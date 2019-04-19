@@ -44,7 +44,11 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
         closesocket(native)
     }
 
+    private var bindded = false
+
     fun bind(port: Int) {
+        if (bindded)
+            throw SocketException("Port was bind")
         portCheck(port)
 
         memScoped {
@@ -55,12 +59,17 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
                 sin_addr.S_un.S_addr = posix_htons(0).convert()//TODO что тут в линуксе
                 sin_port = posix_htons(port.toShort()).convert()
             }
-            if (bind(native, serverAddr.ptr.reinterpret(), sockaddr_in.size.convert()) != 0)
-                throw IOException("bind() error")
+            if (bind(native, serverAddr.ptr.reinterpret(), sockaddr_in.size.convert()) != 0) {
+                throw when (platform.windows.WSAGetLastError()) {
+                    platform.windows.WSAEADDRINUSE -> BindException()
+                    else -> IOException("bind() error. errno=${platform.windows.WSAGetLastError()}")
+                }
+            }
             if (listen(native, SOMAXCONN) != 0)
                 throw IOException("listen() error")
         }
         _connected = true
+        bindded = true
     }
 
     actual fun connect(host: String, port: Int) {

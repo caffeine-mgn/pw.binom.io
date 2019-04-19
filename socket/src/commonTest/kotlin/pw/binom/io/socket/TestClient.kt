@@ -2,10 +2,12 @@ package pw.binom.io.socket
 
 import pw.binom.io.ConnectException
 import pw.binom.io.UnknownHostException
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
+@Ignore
 class TestClient {
     @Test
     fun `unknown dns host`() {
@@ -39,6 +41,22 @@ class TestClient {
         val client = Socket()
         val hostName = "127.0.0.1"
         val port = 0xFFFF - 1
+        try {
+            client.connect(hostName, port)
+            fail()
+        } catch (e: ConnectException) {
+            assertEquals(e.message, "$hostName:$port")
+            assertEquals(e.host, hostName)
+            assertEquals(e.port, port)
+        }
+    }
+
+    @Test
+    fun `unknown ip`() {
+        val client = Socket()
+        val hostName = "127.0.0.2"
+        val port = 0xFFFF - 1
+
         try {
             client.connect(hostName, port)
             fail()
