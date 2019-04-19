@@ -2,6 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.io.*
 import pw.binom.io.socket.Socket
+import pw.binom.io.zip.InflateInputStream
 
 class HttpConnections(val allowKeepAlive: Boolean = true) : Closeable {
     private val connections = HashMap<String, Socket>()
@@ -43,35 +44,56 @@ class HttpConnections(val allowKeepAlive: Boolean = true) : Closeable {
         else -> throw IOException("Unsupported protocol ${url.protocol}")
     }
 
-    interface URLRequest : InputStream {
+    interface URLRequest : Closeable {
         val responseCode: Int
         val contentLength: ULong
         fun addRequestHeader(key: String, value: String)
         fun getResponseHeader(key: String): List<String>?
         val responseHeaderNames: Collection<String>
+        val inputStream: InputStream
     }
 }
 
 private class HttpURLRequestImpl(val method: String, val url: URL, private val connections: HttpConnections) : HttpConnections.URLRequest {
+    private val rawInputStream = object : InputStream {
+        override fun read(data: ByteArray, offset: Int, length: Int): Int {
+            if (closed)
+                return 0
+            readResponse()
+            val r = if (contentLength > 0uL && (contentLength - readed < length.toULong())) {
+                connect().read(data, offset, (contentLength - readed).toInt())
+            } else
+                connect().read(data, offset, length)
+            readed += r.toULong()
+            if (r < length || (contentLength > 0uL && readed == contentLength)) {
+                this@HttpURLRequestImpl.close()
+            }
+            return r
+        }
+
+        override fun close() {
+        }
+    }
+
+    private var _inputStream: InputStream? = null
+
+    override val inputStream: InputStream
+        get() {
+            if (_inputStream != null)
+                return _inputStream!!
+
+            val encode = getResponseHeader("Content-Encoding")?.firstOrNull()
+            _inputStream = when (encode) {
+                "deflate" -> InflateInputStream(rawInputStream, wrap = false)
+                null -> rawInputStream
+                else -> throw RuntimeException("Unknown response encode \"$encode\"")
+            }
+            return _inputStream!!
+        }
 
     private var readed = 0uL
     private var closed = false
     private var connectionKeepAlive = false
-
-    override fun read(data: ByteArray, offset: Int, length: Int): Int {
-        if (closed)
-            return 0
-
-        readResponse()
-        val r = if (contentLength > 0uL && (contentLength - readed < length.toULong())) {
-            connect().read(data, offset, (contentLength - readed).toInt())
-        } else
-            connect().read(data, offset, length)
-        readed += r.toULong()
-        if (r < length || (contentLength > 0uL && readed == contentLength))
-            close()
-        return r
-    }
 
     override fun close() {
         if (closed)
@@ -115,7 +137,7 @@ private class HttpURLRequestImpl(val method: String, val url: URL, private val c
         addRequestHeader("User-Agent", "Binom-Client")
         addRequestHeader("Connection", "keep-alive")
 //        addRequestHeader("Accept-Encoding", "gzip, deflate, br")
-//        addRequestHeader("Accept-Encoding", "deflate")
+        addRequestHeader("Accept-Encoding", "deflate")
     }
 
     override fun addRequestHeader(key: String, value: String) {

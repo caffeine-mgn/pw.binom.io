@@ -26,7 +26,6 @@ class InflateInputStream(val stream: InputStream, bufferSize: Int = 512, wrap: B
             full()
             if (cursor.availIn == 0 || cursor.availOut == 0)
                 break
-            println("Read data: $cursor")
             inflater.inflate(cursor, buf, data)
         }
         return length - cursor.availOut

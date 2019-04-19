@@ -4,6 +4,7 @@ import platform.zlib.Z_BUF_ERROR
 import platform.zlib.Z_DATA_ERROR
 import platform.zlib.Z_OK
 import platform.zlib.Z_STREAM_ERROR
+import platform.zlib.Z_STREAM_END
 
 fun zlibConsts(value: Int) =
         when (value) {
@@ -11,5 +12,6 @@ fun zlibConsts(value: Int) =
             Z_STREAM_ERROR -> "Z_STREAM_ERROR"
             Z_BUF_ERROR -> "Z_BUF_ERROR"
             Z_DATA_ERROR -> "Z_DATA_ERROR"
+            Z_STREAM_END -> "Z_STREAM_END"
             else -> "Unknown ($value)"
         }

@@ -36,7 +36,7 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
             native.pointed.avail_in = cursor.availIn.convert()
             native.pointed.next_in = input.refTo(cursor.inputOffset).getPointer(this).reinterpret()
             val r = inflate(native, Z_NO_FLUSH)
-            if (r != Z_OK)
+            if (r != Z_OK && r != Z_STREAM_END)
                 throw IOException("inflate() error [${zlibConsts(r)}]")
 
 
