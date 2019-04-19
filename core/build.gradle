@@ -1,0 +1,112 @@
+apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+
+kotlin {
+    targets {
+
+        fromPreset(kotlin.presets.linuxX64, 'linuxX64') {
+            compilations.main.outputKinds 'static'
+        }
+
+        fromPreset(kotlin.presets.linuxArm32Hfp, 'linuxArm32') {
+            compilations.main.outputKinds 'static'
+        }
+
+        fromPreset(kotlin.presets.jvm, 'jvm') {
+
+        }
+
+        fromPreset(kotlin.presets.mingwX64, 'mingw') {
+            compilations.main.outputKinds 'static'
+        }
+
+        fromPreset(kotlin.presets.mingwX86, 'mingwX86') {
+            compilations.main.outputKinds 'static'
+        }
+
+        presets.forEach {
+            println("target=${it.name}")
+        }
+    }
+
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+
+        mingwMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+//                dependsOn nativeMain
+            }
+        }
+
+        linuxArm32Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
+            }
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            def repoUser = System.getenv("REPO_USER")
+            def repoPassword = System.getenv("REPO_PASSWORD")
+            def repoUrl = System.getenv("REPO_URL")
+
+            url repoUrl
+
+            credentials {
+                username = repoUser
+                password = repoPassword
+            }
+        }
+    }
+
+    publications.all {
+        def name = ""
+        if (it.name == "metadata") {
+            name = project.name
+        } else {
+            name = "${project.name}-${it.name}"
+        }
+        it.groupId = project.group
+        it.artifactId = "${project.name}-$name"
+        it.version = project.version
+    }
+}
