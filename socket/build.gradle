@@ -50,6 +50,13 @@ kotlin {
             }
         }
 
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+
         nativeMain {
             dependencies {
                 dependsOn commonMain
@@ -82,6 +89,12 @@ kotlin {
         jvmMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
             }
         }
     }

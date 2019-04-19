@@ -103,14 +103,6 @@ actual class Socket constructor(internal val native: Int) : Closeable, InputStre
             if (0 != fcntl(native, F_SETFL, newFlags))
                 throw IOException()
         }
-
-    actual companion object {
-        actual fun startup() {
-        }
-
-        actual fun shutdown() {
-        }
-    }
 }
 
 private fun hostToIp(host: String) {

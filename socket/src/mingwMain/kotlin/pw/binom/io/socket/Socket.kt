@@ -12,13 +12,9 @@ import platform.posix.connect
 import platform.posix.listen
 import platform.posix.recv
 import platform.posix.shutdown
-import platform.posix.socket
 import platform.windows.*
 import platform.windows.ioctlsocket
-import pw.binom.io.Closeable
-import pw.binom.io.IOException
-import pw.binom.io.InputStream
-import pw.binom.io.OutputStream
+import pw.binom.io.*
 
 actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
 
@@ -37,7 +33,7 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
     actual val connected: Boolean
         get() = _connected
 
-    actual constructor() : this(socket(AF_INET, SOCK_STREAM, 0))
+    actual constructor() : this(initNativeSocket())
 
     override fun flush() {
         //NOP
@@ -49,6 +45,8 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
     }
 
     fun bind(port: Int) {
+        portCheck(port)
+
         memScoped {
             val serverAddr = alloc<sockaddr_in>()
             with(serverAddr) {
@@ -66,6 +64,9 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
     }
 
     actual fun connect(host: String, port: Int) {
+
+        portCheck(port)
+
         memScoped {
             val hints = alloc<addrinfo>()
             memset(hints.ptr, 0, sizeOf<addrinfo>().convert())
@@ -76,18 +77,15 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
             hints.ai_protocol = platform.windows.IPPROTO_TCP
 
             val result = allocPointerTo<addrinfo>()
-//                val result = Array<addrinfo>(1)
-//                val result = allocArray<addrinfo>(1)
             if (getaddrinfo(host, port.toString(), hints.ptr, result.ptr) != 0) {
-                throw IOException("Can't resolve host $host")
+                throw UnknownHostException(host)
             }
             val result1 = connect(native, result.value!!.pointed.ai_addr!!.pointed.ptr, result.value!!.pointed.ai_addrlen.convert())
 
             freeaddrinfo(result.value)
 
             if (result1 == SOCKET_ERROR) {
-                println("errno=$errno")
-                throw SocketConnectException()
+                throw ConnectException(host = host, port = port)
             }
             _connected = true
         }
@@ -111,15 +109,9 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
         }
         return r
     }
+}
 
-
-    actual companion object {
-        actual fun startup() {
-            init_sockets()
-        }
-
-        actual fun shutdown() {
-            deinit_sockets()
-        }
-    }
+internal fun portCheck(port: Int) {
+    if (port < 0 || port > 0xFFFF)
+        throw IllegalArgumentException("port out of range:$port")
 }

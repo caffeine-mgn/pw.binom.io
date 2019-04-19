@@ -56,9 +56,15 @@ kotlin {
             }
         }
 
+        nativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
         linuxX64Main {
             dependencies {
-//                dependsOn nativeMain
+                dependsOn nativeMain
             }
         }
 

@@ -1,9 +1,7 @@
 package pw.binom.io.socket
 
+import pw.binom.io.*
 import java.net.InetSocketAddress
-import pw.binom.io.Closeable
-import pw.binom.io.InputStream
-import pw.binom.io.OutputStream
 import java.net.Socket as JSocket
 
 actual class Socket constructor(val native: JSocket) : Closeable, InputStream, OutputStream {
@@ -18,7 +16,13 @@ actual class Socket constructor(val native: JSocket) : Closeable, InputStream, O
     }
 
     actual fun connect(host: String, port: Int) {
-        native.connect(InetSocketAddress(host, port))
+        try {
+            native.connect(InetSocketAddress(host, port))
+        } catch (e: java.net.UnknownHostException) {
+            throw UnknownHostException(e.message!!)
+        } catch (e: java.net.ConnectException) {
+            throw ConnectException(host = host, port = port)
+        }
     }
 
     override fun read(data: ByteArray, offset: Int, length: Int): Int =
@@ -27,15 +31,6 @@ actual class Socket constructor(val native: JSocket) : Closeable, InputStream, O
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
         native.getOutputStream().write(data, offset, length)
         return length
-    }
-
-
-    actual companion object {
-        actual fun startup() {
-        }
-
-        actual fun shutdown() {
-        }
     }
 
     actual val connected: Boolean

@@ -3,7 +3,6 @@ package pw.binom.io.examples.echoServer
 import pw.binom.io.socket.*
 
 fun main(args: Array<String>) {
-    Socket.startup()
     val server = ServerSocketChannel()
     val selector = SocketSelector(100)
 
@@ -15,14 +14,16 @@ fun main(args: Array<String>) {
     while (true) {
         selector.process {
             if (it.channel === server) {
-                selector.reg(server.accept()!!)
+                val client = server.accept()!!
+                client.blocking=false
+                selector.reg(client)
                 println("Client connected")
             } else {
                 try {
                     val client = it.channel as SocketChannel
                     val len = client.read(buffer)
                     client.write(buffer, 0, len)
-                    println("Readed $len")
+                    println("read $len bytes")
                 } catch (e: SocketClosedException) {
                     it.cancel()
                     println("Client disconnected")

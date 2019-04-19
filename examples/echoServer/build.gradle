@@ -23,9 +23,7 @@ kotlin {
         }
 
 
-        fromPreset(kotlin.presets.jvm, 'jvm') {
-
-        }
+        fromPreset(kotlin.presets.jvm, 'jvm')
     }
 
     sourceSets {
@@ -66,13 +64,6 @@ kotlin {
                 dependsOn nativeMain
             }
         }
-
-//        mingwMain {
-//            dependencies {
-//                dependsOn commonMain
-//                api(kotlin("stdlib"))
-//            }
-//        }
 
         jvmMain {
             dependencies {
