@@ -12,22 +12,20 @@ import pw.binom.io.zip.DeflaterOutputStream
 import pw.binom.io.zip.InflateInputStream
 
 fun main(args: Array<String>) {
-    val sb = StringBuilder()
-    for (i in 0..10) {
-        sb.append("==>$i")
-    }
-    val data = sb.toString().asUTF8ByteArray()
+    val data = "Simple Text".asUTF8ByteArray()
 
     val LEVEL = 9
     val WRAP = true
 
-    val file = File("Test.${if (WRAP) "wrap" else "nowrap"}")
+    val file = File("Test.zlib")
     FileOutputStream(file, false).use {
         DeflaterOutputStream(it, LEVEL, 512, WRAP).use {
             it.write(data, 0, data.size)
             it.flush()
         }
     }
+
+    println("Compressed data: \"${data.asUTF8String()}\"")
 
     val out = ByteArrayOutputStream(0)
     FileInputStream(file).use {
@@ -37,5 +35,5 @@ fun main(args: Array<String>) {
     }
 
 
-    println("Result: ${out.toByteArray().asUTF8String()}")
+    println("Decompressed data: \"${out.toByteArray().asUTF8String()}\"")
 }
