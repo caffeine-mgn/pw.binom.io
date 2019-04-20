@@ -5,6 +5,7 @@ import pw.binom.io.OutputStream
 
 actual class SocketChannel(internal val socket: Socket) : Channel,InputStream,OutputStream {
     override fun flush() {
+        //NOP
     }
 
     override fun close() {
@@ -17,11 +18,10 @@ actual class SocketChannel(internal val socket: Socket) : Channel,InputStream,Ou
         socket.connect(host, port)
     }
 
-    override actual fun read(data: ByteArray, offset: Int, length: Int): Int = socket.read(data = data, offset = offset, length = length)
+    override fun read(data: ByteArray, offset: Int, length: Int): Int = socket.read(data = data, offset = offset, length = length)
 
-    override actual fun write(data: ByteArray, offset: Int, length: Int): Int = socket.write(data = data, offset = offset, length = length)
+    override fun write(data: ByteArray, offset: Int, length: Int): Int = socket.write(data = data, offset = offset, length = length)
 
-    actual fun write(data: String): Int = write(data.toUtf8OrThrow())
     actual var blocking: Boolean
         get() = socket.blocking
         set(value) {
