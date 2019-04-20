@@ -22,16 +22,11 @@ actual class SocketChannel constructor(internal val native: JSocketChannel) : Ch
     }
 
     override fun read(data: ByteArray, offset: Int, length: Int): Int {
-        try {
-            val buffer = ByteBuffer.wrap(data)
-            val r = native.read(arrayOf(buffer), offset, length).toInt()
+        val buffer = ByteBuffer.wrap(data, offset, length)
+        val r = native.read(buffer)
             if (r == -1)
                 throw SocketClosedException()
             return r
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            throw e
-        }
     }
 
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
