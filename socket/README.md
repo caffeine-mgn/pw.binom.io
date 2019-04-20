@@ -9,8 +9,9 @@ repositories {
         url "http://repo.tlsys.su/maven/releases"
     }
 }
-
-api "pw.binom.io:socket:<version>"
+dependencies {
+    api "pw.binom.io:socket:<version>"
+}
 ```
 
 ## Simple using
