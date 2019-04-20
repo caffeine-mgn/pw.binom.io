@@ -1,0 +1,106 @@
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+
+kotlin {
+    targets {
+        fromPreset(kotlin.presets.linuxX64, 'linuxX64') {
+            compilations.main.outputKinds 'executable'
+            compilations.main.entryPoint = 'pw.binom.io.examples.file.main'
+        }
+
+        fromPreset(kotlin.presets.linuxArm32Hfp, 'linuxArm32') {
+            compilations.main.outputKinds 'executable'
+            compilations.main.entryPoint = 'pw.binom.io.examples.file.main'
+        }
+
+        fromPreset(kotlin.presets.mingwX64, 'mingw') {
+            compilations.main.outputKinds 'executable'
+            compilations.main.entryPoint = 'pw.binom.io.examples.file.main'
+        }
+
+        fromPreset(kotlin.presets.mingwX86, 'mingwX86') {
+            compilations.main.outputKinds 'executable'
+            compilations.main.entryPoint = 'pw.binom.io.examples.file.main'
+        }
+
+
+        fromPreset(kotlin.presets.jvm, 'jvm') {
+
+        }
+    }
+
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                implementation project(":file")
+            }
+        }
+
+        nativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        mingwMain {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+        mingwMainX86 {
+            dependencies {
+                dependsOn mingwMain
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+        linuxArm32Main {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+//        mingwMain {
+//            dependencies {
+//                dependsOn commonMain
+//                api(kotlin("stdlib"))
+//            }
+//        }
+
+        jvmMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            }
+        }
+    }
+}
+
+jvmJar {
+    with {
+        from {
+            (configurations.jvmRuntimeClasspath).collect {
+                it.isDirectory() ? it : zipTree(it)
+            }
+        } {
+            exclude "META-INF/*.SF"
+            exclude "META-INF/*.DSA"
+            exclude "META-INF/*.RSA"
+        }
+    }
+    manifest {
+        attributes 'Main-Class': "pw.binom.io.examples.file.FileKt"
+    }
+}
+
+task runMainExecutableJvm(dependsOn: jvmJar, group: "run") {
+    doLast {
+        javaexec { main = "-jar"; args jvmJar.archiveFile.get() }
+    }
+}
