@@ -1,0 +1,31 @@
+buildscript {
+    ext.kotlin_version = "1.3.30"
+    ext.network_version = "0.1.0"
+
+    repositories {
+        mavenCentral()
+        jcenter()
+        mavenLocal()
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+
+allprojects {
+    version = network_version
+    group = "pw.binom.io"
+
+    repositories {
+        mavenCentral()
+        jcenter()
+        mavenLocal()
+        maven {
+            url "http://repo.tlsys.su/maven/releases"
+        }
+    }
+}
