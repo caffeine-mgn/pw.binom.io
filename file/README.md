@@ -45,3 +45,6 @@ FileInputStream(file).use {
 
 println("Data from File: \"${out.toByteArray().asUTF8String()}\"")
 ```
+
+## Examples
+[Read-Write File](../examples/file)
