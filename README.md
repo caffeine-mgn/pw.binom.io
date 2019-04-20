@@ -11,3 +11,8 @@ Library contains next parts:<br>
 * [Common Async Server](server/README.md)
 * [Common Http Client](httpClient/README.md)
 * [Common File Utils](file/README.md)
+
+## Plans
+* Mechanism for read/write file via one entity
+* UDP support socket
+* Create common reactor for different events. Not only network
