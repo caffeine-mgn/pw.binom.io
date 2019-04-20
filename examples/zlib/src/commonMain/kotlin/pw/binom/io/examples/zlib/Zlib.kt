@@ -4,9 +4,7 @@ import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
 import pw.binom.io.ByteArrayOutputStream
 import pw.binom.io.copyTo
-import pw.binom.io.file.File
-import pw.binom.io.file.FileInputStream
-import pw.binom.io.file.FileOutputStream
+import pw.binom.io.file.*
 import pw.binom.io.use
 import pw.binom.io.zip.DeflaterOutputStream
 import pw.binom.io.zip.InflateInputStream
@@ -27,7 +25,7 @@ fun main(args: Array<String>) {
 
     println("Compressed data: \"${data.asUTF8String()}\"")
 
-    val out = ByteArrayOutputStream(0)
+    val out = ByteArrayOutputStream()
     FileInputStream(file).use {
         InflateInputStream(it, 512, WRAP).use {
             it.copyTo(out)
