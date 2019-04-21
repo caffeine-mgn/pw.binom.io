@@ -7,7 +7,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
-@Ignore
 class TestClient {
     @Test
     fun `unknown dns host`() {
