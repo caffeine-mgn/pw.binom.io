@@ -5,7 +5,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class Executor:Closeable {
+class Executor : Closeable {
     override fun close() {
         executor.close()
     }
@@ -18,7 +18,6 @@ class Executor:Closeable {
         f()
     }
 }
-
 internal expect class PlatfromExecutor : Closeable {
     constructor()
 
