@@ -13,6 +13,7 @@ include(":core")
 include(":server")
 include(":file")
 include(":socket")
+include(":job")
 include(":httpClient")
 
 include(":examples:echoServer")
