@@ -44,23 +44,25 @@ kotlin {
             }
         }
 
-        mingwMain {
-            dependencies {
-                dependsOn linuxX64Main
-            }
-        }
-
-        mingwX86Main {
-            dependencies {
-                dependsOn linuxX64Main
-            }
-        }
-
         nativeMain {
             dependencies {
                 dependsOn commonMain
             }
         }
+
+        mingwMain {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+
 
         linuxX64Main {
             dependencies {
