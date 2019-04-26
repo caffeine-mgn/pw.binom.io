@@ -12,14 +12,14 @@ actual fun sleep(time: Long) {
 }
 
 actual fun currentTimeMillis(): Long = memScoped {
-    val spec = alloc<timespec>(sizeOf<timespec>().convert())
+    val spec = this.alloc<timespec>()
     clock_gettime(CLOCK_REALTIME, spec.ptr)
 
     var s = spec.tv_sec
 
     var ms = round(spec.tv_nsec / 1.0e6).toLong()
     if (ms > 999) {
-        s++;
+        s++
         ms = 0
     }
     s * 1000 + ms
