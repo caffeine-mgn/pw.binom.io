@@ -1,6 +1,13 @@
 package pw.binom.io.socket
 
+import kotlin.native.concurrent.ensureNeverFrozen
+
 actual class ServerSocketChannel actual constructor(): Channel {
+
+    init {
+        this.ensureNeverFrozen()
+    }
+
     override fun close() {
         socket.close()
     }

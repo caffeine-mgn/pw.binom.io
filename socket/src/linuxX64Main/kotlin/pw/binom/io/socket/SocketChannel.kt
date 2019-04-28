@@ -2,8 +2,14 @@ package pw.binom.io.socket
 
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
+import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class SocketChannel(internal val socket: Socket) : Channel,InputStream,OutputStream {
+
+    init {
+        this.ensureNeverFrozen()
+    }
+
     override fun flush() {
         //NOP
     }

@@ -5,8 +5,13 @@ import platform.posix.free
 import platform.posix.malloc
 import pw.binom.io.Closeable
 import pw.binom.io.cinterop.wepoll.*
+import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class SocketSelector actual constructor(private val connections: Int) : Closeable {
+
+    init {
+        this.ensureNeverFrozen()
+    }
 
     private val native = epoll_create(connections)
     private val list = malloc((sizeOf<epoll_event>() * connections).convert())!!.reinterpret<epoll_event>()

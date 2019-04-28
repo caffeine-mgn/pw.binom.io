@@ -15,8 +15,13 @@ import platform.posix.shutdown
 import platform.windows.*
 import platform.windows.ioctlsocket
 import pw.binom.io.*
+import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
+
+    init {
+        this.ensureNeverFrozen()
+    }
 
     var blocking: Boolean = true
         set(value) {

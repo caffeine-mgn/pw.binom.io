@@ -3,9 +3,14 @@ package pw.binom.io.socket
 import platform.posix.SOCKET
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
+import kotlin.native.concurrent.ensureNeverFrozen
 
 
 actual class SocketChannel internal constructor(internal val socket: Socket) : Channel,InputStream,OutputStream {
+
+    init {
+        this.ensureNeverFrozen()
+    }
 
     override val native: SOCKET
         get() = socket.native

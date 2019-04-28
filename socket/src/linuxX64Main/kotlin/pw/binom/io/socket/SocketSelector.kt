@@ -4,8 +4,14 @@ import kotlinx.cinterop.*
 import platform.linux.*
 import platform.posix.close
 import pw.binom.io.Closeable
+import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class SocketSelector actual constructor(private val connections: Int) : Closeable {
+
+    init {
+        this.ensureNeverFrozen()
+    }
+
     private val native = epoll_create(connections)
     private val list = malloc((sizeOf<epoll_event>() * connections).convert())!!.reinterpret<epoll_event>()
     override fun close() {

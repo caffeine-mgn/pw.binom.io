@@ -1,8 +1,14 @@
 package pw.binom.io.socket
 
 import platform.posix.SOCKET
+import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class ServerSocketChannel actual constructor() : Channel {
+
+    init {
+        this.ensureNeverFrozen()
+    }
+
     override val native: SOCKET
         get() = socket.socket.native
 

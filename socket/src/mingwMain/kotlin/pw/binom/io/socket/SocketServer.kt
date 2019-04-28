@@ -4,9 +4,14 @@ import platform.posix.INVALID_SOCKET
 import platform.posix.accept
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
+import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class SocketServer : Closeable {
     internal val socket = Socket()
+
+    init {
+        this.ensureNeverFrozen()
+    }
 
     override fun close() {
         socket.close()

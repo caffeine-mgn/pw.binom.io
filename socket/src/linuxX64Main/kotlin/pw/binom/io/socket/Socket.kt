@@ -7,8 +7,14 @@ import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
+import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class Socket constructor(internal val native: Int) : Closeable, InputStream, OutputStream {
+
+    init {
+        this.ensureNeverFrozen()
+    }
+
     override fun flush() {
 //
     }
