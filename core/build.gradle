@@ -58,7 +58,7 @@ kotlin {
 
         mingwX86Main {
             dependencies {
-                dependsOn nativeMain
+                dependsOn mingwMain
             }
         }
 

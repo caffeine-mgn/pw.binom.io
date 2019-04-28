@@ -12,7 +12,7 @@ actual class FileOutputStream actual constructor(file: File, append: Boolean) : 
         //NOP
     }
 
-    private val handler = fopen(file.path, if (append) "a+" else "w+")
+    private val handler = fopen(file.path, if (append) "ab+" else "wb+")
 
     actual override fun write(data: ByteArray, offset: Int, length: Int): Int =
             fwrite(data.refTo(offset), 1, length.convert(), handler).convert()
