@@ -90,31 +90,4 @@ kotlin {
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            def repoUser = System.getenv("REPO_USER")
-            def repoPassword = System.getenv("REPO_PASSWORD")
-            def repoUrl = System.getenv("REPO_URL")
-
-            url repoUrl
-
-            credentials {
-                username = repoUser
-                password = repoPassword
-            }
-        }
-    }
-
-    publications.all {
-        def name = ""
-        if (it.name == "metadata") {
-            name = project.name
-        } else {
-            name = "${project.name}-${it.name}"
-        }
-        it.groupId = project.group
-        it.artifactId = "${project.name}-$name"
-        it.version = project.version
-    }
-}
+apply from: '../public.gradle'

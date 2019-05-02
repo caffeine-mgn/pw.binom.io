@@ -17,13 +17,14 @@ publishing {
 
     publications.all {
         def name = ""
-        if (it.name == "metadata") {
+        if (it.name == "kotlinMultiplatform") {
             name = project.name
         } else {
             name = "${project.name}-${it.name}"
         }
         it.groupId = project.group
-        it.artifactId = "${project.name}-$name"
+        it.artifactId = name
         it.version = project.version
+        println("name=$name (${it.name})")
     }
 }
