@@ -37,7 +37,6 @@ class HttpServer(port: Int) : AsyncServer(port) {
 }
 
 fun main(args: Array<String>) {
-    Socket.startup()
     val server = HttpServer(8899)
     server.start()
 }

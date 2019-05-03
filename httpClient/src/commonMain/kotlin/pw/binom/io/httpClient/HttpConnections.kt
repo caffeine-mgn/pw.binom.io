@@ -54,8 +54,11 @@ class HttpConnections(val allowKeepAlive: Boolean = true) : Closeable {
     }
 }
 
+
+
 private class HttpURLRequestImpl(val method: String, val url: URL, private val connections: HttpConnections) : HttpConnections.URLRequest {
-    private val rawInputStream = object : InputStream {
+
+    private inner class RawHttpInputStream():InputStream{
         override fun read(data: ByteArray, offset: Int, length: Int): Int {
             if (closed)
                 return 0
@@ -74,6 +77,8 @@ private class HttpURLRequestImpl(val method: String, val url: URL, private val c
         override fun close() {
         }
     }
+
+    private val rawInputStream = RawHttpInputStream()
 
     private var _inputStream: InputStream? = null
 
