@@ -7,12 +7,13 @@ class TestThreadUtils {
 
     @Test
     fun test() {
-        val start = currentTimeMillis()
-        sleep(500)
-        val end = currentTimeMillis()
+        val start = Thread.currentTimeMillis()
+        Thread.sleep(500)
+        val end = Thread.currentTimeMillis()
 
         assertTrue(end > start)
-        assertTrue(end - start > 500 && end - start < 1000)
+        println(end-start)
+        assertTrue(end - start in 500..999)
 
     }
 }

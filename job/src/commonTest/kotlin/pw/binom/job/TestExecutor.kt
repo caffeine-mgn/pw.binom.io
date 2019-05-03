@@ -9,18 +9,22 @@ class FF(var value: Int)
 class TestExecutor {
     @Test
     fun run() {
-        val exe = Executor()
-
+        val exe = Worker()
 
         var ff = FF(10)
+
         val func: (FF) -> FF = {
-            FF(it.value + 2)
+            val r = FF(it.value + 2)
+            println("DONE!")
+            r
         }
 
-        val e1 = exe.execute(ff, func)
-        val e2 = exe.execute(ff, func)
+        val e1 = exe.execute({ ff }, func)
+        val e2 = exe.execute({ ff }, func)
 
         exe.close()
+        e1.join()
+        e2.join()
 
         assertTrue(e1.isFinished)
         assertTrue(e2.isFinished)
