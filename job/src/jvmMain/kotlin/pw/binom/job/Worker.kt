@@ -33,6 +33,8 @@ actual class Worker : Closeable {
         native.shutdown()
         native.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)
     }
+
+    actual companion object
 }
 
 private class FuturePromiseImpl<T>(private val future: CompletableFuture<T>) : FuturePromise<T> {
@@ -67,12 +69,6 @@ private class FuturePromiseImpl<T>(private val future: CompletableFuture<T>) : F
 
     private var _success: ((T) -> Unit)? = null
     private var _exception: ((Throwable) -> Unit)? = null
-
-    override fun consume(success: (T) -> Unit, exception: (Throwable) -> Unit) {
-        _success = success
-        _exception = exception
-        future.join()
-    }
 
     @Volatile
     private var _isDone = false

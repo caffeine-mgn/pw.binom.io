@@ -18,6 +18,7 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     override fun close() {
         free(list)
         epoll_close(native)
+        elements.clear()
     }
 
     private inner class SelectorKeyImpl(override val channel: Channel, override val attachment: Any?) : SelectorKey {
@@ -37,7 +38,7 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
         return memScoped {
             val event = alloc<epoll_event>()
-            event.events = (EPOLLIN).convert();// | EPOLLET;
+            event.events = (EPOLLIN or EPOLLRDHUP).convert();// | EPOLLET;
             val socket = when (channel) {
                 is ServerSocketChannel -> channel.socket.socket
                 is SocketChannel -> channel.socket
@@ -53,21 +54,29 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
         }
     }
 
-    actual fun process(func: (SelectorKey) -> Unit): Boolean {
-        val count = epoll_wait(native, list, connections, -1)
+    actual fun process(timeout: Int?, func: (SelectorKey) -> Unit): Boolean {
+        val count = epoll_wait(native, list, connections, timeout ?: -1)
         if (count <= 0)
             return false
         for (i in 0 until count) {
-            val el = elements[list[i].data.sock] ?: continue
-//            val EPOLLIN = list[i].events and EPOLLIN > 0u
-//            val EPOLLOUT = list[i].events and EPOLLOUT > 0u
-//            val EPOLLRDHUP = list[i].events and EPOLLRDHUP > 0u
-//            println("EPOLLIN=$EPOLLIN EPOLLOUT=$EPOLLOUT EPOLLRDHUP=$EPOLLRDHUP")
+            val item = list[i]
 
+            val el = elements[item.data.sock] ?: continue
+
+            if (item.events.convert<Int>() and EPOLLRDHUP.convert() != 0) {
+                when (el.channel){
+                    is SocketChannel->el.channel.socket.internalDisconnected()
+                    is ServerSocketChannel->el.channel.socket.socket.internalDisconnected()
+                }
+                el.cancel()
+            }
             func(el)
         }
         return true
     }
+
+    actual val keys: Collection<SelectorKey>
+        get() = elements.values
 
     actual interface SelectorKey {
         actual val channel: Channel

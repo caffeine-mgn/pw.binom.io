@@ -17,6 +17,7 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     override fun close() {
         free(list)
         close(native)
+        elements.clear()
     }
 
     private inner class SelectorKeyImpl(override val channel: Channel, override val attachment: Any?) : SelectorKey {
@@ -36,7 +37,7 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
         return memScoped {
             val event = alloc<epoll_event>()
-            event.events = EPOLLIN.convert()
+            event.events = (EPOLLIN or EPOLLRDHUP).convert()
             val socket = when (channel) {
                 is ServerSocketChannel -> channel.socket.socket
                 is SocketChannel -> channel.socket
@@ -62,12 +63,23 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
 //        epoll_ctl(native, EPOLL_CTL_DEL, socket, null)
 //    }
 
-    actual fun process(func: (SelectorKey) -> Unit): Boolean {
-        val count = epoll_wait(native, list, connections, -1)
+    actual fun process(timeout: Int?, func: (SelectorKey) -> Unit): Boolean {
+        val count = epoll_wait(native, list, connections, timeout ?: -1)
         if (count <= 0)
             return false
         for (i in 0 until count) {
-            val el = elements[list[i].data.fd] ?: continue
+            val item = list[i]
+
+            val el = elements[item.data.fd] ?: continue
+
+            if (item.events.convert<Int>() and EPOLLRDHUP.convert() != 0) {
+                when (el.channel){
+                    is SocketChannel->el.channel.socket.internalDisconnected()
+                    is ServerSocketChannel->el.channel.socket.socket.internalDisconnected()
+                }
+                el.cancel()
+                elements.remove(item.data.fd)
+            }
             func(el)
         }
         return true
@@ -78,5 +90,8 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
         actual val attachment: Any?
         actual fun cancel()
     }
+
+    actual val keys: Collection<SelectorKey>
+        get() = elements.values
 
 }

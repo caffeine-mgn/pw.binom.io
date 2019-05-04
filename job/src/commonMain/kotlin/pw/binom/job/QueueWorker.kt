@@ -1,5 +1,6 @@
 package pw.binom.job
 
+import pw.binom.FreezedStack
 import pw.binom.Queue
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.doFreeze
@@ -47,7 +48,7 @@ class QueueThreadControl<T : Any> {
         interruptFlag.value = true
     }
 
-    internal val stack = Queue<T>()
+    internal val stack = FreezedStack<T>()
 
     fun push(value: T) {
         stack.pushFirst(value)

@@ -25,7 +25,7 @@ actual class SocketServer : Closeable {
         if (native == -1)
             return null
         val s = Socket(native)
-        s.setConnected()
+        s.internalConnected()
         return s
     }
 

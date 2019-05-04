@@ -1,42 +1,49 @@
 package pw.binom.io.examples.httpServer
 
-import pw.binom.io.AsyncInputStream
-import pw.binom.io.OutputStream
-import pw.binom.io.readLn
-import pw.binom.io.socket.AsyncServer
-import pw.binom.io.socket.Socket
+import pw.binom.io.IOException
+import pw.binom.io.readln
+import pw.binom.io.socket.ConnectionManager
 import pw.binom.io.write
+import pw.binom.io.writeln
 
-class HttpServer(port: Int) : AsyncServer(port) {
-    override suspend fun client(input: AsyncInputStream, output: OutputStream) {
-        //read request method and uri
-        val header = input.readLn().split(' ')
-        println("Request ${header[0]} ${header[1]}")
+class HttpServer : ConnectionManager() {
+    override fun connected(connection: Connection) {
+        connection {
+            try {
+                val header = it.input.readln().split(' ')
+                println("Request ${header[0]} ${header[1]}")
 
-        //skip all request headers
-        while (true) {
-            if (input.readLn().isEmpty())
-                break
+                //skip all request headers
+                while (true) {
+                    if (it.input.readln().isEmpty())
+                        break
+                }
+
+                val txt = """<html>
+                |<title>Binom Example Web Server</title>
+                |<body>
+                |  Hello from Simple server based on <b>Binom IO</b>
+                |</body>
+                |</html>""".trimMargin()
+                it.output.writeln("HTTP/1.1 200 OK")
+                it.output.writeln("Server: Binom Example Server")
+                it.output.writeln("Content-Type: text/html; charset=utf-8")
+                it.output.writeln("Content-Length: ${txt.length}")
+                it.output.writeln("Connection: close")
+                it.output.writeln("")
+                it.output.writeln("")
+                it.output.write(txt)
+            } catch (e: IOException) {
+                //NOP
+            }
         }
-
-        val txt = """<html>
-            |<title>Binom Example Web Server</title>
-            |<body>
-            |  Hello from Simple server based on <b>Binom IO</b>
-            |</body>
-            |</html>""".trimMargin()
-
-        output.write("HTTP/1.1 200 OK\r\n")
-        output.write("Server: Binom Example Server\r\n")
-        output.write("Content-Type: text/html; charset=utf-8\r\n")
-        output.write("Content-Length: ${txt.length}\r\n")
-        output.write("Connection: close\r\n")
-        output.write("\r\n\r\n")
-        output.write(txt)
     }
 }
 
 fun main(args: Array<String>) {
-    val server = HttpServer(8899)
-    server.start()
+    val server = HttpServer()
+    server.bind(8899)
+    while (true) {
+        server.update()
+    }
 }

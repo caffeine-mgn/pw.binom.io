@@ -23,12 +23,17 @@ actual class Socket constructor(internal val native: Int) : Closeable, InputStre
 
     override fun close() {
         close(native)
+        internalDisconnected()
     }
 
     private var _connected = false
 
     actual val connected: Boolean
         get() = _connected
+
+    internal fun internalDisconnected() {
+        _connected = false
+    }
 
     fun bind(port: Int) {
         memScoped {
@@ -47,7 +52,7 @@ actual class Socket constructor(internal val native: Int) : Closeable, InputStre
         }
     }
 
-    internal fun setConnected() {
+    internal fun internalConnected() {
         _connected = true
     }
 
@@ -76,7 +81,7 @@ actual class Socket constructor(internal val native: Int) : Closeable, InputStre
             throw SocketClosedException()
         val r = recv(native, buf, length.convert(), 0).convert<Int>()
         if (r == 0) {
-            _connected = false
+            internalDisconnected()
             throw SocketClosedException()
         }
         return r
@@ -87,7 +92,7 @@ actual class Socket constructor(internal val native: Int) : Closeable, InputStre
             throw SocketClosedException()
         val r = send(native, data, length.convert(), 0).convert<Int>()
         if (r == 0) {
-            _connected = false
+            internalDisconnected()
             throw SocketClosedException()
         }
         return r
@@ -95,7 +100,13 @@ actual class Socket constructor(internal val native: Int) : Closeable, InputStre
 
     override fun read(data: ByteArray, offset: Int, length: Int): Int = read(data.refTo(offset), length)
 
-    override fun write(data: ByteArray, offset: Int, length: Int): Int = write(data.refTo(offset), length)
+    override fun write(data: ByteArray, offset: Int, length: Int): Int {
+        if (length == 0)
+            return 0
+        if (offset + length > data.size)
+            throw ArrayIndexOutOfBoundsException()
+        return write(data.refTo(offset), length)
+    }
 
     var blocking: Boolean
         get() = fcntl(native, F_GETFL, 0) and O_NONBLOCK == 0
@@ -109,8 +120,4 @@ actual class Socket constructor(internal val native: Int) : Closeable, InputStre
             if (0 != fcntl(native, F_SETFL, newFlags))
                 throw IOException()
         }
-}
-
-private fun hostToIp(host: String) {
-
 }

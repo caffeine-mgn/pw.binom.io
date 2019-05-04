@@ -1,44 +1,31 @@
 package pw.binom.job
 
-import pw.binom.Thread
-import pw.binom.atomic.AtomicInt
+import pw.binom.*
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class TestQueueThreadRunner {
 
-    class SimpleJobData(value: Int) {
-        val int = AtomicInt(value)
-    }
-
-    class Task : QueueWorker<SimpleJobData>() {
-        override fun run() {
-            while (!isInterrupted) {
-                val item = get()
-                if (item == null) {
-                    Thread.sleep(100)
-                    continue
+    @Test
+    fun workerWithQueue() {
+        class TaskImpl(val input: Queue<Int>, val output: AppendableQueue<Int>) : pw.binom.job.Task() {
+            override fun execute() {
+                while (!isInterrupted) {
+                    output.push(input.popAwait() * 10)
+                    Thread.sleep(1)
                 }
-                item.int.increment()
             }
         }
 
-    }
+        val input = FreezedStack<Int>().asFiFoQueue()
+        val output = FreezedStack<Int>().asFiFoQueue()
 
-    @Test
-    fun test() {
-        val data = SimpleJobData(0)
+        val thread = Worker.execute{TaskImpl(input, output)}
 
-        val runner = QueueThreadRunner { Task() }
+        input.push(10)
 
-        runner.start()
-        runner.push(data)
-
-        val start = Thread.currentTimeMillis()
-        while (data.int.value == 0) {
-            if (Thread.currentTimeMillis() - start > 10_000)
-                throw AssertionError("Timeout")
-            Thread.sleep(100)
-        }
-        runner.close()
+        assertEquals(100, output.popAwait())
+        thread.interrupt()
+        thread.join()
     }
 }

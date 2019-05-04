@@ -6,7 +6,7 @@ import pw.binom.io.OutputStream
 import kotlin.native.concurrent.ensureNeverFrozen
 
 
-actual class SocketChannel internal constructor(internal val socket: Socket) : Channel,InputStream,OutputStream {
+actual class SocketChannel internal constructor(internal val socket: Socket) : Channel, InputStream, OutputStream {
 
     init {
         this.ensureNeverFrozen()
@@ -37,5 +37,11 @@ actual class SocketChannel internal constructor(internal val socket: Socket) : C
 
     override fun read(data: ByteArray, offset: Int, length: Int): Int = socket.read(data = data, offset = offset, length = length)
 
-    override fun write(data: ByteArray, offset: Int, length: Int) = socket.write(data = data, offset = offset, length = length)
+    override fun write(data: ByteArray, offset: Int, length: Int) =
+            try {
+                socket.write(data = data, offset = offset, length = length)
+            } catch (e: Throwable) {
+                println("ERROR IN SocketChannel. =>$e")
+                throw e
+            }
 }

@@ -156,8 +156,6 @@ private class HttpURLRequestImpl(val method: String, val url: URL, private val c
             throw IllegalStateException("Connection already closed")
         if (socket == null) {
             socket = connections.pollConnection(url.host, url.port ?: url.defaultPort)
-            if (socket != null)
-                println("Connection pulled")
         }
         if (socket == null) {
             socket = Socket()

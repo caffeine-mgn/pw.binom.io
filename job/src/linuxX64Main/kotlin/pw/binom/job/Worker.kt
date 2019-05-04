@@ -20,6 +20,8 @@ actual class Worker : Closeable {
             FuturePromiseImpl(native.execute(TransferMode.SAFE, { Task(param(), task).freeze() }) {
                 it.task(it.param)
             })
+
+    actual companion object
 }
 
 private class FuturePromiseImpl<T>(private val future: Future<T>) : FuturePromise<T> {
@@ -54,13 +56,4 @@ private class FuturePromiseImpl<T>(private val future: Future<T>) : FuturePromis
 
             return future.result as Throwable
         }
-
-    override fun consume(success: (T) -> Unit, exception: (Throwable) -> Unit) {
-        future.consume {
-            if (future.state == FutureState.THROWN)
-                exception(it as Throwable)
-            if (future.state == FutureState.COMPUTED)
-                success(it)
-        }
-    }
 }

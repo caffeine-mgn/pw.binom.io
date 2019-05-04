@@ -1,7 +1,7 @@
 publishing {
     repositories {
         maven {
-            name="BinomRepository"
+            name = "BinomRepository"
             def repoUser = System.getenv("REPO_USER")
             def repoPassword = System.getenv("REPO_PASSWORD")
             def repoUrl = System.getenv("REPO_URL")
@@ -16,15 +16,35 @@ publishing {
     }
 
     publications.all {
-        def name = ""
+        def repoName = ""
         if (it.name == "kotlinMultiplatform") {
-            name = project.name
+            repoName = project.name
         } else {
-            name = "${project.name}-${it.name}"
+            repoName = "${project.name}-${it.name}"
         }
         it.groupId = project.group
-        it.artifactId = name
+        it.artifactId = repoName
         it.version = project.version
         println("name=$name (${it.name})")
+
+        pom {
+            scm {
+                connection = "https://github.com/caffeine-mgn/pw.binom.io.git"
+                url = "https://github.com/caffeine-mgn/pw.binom.io"
+            }
+            developers {
+                developer {
+                    id = 'subochev'
+                    name = 'Anton Subochev'
+                    email = 'caffeine.mgn@gmail.com'
+                }
+            }
+            licenses {
+                license {
+                    name = 'The Apache License, Version 2.0'
+                    url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                }
+            }
+        }
     }
 }

@@ -2,108 +2,95 @@ package pw.binom.job
 
 import pw.binom.Lock
 import pw.binom.Thread
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.atomic.AtomicReference
+import pw.binom.doFreeze
 import pw.binom.use
 
-interface FuturePromise<T> {
+interface FuturePromise<T:Any?> {
     val isFinished: Boolean
     val isError: Boolean
     val result: T
     val exception: Throwable
-
-    /**
-     * Blocks current thread until Promise will be done
-     *
-     * @param success call when promise done success
-     * @param exception call when promise done with exception
-     */
-    fun consume(success: (T) -> Unit, exception: (Throwable) -> Unit)
 }
 
+/**
+ * Blocks current thread until Promise will be done
+ *
+ * @param success call when promise done success
+ * @param exception call when promise done with exception
+ */
+fun <T:Any?> FuturePromise<T>.consume(success: (T) -> Unit, exception: (Throwable) -> Unit){
+    join()
+    if (isError)
+        exception(this.exception)
+    else
+        success(result)
+}
+
+/**
+ * Blocks current thread until Promise will be done. Execution result can be get from [FuturePromise.isFinished] and others
+ */
 fun FuturePromise<*>.join() {
     while (!isFinished) {
         Thread.sleep(1)
     }
 }
 
-class Promise<T : Any?> {
+/**
+ * Blocks current thread until Promise will be done. When promise done function returns result of promise or throw exception
+ *
+ * @return Result of Promise
+ */
+fun <T>FuturePromise<T>.await():T{
+    join()
+    if (isError)
+        throw exception
+    else
+        return result
+}
 
-    companion object {
-        fun <T> resolve(value: T): Promise<T> {
-            val p = Promise<T>()
-            p.resume(value)
-            return p
-        }
-    }
+class Promise<T:Any?> : FuturePromise<T> {
 
-    private var _result: T? = null
-    private var done = false
-    private var _error: Throwable? = null
-    private var thenFunc: ((T) -> Unit)? = null
-    private var errorFunc: ((Throwable) -> Unit)? = null
-    private var called = false
-    private val lock = Lock()
+    private val done = AtomicBoolean(false)
+    private val withException = AtomicBoolean(false)
 
-    val isFinished: Boolean
-        get() = lock.use { done }
+    private val resultObj = AtomicReference<T?>(null)
+    private val errorObj = AtomicReference<Throwable?>(null)
 
-    val isError: Boolean
-        get() = lock.use {
-            if (!done)
-                throw IllegalStateException("Promise not finished")
-            return isError
-        }
-
-    val error: Throwable
-        get() = lock.use {
-            if (!done)
-                throw IllegalStateException("Promise not finished")
-            return _error!!
+    override val exception: Throwable
+        get() {
+            if (!isFinished)
+                throw IllegalStateException("Promise not ready")
+            if (!isError)
+                throw IllegalStateException("Promise not throws exception")
+            return errorObj.value!!
         }
 
-    val result: T
-        get() = lock.use {
-            if (!done)
-                throw IllegalStateException("Promise not finished")
-            return _result as T
+    override val isError: Boolean
+        get() = withException.value
+
+    override val isFinished: Boolean
+        get() = done.value
+
+    override val result: T
+        get() {
+            if (!isFinished)
+                throw IllegalStateException("Promise not ready")
+            if (!isError)
+                throw IllegalStateException("Promise throws exception")
+            return resultObj.value as T
         }
 
-    fun then(func: ((T) -> Unit)?, error: ((Throwable) -> Unit)?) {
-        lock.use {
-            if (called)
-                throw IllegalStateException("Promise already called")
-            thenFunc = func
-            errorFunc = error
-
-            if (done)
-                thenFunc!!(_result as T)
-        }
-    }
-
-    fun resume(value: T) {
-        lock.use {
-            done = true
-            _result = value
-            if (thenFunc != null) {
-                called = true
-                thenFunc!!(value)
-            }
-        }
+    fun resume(result: T) {
+        (result as Any?)?.doFreeze()
+        resultObj.value = result
+        done.value = true
     }
 
     fun exception(exception: Throwable) {
-        lock.use {
-            done = true
-            _error = exception
-            if (errorFunc != null) {
-                called = true
-                errorFunc!!(exception)
-            }
-        }
-    }
-
-    fun join() {
-        while (!isFinished) {
-            Thread.sleep(1)
-        }
+        exception.doFreeze()
+        errorObj.value = exception
+        done.value = true
     }
 }

@@ -26,7 +26,9 @@ actual class SocketServer : Closeable {
         val native = accept(socket.native, null, null)
         if (native == INVALID_SOCKET)
             throw IOException("Can't accept new client")
-        return Socket(native)
+        val r = Socket(native)
+        r.internalConnected()
+        return r
     }
 
     var blocking: Boolean

@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import pw.binom.collection.MappedCollection
 import pw.binom.io.Closeable
 import java.nio.channels.Selector
 import java.nio.channels.IllegalBlockingModeException as JIllegalBlockingModeException
@@ -39,17 +40,13 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         return ss
     }
 
-//    actual fun unreg(channel: Channel) {
-//        val native = when (channel) {
-//            is SocketChannel -> channel.native
-//            is ServerSocketChannel -> channel.native
-//            else -> TODO()
-//        }
-//        this.native.keys().find { it.channel() === native }?.cancel()
-//    }
+    actual fun process(timeout: Int?, func: (SelectorKey) -> Unit): Boolean {
+        val founded = if (timeout != null)
+            native.select(timeout.toLong())
+        else
+            native.select()
 
-    actual fun process(func: (SelectorKey) -> Unit): Boolean {
-        if (native.select() <= 0) {
+        if (founded <= 0) {
             return false
         }
 
@@ -70,5 +67,8 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         actual val attachment: Any?
         actual fun cancel()
     }
+
+    actual val keys: Collection<SelectorKey>
+        get() = MappedCollection(native.keys()){it.attachment() as SelectorKey}
 
 }

@@ -15,7 +15,6 @@ class TestExecutor {
 
         val func: (FF) -> FF = {
             val r = FF(it.value + 2)
-            println("DONE!")
             r
         }
 

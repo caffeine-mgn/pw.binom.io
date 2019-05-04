@@ -35,8 +35,17 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
         }
 
     private var _connected = false
+
     actual val connected: Boolean
         get() = _connected
+
+    internal fun internalDisconnected() {
+        _connected = false
+    }
+
+    internal fun internalConnected() {
+        _connected = true
+    }
 
     actual constructor() : this(initNativeSocket())
 
@@ -47,6 +56,7 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
     override fun close() {
         shutdown(native, SD_SEND)
         closesocket(native)
+        internalDisconnected()
     }
 
     private var bindded = false
@@ -115,7 +125,10 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
     }
 
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
-
+        if (length == 0)
+            return 0
+        if (offset + length > data.size)
+            throw ArrayIndexOutOfBoundsException()
         val r = send(native, data.refTo(offset), length, 0)
         if (r <= 0) {
             _connected = false

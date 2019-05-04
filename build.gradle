@@ -15,7 +15,6 @@ buildscript {
     }
 }
 
-
 allprojects {
     version = network_version
     group = "pw.binom.io"
