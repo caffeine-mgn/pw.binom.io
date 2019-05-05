@@ -1,10 +1,12 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
+import platform.linux.*
+import platform.linux.SOCKET
+import platform.linux.epoll_event
 import platform.posix.free
 import platform.posix.malloc
 import pw.binom.io.Closeable
-import pw.binom.io.cinterop.wepoll.*
 import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class SocketSelector actual constructor(private val connections: Int) : Closeable {
@@ -21,35 +23,31 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
         elements.clear()
     }
 
-    private inner class SelectorKeyImpl(override val channel: Channel, override val attachment: Any?) : SelectorKey {
+    private inner class SelectorKeyImpl(override val channel: NetworkChannel, override val attachment: Any?) : SelectorKey {
         override fun cancel() {
-            val socket = when (channel) {
-                is ServerSocketChannel -> channel.socket.socket
-                is SocketChannel -> channel.socket
-                else -> TODO()
-            }
-            elements.remove(socket.native)
-            epoll_ctl(native, EPOLL_CTL_DEL, socket.native, null)
+            channel.unregSelector(this@SocketSelector)
+            elements.remove(channel.socket.native)
+            epoll_ctl(native, EPOLL_CTL_DEL, channel.socket.native, null)
         }
     }
 
     private val elements = HashMap<SOCKET, SelectorKeyImpl>()
 
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
+        channel as NetworkChannel
         return memScoped {
             val event = alloc<epoll_event>()
-            event.events = (EPOLLIN or EPOLLRDHUP).convert();// | EPOLLET;
-            val socket = when (channel) {
-                is ServerSocketChannel -> channel.socket.socket
-                is SocketChannel -> channel.socket
-                else -> TODO()
-            }
-            if (socket.blocking)
-                throw IllegalBlockingModeException()
-            event.data.sock = socket.native
-            epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
             val key = SelectorKeyImpl(channel, attachment)
-            elements[socket.native] = key
+            event.events = (EPOLLIN or EPOLLRDHUP).convert()
+
+            if (channel.socket.blocking)
+                throw IllegalBlockingModeException()
+
+            channel.regSelector(this@SocketSelector, key)
+            event.data.sock = channel.socket.native
+            epoll_ctl(native, EPOLL_CTL_ADD, channel.socket.native, event.ptr)
+
+            elements[channel.socket.native] = key
             key
         }
     }
@@ -62,13 +60,12 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
             val item = list[i]
 
             val el = elements[item.data.sock] ?: continue
-
             if (item.events.convert<Int>() and EPOLLRDHUP.convert() != 0) {
-                when (el.channel){
-                    is SocketChannel->el.channel.socket.internalDisconnected()
-                    is ServerSocketChannel->el.channel.socket.socket.internalDisconnected()
+                when (el.channel) {
+                    is SocketChannel -> el.channel.socket.internalDisconnected()
+                    is ServerSocketChannel -> el.channel.socket.internalDisconnected()
                 }
-                el.cancel()
+//                el.cancel()
             }
             func(el)
         }

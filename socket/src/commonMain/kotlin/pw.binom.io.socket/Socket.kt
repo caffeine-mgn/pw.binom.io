@@ -7,4 +7,5 @@ import pw.binom.io.OutputStream
 expect class Socket() : Closeable, InputStream, OutputStream {
     fun connect(host: String, port: Int)
     val connected: Boolean
+    val closed: Boolean
 }

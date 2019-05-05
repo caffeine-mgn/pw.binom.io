@@ -1,13 +1,11 @@
 package pw.binom.job
 
-import pw.binom.Lock
 import pw.binom.Thread
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicReference
 import pw.binom.doFreeze
-import pw.binom.use
 
-interface FuturePromise<T:Any?> {
+interface FuturePromise<T : Any?> {
     val isFinished: Boolean
     val isError: Boolean
     val result: T
@@ -20,7 +18,7 @@ interface FuturePromise<T:Any?> {
  * @param success call when promise done success
  * @param exception call when promise done with exception
  */
-fun <T:Any?> FuturePromise<T>.consume(success: (T) -> Unit, exception: (Throwable) -> Unit){
+fun <T : Any?> FuturePromise<T>.consume(success: (T) -> Unit, exception: (Throwable) -> Unit) {
     join()
     if (isError)
         exception(this.exception)
@@ -42,7 +40,7 @@ fun FuturePromise<*>.join() {
  *
  * @return Result of Promise
  */
-fun <T>FuturePromise<T>.await():T{
+fun <T> FuturePromise<T>.await(): T {
     join()
     if (isError)
         throw exception
@@ -50,7 +48,7 @@ fun <T>FuturePromise<T>.await():T{
         return result
 }
 
-class Promise<T:Any?> : FuturePromise<T> {
+class Promise<T : Any?> : FuturePromise<T> {
 
     private val done = AtomicBoolean(false)
     private val withException = AtomicBoolean(false)
@@ -77,10 +75,14 @@ class Promise<T:Any?> : FuturePromise<T> {
         get() {
             if (!isFinished)
                 throw IllegalStateException("Promise not ready")
-            if (!isError)
+            if (isError)
                 throw IllegalStateException("Promise throws exception")
             return resultObj.value as T
         }
+
+    init {
+        doFreeze()
+    }
 
     fun resume(result: T) {
         (result as Any?)?.doFreeze()

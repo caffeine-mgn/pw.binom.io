@@ -104,7 +104,7 @@ class FreezedStack<T> {
 
     fun asLiFoQueue() = object : AppendableQueue<T> {
         override val isEmpty: Boolean
-            get() = isEmpty
+            get() = this@FreezedStack.isEmpty
 
         override fun push(value: T) {
             pushFirst(value)

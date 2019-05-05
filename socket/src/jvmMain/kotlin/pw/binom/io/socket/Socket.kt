@@ -21,19 +21,40 @@ actual class Socket constructor(val native: JSocket) : Closeable, InputStream, O
         } catch (e: java.net.UnknownHostException) {
             throw UnknownHostException(e.message!!)
         } catch (e: java.net.ConnectException) {
-            throw ConnectException(host = host, port = port)
+            throw ConnectException(e.message)
         }
     }
 
     override fun read(data: ByteArray, offset: Int, length: Int): Int =
-            native.getInputStream().read(data, offset, length)
+            try {
+                val reded = native.getInputStream().read(data, offset, length)
+                if (reded == -1) {
+                    close()
+                    throw SocketClosedException()
+                }
+                reded
+            } catch (e: java.io.IOException) {
+                throw IOException(e.message)
+            }
 
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
+        if (closed)
+            throw SocketClosedException()
+        if (!connected)
+            throw IOException("Socket is not connected")
+        if (length == 0)
+            return 0
+        if (offset + length > data.size)
+            throw ArrayIndexOutOfBoundsException()
         native.getOutputStream().write(data, offset, length)
         return length
     }
 
     actual val connected: Boolean
-        get() = native.isConnected
+        get() = native.isConnected && !closed
+
+    actual val closed: Boolean
+        get() = native.isClosed
+
 
 }

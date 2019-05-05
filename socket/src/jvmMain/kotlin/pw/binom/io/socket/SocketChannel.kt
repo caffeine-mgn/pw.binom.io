@@ -1,13 +1,11 @@
 package pw.binom.io.socket
 
-import pw.binom.io.InputStream
-import pw.binom.io.OutputStream
-import java.io.IOException
+import pw.binom.io.*
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel as JSocketChannel
 
-actual class SocketChannel constructor(internal val native: JSocketChannel) : Channel, OutputStream, InputStream {
+actual class SocketChannel constructor(internal val native: JSocketChannel) : NetworkChannel, OutputStream, InputStream {
     override fun flush() {
         //NOP
     }
@@ -19,15 +17,26 @@ actual class SocketChannel constructor(internal val native: JSocketChannel) : Ch
     actual constructor() : this(JSocketChannel.open())
 
     actual fun connect(host: String, port: Int) {
-        native.connect(InetSocketAddress(host, port))
+        try {
+            native.connect(InetSocketAddress(host, port))
+            native.finishConnect()
+        } catch (e: java.net.UnknownHostException) {
+            throw UnknownHostException(e.message!!)
+        } catch (e: java.net.ConnectException) {
+            throw ConnectException(host, port)
+        }
     }
 
     override fun read(data: ByteArray, offset: Int, length: Int): Int {
         val buffer = ByteBuffer.wrap(data, offset, length)
-        val r = native.read(buffer)
-        if (r == -1)
-            throw SocketClosedException()
-        return r
+        try {
+            val r = native.read(buffer)
+            if (r == -1)
+                throw SocketClosedException()
+            return r
+        } catch (e: java.io.IOException) {
+            throw IOException(e.message)
+        }
     }
 
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
@@ -38,8 +47,8 @@ actual class SocketChannel constructor(internal val native: JSocketChannel) : Ch
         try {
             val buffer: ByteBuffer = ByteBuffer.wrap(data, offset, length)
             return native.write(buffer)
-        } catch (e: IOException) {
-            throw pw.binom.io.IOException()
+        } catch (e: java.io.IOException) {
+            throw IOException(e.message)
         }
     }
 

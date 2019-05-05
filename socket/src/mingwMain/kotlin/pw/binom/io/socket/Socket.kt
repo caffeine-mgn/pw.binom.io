@@ -14,6 +14,7 @@ import platform.posix.recv
 import platform.posix.shutdown
 import platform.windows.*
 import platform.windows.ioctlsocket
+import pw.binom.Thread
 import pw.binom.io.*
 import kotlin.native.concurrent.ensureNeverFrozen
 
@@ -35,6 +36,7 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
         }
 
     private var _connected = false
+    private var _closed = false
 
     actual val connected: Boolean
         get() = _connected
@@ -56,6 +58,7 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
     override fun close() {
         shutdown(native, SD_SEND)
         closesocket(native)
+        _closed = true
         internalDisconnected()
     }
 
@@ -100,31 +103,58 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
             hints.ai_socktype = SOCK_STREAM
             hints.ai_protocol = platform.windows.IPPROTO_TCP
 
-            val result = allocPointerTo<addrinfo>()
-            if (getaddrinfo(host, port.toString(), hints.ptr, result.ptr) != 0) {
-                throw UnknownHostException(host)
-            }
-            val result1 = connect(native, result.value!!.pointed.ai_addr!!.pointed.ptr, result.value!!.pointed.ai_addrlen.convert())
+            LOOP@ while (true) {
+                println("Turn connect...")
+                val result = allocPointerTo<addrinfo>()
+                if (getaddrinfo(host, port.toString(), hints.ptr, result.ptr) != 0) {
+                    throw UnknownHostException(host)
+                }
+                val result1 = connect(
+                        native,
+                        result.value!!.pointed.ai_addr!!.pointed.ptr,
+                        result.value!!.pointed.ai_addrlen.convert()
+                )
 
-            freeaddrinfo(result.value)
+                freeaddrinfo(result.value)
 
-            if (result1 == SOCKET_ERROR) {
-                throw ConnectException(host = host, port = port)
+                if (result1 == SOCKET_ERROR) {
+                    when (platform.windows.WSAGetLastError()) {
+                        platform.windows.WSAEWOULDBLOCK -> {
+                            Thread.sleep(50)
+                            continue@LOOP
+                        }
+                        platform.windows.WSAEISCONN -> {
+                            internalConnected()
+                            break@LOOP
+                        }
+                        platform.windows.WSAECONNREFUSED -> {
+                            throw ConnectException("Connection refused: connect")
+                        }
+                    }
+                    println("Connect ERROR: ${platform.windows.WSAGetLastError()}")
+                    throw ConnectException(host = host, port = port)
+                }
+                internalConnected()
+                break
             }
-            _connected = true
         }
     }
 
     override fun read(data: ByteArray, offset: Int, length: Int): Int {
         val r = recv(native, data.refTo(offset), length, 0)
-        if (r == 0) {
-            _connected = false
+        if (r <= 0) {
+            close()
             throw SocketClosedException()
         }
         return r
     }
 
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
+        if (closed)
+            throw SocketClosedException()
+        if (!connected)
+            throw IOException("Socket is not connected")
+
         if (length == 0)
             return 0
         if (offset + length > data.size)
@@ -136,6 +166,9 @@ actual class Socket(val native: SOCKET) : Closeable, InputStream, OutputStream {
         }
         return r
     }
+
+    actual val closed: Boolean
+        get() = _closed
 }
 
 internal fun portCheck(port: Int) {

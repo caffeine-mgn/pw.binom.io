@@ -1,3 +1,5 @@
 package pw.binom.io
 
-open class ConnectException(val host:String,val port:Int) : SocketException(message = "$host:$port")
+open class ConnectException(message: String? = null) : SocketException(message = message) {
+    constructor(host: String, port: Int) : this("$host:$port")
+}

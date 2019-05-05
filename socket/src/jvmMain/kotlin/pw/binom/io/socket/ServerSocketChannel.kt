@@ -3,7 +3,7 @@ package pw.binom.io.socket
 import java.net.InetSocketAddress
 import java.nio.channels.ServerSocketChannel as JServerSocketChannel
 
-actual class ServerSocketChannel actual constructor() : Channel {
+actual class ServerSocketChannel actual constructor() : NetworkChannel {
     override fun close() {
         native.close()
     }
@@ -18,7 +18,7 @@ actual class ServerSocketChannel actual constructor() : Channel {
         return SocketChannel(native.accept() ?: return null)
     }
 
-    actual var blocking: Boolean
+    var blocking: Boolean
         get() = native.isBlocking
         set(value) {
             native.configureBlocking(value)

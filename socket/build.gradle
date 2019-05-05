@@ -21,7 +21,7 @@ kotlin {
             compilations.main.cinterops {
                 wepoll {
                     defFile project.file("src/mingwMain/cinterop/wepoll.def")
-                    packageName 'pw.binom.io.cinterop.wepoll'
+                    packageName 'platform.linux'
                 }
             }
         }
@@ -31,7 +31,7 @@ kotlin {
             compilations.main.cinterops {
                 wepoll {
                     defFile project.file("src/mingwMain/cinterop/wepoll.def")
-                    packageName 'pw.binom.io.cinterop.wepoll'
+                    packageName 'platform.linux'
                 }
             }
         }
@@ -54,6 +54,7 @@ kotlin {
             dependencies {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
+                implementation project(":job")
             }
         }
 

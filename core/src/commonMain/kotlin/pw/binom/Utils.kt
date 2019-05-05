@@ -1,19 +1,19 @@
 package pw.binom
 
 operator fun Long.get(index: Int): Byte {
-    if (index !in 0 .. 7)
+    if (index !in 0..7)
         throw IndexOutOfBoundsException()
     return ((this ushr (56 - 8 * index)) and 0xFF).toByte()
 }
 
 operator fun Int.get(index: Int): Byte {
-    if (index !in 0 .. 3)
+    if (index !in 0..3)
         throw IndexOutOfBoundsException()
-    return ((this ushr (24 - 8 * index)) and 0xFF).toByte()
+    return ((this ushr (8 * (3 - index)))).toByte()
 }
 
 operator fun Short.get(index: Int): Byte {
-    if (index !in 0 .. 1)
+    if (index !in 0..1)
         throw IndexOutOfBoundsException()
     return ((this.toInt() ushr (8 - 8 * index)) and 0xFF).toByte()
 }
@@ -62,13 +62,11 @@ fun Short.Companion.fromBytes(byte0: Byte, byte1: Byte) =
                         (byte1.toInt() shl 0)
                 ).toShort()
 
-fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte) =
-        (
-                (byte0.toInt() shl 24) +
-                        (byte1.toInt() shl 16) +
-                        (byte2.toInt() shl 8) +
-                        (byte3.toInt() shl 0)
-                )
+fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte): Int =
+        ((byte0.toInt() and 0xFF) shl 24) +
+                ((byte1.toInt() and 0xFF) shl 16) +
+                ((byte2.toInt() and 0xFF) shl 8) +
+                ((byte3.toInt() and 0xFF) shl 0)
 
 fun Long.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte,
                              byte4: Byte, byte5: Byte, byte6: Byte, byte7: Byte) =

@@ -1,25 +1,33 @@
 package pw.binom.io.socket
 
-import platform.posix.SOCKET
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
 import kotlin.native.concurrent.ensureNeverFrozen
 
 
-actual class SocketChannel internal constructor(internal val socket: Socket) : Channel, InputStream, OutputStream {
-
-    init {
-        this.ensureNeverFrozen()
-    }
-
-    override val native: SOCKET
-        get() = socket.native
-
+actual class SocketChannel internal constructor(override val socket: Socket) : NetworkChannel, InputStream, OutputStream {
     actual var blocking: Boolean
         get() = socket.blocking
         set(value) {
             socket.blocking = value
         }
+
+    init {
+        this.ensureNeverFrozen()
+    }
+
+    private val keys = HashMap<SocketSelector, SocketSelector.SelectorKey>()
+
+    override fun regSelector(selector: SocketSelector, key: SocketSelector.SelectorKey) {
+        if (keys.containsKey(selector))
+            throw IllegalArgumentException("Already is registered in selector")
+        keys[selector] = key
+    }
+
+    override fun unregSelector(selector: SocketSelector) {
+        val g = keys[selector] ?: throw IllegalArgumentException("Not registered in selector")
+        g.cancel()
+    }
 
     actual constructor() : this(Socket())
 

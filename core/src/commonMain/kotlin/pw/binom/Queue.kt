@@ -32,4 +32,10 @@ fun <T> Queue<T>.popAwait(timeout: Long? = null): T {
     return pop()
 }
 
+fun <T> Queue<T>.popOrNull(): T? {
+    if (isEmpty)
+        return null
+    return pop()
+}
+
 class QueuePopTimeout : Exception()

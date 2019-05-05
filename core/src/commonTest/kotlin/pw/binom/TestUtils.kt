@@ -23,6 +23,9 @@ class TestUtils {
         assertEquals(4, value[3])
 
         assertEquals(value, Int.fromBytes(1, 2, 3, 4))
+
+        val value2 = 8081
+        assertEquals(value2, Int.fromBytes(value2[0], value2[1], value2[2], value2[3]))
     }
 
     @Test

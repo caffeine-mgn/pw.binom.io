@@ -2,6 +2,7 @@ package pw.binom.io.socket
 
 import pw.binom.collection.MappedCollection
 import pw.binom.io.Closeable
+import java.nio.ByteBuffer
 import java.nio.channels.Selector
 import java.nio.channels.IllegalBlockingModeException as JIllegalBlockingModeException
 import java.nio.channels.SelectionKey as JSelectionKey
@@ -49,12 +50,10 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         if (founded <= 0) {
             return false
         }
-
         val itt = native.selectedKeys().iterator()
         itt.forEach {
             try {
-                val key = it.attachment() as SelectorKeyImpl
-                func(key)
+                func(it.attachment() as SelectorKeyImpl)
             } finally {
                 itt.remove()
             }
@@ -69,6 +68,6 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
     }
 
     actual val keys: Collection<SelectorKey>
-        get() = MappedCollection(native.keys()){it.attachment() as SelectorKey}
+        get() = MappedCollection(native.keys()) { it.attachment() as SelectorKey }
 
 }

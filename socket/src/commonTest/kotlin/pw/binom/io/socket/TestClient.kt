@@ -1,11 +1,9 @@
 package pw.binom.io.socket
 
-import pw.binom.io.ConnectException
-import pw.binom.io.UnknownHostException
-import kotlin.test.Ignore
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.fail
+import pw.binom.Thread
+import pw.binom.io.*
+import pw.binom.job.*
+import kotlin.test.*
 
 class TestClient {
     @Test
@@ -44,9 +42,7 @@ class TestClient {
             client.connect(hostName, port)
             fail()
         } catch (e: ConnectException) {
-            assertEquals(e.message, "$hostName:$port")
-            assertEquals(e.host, hostName)
-            assertEquals(e.port, port)
+            assertEquals(e.message, "Connection refused: connect")
         }
     }
 
@@ -60,9 +56,88 @@ class TestClient {
             client.connect(hostName, port)
             fail()
         } catch (e: ConnectException) {
-            assertEquals(e.message, "$hostName:$port")
-            assertEquals(e.host, hostName)
-            assertEquals(e.port, port)
+            assertEquals(e.message, "Connection refused: connect")
+        }
+    }
+
+    @Test
+    fun `disconnect on read`() {
+        class TaskImlp(val promise: Promise<Unit>) : Task() {
+            override fun execute() {
+                val server = SocketServer()
+                try {
+                    server.bind(9919)
+                    promise.resume(Unit)
+                    val remoteClient = server.accept()!!
+                    Thread.sleep(100)
+                    remoteClient.close()
+                } finally {
+                    server.close()
+                }
+            }
+        }
+
+        val p = Promise<Unit>()
+        Worker.execute { TaskImlp(p) }
+        p.await()
+        val client = Socket()
+        try {
+            client.connect("127.0.0.1", 9919)
+            client.read()
+            fail()
+        } catch (e: SocketClosedException) {
+            //NOP
+        }
+        assertFalse(client.connected)
+    }
+
+    @Test
+    fun `disconnect on write`() {
+        class TaskImlp(val promise: Promise<Unit>) : Task() {
+            override fun execute() {
+                val server = SocketServer()
+                try {
+                    server.bind(9919)
+                    promise.resume(Unit)
+                    val remoteClient = server.accept()!!
+                    remoteClient.close()
+                } finally {
+                    server.close()
+                }
+            }
+        }
+
+        val p = Promise<Unit>()
+        Worker.execute { TaskImlp(p) }
+        p.await()
+        val client = Socket()
+        client.connect("127.0.0.1", 9919)
+        Thread.sleep(100)
+        assertTrue(client.connected)
+    }
+
+    @Test
+    fun `write to closed socket`(){
+        val socket = Socket()
+        socket.close()
+
+        try {
+            socket.write(0)
+            fail()
+        } catch (e:SocketClosedException){
+            //NOP
+        }
+    }
+
+    @Test
+    fun `write to not connected socket`(){
+        val socket = Socket()
+
+        try {
+            socket.write(0)
+            fail()
+        } catch (e: IOException){
+            //NOP
         }
     }
 }

@@ -34,7 +34,7 @@ open class ConnectionManager : Closeable {
 
         val output = channel
 
-        internal val waitList = Stack<WaitEvent>().asFiFoQueue()
+        internal val waitList = Stack<WaitEvent>().asLiFoQueue()
 
         override fun close() {
             channel.close()
@@ -65,9 +65,16 @@ open class ConnectionManager : Closeable {
                     return@process
                 val ev = client.waitList.pop()
                 try {
-                    ev.continuation.resume(client.channel.read(ev.data, ev.offset, ev.length))
+                    val readBytesCount = try {
+                        client.channel.read(ev.data, ev.offset, ev.length)
+                    } catch (e: Throwable) {
+                        ev.continuation.resumeWithException(e)
+                        return@process
+                    }
+                    ev.continuation.resume(readBytesCount)
                 } catch (e: Throwable) {
                     it.cancel()
+                    it.channel.close()
                     throw e
                 }
             }
