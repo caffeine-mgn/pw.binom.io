@@ -20,7 +20,7 @@ kotlin {
             compilations.main.outputKinds 'static'
             compilations.main.cinterops {
                 wepoll {
-                    defFile project.file("src/mingwMain/cinterop/wepoll.def")
+                    defFile project.file("src/cinterop/wepoll.def")
                     packageName 'platform.linux'
                 }
             }
@@ -30,7 +30,7 @@ kotlin {
             compilations.main.outputKinds 'static'
             compilations.main.cinterops {
                 wepoll {
-                    defFile project.file("src/mingwMain/cinterop/wepoll.def")
+                    defFile project.file("src/cinterop/wepoll.def")
                     packageName 'platform.linux'
                 }
             }
@@ -58,7 +58,7 @@ kotlin {
             }
         }
 
-        nativeMain {
+        commonNativeMain {
             dependencies {
                 dependsOn commonMain
             }
@@ -66,6 +66,7 @@ kotlin {
 
         mingwMain {
             dependencies {
+                dependsOn commonNativeMain
             }
         }
 
@@ -77,7 +78,7 @@ kotlin {
 
         linuxX64Main {
             dependencies {
-//                dependsOn nativeMain
+                dependsOn commonNativeMain
             }
         }
 

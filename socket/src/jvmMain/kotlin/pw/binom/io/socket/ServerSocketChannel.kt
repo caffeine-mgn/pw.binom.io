@@ -18,7 +18,7 @@ actual class ServerSocketChannel actual constructor() : NetworkChannel {
         return SocketChannel(native.accept() ?: return null)
     }
 
-    var blocking: Boolean
+    actual var blocking: Boolean
         get() = native.isBlocking
         set(value) {
             native.configureBlocking(value)

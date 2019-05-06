@@ -1,16 +1,14 @@
 package pw.binom.io.socket
 
-import platform.posix.INVALID_SOCKET
-import platform.posix.accept
+import pw.binom.doFreeze
 import pw.binom.io.Closeable
-import pw.binom.io.IOException
-import kotlin.native.concurrent.ensureNeverFrozen
+import pw.binom.neverFreeze
 
 actual class SocketServer : Closeable {
     internal val socket = Socket()
 
     init {
-        this.ensureNeverFrozen()
+        doFreeze()
     }
 
     override fun close() {
@@ -22,11 +20,7 @@ actual class SocketServer : Closeable {
     }
 
     actual fun accept(): Socket? {
-
-        val native = accept(socket.native, null, null)
-        if (native == INVALID_SOCKET)
-            throw IOException("Can't accept new client")
-        val r = Socket(native)
+        val r = Socket(acceptSocket(socket.native))
         r.internalConnected()
         return r
     }

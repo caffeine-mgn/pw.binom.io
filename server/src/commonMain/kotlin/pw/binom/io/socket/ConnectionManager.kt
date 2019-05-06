@@ -3,6 +3,8 @@ package pw.binom.io.socket
 import pw.binom.Stack
 import pw.binom.io.AsyncInputStream
 import pw.binom.io.Closeable
+import pw.binom.io.OutputStream
+import pw.binom.neverFreeze
 import kotlin.coroutines.*
 
 private fun <P, T> (suspend (P) -> T).start(value: P) {
@@ -12,7 +14,6 @@ private fun <P, T> (suspend (P) -> T).start(value: P) {
         override fun resumeWith(result: Result<T>) {
             result.getOrThrow()
         }
-
     })
 }
 
@@ -20,8 +21,9 @@ open class ConnectionManager : Closeable {
 
     internal class WaitEvent(val continuation: Continuation<Int>, val data: ByteArray, val offset: Int, val length: Int)
 
-    inner class Connection(var attachment: Any?, internal val channel: SocketChannel) : Closeable {
-        val input = object : AsyncInputStream {
+    inner class Connection internal constructor(internal val channel: SocketChannel, var attachment: Any?) : Closeable {
+        internal lateinit var selectionKey: SocketSelector.SelectorKey
+        val input: AsyncInputStream = object : AsyncInputStream {
             override suspend fun read(data: ByteArray, offset: Int, length: Int): Int =
                     suspendCoroutine { v ->
                         waitList.push(WaitEvent(v, data, offset, length))
@@ -32,16 +34,25 @@ open class ConnectionManager : Closeable {
             }
         }
 
-        val output = channel
+        val output: OutputStream = channel
 
         internal val waitList = Stack<WaitEvent>().asLiFoQueue()
 
-        override fun close() {
-            channel.close()
-        }
-
         operator fun invoke(func: suspend (Connection) -> Unit) {
             func.start(this)
+        }
+
+        fun detach(): SocketChannel {
+            selectionKey.cancel()
+            return channel
+        }
+
+        override fun close() {
+            detach().close()
+        }
+
+        init {
+            neverFreeze()
         }
     }
 
@@ -55,9 +66,9 @@ open class ConnectionManager : Closeable {
         selector.process(timeout) {
             if (it.channel is ServerSocketChannel) {
                 val server = it.channel as ServerSocketChannel
-                val connection = Connection(null, server.accept()!!)
+                val connection = Connection(channel = server.accept()!!, attachment = null)
                 connection.channel.blocking = false
-                selector.reg(connection.channel, connection)
+                connection.selectionKey = selector.reg(connection.channel, connection)
                 connected(connection)
             } else {
                 val client = it.attachment as Connection
@@ -73,8 +84,7 @@ open class ConnectionManager : Closeable {
                     }
                     ev.continuation.resume(readBytesCount)
                 } catch (e: Throwable) {
-                    it.cancel()
-                    it.channel.close()
+                    client.close()
                     throw e
                 }
             }
@@ -84,6 +94,9 @@ open class ConnectionManager : Closeable {
     fun findClient(func: (Connection) -> Boolean): Connection? =
             selector.keys.asSequence().map { it.attachment as? Connection }.filterNotNull().find(func)
 
+    /**
+     * Returns clients count
+     */
     val clientSize: Int
         get() = selector.keys.size
 
@@ -97,9 +110,16 @@ open class ConnectionManager : Closeable {
     fun connect(host: String, port: Int, attachment: Any? = null): Connection {
         val channel = SocketChannel()
         channel.connect(host, port)
+        return attach(channel, attachment)
+    }
+
+    /**
+     * Attach channel to current ConnectionManager
+     */
+    fun attach(channel: SocketChannel, attachment: Any? = null): Connection {
         channel.blocking = false
-        val connection = Connection(attachment, channel)
-        selector.reg(channel, connection)
+        val connection = Connection(channel = channel, attachment = attachment)
+        connection.selectionKey = selector.reg(channel, connection)
         return connection
     }
 
@@ -108,5 +128,9 @@ open class ConnectionManager : Closeable {
             it.channel.close()
         }
         selector.close()
+    }
+
+    init {
+        neverFreeze()
     }
 }

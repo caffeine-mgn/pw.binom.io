@@ -1,8 +1,9 @@
 package pw.binom.io.socket
 
+import pw.binom.doFreeze
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
-import kotlin.native.concurrent.ensureNeverFrozen
+import pw.binom.neverFreeze
 
 
 actual class SocketChannel internal constructor(override val socket: Socket) : NetworkChannel, InputStream, OutputStream {
@@ -13,20 +14,7 @@ actual class SocketChannel internal constructor(override val socket: Socket) : N
         }
 
     init {
-        this.ensureNeverFrozen()
-    }
-
-    private val keys = HashMap<SocketSelector, SocketSelector.SelectorKey>()
-
-    override fun regSelector(selector: SocketSelector, key: SocketSelector.SelectorKey) {
-        if (keys.containsKey(selector))
-            throw IllegalArgumentException("Already is registered in selector")
-        keys[selector] = key
-    }
-
-    override fun unregSelector(selector: SocketSelector) {
-        val g = keys[selector] ?: throw IllegalArgumentException("Not registered in selector")
-        g.cancel()
+        doFreeze()
     }
 
     actual constructor() : this(Socket())

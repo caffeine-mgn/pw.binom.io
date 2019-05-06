@@ -1,5 +1,8 @@
 linkerOpts.mingwX62= -lws2_32 -lwsock32 -lws2_64 -lwsock64
 ---
+#ifndef _WIN32
+typedef int SOCKET;
+#else
 /*
  * wepoll - epoll for Windows
  * https://github.com/piscisaureus/wepoll
@@ -2189,3 +2192,5 @@ SOCKET ws_get_base_socket(SOCKET socket) {
 
   return base_socket;
 }
+
+#endif

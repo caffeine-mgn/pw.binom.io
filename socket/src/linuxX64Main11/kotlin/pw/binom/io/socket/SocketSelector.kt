@@ -35,22 +35,25 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     private val elements = HashMap<Int, SelectorKeyImpl>()
 
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
-        return memScoped {
+
+        val socket = when (channel) {
+            is ServerSocketChannel -> channel.socket.socket
+            is SocketChannel -> channel.socket
+            else -> TODO()
+        }
+        if (socket.blocking)
+            throw IllegalBlockingModeException()
+
+        memScoped {
             val event = alloc<epoll_event>()
             event.events = (EPOLLIN or EPOLLRDHUP).convert()
-            val socket = when (channel) {
-                is ServerSocketChannel -> channel.socket.socket
-                is SocketChannel -> channel.socket
-                else -> TODO()
-            }
-            if (socket.blocking)
-                throw IllegalBlockingModeException()
             event.data.fd = socket.native
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
-            val e = SelectorKeyImpl(channel, attachment)
-            elements[socket.native] = e
-            e
         }
+
+        val e = SelectorKeyImpl(channel, attachment)
+        elements[socket.native] = e
+        e
     }
 
 //    fun unreg(channel: Channel) {
