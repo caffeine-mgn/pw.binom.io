@@ -55,10 +55,9 @@ class HttpConnections(val allowKeepAlive: Boolean = true) : Closeable {
 }
 
 
-
 private class HttpURLRequestImpl(val method: String, val url: URL, private val connections: HttpConnections) : HttpConnections.URLRequest {
 
-    private inner class RawHttpInputStream():InputStream{
+    private inner class RawHttpInputStream() : InputStream {
         override fun read(data: ByteArray, offset: Int, length: Int): Int {
             if (closed)
                 return 0
@@ -140,7 +139,10 @@ private class HttpURLRequestImpl(val method: String, val url: URL, private val c
     init {
         addRequestHeader("Host", url.host)
         addRequestHeader("User-Agent", "Binom-Client")
-        addRequestHeader("Connection", "keep-alive")
+        if (connectionKeepAlive)
+            addRequestHeader("Connection", "keep-alive")
+        else
+            addRequestHeader("Connection", "close")
 //        addRequestHeader("Accept-Encoding", "gzip, deflate, br")
         addRequestHeader("Accept-Encoding", "deflate")
     }
