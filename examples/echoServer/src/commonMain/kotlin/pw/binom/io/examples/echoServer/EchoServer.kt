@@ -9,13 +9,13 @@ fun main(args: Array<String>) {
     server.blocking = false
     server.bind(8899)
     selector.reg(server)
-
+    println("Start listen port 8899")
     val buffer = ByteArray(256)
     while (true) {
         selector.process {
             if (it.channel === server) {
                 val client = server.accept()!!
-                client.blocking=false
+                client.blocking = false
                 selector.reg(client)
                 println("Client connected")
             } else {
