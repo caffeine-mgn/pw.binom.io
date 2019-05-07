@@ -42,11 +42,11 @@ suspend fun AsyncInputStream.readln(): String {
     val buf = ByteArray(1)
     while (true) {
         val r = read(buf, 0, 1)
-        if (r == 0 || buf[0] == 13.toByte()) {
+        if (r == 0 || buf[0] == 10.toByte()) {
             return sb.toString()
         }
 
-        if (buf[0] == 10.toByte()) {
+        if (buf[0] == 13.toByte()) {
             continue
         }
         sb.append(buf[0].toChar())
