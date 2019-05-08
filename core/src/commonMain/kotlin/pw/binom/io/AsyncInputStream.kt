@@ -64,9 +64,21 @@ suspend fun AsyncInputStream.readLong() =
 
 suspend fun AsyncInputStream.readFloat() = Float.fromBits(readInt())
 suspend fun AsyncInputStream.readDouble() = Double.fromBits(readLong())
-suspend fun AsyncInputStream.readUTF8String():String{
+suspend fun AsyncInputStream.readUTF8String(): String {
     val len = readInt()
     val data = ByteArray(len)
     readFully(data)
     return data.asUTF8String()
+}
+
+suspend fun AsyncInputStream.copyTo(outputStream: OutputStream, bufferSize: Int = 512) {
+    val buffer = ByteArray(bufferSize)
+    while (true) {
+        val len = read(buffer)
+        if (len <= 0) {
+            break
+        }
+        outputStream.write(buffer, 0, len)
+    }
+    outputStream.flush()
 }

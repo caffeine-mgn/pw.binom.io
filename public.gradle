@@ -13,6 +13,19 @@ publishing {
                 password = repoPassword
             }
         }
+//        maven {
+//            name = "TestRepository"
+//            def repoUser = "123"
+//            def repoPassword = "456"
+//            def repoUrl = "http://127.0.0.1:8080/"
+//
+//            url repoUrl
+//
+//            credentials {
+//                username = repoUser
+//                password = repoPassword
+//            }
+//        }
     }
 
     publications.all {
