@@ -6,6 +6,7 @@ import platform.posix.fclose
 import platform.posix.fopen
 import platform.posix.fwrite
 import pw.binom.io.OutputStream
+import kotlin.native.concurrent.freeze
 
 actual class FileOutputStream actual constructor(file: File, append: Boolean) : OutputStream {
     override fun flush() {
@@ -19,5 +20,9 @@ actual class FileOutputStream actual constructor(file: File, append: Boolean) : 
 
     actual override fun close() {
         fclose(handler)
+    }
+
+    init {
+        freeze()
     }
 }

@@ -8,13 +8,7 @@ actual class File actual constructor(path: String) {
 
     actual constructor(parent: File, name: String) : this("${parent.path}$SEPARATOR$name")
 
-    actual val parent: File
-        get() = File(native.parent)
-
-    actual val name: String
-        get() = native.name
-
-    actual val path: String = path
+    actual val path: String = replacePath(path)
     actual val isFile: Boolean
         get() = native.isFile
 
@@ -28,5 +22,12 @@ actual class File actual constructor(path: String) {
 
     actual fun delete() = native.delete()
     actual fun mkdir(): Boolean = native.mkdir()
+
+    override fun toString(): String = path
+    actual val size: Long
+        get() = native.length()
+
+    actual val lastModified: Long
+        get() = native.lastModified()
 
 }

@@ -13,7 +13,7 @@ actual class FileInputStream actual constructor(file: File) : InputStream {
             throw FileNotFoundException(file.path)
     }
 
-    internal val native = JFileInputStream(file.name)
+    internal val native = JFileInputStream(file.native)
 
     actual override fun read(data: ByteArray, offset: Int, length: Int): Int =
             try {

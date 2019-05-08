@@ -32,3 +32,14 @@ actual object Thread {
         get() = pthread_self().toLong()
 
 }
+
+fun timespec.toMillis():Long{
+    var s = tv_sec
+
+    var ms = round(tv_nsec / 1.0e6).toLong()
+    if (ms > 999) {
+        s++
+        ms = 0
+    }
+    return s * 1000 + ms
+}

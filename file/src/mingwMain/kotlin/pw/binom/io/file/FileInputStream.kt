@@ -14,9 +14,10 @@ actual class FileInputStream actual constructor(file: File) : InputStream {
             throw FileNotFoundException(file.path)
     }
 
-    internal val handler = fopen(file.path, "rb")
-    actual override fun read(data: ByteArray, offset: Int, length: Int): Int{
-        if (feof(handler)!=0)
+    internal val handler = fopen(file.path, "rb") ?: throw FileNotFoundException(file.path)
+
+    actual override fun read(data: ByteArray, offset: Int, length: Int): Int {
+        if (feof(handler) != 0)
             return -1
         return fread(data.refTo(offset.convert()), 1, length.convert(), handler).convert()
     }

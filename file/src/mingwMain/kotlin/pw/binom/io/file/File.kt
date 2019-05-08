@@ -5,29 +5,12 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import platform.posix.*
+import kotlin.native.concurrent.freeze
 
 actual class File actual constructor(path: String) {
-    actual constructor(parent: File, name: String) : this("${parent.parent}$SEPARATOR$name")
+    actual constructor(parent: File, name: String) : this("${parent.path}$SEPARATOR$name")
 
-    actual val parent: File by lazy {
-        val p = path.lastIndexOf(SEPARATOR)
-        File(
-                if (p == -1)
-                    ""
-                else
-                    path.substring(0, p)
-        )
-    }
-
-    actual val name: String
-        get() {
-            val p = path.lastIndexOf(SEPARATOR)
-            if (p == -1)
-                return ""
-            return path.substring(p + 1)
-        }
-
-    actual val path: String = path
+    actual val path: String = replacePath(path)
 
     actual val isFile: Boolean
         get() =
@@ -62,4 +45,26 @@ actual class File actual constructor(path: String) {
     }
 
     actual fun mkdir(): Boolean = mkdir(path) == 0
+
+    override fun toString(): String = path
+
+    init {
+        freeze()
+    }
+
+    actual val size: Long
+        get() = memScoped {
+            val stat = alloc<_stat64>()
+            if (_stat64(path, stat.ptr) != 0)
+                return@memScoped 0
+            return stat.st_size
+        }
+
+    actual val lastModified: Long
+        get() = memScoped {
+            val stat = alloc<_stat64>()
+            if (_stat64(path, stat.ptr) != 0)
+                return@memScoped 0
+            return stat.st_ctime
+        }
 }
