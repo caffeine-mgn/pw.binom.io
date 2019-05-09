@@ -52,12 +52,12 @@ actual class Socket internal constructor(internal val native: NativeSocketHolder
     }
 
 
-    fun bind(port: Int) {
+    fun bind(host:String,port: Int) {
         if (connected)
             throw SocketException("Socket already connected")
         portCheck(port)
 
-        bindSocket(native, port)
+        bindSocket(native, host, port)
         internalConnected()
     }
 

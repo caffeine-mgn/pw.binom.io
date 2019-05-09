@@ -1,7 +1,6 @@
 package pw.binom.io.socket
 
 import pw.binom.doFreeze
-import pw.binom.neverFreeze
 
 actual class ServerSocketChannel actual constructor() : NetworkChannel {
 
@@ -25,8 +24,8 @@ actual class ServerSocketChannel actual constructor() : NetworkChannel {
         socket.close()
     }
 
-    actual fun bind(port: Int) {
-        socket.bind(port)
+    actual fun bind(host: String, port: Int) {
+        socket.bind(host, port)
     }
 
     actual fun accept(): SocketChannel? {

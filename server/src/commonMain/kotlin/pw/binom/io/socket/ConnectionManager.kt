@@ -100,10 +100,10 @@ open class ConnectionManager : Closeable {
     val clientSize: Int
         get() = selector.keys.size
 
-    fun bind(port: Int) {
+    fun bind(host: String = "0.0.0.0", port: Int) {
         val channel = ServerSocketChannel()
         channel.blocking = false
-        channel.bind(port)
+        channel.bind(host, port)
         selector.reg(channel)
     }
 

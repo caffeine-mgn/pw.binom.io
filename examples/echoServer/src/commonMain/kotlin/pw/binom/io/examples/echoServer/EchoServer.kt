@@ -1,13 +1,16 @@
 package pw.binom.io.examples.echoServer
 
-import pw.binom.io.socket.*
+import pw.binom.io.socket.ServerSocketChannel
+import pw.binom.io.socket.SocketChannel
+import pw.binom.io.socket.SocketClosedException
+import pw.binom.io.socket.SocketSelector
 
 fun main(args: Array<String>) {
     val server = ServerSocketChannel()
     val selector = SocketSelector(100)
 
     server.blocking = false
-    server.bind(8899)
+    server.bind("0.0.0.0", 8899)
     selector.reg(server)
     println("Start listen port 8899")
     val buffer = ByteArray(256)

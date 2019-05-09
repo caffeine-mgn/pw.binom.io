@@ -27,7 +27,7 @@ open class HttpServer(protected val handler: Handler) {
                                 break
                             val items1 = s.split(": ", limit = 2)
 
-                            headers.getOrPut(items1[0]) { ArrayList() }.add(items1[1])
+                            headers.getOrPut(items1[0]) { ArrayList() }.add(items1.getOrNull(1) ?: "")
                         }
 
                         val request1 = HttpRequestImpl(
@@ -72,8 +72,8 @@ open class HttpServer(protected val handler: Handler) {
      *
      * @param port Port for bind
      */
-    fun bind(port: Int) {
-        manager.bind(port)
+    fun bind(host: String = "0.0.0.0", port: Int) {
+        manager.bind(host = host, port = port)
     }
 
     /**

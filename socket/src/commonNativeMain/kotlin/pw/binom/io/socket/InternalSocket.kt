@@ -30,7 +30,7 @@ internal expect fun setBlocking(native: NativeSocketHolder, value: Boolean)
 internal expect fun closeSocket(native: NativeSocketHolder)
 internal expect fun initNativeSocket(): NativeSocketHolder
 internal expect fun recvSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int
-internal expect fun bindSocket(socket: NativeSocketHolder, port: Int)
+internal expect fun bindSocket(socket: NativeSocketHolder, host:String, port: Int)
 internal expect fun connectSocket(native: NativeSocketHolder, host: String, port: Int)
 internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int)
 internal expect fun acceptSocket(socket: NativeSocketHolder): NativeSocketHolder

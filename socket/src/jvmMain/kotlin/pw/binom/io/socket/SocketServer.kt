@@ -12,9 +12,9 @@ actual class SocketServer : Closeable {
     }
 
     internal val native = JServerSocket()
-    actual fun bind(port: Int) {
+    actual fun bind(host: String, port: Int) {
         try {
-            native.bind(InetSocketAddress(port))
+            native.bind(InetSocketAddress(host, port))
         } catch (e: java.net.BindException) {
             throw BindException()
         } catch (e: java.net.SocketException) {

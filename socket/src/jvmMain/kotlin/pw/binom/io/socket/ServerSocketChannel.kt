@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import pw.binom.io.BindException
 import java.net.InetSocketAddress
 import java.nio.channels.ServerSocketChannel as JServerSocketChannel
 
@@ -10,8 +11,12 @@ actual class ServerSocketChannel actual constructor() : NetworkChannel {
 
     internal val native = JServerSocketChannel.open()
 
-    actual fun bind(port: Int) {
-        native.bind(InetSocketAddress(port))
+    actual fun bind(host: String, port: Int) {
+        try {
+            native.bind(InetSocketAddress(host, port))
+        } catch (e: java.net.BindException) {
+            throw BindException(e.message)
+        }
     }
 
     actual fun accept(): SocketChannel? {

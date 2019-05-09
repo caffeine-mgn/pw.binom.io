@@ -5,6 +5,7 @@ import platform.linux.*
 import platform.posix.*
 import platform.posix.free
 import platform.posix.malloc
+import pw.binom.io.BindException
 import pw.binom.io.IOException
 
 internal actual fun setBlocking(native: NativeSocketHolder, value: Boolean) {
@@ -34,19 +35,23 @@ internal actual fun initNativeSocket(): NativeSocketHolder =
 internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int =
         recv(socket.native, data.refTo(offset), length.convert(), 0).convert()
 
-internal actual fun bindSocket(socket: NativeSocketHolder, port: Int) {
+internal actual fun bindSocket(socket: NativeSocketHolder, host: String, port: Int) {
     memScoped {
         val serverAddr = alloc<sockaddr_in>()
         with(serverAddr) {
             memset(this.ptr, 0, sockaddr_in.size.convert())
             sin_family = AF_INET.convert()
             //sin_addr.s_addr = posix_htons(0).convert()//TODO что тут в линуксе
+            sin_addr.s_addr = if (host == "0.0.0.0")
+                posix_htons(0).convert<UInt>()
+            else
+                inet_addr(host)
             sin_port = posix_htons(port.convert()).convert()
         }
         if (bind(socket.native, serverAddr.ptr.reinterpret(), sockaddr_in.size.convert()) != 0)
-            throw IOException()
+            throw BindException()
         if (listen(socket.native, SOMAXCONN) == -1)
-            throw IOException()
+            throw BindException()
     }
 }
 

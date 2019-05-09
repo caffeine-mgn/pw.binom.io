@@ -2,7 +2,6 @@ package pw.binom.io.socket
 
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
-import pw.binom.neverFreeze
 
 actual class SocketServer : Closeable {
     internal val socket = Socket()
@@ -15,8 +14,8 @@ actual class SocketServer : Closeable {
         socket.close()
     }
 
-    actual fun bind(port: Int) {
-        socket.bind(port)
+    actual fun bind(host: String, port: Int) {
+        socket.bind(host, port)
     }
 
     actual fun accept(): Socket? {

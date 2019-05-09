@@ -42,7 +42,7 @@ class HttpServer : ConnectionManager() {
 
 fun main(args: Array<String>) {
     val server = HttpServer()
-    server.bind(8899)
+    server.bind(port=8899)
     while (true) {
         server.update()
     }
