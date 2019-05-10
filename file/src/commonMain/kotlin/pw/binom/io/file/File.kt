@@ -58,3 +58,13 @@ internal fun replacePath(path: String): String {
     }
     return path.replace(invalidSeparator, File.SEPARATOR)
 }
+
+fun File.mkdirs(): Boolean {
+    if (isFile)
+        return false
+    if (isDirectory)
+        return true
+    if (!parent.mkdirs())
+        return false
+    return mkdir()
+}
