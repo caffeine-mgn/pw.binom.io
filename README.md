@@ -52,3 +52,8 @@ See [JsonWriter](json/src/commonMain/kotlin/pw/binom/json/JsonWriter.kt) and [Js
 See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer.kt)
 - [ ] HTTP Server: WebSocket Support
 - [ ] HTTPS Support
+
+
+
+## Projects with Binom IO
+[Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)
