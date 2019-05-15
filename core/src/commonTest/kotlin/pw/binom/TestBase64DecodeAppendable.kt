@@ -11,6 +11,7 @@ class TestBase64DecodeAppendable {
         val out = ByteArrayOutputStream()
         val o = Base64DecodeAppendable(out)
         val txt = "Hello world!"
+        println("-->${Base64.encode(txt.asUTF8ByteArray())}")
         o.append(Base64.encode(txt.asUTF8ByteArray()))
         assertEquals(txt, out.toByteArray().asUTF8String())
     }

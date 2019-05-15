@@ -4,11 +4,21 @@ import pw.binom.io.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+fun Byte.toBinary(max: Int = 6): String {
+    val ss = this.toString(2)
+    val sb = StringBuilder()
+    while (sb.length + ss.length < max) {
+        sb.append("0")
+    }
+    sb.append(ss)
+    return sb.toString()
+}
+
 class TestBase64EncodeOutputStream {
 
     @Test
     fun test() {
-        val data = "Hello world".asUTF8ByteArray()
+        val data = "Hello world!".asUTF8ByteArray()
         data.forEachIndexed { index, byte ->
             println("$index->${byte.toBinary()}")
         }
@@ -16,7 +26,7 @@ class TestBase64EncodeOutputStream {
         Base64EncodeOutputStream(sb).use {
             it.write(data)
         }
-        assertEquals("SGVsbG8gd29ybGQ=", sb.toString())
+        assertEquals("SGVsbG8gd29ybGQh", sb.toString())
     }
 
     @Test

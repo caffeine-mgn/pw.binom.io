@@ -16,6 +16,7 @@ include(":socket")
 include(":job")
 include(":httpClient")
 include(":httpServer")
+include(":json")
 
 include(":examples:echoServer")
 include(":examples:httpServer")

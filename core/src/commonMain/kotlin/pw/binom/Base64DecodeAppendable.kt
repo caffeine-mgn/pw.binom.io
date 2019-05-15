@@ -59,19 +59,9 @@ class Base64DecodeAppendable(val stream: OutputStream) : Appendable {
 
     override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
         csq ?: throw IllegalArgumentException("Argument is null")
-        (start until end).forEach {
+        (start .. end).forEach {
             append(csq[it])
         }
         return this
     }
-}
-
-fun Byte.toBinary(max: Int = 6): String {
-    val ss = this.toString(2)
-    val sb = StringBuilder()
-    while (sb.length + ss.length < max) {
-        sb.append("0")
-    }
-    sb.append(ss)
-    return sb.toString()
 }

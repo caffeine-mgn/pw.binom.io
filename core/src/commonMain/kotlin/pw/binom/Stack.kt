@@ -39,6 +39,21 @@ class Stack<T> {
         _size--
     }
 
+    fun popFirst(result: PopResult<T>) {
+        if (top == null) {
+            result.clear()
+            return
+        }
+        val item = top!!
+
+        top = item.next
+
+        if (bottom == item)
+            bottom = null
+        _size--
+        result.set(item.value)
+    }
+
     fun popFirst(): T {
         val item = top ?: throw IllegalStateException("Stack is empty")
 
@@ -48,6 +63,20 @@ class Stack<T> {
             bottom = null
         _size--
         return item.value
+    }
+
+    fun popLast(result: PopResult<T>) {
+        if (bottom == null) {
+            result.clear()
+            return
+        }
+        val item = bottom!!
+        bottom = item.back
+
+        if (top == item)
+            top = null
+        _size--
+        result.set(item.value)
     }
 
     fun popLast(): T {
