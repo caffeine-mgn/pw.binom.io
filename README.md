@@ -21,17 +21,20 @@ Library contains next parts:<br>
 
 #### Socket IO
 - [ ] UDP support socket
-- [ ] Opportunity set bind interface when you start your server 
+- [ ] Opportunity set bind interface when you start your server
+- [ ] SSL Sockets
 
 #### Common
 - [x] Create common reactor for different events. Not only network<br>
 See [Stack](core/src/commonMain/kotlin/pw/binom/Stack.kt) and [FreezedStack](core/src/commonMain/kotlin/pw/binom/FreezedStack.kt)
 - [x] Base64 Tools<br>
 See [Base64](core/src/commonMain/kotlin/pw/binom/Base64.kt), [Base64EncodeOutputStream](core/src/commonMain/kotlin/pw/binom/Base64EncodeOutputStream.kt) and [Base64DecodeAppendable](core/src/commonMain/kotlin/pw/binom/Base64DecodeAppendable.kt)
+- [ ] Json Tools
+- [ ] JsonB Tools
+- [ ] XML Tools
+- [ ] SSL
 
 #### HTTP
 - [x] Basic Support Http Support
 - [ ] HTTP Server: WebSocket Support
-- [ ] Json Tools
-- [ ] JsonB Tools
-- [ ] XML Tools
+- [ ] HTTPS Support
