@@ -1,23 +1,10 @@
 publishing {
     repositories {
-        maven {
-            name = "BinomRepository"
-            def repoUser = System.getenv("REPO_USER")
-            def repoPassword = System.getenv("REPO_PASSWORD")
-            def repoUrl = System.getenv("REPO_URL")
-
-            url repoUrl
-
-            credentials {
-                username = repoUser
-                password = repoPassword
-            }
-        }
 //        maven {
-//            name = "TestRepository"
-//            def repoUser = "123"
-//            def repoPassword = "456"
-//            def repoUrl = "http://127.0.0.1:8080/"
+//            name = "BinomRepository"
+//            def repoUser = System.getenv("REPO_USER")
+//            def repoPassword = System.getenv("REPO_PASSWORD")
+//            def repoUrl = System.getenv("REPO_URL")
 //
 //            url repoUrl
 //
@@ -26,6 +13,19 @@ publishing {
 //                password = repoPassword
 //            }
 //        }
+        maven {
+            name = "TestRepository"
+            def repoUser = "subochev"
+            def repoPassword = "Drovosek319"
+            def repoUrl = "http://repo.binom.pw/releases"
+
+            url repoUrl
+
+            credentials {
+                username = repoUser
+                password = repoPassword
+            }
+        }
     }
 
     publications.all {

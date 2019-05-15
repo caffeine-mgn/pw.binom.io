@@ -88,7 +88,6 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
         hints.ai_protocol = platform.windows.IPPROTO_TCP
 
         LOOP@ while (true) {
-            println("Turn connect...")
             val result = allocPointerTo<addrinfo>()
             if (getaddrinfo(host, port.toString(), hints.ptr, result.ptr) != 0) {
                 throw UnknownHostException(host)
@@ -114,7 +113,6 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
                         throw ConnectException("Connection refused: connect")
                     }
                 }
-                println("Connect ERROR: ${platform.windows.WSAGetLastError()}")
                 throw ConnectException(host = host, port = port)
             }
             break
@@ -149,9 +147,23 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
     actual fun add(socket: NativeSocketHolder) {
         memScoped {
             val event = alloc<epoll_event>()
-            event.events = (EPOLLIN or EPOLLRDHUP).convert()
+            event.events = (EPOLLIN or EPOLLRDHUP or EPOLLOUT).convert()
             event.data.sock = socket.native
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
+        }
+    }
+
+    actual fun edit(socket: NativeSocketHolder, readFlag: Boolean, writeFlag: Boolean) {
+        memScoped {
+            val event = alloc<epoll_event>()
+            var e = 0u//EPOLLRDHUP
+            if (readFlag)
+                e = e or EPOLLIN
+            if (writeFlag)
+                e = e or EPOLLOUT
+            event.events = e.convert()
+            event.data.sock = socket.native
+            epoll_ctl(native, EPOLL_CTL_MOD, socket.native, event.ptr)
         }
     }
 }
@@ -169,5 +181,12 @@ internal actual class NativeEpollList actual constructor(connectionCount: Int) {
 
 internal actual val NativeEvent.isClosed: Boolean
     get() = events.convert<Int>() and EPOLLRDHUP.convert() != 0
+
+internal actual val NativeEvent.isReadable: Boolean
+    get() = events.convert<Int>() and EPOLLIN.convert() != 0
+
+internal actual val NativeEvent.isWritable: Boolean
+    get() = events.convert<Int>() and EPOLLOUT.convert() != 0
+
 internal actual val NativeEvent.socId: Int
     get() = data.sock.toInt()

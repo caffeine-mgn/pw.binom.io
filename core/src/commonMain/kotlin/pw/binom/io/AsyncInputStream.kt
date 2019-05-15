@@ -1,5 +1,6 @@
 package pw.binom.io
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.asUTF8String
 import pw.binom.fromBytes
 
@@ -71,7 +72,19 @@ suspend fun AsyncInputStream.readUTF8String(): String {
     return data.asUTF8String()
 }
 
-suspend fun AsyncInputStream.copyTo(outputStream: OutputStream, bufferSize: Int = 512) {
+suspend fun AsyncInputStream.copyTo(outputStream: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
+    val buffer = ByteArray(bufferSize)
+    while (true) {
+        val len = read(buffer)
+        if (len <= 0) {
+            break
+        }
+        outputStream.write(buffer, 0, len)
+    }
+    outputStream.flush()
+}
+
+suspend fun AsyncInputStream.copyTo(outputStream: AsyncOutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
     val buffer = ByteArray(bufferSize)
     while (true) {
         val len = read(buffer)

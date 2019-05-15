@@ -25,7 +25,6 @@ class Base64DecodeAppendable(val stream: OutputStream) : Appendable {
             return this
         }
         val value = charFromBase64(c)
-        println("$g ($c, $value):")
         when (g) {
             0 -> {
                 b = b or (value shl 2)
@@ -47,7 +46,6 @@ class Base64DecodeAppendable(val stream: OutputStream) : Appendable {
             }
             else -> throw RuntimeException()
         }
-        println()
         g++
         if (g == 4)
             g = 0
@@ -61,7 +59,7 @@ class Base64DecodeAppendable(val stream: OutputStream) : Appendable {
 
     override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
         csq ?: throw IllegalArgumentException("Argument is null")
-        (start..end).forEach {
+        (start until end).forEach {
             append(csq[it])
         }
         return this

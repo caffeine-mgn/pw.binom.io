@@ -1,12 +1,8 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.posix.CLOCK_REALTIME
-import platform.posix.clock_gettime
-import platform.posix.timespec
-import platform.posix.usleep
+import platform.posix.*
 import kotlin.math.round
-import platform.posix.pthread_self
 
 actual object Thread {
     actual fun sleep(time: Long) {

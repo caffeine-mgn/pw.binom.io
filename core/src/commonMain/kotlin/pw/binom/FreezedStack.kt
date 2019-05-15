@@ -51,7 +51,7 @@ class FreezedStack<T> {
         }
     }
 
-    fun popFirst(): T = lock.use {
+    private fun privatePopFirst(): T {
         val item = top.value ?: throw IllegalStateException("Stack is empty")
 
         top.value = item.next.value
@@ -59,17 +59,25 @@ class FreezedStack<T> {
         if (bottom.value == item)
             bottom.value = null
         _size.decrement()
-        item.value
+        return item.value
     }
 
-    fun popLast(): T = lock.use {
+    fun popFirst(): T = lock.use {
+        privatePopFirst()
+    }
+
+    private fun privatePopLast(): T {
         val item = bottom.value ?: throw IllegalStateException("Stack is empty")
         bottom.value = item.back.value
 
         if (top.value == item)
             top.value = null
         _size.decrement()
-        item.value
+        return item.value
+    }
+
+    fun popLast(): T = lock.use {
+        privatePopLast()
     }
 
     fun peekFirst(): T {
@@ -86,6 +94,15 @@ class FreezedStack<T> {
         get() = top.value == null
 
     fun asFiFoQueue() = object : AppendableQueue<T> {
+        override fun pop(dist: PopResult<T>) {
+            lock.use {
+                if (isEmpty)
+                    dist.clear()
+                else
+                    dist.set(privatePopLast())
+            }
+        }
+
         override val isEmpty: Boolean
             get() = this@FreezedStack.isEmpty
 
@@ -103,6 +120,15 @@ class FreezedStack<T> {
     }
 
     fun asLiFoQueue() = object : AppendableQueue<T> {
+        override fun pop(dist: PopResult<T>) {
+            lock.use {
+                if (isEmpty)
+                    dist.clear()
+                else
+                    dist.set(privatePopFirst())
+            }
+        }
+
         override val isEmpty: Boolean
             get() = this@FreezedStack.isEmpty
 

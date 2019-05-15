@@ -31,4 +31,7 @@ See [Base64](core/src/commonMain/kotlin/pw/binom/Base64.kt), [Base64EncodeOutput
 
 #### HTTP
 - [x] Basic Support Http Support
-- [ ] HTTP Server: WebSocket Support 
+- [ ] HTTP Server: WebSocket Support
+- [ ] Json Tools
+- [ ] JsonB Tools
+- [ ] XML Tools

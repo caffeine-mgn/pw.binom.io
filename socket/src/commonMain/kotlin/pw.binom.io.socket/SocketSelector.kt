@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import pw.binom.PopResult
 import pw.binom.Queue
 import pw.binom.Stack
 import pw.binom.io.Closeable
@@ -13,6 +14,10 @@ expect class SocketSelector(connections: Int) : Closeable {
     interface SelectorKey {
         val channel: Channel
         val attachment: Any?
+        val isReadable: Boolean
+        val isWritable: Boolean
+        var listenReadable: Boolean
+        var listenWritable: Boolean
         fun cancel()
     }
 }
@@ -21,6 +26,14 @@ expect class SocketSelector(connections: Int) : Closeable {
  * Returns [SocketSelector.SelectorKey] Queue
  */
 fun SocketSelector.asQueue(timeout: Int? = 1): Queue<SocketSelector.SelectorKey> = object : Queue<SocketSelector.SelectorKey> {
+
+    override fun pop(dist: PopResult<SocketSelector.SelectorKey>) {
+        if (isEmpty) {
+            dist.clear()
+        } else {
+            dist.set(pop())
+        }
+    }
 
     private val list = Stack<SocketSelector.SelectorKey>().asFiFoQueue()
 

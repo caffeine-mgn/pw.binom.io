@@ -5,6 +5,7 @@ import pw.binom.get
 
 interface AsyncOutputStream : Closeable {
     suspend fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
+    suspend fun flush()
 }
 
 suspend fun AsyncOutputStream.write(value: Byte): Boolean {

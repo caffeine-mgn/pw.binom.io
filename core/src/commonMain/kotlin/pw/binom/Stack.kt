@@ -6,17 +6,17 @@ class Stack<T> {
         get() = _size
 
     fun clear() {
-            _size=0
-            top = null
-            bottom = null
+        _size = 0
+        top = null
+        bottom = null
     }
 
     private var _size = 0
 
     private inner class Item(val value: T, var next: Item?, var back: Item?)
 
-    private var top:Item?=null
-    private var bottom:Item?=null
+    private var top: Item? = null
+    private var bottom: Item? = null
 
     fun pushFirst(value: T) {
         val i = Item(value, next = bottom, back = null)
@@ -24,7 +24,7 @@ class Stack<T> {
         if (bottom == null)
             bottom = i
 
-        top?.back= i
+        top?.back = i
         top = i
         _size++
     }
@@ -33,9 +33,9 @@ class Stack<T> {
         val i = Item(value, next = null, back = bottom)
 
         if (top == null)
-            top= i
+            top = i
 
-        bottom= i
+        bottom = i
         _size--
     }
 
@@ -74,6 +74,13 @@ class Stack<T> {
         get() = top == null
 
     fun asFiFoQueue() = object : AppendableQueue<T> {
+        override fun pop(dist: PopResult<T>) {
+            if (isEmpty)
+                dist.clear()
+            else
+                dist.set(pop())
+        }
+
         override val isEmpty: Boolean
             get() = this@Stack.isEmpty
 
@@ -91,6 +98,13 @@ class Stack<T> {
     }
 
     fun asLiFoQueue() = object : AppendableQueue<T> {
+        override fun pop(dist: PopResult<T>) {
+            if (isEmpty)
+                dist.clear()
+            else
+                dist.set(pop())
+        }
+
         override val isEmpty: Boolean
             get() = this@Stack.isEmpty
 

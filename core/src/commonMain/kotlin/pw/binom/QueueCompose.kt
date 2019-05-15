@@ -38,6 +38,36 @@ class QueueCompose<T, F : T, S : T>(val first: Queue<F>, val second: Queue<S>) :
             throw NoSuchElementException()
         }
     }
+
+    override fun pop(dist: PopResult<T>) {
+        lock.use {
+            turn.value = !turn.value
+
+            if (turn.value) {
+                first.pop(dist as PopResult<F>)
+                if (!dist.isEmpty) {
+                    return@use
+                }
+
+                turn.value = !turn.value
+                second.pop(dist as PopResult<S>)
+
+                if (!dist.isEmpty)
+                    return@use
+            } else {
+                second.pop(dist as PopResult<S>)
+                if (!dist.isEmpty) {
+                    return@use
+                }
+
+                turn.value = !turn.value
+
+                first.pop(dist as PopResult<F>)
+                if (!dist.isEmpty)
+                    return@use
+            }
+        }
+    }
 }
 
 operator fun <T, F : T, S : T> Queue<F>.plus(other: Queue<S>) =

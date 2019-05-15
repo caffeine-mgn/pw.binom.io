@@ -1,5 +1,6 @@
 package pw.binom.io
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.asUTF8String
 import pw.binom.fromBytes
 
@@ -9,7 +10,7 @@ interface InputStream : Closeable {
 
 fun InputStream.read(): Byte {
     val b = ByteArray(1)
-    if (read(b, 0, 1)!=1)
+    if (read(b, 0, 1) != 1)
         throw EOFException()
     return b[0]
 }
@@ -30,7 +31,19 @@ fun InputStream.readLn(): String {
     }
 }
 
-fun InputStream.copyTo(outputStream: OutputStream, bufferSize: Int = 512) {
+fun InputStream.copyTo(outputStream: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
+    val buf = ByteArray(bufferSize)
+    while (true) {
+        val len = read(buf, 0, buf.size)
+        if (len <= 0) {
+            break
+        }
+        outputStream.write(buf, 0, len)
+    }
+    outputStream.flush()
+}
+
+suspend fun InputStream.copyTo(outputStream: AsyncOutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
     val buf = ByteArray(bufferSize)
     while (true) {
         val len = read(buf, 0, buf.size)
@@ -53,7 +66,7 @@ fun InputStream.readLong() =
 
 fun InputStream.readFloat() = Float.fromBits(readInt())
 fun InputStream.readDouble() = Double.fromBits(readLong())
-fun InputStream.readUTF8String():String{
+fun InputStream.readUTF8String(): String {
     val len = readInt()
     val data = ByteArray(len)
     read(data)

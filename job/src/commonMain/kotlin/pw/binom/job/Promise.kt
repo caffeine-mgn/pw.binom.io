@@ -1,5 +1,6 @@
 package pw.binom.job
 
+import pw.binom.AppendableQueue
 import pw.binom.Thread
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicReference
@@ -48,7 +49,24 @@ fun <T> FuturePromise<T>.await(): T {
         return result
 }
 
-class Promise<T : Any?> : FuturePromise<T> {
+interface ResumableFuturePromise<T> : FuturePromise<T> {
+    fun resume(result: T)
+    fun exception(exception: Throwable)
+}
+
+class QueueFuturePromise<T>(private val queue: AppendableQueue<Result<T>>) : Promise<T>() {
+    override fun resume(result: T) {
+        super.resume(result)
+        queue.push(Result.success(result))
+    }
+
+    override fun exception(exception: Throwable) {
+        super.exception(exception)
+        queue.push(Result.failure(exception))
+    }
+}
+
+open class Promise<T : Any?> : ResumableFuturePromise<T> {
 
     private val done = AtomicBoolean(false)
     private val withException = AtomicBoolean(false)
@@ -84,13 +102,13 @@ class Promise<T : Any?> : FuturePromise<T> {
         doFreeze()
     }
 
-    fun resume(result: T) {
+    override fun resume(result: T) {
         (result as Any?)?.doFreeze()
         resultObj.value = result
         done.value = true
     }
 
-    fun exception(exception: Throwable) {
+    override fun exception(exception: Throwable) {
         exception.doFreeze()
         errorObj.value = exception
         done.value = true

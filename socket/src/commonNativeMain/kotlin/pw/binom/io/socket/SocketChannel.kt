@@ -37,7 +37,6 @@ actual class SocketChannel internal constructor(override val socket: Socket) : N
             try {
                 socket.write(data = data, offset = offset, length = length)
             } catch (e: Throwable) {
-                println("ERROR IN SocketChannel. =>$e")
                 throw e
             }
 }

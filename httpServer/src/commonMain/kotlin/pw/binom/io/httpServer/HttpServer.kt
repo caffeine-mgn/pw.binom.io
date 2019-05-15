@@ -12,14 +12,19 @@ import pw.binom.io.writeln
  */
 open class HttpServer(protected val handler: Handler) {
 
-    protected val manager = object : ConnectionManager() {
-        override fun connected(connection: Connection) {
-            connection {
-                try {
-                    while (true) {
+    private fun runProcessing(connection: ConnectionManager.Connection, state: HttpConnectionState?) {
+        connection {
+            try {
+                while (true) {
+                    val uri: String
+                    val method: String
+                    val headers = HashMap<String, ArrayList<String>>()
+                    if (state == null) {
                         val request = it.input.readln()
                         val items = request.split(' ')
-                        val headers = HashMap<String, ArrayList<String>>()
+                        method = items[0]
+                        uri = items.getOrNull(1) ?: ""
+
 
                         while (true) {
                             val s = it.input.readln()
@@ -29,41 +34,58 @@ open class HttpServer(protected val handler: Handler) {
 
                             headers.getOrPut(items1[0]) { ArrayList() }.add(items1.getOrNull(1) ?: "")
                         }
-
-                        val request1 = HttpRequestImpl(
-                                connection = it,
-                                method = items[0],
-                                uri = items[1],
-                                headers = headers)
-
-                        val response = HttpResponseImpl(it)
-
-                        handler.request(request1, response)
-                        response.endResponse()
-
-                        connection.output.writeln("")
-                        connection.output.writeln("")
-
-                        if (response.disconnectFlag) {
-                            break
+                    } else {
+                        uri = state.uri
+                        method = state.method
+                        state.requestHeaders.forEach {
+                            headers[it.key] = ArrayList(it.value)
                         }
+                    }
+                    val request1 = HttpRequestImpl(
+                            connection = it,
+                            method = method,
+                            uri = uri,
+                            headers = headers)
 
-                        if (response.detachFlag) {
-                            return@connection
-                        }
+                    val response = HttpResponseImpl(
+                            status = state?.status ?: 404,
+                            headerSendded = state?.headerSendded ?: false,
+                            headers = state?.responseHeaders ?: mapOf(),
+                            connection = it,
+                            request = request1)
 
-                        if (response.headers["Connection"]?.singleOrNull() == "keep-alive"
-                                && response.headers["Content-Length"]?.singleOrNull()?.toLongOrNull() != null) {
-                            continue
-                        }
+                    handler.request(request1, response)
+
+
+                    if (response.disconnectFlag) {
                         break
                     }
-                    it.close()
-                } catch (e: IOException) {
-                    //NOP
-                    println("Disconnected ${e}")
+
+                    if (response.detachFlag) {
+                        return@connection
+                    }
+
+                    response.endResponse()
+
+                    connection.output.writeln("")
+                    connection.output.writeln("")
+
+                    if (response.headers["Connection"]?.singleOrNull() == "keep-alive"
+                            && response.headers["Content-Length"]?.singleOrNull()?.toLongOrNull() != null) {
+                        continue
+                    }
+                    break
                 }
+                it.close()
+            } catch (e: IOException) {
+                it.close()
             }
+        }
+    }
+
+    protected val manager = object : ConnectionManager() {
+        override fun connected(connection: Connection) {
+            runProcessing(connection, null)
         }
     }
 
@@ -76,12 +98,15 @@ open class HttpServer(protected val handler: Handler) {
         manager.bind(host = host, port = port)
     }
 
+    fun attach(state: HttpConnectionState) {
+        val con = manager.attach(state.channel)
+        runProcessing(con, state)
+    }
+
     /**
      * Update network events
      *
      * @param timeout Timeout for wait event
      */
-    fun update(timeout: Int? = null) {
-        manager.update(timeout)
-    }
+    fun update(timeout: Int? = null) = manager.update(timeout)
 }

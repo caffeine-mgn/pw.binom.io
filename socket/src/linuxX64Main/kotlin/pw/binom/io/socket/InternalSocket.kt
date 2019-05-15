@@ -75,7 +75,7 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
 }
 
 internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int) {
-    send(socket.native, data.refTo(offset), length.convert(), 0).convert<Int>()
+    send(socket.native, data.refTo(offset), length.convert(), MSG_NOSIGNAL).convert<Int>()
 }
 
 internal actual fun acceptSocket(socket: NativeSocketHolder): NativeSocketHolder {
@@ -101,9 +101,23 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
     actual fun add(socket: NativeSocketHolder) {
         memScoped {
             val event = alloc<epoll_event>()
-            event.events = (EPOLLIN or EPOLLRDHUP).convert()
+            event.events = (EPOLLIN or EPOLLOUT or EPOLLRDHUP).convert()
             event.data.fd = socket.native
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
+        }
+    }
+
+    actual fun edit(socket: NativeSocketHolder, readFlag: Boolean, writeFlag: Boolean) {
+        memScoped {
+            val event = alloc<epoll_event>()
+            var e = 0//EPOLLRDHUP
+            if (readFlag)
+                e = e or EPOLLIN
+            if (writeFlag)
+                e = e or EPOLLOUT
+            event.events = e.convert()
+            event.data.fd = socket.native
+            epoll_ctl(native, EPOLL_CTL_MOD, socket.native, event.ptr)
         }
     }
 }
@@ -121,6 +135,12 @@ internal actual class NativeEpollList actual constructor(connectionCount: Int) {
 
 internal actual val NativeEvent.isClosed: Boolean
     get() = events.convert<Int>() and EPOLLRDHUP.convert() != 0
+
+internal actual val NativeEvent.isReadable: Boolean
+    get() = events.convert<Int>() and EPOLLIN.convert() != 0
+
+internal actual val NativeEvent.isWritable: Boolean
+    get() = events.convert<Int>() and EPOLLOUT.convert() != 0
 
 internal actual val NativeEvent.socId: Int
     get() = data.fd

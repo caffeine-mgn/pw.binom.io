@@ -1,19 +1,32 @@
 package pw.binom.io.httpServer
 
-import pw.binom.io.OutputStream
+import pw.binom.io.AsyncOutputStream
 import pw.binom.io.socket.ConnectionManager
-import pw.binom.io.socket.SocketChannel
 import pw.binom.io.writeln
 
-class HttpResponseImpl(val connection: ConnectionManager.Connection) : HttpResponse {
+class HttpResponseImpl(
+        status: Int,
+        headers: Map<String, List<String>>,
+        headerSendded: Boolean,
+        private val connection: ConnectionManager.Connection,
+        private val request: HttpRequest
+) : HttpResponse {
     private val _header = HashMap<String, ArrayList<String>>()
+
+    init {
+        headers.forEach { k ->
+            _header[k.key] = ArrayList(k.value)
+        }
+    }
+
     override val headers: Map<String, List<String>>
         get() = _header
-    override var status: Int = 404
 
-    private var headerResp = false
+    override var status: Int = status
 
-    internal fun endResponse() {
+    private var headerResp = headerSendded
+
+    internal suspend fun endResponse() {
         if (sendded == 0L && !headers.containsKey("Content-Length")) {
             addHeader("Content-Length", "0")
         }
@@ -22,7 +35,7 @@ class HttpResponseImpl(val connection: ConnectionManager.Connection) : HttpRespo
 
     private var sendded = 0L
 
-    private fun sendHeader() {
+    private suspend fun sendHeader() {
         if (headerResp)
             return
         headerResp = true
@@ -48,14 +61,14 @@ class HttpResponseImpl(val connection: ConnectionManager.Connection) : HttpRespo
         connection.output.writeln("")
     }
 
-    override val output = object : OutputStream {
+    override val output = object : AsyncOutputStream {
         override fun close() {
         }
 
-        override fun flush() {
+        override suspend fun flush() {
         }
 
-        override fun write(data: ByteArray, offset: Int, length: Int): Int {
+        override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
             sendHeader()
             val w = connection.output.write(data, offset, length)
             sendded += w
@@ -75,17 +88,28 @@ class HttpResponseImpl(val connection: ConnectionManager.Connection) : HttpRespo
 
     internal var disconnectFlag = false
     internal var detachFlag = false
+
     override fun disconnect() {
         disconnectFlag = true
     }
 
-    override fun detach(): SocketChannel {
+    override fun detach(): HttpConnectionState {
         detachFlag = true
-        return connection.detach()
+        return HttpConnectionState(
+                status = status,
+                responseHeaders = headers,
+                channel = connection.detach(),
+                headerSendded = headerResp,
+                uri = request.uri,
+                method = request.method,
+                requestHeaders = request.headers
+        )
     }
 
     init {
-        resetHeader("Server", "Binom Server")
-        resetHeader("Content-Type", "text/html; charset=utf-8")
+        if (!headers.containsKey("Server"))
+            resetHeader("Server", "Binom Server")
+        if (!headers.containsKey("Content-Type"))
+            resetHeader("Content-Type", "text/html; charset=utf-8")
     }
 }

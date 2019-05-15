@@ -12,13 +12,15 @@ internal expect class NativeEpoll {
     fun remove(socket: NativeSocketHolder)
     fun free()
     fun wait(list: NativeEpollList, connectionCount: Int, timeout: Int): Int
+    fun edit(socket: NativeSocketHolder, readFlag:Boolean,writeFlag:Boolean)
 }
 
 expect class NativeEvent
 
 internal expect val NativeEvent.isClosed:Boolean
+internal expect val NativeEvent.isReadable:Boolean
+internal expect val NativeEvent.isWritable:Boolean
 internal expect val NativeEvent.socId:Int
-
 internal expect class NativeEpollList {
     constructor(connectionCount: Int)
 
