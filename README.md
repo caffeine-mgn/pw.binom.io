@@ -6,12 +6,25 @@ Actual version is `0.1.3`
 
 ## Parts of library
 Library contains next parts:<br>
-* [Common Core IO](core/README.md)
-* [Common Socket Library](socket/README.md)
-* [Common Async Server](server/README.md)
-* [Common Http Client](httpClient/README.md)
-* [Common File Utils](file/README.md)
-* [Job Executor](job/README.md)
+* [Common Core IO](core)
+* [Common Socket Library](socket)
+* [Common Async Server](server)
+* [Common Http Client](httpClient)
+* [Common Http Server](httpServer)
+* [Common File Utils](file)
+* [Common Json Tools](json)
+* [Job Executor](job)
+
+## Using
+### Gradle
+Before using you must add repository:
+```groovy
+repositories {
+    maven {
+        url "http://repo.binom.pw/releases"
+    }
+}
+```
 
 ## Plans
 ### Version 0.2

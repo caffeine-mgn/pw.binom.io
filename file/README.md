@@ -2,12 +2,8 @@
 Kotlin Library for work with File System.<br>
 ## Using
 ### Gradle
+You must add repository. See [README](../README.md)
 ```groovy
-repositories {
-    maven {
-        url "http://repo.tlsys.su/maven/releases"
-    }
-}
 dependencies {
     api "pw.binom.io:file:<version>"
 }

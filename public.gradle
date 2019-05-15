@@ -1,23 +1,10 @@
 publishing {
     repositories {
-//        maven {
-//            name = "BinomRepository"
-//            def repoUser = System.getenv("REPO_USER")
-//            def repoPassword = System.getenv("REPO_PASSWORD")
-//            def repoUrl = System.getenv("REPO_URL")
-//
-//            url repoUrl
-//
-//            credentials {
-//                username = repoUser
-//                password = repoPassword
-//            }
-//        }
         maven {
-            name = "TestRepository"
-            def repoUser = "subochev"
-            def repoPassword = "Drovosek319"
-            def repoUrl = "http://repo.binom.pw/releases"
+            name = "BinomRepository"
+            def repoUser = System.getenv("REPO_USER")
+            def repoPassword = System.getenv("REPO_PASSWORD")
+            def repoUrl = System.getenv("REPO_URL")
 
             url repoUrl
 
@@ -38,7 +25,6 @@ publishing {
         it.groupId = project.group
         it.artifactId = repoName
         it.version = project.version
-        println("name=$name (${it.name})")
 
         pom {
             scm {
