@@ -1,4 +1,4 @@
-package pw.binom.xml
+package pw.binom.xml.sax
 
 import pw.binom.io.AsyncAppendable
 
@@ -19,7 +19,7 @@ private suspend fun String.encode(appendable: AsyncAppendable){
     }
 }
 
-class XmlWriterVisiter(val nodeName: String, val appendable: AsyncAppendable) : XmlTreeVisiter {
+class XmlWriterVisiter(val nodeName: String, val appendable: AsyncAppendable) : XmlVisiter {
 
     init {
         if ('<' in nodeName || '>' in nodeName)
@@ -78,7 +78,7 @@ class XmlWriterVisiter(val nodeName: String, val appendable: AsyncAppendable) : 
         body.encode(appendable)
     }
 
-    override suspend fun subNode(name: String): XmlTreeVisiter {
+    override suspend fun subNode(name: String): XmlVisiter {
         if (progress < START)
             throw IllegalStateException("Node not started")
         if (progress >= END)

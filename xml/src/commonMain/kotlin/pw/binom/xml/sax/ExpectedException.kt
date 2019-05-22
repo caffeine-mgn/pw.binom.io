@@ -1,4 +1,4 @@
-package pw.binom.xml
+package pw.binom.xml.sax
 
 class ExpectedException(val tag: String) : XMLSAXException() {
     override val message: String?

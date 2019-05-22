@@ -1,8 +1,8 @@
-package pw.binom.xml
+package pw.binom.xml.sax
 
 import pw.binom.io.AsyncAppendable
 
-class XmlRootWriterVisiter(val appendable: AsyncAppendable) : XmlTreeVisiter {
+class XmlRootWriterVisiter(val appendable: AsyncAppendable) : XmlVisiter {
     private var started = false
     private var endded = false
     override suspend fun start() {
@@ -32,7 +32,7 @@ class XmlRootWriterVisiter(val appendable: AsyncAppendable) : XmlTreeVisiter {
         throw IllegalStateException("Root node not supports attributes")
     }
 
-    override suspend fun subNode(name: String): XmlTreeVisiter {
+    override suspend fun subNode(name: String): XmlVisiter {
         if (!started)
             throw IllegalStateException("Root Node not started")
         if (endded)

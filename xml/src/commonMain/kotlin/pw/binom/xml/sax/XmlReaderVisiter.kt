@@ -1,4 +1,4 @@
-package pw.binom.xml
+package pw.binom.xml.sax
 
 import pw.binom.Stack
 import pw.binom.io.*
@@ -6,7 +6,7 @@ import pw.binom.io.*
 class XmlReaderVisiter(reader: AsyncReader) {
     private val reader = AsyncComposeReader().addLast(reader)
 
-    private class Record(val name: String, val visiter: XmlTreeVisiter)
+    private class Record(val name: String, val visiter: XmlVisiter)
 
     private val visiters = Stack<Record>().asLiFoQueue()
 
@@ -28,7 +28,7 @@ class XmlReaderVisiter(reader: AsyncReader) {
         }
     }
 
-    suspend fun accept(visiter: XmlTreeVisiter) {
+    suspend fun accept(visiter: XmlVisiter) {
         visiters.push(Record("ROOT", visiter))
 
         do {

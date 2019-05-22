@@ -1,4 +1,4 @@
-package pw.binom.xml
+package pw.binom.xml.sax
 
 import pw.binom.async
 import pw.binom.io.asAsync
