@@ -4,6 +4,7 @@ import pw.binom.io.*
 import pw.binom.io.socket.Socket
 import pw.binom.io.zip.InflateInputStream
 
+@ExperimentalUnsignedTypes
 class HttpConnections(val allowKeepAlive: Boolean = true) : Closeable {
     private val connections = HashMap<String, Socket>()
     override fun close() {
@@ -44,6 +45,7 @@ class HttpConnections(val allowKeepAlive: Boolean = true) : Closeable {
         else -> throw IOException("Unsupported protocol ${url.protocol}")
     }
 
+
     interface URLRequest : Closeable {
         val responseCode: Int
         val contentLength: ULong
@@ -54,10 +56,10 @@ class HttpConnections(val allowKeepAlive: Boolean = true) : Closeable {
     }
 }
 
-
+@ExperimentalUnsignedTypes
 private class HttpURLRequestImpl(val method: String, val url: URL, private val connections: HttpConnections) : HttpConnections.URLRequest {
 
-    private inner class RawHttpInputStream() : InputStream {
+    private inner class RawHttpInputStream : InputStream {
         override fun read(data: ByteArray, offset: Int, length: Int): Int {
             if (closed)
                 return 0
@@ -216,8 +218,11 @@ private class HttpURLRequestImpl(val method: String, val url: URL, private val c
             val items = str.split(": ")
             if (items[0] == "Content-Length")
                 _contentLength = items[1].toULong()
+
             if (items[0] == "Connection" && items[1] == "keep-alive")
                 connectionKeepAlive = true
+            if (items[0] == "Connection" && items[1] == "close")
+                connectionKeepAlive = false
             responseHeaders.getOrPut(items[0]) { ArrayList() }.add(items[1])
         }
         responseRead = true

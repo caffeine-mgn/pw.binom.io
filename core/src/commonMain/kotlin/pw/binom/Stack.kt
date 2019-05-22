@@ -19,7 +19,7 @@ class Stack<T> {
     private var bottom: Item? = null
 
     fun pushFirst(value: T) {
-        val i = Item(value, next = bottom, back = null)
+        val i = Item(value, next = top, back = null)
 
         if (bottom == null)
             bottom = i
@@ -103,6 +103,9 @@ class Stack<T> {
         get() = top == null
 
     fun asFiFoQueue() = object : AppendableQueue<T> {
+        override val size: Int
+            get() = this@Stack.size
+
         override fun pop(dist: PopResult<T>) {
             if (isEmpty)
                 dist.clear()
@@ -127,6 +130,9 @@ class Stack<T> {
     }
 
     fun asLiFoQueue() = object : AppendableQueue<T> {
+        override val size: Int
+            get() = this@Stack.size
+
         override fun pop(dist: PopResult<T>) {
             if (isEmpty)
                 dist.clear()

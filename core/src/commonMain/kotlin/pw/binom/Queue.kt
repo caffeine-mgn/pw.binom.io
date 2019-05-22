@@ -1,5 +1,6 @@
 package pw.binom
 
+@Suppress("UNCHECKED_CAST")
 class PopResult<T> {
     val isEmpty: Boolean
         get() = empty
@@ -30,6 +31,7 @@ class PopResult<T> {
 
 interface Queue<T> {
     val isEmpty: Boolean
+    val size:Int
     fun pop(): T
     fun pop(dist: PopResult<T>)
 }

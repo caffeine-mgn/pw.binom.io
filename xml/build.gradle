@@ -1,0 +1,92 @@
+apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+
+kotlin {
+    targets {
+
+        fromPreset(kotlin.presets.linuxX64, 'linuxX64') {
+            compilations.main.outputKinds 'static'
+        }
+
+        fromPreset(kotlin.presets.linuxArm32Hfp, 'linuxArm32') {
+            compilations.main.outputKinds 'static'
+        }
+
+        fromPreset(kotlin.presets.jvm, 'jvm') {
+
+        }
+
+        fromPreset(kotlin.presets.mingwX64, 'mingw') {
+            compilations.main.outputKinds 'static'
+        }
+
+        fromPreset(kotlin.presets.mingwX86, 'mingwX86') {
+            compilations.main.outputKinds 'static'
+        }
+
+        presets.forEach {
+            println("target=${it.name}")
+        }
+    }
+
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":core")
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+
+        nativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+        linuxArm32Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn mingwMain
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
+            }
+        }
+    }
+}
+
+apply from: '../public.gradle'

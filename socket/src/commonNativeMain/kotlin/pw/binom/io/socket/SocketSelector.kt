@@ -18,6 +18,12 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     }
 
     private inner class SelectorKeyImpl(override val channel: NetworkChannel, override val attachment: Any?, r: Boolean, w: Boolean) : SelectorKey {
+
+        private var _canlelled = false
+
+        override val isCanlelled: Boolean
+            get() = _canlelled
+
         override var listenReadable: Boolean = r
             set(value) {
                 if (value == field)
@@ -36,8 +42,11 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
         override var isWritable: Boolean = false
 
         override fun cancel() {
+            if (isCanlelled)
+                throw IllegalStateException("SocketKey already cancelled")
             elements.remove(channel.socket.native.code)
             native.remove(channel.socket.native)
+            _canlelled = true
         }
     }
 
@@ -89,6 +98,7 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
         actual val isWritable: Boolean
         actual var listenReadable: Boolean
         actual var listenWritable: Boolean
+        actual val isCanlelled: Boolean
         actual fun cancel()
     }
 

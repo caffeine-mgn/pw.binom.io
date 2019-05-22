@@ -1,10 +1,7 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.posix._localtime64
-import platform.posix._mktime64
-import platform.posix._time64
-import platform.posix.tm
+import platform.posix.*
 
 internal actual fun calcTime(year: Int, month: Int, dayOfMonth: Int, hours: Int, min: Int, sec: Int): Long =
         memScoped {
@@ -25,3 +22,9 @@ internal actual fun getNativeTime(time: Long) = memScoped {
     _localtime64(t.ptr)!!.pointed
 }
 actual typealias NTime = tm
+
+internal actual fun currentTimezoneOffset(): Int = memScoped {
+    val t = alloc<timezone>()
+    mingw_gettimeofday(null, t.ptr)
+    t.tz_minuteswest
+}

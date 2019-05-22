@@ -66,6 +66,7 @@ class QueueFuturePromise<T>(private val queue: AppendableQueue<Result<T>>) : Pro
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 open class Promise<T : Any?> : ResumableFuturePromise<T> {
 
     private val done = AtomicBoolean(false)

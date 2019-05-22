@@ -12,6 +12,12 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
     }
 
     private class SelectorKeyImpl(override val channel: Channel, override val attachment: Any?) : SelectorKey {
+
+        private var _canlelled = false
+
+        override val isCanlelled: Boolean
+            get() = _canlelled
+
         override var listenReadable: Boolean
             get() = key.interestOps() and JSelectionKey.OP_READ != 0
             set(value) {
@@ -36,7 +42,10 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         override var isWritable: Boolean = false
 
         override fun cancel() {
+            if (isCanlelled)
+                throw IllegalStateException("SocketKey already cancelled")
             key.cancel()
+            _canlelled = true
         }
 
         lateinit var key: JSelectionKey
@@ -94,6 +103,7 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         actual val isWritable: Boolean
         actual var listenReadable: Boolean
         actual var listenWritable: Boolean
+        actual val isCanlelled: Boolean
     }
 
     actual val keys: Collection<SelectorKey>

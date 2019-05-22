@@ -1,12 +1,14 @@
 package pw.binom
 
+import java.util.*
 import java.util.Date as JDate
+
 
 actual class Date {
 
     private val native: JDate
 
-    internal actual constructor(time: Long) {
+    actual constructor(time: Long) {
         native = JDate(time)
     }
 
@@ -31,6 +33,20 @@ actual class Date {
 
     actual companion object {
         actual fun now(): Date = Date(JDate().time)
+        actual val timeZoneOffset: Int
+            get() {
+                val r = TimeZone.getDefault().rawOffset
+                if (r == 0)
+                    return 0
+                return r / 1000 / 60
+            }
     }
+
+    actual val dayOfWeek: Int
+        get() {
+            val calendar = Calendar.getInstance()
+            calendar.time = native
+            return calendar.get(Calendar.DAY_OF_WEEK)
+        }
 
 }

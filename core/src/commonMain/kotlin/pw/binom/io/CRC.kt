@@ -3,6 +3,7 @@ package pw.binom.io
 /**
  * https://stackoverflow.com/questions/27939882/fast-crc-algorithm
  */
+@ExperimentalUnsignedTypes
 open class CRC32Basic(private val poly:UInt, init:UInt) {
     private var crc = init
 

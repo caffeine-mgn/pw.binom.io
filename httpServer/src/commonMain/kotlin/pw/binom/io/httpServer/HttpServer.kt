@@ -12,7 +12,7 @@ import pw.binom.io.writeln
  */
 open class HttpServer(protected val handler: Handler) {
 
-    private fun runProcessing(connection: ConnectionManager.Connection, state: HttpConnectionState?) {
+    private fun runProcessing(connection: ConnectionManager.Connection, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
         connection {
             try {
                 while (true) {
@@ -21,6 +21,7 @@ open class HttpServer(protected val handler: Handler) {
                     val headers = HashMap<String, ArrayList<String>>()
                     if (state == null) {
                         val request = it.input.readln()
+                        println("REQUEST \"$request\"")
                         val items = request.split(' ')
                         method = items[0]
                         uri = items.getOrNull(1) ?: ""
@@ -52,9 +53,13 @@ open class HttpServer(protected val handler: Handler) {
                             headerSendded = state?.headerSendded ?: false,
                             headers = state?.responseHeaders ?: mapOf(),
                             connection = it,
-                            request = request1)
+                            request = request1,
+                            keepAlive = request1.headers["Connection"]?.getOrNull(0) == "keep-alive")
 
-                    handler.request(request1, response)
+                    if (handler != null) {
+                        handler(request1, response)
+                    } else
+                        this.handler.request(request1, response)
 
 
                     if (response.disconnectFlag) {
@@ -85,7 +90,7 @@ open class HttpServer(protected val handler: Handler) {
 
     protected val manager = object : ConnectionManager() {
         override fun connected(connection: Connection) {
-            runProcessing(connection, null)
+            runProcessing(connection, null, null)
         }
     }
 
@@ -98,9 +103,9 @@ open class HttpServer(protected val handler: Handler) {
         manager.bind(host = host, port = port)
     }
 
-    fun attach(state: HttpConnectionState) {
+    fun attach(state: HttpConnectionState, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)? = null) {
         val con = manager.attach(state.channel)
-        runProcessing(con, state)
+        runProcessing(con, state, handler)
     }
 
     /**

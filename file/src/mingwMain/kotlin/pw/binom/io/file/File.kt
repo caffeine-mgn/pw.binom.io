@@ -8,7 +8,7 @@ import platform.posix.*
 import kotlin.native.concurrent.freeze
 
 actual class File actual constructor(path: String) {
-    actual constructor(parent: File, name: String) : this("${parent.path}$SEPARATOR$name")
+    actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR$name")
 
     actual val path: String = replacePath(path)
 

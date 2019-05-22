@@ -18,6 +18,7 @@ expect class SocketSelector(connections: Int) : Closeable {
         val isWritable: Boolean
         var listenReadable: Boolean
         var listenWritable: Boolean
+        val isCanlelled: Boolean
         fun cancel()
     }
 }
@@ -26,6 +27,11 @@ expect class SocketSelector(connections: Int) : Closeable {
  * Returns [SocketSelector.SelectorKey] Queue
  */
 fun SocketSelector.asQueue(timeout: Int? = 1): Queue<SocketSelector.SelectorKey> = object : Queue<SocketSelector.SelectorKey> {
+    override val size: Int
+        get() {
+            checkFull()
+            return list.size
+        }
 
     override fun pop(dist: PopResult<SocketSelector.SelectorKey>) {
         if (isEmpty) {

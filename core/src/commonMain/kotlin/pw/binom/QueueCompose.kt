@@ -2,7 +2,12 @@ package pw.binom
 
 import pw.binom.atomic.AtomicBoolean
 
+@Suppress("UNCHECKED_CAST")
 class QueueCompose<T, F : T, S : T>(val first: Queue<F>, val second: Queue<S>) : Queue<T> {
+    override val size: Int
+        get() = lock.use {
+            first.size + second.size
+        }
 
     private val turn = AtomicBoolean(true)
 

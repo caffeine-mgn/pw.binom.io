@@ -94,6 +94,9 @@ class FreezedStack<T> {
         get() = top.value == null
 
     fun asFiFoQueue() = object : AppendableQueue<T> {
+        override val size: Int
+            get() = this@FreezedStack.size
+
         override fun pop(dist: PopResult<T>) {
             lock.use {
                 if (isEmpty)
@@ -120,6 +123,9 @@ class FreezedStack<T> {
     }
 
     fun asLiFoQueue() = object : AppendableQueue<T> {
+        override val size: Int
+            get() = this@FreezedStack.size
+
         override fun pop(dist: PopResult<T>) {
             lock.use {
                 if (isEmpty)

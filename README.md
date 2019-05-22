@@ -13,6 +13,7 @@ Library contains next parts:<br>
 * [Common Http Server](httpServer)
 * [Common File Utils](file)
 * [Common Json Tools](json)
+* [Common XML Tools](xml)
 * [Job Executor](job)
 
 ## Using

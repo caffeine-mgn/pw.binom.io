@@ -6,17 +6,11 @@ import pw.binom.io.AsyncInputStream
 import pw.binom.io.AsyncOutputStream
 import pw.binom.io.Closeable
 import pw.binom.neverFreeze
-import kotlin.coroutines.*
-
-private fun <P, T> (suspend (P) -> T).start(value: P) {
-    this.startCoroutine(value, object : Continuation<T> {
-        override val context: CoroutineContext = EmptyCoroutineContext
-
-        override fun resumeWith(result: Result<T>) {
-            result.getOrThrow()
-        }
-    })
-}
+import pw.binom.start
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 open class ConnectionManager : Closeable {
 
@@ -68,6 +62,12 @@ open class ConnectionManager : Closeable {
         fun detach(): SocketChannel {
             detached = true
             selectionKey.cancel()
+            while (!readWaitList.isEmpty) {
+                readWaitList.pop().continuation.resumeWithException(RuntimeException("Connection Detached"))
+            }
+            while (!writeWaitList.isEmpty) {
+                writeWaitList.pop().continuation.resumeWithException(RuntimeException("Connection Detached"))
+            }
             return channel
         }
 
@@ -97,8 +97,9 @@ open class ConnectionManager : Closeable {
             connected(connection)
         } else {
             val client = it.attachment as Connection
-
-            if (it.isReadable) {
+            if (client.selectionKey.isCanlelled)
+                return@process
+            if (!client.selectionKey.isCanlelled && it.isReadable) {
                 client.readWaitList.pop(popResult)
                 if (!popResult.isEmpty) {
                     val ev = popResult.value
@@ -117,7 +118,7 @@ open class ConnectionManager : Closeable {
                 }
             }
 
-            if (it.isWritable) {
+            if (!client.selectionKey.isCanlelled && it.isWritable) {
                 client.writeWaitList.pop(popResult)
                 if (!popResult.isEmpty) {
                     val ev = popResult.value
@@ -135,8 +136,11 @@ open class ConnectionManager : Closeable {
                     }
                 }
             }
-            client.selectionKey.listenReadable = !client.readWaitList.isEmpty
-            client.selectionKey.listenWritable = !client.writeWaitList.isEmpty
+
+            if (!client.selectionKey.isCanlelled) {
+                client.selectionKey.listenReadable = !client.readWaitList.isEmpty
+                client.selectionKey.listenWritable = !client.writeWaitList.isEmpty
+            }
         }
     }
 

@@ -13,4 +13,5 @@ expect class NTime {
     var tm_year: Int
 }
 
+expect internal fun currentTimezoneOffset():Int
 expect internal fun getNativeTime(time: Long): NTime

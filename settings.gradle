@@ -17,6 +17,7 @@ include(":job")
 include(":httpClient")
 include(":httpServer")
 include(":json")
+include(":xml")
 
 include(":examples:echoServer")
 include(":examples:httpServer")

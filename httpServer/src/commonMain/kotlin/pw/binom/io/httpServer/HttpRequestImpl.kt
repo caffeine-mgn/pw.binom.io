@@ -16,15 +16,15 @@ class HttpRequestImpl(
 
         override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {
             val size = size
-            var length = length
+            var localLength = length
             if (size != null && size > 0L) {
-                if (readed + length.toLong() > size) {
-                    length = (size - readed).toInt()
+                if (readed + localLength.toLong() > size) {
+                    localLength = (size - readed).toInt()
                 }
             }
-            if (length == 0)
+            if (localLength == 0)
                 return 0
-            val r = connection.input.read(data, offset, length)
+            val r = connection.input.read(data, offset, localLength)
             readed += r
             return r
         }

@@ -1,6 +1,6 @@
 package pw.binom
 
-actual class Date internal actual constructor(actual val time: Long) {
+actual class Date actual constructor(actual val time: Long) {
 
     private val native = getNativeTime(time)
 
@@ -22,12 +22,17 @@ actual class Date internal actual constructor(actual val time: Long) {
     actual val sec: Int
         get() = native.tm_sec
 
+    actual val dayOfWeek: Int
+        get() = native.tm_wday
+
     actual constructor(year: Int, month: Int, dayOfMonth: Int, hours: Int, min: Int, sec: Int) :
             this(calcTime(year = year, month = month, dayOfMonth = dayOfMonth, hours = hours, min = min, sec = sec))
 
 
     actual companion object {
         actual fun now(): Date = Date(nowTime())
+        actual val timeZoneOffset: Int
+            get() = currentTimezoneOffset()
     }
 
 }
