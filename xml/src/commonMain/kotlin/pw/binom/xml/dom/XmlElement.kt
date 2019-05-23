@@ -6,7 +6,7 @@ import pw.binom.xml.sax.XmlWriterVisiter
 
 class XmlElement(var tag: String, var nameSpace: NameSpace?) {
     val attributes = HashMap<Attribute, String?>()
-    internal val childs = ArrayList<XmlElement>()
+    val childs = ArrayList<XmlElement>()
     var body: String? = null
 
     suspend fun accept(visiter: XmlVisiter) {
