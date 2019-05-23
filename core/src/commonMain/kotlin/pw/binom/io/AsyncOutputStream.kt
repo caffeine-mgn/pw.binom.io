@@ -57,3 +57,16 @@ suspend fun AsyncOutputStream.writeUTF8String(value:String){
     writeInt(value.length)
     write(value.asUTF8ByteArray())
 }
+
+fun OutputStream.asAsync(): AsyncOutputStream = object : AsyncOutputStream {
+    override fun close() {
+        this@asAsync.close()
+    }
+
+    override suspend fun flush() {
+        this@asAsync.flush()
+    }
+
+    override suspend fun write(data: ByteArray, offset: Int, length: Int): Int =
+            this@asAsync.write(data, offset, length)
+}
