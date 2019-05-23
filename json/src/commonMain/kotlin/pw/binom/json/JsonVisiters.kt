@@ -1,23 +1,23 @@
 package pw.binom.json
 
 interface JsonVisiter {
-    fun textValue(value: String)
-    fun numberValue(value: Double)
-    fun nullValue()
+    suspend fun textValue(value: String)
+    suspend fun numberValue(value: String)
+    suspend fun nullValue()
     fun objectValue(): JsonObjectVisiter
-    fun arrayValue(): JsonArrayVisiter
-    fun booleanValue(value: Boolean)
+    suspend fun arrayValue(): JsonArrayVisiter
+    suspend fun booleanValue(value: Boolean)
 }
 
 interface JsonObjectVisiter {
-    fun start()
-    fun property(name: String): JsonVisiter
-    fun end()
+    suspend fun start()
+    suspend fun property(name: String): JsonVisiter
+    suspend fun end()
 }
 
 interface JsonArrayVisiter {
-    fun start()
-    fun element(): JsonVisiter
-    fun end()
+    suspend fun start()
+    suspend fun element(): JsonVisiter
+    suspend fun end()
 }
 

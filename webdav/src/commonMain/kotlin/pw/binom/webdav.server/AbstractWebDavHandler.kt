@@ -22,7 +22,9 @@ abstract class AbstractWebDavHandler<U> : Handler {
     private suspend fun buildRropFind(req: HttpRequest, resp: HttpResponse) {
         val fs = getFS(req, resp)
         val user = getUser(req, resp)
+        println("Getting ${req.contextUri}")
         val currentEntry = fs.getEntry(user, req.contextUri)
+
         if (currentEntry == null) {
             resp.status = 404
             return
@@ -40,7 +42,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                             it.nameSpace?.url to it.tag
                         }.toMutableSet()
         val depth = req.headers["Depth"]?.firstOrNull()?.toInt() ?: 0
-
+        println("Depth=${req.headers["Depth"]?.firstOrNull()}   depth=$depth")
         val entities = if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
         val DAV_NS = "DAV:"
 
@@ -50,7 +52,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 entities.forEach { e ->
                     node("response", DAV_NS) {
                         node("href", DAV_NS) {
-                            value("${getGlobalURI(req)}${e.path}")
+                            value("${getGlobalURI(req)}${e.path.removePrefix("/")}")
                         }
                         node("propstat", DAV_NS) {
                             node("prop", DAV_NS) {
@@ -61,7 +63,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                                         }
                                         prop.first == DAV_NS && prop.second == "getlastmodified" ->
                                             node("getlastmodified", DAV_NS) {
-                                                value(Date(e.lastModified!!).toUTC().asString())
+                                                value(Date(e.lastModified).toUTC().asString())
                                             }
                                         prop.first == DAV_NS && prop.second == "getcontentlength" ->
                                             node("getcontentlength", DAV_NS) {
@@ -106,9 +108,10 @@ abstract class AbstractWebDavHandler<U> : Handler {
         try {
             //resp.resetHeader("Connection", "close")
             if (req.method == "OPTIONS") {
-                resp.resetHeader("Allow", "GET, POST, OPTIONS, HEAD, MKCOL, PUT, PROPFIND, PROPPATCH, DELETE, MOVE, COPY, GETLIB, LOCK, UNLOCK")
+                println("Check ${req.contextUri}")
+                fs.getEntry(user, req.contextUri)
+                resp.resetHeader("Allow", "GET, POST, OPTIONS, HEAD, MKCOL, PUT, PROPFIND, PROPPATCH, ORDERPATCH, DELETE, MOVE, COPY, GETLIB, LOCK, UNLOCK")
                 resp.resetHeader("DAV", "1, 2, ordered-collections")
-                resp.addHeader("Allow", "MKCOL, PROPFIND, PROPPATCH, LOCK, UNLOCK, ORDERPATCH")
                 resp.status = 200
                 return
             }
@@ -181,9 +184,13 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 return
             }
             resp.status = 404
+        } catch (e: FileSystemAccess.AccessException.ForbiddenException) {
+            resp.status = 403
+            println("ForbiddenException")
         } catch (e: FileSystemAccess.AccessException.UnauthorizedException) {
             resp.status = 401
             resp.resetHeader("WWW-Authenticate", "Basic realm=\"ownCloud\"")
+            println("UnauthorizedException")
             return
         } catch (e: Throwable) {
             println("ERROR: $e")

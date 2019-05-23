@@ -1,7 +1,15 @@
 package pw.binom.json
 
-class JsonWriter(private val output: Appendable) : JsonVisiter {
-    override fun booleanValue(value: Boolean) {
+import pw.binom.io.AsyncAppendable
+
+class JsonWriter(private val output: AsyncAppendable) : JsonVisiter {
+    override suspend fun numberValue(value: String) {
+        checkDone()
+        output.append(value)
+        done = true
+    }
+
+    override suspend fun booleanValue(value: Boolean) {
         output.append(if (value) "true" else "false")
     }
 
@@ -12,20 +20,13 @@ class JsonWriter(private val output: Appendable) : JsonVisiter {
             throw IllegalStateException("Json Write already done")
     }
 
-    override fun textValue(value: String) {
+    override suspend fun textValue(value: String) {
         checkDone()
         output.append('\"').append(value).append('\"')
         done = true
     }
 
-    override fun numberValue(value: Double) {
-        checkDone()
-        output.append(value.toString())
-        done = true
-    }
-
-
-    override fun nullValue() {
+    override suspend fun nullValue() {
         checkDone()
         output.append("null")
         done = true
@@ -37,20 +38,20 @@ class JsonWriter(private val output: Appendable) : JsonVisiter {
         return JsonObjectWriter(output)
     }
 
-    override fun arrayValue(): JsonArrayVisiter {
+    override suspend fun arrayValue(): JsonArrayVisiter {
         checkDone()
         done = true
         return JsonArrayWriter(output)
     }
 }
 
-private class JsonObjectWriter(val output: Appendable) : JsonObjectVisiter {
+private class JsonObjectWriter(val output: AsyncAppendable) : JsonObjectVisiter {
     private var first = true
-    override fun start() {
+    override suspend fun start() {
         output.append('{')
     }
 
-    override fun property(name: String): JsonVisiter {
+    override suspend fun property(name: String): JsonVisiter {
         if (!first)
             output.append(',')
         first = false
@@ -58,15 +59,15 @@ private class JsonObjectWriter(val output: Appendable) : JsonObjectVisiter {
         return JsonWriter(output)
     }
 
-    override fun end() {
+    override suspend fun end() {
         output.append('}')
     }
 }
 
-private class JsonArrayWriter(val output: Appendable) : JsonArrayVisiter {
+private class JsonArrayWriter(val output: AsyncAppendable) : JsonArrayVisiter {
     private var started = false
     private var done = false
-    override fun element(): JsonVisiter {
+    override suspend fun element(): JsonVisiter {
         if (!started)
             throw IllegalStateException("Json Array Writer not started")
         if (done)
@@ -78,7 +79,7 @@ private class JsonArrayWriter(val output: Appendable) : JsonArrayVisiter {
     }
 
     private var first = true
-    override fun start() {
+    override suspend fun start() {
         if (started)
             throw IllegalStateException("Json Array Writer already started")
         if (done)
@@ -87,7 +88,7 @@ private class JsonArrayWriter(val output: Appendable) : JsonArrayVisiter {
         output.append('[')
     }
 
-    override fun end() {
+    override suspend fun end() {
         if (!started)
             throw IllegalStateException("Json Array Writer not started")
         if (done)

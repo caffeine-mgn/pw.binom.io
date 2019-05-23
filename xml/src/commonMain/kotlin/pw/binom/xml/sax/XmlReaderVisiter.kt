@@ -4,7 +4,7 @@ import pw.binom.Stack
 import pw.binom.io.*
 
 class XmlReaderVisiter(reader: AsyncReader) {
-    private val reader = AsyncComposeReader().addLast(reader)
+    private val reader = ComposeAsyncReader().addLast(reader)
 
     private class Record(val name: String, val visiter: XmlVisiter)
 
@@ -110,7 +110,7 @@ class XmlReaderVisiter(reader: AsyncReader) {
     }
 }
 
-internal suspend fun AsyncComposeReader.readString(): String {
+internal suspend fun ComposeAsyncReader.readString(): String {
     if (read() != '"')
         throw ExpectedException("\"")
     val sb = StringBuilder()
@@ -126,7 +126,7 @@ internal suspend fun AsyncComposeReader.readString(): String {
     return sb.toString()
 }
 
-private suspend fun AsyncComposeReader.readNoSpace(): Char? {
+private suspend fun ComposeAsyncReader.readNoSpace(): Char? {
     while (true) {
         try {
             val c = read()
@@ -141,7 +141,7 @@ private suspend fun AsyncComposeReader.readNoSpace(): Char? {
 private val Char.isBreak: Boolean
     get() = this == '\n' || this == '\r' || this == ' ' || this == '=' || this == '<' || this == '>' || this == '/'
 
-internal suspend fun AsyncComposeReader.readText(text: String): Boolean {
+internal suspend fun ComposeAsyncReader.readText(text: String): Boolean {
     val sb = StringBuilder()
     while (true) {
         if (text.length == sb.length)
@@ -160,7 +160,7 @@ internal suspend fun AsyncComposeReader.readText(text: String): Boolean {
     }
 }
 
-private suspend fun AsyncComposeReader.isNextChar(charFunc: (Char) -> Boolean) = try {
+private suspend fun ComposeAsyncReader.isNextChar(charFunc: (Char) -> Boolean) = try {
     val c = read()
     addFirst(c)
     charFunc(c)
@@ -168,7 +168,7 @@ private suspend fun AsyncComposeReader.isNextChar(charFunc: (Char) -> Boolean) =
     false
 }
 
-internal suspend fun AsyncComposeReader.skipSpaces() {
+internal suspend fun ComposeAsyncReader.skipSpaces() {
     while (true) {
         try {
             val c = read()
@@ -182,10 +182,10 @@ internal suspend fun AsyncComposeReader.skipSpaces() {
     }
 }
 
-private fun AsyncComposeReader.addFirst(char: Char) = addFirst(char.toString())
-private fun AsyncComposeReader.addFirst(text: String) = addFirst(text.asReader().asAsync())
+private fun ComposeAsyncReader.addFirst(char: Char) = addFirst(char.toString())
+private fun ComposeAsyncReader.addFirst(text: String) = addFirst(text.asReader().asAsync())
 
-internal suspend fun AsyncComposeReader.word(): String {
+internal suspend fun ComposeAsyncReader.word(): String {
     skipSpaces()
     val sb = StringBuilder()
     while (true) {

@@ -3,7 +3,7 @@ package pw.binom.io
 import pw.binom.PopResult
 import pw.binom.Stack
 
-class AsyncComposeReader: AbstractAsyncReader() {
+class ComposeAsyncReader : AbstractAsyncReader() {
     private val readers = Stack<AsyncReader>()
     private var current = PopResult<AsyncReader>()
 
@@ -22,7 +22,7 @@ class AsyncComposeReader: AbstractAsyncReader() {
         }
     }
 
-    fun addFirst(reader: AsyncReader): AsyncComposeReader {
+    fun addFirst(reader: AsyncReader): ComposeAsyncReader {
         if (!current.isEmpty) {
             readers.pushFirst(current.value)
             current.clear()
@@ -31,7 +31,7 @@ class AsyncComposeReader: AbstractAsyncReader() {
         return this
     }
 
-    fun addLast(reader: AsyncReader): AsyncComposeReader {
+    fun addLast(reader: AsyncReader): ComposeAsyncReader {
         readers.pushLast(reader)
         return this
     }
@@ -49,4 +49,4 @@ class AsyncComposeReader: AbstractAsyncReader() {
 }
 
 operator fun AsyncReader.plus(other: AsyncReader) =
-        AsyncComposeReader().addLast(this).addLast(other)
+        ComposeAsyncReader().addLast(this).addLast(other)

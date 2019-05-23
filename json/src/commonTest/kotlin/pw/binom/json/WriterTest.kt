@@ -1,5 +1,7 @@
 package pw.binom.json
 
+import pw.binom.async
+import pw.binom.io.asAsync
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -7,29 +9,33 @@ class WriterTest {
 
     @Test
     fun `empty array`() {
-        val sb = StringBuilder()
+        async {
+            val sb = StringBuilder()
 
-        val w = JsonWriter(sb)
+            val w = JsonWriter(sb.asAsync())
 
-        w.arrayValue().also {
-            it.start()
-            it.end()
+            w.arrayValue().also {
+                it.start()
+                it.end()
+            }
+
+            assertEquals("[]", sb.toString())
         }
-
-        assertEquals("[]", sb.toString())
     }
 
     @Test
     fun `empty object`() {
-        val sb = StringBuilder()
+        async {
+            val sb = StringBuilder()
 
-        val w = JsonWriter(sb)
+            val w = JsonWriter(sb.asAsync())
 
-        w.objectValue().also {
-            it.start()
-            it.end()
+            w.objectValue().also {
+                it.start()
+                it.end()
+            }
+
+            assertEquals("{}", sb.toString())
         }
-
-        assertEquals("{}", sb.toString())
     }
 }

@@ -1,15 +1,12 @@
 package pw.binom.json
 
-import pw.binom.io.ComposeReader
-import pw.binom.io.EOFException
-import pw.binom.io.Reader
-import pw.binom.io.asReader
+import pw.binom.io.*
 
 
-class JsonReader(reader: Reader) {
-    val reader = ComposeReader().addLast(reader)
+class JsonReader(reader: AsyncReader) {
+    val reader = ComposeAsyncReader().addLast(reader)
 
-    fun accept(visiter: JsonVisiter) {
+    suspend fun accept(visiter: JsonVisiter) {
         when (val v = reader.readNoSpace()) {
             '{' -> {
                 parseObject(visiter.objectValue());return
@@ -30,14 +27,14 @@ class JsonReader(reader: Reader) {
             "null" -> visiter.nullValue()
             else -> {
                 if (v.isNumber)
-                    visiter.numberValue(v.toDouble())
+                    visiter.numberValue(v)
                 else
                     TODO("Unknown word '$v'")
             }
         }
     }
 
-    private fun parseArray(arrayVisiter: JsonArrayVisiter) {
+    private suspend fun parseArray(arrayVisiter: JsonArrayVisiter) {
         arrayVisiter.start()
         while (true) {
             when (val c = reader.readNoSpace()) {
@@ -48,14 +45,14 @@ class JsonReader(reader: Reader) {
                 ',' -> {
                 }
                 else -> {
-                    reader.addFirst(c.toString().asReader())
+                    reader.addFirst(c.toString().asReader().asAsync())
                     accept(arrayVisiter.element())
                 }
             }
         }
     }
 
-    private fun parseObject(objectVisiter: JsonObjectVisiter) {
+    private suspend fun parseObject(objectVisiter: JsonObjectVisiter) {
         objectVisiter.start()
         while (true) {
             when (val c = reader.readNoSpace()) {
@@ -73,7 +70,7 @@ class JsonReader(reader: Reader) {
         }
     }
 
-    private fun parseProperty(objectVisiter: JsonObjectVisiter) {
+    private suspend fun parseProperty(objectVisiter: JsonObjectVisiter) {
         val name = parseString()
         if (reader.readNoSpace() != ':')
             TODO()
@@ -81,7 +78,7 @@ class JsonReader(reader: Reader) {
         accept(objectVisiter.property(name))
     }
 
-    private fun parseString(): String {
+    private suspend fun parseString(): String {
         val sb = StringBuilder()
         while (true) {
             var c = reader.read()
@@ -95,7 +92,7 @@ class JsonReader(reader: Reader) {
     }
 }
 
-private fun Reader.readNoSpace(): Char? {
+private suspend fun ComposeAsyncReader.readNoSpace(): Char? {
     while (true) {
         try {
             val c = read()
@@ -107,12 +104,12 @@ private fun Reader.readNoSpace(): Char? {
     }
 }
 
-private fun ComposeReader.skipSpaces() {
+private suspend fun ComposeAsyncReader.skipSpaces() {
     while (true) {
         try {
             val c = read()
             if (c != ' ' && c != '\n' && c != '\r') {
-                addFirst(c.toString().asReader())
+                addFirst(c.toString().asReader().asAsync())
                 break
             }
         } catch (e: EOFException) {
@@ -121,10 +118,10 @@ private fun ComposeReader.skipSpaces() {
     }
 }
 
-private fun ComposeReader.addFirst(char: Char): ComposeReader = addFirst(char.toString())
-private fun ComposeReader.addFirst(text: String): ComposeReader = addFirst(text.asReader())
+private fun ComposeAsyncReader.addFirst(char: Char): ComposeAsyncReader = addFirst(char.toString())
+private fun ComposeAsyncReader.addFirst(text: String): ComposeAsyncReader = addFirst(text.asReader().asAsync())
 
-private fun ComposeReader.word(): String {
+private suspend fun ComposeAsyncReader.word(): String {
     skipSpaces()
     val sb = StringBuilder()
     while (true) {

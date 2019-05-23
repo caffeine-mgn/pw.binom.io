@@ -1,10 +1,10 @@
 package pw.binom.xml.sax
 
-import pw.binom.io.AsyncComposeReader
 import pw.binom.io.AsyncReader
+import pw.binom.io.ComposeAsyncReader
 
 class XmlRootReaderVisiter(reader: AsyncReader) {
-    private val reader = AsyncComposeReader().addLast(reader)
+    private val reader = ComposeAsyncReader().addLast(reader)
     suspend fun accept(visiter: XmlVisiter) {
         reader.skipSpaces()
         if (!reader.readText("<?xml "))

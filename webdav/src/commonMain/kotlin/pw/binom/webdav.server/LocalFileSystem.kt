@@ -38,6 +38,7 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
     }
 
     override suspend fun getEntry(user: U, path: String): FileSystem.Entity? {
+        access.getFile(user, path)
         val f = File(root, path.removePrefix("/"))
         if (!f.isExist)
             return null
