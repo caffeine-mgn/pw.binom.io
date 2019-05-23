@@ -57,6 +57,7 @@ See DOM Tools:
 [XmlDomReader](xml/src/commonMain/kotlin/pw/binom/xml/dom/XmlDomReader.kt)
 and Method [xml](xml/src/commonMain/kotlin/pw/binom/xml/dom/TagWriteContext.kt)
 - [ ] SSL
+- [ ] Logger
 
 #### HTTP
 - [x] Basic Support Http Support
