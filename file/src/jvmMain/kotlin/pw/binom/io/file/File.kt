@@ -30,4 +30,7 @@ actual class File actual constructor(path: String) {
     actual val lastModified: Long
         get() = native.lastModified()
 
+    actual fun renameTo(newPath: File): Boolean =
+            native.renameTo(newPath.native)
+
 }

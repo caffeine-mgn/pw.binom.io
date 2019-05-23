@@ -67,4 +67,6 @@ actual class File actual constructor(path: String) {
                 return@memScoped 0
             return stat.st_ctime
         }
+
+    actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
 }

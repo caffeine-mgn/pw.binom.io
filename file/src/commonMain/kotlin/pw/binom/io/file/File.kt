@@ -1,17 +1,20 @@
 package pw.binom.io.file
 
+import pw.binom.io.use
+
 expect class File(path: String) {
     constructor(parent: File, name: String)
 
     val path: String
     val size: Long
-    val lastModified:Long
+    val lastModified: Long
 
     val isFile: Boolean
     val isDirectory: Boolean
 
     fun delete(): Boolean
     fun mkdir(): Boolean
+    fun renameTo(newPath: File): Boolean
 
     companion object {
         val SEPARATOR: Char
@@ -30,10 +33,10 @@ val File.name: String
         return path.substring(p + 1)
     }
 
-val File.parent: File
+val File.parent: File?
     get() = path.lastIndexOf(File.SEPARATOR).let {
         File(if (it == -1)
-            ""
+            return@let null
         else
             path.substring(0, it)
         )
@@ -64,7 +67,21 @@ fun File.mkdirs(): Boolean {
         return false
     if (isDirectory)
         return true
-    if (!parent.mkdirs())
+    if (parent?.mkdirs() == false)
         return false
     return mkdir()
+}
+
+fun File.deleteRecursive(): Boolean {
+    if (isFile)
+        return delete()
+    if (isDirectory) {
+        iterator().use {
+            it.forEach {
+                if (!it.deleteRecursive())
+                    return false
+            }
+        }
+    }
+    return delete()
 }
