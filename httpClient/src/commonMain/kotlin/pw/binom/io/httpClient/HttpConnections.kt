@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient
 
+import pw.binom.URL
 import pw.binom.io.*
 import pw.binom.io.socket.Socket
 import pw.binom.io.zip.InflateInputStream
