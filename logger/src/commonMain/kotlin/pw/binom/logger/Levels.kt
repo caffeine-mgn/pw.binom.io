@@ -2,8 +2,7 @@ package pw.binom.logger
 
 import kotlin.native.concurrent.SharedImmutable
 
-@SharedImmutable
-private val INFO_LEVEL = object : Logger.Level {
+private object INFO_LEVEL: Logger.Level {
     override val name: String
         get() = "I"
     override val priority: UInt
@@ -17,8 +16,7 @@ fun Logger.LoggerImpl.info(text: String) {
     log(Logger.INFO, text)
 }
 
-@SharedImmutable
-private val WARN_LEVEL = object : Logger.Level {
+private object WARN_LEVEL : Logger.Level {
     override val name: String
         get() = "W"
     override val priority: UInt
@@ -32,8 +30,7 @@ fun Logger.LoggerImpl.warn(text: String) {
     log(Logger.WARNING, text)
 }
 
-@SharedImmutable
-private val SEVERE_LEVEL = object : Logger.Level {
+private object SEVERE_LEVEL : Logger.Level {
     override val name: String
         get() = "S"
     override val priority: UInt
