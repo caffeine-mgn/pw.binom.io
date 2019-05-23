@@ -21,7 +21,6 @@ open class HttpServer(protected val handler: Handler) {
                     val headers = HashMap<String, ArrayList<String>>()
                     if (state == null) {
                         val request = it.input.readln()
-                        println("REQUEST \"$request\"")
                         val items = request.split(' ')
                         method = items[0]
                         uri = items.getOrNull(1) ?: ""
