@@ -108,7 +108,7 @@ private class HttpURLRequestImpl(val method: String, val url: URL, private val c
         closed = true
         if (socket?.connected == true) {
             if (connectionKeepAlive) {
-                connections.pushConnect(url.host, url.port ?: url.defaultPort, socket!!)
+                connections.pushConnect(url.host, url.port ?: url.defaultPort!!, socket!!)
             } else {
                 socket!!.close()
             }
@@ -160,11 +160,11 @@ private class HttpURLRequestImpl(val method: String, val url: URL, private val c
         if (closed)
             throw IllegalStateException("Connection already closed")
         if (socket == null) {
-            socket = connections.pollConnection(url.host, url.port ?: url.defaultPort)
+            socket = connections.pollConnection(url.host, url.port ?: url.defaultPort!!)
         }
         if (socket == null) {
             socket = Socket()
-            socket!!.connect(url.host, url.port ?: url.defaultPort)
+            socket!!.connect(url.host, url.port ?: url.defaultPort!!)
         }
         return socket!!
     }

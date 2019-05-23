@@ -37,6 +37,7 @@ kotlin {
                 api project(":core")
                 api project(":httpServer")
                 api project(":xml")
+                api project(":file")
             }
         }
 

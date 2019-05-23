@@ -72,3 +72,13 @@ fun InputStream.readUTF8String(): String {
     read(data)
     return data.asUTF8String()
 }
+
+fun InputStream.asAsync() = object : AsyncInputStream {
+    override fun close() {
+        this@asAsync.close()
+    }
+
+    override suspend fun read(data: ByteArray, offset: Int, length: Int): Int =
+            this@asAsync.read(data, offset, length)
+
+}

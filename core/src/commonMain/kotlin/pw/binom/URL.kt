@@ -5,7 +5,17 @@ class URL(private val path: String) {
     val host: String
     val port: Int?
     val uri: String
-    val defaultPort: Int
+    val defaultPort: Int?
+        get() = defaultPort(protocol)
+
+    companion object {
+        fun defaultPort(protocol: String) = when (protocol) {
+            "ws", "http" -> 80
+            "wss", "https" -> 443
+            "ftp" -> 21
+            else -> null
+        }
+    }
 
     init {
         val p = path.indexOf("://")
@@ -13,12 +23,6 @@ class URL(private val path: String) {
             throw MalformedURLException("Protocol not set in URL \"$path\"")
         protocol = path.substring(0, p)
 
-        defaultPort = when (protocol) {
-            "ws", "http" -> 80
-            "wss", "https" -> 443
-            "ftp" -> 21
-            else -> throw MalformedURLException("Unknown protocol \"$protocol\" in URL \"$path\"")
-        }
 
         val uriStart = path.indexOf('/', protocol.length + 3)
         val portStart = path.indexOf(':', protocol.length + 3)
