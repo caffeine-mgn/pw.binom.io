@@ -54,12 +54,12 @@ class Base64DecodeAppendable(val stream: OutputStream) : Appendable {
 
     override fun append(csq: CharSequence?): Appendable {
         csq ?: throw IllegalArgumentException("Argument is null")
-        return append(csq, 0, csq.length - 1)
+        return append(csq, 0, csq.length)
     }
 
     override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
         csq ?: throw IllegalArgumentException("Argument is null")
-        (start .. end).forEach {
+        (start until end).forEach {
             append(csq[it])
         }
         return this
