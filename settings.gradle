@@ -19,6 +19,7 @@ include(":httpServer")
 include(":json")
 include(":xml")
 include(":logger")
+include(":webdav")
 
 include(":examples:echoServer")
 include(":examples:httpServer")
