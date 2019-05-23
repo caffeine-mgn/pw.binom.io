@@ -1,4 +1,4 @@
-package pw.binom.io.httpClient
+package pw.binom
 
 class URL(private val path: String) {
     val protocol: String
@@ -40,6 +40,24 @@ class URL(private val path: String) {
 
 
     fun newURI(uri: String): URL {
+        val sb = StringBuilder(protocol)
+        sb.append("://").append(host)
+        if (port != null)
+            sb.append(":").append(port)
+        sb.append(uri)
+        return URL(sb.toString())
+    }
+
+    fun newPort(port: Int?): URL {
+        val sb = StringBuilder(protocol)
+        sb.append("://").append(host)
+        if (port != null)
+            sb.append(":").append(port)
+        sb.append(uri)
+        return URL(sb.toString())
+    }
+
+    fun newHost(host: String): URL {
         val sb = StringBuilder(protocol)
         sb.append("://").append(host)
         if (port != null)

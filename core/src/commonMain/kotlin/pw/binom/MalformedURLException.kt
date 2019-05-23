@@ -1,4 +1,4 @@
-package pw.binom.io.httpClient
+package pw.binom
 
 import pw.binom.io.IOException
 
