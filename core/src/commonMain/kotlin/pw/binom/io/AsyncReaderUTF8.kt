@@ -7,3 +7,5 @@ class AsyncReaderUTF8(private val stream: AsyncInputStream) : AbstractAsyncReade
 
     override suspend fun read(): Char = UTF8.read(stream)
 }
+
+fun AsyncInputStream.utf8Reader() = AsyncReaderUTF8(this)
