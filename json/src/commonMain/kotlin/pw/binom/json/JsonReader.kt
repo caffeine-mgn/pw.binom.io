@@ -29,7 +29,7 @@ class JsonReader(reader: AsyncReader) {
                 if (v.isNumber)
                     visiter.numberValue(v)
                 else
-                    TODO("Unknown word '$v'")
+                    throw JsonSaxException("Unknown word \"$v\"")
             }
         }
     }
@@ -65,7 +65,7 @@ class JsonReader(reader: AsyncReader) {
                 }
                 ',' -> {
                 }
-                else -> TODO("Unknown \"$c\"")
+                else -> JsonSaxException("Unknown char \"$c\"")
             }
         }
     }
@@ -73,8 +73,7 @@ class JsonReader(reader: AsyncReader) {
     private suspend fun parseProperty(objectVisiter: JsonObjectVisiter) {
         val name = parseString()
         if (reader.readNoSpace() != ':')
-            TODO()
-        println("Reading property $name")
+            throw ExpectedException(":")
         accept(objectVisiter.property(name))
     }
 
@@ -128,7 +127,6 @@ private suspend fun ComposeAsyncReader.word(): String {
         try {
             val c = read()
             if (c.isBreak && c != '.') {
-                println("Break on '$c'")
                 addFirst(c)
                 return sb.toString()
             }

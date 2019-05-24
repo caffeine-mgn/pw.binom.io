@@ -1,33 +1,48 @@
 package pw.binom.json
 
-class JsonDomReader(private val ready: (JsonNode) -> Unit) : JsonVisiter {
+class JsonDomReader() : JsonVisiter {
+    private var ready: ((JsonNode) -> Unit)? = null
+
+    private var _node: JsonNode? = null
+
+    val node: JsonNode
+        get() = _node ?: throw IllegalStateException("Node not readed")
+
+    constructor(ready: (JsonNode) -> Unit) : this() {
+        this.ready = ready
+    }
+
+    private fun done(node: JsonNode) {
+        ready?.invoke(node)
+        _node = node
+    }
 
     override suspend fun textValue(value: String) {
-        ready(JsonString(value))
+        done(JsonString(value))
     }
 
     override suspend fun numberValue(value: String) {
-        ready(JsonNumber(value))
+        done(JsonNumber(value))
     }
 
     override suspend fun nullValue() {
-        ready(JsonNull())
+        done(JsonNull())
     }
 
     override fun objectValue(): JsonObjectVisiter {
         val r = JsonDomObjectReader()
-        ready(r.node)
+        done(r.node)
         return r
     }
 
     override suspend fun arrayValue(): JsonArrayVisiter {
         val r = JsonDomArrayReader()
-        ready(r.node)
+        done(r.node)
         return r
     }
 
     override suspend fun booleanValue(value: Boolean) {
-        ready(JsonBoolean(value))
+        done(JsonBoolean(value))
     }
 
 }
