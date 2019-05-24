@@ -37,3 +37,32 @@ fun Reader.asAsync() = object : AsyncReader {
     }
 
 }
+
+fun Reader.readLn(): String {
+    val sb = StringBuilder()
+    while (true) {
+        try {
+            val r = read()
+            if (r == 10.toChar())
+                break
+            if (r == 13.toChar())
+                continue
+            sb.append(r)
+        } catch (e: EOFException) {
+            break
+        }
+    }
+    return sb.toString()
+}
+
+fun Reader.readText(): String {
+    val sb = StringBuilder()
+    while (true) {
+        try {
+            sb.append(read())
+        } catch (e: EOFException) {
+            break
+        }
+    }
+    return sb.toString()
+}
