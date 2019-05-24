@@ -25,12 +25,13 @@ class URL(private val path: String) {
 
 
         val uriStart = path.indexOf('/', protocol.length + 3)
+
         val portStart = path.indexOf(':', protocol.length + 3)
-        if (portStart != -1 && (portStart < uriStart)) {
+        if (portStart != -1) {
             host = path.substring(protocol.length + 3, portStart)
-            port = path.substring(portStart + 1, uriStart).toInt()
+            port = path.substring(portStart + 1, if (uriStart==-1) path.length else uriStart).toInt()
         } else {
-            host = path.substring(protocol.length + 3, uriStart)
+            host = path.substring(protocol.length + 3, if (uriStart==-1) path.length else uriStart)
             port = null
         }
         uri = if (uriStart == -1)
