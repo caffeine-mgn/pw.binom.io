@@ -16,9 +16,22 @@ class HttpConnections(val allowKeepAlive: Boolean = true) : Closeable {
         connections.clear()
     }
 
+    private fun cleanUp() {
+        val it = connections.iterator()
+
+        while (it.hasNext()) {
+            val c = it.next()
+            if (!c.value.connected)
+                it.remove()
+        }
+    }
+
     internal fun pollConnection(host: String, port: Int): Socket? {
         if (!allowKeepAlive)
             return null
+
+        cleanUp()
+
         val g = connections["$host:$port"]
         if (g != null) {
             if (!g.connected) {

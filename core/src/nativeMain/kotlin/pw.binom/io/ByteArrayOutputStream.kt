@@ -10,6 +10,8 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
     private var buffer = ByteArray(capacity)
     private var writeLen = 0
     private var closed = false
+    actual val size: Int
+        get() = writeLen
 
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
         if (closed)
@@ -51,7 +53,8 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
 
     actual fun toByteArray(): ByteArray {
         val out = ByteArray(writeLen)
-        memcpy(out.refTo(0), buffer.refTo(0), writeLen.convert())
+        if (writeLen>0)
+            memcpy(out.refTo(0), buffer.refTo(0), writeLen.convert())
         return out
     }
 }

@@ -11,6 +11,34 @@ import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.xml
 import pw.binom.xml.dom.xmlTree
 
+private fun urlEncode(url: String) =
+        url.splitToSequence("/").map { UTF8.urlEncode(it) }.joinToString("/")
+
+private fun urlDecode(url: String) =
+        url.splitToSequence("/").map { UTF8.urlDecode(it) }.joinToString("/")
+
+suspend fun <U> FileSystem<U>.getD(user: U, path: String, d: Int, out: ArrayList<FileSystem.Entity<U>>) {
+    if (d <= 0)
+        return
+    getDir(user, path)?.forEach {
+        out.add(it)
+        if (!it.isFile)
+            getD(user, it.path, d - 1, out)
+    }
+}
+
+suspend fun <U> FileSystem<U>.getEntitiesWithDepth(user: U, path: String, depth: Int): List<FileSystem.Entity<U>>? {
+    val out = ArrayList<FileSystem.Entity<U>>()
+    val e = get(user, path) ?: return null
+    out += e
+
+
+    if (!e.isFile)
+        getD(user, path, depth, out)
+
+    return out
+}
+
 abstract class AbstractWebDavHandler<U> : Handler {
 
     protected abstract fun getFS(req: HttpRequest, resp: HttpResponse): FileSystem<U>
@@ -22,8 +50,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
     private suspend fun buildRropFind(req: HttpRequest, resp: HttpResponse) {
         val fs = getFS(req, resp)
         val user = getUser(req, resp)
-        println("Getting ${req.contextUri}")
-        val currentEntry = fs.getEntry(user, req.contextUri)
+        val currentEntry = fs.get(user, urlDecode(req.contextUri))
 
         if (currentEntry == null) {
             resp.status = 404
@@ -42,8 +69,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                             it.nameSpace?.url to it.tag
                         }.toMutableSet()
         val depth = req.headers["Depth"]?.firstOrNull()?.toInt() ?: 0
-        println("Depth=${req.headers["Depth"]?.firstOrNull()}   depth=$depth")
-        val entities = if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
+        val entities = fs.getEntitiesWithDepth(user, urlDecode(req.contextUri), depth)!!//if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
         val DAV_NS = "DAV:"
 
         val ss = StringBuilder()
@@ -52,14 +78,14 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 entities.forEach { e ->
                     node("response", DAV_NS) {
                         node("href", DAV_NS) {
-                            value("${getGlobalURI(req)}${e.path.removePrefix("/")}")
+                            value(urlEncode("${getGlobalURI(req)}${e.path}"))
                         }
                         node("propstat", DAV_NS) {
                             node("prop", DAV_NS) {
                                 properties.forEach { prop ->
                                     when {
                                         prop.first == DAV_NS && prop.second == "displayname" -> node("displayname", DAV_NS) {
-                                            value(e.name)
+                                            //value(e.name)
                                         }
                                         prop.first == DAV_NS && prop.second == "getlastmodified" ->
                                             node("getlastmodified", DAV_NS) {
@@ -86,7 +112,12 @@ abstract class AbstractWebDavHandler<U> : Handler {
                                 }
                             }
                             node("status", DAV_NS) {
-                                value("HTTP/1.1 200 OK")
+                                try {
+                                    fs.get(user, e.path)
+                                    value("HTTP/1.1 200 OK")
+                                } catch (e: Throwable) {
+                                    value("HTTP/1.1 403 Forbidden")
+                                }
                             }
                         }
                     }
@@ -108,15 +139,14 @@ abstract class AbstractWebDavHandler<U> : Handler {
         try {
             //resp.resetHeader("Connection", "close")
             if (req.method == "OPTIONS") {
-                println("Check ${req.contextUri}")
-                fs.getEntry(user, req.contextUri)
+                fs.get(user, urlDecode(req.contextUri))
                 resp.resetHeader("Allow", "GET, POST, OPTIONS, HEAD, MKCOL, PUT, PROPFIND, PROPPATCH, ORDERPATCH, DELETE, MOVE, COPY, GETLIB, LOCK, UNLOCK")
                 resp.resetHeader("DAV", "1, 2, ordered-collections")
                 resp.status = 200
                 return
             }
             if (req.method == "MKCOL") {
-                fs.mkdir(user, req.contextUri)
+                fs.mkdir(user, urlDecode(req.contextUri))
                 resp.status = 201
                 return
             }
@@ -127,46 +157,50 @@ abstract class AbstractWebDavHandler<U> : Handler {
                     resp.status = 406
                     return
                 }
-                val destinationPath = getLocalURI(req, destination.uri)
+                val destinationPath = getLocalURI(req, destination.uri).let { urlDecode(it) }
                 val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
-                val source = fs.getEntry(user, req.contextUri)
+                val source = fs.get(user, urlDecode(req.contextUri))
                 if (source == null) {
                     resp.status = 404
                     return
                 }
-                if (!overwrite && fs.getEntry(user, destinationPath) != null) {
+                if (!overwrite && fs.get(user, destinationPath) != null) {
                     resp.status = 409
                     return
                 }
 
-
-                fs.rewriteFile(user, destinationPath).use { d ->
-                    fs.read(user, source.path)!!.use { s ->
-                        s.copyTo(d)
-                    }
-                }
+                source.copy(destinationPath)
                 resp.status = 201
                 return
             }
             if (req.method == "DELETE") {
-                fs.delete(user, req.contextUri)
+                val e = fs.get(user, urlDecode(req.contextUri))
+                if (e == null) {
+                    resp.status = 404
+                    return
+                }
+                e.delete()
                 resp.status = 200
                 return
             }
             if (req.method == "PUT") {
-                fs.rewriteFile(user, req.contextUri).use {
+                val path = urlDecode(req.contextUri)
+                val e = fs.get(user, path)?.rewrite() ?: fs.new(user, path)
+
+                e.use {
                     req.input.copyTo(it)
                 }
                 resp.status = 201
                 return
             }
             if (req.method == "GET") {
-                val e = fs.getEntry(user, req.contextUri)
-                val stream = fs.read(user, req.contextUri)
-                if (e == null || stream == null) {
+                val e = fs.get(user, urlDecode(req.contextUri))
+
+                if (e == null) {
                     resp.status = 404
                     return
                 }
+                val stream = e.read()!!
                 resp.status = 200
                 resp.resetHeader("Content-Length", e.length.toString())
                 stream.use {
@@ -186,14 +220,10 @@ abstract class AbstractWebDavHandler<U> : Handler {
             resp.status = 404
         } catch (e: FileSystemAccess.AccessException.ForbiddenException) {
             resp.status = 403
-            println("ForbiddenException")
         } catch (e: FileSystemAccess.AccessException.UnauthorizedException) {
             resp.status = 401
             resp.resetHeader("WWW-Authenticate", "Basic realm=\"ownCloud\"")
-            println("UnauthorizedException")
             return
-        } catch (e: Throwable) {
-            println("ERROR: $e")
         }
     }
 

@@ -6,14 +6,15 @@ Actual version is `0.1.3`
 
 ## Parts of library
 Library contains next parts:<br>
-* [Common Core IO](core)
-* [Common Socket Library](socket)
-* [Common Async Server](server)
-* [Common Http Client](httpClient)
-* [Common Http Server](httpServer)
-* [Common File Utils](file)
-* [Common Json Tools](json)
-* [Common XML Tools](xml)
+* [Core IO](core)
+* [Socket Library](socket)
+* [Async Server](server)
+* [Http Client](httpClient)
+* [Http Server](httpServer)
+* [File Utils](file)
+* [Json Tools](json)
+* [XML Tools](xml)
+* [WebDav](webdav)
 * [Job Executor](job)
 
 ## Using
@@ -72,5 +73,5 @@ See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpSer
 
 
 
-## Projects with Binom IO
+## Using Library in Projects:
 [Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)

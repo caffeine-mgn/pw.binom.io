@@ -1,5 +1,6 @@
 package pw.binom.io.examples.zlib
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
 import pw.binom.io.ByteArrayOutputStream
@@ -17,7 +18,7 @@ fun main(args: Array<String>) {
 
     val file = File("Test.zlib")
     FileOutputStream(file, false).use {
-        DeflaterOutputStream(it, LEVEL, 512, WRAP).use {
+        DeflaterOutputStream(it, LEVEL, DEFAULT_BUFFER_SIZE, WRAP).use {
             it.write(data, 0, data.size)
             it.flush()
         }
@@ -27,7 +28,7 @@ fun main(args: Array<String>) {
 
     val out = ByteArrayOutputStream()
     FileInputStream(file).use {
-        InflateInputStream(it, 512, WRAP).use {
+        InflateInputStream(it, DEFAULT_BUFFER_SIZE, WRAP).use {
             it.copyTo(out)
         }
     }

@@ -6,9 +6,11 @@ import java.io.ByteArrayOutputStream as JByteArrayOutputStream
 actual class ByteArrayOutputStream actual constructor(capacity: Int, capacityFactor: Float) : OutputStream {
 
     private val native = JByteArrayOutputStream(capacity)
+    private var _wrote = 0
 
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
         native.write(data, offset, length)
+        _wrote += length
         return length
     }
 
@@ -22,5 +24,8 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, capacityFac
 
     actual fun toByteArray(): ByteArray =
             native.toByteArray()
+
+    actual val size: Int
+        get() = _wrote
 
 }

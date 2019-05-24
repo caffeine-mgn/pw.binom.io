@@ -2,7 +2,7 @@ package pw.binom.io
 
 class AsyncAppendableUTF8(private val stream: AsyncOutputStream) : AsyncAppendable {
     override suspend fun append(c: Char): AsyncAppendable {
-        stream.write(c.toByte())
+        UTF8.write(c, stream)
         return this
     }
 

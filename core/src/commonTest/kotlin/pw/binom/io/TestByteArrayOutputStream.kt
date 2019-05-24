@@ -41,4 +41,10 @@ class TestByteArrayOutputStream {
             //NOP
         }
     }
+
+    @Test
+    fun `test empty`() {
+        val d = ByteArrayOutputStream().toByteArray()
+        assertEquals(0, d.size)
+    }
 }

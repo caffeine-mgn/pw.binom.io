@@ -1,5 +1,6 @@
 package pw.binom.io.file
 
+import pw.binom.io.FileSystem
 import pw.binom.io.use
 
 expect class File(path: String) {
@@ -50,6 +51,17 @@ val File.nameWithoutExtension: String
                 return name
             else
                 name.substring(0, it)
+        }
+    }
+
+val File.extension: String
+    get() {
+        val name = name
+        return name.lastIndexOf('.').let {
+            if (it == -1)
+                return ""
+            else
+                name.substring(it + 1)
         }
     }
 

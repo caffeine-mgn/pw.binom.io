@@ -87,6 +87,10 @@ class HttpResponseImpl(
         private val connection: ConnectionManager.Connection,
         private val request: HttpRequest
 ) : HttpResponse {
+    override fun clearHeaders() {
+        _header.clear()
+    }
+
     private val _header = HashMap<String, ArrayList<String>>()
 
     init {
@@ -188,4 +192,60 @@ class HttpResponseImpl(
         if (!headers.containsKey("Content-Type"))
             resetHeader("Content-Type", "text/html; charset=utf-8")
     }
+}
+
+private class PrivateHttpResponse(
+        override var status: Int,
+        override val output: AsyncOutputStream,
+        headers: Map<String, List<String>>,
+        val parent: HttpResponse) : HttpResponse {
+    override fun clearHeaders() {
+        _headers.clear()
+    }
+
+    private val _headers = HashMap<String, ArrayList<String>>()
+
+    init {
+        headers.forEach { k ->
+            _headers[k.key] = ArrayList(k.value)
+        }
+    }
+
+    override val headers: Map<String, List<String>>
+        get() = _headers
+
+    override fun resetHeader(name: String, value: String) {
+        _headers.remove(name)
+        addHeader(name, value)
+    }
+
+    override fun addHeader(name: String, value: String) {
+        _headers.getOrPut(name) { ArrayList() }.add(value)
+    }
+
+    override fun detach(): HttpConnectionState = parent.detach()
+
+    override fun disconnect() = parent.disconnect()
+
+}
+
+fun HttpResponse.withOutput(stream: AsyncOutputStream): HttpResponse =
+        PrivateHttpResponse(
+                status = status,
+                headers = headers,
+                output = stream,
+                parent = this
+        )
+
+fun HttpResponse.addHeaders(resp: HttpResponse) {
+    resp.headers.forEach { k ->
+        k.value.forEach {
+            addHeader(k.key, it)
+        }
+    }
+}
+
+fun HttpResponse.resetHeaders(resp: HttpResponse) {
+    clearHeaders()
+    addHeaders(resp)
 }
