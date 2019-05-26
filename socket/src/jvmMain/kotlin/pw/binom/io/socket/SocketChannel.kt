@@ -57,4 +57,6 @@ actual class SocketChannel constructor(internal val native: JSocketChannel) : Ne
         set(value) {
             native.configureBlocking(value)
         }
+    actual val isConnected: Boolean
+        get() = native.isConnected
 }

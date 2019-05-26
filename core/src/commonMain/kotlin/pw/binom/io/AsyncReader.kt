@@ -24,3 +24,32 @@ abstract class AbstractAsyncReader : AsyncReader {
         return i
     }
 }
+
+suspend fun AsyncReader.readLn(): String {
+    val sb = StringBuilder()
+    while (true) {
+        try {
+            val r = read()
+            if (r == 10.toChar())
+                break
+            if (r == 13.toChar())
+                continue
+            sb.append(r)
+        } catch (e: EOFException) {
+            break
+        }
+    }
+    return sb.toString()
+}
+
+suspend fun AsyncReader.readText(): String {
+    val sb = StringBuilder()
+    while (true) {
+        try {
+            sb.append(read())
+        } catch (e: EOFException) {
+            break
+        }
+    }
+    return sb.toString()
+}

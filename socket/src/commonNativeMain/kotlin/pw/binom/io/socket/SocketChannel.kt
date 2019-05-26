@@ -3,7 +3,6 @@ package pw.binom.io.socket
 import pw.binom.doFreeze
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
-import pw.binom.neverFreeze
 
 
 actual class SocketChannel internal constructor(override val socket: Socket) : NetworkChannel, InputStream, OutputStream {
@@ -18,6 +17,9 @@ actual class SocketChannel internal constructor(override val socket: Socket) : N
     }
 
     actual constructor() : this(Socket())
+
+    actual val isConnected: Boolean
+        get() = socket.connected
 
     override fun flush() {
         //NOP

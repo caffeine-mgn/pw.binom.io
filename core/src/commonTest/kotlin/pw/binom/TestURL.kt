@@ -40,7 +40,7 @@ class TestURL {
 
     @Test
     fun `with uri`() {
-        var url = URL("http://127.0.0.1:4646/")
+        var url = URL("http://127.0.0.1:4646")
         url=url.newURI("${url.uri}/var")
 
         assertEquals("/var", url.uri)

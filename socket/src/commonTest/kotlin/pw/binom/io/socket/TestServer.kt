@@ -12,7 +12,7 @@ class TestServer {
         val port = 0xFFFF + 10
         val server = SocketServer()
         try {
-            server.bind(port)
+            server.bind("127.0.0.1", port)
         } catch (e: IllegalArgumentException) {
             assertEquals(e.message, "port out of range:$port")
             //NOP
@@ -24,9 +24,9 @@ class TestServer {
         val port = 0xFFFF - 10
         val server1 = SocketServer()
         val server2 = SocketServer()
-        server1.bind(port)
+        server1.bind("127.0.0.1", port)
         try {
-            server2.bind(port)
+            server2.bind("127.0.0.1", port)
             fail()
         } catch (e: BindException) {
             //NOP
@@ -39,9 +39,9 @@ class TestServer {
     fun `rebind`() {
         val port = 0xFFFF - 10
         val server = SocketServer()
-        server.bind(port)
+        server.bind("127.0.0.1", port)
         try {
-            server.bind(port)
+            server.bind("127.0.0.1", port)
             fail()
         } catch (e: SocketException) {
             //NOP

@@ -3,13 +3,13 @@ package pw.binom.io.examples.httpClient
 import pw.binom.asUTF8String
 import pw.binom.io.ByteArrayOutputStream
 import pw.binom.io.copyTo
-import pw.binom.io.httpClient.HttpConnections
+import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.URL
 
 fun main(args: Array<String>) {
     val url = URL("http://example.com/")
 
-    val connections = HttpConnections()
+    val connections = HttpClient()
 
     val con = connections.request(url)
     con.responseHeaderNames.forEach { key ->

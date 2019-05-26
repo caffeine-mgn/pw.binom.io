@@ -25,7 +25,7 @@ class ConnectionManagerTest {
                 }
             }
         }
-        manager.bind(port)
+        manager.bind(port=port)
         val soc = Socket()
         soc.connect("127.0.0.1", port)
         manager.update(1)

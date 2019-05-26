@@ -11,7 +11,7 @@ class ParserTest {
     @Test
     fun test() {
         async {
-            val txt = """{ "test" : "Hello!" , "array":["OLOLO"],"array1":[],"bool":false,"null":null,"int":123,"float1":123.5,"float2":.5}"""
+            val txt = """{ "test" : "Hello!" , "array":["OLOLO"],"array1":[],"bool":false,"null":null,"int":123,"float1":123.5,"float2":0.5}"""
             val r = txt.asReader().asAsync()
 
             val sb = StringBuilder()
@@ -19,7 +19,7 @@ class ParserTest {
             JsonReader(r).accept(JsonWriter(sb.asAsync()))
 
             println("Result: $sb")
-            assertEquals("""{"test":"Hello!","array":["OLOLO"],"array1":[],"bool":false,"null":null,"int":123.0,"float1":123.5,"float2":0.5}""", sb.toString())
+            assertEquals("""{"test":"Hello!","array":["OLOLO"],"array1":[],"bool":false,"null":null,"int":123,"float1":123.5,"float2":0.5}""", sb.toString())
         }
     }
 }

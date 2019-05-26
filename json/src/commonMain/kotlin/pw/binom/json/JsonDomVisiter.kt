@@ -1,5 +1,7 @@
 package pw.binom.json
 
+import pw.binom.io.AsyncReader
+
 class JsonDomReader() : JsonVisiter {
     private var ready: ((JsonNode) -> Unit)? = null
 
@@ -76,5 +78,10 @@ class JsonDomArrayReader : JsonArrayVisiter {
     }
 
     val node = JsonArray()
+}
 
+suspend fun AsyncReader.parseJSON(): JsonNode {
+    val r = JsonDomReader()
+    JsonReader(this).accept(r)
+    return r.node
 }

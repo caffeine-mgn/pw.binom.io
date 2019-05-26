@@ -129,9 +129,11 @@ private object PrivateForbiddenFileSystemAccess : FileSystemAccess<Any?> {
 /**
  * Returns FileSystemAccess that allow all Access
  */
+@Suppress("UNCHECKED_CAST")
 fun <U> FileSystemAccess.Companion.fullAccess(): FileSystemAccess<U> = PrivateFullAccessFileSystemAccess as FileSystemAccess<U>
 
 /**
  * Returns FileSystemAccess that disallow all Access
  */
+@Suppress("UNCHECKED_CAST")
 fun <U> FileSystemAccess.Companion.forbidden(): FileSystemAccess<U> = PrivateForbiddenFileSystemAccess as FileSystemAccess<U>

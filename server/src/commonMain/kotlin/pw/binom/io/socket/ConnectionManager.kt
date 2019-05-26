@@ -61,7 +61,8 @@ open class ConnectionManager : Closeable {
 
         fun detach(): SocketChannel {
             detached = true
-            selectionKey.cancel()
+            if (!selectionKey.isCanlelled)
+                selectionKey.cancel()
             while (!readWaitList.isEmpty) {
                 readWaitList.pop().continuation.resumeWithException(RuntimeException("Connection Detached"))
             }

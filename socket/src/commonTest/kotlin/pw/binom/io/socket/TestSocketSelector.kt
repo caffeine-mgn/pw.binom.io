@@ -10,7 +10,7 @@ class TestSocketSelector {
     fun `unbind after disconnect`() {
         val port = 9912
         val server = SocketServer()
-        server.bind(port)
+        server.bind("127.0.0.1",port)
         Thread.sleep(100)
 
         val selector = SocketSelector(100)

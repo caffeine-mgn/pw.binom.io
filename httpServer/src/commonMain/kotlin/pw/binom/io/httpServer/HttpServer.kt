@@ -87,7 +87,7 @@ open class HttpServer(protected val handler: Handler) {
         }
     }
 
-    protected val manager = object : ConnectionManager() {
+    val manager = object : ConnectionManager() {
         override fun connected(connection: Connection) {
             runProcessing(connection, null, null)
         }

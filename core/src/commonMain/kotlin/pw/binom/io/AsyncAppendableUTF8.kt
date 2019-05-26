@@ -22,3 +22,5 @@ class AsyncAppendableUTF8(private val stream: AsyncOutputStream) : AsyncAppendab
     }
 
 }
+
+fun AsyncOutputStream.utf8Appendable() = AsyncAppendableUTF8(this)

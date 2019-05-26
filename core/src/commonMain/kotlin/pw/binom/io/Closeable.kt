@@ -11,3 +11,15 @@ inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
         close()
     }
 }
+
+interface AsyncCloseable {
+    suspend fun close()
+}
+
+suspend inline fun <T : AsyncCloseable, R> T.use(func: (T) -> R): R {
+    return try {
+        func(this)
+    } finally {
+        close()
+    }
+}

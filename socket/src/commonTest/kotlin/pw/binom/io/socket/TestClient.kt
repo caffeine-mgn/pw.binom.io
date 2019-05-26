@@ -66,7 +66,7 @@ class TestClient {
             override fun execute() {
                 val server = SocketServer()
                 try {
-                    server.bind(9919)
+                    server.bind("127.0.0.1", 9919)
                     promise.resume(Unit)
                     val remoteClient = server.accept()!!
                     Thread.sleep(100)
@@ -97,7 +97,7 @@ class TestClient {
             override fun execute() {
                 val server = SocketServer()
                 try {
-                    server.bind(9919)
+                    server.bind("127.0.0.1", 9919)
                     promise.resume(Unit)
                     val remoteClient = server.accept()!!
                     remoteClient.close()
@@ -117,26 +117,26 @@ class TestClient {
     }
 
     @Test
-    fun `write to closed socket`(){
+    fun `write to closed socket`() {
         val socket = Socket()
         socket.close()
 
         try {
             socket.write(0)
             fail()
-        } catch (e:SocketClosedException){
+        } catch (e: SocketClosedException) {
             //NOP
         }
     }
 
     @Test
-    fun `write to not connected socket`(){
+    fun `write to not connected socket`() {
         val socket = Socket()
 
         try {
             socket.write(0)
             fail()
-        } catch (e: IOException){
+        } catch (e: IOException) {
             //NOP
         }
     }
