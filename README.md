@@ -16,6 +16,7 @@ Library contains next parts:<br>
 * [XML Tools](xml)
 * [WebDav](webdav)
 * [Job Executor](job)
+* [SSL](ssl)
 
 ## Using
 ### Gradle
@@ -61,7 +62,7 @@ See DOM Tools:
 [XmlElement](xml/src/commonMain/kotlin/pw/binom/xml/dom/XmlElement.kt),
 [XmlDomReader](xml/src/commonMain/kotlin/pw/binom/xml/dom/XmlDomReader.kt)
 and Method [xml](xml/src/commonMain/kotlin/pw/binom/xml/dom/TagWriteContext.kt)
-- [ ] SSL
+- [x] SSL
 - [x] Logger<br>
 See [Logger](logger/src/commonMain/kotlin/pw/binom/logger/Logger.kt)
 
