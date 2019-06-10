@@ -1,16 +1,21 @@
 package pw.binom.io.httpServer
 
+import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import pw.binom.io.readln
 import pw.binom.io.socket.ConnectionManager
+import pw.binom.io.socket.ServerSocketChannel
+import pw.binom.io.socket.SocketFactory
+import pw.binom.io.socket.rawSocketFactory
 import pw.binom.io.writeln
+import pw.binom.ssl.SSLContext
 
 /**
  * Base Http Server
  *
  * @param handler request handler
  */
-open class HttpServer(protected val handler: Handler) {
+open class HttpServer(val manager: ConnectionManager, protected val handler: Handler) : Closeable, ConnectionManager.ConnectHandler {
 
     private fun runProcessing(connection: ConnectionManager.Connection, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
         connection {
@@ -20,7 +25,9 @@ open class HttpServer(protected val handler: Handler) {
                     val method: String
                     val headers = HashMap<String, ArrayList<String>>()
                     if (state == null) {
+                        println("Read request line...")
                         val request = it.input.readln()
+                        println("Request line: $request")
                         val items = request.split(' ')
                         method = items[0]
                         uri = items.getOrNull(1) ?: ""
@@ -87,19 +94,30 @@ open class HttpServer(protected val handler: Handler) {
         }
     }
 
-    val manager = object : ConnectionManager() {
-        override fun connected(connection: Connection) {
-            runProcessing(connection, null, null)
+    override fun clientConnected(connection: ConnectionManager.Connection, manager: ConnectionManager) {
+        runProcessing(connection, null, null)
+    }
+
+    private val binded = ArrayList<ServerSocketChannel>()
+
+    override fun close() {
+        binded.forEach {
+            it.close()
         }
+        manager.close()
     }
 
     /**
-     * Bind server to port [port]
+     * Bind HTTP server to port [port]
      *
      * @param port Port for bind
      */
-    fun bind(host: String = "0.0.0.0", port: Int) {
-        manager.bind(host = host, port = port)
+    fun bindHTTP(host: String = "0.0.0.0", port: Int) {
+        binded += manager.bind(host = host, port = port, handler = this, factory = SocketFactory.rawSocketFactory)
+    }
+
+    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
+        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
     }
 
     fun attach(state: HttpConnectionState, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)? = null) {

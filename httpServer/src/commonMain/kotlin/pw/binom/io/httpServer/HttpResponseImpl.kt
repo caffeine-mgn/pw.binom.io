@@ -129,7 +129,8 @@ class HttpResponseImpl(
 
 
         if (!headers.containsKey("Connection")) {
-            if (keepAlive && headers["Content-Length"]?.singleOrNull()?.toLongOrNull() != null) {
+            val contentLengthDefine = headers["Content-Length"]?.singleOrNull()?.toLongOrNull() != null
+            if (keepAlive && contentLengthDefine) {
                 addHeader("Connection", "keep-alive")
                 connection.output.writeln("Connection: keep-alive")
             } else {
@@ -142,7 +143,7 @@ class HttpResponseImpl(
     }
 
     override val output = object : AsyncOutputStream {
-        override fun close() {
+        override suspend fun close() {
         }
 
         override suspend fun flush() {

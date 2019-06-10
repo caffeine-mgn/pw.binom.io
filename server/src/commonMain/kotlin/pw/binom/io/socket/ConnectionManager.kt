@@ -14,21 +14,29 @@ import kotlin.coroutines.suspendCoroutine
 
 open class ConnectionManager : Closeable {
 
+    interface ConnectHandler {
+        fun clientConnected(connection: Connection, manager: ConnectionManager)
+    }
+
     internal class WaitEvent(val continuation: Continuation<Int>, val data: ByteArray, val offset: Int, val length: Int)
 
-    inner class Connection internal constructor(internal val channel: SocketChannel, var attachment: Any?) : Closeable {
+    inner class Connection internal constructor(val manager: ConnectionManager, internal val channel: SocketChannel, var attachment: Any?) : Closeable {
         internal lateinit var selectionKey: SocketSelector.SelectorKey
         val input: AsyncInputStream = object : AsyncInputStream {
             override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {
                 if (detached)
                     throw IllegalStateException("Connection was detached")
+                if (channel.available > 0) {
+                    return channel.read(data, offset, length)
+                }
+
                 return suspendCoroutine { v ->
                     readWaitList.push(WaitEvent(v, data, offset, length))
                     selectionKey.listenReadable = true
                 }
             }
 
-            override fun close() {
+            override suspend fun close() {
             }
         }
 
@@ -43,7 +51,7 @@ open class ConnectionManager : Closeable {
                 }
             }
 
-            override fun close() {
+            override suspend fun close() {
             }
 
             override suspend fun flush() {
@@ -83,21 +91,26 @@ open class ConnectionManager : Closeable {
 
     private val selector = SocketSelector(100)
 
-    protected open fun connected(connection: Connection) {
-        //
-    }
-
     private val popResult = PopResult<WaitEvent>()
 
     fun update(timeout: Int? = null) = selector.process(timeout) {
         if (it.channel is ServerSocketChannel) {
             val server = it.channel as ServerSocketChannel
-            val connection = Connection(channel = server.accept()!!, attachment = null)
+            val cl = server.accept() ?: return@process
+            val connection = Connection(channel = cl, attachment = null, manager = this)
             connection.channel.blocking = false
             connection.selectionKey = selector.reg(connection.channel, connection)
-            connected(connection)
+            val handler = it.attachment as ConnectHandler?
+            handler?.clientConnected(connection, this)
         } else {
-            val client = it.attachment as Connection
+            val client = (it.attachment as Connection?)
+            if (client == null) {
+                println("client is null!")
+                return@process
+            }
+            if (client.manager !== this)
+                return@process
+
             if (client.selectionKey.isCanlelled)
                 return@process
             if (!client.selectionKey.isCanlelled && it.isReadable) {
@@ -116,6 +129,8 @@ open class ConnectionManager : Closeable {
                         client.close()
                         throw e
                     }
+                } else {
+                    println("Данные есть, а читать их никто ни хочет!")
                 }
             }
 
@@ -154,15 +169,16 @@ open class ConnectionManager : Closeable {
     val clientSize: Int
         get() = selector.keys.size
 
-    fun bind(host: String = "0.0.0.0", port: Int) {
-        val channel = ServerSocketChannel()
+    fun bind(host: String = "0.0.0.0", port: Int, handler: ConnectHandler, factory: SocketFactory = SocketFactory.rawSocketFactory): ServerSocketChannel {
+        val channel = factory.createSocketServerChannel()
         channel.blocking = false
         channel.bind(host, port)
-        selector.reg(channel)
+        selector.reg(channel, handler)
+        return channel
     }
 
-    fun connect(host: String, port: Int, attachment: Any? = null): Connection {
-        val channel = SocketChannel()
+    fun connect(host: String, port: Int, attachment: Any? = null, factory: SocketFactory = SocketFactory.rawSocketFactory): Connection {
+        val channel = factory.createSocketChannel()
         channel.connect(host, port)
         return attach(channel, attachment)
     }
@@ -172,10 +188,11 @@ open class ConnectionManager : Closeable {
      */
     fun attach(channel: SocketChannel, attachment: Any? = null): Connection {
         channel.blocking = false
-        val connection = Connection(channel = channel, attachment = attachment)
+        val connection = Connection(channel = channel, attachment = attachment, manager = this)
         connection.selectionKey = selector.reg(channel, connection)
         connection.selectionKey.listenReadable = false
         connection.selectionKey.listenWritable = false
+        println("Channel attached")
         return connection
     }
 

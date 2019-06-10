@@ -29,14 +29,14 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
                 if (value == field)
                     return
                 field = value
-                native.edit(channel.socket.native, value, listenWritable)
+                native.edit(channel.nsocket.native, value, listenWritable)
             }
         override var listenWritable: Boolean = w
             set(value) {
                 if (value == field)
                     return
                 field = value
-                native.edit(channel.socket.native, listenReadable, value)
+                native.edit(channel.nsocket.native, listenReadable, value)
             }
         override var isReadable: Boolean = false
         override var isWritable: Boolean = false
@@ -44,8 +44,8 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
         override fun cancel() {
             if (isCanlelled)
                 throw IllegalStateException("SocketKey already cancelled")
-            elements.remove(channel.socket.native.code)
-            native.remove(channel.socket.native)
+            elements.remove(channel.nsocket.native.code)
+            native.remove(channel.nsocket.native)
             _canlelled = true
         }
     }
@@ -55,14 +55,14 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
         channel as NetworkChannel
 
-        val key = SelectorKeyImpl(channel, attachment, channel is SocketChannel, channel is SocketChannel)
+        val key = SelectorKeyImpl(channel, attachment, channel is RawSocketChannel, channel is RawSocketChannel)
 
 
-        if (channel.socket.blocking)
+        if (channel.nsocket.blocking)
             throw IllegalBlockingModeException()
 
-        native.add(channel.socket.native)
-        elements[channel.socket.native.code] = key
+        native.add(channel.nsocket.native)
+        elements[channel.nsocket.native.code] = key
         return key
     }
 
@@ -78,8 +78,8 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
             el.isWritable = item.isWritable
             if (item.isClosed) {
                 when (el.channel) {
-                    is SocketChannel -> el.channel.socket.internalDisconnected()
-                    is ServerSocketChannel -> el.channel.socket.internalDisconnected()
+                    is RawSocketChannel -> el.channel.socket.internalDisconnected()
+                    is RawServerSocketChannel -> el.channel.nsocket.internalDisconnected()
                 }
 //                el.cancel()
             }

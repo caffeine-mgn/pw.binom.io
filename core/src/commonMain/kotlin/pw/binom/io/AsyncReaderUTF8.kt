@@ -1,7 +1,7 @@
 package pw.binom.io
 
 class AsyncReaderUTF8(private val stream: AsyncInputStream) : AbstractAsyncReader() {
-    override fun close() {
+    override suspend fun close() {
         stream.close()
     }
 

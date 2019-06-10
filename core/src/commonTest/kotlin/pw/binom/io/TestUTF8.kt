@@ -1,6 +1,7 @@
 package pw.binom.io
 
 import pw.binom.asUTF8ByteArray
+import pw.binom.asUTF8String
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -79,5 +80,19 @@ class TestUTF8 {
     @Test
     fun testDecode() {
         assertEquals("AntonАБ вг", UTF8.urlDecode("Anton%D0%90%D0%91%20%D0%B2%D0%B3"))
+    }
+
+    @Test
+    fun testEndLine() {
+        val txt = "Hello\r\nFrom Server"
+
+        assertEquals(txt, ByteArrayInputStream(txt.asUTF8ByteArray()).utf8Reader().readText())
+
+        assertEquals(txt,
+                ByteArrayOutputStream().also {
+                    it.utf8Appendable().append(txt)
+                    it.flush()
+                }.toByteArray().asUTF8String()
+        )
     }
 }

@@ -36,7 +36,7 @@ class ComposeAsyncReader : AbstractAsyncReader() {
         return this
     }
 
-    override fun close() {
+    override suspend fun close() {
         if (!current.isEmpty)
             current.value.close()
         while (true) {

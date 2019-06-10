@@ -1,4 +1,4 @@
-linkerOpts.mingwX62= -lws2_32 -lwsock32 -lws2_64 -lwsock64
+linkerOpts.mingwX32= -lws2_32 -lwsock32 -lws2_64 -lwsock64
 ---
 #ifndef _WIN32
 typedef int SOCKET;

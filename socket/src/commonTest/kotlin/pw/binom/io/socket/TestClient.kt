@@ -8,7 +8,7 @@ import kotlin.test.*
 class TestClient {
     @Test
     fun `unknown dns host`() {
-        val client = Socket()
+        val client = RawSocket()
         val hostName = "unknown_host"
         try {
             client.connect(hostName, 23)
@@ -21,7 +21,7 @@ class TestClient {
 
     @Test
     fun `invalid port`() {
-        val client = Socket()
+        val client = RawSocket()
         val hostName = "127.0.0.1"
         val port = 0xFFFF + 10
         try {
@@ -35,7 +35,7 @@ class TestClient {
 
     @Test
     fun `unknown port`() {
-        val client = Socket()
+        val client = RawSocket()
         val hostName = "127.0.0.1"
         val port = 0xFFFF - 1
         try {
@@ -48,7 +48,7 @@ class TestClient {
 
     @Test
     fun `unknown ip`() {
-        val client = Socket()
+        val client = RawSocket()
         val hostName = "127.0.0.2"
         val port = 0xFFFF - 1
 
@@ -64,7 +64,7 @@ class TestClient {
     fun `disconnect on read`() {
         class TaskImlp(val promise: Promise<Unit>) : Task() {
             override fun execute() {
-                val server = SocketServer()
+                val server = RawSocketServer()
                 try {
                     server.bind("127.0.0.1", 9919)
                     promise.resume(Unit)
@@ -80,10 +80,10 @@ class TestClient {
         val p = Promise<Unit>()
         Worker.execute { TaskImlp(p) }
         p.await()
-        val client = Socket()
+        val client = RawSocket()
         try {
             client.connect("127.0.0.1", 9919)
-            client.read()
+            client.input.read()
             fail()
         } catch (e: SocketClosedException) {
             //NOP
@@ -95,7 +95,7 @@ class TestClient {
     fun `disconnect on write`() {
         class TaskImlp(val promise: Promise<Unit>) : Task() {
             override fun execute() {
-                val server = SocketServer()
+                val server = RawSocketServer()
                 try {
                     server.bind("127.0.0.1", 9919)
                     promise.resume(Unit)
@@ -110,7 +110,7 @@ class TestClient {
         val p = Promise<Unit>()
         Worker.execute { TaskImlp(p) }
         p.await()
-        val client = Socket()
+        val client = RawSocket()
         client.connect("127.0.0.1", 9919)
         Thread.sleep(100)
         assertTrue(client.connected)
@@ -118,11 +118,11 @@ class TestClient {
 
     @Test
     fun `write to closed socket`() {
-        val socket = Socket()
+        val socket = RawSocket()
         socket.close()
 
         try {
-            socket.write(0)
+            socket.output.write(0)
             fail()
         } catch (e: SocketClosedException) {
             //NOP
@@ -131,10 +131,10 @@ class TestClient {
 
     @Test
     fun `write to not connected socket`() {
-        val socket = Socket()
+        val socket = RawSocket()
 
         try {
-            socket.write(0)
+            socket.output.write(0)
             fail()
         } catch (e: IOException) {
             //NOP

@@ -2,12 +2,7 @@ package pw.binom.io.socket
 
 import pw.binom.io.Closeable
 
-/**
- * Socket Server
- */
-expect class SocketServer : Closeable {
-    constructor()
-
+interface SocketServer: Closeable {
     /**
      * Listen message on interface [host] and [port]
      *

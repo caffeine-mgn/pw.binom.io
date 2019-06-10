@@ -4,7 +4,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.asUTF8String
 import pw.binom.fromBytes
 
-interface AsyncInputStream : Closeable {
+interface AsyncInputStream : AsyncCloseable {
     suspend fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
 }
 
@@ -43,6 +43,8 @@ suspend fun AsyncInputStream.readln(): String {
     val buf = ByteArray(1)
     while (true) {
         val r = read(buf, 0, 1)
+        if (r==0)
+            continue
         if (r == 0 || buf[0] == 10.toByte()) {
             return sb.toString()
         }

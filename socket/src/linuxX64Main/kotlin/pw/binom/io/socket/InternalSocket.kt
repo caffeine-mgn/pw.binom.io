@@ -23,7 +23,7 @@ internal actual fun closeSocket(native: NativeSocketHolder) {
     close(native.native)
 }
 
-internal actual class NativeSocketHolder(val native: Int) {
+actual class NativeSocketHolder(val native: Int) {
     actual val code: Int
         get() = native
 

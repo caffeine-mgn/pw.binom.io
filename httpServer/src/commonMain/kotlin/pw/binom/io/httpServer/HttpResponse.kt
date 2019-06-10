@@ -1,8 +1,6 @@
 package pw.binom.io.httpServer
 
 import pw.binom.io.AsyncOutputStream
-import pw.binom.io.OutputStream
-import pw.binom.io.socket.SocketChannel
 
 interface HttpResponse {
     var status: Int

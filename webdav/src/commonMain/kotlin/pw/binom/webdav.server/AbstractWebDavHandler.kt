@@ -29,7 +29,7 @@ suspend fun <U> FileSystem<U>.getD(user: U, path: String, d: Int, out: ArrayList
 
 suspend fun <U> FileSystem<U>.getEntitiesWithDepth(user: U, path: String, depth: Int): List<FileSystem.Entity<U>>? {
     val out = ArrayList<FileSystem.Entity<U>>()
-    val e = get(user, path) ?: return null
+    val e = get(user, path.removeSuffix("/")) ?: return null
     out += e
 
 
@@ -78,7 +78,10 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 entities.forEach { e ->
                     node("response", DAV_NS) {
                         node("href", DAV_NS) {
-                            value(urlEncode("${getGlobalURI(req)}${e.path}"))
+                            if (e.isFile)
+                                value(urlEncode("${getGlobalURI(req)}${e.path}"))
+                            else
+                                value(urlEncode("${getGlobalURI(req)}${e.path}/"))
                         }
                         node("propstat", DAV_NS) {
                             node("prop", DAV_NS) {
@@ -194,7 +197,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 return
             }
             if (req.method == "GET") {
-                val e = fs.get(user, urlDecode(req.contextUri))
+                val e = fs.get(user, urlDecode(req.contextUri).removeSuffix("/"))
 
                 if (e == null) {
                     resp.status = 404

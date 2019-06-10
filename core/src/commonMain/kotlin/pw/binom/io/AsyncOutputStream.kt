@@ -3,7 +3,7 @@ package pw.binom.io
 import pw.binom.asUTF8ByteArray
 import pw.binom.get
 
-interface AsyncOutputStream : Closeable {
+interface AsyncOutputStream : AsyncCloseable {
     suspend fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
     suspend fun flush()
 }
@@ -45,21 +45,21 @@ suspend fun AsyncOutputStream.writeLong(value: Long) {
     write(value[7])
 }
 
-suspend fun AsyncOutputStream.writeFloat(value:Float){
+suspend fun AsyncOutputStream.writeFloat(value: Float) {
     writeInt(value.toRawBits())
 }
 
-suspend fun AsyncOutputStream.writeDouble(value:Double){
+suspend fun AsyncOutputStream.writeDouble(value: Double) {
     writeLong(value.toRawBits())
 }
 
-suspend fun AsyncOutputStream.writeUTF8String(value:String){
+suspend fun AsyncOutputStream.writeUTF8String(value: String) {
     writeInt(value.length)
     write(value.asUTF8ByteArray())
 }
 
 fun OutputStream.asAsync(): AsyncOutputStream = object : AsyncOutputStream {
-    override fun close() {
+    override suspend fun close() {
         this@asAsync.close()
     }
 

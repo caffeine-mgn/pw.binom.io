@@ -1,6 +1,6 @@
 package pw.binom.io
 
-interface AsyncReader : Closeable {
+interface AsyncReader : AsyncCloseable {
     /**
      * @throws EOFException throws when stream is done
      */
@@ -25,7 +25,7 @@ abstract class AbstractAsyncReader : AsyncReader {
     }
 }
 
-suspend fun AsyncReader.readLn(): String {
+suspend fun AsyncReader.readln(): String {
     val sb = StringBuilder()
     while (true) {
         try {
@@ -36,7 +36,7 @@ suspend fun AsyncReader.readLn(): String {
                 continue
             sb.append(r)
         } catch (e: EOFException) {
-            break
+            continue
         }
     }
     return sb.toString()

@@ -35,6 +35,7 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":server")
+                api project(":ssl")
             }
         }
 

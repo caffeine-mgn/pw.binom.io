@@ -13,20 +13,21 @@ class ConnectionManagerTest {
     fun testBind() {
         val port = 9919
         var done = false
-        val manager = object : ConnectionManager() {
-            override fun connected(connection: Connection) {
+        val handler = object : ConnectionManager.ConnectHandler {
+            override fun clientConnected(connection: ConnectionManager.Connection, manager: ConnectionManager) {
                 connection {
                     try {
                         it.input.readln()
                         fail()
                     } catch (e: IOException) {
-                        done=true
+                        done = true
                     }
                 }
             }
         }
-        manager.bind(port=port)
-        val soc = Socket()
+        val manager = ConnectionManager()
+        manager.bind(port = port, handler = handler)
+        val soc = RawSocket()
         soc.connect("127.0.0.1", port)
         manager.update(1)
         assertEquals(2, manager.clientSize)

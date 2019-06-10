@@ -1,6 +1,7 @@
 package pw.binom.io.httpServer
 
 import pw.binom.doFreeze
+import pw.binom.io.socket.RawSocketChannel
 import pw.binom.io.socket.SocketChannel
 
 class HttpConnectionState(

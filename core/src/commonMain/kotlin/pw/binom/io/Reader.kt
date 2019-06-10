@@ -32,23 +32,27 @@ fun Reader.asAsync() = object : AsyncReader {
     override suspend fun read(data: CharArray, offset: Int, length: Int): Int =
             this@asAsync.read(data, offset, length)
 
-    override fun close() {
+    override suspend fun close() {
         this@asAsync.close()
     }
 
 }
 
-fun Reader.readLn(): String {
+fun Reader.readln(): String? {
     val sb = StringBuilder()
+    var first = true
     while (true) {
         try {
             val r = read()
+            first = false
             if (r == 10.toChar())
                 break
             if (r == 13.toChar())
                 continue
             sb.append(r)
         } catch (e: EOFException) {
+            if (first)
+                return null
             break
         }
     }

@@ -1,7 +1,7 @@
 package pw.binom.io.socket
 
 
-internal expect class NativeSocketHolder{
+expect class NativeSocketHolder{
     val code:Int
 }
 

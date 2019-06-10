@@ -9,3 +9,9 @@ dependencies {
     api "pw.binom.io:httpClient:<version>"
 }
 ```
+
+## Features
+* Async client
+* Can be attach to common Connection Manager
+* Supports `Connection: keep-alive`
+* Supports `Transfer-Encoding: chunked`

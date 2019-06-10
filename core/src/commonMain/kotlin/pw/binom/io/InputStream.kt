@@ -6,6 +6,13 @@ import pw.binom.fromBytes
 
 interface InputStream : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
+
+    /**
+     * the number of bytes that can be read from this input stream without blocking.
+     * returns -1 of not support available property
+     */
+    val available: Int
+        get() = -1
 }
 
 fun InputStream.read(): Byte {
@@ -15,7 +22,7 @@ fun InputStream.read(): Byte {
     return b[0]
 }
 
-fun InputStream.readLn(): String {
+fun InputStream.readln(): String {
     val sb = StringBuilder()
     val buf = ByteArray(1)
     while (true) {
@@ -74,7 +81,7 @@ fun InputStream.readUTF8String(): String {
 }
 
 fun InputStream.asAsync() = object : AsyncInputStream {
-    override fun close() {
+    override suspend fun close() {
         this@asAsync.close()
     }
 

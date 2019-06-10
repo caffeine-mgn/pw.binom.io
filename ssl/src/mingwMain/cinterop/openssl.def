@@ -1,0 +1,37 @@
+headers = openssl/ssl.h
+headerFilter = openssl/**
+linkerOpts = -lwsock32 -lws2_32
+---
+#undef EVP_PKEY_CTX_set_rsa_keygen_bits
+
+int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX* ctx, int bits){
+    return RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, EVP_PKEY_CTRL_RSA_KEYGEN_BITS, bits, NULL);
+}
+
+long internal_BIO_do_connect(BIO *bp){
+    return BIO_do_connect(bp);
+}
+
+long internal_BIO_do_accept(BIO *bp){
+    return BIO_do_connect(bp);
+}
+
+BIO* internal_BIO_new_fp(int fd){
+    return BIO_new_fp(fd, BIO_NOCLOSE);
+}
+
+long internal_BIO_set_conn_hostname(BIO*bp, char* host){
+    return BIO_set_conn_hostname(bp, host);
+}
+
+long internal_BIO_do_handshake(BIO*bp){
+    return BIO_do_handshake(bp);
+}
+
+void print_ssl_error(){
+    ERR_print_errors_fp(stderr);
+}
+
+//get_supported_ciphers(SSL*ssl){
+//    SSL_get1_supported_ciphers(ssl)
+//}

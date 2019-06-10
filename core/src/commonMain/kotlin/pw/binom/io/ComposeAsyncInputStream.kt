@@ -27,7 +27,7 @@ class ComposeAsyncInputStream : AsyncInputStream {
         }
     }
 
-    override fun close() {
+    override suspend fun close() {
         do {
             if (!current.isEmpty)
                 current.value.close()

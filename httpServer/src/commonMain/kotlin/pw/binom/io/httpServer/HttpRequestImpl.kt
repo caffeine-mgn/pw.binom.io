@@ -13,7 +13,7 @@ class HttpRequestImpl(
 
     override val input = object : AsyncInputStream {
         var readed = 0L
-        override fun close() {
+        override suspend fun close() {
         }
 
         override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {

@@ -1,0 +1,165 @@
+apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+kotlin {
+    targets {
+
+        fromPreset(kotlin.presets.linuxX64, 'linuxX64') {
+            compilations.main.outputKinds 'static'
+            compilations.main.outputKinds 'static'
+            compilations.main.outputKinds 'static'
+            def args = [
+                    '-include-binary', buildFile.parent + '/src/linuxX64Main/cinterop/lib/libssl.a',
+                    '-include-binary', buildFile.parent + '/src/linuxX64Main/cinterop/lib/libcrypto.a'
+            ]
+            compilations.main.kotlinOptions.freeCompilerArgs = args
+            compilations.test.kotlinOptions.freeCompilerArgs = args
+            compilations.main.cinterops {
+                openssl {
+                    defFile project.file("src/linuxX64Main/cinterop/openssl.def")
+                    packageName 'platform.openssl'
+                    includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxX64Main/cinterop/include"
+                    includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                }
+            }
+        }
+
+        fromPreset(kotlin.presets.linuxArm32Hfp, 'linuxArm32') {
+            compilations.main.outputKinds 'static'
+            compilations.main.outputKinds 'static'
+            def args = [
+                    '-include-binary', buildFile.parent + '/src/linuxArm32Main/cinterop/lib/libssl.a',
+                    '-include-binary', buildFile.parent + '/src/linuxArm32Main/cinterop/lib/libcrypto.a'
+            ]
+            compilations.main.kotlinOptions.freeCompilerArgs = args
+            compilations.test.kotlinOptions.freeCompilerArgs = args
+            compilations.main.cinterops {
+                openssl {
+                    defFile project.file("src/linuxArm32Main/cinterop/openssl.def")
+                    packageName 'platform.openssl'
+                    includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxArm32Main/cinterop/include"
+                    includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                }
+            }
+        }
+
+        fromPreset(kotlin.presets.jvm, 'jvm') {
+
+        }
+
+        fromPreset(kotlin.presets.mingwX64, 'mingw') {
+            compilations.main.outputKinds 'static'
+            def args = [
+//                    '-include-binary', buildFile.parent+'/src/mingwMain/cinterop/lib/libcrypto.a',
+//                    '-include-binary', buildFile.parent+'/src/mingwMain/cinterop/lib/libssl.a'
+'-include-binary', buildFile.parent + '/src/mingwMain/cinterop/lib/libopenssl.a'
+
+            ]
+            compilations.main.kotlinOptions.freeCompilerArgs = args
+            compilations.test.kotlinOptions.freeCompilerArgs = args
+            compilations.main.cinterops {
+                openssl {
+                    defFile project.file("src/mingwMain/cinterop/openssl.def")
+                    packageName 'platform.openssl'
+                    includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwMain/cinterop/include"
+                    includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                }
+            }
+        }
+
+        fromPreset(kotlin.presets.mingwX86, 'mingwX86') {
+            compilations.main.outputKinds 'static'
+            def args = [
+//                    '-include-binary', buildFile.parent+'/src/mingwX86Main/cinterop/lib/libssl.a',
+//                    '-include-binary', buildFile.parent+'/src/mingwX86Main/cinterop/lib/libcrypto.a',
+'-include-binary', buildFile.parent + '/src/mingwX86Main/cinterop/lib/libopenssl.a'
+            ]
+            compilations.main.kotlinOptions.freeCompilerArgs = args
+            compilations.test.kotlinOptions.freeCompilerArgs = args
+            compilations.main.cinterops {
+                openssl {
+                    defFile project.file("src/mingwX86Main/cinterop/openssl.def")
+                    packageName 'platform.openssl'
+                    includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX86Main/cinterop/include"
+                    includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                }
+            }
+            compilations.main.linkerOpts '-lws2_32'
+            compilations.main.linkerOpts '-lgdi32'
+            compilations.main.linkerOpts '-lwsock32'
+            compilations.test.linkerOpts '-lws2_32'
+            compilations.test.linkerOpts '-lgdi32'
+            compilations.test.linkerOpts '-lwsock32'
+        }
+
+        presets.forEach {
+            println("target=${it.name}")
+        }
+    }
+
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":core")
+                api project(":socket")
+                api project(":file")
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+                implementation project(":server")
+                implementation project(":job")
+            }
+        }
+
+        nativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+                dependsOn mingwMain
+            }
+        }
+
+        linuxArm32Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn mingwMain
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+                api group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.61'
+                api group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.61'
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
+            }
+        }
+    }
+}
+
+apply from: '../public.gradle'

@@ -58,7 +58,7 @@ class JsonDomObjectReader : JsonObjectVisiter {
 
     override suspend fun property(name: String): JsonVisiter =
             JsonDomReader {
-                node.childs[name] = it
+                node[name] = it
             }
 
     override suspend fun end() {
@@ -71,7 +71,7 @@ class JsonDomArrayReader : JsonArrayVisiter {
 
     override suspend fun element(): JsonVisiter =
             JsonDomReader {
-                node.elements += it
+                node += it
             }
 
     override suspend fun end() {

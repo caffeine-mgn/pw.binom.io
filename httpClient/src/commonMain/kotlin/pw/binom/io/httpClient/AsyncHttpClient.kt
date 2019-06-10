@@ -4,7 +4,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.URL
 import pw.binom.io.*
 import pw.binom.io.socket.ConnectionManager
-import pw.binom.io.socket.SocketChannel
+import pw.binom.io.socket.RawSocketChannel
 import pw.binom.io.socket.SocketClosedException
 
 class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
@@ -16,7 +16,7 @@ class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
         }
     }
 
-    private val connections = HashMap<String, ArrayList<SocketChannel>>()
+    private val connections = HashMap<String, ArrayList<RawSocketChannel>>()
 
     private fun cleanUp() {
         val cit = connections.entries.iterator()
@@ -35,7 +35,7 @@ class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
         }
     }
 
-    internal fun pollConnection(proto: String, host: String, port: Int): SocketChannel? {
+    internal fun pollConnection(proto: String, host: String, port: Int): RawSocketChannel? {
         cleanUp()
         val key = "$proto://$host:$port"
         val con = connections[key] ?: return null
@@ -45,7 +45,7 @@ class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
         return r
     }
 
-    internal fun pushConnection(proto: String, host: String, port: Int, socket: SocketChannel) {
+    internal fun pushConnection(proto: String, host: String, port: Int, socket: RawSocketChannel) {
         if (!socket.isConnected)
             return
         val key = "$proto://$host:$port"
@@ -113,30 +113,73 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
         return _responseCode
     }
 
+    private var eof = false
+
     private inner class RawInputStream : AsyncInputStream {
         private var readed = 0uL
+        private var chunkedSize: ULong? = null
         override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {
             try {
-                if (closed)
+                if (closed || eof)
                     return 0
                 readResponse()
-                if (_contentLength > 0uL && (_contentLength - readed <= 0uL))
-                    return 0
-                val r = if (_contentLength > 0uL && (_contentLength - readed < length.toULong())) {
-                    connect().input.read(data, offset, (_contentLength - readed).toInt())
-                } else
-                    connect().input.read(data, offset, length)
-                readed += r.toULong()
-                if (r < length || (_contentLength > 0uL && readed == _contentLength)) {
-                    this@UrlConnectHTTP.close()
+                if (chunked) {
+                    while (true) {
+                        if (chunkedSize == null) {
+                            val chunkedSize = connect().input.readln()
+                            this.chunkedSize = chunkedSize.toULongOrNull(16)
+                                    ?: throw RuntimeException("Invalid Chunked Size: \"${chunkedSize}\"")
+                            this.chunkedSize = this.chunkedSize!!
+                            readed = 0uL
+                        }
+
+                        if (chunkedSize == 0uL) {
+                            if (
+                                    connect().input.read() != 13.toByte()
+                                    || connect().input.read() != 10.toByte()
+                            )
+                                throw IOException("Invalid end body")
+                            eof = true
+                            close()
+                            return 0
+                        }
+                        if (chunkedSize!! - readed <= 0uL) {
+                            chunkedSize = null
+                            if (
+                                    connect().input.read() != 13.toByte()
+                                    || connect().input.read() != 10.toByte()
+                            )
+                                throw IOException("Invalid end of chunk")
+                            continue
+                        }
+
+                        val r = minOf(chunkedSize!! - readed, length.toULong())
+                        val b = connect().input.read(data, offset, r.toInt())
+                        readed += b.toULong()
+                        return b
+                    }
+                } else {
+
+
+                    if (_contentLength > 0uL && (_contentLength - readed <= 0uL))
+                        return 0
+                    val r = if (_contentLength > 0uL && (_contentLength - readed < length.toULong())) {
+                        connect().input.read(data, offset, (_contentLength - readed).toInt())
+                    } else
+                        connect().input.read(data, offset, length)
+                    readed += r.toULong()
+                    if (r < length || (_contentLength > 0uL && readed == _contentLength)) {
+                        this@UrlConnectHTTP.close()
+                    }
+                    return r
                 }
-                return r
             } catch (e: SocketClosedException) {
+                eof = true
                 return 0
             }
         }
 
-        override fun close() {
+        override suspend fun close() {
         }
 
     }
@@ -148,6 +191,7 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
     private var closed = false
     private var _responseCode = 0
     private var _contentLength = 0uL
+    private var chunked = false
     private var connectionKeepAlive = false
 
     private var requestHeaders = HashMap<String, ArrayList<String>>()
@@ -185,7 +229,9 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
         if (responseRead)
             return
 
-        _responseCode = connect().input.readln().splitToSequence(' ').iterator().let {
+
+        val responseLine = connect().input.readln()
+        _responseCode = responseLine.splitToSequence(' ').iterator().let {
             it.next()
             it.next()
         }.toInt()
@@ -194,10 +240,11 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
             if (str.isEmpty()) {
                 break
             }
-
             val items = str.split(": ")
             if (items[0] == "Content-Length")
                 _contentLength = items[1].toULong()
+            if (items[0] == "Transfer-Encoding" && items[1] == "chunked")
+                chunked = true
 
             responseHeaders.getOrPut(items[0]) { ArrayList() }.add(items[1])
         }

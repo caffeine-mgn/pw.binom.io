@@ -22,14 +22,13 @@ object UTF8 {
                     ff(-47)
                     ff((code.second.toInt() - 128 - 64).toByte())
                 }
-
             }
         }
     }
 
     private inline fun _read(read: () -> Byte) =
             when (val data = read()) {
-                in 32..126 -> data.toChar()
+                in 0..126 -> data.toChar()
                 (-48).toByte() -> {
                     ((4 shl 8) or (read().toInt() + 128)).toChar()
                 }
@@ -41,22 +40,43 @@ object UTF8 {
 
     fun write(char: Char, stream: OutputStream) {
         _write(char) {
-            stream.write(it)
+            while (!stream.write(it)) {
+            }
         }
     }
 
     suspend fun write(char: Char, stream: AsyncOutputStream) {
         _write(char) {
-            stream.write(it)
+
+            while (!stream.write(it)) {
+            }
         }
     }
 
     fun read(stream: InputStream): Char {
-        return _read { stream.read() }
+        return _read {
+            do {
+                try {
+                    return@_read stream.read()
+                } catch (e: EOFException) {
+                    //NOP
+                }
+            } while (true)
+            TODO()
+        }
     }
 
     suspend fun read(stream: AsyncInputStream): Char {
-        return _read { stream.read() }
+        return _read {
+            do {
+                try {
+                    return@_read stream.read()
+                } catch (e: EOFException) {
+                    //NOP
+                }
+            } while (true)
+            TODO()
+        }
     }
 
     fun urlEncode(input: String): String {

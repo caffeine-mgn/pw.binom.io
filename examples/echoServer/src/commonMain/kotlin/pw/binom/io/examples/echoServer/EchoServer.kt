@@ -1,12 +1,12 @@
 package pw.binom.io.examples.echoServer
 
-import pw.binom.io.socket.ServerSocketChannel
-import pw.binom.io.socket.SocketChannel
+import pw.binom.io.socket.RawServerSocketChannel
+import pw.binom.io.socket.RawSocketChannel
 import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.SocketSelector
 
 fun main(args: Array<String>) {
-    val server = ServerSocketChannel()
+    val server = RawServerSocketChannel()
     val selector = SocketSelector(100)
 
     server.blocking = false
@@ -23,7 +23,7 @@ fun main(args: Array<String>) {
                 println("Client connected")
             } else {
                 try {
-                    val client = it.channel as SocketChannel
+                    val client = it.channel as RawSocketChannel
                     val len = client.read(buffer)
                     client.write(buffer, 0, len)
                     println("read $len bytes")

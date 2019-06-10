@@ -38,7 +38,7 @@ internal actual fun closeSocket(native: NativeSocketHolder) {
     closesocket(native.native)
 }
 
-internal actual class NativeSocketHolder(val native: SOCKET) {
+actual class NativeSocketHolder(val native: SOCKET) {
     actual val code: Int
         get() = native.toInt()
 }
@@ -61,10 +61,10 @@ internal actual fun bindSocket(socket: NativeSocketHolder, host: String, port: I
             memset(this.ptr, 0, sockaddr_in.size.convert())
             sin_family = AF_INET.convert()
             sin_addr.S_un.S_addr = if (host == "0.0.0.0")
-                posix_htons(0).convert<UInt>()
+                htons(0).convert<UInt>()
             else
                 platform.posix.inet_addr(host)
-            sin_port = posix_htons(port.toShort()).convert()
+            sin_port = htons(port.convert()).convert()
         }
         if (bind(socket.native, serverAddr.ptr.reinterpret(), sockaddr_in.size.convert()) != 0) {
             throw when (platform.windows.WSAGetLastError()) {
