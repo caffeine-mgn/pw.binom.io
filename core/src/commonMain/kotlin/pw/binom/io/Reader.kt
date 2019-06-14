@@ -4,7 +4,7 @@ interface Reader : Closeable {
     /**
      * @throws EOFException throws when stream is done
      */
-    fun read(): Char
+    fun read(): Char?
 
     fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): Int
 }
@@ -16,7 +16,7 @@ abstract class AbstractReader : Reader {
         var i = 0
         while (i < length) {
             try {
-                data[offset + i++] = read()
+                data[offset + i++] = read() ?: break
             } catch (e: EOFException) {
                 return i
             }
@@ -26,7 +26,7 @@ abstract class AbstractReader : Reader {
 }
 
 fun Reader.asAsync() = object : AsyncReader {
-    override suspend fun read(): Char =
+    override suspend fun read(): Char? =
             this@asAsync.read()
 
     override suspend fun read(data: CharArray, offset: Int, length: Int): Int =
@@ -44,18 +44,21 @@ fun Reader.readln(): String? {
     while (true) {
         try {
             val r = read()
-            first = false
+
             if (r == 10.toChar())
                 break
             if (r == 13.toChar())
                 continue
-            sb.append(r)
+            sb.append(r ?: break)
+            first = false
         } catch (e: EOFException) {
             if (first)
                 return null
             break
         }
     }
+    if (first)
+        return null
     return sb.toString()
 }
 
@@ -63,7 +66,7 @@ fun Reader.readText(): String {
     val sb = StringBuilder()
     while (true) {
         try {
-            sb.append(read())
+            sb.append(read() ?: break)
         } catch (e: EOFException) {
             break
         }

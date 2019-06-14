@@ -21,6 +21,7 @@ include(":xml")
 include(":logger")
 include(":webdav")
 include(":ssl")
+include(":process")
 
 include(":examples:echoServer")
 include(":examples:httpServer")

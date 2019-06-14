@@ -4,7 +4,7 @@ interface AsyncReader : AsyncCloseable {
     /**
      * @throws EOFException throws when stream is done
      */
-    suspend fun read(): Char
+    suspend fun read(): Char?
 
     suspend fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): Int
 }
@@ -16,7 +16,7 @@ abstract class AbstractAsyncReader : AsyncReader {
         var i = 0
         while (i < length) {
             try {
-                data[offset + i++] = read()
+                data[offset + i++] = read()?:break
             } catch (e: EOFException) {
                 return i
             }
@@ -46,7 +46,7 @@ suspend fun AsyncReader.readText(): String {
     val sb = StringBuilder()
     while (true) {
         try {
-            sb.append(read())
+            sb.append(read()?:break)
         } catch (e: EOFException) {
             break
         }

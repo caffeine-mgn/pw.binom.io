@@ -10,6 +10,9 @@ fun JInputStream.wrap() = object : InputStream {
     override fun close() {
         this@wrap.close()
     }
+
+    override val available: Int
+        get() = this@wrap.available()
 }
 
 fun JOutputStream.wrap() = object : OutputStream {

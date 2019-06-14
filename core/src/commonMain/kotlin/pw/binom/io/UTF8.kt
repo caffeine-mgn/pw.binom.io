@@ -53,20 +53,25 @@ object UTF8 {
         }
     }
 
-    fun read(stream: InputStream): Char {
+    fun read(stream: InputStream): Char? {
+
         return _read {
-            do {
-                try {
-                    return@_read stream.read()
-                } catch (e: EOFException) {
-                    //NOP
-                }
-            } while (true)
-            TODO()
+            return@_read stream.read()
+//            do {
+//                if (stream.available == 0)
+//                    return null
+//
+//                try {
+//                    return@_read stream.read()
+//                } catch (e: EOFException) {
+//                    //NOP
+//                }
+//            } while (true)
+//            TODO()
         }
     }
 
-    suspend fun read(stream: AsyncInputStream): Char {
+    suspend fun read(stream: AsyncInputStream): Char? {
         return _read {
             do {
                 try {

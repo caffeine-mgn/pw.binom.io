@@ -15,7 +15,12 @@ class ComposeReader : AbstractReader() {
                     throw EOFException()
             }
             try {
-                return current.value.read()
+                val r =  current.value.read()
+                if (r==null){
+                    current.clear()
+                    continue
+                }
+                return r
             } catch (e: EOFException) {
                 current.clear()
             }

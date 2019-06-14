@@ -7,7 +7,7 @@ class ComposeAsyncReader : AbstractAsyncReader() {
     private val readers = Stack<AsyncReader>()
     private var current = PopResult<AsyncReader>()
 
-    override suspend fun read(): Char {
+    override suspend fun read(): Char? {
         while (true) {
             if (current.isEmpty) {
                 readers.popFirst(current)
@@ -15,7 +15,12 @@ class ComposeAsyncReader : AbstractAsyncReader() {
                     throw EOFException()
             }
             try {
-                return current.value.read()
+                val r = current.value.read()
+                if (r==null){
+                    current.clear()
+                    continue
+                }
+                return r
             } catch (e: EOFException) {
                 current.clear()
             }

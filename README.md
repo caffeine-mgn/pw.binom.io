@@ -16,6 +16,7 @@ Library contains next parts:<br>
 * [XML Tools](xml)
 * [WebDav](webdav)
 * [Job Executor](job)
+* [Process API](process)
 * [SSL](ssl)
 
 ## Using
@@ -31,13 +32,18 @@ repositories {
 
 ## Plans
 ### Version 0.2
+
+#### Process API
+- [x] Tools for execute external process and get external IO<br>
+See [Process](process/src/commonMain/kotlin/pw/binom/process/Process.kt)
+
 #### File IO
 - [ ] Mechanism for read/write file via one entity
 
 #### Socket IO
 - [ ] UDP support socket
-- [ ] Opportunity set bind interface when you start your server
-- [ ] SSL Sockets
+- [x] Opportunity set bind interface when you start your server
+- [x] SSL Sockets
 #### WebDav
 - [x] WebDav Server Handler<br>
 See [AbstractWebDavHandler](webdav/src/commonMain/kotlin/pw/binom/webdav.server/AbstractWebDavHandler.kt)
@@ -70,7 +76,7 @@ See [Logger](logger/src/commonMain/kotlin/pw/binom/logger/Logger.kt)
 - [x] Basic Support Http Support
 See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer.kt)
 - [ ] HTTP Server: WebSocket Support
-- [ ] HTTPS Support
+- [x] HTTPS Support
 
 
 

@@ -5,7 +5,7 @@ class ReaderUTF8(val stream: InputStream) : AbstractReader() {
         stream.close()
     }
 
-    override fun read(): Char = UTF8.read(stream)
+    override fun read(): Char? = UTF8.read(stream)
 
 }
 

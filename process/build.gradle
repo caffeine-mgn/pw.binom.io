@@ -34,6 +34,7 @@ kotlin {
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":core")
             }
         }
 
@@ -41,49 +42,37 @@ kotlin {
             dependencies {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
+                implementation project(":job")
             }
         }
 
-        nativeMain {
+        commonNativeMain {
             dependencies {
                 dependsOn commonMain
             }
         }
 
-        mingwCommonMain {
-            dependencies {
-                dependsOn nativeMain
-            }
-        }
-
         mingwMain {
             dependencies {
-                dependsOn mingwCommonMain
+                dependsOn commonNativeMain
             }
         }
 
         mingwX86Main {
             dependencies {
-                dependsOn mingwCommonMain
-            }
-        }
-
-        linuxCommonMain {
-            dependencies {
-                dependsOn nativeMain
+                dependsOn mingwMain
             }
         }
 
         linuxX64Main {
             dependencies {
-                dependsOn linuxCommonMain
-                dependsOn nativeMain
+                dependsOn commonNativeMain
             }
         }
 
         linuxArm32Main {
             dependencies {
-                dependsOn linuxCommonMain
+                dependsOn linuxX64Main
             }
         }
 
