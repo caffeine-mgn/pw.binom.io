@@ -38,4 +38,21 @@ class WriterTest {
             assertEquals("{}", sb.toString())
         }
     }
+
+    @Test
+    fun `spec symbols`() {
+        async {
+            val sb = StringBuilder()
+
+            val w = JsonWriter(sb.asAsync())
+
+            w.objectValue().also {
+                it.start()
+                it.property("name").textValue("Hello\nFrom\n\"Hollywood\"")
+                it.end()
+            }
+
+            assertEquals("""{"name":"Hello\nFrom\n\"Hollywood\""}""", sb.toString())
+        }
+    }
 }

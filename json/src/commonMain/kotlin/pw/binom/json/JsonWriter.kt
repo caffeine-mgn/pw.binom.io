@@ -22,7 +22,17 @@ class JsonWriter(private val output: AsyncAppendable) : JsonVisiter {
 
     override suspend fun textValue(value: String) {
         checkDone()
-        output.append('\"').append(value).append('\"')
+        output.append('\"')
+        value.forEach {
+            when (it) {
+                '\n' -> output.append("\\n")
+                '\r' -> output.append("\\r")
+                '\t' -> output.append("\\t")
+                '"' -> output.append("\\\"")
+                else -> output.append(it)
+            }
+        }
+        output.append('\"')
         done = true
     }
 

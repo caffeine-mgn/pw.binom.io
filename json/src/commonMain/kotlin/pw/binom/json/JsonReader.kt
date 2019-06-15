@@ -83,8 +83,15 @@ class JsonReader(reader: AsyncReader) {
             var c = reader.read()
             if (c == '"')
                 break
-            if (c == '\\')
+            if (c == '\\') {
                 c = reader.read()
+                c = when (c) {
+                    'n' -> '\n'
+                    'r' -> '\r'
+                    't' -> '\t'
+                    else -> c
+                }
+            }
             sb.append(c)
         }
         return sb.toString()
@@ -125,7 +132,7 @@ private suspend fun ComposeAsyncReader.word(): String {
     val sb = StringBuilder()
     while (true) {
         try {
-            val c = read()
+            val c = read() ?: return sb.toString()
             if (c.isBreak && c != '.') {
                 addFirst(c)
                 return sb.toString()

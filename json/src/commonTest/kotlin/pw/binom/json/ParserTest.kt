@@ -22,4 +22,15 @@ class ParserTest {
             assertEquals("""{"test":"Hello!","array":["OLOLO"],"array1":[],"bool":false,"null":null,"int":123,"float1":123.5,"float2":0.5}""", sb.toString())
         }
     }
+
+    @Test
+    fun `spec symbols`() {
+        val txt = """{"name":"Hello\nFrom\n\"Hollywood\""}"""
+
+        async {
+            val r = JsonDomReader()
+            JsonReader(txt.asReader().asAsync()).accept(r)
+            assertEquals("Hello\nFrom\n\"Hollywood\"",r.node.obj["name"]!!.text)
+        }
+    }
 }
