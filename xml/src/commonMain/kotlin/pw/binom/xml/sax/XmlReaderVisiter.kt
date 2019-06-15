@@ -160,12 +160,15 @@ internal suspend fun ComposeAsyncReader.readText(text: String): Boolean {
     }
 }
 
-private suspend fun ComposeAsyncReader.isNextChar(charFunc: (Char) -> Boolean) = try {
-    val c = read()
-    addFirst(c)
-    charFunc(c)
-} catch (e: EOFException) {
-    false
+private suspend fun ComposeAsyncReader.isNextChar(charFunc: (Char) -> Boolean): Boolean {
+    return try {
+        val c = read() ?: return false
+        addFirst(c)
+        charFunc(c)
+    } catch (e: EOFException) {
+        false
+    }
+
 }
 
 internal suspend fun ComposeAsyncReader.skipSpaces() {
@@ -190,7 +193,7 @@ internal suspend fun ComposeAsyncReader.word(): String {
     val sb = StringBuilder()
     while (true) {
         try {
-            val c = read()
+            val c = read()?:return sb.toString()
             if (c.isBreak && c != '.') {
                 addFirst(c)
                 return sb.toString()
