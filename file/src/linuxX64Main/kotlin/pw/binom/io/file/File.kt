@@ -47,7 +47,13 @@ actual class File actual constructor(path: String) {
 
     actual fun mkdir(): Boolean = mkdir(path, ACCESSPERMS) == 0
 
-    override fun toString(): String = path
+    actual override fun toString(): String = path
+    actual override fun equals(other: Any?): Boolean {
+        if (other !is File) return false
+        return path == other.path
+    }
+
+    actual override fun hashCode(): Int = 31 + path.hashCode()
 
     init {
         freeze()

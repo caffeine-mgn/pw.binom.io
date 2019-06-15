@@ -10,7 +10,12 @@ actual class FileOutputStream actual constructor(file: File, append: Boolean) : 
         native.flush()
     }
 
-    internal val native = JFileOutputStream(file.native, append)
+    internal val native = try {
+        JFileOutputStream(file.native, append)
+    } catch (e: java.io.FileNotFoundException) {
+        throw FileNotFoundException(file.path)
+    }
+
     actual override fun write(data: ByteArray, offset: Int, length: Int): Int =
             try {
                 native.write(data, offset, length)

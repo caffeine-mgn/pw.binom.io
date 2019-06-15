@@ -20,6 +20,10 @@ expect class File(path: String) {
     companion object {
         val SEPARATOR: Char
     }
+
+    override fun equals(other: Any?): Boolean
+    override fun hashCode(): Int
+    override fun toString(): String
 }
 
 val File.isExist: Boolean
