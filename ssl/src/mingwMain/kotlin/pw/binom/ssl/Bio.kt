@@ -11,18 +11,18 @@ import pw.binom.io.OutputStream
 inline class Bio(val self: CPointer<BIO>) : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
             memScoped {
-                val readed = alloc<size_tVar>()
-                if (BIO_read_ex(self, data.refTo(offset), length.convert(), readed.ptr) < 0)
+                val r = BIO_read(self, data.refTo(offset), length.convert())
+                if (r < 0)
                     TODO()
-                readed.value.toInt()
+                r
             }
 
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
             memScoped {
-                val wrote = alloc<size_tVar>()
-                if (BIO_write_ex(self, data.refTo(offset), length.convert(), wrote.ptr) < 0)
+                val r = BIO_write(self, data.refTo(offset), length.convert())
+                if (r < 0)
                     TODO()
-                wrote.value.toInt()
+                r
             }
 
     override fun close() {
