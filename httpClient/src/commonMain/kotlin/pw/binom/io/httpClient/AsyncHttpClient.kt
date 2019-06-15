@@ -4,7 +4,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.URL
 import pw.binom.io.*
 import pw.binom.io.socket.ConnectionManager
-import pw.binom.io.socket.RawSocketChannel
+import pw.binom.io.socket.SocketChannel
 import pw.binom.io.socket.SocketClosedException
 
 class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
@@ -16,7 +16,7 @@ class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
         }
     }
 
-    private val connections = HashMap<String, ArrayList<RawSocketChannel>>()
+    private val connections = HashMap<String, ArrayList<SocketChannel>>()
 
     private fun cleanUp() {
         val cit = connections.entries.iterator()
@@ -35,7 +35,7 @@ class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
         }
     }
 
-    internal fun pollConnection(proto: String, host: String, port: Int): RawSocketChannel? {
+    internal fun pollConnection(proto: String, host: String, port: Int): SocketChannel? {
         cleanUp()
         val key = "$proto://$host:$port"
         val con = connections[key] ?: return null
@@ -45,7 +45,7 @@ class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
         return r
     }
 
-    internal fun pushConnection(proto: String, host: String, port: Int, socket: RawSocketChannel) {
+    internal fun pushConnection(proto: String, host: String, port: Int, socket: SocketChannel) {
         if (!socket.isConnected)
             return
         val key = "$proto://$host:$port"
@@ -105,7 +105,7 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
         get() = _inputStream
 
     override val outputStream: AsyncOutputStream
-        get() = connect().output
+        get() = _outputStream
 
 
     override suspend fun responseCode(): Int {
@@ -114,6 +114,21 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
     }
 
     private var eof = false
+
+    private inner class RawOutputStream : AsyncOutputStream {
+        override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
+            sendRequest()
+            return connect().output.write(data, offset, length)
+        }
+
+        override suspend fun flush() {
+            connect().output.flush()
+        }
+
+        override suspend fun close() {
+        }
+
+    }
 
     private inner class RawInputStream : AsyncInputStream {
         private var readed = 0uL
@@ -185,6 +200,7 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
     }
 
     private val _inputStream = RawInputStream()
+    private val _outputStream = RawOutputStream()
 
     private var requestSend = false
     private var responseRead = false
