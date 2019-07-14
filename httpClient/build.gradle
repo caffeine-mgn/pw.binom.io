@@ -1,33 +1,32 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
-
 kotlin {
-    targets {
 
-        fromPreset(kotlin.presets.linuxX64, 'linuxX64') {
-            compilations.main.outputKinds 'static'
-        }
-
-        fromPreset(kotlin.presets.linuxArm32Hfp, 'linuxArm32') {
-            compilations.main.outputKinds 'static'
-        }
-
-        fromPreset(kotlin.presets.jvm, 'jvm') {
-
-        }
-
-        fromPreset(kotlin.presets.mingwX64, 'mingw') {
-            compilations.main.outputKinds 'static'
-        }
-
-        fromPreset(kotlin.presets.mingwX86, 'mingwX86') {
-            compilations.main.outputKinds 'static'
-        }
-
-        presets.forEach {
-            println("target=${it.name}")
+    linuxX64 { // Use your target instead.
+        binaries {
+            staticLib()
         }
     }
+
+    linuxArm32Hfp { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
+    mingwX64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
+    mingwX86 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
+    jvm()
 
     sourceSets {
 
@@ -37,6 +36,7 @@ kotlin {
                 api project(":core")
                 api project(":socket")
                 api project(":server")
+                api project(":http")
             }
         }
         commonTest {
@@ -47,7 +47,7 @@ kotlin {
             }
         }
 
-        mingwMain {
+        mingwX64Main {
             dependencies {
                 dependsOn linuxX64Main
             }
@@ -65,7 +65,7 @@ kotlin {
             }
         }
 
-        linuxArm32Main {
+        linuxArm32HfpMain {
             dependencies {
                 dependsOn linuxX64Main
             }

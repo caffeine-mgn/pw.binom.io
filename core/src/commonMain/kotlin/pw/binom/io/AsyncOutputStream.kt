@@ -2,6 +2,8 @@ package pw.binom.io
 
 import pw.binom.asUTF8ByteArray
 import pw.binom.get
+import pw.binom.internal_write
+import pw.binom.internal_writeln
 
 interface AsyncOutputStream : AsyncCloseable {
     suspend fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
@@ -13,14 +15,10 @@ suspend fun AsyncOutputStream.write(value: Byte): Boolean {
     return write(data) == 1
 }
 
-suspend fun AsyncOutputStream.write(text: String) {
-    write(text.asUTF8ByteArray())
-}
+suspend fun AsyncOutputStream.write(text: String) = internal_write(text) { write(it) }
 
-suspend fun AsyncOutputStream.writeln(text: String) {
-    write(text)
-    write("\r\n")
-}
+suspend fun AsyncOutputStream.writeln(text: String) = internal_writeln(text) { write(it) }
+suspend fun AsyncOutputStream.writeln() = internal_writeln("") { write(it) }
 
 suspend fun AsyncOutputStream.writeShort(value: Short) {
     write(value[0])

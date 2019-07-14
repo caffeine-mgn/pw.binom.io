@@ -12,7 +12,7 @@ class TestThreadUtils {
         val end = Thread.currentTimeMillis()
 
         assertTrue(end > start)
+        println("end - start = ${end - start}")
         assertTrue(end - start in 500..1000)
-
     }
 }

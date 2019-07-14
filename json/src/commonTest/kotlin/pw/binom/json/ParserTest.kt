@@ -25,12 +25,12 @@ class ParserTest {
 
     @Test
     fun `spec symbols`() {
-        val txt = """{"name":"Hello\nFrom\n\"Hollywood\""}"""
+        val txt = """{"name":"\\Hello\nFrom\n\"Hollywood\""}"""
 
         async {
             val r = JsonDomReader()
             JsonReader(txt.asReader().asAsync()).accept(r)
-            assertEquals("Hello\nFrom\n\"Hollywood\"",r.node.obj["name"]!!.text)
+            assertEquals("\\Hello\nFrom\n\"Hollywood\"",r.node.obj["name"]!!.text)
         }
     }
 }

@@ -18,11 +18,11 @@ interface Process : Closeable {
      * @throws ProcessStillActive throw when process still running
      */
     val exitStatus: Int
-    val isActive:Boolean
+    val isActive: Boolean
 
     fun join()
 
     class ProcessStillActive : RuntimeException()
 }
 
-expect fun Process.Companion.execute(path: String, args: Array<String>, workDir: String?): Process
+expect fun Process.Companion.execute(path: String, args: List<String>, env: Map<String, String>, workDir: String?): Process

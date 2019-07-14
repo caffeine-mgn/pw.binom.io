@@ -31,7 +31,7 @@ class PopResult<T> {
 
 interface Queue<T> {
     val isEmpty: Boolean
-    val size:Int
+    val size: Int
     fun pop(): T
     fun pop(dist: PopResult<T>)
 }
@@ -39,6 +39,35 @@ interface Queue<T> {
 interface AppendableQueue<T> : Queue<T> {
     fun push(value: T)
     fun peek(): T
+}
+
+class PopTimeoutException : RuntimeException()
+
+fun <T> Queue<T>.popAwait(timeout: Long? = null): T {
+    val dist = PopResult<T>()
+    if (timeout == null) {
+        do {
+            pop(dist)
+            if (dist.isEmpty) {
+                Thread.sleep(1)
+                continue
+            } else {
+                return dist.value
+            }
+        } while (true)
+    } else {
+        val start = Thread.currentTimeMillis()
+        do {
+            pop(dist)
+            if (!dist.isEmpty)
+                return dist.value
+
+            if (Thread.currentTimeMillis() - start > timeout)
+                throw PopTimeoutException()
+
+            Thread.sleep(1)
+        } while (true)
+    }
 }
 
 /**
@@ -72,7 +101,7 @@ fun <T> Queue<T>.popOrNull(): T? {
     return result.value
 }
 
-fun <T> Queue<T>.popOrElse(func: () -> T): T? {
+fun <T> Queue<T>.popOrElse(func: () -> T): T {
     val result = PopResult<T>()
     pop(result)
     if (result.isEmpty)

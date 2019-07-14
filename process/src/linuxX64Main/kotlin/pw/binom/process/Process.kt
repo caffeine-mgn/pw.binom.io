@@ -5,7 +5,7 @@ import platform.posix.*
 
 private fun WEXITSTATUS(x: Int) = (x shr 8)
 
-class LinuxProcess(exe: String, args: List<String>, workDir: String?) : Process {
+class LinuxProcess(exe: String, args: List<String>, workDir: String?, env: Map<String, String>) : Process {
     override var pid: Long = 0
 
     override val exitStatus: Int
@@ -37,11 +37,11 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?) : Process 
         when (val r = fork()) {
             -1 -> throw RuntimeException("Can't start $exe")
             0 -> {
-                println("stdout.write=${stdout.write}")
-                println("stdout.read=${stdout.read}")
-                val bb = dup2(stdout.write, STDOUT_FILENO)
-                if (bb == -1)
-                    TODO("dup2= $bb error $errno    STDOUT_FILENO=$STDOUT_FILENO")
+                env.forEach {
+                    setenv(it.key, it.value, 1)
+                }
+
+                dup2(stdout.write, STDOUT_FILENO)
                 close(stdout.read)
                 dup2(stderr.write, STDERR_FILENO)
                 close(stderr.read)
@@ -55,7 +55,6 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?) : Process 
                         r[index + 1] = s.cstr.ptr
                     }
                     r[args.lastIndex + 2] = null
-                    println("Run $exe with args: [${args.joinToString(",")}]")
                     if (workDir != null)
                         chdir(workDir)
                     val rr = execv(exe, r)
@@ -69,7 +68,6 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?) : Process 
                 close(stdout.write)
                 close(stderr.write)
                 close(stdin.read)
-                println("Process started. pid=$pid")
             }
         }
     }
@@ -82,5 +80,5 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?) : Process 
 
 }
 
-actual fun Process.Companion.execute(path: String, args: Array<String>, workDir: String?): Process =
-        LinuxProcess(exe = path, args = args.toList(), workDir = workDir)
+actual fun Process.Companion.execute(path: String, args: List<String>, env: Map<String, String>, workDir: String?): Process =
+        LinuxProcess(exe = path, args = args.toList(), workDir = workDir, env = env)

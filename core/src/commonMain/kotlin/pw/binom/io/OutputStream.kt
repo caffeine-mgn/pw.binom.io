@@ -2,25 +2,23 @@ package pw.binom.io
 
 import pw.binom.asUTF8ByteArray
 import pw.binom.get
+import pw.binom.internal_write
+import pw.binom.internal_writeln
 
 interface OutputStream : Closeable {
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
     fun flush()
 }
 
-fun OutputStream.write(text: String) {
-    write(text.asUTF8ByteArray())
-}
+fun OutputStream.write(text: String) = internal_write(text) { write(it) }
 
 fun OutputStream.write(value: Byte): Boolean {
     val data = ByteArray(1) { value }
     return write(data) == 1
 }
 
-fun OutputStream.writeln(text: String) {
-    write(text)
-    write("\r\n")
-}
+fun OutputStream.writeln(text: String) = internal_writeln(text) { write(it) }
+fun OutputStream.writeln() = internal_writeln("") { write(it) }
 
 fun OutputStream.writeShort(value: Short) {
     write(value[0])

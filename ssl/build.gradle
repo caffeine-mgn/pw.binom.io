@@ -1,100 +1,102 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
+
+def argsGenLinux(String path) {
+    return [
+            '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libssl.a",
+            '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libcrypto.a"
+    ]
+}
+
 kotlin {
-    targets {
 
-        fromPreset(kotlin.presets.linuxX64, 'linuxX64') {
-            compilations.main.outputKinds 'static'
-            compilations.main.outputKinds 'static'
-            compilations.main.outputKinds 'static'
-            def args = [
-                    '-include-binary', buildFile.parent + '/src/linuxX64Main/cinterop/lib/libssl.a',
-                    '-include-binary', buildFile.parent + '/src/linuxX64Main/cinterop/lib/libcrypto.a'
-            ]
-            compilations.main.kotlinOptions.freeCompilerArgs = args
-            compilations.test.kotlinOptions.freeCompilerArgs = args
-            compilations.main.cinterops {
-                openssl {
-                    defFile project.file("src/linuxX64Main/cinterop/openssl.def")
-                    packageName 'platform.openssl'
-                    includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxX64Main/cinterop/include"
-                    includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+    linuxX64 { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                kotlinOptions.freeCompilerArgs = argsGenLinux("linuxX64Main")
+
+                cinterops {
+                    openssl {
+                        defFile project.file("src/linuxArm32HfpMain/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
                 }
             }
-        }
-
-        fromPreset(kotlin.presets.linuxArm32Hfp, 'linuxArm32') {
-            compilations.main.outputKinds 'static'
-            compilations.main.outputKinds 'static'
-            def args = [
-                    '-include-binary', buildFile.parent + '/src/linuxArm32Main/cinterop/lib/libssl.a',
-                    '-include-binary', buildFile.parent + '/src/linuxArm32Main/cinterop/lib/libcrypto.a'
-            ]
-            compilations.main.kotlinOptions.freeCompilerArgs = args
-            compilations.test.kotlinOptions.freeCompilerArgs = args
-            compilations.main.cinterops {
-                openssl {
-                    defFile project.file("src/linuxArm32Main/cinterop/openssl.def")
-                    packageName 'platform.openssl'
-                    includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxArm32Main/cinterop/include"
-                    includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
-                }
-            }
-        }
-
-        fromPreset(kotlin.presets.jvm, 'jvm') {
-
-        }
-
-        fromPreset(kotlin.presets.mingwX64, 'mingw') {
-            compilations.main.outputKinds 'static'
-            def args = [
-//                    '-include-binary', buildFile.parent+'/src/mingwMain/cinterop/lib/libcrypto.a',
-//                    '-include-binary', buildFile.parent+'/src/mingwMain/cinterop/lib/libssl.a'
-'-include-binary', buildFile.parent + '/src/mingwMain/cinterop/lib/libopenssl.a'
-
-            ]
-            compilations.main.kotlinOptions.freeCompilerArgs = args
-            compilations.test.kotlinOptions.freeCompilerArgs = args
-            compilations.main.cinterops {
-                openssl {
-                    defFile project.file("src/mingwMain/cinterop/openssl.def")
-                    packageName 'platform.openssl'
-                    includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwMain/cinterop/include"
-                    includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
-                }
-            }
-        }
-
-        fromPreset(kotlin.presets.mingwX86, 'mingwX86') {
-            compilations.main.outputKinds 'static'
-            def args = [
-//                    '-include-binary', buildFile.parent+'/src/mingwX86Main/cinterop/lib/libssl.a',
-//                    '-include-binary', buildFile.parent+'/src/mingwX86Main/cinterop/lib/libcrypto.a',
-'-include-binary', buildFile.parent + '/src/mingwX86Main/cinterop/lib/libopenssl.a'
-            ]
-            compilations.main.kotlinOptions.freeCompilerArgs = args
-            compilations.test.kotlinOptions.freeCompilerArgs = args
-            compilations.main.cinterops {
-                openssl {
-                    defFile project.file("src/mingwX86Main/cinterop/openssl.def")
-                    packageName 'platform.openssl'
-                    includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX86Main/cinterop/include"
-                    includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
-                }
-            }
-            compilations.main.linkerOpts '-lws2_32'
-            compilations.main.linkerOpts '-lgdi32'
-            compilations.main.linkerOpts '-lwsock32'
-            compilations.test.linkerOpts '-lws2_32'
-            compilations.test.linkerOpts '-lgdi32'
-            compilations.test.linkerOpts '-lwsock32'
-        }
-
-        presets.forEach {
-            println("target=${it.name}")
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxX64Main")
         }
     }
+
+    linuxArm32Hfp { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
+
+                cinterops {
+                    openssl {
+                        defFile project.file("src/linuxArm32HfpMain/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
+                }
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
+        }
+    }
+
+    mingwX64 { // Use your target instead.
+        binaries {
+
+            def args = [
+                    '-include-binary', buildFile.parent + '/src/mingwX64Main/cinterop/lib/libopenssl.a'
+            ]
+
+            staticLib()
+            compilations.main {
+                cinterops {
+                    openssl {
+                        defFile project.file("src/mingwX64Main/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX64Main/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
+                }
+
+                kotlinOptions.freeCompilerArgs = args
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = args
+        }
+    }
+
+    mingwX86 { // Use your target instead.
+        binaries {
+
+            def args = [
+                    '-include-binary', buildFile.parent + '/src/mingwX86Main/cinterop/lib/libopenssl.a'
+            ]
+
+            staticLib()
+            compilations.main {
+                cinterops {
+                    openssl {
+                        defFile project.file("src/mingwX86Main/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX86Main/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
+                }
+
+                kotlinOptions.freeCompilerArgs = args
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = args
+        }
+    }
+
+    jvm()
 
     sourceSets {
 
@@ -124,17 +126,17 @@ kotlin {
 
         linuxX64Main {
             dependencies {
-                dependsOn mingwMain
+                dependsOn mingwX64Main
             }
         }
 
-        linuxArm32Main {
+        linuxArm32HfpMain {
             dependencies {
                 dependsOn linuxX64Main
             }
         }
 
-        mingwMain {
+        mingwX64Main {
             dependencies {
                 dependsOn commonMain
             }
@@ -142,7 +144,7 @@ kotlin {
 
         mingwX86Main {
             dependencies {
-                dependsOn mingwMain
+                dependsOn mingwX64Main
             }
         }
 

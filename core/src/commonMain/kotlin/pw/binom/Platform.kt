@@ -8,5 +8,3 @@ enum class Platform {
     MACOS,
     JVM
 }
-
-expect val PLATFORM:Platform

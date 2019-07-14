@@ -38,38 +38,30 @@ fun Reader.asAsync() = object : AsyncReader {
 
 }
 
-fun Reader.readln(): String? {
+fun Reader.readln(): String {
     val sb = StringBuilder()
     var first = true
     while (true) {
-        try {
-            val r = read()
-
-            if (r == 10.toChar())
-                break
-            if (r == 13.toChar())
-                continue
-            sb.append(r ?: break)
-            first = false
-        } catch (e: EOFException) {
-            if (first)
-                return null
+        val r = read()
+        if (r == null && first)
+            throw EOFException()
+        first = false
+        if (r == null)
             break
-        }
+
+        if (r == 10.toChar())
+            break
+        if (r == 13.toChar())
+            continue
+        sb.append(r)
     }
-    if (first)
-        return null
     return sb.toString()
 }
 
 fun Reader.readText(): String {
     val sb = StringBuilder()
     while (true) {
-        try {
-            sb.append(read() ?: break)
-        } catch (e: EOFException) {
-            break
-        }
+        sb.append(read() ?: break)
     }
     return sb.toString()
 }

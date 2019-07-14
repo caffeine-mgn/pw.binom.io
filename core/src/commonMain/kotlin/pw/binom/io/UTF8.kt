@@ -27,15 +27,19 @@ object UTF8 {
     }
 
     private inline fun _read(read: () -> Byte) =
-            when (val data = read()) {
-                in 0..126 -> data.toChar()
-                (-48).toByte() -> {
-                    ((4 shl 8) or (read().toInt() + 128)).toChar()
+            try {
+                when (val data = read()) {
+                    in 0..126 -> data.toChar()
+                    (-48).toByte() -> {
+                        ((4 shl 8) or (read().toInt() + 128)).toChar()
+                    }
+                    (-47).toByte() -> {
+                        ((4 shl 8) or (read().toInt() + 128 + 64)).toChar()
+                    }
+                    else -> throw RuntimeException("Unknown Control Byte $data")
                 }
-                (-47).toByte() -> {
-                    ((4 shl 8) or (read().toInt() + 128 + 64)).toChar()
-                }
-                else -> throw RuntimeException("Unknown Control Byte $data")
+            } catch (e:EOFException){
+                null
             }
 
     fun write(char: Char, stream: OutputStream) {
@@ -77,7 +81,7 @@ object UTF8 {
                 try {
                     return@_read stream.read()
                 } catch (e: EOFException) {
-                    //NOP
+                    return null
                 }
             } while (true)
             TODO()

@@ -3,6 +3,7 @@ package pw.binom.io
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.asUTF8String
 import pw.binom.fromBytes
+import pw.binom.internal_readln
 
 interface InputStream : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
@@ -22,21 +23,7 @@ fun InputStream.read(): Byte {
     return b[0]
 }
 
-fun InputStream.readln(): String {
-    val sb = StringBuilder()
-    val buf = ByteArray(1)
-    while (true) {
-        val r = read(buf, 0, 1)
-        if (r == 0 || buf[0] == 10.toByte()) {
-            return sb.toString()
-        }
-
-        if (buf[0] == 13.toByte()) {
-            continue
-        }
-        sb.append(buf[0].toChar())
-    }
-}
+fun InputStream.readln(): String = internal_readln { read() }
 
 fun InputStream.copyTo(outputStream: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
     val buf = ByteArray(bufferSize)

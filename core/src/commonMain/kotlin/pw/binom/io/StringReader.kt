@@ -4,11 +4,11 @@ class StringReader(private val data: String) : Reader {
     private var cursor = 0
     private var closed = false
 
-    override fun read(): Char {
+    override fun read(): Char? {
         if (closed)
             throw IllegalStateException("String Reader already was closed")
         if (cursor >= data.length)
-            throw EOFException()
+            return null
         return data[cursor++]
     }
 
@@ -17,7 +17,7 @@ class StringReader(private val data: String) : Reader {
             throw IndexOutOfBoundsException()
         var i = 0
         while (cursor < this.data.length && i < length) {
-            data[offset + i++] = read()
+            data[offset + i++] = read() ?: break
         }
         return i
     }

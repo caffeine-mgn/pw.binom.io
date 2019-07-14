@@ -7,23 +7,19 @@ class ComposeReader : AbstractReader() {
     private val readers = Stack<Reader>()
     private var current = PopResult<Reader>()
 
-    override fun read(): Char {
+    override fun read(): Char? {
         while (true) {
             if (current.isEmpty) {
                 readers.popFirst(current)
                 if (current.isEmpty)
-                    throw EOFException()
+                    return null
             }
-            try {
-                val r =  current.value.read()
-                if (r==null){
-                    current.clear()
-                    continue
-                }
-                return r
-            } catch (e: EOFException) {
+            val r = current.value.read()
+            if (r == null) {
                 current.clear()
+                continue
             }
+            return r
         }
     }
 

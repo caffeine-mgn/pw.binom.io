@@ -48,11 +48,11 @@ class WriterTest {
 
             w.objectValue().also {
                 it.start()
-                it.property("name").textValue("Hello\nFrom\n\"Hollywood\"")
+                it.property("name").textValue("\\Hello\nFrom\n\"Hollywood\"")
                 it.end()
             }
 
-            assertEquals("""{"name":"Hello\nFrom\n\"Hollywood\""}""", sb.toString())
+            assertEquals("""{"name":"\\Hello\nFrom\n\"Hollywood\""}""", sb.toString())
         }
     }
 }

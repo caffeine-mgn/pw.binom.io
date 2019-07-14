@@ -1,13 +1,14 @@
 package pw.binom.io.httpServer
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
+import pw.binom.io.StreamClosedException
 import pw.binom.io.readln
 import pw.binom.io.socket.ConnectionManager
 import pw.binom.io.socket.ServerSocketChannel
 import pw.binom.io.socket.SocketFactory
 import pw.binom.io.socket.rawSocketFactory
-import pw.binom.io.writeln
 import pw.binom.ssl.SSLContext
 
 /**
@@ -25,9 +26,7 @@ open class HttpServer(val manager: ConnectionManager, protected val handler: Han
                     val method: String
                     val headers = HashMap<String, ArrayList<String>>()
                     if (state == null) {
-                        println("Read request line...")
                         val request = it.input.readln()
-                        println("Request line: $request")
                         val items = request.split(' ')
                         method = items[0]
                         uri = items.getOrNull(1) ?: ""
@@ -66,6 +65,16 @@ open class HttpServer(val manager: ConnectionManager, protected val handler: Han
                         handler(request1, response)
                     } else
                         this.handler.request(request1, response)
+                    try {
+                        val b = ByteArray(DEFAULT_BUFFER_SIZE)
+                        while (true) {
+                            if (request1.input.read(b) == 0)
+                                break
+                        }
+                    } catch (e: StreamClosedException) {
+                        //NOP
+                    }
+                    response.output.close()
 
 
                     if (response.disconnectFlag) {
@@ -78,8 +87,8 @@ open class HttpServer(val manager: ConnectionManager, protected val handler: Han
 
                     response.endResponse()
 
-                    connection.output.writeln("")
-                    connection.output.writeln("")
+//                    connection.output.writeln()
+//                    connection.output.writeln()
 
                     if (response.headers["Connection"]?.singleOrNull() == "keep-alive"
                             && response.headers["Content-Length"]?.singleOrNull()?.toLongOrNull() != null) {

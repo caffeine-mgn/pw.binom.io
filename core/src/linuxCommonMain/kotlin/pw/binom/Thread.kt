@@ -6,7 +6,7 @@ import kotlin.math.round
 
 actual object Thread {
     actual fun sleep(time: Long) {
-        usleep((time * 100).toUInt())
+        usleep((time * 1000).toUInt())
     }
 
     actual fun currentTimeMillis(): Long =

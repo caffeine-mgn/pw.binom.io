@@ -114,6 +114,15 @@ class ObjectCtxImpl(private val visiter: JsonObjectVisiter) : ObjectCtx {
     }
 }
 
+suspend fun jsonNode(func: suspend ObjectCtx.() -> Unit): JsonObject {
+    val w = JsonDomReader()
+    val v = w.objectValue()
+    v.start()
+    ObjectCtxImpl(v).func()
+    v.end()
+    return w.node.obj
+}
+
 suspend fun jsonNode(appendable: AsyncAppendable, func: suspend ObjectCtx.() -> Unit) {
     val w = JsonWriter(appendable)
     val v = w.objectValue()
@@ -128,4 +137,13 @@ suspend fun jsonArray(appendable: AsyncAppendable, func: suspend ArrayCtx.() -> 
     v.start()
     ArrayCtxImpl(v).func()
     v.end()
+}
+
+suspend fun jsonArray(func: suspend ArrayCtx.() -> Unit): JsonArray {
+    val w = JsonDomReader()
+    val v = w.arrayValue()
+    v.start()
+    ArrayCtxImpl(v).func()
+    v.end()
+    return w.node.array
 }

@@ -29,6 +29,7 @@ class JsonWriter(private val output: AsyncAppendable) : JsonVisiter {
                 '\r' -> output.append("\\r")
                 '\t' -> output.append("\\t")
                 '"' -> output.append("\\\"")
+                '\\' -> output.append("\\\\")
                 else -> output.append(it)
             }
         }

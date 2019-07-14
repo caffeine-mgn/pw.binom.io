@@ -2,7 +2,7 @@ package pw.binom.io
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.fail
+import kotlin.test.assertNull
 
 class StringReaderTest {
 
@@ -14,12 +14,7 @@ class StringReaderTest {
         assertEquals('2', reader.read())
         assertEquals('3', reader.read())
 
-        try {
-            reader.read()
-            fail()
-        } catch (e: EOFException) {
-            //NOP
-        }
+        assertNull(reader.read())
     }
 
     @Test

@@ -11,16 +11,24 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         native.close()
     }
 
-    private class SelectorKeyImpl(override val channel: Channel, override val attachment: Any?) : SelectorKey {
+    private val cancelledKeys = HashMap<Channel, HashSet<SelectorKeyImpl>>()
 
-        private var _canlelled = false
+    private inner class SelectorKeyImpl(override val channel: Channel, override var attachment: Any?) : SelectorKey {
+
+        private var _cancelled = false
 
         override val isCanlelled: Boolean
-            get() = _canlelled
+            get() = _cancelled
 
         override var listenReadable: Boolean
-            get() = key.interestOps() and JSelectionKey.OP_READ != 0
+            get() {
+                if (!key.isValid)
+                    TODO()
+                return key.interestOps() and JSelectionKey.OP_READ != 0
+            }
             set(value) {
+                if (!key.isValid)
+                    TODO()
                 if (value == listenReadable)
                     return
                 if (value)
@@ -29,8 +37,14 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
                     key.interestOps(key.interestOps() xor JSelectionKey.OP_READ)
             }
         override var listenWritable: Boolean
-            get() = key.interestOps() and JSelectionKey.OP_WRITE != 0
+            get() {
+                if (!key.isValid)
+                    TODO()
+                return key.interestOps() and JSelectionKey.OP_WRITE != 0
+            }
             set(value) {
+                if (!key.isValid)
+                    TODO()
                 if (value == listenWritable)
                     return
                 if (value)
@@ -44,8 +58,20 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         override fun cancel() {
             if (isCanlelled)
                 throw IllegalStateException("SocketKey already cancelled")
-            key.cancel()
-            _canlelled = true
+            cancelledKeys.getOrPut(channel) { HashSet() }.add(this)
+            listenReadable = false
+            listenWritable = false
+            _cancelled = true
+        }
+
+        fun rereg() {
+            _cancelled = false
+            listenWritable = true
+            listenReadable = true
+            cancelledKeys[channel]?.remove(this)
+            if (cancelledKeys[channel]?.isEmpty() == true) {
+                cancelledKeys.remove(channel)
+            }
         }
 
         lateinit var key: JSelectionKey
@@ -54,6 +80,12 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
     private val native = Selector.open()
 
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
+        val cancelled = cancelledKeys[channel]?.firstOrNull()
+        if (cancelled != null) {
+            cancelled.rereg()
+            cancelled.attachment = attachment
+            return cancelled
+        }
         val ss = SelectorKeyImpl(channel, attachment)
         val key = when (channel) {
             is SocketChannel -> try {
@@ -73,10 +105,19 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
     }
 
     actual fun process(timeout: Int?, func: (SelectorKey) -> Unit): Boolean {
+        if (cancelledKeys.isNotEmpty()) {
+            cancelledKeys.forEach {
+                it.value.forEach {
+                    it.key.cancel()
+                }
+            }
+            cancelledKeys.clear()
+        }
         val founded = if (timeout != null)
             native.select(timeout.toLong())
         else
             native.select()
+
 
         if (founded <= 0) {
             return false

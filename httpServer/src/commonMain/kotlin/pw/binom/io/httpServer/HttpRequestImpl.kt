@@ -1,6 +1,13 @@
+@file:UseExperimental(ExperimentalUnsignedTypes::class)
+
 package pw.binom.io.httpServer
 
+import pw.binom.io.AsyncEmptyInputStream
 import pw.binom.io.AsyncInputStream
+import pw.binom.io.LazyAsyncInputStream
+import pw.binom.io.http.AsyncChunkedInputStream
+import pw.binom.io.http.AsyncContentLengthInputStream
+import pw.binom.io.http.Headers
 import pw.binom.io.socket.ConnectionManager
 
 class HttpRequestImpl(
@@ -11,29 +18,20 @@ class HttpRequestImpl(
 
     override val contextUri = uri
 
-    override val input = object : AsyncInputStream {
-        var readed = 0L
-        override suspend fun close() {
-        }
 
-        override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {
-            val size = size
-            var localLength = length
-            if (size != null && size > 0L) {
-                if (readed + localLength.toLong() > size) {
-                    localLength = (size - readed).toInt()
-                }
+    override val input = LazyAsyncInputStream {
+        when {
+            headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull() != null ->
+                AsyncContentLengthInputStream(connection.input, headers[Headers.CONTENT_LENGTH]!!.single().toULong())
+            headers[Headers.TRANSFER_ENCODING]?.any { it == Headers.CHUNKED } == true -> {
+                AsyncChunkedInputStream(connection.input)
             }
-            if (localLength == 0)
-                return 0
-            val r = connection.input.read(data, offset, localLength)
-            readed += r
-            return r
+            else -> AsyncEmptyInputStream
         }
-
     }
+
     private val size by lazy {
-        headers["Content-Length"]?.singleOrNull()?.toLongOrNull()?.let { it }
+        headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toLongOrNull()?.let { it }
     }
 }
 

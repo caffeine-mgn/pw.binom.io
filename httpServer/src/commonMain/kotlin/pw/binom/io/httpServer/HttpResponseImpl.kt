@@ -1,6 +1,10 @@
 package pw.binom.io.httpServer
 
 import pw.binom.io.AsyncOutputStream
+import pw.binom.io.LazyAsyncOutputStream
+import pw.binom.io.http.AsyncChunkedOutputStream
+import pw.binom.io.http.AsyncContentLengthOututStream
+import pw.binom.io.http.Headers
 import pw.binom.io.socket.ConnectionManager
 import pw.binom.io.writeln
 
@@ -119,6 +123,15 @@ class HttpResponseImpl(
         if (headerResp)
             return
         headerResp = true
+
+        if (!_header.containsKey(Headers.CONNECTION)) {
+            addHeader(Headers.CONNECTION, Headers.KEEP_ALIVE)
+        }
+
+        if (!_header.containsKey(Headers.CONTENT_LENGTH)){
+            addHeader(Headers.TRANSFER_ENCODING,Headers.CHUNKED)
+        }
+
         connection.output.writeln("HTTP/1.1 $status ${statusToText(status)}")
         _header.forEach { h ->
             h.value.forEach {
@@ -126,37 +139,33 @@ class HttpResponseImpl(
             }
         }
 
+/*
 
-
-        if (!headers.containsKey("Connection")) {
-            val contentLengthDefine = headers["Content-Length"]?.singleOrNull()?.toLongOrNull() != null
+        if (!headers.containsKey(Headers.CONNECTION)) {
+            val contentLengthDefine = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toLongOrNull() != null
             if (keepAlive && contentLengthDefine) {
-                addHeader("Connection", "keep-alive")
-                connection.output.writeln("Connection: keep-alive")
+                addHeader(Headers.CONNECTION, Headers.KEEP_ALIVE)
+                connection.output.writeln("${Headers.CONNECTION}: ${Headers.KEEP_ALIVE}")
             } else {
-                addHeader("Connection", "close")
-                connection.output.writeln("Connection: close")
+                addHeader(Headers.CONNECTION, Headers.CLOSE)
+                connection.output.writeln("${Headers.CONNECTION}: ${Headers.CLOSE}")
             }
         }
-
+*/
         connection.output.writeln("")
     }
 
-    override val output = object : AsyncOutputStream {
-        override suspend fun close() {
-        }
-
-        override suspend fun flush() {
-        }
-
-        override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
-            sendHeader()
-            val w = connection.output.write(data, offset, length)
-            sendded += w
-            return w
-        }
-
-    }
+    override val output =
+            LazyAsyncOutputStream {
+                sendHeader()
+                when {
+                    this.headers[Headers.TRANSFER_ENCODING]?.any { it == Headers.CHUNKED } == true ->
+                        AsyncChunkedOutputStream(connection.output)
+                    this.headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull() != null ->
+                        AsyncContentLengthOututStream(connection.output, this.headers[Headers.CONTENT_LENGTH]!!.single().toULong())
+                    else -> throw RuntimeException("Unknown Output Stream Type")
+                }
+            }
 
     override fun addHeader(name: String, value: String) {
         _header.getOrPut(name) { ArrayList() }.add(value)
@@ -188,10 +197,10 @@ class HttpResponseImpl(
     }
 
     init {
-        if (!headers.containsKey("Server"))
-            resetHeader("Server", "Binom Server")
-        if (!headers.containsKey("Content-Type"))
-            resetHeader("Content-Type", "text/html; charset=utf-8")
+        if (!headers.containsKey(Headers.SERVER))
+            resetHeader(Headers.SERVER, "Binom Server")
+        if (!headers.containsKey(Headers.CONTENT_TYPE))
+            resetHeader(Headers.CONTENT_TYPE, "text/html; charset=utf-8")
     }
 }
 

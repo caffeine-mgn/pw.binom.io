@@ -1,32 +1,41 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
 kotlin {
-    targets {
-        fromPreset(kotlin.presets.linuxX64, 'linuxX64') {
-            compilations.main.outputKinds 'executable'
-            compilations.main.entryPoint = 'pw.binom.io.examples.httpClient.main'
-        }
+    def nativeEntryPoint='pw.binom.io.examples.httpClient.main'
 
-        fromPreset(kotlin.presets.linuxArm32Hfp, 'linuxArm32') {
-            compilations.main.outputKinds 'executable'
-            compilations.main.entryPoint = 'pw.binom.io.examples.httpClient.main'
-        }
-
-        fromPreset(kotlin.presets.mingwX64, 'mingw') {
-            compilations.main.outputKinds 'executable'
-            compilations.main.entryPoint = 'pw.binom.io.examples.httpClient.main'
-        }
-
-        fromPreset(kotlin.presets.mingwX86, 'mingwX86') {
-            compilations.main.outputKinds 'executable'
-            compilations.main.entryPoint = 'pw.binom.io.examples.httpClient.main'
-        }
-
-
-        fromPreset(kotlin.presets.jvm, 'jvm') {
-
+    linuxX64 { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
         }
     }
+
+    linuxArm32Hfp { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+
+    mingwX64 { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+
+    mingwX86 { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+
+    jvm()
 
     sourceSets {
 
@@ -38,13 +47,13 @@ kotlin {
             }
         }
 
-        mingwMain {
+        mingwX64Main {
             dependencies {
                 dependsOn commonMain
             }
         }
 
-        mingwMainX86 {
+        mingwX86Main {
             dependencies {
                 dependsOn commonMain
             }
@@ -56,7 +65,7 @@ kotlin {
             }
         }
 
-        linuxArm32Main {
+        linuxArm32HfpMain {
             dependencies {
                 dependsOn commonMain
             }
