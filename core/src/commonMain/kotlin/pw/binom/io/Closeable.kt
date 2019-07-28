@@ -1,5 +1,7 @@
 package pw.binom.io
 
+class ClosedException : RuntimeException()
+
 interface Closeable {
     fun close()
 }

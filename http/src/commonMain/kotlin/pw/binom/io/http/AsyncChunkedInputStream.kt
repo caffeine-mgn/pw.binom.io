@@ -32,7 +32,6 @@ open class AsyncChunkedInputStream(val stream: AsyncInputStream) : AsyncHttpInpu
                 )
                     throw IOException("Invalid end body  $b1  $b2")
                 eof = true
-                close()
                 return 0
             }
             if (chunkedSize!! - readed <= 0uL) {

@@ -2,6 +2,7 @@ package pw.binom.process
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import pw.binom.Thread
 
 private fun WEXITSTATUS(x: Int) = (x shr 8)
 
@@ -76,6 +77,13 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?, env: Map<S
         stdout.free()
         stderr.free()
         stdin.free()
+        kill(pid.convert(), SIGINT)
+        val time = Thread.currentTimeMillis()
+        while (Thread.currentTimeMillis() - time < 1000 && isActive) {
+            //NOP
+        }
+        if (isActive)
+            kill(pid.convert(), SIGKILL)
     }
 
 }

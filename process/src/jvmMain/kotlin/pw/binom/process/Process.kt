@@ -6,6 +6,7 @@ import pw.binom.io.wrap
 import java.io.File
 
 class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<String, String>) : Process {
+
     val process: java.lang.Process
 
     init {
@@ -40,6 +41,8 @@ class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<Str
 
     override fun close() {
         process.destroy()
+        if (isActive)
+            process.destroyForcibly()
     }
 
 }

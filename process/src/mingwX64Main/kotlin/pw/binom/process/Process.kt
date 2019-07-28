@@ -120,6 +120,9 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
         stdout.close()
         stderr.close()
         stdin.close()
+
+        TerminateProcess(processHandle,1.convert())
+
         CloseHandle(processHandle)
     }
 

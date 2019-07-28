@@ -84,6 +84,10 @@ open class ConnectionManager : Closeable {
         }
 
         override fun close() {
+            while (!writeWaitList.isEmpty)
+                writeWaitList.pop().continuation.resumeWithException(ClosedException())
+            while (!readWaitList.isEmpty)
+                readWaitList.pop().continuation.resumeWithException(ClosedException())
             detach().close()
         }
 
@@ -222,7 +226,10 @@ open class ConnectionManager : Closeable {
 
     override fun close() {
         selector.keys.toTypedArray().forEach {
-            it.channel.close()
+            val con = (it.attachment as? Connection) ?: return@forEach
+            if (con.manager === this) {
+                con.close()
+            }
         }
         selector.close()
     }

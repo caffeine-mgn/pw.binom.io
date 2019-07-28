@@ -62,10 +62,12 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
         addr.sin_family = AF_INET.convert()
         addr.sin_port = htons(port.toUShort())
 
-        if (inet_pton(AF_INET, host, addr.sin_addr.ptr) <= 0) {
-            val server = gethostbyname(host) ?: throw SocketConnectException("Unknown host $host")
-            addr.sin_addr.s_addr = server.pointed.h_addr_list!![0]!!.reinterpret<UIntVar>().pointed.value
-        }
+//        if (inet_pton(AF_INET, host, addr.sin_addr.ptr) <= 0) {
+//
+//        }
+
+        val server = gethostbyname(host) ?: throw SocketConnectException("Unknown host \"$host\"")
+        addr.sin_addr.s_addr = server.pointed.h_addr_list!![0]!!.reinterpret<UIntVar>().pointed.value
 
         val r = connect(native.native, addr.ptr.reinterpret(), sizeOf<sockaddr_in>().convert())
         if (r < 0) {
