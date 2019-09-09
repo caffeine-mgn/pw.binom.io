@@ -4,18 +4,22 @@ import pw.binom.io.AsyncAppendable
 
 interface ObjectCtx {
     suspend fun node(name: String, func: suspend ObjectCtx.() -> Unit)
+    suspend fun node(name: String, obj: JsonObject?)
     suspend fun array(name: String, func: suspend ArrayCtx.() -> Unit)
-    suspend fun string(name: String, value: String)
+    suspend fun array(name: String, array: JsonArray?)
+    suspend fun string(name: String, value: String?)
     suspend fun number(name: String, value: Double)
     suspend fun number(name: String, value: Float)
     suspend fun number(name: String, value: Int)
     suspend fun number(name: String, value: Long)
+    suspend fun number(name: String, value: Byte)
     suspend fun bool(name: String, value: Boolean)
     suspend fun attrNull(name: String)
 }
 
 interface ArrayCtx {
     suspend fun node(func: suspend ObjectCtx.() -> Unit)
+    suspend fun node(obj: JsonObject)
     suspend fun array(func: suspend ArrayCtx.() -> Unit)
     suspend fun item(value: String)
     suspend fun item(value: Double)
@@ -27,6 +31,10 @@ interface ArrayCtx {
 }
 
 class ArrayCtxImpl(private val visiter: JsonArrayVisiter) : ArrayCtx {
+    override suspend fun node(obj: JsonObject) {
+        obj.accept(visiter.element())
+    }
+
     override suspend fun bool(value: Boolean) {
         visiter.element().booleanValue(value)
     }
@@ -71,6 +79,22 @@ class ArrayCtxImpl(private val visiter: JsonArrayVisiter) : ArrayCtx {
 }
 
 class ObjectCtxImpl(private val visiter: JsonObjectVisiter) : ObjectCtx {
+    override suspend fun array(name: String, array: JsonArray?) {
+        val vis = visiter.property(name)
+        if (array == null)
+            vis.nullValue()
+        else
+            array.accept(vis.arrayValue())
+    }
+
+    override suspend fun node(name: String, obj: JsonObject?) {
+        val vis = visiter.property(name)
+        if (obj == null)
+            vis.nullValue()
+        else
+            obj.accept(vis)
+    }
+
     override suspend fun attrNull(name: String) {
         visiter.property(name).nullValue()
     }
@@ -93,15 +117,23 @@ class ObjectCtxImpl(private val visiter: JsonObjectVisiter) : ObjectCtx {
         w.end()
     }
 
-    override suspend fun string(name: String, value: String) {
-        visiter.property(name).textValue(value)
+    override suspend fun string(name: String, value: String?) {
+        if (value == null)
+            visiter.property(name).nullValue()
+        else
+            visiter.property(name).textValue(value)
     }
+
 
     override suspend fun number(name: String, value: Double) {
         visiter.property(name).numberValue(value.toString())
     }
 
     override suspend fun number(name: String, value: Float) {
+        visiter.property(name).numberValue(value.toString())
+    }
+
+    override suspend fun number(name: String, value: Byte) {
         visiter.property(name).numberValue(value.toString())
     }
 

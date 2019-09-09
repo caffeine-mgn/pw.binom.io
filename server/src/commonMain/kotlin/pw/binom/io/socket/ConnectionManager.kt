@@ -141,7 +141,6 @@ open class ConnectionManager : Closeable {
                         }
                         ev.continuation.resume(readBytesCount)
                     } catch (e: Throwable) {
-                        println("ERROR #1: $e")
                         client.close()
                         throw e
                     }

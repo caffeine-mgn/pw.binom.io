@@ -9,7 +9,7 @@ import pw.binom.toMillis
 import kotlin.native.concurrent.freeze
 
 actual class File actual constructor(path: String) {
-    actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR$name")
+    actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR${name.removePrefix("/").removePrefix("\\")}")
 
     actual val path: String = replacePath(path)
 

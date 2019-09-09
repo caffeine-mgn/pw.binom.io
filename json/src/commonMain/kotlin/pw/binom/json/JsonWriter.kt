@@ -1,6 +1,8 @@
 package pw.binom.json
 
 import pw.binom.io.AsyncAppendable
+import pw.binom.io.AsyncOutputStream
+import pw.binom.io.utf8Appendable
 
 class JsonWriter(private val output: AsyncAppendable) : JsonVisiter {
     override suspend fun numberValue(value: String) {
@@ -107,4 +109,8 @@ private class JsonArrayWriter(val output: AsyncAppendable) : JsonArrayVisiter {
         output.append(']')
         done = true
     }
+}
+
+suspend fun AsyncOutputStream.write(json: JsonNode) {
+    json.accept(JsonWriter(utf8Appendable()))
 }

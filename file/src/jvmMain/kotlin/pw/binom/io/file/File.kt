@@ -6,7 +6,7 @@ actual class File actual constructor(path: String) {
 
     internal val native = JFile(path)
 
-    actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR$name")
+    actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR${name.removePrefix("/").removePrefix("\\")}")
 
     actual val path: String = replacePath(path)
     actual val isFile: Boolean

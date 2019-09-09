@@ -8,6 +8,8 @@ import pw.binom.internal_readln
 interface InputStream : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
 
+    fun skip(length: Long):Long = 0L
+
     /**
      * the number of bytes that can be read from this input stream without blocking.
      * returns -1 of not support available property

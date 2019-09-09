@@ -7,6 +7,9 @@ import java.io.FileInputStream as JFileInputStream
 import java.io.IOException as JIOException
 
 actual class FileInputStream actual constructor(file: File) : InputStream {
+    override fun skip(length: Long): Long {
+        return native.skip(length)
+    }
 
     init {
         if (!file.native.isFile)

@@ -7,7 +7,7 @@ expect class Date {
     val year: Int
     val month: Int
     val dayOfMonth: Int
-    val dayOfWeek:Int
+    val dayOfWeek: Int
     val hours: Int
     val min: Int
     val sec: Int
@@ -26,6 +26,12 @@ expect class Date {
         val timeZoneOffset: Int
     }
 }
+
+val Date.timeUTC: Long
+    get() = time - Date.timeZoneOffset.toLong() * 60 * 1000
+
+fun Date.Companion.fromUTC(time: Long) =
+        Date(time + Date.timeZoneOffset.toLong() * 60 * 1000)
 
 fun Date.Companion.from(year: Int = 0, month: Int = 0, dayOfMonth: Int = 0, hours: Int = 0, min: Int = 0, sec: Int = 0) =
         Date(year, month, dayOfMonth, hours, min, sec)

@@ -10,13 +10,16 @@ class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<Str
     val process: java.lang.Process
 
     init {
+        println("create proces... $cmd [$args]. env=$env")
         val pb = ProcessBuilder(listOf(cmd) + args)
         pb.environment().clear()
         pb.environment().putAll(env)
         workDir?.let { pb.directory(File(it)) }
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE)
         pb.redirectError(ProcessBuilder.Redirect.PIPE)
+        println("execute process...")
         process = pb.start()
+        println("process started! ${process.isAlive}")
     }
 
     override val pid: Long
