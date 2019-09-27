@@ -6,14 +6,15 @@ import pw.binom.internal_write
 import pw.binom.internal_writeln
 
 interface AsyncOutputStream : AsyncCloseable {
+    suspend fun write(data:Byte):Boolean
     suspend fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
     suspend fun flush()
 }
 
-suspend fun AsyncOutputStream.write(value: Byte): Boolean {
-    numberArray[0] = value
-    return write(numberArray, 0, 1) == 1
-}
+//suspend fun AsyncOutputStream.write(value: Byte): Boolean {
+//    numberArray[0] = value
+//    return write(numberArray, 0, 1) == 1
+//}
 
 suspend fun AsyncOutputStream.write(text: String) = internal_write(text) { write(it) }
 
@@ -60,6 +61,9 @@ suspend fun AsyncOutputStream.writeUTF8String(value: String) {
 }
 
 fun OutputStream.asAsync(): AsyncOutputStream = object : AsyncOutputStream {
+    override suspend fun write(data: Byte): Boolean =
+            this@asAsync.write(data)
+
     override suspend fun close() {
         this@asAsync.close()
     }

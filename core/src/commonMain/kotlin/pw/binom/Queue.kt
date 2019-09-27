@@ -40,7 +40,7 @@ interface AppendableQueue<T> : Queue<T> {
     fun push(value: T)
     fun peek(): T
 }
-
+/*
 class PopTimeoutException : RuntimeException()
 
 fun <T> Queue<T>.popAwait(timeout: Long? = null): T {
@@ -92,7 +92,7 @@ fun <T> Queue<T>.popAwait(dist: PopResult<T>, timeout: Long? = null) {
         } while (dist.isEmpty)
     }
 }
-
+*/
 fun <T> Queue<T>.popOrNull(): T? {
     val result = PopResult<T>()
     pop(result)

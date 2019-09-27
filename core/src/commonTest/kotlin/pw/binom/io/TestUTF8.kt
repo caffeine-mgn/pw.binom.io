@@ -10,7 +10,8 @@ class TestUTF8 {
 
     private fun testWriteChar(char: Char) {
         val s = ByteArrayOutputStream()
-        UTF8.write(char, s)
+        val data = ByteArray(6)
+        s.write(data, 0, UTF8.unicodeToUtf8(char, data))
 
         val d = s.toByteArray()
         val e = char.toString().asUTF8ByteArray()
@@ -24,7 +25,7 @@ class TestUTF8 {
 
     private fun testReadChar(char: Char) {
         val data = char.toString().asUTF8ByteArray()
-        assertEquals(char, UTF8.read(ByteArrayInputStream(data)))
+        assertEquals(char, UTF8.utf8toUnicode(data[0], data, 1))
     }
 
     @Test
@@ -70,6 +71,23 @@ class TestUTF8 {
 
         testWriteChar('ё')
         testWriteChar('Ё')
+        testWriteChar('@')
+        testWriteChar('*')
+        testWriteChar('/')
+        testWriteChar('\\')
+        testWriteChar('\n')
+        testWriteChar('\t')
+        testWriteChar('?')
+
+        testReadChar('ё')
+        testReadChar('Ё')
+        testReadChar('@')
+        testReadChar('*')
+        testReadChar('/')
+        testReadChar('\\')
+        testReadChar('\n')
+        testReadChar('\t')
+        testReadChar('?')
     }
 
     @Test
@@ -84,7 +102,7 @@ class TestUTF8 {
 
     @Test
     fun testEndLine() {
-        val txt = "Hello\r\nFrom Server"
+        val txt = "H\r\nE"
 
         assertEquals(txt, ByteArrayInputStream(txt.asUTF8ByteArray()).utf8Reader().readText())
 

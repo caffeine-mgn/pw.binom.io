@@ -8,7 +8,7 @@ import pw.binom.internal_readln
 interface InputStream : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
 
-    fun skip(length: Long):Long = 0L
+    fun skip(length: Long): Long = 0L
 
     /**
      * the number of bytes that can be read from this input stream without blocking.
@@ -51,14 +51,30 @@ suspend fun InputStream.copyTo(outputStream: AsyncOutputStream, bufferSize: Int 
     outputStream.flush()
 }
 
-fun InputStream.readShort() =
-        Short.fromBytes(read(), read())
+fun InputStream.readShort(): Short {
+    read(numberArray, 0, Short.SIZE_BYTES)
+    return Short.fromBytes(numberArray[0], numberArray[1])
+}
 
-fun InputStream.readInt() =
-        Int.fromBytes(read(), read(), read(), read())
 
-fun InputStream.readLong() =
-        Long.fromBytes(read(), read(), read(), read(), read(), read(), read(), read())
+fun InputStream.readInt(): Int {
+    read(numberArray, 0, Int.SIZE_BYTES)
+    return Int.fromBytes(numberArray[0], numberArray[1], numberArray[2], numberArray[3])
+}
+
+fun InputStream.readLong(): Long {
+    read(numberArray, 0, Long.SIZE_BYTES)
+    return Long.fromBytes(
+            numberArray[0],
+            numberArray[1],
+            numberArray[2],
+            numberArray[3],
+            numberArray[4],
+            numberArray[5],
+            numberArray[6],
+            numberArray[7]
+    )
+}
 
 fun InputStream.readFloat() = Float.fromBits(readInt())
 fun InputStream.readDouble() = Double.fromBits(readLong())
@@ -70,6 +86,9 @@ fun InputStream.readUTF8String(): String {
 }
 
 fun InputStream.asAsync() = object : AsyncInputStream {
+    override suspend fun read(): Byte =
+            this@asAsync.read()
+
     override suspend fun close() {
         this@asAsync.close()
     }

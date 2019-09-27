@@ -18,11 +18,11 @@ import platform.windows.accept
 import platform.windows.closesocket
 import platform.windows.ioctlsocket
 import platform.windows.shutdown
-import pw.binom.Thread
 import pw.binom.io.BindException
 import pw.binom.io.ConnectException
 import pw.binom.io.IOException
 import pw.binom.io.UnknownHostException
+import pw.binom.thread.Thread
 
 internal actual fun setBlocking(native: NativeSocketHolder, value: Boolean) {
     memScoped {

@@ -7,6 +7,8 @@ package pw.binom.io
  * @param func real thread provider
  */
 class LazyAsyncInputStream(private val func: suspend () -> AsyncInputStream) : AsyncInputStream {
+    override suspend fun read(): Byte =
+            inited().read()
 
     private var inited = false
     private var stream: AsyncInputStream? = null
@@ -18,7 +20,7 @@ class LazyAsyncInputStream(private val func: suspend () -> AsyncInputStream) : A
         }
         return stream!!
     }
-val bb by lazy{}
+
     override suspend fun read(data: ByteArray, offset: Int, length: Int): Int =
             inited().read(data, offset, length)
 

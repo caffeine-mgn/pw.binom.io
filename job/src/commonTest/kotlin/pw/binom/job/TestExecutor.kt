@@ -1,5 +1,6 @@
 package pw.binom.job
 
+import pw.binom.Thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

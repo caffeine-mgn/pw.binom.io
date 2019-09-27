@@ -1,6 +1,8 @@
 package pw.binom
 
+@UseExperimental(ExperimentalStdlibApi::class)
 actual fun ByteArray.asUTF8String(offset: Int, length: Int): String =
-        this.stringFromUtf8OrThrow(start = offset, size = length)
+        this.decodeToString(startIndex = offset, endIndex = offset + length, throwOnInvalidSequence = true)
 
-actual fun String.asUTF8ByteArray(): ByteArray = this.toUtf8OrThrow()
+@UseExperimental(ExperimentalStdlibApi::class)
+actual fun String.asUTF8ByteArray(): ByteArray = this.encodeToByteArray()

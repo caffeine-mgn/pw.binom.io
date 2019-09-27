@@ -62,7 +62,7 @@ class JsonBoolean(val value: Boolean) : JsonNode {
 
 }
 
-val JsonNode.text: String
+val JsonNode.string: String
     get() = when (this) {
         is JsonString -> this.value
         is JsonNumber -> this.value

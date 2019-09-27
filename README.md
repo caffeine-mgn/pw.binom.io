@@ -13,11 +13,14 @@ Library contains next parts:<br>
 * [Http Server](httpServer)
 * [File Utils](file)
 * [Json Tools](json)
+* [RPC Tool Plugin](krpcPlugin)
+* [JSON RPC Implementation](rpcJson)
 * [XML Tools](xml)
 * [WebDav](webdav)
 * [Job Executor](job)
 * [Process API](process)
 * [SSL](ssl)
+* [Thread](thread)
 
 ## Using
 ### Gradle
@@ -30,15 +33,23 @@ repositories {
 }
 ```
 
+For using plugins you must use it:
+```groovy
+buildscript {
+    repositories {
+        maven {
+            url "http://repo.binom.pw/releases"
+        }
+    }
+}
+```
+
 ## Plans
 ### Version 0.2
 
 #### Process API
 - [x] Tools for execute external process and get external IO<br>
 See [Process](process/src/commonMain/kotlin/pw/binom/process/Process.kt)
-
-#### File IO
-- [ ] Mechanism for read/write file via one entity
 
 #### Socket IO
 - [ ] UDP support socket
@@ -71,6 +82,8 @@ and Method [xml](xml/src/commonMain/kotlin/pw/binom/xml/dom/TagWriteContext.kt)
 - [x] SSL
 - [x] Logger<br>
 See [Logger](logger/src/commonMain/kotlin/pw/binom/logger/Logger.kt)
+- [x] RPC Tool Plugin. See [Plugin](krpcPlugin), [RPC Library](krpc)
+- [x] JSON RPC [Implementation](rpcJson) 
 
 #### HTTP
 - [x] Basic Support Http Support

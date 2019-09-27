@@ -7,18 +7,18 @@ class JsonReader(reader: AsyncReader) {
     val reader = ComposeAsyncReader().addLast(reader)
 
     suspend fun accept(visiter: JsonVisiter) {
-        when (val v = reader.readNoSpace()) {
-            '{' -> {
+        when (val v = reader.readNoSpace()?.toInt()) {
+            '{'.toInt() -> {
                 parseObject(visiter.objectValue());return
             }
-            '"' -> {
+            '"'.toInt() -> {
                 visiter.textValue(parseString());return
             }
-            '[' -> {
+            '['.toInt() -> {
                 parseArray(visiter.arrayValue());return
             }
             null -> throw EOFException()
-            else -> reader.addFirst(v)
+            else -> reader.addFirst(v.toChar())
         }
 
         when (val v = reader.word()) {
@@ -37,15 +37,16 @@ class JsonReader(reader: AsyncReader) {
     private suspend fun parseArray(arrayVisiter: JsonArrayVisiter) {
         arrayVisiter.start()
         while (true) {
-            when (val c = reader.readNoSpace()) {
-                ']' -> {
+            when (val c = reader.readNoSpace()?.toInt()) {
+                ']'.toInt() -> {
                     arrayVisiter.end()
                     return
                 }
-                ',' -> {
+                ','.toInt() -> {
                 }
+                null -> throw EOFException()
                 else -> {
-                    reader.addFirst(c.toString().asReader().asAsync())
+                    reader.addFirst(c.toChar().toString().asReader().asAsync())
                     accept(arrayVisiter.element())
                 }
             }
@@ -55,16 +56,17 @@ class JsonReader(reader: AsyncReader) {
     private suspend fun parseObject(objectVisiter: JsonObjectVisiter) {
         objectVisiter.start()
         while (true) {
-            when (val c = reader.readNoSpace()) {
-                '}' -> {
+            when (val c = reader.readNoSpace()?.toInt()) {
+                '}'.toInt() -> {
                     objectVisiter.end()
                     return
                 }
-                '"' -> {
+                '"'.toInt() -> {
                     parseProperty(objectVisiter)
                 }
-                ',' -> {
+                ','.toInt() -> {
                 }
+                null -> throw EOFException()
                 else -> JsonSaxException("Unknown char \"$c\"")
             }
         }
@@ -80,19 +82,20 @@ class JsonReader(reader: AsyncReader) {
     private suspend fun parseString(): String {
         val sb = StringBuilder()
         while (true) {
-            var c = reader.read()
-            if (c == '"')
+            var c = reader.read()?.toInt()
+            if (c == '"'.toInt())
                 break
-            if (c == '\\') {
-                c = reader.read()
+            if (c == '\\'.toInt()) {
+                c = reader.read()?.toInt()
                 c = when (c) {
-                    'n' -> '\n'
-                    'r' -> '\r'
-                    't' -> '\t'
+                    'n'.toInt() -> '\n'.toInt()
+                    'r'.toInt() -> '\r'.toInt()
+                    't'.toInt() -> '\t'.toInt()
                     else -> c
                 }
             }
-            sb.append(c)
+            c ?: throw EOFException()
+            sb.append(c.toChar())
         }
         return sb.toString()
     }
@@ -101,9 +104,9 @@ class JsonReader(reader: AsyncReader) {
 private suspend fun ComposeAsyncReader.readNoSpace(): Char? {
     while (true) {
         try {
-            val c = read()
-            if (c != '\r' && c != '\n' && c != ' ')
-                return c
+            val c = read()?.toInt()
+            if (c != '\r'.toInt() && c != '\n'.toInt() && c != ' '.toInt())
+                return c?.toChar()
         } catch (e: EOFException) {
             return null
         }
@@ -113,9 +116,9 @@ private suspend fun ComposeAsyncReader.readNoSpace(): Char? {
 private suspend fun ComposeAsyncReader.skipSpaces() {
     while (true) {
         try {
-            val c = read()
-            if (c != ' ' && c != '\n' && c != '\r') {
-                addFirst(c.toString().asReader().asAsync())
+            val c = read()?.toInt()
+            if (c != ' '.toInt() && c != '\n'.toInt() && c != '\r'.toInt()) {
+                addFirst(c?.toChar()?.toString()?.asReader()?.asAsync()?:break)
                 break
             }
         } catch (e: EOFException) {
@@ -133,7 +136,7 @@ private suspend fun ComposeAsyncReader.word(): String {
     while (true) {
         try {
             val c = read() ?: return sb.toString()
-            if (c.isBreak && c != '.') {
+            if (c.isBreak && c.toInt() != '.'.toInt()) {
                 addFirst(c)
                 return sb.toString()
             }

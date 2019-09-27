@@ -1,4 +1,4 @@
-# Binom JSON
+# Binom SSL
 Kotlin Library for SSL
 
 ## Using

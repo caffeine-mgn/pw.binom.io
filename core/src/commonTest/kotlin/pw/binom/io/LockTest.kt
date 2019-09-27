@@ -1,12 +1,7 @@
 package pw.binom.io
 
-import pw.binom.AppendableQueue
-import pw.binom.Lock
-import pw.binom.atomic.AtomicInt
-import pw.binom.job.Task
-import pw.binom.job.Worker
-import pw.binom.job.execute
-import pw.binom.use
+import pw.binom.thread.Lock
+import pw.binom.thread.use
 import kotlin.test.Test
 
 class LockTest {

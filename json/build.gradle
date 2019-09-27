@@ -28,6 +28,7 @@ kotlin {
     }
     
     jvm()
+    js()
 
     sourceSets {
 
@@ -72,6 +73,18 @@ kotlin {
         mingwX86Main {
             dependencies {
                 dependsOn mingwX64Main
+            }
+        }
+
+        jsMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+            }
+        }
+
+        jsTest {
+            dependencies {
+                implementation kotlin('test-junit')
             }
         }
 

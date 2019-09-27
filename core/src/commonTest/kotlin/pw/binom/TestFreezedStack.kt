@@ -1,5 +1,6 @@
 package pw.binom
 
+import pw.binom.thread.FreezedStack
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

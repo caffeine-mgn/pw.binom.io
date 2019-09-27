@@ -5,8 +5,18 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import platform.posix.*
-import pw.binom.toMillis
 import kotlin.native.concurrent.freeze
+
+private fun timespec.toMillis():Long{
+    var s = tv_sec
+
+    var ms = round(tv_nsec / 1.0e6).toLong()
+    if (ms > 999) {
+        s++
+        ms = 0
+    }
+    return s * 1000 + ms
+}
 
 actual class File actual constructor(path: String) {
     actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR${name.removePrefix("/").removePrefix("\\")}")

@@ -15,7 +15,7 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
 
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
         if (closed)
-            throw IllegalStateException("Stream is closed")
+            throw StreamClosedException()
 
         if (length < 0)
             throw IndexOutOfBoundsException("Length can't be less than 0")
@@ -42,16 +42,18 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
 
     override fun flush() {
         if (closed)
-            throw IllegalStateException("Stream is closed")
+            throw StreamClosedException()
     }
 
     override fun close() {
         if (closed)
-            throw IllegalStateException("Stream is closed")
+            throw StreamClosedException()
         closed = true
     }
 
     actual fun toByteArray(): ByteArray {
+        if (closed)
+            throw StreamClosedException()
         val out = ByteArray(writeLen)
         if (writeLen>0)
             memcpy(out.refTo(0), buffer.refTo(0), writeLen.convert())

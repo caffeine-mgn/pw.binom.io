@@ -27,6 +27,7 @@ kotlin {
     }
     
     jvm()
+    js()
 
     sourceSets {
 
@@ -34,6 +35,7 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
+                api project(":krpc")
                 api project(":json")
             }
         }
@@ -72,6 +74,17 @@ kotlin {
         mingwX86Main {
             dependencies {
                 dependsOn mingwX64Main
+            }
+        }
+
+        jsMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+            }
+        }
+
+        jsTest {
+            dependencies {
             }
         }
 

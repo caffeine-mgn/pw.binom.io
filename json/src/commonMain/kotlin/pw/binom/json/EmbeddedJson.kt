@@ -1,181 +1,148 @@
 package pw.binom.json
 
-import pw.binom.io.AsyncAppendable
-
 interface ObjectCtx {
-    suspend fun node(name: String, func: suspend ObjectCtx.() -> Unit)
-    suspend fun node(name: String, obj: JsonObject?)
-    suspend fun array(name: String, func: suspend ArrayCtx.() -> Unit)
-    suspend fun array(name: String, array: JsonArray?)
-    suspend fun string(name: String, value: String?)
-    suspend fun number(name: String, value: Double)
-    suspend fun number(name: String, value: Float)
-    suspend fun number(name: String, value: Int)
-    suspend fun number(name: String, value: Long)
-    suspend fun number(name: String, value: Byte)
-    suspend fun bool(name: String, value: Boolean)
-    suspend fun attrNull(name: String)
+    fun node(name: String, func: ObjectCtx.() -> Unit)
+    fun node(name: String, obj: JsonNode?)
+    fun array(name: String, func: ArrayCtx.() -> Unit)
+    fun array(name: String, array: JsonArray?)
+    fun string(name: String, value: String?)
+    fun number(name: String, value: Double?)
+    fun number(name: String, value: Float?)
+    fun number(name: String, value: Int?)
+    fun number(name: String, value: Long?)
+    fun number(name: String, value: Byte?)
+    fun bool(name: String, value: Boolean?)
+    fun nil(name: String)
 }
 
 interface ArrayCtx {
-    suspend fun node(func: suspend ObjectCtx.() -> Unit)
-    suspend fun node(obj: JsonObject)
-    suspend fun array(func: suspend ArrayCtx.() -> Unit)
-    suspend fun item(value: String)
-    suspend fun item(value: Double)
-    suspend fun item(value: Float)
-    suspend fun item(value: Int)
-    suspend fun item(value: Long)
-    suspend fun bool(value: Boolean)
-    suspend fun itemNull()
+    fun node(func: ObjectCtx.() -> Unit)
+    fun node(obj: JsonNode?)
+    fun array(func: ArrayCtx.() -> Unit)
+    fun string(value: String?)
+    fun number(value: Double?)
+    fun number(value: Float?)
+    fun number(value: Int?)
+    fun number(value: Long?)
+    fun bool(value: Boolean?)
+    fun nil()
 }
 
-class ArrayCtxImpl(private val visiter: JsonArrayVisiter) : ArrayCtx {
-    override suspend fun node(obj: JsonObject) {
-        obj.accept(visiter.element())
+fun Sequence<JsonNode?>.toJsonArray() = JsonArray(toMutableList())
+
+fun Iterable<JsonNode?>.toJsonArray() = JsonArray(toMutableList())
+
+class ArrayCtxImpl : ArrayCtx {
+    val node = JsonArray()
+    override fun node(obj: JsonNode?) {
+        node.add(obj)
     }
 
-    override suspend fun bool(value: Boolean) {
-        visiter.element().booleanValue(value)
+    override fun bool(value: Boolean?) {
+        node.add(value?.let { JsonBoolean(it) })
     }
 
-    override suspend fun itemNull() {
-        visiter.element().nullValue()
+    override fun nil() {
+        node.add(null)
     }
 
-    override suspend fun array(func: suspend ArrayCtx.() -> Unit) {
-        val w = visiter.element().arrayValue()
-        w.start()
-        ArrayCtxImpl(w).func()
-        w.end()
+    override fun array(func: ArrayCtx.() -> Unit) {
+        val out = ArrayCtxImpl()
+        out.func()
+        node(out.node)
     }
 
-    override suspend fun node(func: suspend ObjectCtx.() -> Unit) {
-        val w = visiter.element().objectValue()
-        w.start()
-        ObjectCtxImpl(w).func()
-        w.end()
+    override fun node(func: ObjectCtx.() -> Unit) {
+        val out = ObjectCtxImpl()
+        out.func()
+        node(out.node)
     }
 
-    override suspend fun item(value: String) {
-        visiter.element().textValue(value)
+    override fun string(value: String?) {
+        node.add(value?.let { JsonString(it) })
     }
 
-    override suspend fun item(value: Double) {
-        visiter.element().numberValue(value.toString())
+    override fun number(value: Double?) {
+        node.add(value?.let { JsonNumber(it.toString()) })
     }
 
-    override suspend fun item(value: Float) {
-        visiter.element().numberValue(value.toString())
+    override fun number(value: Float?) {
+        node.add(value?.let { JsonNumber(it.toString()) })
     }
 
-    override suspend fun item(value: Int) {
-        visiter.element().numberValue(value.toString())
+    override fun number(value: Int?) {
+        node.add(value?.let { JsonNumber(it.toString()) })
     }
 
-    override suspend fun item(value: Long) {
-        visiter.element().numberValue(value.toString())
-    }
-}
-
-class ObjectCtxImpl(private val visiter: JsonObjectVisiter) : ObjectCtx {
-    override suspend fun array(name: String, array: JsonArray?) {
-        val vis = visiter.property(name)
-        if (array == null)
-            vis.nullValue()
-        else
-            array.accept(vis.arrayValue())
-    }
-
-    override suspend fun node(name: String, obj: JsonObject?) {
-        val vis = visiter.property(name)
-        if (obj == null)
-            vis.nullValue()
-        else
-            obj.accept(vis)
-    }
-
-    override suspend fun attrNull(name: String) {
-        visiter.property(name).nullValue()
-    }
-
-    override suspend fun bool(name: String, value: Boolean) {
-        visiter.property(name).booleanValue(value)
-    }
-
-    override suspend fun array(name: String, func: suspend ArrayCtx.() -> Unit) {
-        val w = visiter.property(name).arrayValue()
-        w.start()
-        ArrayCtxImpl(w).func()
-        w.end()
-    }
-
-    override suspend fun node(name: String, func: suspend ObjectCtx.() -> Unit) {
-        val w = visiter.property(name).objectValue()
-        w.start()
-        ObjectCtxImpl(w).func()
-        w.end()
-    }
-
-    override suspend fun string(name: String, value: String?) {
-        if (value == null)
-            visiter.property(name).nullValue()
-        else
-            visiter.property(name).textValue(value)
-    }
-
-
-    override suspend fun number(name: String, value: Double) {
-        visiter.property(name).numberValue(value.toString())
-    }
-
-    override suspend fun number(name: String, value: Float) {
-        visiter.property(name).numberValue(value.toString())
-    }
-
-    override suspend fun number(name: String, value: Byte) {
-        visiter.property(name).numberValue(value.toString())
-    }
-
-    override suspend fun number(name: String, value: Int) {
-        visiter.property(name).numberValue(value.toString())
-    }
-
-    override suspend fun number(name: String, value: Long) {
-        visiter.property(name).numberValue(value.toString())
+    override fun number(value: Long?) {
+        node.add(value?.let { JsonNumber(it.toString()) })
     }
 }
 
-suspend fun jsonNode(func: suspend ObjectCtx.() -> Unit): JsonObject {
-    val w = JsonDomReader()
-    val v = w.objectValue()
-    v.start()
-    ObjectCtxImpl(v).func()
-    v.end()
-    return w.node.obj
+class ObjectCtxImpl : ObjectCtx {
+    val node = JsonObject()
+    override fun array(name: String, array: JsonArray?) {
+        node[name] = array
+    }
+
+    override fun node(name: String, obj: JsonNode?) {
+        node[name] = obj
+    }
+
+    override fun nil(name: String) {
+        node[name] = null
+    }
+
+    override fun bool(name: String, value: Boolean?) {
+        node[name] = value?.let { JsonBoolean(it) }
+    }
+
+    override fun array(name: String, func: ArrayCtx.() -> Unit) {
+        val out = ArrayCtxImpl()
+        out.func()
+        node(name, out.node)
+    }
+
+    override fun node(name: String, func: ObjectCtx.() -> Unit) {
+        val out = ObjectCtxImpl()
+        out.func()
+        node(name, out.node)
+    }
+
+    override fun string(name: String, value: String?) {
+        node[name] = value?.let { JsonString(it) }
+    }
+
+
+    override fun number(name: String, value: Double?) {
+        node[name] = value?.let { JsonNumber(it.toString()) }
+    }
+
+    override fun number(name: String, value: Float?) {
+        node[name] = value?.let { JsonNumber(it.toString()) }
+    }
+
+    override fun number(name: String, value: Byte?) {
+        node[name] = value?.let { JsonNumber(it.toString()) }
+    }
+
+    override fun number(name: String, value: Int?) {
+        node[name] = value?.let { JsonNumber(it.toString()) }
+    }
+
+    override fun number(name: String, value: Long?) {
+        node[name] = value?.let { JsonNumber(it.toString()) }
+    }
 }
 
-suspend fun jsonNode(appendable: AsyncAppendable, func: suspend ObjectCtx.() -> Unit) {
-    val w = JsonWriter(appendable)
-    val v = w.objectValue()
-    v.start()
-    ObjectCtxImpl(v).func()
-    v.end()
+fun jsonNode(func: ObjectCtx.() -> Unit): JsonObject {
+    val out = ObjectCtxImpl()
+    out.func()
+    return out.node
 }
 
-suspend fun jsonArray(appendable: AsyncAppendable, func: suspend ArrayCtx.() -> Unit) {
-    val w = JsonWriter(appendable)
-    val v = w.arrayValue()
-    v.start()
-    ArrayCtxImpl(v).func()
-    v.end()
-}
-
-suspend fun jsonArray(func: suspend ArrayCtx.() -> Unit): JsonArray {
-    val w = JsonDomReader()
-    val v = w.arrayValue()
-    v.start()
-    ArrayCtxImpl(v).func()
-    v.end()
-    return w.node.array
+fun jsonArray(func: ArrayCtx.() -> Unit): JsonArray {
+    val out = ArrayCtxImpl()
+    out.func()
+    return out.node
 }

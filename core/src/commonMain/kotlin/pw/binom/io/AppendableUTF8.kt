@@ -1,8 +1,9 @@
 package pw.binom.io
 
 class AppendableUTF8(private val stream: OutputStream) : Appendable {
+    private val data = ByteArray(6)
     override fun append(c: Char): AppendableUTF8 {
-        UTF8.write(c, stream)
+        stream.write(data, 0, UTF8.unicodeToUtf8(c, data))
         return this
     }
 

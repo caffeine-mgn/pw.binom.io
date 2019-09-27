@@ -7,6 +7,11 @@ package pw.binom.io
  * @param func real thread provider
  */
 class LazyAsyncOutputStream(private val func: suspend () -> AsyncOutputStream) : AsyncOutputStream {
+    override suspend fun write(data: Byte): Boolean {
+        val vv = inited()
+        return vv.write(data)
+    }
+
     override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
         val vv = inited()
         return vv.write(data, offset, length)

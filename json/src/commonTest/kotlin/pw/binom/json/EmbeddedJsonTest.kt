@@ -11,11 +11,11 @@ class EmbeddedJsonTest {
     fun testNode() {
         async {
             val sb = StringBuilder()
-            jsonNode(sb.asAsync()) {
+            jsonNode {
                 node("test") {
                     string("value", "key")
                 }
-            }
+            }.write(sb.asAsync())
 
             assertEquals(sb.toString(), """{"test":{"value":"key"}}""")
         }
@@ -25,11 +25,11 @@ class EmbeddedJsonTest {
     fun testArray() {
         async {
             val sb = StringBuilder()
-            jsonArray(sb.asAsync()) {
+            jsonArray {
                 node {
                     string("value", "key")
                 }
-            }
+            }.write(sb.asAsync())
 
             assertEquals(sb.toString(), """[{"value":"key"}]""")
         }

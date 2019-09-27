@@ -3,12 +3,17 @@ package pw.binom
 import pw.binom.job.Task
 import pw.binom.job.Worker
 import pw.binom.job.execute
+import pw.binom.thread.FreezedStack
+import pw.binom.thread.Thread
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class FreezedStackTest {
 
+    /*
     @Test
+    @Ignore
     fun threding() {
         class SomeTask(val input: Queue<Int>, val output: AppendableQueue<Int>) : Task() {
             override fun execute() {
@@ -42,4 +47,5 @@ class FreezedStackTest {
 
         w.interrupt()
     }
+    */
 }

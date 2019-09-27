@@ -2,7 +2,7 @@ package pw.binom.process
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import pw.binom.Thread
+import pw.binom.thread.Thread
 
 private fun WEXITSTATUS(x: Int) = (x shr 8)
 

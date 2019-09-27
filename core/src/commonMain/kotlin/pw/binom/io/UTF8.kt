@@ -3,90 +3,177 @@ package pw.binom.io
 import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
 
-//fun Byte.toUByteSafe() = (toInt() + 128).toUByte()
-//fun UByte.toByteSafe() = (toInt() - 128).toByte()
-
 object UTF8 {
 
-    private inline fun _write(char: Char, ff: (Byte) -> Unit) {
-        val code = char.toInt()
-        when {
-            code.first == 0.toByte() -> {
-                ff(code.second)
-            }
-            code.first == 4.toByte() -> {
-                if (code.second < 64) {
-                    ff(-48)
-                    ff((code.second.toInt() - 128).toByte())
-                } else {
-                    ff(-47)
-                    ff((code.second.toInt() - 128 - 64).toByte())
-                }
-            }
-        }
-    }
 
-    private inline fun _read(read: () -> Byte) =
-            try {
-                when (val data = read()) {
-                    in 0..126 -> data.toChar()
-                    (-48).toByte() -> {
-                        ((4 shl 8) or (read().toInt() + 128)).toChar()
-                    }
-                    (-47).toByte() -> {
-                        ((4 shl 8) or (read().toInt() + 128 + 64)).toChar()
-                    }
-                    else -> throw RuntimeException("Unknown Control Byte $data")
-                }
-            } catch (e:EOFException){
-                null
+    /**
+     * Converts unicode character to utf8 character
+     *
+     * @param char input character
+     * @param out output byte array
+     * @return size of full utf8 character in bytes
+     */
+    fun unicodeToUtf8(char: Char, out: ByteArray): Int {
+        val utf = char.toInt()
+        return when {
+            utf <= 0x7F -> {
+                // Plain ASCII
+                out[0] = utf.toByte()
+                1
             }
-
-    fun write(char: Char, stream: OutputStream) {
-        _write(char) {
-            while (!stream.write(it)) {
+            utf <= 0x07FF -> {
+                // 2-byte unicode
+                out[0] = (((utf shr 6) and 0x1F) or 0xC0).toByte()
+                out[1] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                2
             }
-        }
-    }
-
-    suspend fun write(char: Char, stream: AsyncOutputStream) {
-        _write(char) {
-
-            while (!stream.write(it)) {
+            utf <= 0xFFFF -> {
+                // 3-byte unicode
+                out[0] = (((utf shr 12) and 0x0F) or 0xE0).toByte()
+                out[1] = (((utf shr 6) and 0x3F) or 0x80).toByte()
+                out[2] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                3
+            }
+            utf <= 0x10FFFF -> {
+                // 4-byte unicode
+                out[0] = (((utf shr 18) and 0x07) or 0xF0).toByte()
+                out[1] = (((utf shr 12) and 0x3F) or 0x80).toByte()
+                out[2] = (((utf shr 6) and 0x3F) or 0x80).toByte()
+                out[3] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                4
+            }
+            else -> {
+                // error - use replacement character
+                out[0] = 0xEF.toByte()
+                out[1] = 0xBF.toByte()
+                out[2] = 0xBD.toByte()
+                0
             }
         }
     }
 
-    fun read(stream: InputStream): Char? {
+    /**
+     * Returns size of character by first byte
+     *
+     * @param first byte of character
+     * @return size of full utf8 character
+     */
+    fun utf8CharSize(firstByte: Byte): Int {
+        val c = firstByte.toInt()
+        return when {
+            (c and 0x80) == 0 -> 1 - 1
+            (c and 0xE0) == 0xC0 -> 2 - 1
+            (c and 0xF0) == 0xE0 -> 3 - 1
+            (c and 0xF8) == 0xF0 -> 4 - 1
+            (c and 0xFC) == 0xF8 -> 5 - 1
+            (c and 0xFE) == 0xFC -> 6 - 1
+            else -> throw IllegalArgumentException("Unknown Character #$c")
+        }
+    }
 
-        return _read {
-            return@_read stream.read()
-//            do {
-//                if (stream.available == 0)
-//                    return null
+    /**
+     * Converts utf8 character to unicode
+     * @param firstByte first byte of utf8 character
+     * @param otherBytes other bytes of utf8 character
+     * @param offset offset for [otherBytes]
+     * @return full unicode character
+     */
+    fun utf8toUnicode(firstByte: Byte, otherBytes: ByteArray, offset: Int = 0): Char {
+        val c = firstByte.toInt()
+        var cur = offset
+        fun func() = otherBytes[cur++]
+        return when {
+            (c and 0x80) == 0 -> c
+            (c and 0xE0) == 0xC0 -> {
+                ((c and 0x1F) shl 6) or (func().toInt() and 0x3F)
+            }
+            (c and 0xF0) == 0xE0 -> {
+                ((c and 0xF) shl 12) or
+                        ((func().toInt() and 0x3F) shl 6) or
+                        ((func().toInt() and 0x3F))
+            }
+            (c and 0xF8) == 0xF0 -> {
+                ((c and 0x7) shl 18) or
+                        ((func().toInt() and 0x3F) shl 12) or
+                        ((func().toInt() and 0x3F) shl 6) or
+                        ((func().toInt() and 0x3F))
+            }
+            (c and 0xFC) == 0xF8 -> {
+                ((c and 0x3) shl 24) or
+                        ((func().toInt() and 0x3F) shl 18) or
+                        ((func().toInt() and 0x3F) shl 12) or
+                        ((func().toInt() and 0x3F) shl 6) or
+                        ((func().toInt() and 0x3F))
+            }
+            (c and 0xFE) == 0xFC -> {
+                ((c and 0x1) shl 30) or
+                        ((func().toInt() and 0x3F) shl 24) or
+                        ((func().toInt() and 0x3F) shl 18) or
+                        ((func().toInt() and 0x3F) shl 12) or
+                        ((func().toInt() and 0x3F) shl 6) or
+                        ((func().toInt() and 0x3F))
+            }
+            else -> throw IllegalArgumentException("Unknown Character #$c")
+        }.toChar()
+    }
+
+//    private inline fun _write(char: Char, ff: (Byte) -> Unit) {
+//        val data = ByteArray(40)
+//        when (unicodeToUtf8(char, data)) {
+//            1 -> {
+//                ff(data[0])
+//            }
+//            2 -> {
+//                ff(data[0])
+//                ff(data[1])
+//            }
+//            3 -> {
+//                ff(data[0])
+//                ff(data[1])
+//                ff(data[3])
+//            }
+//            4 -> {
+//                ff(data[0])
+//                ff(data[1])
+//                ff(data[2])
+//                ff(data[3])
+//            }
+//            else -> {
+//            }
+//        }
+//    }
+
+//    fun write(char: Char, stream: OutputStream) {
+//        _write(char) {
+//            while (!stream.write(it)) {
+//            }
+//        }
+//    }
+
+//    suspend fun write(char: Char, stream: AsyncOutputStream) {
+//        _write(char) {
 //
-//                try {
-//                    return@_read stream.read()
-//                } catch (e: EOFException) {
-//                    //NOP
-//                }
-//            } while (true)
-//            TODO()
-        }
-    }
+//            while (!stream.write(it)) {
+//            }
+//        }
+//    }
 
-    suspend fun read(stream: AsyncInputStream): Char? {
-        return _read {
-            do {
-                try {
-                    return@_read stream.read()
-                } catch (e: EOFException) {
-                    return null
-                }
-            } while (true)
-            TODO()
-        }
-    }
+//    fun read(stream: InputStream): Char {
+//        val firstByte = stream.read()
+//        val size = utf8CharSize(firstByte)
+//        val data = ByteArray(size)
+//        if (size > 0)
+//            stream.read(data)
+//        return utf8toUnicode(firstByte, data)
+//    }
+
+//    suspend fun read(stream: AsyncInputStream): Char? {
+//        val firstByte = stream.read()
+//        val size = utf8CharSize(firstByte)
+//        val data = ByteArray(size)
+//        stream.read(data)
+//        return utf8toUnicode(firstByte, data)
+//    }
 
     fun urlEncode(input: String): String {
         val sb = StringBuilder()
@@ -128,10 +215,3 @@ object UTF8 {
         return sb.toByteArray().asUTF8String()
     }
 }
-
-private val Int.first: Byte
-    get() = (this ushr 8).toByte()
-
-private val Int.second: Byte
-    get() = (this and 0xff).toByte()
-

@@ -7,6 +7,14 @@ open class AsyncChunkedOutputStream(
         val stream: AsyncOutputStream,
         private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE
 ) : AsyncOutputStream {
+    override suspend fun write(data: Byte): Boolean {
+        checkClosed()
+        val r = buffer.write(data)
+        if (buffer.size >= autoFlushBuffer)
+            flush()
+        return r
+    }
+
     private var closed = false
     var buffer = ByteArrayOutputStream(autoFlushBuffer)
     override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {

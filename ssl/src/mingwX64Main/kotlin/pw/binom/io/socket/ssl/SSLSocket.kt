@@ -3,7 +3,6 @@ package pw.binom.io.socket.ssl
 import kotlinx.cinterop.*
 import platform.openssl.*
 import pw.binom.Date
-import pw.binom.Thread
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
 import pw.binom.io.buffered
@@ -12,6 +11,7 @@ import pw.binom.io.socket.RawSocket
 import pw.binom.io.socket.Socket
 import pw.binom.io.socket.SocketClosedException
 import pw.binom.ssl.SSLContext
+import pw.binom.thread.Thread
 import kotlin.collections.ArrayList
 import kotlin.collections.List
 import kotlin.collections.isEmpty

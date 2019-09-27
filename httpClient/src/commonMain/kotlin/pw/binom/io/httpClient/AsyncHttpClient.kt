@@ -73,17 +73,6 @@ class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
     }
 }
 
-class PreparedAsyncInputStream<T : AsyncInputStream>(val stream: T, val func: suspend (T) -> Unit) : AsyncInputStream {
-    override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {
-        func(stream)
-        return stream.read(data, offset, length)
-    }
-
-    override suspend fun close() {
-        stream.close()
-    }
-}
-
 private class UrlConnectHTTP(val method: String, val url: URL, val client: AsyncHttpClient) : AsyncHttpClient.UrlConnect {
 
     private suspend fun skipInput() {

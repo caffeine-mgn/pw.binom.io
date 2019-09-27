@@ -106,6 +106,7 @@ kotlin {
                 api project(":core")
                 api project(":socket")
                 api project(":file")
+                api project(":thread")
             }
         }
 

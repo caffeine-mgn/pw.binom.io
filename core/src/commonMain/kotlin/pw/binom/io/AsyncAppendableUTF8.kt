@@ -1,8 +1,9 @@
 package pw.binom.io
 
 class AsyncAppendableUTF8(private val stream: AsyncOutputStream) : AsyncAppendable {
+    private val data = ByteArray(6)
     override suspend fun append(c: Char): AsyncAppendable {
-        UTF8.write(c, stream)
+        stream.write(data, 0, UTF8.unicodeToUtf8(c, data))
         return this
     }
 

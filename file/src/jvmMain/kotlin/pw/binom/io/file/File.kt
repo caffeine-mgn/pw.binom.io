@@ -1,3 +1,4 @@
+@file:JvmName("FileJvm")
 package pw.binom.io.file
 
 import java.io.File as JFile
@@ -39,5 +40,10 @@ actual class File actual constructor(path: String) {
 
     actual fun renameTo(newPath: File): Boolean =
             native.renameTo(newPath.native)
-
 }
+
+val java.io.File.asBFile: File
+    get() = File(absolutePath)
+
+val File.asJFile: java.io.File
+    get() = java.io.File(path)

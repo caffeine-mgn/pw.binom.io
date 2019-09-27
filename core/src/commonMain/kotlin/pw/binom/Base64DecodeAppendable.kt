@@ -4,7 +4,7 @@ import pw.binom.io.OutputStream
 import pw.binom.io.write
 import kotlin.experimental.or
 
-internal fun charFromBase64(value: Char): Byte =
+private fun charFromBase64(value: Char): Byte =
         when (value) {
             in ('A'..'Z') -> (value.toInt() - 'A'.toInt()).toByte()
             in ('a'..'z') -> (26 + value.toInt() - 'a'.toInt()).toByte()

@@ -1,10 +1,10 @@
 package pw.binom.job
 
 import pw.binom.AppendableQueue
-import pw.binom.Thread
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicReference
 import pw.binom.doFreeze
+import pw.binom.thread.Thread
 
 interface FuturePromise<T : Any?> {
     val isFinished: Boolean

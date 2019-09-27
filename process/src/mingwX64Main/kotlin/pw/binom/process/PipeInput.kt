@@ -2,7 +2,7 @@ package pw.binom.process
 
 import kotlinx.cinterop.*
 import platform.windows.*
-import pw.binom.Thread
+import pw.binom.thread.Thread
 import pw.binom.io.InputStream
 
 class PipeInput(val process: WinProcess) : Pipe(), InputStream {

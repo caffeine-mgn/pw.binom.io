@@ -1,9 +1,19 @@
 package pw.binom.io.httpClient
 
 import pw.binom.io.AsyncInputStream
+import pw.binom.io.EOFException
+import pw.binom.io.StreamClosedException
 import pw.binom.io.socket.SocketClosedException
 
 class AsyncClosableInputStream(val stream: AsyncInputStream) : AsyncInputStream {
+    override suspend fun read(): Byte {
+        checkClosed()
+        if (read(staticData) != 1)
+            throw EOFException()
+        return staticData[0]
+    }
+
+    private val staticData = ByteArray(1)
     private var eof = false
     private var closed = false
     override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {
@@ -25,7 +35,7 @@ class AsyncClosableInputStream(val stream: AsyncInputStream) : AsyncInputStream 
 
     private fun checkClosed() {
         if (closed)
-            throw IllegalStateException("Stream already closed")
+            throw StreamClosedException()
     }
 
 }

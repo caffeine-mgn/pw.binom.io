@@ -10,6 +10,13 @@ import kotlin.native.concurrent.ThreadLocal
 internal val numberArray = ByteArray(Long.SIZE_BYTES)
 
 interface AsyncInputStream : AsyncCloseable {
+    /**
+     * Reads one byte from stream
+     * @return byte from stream
+     * @throws EOFException when stream is empty
+     */
+    suspend fun read(): Byte
+
     suspend fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
 }
 
@@ -44,7 +51,7 @@ suspend fun AsyncInputStream.read(): Byte {
 
 suspend fun AsyncInputStream.readln(): String = internal_readln { read() }
 
-suspend fun AsyncInputStream.readShort():Short {
+suspend fun AsyncInputStream.readShort(): Short {
     if (readFully(numberArray, 0, Short.SIZE_BYTES) != Short.SIZE_BYTES)
         throw EOFException()
     return Short.fromBytes(numberArray[0], numberArray[1])

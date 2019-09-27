@@ -1,17 +1,14 @@
 package pw.binom.io.socket
 
-import pw.binom.PopResult
-import pw.binom.Stack
+import pw.binom.*
 import pw.binom.io.*
-import pw.binom.neverFreeze
-import pw.binom.start
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 open class ConnectionManager : Closeable {
-
+    class ReadInterruptException : RuntimeException()
     interface ConnectHandler {
         fun clientConnected(connection: Connection, manager: ConnectionManager)
     }
@@ -25,7 +22,21 @@ open class ConnectionManager : Closeable {
         val inputAvailable: Boolean
             get() = _inputAvailable
 
+        fun readInterrupt() {
+            while (true) {
+                val v = readWaitList.popOrNull() ?: break
+                v.continuation.resumeWithException(ReadInterruptException())
+            }
+        }
+
         val input: AsyncInputStream = object : AsyncInputStream {
+            private val staticData = ByteArray(1)
+            override suspend fun read(): Byte {
+                if (read(staticData) != 1)
+                    throw EOFException()
+                return staticData[0]
+            }
+
             override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {
                 if (detached)
                     throw IllegalStateException("Connection was detached")
@@ -44,10 +55,11 @@ open class ConnectionManager : Closeable {
         }
 
         val output: AsyncOutputStream = object : AsyncOutputStream {
+            override suspend fun write(data: Byte): Boolean =
+                    write(ByteArray(1) { data }) == 1
 
             override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
-                if (detached)
-                    throw IllegalStateException("Connection was detached")
+                check(!detached) { "Connection was detached" }
                 return suspendCoroutine { v ->
                     writeWaitList.push(WaitEvent(v, data, offset, length))
                     selectionKey.listenWritable = true
@@ -127,27 +139,6 @@ open class ConnectionManager : Closeable {
 
             var l = it.isReadable
 
-            if (!client.selectionKey.isCanlelled && it.isReadable && client.selectionKey.attachment === client) {
-                client.readWaitList.pop(popResult)
-                if (!popResult.isEmpty) {
-                    val ev = popResult.value
-                    try {
-                        val readBytesCount = try {
-                            l = false
-                            client.channel.read(ev.data, ev.offset, ev.length)
-                        } catch (e: Throwable) {
-                            ev.continuation.resumeWithException(e)
-                            return@process
-                        }
-                        ev.continuation.resume(readBytesCount)
-                    } catch (e: Throwable) {
-                        client.close()
-                        throw e
-                    }
-                }
-            }
-
-
             if (!client.selectionKey.isCanlelled && it.isWritable && client.selectionKey.attachment === client) {
                 client.writeWaitList.pop(popResult)
                 if (!popResult.isEmpty) {
@@ -163,6 +154,26 @@ open class ConnectionManager : Closeable {
                         ev.continuation.resume(wroteBytesCount)
                     } catch (e: Throwable) {
                         println("ERROR #3: $e")
+                        client.close()
+                        throw e
+                    }
+                }
+            }
+
+            if (!client.selectionKey.isCanlelled && it.isReadable && client.selectionKey.attachment === client) {
+                client.readWaitList.pop(popResult)
+                if (!popResult.isEmpty) {
+                    val ev = popResult.value
+                    try {
+                        val readBytesCount = try {
+                            l = false
+                            client.channel.read(ev.data, ev.offset, ev.length)
+                        } catch (e: Throwable) {
+                            ev.continuation.resumeWithException(e)
+                            return@process
+                        }
+                        ev.continuation.resume(readBytesCount)
+                    } catch (e: Throwable) {
                         client.close()
                         throw e
                     }

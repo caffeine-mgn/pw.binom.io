@@ -18,13 +18,24 @@ class TestBase64DecodeAppendable {
 
     @Test
     fun test2() {
-        assertEquals(0, charFromBase64('A'))
-        assertEquals(25, charFromBase64('Z'))
-        assertEquals(26, charFromBase64('a'))
-        assertEquals(51, charFromBase64('z'))
-        assertEquals(52, charFromBase64('0'))
-        assertEquals(61, charFromBase64('9'))
-        assertEquals(62, charFromBase64('+'))
-        assertEquals(63, charFromBase64('/'))
+        val out = ByteArrayOutputStream()
+        Base64DecodeAppendable(out).apply {
+            append('A')
+            append('Z')
+            append('a')
+            append('z')
+            append('0')
+            append('9')
+            append('+')
+            append('/')
+        }
+        out.toByteArray().also {
+            assertEquals(1, it[0])
+            assertEquals(-106, it[1])
+            assertEquals(-77, it[2])
+            assertEquals(-45, it[3])
+            assertEquals(-33, it[4])
+            assertEquals(-65, it[5])
+        }
     }
 }

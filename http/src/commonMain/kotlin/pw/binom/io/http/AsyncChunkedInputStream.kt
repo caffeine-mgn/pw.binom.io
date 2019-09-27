@@ -3,6 +3,14 @@ package pw.binom.io.http
 import pw.binom.io.*
 
 open class AsyncChunkedInputStream(val stream: AsyncInputStream) : AsyncHttpInputStream {
+    override suspend fun read(): Byte {
+        checkClosed()
+        if (read(staticData) != 1)
+            throw EOFException()
+        return staticData[0]
+    }
+
+    private val staticData = ByteArray(1)
     override val isEof: Boolean
         get() = closed || eof
     private var chunkedSize: ULong? = null
@@ -24,8 +32,8 @@ open class AsyncChunkedInputStream(val stream: AsyncInputStream) : AsyncHttpInpu
             }
 
             if (chunkedSize == 0uL) {
-                val b1=stream.read()
-                val b2=stream.read()
+                val b1 = stream.read()
+                val b2 = stream.read()
                 if (
                         b1 != 13.toByte()
                         || b2 != 10.toByte()

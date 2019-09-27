@@ -1,6 +1,8 @@
 package pw.binom
 
+import pw.binom.io.ByteArrayOutputStream
 import pw.binom.io.use
+import pw.binom.io.write
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -31,13 +33,17 @@ class TestBase64EncodeOutputStream {
 
     @Test
     fun test2() {
-        assertEquals('A', byteToBase64(0))
-        assertEquals('Z', byteToBase64(25))
-        assertEquals('a', byteToBase64(26))
-        assertEquals('z', byteToBase64(51))
-        assertEquals('0', byteToBase64(52))
-        assertEquals('9', byteToBase64(61))
-        assertEquals('+', byteToBase64(62))
-        assertEquals('/', byteToBase64(63))
+        val out = StringBuilder()
+        Base64EncodeOutputStream(out).also {
+            it.write(0)
+            it.write(25)
+            it.write(26)
+            it.write(51)
+            it.write(52)
+            it.write(61)
+            it.write(62)
+            it.write(63)
+        }
+        assertEquals("ABkaMzQ9Pj",out.toString())
     }
 }
