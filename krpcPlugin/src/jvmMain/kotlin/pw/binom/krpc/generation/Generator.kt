@@ -5,5 +5,5 @@ import pw.binom.krpc.Struct
 
 interface Generator {
     fun struct(packageName: String?, struct: Struct, output: Appendable)
-    fun service(packageName: String?, suspend: Boolean, service: Interface, output: Appendable)
+    fun service(packageName: String?, service: Interface, output: Appendable)
 }

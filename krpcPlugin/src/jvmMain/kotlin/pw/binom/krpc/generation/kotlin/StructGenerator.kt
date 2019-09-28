@@ -1,11 +1,7 @@
-package pw.binom.krpc.generation
+package pw.binom.krpc.generation.kotlin
 
 import pw.binom.krpc.Struct
 import pw.binom.krpc.Type
-import kotlin.reflect.KClass
-
-private val Type.nullDef
-    get() = if (nullable) "?" else ""
 
 fun Type.asPsevdoClass(): String {
     return when {
@@ -43,34 +39,9 @@ fun Type.asKotlinType(): String {
     }
 }
 
-fun Type.asCode(): String {
-    return "${asKotlinType()}${if (nullable) "?" else ""}"
-    return when {
-        this is Type.Primitive -> when (type) {
-            Type.Primitive.Type.INT -> "Int${if (nullable) "?" else ""}"
-            Type.Primitive.Type.LONG -> "Long${if (nullable) "?" else ""}"
-            Type.Primitive.Type.BOOL -> "Boolean${if (nullable) "?" else ""}"
-            Type.Primitive.Type.FLOAT -> "Float${if (nullable) "?" else ""}"
-            Type.Primitive.Type.STRING -> "String${if (nullable) "?" else ""}"
-            Type.Primitive.Type.STRUCT -> "DTO${if (nullable) "?" else ""}"
-        }
-        this is Type.Array -> {
-            "List<${type.asCode()}>${nullDef}"
-        }
-        this is Type.Struct -> "${name}${nullDef}"
-        else -> TODO("Unknown type $this")
-    }
-}
+fun Type.asCode(): String = "${asKotlinType()}${if (nullable) "?" else ""}"
 
-private fun forceCastTo(type: Type) {
-    when (type) {
-        is Type.Primitive -> when (type.type) {
-            Type.Primitive.Type.STRUCT -> "Any"
-        }
-    }
-}
-
-class StructGenerator {
+object StructGenerator {
     fun generate(packageName: String?, struct: Struct, out: Appendable) {
         if (packageName != null)
             out.append("package ${packageName}\n\n")
@@ -89,8 +60,8 @@ class StructGenerator {
 
         val fields = struct.fields.map { "val ${it.name}: ${it.type.asCode()}" }.joinToString(", ")
         out.append("class ${struct.name}($fields): Struct")
-        if (struct.extends=="Exception")
-        out.append(", RuntimeException()")
+        if (struct.extends == "Exception")
+            out.append(", RuntimeException()")
         out.append(" {\n")
         out.append("\tcompanion object:StructFactory<${struct.name}>{\n")
         out.append("\t\toverride val name\n")

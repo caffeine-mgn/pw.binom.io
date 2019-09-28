@@ -11,11 +11,15 @@ buildscript {
     }
 }
 
-task generateDTO(type: pw.binom.krpc.KRpcTask) {
+task generateKotlinDTO(type: pw.binom.krpc.KRpcKotlin) {
     outputDtoList="pw.binom.builder.remote.DTO_LIST" 
     destination = file("${buildDir}/gen")
     from(fileTree("src/commonMain/proto"))
-    suspend = true
+}
+
+task generateCsharpDTO(type: pw.binom.krpc.KRpcCsharp) {
+    destination = file("${buildDir}/gen")
+    from(fileTree("src/commonMain/proto"))
 }
 ```
 #### Plugin Settings:

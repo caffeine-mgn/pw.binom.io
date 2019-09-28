@@ -1,10 +1,8 @@
 package pw.binom.krpc
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Plugin
-import org.gradle.api.Project
+import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -12,21 +10,14 @@ import pw.binom.io.AppendableUTF8
 import pw.binom.io.file.*
 import pw.binom.io.use
 import pw.binom.io.utf8Reader
+import pw.binom.krpc.generation.Generator
 import pw.binom.krpc.generation.kotlin.KotlinGenerator
 import java.io.File
 
-open class KRpcPlugin : Plugin<Project> {
-    override fun apply(project: Project) {
-    }
-}
-
-open class KRpcTask : DefaultTask() {
+open class KRpcKotlin : DefaultTask() {
 
     @OutputDirectory
     var destination: File? = null
-
-    @get:Input
-    var suspend: Boolean = false
 
     @get:InputFiles
     val inputs = ArrayList<File>()
@@ -38,18 +29,17 @@ open class KRpcTask : DefaultTask() {
     }
 
     fun from(files: Collection<File>) {
-        inputs.clear()
         inputs.addAll(files)
     }
 
     @TaskAction
     open fun action() {
         if (destination == null)
-            TODO("destination not set")
+            throw GradleException("Property \"destination\" not set")
         val files = inputs.map {
             it.asBFile.inputStream!!.use {
                 val proto = parseProto(it.utf8Reader())
-                genProto(proto, suspend, destination!!)
+                genProto(proto, destination!!)
             }
         }
 
@@ -57,7 +47,7 @@ open class KRpcTask : DefaultTask() {
     }
 }
 
-fun generateDtoListFile(outputDtoList: String, genRootDir: File, files: List<ProtoFile>) {
+private fun generateDtoListFile(outputDtoList: String, genRootDir: File, files: List<ProtoFile>) {
     if (!files.asSequence().map { it.structs }.any())
         return
     val list = outputDtoList.split('.')
@@ -67,8 +57,10 @@ fun generateDtoListFile(outputDtoList: String, genRootDir: File, files: List<Pro
         sb.append("package ${list.subList(0, list.lastIndex).joinToString(".")}\n\n")
     sb
             .append("import pw.binom.krpc.SimpleStructLibrary\n")
+            .append("import kotlin.native.concurrent.SharedImmutable\n")
             .append("\n")
-    sb.append("val ${list.last()} = SimpleStructLibrary(listOf(")
+            .append("@SharedImmutable\n")
+            .append("val ${list.last()} = SimpleStructLibrary(listOf(")
     var first = true
     files.forEach { file ->
         file.structs.forEach {
@@ -91,12 +83,12 @@ fun generateDtoListFile(outputDtoList: String, genRootDir: File, files: List<Pro
     outFile.writeText(sb.toString())
 }
 
-fun genProto(file: ProtoFile, suspend: Boolean, genRootDir: File): ProtoFile {
+private fun genProto(file: ProtoFile, genRootDir: File): ProtoFile {
     val outDir = if (file.packageName == null || file.packageName!!.isEmpty())
         genRootDir
     else
         File(genRootDir, file.packageName!!.replace('.', File.separatorChar))
-    val gen = KotlinGenerator()
+    val gen: Generator = KotlinGenerator
     file.structs.forEach { struct ->
         val outFile = File(outDir, "${struct.name}.kt").asBFile
         outFile.parent?.mkdirs()
@@ -115,15 +107,14 @@ fun genProto(file: ProtoFile, suspend: Boolean, genRootDir: File): ProtoFile {
             outFile.delete()
         outFile.outputStream!!.use {
             val r = AppendableUTF8(it)
-            gen.service(packageName = file.packageName, service = service, output = r, suspend = suspend)
+            gen.service(packageName = file.packageName, service = service, output = r)
         }
     }
     return file
 }
 
 fun main() {
-    val task = KRpcTask()
-    task.suspend = true
+    val task = KRpcKotlin()
     task.outputDtoList = "game.remote.DTOList"
     task.destination = File("D:\\WORK\\slidearena\\server\\game\\build\\gen")
     task.from(listOf(

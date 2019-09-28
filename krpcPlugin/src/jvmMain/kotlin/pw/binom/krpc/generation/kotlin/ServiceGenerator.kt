@@ -1,8 +1,8 @@
-package pw.binom.krpc.generation
+package pw.binom.krpc.generation.kotlin
 
 import pw.binom.krpc.Interface
 
-class ServiceGenerator {
+object ServiceGenerator {
     fun generate(packageName: String?, service: Interface, out: Appendable) {
         if (packageName != null)
             out.append("package ${packageName}\n\n")
