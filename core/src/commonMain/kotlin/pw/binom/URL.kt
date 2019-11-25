@@ -1,12 +1,12 @@
 package pw.binom
 
 class URL(private val path: String) {
-    val protocol: String
+    val protocol: String?
     val host: String
     val port: Int?
     val uri: String
     val defaultPort: Int?
-        get() = defaultPort(protocol)
+        get() = protocol?.let { defaultPort(it) }
 
     companion object {
         fun defaultPort(protocol: String) = when (protocol) {
@@ -18,20 +18,26 @@ class URL(private val path: String) {
     }
 
     init {
-        val p = path.indexOf("://")
-        if (p == -1)
-            throw MalformedURLException("Protocol not set in URL \"$path\"")
-        protocol = path.substring(0, p)
-
-
-        val uriStart = path.indexOf('/', protocol.length + 3)
-
-        val portStart = path.indexOf(':', protocol.length + 3)
-        if (portStart != -1) {
-            host = path.substring(protocol.length + 3, portStart)
-            port = path.substring(portStart + 1, if (uriStart==-1) path.length else uriStart).toInt()
+        val hostStart = if (path.startsWith("//")) {
+            protocol = null
+            2
         } else {
-            host = path.substring(protocol.length + 3, if (uriStart==-1) path.length else uriStart)
+            val p = path.indexOf("://")
+
+            if (p == -1)
+                throw MalformedURLException("Protocol not set in URL \"$path\"")
+            protocol = path.substring(0, p)
+            protocol.length + 3
+        }
+
+        val uriStart = path.indexOf('/', hostStart)
+
+        val portStart = path.indexOf(':', hostStart)
+        if (portStart != -1) {
+            host = path.substring(hostStart, portStart)
+            port = path.substring(portStart + 1, if (uriStart == -1) path.length else uriStart).toInt()
+        } else {
+            host = path.substring(hostStart, if (uriStart == -1) path.length else uriStart)
             port = null
         }
         uri = if (uriStart == -1)
@@ -43,31 +49,22 @@ class URL(private val path: String) {
 
     override fun toString(): String = path
 
-
-    fun newURI(uri: String): URL {
-        val sb = StringBuilder(protocol)
-        sb.append("://").append(host)
+    fun new(protocol: String? = this.protocol, host: String = this.host, port: Int? = this.port, uri: String = this.uri): URL {
+        val sb = StringBuilder()
+        if (protocol == null)
+            sb.append("//")
+        else
+            sb.append(protocol).append("://")
+        sb.append(host)
         if (port != null)
             sb.append(":").append(port)
         sb.append(uri)
         return URL(sb.toString())
     }
 
-    fun newPort(port: Int?): URL {
-        val sb = StringBuilder(protocol)
-        sb.append("://").append(host)
-        if (port != null)
-            sb.append(":").append(port)
-        sb.append(uri)
-        return URL(sb.toString())
-    }
+    fun newURI(uri: String): URL = new(uri = uri)
 
-    fun newHost(host: String): URL {
-        val sb = StringBuilder(protocol)
-        sb.append("://").append(host)
-        if (port != null)
-            sb.append(":").append(port)
-        sb.append(uri)
-        return URL(sb.toString())
-    }
+    fun newPort(port: Int?): URL = new(port = port)
+
+    fun newHost(host: String): URL = new(host = host)
 }

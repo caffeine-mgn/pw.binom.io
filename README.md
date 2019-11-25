@@ -2,7 +2,7 @@
 Kotlin IO Library.<br>
 
 ## Actual version
-Actual version is `0.1.3`
+Actual version is `0.1.8`
 
 ## Parts of library
 Library contains next parts:<br>
@@ -28,7 +28,7 @@ Before using you must add repository:
 ```groovy
 repositories {
     maven {
-        url "http://repo.binom.pw/releases"
+        url "https://repo.binom.pw/releases"
     }
 }
 ```
@@ -38,7 +38,7 @@ For using plugins you must use it:
 buildscript {
     repositories {
         maven {
-            url "http://repo.binom.pw/releases"
+            url "https://repo.binom.pw/releases"
         }
     }
 }

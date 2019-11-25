@@ -200,7 +200,7 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
         if (socket != null)
             return socket!!
         if (socket == null) {
-            val channel = client.pollConnection(url.protocol, url.host, url.port ?: url.defaultPort!!)
+            val channel = client.pollConnection(url.protocol ?: "http", url.host, url.port ?: url.defaultPort!!)
             if (channel != null) {
                 socket = client.connectionManager.attach(channel = channel, attachment = this)
             }
@@ -227,7 +227,7 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
         socket = null
         if (channel?.isConnected == true) {
             if (connectionKeepAlive) {
-                client.pushConnection(url.protocol, url.host, url.port ?: url.defaultPort!!, channel)
+                client.pushConnection(url.protocol ?: "http", url.host, url.port ?: url.defaultPort!!, channel)
             } else {
                 channel.close()
             }

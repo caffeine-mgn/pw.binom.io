@@ -37,6 +37,7 @@ kotlin {
                 api project(":server")
                 api project(":ssl")
                 api project(":http")
+                api project(":httpClient")
             }
         }
 

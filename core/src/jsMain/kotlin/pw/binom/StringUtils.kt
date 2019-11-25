@@ -4,7 +4,7 @@ import pw.binom.io.ByteArrayOutputStream
 import pw.binom.io.UTF8
 import pw.binom.io.use
 
-actual fun ByteArray.asUTF8String(offset: Int, length: Int): String {
+actual fun ByteArray.asUTF8String(): String {
     val sb = StringBuilder()
     var cur = 0
     while (cur < size) {
