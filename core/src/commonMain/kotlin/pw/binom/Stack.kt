@@ -36,7 +36,7 @@ class Stack<T> {
             top = i
 
         bottom = i
-        _size--
+        _size++
     }
 
     fun popFirst(result: PopResult<T>) {
