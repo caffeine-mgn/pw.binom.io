@@ -4,7 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.malloc
 import pw.binom.io.Closeable
 
-actual class IntDataBuffer private constructor(actual val size: Int) : Closeable {
+actual class IntDataBuffer private constructor(actual val size: Int) : Closeable, Iterable<Int> {
     actual companion object {
         actual fun alloc(size: Int): IntDataBuffer {
             if (size <= 0)
@@ -22,7 +22,7 @@ actual class IntDataBuffer private constructor(actual val size: Int) : Closeable
         }
 
     override fun close() {
-        check(_buffer == null) { "DataBuffer already closed" }
+        check(_buffer != null) { "DataBuffer already closed" }
         _buffer = null
     }
 
@@ -37,4 +37,6 @@ actual class IntDataBuffer private constructor(actual val size: Int) : Closeable
             throw IndexOutOfBoundsException("Index: $index, Size=$size")
         return buffer[index]
     }
+
+    actual override fun iterator(): IntDataBufferIterator = IntDataBufferIterator(this)
 }

@@ -3,6 +3,11 @@ package pw.binom
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
 import platform.posix.__environ
+import platform.posix.htonl
+
+val isBigEndianPrivate = htonl(47u) == 47u
+actual val Environment.isBigEndian: Boolean
+    get() = isBigEndianPrivate
 
 actual val Environment.platform: Platform
     get() = Platform.LINUX_64

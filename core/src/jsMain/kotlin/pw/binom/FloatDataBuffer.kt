@@ -6,7 +6,7 @@ import org.khronos.webgl.get
 import org.khronos.webgl.set
 import pw.binom.io.Closeable
 
-actual class FloatDataBuffer private constructor(size: Int) : Closeable {
+actual class FloatDataBuffer private constructor(size: Int) : Closeable, Iterable<Float> {
     actual companion object {
         actual fun alloc(size: Int): FloatDataBuffer {
             if (size <= 0)
@@ -24,7 +24,7 @@ actual class FloatDataBuffer private constructor(size: Int) : Closeable {
         }
 
     override fun close() {
-        check(_buffer == null) { "DataBuffer already closed" }
+        check(_buffer != null) { "DataBuffer already closed" }
         _buffer = null
     }
 
@@ -36,4 +36,6 @@ actual class FloatDataBuffer private constructor(size: Int) : Closeable {
     }
 
     actual operator fun get(index: Int): Float = buffer[index]
+
+    actual override fun iterator(): FloatDataBufferIterator = FloatDataBufferIterator(this)
 }

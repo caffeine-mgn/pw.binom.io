@@ -5,3 +5,5 @@ actual val Environment.platform: Platform
 
 actual fun Environment.getEnv(name: String): String? = System.getenv(name)
 actual fun Environment.getEnvs(): Map<String, String> = System.getenv()
+actual val Environment.isBigEndian: Boolean
+    get() = true
