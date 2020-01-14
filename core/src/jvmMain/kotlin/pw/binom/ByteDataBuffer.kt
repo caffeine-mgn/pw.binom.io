@@ -3,12 +3,12 @@ package pw.binom
 import pw.binom.io.Closeable
 import java.nio.ByteBuffer
 
-actual class DataBuffer private constructor(size: Int) : Closeable {
+actual class ByteDataBuffer private constructor(size: Int) : Closeable {
     actual companion object {
-        actual fun alloc(size: Int): DataBuffer {
+        actual fun alloc(size: Int): ByteDataBuffer {
             if (size <= 0)
                 throw IllegalArgumentException("Argument size must be greater that 0")
-            return DataBuffer(size)
+            return ByteDataBuffer(size)
         }
     }
 
@@ -24,4 +24,13 @@ actual class DataBuffer private constructor(size: Int) : Closeable {
         check(_buffer == null) { "DataBuffer already closed" }
         _buffer = null
     }
+
+    actual val size: Int
+        get() = buffer.capacity()
+
+    actual operator fun set(index: Int, value: Byte) {
+        buffer.put(index, value)
+    }
+
+    actual operator fun get(index: Int): Byte = buffer.get(index)
 }
