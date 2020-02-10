@@ -6,8 +6,8 @@ import pw.binom.io.socket.ConnectionManager
 import pw.binom.io.write
 import pw.binom.io.writeln
 
-class HttpServer : ConnectionManager() {
-    override fun connected(connection: Connection) {
+class HttpServerHandler : ConnectionManager.ConnectHandler {
+    override fun clientConnected(connection: ConnectionManager.Connection, manager: ConnectionManager) {
         connection {
             try {
                 val header = it.input.readln().split(' ')
@@ -38,11 +38,12 @@ class HttpServer : ConnectionManager() {
             }
         }
     }
+
 }
 
 fun main(args: Array<String>) {
-    val server = HttpServer()
-    server.bind(port=8899)
+    val server = ConnectionManager()
+    server.bind(port = 8899, handler = HttpServerHandler())
     while (true) {
         server.update()
     }

@@ -1,20 +1,33 @@
 package pw.binom
 
-import org.khronos.webgl.Int8Array
-import org.khronos.webgl.get
-import org.khronos.webgl.set
+import org.khronos.webgl.*
 import pw.binom.io.Closeable
 
-actual class ByteDataBuffer private constructor(size: Int) : Closeable, Iterable<Byte> {
+actual class ByteDataBuffer : Closeable, Iterable<Byte> {
     actual companion object {
         actual fun alloc(size: Int): ByteDataBuffer {
             if (size <= 0)
                 throw IllegalArgumentException("Argument size must be greater than 0")
             return ByteDataBuffer(size)
         }
+
+        fun wrap(array: Int8Array): ByteDataBuffer {
+            return ByteDataBuffer(array)
+        }
+
+        fun wrap(array: Uint8Array) =
+                wrap(Int8Array(array.buffer))
     }
 
-    private var _buffer: Int8Array? = Int8Array(size)
+    private constructor(size: Int) {
+        _buffer = Int8Array(size)
+    }
+
+    private constructor(array: Int8Array) {
+        _buffer = array
+    }
+
+    private var _buffer: Int8Array? = null
     val buffer: Int8Array
         get() {
             val bufferVar = _buffer

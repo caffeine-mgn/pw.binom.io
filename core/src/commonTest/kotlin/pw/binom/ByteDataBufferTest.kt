@@ -10,5 +10,6 @@ class ByteDataBufferTest {
         val d = ByteDataBuffer.alloc(10)
         d[5] = 127
         assertEquals(127, d[5])
+        d.close()
     }
 }
