@@ -35,6 +35,7 @@ class Stack<T> {
         if (top == null)
             top = i
 
+        bottom?.next = i
         bottom = i
         _size++
     }

@@ -49,6 +49,7 @@ class FreezedStack<T> {
             if (top.value == null)
                 top.value = i
 
+            bottom.value?.next?.value = i
             bottom.value = i
             _size.increment()
         }
