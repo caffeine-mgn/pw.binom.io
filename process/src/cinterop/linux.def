@@ -1,0 +1,9 @@
+
+---
+#include <signal.h>
+
+#ifndef SIGBREAK
+    #define SIGBREAK 21
+#endif
+
+const int internal_SIGBREAK = SIGBREAK;

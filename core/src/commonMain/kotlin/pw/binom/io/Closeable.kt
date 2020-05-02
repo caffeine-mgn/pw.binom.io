@@ -6,6 +6,13 @@ interface Closeable {
     fun close()
 }
 
+fun Closeable(func: () -> Unit) = object : Closeable {
+    override fun close() {
+        func()
+    }
+
+}
+
 inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
     return try {
         func(this)

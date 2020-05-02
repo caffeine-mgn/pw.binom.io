@@ -1,9 +1,6 @@
 package pw.binom.io.file
 
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
+import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.native.concurrent.freeze
 
@@ -76,3 +73,13 @@ actual class File actual constructor(path: String) {
 
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
 }
+
+actual val File.workDirectory: File
+    get() {
+        val data = _wgetcwd(null, 0.convert()) ?: TODO()
+        try {
+            return File(data.toKString())
+        } finally {
+            free(data)
+        }
+    }

@@ -1,6 +1,5 @@
 package pw.binom.io.file
 
-import pw.binom.io.FileSystem
 import pw.binom.io.use
 
 expect class File(path: String) {
@@ -29,6 +28,10 @@ expect class File(path: String) {
 val File.isExist: Boolean
     get() = isFile || isDirectory
 
+/**
+ * Returns current work directory
+ */
+expect val File.workDirectory: File
 
 val File.name: String
     get() {

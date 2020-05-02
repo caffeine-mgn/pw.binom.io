@@ -1,6 +1,7 @@
 package pw.binom
 
 import kotlinx.cinterop.*
+import platform.posix.signal
 import platform.windows.FreeEnvironmentStrings
 import platform.windows.GetEnvironmentStringsW
 import platform.windows.htonl

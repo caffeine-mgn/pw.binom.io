@@ -2,32 +2,15 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
 kotlin {
-
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
-            compilations.main {
-                cinterops {
-                    signals {
-                        defFile project.file("src/cinterop/linux.def")
-                        packageName 'platform.linux'
-                    }
-                }
-            }
         }
     }
 
     linuxArm32Hfp { // Use your target instead.
         binaries {
             staticLib()
-            compilations.main {
-                cinterops {
-                    signals {
-                        defFile project.file("src/cinterop/linux.def")
-                        packageName 'platform.linux'
-                    }
-                }
-            }
         }
     }
 
@@ -42,8 +25,9 @@ kotlin {
             staticLib()
         }
     }
-    
+
     jvm()
+    js()
 
     sourceSets {
 
@@ -51,7 +35,6 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
-                api project(":thread")
             }
         }
 
@@ -59,37 +42,36 @@ kotlin {
             dependencies {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
-                implementation project(":job")
             }
         }
 
-        commonNativeMain {
+        nativeMain {
             dependencies {
                 dependsOn commonMain
             }
         }
 
-        mingwX64Main {
-            dependencies {
-                dependsOn commonNativeMain
-            }
-        }
-
-        mingwX86Main {
-            dependencies {
-                dependsOn mingwX64Main
-            }
-        }
-
         linuxX64Main {
             dependencies {
-                dependsOn commonNativeMain
+//                dependsOn nativeMain
             }
         }
 
         linuxArm32HfpMain {
             dependencies {
                 dependsOn linuxX64Main
+            }
+        }
+
+        mingwX64Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn mingwX64Main
             }
         }
 

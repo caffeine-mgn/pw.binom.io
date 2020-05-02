@@ -4,10 +4,10 @@ import pw.binom.io.ByteArrayOutputStream
 import pw.binom.io.UTF8
 import pw.binom.io.use
 
-actual fun ByteArray.asUTF8String(): String {
+actual fun ByteArray.asUTF8String(startIndex: Int, length: Int): String {
     val sb = StringBuilder()
-    var cur = 0
-    while (cur < size) {
+    var cur = startIndex
+    while (cur < cur + length) {
         val size = UTF8.utf8CharSize(this[cur])
         sb.append(UTF8.utf8toUnicode(this[cur], this, cur + 1))
         cur += size + 1

@@ -13,6 +13,10 @@ fun JInputStream.wrap() = object : InputStream {
 
     override val available: Int
         get() = this@wrap.available()
+
+    override fun skip(length: Long): Long {
+        return this@wrap.skip(length)
+    }
 }
 
 fun JOutputStream.wrap() = object : OutputStream {

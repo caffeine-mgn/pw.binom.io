@@ -4,9 +4,58 @@ import pw.binom.AppendableQueue
 import pw.binom.PopResult
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
+import pw.binom.collection.EmptyIterator
 import pw.binom.doFreeze
 
-class FreezedStack<T> {
+class FreezedStack<T> : MutableIterable<T> {
+    private var changeCounter = AtomicInt(0)
+
+    private inner class TopBottomStackIterator : MutableIterator<T> {
+        var changeCounter = this@FreezedStack.changeCounter.value
+        private var first = true
+
+        init {
+            check(top.value != null)
+        }
+
+        var currentItem: Item? = null
+        override fun hasNext(): Boolean = lock.use {
+            if (changeCounter != this@FreezedStack.changeCounter.value)
+                throw ConcurrentModificationException()
+            if (currentItem == null && first && !isEmpty)
+                return true
+            return currentItem?.next?.value != null
+        }
+
+        override fun next(): T =
+                lock.use {
+                    if (changeCounter != this@FreezedStack.changeCounter.value)
+                        throw ConcurrentModificationException()
+                    if (currentItem == null && first && !isEmpty) {
+                        currentItem = this@FreezedStack.top.value
+                        first = false
+                        return currentItem!!.value
+                    }
+
+                    if (currentItem?.next?.value == null)
+                        throw NoSuchElementException()
+                    val next = currentItem!!.next.value ?: throw NoSuchElementException()
+                    currentItem = next
+                    next.value
+                }
+
+        override fun remove() {
+            if (currentItem == null)
+                throw NoSuchElementException()
+            this@FreezedStack.remove(currentItem!!)
+            this@FreezedStack.changeCounter.increment()
+            changeCounter = this@FreezedStack.changeCounter.value
+            currentItem = currentItem?.back?.value
+            _size.decrement()
+        }
+
+    }
+
     val size: Int
         get() = _size.value
 
@@ -15,6 +64,7 @@ class FreezedStack<T> {
             _size.value = 0
             top.value = null
             bottom.value = null
+            changeCounter.increment()
         }
     }
 
@@ -39,6 +89,7 @@ class FreezedStack<T> {
             top.value?.back?.value = i
             top.value = i
             _size.increment()
+            changeCounter.increment()
         }
     }
 
@@ -52,7 +103,26 @@ class FreezedStack<T> {
             bottom.value?.next?.value = i
             bottom.value = i
             _size.increment()
+            changeCounter.increment()
         }
+    }
+
+    private fun remove(item: Item) {
+        if (top.value == item) {
+            top.value = item.next.value
+        }
+
+        if (bottom.value == item) {
+            bottom.value = item.back.value
+        }
+        item.back.value?.let {
+            it.next.value = item.next.value
+        }
+
+        item.next.value?.let {
+            it.back.value = item.back.value
+        }
+
     }
 
     private fun privatePopFirst(): T {
@@ -63,6 +133,7 @@ class FreezedStack<T> {
         if (bottom.value == item)
             bottom.value = null
         _size.decrement()
+        changeCounter.increment()
         return item.value
     }
 
@@ -77,6 +148,7 @@ class FreezedStack<T> {
         if (top.value == item)
             top.value = null
         _size.decrement()
+        changeCounter.increment()
         return item.value
     }
 
@@ -157,5 +229,10 @@ class FreezedStack<T> {
 
     init {
         doFreeze()
+    }
+
+    override fun iterator(): MutableIterator<T> {
+        if (isEmpty) return EmptyIterator()
+        return TopBottomStackIterator()
     }
 }

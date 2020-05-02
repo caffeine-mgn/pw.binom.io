@@ -1,13 +1,11 @@
 package pw.binom.io.file
 
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
+import kotlinx.cinterop.*
 import platform.posix.*
+import pw.binom.io.FileSystemAccess
 import kotlin.native.concurrent.freeze
 
-private fun timespec.toMillis():Long{
+private fun timespec.toMillis(): Long {
     var s = tv_sec
 
     var ms = round(tv_nsec / 1.0e6).toLong()
@@ -86,3 +84,15 @@ actual class File actual constructor(path: String) {
 
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
 }
+
+actual val File.workDirectory: File
+    get() {
+        val data = getcwd(null, 0.convert()) ?: TODO()
+        if (errno == EACCES)
+            throw FileSystemAccess.AccessException.ForbiddenException()
+        try {
+            return File(data.reinterpret<ShortVar>().toKString())
+        } finally {
+            free(data)
+        }
+    }
