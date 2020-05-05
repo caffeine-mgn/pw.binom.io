@@ -2,21 +2,14 @@ package pw.binom.io.socket.ssl
 
 import kotlinx.cinterop.*
 import platform.openssl.*
-import pw.binom.Date
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
-import pw.binom.io.buffered
 import pw.binom.io.socket.NativeSocketHolder
 import pw.binom.io.socket.RawSocket
 import pw.binom.io.socket.Socket
 import pw.binom.io.socket.SocketClosedException
 import pw.binom.ssl.SSLContext
 import pw.binom.thread.Thread
-import kotlin.collections.ArrayList
-import kotlin.collections.List
-import kotlin.collections.isEmpty
-import kotlin.collections.mapOf
-import kotlin.collections.plusAssign
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.NativePtr.Companion.NULL
 
@@ -49,8 +42,9 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
         get() = raw
 
     private val sslIN = SSLInputStream()
-    override val input: InputStream = sslIN.buffered()
+    override val input: InputStream = sslIN//.buffered()
     override val output: OutputStream = SSLOutputStream()
+
     //    private lateinit var ctx: CPointer<SSL_CTX>
     lateinit var ssl: CPointer<SSL>
 
@@ -69,7 +63,11 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
             }
             if (offset + length > data.size)
                 throw IndexOutOfBoundsException("write(offset=$offset length=$length data.size=${data.size})")
-            SSL_write(ssl, data.refTo(offset), length)
+            val r = SSL_write(ssl, data.refTo(offset), length)
+            if (r <= 0) {
+                val ret = SSL_get_error(ssl, r)
+                TODO("SSL_write $r $ret")
+            }
             println("Wrote $length")
             return length
         }
@@ -95,7 +93,11 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
 
             val r = SSL_read(ssl, data.refTo(offset), length)
             if (r <= 0) {
-                println("Close connection!!!")
+                val ret = SSL_get_error(ssl, r)
+                if (ret == SSL_ERROR_WANT_READ) {
+                    return -5
+                }
+//                println("Close connection!!! $r ${ssl.getError(r)}")
                 this@SSLSocket.close()
                 throw SocketClosedException()
             }
@@ -107,66 +109,14 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
 
     }
 
+    private val rbio = BIO_new(BIO_s_mem()!!)!!
+    private val wbio = BIO_new(BIO_s_mem()!!)!!
 
     init {
-//        val keyManager = KeyManager()//val rr = AtomicReference<KeyManager?>(null)
-//        val b = DetachedObjectGraph(TransferMode.UNSAFE) { keyManager }
-
-//        rr.value = keyManager
-
-
-        //SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2.convert<UInt>() or SSL_OP_NO_SSLv3 or SSL_OP_NO_COMPRESSION)
-
-
-//        SSL_CTX_use_certificate(ctx, public_cer.ptr)
-
-//        SSL_CTX_set_default_passwd_cb(ctx, password_cb);
-//        SSL_CTX_use_PrivateKey(ctx, private_cer.ptr);
-
-
-//        val rsa = RSA_generate_key(512, RSA_F4, null, null);
-
-//        SSL_CTX_set_tmp_rsa(ctx, rsa);
-//        if (X509_verify(public_cer.ptr, private_cer.ptr) < 0) {
-//            TODO("X509_verify error")
-//        }
-//        RSA_free(rsa);
-
-
-//        ctx = ctx//if (server) sslCtx.server() else sslCtx.client()
-
-
-//        val public_cer =sslCtx.keyManager!!.getPublic("localhost")!!
-//        val private_cer =sslCtx.keyManager!!.getPrivate("localhost")!!
-
-//        if (X509_verify(public_cer.ptr, private_cer.native) < 0) {
-//            TODO("X509_verify error")
-//        }
-
-//        SSL_CTX_use_certificate(ctx, public_cer.ptr)
-//        SSL_CTX_use_PrivateKey(ctx, private_cer.native)
         SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, null)
 
         ssl = SSL_new(ctx)!!
-//        SSL_use_certificate(ssl, public_cer.ptr)
-//        SSL_use_PrivateKey(ssl, private_cer.native)
-
-
-//        if (SSL_CTX_use_certificate_chain_file(ctx, "D:\\Temp\\server-certificate-chain.pem") != 1)
-//            TODO("SSL_CTX_use_certificate_chain_file error")
-//        if (SSL_CTX_use_PrivateKey_file(ctx, "D:\\Temp\\server-private-key.pem", SSL_FILETYPE_PEM) != 1)
-//            TODO("SSL_CTX_use_PrivateKey_file error")
-//        if (SSL_CTX_check_private_key(ctx) != 1)
-//            TODO("SSL_CTX_check_private_key error")
-//        if (SSL_use_PrivateKey(ssl, private_cer.ptr) < 0) {
-//            TODO("SSL_use_PrivateKey error")
-//        }
-
-//        bio_out = BIO_new_socket(raw.native.code, BIO_NOCLOSE)!!
-//        bio_remote=BIO_new_ssl_connect(ctx)!!
-        //SSL_set_bio(ssl, bio_out, bio_out)
-//        SSL_set_cipher_list(ssl, "HIGH:!aNULL:!kRSA:!PSK:!SRP:!MD5:!RC4")
-        SSL_set_fd(ssl, raw.native.code)
+        SSL_set_bio(ssl, rbio, wbio)
         freeze()
     }
 
@@ -233,11 +183,24 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
         println("connect->#1")
         raw.connect(host, port)
         println("connect->#2")
+        SSL_set_connect_state(ssl)
 //        internal_BIO_set_conn_hostname(bio_remote, "$host:$port".cstr)
-        SSL_set1_host(ssl, "$host:$port")
+        if (SSL_set1_host(ssl, "$host:$port") <= 0) {
+            TODO("SSL_set1_host error")
+        }
+        SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, "$host:$port".cstr)
 //        internal_BIO_do_connect()
-        if (SSL_connect(ssl) < 0)
-            TODO("SSL_connect error")
+        val r = SSL_connect(ssl)
+        if (r < 0) {
+            val ret = SSL_get_error(ssl, r)
+//            val r = getSSLError(ret)!!
+//
+//            memScoped {
+//                println("ERRRRRROR: ${r.pointed.ptr.toKString()}")
+//            }
+//            free(r)
+            TODO("SSL_connect error  $ret   $r")
+        }
         println("connect->#4")
     }
 
@@ -249,6 +212,8 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
     override fun close() {
         if (!closed) {
             raw.close()
+            BIO_free(wbio)
+            BIO_free(rbio)
             SSL_shutdown(ssl)
             SSL_free(ssl)
             SSL_CTX_free(ctx)

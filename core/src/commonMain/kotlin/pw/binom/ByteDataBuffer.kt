@@ -10,6 +10,8 @@ expect class ByteDataBuffer : Closeable, Iterable<Byte> {
     val size: Int
     operator fun set(index: Int, value: Byte)
     operator fun get(index: Int): Byte
+    fun write(position: Int, data: ByteArray, offset: Int, length: Int): Int
+    fun read(position: Int, data: ByteArray, offset: Int, length: Int): Int
 
     override fun iterator(): ByteDataBufferIterator
 }
@@ -47,4 +49,10 @@ class ByteDataBufferIterator(val buffer: ByteDataBuffer) : Iterator<Byte> {
             throw NoSuchElementException()
         buffer[cursor++] = value
     }
+}
+
+internal inline fun ByteDataBuffer.checkBounds(position: Int, off: Int, len: Int, size: Int) {
+    require(off >= 0 && len >= 0)
+    if (off + len > size || position + len > size)
+        throw IndexOutOfBoundsException()
 }

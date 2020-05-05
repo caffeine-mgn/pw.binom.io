@@ -88,7 +88,7 @@ class HttpResponseImpl(
         status: Int,
         headers: Map<String, List<String>>,
         headerSendded: Boolean,
-        private val connection: ConnectionManager.Connection,
+        private val connection: ConnectionManager.ConnectionRaw,
         private val request: HttpRequest
 ) : HttpResponse {
     override fun clearHeaders() {

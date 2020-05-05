@@ -8,6 +8,10 @@ int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX* ctx, int bits){
     return RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, EVP_PKEY_CTRL_RSA_KEYGEN_BITS, bits, NULL);
 }
 
+int internal_BIO_should_retry(BIO *bp){
+    return BIO_test_flags(bp, BIO_FLAGS_SHOULD_RETRY);
+}
+
 long internal_BIO_do_connect(BIO *bp){
     return BIO_do_connect(bp);
 }
@@ -30,6 +34,22 @@ long internal_BIO_do_handshake(BIO*bp){
 
 void print_ssl_error(){
     ERR_print_errors_fp(stderr);
+}
+
+char* getSSLError(int ret){
+    char *msg=(char *)malloc(1024);
+    SSL_load_error_strings();
+    ERR_error_string_n(ret, msg, 1024);
+    return msg;
+}
+
+void print_ssl_error2(){
+      printf("Getting error\n");
+      //ERR_load_crypto_strings();
+      SSL_load_error_strings(); // just once
+      char msg[1024];
+      ERR_error_string_n(ERR_get_error(), msg, sizeof(msg));
+      printf("%s %s %s %s\n", msg, ERR_lib_error_string(0), ERR_func_error_string(0), ERR_reason_error_string(0));
 }
 
 //get_supported_ciphers(SSL*ssl){

@@ -1,6 +1,8 @@
 package pw.binom.ssl
 
 import pw.binom.io.Closeable
+import pw.binom.io.socket.ssl.SSLServerSocketChannel
+import pw.binom.io.socket.ssl.SSLSession
 import pw.binom.io.socket.ssl.SSLSocketFactory
 import java.security.SecureRandom
 import javax.net.ssl.SSLContext as JSSLContext
@@ -29,5 +31,25 @@ actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: Ke
             }
             return SSLContext(JSSLContext.getInstance(protocol), keyManager, trustManager)
         }
+    }
+
+    actual fun clientSession(host: String, port: Int): SSLSession {
+        val engine = ctx.createSSLEngine(host, port)
+        engine.useClientMode = true
+        engine.wantClientAuth = false//wantClientAuthentication
+        engine.needClientAuth = false//needClientAuthentication
+        engine.enabledProtocols = SSLServerSocketChannel.filterArray(engine.enabledProtocols, null, null)
+        engine.enabledCipherSuites = SSLServerSocketChannel.filterArray(engine.enabledCipherSuites, null, null)
+        return SSLSession(engine)
+    }
+
+    actual fun serverSession(): SSLSession {
+        val engine = ctx.createSSLEngine()
+        engine.useClientMode = false
+        engine.wantClientAuth = false//wantClientAuthentication
+        engine.needClientAuth = false//needClientAuthentication
+        engine.enabledProtocols = SSLServerSocketChannel.filterArray(engine.enabledProtocols, null, null)
+        engine.enabledCipherSuites = SSLServerSocketChannel.filterArray(engine.enabledCipherSuites, null, null)
+        return SSLSession(engine)
     }
 }

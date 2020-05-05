@@ -12,7 +12,8 @@ class LazyAsyncInputStream(private val func: suspend () -> AsyncInputStream) : A
         return stream.read()
     }
 
-    private var stream: AsyncInputStream? = null
+    var stream: AsyncInputStream? = null
+    private set
 
     private suspend fun inited(): AsyncInputStream {
         if (stream == null) {

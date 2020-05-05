@@ -3,6 +3,7 @@ package pw.binom.ssl
 import kotlinx.cinterop.*
 import platform.openssl.*
 import pw.binom.io.Closeable
+import pw.binom.io.socket.ssl.SSLSession
 import pw.binom.io.socket.ssl.SSLSocketFactory
 
 private var inited = false
@@ -13,7 +14,7 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
     init {
         if (!inited) {
             OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS.convert(), null)
-            OPENSSL_init_ssl(0, null)
+            OPENSSL_init_ssl(0.convert(), null)
         }
         inited = true
     }
@@ -63,6 +64,26 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
     actual companion object {
         actual fun getInstance(method: SSLMethod, keyManager: KeyManager, trustManager: TrustManager): SSLContext =
                 SSLContext(method, keyManager, trustManager)
+    }
+
+    actual fun clientSession(host: String, port: Int): SSLSession {
+        val sslCtx = client()
+        SSL_CTX_set_verify(sslCtx, SSL_VERIFY_NONE, null)
+        val ssl = SSL_new(sslCtx)!!
+        val connect = "$host:$port"
+        if (SSL_set1_host(ssl, connect) <= 0) {
+            TODO("SSL_set1_host error")
+        }
+        if (SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, connect.cstr) <= 0)
+            TODO("SSL_ctrl error")
+        return SSLSession(ssl, true)
+    }
+
+    actual fun serverSession(): SSLSession {
+        val sslCtx = client()
+        SSL_CTX_set_verify(sslCtx, SSL_VERIFY_NONE, null)
+        val ssl = SSL_new(sslCtx)!!
+        return SSLSession(ssl, false)
     }
 }
 

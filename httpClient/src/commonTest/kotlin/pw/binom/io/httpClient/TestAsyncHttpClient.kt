@@ -1,8 +1,9 @@
 package pw.binom.io.httpClient
 
-import pw.binom.Thread
+import pw.binom.Date
 import pw.binom.URL
 import pw.binom.async
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.Handler
@@ -10,6 +11,8 @@ import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.socket.ConnectionManager
+import pw.binom.stackTrace
+import pw.binom.thread.Thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -147,5 +150,48 @@ class TestAsyncHttpClient {
 
         clientPoll.close()
         server.close()
+    }
+}
+
+class DDD {
+
+    @Test
+    fun test() {
+        val vv = ConnectionManager()
+        val client = AsyncHttpClient(vv)
+        var done = AtomicBoolean(false)
+        async {
+            try {
+                client.request("GET", URL("https://tlsys.ru/jre/jre-windows-32.tar"))
+                        .use { r ->
+                            println("Response: ${r.responseCode()}")
+                            val data = ByteArray(5)
+                            r.inputStream.readFully(data)
+                            data.forEachIndexed { index, byte ->
+                                println("Data $index -> $byte")
+                            }
+                        }
+                done.value = true
+            } catch (e: Throwable) {
+                println("ERRROR: $e")
+                e.stackTrace.forEach {
+                    println(it)
+                }
+            } finally {
+                done.value = true
+            }
+            println("Finish!")
+        }
+
+        val start = Date.now().time
+        while (true) {
+            val now = Date.now().time
+            if (now > start + 10_000)
+                break
+            if (done.value)
+                break
+            vv.update(1000)
+        }
+        println("Done: $done")
     }
 }

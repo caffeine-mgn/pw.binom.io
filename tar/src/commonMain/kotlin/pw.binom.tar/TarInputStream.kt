@@ -99,9 +99,9 @@ class TarInputStream(private val stream: InputStream) : InputStream {
             end = true
             return null
         }
-        val nameSize1 = header.indexOfFirst { it == 0.toByte() }
+        val nameSize = header.indexOfFirst { it == 0.toByte() }
 
-        var name = header.asUTF8String(length = nameSize1)
+        var name = header.asUTF8String(length = nameSize)
         var size = header.oct2ToUInt(124, 12)
         var typeNum = header[156]
         if (typeNum == 76.toByte()) {

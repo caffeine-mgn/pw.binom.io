@@ -14,7 +14,7 @@ class ConnectionManagerTest {
         val port = 9919
         var done = false
         val handler = object : ConnectionManager.ConnectHandler {
-            override fun clientConnected(connection: ConnectionManager.Connection, manager: ConnectionManager) {
+            override fun clientConnected(connection: ConnectionManager.ConnectionRaw, manager: ConnectionManager) {
                 connection {
                     try {
                         it.input.readln()

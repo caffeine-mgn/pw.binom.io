@@ -31,7 +31,7 @@ val File.isExist: Boolean
 /**
  * Returns current work directory
  */
-expect val File.workDirectory: File
+expect val File.Companion.workDirectory: File
 
 val File.name: String
     get() {

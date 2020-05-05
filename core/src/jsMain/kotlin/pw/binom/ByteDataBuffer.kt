@@ -50,4 +50,19 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
     actual operator fun get(index: Int): Byte = buffer[index]
 
     actual override fun iterator(): ByteDataBufferIterator = ByteDataBufferIterator(this)
+    actual fun write(position: Int, data: ByteArray, offset: Int, length: Int): Int {
+        checkBounds(position, offset, length, data.size)
+        for (i in 0 until length) {
+            buffer[position + i] = data[i + offset]
+        }
+        return length
+    }
+
+    actual fun read(position: Int, data: ByteArray, offset: Int, length: Int): Int {
+        checkBounds(position, offset, length, data.size)
+        for (i in 0 until length) {
+            data[i + offset] = buffer[position + i]
+        }
+        return length
+    }
 }

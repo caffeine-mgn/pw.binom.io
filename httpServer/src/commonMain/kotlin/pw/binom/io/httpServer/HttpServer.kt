@@ -18,7 +18,7 @@ import pw.binom.ssl.SSLContext
  */
 open class HttpServer(val manager: ConnectionManager, protected val handler: Handler) : Closeable, ConnectionManager.ConnectHandler {
 
-    private fun runProcessing(connection: ConnectionManager.Connection, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
+    private fun runProcessing(connection: ConnectionManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
         connection {
             try {
                 while (true) {
@@ -103,7 +103,7 @@ open class HttpServer(val manager: ConnectionManager, protected val handler: Han
         }
     }
 
-    override fun clientConnected(connection: ConnectionManager.Connection, manager: ConnectionManager) {
+    override fun clientConnected(connection: ConnectionManager.ConnectionRaw, manager: ConnectionManager) {
         runProcessing(connection, null, null)
     }
 

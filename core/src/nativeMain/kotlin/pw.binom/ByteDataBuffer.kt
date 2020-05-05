@@ -1,11 +1,9 @@
 package pw.binom
 
-import kotlinx.cinterop.COpaquePointer
-import platform.posix.malloc
-import platform.posix.free
 import kotlinx.cinterop.*
-import platform.posix.size_t
-import kotlinx.cinterop.convert
+import platform.posix.free
+import platform.posix.malloc
+import platform.posix.memcpy
 import pw.binom.io.Closeable
 
 actual class ByteDataBuffer private constructor(actual val size: Int) : Closeable, Iterable<Byte> {
@@ -25,8 +23,13 @@ actual class ByteDataBuffer private constructor(actual val size: Int) : Closeabl
             return bufferVar
         }
 
+    fun refTo(index: Int): CPointer<ByteVar> {
+        return (buffer + index)!!
+    }
+
     override fun close() {
         check(_buffer != null) { "DataBuffer already closed" }
+        free(_buffer)
         _buffer = null
     }
 
@@ -43,4 +46,15 @@ actual class ByteDataBuffer private constructor(actual val size: Int) : Closeabl
     }
 
     actual override fun iterator(): ByteDataBufferIterator = ByteDataBufferIterator(this)
+    actual fun write(position: Int, data: ByteArray, offset: Int, length: Int): Int {
+        checkBounds(position, offset, length, data.size)
+        memcpy(buffer + position, data.refTo(offset), length.convert())
+        return length
+    }
+
+    actual fun read(position: Int, data: ByteArray, offset: Int, length: Int): Int {
+        checkBounds(position, offset, length, data.size)
+        memcpy(data.refTo(offset), buffer + position, length.convert())
+        return length
+    }
 }

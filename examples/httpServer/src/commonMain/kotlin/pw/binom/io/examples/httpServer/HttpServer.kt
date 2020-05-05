@@ -7,7 +7,7 @@ import pw.binom.io.write
 import pw.binom.io.writeln
 
 class HttpServerHandler : ConnectionManager.ConnectHandler {
-    override fun clientConnected(connection: ConnectionManager.Connection, manager: ConnectionManager) {
+    override fun clientConnected(connection: ConnectionManager.ConnectionRaw, manager: ConnectionManager) {
         connection {
             try {
                 val header = it.input.readln().split(' ')

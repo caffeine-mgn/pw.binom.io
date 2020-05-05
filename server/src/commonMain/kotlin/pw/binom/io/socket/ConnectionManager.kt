@@ -10,12 +10,12 @@ import kotlin.coroutines.suspendCoroutine
 open class ConnectionManager : Closeable {
     class ReadInterruptException : RuntimeException()
     interface ConnectHandler {
-        fun clientConnected(connection: Connection, manager: ConnectionManager)
+        fun clientConnected(connection: ConnectionRaw, manager: ConnectionManager)
     }
 
     internal class WaitEvent(val continuation: Continuation<Int>, val data: ByteArray, val offset: Int, val length: Int)
 
-    inner class Connection internal constructor(val manager: ConnectionManager, internal val channel: SocketChannel, var attachment: Any?) : Closeable {
+    inner class ConnectionRaw internal constructor(val manager: ConnectionManager, internal val channel: SocketChannel, var attachment: Any?) : AsyncChannel {
         internal lateinit var selectionKey: SocketSelector.SelectorKey
 
         internal var _inputAvailable: Boolean = false
@@ -29,7 +29,7 @@ open class ConnectionManager : Closeable {
             }
         }
 
-        val input: AsyncInputStream = object : AsyncInputStream {
+        override val input: AsyncInputStream = object : AsyncInputStream {
             private val staticData = ByteArray(1)
             override suspend fun read(): Byte {
                 if (read(staticData) != 1)
@@ -44,9 +44,15 @@ open class ConnectionManager : Closeable {
                     return channel.read(data, offset, length)
                 }
 
-                return suspendCoroutine { v ->
-                    readWaitList.push(WaitEvent(v, data, offset, length))
-                    selectionKey.listenReadable = true
+                while (true) {
+                    val readed = suspendCoroutine<Int> { v ->
+                        readWaitList.push(WaitEvent(v, data, offset, length))
+                        selectionKey.listenReadable = true
+                    }
+                    if (readed >= 0) {
+                        println("Readed RAW $readed")
+                        return readed
+                    }
                 }
             }
 
@@ -54,12 +60,13 @@ open class ConnectionManager : Closeable {
             }
         }
 
-        val output: AsyncOutputStream = object : AsyncOutputStream {
+        override val output: AsyncOutputStream = object : AsyncOutputStream {
             override suspend fun write(data: Byte): Boolean =
                     write(ByteArray(1) { data }) == 1
 
             override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
                 check(!detached) { "Connection was detached" }
+                println("Write RAW $length")
                 return suspendCoroutine { v ->
                     writeWaitList.push(WaitEvent(v, data, offset, length))
                     selectionKey.listenWritable = true
@@ -76,7 +83,7 @@ open class ConnectionManager : Closeable {
         internal val readWaitList = Stack<WaitEvent>().asLiFoQueue()
         internal val writeWaitList = Stack<WaitEvent>().asLiFoQueue()
 
-        operator fun invoke(func: suspend (Connection) -> Unit) {
+        operator fun invoke(func: suspend (ConnectionRaw) -> Unit) {
             func.start(this)
         }
 
@@ -95,7 +102,7 @@ open class ConnectionManager : Closeable {
             return channel
         }
 
-        override fun close() {
+        override suspend fun close() {
             while (!writeWaitList.isEmpty)
                 writeWaitList.pop().continuation.resumeWithException(ClosedException())
             while (!readWaitList.isEmpty)
@@ -116,13 +123,13 @@ open class ConnectionManager : Closeable {
         if (it.channel is ServerSocketChannel) {
             val server = it.channel as ServerSocketChannel
             val cl = server.accept() ?: return@process
-            val connection = Connection(channel = cl, attachment = null, manager = this)
+            val connection = ConnectionRaw(channel = cl, attachment = null, manager = this)
             connection.channel.blocking = false
             connection.selectionKey = selector.reg(connection.channel, connection)
             val handler = it.attachment as ConnectHandler?
             handler?.clientConnected(connection, this)
         } else {
-            val client = (it.attachment as Connection?)
+            val client = (it.attachment as ConnectionRaw?)
             if (client?.detached == true) {
                 TODO("Client is detached")
             }
@@ -154,7 +161,9 @@ open class ConnectionManager : Closeable {
                         ev.continuation.resume(wroteBytesCount)
                     } catch (e: Throwable) {
                         println("ERROR #3: $e")
-                        client.close()
+                        async {
+                            client.close()
+                        }
                         throw e
                     }
                 }
@@ -174,7 +183,9 @@ open class ConnectionManager : Closeable {
                         }
                         ev.continuation.resume(readBytesCount)
                     } catch (e: Throwable) {
-                        client.close()
+                        async {
+                            client.close()
+                        }
                         throw e
                     }
                 }
@@ -189,8 +200,8 @@ open class ConnectionManager : Closeable {
         }
     }
 
-    fun findClient(func: (Connection) -> Boolean): Connection? =
-            selector.keys.asSequence().map { it.attachment as? Connection }.filterNotNull().find(func)
+    fun findClient(func: (ConnectionRaw) -> Boolean): ConnectionRaw? =
+            selector.keys.asSequence().map { it.attachment as? ConnectionRaw }.filterNotNull().find(func)
 
     /**
      * Returns clients count
@@ -211,7 +222,7 @@ open class ConnectionManager : Closeable {
         }
     }
 
-    fun connect(host: String, port: Int, attachment: Any? = null, factory: SocketFactory = SocketFactory.rawSocketFactory): Connection {
+    fun connect(host: String, port: Int, attachment: Any? = null, factory: SocketFactory = SocketFactory.rawSocketFactory): ConnectionRaw {
         val channel = factory.createSocketChannel()
         try {
             channel.connect(host, port)
@@ -225,9 +236,9 @@ open class ConnectionManager : Closeable {
     /**
      * Attach channel to current ConnectionManager
      */
-    fun attach(channel: SocketChannel, attachment: Any? = null): Connection {
+    fun attach(channel: SocketChannel, attachment: Any? = null): ConnectionRaw {
         channel.blocking = false
-        val connection = Connection(channel = channel, attachment = attachment, manager = this)
+        val connection = ConnectionRaw(channel = channel, attachment = attachment, manager = this)
         connection.selectionKey = selector.reg(channel, connection)
         connection.selectionKey.listenReadable = false
         connection.selectionKey.listenWritable = false
@@ -236,9 +247,11 @@ open class ConnectionManager : Closeable {
 
     override fun close() {
         selector.keys.toTypedArray().forEach {
-            val con = (it.attachment as? Connection) ?: return@forEach
+            val con = (it.attachment as? ConnectionRaw) ?: return@forEach
             if (con.manager === this) {
-                con.close()
+                async {
+                    con.close()
+                }
             }
         }
         selector.close()

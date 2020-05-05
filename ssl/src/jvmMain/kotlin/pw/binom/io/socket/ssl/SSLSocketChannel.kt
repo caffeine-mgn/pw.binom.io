@@ -114,9 +114,7 @@ actual class SSLSocketChannel
         }
         val l = minOf(length, readBuf.remaining())
         readBuf.get(data, offset, l)
-//        println("Read from buffer $l ${readBuf.remaining()}")
         return l
-
     }
 
     /**
@@ -178,129 +176,6 @@ actual class SSLSocketChannel
     override fun flush() {
 
     }
-
-    /**
-     *
-     * Reads a sequence of bytes from this channel into a subsequence of the given buffers.
-     *
-     *
-     * An invocation of this method attempts to read up to r bytes from this channel, where r is the total number of bytes remaining the specified subsequence of the given buffer array, that is,
-     * <pre>
-     * `dsts[offset].remaining()
-     * + dsts[offset+1].remaining()
-     * + ... + dsts[offset+length-1].remaining()
-    ` *
-    </pre> *
-     *
-     * at the moment that this method is invoked.
-     *
-     *
-     * Suppose that a byte sequence of length n is read, where 0 <= n <= r. Up to the first dsts[offset].remaining() bytes of this sequence are transferred into buffer dsts[offset], up to the next dsts[offset+1].remaining() bytes are transferred into buffer dsts[offset+1], and so forth, until the entire byte sequence is transferred into the given buffers. As many bytes as possible are transferred into each buffer, hence the final position of each updated buffer, except the last updated buffer, is guaranteed to be equal to that buffer's limit.
-     *
-     *
-     * This method may be invoked at any time. If another thread has already initiated a read operation upon this channel, however, then an invocation of this method will block until the first operation is complete.
-     *
-     * @param applicationByteBuffers The buffers into which bytes are to be transferred
-     * @param offset The offset within the buffer array of the first buffer into which bytes are to be transferred; must be non-negative and no larger than dsts.length
-     * @param length The maximum number of buffers to be accessed; must be non-negative and no larger than `dsts.length - offset`
-     * @return The number of bytes read, possibly zero, or -1 if the channel has reached end-of-stream
-     * @throws java.nio.channels.NotYetConnectedException If this channel is not yet connected
-     * @throws java.nio.channels.ClosedChannelException If this channel is closed
-     * @throws java.nio.channels.AsynchronousCloseException If another thread closes this channel while the read operation is in progress
-     * @throws java.nio.channels.ClosedByInterruptException If another thread interrupts the current thread while the read operation is in progress, thereby closing the channel and setting the current thread's interrupt status
-     * @throws IOException If some other I/O error occurs
-     * @throws IllegalArgumentException If one of the given applicationBuffers capacity ([ByteBuffer.capacity] is less then the application buffer size of the [SSLEngine] session application buffer size ([SSLSession.getApplicationBufferSize] this channel was constructed was.
-     */
-/*
-    @Throws(IOException::class, IllegalArgumentException::class)
-    override fun read(applicationByteBuffers: Array<ByteBuffer>, offset: Int, length: Int): Long {
-        var totalRead: Long = 0
-        for (i in offset until length) {
-            val applicationByteBuffer = applicationByteBuffers[i]
-            if (applicationByteBuffer.hasRemaining()) {
-                val read = read(applicationByteBuffer)
-                if (read > 0) {
-                    totalRead += read.toLong()
-                    if (applicationByteBuffer.hasRemaining()) {
-                        break
-                    }
-                } else {
-                    if (read < 0 && totalRead == 0L) {
-                        totalRead = -1
-                    }
-                    break
-                }
-            }
-        }
-        return totalRead
-    }
-*/
-
-    /**
-     *
-     * Writes a sequence of bytes to this channel from a subsequence of the given buffers.
-     *
-     *
-     * An attempt is made to write up to r bytes to this channel, where r is the total number of bytes remaining in the specified subsequence of the given buffer array, that is,
-     * <pre>
-     * `srcs[offset].remaining()
-     * + srcs[offset+1].remaining()
-     * + ... + srcs[offset+length-1].remaining()
-    ` *
-    </pre> *
-     *
-     * at the moment that this method is invoked.
-     *
-     *
-     * Suppose that a byte sequence of length n is written, where 0 <= n <= r. Up to the first srcs[offset].remaining() bytes of this sequence are written from buffer srcs[offset], up to the next srcs[offset+1].remaining() bytes are written from buffer srcs[offset+1], and so forth, until the entire byte sequence is written. As many bytes as possible are written from each buffer, hence the final position of each updated buffer, except the last updated buffer, is guaranteed to be equal to that buffer's limit.
-     *
-     *
-     * Unless otherwise specified, a write operation will return only after writing all of the r requested bytes. Some types of channels, depending upon their state, may write only some of the bytes or possibly none at all. A socket channel in non-blocking mode, for example, cannot write any more bytes than are free in the socket's output buffer.
-     *
-     *
-     * This method may be invoked at any time. If another thread has already initiated a write operation upon this channel, however, then an invocation of this method will block until the first operation is complete.
-     *
-     * @param applicationByteBuffers The buffers from which bytes are to be retrieved
-     * @param offset offset - The offset within the buffer array of the first buffer from which bytes are to be retrieved; must be non-negative and no larger than `srcs.length`
-     * @param length The maximum number of buffers to be accessed; must be non-negative and no larger than `srcs.length - offset`
-     * @return The number of bytes written, possibly zero
-     * @throws java.nio.channels.NotYetConnectedException If this channel is not yet connected
-     * @throws java.nio.channels.ClosedChannelException If this channel is closed
-     * @throws java.nio.channels.AsynchronousCloseException If another thread closes this channel while the read operation is in progress
-     * @throws java.nio.channels.ClosedByInterruptException If another thread interrupts the current thread while the read operation is in progress, thereby closing the channel and setting the current thread's interrupt status
-     * @throws IOException If some other I/O error occurs
-     * @throws IllegalArgumentException If one of the given applicationBuffers capacity ([ByteBuffer.capacity] is less then the application buffer size of the [SSLEngine] session application buffer size ([SSLSession.getApplicationBufferSize] this channel was constructed was.
-     */
-/*    @Throws(IOException::class, IllegalArgumentException::class)
-    override fun write(applicationByteBuffers: Array<ByteBuffer>, offset: Int, length: Int): Long {
-        var totalWritten: Long = 0
-        for (i in offset until length) {
-            val byteBuffer = applicationByteBuffers[i]
-            if (byteBuffer.hasRemaining()) {
-                val written = write(byteBuffer)
-                if (written > 0) {
-                    totalWritten += written.toLong()
-                    if (byteBuffer.hasRemaining()) {
-                        break
-                    }
-                } else {
-                    if (written < 0 && totalWritten == 0L) {
-                        totalWritten = -1
-                    }
-                    break
-                }
-            }
-        }
-        return totalWritten
-    }*/
-
-//    override fun socket(): Socket {
-//        return wrappedSocketChannel.socket()
-//    }
-
-//    override fun isConnected(): Boolean {
-//        return wrappedSocketChannel.isConnected
-//    }
 
     @Throws(IOException::class)
     fun finishConnect(): Boolean {

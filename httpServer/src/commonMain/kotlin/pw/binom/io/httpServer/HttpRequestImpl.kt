@@ -11,7 +11,7 @@ import pw.binom.io.http.Headers
 import pw.binom.io.socket.ConnectionManager
 
 class HttpRequestImpl(
-        private val connection: ConnectionManager.Connection,
+        private val connection: ConnectionManager.ConnectionRaw,
         override val method: String,
         override val uri: String,
         override val headers: Map<String, List<String>>) : HttpRequest {

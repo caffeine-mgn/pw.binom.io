@@ -30,7 +30,7 @@ class TestClientServer {
     }
 
     class EchoHandler : ConnectionManager.ConnectHandler {
-        override fun clientConnected(connection: ConnectionManager.Connection, manager: ConnectionManager) {
+        override fun clientConnected(connection: ConnectionManager.ConnectionRaw, manager: ConnectionManager) {
             connection {
                 val reader = it.input.utf8Reader()
                 val writer = it.output.utf8Appendable()

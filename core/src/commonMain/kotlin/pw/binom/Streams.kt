@@ -18,4 +18,4 @@ internal inline fun internal_readln(f: () -> Byte): String {
 }
 
 internal inline fun internal_write(text: String, f: (ByteArray) -> Int) = f(text.asUTF8ByteArray())
-internal inline fun internal_writeln(txt: String, f: (String) -> Int) = f(txt) + f("\r\n")
+internal inline fun internal_writeln(txt: String, f: (String) -> Int) = f("$txt\r\n")
