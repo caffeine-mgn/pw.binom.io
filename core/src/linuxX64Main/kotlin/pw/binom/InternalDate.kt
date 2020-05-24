@@ -20,7 +20,6 @@ actual typealias NTime = tm
 
 internal actual fun getNativeTime(time: Long) = memScoped {
     val t = alloc<LongVar>()
-
     t.value = time
     localtime(t.ptr)!!.pointed
 }

@@ -2,6 +2,10 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import platform.windows.GetLocalTime
+import platform.windows.GetSystemTime
+import platform.windows.*
+import platform.windows.LPSYSTEMTIMEVar
 
 internal actual fun calcTime(year: Int, month: Int, dayOfMonth: Int, hours: Int, min: Int, sec: Int): Long =
         memScoped {
@@ -18,6 +22,9 @@ internal actual fun calcTime(year: Int, month: Int, dayOfMonth: Int, hours: Int,
 internal actual fun nowTime(): Long = _time64(null)
 internal actual fun getNativeTime(time: Long) = memScoped {
     val t = alloc<LongVar>()
+    val v = alloc<LPSYSTEMTIMEVar>()
+    GetLocalTime(v.value)
+    v.pointed!!.wMilliseconds
     t.value = time
     _localtime64(t.ptr)!!.pointed
 }

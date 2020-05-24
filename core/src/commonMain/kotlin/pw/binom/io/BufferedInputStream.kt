@@ -17,10 +17,8 @@ open class BufferedInputStream(val stream: InputStream, bufferSize: Int = DEFAUL
 
     override fun read(data: ByteArray, offset: Int, length: Int): Int {
         if (available == -1) {
-            println("Try to read next part ${buffer.size}")
             readed.value = 0
             wrote.value = stream.read(buffer, 0, buffer.size)
-            println("Part readed. Size=${wrote.value}")
             if (wrote.value <= 0)
                 return wrote.value
         }
@@ -29,7 +27,6 @@ open class BufferedInputStream(val stream: InputStream, bufferSize: Int = DEFAUL
 
         buffer.copyInto(data, destinationOffset = offset, startIndex = readed.value, endIndex = readed.value + l)
         readed.addAndGet(l)
-        println("Returns $l bytes from available. New Avalibale: $available wrote: ${wrote.value} readed: ${readed.value}")
         return l
     }
 

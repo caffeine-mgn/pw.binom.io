@@ -1,6 +1,6 @@
 package pw.binom.ssl
 
-import pw.binom.Base64DecodeAppendable
+import pw.binom.base64.Base64DecodeAppendable
 import pw.binom.io.ByteArrayOutputStream
 import pw.binom.io.Closeable
 import pw.binom.io.Reader

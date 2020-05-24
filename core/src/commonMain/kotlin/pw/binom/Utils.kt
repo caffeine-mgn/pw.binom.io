@@ -1,5 +1,7 @@
 package pw.binom
 
+import pw.binom.base64.shl
+
 operator fun Long.get(index: Int): Byte {
     if (index !in 0..7)
         throw IndexOutOfBoundsException()

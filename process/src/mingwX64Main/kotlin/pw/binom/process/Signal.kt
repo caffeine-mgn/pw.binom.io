@@ -38,12 +38,8 @@ actual object Signal {
     }
 
     actual fun listen(signal: Type, handler: (Signal.Type) -> Unit): Closeable {
-        if (inited.compareAndSet(expected = false, new = true)) {
-            println("Start listening...")
-            val r = SetConsoleCtrlHandler(globalHandler, TRUE)
-            println("r==>$r")
-        } else {
-            println("Can't start listening signals")
+        if (!inited.compareAndSet(expected = false, new = true) || SetConsoleCtrlHandler(globalHandler, TRUE) <= 0) {
+            throw RuntimeException("Can't execute SetConsoleCtrlHandler")
         }
         val listener = SignalListener(signal, handler)
         signals.pushLast(listener)

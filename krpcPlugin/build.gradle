@@ -12,6 +12,8 @@ kotlin {
                 api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
                 api project(":core")
                 api project(":file")
+                api "com.google.protobuf:protobuf-java:3.12.0"
+
             }
         }
 

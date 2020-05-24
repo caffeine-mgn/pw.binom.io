@@ -14,6 +14,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) {
 
     private var rbio = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
     private var wbio = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
+    private val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.applicationBufferSize)
 
     init {
         rbio.flip()
@@ -23,8 +24,9 @@ actual class SSLSession(private val sslEngine: SSLEngine) {
     actual fun readNet(dst: ByteArray, offset: Int, length: Int): Int {
         while (true) {
             if (sslEngine.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_WRAP) {
-                val buf = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
-                val s = sslEngine.wrap(buf, wbio)
+//                val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
+                tmpBuf.clear()
+                val s = sslEngine.wrap(tmpBuf, wbio)
                 if (s.bytesConsumed() > 0)
                     TODO()
                 if (s.status != SSLEngineResult.Status.OK)
@@ -45,7 +47,6 @@ actual class SSLSession(private val sslEngine: SSLEngine) {
         wbio.limit(wbio.capacity())
         return l
     }
-
     actual fun writeNet(dst: ByteArray, offset: Int, length: Int): Int {
         val p = rbio.position()
         val l = rbio.limit()
@@ -60,8 +61,8 @@ actual class SSLSession(private val sslEngine: SSLEngine) {
         rbio.position(p)
         while (true) {
             if (sslEngine.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_UNWRAP) {
-                val tmp = ByteBuffer.allocateDirect(sslEngine.session.applicationBufferSize)
-                val rr = sslEngine.unwrap(rbio, tmp)
+                tmpBuf.clear()
+                val rr = sslEngine.unwrap(rbio, tmpBuf)
                 rbio.cleanup()
                 if (rr.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_TASK) {
                     while (true) {
@@ -111,11 +112,12 @@ actual class SSLSession(private val sslEngine: SSLEngine) {
 
     private fun fullBuff(): Status {
         try {
-            val buf = ByteBuffer.allocateDirect(sslEngine.session.applicationBufferSize)
-            val s = sslEngine.unwrap(rbio, buf)
-            buf.flip()
-            val b = ByteArray(buf.remaining())
-            buf.get(b)
+//            val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.applicationBufferSize)
+            tmpBuf.clear()
+            val s = sslEngine.unwrap(rbio, tmpBuf)
+            tmpBuf.flip()
+            val b = ByteArray(tmpBuf.remaining())
+            tmpBuf.get(b)
             clientData.write(b, 0, b.size)
             rbio.cleanup()
             val state = when (s.status) {

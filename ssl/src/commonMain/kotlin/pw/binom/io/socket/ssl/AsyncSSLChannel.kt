@@ -9,10 +9,9 @@ fun SSLSession.asyncChannel(channel: AsyncChannel) =
         AsyncSSLChannel(this, channel)
 
 class AsyncSSLChannel(val session: SSLSession, val channel: AsyncChannel) : AsyncChannel {
-    private val buf = ByteArray(1)
+    private val buf = ByteArray(1024)
 
     private suspend fun sendAll() {
-        val buf = ByteArray(512)
         while (true) {
             val n = session.readNet(buf, 0, buf.size)
             if (n == 0)
@@ -22,7 +21,6 @@ class AsyncSSLChannel(val session: SSLSession, val channel: AsyncChannel) : Asyn
     }
 
     private suspend fun readAll() {
-        val buf = ByteArray(512)
         val n = channel.input.read(buf)
         session.writeNet(buf, 0, n)
     }
@@ -53,7 +51,7 @@ class AsyncSSLChannel(val session: SSLSession, val channel: AsyncChannel) : Asyn
                         readAll()
                     }
                     SSLSession.State.OK -> {
-                        if (readed>0)
+                        if (readed > 0)
                             break@LOOP
                     }
                     else -> TODO("Unknown state ${s.state}")

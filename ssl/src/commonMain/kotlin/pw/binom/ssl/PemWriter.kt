@@ -1,6 +1,6 @@
 package pw.binom.ssl
 
-import pw.binom.Base64EncodeOutputStream
+import pw.binom.base64.Base64EncodeOutputStream
 
 class PemWriter(val appendable: Appendable) {
     fun write(type: String, data: ByteArray) {

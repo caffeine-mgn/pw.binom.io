@@ -176,7 +176,6 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
         } while (applicationInputBuffer.hasRemaining())
 
         applicationInputBuffer.limit(applicationInputBuffer.position() + totalReadFromChannel)
-        println("totalReadFromChannel->${totalReadFromChannel}")
         return totalReadFromChannel
     }
 

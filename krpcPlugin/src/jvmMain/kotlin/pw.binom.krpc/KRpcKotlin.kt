@@ -1,5 +1,6 @@
 package pw.binom.krpc
 
+import com.google.protobuf.compiler.PluginProtos
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection

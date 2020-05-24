@@ -231,6 +231,9 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
                 if (url.protocol == "https")
                     socket = client.sslContext.clientSession(url.host, url.port ?: url.defaultPort!!)
                             .asyncChannel(socket!!)
+                if (url.protocol == "http") {
+                    socket = AsyncBufferedChannel(socket!!)
+                }
 //                    socket = socket!!.ssl(client.sslContext, "${url.host}:${url.port ?: url.defaultPort}")
             }
         }

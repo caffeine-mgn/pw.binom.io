@@ -127,13 +127,3 @@ actual class SSLSession(val ssl: CPointer<SSL>, val client: Boolean) {
         )
     }
 }
-
-private fun CPointer<SSL>.getError(ret: Int): String {
-    val r = getSSLError(ret)!!
-
-    val str = memScoped {
-        r.toKString()
-    }
-    free(r)
-    return str
-}

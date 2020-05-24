@@ -1,0 +1,124 @@
+apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+
+String pathToHeaders(){
+    return "${project(":native:native_sqlite").buildFile.parentFile}/src/main/h".toString()
+}
+
+def sqlitePackageName='platform.internal_sqlite'
+
+kotlin {
+/*
+    linuxX64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
+    linuxArm32Hfp { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+*/
+
+    mingwX64 { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                cinterops {
+                    nativeSqlite3 {
+                        packageName sqlitePackageName
+                        includeDirs.headerFilterOnly pathToHeaders()
+                    }
+                    kotlinOptions.freeCompilerArgs = ['-include-binary', "${project(":native:native_sqlite").buildDir}/libs/sqlite/static/mingwX64/sqlite.lib".toString()]
+                }
+            }
+        }
+    }
+
+    mingwX86 { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                cinterops {
+                    nativeSqlite3 {
+                        packageName sqlitePackageName
+                        includeDirs.headerFilterOnly pathToHeaders()
+                    }
+                    kotlinOptions.freeCompilerArgs = ['-include-binary', "${project(":native:native_sqlite").buildDir}/libs/sqlite/static/mingwX86/sqlite.lib".toString()]
+                }
+            }
+        }
+    }
+    
+    jvm()
+
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":db")
+                api project(":file")
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+
+        nativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+//        linuxArm32HfpMain {
+//            dependencies {
+//                dependsOn linuxX64Main
+//            }
+//        }
+
+        mingwX64Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn mingwX64Main
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+                api 'org.xerial:sqlite-jdbc:3.31.1'
+
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
+            }
+        }
+    }
+}
+
+linkDebugStaticMingwX64{
+    dependsOn ":native:native:native_sqlite"
+}
+
+apply from: '../public.gradle'

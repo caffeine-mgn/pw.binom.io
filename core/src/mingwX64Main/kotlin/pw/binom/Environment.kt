@@ -1,7 +1,7 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.posix.signal
+import platform.posix.*
 import platform.windows.FreeEnvironmentStrings
 import platform.windows.GetEnvironmentStringsW
 import platform.windows.htonl
@@ -28,3 +28,17 @@ actual fun Environment.getEnvs(): Map<String, String> {
     FreeEnvironmentStrings!!.invoke(ff)
     return out
 }
+
+actual val Environment.currentTimeMillis: Long
+    get() = memScoped {
+        val ff = alloc<timespec>()
+        clock_gettime(CLOCK_REALTIME, ff.ptr)
+        ff.tv_sec * 1000L + ff.tv_nsec / 1000000L
+    }
+
+actual val Environment.currentTimeNanoseconds: Long
+    get() = memScoped {
+        val ff = alloc<timespec>()
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, ff.ptr)
+        ff.tv_sec * 1000000000L + ff.tv_nsec
+    }

@@ -1,0 +1,50 @@
+apply plugin: 'cpp'
+apply plugin: 'c'
+
+model {
+
+    platforms {
+        mingwX64 {
+            architecture "mingwX64"
+        }
+        mingwX86 {
+            architecture "mingwX86"
+        }
+    }
+
+    toolChains {
+        gccX64(Gcc) {
+            target("mingwX64")
+            path "${System.getProperty("user.home")}/.konan/dependencies/msys2-mingw-w64-x86_64-gcc-7.3.0-clang-llvm-lld-6.0.1/bin"
+        }
+
+        gccX86(Gcc) {
+            target("mingwX86")
+            path "${System.getProperty("user.home")}/.konan/dependencies/msys2-mingw-w64-i686-clang-llvm-lld-compiler_rt-8.0.1/bin"
+        }
+    }
+
+    components {
+        sqlite(NativeLibrarySpec) {
+            targetPlatform "mingwX64"
+            targetPlatform "mingwX86"
+            sources {
+                c {
+                    source {
+                        srcDir "src/main/c"
+                        include "**/*.c"
+                    }
+                    exportedHeaders {
+                        srcDir "src/main/h"
+                        include "**/*.h"
+                    }
+                }
+            }
+
+            binaries.all {
+                cCompiler.args '-O2', '-DSQLITE_ENABLE_FTS4', '-DSQLITE_ENABLE_RTREE', '-DSQLITE_ENABLE_COLUMN_METADATA'
+                println("->>$it   ${it}")
+            }
+        }
+    }
+}

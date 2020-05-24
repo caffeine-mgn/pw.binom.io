@@ -50,7 +50,6 @@ open class ConnectionManager : Closeable {
                         selectionKey.listenReadable = true
                     }
                     if (readed >= 0) {
-                        println("Readed RAW $readed")
                         return readed
                     }
                 }
@@ -66,11 +65,17 @@ open class ConnectionManager : Closeable {
 
             override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
                 check(!detached) { "Connection was detached" }
-                println("Write RAW $length")
-                return suspendCoroutine { v ->
-                    writeWaitList.push(WaitEvent(v, data, offset, length))
-                    selectionKey.listenWritable = true
+                var len = length
+                var off = offset
+                while (len > 0) {
+                    val r = suspendCoroutine<Int> { v ->
+                        writeWaitList.push(WaitEvent(v, data, off, len))
+                        selectionKey.listenWritable = true
+                    }
+                    off += r
+                    len -= r
                 }
+                return length
             }
 
             override suspend fun close() {
@@ -158,6 +163,8 @@ open class ConnectionManager : Closeable {
                             ev.continuation.resumeWithException(e)
                             return@process
                         }
+                        if (ev.length != wroteBytesCount)
+                            println("need send: ${ev.length}. Sendded $wroteBytesCount")
                         ev.continuation.resume(wroteBytesCount)
                     } catch (e: Throwable) {
                         println("ERROR #3: $e")

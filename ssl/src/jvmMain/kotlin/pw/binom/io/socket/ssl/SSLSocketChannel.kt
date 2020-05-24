@@ -107,7 +107,6 @@ actual class SSLSocketChannel
             if (r == -1)
                 return -1
             readBuf.limit(r)
-            println("Read from network $r ${readBuf.remaining()}")
             if (r <= 0)
                 return r
             readBuf.flip()
