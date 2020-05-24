@@ -5,7 +5,7 @@ import platform.internal_sqlite.*
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 
-class SQLiteResultSetV2(
+class SQLiteResultSet(
         val prepareStatement: SQLitePrepareStatement,
         var empty: Boolean
 ) : ResultSet {
@@ -25,8 +25,6 @@ class SQLiteResultSetV2(
             columnsMap[name] = it
         }
         columns = out
-
-        println("Names: ${out}")
     }
 
     private var skipOne = true

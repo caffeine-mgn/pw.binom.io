@@ -58,8 +58,8 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
         val code = sqlite3_step(stmt)
         connection.checkSqlCode(code)
         val result = when (code) {
-            SQLITE_DONE -> SQLiteResultSetV2(this, true)
-            SQLITE_ROW -> SQLiteResultSetV2(this, false)
+            SQLITE_DONE -> SQLiteResultSet(this, true)
+            SQLITE_ROW -> SQLiteResultSet(this, false)
             else -> throw IllegalStateException()
         }
         openedResultSetCount++
