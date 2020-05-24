@@ -13,6 +13,11 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : Connection 
             val connection = JDBC4Connection(null, file.path, Properties())
             return SQLiteConnector(connection)
         }
+
+        actual fun memory(name: String?): SQLiteConnector {
+            val connection = JDBC4Connection("jdbc:sqlite::memory:", null, Properties ())
+            return SQLiteConnector(connection)
+        }
     }
 
     override fun createStatement(): Statement =

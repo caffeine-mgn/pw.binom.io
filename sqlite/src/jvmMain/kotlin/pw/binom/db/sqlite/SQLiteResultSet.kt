@@ -28,6 +28,20 @@ class SQLiteResultSet(private val native: ResultSet) : pw.binom.db.ResultSet {
 
     override fun getFloat(index: Int) = native.getFloat(index + 1)
     override fun getFloat(column: String): Float = native.getFloat(column)
+    override fun getBlob(index: Int): ByteArray {
+        return native.getBinaryStream(index + 1).readAllBytes()
+//        val b = native.getBlob(index + 1)
+//        val buf = ByteArray(b.length().toInt())
+//        b.getBytes(0, buf.size)
+//        return buf
+    }
+
+    override fun getBlob(column: String): ByteArray {
+        val b = native.getBlob(column)
+        val buf = ByteArray(b.length().toInt())
+        b.getBytes(0, buf.size)
+        return buf
+    }
 
     override fun isNull(index: Int) =
             native.getObject(index + 1) != null

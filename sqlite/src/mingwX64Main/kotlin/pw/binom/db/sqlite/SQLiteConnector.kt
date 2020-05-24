@@ -1,11 +1,13 @@
 package pw.binom.db.sqlite
 
+import cnames.structs.sqlite3
 import cnames.structs.sqlite3_stmt
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.free
 import pw.binom.db.Connection
 import pw.binom.db.PreparedStatement
+import pw.binom.db.SQLException
 import pw.binom.db.Statement
 import pw.binom.io.IOException
 import pw.binom.io.file.File
@@ -50,7 +52,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         free(ctx)
     }
 }
-
+/*
 internal val callback = staticCFunction<COpaquePointer?, Int, CPointer<CPointerVar<ByteVar>>?, CPointer<CPointerVar<ByteVar>>?, Int> { notUsed: COpaquePointer?, argc: Int, argv: CPointer<CPointerVar<ByteVar>>?, azColName: CPointer<CPointerVar<ByteVar>>? ->
     val resultSet = notUsed!!.asStableRef<SQLiteResultSetV1>().get()
 
@@ -69,4 +71,16 @@ internal val callback = staticCFunction<COpaquePointer?, Int, CPointer<CPointerV
             }
     )
     0
+}
+*/
+internal fun SQLiteConnector.checkSqlCode(code: Int) {
+    fun msg() = sqlite3_errmsg(this.ctx.pointed.value)?.toKStringFromUtf8() ?: "Unknown Error"
+    when (code) {
+        SQLITE_OK, SQLITE_DONE, SQLITE_ROW -> return
+        SQLITE_BUSY -> throw SQLException("Database is Busy")
+        SQLITE_ERROR -> throw SQLException(msg())
+        SQLITE_MISUSE -> throw SQLException("Database is Misuse")
+        SQLITE_CONSTRAINT -> throw SQLException("Constraint: ${msg()}")
+        else -> throw SQLException("SQL Code: $code")
+    }
 }

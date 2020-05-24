@@ -11,6 +11,7 @@ interface ResultSet : Closeable {
     fun getInt(index: Int): Int
     fun getLong(index: Int): Long
     fun getFloat(index: Int): Float
+    fun getBlob(index: Int): ByteArray
     fun isNull(index: Int): Boolean
 
     fun getString(column: String): String
@@ -18,6 +19,7 @@ interface ResultSet : Closeable {
     fun getInt(column: String): Int
     fun getLong(column: String): Long
     fun getFloat(column: String): Float
+    fun getBlob(column: String): ByteArray
     fun isNull(column: String): Boolean
 
     class InvalidColumnTypeException : IOException()

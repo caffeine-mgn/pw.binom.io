@@ -1,10 +1,6 @@
 package pw.binom
 
-import pw.binom.job.Task
-import pw.binom.job.Worker
-import pw.binom.job.execute
 import pw.binom.thread.FreezedStack
-import pw.binom.thread.Thread
 import kotlin.test.*
 
 class FreezedStackTest {

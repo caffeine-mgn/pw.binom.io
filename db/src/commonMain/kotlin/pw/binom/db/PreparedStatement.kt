@@ -9,6 +9,7 @@ interface PreparedStatement : Closeable {
     fun set(index: Int, value: Long)
     fun set(index: Int, value: String)
     fun set(index: Int, value: Boolean)
+    fun set(index: Int, value: ByteArray)
     fun executeQuery(): ResultSet
-    fun executeUpdate(query: String)
+    fun executeUpdate()
 }

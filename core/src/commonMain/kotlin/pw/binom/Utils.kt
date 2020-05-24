@@ -85,14 +85,14 @@ fun Long.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte,
 fun Long.toBytes(array: ByteArray, offset: Int = 0) {
     if (array.size - offset < Long.SIZE_BYTES)
         throw IllegalArgumentException()
-    array[0] = ushr(56).toByte()
-    array[1] = ushr(48).toByte()
-    array[2] = ushr(40).toByte()
-    array[3] = ushr(32).toByte()
-    array[4] = ushr(24).toByte()
-    array[5] = ushr(16).toByte()
-    array[6] = ushr(8).toByte()
-    array[7] = ushr(0).toByte()
+    array[0 + offset] = ushr(56).toByte()
+    array[1 + offset] = ushr(48).toByte()
+    array[2 + offset] = ushr(40).toByte()
+    array[3 + offset] = ushr(32).toByte()
+    array[4 + offset] = ushr(24).toByte()
+    array[5 + offset] = ushr(16).toByte()
+    array[6 + offset] = ushr(8).toByte()
+    array[7 + offset] = ushr(0).toByte()
 }
 
 fun Long.Companion.fromBytes(readBuffer: ByteArray) = (readBuffer[0] shl 56) +

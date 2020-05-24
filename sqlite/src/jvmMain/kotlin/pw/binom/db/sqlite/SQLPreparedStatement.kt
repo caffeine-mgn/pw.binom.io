@@ -25,10 +25,14 @@ class SQLPreparedStatement(override val connection: SQLiteConnector, internal va
         set(index, if (value) 1 else 0)
     }
 
+    override fun set(index: Int, value: ByteArray) {
+        native.setBytes(index + 1, value)
+    }
+
     override fun executeQuery(): ResultSet =
             SQLiteResultSet(native.executeQuery())
 
-    override fun executeUpdate(query: String) {
+    override fun executeUpdate() {
         native.executeUpdate()
     }
 

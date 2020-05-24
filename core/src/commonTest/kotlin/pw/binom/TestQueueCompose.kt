@@ -1,10 +1,9 @@
 package pw.binom
 
-import pw.binom.thread.FreezedStack
-import pw.binom.thread.plus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
+import pw.binom.thread.*
 
 class TestQueueCompose {
 

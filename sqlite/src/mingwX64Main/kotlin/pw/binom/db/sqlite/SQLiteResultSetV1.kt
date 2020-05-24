@@ -2,7 +2,7 @@ package pw.binom.db.sqlite
 
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
-
+/*
 class SQLiteResultSetV1 : ResultSet {
 
     private class Record(val values: Array<String?>, var next: Record?)
@@ -111,6 +111,21 @@ class SQLiteResultSetV1 : ResultSet {
         return str.toFloatOrNull() ?: throw SQLException("Can't convert \"$str\" to float")
     }
 
+    override fun getBlob(index: Int): ByteArray {
+        checkRange(index)
+        val data = getActiveRecord().values[index] ?: nullNotExpected()
+        val v = data.toCharArray()
+        println("getBlob($index)=${data} ${data.length}")
+        return ByteArray(v.size) { v[it].toByte() }
+    }
+
+    override fun getBlob(column: String): ByteArray {
+        val index = columns1.indexOf(column)
+        if (index < 0)
+            throw SQLException("Column \"$column\" not found")
+        return getBlob(index)
+    }
+
     override fun isNull(index: Int): Boolean {
         checkRange(index)
         return getActiveRecord().values[index] == null
@@ -128,3 +143,4 @@ class SQLiteResultSetV1 : ResultSet {
         columns1.clear()
     }
 }
+*/

@@ -51,12 +51,12 @@ class SQLiteResultSetV2(
                 true
             }
             SQLITE_ERROR -> throw SQLException(
-                    sqlite3_errmsg(prepareStatement.connection.ctx.pointed.value)?.toKStringFromUtf8() ?: "Unknown Error"
+                    sqlite3_errmsg(prepareStatement.connection.ctx.pointed.value)?.toKStringFromUtf8()
+                            ?: "Unknown Error"
             )
             SQLITE_MISUSE -> throw SQLException("Database is Misuse")
             else -> throw SQLException()
         }
-        println("next result: $bb")
         return bb
     }
 
@@ -74,6 +74,15 @@ class SQLiteResultSetV2(
                 ?.toKStringFromUtf8()
                 ?: nullNotExpected()
     }
+
+    override fun getBlob(index: Int): ByteArray {
+        if (isNullColumn(index))
+            nullNotExpected()
+        val len = sqlite3_column_bytes(stmt, index)
+        return sqlite3_column_blob(stmt, index)!!.readBytes(len)
+    }
+
+    override fun getBlob(column: String): ByteArray = getBlob(columnIndex(column))
 
     override fun getString(column: String) =
             getString(columnIndex(column))
