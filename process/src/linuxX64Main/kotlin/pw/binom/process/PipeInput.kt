@@ -11,7 +11,6 @@ class PipeInput : Pipe(), InputStream {
     override fun read(data: ByteArray, offset: Int, length: Int): Int {
         if (endded.value)
             return 0
-//        println("Try to read $length")
         val r = platform.posix.read(read, data.refTo(offset), length.convert()).convert<Int>()
         if (r <= 0)
             endded.value = true

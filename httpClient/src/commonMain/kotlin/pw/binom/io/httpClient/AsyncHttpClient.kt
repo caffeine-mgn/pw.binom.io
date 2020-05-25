@@ -173,7 +173,6 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
             connect().output.flush()
             requestSend = true
         } catch (e: Throwable) {
-            println("Error!!! $e")
             e.stackTrace.forEach {
                 println(it)
             }
@@ -185,7 +184,6 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
 
 
     private suspend fun readResponse() {
-        println("Send request")
         sendRequest()
         if (responseRead)
             return
@@ -197,9 +195,7 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
 
         var responseLine: String
         while (true) {
-            println("Read headers")
             responseLine = connect().input.readln()
-            println("responseLine->$responseLine")
             if (responseLine.isNotEmpty())
                 break
             break
@@ -255,7 +251,6 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
                 con = client.sslContext.clientSession(url.host, url.port ?: url.defaultPort!!)
                         .asyncChannel(con)
 //                con = con.ssl(client.sslContext, "${url.host}:${url.port ?: url.defaultPort}")
-                println("Http client connected!")
             }
             socket = con
         }

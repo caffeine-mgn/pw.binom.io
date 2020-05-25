@@ -98,7 +98,6 @@ actual class SSLSocketChannel
         if (data.size < offset + length)
             throw IndexOutOfBoundsException()
         if (length == 0) {
-            println("length == 0")
             return 0
         }
         if (!readBuf.hasRemaining()) {

@@ -58,7 +58,6 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
 //            if (!checkState())
 //                return 0
             if (data.isEmpty()) {
-                println("Write 0")
                 return 0
             }
             if (offset + length > data.size)
@@ -68,7 +67,6 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
                 val ret = SSL_get_error(ssl, r)
                 TODO("SSL_write $r $ret")
             }
-            println("Wrote $length")
             return length
         }
 
@@ -155,15 +153,12 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
         val start = Thread.currentTimeMillis()
         while (true) {
             if (Thread.currentTimeMillis() - start > 1000) {
-                println("Timeout")
                 return false
             }
             raw.blocking = false
             val r = SSL_accept(ssl)
-            println("accepted: $r")
             if (r == -1) {
                 val ret = SSL_get_error(ssl, r)
-                println("SSL_ERROR_WANT_READ=${ret == SSL_ERROR_WANT_READ}   SSL_ERROR_WANT_WRITE=${ret == SSL_ERROR_WANT_WRITE}   $ret")
                 if (ret != SSL_ERROR_WANT_READ && ret != SSL_ERROR_WANT_WRITE) {
                     close()
                     return false
@@ -174,15 +169,11 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
             Thread.sleep(1)
         }
         raw.blocking = b
-        println("accepted!")
         return true
     }
 
     override fun connect(host: String, port: Int) {
-        println("Connect to $host:$port...")
-        println("connect->#1")
         raw.connect(host, port)
-        println("connect->#2")
         SSL_set_connect_state(ssl)
 //        internal_BIO_set_conn_hostname(bio_remote, "$host:$port".cstr)
         if (SSL_set1_host(ssl, "$host:$port") <= 0) {
@@ -201,7 +192,6 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
 //            free(r)
             TODO("SSL_connect error  $ret   $r")
         }
-        println("connect->#4")
     }
 
     override val connected: Boolean

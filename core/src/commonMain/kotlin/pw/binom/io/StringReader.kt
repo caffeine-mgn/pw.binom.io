@@ -1,13 +1,15 @@
 package pw.binom.io
 
-class StringReader(private val data: String) : Reader {
+class StringReader(data: String) : Reader {
     private var cursor = 0
     private var closed = false
 
+    @OptIn(ExperimentalStdlibApi::class)
+    private val data = data.toCharArray()
     override fun read(): Char? {
         if (closed)
             throw IllegalStateException("String Reader already was closed")
-        if (cursor >= data.length)
+        if (cursor >= data.size)
             return null
         return data[cursor++]
     }
@@ -15,11 +17,12 @@ class StringReader(private val data: String) : Reader {
     override fun read(data: CharArray, offset: Int, length: Int): Int {
         if (offset + length > data.size)
             throw IndexOutOfBoundsException()
-        var i = 0
-        while (cursor < this.data.length && i < length) {
-            data[offset + i++] = read() ?: break
-        }
-        return i
+        val len = minOf(this.data.size - cursor, length)
+        if (len == 0)
+            return 0
+        this.data.copyInto(data, offset, cursor, cursor + len)
+        cursor += len
+        return len
     }
 
     override fun close() {

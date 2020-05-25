@@ -59,7 +59,6 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?, env: Map<S
                     if (workDir != null)
                         chdir(workDir)
                     val rr = execv(exe, r)
-                    println("Result: $rr $errno")
                     TODO()
                 }
 

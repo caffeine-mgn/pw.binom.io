@@ -26,7 +26,13 @@ kotlin {
         }
     }
     js()
-    jvm()
+    jvm{
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = '1.8'
+            }
+        }
+    }
 
     sourceSets {
 
@@ -83,6 +89,12 @@ kotlin {
         jvmTest {
             dependencies {
                 implementation kotlin('test-junit')
+            }
+        }
+
+        sourceSets.all {
+            languageSettings {
+                progressiveMode = true
             }
         }
     }

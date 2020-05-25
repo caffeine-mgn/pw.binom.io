@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import pw.binom.ByteDataBuffer
 import pw.binom.io.ConnectException
 import pw.binom.io.IOException
 import pw.binom.io.UnknownHostException

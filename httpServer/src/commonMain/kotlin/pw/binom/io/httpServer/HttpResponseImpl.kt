@@ -138,20 +138,6 @@ class HttpResponseImpl(
                 connection.output.writeln("${h.key}: $it")
             }
         }
-
-/*
-
-        if (!headers.containsKey(Headers.CONNECTION)) {
-            val contentLengthDefine = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toLongOrNull() != null
-            if (keepAlive && contentLengthDefine) {
-                addHeader(Headers.CONNECTION, Headers.KEEP_ALIVE)
-                connection.output.writeln("${Headers.CONNECTION}: ${Headers.KEEP_ALIVE}")
-            } else {
-                addHeader(Headers.CONNECTION, Headers.CLOSE)
-                connection.output.writeln("${Headers.CONNECTION}: ${Headers.CLOSE}")
-            }
-        }
-*/
         connection.output.writeln("")
     }
 

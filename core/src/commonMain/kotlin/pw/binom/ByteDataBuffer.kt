@@ -12,6 +12,8 @@ expect class ByteDataBuffer : Closeable, Iterable<Byte> {
     operator fun get(index: Int): Byte
     fun write(position: Int, data: ByteArray, offset: Int, length: Int): Int
     fun read(position: Int, data: ByteArray, offset: Int, length: Int): Int
+    fun write(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int
+    fun read(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int
 
     override fun iterator(): ByteDataBufferIterator
 }

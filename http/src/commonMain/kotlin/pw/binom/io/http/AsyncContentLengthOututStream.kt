@@ -29,6 +29,7 @@ open class AsyncContentLengthOututStream(val stream: AsyncOutputStream, val cont
     }
 
     override suspend fun flush() {
+        stream.flush()
     }
 
     override suspend fun close() {

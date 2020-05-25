@@ -110,10 +110,8 @@ actual class SSLServerSocketChannel
     override fun accept(): SSLSocketChannel? {
         val channel = serverSocketChannel.accept()
         if (channel == null) {
-            println("accepted null")
             return null
         } else {
-            println("accepted normal")
             channel.configureBlocking(blockingMode)
 
             val sslEngine = sslContext.ctx.createSSLEngine()

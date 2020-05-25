@@ -30,8 +30,6 @@ open class HttpServer(val manager: ConnectionManager, protected val handler: Han
                         val items = request.split(' ')
                         method = items[0]
                         uri = items.getOrNull(1) ?: ""
-
-
                         while (true) {
                             val s = it.input.readln()
                             if (s.isEmpty())

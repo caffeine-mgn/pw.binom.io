@@ -67,29 +67,21 @@ actual object Signal {
 private val globalHandler = staticCFunction<DWORD, WINBOOL> handler@{ signal ->
     initRuntimeIfNeeded()
     try {
-        println("Signal Event")
-        println("signal=$signal")
         Thread.sleep(1000)
 //        val signalI = signal.toInt()
-//        println("signalI=$signalI")
 //        return@handler FALSE
         val type = Signal.Type.values().find { it.code.toUInt() == signal }
-        println("Type: $type")
         Thread.sleep(1000)
         if (type == null) {
-            println("Can't determinate type. Code=${signal}")
             return@handler FALSE
         }
         val signalObj = signals.find { it.signal == type }
         if (signalObj == null) {
-            println("Can't find listener for $type")
             return@handler FALSE
         }
-        println("Call listener...")
         signalObj.call(type)
         return@handler TRUE
     } catch (e: Throwable) {
-        println("ERROR: ${e}")
         e.printStackTrace()
         return@handler FALSE
     }

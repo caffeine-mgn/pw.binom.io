@@ -16,7 +16,8 @@ abstract class AbstractReader : Reader {
         var i = 0
         while (i < length) {
             try {
-                data[offset + i++] = read() ?: break
+                val c = read() ?: break
+                data[offset + i++] = c
             } catch (e: EOFException) {
                 return i
             }

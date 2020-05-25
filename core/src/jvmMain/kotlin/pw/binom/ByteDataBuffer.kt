@@ -58,7 +58,24 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
         checkBounds(position, offset, length, data.size)
         buffer.position(position)
         buffer.get(data, offset, length)
-        buffer.position(0)
+        return length
+    }
+
+    actual fun write(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
+        checkBounds(position, offset, length, data.size)
+        buffer.position(position)
+        buffer.limit(position + length)
+        data.buffer.position(offset)
+        data.buffer.limit(offset + length)
+        buffer.put(data.buffer)
+        return length
+    }
+
+    actual fun read(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
+        data.buffer.position(offset)
+        data.buffer.limit(offset + length)
+        buffer.position(position)
+        buffer.limit(position + length)
         return length
     }
 }

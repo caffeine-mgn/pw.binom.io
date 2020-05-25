@@ -10,6 +10,13 @@ interface InputStream : Closeable {
 
     fun skip(length: Long): Long = 0L
 
+    fun read(): Byte {
+        val b = ByteArray(1)
+        if (read(b, 0, 1) != 1)
+            throw EOFException()
+        return b[0]
+    }
+
     /**
      * the number of bytes that can be read from this input stream without blocking.
      * returns -1 of not support available property
@@ -18,12 +25,7 @@ interface InputStream : Closeable {
         get() = -1
 }
 
-fun InputStream.read(): Byte {
-    val b = ByteArray(1)
-    if (read(b, 0, 1) != 1)
-        throw EOFException()
-    return b[0]
-}
+
 
 fun InputStream.readln(): String = internal_readln { read() }
 

@@ -23,6 +23,29 @@ class ComposeReader : AbstractReader() {
         }
     }
 
+    override fun read(data: CharArray, offset: Int, length: Int): Int {
+        var off = offset
+        var len = length
+
+        while (len > 0) {
+            while (true) {
+                if (current.isEmpty) {
+                    readers.popFirst(current)
+                    if (current.isEmpty)
+                        return off - offset
+                }
+                val l = current.value.read(data, off, len)
+                len -= l
+                off += l
+                if (l == 0)
+                    current.clear()
+                else
+                    break
+            }
+        }
+        return off - offset
+    }
+
     fun addFirst(reader: Reader): ComposeReader {
         if (!current.isEmpty) {
             readers.pushFirst(current.value)

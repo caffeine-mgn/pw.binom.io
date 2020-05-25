@@ -45,7 +45,6 @@ while (true) {
             val client = server.accept()!!
             client.blocking=false
             selector.reg(client)
-            println("Client connected")
         } else {
             try {
                 val client = it.channel as SocketChannel
@@ -53,7 +52,6 @@ while (true) {
                 client.write(buffer, 0, len)
             } catch (e: SocketClosedException) {
                 it.cancel()
-                println("Client disconnected")
             }
         }
     }

@@ -57,4 +57,16 @@ actual class ByteDataBuffer private constructor(actual val size: Int) : Closeabl
         memcpy(data.refTo(offset), buffer + position, length.convert())
         return length
     }
+
+    actual fun write(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
+        checkBounds(position, offset, length, data.size)
+        memcpy(buffer + position, data.refTo(offset), length.convert())
+        return length
+    }
+
+    actual fun read(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
+        checkBounds(position, offset, length, data.size)
+        memcpy(data.refTo(offset), buffer + position, length.convert())
+        return length
+    }
 }

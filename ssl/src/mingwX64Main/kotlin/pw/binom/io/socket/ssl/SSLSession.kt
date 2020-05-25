@@ -24,20 +24,16 @@ actual class SSLSession(val ssl: CPointer<SSL>, val client: Boolean) {
             return null
         if (client) {
             while (true) {
-                println("Try connect")
                 val n = SSL_connect(ssl)
                 if (n > 0) {
-                    println("SSL connected")
                     break
                 }
                 val err = SSL_get_error(ssl, n)
                 if (err == SSL_ERROR_WANT_WRITE) {
-                    println("SSL connect need to write")
                     return State.WANT_WRITE
                 }
 
                 if (err == SSL_ERROR_WANT_READ) {
-                    println("SSL connect need to read")
                     return State.WANT_READ
                 }
             }

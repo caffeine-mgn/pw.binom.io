@@ -159,15 +159,11 @@ open class ConnectionManager : Closeable {
                         val wroteBytesCount = try {
                             client.channel.write(ev.data, ev.offset, ev.length)
                         } catch (e: Throwable) {
-                            println("ERROR #2: $e")
                             ev.continuation.resumeWithException(e)
                             return@process
                         }
-                        if (ev.length != wroteBytesCount)
-                            println("need send: ${ev.length}. Sendded $wroteBytesCount")
                         ev.continuation.resume(wroteBytesCount)
                     } catch (e: Throwable) {
-                        println("ERROR #3: $e")
                         async {
                             client.close()
                         }
