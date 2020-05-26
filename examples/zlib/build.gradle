@@ -1,11 +1,11 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
 kotlin {
-    def nativeEntryPoint='pw.binom.io.examples.zlib.main'
+    def nativeEntryPoint = 'pw.binom.io.examples.zlib.main'
 
     linuxX64 { // Use your target instead.
         binaries {
-            executable{
+            executable {
                 entryPoint = nativeEntryPoint
             }
         }
@@ -13,7 +13,7 @@ kotlin {
 
     linuxArm32Hfp { // Use your target instead.
         binaries {
-            executable{
+            executable {
                 entryPoint = nativeEntryPoint
             }
         }
@@ -21,7 +21,7 @@ kotlin {
 
     mingwX64 { // Use your target instead.
         binaries {
-            executable{
+            executable {
                 entryPoint = nativeEntryPoint
             }
         }
@@ -29,20 +29,27 @@ kotlin {
 
     mingwX86 { // Use your target instead.
         binaries {
-            executable{
+            executable {
                 entryPoint = nativeEntryPoint
             }
         }
     }
 
-    jvm()
-    
+    jvm {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = '1.8'
+            }
+        }
+    }
+
     sourceSets {
 
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 implementation project(":file")
+                implementation project(":compression")
             }
         }
 

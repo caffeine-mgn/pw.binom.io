@@ -5,7 +5,7 @@ import pw.binom.io.LazyAsyncOutputStream
 import pw.binom.io.http.AsyncChunkedOutputStream
 import pw.binom.io.http.AsyncContentLengthOututStream
 import pw.binom.io.http.Headers
-import pw.binom.io.socket.ConnectionManager
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.writeln
 
 private fun statusToText(code: Int) =
@@ -88,7 +88,7 @@ class HttpResponseImpl(
         status: Int,
         headers: Map<String, List<String>>,
         headerSendded: Boolean,
-        private val connection: ConnectionManager.ConnectionRaw,
+        private val connection: SocketNIOManager.ConnectionRaw,
         private val request: HttpRequest
 ) : HttpResponse {
     override fun clearHeaders() {

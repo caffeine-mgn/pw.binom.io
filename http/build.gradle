@@ -27,22 +27,20 @@ kotlin {
         }
     }
 
-    jvm{
+    jvm {
         compilations.all {
             kotlinOptions {
                 jvmTarget = '1.8'
             }
         }
     }
-    
+
     sourceSets {
 
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
-                api project(":socket")
-                api project(":server")
             }
         }
         commonTest {

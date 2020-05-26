@@ -1,8 +1,5 @@
 package pw.binom.io
 
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.refTo
-import platform.posix.memcpy
 import kotlin.math.ceil
 
 actual class ByteArrayOutputStream actual constructor(capacity: Int, private val capacityFactor: Float) : OutputStream {
@@ -30,12 +27,9 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
                     buffer.size + needWrite
             )
 
-            val new = ByteArray(newSize)
-            if (writeLen > 0)
-                memcpy(new.refTo(0), buffer.refTo(0), writeLen.convert())
-            buffer = new
+            buffer = buffer.copyOf(newSize)
         }
-        memcpy(buffer.refTo(writeLen), data.refTo(offset), length.convert())
+        data.copyInto(buffer, writeLen, offset, offset + length)
         writeLen += length
         return length
     }
@@ -54,9 +48,9 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
     actual fun toByteArray(): ByteArray {
         if (closed)
             throw StreamClosedException()
-        val out = ByteArray(writeLen)
-        if (writeLen>0)
-            memcpy(out.refTo(0), buffer.refTo(0), writeLen.convert())
-        return out
+        return if (writeLen > 0)
+            buffer.copyOf(writeLen)
+        else
+            ByteArray(0)
     }
 }

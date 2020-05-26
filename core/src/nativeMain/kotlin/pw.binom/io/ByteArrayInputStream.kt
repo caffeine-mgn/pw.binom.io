@@ -1,9 +1,5 @@
 package pw.binom.io
 
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.refTo
-import platform.posix.memcpy
-
 actual class ByteArrayInputStream actual constructor(private val data: ByteArray, offset: Int, private val length: Int) : InputStream {
 
     private var cursor: Int = offset
@@ -21,7 +17,8 @@ actual class ByteArrayInputStream actual constructor(private val data: ByteArray
         if (max <= 0)
             return 0
         max = minOf(max, length)
-        memcpy(data.refTo(offset), this.data.refTo(cursor), max.convert())
+        this.data.copyInto(data,offset,cursor,cursor+max)
+//        memcpy(data.refTo(offset), this.data.refTo(cursor), max.convert())
         cursor += max
         return max
     }

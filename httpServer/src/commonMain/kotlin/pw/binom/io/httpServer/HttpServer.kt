@@ -5,9 +5,9 @@ import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import pw.binom.io.StreamClosedException
 import pw.binom.io.readln
-import pw.binom.io.socket.ConnectionManager
 import pw.binom.io.socket.ServerSocketChannel
 import pw.binom.io.socket.SocketFactory
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.rawSocketFactory
 import pw.binom.ssl.SSLContext
 
@@ -16,9 +16,9 @@ import pw.binom.ssl.SSLContext
  *
  * @param handler request handler
  */
-open class HttpServer(val manager: ConnectionManager, protected val handler: Handler) : Closeable, ConnectionManager.ConnectHandler {
+open class HttpServer(val manager: SocketNIOManager, protected val handler: Handler) : Closeable, SocketNIOManager.ConnectHandler {
 
-    private fun runProcessing(connection: ConnectionManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
+    private fun runProcessing(connection: SocketNIOManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
         connection {
             try {
                 while (true) {
@@ -101,7 +101,7 @@ open class HttpServer(val manager: ConnectionManager, protected val handler: Han
         }
     }
 
-    override fun clientConnected(connection: ConnectionManager.ConnectionRaw, manager: ConnectionManager) {
+    override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
         runProcessing(connection, null, null)
     }
 

@@ -2,12 +2,12 @@ package pw.binom.io.examples.httpServer
 
 import pw.binom.io.IOException
 import pw.binom.io.readln
-import pw.binom.io.socket.ConnectionManager
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.write
 import pw.binom.io.writeln
 
-class HttpServerHandler : ConnectionManager.ConnectHandler {
-    override fun clientConnected(connection: ConnectionManager.ConnectionRaw, manager: ConnectionManager) {
+class HttpServerHandler : SocketNIOManager.ConnectHandler {
+    override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
         connection {
             try {
                 val header = it.input.readln().split(' ')
@@ -42,9 +42,9 @@ class HttpServerHandler : ConnectionManager.ConnectHandler {
 }
 
 fun main(args: Array<String>) {
-    val server = ConnectionManager()
-    server.bind(port = 8899, handler = HttpServerHandler())
+    val nioManager = SocketNIOManager()
+    nioManager.bind(port = 8899, handler = HttpServerHandler())
     while (true) {
-        server.update()
+        nioManager.update()
     }
 }

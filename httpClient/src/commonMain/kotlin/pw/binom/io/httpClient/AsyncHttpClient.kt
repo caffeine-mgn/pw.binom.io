@@ -3,9 +3,9 @@ package pw.binom.io.httpClient
 import pw.binom.URL
 import pw.binom.io.*
 import pw.binom.io.http.*
-import pw.binom.io.socket.ConnectionManager
 import pw.binom.io.socket.SocketChannel
 import pw.binom.io.socket.SocketFactory
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.rawSocketFactory
 import pw.binom.io.socket.ssl.AsyncSSLChannel
 import pw.binom.io.socket.ssl.asyncChannel
@@ -21,7 +21,7 @@ object EmptyKeyManager : KeyManager {
     }
 }
 
-class AsyncHttpClient(val connectionManager: ConnectionManager) : Closeable {
+class AsyncHttpClient(val connectionManager: SocketNIOManager) : Closeable {
 
     val sslContext = SSLContext.getInstance(SSLMethod.TLSv1_1, EmptyKeyManager, TrustManager.TRUST_ALL)
 
@@ -292,11 +292,11 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
     }
 }
 
-fun AsyncChannel.unwrap(): ConnectionManager.ConnectionRaw {
+fun AsyncChannel.unwrap(): SocketNIOManager.ConnectionRaw {
     var c = this
     while (true) {
         when (c) {
-            is ConnectionManager.ConnectionRaw -> return c
+            is SocketNIOManager.ConnectionRaw -> return c
             is AsyncSSLChannel -> c = c.channel
             else -> throw IllegalArgumentException()
         }
