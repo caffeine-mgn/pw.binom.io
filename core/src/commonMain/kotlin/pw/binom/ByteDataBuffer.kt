@@ -53,8 +53,8 @@ class ByteDataBufferIterator(val buffer: ByteDataBuffer) : Iterator<Byte> {
     }
 }
 
-internal inline fun ByteDataBuffer.checkBounds(position: Int, off: Int, len: Int, size: Int) {
+internal fun ByteDataBuffer.checkBounds(position: Int, off: Int, len: Int, size: Int) {
     require(off >= 0 && len >= 0)
-    if (off + len > size || position + len > size)
+    if (off + len > size)
         throw IndexOutOfBoundsException()
 }

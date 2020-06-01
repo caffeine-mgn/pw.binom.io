@@ -12,13 +12,18 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
 
     actual constructor() : this(true)
 
-    actual fun inflate(cursor: Cursor, input: ByteArray, output: ByteArray) {
+    actual fun inflate(cursor: Cursor, input: ByteArray, output: ByteArray):Int {
         native.setInput(input, cursor.inputOffset, cursor.availIn)
         val readed = native.bytesRead
         val writed = native.bytesWritten
         native.inflate(output, cursor.outputOffset, cursor.availOut)
         cursor.inputOffset += (native.bytesRead - readed).toInt()
         cursor.outputOffset += (native.bytesWritten - writed).toInt()
+        return (native.bytesWritten - writed).toInt()
+    }
+
+    actual fun end() {
+        native.end()
     }
 
 }

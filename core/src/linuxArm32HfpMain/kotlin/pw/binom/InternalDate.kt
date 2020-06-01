@@ -1,5 +1,6 @@
 package pw.binom
 
+/*
 import kotlinx.cinterop.*
 import platform.posix.*
 
@@ -28,4 +29,4 @@ internal actual fun currentTimezoneOffset(): Int = memScoped {
     val t = alloc<timezone>()
     gettimeofday(null, t.ptr)
     t.tz_minuteswest
-}
+}*/

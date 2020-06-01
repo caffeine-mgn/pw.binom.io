@@ -1,5 +1,6 @@
 package pw.binom
 
+/*
 import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.GetLocalTime
@@ -9,6 +10,7 @@ import platform.windows.LPSYSTEMTIMEVar
 
 internal actual fun calcTime(year: Int, month: Int, dayOfMonth: Int, hours: Int, min: Int, sec: Int): Long =
         memScoped {
+            println("try make time")
             val t = alloc<tm>()
             t.tm_year = year
             t.tm_mon = month
@@ -16,7 +18,10 @@ internal actual fun calcTime(year: Int, month: Int, dayOfMonth: Int, hours: Int,
             t.tm_hour = hours
             t.tm_min = min
             t.tm_sec = sec
-            _mktime64(t.ptr)
+            println("execute...")
+            val r = _mktime64(t.ptr)
+            println("calcTime Done! $r")
+            r
         }
 
 internal actual fun nowTime(): Long = _time64(null)
@@ -33,5 +38,6 @@ actual typealias NTime = tm
 internal actual fun currentTimezoneOffset(): Int = memScoped {
     val t = alloc<timezone>()
     mingw_gettimeofday(null, t.ptr)
-    t.tz_minuteswest
-}
+    val r= t.tz_minuteswest
+    r
+}*/

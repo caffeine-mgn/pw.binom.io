@@ -48,6 +48,7 @@ kotlin {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
                 api project(":thread")
+                api project(":file")
             }
         }
 
@@ -119,5 +120,32 @@ kotlin {
         }
     }
 }
+
+def makeTime() {
+    def dateDir = file("$buildDir/tmp-date")
+    dateDir.mkdirs()
+    def tzFile = file("$dateDir/currentTZ")
+    tzFile.delete()
+    tzFile << TimeZone.default.getRawOffset() / 1000 / 60
+}
+
+mingwX64Test {
+    doFirst {
+        makeTime()
+    }
+}
+
+jvmTest {
+    doFirst {
+        makeTime()
+    }
+}
+
+linuxX64Test {
+    doFirst {
+        makeTime()
+    }
+}
+
 
 apply from: '../public.gradle'

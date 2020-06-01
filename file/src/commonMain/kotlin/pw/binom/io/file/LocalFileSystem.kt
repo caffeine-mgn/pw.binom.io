@@ -61,10 +61,13 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
             return FileInputStream(file).asAsync()
         }
 
-        override suspend fun copy(path: String): FileSystem.Entity<U> {
+        override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity<U> {
             access.copyFile(user, from = this.path, to = path)
 //            val fromFile = File(root, from.removePrefix("/"))
             val toFile = File(root, path.removePrefix("/"))
+
+            if (toFile.isExist && !overwrite)
+                throw FileSystem.EntityExistException(path)
 
             if (!file.isExist)
                 throw FileSystem.FileNotFoundException(this.path)
@@ -77,9 +80,12 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
             return EntityImpl(toFile, user)
         }
 
-        override suspend fun move(path: String): FileSystem.Entity<U> {
+        override suspend fun move(path: String, overwrite: Boolean): FileSystem.Entity<U> {
             access.moveFile(user, this.path, path)
             val toFile = File(root, path.removePrefix("/"))
+
+            if (toFile.isExist && !overwrite)
+                throw FileSystem.EntityExistException(path)
 
             if (!file.isExist)
                 throw FileSystem.FileNotFoundException(this.path)

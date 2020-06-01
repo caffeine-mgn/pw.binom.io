@@ -3,15 +3,19 @@ package pw.binom.io.file
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.refTo
 import platform.posix.*
+import pw.binom.io.IOException
+import pw.binom.io.EOFException
 import pw.binom.io.InputStream
 
 actual class FileInputStream actual constructor(file: File) : InputStream {
+    private val static = ByteArray(1)
+
     init {
         if (!file.isFile)
             throw FileNotFoundException(file.path)
     }
 
-    override fun skip(length: Long):Long {
+    override fun skip(length: Long): Long {
         if (length == 0L)
             return 0L
         if (feof(handler) != 0)
@@ -24,12 +28,22 @@ actual class FileInputStream actual constructor(file: File) : InputStream {
         return endOfFile - position
     }
 
+    override fun read(): Byte {
+        if (read(static) != 1)
+            throw EOFException()
+        return static[0]
+    }
+
     internal val handler = fopen(file.path, "rb") ?: throw FileNotFoundException(file.path)
 
     actual override fun read(data: ByteArray, offset: Int, length: Int): Int {
         if (feof(handler) != 0)
             return -1
-        return fread(data.refTo(offset.convert()), 1.convert(), length.convert(), handler).convert()
+        val read = fread(data.refTo(offset.convert()), 1.convert(), length.convert(), handler).convert<Int>()
+        if (read < length && feof(handler) <= 0) {
+            throw IOException("Can't read file. Error: ${ferror(handler)}")
+        }
+        return read
     }
 
     actual override fun close() {

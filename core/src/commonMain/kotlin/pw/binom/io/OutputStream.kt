@@ -58,3 +58,15 @@ fun OutputStream.writeUTF8String(value: String) {
     writeInt(value.length)
     write(value.asUTF8ByteArray())
 }
+
+fun OutputStream.noCloseWrapper()=object :OutputStream{
+    override fun write(data: ByteArray, offset: Int, length: Int): Int =
+            this@noCloseWrapper.write(data, offset, length)
+
+    override fun flush() {
+        this@noCloseWrapper.flush()
+    }
+
+    override fun close() {
+    }
+}

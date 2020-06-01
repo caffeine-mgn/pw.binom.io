@@ -20,7 +20,6 @@ private fun OutputStream.writeZero(size: Int) {
         val l = minOf(ZERO_BYTE.size, s)
         val b = write(ZERO_BYTE, 0, l)
         s -= b
-        println("writed $b")
     }
 }
 
@@ -72,11 +71,16 @@ private val version = byteArrayOf(
 @OptIn(ExperimentalStdlibApi::class)
 private val longLink = "././@LongLink".encodeToByteArray()
 
-class TarWriter(val stream: OutputStream) : Closeable {
+class TarWriter(val stream: OutputStream):Closeable {
+
+    private var entityWriting = false
 
     @OptIn(ExperimentalStdlibApi::class)
     fun newEntity(name: String, mode: UShort, uid: UShort, gid: UShort, time: Long, type: TarEntityType): OutputStream {
-
+        checkFinished()
+        if (entityWriting)
+            throw IllegalStateException("You mast close previous Entity")
+        entityWriting = true
         val block = ByteArray(BLOCK_SIZE.toInt())
 
         val nameBytes = name.encodeToByteArray()
@@ -121,7 +125,7 @@ class TarWriter(val stream: OutputStream) : Closeable {
                     this.data.write(data, offset, length)
 
             override fun flush() {
-
+                data.flush()
             }
 
             override fun close() {
@@ -130,18 +134,31 @@ class TarWriter(val stream: OutputStream) : Closeable {
                 block.calcCheckSum().toOct(block, 148, 7)
                 block[155] = ' '.toByte()
 
-
                 stream.write(block)
                 stream.write(data.toByteArray())
                 stream.writeZero(BLOCK_SIZE.toInt() - data.size % BLOCK_SIZE.toInt())
+                entityWriting = false
             }
 
         }
     }
 
+    var isFinished = false
+        private set
+
+    private inline fun checkFinished() {
+        if (isFinished)
+            throw IllegalStateException("TarWrite already finished")
+    }
+
     override fun close() {
+        checkFinished()
+        if (entityWriting)
+            throw IllegalStateException("You mast close previous Entity")
         stream.writeZero(BLOCK_SIZE.toInt())
         stream.writeZero(BLOCK_SIZE.toInt())
+        isFinished = true
+        stream.flush()
     }
 
 }

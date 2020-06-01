@@ -1,5 +1,12 @@
 package pw.binom.compression.tar
 
+import pw.binom.compression.zlib.DeflaterOutputStream
+import pw.binom.compression.zlib.GZIPInputStream
+import pw.binom.compression.zlib.GZIPOutputStream
+import pw.binom.io.*
+import pw.binom.io.file.File
+import pw.binom.io.file.outputStream
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

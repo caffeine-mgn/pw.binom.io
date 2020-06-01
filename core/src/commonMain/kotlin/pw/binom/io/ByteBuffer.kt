@@ -12,13 +12,27 @@ class ByteBuffer(private val packageSize: Int) : Closeable {
         private var writePosition = 0
         private var readPosition = 0
 
+        fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+            val len = minOf(writeRemaining, length)
+            if (len == 0)
+                return 0
+            this.data.write(writePosition, data, offset, len)
+//            for (i in 0 until len) {
+//                this.data[writePosition + i] = data[i + offset]
+//            }
+            this@ByteBuffer.readRemaining += len
+            writePosition += len
+            return len
+        }
+
         fun write(data: ByteArray, offset: Int, length: Int): Int {
             val len = minOf(writeRemaining, length)
             if (len == 0)
                 return 0
-            for (i in 0 until len) {
-                this.data[writePosition + i] = data[i + offset]
-            }
+            this.data.write(writePosition, data, offset, len)
+//            for (i in 0 until len) {
+//                this.data[writePosition + i] = data[i + offset]
+//            }
             this@ByteBuffer.readRemaining += len
             writePosition += len
             return len
@@ -28,8 +42,10 @@ class ByteBuffer(private val packageSize: Int) : Closeable {
             val len = minOf(readRemaining, length)
             if (len == 0)
                 return 0
-            for (i in offset until len) {
-                data[i + offset] = this.data[readPosition + i]
+            try {
+                this.data.read(readPosition, data, offset, len)
+            } catch (e:Throwable) {
+                throw e
             }
             readPosition += len
             this@ByteBuffer.readRemaining -= len
@@ -64,9 +80,25 @@ class ByteBuffer(private val packageSize: Int) : Closeable {
             if (packages.isEmpty)
                 return null
             val l = packages.peekFirst()
-            if (l.readRemaining <= 0)
+            if (l.readRemaining <= 0) {
                 packages.popFirst()
+                continue
+            }
             return l
+        }
+    }
+
+    fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset) {
+        if (length == 0)
+            return
+        var index = offset
+        var len = length
+        while (len > 0) {
+            val p = getReadyForWrite()
+            val w = p.write(data, index, len)
+            index += w
+            len -= w
+            if (w == 0) throw IllegalArgumentException()
         }
     }
 

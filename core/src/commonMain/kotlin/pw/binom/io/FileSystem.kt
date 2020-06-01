@@ -10,14 +10,14 @@ interface FileSystem<U> {
         val user: U
         val fileSystem: FileSystem<U>
         suspend fun read(): AsyncInputStream?
-        suspend fun copy(path: String): Entity<U>
-        suspend fun move(path: String): Entity<U>
+        suspend fun copy(path: String, overwrite: Boolean): Entity<U>
+        suspend fun move(path: String, overwrite: Boolean): Entity<U>
         suspend fun delete()
         suspend fun rewrite(): AsyncOutputStream
     }
 
     //    suspend fun rewriteFile(user: U, path: String): AsyncOutputStream
-    suspend fun mkdir(user: U, path: String): Entity<U>
+    suspend fun mkdir(user: U, path: String): Entity<U>?
 
     //    suspend fun delete(user: U, path: String)
     suspend fun getDir(user: U, path: String): Sequence<Entity<U>>?
@@ -28,9 +28,8 @@ interface FileSystem<U> {
 //    suspend fun copy(user: U, from: String, to: String)
 //    suspend fun move(user: U, from: String, to: String)
 
-    class FileNotFoundException(val path: String) : RuntimeException() {
-        override fun toString(): String = "File \"$path\" not found"
-    }
+    class FileNotFoundException(val path: String) : IOException("File \"$path\" not found")
+    class EntityExistException(val path: String) : IOException("Entity \"$path\" already exist")
 }
 
 val FileSystem.Entity<*>.extension: String

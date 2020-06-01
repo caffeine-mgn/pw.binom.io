@@ -1,9 +1,10 @@
 package pw.binom.webdav.server
 
-import pw.binom.Date
+import pw.binom.date.Date
 import pw.binom.URL
 import pw.binom.asUTF8String
 import pw.binom.io.*
+import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
@@ -153,6 +154,25 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 resp.status = 201
                 return
             }
+            if (req.method == "MOVE") {
+                val destination = req.headers["Destination"]?.firstOrNull()?.let { URL(it) }
+
+                if (destination == null) {
+                    resp.status = 406
+                    return
+                }
+                val destinationPath = getLocalURI(req, destination.uri).let { urlDecode(it) }
+                val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
+                val source = fs.get(user, urlDecode(req.contextUri))
+                if (source == null) {
+                    resp.status = 404
+                    return
+                }
+
+                source.move(destinationPath, overwrite)
+                resp.status = 201
+                return
+            }
             if (req.method == "COPY") {
                 val destination = req.headers["Destination"]?.firstOrNull()?.let { URL(it) }
 
@@ -167,12 +187,8 @@ abstract class AbstractWebDavHandler<U> : Handler {
                     resp.status = 404
                     return
                 }
-                if (!overwrite && fs.get(user, destinationPath) != null) {
-                    resp.status = 409
-                    return
-                }
 
-                source.copy(destinationPath)
+                source.copy(destinationPath, overwrite)
                 resp.status = 201
                 return
             }
@@ -205,7 +221,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 }
                 val stream = e.read()!!
                 resp.status = 200
-                resp.resetHeader("Content-Length", e.length.toString())
+                resp.resetHeader(Headers.CONTENT_LENGTH, e.length.toString())
                 stream.use {
                     it.copyTo(resp.output)
                 }
@@ -227,6 +243,10 @@ abstract class AbstractWebDavHandler<U> : Handler {
             resp.status = 401
             resp.resetHeader("WWW-Authenticate", "Basic realm=\"ownCloud\"")
             return
+        } catch (e: FileSystem.EntityExistException) {
+            resp.status = 409
+        } catch (e: FileSystem.FileNotFoundException) {
+            resp.status = 404
         }
     }
 

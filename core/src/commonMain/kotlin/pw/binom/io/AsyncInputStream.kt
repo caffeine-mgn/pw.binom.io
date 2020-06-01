@@ -17,6 +17,8 @@ interface AsyncInputStream : AsyncCloseable {
      */
     suspend fun read(): Byte
 
+    suspend fun skip(length: Long): Long = 0L
+
     suspend fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
 }
 

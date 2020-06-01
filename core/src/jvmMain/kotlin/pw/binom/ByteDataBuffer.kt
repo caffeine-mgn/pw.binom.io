@@ -15,7 +15,7 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
     }
 
     private constructor(size: Int) {
-        _buffer = ByteBuffer.allocateDirect(size)
+        _buffer = ByteBuffer.allocate(size)
     }
 
     private constructor(buffer: ByteBuffer) {

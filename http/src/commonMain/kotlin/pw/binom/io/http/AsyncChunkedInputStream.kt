@@ -2,6 +2,26 @@ package pw.binom.io.http
 
 import pw.binom.io.*
 
+private const val CR = 0x0D.toByte()
+private const val LF = 0x0A.toByte()
+
+private suspend fun AsyncInputStream.readLineCRLF(): String {
+    val sb = StringBuilder()
+    while (true) {
+        val r = read()
+        if (r == CR) {
+            if (read() != LF)
+                throw IllegalStateException("Invalid end of line")
+            return sb.toString()
+        }
+
+        if (r == 13.toByte()) {
+            continue
+        }
+        sb.append(r.toChar())
+    }
+}
+
 open class AsyncChunkedInputStream(val stream: AsyncInputStream) : AsyncHttpInputStream {
     override suspend fun read(): Byte {
         checkClosed()
@@ -24,30 +44,26 @@ open class AsyncChunkedInputStream(val stream: AsyncInputStream) : AsyncHttpInpu
             return 0
         while (true) {
             if (chunkedSize == null) {
-                val chunkedSize = stream.readln()
+                val chunkedSize = stream.readLineCRLF()
                 this.chunkedSize = chunkedSize.toULongOrNull(16)
                         ?: throw IOException("Invalid Chunk Size: \"$chunkedSize\"")
-                this.chunkedSize = this.chunkedSize!!
+//                this.chunkedSize = this.chunkedSize!!
                 readed = 0uL
             }
 
             if (chunkedSize == 0uL) {
                 val b1 = stream.read()
                 val b2 = stream.read()
-                if (
-                        b1 != 13.toByte()
-                        || b2 != 10.toByte()
-                )
+                if (b1 != CR || b2 != LF)
                     throw IOException("Invalid end body  $b1  $b2")
                 eof = true
                 return 0
             }
-            if (chunkedSize!! - readed <= 0uL) {
+            if (chunkedSize!! - readed == 0uL) {
                 chunkedSize = null
-                if (
-                        stream.read() != 13.toByte()
-                        || stream.read() != 10.toByte()
-                )
+                val b1 = stream.read()
+                val b2 = stream.read()
+                if (b1 != CR || b2 != LF)
                     throw IOException("Invalid end of chunk")
                 continue
             }

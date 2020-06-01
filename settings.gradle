@@ -10,6 +10,7 @@ enableFeaturePreview('GRADLE_METADATA')
 rootProject.name = 'pw.binom.io'
 
 include(":core")
+include(":date")
 include(":nio")
 include(":file")
 include(":db")

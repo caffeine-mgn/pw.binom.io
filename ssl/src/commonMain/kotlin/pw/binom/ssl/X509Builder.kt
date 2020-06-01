@@ -1,6 +1,6 @@
 package pw.binom.ssl
 
-import pw.binom.Date
+import pw.binom.date.Date
 
 class X509Builder(
         val pair: KeyGenerator.KeyPair,

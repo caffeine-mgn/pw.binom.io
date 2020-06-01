@@ -1,5 +1,6 @@
 package pw.binom.io.socket.ssl
 
+import pw.binom.ByteDataBuffer
 import java.nio.ByteBuffer
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult
@@ -116,9 +117,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) {
             tmpBuf.clear()
             val s = sslEngine.unwrap(rbio, tmpBuf)
             tmpBuf.flip()
-            val b = ByteArray(tmpBuf.remaining())
-            tmpBuf.get(b)
-            clientData.write(b, 0, b.size)
+            clientData.write(ByteDataBuffer.wrap(tmpBuf), 0, tmpBuf.remaining())
             rbio.cleanup()
             val state = when (s.status) {
                 SSLEngineResult.Status.OK ->
@@ -150,15 +149,21 @@ actual class SSLSession(private val sslEngine: SSLEngine) {
     }
 
     actual fun readApp(dst: ByteArray, offset: Int, length: Int): Status {
-        if (clientData.readRemaining == 0) {
-            return fullBuff()
+        if (length==1093)
+            println()
+        while (true) {
+            if (clientData.readRemaining == 0) {
+                val s = fullBuff()
+                if (s.state!=State.OK)
+                    return s
+            }
+            val l = minOf(clientData.readRemaining, length)
+            clientData.read(dst, offset, l)
+            return Status(
+                    State.OK,
+                    l
+            )
         }
-        val l = minOf(clientData.readRemaining, length)
-        clientData.read(dst, offset, l)
-        return Status(
-                State.OK,
-                l
-        )
     }
 
     private fun ByteBuffer.cleanup() {

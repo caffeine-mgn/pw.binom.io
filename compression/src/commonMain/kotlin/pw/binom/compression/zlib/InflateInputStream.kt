@@ -4,9 +4,10 @@ import pw.binom.io.InputStream
 
 private val tmpBuf = ByteArray(32)
 
-class InflateInputStream(val stream: InputStream, bufferSize: Int = 512, wrap: Boolean = false) : InputStream {
+open class InflateInputStream(val stream: InputStream, bufferSize: Int = 512, wrap: Boolean = false) : InputStream {
     private val buf = ByteArray(bufferSize)
     private val inflater = Inflater(wrap)
+    protected var usesDefaultInflater = true
 
     private var cursor = Cursor()
     private var first = true
@@ -36,12 +37,16 @@ class InflateInputStream(val stream: InputStream, bufferSize: Int = 512, wrap: B
             full()
             if (cursor.availIn == 0 || cursor.availOut == 0)
                 break
-            inflater.inflate(cursor, buf, data)
+            val b = inflater.inflate(cursor, buf, data)
+            if (b==0)
+                break
         }
         return length - cursor.availOut
     }
 
     override fun close() {
+        if (usesDefaultInflater)
+            inflater.end()
         inflater.close()
     }
 

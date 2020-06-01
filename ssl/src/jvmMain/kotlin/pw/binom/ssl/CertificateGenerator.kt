@@ -6,7 +6,7 @@ import org.bouncycastle.asn1.x509.X509Extensions
 import org.bouncycastle.asn1.x509.X509Name
 import org.bouncycastle.jcajce.provider.asymmetric.dh.KeyPairGeneratorSpi
 import org.bouncycastle.x509.X509V3CertificateGenerator
-import pw.binom.Date
+import pw.binom.date.Date
 import java.math.BigInteger
 import javax.security.auth.x500.X500Principal
 

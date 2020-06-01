@@ -1,5 +1,6 @@
 package pw.binom
 
+/*
 actual class Date {
 
     private val obj: kotlin.js.Date
@@ -30,19 +31,23 @@ actual class Date {
         get() = obj.getTime().toLong()
 
     actual companion object {
-        /**
+        */
+/**
          * Returns current time
-         */
+         *//*
+
         actual fun now(): Date = Date(js("new Date().getTime()"))
 
         private val offset: Int = js("new Date().getTimezoneOffset()")
 
-        /**
+        */
+/**
          * Returns current offset UTC in minutes
-         */
+         *//*
+
         actual val timeZoneOffset: Int
             get() = offset
 
     }
 
-}
+}*/

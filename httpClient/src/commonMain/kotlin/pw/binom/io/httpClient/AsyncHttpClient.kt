@@ -187,19 +187,23 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
         sendRequest()
         if (responseRead)
             return
+        println("Request sendded!")
         try {
             outputStream.close()
         } catch (e: StreamClosedException) {
             //NOP
         }
 
+        println("Read headers...")
         var responseLine: String
         while (true) {
             responseLine = connect().input.readln()
+            println("Readed header $responseLine")
             if (responseLine.isNotEmpty())
                 break
             break
         }
+        println("Header readed!")
         _responseCode = responseLine.splitToSequence(' ').iterator().let {
             it.next()
             it.next()
