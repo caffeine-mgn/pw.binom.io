@@ -1,22 +1,19 @@
 package pw.binom.io.httpClient
 
-import pw.binom.Date
 import pw.binom.URL
 import pw.binom.async
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.HttpServer
-import pw.binom.io.socket.ConnectionManager
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.stackTrace
 import pw.binom.thread.Thread
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class HandlerImpl(val txt: String, val chunked: Boolean) : Handler {
     override suspend fun request(req: HttpRequest, resp: HttpResponse) {
@@ -55,12 +52,43 @@ class EmptyHandler : Handler {
 
 class TestAsyncHttpClient {
 
+    @Ignore
+    @Test
+    fun ttt() {
+        val manager = SocketNIOManager()
+        val client = AsyncHttpClient(manager)
+
+        var done = false
+        async {
+            try {
+                val out = ByteArrayOutputStream()
+                val r = client.request("GET", URL("https://www.google.com/"))
+                r.inputStream.copyTo(out)
+                r.getResponseHeaders().forEach {
+                    println("${it.key}: ${it.value}")
+                }
+                println("Read ${out.size}")
+            } catch (e:Throwable){
+                println("Error: $e")
+                e.stackTrace.forEach {
+                    println(it)
+                }
+            }finally {
+                done = true
+            }
+        }
+
+        while (!done) {
+            manager.update()
+        }
+    }
+
     @Test
     fun test() {
         println("---------------test---------------")
         val txt = "Hello from server"
         var done = false
-        val manager = ConnectionManager()
+        val manager = SocketNIOManager()
         val server = HttpServer(manager, HandlerImpl(txt = txt, chunked = false))
         val port = 9747
         server.bindHTTP(host = "127.0.0.1", port = port)
@@ -87,7 +115,7 @@ class TestAsyncHttpClient {
         println("---------------chunkedTest---------------")
         val txt = "Hello from server"
         var done = false
-        val manager = ConnectionManager()
+        val manager = SocketNIOManager()
         val server = HttpServer(manager, HandlerImpl(txt = txt, chunked = true))
         val port = 9748
         server.bindHTTP(host = "127.0.0.1", port = port)
@@ -115,7 +143,7 @@ class TestAsyncHttpClient {
     @Test
     fun emptyHandler() {
         println("---------------emptyHandler---------------")
-        val manager = ConnectionManager()
+        val manager = SocketNIOManager()
         val server = HttpServer(manager, EmptyHandler())
         val clientPoll = AsyncHttpClient(server.manager)
         var done = false
@@ -157,7 +185,7 @@ class DDD {
 
     @Test
     fun test() {
-        val vv = ConnectionManager()
+        val vv = SocketNIOManager()
         val client = AsyncHttpClient(vv)
         var done = AtomicBoolean(false)
         async {
@@ -183,9 +211,9 @@ class DDD {
             println("Finish!")
         }
 
-        val start = Date.now().time
+        val start = Date.now
         while (true) {
-            val now = Date.now().time
+            val now = Date.now
             if (now > start + 10_000)
                 break
             if (done.value)

@@ -1,6 +1,8 @@
 package pw.binom.io.httpClient
 
 import pw.binom.URL
+import pw.binom.compression.zlib.AsyncGZIPInputStream
+import pw.binom.compression.zlib.AsyncInflateInputStream
 import pw.binom.io.*
 import pw.binom.io.http.*
 import pw.binom.io.socket.SocketChannel
@@ -77,6 +79,7 @@ class AsyncHttpClient(val connectionManager: SocketNIOManager) : Closeable {
         r.addRequestHeader(Headers.USER_AGENT, "Binom Client")
         r.addRequestHeader(Headers.CONNECTION, Headers.KEEP_ALIVE)
         r.addRequestHeader(Headers.HOST, url.host)
+        r.addRequestHeader(Headers.ACCEPT_ENCODING, "gzip, deflate")
         return r
     }
 
@@ -111,12 +114,18 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
 
     override val inputStream = LazyAsyncInputStream {
         readResponse()
-        when {
+        val stream = when {
             responseHeaders[Headers.TRANSFER_ENCODING]?.any { it == Headers.CHUNKED }
                     ?: false -> AsyncChunkedInputStream(connect().input)
             responseHeaders[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull() != null ->
                 AsyncContentLengthInputStream(connect().input, responseHeaders[Headers.CONTENT_LENGTH]!!.single().toULong())
             else -> AsyncClosableInputStream(connect().input)
+        }
+        when (val contentEncode = responseHeaders[Headers.CONTENT_ENCODING]?.lastOrNull()?.toLowerCase()) {
+            "deflate" -> AsyncInflateInputStream(stream = stream, wrap = true)
+            "gzip" -> AsyncGZIPInputStream(stream)
+            null -> stream
+            else -> throw IOException("Unsupported Content Encode \"$contentEncode\"")
         }
     }
 

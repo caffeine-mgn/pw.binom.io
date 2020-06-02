@@ -45,7 +45,9 @@ open class AsyncInflateInputStream(val stream: AsyncInputStream, bufferSize: Int
             full()
             if (cursor.availIn == 0 || cursor.availOut == 0)
                 break
-            inflater.inflate(cursor, buf, data)
+            val r = inflater.inflate(cursor, buf, data)
+            if (r==0)
+                break
         }
         return length - cursor.availOut
     }
