@@ -1,13 +1,16 @@
 package pw.binom.compression.zlib
 
+import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
-
 
 
 expect class Inflater : Closeable {
     constructor()
-    constructor(wrap:Boolean)
+    constructor(wrap: Boolean)
+
     fun end()
 
-    fun inflate(cursor: Cursor, input: ByteArray, output: ByteArray):Int
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
+    fun inflate(cursor: Cursor, input: ByteArray, output: ByteArray): Int
+    fun inflate(cursor: Cursor, input: ByteDataBuffer, output: ByteDataBuffer): Int
 }

@@ -6,7 +6,9 @@ import pw.binom.io.InputStream
 import java.io.EOFException as JEOFException
 import java.io.FileInputStream as JFileInputStream
 import java.io.IOException as JIOException
+
 private val static = ByteArray(1)
+
 actual class FileInputStream actual constructor(file: File) : InputStream {
     override fun skip(length: Long): Long {
         return native.skip(length)
@@ -20,12 +22,12 @@ actual class FileInputStream actual constructor(file: File) : InputStream {
     internal val native = JFileInputStream(file.native)
 
     override fun read(): Byte {
-        if (read(static)!=1)
+        if (read(static) != 1)
             throw EOFException()
         return static[0]
     }
 
-    actual override fun read(data: ByteArray, offset: Int, length: Int): Int =
+    override fun read(data: ByteArray, offset: Int, length: Int): Int =
             try {
                 native.read(data, offset, length)
             } catch (e: JEOFException) {
@@ -34,7 +36,7 @@ actual class FileInputStream actual constructor(file: File) : InputStream {
                 throw IOException(cause = e)
             }
 
-    actual override fun close() {
+    override fun close() {
         try {
             native.close()
         } catch (e: JIOException) {

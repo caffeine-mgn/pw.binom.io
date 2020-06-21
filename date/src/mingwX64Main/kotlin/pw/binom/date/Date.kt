@@ -22,7 +22,7 @@ actual inline class Date(val time: Long) {
                 ff.tv_sec * 1000L + ff.tv_nsec / 1000000L
             }
 
-        actual fun of(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int) =
+        actual fun internalOf(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int) =
                 memScoped {
                     val t = alloc<tm>()
                     t.tm_year = year - 1900

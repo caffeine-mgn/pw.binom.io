@@ -4,112 +4,59 @@ import pw.binom.*
 import pw.binom.io.*
 import pw.binom.io.socket.*
 import pw.binom.pool.DefaultPool
+import pw.binom.pool.ObjectPool
+import pw.binom.thread.Lock
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
-open class SocketNIOManager : Closeable {
+abstract class SocketNIOManager(
+        val packagePool: ObjectPool<ByteBuffer>,
+        val bufferPool: ObjectPool<ByteDataBuffer>
+) : Closeable {
+
     class ReadInterruptException : RuntimeException()
     interface ConnectHandler {
         fun clientConnected(connection: ConnectionRaw, manager: SocketNIOManager)
     }
 
-    private val waitEventPool = DefaultPool(30) {
-        WaitEvent()
-    }
+//    private val waitEventPool2 = DefaultPool(30) {
+//        WaitEvent2()
+//    }
 
-    internal class WaitEvent {
-        lateinit var continuation: Continuation<Int>
-        lateinit var data: ByteArray
-        var offset: Int = 0
-        var length: Int = 0
-    }
+//    class WaitEvent2 {
+//        lateinit var continuation: Continuation<Int>
+//        lateinit var data: ByteDataBuffer
+//        var offset: Int = 0
+//        var length: Int = 0
+//    }
 
     inner class ConnectionRaw internal constructor(val manager: SocketNIOManager, internal val channel: SocketChannel, var attachment: Any?) : AsyncChannel {
+
+        val input = packagePool.borrow()
+        val output = packagePool.borrow()
+
         internal lateinit var selectionKey: SocketSelector.SelectorKey
 
-        internal var _inputAvailable: Boolean = false
-        val inputAvailable: Boolean
-            get() = _inputAvailable
-
         fun readInterrupt() {
-            while (true) {
-                val v = readWaitList.popOrNull() ?: break
-                v.continuation.resumeWithException(ReadInterruptException())
+            fillBufWaiter?.let {
+                it.resumeWithException(ReadInterruptException())
+                fillBufWaiter=null
             }
+//            readWater2?.let {
+//                it.continuation.resumeWithException(ReadInterruptException())
+//                waitEventPool2.recycle(it)
+//            }
         }
 
-        override val input: AsyncInputStream = object : AsyncInputStream {
-            private val staticData = ByteArray(1)
-            override suspend fun read(): Byte {
-                if (read(staticData) != 1)
-                    throw EOFException()
-                return staticData[0]
-            }
-
-            override suspend fun read(data: ByteArray, offset: Int, length: Int): Int {
-                if (detached)
-                    throw IllegalStateException("Connection was detached")
-                if (channel.available > 0) {
-                    return channel.read(data, offset, length)
-                }
-
-                while (true) {
-                    val readed = suspendCoroutine<Int> { v ->
-                        val waitEvent = waitEventPool.borrow {
-                            it.continuation = v
-                            it.data = data
-                            it.offset = offset
-                            it.length = length
-                        }
-                        readWaitList.push(waitEvent)
-                        selectionKey.listenReadable = true
-                    }
-                    if (readed >= 0) {
-                        return readed
-                    }
-                }
-            }
-
-            override suspend fun close() {
-            }
-        }
-
-        override val output: AsyncOutputStream = object : AsyncOutputStream {
-            override suspend fun write(data: Byte): Boolean =
-                    write(ByteArray(1) { data }) == 1
-
-            override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
-                check(!detached) { "Connection was detached" }
-                var len = length
-                var off = offset
-                while (len > 0) {
-                    val r = suspendCoroutine<Int> { v ->
-                        val waitEvent = waitEventPool.borrow {
-                            it.continuation = v
-                            it.data = data
-                            it.offset = off
-                            it.length = len
-                        }
-                        writeWaitList.push(waitEvent)
-                        selectionKey.listenWritable = true
-                    }
-                    off += r
-                    len -= r
-                }
-                return length
-            }
-
-            override suspend fun close() {
-            }
-
-            override suspend fun flush() {
-            }
-        }
-
-        internal val readWaitList = Stack<WaitEvent>().asLiFoQueue()
-        internal val writeWaitList = Stack<WaitEvent>().asLiFoQueue()
+//        var readWater2: WaitEvent2? = null
+        var flushWaiter: Continuation<Unit>? = null
+        var fillBufWaiter: Continuation<Unit>? = null
+//        var writeWater2: WaitEvent2? = null
 
         operator fun invoke(func: suspend (ConnectionRaw) -> Unit) {
             func.start(this)
@@ -117,29 +64,195 @@ open class SocketNIOManager : Closeable {
 
         internal var detached = false
 
-        fun detach(): SocketChannel {
+        suspend fun detach(): SocketChannel {
             detached = true
+            selectionKey.updateListening(false, false)
             if (!selectionKey.isCanlelled)
                 selectionKey.cancel()
-            while (!readWaitList.isEmpty) {
-                val e = readWaitList.pop()
-                e.continuation.resumeWithException(RuntimeException("Connection Detached"))
-                waitEventPool.recycle(e)
+            fillBufWaiter?.let {
+                it.resumeWithException(RuntimeException("Connection Detached"))
+                fillBufWaiter=null
             }
-            while (!writeWaitList.isEmpty) {
-                val e = writeWaitList.pop()
-                e.continuation.resumeWithException(RuntimeException("Connection Detached"))
-                waitEventPool.recycle(e)
+            flushWaiter?.let {
+                it.resumeWithException(RuntimeException("Connection Detached"))
+                flushWaiter=null
             }
+//            readWater2?.let {
+//                it.continuation.resumeWithException(RuntimeException("Connection Detached"))
+//                waitEventPool2.recycle(it)
+//            }
+
+//            writeWater2?.let {
+//                it.continuation.resumeWithException(RuntimeException("Connection Detached"))
+//                waitEventPool2.recycle(it)
+//            }
             return channel
         }
 
-        override suspend fun close() {
-            while (!writeWaitList.isEmpty)
-                writeWaitList.pop().continuation.resumeWithException(ClosedException())
-            while (!readWaitList.isEmpty)
-                readWaitList.pop().continuation.resumeWithException(ClosedException())
+        internal suspend fun forceClose() {
+            fillBufWaiter?.let {
+                it.resumeWithException(ClosedException())
+                flushWaiter = null
+            }
+
+            flushWaiter?.let {
+                it.resumeWithException(ClosedException())
+                flushWaiter = null
+            }
             detach().close()
+        }
+
+        override suspend fun close() {
+            flush()
+            forceClose()
+//            readWater2?.let {
+//                it.continuation.resumeWithException(ClosedException())
+//                waitEventPool2.recycle(it)
+//                readWater2 = null
+//            }
+
+
+
+//            writeWater2?.let {
+//                it.continuation.resumeWithException(ClosedException())
+//                waitEventPool2.recycle(it)
+//                readWater2 = null
+//            }
+
+        }
+
+        @OptIn(ExperimentalTime::class)
+        override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+            check(!detached) { "Connection was detached" }
+//            println("try write")
+            output.write(data, offset, length)
+//
+////            waitWrite += measureTime {
+//            var len = length
+//            var off = offset
+//            while (len > 0) {
+////                val l = channel.write(data, off, len)
+////                if (l < 0)
+////                    TODO("send returns $l")
+////                if (l == 0) {
+//                println("Try to write...")
+//                val l = suspendCoroutine<Int> { v ->
+//                    val waitEvent = waitEventPool2.borrow {
+//                        it.continuation = v
+//                        it.data = data
+//                        it.offset = off
+//                        it.length = len
+//                    }
+//                    writeWater2 = waitEvent
+//                    selectionKey.updateListening(selectionKey.listenReadable, true)
+//                }
+//                println("Writed!")
+////                    break
+////                }
+//                len -= l
+//                off += l
+//            }
+//
+////            }
+            return length
+        }
+
+        override suspend fun flush() {
+            if (output.readRemaining <= 0)
+                return
+
+            suspendCoroutine<Unit> {
+                flushWaiter = it
+                selectionKey.updateListening(selectionKey.listenReadable, true)
+            }
+//            val buf = bufferPool.borrow()
+//            try {
+//                while (true) {
+//                    val l = output.read(buf)
+//                    if (l <= 0)
+//                        break
+//                    val r = suspendCoroutine<Int> { v ->
+//                        val waitEvent = waitEventPool2.borrow {
+//                            it.continuation = v
+//                            it.data = buf
+//                            it.offset = 0
+//                            it.length = l
+//                        }
+//                        writeWater2 = waitEvent
+//                        selectionKey.updateListening(selectionKey.listenReadable, true)
+//                    }
+//                    if (r == 0)
+//                        throw SocketClosedException()
+//                }
+//            } finally {
+//                bufferPool.recycle(buf)
+//            }
+        }
+
+        override suspend fun skip(length: Long): Long {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+            if (detached)
+                throw IllegalStateException("Connection was detached")
+//            println("try read")
+            while (true) {
+                val l = input.read(data, offset, length)
+                if (l > 0) {
+                    return l
+                }
+                suspendCoroutine<Unit> {
+                    fillBufWaiter = it
+                    selectionKey.updateListening(true, selectionKey.listenWritable)
+                }
+
+//                val buf = bufferPool.borrow()
+//                try {
+//                    val r = suspendCoroutine<Int> { сontinuation ->
+//                        val waitEvent = waitEventPool2.borrow {
+//                            it.continuation = сontinuation
+//                            it.data = buf
+//                            it.offset = 0
+//                            it.length = buf.size
+//                        }
+//                        readWater2 = waitEvent
+//                        selectionKey.updateListening(true, selectionKey.listenWritable)
+//                    }
+//                    if (r == 0)
+//                        throw SocketClosedException()
+//                    input.write(buf, 0, r)
+//                } finally {
+//                    bufferPool.recycle(buf)
+//                }
+            }
+            /*
+            inputFetchSize
+
+            waitEventPool2.borrow {
+                it.continuation = v
+                it.data = data
+                it.offset = offset
+                it.length = length
+            }
+
+
+            while (true) {
+                val readed = suspendCoroutine<Int> { v ->
+                    val waitEvent = waitEventPool2.borrow {
+                        it.continuation = v
+                        it.data = data
+                        it.offset = offset
+                        it.length = length
+                    }
+                    readWater2 = waitEvent
+                    selectionKey.updateListening(true, selectionKey.listenWritable)
+                }
+                if (readed >= 0) {
+                    return readed
+                }
+            }
+            */
         }
 
         init {
@@ -149,88 +262,277 @@ open class SocketNIOManager : Closeable {
 
     private val selector = SocketSelector(100)
 
-    private val popResult = PopResult<WaitEvent>()
+    @OptIn(ExperimentalTime::class)
+    var updateTime = Duration.ZERO
 
-    fun update(timeout: Int? = null) = selector.process(timeout) {
-        if (it.channel is ServerSocketChannel) {
-            val server = it.channel as ServerSocketChannel
-            val cl = server.accept() ?: return@process
-            val connection = ConnectionRaw(channel = cl, attachment = null, manager = this)
-            connection.channel.blocking = false
-            connection.selectionKey = selector.reg(connection.channel, connection)
-            val handler = it.attachment as ConnectHandler?
-            handler?.clientConnected(connection, this)
+    private val executeOnThread = ArrayList<suspend (ConnectionRaw) -> Unit>()
+    private val executeThreadLock = Lock()
+
+    protected open fun processIo(key: SocketSelector.SelectorKey) {
+//        println("read: ${key.isReadable}, write: ${key.isWritable}")
+        val client = (key.attachment as ConnectionRaw?)
+        if (client?.detached == true) {
+            return
+//                    throw IOException("Client is detached")
+        }
+        if (client == null) {
+            return
+        }
+        if (client.manager !== this)
+            return
+
+        if (!client.channel.isConnected) {
+            client.flushWaiter?.let {
+                client.flushWaiter=null
+                it.resumeWithException(SocketClosedException())
+            }
+            client.fillBufWaiter?.let {
+                client.fillBufWaiter=null
+                it.resumeWithException(SocketClosedException())
+            }
+//            client.writeWater2?.continuation?.resumeWithException(SocketClosedException())
+//            client.readWater2?.continuation?.resumeWithException(SocketClosedException())
+            client.channel.close()
+            return
+        }
+
+        if (client.selectionKey.isCanlelled) {
+            return
+        }
+        if (client.detached)
+            return
+
+        if (key.isWritable && client.flushWaiter != null) {
+            val buf = bufferPool.borrow()
+            try {
+                if (client.output.readRemaining > 0) {
+                    val l = client.output.read(buf)
+                    client.channel.write(buf, 0, l)
+                }
+
+                if (client.output.readRemaining <= 0) {
+                    client.selectionKey.updateListening(
+                            key.listenReadable,
+                            false
+                    )
+
+                    val waiter = client.flushWaiter
+                    client.flushWaiter = null
+                    waiter?.resume(Unit)
+                }
+
+            } catch (e: Throwable) {
+                val waiter = client.flushWaiter
+                client.flushWaiter = null
+                waiter?.resumeWithException(e)
+                client.selectionKey.updateListening(
+                        key.listenReadable,
+                        false
+                )
+            } finally {
+                bufferPool.recycle(buf)
+            }
         } else {
-            val client = (it.attachment as ConnectionRaw?)
-            if (client?.detached == true) {
-                TODO("Client is detached")
-            }
-            if (client == null) {
-                return@process
-            }
-            if (client.manager !== this)
-                return@process
+            client.selectionKey.updateListening(
+                    key.listenReadable,
+                    false
+            )
+        }
 
-            if (client.selectionKey.isCanlelled) {
-                TODO()
-                return@process
+//        if (key.isWritable && client.selectionKey.attachment === client) {
+//            val ww = client.writeWater2
+//            if (ww != null) {
+//                client.writeWater2 = null
+//                val ev = ww
+//                var wroteBytesCount = 0
+//                val needWrite = ev.length
+//                while (ev.length > 0) {
+//                    try {
+//                        val v = client.channel.write(ev.data, ev.offset, ev.length)
+//                        ev.length -= v
+//                        ev.offset += v
+//                        if (v == 0)
+//                            break
+//                        if (v == -1)
+//                            TODO()
+//                        wroteBytesCount += v
+//                        println("Writed: [$v], need write: [${needWrite}]")
+//                    } catch (e: Throwable) {
+//                        println("ERROR! CLOSE!")
+//                        async {
+//                            client.close()
+//                        }
+//                        ev.continuation.resumeWithException(e)
+//                        waitEventPool2.recycle(ev)
+//                        return
+//                    }
+//
+//                }
+//                if (ev.length <= 0) {
+//                    ev.continuation.resume(wroteBytesCount)
+//                    waitEventPool2.recycle(ev)
+//                } else {
+//                    println("need send again!")
+//                    client.writeWater2 = ww
+//                }
+//            }
+//        }
+
+        if (key.isReadable && client.fillBufWaiter != null) {
+            val buf = bufferPool.borrow()
+            try {
+                if (client.input.readRemaining <= 0) {
+                    val l = client.channel.read(buf)
+                    client.input.write(buf,0,l)
+                }
+
+                if (client.input.readRemaining > 0) {
+                    client.selectionKey.updateListening(
+                            false,
+                            key.listenWritable)
+
+                    val waiter = client.fillBufWaiter
+                    client.fillBufWaiter = null
+                    waiter?.resume(Unit)
+                }
+
+            } catch (e: Throwable) {
+                val waiter = client.fillBufWaiter
+                client.fillBufWaiter = null
+                waiter?.resumeWithException(e)
+                client.selectionKey.updateListening(
+                        false,
+                        key.listenWritable
+                )
+            } finally {
+                bufferPool.recycle(buf)
             }
+        } else {
+            client.selectionKey.updateListening(
+                    false,
+                    key.listenWritable
+            )
+        }
 
-            var l = it.isReadable
+//        if (key.isReadable && client.fillBufWaiter!=null) {
+//            val rw = client.fillBufWaiter
+//            if (rw != null) {
+//                client.fillBufWaiter=null
+//                val buf = bufferPool.borrow()
+//                try {
+//                    val reaaded = client.channel.read(rw.data, rw.offset, rw.length)
+//                    println("Resume Corutine! $reaaded")
+//                    rw.continuation.resume(reaaded)
+//                    waitEventPool2.recycle(rw)
+//                } catch (e: Throwable) {
+//                    rw.continuation.resumeWithException(e)
+//                    waitEventPool2.recycle(rw)
+//                    async {
+//                        client.close()
+//                    }
+//                    e.printStacktrace()
+//                }
+//                client.selectionKey.updateListening(
+//                        false,
+//                        key.listenWritable
+//                )
+//            }
+//        }
 
-            if (!client.selectionKey.isCanlelled && it.isWritable && client.selectionKey.attachment === client) {
-                client.writeWaitList.pop(popResult)
-                if (!popResult.isEmpty) {
-                    val ev = popResult.value
-                    try {
-                        val wroteBytesCount = try {
-                            client.channel.write(ev.data, ev.offset, ev.length)
-                        } catch (e: Throwable) {
-                            ev.continuation.resumeWithException(e)
-                            return@process
+/*
+                if (it.isWritable && client.selectionKey.attachment === client) {
+                    val ww = client.writeWater
+                    if (ww != null) {
+                        val ev = ww
+                        try {
+                            try {
+                                val v = client.channel.write(ev.data, ev.offset, ev.length)
+                                ev.offset += v
+                                ev.length -= v
+                            } catch (e: Throwable) {
+                                async {
+                                    client.close()
+                                }
+                                ev.continuation.resumeWithException(e)
+                                return@process
+                            }
+                            if (ev.length <= 0) {
+                                client.writeWater = null
+                                ev.continuation.resume(0)
+                            }
+                        } finally {
+                            waitEventPool.recycle(ev)
                         }
-                        ev.continuation.resume(wroteBytesCount)
-                    } catch (e: Throwable) {
-                        async {
-                            client.close()
-                        }
-                        throw e
-                    } finally {
-                        waitEventPool.recycle(ev)
                     }
                 }
-            }
 
-            if (!client.selectionKey.isCanlelled && it.isReadable && client.selectionKey.attachment === client) {
-                client.readWaitList.pop(popResult)
-                if (!popResult.isEmpty) {
-                    val ev = popResult.value
-                    try {
-                        val readBytesCount = try {
-                            l = false
-                            client.channel.read(ev.data, ev.offset, ev.length)
+                if (it.isReadable && client.selectionKey.attachment === client) {
+                    val rw = client.readWater
+                    if (rw != null) {
+                        client.readWater = null
+                        val ev = rw
+                        try {
+                            val readBytesCount = try {
+                                l = false
+                                client.channel.read(ev.data, ev.offset, ev.length)
+                            } catch (e: Throwable) {
+                                ev.continuation.resumeWithException(e)
+                                return@process
+                            }
+                            ev.continuation.resume(readBytesCount)
                         } catch (e: Throwable) {
-                            ev.continuation.resumeWithException(e)
-                            return@process
+                            async {
+                                client.close()
+                            }
+                            throw e
+                        } finally {
+                            waitEventPool.recycle(ev)
                         }
-                        ev.continuation.resume(readBytesCount)
-                    } catch (e: Throwable) {
-                        async {
-                            client.close()
-                        }
-                        throw e
-                    } finally {
-                        waitEventPool.recycle(ev)
                     }
                 }
-            }
+*/
+//        println("After process: need read: [${client.readWater2 != null}], need write: ${client.writeWater2 != null}")
+//        if (!client.selectionKey.isCanlelled && client.selectionKey.attachment === client) {
+//            client.selectionKey.updateListening(
+//                    client.readWater2 != null,
+//                    client.output.readRemaining > 0 && client.flushWaiter!=null)
+//        }
+    }
 
-            client._inputAvailable = l
+    protected open fun processAccept(key: SocketSelector.SelectorKey) {
+        val server = key.channel as ServerSocketChannel
+        val cl = server.accept() ?: return@processAccept
+        val connection = ConnectionRaw(channel = cl, attachment = null, manager = this)
+        connection.channel.blocking = false
+        connection.selectionKey = selector.reg(connection.channel, connection)
+        val handler = key.attachment as ConnectHandler?
+        handler?.clientConnected(connection, this)
+    }
 
-            if (!client.selectionKey.isCanlelled && client.selectionKey.attachment === client) {
-                client.selectionKey.listenReadable = !client.readWaitList.isEmpty
-                client.selectionKey.listenWritable = !client.writeWaitList.isEmpty
+    @OptIn(ExperimentalTime::class)
+    protected open fun processEvent(key: SocketSelector.SelectorKey) {
+        updateTime += measureTime {
+            if (key.channel is ServerSocketChannel) {
+                processAccept(key)
+            } else {
+                processIo(key)
             }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    fun update(timeout: Int? = null) = waitEvents(timeout)
+
+    protected fun waitEvents(timeout: Int?) {
+        selector.process(timeout) { key ->
+//        if (threadPool != null) {
+//            threadPool.execute {
+//                processEvent(key)
+//            }
+//        } else {
+//
+//        }
+            processEvent(key)
         }
     }
 
@@ -270,13 +572,16 @@ open class SocketNIOManager : Closeable {
     /**
      * Attach channel to current ConnectionManager
      */
-    fun attach(channel: SocketChannel, attachment: Any? = null): ConnectionRaw {
-        channel.blocking = false
-        val connection = ConnectionRaw(channel = channel, attachment = attachment, manager = this)
-        connection.selectionKey = selector.reg(channel, connection)
-        connection.selectionKey.listenReadable = false
-        connection.selectionKey.listenWritable = false
-        return connection
+    fun attach(channel: SocketChannel, attachment: Any? = null, func: (suspend (ConnectionRaw) -> Unit)? = null): ConnectionRaw {
+        executeThreadLock.hold {
+            channel.blocking = false
+            val connection = ConnectionRaw(channel = channel, attachment = attachment, manager = this)
+            connection.selectionKey = selector.reg(channel, connection)
+            connection.selectionKey.updateListening(false, false)
+            if (func != null)
+                executeOnThread += func
+            return connection
+        }
     }
 
     override fun close() {

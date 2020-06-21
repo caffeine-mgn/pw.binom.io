@@ -5,6 +5,8 @@ import pw.binom.doFreeze
 actual class RawServerSocketChannel constructor(socket: RawSocketServer) : ServerSocketChannel, NetworkChannel {
     override val nsocket: RawSocket
         get() = server.socket
+    override val type: Int
+        get() = RAW_SOCKET_SERVER_TYPE
 
     actual constructor() : this(RawSocketServer())
 

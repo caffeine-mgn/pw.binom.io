@@ -5,6 +5,7 @@ import pw.binom.get
 import pw.binom.internal_write
 import pw.binom.internal_writeln
 
+@Deprecated("Use AsyncOutput")
 interface OutputStream : Closeable {
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
     fun flush()
@@ -59,14 +60,34 @@ fun OutputStream.writeUTF8String(value: String) {
     write(value.asUTF8ByteArray())
 }
 
-fun OutputStream.noCloseWrapper()=object :OutputStream{
-    override fun write(data: ByteArray, offset: Int, length: Int): Int =
-            this@noCloseWrapper.write(data, offset, length)
+class NoCloseWrapperOutputStream(val stream: OutputStream) : OutputStream {
+
+    override fun write(data: ByteArray, offset: Int, length: Int): Int {
+        checkClosed()
+        return stream.write(data, offset, length)
+    }
 
     override fun flush() {
-        this@noCloseWrapper.flush()
+        checkClosed()
+        stream.flush()
+    }
+
+    var closed: Boolean = false
+        private set
+
+    private fun checkClosed() {
+        if (closed)
+            throw StreamClosedException()
     }
 
     override fun close() {
+        checkClosed()
+        closed = true
     }
 }
+
+fun OutputStream.noCloseWrapper() =
+        when (this) {
+            is NoCloseWrapperOutputStream -> this
+            else -> NoCloseWrapperOutputStream(this)
+        }

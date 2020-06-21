@@ -40,7 +40,6 @@ fun Date.Companion.fromUTC(time: Long) =
 
 fun Date.Companion.from(year: Int = 0, month: Int = 0, dayOfMonth: Int = 0, hours: Int = 0, min: Int = 0, sec: Int = 0):Date{
     val r = Date(year, month, dayOfMonth, hours, min, sec)
-    println("Date.Companion.from Done!")
     return r
 }
 

@@ -39,6 +39,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                api project(":env")
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
             }
         }
@@ -52,46 +53,27 @@ kotlin {
             }
         }
 
-        nativeMain {
+        linuxX64Main {
             dependencies {
                 dependsOn commonMain
             }
         }
 
-        mingwCommonMain {
+        linuxArm32HfpMain {
             dependencies {
-                dependsOn nativeMain
+                dependsOn linuxX64Main
             }
         }
 
         mingwX64Main {
             dependencies {
-                dependsOn mingwCommonMain
+                dependsOn linuxX64Main
             }
         }
 
         mingwX86Main {
             dependencies {
-                dependsOn mingwCommonMain
-            }
-        }
-
-        linuxCommonMain {
-            dependencies {
-                dependsOn nativeMain
-            }
-        }
-
-        linuxX64Main {
-            dependencies {
-                dependsOn linuxCommonMain
-                dependsOn nativeMain
-            }
-        }
-
-        linuxArm32HfpMain {
-            dependencies {
-                dependsOn linuxCommonMain
+                dependsOn linuxX64Main
             }
         }
 

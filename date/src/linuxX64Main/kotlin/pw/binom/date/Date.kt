@@ -25,7 +25,7 @@ actual inline class Date(val time: Long) {
         /**
          * @param year full year. For example 2010
          */
-        actual fun of(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int): Date =
+        actual fun internalOf(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int): Date =
                 memScoped {
                     val t = alloc<tm>()
                     t.tm_year = year - 1900

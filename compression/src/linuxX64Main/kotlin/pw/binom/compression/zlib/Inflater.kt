@@ -5,6 +5,7 @@ import platform.posix.free
 import platform.posix.malloc
 import platform.posix.memset
 import platform.zlib.*
+import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -49,10 +50,28 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
 
                 cursor.availIn = native.pointed.avail_in.convert()
                 cursor.availOut = native.pointed.avail_out.convert()
-                cursor.availOut - rr
+                rr - cursor.availOut
             }
 
     actual fun end() {
         inflateEnd(native)
     }
+
+    actual fun inflate(cursor: Cursor, input: ByteDataBuffer, output: ByteDataBuffer): Int =
+            memScoped {
+                native.pointed.avail_out = cursor.availOut.convert()
+                native.pointed.next_out = output.refTo(cursor.outputOffset).getPointer(this).reinterpret()
+
+                native.pointed.avail_in = cursor.availIn.convert()
+                native.pointed.next_in = input.refTo(cursor.inputOffset).getPointer(this).reinterpret()
+                val rr = cursor.availOut
+                val r = inflate(native, Z_NO_FLUSH)
+                if (r != Z_OK && r != Z_STREAM_END)
+                    throw IOException("inflate() error [${zlibConsts(r)}]")
+
+
+                cursor.availIn = native.pointed.avail_in.convert()
+                cursor.availOut = native.pointed.avail_out.convert()
+                rr - cursor.availOut
+            }
 }

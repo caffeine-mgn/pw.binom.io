@@ -1,13 +1,17 @@
 package pw.binom.io.file
 
+import pw.binom.AsyncOutput
+import pw.binom.AsyncInput
+import pw.binom.asyncInput
+import pw.binom.asyncOutput
 import pw.binom.io.*
 
 class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : FileSystem<U> {
-    override suspend fun new(user: U, path: String): AsyncOutputStream {
+    override suspend fun new(user: U, path: String): AsyncOutput {
         access.putFile(user, path)
         val file = File(root, path.removePrefix("/"))
         file.parent?.mkdirs()
-        return FileOutputStream(file).asAsync()
+        return file.channel(AccessType.CREATE,AccessType.WRITE).asyncOutput()
     }
 
     override suspend fun get(user: U, path: String): FileSystem.Entity<U>? {
@@ -52,13 +56,13 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
         override val fileSystem: FileSystem<U>
             get() = this@LocalFileSystem
 
-        override suspend fun read(): AsyncInputStream? {
+        override suspend fun read(): AsyncInput? {
             access.getFile(user, path)
             val file = File(root, path.removePrefix("/"))
             if (!file.isFile)
                 return null
 
-            return FileInputStream(file).asAsync()
+            return file.channel(AccessType.READ).asyncInput()
         }
 
         override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity<U> {
@@ -99,11 +103,11 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
             File(root, path.removePrefix("/")).deleteRecursive()
         }
 
-        override suspend fun rewrite(): AsyncOutputStream {
+        override suspend fun rewrite(): AsyncOutput {
             access.putFile(user, path)
             val file = File(root, path)
             file.parent?.mkdirs()
-            return FileOutputStream(file, false).asAsync()
+            return file.channel(AccessType.WRITE,AccessType.CREATE).asyncOutput()
         }
 
         override val path: String

@@ -1,13 +1,16 @@
 package pw.binom.webdav.server
 
-import pw.binom.date.Date
+import pw.binom.ByteDataBuffer
 import pw.binom.URL
-import pw.binom.asUTF8String
+import pw.binom.asyncInput
+import pw.binom.copyTo
+import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
+import pw.binom.pool.ObjectPool
 import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.xml
 import pw.binom.xml.dom.xmlTree
@@ -42,6 +45,8 @@ suspend fun <U> FileSystem<U>.getEntitiesWithDepth(user: U, path: String, depth:
 
 abstract class AbstractWebDavHandler<U> : Handler {
 
+    protected abstract val bufferPool: ObjectPool<ByteDataBuffer>
+
     protected abstract fun getFS(req: HttpRequest, resp: HttpResponse): FileSystem<U>
     protected abstract fun getUser(req: HttpRequest, resp: HttpResponse): U
 
@@ -58,10 +63,11 @@ abstract class AbstractWebDavHandler<U> : Handler {
             return
         }
 
-        val o = ByteArrayOutputStream()
-        req.input.copyTo(o)
+        val o = ByteArrayOutput()
+        req.input.copyTo(o, bufferPool)
 
-        val node = o.toByteArray().asUTF8String().asReader().asAsync().xmlTree()!!
+        o.trimToSize()
+        val node = o.data.toInput().asyncInput().utf8Reader().xmlTree()!!
 
         val properties =
                 node.findElements { it.tag.endsWith("prop") }.first().childs
@@ -132,7 +138,9 @@ abstract class AbstractWebDavHandler<U> : Handler {
         resp.status = 207
         resp.resetHeader("Content-Length", ss.length.toString())
         resp.resetHeader("Content-Type", "application/xml")
-        AsyncAppendableUTF8(resp.output).append(ss.toString())
+        val out = resp.complete()
+        out.utf8Appendable().append(ss.toString())
+        out.flush()
         return
 
     }
@@ -207,7 +215,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 val e = fs.get(user, path)?.rewrite() ?: fs.new(user, path)
 
                 e.use {
-                    req.input.copyTo(it)
+                    req.input.copyTo(it, bufferPool)
                 }
                 resp.status = 201
                 return
@@ -222,9 +230,11 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 val stream = e.read()!!
                 resp.status = 200
                 resp.resetHeader(Headers.CONTENT_LENGTH, e.length.toString())
+                val out = resp.complete()
                 stream.use {
-                    it.copyTo(resp.output)
+                    it.copyTo(out, bufferPool)
                 }
+                out.flush()
                 return
             }
             if (req.method == "PROPFIND") {

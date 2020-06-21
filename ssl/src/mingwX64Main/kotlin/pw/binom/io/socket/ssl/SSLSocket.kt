@@ -34,6 +34,7 @@ val public_cer by lazy {
     pair.second
 }*/
 
+/*
 actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket {
     override val native: NativeSocketHolder
         get() = raw.native
@@ -95,7 +96,6 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
                 if (ret == SSL_ERROR_WANT_READ) {
                     return -5
                 }
-//                println("Close connection!!! $r ${ssl.getError(r)}")
                 this@SSLSocket.close()
                 throw SocketClosedException()
             }
@@ -136,6 +136,7 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
 
 //    lateinit var bio_remote: CPointer<BIO>
 
+*/
 /*
     fun checkState(): Boolean {
         if (SSL_is_init_finished(ssl) != 1) {
@@ -145,7 +146,8 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
         }
         return true
     }
-*/
+*//*
+
 
 
     internal fun accepted(): Boolean {
@@ -166,7 +168,6 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
             }
             if (r != -1)
                 break
-            Thread.sleep(1)
         }
         raw.blocking = b
         return true
@@ -209,4 +210,4 @@ actual class SSLSocket(val ctx: CPointer<SSL_CTX>, val raw: RawSocket) : Socket 
             SSL_CTX_free(ctx)
         }
     }
-}
+}*/

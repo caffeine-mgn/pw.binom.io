@@ -6,6 +6,7 @@ import pw.binom.io.socket.RawSocket
 import pw.binom.io.socket.Socket
 import pw.binom.ssl.SSLContext
 import java.net.Socket as JSocket
+/*
 
 actual class SSLSocket(internal val native: JSocket) : Socket {
     constructor(ctx: SSLContext) : this(ctx.ctx.socketFactory.createSocket())
@@ -29,4 +30,4 @@ actual class SSLSocket(internal val native: JSocket) : Socket {
     override fun close() {
         raw.close()
     }
-}
+}*/

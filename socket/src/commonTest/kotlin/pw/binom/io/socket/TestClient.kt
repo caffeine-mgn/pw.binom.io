@@ -1,9 +1,8 @@
 package pw.binom.io.socket
 
-import pw.binom.Thread
 import pw.binom.io.*
-import pw.binom.job.*
 import kotlin.test.*
+/*
 
 class TestClient {
     @Test
@@ -140,4 +139,4 @@ class TestClient {
             //NOP
         }
     }
-}
+}*/

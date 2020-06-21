@@ -16,6 +16,7 @@ open class AsyncChunkedOutputStream(
     }
 
     private var closed = false
+    private var finished = false
     var buffer = ByteArrayOutputStream(autoFlushBuffer)
     override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
         checkClosed()
@@ -36,12 +37,19 @@ open class AsyncChunkedOutputStream(
         buffer = ByteArrayOutputStream(autoFlushBuffer)
     }
 
-    override suspend fun close() {
+    suspend fun finish() {
         checkClosed()
+        if (finished)
+            return
         flush()
         stream.write("0\r\n")
         stream.write("\r\n")
         stream.flush()
+        finished = true
+    }
+
+    override suspend fun close() {
+        finish()
         closed = true
     }
 

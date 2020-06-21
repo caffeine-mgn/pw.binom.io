@@ -1,8 +1,10 @@
 package pw.binom.io.httpClient
 
+import pw.binom.AsyncOutput
+import pw.binom.AsyncInput
 import pw.binom.URL
-import pw.binom.compression.zlib.AsyncGZIPInputStream
-import pw.binom.compression.zlib.AsyncInflateInputStream
+import pw.binom.compression.zlib.AsyncGZIPInput
+import pw.binom.compression.zlib.AsyncInflateInput
 import pw.binom.io.*
 import pw.binom.io.http.*
 import pw.binom.io.socket.SocketChannel
@@ -85,8 +87,8 @@ class AsyncHttpClient(val connectionManager: SocketNIOManager) : Closeable {
 
     interface UrlConnect : AsyncCloseable {
         suspend fun responseCode(): Int
-        val inputStream: AsyncInputStream
-        val outputStream: AsyncOutputStream
+        val inputStream: AsyncInput
+        val outputStream: AsyncOutput
 
         fun addRequestHeader(key: String, value: String)
         suspend fun getResponseHeaders(): Map<String, List<String>>
@@ -112,30 +114,30 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
 //        }
 //    }
 
-    override val inputStream = LazyAsyncInputStream {
+    override val inputStream = LazyAsyncInput {
         readResponse()
         val stream = when {
             responseHeaders[Headers.TRANSFER_ENCODING]?.any { it == Headers.CHUNKED }
-                    ?: false -> AsyncChunkedInputStream(connect().input)
+                    ?: false -> AsyncChunkedInput(connect())
             responseHeaders[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull() != null ->
-                AsyncContentLengthInputStream(connect().input, responseHeaders[Headers.CONTENT_LENGTH]!!.single().toULong())
-            else -> AsyncClosableInputStream(connect().input)
+                AsyncContentLengthInput(connect(), responseHeaders[Headers.CONTENT_LENGTH]!!.single().toULong())
+            else -> AsyncClosableInput(connect())
         }
         when (val contentEncode = responseHeaders[Headers.CONTENT_ENCODING]?.lastOrNull()?.toLowerCase()) {
-            "deflate" -> AsyncInflateInputStream(stream = stream, wrap = true)
-            "gzip" -> AsyncGZIPInputStream(stream)
+            "deflate" -> AsyncInflateInput(stream = stream, wrap = true)
+            "gzip" -> AsyncGZIPInput(stream)
             null -> stream
             else -> throw IOException("Unsupported Content Encode \"$contentEncode\"")
         }
     }
 
-    override val outputStream = LazyAsyncOutputStream {
+    override val outputStream = LazyAsyncOutput {
         sendRequest()
         when {
             requestHeaders[Headers.TRANSFER_ENCODING]?.any { it == Headers.CHUNKED } == true ->
-                AsyncChunkedOutputStream(connect().output)
+                AsyncChunkedOutput(connect())
             requestHeaders[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull() != null ->
-                AsyncContentLengthOututStream(connect().output, requestHeaders[Headers.CONTENT_LENGTH]!!.single().toULong())
+                AsyncContentLengthOutput(connect(), requestHeaders[Headers.CONTENT_LENGTH]!!.single().toULong())
             else -> throw IllegalStateException("Unknown Output Stream Type")
         }
     }
@@ -167,19 +169,21 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
             if (requestSend) {
                 return
             }
-            connect().output.writeln("$method ${url.uri} HTTP/1.1")
+            val app =connect().utf8Appendable()
+            app.append("$method ${url.uri} HTTP/1.1\r\n")
 
             if (!requestHeaders.containsKey(Headers.CONTENT_LENGTH))
                 addRequestHeader(Headers.TRANSFER_ENCODING, Headers.CHUNKED)
             requestHeaders.forEach { en ->
                 en.value.forEach {
-                    connect().output.write(en.key)
-                    connect().output.write(": ")
-                    connect().output.writeln(it)
+                    app.append(en.key)
+                    app.append(": ")
+                    app.append(it)
+                    app.append("\r\n")
                 }
             }
-            connect().output.writeln()
-            connect().output.flush()
+            app.append("\r\n")
+            connect().flush()
             requestSend = true
         } catch (e: Throwable) {
             e.stackTrace.forEach {
@@ -196,29 +200,26 @@ private class UrlConnectHTTP(val method: String, val url: URL, val client: Async
         sendRequest()
         if (responseRead)
             return
-        println("Request sendded!")
         try {
             outputStream.close()
         } catch (e: StreamClosedException) {
             //NOP
         }
 
-        println("Read headers...")
+        val red = connect().utf8Reader()
         var responseLine: String
         while (true) {
-            responseLine = connect().input.readln()
-            println("Readed header $responseLine")
+            responseLine = red.readln()?:""
             if (responseLine.isNotEmpty())
                 break
             break
         }
-        println("Header readed!")
         _responseCode = responseLine.splitToSequence(' ').iterator().let {
             it.next()
             it.next()
         }.toInt()
         while (true) {
-            val str = connect().input.readln()
+            val str = red.readln()?:""
             if (str.isEmpty()) {
                 break
             }

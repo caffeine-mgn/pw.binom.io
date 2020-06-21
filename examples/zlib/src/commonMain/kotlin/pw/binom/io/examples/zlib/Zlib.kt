@@ -26,8 +26,6 @@ fun main(args: Array<String>) {
         }
     }
 
-    println("Compressed data: \"${data.asUTF8String()}\"")
-
     val out = ByteArrayOutputStream()
     FileInputStream(file).use {
         InflateInputStream(it, DEFAULT_BUFFER_SIZE, WRAP).use {

@@ -5,6 +5,8 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 class AsyncBufferedOutputStream(val stream: AsyncOutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) : AsyncOutputStream {
     private val buffer = ByteArray(bufferSize)
     private var cursor = 0
+    val bufferSize
+        get() = buffer.size
 
     override suspend fun write(data: Byte): Boolean {
         if (cursor == buffer.size)
@@ -16,24 +18,25 @@ class AsyncBufferedOutputStream(val stream: AsyncOutputStream, bufferSize: Int =
     override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
         var off = offset
         var len = length
+//        var cursor = cursor
         while (len > 0) {
             if (cursor == buffer.size)
                 flush()
             val bb = minOf(buffer.size - cursor, len)
 
-            data.copyInto(buffer, cursor, off, bb)
+            data.copyInto(buffer, cursor, off, off + bb)
             len -= bb
             off += bb
-//            buffer[cursor++] = data[off++]
-//            len--
+            cursor += bb
         }
+//        this.cursor = cursor
         return length - len
     }
 
     override suspend fun flush() {
-        if (cursor > 0) {
-            stream.write(buffer, 0, cursor)
-            cursor = 0
+        while (cursor > 0) {
+            cursor -= stream.write(buffer, 0, cursor)
+            stream.flush()
         }
     }
 
@@ -43,4 +46,8 @@ class AsyncBufferedOutputStream(val stream: AsyncOutputStream, bufferSize: Int =
     }
 }
 
-fun AsyncOutputStream.buffered(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedOutputStream(this, bufferSize)
+fun AsyncOutputStream.buffered(bufferSize: Int = DEFAULT_BUFFER_SIZE): AsyncBufferedOutputStream {
+    if (this is AsyncBufferedOutputStream && this.bufferSize == bufferSize)
+        return this
+    return AsyncBufferedOutputStream(this, bufferSize)
+}

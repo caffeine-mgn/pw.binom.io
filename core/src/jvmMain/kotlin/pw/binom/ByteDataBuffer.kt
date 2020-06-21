@@ -2,6 +2,8 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import java.nio.ByteBuffer
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 actual class ByteDataBuffer : Closeable, Iterable<Byte> {
     actual companion object {
@@ -12,10 +14,11 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
         }
 
         fun wrap(buffer: ByteBuffer) = ByteDataBuffer(buffer)
+        actual fun wrap(data: ByteArray): ByteDataBuffer = ByteDataBuffer(ByteBuffer.wrap(data))
     }
 
     private constructor(size: Int) {
-        _buffer = ByteBuffer.allocate(size)
+        _buffer = ByteBuffer.allocateDirect(size)
     }
 
     private constructor(buffer: ByteBuffer) {
@@ -48,34 +51,59 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
 
     actual fun write(position: Int, data: ByteArray, offset: Int, length: Int): Int {
         checkBounds(position, offset, length, data.size)
-        buffer.position(position)
-        buffer.put(data, offset, length)
-        buffer.position(0)
+        update(position, length) {
+            it.put(data, offset, length)
+        }
         return length
     }
 
     actual fun read(position: Int, data: ByteArray, offset: Int, length: Int): Int {
         checkBounds(position, offset, length, data.size)
-        buffer.position(position)
-        buffer.get(data, offset, length)
+        update(position, length) {
+            it.get(data, offset, length)
+        }
         return length
     }
 
-    actual fun write(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
+    actual fun writeTo(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
         checkBounds(position, offset, length, data.size)
-        buffer.position(position)
-        buffer.limit(position + length)
-        data.buffer.position(offset)
-        data.buffer.limit(offset + length)
-        buffer.put(data.buffer)
+        update(position, length) { self ->
+            data.update(offset, length) { data ->
+                data.put(self)
+                data.clear()
+            }
+        }
         return length
     }
 
-    actual fun read(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
-        data.buffer.position(offset)
-        data.buffer.limit(offset + length)
-        buffer.position(position)
-        buffer.limit(position + length)
-        return length
+    internal actual fun unsafe() {
+    }
+
+    internal actual fun safe() {
+    }
+
+    actual fun fill(element: Byte, startIndex: Int, endIndex: Int) {
+        (startIndex..endIndex).forEach {
+            buffer.put(it, element)
+        }
     }
 }
+
+@OptIn(ExperimentalContracts::class)
+fun <T> ByteDataBuffer.update(offset: Int, length: Int, func: (ByteBuffer) -> T): T {
+    contract {
+        callsInPlace(func)
+    }
+    try {
+        buffer.position(offset)
+        buffer.limit(offset + length)
+        return func(buffer)
+    } finally {
+        buffer.clear()
+    }
+}
+
+inline fun ByteBuffer.get(buffer: ByteBuffer) {
+    buffer.put(this)
+}
+

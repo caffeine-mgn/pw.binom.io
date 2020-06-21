@@ -3,6 +3,7 @@ package pw.binom.io.socket.ssl
 import pw.binom.io.socket.*
 import pw.binom.ssl.SSLContext
 
+/*
 actual class SSLSocketFactory internal constructor(val ctx: SSLContext) : SocketFactory {
     override fun createSocket(): Socket =
             SSLSocket(ctx)
@@ -18,4 +19,4 @@ actual class SSLSocketFactory internal constructor(val ctx: SSLContext) : Socket
 //            SSLSocket(ctx.getClientSessionContext())
 //
 //    actual override fun createSocketServer(): SocketServer = SSLSocketServer(ctx.getServerSessionContext())
-}
+}*/

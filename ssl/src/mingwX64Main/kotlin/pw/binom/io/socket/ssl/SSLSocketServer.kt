@@ -6,9 +6,12 @@ import pw.binom.io.socket.RawSocketServer
 import pw.binom.io.socket.SocketServer
 import pw.binom.ssl.SSLContext
 
+/*
 actual class SSLSocketServer(val ctx: SSLContext, val raw: RawSocketServer) : SocketServer, NetworkChannel {
     override val nsocket: RawSocket
         get() = raw.socket
+    override val type: Int
+        get() = 0x010b
 
     constructor(ctx: SSLContext) : this(ctx, RawSocketServer())
 
@@ -31,4 +34,4 @@ actual class SSLSocketServer(val ctx: SSLContext, val raw: RawSocketServer) : So
         raw.close()
     }
 
-}
+}*/

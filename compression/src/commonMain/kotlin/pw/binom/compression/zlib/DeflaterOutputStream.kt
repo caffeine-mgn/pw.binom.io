@@ -2,6 +2,7 @@ package pw.binom.compression.zlib
 
 import pw.binom.io.OutputStream
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
 open class DeflaterOutputStream(val stream: OutputStream, level: Int, bufferSize: Int = 512, wrap: Boolean = false, syncFlush: Boolean = true) : OutputStream {
 
     protected val deflater = Deflater(level, wrap, syncFlush)
@@ -23,7 +24,7 @@ open class DeflaterOutputStream(val stream: OutputStream, level: Int, bufferSize
 
         while (true) {
             cursor.outputOffset = 0
-            this.deflater.deflate(cursor, data, buffer)
+            deflater.deflate(cursor, data, buffer)
 
             val writed = buffer.size - cursor.availOut
             if (writed > 0)

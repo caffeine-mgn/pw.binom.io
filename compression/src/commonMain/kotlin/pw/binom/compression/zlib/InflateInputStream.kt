@@ -4,6 +4,7 @@ import pw.binom.io.InputStream
 
 private val tmpBuf = ByteArray(32)
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
 open class InflateInputStream(val stream: InputStream, bufferSize: Int = 512, wrap: Boolean = false) : InputStream {
     private val buf = ByteArray(bufferSize)
     private val inflater = Inflater(wrap)

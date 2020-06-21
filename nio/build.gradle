@@ -40,6 +40,7 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":socket")
+                api project(":thread")
             }
         }
 
@@ -47,6 +48,7 @@ kotlin {
             dependencies {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
+                implementation project(":file")
             }
         }
 

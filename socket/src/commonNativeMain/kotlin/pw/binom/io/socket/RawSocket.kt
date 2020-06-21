@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import pw.binom.ByteDataBuffer
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.doFreeze
 import pw.binom.io.IOException
@@ -36,9 +37,8 @@ actual class RawSocket internal constructor(override val native: NativeSocketHol
             if (length == 0)
                 return 0
             if (offset + length > data.size)
-                throw IllegalArgumentException("Array Index Out Of Bounds Exception")
-            sendSocket(native, data, offset, length)
-            return length
+                throw IndexOutOfBoundsException("Array Index Out Of Bounds Exception")
+            return sendSocket(native, data, offset, length)
         }
 
         override fun flush() {
@@ -89,6 +89,29 @@ actual class RawSocket internal constructor(override val native: NativeSocketHol
         internalDisconnected()
     }
 
+    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
+            sendSocket(native, data, offset, length)
+
+    override fun flush() {
+    }
+
+    override fun skip(length: Long): Long {
+        var l = length
+        while (l > 0) {
+            l -= read(skipBuffer, 0, l.toInt())
+        }
+        return length
+    }
+
+    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+        val r = recvSocket(native, data, offset, length)
+        if (r <= 0) {
+            this@RawSocket.close()
+            throw SocketClosedException()
+        }
+        return r
+    }
+
 
     fun bind(host: String, port: Int) {
         if (connected)
@@ -107,6 +130,8 @@ actual class RawSocket internal constructor(override val native: NativeSocketHol
         internalConnected()
     }
 }
+
+private val skipBuffer = ByteDataBuffer.alloc(128)
 
 internal fun portCheck(port: Int) {
     if (port < 0 || port > 0xFFFF)

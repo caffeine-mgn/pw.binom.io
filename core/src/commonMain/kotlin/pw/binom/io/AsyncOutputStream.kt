@@ -4,9 +4,9 @@ import pw.binom.asUTF8ByteArray
 import pw.binom.get
 import pw.binom.internal_write
 import pw.binom.internal_writeln
-
+@Deprecated("Use AsyncOutput")
 interface AsyncOutputStream : AsyncCloseable {
-    suspend fun write(data:Byte):Boolean
+    suspend fun write(data: Byte): Boolean
     suspend fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
     suspend fun flush()
 }
@@ -75,3 +75,39 @@ fun OutputStream.asAsync(): AsyncOutputStream = object : AsyncOutputStream {
     override suspend fun write(data: ByteArray, offset: Int, length: Int): Int =
             this@asAsync.write(data, offset, length)
 }
+
+class AsyncNoCloseWrapperOutputStream(val stream: AsyncOutputStream) : AsyncOutputStream {
+    override suspend fun write(data: Byte): Boolean {
+        checkClosed()
+        return stream.write(data)
+    }
+
+    override suspend fun write(data: ByteArray, offset: Int, length: Int): Int {
+        checkClosed()
+        return stream.write(data, offset, length)
+    }
+
+    override suspend fun flush() {
+        checkClosed()
+        stream.flush()
+    }
+
+    var closed: Boolean = false
+        private set
+
+    private fun checkClosed() {
+        if (closed)
+            throw StreamClosedException()
+    }
+
+    override suspend fun close() {
+        checkClosed()
+        closed = true
+    }
+}
+
+fun AsyncOutputStream.noCloseWrapper() =
+        when (this) {
+            is AsyncNoCloseWrapperOutputStream -> this
+            else -> AsyncNoCloseWrapperOutputStream(this)
+        }

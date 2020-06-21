@@ -1,5 +1,8 @@
 package pw.binom.io
 
+import pw.binom.AsyncOutput
+import pw.binom.AsyncInput
+
 class MountedFileSystem<U> : FileSystem<U> {
 
     inner class MountPoint<T>(path: String, val newFileSystem: FileSystem<T>, val func: (U) -> T) : FileSystem.Entity<U> {
@@ -18,7 +21,7 @@ class MountedFileSystem<U> : FileSystem<U> {
         override val fileSystem: FileSystem<U>
             get() = this@MountedFileSystem
 
-        override suspend fun read(): AsyncInputStream? {
+        override suspend fun read(): AsyncInput? {
             TODO("Not yet implemented")
         }
 
@@ -34,7 +37,7 @@ class MountedFileSystem<U> : FileSystem<U> {
             TODO("Not yet implemented")
         }
 
-        override suspend fun rewrite(): AsyncOutputStream {
+        override suspend fun rewrite(): AsyncOutput {
             TODO("Not yet implemented")
         }
     }
@@ -65,7 +68,7 @@ class MountedFileSystem<U> : FileSystem<U> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun new(user: U, path: String): AsyncOutputStream {
+    override suspend fun new(user: U, path: String): AsyncOutput {
         TODO("Not yet implemented")
     }
 

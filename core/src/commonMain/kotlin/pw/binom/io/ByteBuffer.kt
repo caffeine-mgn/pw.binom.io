@@ -2,6 +2,7 @@ package pw.binom.io
 
 import pw.binom.ByteDataBuffer
 import pw.binom.Stack
+import pw.binom.copyInto
 
 class ByteBuffer(private val packageSize: Int) : Closeable {
     var readRemaining = 0
@@ -16,7 +17,9 @@ class ByteBuffer(private val packageSize: Int) : Closeable {
             val len = minOf(writeRemaining, length)
             if (len == 0)
                 return 0
-            this.data.write(writePosition, data, offset, len)
+//            this.data.writeTo(writePosition, data, offset, len)
+            data.copyInto(this.data, writePosition, offset, offset + len)
+//            data.writeTo(writePosition, this.data, offset, len)
 //            for (i in 0 until len) {
 //                this.data[writePosition + i] = data[i + offset]
 //            }
@@ -38,13 +41,27 @@ class ByteBuffer(private val packageSize: Int) : Closeable {
             return len
         }
 
+        fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+            val len = minOf(readRemaining, length)
+            if (len == 0)
+                return 0
+            try {
+                this.data.writeTo(readPosition, data, offset, len)
+            } catch (e: Throwable) {
+                throw e
+            }
+            readPosition += len
+            this@ByteBuffer.readRemaining -= len
+            return len
+        }
+
         fun read(data: ByteArray, offset: Int, length: Int): Int {
             val len = minOf(readRemaining, length)
             if (len == 0)
                 return 0
             try {
                 this.data.read(readPosition, data, offset, len)
-            } catch (e:Throwable) {
+            } catch (e: Throwable) {
                 throw e
             }
             readPosition += len
@@ -56,7 +73,7 @@ class ByteBuffer(private val packageSize: Int) : Closeable {
             get() = data.size - writePosition
 
         val readRemaining
-            get() = data.size - readPosition
+            get() = writePosition - readPosition
     }
 
     private val packages = Stack<Package>()
@@ -114,6 +131,23 @@ class ByteBuffer(private val packageSize: Int) : Closeable {
             len -= w
             if (w == 0) throw IllegalArgumentException()
         }
+    }
+
+    fun read(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int {
+        if (length == 0)
+            return 0
+        var index = offset
+        var len = length
+        var read = 0
+        while (len > 0) {
+            val p = getReadyForRead() ?: return read
+            val r = p.read(data, index, len)
+            read += r
+
+            index += r
+            len -= r
+        }
+        return read
     }
 
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int {

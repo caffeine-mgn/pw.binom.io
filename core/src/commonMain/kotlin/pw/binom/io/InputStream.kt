@@ -5,6 +5,7 @@ import pw.binom.asUTF8String
 import pw.binom.fromBytes
 import pw.binom.internal_readln
 
+@Deprecated("Use Input")
 interface InputStream : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
 

@@ -5,6 +5,7 @@ import pw.binom.io.EOFException
 
 private val tmpBuf = ByteArray(32)
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
 open class AsyncInflateInputStream(val stream: AsyncInputStream, bufferSize: Int = 512, wrap: Boolean = false) : AsyncInputStream {
     private val buf = ByteArray(bufferSize)
     private val inflater = Inflater(wrap)

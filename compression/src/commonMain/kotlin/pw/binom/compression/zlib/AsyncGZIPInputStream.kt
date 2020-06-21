@@ -2,6 +2,7 @@ package pw.binom.compression.zlib
 
 import pw.binom.io.*
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
 class AsyncGZIPInputStream(stream: AsyncInputStream, bufferSize: Int = 512) : AsyncInflateInputStream(stream, bufferSize, false) {
     private val crc = CRC32()
     private val tmpbuf = ByteArray(128)

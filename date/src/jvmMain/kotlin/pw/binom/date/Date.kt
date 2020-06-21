@@ -11,7 +11,7 @@ actual inline class Date(val time: Long) {
         actual val now: Long
             get() = System.currentTimeMillis()
 
-        actual fun of(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int): Date {
+        actual fun internalOf(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int): Date {
             val t = LocalDateTime.of(
                     year,
                     month + 1,

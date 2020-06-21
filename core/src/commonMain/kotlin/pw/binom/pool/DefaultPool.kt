@@ -2,9 +2,9 @@ package pw.binom.pool
 
 open class DefaultPool<T : Any>(val capacity: Int, val new: () -> T) : ObjectPool<T> {
 
-    private val pool = arrayOfNulls<Any>(capacity) as Array<T?>
+    protected val pool = arrayOfNulls<Any>(capacity) as Array<T?>
     var size = 0
-        private set
+        protected set
 
     override fun borrow(init: ((T) -> Unit)?): T {
         if (size == 0)

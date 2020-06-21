@@ -1,6 +1,6 @@
 package pw.binom.io.socket
 
-import pw.binom.Thread
+import pw.binom.thread.Thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame

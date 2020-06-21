@@ -12,6 +12,7 @@ internal const val FNAME = 8 // File name
 
 internal const val FCOMMENT = 16 // File comment
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
 class GZIPInputStream(stream: InputStream, bufferSize: Int = 512) : InflateInputStream(stream, bufferSize, false) {
     private val crc = CRC32()
     private val tmpbuf = ByteArray(128)

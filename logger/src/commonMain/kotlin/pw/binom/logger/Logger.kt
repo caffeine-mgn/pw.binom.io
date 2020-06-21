@@ -1,7 +1,6 @@
 package pw.binom.logger
 
-import pw.binom.Date
-import pw.binom.atomic.AtomicReference
+import pw.binom.date.Date
 import kotlin.native.concurrent.SharedImmutable
 
 object Logger {
@@ -32,9 +31,9 @@ object Logger {
             if (currentLevel != null && currentLevel.priority > level.priority)
                 return
                 */
-            val now = Date.now()
+            val now = Date(Date.now).calendar()
 
-            println("${now.year + 1900}/${(now.month + 1).dateNumber()}/${now.dayOfMonth.dateNumber()} ${now.hours.dateNumber()}:${now.min.dateNumber()}:${now.sec.dateNumber()} [${level.name}] [$pkg]: $text")
+            println("${now.year}/${(now.month + 1).dateNumber()}/${now.dayOfMonth.dateNumber()} ${now.hours.dateNumber()}:${now.minutes.dateNumber()}:${now.seconds.dateNumber()} [${level.name}] [$pkg]: $text")
         }
     }
 }

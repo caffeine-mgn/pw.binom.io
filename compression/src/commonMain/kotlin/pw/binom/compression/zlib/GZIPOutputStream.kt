@@ -3,6 +3,7 @@ package pw.binom.compression.zlib
 import pw.binom.io.CRC32
 import pw.binom.io.OutputStream
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
 class GZIPOutputStream(stream: OutputStream, level: Int, bufferSize: Int = 512) : DeflaterOutputStream(
         stream = stream,
         bufferSize = bufferSize,

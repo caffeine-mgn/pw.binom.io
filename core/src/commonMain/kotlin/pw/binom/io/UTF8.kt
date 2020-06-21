@@ -1,10 +1,57 @@
 package pw.binom.io
 
+import pw.binom.ByteDataBuffer
 import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
 
 object UTF8 {
 
+    fun unicodeToUtf8(text: String, out: ByteDataBuffer, offset: Int = 0):Int {
+        var len = 0
+        text.forEachIndexed { index, c ->
+            len+=unicodeToUtf8(c, out, offset + index)
+        }
+        return len
+    }
+
+    fun unicodeToUtf8(char: Char, out: ByteDataBuffer, offset: Int = 0): Int {
+        val utf = char.toInt()
+        return when {
+            utf <= 0x7F -> {
+                // Plain ASCII
+                out[0 + offset] = utf.toByte()
+                1
+            }
+            utf <= 0x07FF -> {
+                // 2-byte unicode
+                out[0 + offset] = (((utf shr 6) and 0x1F) or 0xC0).toByte()
+                out[1 + offset] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                2
+            }
+            utf <= 0xFFFF -> {
+                // 3-byte unicode
+                out[0 + offset] = (((utf shr 12) and 0x0F) or 0xE0).toByte()
+                out[1 + offset] = (((utf shr 6) and 0x3F) or 0x80).toByte()
+                out[2 + offset] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                3
+            }
+            utf <= 0x10FFFF -> {
+                // 4-byte unicode
+                out[0 + offset] = (((utf shr 18) and 0x07) or 0xF0).toByte()
+                out[1 + offset] = (((utf shr 12) and 0x3F) or 0x80).toByte()
+                out[2 + offset] = (((utf shr 6) and 0x3F) or 0x80).toByte()
+                out[3 + offset] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                4
+            }
+            else -> {
+                // error - use replacement character
+                out[0 + offset] = 0xEF.toByte()
+                out[1 + offset] = 0xBF.toByte()
+                out[2 + offset] = 0xBD.toByte()
+                0
+            }
+        }
+    }
 
     /**
      * Converts unicode character to utf8 character
@@ -79,6 +126,45 @@ object UTF8 {
      * @return full unicode character
      */
     fun utf8toUnicode(firstByte: Byte, otherBytes: ByteArray, offset: Int = 0): Char {
+        val c = firstByte.toInt()
+        var cur = offset
+        fun func() = otherBytes[cur++]
+        return when {
+            (c and 0x80) == 0 -> c
+            (c and 0xE0) == 0xC0 -> {
+                ((c and 0x1F) shl 6) or (func().toInt() and 0x3F)
+            }
+            (c and 0xF0) == 0xE0 -> {
+                ((c and 0xF) shl 12) or
+                        ((func().toInt() and 0x3F) shl 6) or
+                        ((func().toInt() and 0x3F))
+            }
+            (c and 0xF8) == 0xF0 -> {
+                ((c and 0x7) shl 18) or
+                        ((func().toInt() and 0x3F) shl 12) or
+                        ((func().toInt() and 0x3F) shl 6) or
+                        ((func().toInt() and 0x3F))
+            }
+            (c and 0xFC) == 0xF8 -> {
+                ((c and 0x3) shl 24) or
+                        ((func().toInt() and 0x3F) shl 18) or
+                        ((func().toInt() and 0x3F) shl 12) or
+                        ((func().toInt() and 0x3F) shl 6) or
+                        ((func().toInt() and 0x3F))
+            }
+            (c and 0xFE) == 0xFC -> {
+                ((c and 0x1) shl 30) or
+                        ((func().toInt() and 0x3F) shl 24) or
+                        ((func().toInt() and 0x3F) shl 18) or
+                        ((func().toInt() and 0x3F) shl 12) or
+                        ((func().toInt() and 0x3F) shl 6) or
+                        ((func().toInt() and 0x3F))
+            }
+            else -> throw IllegalArgumentException("Unknown Character #$c")
+        }.toChar()
+    }
+
+    fun utf8toUnicode(firstByte: Byte, otherBytes: ByteDataBuffer, offset: Int = 0): Char {
         val c = firstByte.toInt()
         var cur = offset
         fun func() = otherBytes[cur++]

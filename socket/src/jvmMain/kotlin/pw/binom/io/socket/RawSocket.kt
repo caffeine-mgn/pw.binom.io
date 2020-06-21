@@ -1,6 +1,8 @@
 package pw.binom.io.socket
 
+import pw.binom.ByteDataBuffer
 import pw.binom.io.*
+import pw.binom.update
 import java.net.InetSocketAddress
 import java.net.Socket as JSocket
 
@@ -55,6 +57,29 @@ actual class RawSocket constructor(val native: JSocket) : Socket {
         native.close()
     }
 
+    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+        return data.update(offset,length){data->
+            native.channel.write(data)
+        }
+    }
+
+    override fun flush() {
+    }
+
+    override fun skip(length: Long): Long {
+        var l = length
+        while (l > 0) {
+            l -= read(skipBuffer, 0, l.toInt())
+        }
+        return length
+    }
+
+    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+        return data.update(offset,length){data->
+            native.channel.read(data)
+        }
+    }
+
     override fun connect(host: String, port: Int) {
         try {
             native.connect(InetSocketAddress(host, port))
@@ -73,3 +98,5 @@ actual class RawSocket constructor(val native: JSocket) : Socket {
 
 
 }
+
+private val skipBuffer = ByteDataBuffer.alloc(128)

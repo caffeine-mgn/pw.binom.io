@@ -6,12 +6,15 @@ import pw.binom.io.socket.RawSocket
 import pw.binom.io.socket.Socket
 import pw.binom.io.socket.SocketChannel
 
+/*
 actual class SSLSocketChannel(val sslSocket: SSLSocket) : SocketChannel, NetworkChannel {
     override val socket: Socket
         get() = sslSocket
 
     override val nsocket: RawSocket
         get() = sslSocket.raw
+    override val type: Int
+        get() = 0x001b
 
     override var blocking: Boolean
         get() = nsocket.blocking
@@ -46,4 +49,4 @@ actual class SSLSocketChannel(val sslSocket: SSLSocket) : SocketChannel, Network
 
     override fun write(data: ByteArray, offset: Int, length: Int) =
             socket.output.write(data = data, offset = offset, length = length)
-}
+}*/

@@ -4,11 +4,13 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.asUTF8String
 import pw.binom.fromBytes
 import pw.binom.internal_readln
+import pw.binom.pool.ObjectPool
 import kotlin.native.concurrent.ThreadLocal
 
 @ThreadLocal
 internal val numberArray = ByteArray(Long.SIZE_BYTES)
 
+@Deprecated("Use AsyncInput")
 interface AsyncInputStream : AsyncCloseable {
     /**
      * Reads one byte from stream
@@ -92,6 +94,22 @@ suspend fun AsyncInputStream.copyTo(outputStream: OutputStream, bufferSize: Int 
     outputStream.flush()
 }
 
+suspend fun AsyncInputStream.copyTo(outputStream: OutputStream, bufferPool: ObjectPool<ByteArray>) {
+    val buffer = bufferPool.borrow()
+    try {
+        while (true) {
+            val len = read(buffer)
+            if (len <= 0) {
+                break
+            }
+            outputStream.write(buffer, 0, len)
+        }
+        outputStream.flush()
+    } finally {
+        bufferPool.recycle(buffer)
+    }
+}
+
 suspend fun AsyncInputStream.copyTo(outputStream: AsyncOutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
     val buffer = ByteArray(bufferSize)
     while (true) {
@@ -102,4 +120,20 @@ suspend fun AsyncInputStream.copyTo(outputStream: AsyncOutputStream, bufferSize:
         outputStream.write(buffer, 0, len)
     }
     outputStream.flush()
+}
+
+suspend fun AsyncInputStream.copyTo(outputStream: AsyncOutputStream, bufferPool: ObjectPool<ByteArray>) {
+    val buffer = bufferPool.borrow()
+    try {
+        while (true) {
+            val len = read(buffer)
+            if (len <= 0) {
+                break
+            }
+            outputStream.write(buffer, 0, len)
+        }
+        outputStream.flush()
+    } finally {
+        bufferPool.recycle(buffer)
+    }
 }

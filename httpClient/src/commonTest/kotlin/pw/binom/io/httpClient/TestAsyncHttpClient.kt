@@ -2,18 +2,18 @@ package pw.binom.io.httpClient
 
 import pw.binom.URL
 import pw.binom.async
-import pw.binom.atomic.AtomicBoolean
-import pw.binom.date.Date
-import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
-import pw.binom.io.httpServer.HttpServer
+import pw.binom.io.readText
 import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.stackTrace
-import pw.binom.thread.Thread
-import kotlin.test.*
+import pw.binom.io.use
+import pw.binom.io.utf8Appendable
+import pw.binom.io.utf8Reader
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class HandlerImpl(val txt: String, val chunked: Boolean) : Handler {
     override suspend fun request(req: HttpRequest, resp: HttpResponse) {
@@ -29,8 +29,9 @@ class HandlerImpl(val txt: String, val chunked: Boolean) : Handler {
         }
 
         resp.status = 200
-        resp.output.utf8Appendable().append(txt)
-        resp.output.flush()
+        val out = resp.complete()
+        out.utf8Appendable().append(txt)
+        out.flush()
 
         val list = assertNotNull(req.headers["X-Server"])
         assertEquals(1, list.size)
@@ -52,6 +53,34 @@ class EmptyHandler : Handler {
 
 class TestAsyncHttpClient {
 
+/*    @Test
+    fun test() {
+        val manager = SocketNIOManager()
+        val client = AsyncHttpClient(manager)
+        async {
+            client.request("GET", URL("http://api.tlsys.org/client")).use {
+                it.addRequestHeader(Headers.CONTENT_TYPE, "application/json; charset=utf-8")
+                it.outputStream.utf8Appendable().append("""{"organization":null,"businessUnit":null,"workPlace":"fdf896f5-e622-4c84-b5b9-8fc19b66834a","client":{"card":"112","mobilePhone":null,"email":null,"validationCode":null,"availableAmount":null}}""")
+                it.outputStream.flush()
+                println("Response code: ${it.responseCode()}")
+                val reader = it.inputStream.utf8Reader()
+                var i = 0
+                while (true) {
+                    val c = reader.read()?:break
+                    print(c)
+                    i++
+                    if (i>1000)
+                        break
+                }
+                println("Break")
+            }
+        }
+        while (true) {
+            manager.update()
+        }
+    }*/
+
+
     @Ignore
     @Test
     fun ttt() {
@@ -68,12 +97,12 @@ class TestAsyncHttpClient {
                     println("${it.key}: ${it.value}")
                 }
                 println("Read ${out.size}")
-            } catch (e:Throwable){
+            } catch (e: Throwable) {
                 println("Error: $e")
                 e.stackTrace.forEach {
                     println(it)
                 }
-            }finally {
+            } finally {
                 done = true
             }
         }
@@ -222,4 +251,5 @@ class DDD {
         }
         println("Done: $done")
     }
+
 }

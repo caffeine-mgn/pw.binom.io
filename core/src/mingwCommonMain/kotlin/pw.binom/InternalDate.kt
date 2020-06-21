@@ -10,7 +10,6 @@ import platform.windows.LPSYSTEMTIMEVar
 
 internal actual fun calcTime(year: Int, month: Int, dayOfMonth: Int, hours: Int, min: Int, sec: Int): Long =
         memScoped {
-            println("try make time")
             val t = alloc<tm>()
             t.tm_year = year
             t.tm_mon = month
@@ -18,9 +17,7 @@ internal actual fun calcTime(year: Int, month: Int, dayOfMonth: Int, hours: Int,
             t.tm_hour = hours
             t.tm_min = min
             t.tm_sec = sec
-            println("execute...")
             val r = _mktime64(t.ptr)
-            println("calcTime Done! $r")
             r
         }
 

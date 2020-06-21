@@ -1,102 +1,76 @@
 package pw.binom.io.httpServer
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.io.Closeable
-import pw.binom.io.IOException
-import pw.binom.io.StreamClosedException
-import pw.binom.io.readln
+import pw.binom.io.*
+import pw.binom.io.http.Headers
 import pw.binom.io.socket.ServerSocketChannel
+import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.SocketFactory
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.rawSocketFactory
+import pw.binom.pool.DefaultPool
 import pw.binom.ssl.SSLContext
+import pw.binom.stackTrace
 
 /**
  * Base Http Server
  *
  * @param handler request handler
  */
-open class HttpServer(val manager: SocketNIOManager, protected val handler: Handler) : Closeable, SocketNIOManager.ConnectHandler {
+open class HttpServer(val manager: SocketNIOManager,
+                      protected val handler: Handler,
+                      bufferSize: Int = DEFAULT_BUFFER_SIZE,
+                      poolSize: Int = 10
+) : Closeable, SocketNIOManager.ConnectHandler {
+
+    private val returnToPoolForOutput: (NoCloseOutput) -> Unit = {
+        outputBufferPool.recycle(it)
+    }
+
+    private val inputBufferPool = DefaultPool(poolSize) {
+        NoCloseInput()
+    }
+    private val outputBufferPool = DefaultPool(poolSize) {
+        NoCloseOutput(returnToPoolForOutput)
+    }
+    private val httpRequestPool = DefaultPool(poolSize) {
+        HttpRequestImpl2()
+    }
+
+    private val httpResponseBodyPool = DefaultPool(poolSize) {
+        HttpResponseBodyImpl2()
+    }
+
+    private val httpResponsePool = DefaultPool(poolSize) {
+        HttpResponseImpl2(httpResponseBodyPool)
+    }
 
     private fun runProcessing(connection: SocketNIOManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
         connection {
-            try {
-                while (true) {
-                    val uri: String
-                    val method: String
-                    val headers = HashMap<String, ArrayList<String>>()
-                    if (state == null) {
-                        val request = it.input.readln()
-                        val items = request.split(' ')
-                        method = items[0]
-                        uri = items.getOrNull(1) ?: ""
-                        while (true) {
-                            val s = it.input.readln()
-                            if (s.isEmpty())
-                                break
-                            val items1 = s.split(": ", limit = 2)
-
-                            headers.getOrPut(items1[0]) { ArrayList() }.add(items1.getOrNull(1) ?: "")
-                        }
-                    } else {
-                        uri = state.uri
-                        method = state.method
-                        state.requestHeaders.forEach {
-                            headers[it.key] = ArrayList(it.value)
-                        }
-                    }
-                    val request1 = HttpRequestImpl(
-                            connection = it,
-                            method = method,
-                            uri = uri,
-                            headers = headers)
-
-                    val response = HttpResponseImpl(
-                            status = state?.status ?: 404,
-                            headerSendded = state?.headerSendded ?: false,
-                            headers = state?.responseHeaders ?: mapOf(),
-                            connection = it,
-                            request = request1,
-                            keepAlive = request1.headers["Connection"]?.getOrNull(0) == "keep-alive")
-
-                    if (handler != null) {
-                        handler(request1, response)
-                    } else
-                        this.handler.request(request1, response)
-                    try {
-                        val b = ByteArray(DEFAULT_BUFFER_SIZE)
-                        while (true) {
-                            if (request1.input.read(b) == 0)
-                                break
-                        }
-                    } catch (e: StreamClosedException) {
-                        //NOP
-                    }
-                    response.output.close()
-
-
-                    if (response.disconnectFlag) {
+            println("New Connection!")
+            while (true) {
+                try {
+                    val keepAlive = ConnectionProcessing.process(
+                            connection = connection,
+                            handler = this.handler,
+                            inputBufferPool = inputBufferPool,
+                            httpRequestPool = httpRequestPool,
+                            httpResponsePool = httpResponsePool
+                    )
+                    if (!keepAlive) {
+                        it.close()
                         break
                     }
-
-                    if (response.detachFlag) {
-                        return@connection
-                    }
-
-                    response.endResponse()
-
-//                    connection.output.writeln()
-//                    connection.output.writeln()
-
-                    if (response.headers["Connection"]?.singleOrNull() == "keep-alive"
-                            && response.headers["Content-Length"]?.singleOrNull()?.toLongOrNull() != null) {
-                        continue
-                    }
+                } catch (e: SocketClosedException) {
+                    break
+                } catch (e: Throwable) {
+//                    println("Error: $e")
+//                    e.stackTrace.forEach {
+//                        println(it)
+//                    }
+                    it.close()
                     break
                 }
-                it.close()
-            } catch (e: IOException) {
-                it.close()
             }
         }
     }
@@ -123,9 +97,9 @@ open class HttpServer(val manager: SocketNIOManager, protected val handler: Hand
         binded += manager.bind(host = host, port = port, handler = this, factory = SocketFactory.rawSocketFactory)
     }
 
-    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
-        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
-    }
+//    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
+//        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
+//    }
 
     fun attach(state: HttpConnectionState, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)? = null) {
         val con = manager.attach(state.channel)
@@ -137,5 +111,5 @@ open class HttpServer(val manager: SocketNIOManager, protected val handler: Hand
      *
      * @param timeout Timeout for wait event
      */
-    fun update(timeout: Int? = null) = manager.update(timeout)
+//    fun update(timeout: Int? = null) = manager.update(timeout)
 }

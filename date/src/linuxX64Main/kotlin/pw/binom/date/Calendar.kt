@@ -2,13 +2,14 @@ package pw.binom.date
 
 import kotlinx.cinterop.*
 import platform.posix.localtime
+import platform.posix.time_tVar
 
 actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
 
     private val tt = memScoped {
-        val t = alloc<LongVar>()
+        val t = alloc<time_tVar>()
         val tx = timeZoneOffset - Date.timeZoneOffset
-        t.value = utcTime / 1000L + tx * 60L
+        t.value = (utcTime / 1000L + tx * 60L).convert()
         localtime(t.ptr)!!.pointed
     }
 

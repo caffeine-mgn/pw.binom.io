@@ -9,6 +9,7 @@ internal const val GZIP_MAGIC2 = 0x8b.toByte()
 internal const val TRAILER_SIZE = 8
 internal const val DEFLATED = 8.toByte()
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
 class AsyncGZIPOutputStream(stream: AsyncOutputStream, level: Int, bufferSize: Int = 512) : AsyncDeflaterOutputStream(
         stream = stream,
         bufferSize = bufferSize,
