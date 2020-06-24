@@ -47,6 +47,7 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
                 return
             listenReadable = read
             listenWritable = write
+            println("update key: read: [$read], write: [$write]")
             native.edit(channel.nsocket.native, selfRef, read, write)
         }
     }

@@ -172,12 +172,10 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
             memScoped {
                 val event = alloc<epoll_event>()
                 val ref = SelfRefKey(key)
-                //EPOLLONESTHOT
                 event.events = if (key.channel is ServerSocketChannel)
                     (EPOLLIN or EPOLLOUT or EPOLLRDHUP).convert()
                 else
                     EPOLLRDHUP.convert()
-//                event.events = EPOLLRDHUP.convert()//(EPOLLIN or EPOLLOUT or EPOLLRDHUP).convert()
                 event.data.sock = socket.native
                 event.data.ptr = ref.key
                 epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)

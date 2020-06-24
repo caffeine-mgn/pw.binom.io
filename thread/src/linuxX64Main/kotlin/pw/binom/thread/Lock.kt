@@ -72,7 +72,6 @@ actual class Lock : Closeable {
                     val r = pthread_cond_timedwait(native, mutex, waitUntil.ptr)
                     if (Thread.currentThread.isInterrupted)
                         throw InterruptedException()
-                    println("Output = $r")
                     if (r == ETIMEDOUT) {
                         if (now.elapsedNow() > duration)
                             return@memScoped false

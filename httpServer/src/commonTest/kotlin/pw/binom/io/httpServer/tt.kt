@@ -13,6 +13,7 @@ import pw.binom.thread.Thread
 import kotlin.test.Ignore
 import kotlin.test.Test
 
+@Ignore
 class tt {
 
     class KeyManagerImpl : KeyManager {

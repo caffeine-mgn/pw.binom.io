@@ -13,6 +13,7 @@ import pw.binom.pool.DefaultPool
 import pw.binom.thread.FixedThreadPool
 import pw.binom.thread.Runnable
 import pw.binom.thread.Thread
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -26,7 +27,7 @@ class PostRequestTest {
         val bufPool = ByteDataBufferPool(1024 * 1024 * 10)
         val threadPool = FixedThreadPool(10)
         val bufferPool = ByteDataBufferPool()
-        val packagePool = DefaultPool<ByteBuffer>(30) { ByteBuffer(1024*1024) }
+        val packagePool = DefaultPool<ByteBuffer>(30) { ByteBuffer(1024 * 1024) }
         val manager = PoolThreadNioManager(packagePool, bufferPool, threadPool)
         var done = false
         var dd = TimeSource.Monotonic.markNow()
@@ -49,7 +50,8 @@ class PostRequestTest {
                 println("Try to return stub file!")
                 resp.status = 200
                 try {
-                    val filePath="E:\\Temp\\3\\33.stl"
+//                    val filePath="E:\\Temp\\3\\33.stl"
+                    val filePath = "/home/subochev/tmp/33.stl"
 //                    val filePath="E:\\Temp\\2\\out.txt"
                     println("Read file and copy it")
                     File(filePath).channel(AccessType.READ).use {
@@ -76,12 +78,18 @@ class PostRequestTest {
 //                }
             }
         }, bufferSize = DEFAULT_BUFFER_SIZE * 40)
-        server.bindHTTP(port = 8080)
-        while (!done) {
-            manager.update(1000)
+        try {
+            server.bindHTTP(port = 8080)
+            while (!done) {
+                manager.update(1000)
+            }
+        } catch (e: Throwable) {
+            println("Error!")
+            e.printStacktrace(Console.std)
         }
     }
 
+    @Ignore
     @Test
     fun rff() {
         val manager = SingleThreadNioManager(TODO(), TODO())
@@ -104,6 +112,7 @@ class PostRequestTest {
         }
     }
 
+    @Ignore
     @Test
     fun test() {
         val manager = SingleThreadNioManager(TODO(), TODO())

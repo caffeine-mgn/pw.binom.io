@@ -95,7 +95,7 @@ internal actual fun acceptSocket(socket: NativeSocketHolder): NativeSocketHolder
 }
 
 internal actual val NativeEvent.key: SocketSelector.SelectorKeyImpl
-    get() = this.ptr.asStableRef<SocketSelector.SelectorKeyImpl>().get()
+    get() = data.ptr!!.asStableRef<SocketSelector.SelectorKeyImpl>().get()
 
 internal actual class NativeEpoll actual constructor(connectionCount: Int) {
     val native = epoll_create(connectionCount)
@@ -114,7 +114,10 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
             memScoped {
                 val event = alloc<epoll_event>()
                 val ref = SelfRefKey(key)
-                event.events = (EPOLLIN or EPOLLOUT or EPOLLRDHUP or EPOLLET.convert()).convert()
+                event.events = if (key.channel is ServerSocketChannel)
+                    (EPOLLIN or EPOLLOUT or EPOLLRDHUP).convert()
+                else
+                    EPOLLRDHUP.convert()
                 event.data.fd = socket.native
                 event.data.ptr = ref.key
                 epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
@@ -124,11 +127,11 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
     actual fun edit(socket: NativeSocketHolder, ref: SelfRefKey, readFlag: Boolean, writeFlag: Boolean) {
         memScoped {
             val event = alloc<epoll_event>()
-            var e = EPOLLRDHUP or EPOLLET.convert()
+            var e = EPOLLRDHUP.convert<UInt>()
             if (readFlag)
-                e = e or EPOLLIN
+                e = e or EPOLLIN.convert()
             if (writeFlag)
-                e = e or EPOLLOUT
+                e = e or EPOLLOUT.convert()
             event.events = e.convert()
             event.data.fd = socket.native
             event.data.ptr = ref.key
@@ -166,6 +169,3 @@ internal actual val NativeEvent.isWritable: Boolean
 
 internal actual val NativeEvent.socId: Int
     get() = data.fd
-
-internal actual val isEpolletSupported: Boolean
-    get() = true

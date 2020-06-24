@@ -45,7 +45,7 @@ abstract class SocketNIOManager(
         fun readInterrupt() {
             fillBufWaiter?.let {
                 it.resumeWithException(ReadInterruptException())
-                fillBufWaiter=null
+                fillBufWaiter = null
             }
 //            readWater2?.let {
 //                it.continuation.resumeWithException(ReadInterruptException())
@@ -53,7 +53,7 @@ abstract class SocketNIOManager(
 //            }
         }
 
-//        var readWater2: WaitEvent2? = null
+        //        var readWater2: WaitEvent2? = null
         var flushWaiter: Continuation<Unit>? = null
         var fillBufWaiter: Continuation<Unit>? = null
 //        var writeWater2: WaitEvent2? = null
@@ -71,11 +71,11 @@ abstract class SocketNIOManager(
                 selectionKey.cancel()
             fillBufWaiter?.let {
                 it.resumeWithException(RuntimeException("Connection Detached"))
-                fillBufWaiter=null
+                fillBufWaiter = null
             }
             flushWaiter?.let {
                 it.resumeWithException(RuntimeException("Connection Detached"))
-                flushWaiter=null
+                flushWaiter = null
             }
 //            readWater2?.let {
 //                it.continuation.resumeWithException(RuntimeException("Connection Detached"))
@@ -110,7 +110,6 @@ abstract class SocketNIOManager(
 //                waitEventPool2.recycle(it)
 //                readWater2 = null
 //            }
-
 
 
 //            writeWater2?.let {
@@ -160,7 +159,6 @@ abstract class SocketNIOManager(
         override suspend fun flush() {
             if (output.readRemaining <= 0)
                 return
-
             suspendCoroutine<Unit> {
                 flushWaiter = it
                 selectionKey.updateListening(selectionKey.listenReadable, true)
@@ -283,11 +281,11 @@ abstract class SocketNIOManager(
 
         if (!client.channel.isConnected) {
             client.flushWaiter?.let {
-                client.flushWaiter=null
+                client.flushWaiter = null
                 it.resumeWithException(SocketClosedException())
             }
             client.fillBufWaiter?.let {
-                client.fillBufWaiter=null
+                client.fillBufWaiter = null
                 it.resumeWithException(SocketClosedException())
             }
 //            client.writeWater2?.continuation?.resumeWithException(SocketClosedException())
@@ -301,95 +299,50 @@ abstract class SocketNIOManager(
         }
         if (client.detached)
             return
+        var needRead = client.selectionKey.listenReadable
+        var needWrite = client.selectionKey.listenWritable || client.flushWaiter != null
 
-        if (key.isWritable && client.flushWaiter != null) {
-            val buf = bufferPool.borrow()
-            try {
-                if (client.output.readRemaining > 0) {
-                    val l = client.output.read(buf)
-                    client.channel.write(buf, 0, l)
-                }
+        if (key.isWritable) {
+            if (client.flushWaiter == null) {
+                needWrite = false
+            } else {
+                val buf = bufferPool.borrow()
+                try {
+                    if (client.output.readRemaining > 0) {
+                        val l = client.output.read(buf)
+                        client.channel.write(buf, 0, l)
+                    }
 
-                if (client.output.readRemaining <= 0) {
-                    client.selectionKey.updateListening(
-                            key.listenReadable,
-                            false
-                    )
+                    if (client.output.readRemaining <= 0) {
+                        needWrite = true
 
+                        val waiter = client.flushWaiter
+                        client.flushWaiter = null
+                        waiter?.resume(Unit)
+                    } else {
+                        needWrite = true
+                    }
+                } catch (e: Throwable) {
                     val waiter = client.flushWaiter
                     client.flushWaiter = null
-                    waiter?.resume(Unit)
+                    waiter?.resumeWithException(e)
+                    needWrite = false
+                } finally {
+                    bufferPool.recycle(buf)
                 }
-
-            } catch (e: Throwable) {
-                val waiter = client.flushWaiter
-                client.flushWaiter = null
-                waiter?.resumeWithException(e)
-                client.selectionKey.updateListening(
-                        key.listenReadable,
-                        false
-                )
-            } finally {
-                bufferPool.recycle(buf)
             }
-        } else {
-            client.selectionKey.updateListening(
-                    key.listenReadable,
-                    false
-            )
         }
-
-//        if (key.isWritable && client.selectionKey.attachment === client) {
-//            val ww = client.writeWater2
-//            if (ww != null) {
-//                client.writeWater2 = null
-//                val ev = ww
-//                var wroteBytesCount = 0
-//                val needWrite = ev.length
-//                while (ev.length > 0) {
-//                    try {
-//                        val v = client.channel.write(ev.data, ev.offset, ev.length)
-//                        ev.length -= v
-//                        ev.offset += v
-//                        if (v == 0)
-//                            break
-//                        if (v == -1)
-//                            TODO()
-//                        wroteBytesCount += v
-//                        println("Writed: [$v], need write: [${needWrite}]")
-//                    } catch (e: Throwable) {
-//                        println("ERROR! CLOSE!")
-//                        async {
-//                            client.close()
-//                        }
-//                        ev.continuation.resumeWithException(e)
-//                        waitEventPool2.recycle(ev)
-//                        return
-//                    }
-//
-//                }
-//                if (ev.length <= 0) {
-//                    ev.continuation.resume(wroteBytesCount)
-//                    waitEventPool2.recycle(ev)
-//                } else {
-//                    println("need send again!")
-//                    client.writeWater2 = ww
-//                }
-//            }
-//        }
 
         if (key.isReadable && client.fillBufWaiter != null) {
             val buf = bufferPool.borrow()
             try {
                 if (client.input.readRemaining <= 0) {
                     val l = client.channel.read(buf)
-                    client.input.write(buf,0,l)
+                    client.input.write(buf, 0, l)
                 }
 
                 if (client.input.readRemaining > 0) {
-                    client.selectionKey.updateListening(
-                            false,
-                            key.listenWritable)
+                    needRead = false
 
                     val waiter = client.fillBufWaiter
                     client.fillBufWaiter = null
@@ -400,103 +353,18 @@ abstract class SocketNIOManager(
                 val waiter = client.fillBufWaiter
                 client.fillBufWaiter = null
                 waiter?.resumeWithException(e)
-                client.selectionKey.updateListening(
-                        false,
-                        key.listenWritable
-                )
+                needRead = false
             } finally {
                 bufferPool.recycle(buf)
             }
+
+            if (!needWrite && client.flushWaiter != null)
+                needWrite = true
         } else {
-            client.selectionKey.updateListening(
-                    false,
-                    key.listenWritable
-            )
+            needRead = false
         }
 
-//        if (key.isReadable && client.fillBufWaiter!=null) {
-//            val rw = client.fillBufWaiter
-//            if (rw != null) {
-//                client.fillBufWaiter=null
-//                val buf = bufferPool.borrow()
-//                try {
-//                    val reaaded = client.channel.read(rw.data, rw.offset, rw.length)
-//                    println("Resume Corutine! $reaaded")
-//                    rw.continuation.resume(reaaded)
-//                    waitEventPool2.recycle(rw)
-//                } catch (e: Throwable) {
-//                    rw.continuation.resumeWithException(e)
-//                    waitEventPool2.recycle(rw)
-//                    async {
-//                        client.close()
-//                    }
-//                    e.printStacktrace()
-//                }
-//                client.selectionKey.updateListening(
-//                        false,
-//                        key.listenWritable
-//                )
-//            }
-//        }
-
-/*
-                if (it.isWritable && client.selectionKey.attachment === client) {
-                    val ww = client.writeWater
-                    if (ww != null) {
-                        val ev = ww
-                        try {
-                            try {
-                                val v = client.channel.write(ev.data, ev.offset, ev.length)
-                                ev.offset += v
-                                ev.length -= v
-                            } catch (e: Throwable) {
-                                async {
-                                    client.close()
-                                }
-                                ev.continuation.resumeWithException(e)
-                                return@process
-                            }
-                            if (ev.length <= 0) {
-                                client.writeWater = null
-                                ev.continuation.resume(0)
-                            }
-                        } finally {
-                            waitEventPool.recycle(ev)
-                        }
-                    }
-                }
-
-                if (it.isReadable && client.selectionKey.attachment === client) {
-                    val rw = client.readWater
-                    if (rw != null) {
-                        client.readWater = null
-                        val ev = rw
-                        try {
-                            val readBytesCount = try {
-                                l = false
-                                client.channel.read(ev.data, ev.offset, ev.length)
-                            } catch (e: Throwable) {
-                                ev.continuation.resumeWithException(e)
-                                return@process
-                            }
-                            ev.continuation.resume(readBytesCount)
-                        } catch (e: Throwable) {
-                            async {
-                                client.close()
-                            }
-                            throw e
-                        } finally {
-                            waitEventPool.recycle(ev)
-                        }
-                    }
-                }
-*/
-//        println("After process: need read: [${client.readWater2 != null}], need write: ${client.writeWater2 != null}")
-//        if (!client.selectionKey.isCanlelled && client.selectionKey.attachment === client) {
-//            client.selectionKey.updateListening(
-//                    client.readWater2 != null,
-//                    client.output.readRemaining > 0 && client.flushWaiter!=null)
-//        }
+        client.selectionKey.updateListening(needRead, needWrite)
     }
 
     protected open fun processAccept(key: SocketSelector.SelectorKey) {

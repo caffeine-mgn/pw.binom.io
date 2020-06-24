@@ -9,6 +9,7 @@ import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.thread.Runnable
 import pw.binom.thread.Thread
 import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -20,6 +21,7 @@ import kotlin.time.toDuration
 suspend inline fun AsyncAppendable.appendln(text: String) = append("$text\r\n")
 suspend inline fun AsyncAppendable.appendln() = append("\r\n")
 
+@Ignore
 @OptIn(ExperimentalTime::class)
 class IdentityServerTest {
 
