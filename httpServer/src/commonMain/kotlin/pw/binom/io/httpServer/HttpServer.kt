@@ -19,7 +19,6 @@ import pw.binom.stackTrace
  */
 open class HttpServer(val manager: SocketNIOManager,
                       protected val handler: Handler,
-                      bufferSize: Int = DEFAULT_BUFFER_SIZE,
                       poolSize: Int = 10
 ) : Closeable, SocketNIOManager.ConnectHandler {
 

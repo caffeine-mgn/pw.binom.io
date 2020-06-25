@@ -51,7 +51,8 @@ class PostRequestTest {
                 resp.status = 200
                 try {
 //                    val filePath="E:\\Temp\\3\\33.stl"
-                    val filePath = "/home/subochev/tmp/33.stl"
+//                    val filePath = "/home/subochev/tmp/33.stl"
+                    val filePath = "/mnt/e/Temp/2/33.stl"
 //                    val filePath="E:\\Temp\\2\\out.txt"
                     println("Read file and copy it")
                     File(filePath).channel(AccessType.READ).use {

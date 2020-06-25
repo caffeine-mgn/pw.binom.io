@@ -40,6 +40,7 @@ open class AsyncChunkedOutput(
         tmp[r] = '\r'.toByte()
         tmp[r + 1] = '\n'.toByte()
         stream.write(tmp, 0, r + 2)
+        println("Send chunk. ${bufferPos}")
         stream.write(buffer, 0, bufferPos)
         stream.write(tmp, r, 2)
         stream.flush()

@@ -267,7 +267,6 @@ abstract class SocketNIOManager(
     private val executeThreadLock = Lock()
 
     protected open fun processIo(key: SocketSelector.SelectorKey) {
-//        println("read: ${key.isReadable}, write: ${key.isWritable}")
         val client = (key.attachment as ConnectionRaw?)
         if (client?.detached == true) {
             return

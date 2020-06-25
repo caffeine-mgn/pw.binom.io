@@ -27,7 +27,7 @@ actual val Environment.workDirectory: String
         if (errno == EACCES)
             throw RuntimeException("Forbidden")
         try {
-            return data.reinterpret<ShortVar>().toKString()
+            return data.toKString()
         } finally {
             free(data)
         }
