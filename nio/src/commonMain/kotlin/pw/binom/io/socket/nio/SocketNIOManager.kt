@@ -363,8 +363,8 @@ abstract class SocketNIOManager(
         } else {
             needRead = false
         }
-
-        client.selectionKey.updateListening(needRead, needWrite)
+        if (!key.isCanlelled)
+            key.updateListening(needRead, needWrite)
     }
 
     protected open fun processAccept(key: SocketSelector.SelectorKey) {
