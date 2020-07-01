@@ -51,8 +51,6 @@ open class HttpServer(val manager: SocketNIOManager,
 
     private fun runProcessing(connection: SocketNIOManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
         connection {
-            println("New Connection!")
-
             val inputBufferid = bufferedInputPool.borrow { buf ->
                 buf.currentStream = it
             }
@@ -63,7 +61,6 @@ open class HttpServer(val manager: SocketNIOManager,
                 try {
 
                     val keepAlive = ConnectionProcessing.process(
-//                            connection = connection,
                             handler = this.handler,
                             httpRequestPool = httpRequestPool,
                             httpResponsePool = httpResponsePool,
