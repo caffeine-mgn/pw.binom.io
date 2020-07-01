@@ -11,7 +11,6 @@ import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.socket.nio.SingleThreadNioManager
 import pw.binom.io.use
-import pw.binom.io.utf8Appendable
 import pw.binom.pool.ObjectPool
 
 suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
@@ -33,14 +32,6 @@ fun main(args: Array<String>) {
     val server = HttpServer(nioManager, object : Handler {
         override suspend fun request(req: HttpRequest, resp: HttpResponse) {
             val file = File(File(Environment.workDirectory), req.uri)
-//            resp.status = 200
-//            resp.addHeader(Headers.CONTENT_TYPE, "text/html")
-//            println("Try complit")
-//            val out = resp.complete()
-//            println("Complited! Try write body")
-//            out.utf8Appendable().append("Anton")
-//            println("Body writed!")
-//            return
             if (!file.isFile) {
                 resp.status = 404
                 resp.complete()
@@ -49,12 +40,11 @@ fun main(args: Array<String>) {
                 resp.addHeader(Headers.CONTENT_TYPE, "application/octet-stream")
                 resp.addHeader(Headers.CONTENT_LENGTH, file.size.toString())
                 file.channel(AccessType.READ).use { channel ->
-//                    resp.complete().write(channel)
                     channel.copyTo(resp.complete(), byteDataPool)
                 }
             }
         }
-    }, outputBufferSize = 1024 * 1024*3)
+    }, outputBufferSize = 1024 * 1024 * 3)
     server.bindHTTP(port = 8080)
     while (true) {
         nioManager.update()
