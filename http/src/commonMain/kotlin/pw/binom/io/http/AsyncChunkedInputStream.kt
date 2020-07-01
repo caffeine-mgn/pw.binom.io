@@ -22,6 +22,7 @@ private suspend fun AsyncInputStream.readLineCRLF(): String {
     }
 }
 
+@Deprecated("Use AsyncChunkedInput")
 open class AsyncChunkedInputStream(val stream: AsyncInputStream) : AsyncHttpInputStream {
     override suspend fun read(): Byte {
         checkClosed()

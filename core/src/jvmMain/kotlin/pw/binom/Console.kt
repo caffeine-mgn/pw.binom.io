@@ -6,7 +6,7 @@ import pw.binom.io.ReaderUTF82
 import java.io.PrintStream
 import java.nio.channels.Channels
 
-private val tmpBuf = ByteDataBuffer.alloc(32)
+private val tmpBuf = ByteBuffer.alloc(32)
 
 actual object Console {
     private class Out(oo: PrintStream) : Output {
@@ -14,10 +14,13 @@ actual object Console {
         override fun close() {
         }
 
-        override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
-                data.update(offset, length) {
-                    vv.write(it)
-                }
+//        override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
+//                data.update(offset, length) {
+//                    vv.write(it)
+//                }
+
+        override fun write(data: ByteBuffer): Int =
+                vv.write(data.native)
 
         override fun flush() {
         }
@@ -32,15 +35,19 @@ actual object Console {
         override fun skip(length: Long): Long {
             var l = length
             while (l > 0) {
-                l -= read(tmpBuf, 0, minOf(tmpBuf.size, l.toInt()))
+                tmpBuf.reset(0, minOf(tmpBuf.capacity, l.toInt()))
+                l -= read(tmpBuf)
             }
             return length
         }
 
-        override fun read(data: ByteDataBuffer, offset: Int, length: Int) =
-                data.update(offset, length) {
-                    cc.read(it)
-                }
+        override fun read(dest: ByteBuffer): Int =
+                cc.read(dest.native)
+
+//        override fun read(data: ByteDataBuffer, offset: Int, length: Int) =
+//                data.update(offset, length) {
+//                    cc.read(it)
+//                }
 
         override fun close() {
         }

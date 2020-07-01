@@ -5,6 +5,7 @@ import platform.linux.*
 import platform.posix.*
 import platform.posix.free
 import platform.posix.malloc
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.BindException
 import pw.binom.io.Closeable
@@ -39,6 +40,12 @@ internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteArray, offs
 
 internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int): Int =
         recv(socket.native, data.refTo(offset), length.convert(), 0).convert()
+
+internal actual fun recvSocket(socket: NativeSocketHolder, dest: ByteBuffer): Int {
+    val r = recv(socket.native, dest.native + dest.position, dest.remaining.convert(), 0).convert<Int>()
+    dest.position += r
+    return r
+}
 
 internal actual fun bindSocket(socket: NativeSocketHolder, host: String, port: Int) {
     memScoped {
@@ -86,6 +93,12 @@ internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offs
 
 internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int): Int =
         send(socket.native, data.refTo(offset), length.convert(), MSG_NOSIGNAL).convert()
+
+internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteBuffer): Int {
+    val r = send(socket.native, data.native + data.position, data.remaining.convert(), MSG_NOSIGNAL).convert<Int>()
+    data.position += r
+    return r
+}
 
 internal actual fun acceptSocket(socket: NativeSocketHolder): NativeSocketHolder {
     val native = accept(socket.native, null, null)

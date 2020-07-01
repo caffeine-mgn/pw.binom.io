@@ -1,10 +1,7 @@
 package pw.binom.io.socket
 
 import pw.binom.thread.Thread
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class TestSocketSelector {
 
@@ -40,15 +37,15 @@ class TestSocketSelector {
         client.blocking = false
         val b1 = Any()
         val k = selector.reg(client, b1).apply {
-            assertTrue(listenReadable)
-            assertTrue(listenWritable)
+            assertFalse(listenReadable)
+            assertFalse(listenWritable)
         }
         assertSame(b1, k.attachment)
         k.cancel()
         val b2 = Any()
         val v = selector.reg(client,b2).apply {
-            assertTrue(listenReadable)
-            assertTrue(listenWritable)
+            assertFalse(listenReadable)
+            assertFalse(listenWritable)
         }
 
         assertSame(k, v)
@@ -59,8 +56,8 @@ class TestSocketSelector {
         }
 
         k.apply {
-            assertTrue(listenReadable)
-            assertTrue(listenWritable)
+            assertFalse(listenReadable)
+            assertFalse(listenWritable)
         }
     }
 }

@@ -27,7 +27,7 @@ class PostRequestTest {
         val bufPool = ByteDataBufferPool(1024 * 1024 * 10)
         val threadPool = FixedThreadPool(10)
         val bufferPool = ByteDataBufferPool()
-        val packagePool = DefaultPool<ByteBuffer>(30) { ByteBuffer(1024 * 1024) }
+        val packagePool = DefaultPool<InfinityByteBuffer>(30) { InfinityByteBuffer(1024 * 1024) }
         val manager = PoolThreadNioManager(packagePool, bufferPool, threadPool)
         var done = false
         var dd = TimeSource.Monotonic.markNow()

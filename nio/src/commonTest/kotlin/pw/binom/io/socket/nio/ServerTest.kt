@@ -1,7 +1,7 @@
 package pw.binom.io.socket.nio
 
-import pw.binom.ByteDataBuffer
 import pw.binom.AsyncInput
+import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.socket.RawSocketChannel
 import pw.binom.io.socket.SocketFactory
@@ -21,10 +21,11 @@ import kotlin.time.*
 @OptIn(ExperimentalTime::class)
 class ServerTest {
     val port = Random.nextInt(1000, 0xFFFF)
-    val data = ByteDataBuffer.alloc(1024 * 1024).also {
+    val data = ByteBuffer.alloc(1024 * 1024).also {
         Random.nextBytes(it)
+        it.clear()
     }
-    val readed = ByteDataBuffer.alloc(data.size)
+    val readed = ByteBuffer.alloc(data.capacity)
 
 
     val totalRunTimer = Thread(Runnable {
@@ -55,49 +56,42 @@ class ServerTest {
         try {
             val selector = SocketSelector(10)
             val client = SocketFactory.rawSocketFactory.createSocketChannel()
-            var readTime = Duration.ZERO
-            var writeTime = Duration.ZERO
             client.connect("127.0.0.1", port)
             client.blocking = false
             selector.reg(client).updateListening(true, false)
-            var cursor = 0
             println("Try to read data from server")
             var write = false
             while (isExecuting()) {
 //            println("Selector Process!")
                 selector.process(1000) {
                     if (it.isReadable) {
-                        readTime += measureTime {
+                        if (readed.remaining > 0) {
                             println("Read!")
                             val channel = it.channel as RawSocketChannel
-                            val r = channel.read(readed, cursor/*, length = minOf(readed.size - cursor, 1024 * 8)*/)
-                            println("Readed $r")
-                            cursor += r
+                            val r = channel.read(readed/*, length = minOf(readed.size - cursor, 1024 * 8)*/)
+                            println("Readed $r. Need read: [${readed.remaining} bytes]")
+                            if (readed.remaining == 0) {
+                                println("Swap mode: Read -> Write")
+                                write = true
+                                readed.flip()
+                                it.updateListening(false, true)
+                            }
                         }
                     }
                     if (it.isWritable) {
-                        writeTime += measureTime {
-                            println("Write!")
+                        if (readed.remaining > 0) {
+                            println("Write! Need write: [${readed.remaining} bytes]")
                             val channel = it.channel as RawSocketChannel
-                            val r = channel.write(readed, cursor/*, length = minOf(readed.size - cursor, 1024 * 8)*/)
+                            val r = channel.write(readed/*, length = minOf(readed.size - cursor, 1024 * 8)*/)
                             println("Wrote $r")
-                            cursor += r
+                            if (readed.remaining == 0) {
+                                println("Client is Done! - OK")
+                                good1.value = true
+                            }
                         }
-                    }
-                    if (cursor == readed.size) {
-                        if (write) {
-                            println("Client is Done! - OK")
-                            good1.value = true
-                            return@process
-                        }
-                        println("Swap mode: Read -> Write")
-                        cursor = 0
-                        write = true
-                        it.updateListening(false, true)
                     }
                 }
             }
-            println("Full ReadTime: $readTime")
         } catch (e: Throwable) {
             e.printStacktrace()
         }
@@ -107,15 +101,13 @@ class ServerTest {
         override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
             connection { con ->
                 try {
-                    println("SERVER-Client connected! Send data...")
-                    assertEquals(data.size, con.write(data))
+                    println("SERVER-Client connected! Send data... size: [${data.remaining}]")
+                    assertEquals(data.capacity, con.write(data))
                     println("SERVER-Data Sendded!")
                     println("SERVER-Try to read data from client")
-                    ByteDataBuffer.alloc(data.size).use { tmp ->
+                    ByteBuffer.alloc(data.capacity).use { tmp ->
                         con.readFull2(tmp)
-                        data.forEachIndexed { index, byte ->
-                            assertEquals(byte, tmp[index])
-                        }
+                        assertArrayEquals(data, 0, tmp, 0, data.capacity)
                     }
                     println("SERVER-Data Readed")
                     good2.value = true
@@ -129,24 +121,23 @@ class ServerTest {
 
     fun isExecuting(): Boolean {
         return when {
-            !good1.value || !good2.value -> true
-            done.value -> true
+            good1.value && good2.value -> false
+            !done.value && (!good1.value || !good2.value) -> true
+            done.value -> false
+            !done.value -> true
             else -> false
         }
 //        (!good1.value || good2.value) && !done.value
     }
 
-    suspend fun AsyncInput.readFull2(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int {
-        var off = offset
-        var len = length
-        while (len > 0) {
-            print("MAIN-($this)-Try to read $len...")
-            val t = read(data, off, len)
+    suspend fun AsyncInput.readFull2(data: ByteBuffer): Int {
+        var l = data.remaining
+        while (data.remaining > 0) {
+            print("MAIN-($this)-Try to read ${data.remaining}...")
+            val t = read(data)
             println("OK: $t")
-            off += t
-            len -= t
         }
-        return length
+        return l
     }
 
     @Test
@@ -158,7 +149,7 @@ class ServerTest {
         clientThread.start()
         totalRunTimer.start()
         while (isExecuting()) {
-            println("Call update.. ${isExecuting()}  ${done.value}")
+            println("Call update... isExecuting: [${isExecuting()}], done: [${done.value}], good1: [${good1.value}], good2: [${good2.value}]")
             manager.update(1000)
         }
 
@@ -166,10 +157,14 @@ class ServerTest {
             fail("Test Timeout")
 
         val assertTime = measureTime {
-            data.forEachIndexed { index, byte ->
-                assertEquals(byte, readed[index])
-            }
+            assertArrayEquals(data, 0, readed, 0, data.capacity)
         }
         println("Assert time: $assertTime")
+    }
+}
+
+fun assertArrayEquals(expected: ByteBuffer, expectedOffset: Int, actual: ByteBuffer, actualOffset: Int, length: Int) {
+    for (i in expectedOffset until expectedOffset + length) {
+        assertEquals(expected[i], actual[i - expectedOffset + actualOffset], "On Element ${i - expectedOffset}")
     }
 }

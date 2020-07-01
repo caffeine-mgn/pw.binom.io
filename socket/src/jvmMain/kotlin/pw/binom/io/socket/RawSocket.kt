@@ -1,8 +1,7 @@
 package pw.binom.io.socket
 
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.io.*
-import pw.binom.update
 import java.net.InetSocketAddress
 import java.net.Socket as JSocket
 
@@ -57,11 +56,14 @@ actual class RawSocket constructor(val native: JSocket) : Socket {
         native.close()
     }
 
-    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        return data.update(offset,length){data->
-            native.channel.write(data)
-        }
-    }
+    override fun write(data: ByteBuffer): Int =
+            native.channel.write(data.native)
+
+//    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        return data.update(offset,length){data->
+//            native.channel.write(data)
+//        }
+//    }
 
     override fun flush() {
     }
@@ -69,16 +71,20 @@ actual class RawSocket constructor(val native: JSocket) : Socket {
     override fun skip(length: Long): Long {
         var l = length
         while (l > 0) {
-            l -= read(skipBuffer, 0, l.toInt())
+            skipBuffer.reset(0, minOf(skipBuffer.capacity, l.toInt()))
+            l -= read(skipBuffer)
         }
         return length
     }
 
-    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        return data.update(offset,length){data->
-            native.channel.read(data)
-        }
-    }
+    override fun read(dest: ByteBuffer): Int =
+            native.channel.read(dest.native)
+
+//    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        return data.update(offset,length){data->
+//            native.channel.read(data)
+//        }
+//    }
 
     override fun connect(host: String, port: Int) {
         try {
@@ -99,4 +105,4 @@ actual class RawSocket constructor(val native: JSocket) : Socket {
 
 }
 
-private val skipBuffer = ByteDataBuffer.alloc(128)
+private val skipBuffer = ByteBuffer.alloc(128)

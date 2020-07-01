@@ -5,6 +5,7 @@ import platform.posix.free
 import platform.posix.malloc
 import platform.posix.memset
 import platform.zlib.*
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
@@ -32,8 +33,6 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         free(native)
         closed = true
     }
-
-    actual constructor() : this(6, true, true)
 
     actual fun deflate(cursor: Cursor, input: ByteArray, output: ByteArray): Int {
         checkClosed()
@@ -181,6 +180,79 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
             val inLength = readed - cursor.availIn
 
             _totalIn += inLength
+            _totalOut += outLength
+
+            if (r == Z_OK || r == Z_BUF_ERROR)
+                return true
+            if (r == Z_STREAM_END)
+                return false
+        }
+    }
+
+    actual fun deflate(input: ByteBuffer, output: ByteBuffer): Int {
+        checkClosed()
+        if (output.remaining == 0)
+            throw IllegalArgumentException("Output Buffer has no Free Space")
+        if (!_finishing && input.remaining == 0)
+            return 0
+        native.pointed.next_out = (output.native + output.position)!!.reinterpret()
+        native.pointed.avail_out = output.remaining.convert()
+
+        native.pointed.next_in = (input.native + input.position)!!.reinterpret()
+        native.pointed.avail_in = input.remaining.convert()
+        val freeOutput = output.remaining
+        val freeInput = input.remaining
+
+        val mode = if (_finishing)
+            Z_FINISH
+//            Z_SYNC_FLUSH
+//            Z_FULL_FLUSH
+        else
+            Z_NO_FLUSH
+        val deflateResult = deflate(native, mode)
+        if (deflateResult != Z_OK)
+            throw IOException("deflate() returns [${zlibConsts(deflateResult)}]. avail_in: [${native.pointed.avail_in}], avail_out: [${native.pointed.avail_out}]")
+        val wrote = freeOutput - native.pointed.avail_out.convert<Int>()
+        input.position += freeInput - native.pointed.avail_in.convert<Int>()
+        output.position += freeOutput - native.pointed.avail_out.convert<Int>()
+        println("wrote: $wrote")
+
+        val outLength = freeOutput - output.remaining
+        val inLength = freeInput - input.remaining
+        _totalOut += outLength
+        _totalIn += inLength
+        if (_finishing)
+            _finished = true
+        return outLength
+    }
+
+    actual fun flush(output: ByteBuffer): Boolean {
+        if (!_finishing)
+            return false
+        while (true) {
+            val writed = output.remaining
+            val mode = if (_finishing)
+                Z_FINISH
+            else
+                if (syncFlush)
+                    Z_SYNC_FLUSH
+                else
+                    Z_NO_FLUSH
+
+            val r = memScoped {
+                native.pointed.next_out = (output.native + output.position)!!.reinterpret()
+                native.pointed.avail_out = output.remaining.convert()
+
+                native.pointed.next_in = null
+                native.pointed.avail_in = 0.convert()
+                deflate(native, mode)
+            }
+//            if (r != Z_OK)
+//                throw IOException("Can't flush data. Code: $r (${zlibConsts(r)})")
+
+            val outLength = writed - native.pointed.avail_out.convert<Int>()
+            output.position += writed - native.pointed.avail_out.convert<Int>()
+
             _totalOut += outLength
 
             if (r == Z_OK || r == Z_BUF_ERROR)

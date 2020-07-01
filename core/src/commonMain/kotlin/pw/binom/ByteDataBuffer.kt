@@ -113,13 +113,12 @@ class ByteDataBufferPool(size: Int = DEFAULT_BUFFER_SIZE) : DefaultPool<ByteData
     }
 }
 
-fun ByteDataBuffer.asUTF8String(offset: Int = 0, length: Int = size): String {
-    var i = offset
+fun ByteBuffer.asUTF8String(): String {
     val sb = StringBuilder()
-    while (i < length + offset) {
-        val size = UTF8.utf8CharSize(this[i])
-        UTF8.utf8toUnicode(this[i], this, i + 1)
-        i += size
+    while (remaining>0) {
+        val first = get()
+        val size = UTF8.utf8CharSize(first)
+        UTF8.utf8toUnicode(first, this)
     }
     return sb.toString()
 }

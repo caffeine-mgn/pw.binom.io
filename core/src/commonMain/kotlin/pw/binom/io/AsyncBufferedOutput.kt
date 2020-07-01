@@ -1,44 +1,50 @@
 package pw.binom.io
 
 import pw.binom.AsyncOutput
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.copyInto
 
-class AsyncBufferedOutput(val stream: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE) : AsyncOutput {
-    private val buffer = ByteDataBuffer.alloc(bufferSize)
-    private var cursor = 0
-    val bufferSize
-        get() = buffer.size
+class AsyncBufferedOutput(override val stream: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE) : AbstractAsyncBufferedOutput() {
+    override val buffer = ByteBuffer.alloc(bufferSize)
 
-    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        var off = offset
-        var len = length
-//        var cursor = cursor
-        while (len > 0) {
-            if (cursor == buffer.size)
-                flush()
-            val bb = minOf(buffer.size - cursor, len)
-
-            data.copyInto(buffer, cursor, off, off + bb)
-            len -= bb
-            off += bb
-            cursor += bb
+    override suspend fun close() {
+        try {
+            super.close()
+        } finally {
+            stream.close()
+            buffer.close()
         }
-//        this.cursor = cursor
-        return length - len
+    }
+}
+
+abstract class AbstractAsyncBufferedOutput : AsyncOutput {
+    protected abstract val stream: AsyncOutput
+    protected abstract val buffer: ByteBuffer
+
+    val bufferSize
+        get() = buffer.capacity
+
+    override suspend fun write(data: ByteBuffer): Int {
+        var l = 0
+        while (data.remaining > 0) {
+            if (buffer.remaining <= 0)
+                flush()
+            l += buffer.write(data)
+        }
+        return l
     }
 
     override suspend fun flush() {
-        while (cursor > 0) {
-            cursor -= stream.write(buffer, 0, cursor)
-            stream.flush()
+        buffer.flip()
+        while (buffer.remaining > 0) {
+            stream.write(buffer)
         }
+        stream.flush()
+        buffer.clear()
     }
 
     override suspend fun close() {
         flush()
-        stream.close()
     }
 }
 

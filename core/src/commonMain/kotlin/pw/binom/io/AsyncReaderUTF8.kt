@@ -1,7 +1,7 @@
 package pw.binom.io
 
-import pw.binom.ByteDataBuffer
 import pw.binom.AsyncInput
+import pw.binom.tmp8
 
 @Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
 class AsyncReaderUTF8(private val stream: AsyncInputStream) : AbstractAsyncReader() {
@@ -26,7 +26,7 @@ class AsyncReaderUTF8(private val stream: AsyncInputStream) : AbstractAsyncReade
 
 class AsyncReaderUTF82(private val stream: AsyncInput) : AbstractAsyncReader() {
 
-    private val data = ByteDataBuffer.alloc(4)
+//    private val data = ByteDataBuffer.alloc(4)
 
     override suspend fun close() {
         stream.close()
@@ -34,14 +34,18 @@ class AsyncReaderUTF82(private val stream: AsyncInput) : AbstractAsyncReader() {
 
     override suspend fun read(): Char? =
             try {
-                if (stream.read(data, length = 1) == 0) {
+                tmp8.reset(0, 1)
+                if (stream.read(tmp8) == 0) {
                     null
                 } else {
-                    val firstByte = data[0]
+                    val firstByte = tmp8[0]
                     val size = UTF8.utf8CharSize(firstByte)
-                    if (size > 0)
-                        stream.read(data, length = size)
-                    UTF8.utf8toUnicode(firstByte, data)
+                    if (size > 0) {
+                        tmp8.reset(0, size)
+                        stream.read(tmp8)
+                        tmp8.flip()
+                    }
+                    UTF8.utf8toUnicode(firstByte, tmp8)
                 }
             } catch (e: EOFException) {
                 null

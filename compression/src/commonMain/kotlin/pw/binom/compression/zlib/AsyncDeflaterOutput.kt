@@ -1,27 +1,32 @@
 package pw.binom.compression.zlib
 
 import pw.binom.AsyncOutput
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 
-open class AsyncDeflaterOutput(val stream: AsyncOutput, level: Int, bufferSize: Int = 512, wrap: Boolean = false, syncFlush: Boolean = true) : AsyncOutput {
+open class AsyncDeflaterOutput(
+        val stream: AsyncOutput,
+        level: Int = 6,
+        bufferSize: Int = 512,
+        wrap: Boolean = false,
+        syncFlush: Boolean = true,
+        val autoCloseStream: Boolean = false
+) : AsyncOutput {
 
     private val deflater = Deflater(level, wrap, syncFlush)
-    private val buffer = ByteDataBuffer.alloc(bufferSize)
+    private val buffer = ByteBuffer.alloc(bufferSize)
     protected val buf
         get() = buffer
 
     protected val def
         get() = deflater
 
-    constructor(stream: AsyncOutput) : this(stream, 6, 512, false, true)
-
-    protected val cursor = Cursor()
+//    protected val cursor = Cursor()
 
     protected var usesDefaultDeflater = true
 
-    init {
-        cursor.outputLength = buffer.size
-    }
+//    init {
+//        cursor.outputLength = buffer.size
+//    }
 
 //    private val sync = ByteArray(1)
 //
@@ -30,41 +35,49 @@ open class AsyncDeflaterOutput(val stream: AsyncOutput, level: Int, bufferSize: 
 //        return write(sync) == 1
 //    }
 
-    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        cursor.inputLength = length
-        cursor.inputOffset = offset
+//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        cursor.inputLength = length
+//        cursor.inputOffset = offset
+//
+//        while (true) {
+//            cursor.outputOffset = 0
+//            deflater.deflate(cursor, data, buffer)
+//
+//            val writed = buffer.size - cursor.availOut
+//            if (writed > 0)
+//                stream.write(buffer, 0, writed)
+//
+//            if (cursor.availOut > 0)
+//                break
+//        }
+//        return length
+//    }
 
+    override suspend fun write(data: ByteBuffer): Int {
+        val vv = data.remaining
         while (true) {
-            cursor.outputOffset = 0
-            deflater.deflate(cursor, data, buffer)
+            buffer.clear()
+            val l = deflater.deflate(data, buffer)
 
-            val writed = buffer.size - cursor.availOut
-            if (writed > 0)
-                stream.write(buffer, 0, writed)
+            buffer.flip()
+            stream.write(buffer)
 
-            if (cursor.availOut > 0)
+            if (l <= 0)
                 break
         }
-        return length
+        return vv
     }
 
     override suspend fun flush() {
         while (true) {
-            cursor.outputOffset = 0
-            cursor.availIn = 0
-
-            val r = deflater.flush(cursor, buffer)
-
-
-            val writed = buffer.size - cursor.availOut
+            buffer.clear()
+            val r = deflater.flush(buffer)
+            val writed = buffer.position
+            buffer.flip()
             if (writed > 0)
-                stream.write(buffer, 0, writed)
-
+                stream.write(buffer)
             if (!r)
                 break
-
-//            if (cursor.availOut > 0)
-//                break
         }
         stream.flush()
     }
@@ -79,6 +92,8 @@ open class AsyncDeflaterOutput(val stream: AsyncOutput, level: Int, bufferSize: 
     override suspend fun close() {
         finish()
         deflater.close()
-        stream.close()
+        if (autoCloseStream) {
+            stream.close()
+        }
     }
 }

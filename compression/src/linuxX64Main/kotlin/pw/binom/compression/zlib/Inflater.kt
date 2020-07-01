@@ -5,14 +5,13 @@ import platform.posix.free
 import platform.posix.malloc
 import platform.posix.memset
 import platform.zlib.*
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
 actual class Inflater actual constructor(wrap: Boolean) : Closeable {
     internal val native = malloc(sizeOf<z_stream_s>().convert())!!.reinterpret<z_stream_s>()
-
-    actual constructor() : this(true)
 
     private var closed = false
 
@@ -74,4 +73,28 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
                 cursor.availOut = native.pointed.avail_out.convert()
                 rr - cursor.availOut
             }
+
+    actual fun inflate(input: ByteBuffer, output: ByteBuffer): Int {
+        native.pointed.avail_out = output.remaining.convert()
+        native.pointed.next_out = (output.native + output.position)!!.reinterpret()
+
+        native.pointed.avail_in = input.remaining.convert()
+        native.pointed.next_in = (input.native + input.position)!!.reinterpret()
+        val freeOutput = output.remaining
+        val freeInput = input.remaining
+
+        println("try inflate. avail_in: [${native.pointed.avail_in}], avail_out: [${native.pointed.avail_out}]")
+        (input.position until input.limit).forEach {
+            println("-->$it = ${input[it]}")
+        }
+        val r = inflate(native, Z_NO_FLUSH)
+        if (r != Z_OK && r != Z_STREAM_END)
+            throw IOException("inflate() returns [${zlibConsts(r)}]. avail_in: [${native.pointed.avail_in}], avail_out: [${native.pointed.avail_out}]")
+        val wrote = freeOutput - native.pointed.avail_out.convert<Int>()
+
+        input.position += freeInput - native.pointed.avail_in.convert<Int>()
+        output.position += wrote
+        println("inflate readed: [$wrote]")
+        return wrote
+    }
 }

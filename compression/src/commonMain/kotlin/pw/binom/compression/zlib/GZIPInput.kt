@@ -1,16 +1,20 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.Input
 import pw.binom.io.CRC32
 import pw.binom.io.CheckedInput
 import pw.binom.io.EOFException
 import pw.binom.io.IOException
 
-class GZIPInput(stream: Input, bufferSize: Int = 512) : InflateInput(stream, bufferSize, false) {
+class GZIPInput(stream: Input, bufferSize: Int = 512, autoCloseStream: Boolean = false) : InflateInput(
+        stream = stream,
+        bufferSize = bufferSize,
+        wrap = false,
+        autoCloseStream = autoCloseStream) {
     private val crc = CRC32()
-    private val tmpbuf = ByteDataBuffer.alloc(128)
-    private val tt = ByteDataBuffer.alloc(2)
+    private val tmpbuf = ByteBuffer.alloc(128)
+    private val tt = ByteBuffer.alloc(2)
 
     init {
         usesDefaultInflater = true
@@ -22,9 +26,14 @@ class GZIPInput(stream: Input, bufferSize: Int = 512) : InflateInput(stream, buf
         super.close()
     }
 
-    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        readHeader(stream)
+//        return super.read(data, offset, length)
+//    }
+
+    override fun read(dest: ByteBuffer): Int {
         readHeader(stream)
-        return super.read(data, offset, length)
+        return super.read(dest)
     }
 
     private var headerRead = false
@@ -34,13 +43,15 @@ class GZIPInput(stream: Input, bufferSize: Int = 512) : InflateInput(stream, buf
         headerRead = true
         crc.reset()
         val stream = CheckedInput(stream, crc)
+        tt.clear()
         stream.read(tt)
         val b1 = tt[0].toUByte()
         val b2 = tt[1].toUByte()
         if (b1 != 0x1fu.toUByte() || b2 != 0x8bu.toUByte())
             throw IOException("Not in GZIP format")
         // Check compression method
-        stream.read(tt, length = 1)
+        tt.reset(0, 1)
+        stream.read(tt)
         if (tt[0] != DEFLATED) {
             throw IOException("Unsupported compression method")
         }
@@ -82,7 +93,8 @@ class GZIPInput(stream: Input, bufferSize: Int = 512) : InflateInput(stream, buf
     private fun skipBytes(stream: Input, n: Int) {
         var n = n
         while (n > 0) {
-            val len: Int = stream.read(tmpbuf, 0, if (n < tmpbuf.size) n else tmpbuf.size)
+            tmpbuf.reset(0, if (n < tmpbuf.capacity) n else tmpbuf.capacity)
+            val len: Int = stream.read(tmpbuf)
             if (len == -1) {
                 throw EOFException()
             }
@@ -96,7 +108,8 @@ class GZIPInput(stream: Input, bufferSize: Int = 512) : InflateInput(stream, buf
     }
 
     private fun readUByte(stream: Input): Int {
-        stream.read(tt, length = 1)
+        tt.reset(0, 1)
+        stream.read(tt)
         val b: Int = tt[0].toInt()
         if (b == -1) {
             throw EOFException()

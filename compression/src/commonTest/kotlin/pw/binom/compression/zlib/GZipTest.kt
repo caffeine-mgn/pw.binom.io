@@ -1,14 +1,19 @@
 package pw.binom.compression.zlib
 
-import pw.binom.*
-import pw.binom.io.*
-import pw.binom.io.file.AccessType
-import pw.binom.io.file.File
-import pw.binom.io.file.channel
-import kotlin.random.Random
-import kotlin.test.Ignore
+import pw.binom.ByteBuffer
+import pw.binom.async
+import pw.binom.asyncOutput
+import pw.binom.clone
 import kotlin.test.Test
 import kotlin.test.assertEquals
+
+class GZipTest {
+
+
+
+
+}
+/*
 
 fun Output.noCloseWrapper() = object : Output {
     override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
@@ -121,4 +126,4 @@ class GZipTest {
             }
         }
     }
-}
+}*/

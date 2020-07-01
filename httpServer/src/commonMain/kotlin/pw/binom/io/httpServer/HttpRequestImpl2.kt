@@ -21,7 +21,7 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val contextUri: String
         get() = uri
 
-    private var wrapped: NoCloseInput? = null
+    private var wrapped: AsyncInput? = null
 
     override val input: AsyncInput
         get() = wrapped!!
@@ -34,19 +34,19 @@ internal class HttpRequestImpl2 : HttpRequest {
     var keepAlive = false
         private set
 
-    fun flush(inputBufferPool: DefaultPool<NoCloseInput>) {
-        wrapped?.let {
-            inputBufferPool.recycle(it)
-            it.stream = null
-            wrapped = null
-        }
+    fun flush(/*inputBufferPool: DefaultPool<NoCloseInput>*/) {
+        wrapped=null
+//        wrapped?.let {
+//            inputBufferPool.recycle(it)
+//            it.stream = null
+//            wrapped = null
+//        }
     }
 
-    suspend fun init(method: String, uri: String, input: AsyncInput, inputBufferPool: DefaultPool<NoCloseInput>) {
+    suspend fun init(method: String, uri: String, input: AsyncInput/*, inputBufferPool: DefaultPool<NoCloseInput>*/) {
         this.method = method
         this.uri = uri
         headers.clear()
-        println("read headers...")
         val reader = input.utf8Reader()
         while (true) {
             val s = reader.readln()?:break
@@ -69,8 +69,8 @@ internal class HttpRequestImpl2 : HttpRequest {
                 }
                 ?.firstOrNull() ?: EncodeType.IDENTITY
         keepAlive = headers[Headers.CONNECTION]?.any { it.toLowerCase() == Headers.KEEP_ALIVE } ?: false
-        wrapped = inputBufferPool.borrow {
+        wrapped = input/*inputBufferPool.borrow {
             it.stream = input
-        }
+        }*/
     }
 }

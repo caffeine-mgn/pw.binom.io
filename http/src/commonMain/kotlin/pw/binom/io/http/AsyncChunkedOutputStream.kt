@@ -3,6 +3,7 @@ package pw.binom.io.http
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.*
 
+@Deprecated("Use AsyncChunkedOutput")
 open class AsyncChunkedOutputStream(
         val stream: AsyncOutputStream,
         private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE

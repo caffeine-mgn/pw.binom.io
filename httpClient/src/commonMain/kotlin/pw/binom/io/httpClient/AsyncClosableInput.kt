@@ -2,6 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.ByteDataBuffer
 import pw.binom.AsyncInput
+import pw.binom.ByteBuffer
 import pw.binom.io.StreamClosedException
 import pw.binom.io.socket.SocketClosedException
 
@@ -12,12 +13,24 @@ class AsyncClosableInput(val stream: AsyncInput) : AsyncInput {
     override suspend fun skip(length: Long): Long =
             stream.skip(length)
 
-    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        checkClosed()
+//        if (eof)
+//            return 0
+//        return try {
+//            stream.read(data, offset, length)
+//        } catch (e: SocketClosedException) {
+//            eof = true
+//            0
+//        }
+//    }
+
+    override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
         if (eof)
             return 0
         return try {
-            stream.read(data, offset, length)
+            stream.read(dest)
         } catch (e: SocketClosedException) {
             eof = true
             0

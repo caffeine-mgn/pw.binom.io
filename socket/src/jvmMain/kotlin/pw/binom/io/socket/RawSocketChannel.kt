@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.ConnectException
 import pw.binom.io.IOException
@@ -16,36 +17,55 @@ actual class RawSocketChannel constructor(override val native: JSocketChannel) :
         //NOP
     }
 
+    override fun write(data: ByteBuffer): Int {
+        try {
+            return native.write(data.native)
+        } catch (e: java.io.IOException) {
+            throw SocketClosedException()
+        }
+    }
+
     override fun skip(length: Long): Long {
         TODO("Not yet implemented")
     }
 
-    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        return data.update(offset, length) { b ->
-            try {
-                val r = native.read(b)
-                if (r == -1)
-                    throw SocketClosedException()
-                 r
-            } catch (e: java.io.IOException) {
-                throw IOException(e.message)
-            }
+    override fun read(dest: ByteBuffer): Int {
+        return try {
+            val r = native.read(dest.native)
+            if (r == -1)
+                throw SocketClosedException()
+            r
+        } catch (e: java.io.IOException) {
+            throw IOException(e.message)
         }
     }
+
+//    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        return data.update(offset, length) { b ->
+//            try {
+//                val r = native.read(b)
+//                if (r == -1)
+//                    throw SocketClosedException()
+//                 r
+//            } catch (e: java.io.IOException) {
+//                throw IOException(e.message)
+//            }
+//        }
+//    }
 
     override fun close() {
         native.close()
     }
 
-    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        try {
-            return data.update(offset, length) { data ->
-                native.write(data)
-            }
-        } catch (e: java.io.IOException) {
-            throw SocketClosedException()
-        }
-    }
+//    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        try {
+//            return data.update(offset, length) { data ->
+//                native.write(data)
+//            }
+//        } catch (e: java.io.IOException) {
+//            throw SocketClosedException()
+//        }
+//    }
 
     override fun connect(host: String, port: Int) {
         try {

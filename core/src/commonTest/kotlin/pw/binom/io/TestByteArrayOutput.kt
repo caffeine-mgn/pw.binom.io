@@ -3,7 +3,7 @@ package pw.binom.io
 import pw.binom.byteDataOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
+/*
 class TestByteArrayOutput {
 
     @Test
@@ -26,3 +26,4 @@ class TestByteArrayOutput {
         assertEquals(10, out.size)
     }
 }
+*/

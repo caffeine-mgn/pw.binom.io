@@ -2,6 +2,7 @@ package pw.binom.io
 
 import pw.binom.ByteDataBuffer
 import pw.binom.AsyncInput
+import pw.binom.ByteBuffer
 
 /**
  * Lazy AsyncInputStream. On first call [read] or [close] will init real stream via function [func].
@@ -26,9 +27,14 @@ class LazyAsyncInput(private val func: suspend () -> AsyncInput) : AsyncInput {
         return stream.skip(length)
     }
 
-    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        val stream = inited()
+//        return stream.read(data, offset, length)
+//    }
+
+    override suspend fun read(dest: ByteBuffer): Int {
         val stream = inited()
-        return stream.read(data, offset, length)
+        return stream.read(dest)
     }
 
     override suspend fun close() {

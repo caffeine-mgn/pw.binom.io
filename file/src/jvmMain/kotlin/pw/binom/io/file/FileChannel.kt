@@ -1,8 +1,7 @@
 package pw.binom.io.file
 
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.io.Channel
-import pw.binom.update
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
 
@@ -23,21 +22,29 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         return l
     }
 
-    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        return data.update(offset, length) { data ->
-            native.read(data)
-        }
-    }
+    override fun read(dest: ByteBuffer): Int =
+            native.read(dest.native).let {
+                if (it == -1) 0 else it
+            }
+
+//    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        return data.update(offset, length) { data ->
+//            native.read(data)
+//        }
+//    }
 
     override fun close() {
         native.close()
     }
 
-    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        return data.update(offset, length) { data ->
-            native.write(data)
-        }
-    }
+    override fun write(data: ByteBuffer): Int =
+            native.write(data.native)
+
+//    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        return data.update(offset, length) { data ->
+//            native.write(data)
+//        }
+//    }
 
     override fun flush() {
     }

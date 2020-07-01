@@ -12,8 +12,6 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
 
     }
 
-    actual constructor() : this(6, true, true)
-
     actual fun deflate(cursor: Cursor, input: ByteArray, output: ByteArray): Int {
         native.setInput(input, cursor.inputOffset, cursor.inputLength)
         val readed = native.bytesRead
@@ -112,15 +110,34 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
             _totalIn += wasRead
             _totalOut += wasWrote
             !native.finished()
-//                if (r <= 0)
-//                    flag = false
-//                _finished
-//            if (finishCalled)
-//                native.finished()
-//            else
-//                r > 0
-//            }
         }
+    }
+
+    actual fun deflate(input: pw.binom.ByteBuffer, output: pw.binom.ByteBuffer): Int {
+        native.setInput(input.native)
+        val readedBefore = native.bytesRead
+        val writedBefore = native.bytesWritten
+        native.deflate(output.native, JDeflater.NO_FLUSH)
+
+        val wroteAfter = native.bytesWritten - writedBefore
+        _totalIn += native.bytesRead - readedBefore
+        _totalOut += wroteAfter
+
+        return wroteAfter.toInt()
+    }
+
+    actual fun flush(output: pw.binom.ByteBuffer): Boolean {
+        if (!finishCalled)
+            return false
+        native.setInput(EMPTY_BUFFER)
+        val readed = native.bytesRead
+        val writed = native.bytesWritten
+        val r = native.deflate(output.native, if (syncFlush) JDeflater.SYNC_FLUSH else JDeflater.NO_FLUSH)
+        val wasRead = (native.bytesRead - readed).toInt()
+        val wasWrote = (native.bytesWritten - writed).toInt()
+        _totalIn += wasRead
+        _totalOut += wasWrote
+        return !native.finished()
     }
 }
 

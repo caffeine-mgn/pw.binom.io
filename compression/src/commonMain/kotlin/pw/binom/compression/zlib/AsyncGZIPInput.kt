@@ -1,24 +1,39 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteDataBuffer
 import pw.binom.AsyncInput
+import pw.binom.ByteBuffer
 import pw.binom.io.AsyncCheckedInput
 import pw.binom.io.CRC32
 import pw.binom.io.EOFException
 import pw.binom.io.IOException
 
-class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512) : AsyncInflateInput(stream, bufferSize, false) {
+class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, autoCloseStream: Boolean = false) : AsyncInflateInput(
+        stream = stream,
+        bufferSize = bufferSize,
+        wrap = false,
+        autoCloseStream = autoCloseStream
+) {
     private val crc = CRC32()
-    private val tmpbuf = ByteDataBuffer.alloc(128)
-    private val tt = ByteDataBuffer.alloc(2)
+    private val tmpbuf = ByteBuffer.alloc(128)
+    private val tt = ByteBuffer.alloc(2)
 
     init {
         usesDefaultInflater = true
     }
 
-    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        readHeader(stream)
+//        return super.read(data, offset, length)
+//    }
+
+    override suspend fun read(dest: ByteBuffer): Int {
         readHeader(stream)
-        return super.read(data, offset, length)
+        return super.read(dest)
+    }
+
+    override suspend fun skip(length: Long): Long {
+        readHeader(stream)
+        return super.skip(length)
     }
 
     private var headerRead = false
@@ -28,13 +43,15 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512) : AsyncInflateIn
         headerRead = true
         crc.reset()
         val stream = AsyncCheckedInput(stream, crc)
+        tt.clear()
         stream.readFully(tt)
         val b1 = tt[0].toUByte()
         val b2 = tt[1].toUByte()
         if (b1 != 0x1fu.toUByte() || b2 != 0x8bu.toUByte())
             throw IOException("Not in GZIP format")
         // Check compression method
-        stream.readFully(tt, length = 1)
+        tt.reset(0, 1)
+        stream.readFully(tt)
         if (tt[0] != DEFLATED) {
             throw IOException("Unsupported compression method")
         }
@@ -76,7 +93,8 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512) : AsyncInflateIn
     private suspend fun skipBytes(stream: AsyncInput, n: Int) {
         var n = n
         while (n > 0) {
-            val len: Int = stream.readFully(tmpbuf, 0, if (n < tmpbuf.size) n else tmpbuf.size)
+            tmpbuf.reset(0, if (n < tmpbuf.capacity) n else tmpbuf.capacity)
+            val len: Int = stream.readFully(tmpbuf)
             if (len == -1) {
                 throw EOFException()
             }
@@ -90,7 +108,8 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512) : AsyncInflateIn
     }
 
     private suspend fun readUByte(stream: AsyncInput): Int {
-        stream.readFully(tt,length = 1)
+        tt.reset(0, 1)
+        stream.readFully(tt)
         val b: Int = tt[0].toInt()
         if (b == -1) {
             throw EOFException()

@@ -1,8 +1,9 @@
 package pw.binom.io.file
 
 import kotlinx.cinterop.convert
+import kotlinx.cinterop.plus
 import platform.posix.*
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.io.Channel
 
 actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel, FileAccess {
@@ -41,21 +42,37 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         return (endOfFile - position).toLong()
     }
 
-    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+    override fun read(dest: ByteBuffer): Int {
         if (feof(handler) != 0)
             return 0
-        return fread(data.refTo(offset.convert()), 1.convert(), length.convert(), handler).convert()
+        val r = fread(dest.native + dest.position, 1.convert(), dest.remaining.convert(), handler).convert<Int>()
+        dest.position += r
+        return r
     }
+
+//    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        if (feof(handler) != 0)
+//            return 0
+//        return fread(data.refTo(offset.convert()), 1.convert(), length.convert(), handler).convert()
+//    }
 
     override fun close() {
         fclose(handler)
     }
 
-    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+    override fun write(data: ByteBuffer): Int {
         if (feof(handler) != 0)
             return 0
-        return fwrite(data.refTo(offset), 1.convert(), length.convert(), handler).convert()
+        val r = fwrite(data.native + data.position, 1.convert(), data.remaining.convert(), handler).convert<Int>()
+        data.position += r
+        return r
     }
+
+//    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        if (feof(handler) != 0)
+//            return 0
+//        return fwrite(data.refTo(offset), 1.convert(), length.convert(), handler).convert()
+//    }
 
     override fun flush() {
     }

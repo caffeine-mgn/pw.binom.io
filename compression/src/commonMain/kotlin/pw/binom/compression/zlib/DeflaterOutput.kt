@@ -1,27 +1,26 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.Output
 
-open class DeflaterOutput(val stream: Output, level: Int, bufferSize: Int = 1024, wrap: Boolean = false, syncFlush: Boolean = true) : Output {
+open class DeflaterOutput(
+        val stream: Output,
+        level: Int = 6,
+        bufferSize: Int = 1024,
+        wrap: Boolean = false,
+        syncFlush: Boolean = true,
+        val autoCloseStream: Boolean = false
+) : Output {
 
     private val deflater = Deflater(level, wrap, syncFlush)
-    private val buffer = ByteDataBuffer.alloc(bufferSize)
+    private val buffer = ByteBuffer.alloc(bufferSize)
     protected val buf
         get() = buffer
 
     protected val def
         get() = deflater
 
-    constructor(stream: Output) : this(stream, 6, 512, false, true)
-
-    protected val cursor = Cursor()
-
     protected var usesDefaultDeflater = true
-
-    init {
-        cursor.outputLength = buffer.size
-    }
 
 //    private val sync = ByteArray(1)
 //
@@ -30,40 +29,32 @@ open class DeflaterOutput(val stream: Output, level: Int, bufferSize: Int = 1024
 //        return write(sync) == 1
 //    }
 
-    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        cursor.inputLength = length
-        cursor.inputOffset = offset
+    override fun write(data: ByteBuffer): Int {
+        val vv = data.remaining
+        while (data.remaining > 0) {
+            buffer.clear()
+            val l = deflater.deflate(data, buffer)
 
-        while (true) {
-            cursor.outputOffset = 0
-            val deflaterResult = deflater.deflate(cursor, data, buffer)
+            buffer.flip()
+            stream.write(buffer)
 
-            val writed = buffer.size - cursor.availOut
-            if (writed > 0)
-                stream.write(buffer, 0, writed)
-
-            if (cursor.availOut > 0)
+            if (l <= 0)
                 break
         }
-        return length
+        return vv
     }
 
     override fun flush() {
         while (true) {
-            cursor.outputOffset = 0
-            cursor.availIn = 0
+            buffer.clear()
+            val r = deflater.flush(buffer)
+            buffer.flip()
+            if (buffer.remaining > 0) {
+                val pp = stream.write(buffer)
 
-            val r = deflater.flush(cursor, buffer)
-
-
-            val writed = buffer.size - cursor.availOut
-            if (writed > 0)
-                stream.write(buffer, 0, writed)
-
+            }
             if (!r)
                 break
-//            if (cursor.availOut > 0)
-//                break
         }
         stream.flush()
     }
@@ -79,6 +70,8 @@ open class DeflaterOutput(val stream: Output, level: Int, bufferSize: Int = 1024
         flush()
         finish()
         deflater.close()
-        stream.close()
+        if (autoCloseStream) {
+            stream.close()
+        }
     }
 }

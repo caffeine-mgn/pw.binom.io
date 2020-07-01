@@ -1,16 +1,14 @@
 package pw.binom.io.httpServer
 
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.io.*
-import pw.binom.io.http.Headers
+import pw.binom.*
+import pw.binom.io.AbstractAsyncBufferedInput
+import pw.binom.io.Closeable
 import pw.binom.io.socket.ServerSocketChannel
 import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.SocketFactory
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.rawSocketFactory
 import pw.binom.pool.DefaultPool
-import pw.binom.ssl.SSLContext
-import pw.binom.stackTrace
 
 /**
  * Base Http Server
@@ -19,16 +17,23 @@ import pw.binom.stackTrace
  */
 open class HttpServer(val manager: SocketNIOManager,
                       protected val handler: Handler,
-                      poolSize: Int = 10
+                      poolSize: Int = 10,
+                      inputBufferSize: Int = DEFAULT_BUFFER_SIZE,
+                      outputBufferSize: Int = DEFAULT_BUFFER_SIZE
 ) : Closeable, SocketNIOManager.ConnectHandler {
 
     private val returnToPoolForOutput: (NoCloseOutput) -> Unit = {
         outputBufferPool.recycle(it)
     }
 
-    private val inputBufferPool = DefaultPool(poolSize) {
-        NoCloseInput()
+    private val bufferedInputPool = DefaultPool(poolSize) {
+        PooledAsyncBufferedInput(inputBufferSize)
     }
+
+    private val bufferedOutputPool = DefaultPool(poolSize) {
+        PoolAsyncBufferedOutput(outputBufferSize)
+    }
+
     private val outputBufferPool = DefaultPool(poolSize) {
         NoCloseOutput(returnToPoolForOutput)
     }
@@ -47,26 +52,43 @@ open class HttpServer(val manager: SocketNIOManager,
     private fun runProcessing(connection: SocketNIOManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
         connection {
             println("New Connection!")
+
+            val inputBufferid = bufferedInputPool.borrow { buf ->
+                buf.currentStream = it
+            }
+            val outputBufferid = bufferedOutputPool.borrow { buf->
+                buf.currentStream=it
+            }
             while (true) {
                 try {
+
                     val keepAlive = ConnectionProcessing.process(
-                            connection = connection,
+//                            connection = connection,
                             handler = this.handler,
-                            inputBufferPool = inputBufferPool,
                             httpRequestPool = httpRequestPool,
-                            httpResponsePool = httpResponsePool
+                            httpResponsePool = httpResponsePool,
+                            inputBuffered = inputBufferid,
+                            outputBuffered = outputBufferid
                     )
                     if (!keepAlive) {
+                        inputBufferid.reset()
+                        bufferedInputPool.recycle(inputBufferid)
+                        outputBufferid.reset()
+                        bufferedOutputPool.recycle(outputBufferid)
                         it.close()
                         break
                     }
                 } catch (e: SocketClosedException) {
                     break
                 } catch (e: Throwable) {
-//                    println("Error: $e")
-//                    e.stackTrace.forEach {
-//                        println(it)
-//                    }
+                    println("Error: $e")
+                    e.stackTrace.forEach {
+                        println(it)
+                    }
+                    inputBufferid.reset()
+                    bufferedInputPool.recycle(inputBufferid)
+                    outputBufferid.reset()
+                    bufferedOutputPool.recycle(outputBufferid)
                     it.close()
                     break
                 }
@@ -85,6 +107,11 @@ open class HttpServer(val manager: SocketNIOManager,
             it.close()
         }
         manager.close()
+        async {
+            while (bufferedInputPool.size > 0) {
+                bufferedInputPool.borrow { it.currentStream = null }.close()
+            }
+        }
     }
 
     /**

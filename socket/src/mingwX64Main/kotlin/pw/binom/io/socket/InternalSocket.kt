@@ -18,6 +18,7 @@ import platform.windows.accept
 import platform.windows.closesocket
 import platform.windows.ioctlsocket
 import platform.windows.shutdown
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.*
 import pw.binom.thread.Thread
@@ -60,6 +61,18 @@ internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteDataBuffer,
             return 0
         throw IOException("Error on send data to network. send: [$r], error: [${GetLastError()}]")
     }
+    return r
+}
+
+internal actual fun recvSocket(socket: NativeSocketHolder, dest: ByteBuffer): Int{
+    val r: Int = recv(socket.native, dest.native+dest.position, (dest.limit-dest.position).convert(), 0).convert()
+    if (r < 0) {
+        val error = GetLastError()
+        if (error == 10035.convert<DWORD>())
+            return 0
+        throw IOException("Error on send data to network. send: [$r], error: [${GetLastError()}]")
+    }
+    dest.position += r
     return r
 }
 
@@ -131,6 +144,20 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
 
 internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int =
         send(socket.native, data.refTo(offset), length, 0)
+
+internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteBuffer): Int {
+    val r: Int = send(socket.native, data.native+data.position, data.remaining.convert(), 0).convert()
+    if (r < 0) {
+        val error = GetLastError()
+        if (error == 10035.convert<DWORD>())
+            return 0
+        if (error == 10038.convert<DWORD>() || error == 10054.convert<DWORD>())
+            throw SocketClosedException()
+        throw IOException("Error on send data to network. send: [$r], error: [${GetLastError()}]")
+    }
+    data.position += r
+    return r
+}
 
 internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int): Int {
     val r: Int = send(socket.native, data.refTo(offset), length.convert(), 0).convert()

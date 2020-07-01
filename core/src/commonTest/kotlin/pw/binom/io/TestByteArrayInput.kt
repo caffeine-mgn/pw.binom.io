@@ -5,7 +5,7 @@ import pw.binom.alloc
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
-
+/*
 class TestByteArrayInput {
 
     @Test
@@ -77,3 +77,4 @@ class TestByteArrayInput {
     }
 
 }
+*/

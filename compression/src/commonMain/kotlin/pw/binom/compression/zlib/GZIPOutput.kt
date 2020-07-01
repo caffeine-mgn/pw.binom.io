@@ -1,17 +1,16 @@
 package pw.binom.compression.zlib
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.Output
-import pw.binom.io.AsyncOutputStream
 import pw.binom.io.CRC32
 
-class GZIPOutput(stream: Output, level: Int, bufferSize: Int = 1024) : DeflaterOutput(
+class GZIPOutput(stream: Output, level: Int, bufferSize: Int = 1024, autoCloseStream: Boolean) : DeflaterOutput(
         stream = stream,
         bufferSize = bufferSize,
         level = level,
         wrap = false,
-        syncFlush = false
+        syncFlush = false,
+        autoCloseStream = autoCloseStream
 ) {
     private val crc = CRC32()
 
@@ -20,59 +19,68 @@ class GZIPOutput(stream: Output, level: Int, bufferSize: Int = 1024) : DeflaterO
         usesDefaultDeflater = false
     }
 
-    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+    override fun write(data: ByteBuffer): Int {
         writeHeader()
-        val r = super.write(data, offset, length)
-        crc.update(data, offset, length)
+        val pos = data.position
+        val r = super.write(data)
+        crc.update(data, pos, r)
         return r
     }
+
+//    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        writeHeader()
+//        val r = super.write(data, offset, length)
+//        crc.update(data, offset, length)
+//        return r
+//    }
 
     override fun finish() {
         writeHeader()
         super.finish()
-        val trailer = ByteDataBuffer.alloc(TRAILER_SIZE)
-        writeTrailer(trailer, 0)
+        val trailer = ByteBuffer.alloc(TRAILER_SIZE)
+        writeTrailer(trailer)
         stream.write(trailer)
     }
 
-    private fun writeTrailer(buf: ByteDataBuffer, offset: Int) {
-        writeInt(crc.value.toInt(), buf, offset) // CRC-32 of uncompr. data
-        writeInt(def.totalIn.toInt(), buf, offset + 4) // Number of uncompr. bytes
+    private fun writeTrailer(buf: ByteBuffer) {
+        writeInt(crc.value.toInt(), buf) // CRC-32 of uncompr. data
+        writeInt(def.totalIn.toInt(), buf) // Number of uncompr. bytes
     }
 
-    private fun writeInt(i: Int, buf: ByteDataBuffer, offset: Int) {
+    private fun writeInt(i: Int, buf: ByteBuffer) {
 
-        writeShort(i and 0xffff, buf, offset)
-        writeShort(i shr 16 and 0xffff, buf, offset + 2)
+        writeShort(i and 0xffff, buf)
+        writeShort(i shr 16 and 0xffff, buf)
     }
 
     /*
      * Writes short integer in Intel byte order to a byte array, starting
      * at a given offset
      */
-    private fun writeShort(s: Int, buf: ByteDataBuffer, offset: Int) {
-        buf[offset] = (s and 0xff).toByte()
-        buf[offset + 1] = (s shr 8 and 0xff).toByte()
+    private fun writeShort(s: Int, buf: ByteBuffer) {
+        buf.put((s and 0xff).toByte())
+        buf.put((s shr 8 and 0xff).toByte())
     }
 
     private var headerWrited = false
     private fun writeHeader() {
         if (headerWrited)
             return
+        header.clear()
         stream.write(header)
         headerWrited = true
     }
 }
 
-private val header = ByteDataBuffer.alloc(10).also {
-    it[0]=GZIP_MAGIC1  // Magic number (short)
-    it[1]=GZIP_MAGIC2  // Magic number (short)
-    it[2]=DEFLATED  // Compression method (CM)
-    it[3]=0  // Flags (FLG)
-    it[4]=0  // Modification time MTIME (int)
-    it[5]=0  // Modification time MTIME (int)
-    it[6]=0  // Modification time MTIME (int)
-    it[7]=0  // Modification time MTIME (int)
-    it[8]=0  // Extra flags (XFLG)
-    it[9]=0 // Operating system (OS)
+private val header = ByteBuffer.alloc(10).also {
+    it.put(GZIP_MAGIC1)  // Magic number (short)
+    it.put(GZIP_MAGIC2)  // Magic number (short)
+    it.put(DEFLATED)  // Compression method (CM)
+    it.put(0)  // Flags (FLG)
+    it.put(0)  // Modification time MTIME (int)
+    it.put(0)  // Modification time MTIME (int)
+    it.put(0)  // Modification time MTIME (int)
+    it.put(0)  // Modification time MTIME (int)
+    it.put(0)  // Extra flags (XFLG)
+    it.put(0) // Operating system (OS)
 }

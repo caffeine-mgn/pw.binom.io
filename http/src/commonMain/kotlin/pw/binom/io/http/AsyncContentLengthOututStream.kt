@@ -3,6 +3,7 @@ package pw.binom.io.http
 import pw.binom.io.AsyncOutputStream
 import pw.binom.io.StreamClosedException
 
+@Deprecated("Use AsyncContentLengthOutut")
 open class AsyncContentLengthOututStream(val stream: AsyncOutputStream, val contentLength: ULong) : AsyncOutputStream {
     override suspend fun write(data: Byte): Boolean {
         checkClosed()

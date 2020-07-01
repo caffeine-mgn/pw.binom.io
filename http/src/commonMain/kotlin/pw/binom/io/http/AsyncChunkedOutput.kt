@@ -1,63 +1,95 @@
 package pw.binom.io.http
 
 import pw.binom.AsyncOutput
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.StreamClosedException
 import pw.binom.io.UTF8
 
+/**
+ * Implements Async Http Chunked Transport Output
+ *
+ * @param stream real output stream
+ * @param autoFlushBuffer size of buffer for auto flush data in buffer
+ * @param autoCloseStream flag for auto close [stream] when this stream will close
+ */
 open class AsyncChunkedOutput(
         val stream: AsyncOutput,
-        private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE
+        private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
+        val autoCloseStream: Boolean = false
 ) : AsyncOutput {
     private var closed = false
     private var finished = false
-    val buffer = ByteDataBuffer.alloc(autoFlushBuffer)
-    private var bufferPos = 0
-    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+    val buffer = ByteBuffer.alloc(autoFlushBuffer)
+//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        checkClosed()
+//        var l = length
+//        var o = offset
+//        while (l > 0) {
+//            if (bufferPos == buffer.size) {
+//                flush()
+//            }
+//            val r = minOf(l, (buffer.size - bufferPos))
+//            data.writeTo(o, buffer, bufferPos, r)
+//            l -= r
+//            o += r
+//            bufferPos += r
+//        }
+//        return length
+//    }
+
+    private val tmp = ByteBuffer.alloc(50)
+    override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
-        var l = length
-        var o = offset
-        while (l > 0) {
-            if (bufferPos == buffer.size) {
-                flush()
+        val len = data.remaining
+        while (true) {
+            if (data.remaining==0)
+                break
+            if (buffer.remaining==0) {
+                buffer.flip()
+                sendBuffer()
             }
-            val r = minOf(l, (buffer.size - bufferPos))
-            data.writeTo(o, buffer, bufferPos, r)
-            l -= r
-            o += r
-            bufferPos += r
+            buffer.write(data)
         }
-        return length
+        return len
     }
 
-    private val tmp = ByteDataBuffer.alloc(50)
+    private suspend fun sendBuffer(){
+        tmp.clear()
+        UTF8.unicodeToUtf8((buffer.remaining).toString(16), tmp)
+        tmp.put('\r'.toByte())
+        tmp.put('\n'.toByte())
+        tmp.flip()
+        stream.write(tmp)
+        stream.write(buffer)
+        tmp.reset(1,2)
+        val bb = stream.write(tmp)
+        stream.flush()
+        buffer.clear()
+    }
+
     override suspend fun flush() {
         checkClosed()
-        if (buffer.size == 0)
+        if (buffer.position == 0)
             return
-        val r = UTF8.unicodeToUtf8((bufferPos).toString(16), tmp, 0)
-        tmp[r] = '\r'.toByte()
-        tmp[r + 1] = '\n'.toByte()
-        stream.write(tmp, 0, r + 2)
-        println("Send chunk. ${bufferPos}")
-        stream.write(buffer, 0, bufferPos)
-        stream.write(tmp, r, 2)
-        stream.flush()
-        bufferPos = 0
+        buffer.flip()
+        sendBuffer()
     }
 
-    suspend fun finish() {
+    private suspend fun finish() {
         checkClosed()
         if (finished)
             return
         flush()
-        tmp[0] = '0'.toByte()
-        tmp[1] = '\r'.toByte()
-        tmp[2] = '\n'.toByte()
-        tmp[3] = '\r'.toByte()
-        tmp[4] = '\n'.toByte()
-        stream.write(tmp, 0, 5)
+        tmp.clear()
+        tmp.put('0'.toByte())
+        tmp.put('\r'.toByte())
+        tmp.put('\n'.toByte())
+        tmp.put('\r'.toByte())
+        tmp.put('\n'.toByte())
+        tmp.flip()
+        stream.write(tmp)
         stream.flush()
         finished = true
     }
@@ -66,6 +98,9 @@ open class AsyncChunkedOutput(
         finish()
         closed = true
         tmp.close()
+        if (autoCloseStream) {
+            stream.close()
+        }
     }
 
     protected fun checkClosed() {

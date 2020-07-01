@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
 
@@ -42,6 +43,7 @@ internal expect fun initNativeSocket(): NativeSocketHolder
 internal expect fun recvSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int
 
 internal expect fun recvSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int): Int
+internal expect fun recvSocket(socket: NativeSocketHolder, dest: ByteBuffer): Int
 internal expect fun bindSocket(socket: NativeSocketHolder, host: String, port: Int)
 internal expect fun connectSocket(native: NativeSocketHolder, host: String, port: Int)
 
@@ -49,4 +51,5 @@ internal expect fun connectSocket(native: NativeSocketHolder, host: String, port
 internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int):Int
 
 internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int):Int
+internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteBuffer):Int
 internal expect fun acceptSocket(socket: NativeSocketHolder): NativeSocketHolder

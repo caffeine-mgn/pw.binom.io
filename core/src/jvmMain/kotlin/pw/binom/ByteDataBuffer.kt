@@ -90,7 +90,7 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
 }
 
 @OptIn(ExperimentalContracts::class)
-fun <T> ByteDataBuffer.update(offset: Int, length: Int, func: (ByteBuffer) -> T): T {
+inline fun <T> ByteDataBuffer.update(offset: Int, length: Int, func: (ByteBuffer) -> T): T {
     contract {
         callsInPlace(func)
     }

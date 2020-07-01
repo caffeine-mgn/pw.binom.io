@@ -1,7 +1,8 @@
 package pw.binom.io.httpServer
 
-import pw.binom.ByteDataBuffer
 import pw.binom.AsyncInput
+import pw.binom.ByteBuffer
+import pw.binom.ByteDataBuffer
 import pw.binom.io.AsyncInputStream
 
 internal class NoCloseInputStream : AsyncInputStream {
@@ -28,8 +29,11 @@ internal class NoCloseInput : AsyncInput {
     override suspend fun skip(length: Long): Long =
             stream!!.skip(length)
 
-    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int =
-            stream!!.read(data, offset, length)
+//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int =
+//            stream!!.read(data, offset, length)
+
+    override suspend fun read(dest: ByteBuffer): Int =
+            stream!!.read(dest)
 
     override suspend fun close() {
     }

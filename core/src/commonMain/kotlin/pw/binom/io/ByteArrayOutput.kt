@@ -1,13 +1,10 @@
 package pw.binom.io
 
-import pw.binom.ByteDataBuffer
-import pw.binom.Output
-import pw.binom.copyInto
-import pw.binom.realloc
+import pw.binom.*
 import kotlin.math.ceil
-
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use ByteBuffer")
 class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
-    var data: ByteDataBuffer = ByteDataBuffer.alloc(capacity)
+    var data = ByteBuffer.alloc(capacity)
         private set
     private var _wrote = 0
     private var closed = false
@@ -17,7 +14,7 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
     }
 
     fun trimToSize() {
-        if (data.size != _wrote) {
+        if (data.capacity != _wrote) {
             this.data = this.data.realloc(_wrote)
         }
     }
@@ -27,26 +24,44 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
             throw StreamClosedException()
     }
 
-    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        checkClosed()
+//
+//        if (length < 0)
+//            throw IndexOutOfBoundsException("Length can't be less than 0")
+//
+//        if (length == 0)
+//            return 0
+//        val needWrite = length - (this.data.size - _wrote)
+//
+//        if (needWrite > 0) {
+//            val newSize = maxOf(
+//                    ceil(this.data.size.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
+//                    this.data.size + _wrote + needWrite
+//            )
+//            this.data = this.data.realloc(newSize)
+//        }
+//        data.copyInto(this.data, _wrote, offset, offset + length)
+//        _wrote += length
+//        return length
+//    }
+
+    override fun write(data: ByteBuffer): Int {
         checkClosed()
 
-        if (length < 0)
-            throw IndexOutOfBoundsException("Length can't be less than 0")
-
-        if (length == 0)
-            return 0
-        val needWrite = length - (this.data.size - _wrote)
+        val needWrite = data.remaining - (this.data.remaining)
 
         if (needWrite > 0) {
             val newSize = maxOf(
-                    ceil(this.data.size.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
-                    this.data.size + _wrote + needWrite
+                    ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
+                    this.data.capacity + _wrote + needWrite
             )
-            this.data = this.data.realloc(newSize)
+            this.data.realloc(newSize)
+            this.data.limit=this.data.capacity
         }
-        data.copyInto(this.data, _wrote, offset, offset + length)
-        _wrote += length
-        return length
+        val l = this.data.write(data)
+        _wrote += l
+        return l
     }
 
     override fun flush() {

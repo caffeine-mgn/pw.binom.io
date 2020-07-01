@@ -20,9 +20,11 @@ import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
+/*
 
 class TelnetTest {
-    /*
+    */
+/*
         sealed class IOOperation {
 
             class Read : IOOperation() {
@@ -143,7 +145,8 @@ class TelnetTest {
                     thread.start()
                 }
             }
-        */
+        *//*
+
     class MyHandler : SocketNIOManager.ConnectHandler {
 
         val done = AtomicBoolean(false)
@@ -250,4 +253,4 @@ class TelnetTest {
             }
         }
     }
-}
+}*/

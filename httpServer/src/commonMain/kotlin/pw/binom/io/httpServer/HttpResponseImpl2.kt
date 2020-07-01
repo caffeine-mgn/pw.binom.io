@@ -1,6 +1,7 @@
 package pw.binom.io.httpServer
 
 import pw.binom.AsyncOutput
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.compression.zlib.AsyncDeflaterOutput
 import pw.binom.compression.zlib.AsyncGZIPOutput
@@ -20,31 +21,16 @@ internal class HttpResponseBodyImpl2(
     private var rawOutput: AsyncOutput? = null
     private var wrappedOutput: AsyncOutput? = null
 
-    val out = object :AsyncOutput{
-        override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
-                rawOutput!!.write(data, offset, length)
-
-        override suspend fun flush() {
-            rawOutput!!.flush()
-        }
-
-        override suspend fun close() {
-            flush()
-            wrappedOutput!!.close()
-        }
-    }
-
-
     fun init(contentLength: ULong?,
              encode: EncodeType,
              rawOutput: AsyncOutput) {
         this.rawOutput = rawOutput
         val stream = when {
             contentLength != null -> {
-                AsyncContentLengthOutput(out, contentLength)
+                AsyncContentLengthOutput(rawOutput, contentLength)
             }
             else -> {
-                AsyncChunkedOutput(out)
+                AsyncChunkedOutput(rawOutput)
             }
         }
         wrappedOutput = when (encode) {
@@ -54,8 +40,11 @@ internal class HttpResponseBodyImpl2(
         }
     }
 
-    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
-            wrappedOutput!!.write(data, offset, length)
+//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
+//            wrappedOutput!!.write(data, offset, length)
+
+    override suspend fun write(data: ByteBuffer): Int =
+            wrappedOutput!!.write(data)
 
     override suspend fun flush() {
         wrappedOutput!!.flush()
@@ -67,7 +56,6 @@ internal class HttpResponseBodyImpl2(
 
 }
 
-@ExperimentalUnsignedTypes
 internal class HttpResponseImpl2(val responseBodyPool: ObjectPool<HttpResponseBodyImpl2>
 ) : HttpResponse {
     override var status: Int = 404
@@ -126,6 +114,7 @@ internal class HttpResponseImpl2(val responseBodyPool: ObjectPool<HttpResponseBo
     fun init(encode: EncodeType,
              keepAlive: Boolean,
              output: AsyncOutput) {
+        headers.clear()
         body = null
         this.encode = encode
         status = 404
@@ -159,7 +148,6 @@ internal class HttpResponseImpl2(val responseBodyPool: ObjectPool<HttpResponseBo
     var body: HttpResponseBodyImpl2? = null
 
     override suspend fun complete(): HttpResponseBody {
-
         val buf = rawOutput!!//!!.bufferedOutput()
         val app = buf.utf8Appendable()
         app.append("HTTP/1.1 $status ${statusToText(status)}\r\n")

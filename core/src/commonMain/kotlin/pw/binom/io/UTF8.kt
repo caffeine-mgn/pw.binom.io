@@ -1,53 +1,54 @@
 package pw.binom.io
 
+import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
 
 object UTF8 {
 
-    fun unicodeToUtf8(text: String, out: ByteDataBuffer, offset: Int = 0):Int {
+    fun unicodeToUtf8(text: String, out: ByteBuffer):Int {
         var len = 0
         text.forEachIndexed { index, c ->
-            len+=unicodeToUtf8(c, out, offset + index)
+            len+=unicodeToUtf8(c, out)
         }
         return len
     }
 
-    fun unicodeToUtf8(char: Char, out: ByteDataBuffer, offset: Int = 0): Int {
+    fun unicodeToUtf8(char: Char, out: ByteBuffer): Int {
         val utf = char.toInt()
         return when {
             utf <= 0x7F -> {
                 // Plain ASCII
-                out[0 + offset] = utf.toByte()
+                out.put(utf.toByte())
                 1
             }
             utf <= 0x07FF -> {
                 // 2-byte unicode
-                out[0 + offset] = (((utf shr 6) and 0x1F) or 0xC0).toByte()
-                out[1 + offset] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                out.put((((utf shr 6) and 0x1F) or 0xC0).toByte())
+                out.put((((utf shr 0) and 0x3F) or 0x80).toByte())
                 2
             }
             utf <= 0xFFFF -> {
                 // 3-byte unicode
-                out[0 + offset] = (((utf shr 12) and 0x0F) or 0xE0).toByte()
-                out[1 + offset] = (((utf shr 6) and 0x3F) or 0x80).toByte()
-                out[2 + offset] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                out.put((((utf shr 12) and 0x0F) or 0xE0).toByte())
+                out.put((((utf shr 6) and 0x3F) or 0x80).toByte())
+                out.put((((utf shr 0) and 0x3F) or 0x80).toByte())
                 3
             }
             utf <= 0x10FFFF -> {
                 // 4-byte unicode
-                out[0 + offset] = (((utf shr 18) and 0x07) or 0xF0).toByte()
-                out[1 + offset] = (((utf shr 12) and 0x3F) or 0x80).toByte()
-                out[2 + offset] = (((utf shr 6) and 0x3F) or 0x80).toByte()
-                out[3 + offset] = (((utf shr 0) and 0x3F) or 0x80).toByte()
+                out.put((((utf shr 18) and 0x07) or 0xF0).toByte())
+                out.put((((utf shr 12) and 0x3F) or 0x80).toByte())
+                out.put((((utf shr 6) and 0x3F) or 0x80).toByte())
+                out.put((((utf shr 0) and 0x3F) or 0x80).toByte())
                 4
             }
             else -> {
                 // error - use replacement character
-                out[0 + offset] = 0xEF.toByte()
-                out[1 + offset] = 0xBF.toByte()
-                out[2 + offset] = 0xBD.toByte()
+                out.put(0xEF.toByte())
+                out.put(0xBF.toByte())
+                out.put(0xBD.toByte())
                 0
             }
         }
@@ -94,7 +95,33 @@ object UTF8 {
                 out[0] = 0xEF.toByte()
                 out[1] = 0xBF.toByte()
                 out[2] = 0xBD.toByte()
-                0
+                3
+            }
+        }
+    }
+
+    fun unicodeToUtf8Size(char: Char): Int {
+        val utf = char.toInt()
+        return when {
+            utf <= 0x7F -> {
+                // Plain ASCII
+                1
+            }
+            utf <= 0x07FF -> {
+                // 2-byte unicode
+                2
+            }
+            utf <= 0xFFFF -> {
+                // 3-byte unicode
+                3
+            }
+            utf <= 0x10FFFF -> {
+                // 4-byte unicode
+                4
+            }
+            else -> {
+                // error - use replacement character
+                3
             }
         }
     }
@@ -164,10 +191,9 @@ object UTF8 {
         }.toChar()
     }
 
-    fun utf8toUnicode(firstByte: Byte, otherBytes: ByteDataBuffer, offset: Int = 0): Char {
+    fun utf8toUnicode(firstByte: Byte, otherBytes: ByteBuffer): Char {
         val c = firstByte.toInt()
-        var cur = offset
-        fun func() = otherBytes[cur++]
+        fun func() = otherBytes.get()
         return when {
             (c and 0x80) == 0 -> c
             (c and 0xE0) == 0xC0 -> {

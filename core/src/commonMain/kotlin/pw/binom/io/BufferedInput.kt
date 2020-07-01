@@ -1,52 +1,57 @@
 package pw.binom.io
 
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.Input
+import pw.binom.empty
 
 class BufferedInput(val stream: Input, bufferSize: Int = DEFAULT_BUFFER_SIZE) : Input {
-    private val buffer = ByteDataBuffer.alloc(bufferSize)
-    private var readed = 0
-    private var wrote = 0
+    private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
-    val available: Int
-        get() {
-            if (wrote == 0 || wrote == readed)
-                return -1
-            return wrote - readed
-        }
+    val available
+        get() = if (buffer.remaining == 0) -1 else buffer.remaining
 
     override fun skip(length: Long): Long {
-        var l = length
-        while (l > 0L) {
-            if (available == -1) {
-                readed = 0
-                wrote = stream.read(buffer, 0, buffer.size)
-                if (wrote <= 0)
-                    wrote
+        val buf = ByteBuffer.alloc(512)
+        try {
+            var l = length
+            while (l > 0) {
+                buf.reset(0, minOf(buf.capacity, l.toInt()))
+                l -= read(buf)
             }
-            readed += minOf(available, l.toInt())
+        } finally {
+            buf.close()
         }
         return length
     }
 
-    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-        if (available == -1) {
-            readed = 0
-            wrote = stream.read(buffer, 0, buffer.size)
-            if (wrote <= 0)
-                return wrote
+    override fun read(dest: ByteBuffer): Int {
+        if (buffer.remaining == 0) {
+            buffer.clear()
+            stream.read(buffer)
+            buffer.flip()
         }
-
-        val l = minOf(wrote - readed, length)
-
-        buffer.writeTo(readed, data, offset, l)
-//        buffer.copyInto(data, destinationOffset = offset, startIndex = readed.value, endIndex = readed.value + l)
-        readed += l
-        return l
+        return dest.write(buffer)
     }
 
+//    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
+//        if (available == -1) {
+//            readed = 0
+//            wrote = stream.read(buffer, 0, buffer.size)
+//            if (wrote <= 0)
+//                return wrote
+//        }
+//
+//        val l = minOf(wrote - readed, length)
+//
+//        buffer.writeTo(readed, data, offset, l)
+////        buffer.copyInto(data, destinationOffset = offset, startIndex = readed.value, endIndex = readed.value + l)
+//        readed += l
+//        return l
+//    }
+
     override fun close() {
+        buffer.close()
         stream.close()
     }
 }

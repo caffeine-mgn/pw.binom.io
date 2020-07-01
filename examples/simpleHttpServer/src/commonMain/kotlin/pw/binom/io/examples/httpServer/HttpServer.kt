@@ -1,7 +1,6 @@
 package pw.binom.io.examples.httpServer
 
 import pw.binom.*
-import pw.binom.io.ByteBuffer
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
@@ -12,19 +11,36 @@ import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.socket.nio.SingleThreadNioManager
 import pw.binom.io.use
-import pw.binom.pool.DefaultPool
+import pw.binom.io.utf8Appendable
+import pw.binom.pool.ObjectPool
+
+suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
+    val buf = pool.borrow()
+    while (true) {
+        buf.clear()
+        val s = read(buf)
+        if (s == 0)
+            break
+        buf.flip()
+        output.write(buf)
+    }
+}
 
 fun main(args: Array<String>) {
-    val byteDataPool = ByteDataBufferPool()
-    val packagePool = DefaultPool(10) { ByteBuffer(DEFAULT_BUFFER_SIZE) }
-    val nioManager = SingleThreadNioManager(packagePool, byteDataPool)
+    println("Environment.workDirectory: ${Environment.workDirectory}")
+    val byteDataPool = ByteBufferPool()
+    val nioManager = SingleThreadNioManager()
     val server = HttpServer(nioManager, object : Handler {
         override suspend fun request(req: HttpRequest, resp: HttpResponse) {
-            val buf = byteDataPool.borrow()
             val file = File(File(Environment.workDirectory), req.uri)
-            println("Environment.workDirectory: ${Environment.workDirectory}")
-            println("URI: ${req.uri}")
-            println("Can't find file ${file.path}")
+//            resp.status = 200
+//            resp.addHeader(Headers.CONTENT_TYPE, "text/html")
+//            println("Try complit")
+//            val out = resp.complete()
+//            println("Complited! Try write body")
+//            out.utf8Appendable().append("Anton")
+//            println("Body writed!")
+//            return
             if (!file.isFile) {
                 resp.status = 404
                 resp.complete()
@@ -33,11 +49,12 @@ fun main(args: Array<String>) {
                 resp.addHeader(Headers.CONTENT_TYPE, "application/octet-stream")
                 resp.addHeader(Headers.CONTENT_LENGTH, file.size.toString())
                 file.channel(AccessType.READ).use { channel ->
+//                    resp.complete().write(channel)
                     channel.copyTo(resp.complete(), byteDataPool)
                 }
             }
         }
-    })
+    }, outputBufferSize = 1024 * 1024*3)
     server.bindHTTP(port = 8080)
     while (true) {
         nioManager.update()

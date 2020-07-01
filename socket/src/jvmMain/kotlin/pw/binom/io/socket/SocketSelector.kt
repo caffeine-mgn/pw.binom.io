@@ -49,8 +49,8 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
 
         fun rereg() {
             _cancelled = false
-            listenWritable = true
-            listenReadable = true
+            listenWritable = false
+            listenReadable = false
             cancelledKeys[channel]?.remove(this)
             if (cancelledKeys[channel]?.isEmpty() == true) {
                 cancelledKeys.remove(channel)

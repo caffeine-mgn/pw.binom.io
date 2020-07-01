@@ -4,6 +4,7 @@ import pw.binom.io.AsyncInputStream
 import pw.binom.io.EOFException
 import pw.binom.io.StreamClosedException
 
+@Deprecated("Use AsyncContentLengthInput")
 open class AsyncContentLengthInputStream(val stream: AsyncInputStream, val contentLength: ULong) : AsyncHttpInputStream {
     override suspend fun read(): Byte {
         if (read(staticData) != 1)
