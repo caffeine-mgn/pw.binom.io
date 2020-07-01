@@ -15,7 +15,7 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-abstract class SocketNIOManager() : Closeable {
+open class SocketNIOManager : Closeable {
 
     class ReadInterruptException : RuntimeException()
     interface ConnectHandler {
@@ -121,132 +121,12 @@ abstract class SocketNIOManager() : Closeable {
             return l
         }
 
-//        @OptIn(ExperimentalTime::class)
-//        override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//            check(!detached) { "Connection was detached" }
-////            println("try write")
-//            output.write(data, offset, length)
-////
-//////            waitWrite += measureTime {
-////            var len = length
-////            var off = offset
-////            while (len > 0) {
-//////                val l = channel.write(data, off, len)
-//////                if (l < 0)
-//////                    TODO("send returns $l")
-//////                if (l == 0) {
-////                println("Try to write...")
-////                val l = suspendCoroutine<Int> { v ->
-////                    val waitEvent = waitEventPool2.borrow {
-////                        it.continuation = v
-////                        it.data = data
-////                        it.offset = off
-////                        it.length = len
-////                    }
-////                    writeWater2 = waitEvent
-////                    selectionKey.updateListening(selectionKey.listenReadable, true)
-////                }
-////                println("Writed!")
-//////                    break
-//////                }
-////                len -= l
-////                off += l
-////            }
-////
-//////            }
-//            return length
-//        }
-
         override suspend fun flush() {
-//            val buf = bufferPool.borrow()
-//            try {
-//                while (true) {
-//                    val l = output.read(buf)
-//                    if (l <= 0)
-//                        break
-//                    val r = suspendCoroutine<Int> { v ->
-//                        val waitEvent = waitEventPool2.borrow {
-//                            it.continuation = v
-//                            it.data = buf
-//                            it.offset = 0
-//                            it.length = l
-//                        }
-//                        writeWater2 = waitEvent
-//                        selectionKey.updateListening(selectionKey.listenReadable, true)
-//                    }
-//                    if (r == 0)
-//                        throw SocketClosedException()
-//                }
-//            } finally {
-//                bufferPool.recycle(buf)
-//            }
         }
 
         override suspend fun skip(length: Long): Long {
             TODO("Not yet implemented")
         }
-
-//        override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//            if (detached)
-//                throw IllegalStateException("Connection was detached")
-////            println("try read")
-//            while (true) {
-//                val l = input.read(data, offset, length)
-//                if (l > 0) {
-//                    return l
-//                }
-//                suspendCoroutine<Unit> {
-//                    fillBufWaiter = it
-//                    selectionKey.updateListening(true, selectionKey.listenWritable)
-//                }
-//
-////                val buf = bufferPool.borrow()
-////                try {
-////                    val r = suspendCoroutine<Int> { сontinuation ->
-////                        val waitEvent = waitEventPool2.borrow {
-////                            it.continuation = сontinuation
-////                            it.data = buf
-////                            it.offset = 0
-////                            it.length = buf.size
-////                        }
-////                        readWater2 = waitEvent
-////                        selectionKey.updateListening(true, selectionKey.listenWritable)
-////                    }
-////                    if (r == 0)
-////                        throw SocketClosedException()
-////                    input.write(buf, 0, r)
-////                } finally {
-////                    bufferPool.recycle(buf)
-////                }
-//            }
-//            /*
-//            inputFetchSize
-//
-//            waitEventPool2.borrow {
-//                it.continuation = v
-//                it.data = data
-//                it.offset = offset
-//                it.length = length
-//            }
-//
-//
-//            while (true) {
-//                val readed = suspendCoroutine<Int> { v ->
-//                    val waitEvent = waitEventPool2.borrow {
-//                        it.continuation = v
-//                        it.data = data
-//                        it.offset = offset
-//                        it.length = length
-//                    }
-//                    readWater2 = waitEvent
-//                    selectionKey.updateListening(true, selectionKey.listenWritable)
-//                }
-//                if (readed >= 0) {
-//                    return readed
-//                }
-//            }
-//            */
-//        }
 
         override suspend fun read(dest: ByteBuffer): Int {
             if (dest.remaining == 0) {
@@ -289,8 +169,6 @@ abstract class SocketNIOManager() : Closeable {
                 client.readWait = null
                 it.con.resumeWithException(SocketClosedException())
             }
-//            client.writeWater2?.continuation?.resumeWithException(SocketClosedException())
-//            client.readWater2?.continuation?.resumeWithException(SocketClosedException())
             client.channel.close()
             return
         }
@@ -302,7 +180,6 @@ abstract class SocketNIOManager() : Closeable {
             return
         var needRead = client.selectionKey.listenReadable
         var needWrite = client.selectionKey.listenWritable || client.readWait != null
-
         val writeWait = client.writeWait
 
         if (key.isWritable) {
@@ -319,20 +196,6 @@ abstract class SocketNIOManager() : Closeable {
                     } else {
                         needWrite = true
                     }
-//                    if (client.output.readRemaining > 0) {
-//                        val l = client.output.read(buf)
-//                        client.channel.write(buf, 0, l)
-//                    }
-//
-//                    if (client.output.readRemaining <= 0) {
-//                        needWrite = true
-//
-//                        val waiter = client.flushWaiter
-//                        client.flushWaiter = null
-//                        waiter?.resume(Unit)
-//                    } else {
-//                        needWrite = true
-//                    }
                 } catch (e: Throwable) {
                     writeWait.con.resumeWithException(e)
                     needWrite = false

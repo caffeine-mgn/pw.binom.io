@@ -1,8 +1,7 @@
 package pw.binom.webdav.server
 
-import pw.binom.ByteDataBuffer
+import pw.binom.ByteBuffer
 import pw.binom.URL
-import pw.binom.asyncInput
 import pw.binom.copyTo
 import pw.binom.date.Date
 import pw.binom.io.*
@@ -45,7 +44,7 @@ suspend fun <U> FileSystem<U>.getEntitiesWithDepth(user: U, path: String, depth:
 
 abstract class AbstractWebDavHandler<U> : Handler {
 
-    protected abstract val bufferPool: ObjectPool<ByteDataBuffer>
+    protected abstract val bufferPool: ObjectPool<ByteBuffer>
 
     protected abstract fun getFS(req: HttpRequest, resp: HttpResponse): FileSystem<U>
     protected abstract fun getUser(req: HttpRequest, resp: HttpResponse): U
@@ -63,11 +62,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             return
         }
 
-        val o = ByteArrayOutput()
-        req.input.copyTo(o, bufferPool)
-
-        o.trimToSize()
-        val node = o.data.toInput().asyncInput().utf8Reader().xmlTree()!!
+        val node = req.input.utf8Reader().xmlTree()!!
 
         val properties =
                 node.findElements { it.tag.endsWith("prop") }.first().childs
@@ -78,9 +73,9 @@ abstract class AbstractWebDavHandler<U> : Handler {
         val depth = req.headers["Depth"]?.firstOrNull()?.toInt() ?: 0
         val entities = fs.getEntitiesWithDepth(user, urlDecode(req.contextUri), depth)!!//if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
         val DAV_NS = "DAV:"
-
-        val ss = StringBuilder()
-        xml(ss.asAsync()) {
+        resp.status = 207
+        resp.resetHeader(Headers.CONTENT_TYPE, "application/xml")
+        xml(resp.complete().utf8Appendable()) {
             node("multistatus", DAV_NS) {
                 entities.forEach { e ->
                     node("response", DAV_NS) {
@@ -134,15 +129,6 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 }
             }
         }
-
-        resp.status = 207
-        resp.resetHeader("Content-Length", ss.length.toString())
-        resp.resetHeader("Content-Type", "application/xml")
-        val out = resp.complete()
-        out.utf8Appendable().append(ss.toString())
-        out.flush()
-        return
-
     }
 
     override suspend fun request(req: HttpRequest, resp: HttpResponse) {

@@ -3,6 +3,7 @@ package pw.binom
 import pw.binom.io.Closeable
 import pw.binom.io.EOFException
 import pw.binom.io.UTF8
+import pw.binom.pool.ObjectPool
 
 interface Input : Closeable {
     fun skip(length: Long): Long
@@ -107,6 +108,18 @@ fun Input.readLong(): Long {
     tmp8.reset(0, 8)
     readFully(tmp8)
     return Long.fromBytes(tmp8[0], tmp8[1], tmp8[2], tmp8[3], tmp8[4], tmp8[5], tmp8[6], tmp8[7])
+}
+
+suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
+    val buf = pool.borrow()
+    while (true) {
+        buf.clear()
+        val s = read(buf)
+        if (s == 0)
+            break
+        buf.flip()
+        output.write(buf)
+    }
 }
 
 fun Input.readFloat() = Float.fromBits(readInt())

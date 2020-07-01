@@ -125,5 +125,29 @@ suspend fun AsyncInput.readLong(): Long {
     return Long.fromBytes(tmp8[0], tmp8[1], tmp8[2], tmp8[3], tmp8[4], tmp8[5], tmp8[6], tmp8[7])
 }
 
-inline suspend fun AsyncInput.readFloat() = Float.fromBits(readInt())
-inline suspend fun AsyncInput.readDouble() = Double.fromBits(readLong())
+suspend inline fun AsyncInput.readFloat() = Float.fromBits(readInt())
+suspend inline fun AsyncInput.readDouble() = Double.fromBits(readLong())
+
+suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
+    val buf = pool.borrow()
+    while (true) {
+        buf.clear()
+        val s = read(buf)
+        if (s == 0)
+            break
+        buf.flip()
+        output.write(buf)
+    }
+}
+
+suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>) {
+    val buf = pool.borrow()
+    while (true) {
+        buf.clear()
+        val s = read(buf)
+        if (s == 0)
+            break
+        buf.flip()
+        output.write(buf)
+    }
+}

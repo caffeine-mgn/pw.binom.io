@@ -13,18 +13,6 @@ import pw.binom.io.socket.nio.SingleThreadNioManager
 import pw.binom.io.use
 import pw.binom.pool.ObjectPool
 
-suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
-    val buf = pool.borrow()
-    while (true) {
-        buf.clear()
-        val s = read(buf)
-        if (s == 0)
-            break
-        buf.flip()
-        output.write(buf)
-    }
-}
-
 fun main(args: Array<String>) {
     println("Environment.workDirectory: ${Environment.workDirectory}")
     val byteDataPool = ByteBufferPool()
