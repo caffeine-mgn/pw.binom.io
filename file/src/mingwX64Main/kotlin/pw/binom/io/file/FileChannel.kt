@@ -34,7 +34,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         }
     }) ?: throw FileNotFoundException(file.path)
 
-    override fun skip(length: Long): Long {
+    actual fun skip(length: Long): Long {
         if (length == 0L)
             return 0L
         if (feof(handler) != 0)

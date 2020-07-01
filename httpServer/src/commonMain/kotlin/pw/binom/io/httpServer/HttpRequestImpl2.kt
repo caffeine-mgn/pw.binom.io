@@ -43,7 +43,7 @@ internal class HttpRequestImpl2 : HttpRequest {
 //        }
     }
 
-    suspend fun init(method: String, uri: String, input: AsyncInput/*, inputBufferPool: DefaultPool<NoCloseInput>*/) {
+    suspend fun init(method: String, uri: String, input: AsyncInput, allowZlib:Boolean/*, inputBufferPool: DefaultPool<NoCloseInput>*/) {
         this.method = method
         this.uri = uri
         headers.clear()
@@ -60,11 +60,10 @@ internal class HttpRequestImpl2 : HttpRequest {
             it.splitToSequence(',')
         }?.map { it.trim().toLowerCase() }
                 ?.mapNotNull {
-                    when (it) {
-                        "gzip" -> EncodeType.GZIP
-                        "deflate" -> EncodeType.DEFLATE
-                        "identity" -> EncodeType.IDENTITY
-                        else -> null
+                    when {
+                        allowZlib && it == "gzip" -> EncodeType.GZIP
+                        allowZlib && it=="deflate" -> EncodeType.DEFLATE
+                        else -> EncodeType.IDENTITY
                     }
                 }
                 ?.firstOrNull() ?: EncodeType.IDENTITY

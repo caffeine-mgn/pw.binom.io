@@ -10,8 +10,8 @@ class AsyncClosableInput(val stream: AsyncInput) : AsyncInput {
 
     private var eof = false
     private var closed = false
-    override suspend fun skip(length: Long): Long =
-            stream.skip(length)
+//    override suspend fun skip(length: Long): Long =
+//            stream.skip(length)
 
 //    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
 //        checkClosed()

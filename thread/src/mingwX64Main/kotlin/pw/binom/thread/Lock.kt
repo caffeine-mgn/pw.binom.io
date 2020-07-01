@@ -1,12 +1,8 @@
 package pw.binom.thread
 
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.sizeOf
-import platform.posix.free
-import platform.posix.malloc
+import kotlinx.cinterop.*
 import platform.windows.*
+import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -16,40 +12,44 @@ private const val checkTime = 100
 
 actual class Lock : Closeable {
 
-//    val native2 = CreateMutex!!(null, FALSE, null)!!
+    //    val native2 = CreateMutex!!(null, FALSE, null)!!
+    var closed = AtomicInt(0)
 
-    private val native = malloc(sizeOf<CRITICAL_SECTION>().convert())!!.reinterpret<CRITICAL_SECTION>()
+    private val native = nativeHeap.alloc<CRITICAL_SECTION>()//malloc(sizeOf<CRITICAL_SECTION>().convert())!!.reinterpret<CRITICAL_SECTION>()
 
     init {
-        InitializeCriticalSection(native)
+        InitializeCriticalSection(native.ptr)
     }
 
     actual fun lock() {
-        EnterCriticalSection(native)
+        EnterCriticalSection(native.ptr)
     }
 
     actual fun unlock() {
-        LeaveCriticalSection(native)
+        LeaveCriticalSection(native.ptr)
     }
 
     override fun close() {
-        DeleteCriticalSection(native)
-        free(native)
+        if (closed.value == 1)
+            throw IllegalStateException("Lock already closed")
+        DeleteCriticalSection(native.ptr)
+        nativeHeap.free(native)
+        closed.value = 1
     }
 
     actual fun newCondition(): Lock.Condition =
             Condition(native)
 
-    actual class Condition(val lock: CPointer<CRITICAL_SECTION>) : Closeable {
-        val native = malloc(sizeOf<CONDITION_VARIABLE>().convert())!!.reinterpret<CONDITION_VARIABLE>()
+    actual class Condition(val lock: CRITICAL_SECTION) : Closeable {
+        val native = nativeHeap.alloc<CONDITION_VARIABLE>()//malloc(sizeOf<CONDITION_VARIABLE>().convert())!!.reinterpret<CONDITION_VARIABLE>()
 
         init {
-            InitializeConditionVariable(native)
+            InitializeConditionVariable(native.ptr)
         }
 
         actual fun wait() {
             while (true) {
-                val r = SleepConditionVariableCS(native, lock, checkTime.convert())
+                val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
                 if (Thread.currentThread.isInterrupted)
                     throw InterruptedException()
                 if (r == 0) {
@@ -61,16 +61,16 @@ actual class Lock : Closeable {
         }
 
         actual fun notify() {
-            WakeConditionVariable(native)
+            WakeConditionVariable(native.ptr)
 
         }
 
         actual fun notifyAll() {
-            WakeAllConditionVariable(native)
+            WakeAllConditionVariable(native.ptr)
         }
 
         override fun close() {
-            free(native)
+            nativeHeap.free(native)
         }
 
         @OptIn(ExperimentalTime::class)
@@ -81,7 +81,7 @@ actual class Lock : Closeable {
             }
             val now = TimeSource.Monotonic.markNow()
             while (true) {
-                val r = SleepConditionVariableCS(native, lock, checkTime.convert())
+                val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
                 if (Thread.currentThread.isInterrupted)
                     throw InterruptedException()
                 if (r == 0) {

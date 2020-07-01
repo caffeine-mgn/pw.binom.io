@@ -1,8 +1,6 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.posix.free
-import platform.posix.malloc
 import platform.posix.memcpy
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
@@ -19,7 +17,14 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
             throw StreamClosedException()
     }
 
-    val native: CPointer<ByteVar> = malloc(capacity.convert())!!.reinterpret()
+    private var bytes = ByteArray(capacity)
+
+    //    val native: CPointer<ByteVar> = malloc(capacity.convert())!!.reinterpret()
+    val native: CPointer<ByteVar> = run {
+        memScoped {
+            bytes.refTo(0).getPointer(this).toLong()
+        }.toCPointer<ByteVar>()!!
+    }
 
     actual fun flip() {
         limit = position
@@ -46,7 +51,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
                 position = value
         }
 
-    override fun skip(length: Long): Long {
+    actual fun skip(length: Long): Long {
         checkClosed()
         require(length > 0) { "Length must be grade than 0" }
 
@@ -79,7 +84,8 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     override fun close() {
         checkClosed()
-        free(native)
+        //free(native)
+        bytes = ByteArray(0)
         closed = true
     }
 

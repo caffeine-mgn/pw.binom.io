@@ -6,7 +6,7 @@ import pw.binom.io.AppendableUTF82
 import pw.binom.io.Reader
 import pw.binom.io.ReaderUTF82
 
-private val tmp1 = ByteBuffer.alloc(32)
+//private val tmp1 = ByteBuffer.alloc(32)
 
 actual object Console {
 
@@ -29,14 +29,14 @@ actual object Console {
     actual val errChannel: Output = Out(STDERR_FILENO)
 
     actual val inChannel: Input = object : Input {
-        override fun skip(length: Long): Long {
-            var l = length
-            while (l > 0) {
-                tmp1.reset(0,minOf(tmp1.capacity, l.toInt()))
-                l -= read(tmp1)
-            }
-            return length
-        }
+//        override fun skip(length: Long): Long {
+//            var l = length
+//            while (l > 0) {
+//                tmp1.reset(0,minOf(tmp1.capacity, l.toInt()))
+//                l -= read(tmp1)
+//            }
+//            return length
+//        }
 
         override fun read(dest: ByteBuffer): Int =
                 platform.posix.write(STDIN_FILENO, dest.native + dest.position, dest.remaining.convert()).convert()

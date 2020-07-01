@@ -2,6 +2,7 @@ package pw.binom.thread
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -11,49 +12,54 @@ private const val checkTime = 100
 
 actual class Lock : Closeable {
 
-    private val native = malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
+    private val native = nativeHeap.alloc<pthread_mutex_t>()//.malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
+    private var closed = AtomicInt(0)
 
     init {
-        pthread_mutex_init(native, null)
+        pthread_mutex_init(native.ptr, null)
     }
 
     actual fun lock() {
-        pthread_mutex_lock(native)
+        pthread_mutex_lock(native.ptr)
     }
 
     actual fun unlock() {
-        pthread_mutex_unlock(native)
+        pthread_mutex_unlock(native.ptr)
     }
 
     override fun close() {
-        pthread_mutex_destroy(native)
-        free(native)
+        if (closed.value == 1)
+            throw IllegalStateException("Lock already closed")
+        pthread_mutex_destroy(native.ptr)
+        nativeHeap.free(native)
+        closed.value = 1
     }
 
     actual fun newCondition(): Lock.Condition = Condition(native)
 
-    actual class Condition(val mutex: CPointer<pthread_mutex_t>) : Closeable {
-        val native = malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
+    actual class Condition(val mutex: pthread_mutex_t) : Closeable {
+        val native = nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
-            pthread_cond_init(native, null)
+            pthread_cond_init(native.ptr, null)
         }
 
         actual fun wait() {
-            pthread_cond_wait(native, mutex)
+            pthread_cond_wait(native.ptr, mutex.ptr)
         }
 
         actual fun notify() {
-            pthread_cond_signal(native)
+            pthread_cond_signal(native.ptr)
         }
 
         override fun close() {
             notifyAll()
-            pthread_cond_destroy(native)
+            pthread_cond_destroy(native.ptr)
+            nativeHeap.free(native)
         }
 
         actual fun notifyAll() {
-            pthread_cond_broadcast(native)
+            pthread_cond_broadcast(native.ptr)
         }
 
         @OptIn(ExperimentalTime::class)
@@ -69,7 +75,7 @@ actual class Lock : Closeable {
 
                 val now = TimeSource.Monotonic.markNow()
                 while (true) {
-                    val r = pthread_cond_timedwait(native, mutex, waitUntil.ptr)
+                    val r = pthread_cond_timedwait(native.ptr, mutex.ptr, waitUntil.ptr)
                     if (Thread.currentThread.isInterrupted)
                         throw InterruptedException()
                     if (r == ETIMEDOUT) {

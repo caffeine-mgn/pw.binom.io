@@ -28,8 +28,8 @@ actual class RawSocketChannel internal constructor(override val socket: RawSocke
         //NOP
     }
 
-    override fun skip(length: Long): Long =
-            socket.skip(length)
+//    override fun skip(length: Long): Long =
+//            socket.skip(length)
 
     override fun read(dest: ByteBuffer): Int =
             socket.read(dest)

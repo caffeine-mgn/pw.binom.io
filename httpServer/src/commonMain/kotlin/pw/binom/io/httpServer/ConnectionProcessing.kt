@@ -2,11 +2,8 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
-import pw.binom.Output
-import pw.binom.io.bufferedOutput
 import pw.binom.io.readln
 import pw.binom.io.socket.SocketClosedException
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.utf8Reader
 import pw.binom.pool.DefaultPool
 
@@ -21,8 +18,10 @@ internal object ConnectionProcessing {
             outputBuffered: AsyncOutput,
             httpRequestPool: DefaultPool<HttpRequestImpl2>,
             httpResponsePool: DefaultPool<HttpResponseImpl2>,
-            handler: Handler): Boolean {
-        val outputBufferid =outputBuffered//connection.bufferedOutput()
+            handler: Handler,
+            allowZlib: Boolean
+    ): Boolean {
+        val outputBufferid = outputBuffered//connection.bufferedOutput()
 //        val buf = AsyncBufferedInput(connection)
         val reader = inputBuffered.utf8Reader()
         val request = reader.readln()!!
@@ -32,7 +31,8 @@ internal object ConnectionProcessing {
         req.init(
                 method = items[0],
                 uri = items.getOrNull(1) ?: "",
-                input = inputBuffered
+                input = inputBuffered,
+                allowZlib = allowZlib
         )
 
         val resp = httpResponsePool.borrow()

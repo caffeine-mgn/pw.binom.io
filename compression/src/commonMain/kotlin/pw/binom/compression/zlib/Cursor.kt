@@ -21,6 +21,4 @@ class Cursor {
     override fun toString(): String {
         return "Cursor(inputOffset=$inputOffset, inputLength=$inputLength, availIn=$availIn, outputOffset=$outputOffset, outputLength=$outputLength, availOut=$availOut)"
     }
-
-
 }

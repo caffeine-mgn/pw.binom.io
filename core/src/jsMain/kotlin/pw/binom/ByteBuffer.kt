@@ -51,7 +51,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
                 position = value
         }
 
-    override fun skip(length: Long): Long {
+    actual fun skip(length: Long): Long {
         checkClosed()
         require(length > 0) { "Length must be grade than 0" }
 

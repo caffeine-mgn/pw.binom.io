@@ -6,7 +6,7 @@ import pw.binom.io.UTF8
 import pw.binom.pool.ObjectPool
 
 interface AsyncInput : AsyncCloseable {
-    suspend fun skip(length: Long): Long
+//    suspend fun skip(length: Long): Long
 //    suspend fun read(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
 //    suspend fun readFully(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int {
 //        var off = offset
@@ -30,8 +30,8 @@ interface AsyncInput : AsyncCloseable {
 }
 
 fun Input.asyncInput() = object : AsyncInput {
-    override suspend fun skip(length: Long): Long =
-            this@asyncInput.skip(length)
+//    override suspend fun skip(length: Long): Long =
+//            this@asyncInput.skip(length)
 
 //    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int =
 //            this@asyncInput.read(data, offset, length)

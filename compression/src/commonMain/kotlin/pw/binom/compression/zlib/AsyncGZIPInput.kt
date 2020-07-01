@@ -31,10 +31,10 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, autoCloseStream:
         return super.read(dest)
     }
 
-    override suspend fun skip(length: Long): Long {
-        readHeader(stream)
-        return super.skip(length)
-    }
+//    override suspend fun skip(length: Long): Long {
+//        readHeader(stream)
+//        return super.skip(length)
+//    }
 
     private var headerRead = false
     private suspend fun readHeader(stream: AsyncInput): Int {

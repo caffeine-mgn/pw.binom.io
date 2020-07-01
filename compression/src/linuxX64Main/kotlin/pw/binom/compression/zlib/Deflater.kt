@@ -215,7 +215,6 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         val wrote = freeOutput - native.pointed.avail_out.convert<Int>()
         input.position += freeInput - native.pointed.avail_in.convert<Int>()
         output.position += freeOutput - native.pointed.avail_out.convert<Int>()
-        println("wrote: $wrote")
 
         val outLength = freeOutput - output.remaining
         val inLength = freeInput - input.remaining

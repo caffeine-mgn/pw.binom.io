@@ -1,7 +1,7 @@
 package pw.binom.io.httpServer
 
-import pw.binom.*
-import pw.binom.io.AbstractAsyncBufferedInput
+import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.async
 import pw.binom.io.Closeable
 import pw.binom.io.socket.ServerSocketChannel
 import pw.binom.io.socket.SocketClosedException
@@ -9,18 +9,25 @@ import pw.binom.io.socket.SocketFactory
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.rawSocketFactory
 import pw.binom.pool.DefaultPool
+import pw.binom.stackTrace
 
 /**
  * Base Http Server
  *
  * @param handler request handler
+ * @param zlibBufferSize size of zlib buffer. 0 - disable zlib
  */
 open class HttpServer(val manager: SocketNIOManager,
                       protected val handler: Handler,
                       poolSize: Int = 10,
                       inputBufferSize: Int = DEFAULT_BUFFER_SIZE,
-                      outputBufferSize: Int = DEFAULT_BUFFER_SIZE
+                      outputBufferSize: Int = DEFAULT_BUFFER_SIZE,
+                      private val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE
 ) : Closeable, SocketNIOManager.ConnectHandler {
+
+    init {
+        require(zlibBufferSize >= 0) { "zlibBufferSize must be grate or equals than 0" }
+    }
 
     private val returnToPoolForOutput: (NoCloseOutput) -> Unit = {
         outputBufferPool.recycle(it)
@@ -46,7 +53,7 @@ open class HttpServer(val manager: SocketNIOManager,
     }
 
     private val httpResponsePool = DefaultPool(poolSize) {
-        HttpResponseImpl2(httpResponseBodyPool)
+        HttpResponseImpl2(httpResponseBodyPool, zlibBufferSize)
     }
 
     private fun runProcessing(connection: SocketNIOManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
@@ -54,18 +61,18 @@ open class HttpServer(val manager: SocketNIOManager,
             val inputBufferid = bufferedInputPool.borrow { buf ->
                 buf.currentStream = it
             }
-            val outputBufferid = bufferedOutputPool.borrow { buf->
-                buf.currentStream=it
+            val outputBufferid = bufferedOutputPool.borrow { buf ->
+                buf.currentStream = it
             }
             while (true) {
                 try {
-
                     val keepAlive = ConnectionProcessing.process(
                             handler = this.handler,
                             httpRequestPool = httpRequestPool,
                             httpResponsePool = httpResponsePool,
                             inputBuffered = inputBufferid,
-                            outputBuffered = outputBufferid
+                            outputBuffered = outputBufferid,
+                            allowZlib = zlibBufferSize > 0
                     )
                     if (!keepAlive) {
                         inputBufferid.reset()

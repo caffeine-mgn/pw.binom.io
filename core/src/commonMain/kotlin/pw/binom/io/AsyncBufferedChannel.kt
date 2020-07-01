@@ -29,8 +29,8 @@ class AsyncBufferedChannel(
         outputBuf.flush()
     }
 
-    override suspend fun skip(length: Long): Long =
-            inputBuf.skip(length)
+//    override suspend fun skip(length: Long): Long =
+//            inputBuf.skip(length)
 
 //    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int =
 //            inputBuf.read(data, offset, length)

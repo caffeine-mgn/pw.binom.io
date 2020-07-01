@@ -74,7 +74,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
         val entities = fs.getEntitiesWithDepth(user, urlDecode(req.contextUri), depth)!!//if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
         val DAV_NS = "DAV:"
         resp.status = 207
-        resp.resetHeader(Headers.CONTENT_TYPE, "application/xml")
+        resp.resetHeader(Headers.CONTENT_TYPE, "application/xml; charset=UTF-8")
         xml(resp.complete().utf8Appendable()) {
             node("multistatus", DAV_NS) {
                 entities.forEach { e ->

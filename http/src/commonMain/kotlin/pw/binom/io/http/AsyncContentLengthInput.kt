@@ -9,8 +9,8 @@ open class AsyncContentLengthInput(val stream: AsyncInput, val contentLength: UL
     override val isEof: Boolean
         get() = closed || readed >= contentLength
 
-    override suspend fun skip(length: Long): Long =
-            stream.skip(length)
+//    override suspend fun skip(length: Long): Long =
+//            stream.skip(length)
 
     private var readed = 0uL
     private var closed = false

@@ -85,9 +85,9 @@ class AsyncSSLChannel(val session: SSLSession, val channel: AsyncChannel) : Asyn
     override suspend fun flush() {
     }
 
-    override suspend fun skip(length: Long): Long {
-        TODO("Not yet implemented")
-    }
+//    override suspend fun skip(length: Long): Long {
+//        TODO("Not yet implemented")
+//    }
 
 //    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
 //        sendAll()

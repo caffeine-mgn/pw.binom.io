@@ -27,22 +27,22 @@ class AsyncCheckedInput(val stream: AsyncInput, val cksum: CRC32Basic) : AsyncIn
         stream.close()
     }
 
-    override suspend fun skip(n: Long): Long {
-        val buf = ByteBuffer.alloc(512)
-        try {
-            var total: Long = 0
-            while (total < n) {
-                var len = n - total
-                buf.reset(0, if (len < buf.capacity) len.toInt() else buf.capacity)
-                len = read(buf).toLong()
-                if (len == -1L) {
-                    return total
-                }
-                total += len
-            }
-            return total
-        } finally {
-            buf.close()
-        }
-    }
+//    override suspend fun skip(n: Long): Long {
+//        val buf = ByteBuffer.alloc(512)
+//        try {
+//            var total: Long = 0
+//            while (total < n) {
+//                var len = n - total
+//                buf.reset(0, if (len < buf.capacity) len.toInt() else buf.capacity)
+//                len = read(buf).toLong()
+//                if (len == -1L) {
+//                    return total
+//                }
+//                total += len
+//            }
+//            return total
+//        } finally {
+//            buf.close()
+//        }
+//    }
 }

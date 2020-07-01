@@ -26,8 +26,8 @@ internal class NoCloseInput : AsyncInput {
 
     var stream: AsyncInput? = null
 
-    override suspend fun skip(length: Long): Long =
-            stream!!.skip(length)
+//    override suspend fun skip(length: Long): Long =
+//            stream!!.skip(length)
 
 //    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int =
 //            stream!!.read(data, offset, length)

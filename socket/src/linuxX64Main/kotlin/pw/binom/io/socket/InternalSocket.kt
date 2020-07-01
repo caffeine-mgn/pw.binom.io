@@ -163,9 +163,9 @@ internal actual class SelfRefKey(key: SocketSelector.SelectorKeyImpl) : Closeabl
 }
 
 internal actual class NativeEpollList actual constructor(connectionCount: Int) {
-    val native = malloc((sizeOf<epoll_event>() * connectionCount).convert())!!.reinterpret<epoll_event>()
+    val native = nativeHeap.allocArray<epoll_event>(connectionCount)//malloc((sizeOf<epoll_event>() * connectionCount).convert())!!.reinterpret<epoll_event>()
     actual fun free() {
-        free(native)
+        nativeHeap.free(native)
     }
 
     actual inline operator fun get(index: Int): NativeEvent = native[index]

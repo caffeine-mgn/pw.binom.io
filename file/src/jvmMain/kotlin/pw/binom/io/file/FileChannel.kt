@@ -16,7 +16,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         }
     }.toSet())
 
-    override fun skip(length: Long): Long {
+    actual fun skip(length: Long): Long {
         val l = minOf(native.position() + length, native.size())
         native.position(l)
         return l

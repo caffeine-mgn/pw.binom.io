@@ -6,7 +6,9 @@ enum class AccessType {
     READ, WRITE, CREATE, APPEND
 }
 
-expect class FileChannel(file: File, vararg mode: AccessType) : Channel, FileAccess
+expect class FileChannel(file: File, vararg mode: AccessType) : Channel, FileAccess{
+    actual fun skip(length: Long): Long
+}
 
 fun File.channel(vararg mode: AccessType): FileChannel {
     if (AccessType.CREATE !in mode && !isFile)

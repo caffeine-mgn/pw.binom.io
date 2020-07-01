@@ -4,6 +4,7 @@ import pw.binom.Console
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.closablesOf
 import pw.binom.io.hold
+import pw.binom.io.use
 import pw.binom.printStacktrace
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -41,7 +42,7 @@ class LockTest {
         val lock = Lock()
         var duration = Duration.ZERO
         val water = Water(true)
-        closablesOf(lock).hold {
+        closablesOf(lock).use {
             val thread = Thread(Runnable {
                 water.unlock()
                 val vv = measureTime {
@@ -70,7 +71,7 @@ class LockTest {
         val lock = Lock()
         val condition = lock.newCondition()
         var duration = Duration.ZERO
-        closablesOf(condition, lock).hold {
+        closablesOf(condition, lock).use {
             val thread = Thread(Runnable {
                 water.unlock()
                 val vv = measureTime {

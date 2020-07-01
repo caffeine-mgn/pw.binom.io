@@ -22,6 +22,7 @@ expect class ByteBuffer : Input, Output, Closeable {
     var position: Int
     var limit: Int
     val capacity: Int
+    fun skip(length: Long): Long
     fun get(): Byte
     fun put(value: Byte)
     fun reset(position: Int, length: Int): ByteBuffer

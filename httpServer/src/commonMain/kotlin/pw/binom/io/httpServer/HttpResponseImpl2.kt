@@ -2,41 +2,39 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.compression.zlib.AsyncDeflaterOutput
 import pw.binom.compression.zlib.AsyncGZIPOutput
-import pw.binom.io.LazyAsyncOutput
-import pw.binom.io.bufferedOutput
 import pw.binom.io.http.AsyncChunkedOutput
 import pw.binom.io.http.AsyncContentLengthOutput
 import pw.binom.io.http.Headers
 import pw.binom.io.utf8Appendable
-import pw.binom.pool.DefaultPool
 import pw.binom.pool.ObjectPool
 
-internal class HttpResponseBodyImpl2(
-
-) : HttpResponseBody {
+internal class HttpResponseBodyImpl2 : HttpResponseBody {
 
     private var rawOutput: AsyncOutput? = null
     private var wrappedOutput: AsyncOutput? = null
 
     fun init(contentLength: ULong?,
              encode: EncodeType,
-             rawOutput: AsyncOutput) {
+             rawOutput: AsyncOutput,
+             zlibBufferSize: Int
+    ) {
         this.rawOutput = rawOutput
-        val stream = when {
+        val stream =
+        when (encode) {
+            EncodeType.GZIP -> AsyncGZIPOutput(stream = rawOutput, level = 6, bufferSize = zlibBufferSize)
+            EncodeType.DEFLATE -> AsyncDeflaterOutput(rawOutput, 6, wrap = true, bufferSize = zlibBufferSize)
+            EncodeType.IDENTITY -> rawOutput
+        }
+
+        wrappedOutput = when {
             contentLength != null -> {
-                AsyncContentLengthOutput(rawOutput, contentLength)
+                AsyncContentLengthOutput(stream, contentLength)
             }
             else -> {
-                AsyncChunkedOutput(rawOutput)
+                AsyncChunkedOutput(stream)
             }
-        }
-        wrappedOutput = when (encode) {
-            EncodeType.GZIP -> AsyncGZIPOutput(stream, 6)
-            EncodeType.DEFLATE -> AsyncDeflaterOutput(stream, 6, wrap = true)
-            EncodeType.IDENTITY -> stream
         }
     }
 
@@ -56,7 +54,9 @@ internal class HttpResponseBodyImpl2(
 
 }
 
-internal class HttpResponseImpl2(val responseBodyPool: ObjectPool<HttpResponseBodyImpl2>
+internal class HttpResponseImpl2(
+        val responseBodyPool: ObjectPool<HttpResponseBodyImpl2>,
+        val zlibBufferSize: Int
 ) : HttpResponse {
     override var status: Int = 404
     private var rawOutput: AsyncOutput? = null
@@ -111,6 +111,8 @@ internal class HttpResponseImpl2(val responseBodyPool: ObjectPool<HttpResponseBo
 
     var encode = EncodeType.IDENTITY
 
+    override var enableCompress = true
+
     fun init(encode: EncodeType,
              keepAlive: Boolean,
              output: AsyncOutput) {
@@ -119,6 +121,7 @@ internal class HttpResponseImpl2(val responseBodyPool: ObjectPool<HttpResponseBo
         this.encode = encode
         status = 404
         this.keepAlive = keepAlive
+        enableCompress = true
 
         val encodeHeader = when (encode) {
             EncodeType.GZIP -> "gzip"
@@ -181,7 +184,9 @@ internal class HttpResponseImpl2(val responseBodyPool: ObjectPool<HttpResponseBo
         }
         app.append("\r\n")
         body = responseBodyPool.borrow {
-            it.init(contentLength, encode, rawOutput!!)
+            it.init(contentLength, encode, rawOutput!!,
+                    if (enableCompress) zlibBufferSize else 0
+            )
         }
         rawOutput = null
         buf.flush()

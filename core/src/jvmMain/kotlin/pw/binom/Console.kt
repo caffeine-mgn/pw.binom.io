@@ -6,7 +6,7 @@ import pw.binom.io.ReaderUTF82
 import java.io.PrintStream
 import java.nio.channels.Channels
 
-private val tmpBuf = ByteBuffer.alloc(32)
+//private val tmpBuf = ByteBuffer.alloc(32)
 
 actual object Console {
     private class Out(oo: PrintStream) : Output {
@@ -32,14 +32,14 @@ actual object Console {
 
     actual val inChannel: Input = object : Input {
         val cc = Channels.newChannel(System.`in`)
-        override fun skip(length: Long): Long {
-            var l = length
-            while (l > 0) {
-                tmpBuf.reset(0, minOf(tmpBuf.capacity, l.toInt()))
-                l -= read(tmpBuf)
-            }
-            return length
-        }
+//        override fun skip(length: Long): Long {
+//            var l = length
+//            while (l > 0) {
+//                tmpBuf.reset(0, minOf(tmpBuf.capacity, l.toInt()))
+//                l -= read(tmpBuf)
+//            }
+//            return length
+//        }
 
         override fun read(dest: ByteBuffer): Int =
                 cc.read(dest.native)

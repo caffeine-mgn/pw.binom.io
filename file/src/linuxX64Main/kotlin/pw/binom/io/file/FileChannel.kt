@@ -1,6 +1,7 @@
 package pw.binom.io.file
 
 import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.plus
 import platform.posix.*
 import pw.binom.ByteBuffer
@@ -31,7 +32,8 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         }
     }) ?: throw FileNotFoundException(file.path)
 
-    override fun skip(length: Long): Long {
+    actual fun skip(length: Long): Long {
+        memScoped {  }
         if (length == 0L)
             return 0L
         if (feof(handler) != 0)

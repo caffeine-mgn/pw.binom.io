@@ -31,7 +31,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
             return native.remaining()
         }
 
-    override fun skip(length: Long): Long {
+    actual fun skip(length: Long): Long {
         checkClosed()
         val pos = minOf((native.position() + length).toInt(), native.limit())
         val len = pos - native.position()

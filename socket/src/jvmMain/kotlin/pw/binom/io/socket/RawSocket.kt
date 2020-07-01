@@ -68,14 +68,14 @@ actual class RawSocket constructor(val native: JSocket) : Socket {
     override fun flush() {
     }
 
-    override fun skip(length: Long): Long {
-        var l = length
-        while (l > 0) {
-            skipBuffer.reset(0, minOf(skipBuffer.capacity, l.toInt()))
-            l -= read(skipBuffer)
-        }
-        return length
-    }
+//    override fun skip(length: Long): Long {
+//        var l = length
+//        while (l > 0) {
+//            skipBuffer.reset(0, minOf(skipBuffer.capacity, l.toInt()))
+//            l -= read(skipBuffer)
+//        }
+//        return length
+//    }
 
     override fun read(dest: ByteBuffer): Int =
             native.channel.read(dest.native)
@@ -105,4 +105,4 @@ actual class RawSocket constructor(val native: JSocket) : Socket {
 
 }
 
-private val skipBuffer = ByteBuffer.alloc(128)
+//private val skipBuffer = ByteBuffer.alloc(128)

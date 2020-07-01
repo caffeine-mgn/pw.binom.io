@@ -166,9 +166,9 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 //        }
 //    }
 
-    override fun skip(length: Long): Long {
-        TODO("Not yet implemented")
-    }
+//    override fun skip(length: Long): Long {
+//        TODO("Not yet implemented")
+//    }
 
     override fun read(dest: ByteBuffer): Int {
         if (dest.remaining == 0)

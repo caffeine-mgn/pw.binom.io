@@ -11,19 +11,19 @@ class BufferedInput(val stream: Input, bufferSize: Int = DEFAULT_BUFFER_SIZE) : 
     val available
         get() = if (buffer.remaining == 0) -1 else buffer.remaining
 
-    override fun skip(length: Long): Long {
-        val buf = ByteBuffer.alloc(512)
-        try {
-            var l = length
-            while (l > 0) {
-                buf.reset(0, minOf(buf.capacity, l.toInt()))
-                l -= read(buf)
-            }
-        } finally {
-            buf.close()
-        }
-        return length
-    }
+//    override fun skip(length: Long): Long {
+//        val buf = ByteBuffer.alloc(512)
+//        try {
+//            var l = length
+//            while (l > 0) {
+//                buf.reset(0, minOf(buf.capacity, l.toInt()))
+//                l -= read(buf)
+//            }
+//        } finally {
+//            buf.close()
+//        }
+//        return length
+//    }
 
     override fun read(dest: ByteBuffer): Int {
         if (buffer.remaining == 0) {

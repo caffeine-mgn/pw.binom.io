@@ -4,23 +4,22 @@ import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 
-private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
+//private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
 
 open class AsyncInflateInput(val stream: AsyncInput, bufferSize: Int = 512, wrap: Boolean = false, val autoCloseStream: Boolean = false) : AsyncInput {
     private val buf2 = ByteBuffer.alloc(bufferSize)
     private val inflater = Inflater(wrap)
     protected var usesDefaultInflater = true
-    private var cursor = Cursor()
     private var first = true
 
-    override suspend fun skip(length: Long): Long {
-        var l = length
-        while (l > 0) {
-            tmpBuf.reset(0, minOf(tmpBuf.capacity, l.toInt()))
-            l -= readFully(tmpBuf)
-        }
-        return length
-    }
+//    override suspend fun skip(length: Long): Long {
+//        var l = length
+//        while (l > 0) {
+//            tmpBuf.reset(0, minOf(tmpBuf.capacity, l.toInt()))
+//            l -= readFully(tmpBuf)
+//        }
+//        return length
+//    }
 
     protected suspend fun full() {
         if (!first && buf2.remaining > 0)

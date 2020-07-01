@@ -98,14 +98,14 @@ actual class RawSocket internal constructor(override val native: NativeSocketHol
     override fun flush() {
     }
 
-    override fun skip(length: Long): Long {
-        var l = length
-        while (l > 0) {
-            skipBuffer.reset(0, l.toInt())
-            l -= read(skipBuffer)
-        }
-        return length
-    }
+//    override fun skip(length: Long): Long {
+//        var l = length
+//        while (l > 0) {
+//            skipBuffer.reset(0, l.toInt())
+//            l -= read(skipBuffer)
+//        }
+//        return length
+//    }
 
     override fun read(dest: ByteBuffer): Int {
         val r = recvSocket(native, dest)
@@ -144,7 +144,7 @@ actual class RawSocket internal constructor(override val native: NativeSocketHol
     }
 }
 
-private val skipBuffer = ByteBuffer.alloc(128)
+//private val skipBuffer = ByteBuffer.alloc(128)
 
 internal fun portCheck(port: Int) {
     if (port < 0 || port > 0xFFFF)

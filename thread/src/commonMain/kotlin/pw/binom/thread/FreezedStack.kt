@@ -6,9 +6,9 @@ import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
 import pw.binom.collection.EmptyIterator
 import pw.binom.doFreeze
-import pw.binom.io.hold
+import pw.binom.io.Closeable
 
-class FreezedStack<T> : MutableIterable<T> {
+class FreezedStack<T> : MutableIterable<T>, Closeable {
     private var changeCounter = AtomicInt(0)
 
     private inner class TopBottomStackIterator : MutableIterator<T> {
@@ -20,7 +20,7 @@ class FreezedStack<T> : MutableIterable<T> {
         }
 
         var currentItem: Item? = null
-        override fun hasNext(): Boolean = lock.hold {
+        override fun hasNext(): Boolean = lock.synchronize {
             if (changeCounter != this@FreezedStack.changeCounter.value)
                 throw ConcurrentModificationException()
             if (currentItem == null && first && !isEmpty)
@@ -29,7 +29,7 @@ class FreezedStack<T> : MutableIterable<T> {
         }
 
         override fun next(): T =
-                lock.hold {
+                lock.synchronize {
                     if (changeCounter != this@FreezedStack.changeCounter.value)
                         throw ConcurrentModificationException()
                     if (currentItem == null && first && !isEmpty) {
@@ -61,7 +61,7 @@ class FreezedStack<T> : MutableIterable<T> {
         get() = _size.value
 
     fun clear() {
-        lock.hold {
+        lock.synchronize {
             _size.value = 0
             top.value = null
             bottom.value = null
@@ -81,7 +81,7 @@ class FreezedStack<T> : MutableIterable<T> {
     private val bottom = AtomicReference<Item?>(null)
 
     fun pushFirst(value: T) {
-        lock.hold {
+        lock.synchronize {
             val i = Item(value, next = bottom.value, back = null).doFreeze()
 
             if (bottom.value == null)
@@ -95,7 +95,7 @@ class FreezedStack<T> : MutableIterable<T> {
     }
 
     fun pushLast(value: T) {
-        lock.hold {
+        lock.synchronize {
             val i = Item(value, next = null, back = bottom.value).doFreeze()
 
             if (top.value == null)
@@ -138,7 +138,7 @@ class FreezedStack<T> : MutableIterable<T> {
         return item.value
     }
 
-    fun popFirst(): T = lock.hold {
+    fun popFirst(): T = lock.synchronize {
         privatePopFirst()
     }
 
@@ -153,7 +153,7 @@ class FreezedStack<T> : MutableIterable<T> {
         return item.value
     }
 
-    fun popLast(): T = lock.hold {
+    fun popLast(): T = lock.synchronize {
         privatePopLast()
     }
 
@@ -175,7 +175,7 @@ class FreezedStack<T> : MutableIterable<T> {
             get() = this@FreezedStack.size
 
         override fun pop(dist: PopResult<T>) {
-            lock.hold {
+            lock.synchronize {
                 if (isEmpty)
                     dist.clear()
                 else
@@ -204,7 +204,7 @@ class FreezedStack<T> : MutableIterable<T> {
             get() = this@FreezedStack.size
 
         override fun pop(dist: PopResult<T>) {
-            lock.hold {
+            lock.synchronize {
                 if (isEmpty)
                     dist.clear()
                 else
@@ -235,5 +235,9 @@ class FreezedStack<T> : MutableIterable<T> {
     override fun iterator(): MutableIterator<T> {
         if (isEmpty) return EmptyIterator()
         return TopBottomStackIterator()
+    }
+
+    override fun close() {
+        lock.close()
     }
 }

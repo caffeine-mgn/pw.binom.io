@@ -25,9 +25,9 @@ actual class RawSocketChannel constructor(override val native: JSocketChannel) :
         }
     }
 
-    override fun skip(length: Long): Long {
-        TODO("Not yet implemented")
-    }
+//    override fun skip(length: Long): Long {
+//        TODO("Not yet implemented")
+//    }
 
     override fun read(dest: ByteBuffer): Int {
         return try {

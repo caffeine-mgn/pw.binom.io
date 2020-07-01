@@ -1,12 +1,12 @@
 package pw.binom.io.socket.nio
 
 import pw.binom.ByteBuffer
-import pw.binom.async
 import pw.binom.io.*
 import pw.binom.io.socket.*
 import pw.binom.neverFreeze
 import pw.binom.start
 import pw.binom.thread.Lock
+import pw.binom.thread.synchronize
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -124,9 +124,9 @@ open class SocketNIOManager : Closeable {
         override suspend fun flush() {
         }
 
-        override suspend fun skip(length: Long): Long {
-            TODO("Not yet implemented")
-        }
+//        override suspend fun skip(length: Long): Long {
+//            TODO("Not yet implemented")
+//        }
 
         override suspend fun read(dest: ByteBuffer): Int {
             if (dest.remaining == 0) {
@@ -329,7 +329,7 @@ open class SocketNIOManager : Closeable {
      * Attach channel to current ConnectionManager
      */
     fun attach(channel: SocketChannel, attachment: Any? = null, func: (suspend (ConnectionRaw) -> Unit)? = null): ConnectionRaw {
-        executeThreadLock.hold {
+        executeThreadLock.synchronize {
             channel.blocking = false
             val connection = ConnectionRaw(channel = channel, attachment = attachment, manager = this)
             connection.selectionKey = selector.reg(channel, connection)
@@ -342,12 +342,14 @@ open class SocketNIOManager : Closeable {
 
     override fun close() {
         selector.keys.toTypedArray().forEach {
-            val con = (it.attachment as? ConnectionRaw) ?: return@forEach
-            if (con.manager === this) {
-                async {
-                    con.close()
-                }
-            }
+            it.cancel()
+            it.channel.close()
+//            val con = (it.attachment as? ConnectionRaw) ?: return@forEach
+//            if (con.manager === this) {
+//                async {
+//                    con.close()
+//                }
+//            }
         }
         selector.close()
     }

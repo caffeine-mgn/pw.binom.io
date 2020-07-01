@@ -4,7 +4,7 @@ import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.Input
 
-private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
+//private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
 
 open class InflateInput(val stream: Input, bufferSize: Int = 512, wrap: Boolean = false, val autoCloseStream: Boolean = false) : Input {
     private val buf2 = ByteBuffer.alloc(bufferSize)
@@ -12,14 +12,14 @@ open class InflateInput(val stream: Input, bufferSize: Int = 512, wrap: Boolean 
     protected var usesDefaultInflater = true
     private var first = true
 
-    override fun skip(length: Long): Long {
-        var l = length
-        while (l > 0) {
-            tmpBuf.reset(0, minOf(tmpBuf.capacity, l.toInt()))
-            l -= read(tmpBuf)
-        }
-        return length
-    }
+//    override fun skip(length: Long): Long {
+//        var l = length
+//        while (l > 0) {
+//            tmpBuf.reset(0, minOf(tmpBuf.capacity, l.toInt()))
+//            l -= read(tmpBuf)
+//        }
+//        return length
+//    }
 
     override fun read(dest: ByteBuffer): Int {
         val l = dest.remaining

@@ -43,9 +43,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolea
     override val isEof: Boolean
         get() = closed || eof
 
-    override suspend fun skip(length: Long): Long {
-        TODO("Not yet implemented")
-    }
+//    override suspend fun skip(length: Long): Long {
+//        TODO("Not yet implemented")
+//    }
 
     private var chunkedSize: ULong? = null
     private var readed = 0uL

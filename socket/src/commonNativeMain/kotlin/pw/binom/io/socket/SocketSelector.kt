@@ -9,11 +9,16 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
         neverFreeze()
     }
 
+    private var closed = false
+
     private val native = NativeEpoll(connections)
     private val list = NativeEpollList(connections)
     override fun close() {
+        if (closed)
+            throw IllegalStateException("SocketSelector already closed")
         list.free()
         native.free()
+        closed = true
     }
 
     internal inner class SelectorKeyImpl(override val channel: NetworkChannel,
@@ -79,7 +84,7 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
             el.isReadable = item.isReadable
             el.isWritable = item.isWritable
             if (item.isClosed) {
-                val cc=el.channel
+                val cc = el.channel
                 when (cc) {
                     is RawSocketChannel -> cc.socket.internalDisconnected()
                     is RawServerSocketChannel -> el.channel.nsocket.internalDisconnected()
