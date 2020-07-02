@@ -15,7 +15,7 @@ actual class Lock : Closeable {
     //    val native2 = CreateMutex!!(null, FALSE, null)!!
     var closed = AtomicInt(0)
 
-    private val native = nativeHeap.alloc<CRITICAL_SECTION>()//malloc(sizeOf<CRITICAL_SECTION>().convert())!!.reinterpret<CRITICAL_SECTION>()
+    private val native = nativeHeap.alloc<CRITICAL_SECTION>()
 
     init {
         InitializeCriticalSection(native.ptr)
@@ -62,7 +62,6 @@ actual class Lock : Closeable {
 
         actual fun notify() {
             WakeConditionVariable(native.ptr)
-
         }
 
         actual fun notifyAll() {
