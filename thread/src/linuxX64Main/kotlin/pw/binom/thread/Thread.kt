@@ -13,7 +13,7 @@ private fun executeInOtherThread(func: () -> Unit): ULong {
         val thread = alloc<ULongVar>()
         val ptr = StableRef.create(func).asCPointer()
         pthread_create(
-                thread.ptr,
+                thread.ptr.reinterpret(),
                 null,
                 staticCFunction<COpaquePointer?, Long> {
                     initRuntimeIfNeeded()
@@ -105,7 +105,7 @@ actual open class Thread {
     }
 
     actual fun join() {
-        pthread_join(selfId, null)
+        pthread_join(selfId.convert(), null)
     }
 
     private val interrupted = AtomicBoolean(false)

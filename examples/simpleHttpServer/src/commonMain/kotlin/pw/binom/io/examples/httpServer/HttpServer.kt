@@ -9,14 +9,20 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.HttpServer
-import pw.binom.io.socket.nio.SingleThreadNioManager
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
-import pw.binom.pool.ObjectPool
+import pw.binom.thread.Thread
 
 fun main(args: Array<String>) {
+
+    repeat(30) {
+        Thread.sleep(5000)
+        ByteBuffer.alloc(1024 * 1024)
+    }
+
     println("Environment.workDirectory: ${Environment.workDirectory}")
     val byteDataPool = ByteBufferPool()
-    val nioManager = SingleThreadNioManager()
+    val nioManager = SocketNIOManager()
     val server = HttpServer(nioManager, object : Handler {
         override suspend fun request(req: HttpRequest, resp: HttpResponse) {
             val file = File(File(Environment.workDirectory), req.uri)

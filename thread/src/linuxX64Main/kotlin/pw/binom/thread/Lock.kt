@@ -12,54 +12,52 @@ private const val checkTime = 100
 
 actual class Lock : Closeable {
 
-    private val native = nativeHeap.alloc<pthread_mutex_t>()//.malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
+    private val native = cValue<pthread_mutex_t>()//nativeHeap.alloc<pthread_mutex_t>()//.malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
     private var closed = AtomicInt(0)
 
     init {
-        pthread_mutex_init(native.ptr, null)
+        pthread_mutex_init(native, null)
     }
 
     actual fun lock() {
-        pthread_mutex_lock(native.ptr)
+        pthread_mutex_lock(native)
     }
 
     actual fun unlock() {
-        pthread_mutex_unlock(native.ptr)
+        pthread_mutex_unlock(native)
     }
 
     override fun close() {
         if (closed.value == 1)
             throw IllegalStateException("Lock already closed")
-        pthread_mutex_destroy(native.ptr)
-        nativeHeap.free(native)
+        pthread_mutex_destroy(native)
         closed.value = 1
     }
 
     actual fun newCondition(): Lock.Condition = Condition(native)
 
-    actual class Condition(val mutex: pthread_mutex_t) : Closeable {
-        val native = nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
+    actual class Condition(val mutex: CValue<pthread_mutex_t>) : Closeable {
+        val native = cValue<pthread_cond_t>()//nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
-            pthread_cond_init(native.ptr, null)
+            pthread_cond_init(native, null)
         }
 
         actual fun wait() {
-            pthread_cond_wait(native.ptr, mutex.ptr)
+            pthread_cond_wait(native, mutex)
         }
 
         actual fun notify() {
-            pthread_cond_signal(native.ptr)
+            pthread_cond_signal(native)
         }
 
         override fun close() {
             notifyAll()
-            pthread_cond_destroy(native.ptr)
-            nativeHeap.free(native)
+            pthread_cond_destroy(native)
         }
 
         actual fun notifyAll() {
-            pthread_cond_broadcast(native.ptr)
+            pthread_cond_broadcast(native)
         }
 
         @OptIn(ExperimentalTime::class)
@@ -71,7 +69,7 @@ actual class Lock : Closeable {
             return memScoped<Boolean> {
                 val waitUntil = alloc<timespec>()
                 clock_gettime(CLOCK_REALTIME, waitUntil.ptr)
-                waitUntil.tv_nsec = checkTime * 1000000L
+                waitUntil.tv_nsec = (checkTime * 1000000L).convert()
 
                 val now = TimeSource.Monotonic.markNow()
                 while (true) {

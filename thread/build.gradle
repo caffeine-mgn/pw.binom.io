@@ -64,7 +64,7 @@ kotlin {
 
         linuxArm32HfpMain {
             dependencies {
-                dependsOn nativeMain
+                dependsOn linuxX64Main
             }
         }
 

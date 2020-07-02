@@ -110,7 +110,6 @@ open class HttpServer(val manager: SocketNIOManager,
         binded.forEach {
             it.close()
         }
-        manager.close()
         async {
             while (bufferedInputPool.size > 0) {
                 bufferedInputPool.borrow { it.currentStream = null }.close()
