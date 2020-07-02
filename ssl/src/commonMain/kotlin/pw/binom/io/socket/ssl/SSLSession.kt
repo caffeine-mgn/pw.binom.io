@@ -2,8 +2,9 @@ package pw.binom.io.socket.ssl
 
 import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
+import pw.binom.io.Closeable
 
-expect class SSLSession {
+expect class SSLSession:Closeable {
     enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR
     }

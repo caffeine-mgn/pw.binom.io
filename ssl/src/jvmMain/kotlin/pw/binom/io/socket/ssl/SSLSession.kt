@@ -2,6 +2,7 @@ package pw.binom.io.socket.ssl
 
 import pw.binom.ByteDataBuffer
 import pw.binom.get
+import pw.binom.io.Closeable
 import pw.binom.length
 import pw.binom.update
 import java.nio.ByteBuffer
@@ -9,7 +10,7 @@ import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult
 
 
-actual class SSLSession(private val sslEngine: SSLEngine) {
+actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
     actual enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR
     }
@@ -396,5 +397,10 @@ actual class SSLSession(private val sslEngine: SSLEngine) {
                 state,
                 s.bytesConsumed()
         )
+    }
+
+    override fun close() {
+        sslEngine.closeInbound()
+        sslEngine.closeOutbound()
     }
 }

@@ -75,14 +75,14 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
         }
         if (SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, connect.cstr) <= 0)
             TODO("SSL_ctrl error")
-        return SSLSession(ssl, true)
+        return SSLSession(sslCtx, ssl, true)
     }
 
     actual fun serverSession(): SSLSession {
         val sslCtx = client()
         SSL_CTX_set_verify(sslCtx, SSL_VERIFY_NONE, null)
         val ssl = SSL_new(sslCtx)!!
-        return SSLSession(ssl, false)
+        return SSLSession(sslCtx, ssl, false)
     }
 }
 

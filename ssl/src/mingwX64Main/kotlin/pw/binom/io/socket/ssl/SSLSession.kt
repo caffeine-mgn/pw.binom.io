@@ -6,8 +6,9 @@ import platform.openssl.*
 import kotlinx.cinterop.*
 import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
+import pw.binom.io.Closeable
 
-actual class SSLSession(val ssl: CPointer<SSL>, val client: Boolean) {
+actual class SSLSession(val ctx:CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val client: Boolean): Closeable {
     actual enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR
     }
@@ -273,5 +274,9 @@ actual class SSLSession(val ssl: CPointer<SSL>, val client: Boolean) {
         return Status(
                 state, 0
         )
+    }
+
+    override fun close() {
+        SSL_CTX_free(ctx)
     }
 }
