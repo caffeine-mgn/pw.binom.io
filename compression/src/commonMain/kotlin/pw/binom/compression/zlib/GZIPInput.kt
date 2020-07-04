@@ -7,11 +7,15 @@ import pw.binom.io.CheckedInput
 import pw.binom.io.EOFException
 import pw.binom.io.IOException
 
-class GZIPInput(stream: Input, bufferSize: Int = 512, autoCloseStream: Boolean = false) : InflateInput(
+class GZIPInput(
+        stream: Input,
+        bufferSize: Int = 512,
+        closeStream: Boolean = false
+) : InflateInput(
         stream = stream,
         bufferSize = bufferSize,
         wrap = false,
-        autoCloseStream = autoCloseStream) {
+        closeStream = closeStream) {
     private val crc = CRC32()
     private val tmpbuf = ByteBuffer.alloc(128)
     private val tt = ByteBuffer.alloc(2)

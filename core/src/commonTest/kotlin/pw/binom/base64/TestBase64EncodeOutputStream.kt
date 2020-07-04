@@ -2,7 +2,6 @@ package pw.binom.base64
 
 import pw.binom.asUTF8ByteArray
 import pw.binom.io.use
-import pw.binom.io.write
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -25,7 +24,7 @@ class TestBase64EncodeOutputStream {
             println("$index->${byte.toBinary()}")
         }
         val sb = StringBuilder()
-        Base64EncodeOutputStream(sb).use {
+        Base64EncodeOutput(sb).use {
             it.write(data)
         }
         assertEquals("SGVsbG8gd29ybGQh", sb.toString())
@@ -34,7 +33,7 @@ class TestBase64EncodeOutputStream {
     @Test
     fun test2() {
         val out = StringBuilder()
-        Base64EncodeOutputStream(out).also {
+        Base64EncodeOutput(out).also {
             it.write(0)
             it.write(25)
             it.write(26)

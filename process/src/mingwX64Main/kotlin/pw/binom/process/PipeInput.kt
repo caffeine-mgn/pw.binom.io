@@ -3,13 +3,11 @@ package pw.binom.process
 import kotlinx.cinterop.*
 import platform.windows.*
 import pw.binom.thread.Thread
-import pw.binom.io.InputStream
+import pw.binom.Input
 
-class PipeInput(val process: WinProcess) : Pipe(), InputStream {
+class PipeInput(val process: WinProcess) : Pipe(), Input {
     override val handler: HANDLE
         get() = writePipe.pointed.value!!
-
-//    val rr = platform.posix.malloc(sizeOf<HANDLEVar>().convert())!!.reinterpret<HANDLEVar>()
 
     override val otherHandler: HANDLE
         get() = readPipe.pointed.value!!//rr.pointed.value!!

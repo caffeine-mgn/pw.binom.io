@@ -5,10 +5,10 @@ import platform.windows.HANDLE
 import platform.windows.HANDLE_FLAG_INHERIT
 import platform.windows.SetHandleInformation
 import platform.windows.WriteFile
-import pw.binom.io.OutputStream
+import pw.binom.Output
 import kotlin.native.concurrent.freeze
 
-class PipeOutput : Pipe(), OutputStream {
+class PipeOutput : Pipe(), Output {
     override val handler: HANDLE
         get() = readPipe.pointed.value!!
 

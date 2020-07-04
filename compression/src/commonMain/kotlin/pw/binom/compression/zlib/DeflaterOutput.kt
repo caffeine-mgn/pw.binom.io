@@ -9,7 +9,7 @@ open class DeflaterOutput(
         bufferSize: Int = 1024,
         wrap: Boolean = false,
         syncFlush: Boolean = true,
-        val autoCloseStream: Boolean = false
+        val closeStream: Boolean = false
 ) : Output {
 
     private val deflater = Deflater(level, wrap, syncFlush)
@@ -70,7 +70,7 @@ open class DeflaterOutput(
         flush()
         finish()
         deflater.close()
-        if (autoCloseStream) {
+        if (closeStream) {
             stream.close()
         }
     }

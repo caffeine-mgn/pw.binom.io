@@ -7,11 +7,11 @@ import pw.binom.io.CRC32
 import pw.binom.io.EOFException
 import pw.binom.io.IOException
 
-class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, autoCloseStream: Boolean = false) : AsyncInflateInput(
+class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boolean = false) : AsyncInflateInput(
         stream = stream,
         bufferSize = bufferSize,
         wrap = false,
-        autoCloseStream = autoCloseStream
+        closeStream = closeStream
 ) {
     private val crc = CRC32()
     private val tmpbuf = ByteBuffer.alloc(128)
@@ -21,20 +21,10 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, autoCloseStream:
         usesDefaultInflater = true
     }
 
-//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        readHeader(stream)
-//        return super.read(data, offset, length)
-//    }
-
     override suspend fun read(dest: ByteBuffer): Int {
         readHeader(stream)
         return super.read(dest)
     }
-
-//    override suspend fun skip(length: Long): Long {
-//        readHeader(stream)
-//        return super.skip(length)
-//    }
 
     private var headerRead = false
     private suspend fun readHeader(stream: AsyncInput): Int {
@@ -91,14 +81,14 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, autoCloseStream:
     }
 
     private suspend fun skipBytes(stream: AsyncInput, n: Int) {
-        var n = n
-        while (n > 0) {
-            tmpbuf.reset(0, if (n < tmpbuf.capacity) n else tmpbuf.capacity)
+        var skipLen = n
+        while (skipLen > 0) {
+            tmpbuf.reset(0, minOf(skipLen, tmpbuf.capacity))
             val len: Int = stream.readFully(tmpbuf)
             if (len == -1) {
                 throw EOFException()
             }
-            n -= len
+            skipLen -= len
         }
     }
 

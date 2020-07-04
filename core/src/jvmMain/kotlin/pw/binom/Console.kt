@@ -1,6 +1,6 @@
 package pw.binom
 
-import pw.binom.io.AppendableUTF82
+import pw.binom.io.AppendableUTF8
 import pw.binom.io.Reader
 import pw.binom.io.ReaderUTF82
 import java.io.PrintStream
@@ -53,8 +53,8 @@ actual object Console {
         }
 
     }
-    actual val std: Appendable = AppendableUTF82(stdChannel)
-    actual val err: Appendable = AppendableUTF82(errChannel)
+    actual val std: Appendable = AppendableUTF8(stdChannel)
+    actual val err: Appendable = AppendableUTF8(errChannel)
     actual val input: Reader = ReaderUTF82(inChannel)
 
 }

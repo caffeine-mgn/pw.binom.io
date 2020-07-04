@@ -6,7 +6,7 @@ import platform.zlib.Z_OK
 import platform.zlib.Z_STREAM_ERROR
 import platform.zlib.Z_STREAM_END
 
-fun zlibConsts(value: Int) =
+internal fun zlibConsts(value: Int) =
         when (value) {
             Z_OK -> "Z_OK"
             Z_STREAM_ERROR -> "Z_STREAM_ERROR"

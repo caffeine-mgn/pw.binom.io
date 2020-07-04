@@ -5,14 +5,20 @@ import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.empty
 
-class AsyncBufferedInput(override val stream: AsyncInput, bufferSize: Int = DEFAULT_BUFFER_SIZE) : AbstractAsyncBufferedInput() {
+class AsyncBufferedInput(
+        override val stream: AsyncInput,
+        bufferSize: Int = DEFAULT_BUFFER_SIZE,
+        private val closeStream: Boolean
+) : AbstractAsyncBufferedInput() {
     override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
 
     override suspend fun close() {
         try {
             super.close()
         } finally {
-            stream.close()
+            if (closeStream) {
+                stream.close()
+            }
             buffer.close()
         }
     }
@@ -76,4 +82,5 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
     }
 }
 
-fun AsyncInput.bufferedInput(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedInput(this, bufferSize)
+fun AsyncInput.bufferedInput(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeStream: Boolean = true) =
+        AsyncBufferedInput(stream = this, bufferSize = bufferSize, closeStream = closeStream)

@@ -3,11 +3,14 @@ package pw.binom.compression.zlib
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.Input
+import pw.binom.empty
 
-//private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
-
-open class InflateInput(val stream: Input, bufferSize: Int = 512, wrap: Boolean = false, val autoCloseStream: Boolean = false) : Input {
-    private val buf2 = ByteBuffer.alloc(bufferSize)
+open class InflateInput(
+        val stream: Input,
+        bufferSize: Int = 512,
+        wrap: Boolean = false,
+        val closeStream: Boolean = false) : Input {
+    private val buf2 = ByteBuffer.alloc(bufferSize).empty()
     private val inflater = Inflater(wrap)
     protected var usesDefaultInflater = true
     private var first = true
@@ -27,7 +30,6 @@ open class InflateInput(val stream: Input, bufferSize: Int = 512, wrap: Boolean 
             full2()
             if (buf2.remaining == 0 || dest.remaining == 0)
                 break
-            println("inflate! ${buf2.remaining}")
             val r = inflater.inflate(buf2, dest)
             if (r == 0)
                 break
@@ -36,11 +38,11 @@ open class InflateInput(val stream: Input, bufferSize: Int = 512, wrap: Boolean 
     }
 
     protected fun full2() {
-        if (!first && buf2.remaining > 0)
+        if (buf2.remaining > 0)
             return
+        buf2.clear()
         stream.read(buf2)
         buf2.flip()
-        first = false
     }
 
 //    protected fun full() {
@@ -71,7 +73,7 @@ open class InflateInput(val stream: Input, bufferSize: Int = 512, wrap: Boolean 
             inflater.end()
         inflater.close()
         buf2.close()
-        if (autoCloseStream) {
+        if (closeStream) {
             stream.close()
         }
     }

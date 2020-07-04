@@ -1,9 +1,13 @@
 package pw.binom.process
 
+import pw.binom.ByteBuffer
+import pw.binom.Input
+import pw.binom.Output
 import pw.binom.io.InputStream
 import pw.binom.io.OutputStream
 import pw.binom.io.wrap
 import java.io.File
+import java.nio.channels.Channels
 
 class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<String, String>) : Process {
 
@@ -21,9 +25,23 @@ class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<Str
 
     override val pid: Long
         get() = process.pid()
-    override val stdin: OutputStream = process.outputStream.wrap()
-    override val stdout: InputStream = ProcessInputStream(process, process.inputStream)
-    override val stderr: InputStream = ProcessInputStream(process, process.errorStream)
+    override val stdin: Output = object :Output{
+
+        private val channel = Channels.newChannel(process.outputStream)
+
+        override fun write(data: ByteBuffer): Int =
+                channel.write(data.native)
+
+        override fun flush() {
+        }
+
+        override fun close() {
+            channel.close()
+        }
+
+    }
+    override val stdout: Input = ProcessInputStream(process, process.inputStream)
+    override val stderr: Input = ProcessInputStream(process, process.errorStream)
     override val exitStatus: Int
         get() {
             try {
@@ -50,21 +68,14 @@ class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<Str
 actual fun Process.Companion.execute(path: String, args: List<String>, env: Map<String, String>, workDir: String?): Process =
         JvmProcess(cmd = path, args = args.toList(), workDir = workDir, env = env)
 
-private class ProcessInputStream(val process: java.lang.Process, val stream: java.io.InputStream) : InputStream {
+private class ProcessInputStream(val process: java.lang.Process, val stream: java.io.InputStream) : Input {
+    private val channel = Channels.newChannel(stream)
 
-    override val available: Int
-        get() {
-            val r = stream.available()
-            if (r <= 0 && process.isAlive)
-                return -1
-            return r
-        }
-
-    override fun read(data: ByteArray, offset: Int, length: Int): Int {
+    override fun read(dest: ByteBuffer): Int {
         while (stream.available() == 0 && process.isAlive) {
             Thread.sleep(10)
         }
-        return stream.read(data, offset, length)
+        return channel.read(dest.native)
     }
 
     override fun close() {

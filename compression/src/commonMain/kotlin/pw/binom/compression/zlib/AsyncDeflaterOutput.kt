@@ -9,7 +9,7 @@ open class AsyncDeflaterOutput(
         bufferSize: Int = 512,
         wrap: Boolean = false,
         syncFlush: Boolean = true,
-        val autoCloseStream: Boolean = false
+        val closeStream: Boolean = false
 ) : AsyncOutput {
 
     private val deflater = Deflater(level, wrap, syncFlush)
@@ -20,38 +20,7 @@ open class AsyncDeflaterOutput(
     protected val def
         get() = deflater
 
-//    protected val cursor = Cursor()
-
     protected var usesDefaultDeflater = true
-
-//    init {
-//        cursor.outputLength = buffer.size
-//    }
-
-//    private val sync = ByteArray(1)
-//
-//    override suspend fun write(data: Byte): Boolean {
-//        sync[0] = data
-//        return write(sync) == 1
-//    }
-
-//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        cursor.inputLength = length
-//        cursor.inputOffset = offset
-//
-//        while (true) {
-//            cursor.outputOffset = 0
-//            deflater.deflate(cursor, data, buffer)
-//
-//            val writed = buffer.size - cursor.availOut
-//            if (writed > 0)
-//                stream.write(buffer, 0, writed)
-//
-//            if (cursor.availOut > 0)
-//                break
-//        }
-//        return length
-//    }
 
     override suspend fun write(data: ByteBuffer): Int {
         val vv = data.remaining
@@ -92,7 +61,7 @@ open class AsyncDeflaterOutput(
     override suspend fun close() {
         finish()
         deflater.close()
-        if (autoCloseStream) {
+        if (closeStream) {
             stream.close()
         }
     }

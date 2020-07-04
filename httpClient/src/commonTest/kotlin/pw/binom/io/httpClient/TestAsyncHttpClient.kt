@@ -1,20 +1,86 @@
 package pw.binom.io.httpClient
 
-import pw.binom.URL
-import pw.binom.async
-import pw.binom.io.http.Headers
-import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
-import pw.binom.io.readText
+import pw.binom.*
+import pw.binom.io.file.AccessType
+import pw.binom.io.file.File
+import pw.binom.io.file.channel
+import pw.binom.io.readln
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
+class TestAsyncHttpClient {
+
+    val tm = ByteBuffer.alloc(1024 * 1024 * 2)
+
+    suspend fun AsyncInput.skipAll() {
+        println("Try skip all")
+        while (true) {
+            tm.clear()
+            if (this.read(tm) == 0) {
+                println("Skip 0")
+                break
+            }
+            tm.flip()
+            println("Skiped: ${tm.remaining}")
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun test() {
+//        File("path to file").channel(AccessType.READ).utf8Reader().use {
+//            while (true){
+//                val line = it.readln()?:break
+//                line.splitToSequence(',').forEachIndexed { index, s ->
+//                    if (index>1)
+//                        print("\t")
+//                    print(s)
+//                }
+//                println()
+//            }
+//        }
+        val manager = SocketNIOManager()
+        val client = AsyncHttpClient(manager)
+        var done = false
+
+        async {
+            try {
+                repeat(3) {
+                    var sipTime:Duration?=null
+                    val readTime = measureTime {
+                        println("\n\n=================[$it]=================\n")
+                        client
+                                .request("GET", URL("https://www.ntv.ru/"))
+                                .response().use {
+                                    println("Response code: ${it.responseCode}")
+                                    sipTime=measureTime {
+                                        it.skipAll()
+                                    }
+                                }
+                    }
+                    println("ReadTime $readTime, skipTime: $sipTime")
+                }
+            } catch (e: Throwable) {
+                e.printStacktrace(Console.std)
+            } finally {
+                done = true
+            }
+        }
+        while (!done) {
+            manager.update(1000)
+        }
+
+        client.close()
+    }
+}
+
+/*
 class HandlerImpl(val txt: String, val chunked: Boolean) : Handler {
     override suspend fun request(req: HttpRequest, resp: HttpResponse) {
         req.headers.forEach { k ->
@@ -253,3 +319,4 @@ class DDD {
     }
 
 }
+*/

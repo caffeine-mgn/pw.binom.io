@@ -87,10 +87,13 @@ See [Logger](logger/src/commonMain/kotlin/pw/binom/logger/Logger.kt)
 - [x] JSON RPC [Implementation](rpcJson) 
 
 #### HTTP
-- [x] Basic Support Http Support
+- [x] Basic Support Http Server<br>
 See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer.kt)
+- [x] Basic Support Http Client<br>
+See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/AsyncHttpClient.kt)
 - [ ] HTTP Server: WebSocket Support
-- [x] HTTPS Support
+- [x] HTTPS Server Support
+- [x] HTTPS Client Support
 
 #### Sync DataBase Access
 - [x] [Common SQL Interfaces](db/README.md)

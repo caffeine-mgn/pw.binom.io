@@ -56,7 +56,7 @@ open class SocketNIOManager : Closeable {
 
         internal var detached = false
 
-        suspend fun detach(): SocketChannel {
+        fun detach(): SocketChannel {
             detached = true
             selectionKey.updateListening(false, false)
             if (!selectionKey.isCanlelled)

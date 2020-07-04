@@ -31,7 +31,7 @@ expect class ByteBuffer : Input, Output, Closeable {
     operator fun set(index: Int, value: Byte)
 }
 
-inline fun ByteBuffer.clone()=realloc(capacity)
+inline fun ByteBuffer.clone() = realloc(capacity)
 
 /**
  * Puts random bytes to free space of [data]
@@ -64,6 +64,7 @@ fun String.toByteBufferUTF8(): ByteBuffer {
     }
     val buf = ByteBuffer.alloc(len)
     UTF8.unicodeToUtf8(this, buf)
+    buf.clear()
     return buf
 }
 

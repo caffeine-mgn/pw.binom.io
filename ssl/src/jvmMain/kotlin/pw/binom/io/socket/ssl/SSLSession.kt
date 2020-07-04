@@ -400,7 +400,7 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
     }
 
     override fun close() {
-        sslEngine.closeInbound()
         sslEngine.closeOutbound()
+//        sslEngine.closeInbound()
     }
 }

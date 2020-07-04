@@ -52,3 +52,4 @@ class ReaderUTF82(val stream: Input) : AbstractReader() {
 }
 
 fun InputStream.utf8Reader() = ReaderUTF8(this)
+fun Input.utf8Reader() = ReaderUTF82(this)

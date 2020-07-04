@@ -118,7 +118,7 @@ fun ByteBuffer.asUTF8String(): String {
     while (remaining>0) {
         val first = get()
         val size = UTF8.utf8CharSize(first)
-        UTF8.utf8toUnicode(first, this)
+        sb.append(UTF8.utf8toUnicode(first, this))
     }
     return sb.toString()
 }

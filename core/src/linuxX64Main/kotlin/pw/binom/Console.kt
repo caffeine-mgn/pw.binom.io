@@ -2,7 +2,7 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import pw.binom.io.AppendableUTF82
+import pw.binom.io.AppendableUTF8
 import pw.binom.io.Reader
 import pw.binom.io.ReaderUTF82
 
@@ -46,9 +46,8 @@ actual object Console {
 
         override fun close() {
         }
-
     }
-    actual val std: Appendable = AppendableUTF82(stdChannel)
+    actual val std: Appendable = AppendableUTF8(stdChannel)
     actual val err: Appendable = object : Appendable {
         override fun append(value: Char): Appendable {
             memScoped {

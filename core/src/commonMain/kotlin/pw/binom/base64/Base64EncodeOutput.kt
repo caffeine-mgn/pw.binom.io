@@ -1,6 +1,7 @@
 package pw.binom.base64
 
-import pw.binom.io.OutputStream
+import pw.binom.ByteBuffer
+import pw.binom.Output
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -15,7 +16,7 @@ internal fun byteToBase64(value: Byte): Char =
             else -> throw IllegalArgumentException()
         }
 
-class Base64EncodeOutputStream(private val appendable: Appendable) : OutputStream {
+class Base64EncodeOutput(private val appendable: Appendable) : Output {
 
 
     private var old = 0.toByte()
@@ -45,10 +46,9 @@ class Base64EncodeOutputStream(private val appendable: Appendable) : OutputStrea
             counter = 0
     }
 
-    override fun write(data: ByteArray, offset: Int, length: Int): Int {
-        if (offset + length > data.size)
-            throw IndexOutOfBoundsException()
-        (offset until (offset + length)).forEach {
+    override fun write(data: ByteBuffer): Int {
+        val length = data.remaining
+        (data.position until data.limit).forEach {
             write(data[it])
         }
         return length

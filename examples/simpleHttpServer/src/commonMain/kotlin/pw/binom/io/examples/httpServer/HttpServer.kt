@@ -11,15 +11,8 @@ import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
-import pw.binom.thread.Thread
 
-fun main(args: Array<String>) {
-
-    repeat(30) {
-        Thread.sleep(5000)
-        ByteBuffer.alloc(1024 * 1024)
-    }
-
+fun main() {
     println("Environment.workDirectory: ${Environment.workDirectory}")
     val byteDataPool = ByteBufferPool()
     val nioManager = SocketNIOManager()

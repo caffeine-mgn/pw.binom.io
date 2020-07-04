@@ -4,10 +4,13 @@ import pw.binom.ByteDataBuffer
 import pw.binom.Output
 import pw.binom.tmp8
 
-class AppendableUTF8(private val stream: OutputStream) : Appendable {
-    private val data = ByteArray(4)
+class AppendableUTF8(private val stream: Output) : Appendable {
+    //private val data = ByteDataBuffer.alloc(4)
     override fun append(c: Char): AppendableUTF8 {
-        stream.write(data, 0, UTF8.unicodeToUtf8(c, data))
+        tmp8.clear()
+        val r = UTF8.unicodeToUtf8(c, tmp8)
+        tmp8.flip()
+        stream.write(tmp8)
         return this
     }
 
@@ -27,31 +30,4 @@ class AppendableUTF8(private val stream: OutputStream) : Appendable {
     }
 }
 
-class AppendableUTF82(private val stream: Output) : Appendable {
-    //private val data = ByteDataBuffer.alloc(4)
-    override fun append(c: Char): AppendableUTF82 {
-        tmp8.clear()
-        val r = UTF8.unicodeToUtf8(c, tmp8)
-        tmp8.flip()
-        stream.write(tmp8)
-        return this
-    }
-
-    override fun append(csq: CharSequence?): AppendableUTF82 {
-        csq?.forEach {
-            append(it)
-        }
-        return this
-    }
-
-    override fun append(csq: CharSequence?, start: Int, end: Int): AppendableUTF82 {
-        csq ?: return this
-        (start..end).forEach {
-            append(csq[it])
-        }
-        return this
-    }
-}
-
-fun OutputStream.utf8Appendable() = AppendableUTF8(this)
-fun Output.utf8Appendable() = AppendableUTF82(this)
+fun Output.utf8Appendable() = AppendableUTF8(this)

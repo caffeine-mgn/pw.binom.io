@@ -4,13 +4,18 @@ import pw.binom.ByteBuffer
 import pw.binom.Output
 import pw.binom.io.CRC32
 
-class GZIPOutput(stream: Output, level: Int, bufferSize: Int = 1024, autoCloseStream: Boolean) : DeflaterOutput(
+class GZIPOutput(
+        stream: Output,
+        level: Int,
+        bufferSize: Int = 1024,
+        closeStream: Boolean
+) : DeflaterOutput(
         stream = stream,
         bufferSize = bufferSize,
         level = level,
         wrap = false,
         syncFlush = false,
-        autoCloseStream = autoCloseStream
+        closeStream = closeStream
 ) {
     private val crc = CRC32()
 

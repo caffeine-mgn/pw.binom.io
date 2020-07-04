@@ -6,6 +6,7 @@ import pw.binom.Input
 import pw.binom.io.InputStream
 import kotlin.jvm.JvmName
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use File.channel(AccessType.READ)")
 expect class FileInputStream(file: File) : InputStream {
 }
 

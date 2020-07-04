@@ -4,13 +4,18 @@ import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.io.CRC32
 
-class AsyncGZIPOutput(stream: AsyncOutput, level: Int, bufferSize: Int = 512,autoCloseStream: Boolean = false) : AsyncDeflaterOutput(
+class AsyncGZIPOutput(
+        stream: AsyncOutput,
+        level: Int,
+        bufferSize: Int = 512,
+        closeStream: Boolean = false
+) : AsyncDeflaterOutput(
         stream = stream,
         bufferSize = bufferSize,
         level = level,
         wrap = false,
         syncFlush = false,
-        autoCloseStream=autoCloseStream
+        closeStream = closeStream
 ) {
     private val crc = CRC32()
 
@@ -49,7 +54,6 @@ class AsyncGZIPOutput(stream: AsyncOutput, level: Int, bufferSize: Int = 512,aut
     }
 
     private fun writeInt(i: Int, buf: ByteBuffer) {
-
         writeShort(i and 0xffff, buf)
         writeShort(i shr 16 and 0xffff, buf)
     }

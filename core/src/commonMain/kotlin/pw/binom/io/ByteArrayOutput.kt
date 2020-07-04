@@ -2,7 +2,7 @@ package pw.binom.io
 
 import pw.binom.*
 import kotlin.math.ceil
-@Deprecated(level = DeprecationLevel.WARNING, message = "Use ByteBuffer")
+
 class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
     var data = ByteBuffer.alloc(capacity)
         private set
