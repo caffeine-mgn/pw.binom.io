@@ -14,7 +14,7 @@ class GZipInputOutputTest {
             compressed.put(10)
         }
         compressed.clear()
-        val def = GZIPOutput(stream = compressed, level = 6, autoCloseStream = false)
+        val def = GZIPOutput(stream = compressed, level = 6, closeStream = false)
         def.write(source)
         def.close()
 
@@ -41,7 +41,7 @@ class GZipInputOutputTest {
                 compressed.put(10)
             }
             compressed.clear()
-            val def = AsyncGZIPOutput(stream = compressed.asyncOutput(), level = 6, autoCloseStream = false)
+            val def = AsyncGZIPOutput(stream = compressed.asyncOutput(), level = 6, closeStream = false)
             def.write(source)
             def.close()
 

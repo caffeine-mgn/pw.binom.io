@@ -151,4 +151,11 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         memcpy(r.refTo(0), native, remaining.convert())
         return r
     }
+
+    actual fun write(data: ByteArray, offset: Int, length: Int) {
+        if (offset+length > data.size)
+            throw ArrayIndexOutOfBoundsException()
+        val l = minOf(remaining,length)
+        memcpy(native+position, data.refTo(offset),l.convert())
+    }
 }

@@ -5,7 +5,6 @@ package pw.binom
 import pw.binom.io.Closeable
 import pw.binom.io.UTF8
 import pw.binom.pool.DefaultPool
-import pw.binom.pool.ObjectPool
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
@@ -26,6 +25,7 @@ expect class ByteBuffer : Input, Output, Closeable {
     fun get(): Byte
     fun put(value: Byte)
     fun reset(position: Int, length: Int): ByteBuffer
+    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset)
     fun clear()
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
@@ -59,6 +59,9 @@ fun ByteBuffer.Companion.wrap(data: ByteArray): ByteBuffer {
     return out
 }
 
+/**
+ * Makes ByteBuffer from [this] String. Returns new clean ByteBuffer
+ */
 fun String.toByteBufferUTF8(): ByteBuffer {
     val len = sumBy {
         UTF8.unicodeToUtf8Size(it)

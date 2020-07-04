@@ -167,6 +167,10 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         native.get(r)
         return r
     }
+
+    actual fun write(data: ByteArray, offset: Int, length: Int){
+        native.put(data,offset,length)
+    }
 }
 
 @OptIn(ExperimentalContracts::class)

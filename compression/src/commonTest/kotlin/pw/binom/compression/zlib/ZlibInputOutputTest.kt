@@ -1,10 +1,6 @@
 package pw.binom.compression.zlib
 
 import pw.binom.*
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.closablesOf
-import pw.binom.io.hold
-import pw.binom.io.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -18,7 +14,7 @@ class ZlibInputOutputTest{
             compressed.put(10)
         }
         compressed.clear()
-        val def = DeflaterOutput(stream = compressed, level = 6, wrap = true, autoCloseStream = false)
+        val def = DeflaterOutput(stream = compressed, level = 6, wrap = true, closeStream = false)
         def.write(source)
         def.close()
 
@@ -48,7 +44,7 @@ class ZlibInputOutputTest{
                 compressed.put(10)
             }
             compressed.clear()
-            val def = AsyncDeflaterOutput(stream = compressed.asyncOutput(), level = 6, wrap = true, autoCloseStream = false)
+            val def = AsyncDeflaterOutput(stream = compressed.asyncOutput(), level = 6, wrap = true, closeStream = false)
             def.write(source)
             def.close()
 

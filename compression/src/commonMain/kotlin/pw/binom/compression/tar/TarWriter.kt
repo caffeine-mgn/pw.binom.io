@@ -1,10 +1,25 @@
 package pw.binom.compression.tar
 
-import pw.binom.io.ByteArrayOutputStream
+import pw.binom.ByteBuffer
+import pw.binom.Output
+import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
-import pw.binom.io.OutputStream
+import pw.binom.set
+import pw.binom.toByteBufferUTF8
 
-private val ZERO_BYTE = ByteArray(100) { 0 }
+private val ZERO_BYTE = ByteBuffer.alloc(100).also {
+    while (it.remaining > 0)
+        it.put(0)
+}
+
+fun ByteBuffer.writeZero() {
+    var s = remaining
+    while (s > 0) {
+        ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
+        val b = write(ZERO_BYTE)
+        s -= b
+    }
+}
 
 
 internal fun Int.forPart(partSize: Int): Int {
@@ -14,24 +29,24 @@ internal fun Int.forPart(partSize: Int): Int {
     return fullSize
 }
 
-private fun OutputStream.writeZero(size: Int) {
+private fun Output.writeZero(size: Int) {
     var s = size
     while (s > 0) {
-        val l = minOf(ZERO_BYTE.size, s)
-        val b = write(ZERO_BYTE, 0, l)
+        ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
+        val b = write(ZERO_BYTE)
         s -= b
     }
 }
 
-internal fun UShort.toOct(dst: ByteArray, dstOffset: Int, size: Int) {
+internal fun UShort.toOct(dst: ByteBuffer, dstOffset: Int, size: Int) {
     this.toLong().toOct(dst, dstOffset, size)
 }
 
-internal fun UInt.toOct(dst: ByteArray, dstOffset: Int, size: Int) {
+internal fun UInt.toOct(dst: ByteBuffer, dstOffset: Int, size: Int) {
     this.toLong().toOct(dst, dstOffset, size)
 }
 
-internal fun Long.toOct(dst: ByteArray, dstOffset: Int, size: Int) {
+internal fun Long.toOct(dst: ByteBuffer, dstOffset: Int, size: Int) {
     var n = this
 
     var len = 0
@@ -62,7 +77,6 @@ private val magic = byteArrayOf(
         'r'.toByte(),
         0
 )
-
 private val version = byteArrayOf(
         '0'.toByte(),
         '0'.toByte()
@@ -71,20 +85,20 @@ private val version = byteArrayOf(
 @OptIn(ExperimentalStdlibApi::class)
 private val longLink = "././@LongLink".encodeToByteArray()
 
-class TarWriter(val stream: OutputStream):Closeable {
+class TarWriter(val stream: Output) : Closeable {
 
     private var entityWriting = false
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun newEntity(name: String, mode: UShort, uid: UShort, gid: UShort, time: Long, type: TarEntityType): OutputStream {
+    fun newEntity(name: String, mode: UShort, uid: UShort, gid: UShort, time: Long, type: TarEntityType): Output {
         checkFinished()
         if (entityWriting)
             throw IllegalStateException("You mast close previous Entity")
         entityWriting = true
-        val block = ByteArray(BLOCK_SIZE.toInt())
+        val block = ByteBuffer.alloc(BLOCK_SIZE.toInt())
 
-        val nameBytes = name.encodeToByteArray()
-        if (nameBytes.size > 100) {
+        val nameBytes = name.toByteBufferUTF8()
+        if (nameBytes.capacity > 100) {
             longLink.copyInto(block)
             mode.toOct(block, 100, 8)
             uid.toOct(block, 108, 8)
@@ -94,20 +108,25 @@ class TarWriter(val stream: OutputStream):Closeable {
             block[156] = 76
             magic.copyInto(block, 257)
             version.copyInto(block, 263)
-            (nameBytes.size + 1).toUInt().toOct(block, 124, 12)
+            (nameBytes.capacity + 1).toUInt().toOct(block, 124, 12)
 
             block.calcCheckSum().toOct(block, 148, 7)
             block[155] = ' '.toByte()
             stream.write(block)
             stream.write(nameBytes)
-            var fullSize = (nameBytes.size + 1).forPart(BLOCK_SIZE.toInt())
-            val needAddZero = fullSize - nameBytes.size
+            var fullSize = (nameBytes.capacity + 1).forPart(BLOCK_SIZE.toInt())
+            val needAddZero = fullSize - nameBytes.capacity
             stream.writeZero(needAddZero)
-            block.fill(0.toByte())
-            nameBytes.copyInto(block, 0, 0, 100)
+            block.clear()
+            block.writeZero()
+            nameBytes.reset(0, 100)
+            block.clear()
+            block.write(nameBytes)
         } else {
-            nameBytes.copyInto(block)
+            block.write(nameBytes)
         }
+        block.clear()
+        nameBytes.close()
 
         mode.toOct(block, 100, 8)
         uid.toOct(block, 108, 8)
@@ -118,11 +137,11 @@ class TarWriter(val stream: OutputStream):Closeable {
         magic.copyInto(block, 257)
         version.copyInto(block, 263)
 
-        return object : OutputStream {
-            val data = ByteArrayOutputStream()
+        return object : Output {
+            val data = ByteArrayOutput()
 
-            override fun write(data: ByteArray, offset: Int, length: Int) =
-                    this.data.write(data, offset, length)
+            override fun write(data: ByteBuffer): Int =
+                    this.data.write(data)
 
             override fun flush() {
                 data.flush()
@@ -135,9 +154,13 @@ class TarWriter(val stream: OutputStream):Closeable {
                 block[155] = ' '.toByte()
 
                 stream.write(block)
-                stream.write(data.toByteArray())
-                stream.writeZero(BLOCK_SIZE.toInt() - data.size % BLOCK_SIZE.toInt())
+                block.close()
+                data.trimToSize()
+                data.data.clear()
+                stream.write(data.data)
+                stream.writeZero(BLOCK_SIZE - data.size % BLOCK_SIZE)
                 entityWriting = false
+                data.close()
             }
 
         }
@@ -163,11 +186,34 @@ class TarWriter(val stream: OutputStream):Closeable {
 
 }
 
-internal fun ByteArray.calcCheckSum(): UInt {
+internal fun ByteBuffer.calcCheckSum(): UInt {
     var chksum = 0u
-    forEach {
-        chksum += it.toUInt()
+    (position until limit).forEach {
+        chksum += this[it].toUInt()
     }
     chksum += 256u
     return chksum
+}
+
+
+/**
+ * Copies this array or its subrange into the [destination] ByteBuffer and returns that ByteBuffer.
+ *
+ *
+ * @param destination the ByteBuffer to copy to.
+ * @param destinationOffset the position in the [destination] ByteBuffer to copy to, 0 by default.
+ * @param startIndex the beginning (inclusive) of the subrange to copy, 0 by default.
+ * @param endIndex the end (exclusive) of the subrange to copy, size of this array by default.
+ *
+ * @throws IndexOutOfBoundsException or [IllegalArgumentException] when [startIndex] or [endIndex] is out of range of this array indices or when `startIndex > endIndex`.
+ * @throws IndexOutOfBoundsException when the subrange doesn't fit into the [destination] array starting at the specified [destinationOffset],
+ * or when that index is out of the [destination] array indices range.
+ *
+ * @return the [destination] ByteBuffer.
+ */
+internal fun ByteArray.copyInto(destination: ByteBuffer, destinationOffset: Int = 0, startIndex: Int = 0, endIndex: Int = size): ByteBuffer {
+    destination.set(destinationOffset, endIndex - startIndex) {
+        it.write(this, startIndex, endIndex - startIndex)
+    }
+    return destination
 }
