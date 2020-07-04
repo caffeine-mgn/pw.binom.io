@@ -5,8 +5,8 @@ import platform.windows.HANDLE
 import platform.windows.HANDLE_FLAG_INHERIT
 import platform.windows.SetHandleInformation
 import platform.windows.WriteFile
+import pw.binom.ByteBuffer
 import pw.binom.Output
-import kotlin.native.concurrent.freeze
 
 class PipeOutput : Pipe(), Output {
     override val handler: HANDLE
@@ -20,16 +20,17 @@ class PipeOutput : Pipe(), Output {
             TODO("#4")
     }
 
-    override fun write(data: ByteArray, offset: Int, length: Int): Int {
-        if (data.size < offset + length)
-            throw IndexOutOfBoundsException()
+    override fun write(data: ByteBuffer): Int {
         memScoped {
             val dwWritten = alloc<UIntVar>()
-            val r = WriteFile(writePipe.pointed.value, data.refTo(offset).getPointer(this).reinterpret(),
-                    length.convert(), dwWritten.ptr, null)
+
+            val r = WriteFile(writePipe.pointed.value, (data.native + data.position)!!.reinterpret(),
+                    data.remaining.convert(), dwWritten.ptr, null)
             if (r <= 0)
                 TODO()
-            return dwWritten.value.toInt()
+            val wrote = dwWritten.value.toInt()
+            data.position += wrote
+            return wrote
         }
     }
 

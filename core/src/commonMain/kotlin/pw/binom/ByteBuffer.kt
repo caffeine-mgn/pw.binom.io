@@ -29,6 +29,7 @@ expect class ByteBuffer : Input, Output, Closeable {
     fun clear()
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
+    fun toByteArray(): ByteArray
 }
 
 inline fun ByteBuffer.clone() = realloc(capacity)

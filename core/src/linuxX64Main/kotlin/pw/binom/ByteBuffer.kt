@@ -145,4 +145,10 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         }
         return new
     }
+
+    actual fun toByteArray(): ByteArray {
+        val r = ByteArray(remaining)
+        memcpy(r.refTo(0), native, remaining.convert())
+        return r
+    }
 }

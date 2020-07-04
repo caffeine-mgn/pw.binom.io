@@ -147,14 +147,22 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = ByteBuffer.alloc(newSize)
         if (newSize > capacity) {
-            memcpy(new.native,0, native, capacity)
+            memcpy(new.native, 0, native, capacity)
             new.position = position
             new.limit = limit
         } else {
-            memcpy(new.native,0, native, newSize)
+            memcpy(new.native, 0, native, newSize)
             new.position = minOf(position, newSize)
             new.limit = minOf(limit, newSize)
         }
         return new
+    }
+
+    actual fun toByteArray(): ByteArray {
+        val r = ByteArray(remaining)
+        (position until limit).forEach {
+            r[it - position] = native[it]
+        }
+        return r
     }
 }

@@ -110,7 +110,3 @@ private class JsonArrayWriter(val output: AsyncAppendable) : JsonArrayVisiter {
         done = true
     }
 }
-
-suspend fun AsyncOutputStream.write(json: JsonNode) {
-    json.accept(JsonWriter(utf8Appendable()))
-}

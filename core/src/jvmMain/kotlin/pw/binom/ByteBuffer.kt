@@ -161,6 +161,12 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         }
         return new
     }
+
+    actual fun toByteArray(): ByteArray {
+        val r = ByteArray(remaining)
+        native.get(r)
+        return r
+    }
 }
 
 @OptIn(ExperimentalContracts::class)
