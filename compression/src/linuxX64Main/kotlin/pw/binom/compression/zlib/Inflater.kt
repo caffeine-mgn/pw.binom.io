@@ -55,7 +55,6 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
 
         input.position += freeInput - native.avail_in.convert<Int>()
         output.position += wrote
-        println("inflate readed: [$wrote]")
         return wrote
     }
 }

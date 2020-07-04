@@ -1,21 +1,18 @@
 package pw.binom.io.examples.httpServer
 
-import pw.binom.io.IOException
-import pw.binom.io.readln
+import pw.binom.io.*
 import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.io.write
-import pw.binom.io.writeln
 
 class HttpServerHandler : SocketNIOManager.ConnectHandler {
     override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
         connection {
             try {
-                val header = it.input.readln().split(' ')
+                val header = it.utf8Reader().readln()!!.split(' ')
                 println("Request ${header[0]} ${header[1]}")
 
                 //skip all request headers
                 while (true) {
-                    if (it.input.readln().isEmpty())
+                    if (it.utf8Reader().readln()?.isNotEmpty() != false)
                         break
                 }
 
@@ -25,14 +22,15 @@ class HttpServerHandler : SocketNIOManager.ConnectHandler {
                 |  Hello from Simple server based on <b>Binom IO</b>
                 |</body>
                 |</html>""".trimMargin()
-                it.output.writeln("HTTP/1.1 200 OK")
-                it.output.writeln("Server: Binom Example Server")
-                it.output.writeln("Content-Type: text/html; charset=utf-8")
-                it.output.writeln("Content-Length: ${txt.length}")
-                it.output.writeln("Connection: close")
-                it.output.writeln("")
-                it.output.writeln("")
-                it.output.write(txt)
+                val app = it.utf8Appendable()
+                app.appendln("HTTP/1.1 200 OK")
+                        .appendln("Server: Binom Example Server")
+                        .appendln("Content-Type: text/html; charset=utf-8")
+                        .appendln("Content-Length: ${txt.length}")
+                        .appendln("Connection: close")
+                        .appendln("")
+                        .appendln("")
+                        .appendln(txt)
             } catch (e: IOException) {
                 //NOP
             }

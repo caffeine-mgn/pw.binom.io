@@ -2,7 +2,7 @@ package pw.binom.io
 
 import pw.binom.AsyncOutput
 import pw.binom.AsyncInput
-
+/*
 class MountedFileSystem<U> : FileSystem<U> {
 
     inner class MountPoint<T>(path: String, val newFileSystem: FileSystem<T>, val func: (U) -> T) : FileSystem.Entity<U> {
@@ -73,3 +73,4 @@ class MountedFileSystem<U> : FileSystem<U> {
     }
 
 }
+*/

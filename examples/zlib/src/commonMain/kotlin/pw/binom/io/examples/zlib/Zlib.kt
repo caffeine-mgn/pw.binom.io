@@ -32,8 +32,5 @@ fun main() {
             it.read(out)
         }
     }
-    out.flip()
-
-    println("Decompressed data: \"${out.asUTF8String()}\"")
     out.close()
 }

@@ -34,6 +34,7 @@ class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
     }
 
     override suspend fun close() {
+        stream.flush()
         stream.close()
     }
 }

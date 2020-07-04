@@ -2,6 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.URL
 import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable
@@ -31,7 +32,6 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
     override fun close() {
         connections.forEach {
             it.value.forEach {
-                println("--->Close connection")
                 it.sslSession?.close()
                 it.channel.unwrap().detach().close()
             }
@@ -73,7 +73,6 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         val key = "${url.protocol}://${url.host}:$port"
         var connectionList = connections[key]
         if (connectionList != null && !connectionList.isEmpty()) {
-            println("Return connection from pool")
             val channel = connectionList.removeAt(connectionList.lastIndex)
 //            val asyncChannel = channel.channel//connectionManager.attach()
 //
@@ -85,7 +84,6 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
             return Connection(channel.sslSession, cc)
 //            return Connection(channel.sslSession, channel.channel)
         }
-        println("Return new Connection")
         var connection = Connection(null, connectionManager.connect(
                 host = url.host,
                 port = port
@@ -124,11 +122,12 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
             connections.getOrPut(key) { ArrayList() }.add(socket)
         }
     */
-    fun request(method: String, url: URL): UrlConnect {
+    fun request(method: String, url: URL, flushSize: Int = DEFAULT_BUFFER_SIZE): UrlConnect {
         return UrlConnectImpl(
                 method = method,
                 url = url,
-                client = this
+                client = this,
+                outputFlushSize = flushSize
         )
     }
 
@@ -151,8 +150,10 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         val headers: MutableMap<String, MutableList<String>>
         suspend fun upload(): UrlRequest
         suspend fun response(): UrlResponse
-
-//        suspend fun getResponseHeaders(): Map<String, List<String>>
+        fun addHeader(key: String, value: String): UrlConnect {
+            headers.getOrPut(key) { ArrayList() }.add(value)
+            return this
+        }
     }
 
     interface UrlRequest : AsyncOutput {

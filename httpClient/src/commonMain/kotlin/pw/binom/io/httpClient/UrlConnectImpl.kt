@@ -8,7 +8,11 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
-internal class UrlConnectImpl(val method: String, val url: URL, val client: AsyncHttpClient) : AsyncHttpClient.UrlConnect {
+internal class UrlConnectImpl(
+        val method: String,
+        val url: URL,
+        val client: AsyncHttpClient,
+        val outputFlushSize: Int) : AsyncHttpClient.UrlConnect {
     override val headers: MutableMap<String, MutableList<String>> = HashMap()
     private var requestSent = false
     private var clientDataLength: ULong? = null
@@ -37,7 +41,7 @@ internal class UrlConnectImpl(val method: String, val url: URL, val client: Asyn
             it.toULongOrNull() ?: throw RuntimeException("Can't parse Content-Length \"$it\" to unsigned long")
         }
         if (clientDataLength == null && withOutput) {
-            if (headers[Headers.TRANSFER_ENCODING]?.isEmpty() == true) {
+            if (headers[Headers.TRANSFER_ENCODING]?.isEmpty() != false) {
                 headers.getOrPut(Headers.TRANSFER_ENCODING) { ArrayList() }.add(Headers.CHUNKED)
                 chanked = true
             }
@@ -61,17 +65,21 @@ internal class UrlConnectImpl(val method: String, val url: URL, val client: Asyn
             }
         }
         app.append("\r\n")
-        val sendTime = measureTime {
-            buffered.flush()
-        }
-        println("Send Request Header: $sendTime")
+        buffered.flush()
         buffered.close()
         channel = connection
     }
 
     override suspend fun upload(): AsyncHttpClient.UrlRequest {
         sendRequest(true)
+        val channel = channel!!
+        return UrlRequestImpl(
+                headers = headers,
+                channel = channel,
+                connection = this,
+                flushBuffer = outputFlushSize
 
+        )
 //        val chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
 //        if (!chanked && clientDataLength == null) {
 //            throw IllegalStateException("Unknown Transfer Encoding")
@@ -88,11 +96,8 @@ internal class UrlConnectImpl(val method: String, val url: URL, val client: Asyn
         val channel = channel!!
         val buffered = channel.channel.bufferedInput(closeStream = false)
         val reader = buffered.utf8Reader()
-        val vv = measureTimedValue {
-            reader.readln()
-        }
-        println("Read Response Time: ${vv.duration}")
-        val responseLine = vv.value
+        val vv = reader.readln()
+        val responseLine = vv
         if (responseLine == null) {
             channel.sslSession?.close()
             channel.channel.close()

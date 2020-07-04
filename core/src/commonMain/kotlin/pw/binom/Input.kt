@@ -110,6 +110,18 @@ fun Input.readLong(): Long {
     return Long.fromBytes(tmp8[0], tmp8[1], tmp8[2], tmp8[3], tmp8[4], tmp8[5], tmp8[6], tmp8[7])
 }
 
+fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>) {
+    val buf = pool.borrow()
+    while (true) {
+        buf.clear()
+        val s = read(buf)
+        if (s == 0)
+            break
+        buf.flip()
+        output.write(buf)
+    }
+}
+
 suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
     val buf = pool.borrow()
     while (true) {

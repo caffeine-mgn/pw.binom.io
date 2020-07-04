@@ -4,8 +4,20 @@ import pw.binom.ByteBuffer
 import pw.binom.empty
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.use
+import pw.binom.writeByte
 
 object Base64 {
+
+    fun encode(data: ByteArray): String {
+        val sb = StringBuilder()
+        Base64EncodeOutput(sb).use {
+            data.forEach { b->
+                it.writeByte(b)
+            }
+        }
+        return sb.toString()
+    }
+
     fun encode(data: ByteBuffer): String {
         val sb = StringBuilder()
         Base64EncodeOutput(sb).use {

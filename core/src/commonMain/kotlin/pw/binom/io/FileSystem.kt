@@ -1,20 +1,27 @@
 package pw.binom.io
 
-import pw.binom.AsyncOutput
 import pw.binom.AsyncInput
+import pw.binom.AsyncOutput
 
 interface FileSystem<U> {
     interface Entity<U> {
         val name: String
+            get() {
+                val p = path.lastIndexOf('/')
+                return if (p == -1)
+                    path
+                else
+                    path.substring(p + 1)
+            }
         val length: Long
         val isFile: Boolean
         val lastModified: Long
         val path: String
         val user: U
         val fileSystem: FileSystem<U>
-        suspend fun read(): AsyncInput?
-        suspend fun copy(path: String, overwrite: Boolean): Entity<U>
-        suspend fun move(path: String, overwrite: Boolean): Entity<U>
+        suspend fun read(offset: ULong = 0uL, length: ULong? = null): AsyncInput?
+        suspend fun copy(path: String, overwrite: Boolean = false): Entity<U>
+        suspend fun move(path: String, overwrite: Boolean = false): Entity<U>
         suspend fun delete()
         suspend fun rewrite(): AsyncOutput
     }

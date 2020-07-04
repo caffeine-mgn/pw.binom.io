@@ -19,14 +19,8 @@ internal class UrlResponseImpl(
         val input: AsyncInput,
         val client: AsyncHttpClient
 ) : AsyncHttpClient.UrlResponse {
-//    init {
-//        println("Headers:")
-//        headers.forEach { item ->
-//            item.value.forEach {
-//                println("${item.key}: $it")
-//            }
-//        }
-//    }
+
+    private var keepAlive = headers[Headers.CONNECTION]?.singleOrNull()?.toLowerCase() == Headers.KEEP_ALIVE.toLowerCase()
 
     private val httpStream: AsyncHttpInput = run {
         if (headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED) {
@@ -42,7 +36,8 @@ internal class UrlResponseImpl(
                     stream = input,
                     contentLength = contentLength
             )
-        TODO()
+        keepAlive = false
+        return@run ClosableAsyncInput(input)
     }
     private val stream = run {
         val contentEncode = headers[Headers.CONTENT_ENCODING]?.lastOrNull()?.toLowerCase()
@@ -61,12 +56,10 @@ internal class UrlResponseImpl(
     override suspend fun close() {
         input.close()
         if (!httpStream.isEof) {
-            println("Ignore Keep-Alive. Force close connection Becouse not all readed. ${httpStream::class.simpleName}")
             stream.close()
             channel.close()
         } else {
-            if (headers[Headers.CONNECTION]?.singleOrNull() == Headers.KEEP_ALIVE) {
-                println("Recycle Connection!")
+            if (keepAlive) {
                 client.recycleConnection(url, channel)
             } else {
                 stream.close()

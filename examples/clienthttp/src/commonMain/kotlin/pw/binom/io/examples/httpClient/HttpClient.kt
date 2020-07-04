@@ -1,11 +1,8 @@
 package pw.binom.io.examples.httpClient
 
-import pw.binom.URL
-import pw.binom.asUTF8String
-import pw.binom.async
+import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.ByteArrayOutputStream
-import pw.binom.io.copyTo
+import pw.binom.io.ByteArrayOutput
 import pw.binom.io.httpClient.AsyncHttpClient
 import pw.binom.io.socket.nio.SocketNIOManager
 
@@ -14,27 +11,32 @@ fun main() {
 
     val nioManager = SocketNIOManager()
     val connections = AsyncHttpClient(nioManager)
+    val byteBufferPool = ByteBufferPool()
 
-    val con = connections.request("GET", url)
     val done = AtomicBoolean(false)
     async {
+        val tempBuffer = ByteArrayOutput()
         try {
-            con.getResponseHeaders().forEach { key ->
+            val con = connections.request("GET", url)
+            val req = con.response()
+            req.headers.forEach { key ->
                 key.value.forEach {
                     println("${key.key}: $it")
                 }
             }
 
-            val bb = ByteArrayOutputStream()
-            con.inputStream.copyTo(bb)
+            req.copyTo(tempBuffer, byteBufferPool)
 
-            val data = bb.toByteArray()
-            println("Response Code: ${con.responseCode()}")
-            println("Response size: ${data.size}")
+            tempBuffer.trimToSize()
+            tempBuffer.data.clear()
+            val data = tempBuffer.data
+            println("Response Code: ${req.responseCode}")
+            println("Response size: ${data.capacity}")
             println("Response Body: ${data.asUTF8String()}")
             con.close()
             connections.close()
         } finally {
+            tempBuffer.close()
             done.value = true
         }
     }

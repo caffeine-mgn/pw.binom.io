@@ -1,17 +1,17 @@
 package pw.binom.io.file
 
-import pw.binom.AsyncOutput
-import pw.binom.AsyncInput
-import pw.binom.asyncInput
-import pw.binom.asyncOutput
-import pw.binom.io.*
+import pw.binom.*
+import pw.binom.io.FileSystem
+import pw.binom.io.FileSystemAccess
+import pw.binom.io.copyTo
+import pw.binom.io.use
 
 class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : FileSystem<U> {
     override suspend fun new(user: U, path: String): AsyncOutput {
         access.putFile(user, path)
         val file = File(root, path.removePrefix("/"))
         file.parent?.mkdirs()
-        return file.channel(AccessType.CREATE,AccessType.WRITE).asyncOutput()
+        return file.channel(AccessType.CREATE, AccessType.WRITE).asyncOutput()
     }
 
     override suspend fun get(user: U, path: String): FileSystem.Entity<U>? {
@@ -56,13 +56,17 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
         override val fileSystem: FileSystem<U>
             get() = this@LocalFileSystem
 
-        override suspend fun read(): AsyncInput? {
+        override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
             access.getFile(user, path)
             val file = File(root, path.removePrefix("/"))
             if (!file.isFile)
                 return null
+            val channel = file.channel(AccessType.READ)
+            if (offset > 0uL) {
+                channel.position = offset
+            }
 
-            return file.channel(AccessType.READ).asyncInput()
+            return length?.let { AsyncInputWithLength(it, channel.asyncInput()) } ?: channel.asyncInput()
         }
 
         override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity<U> {
@@ -107,7 +111,7 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
             access.putFile(user, path)
             val file = File(root, path)
             file.parent?.mkdirs()
-            return file.channel(AccessType.WRITE,AccessType.CREATE).asyncOutput()
+            return file.channel(AccessType.WRITE, AccessType.CREATE).asyncOutput()
         }
 
         override val path: String
@@ -122,4 +126,27 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
             get() = file.isFile
 
     }
+}
+
+private class AsyncInputWithLength(length: ULong, val stream: AsyncInput) : AsyncInput {
+    private var read = length
+    override suspend fun read(dest: ByteBuffer): Int {
+        if (read == 0uL)
+            return 0
+        val lim = dest.limit
+        return try {
+            val l = minOf(dest.remaining, read.toInt())
+            dest.limit = dest.position + l
+            val r = stream.read(dest)
+            read -= r.toULong()
+            r
+        } finally {
+            dest.limit = lim
+        }
+    }
+
+    override suspend fun close() {
+        stream.close()
+    }
+
 }

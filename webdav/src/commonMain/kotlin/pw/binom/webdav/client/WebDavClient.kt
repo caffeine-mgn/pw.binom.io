@@ -1,69 +1,34 @@
 package pw.binom.webdav.client
 
+import pw.binom.AsyncInput
+import pw.binom.webdav.*
+import pw.binom.AsyncOutput
+import pw.binom.ByteBuffer
 import pw.binom.URL
-import pw.binom.asUTF8ByteArray
-import pw.binom.async
-import pw.binom.atomic.AtomicBoolean
-import pw.binom.base64.Base64
 import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.httpClient.AsyncHttpClient
-import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.stackTrace
 import pw.binom.webdav.server.parseDate
 import pw.binom.xml.dom.XmlElement
 import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.xmlTree
-import kotlin.test.Test
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
-interface WebAuthAccess {
-    suspend fun apply(connection: AsyncHttpClient.UrlConnect)
-}
+open class WebDavClient<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : FileSystem<T> {
 
-class BasicAuthorization(login: String, password: String) : WebAuthAccess {
-    val str = "Basic ${Base64.encode("$login:$password".asUTF8ByteArray())}"
-    override suspend fun apply(connection: AsyncHttpClient.UrlConnect) {
-        connection.addRequestHeader("Authorization", str)
-    }
-
-}
-
-private fun XmlElement.xpath(path: String): Sequence<XmlElement> {
-    val pathList = path.split('/').filter { it.isBlank() }
-    if (pathList.isEmpty())
-        return emptySequence()
-    var p = findElements {
-        it.tag == pathList[0]
-    }
-    for (i in 1 until pathList.size) {
-        p = p.flatMap {
-            it.findElements { it.tag == pathList[i] }
-        }
-    }
-    return p
-}
-
-private fun XmlElement.findTag(name: String) =
-        findElements { it.nameSpace?.url == "DAV:" && it.tag == name }
-
-private fun Sequence<XmlElement>.findTag(name: String) =
-        filter { it.nameSpace?.url == "DAV:" && it.tag == name }
-
-class Client<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : FileSystem<T> {
+    private fun XmlElement.findTag(name: String) =
+            findElements { it.nameSpace?.url == "DAV:" && it.tag == name }
 
     override suspend fun mkdir(user: T, path: String): FileSystem.Entity<T>? {
         val allPathUrl = url.newURI("${url.uri}$path")
         val r = client.request("MKCOL", allPathUrl)
         user.apply(r)
-        if (r.responseCode() == 405)
+        val resp = r.response()
+        if (resp.responseCode == 405)
             return null
-        if (r.responseCode() != 201)
-            TODO("Invalid response code ${r.responseCode()}")
+        if (resp.responseCode != 201)
+            TODO("Invalid response code ${resp.responseCode}")
         val ss = path.split('/')
         return RemoteEntity(
-                name = ss.lastOrNull() ?: "",
                 user = user,
                 lastModified = Date.now,
                 path = ss.subList(0, ss.lastIndex - 1).joinToString("/"),
@@ -101,52 +66,50 @@ class Client<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : Fil
 
         }
     */
-    private inner class RemoteEntity(override val name: String, override val length: Long, override val lastModified: Long, override val path: String, override val user: T, override val isFile: Boolean) : FileSystem.Entity<T> {
-        override val fileSystem: Client<T>
-            get() = this@Client
+    private inner class RemoteEntity(override val length: Long, override val lastModified: Long, override val path: String, override val user: T, override val isFile: Boolean) : FileSystem.Entity<T> {
+        override val fileSystem: WebDavClient<T>
+            get() = this@WebDavClient
 
-        override suspend fun read(): AsyncInputStream? {
+        override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
             val allPathUrl = url.newURI("${url.uri}$path/$name")
             val r = client.request("GET", allPathUrl)
+            if (offset != 0uL) {
+                if (length == null) {
+                    r.addHeader("Range", "bytes=$offset-")
+                } else {
+                    r.addHeader("Range", "bytes=$offset-${offset + length}")
+                }
+            }
             user.apply(r)
-            if (r.responseCode() == 404)
+            val resp = r.response()
+            if (resp.responseCode == 404)
                 return null
 
-            return object : AsyncInputStream {
-                override suspend fun read(): Byte =
-                        r.inputStream.read()
-
-                override suspend fun read(data: ByteArray, offset: Int, length: Int): Int =
-                        r.inputStream.read(data, offset, length)
+            return object : AsyncInput {
+                override suspend fun read(dest: ByteBuffer): Int = resp.read(dest)
 
                 override suspend fun close() {
-                    r.inputStream.close()
-                    r.close()
+                    resp.close()
                 }
 
             }
         }
 
-        @OptIn(ExperimentalTime::class)
         override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity<T> {
             val destinationUrl = url.appendDirectionURI(path)
             val r = client.request("COPY", url.appendDirectionURI(this.path).appendDirectionURI(name))
             user.apply(r)
-            r.addRequestHeader("Destination", destinationUrl.toString())
+            r.addHeader("Destination", destinationUrl.toString())
             if (overwrite)
-                r.addRequestHeader("Overwrite", "T")
-            val ff = measureTime {
-                if (r.responseCode() != 201 && r.responseCode() != 204)
-                    throw TODO("Invalid response code ${r.responseCode()}")
+                r.addHeader("Overwrite", "T")
+            val resp = r.response()
+            if (resp.responseCode == 404)
+                throw FileSystem.FileNotFoundException(this.path)
+            if (resp.responseCode != 201 && resp.responseCode != 204)
+                throw TODO("Invalid response code ${resp.responseCode}")
 
-                r.getResponseHeaders().forEach {
-                    println("${it.key}: ${it.value}")
-                }
-            }
-            println("Getting result: $ff")
             val items = path.split('/');
             return RemoteEntity(
-                    name = items.lastOrNull() ?: "",
                     path = items.subList(0, items.lastIndex - 1).joinToString("/"),
                     lastModified = lastModified,
                     user = user,
@@ -159,19 +122,16 @@ class Client<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : Fil
             val destinationUrl = url.appendDirectionURI(path)
             val r = client.request("MOVE", url.appendDirectionURI(this.path).appendDirectionURI(name))
             user.apply(r)
-            r.addRequestHeader("Destination", destinationUrl.toString())
-            if (overwrite)
-                r.addRequestHeader("Overwrite", "T")
-            if (r.responseCode() != 201 && r.responseCode() != 204)
-                throw TODO("Invalid response code ${r.responseCode()}")
-
-            r.getResponseHeaders().forEach {
-                println("${it.key}: ${it.value}")
+            r.addHeader("Destination", destinationUrl.toString())
+            if (overwrite) {
+                r.addHeader("Overwrite", "T")
             }
-            val items = path.split('/');
+            val resp = r.response()
+            if (resp.responseCode != 201 && resp.responseCode != 204)
+                throw TODO("Invalid response code ${resp.responseCode}")
+
             return RemoteEntity(
-                    name = items.lastOrNull() ?: "",
-                    path = items.subList(0, items.lastIndex - 1).joinToString("/"),
+                    path = path,
                     lastModified = lastModified,
                     user = user,
                     length = length,
@@ -182,12 +142,33 @@ class Client<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : Fil
         override suspend fun delete() {
             val r = client.request("DELETE", url.appendDirectionURI(this.path).appendDirectionURI(name))
             user.apply(r)
-            if (r.responseCode() != 201 && r.responseCode() != 204)
-                throw TODO("Invalid response code ${r.responseCode()}")
+            val resp = r.response()
+            try {
+                if (resp.responseCode != 201 && resp.responseCode != 204) {
+                    throw TODO("Invalid response code ${resp.responseCode}")
+                }
+            } finally {
+                resp.close()
+            }
         }
 
-        override suspend fun rewrite(): AsyncOutputStream {
-            TODO("Not yet implemented")
+        override suspend fun rewrite(): AsyncOutput {
+            val allPathUrl = url.appendDirectionURI(path)
+            val r = client.request("PUT", allPathUrl)
+//            r.addHeader("Overwrite", "T")
+            user.apply(r)
+            val upload = r.upload()
+            return object : AsyncOutput {
+                override suspend fun write(data: ByteBuffer): Int = upload.write(data)
+
+                override suspend fun flush() {
+                    upload.flush()
+                }
+
+                override suspend fun close() {
+                    upload.response().close()
+                }
+            }
         }
 
     }
@@ -199,13 +180,15 @@ class Client<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : Fil
         val allPathUrl = url.appendDirectionURI(path)
         val r = client.request("PROPFIND", allPathUrl)
         user.apply(r)
-        r.addRequestHeader("Depth", depth.toString())
+        r.addHeader("Depth", depth.toString())
+        val resp = r.response()
 //        val auth = r.getResponseHeaders()["WWW-Authenticate"]
-        if (r.responseCode() == 404) {
+        if (resp.responseCode == 404) {
             return null
         }
-        val txt = r.inputStream.utf8Reader().readText()
+        val txt = resp.utf8Reader().readText()
         val reader = StringReader(txt).asAsync().xmlTree()!!
+        resp.close()
         return reader
                 .findTag("response")
                 .mapNotNull {
@@ -241,7 +224,6 @@ class Client<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : Fil
                             ?: 0L
                     if (isDirectory)
                         RemoteEntity(
-                                name = href.removePrefix(allPathUrl.uri).removeSuffix("/"),
                                 path = path,
                                 lastModified = lastModified,
                                 user = user,
@@ -250,7 +232,6 @@ class Client<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : Fil
                         )
                     else
                         RemoteEntity(
-                                name = href.removePrefix(allPathUrl.uri),
                                 length = length,
                                 user = user,
                                 lastModified = lastModified,
@@ -267,83 +248,21 @@ class Client<T : WebAuthAccess>(val client: AsyncHttpClient, val url: URL) : Fil
         return getDir(user, path, 0)?.firstOrNull()
     }
 
-    override suspend fun new(user: T, path: String): AsyncOutputStream {
+    override suspend fun new(user: T, path: String): AsyncOutput {
         val allPathUrl = url.appendDirectionURI(path)
         val r = client.request("PUT", allPathUrl)
         user.apply(r)
-        return object : AsyncOutputStream {
-            override suspend fun write(data: Byte): Boolean =
-                    r.outputStream.write(data)
-
-            override suspend fun write(data: ByteArray, offset: Int, length: Int): Int =
-                    r.outputStream.write(data, offset, length)
+        val upload = r.upload()
+        return object : AsyncOutput {
+            override suspend fun write(data: ByteBuffer): Int = upload.write(data)
 
             override suspend fun flush() {
-                r.outputStream.flush()
+                upload.flush()
             }
 
             override suspend fun close() {
-                r.outputStream.close()
-                r.close()
+                upload.response().close()
             }
-
-        }
-    }
-}
-
-class ClientTest {
-
-    @OptIn(ExperimentalTime::class)
-    @Test
-    fun test() {
-        try {
-            val url = URL("https://192.168.88.117/remote.php/webdav")
-            val manager = SocketNIOManager()
-            val client = AsyncHttpClient(manager)
-            val done = AtomicBoolean(false)
-            async {
-                try {
-                    val auth = BasicAuthorization("admin", "Drovosek319")
-                    val clientw = Client<BasicAuthorization>(client, url)
-                    val rr = clientw.getDir(auth, "/tmp2")
-                    println("Print result:")
-                    rr?.toList()
-                            ?.forEach {
-                                println("${it.name}\t\t${it.length}")
-                            }
-
-                    val bb = clientw.mkdir(auth, "/tmp/test")
-                    clientw.new(auth, "/tmp/kotlin.txt").use {
-                        it.write("Hello from Kotlin".asUTF8ByteArray())
-                        it.flush()
-                    }
-                    println("Folder created!")
-                    println("${bb?.path} -> ${bb?.name}")
-                    val file = clientw.get(auth, "/tmp/kotlin.txt")
-                    println("File: $file")
-
-                    val body = file?.read()?.use {
-                        it.utf8Reader()?.readText()
-                    }
-                    val deleteTime = measureTime {
-                        file?.delete()
-                    }
-                    println("Delete Time: $deleteTime")
-                } catch (e: Throwable) {
-                    println("Error! $e")
-                    e.stackTrace.forEachIndexed { index, s ->
-                        println("$index -> $s")
-                    }
-                } finally {
-                    done.value = true
-                }
-            }
-
-            while (!done.value) {
-                manager.update()
-            }
-        } catch (e: Throwable) {
-            println("Exception!!!!!!")
         }
     }
 }
