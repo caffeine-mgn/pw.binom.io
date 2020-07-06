@@ -84,10 +84,8 @@ class FixedThreadPool(size: Int) : ThreadPool {
                     }
 
                 } catch (e: InterruptedException) {
-                    println("Interopted!")
                     break
                 } catch (e: Throwable) {
-                    println("Error!")
                     e.printStacktrace()
                 }
             }
