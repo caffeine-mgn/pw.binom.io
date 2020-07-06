@@ -2,7 +2,6 @@ package pw.binom.io.http
 
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.StreamClosedException
 import pw.binom.io.UTF8
@@ -12,12 +11,12 @@ import pw.binom.io.UTF8
  *
  * @param stream real output stream
  * @param autoFlushBuffer size of buffer for auto flush data in buffer
- * @param autoCloseStream flag for auto close [stream] when this stream will close
+ * @param closeStream flag for auto close [stream] when this stream will close
  */
 open class AsyncChunkedOutput(
         val stream: AsyncOutput,
         private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
-        val autoCloseStream: Boolean = false
+        val closeStream: Boolean = false
 ) : AsyncOutput {
     private var closed = false
     private var finished = false
@@ -58,12 +57,16 @@ open class AsyncChunkedOutput(
     private suspend fun sendBuffer(){
         tmp.clear()
         UTF8.unicodeToUtf8((buffer.remaining).toString(16), tmp)
-        tmp.put('\r'.toByte())
-        tmp.put('\n'.toByte())
+        tmp.put(CR)
+        tmp.put(LF)
         tmp.flip()
         stream.write(tmp)
         stream.write(buffer)
-        tmp.reset(1,2)
+        tmp.clear()
+        tmp.put(CR)
+        tmp.put(LF)
+        tmp.flip()
+//        tmp.reset(1,2)
         val bb = stream.write(tmp)
         stream.flush()
         buffer.clear()
@@ -84,12 +87,15 @@ open class AsyncChunkedOutput(
         flush()
         tmp.clear()
         tmp.put('0'.toByte())
-        tmp.put('\r'.toByte())
-        tmp.put('\n'.toByte())
-        tmp.put('\r'.toByte())
-        tmp.put('\n'.toByte())
+        tmp.put(CR)
+        tmp.put(LF)
+        tmp.put(CR)
+        tmp.put(LF)
+        tmp.put(CR)
+        tmp.put(LF)
         tmp.flip()
         stream.write(tmp)
+
         stream.flush()
         finished = true
     }
@@ -98,7 +104,7 @@ open class AsyncChunkedOutput(
         finish()
         closed = true
         tmp.close()
-        if (autoCloseStream) {
+        if (closeStream) {
             stream.close()
         }
     }

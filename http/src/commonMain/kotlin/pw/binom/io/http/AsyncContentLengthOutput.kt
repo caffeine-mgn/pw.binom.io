@@ -4,7 +4,7 @@ import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.io.StreamClosedException
 
-open class AsyncContentLengthOutput(val stream: AsyncOutput, val contentLength: ULong, val autoCloseStream: Boolean = false) : AsyncOutput {
+open class AsyncContentLengthOutput(val stream: AsyncOutput, val contentLength: ULong, val closeStream: Boolean = false) : AsyncOutput {
 
 //    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
 //        checkClosed()
@@ -37,7 +37,7 @@ open class AsyncContentLengthOutput(val stream: AsyncOutput, val contentLength: 
     override suspend fun close() {
         checkClosed()
         closed = true
-        if (autoCloseStream) {
+        if (closeStream) {
             stream.close()
         }
     }

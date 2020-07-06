@@ -1,10 +1,8 @@
 package pw.binom.io.httpClient
 
 import pw.binom.*
-import pw.binom.io.file.AccessType
-import pw.binom.io.file.File
-import pw.binom.io.file.channel
-import pw.binom.io.readln
+import pw.binom.io.http.Headers
+import pw.binom.io.readText
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
 import pw.binom.io.utf8Appendable
@@ -19,15 +17,12 @@ class TestAsyncHttpClient {
     val tm = ByteBuffer.alloc(1024 * 1024 * 2)
 
     suspend fun AsyncInput.skipAll() {
-        println("Try skip all")
         while (true) {
             tm.clear()
             if (this.read(tm) == 0) {
-                println("Skip 0")
                 break
             }
             tm.flip()
-            println("Skiped: ${tm.remaining}")
         }
     }
 
@@ -52,14 +47,14 @@ class TestAsyncHttpClient {
         async {
             try {
                 repeat(3) {
-                    var sipTime:Duration?=null
+                    var sipTime: Duration? = null
                     val readTime = measureTime {
                         println("\n\n=================[$it]=================\n")
                         client
                                 .request("GET", URL("https://www.ntv.ru/"))
                                 .response().use {
                                     println("Response code: ${it.responseCode}")
-                                    sipTime=measureTime {
+                                    sipTime = measureTime {
                                         it.skipAll()
                                     }
                                 }

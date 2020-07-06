@@ -43,7 +43,6 @@ model {
 
             binaries.all {
                 cCompiler.args '-O2', '-DSQLITE_ENABLE_FTS4', '-DSQLITE_ENABLE_RTREE', '-DSQLITE_ENABLE_COLUMN_METADATA'
-                println("->>$it   ${it}")
             }
         }
     }

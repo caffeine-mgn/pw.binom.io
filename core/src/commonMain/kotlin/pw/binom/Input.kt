@@ -6,7 +6,7 @@ import pw.binom.io.UTF8
 import pw.binom.pool.ObjectPool
 
 interface Input : Closeable {
-//    fun skip(length: Long): Long
+    //    fun skip(length: Long): Long
     fun read(dest: ByteBuffer): Int
     fun readFully(dest: ByteBuffer): Int {
         val length = dest.remaining
@@ -127,8 +127,9 @@ suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
     while (true) {
         buf.clear()
         val s = read(buf)
-        if (s == 0)
+        if (s == 0) {
             break
+        }
         buf.flip()
         output.write(buf)
     }

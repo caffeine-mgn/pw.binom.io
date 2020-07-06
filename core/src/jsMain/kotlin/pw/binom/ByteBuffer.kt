@@ -165,4 +165,14 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         }
         return r
     }
+
+    actual fun write(data: ByteArray, offset: Int, length: Int): Int {
+        if (offset + length > data.size)
+            throw IndexOutOfBoundsException()
+        val l = minOf(remaining, length)
+        (offset until (offset + l)).forEach {
+            native[position++] = data[it]
+        }
+        return l
+    }
 }

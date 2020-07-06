@@ -1,19 +1,14 @@
 package pw.binom.io.httpServer
 
 import pw.binom.*
-import pw.binom.io.*
+import pw.binom.io.InfinityByteBuffer
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
-import pw.binom.io.http.Headers
-import pw.binom.io.httpClient.AsyncHttpClient
-import pw.binom.io.socket.nio.PoolThreadNioManager
-import pw.binom.io.socket.nio.SingleThreadNioManager
+import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.io.use
 import pw.binom.pool.DefaultPool
 import pw.binom.thread.FixedThreadPool
-import pw.binom.thread.Runnable
-import pw.binom.thread.Thread
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -24,21 +19,21 @@ class PostRequestTest {
     @OptIn(ExperimentalTime::class)
     @Test
     fun server() {
-        val bufPool = ByteDataBufferPool(1024 * 1024 * 10)
-        val threadPool = FixedThreadPool(10)
-        val bufferPool = ByteDataBufferPool()
-        val packagePool = DefaultPool<InfinityByteBuffer>(30) { InfinityByteBuffer(1024 * 1024) }
-        val manager = PoolThreadNioManager(packagePool, bufferPool, threadPool)
+        val bufPool = ByteBufferPool(1024u * 1024u * 2u)
+        val manager = SocketNIOManager()
         var done = false
         var dd = TimeSource.Monotonic.markNow()
-//        val data = ByteArray(1024 * 1024)
-//        Random.Default.nextBytes(data)
-//        val pool = ByteDataBufferPool(1024 * 16)
-//        val pool = DefaultPool(10) {
-//            ByteDataBuffer.alloc()
-//        }
         val server = HttpServer(manager, object : Handler {
             override suspend fun request(req: HttpRequest, resp: HttpResponse) {
+//                val p = ByteBuffer.alloc(200)
+//                req.input.read(p)
+//                p.flip()
+//                if (p.remaining > 0) {
+//                    println("Readed:")
+//                    (p.position until p.limit).forEach {
+//                        println("0x${p[it].toString(16).toUpperCase()?.let { if (it.length == 1) "0$it" else it }} ")
+//                    }
+//                }
                 println("Время простоя: ${dd.elapsedNow()}")
                 var readFrom = Duration.ZERO
                 var writeTo = Duration.ZERO
@@ -50,13 +45,13 @@ class PostRequestTest {
                 println("Try to return stub file!")
                 resp.status = 200
                 try {
-//                    val filePath="E:\\Temp\\3\\33.stl"
+                    val filePath = "E:\\Temp\\3\\33.stl"
 //                    val filePath = "/home/subochev/tmp/33.stl"
-                    val filePath = "/mnt/e/Temp/2/33.stl"
+//                    val filePath = "/mnt/e/Temp/2/33.stl"
 //                    val filePath="E:\\Temp\\2\\out.txt"
                     println("Read file and copy it")
                     File(filePath).channel(AccessType.READ).use {
-                        it.copyTo(resp.complete(), bufPool)
+                        it.copyTo(resp.complete(1024u * 1024u * 2u), bufPool)
                     }
                     println("File writed!")
                 } catch (e: Throwable) {
@@ -78,7 +73,12 @@ class PostRequestTest {
 //                    it.flush()
 //                }
             }
-        }, bufferSize = DEFAULT_BUFFER_SIZE * 40)
+        },
+                inputBufferSize = DEFAULT_BUFFER_SIZE * 40,
+                zlibBufferSize = 512,
+                outputBufferSize = DEFAULT_BUFFER_SIZE * 40,
+                poolSize = 10
+        )
         try {
             server.bindHTTP(port = 8080)
             while (!done) {
@@ -89,7 +89,7 @@ class PostRequestTest {
             e.printStacktrace(Console.std)
         }
     }
-
+/*
     @Ignore
     @Test
     fun rff() {
@@ -166,5 +166,5 @@ class PostRequestTest {
         t.interrupt()
         t.join()
         println("#3")
-    }
+    }*/
 }

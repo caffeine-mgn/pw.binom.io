@@ -44,10 +44,6 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
         native.next_in = (input.native + input.position)!!.reinterpret()
         val freeOutput = output.remaining
         val freeInput = input.remaining
-
-        (input.position until input.limit).forEach {
-            println("-->$it = ${input[it]}")
-        }
         val r = inflate(native.ptr, Z_NO_FLUSH)
         if (r != Z_OK && r != Z_STREAM_END)
             throw IOException("inflate() returns [${zlibConsts(r)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")

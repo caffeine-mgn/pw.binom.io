@@ -18,24 +18,38 @@ internal class HttpResponseBodyImpl2 : HttpResponseBody {
     fun init(contentLength: ULong?,
              encode: EncodeType,
              rawOutput: AsyncOutput,
-             zlibBufferSize: Int
+             zlibBufferSize: Int,
+             autoFlushSize: Int
     ) {
         this.rawOutput = rawOutput
-        val stream =
-        when (encode) {
-            EncodeType.GZIP -> AsyncGZIPOutput(stream = rawOutput, level = 6, bufferSize = zlibBufferSize)
-            EncodeType.DEFLATE -> AsyncDeflaterOutput(rawOutput, 6, wrap = true, bufferSize = zlibBufferSize)
-            EncodeType.IDENTITY -> rawOutput
-        }
+        var stream = rawOutput
 
-        wrappedOutput = when {
+        stream = when {
             contentLength != null -> {
-                AsyncContentLengthOutput(stream, contentLength)
+                AsyncContentLengthOutput(
+                        stream = stream,
+                        contentLength = contentLength,
+                        closeStream = false
+                )
             }
             else -> {
-                AsyncChunkedOutput(stream)
+                AsyncChunkedOutput(
+                        stream = stream,
+                        autoFlushBuffer = autoFlushSize,
+                        closeStream = false
+                )
             }
         }
+
+        stream =
+                when (encode) {
+                    EncodeType.GZIP -> AsyncGZIPOutput(stream = stream, level = 6, bufferSize = zlibBufferSize, closeStream = stream != rawOutput)
+                    EncodeType.DEFLATE -> AsyncDeflaterOutput(stream, 6, wrap = true, bufferSize = zlibBufferSize, closeStream = stream != rawOutput)
+                    EncodeType.IDENTITY -> stream
+                }
+
+
+        wrappedOutput = stream
     }
 
 //    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
@@ -150,7 +164,7 @@ internal class HttpResponseImpl2(
 
     var body: HttpResponseBodyImpl2? = null
 
-    override suspend fun complete(): HttpResponseBody {
+    override suspend fun complete(autoFlushSize: UInt): HttpResponseBody {
         val buf = rawOutput!!//!!.bufferedOutput()
         val app = buf.utf8Appendable()
         app.append("HTTP/1.1 $status ${statusToText(status)}\r\n")
@@ -184,8 +198,12 @@ internal class HttpResponseImpl2(
         }
         app.append("\r\n")
         body = responseBodyPool.borrow {
-            it.init(contentLength, encode, rawOutput!!,
-                    if (enableCompress) zlibBufferSize else 0
+            it.init(
+                    contentLength = contentLength,
+                    encode = encode,
+                    rawOutput = rawOutput!!,
+                    zlibBufferSize = if (enableCompress) zlibBufferSize else 0,
+                    autoFlushSize = autoFlushSize.toInt()
             )
         }
         rawOutput = null

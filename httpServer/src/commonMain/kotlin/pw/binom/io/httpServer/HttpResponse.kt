@@ -1,6 +1,7 @@
 package pw.binom.io.httpServer
 
 import pw.binom.AsyncOutput
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.Output
 import pw.binom.io.AsyncOutputStream
 
@@ -12,7 +13,7 @@ interface HttpResponse {
     fun resetHeader(name: String, value: String)
     fun addHeader(name: String, value: String)
     fun detach(): HttpConnectionState
-    suspend fun complete():HttpResponseBody
+    suspend fun complete(autoFlushSize:UInt= DEFAULT_BUFFER_SIZE.toUInt()):HttpResponseBody
 }
 
 interface HttpResponseBody:AsyncOutput{

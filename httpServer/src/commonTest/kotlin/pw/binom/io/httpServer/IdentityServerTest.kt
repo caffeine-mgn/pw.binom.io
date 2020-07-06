@@ -4,7 +4,6 @@ import pw.binom.ByteDataBuffer
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
 import pw.binom.io.http.Headers
-import pw.binom.io.socket.nio.SingleThreadNioManager
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.thread.Runnable
 import pw.binom.thread.Thread
@@ -20,6 +19,7 @@ import kotlin.time.toDuration
 
 suspend inline fun AsyncAppendable.appendln(text: String) = append("$text\r\n")
 suspend inline fun AsyncAppendable.appendln() = append("\r\n")
+/*
 
 @Ignore
 @OptIn(ExperimentalTime::class)
@@ -30,7 +30,7 @@ class IdentityServerTest {
     val good = AtomicBoolean(false)
 
     val client = Thread(Runnable {
-        val manager = SingleThreadNioManager(TODO(), TODO())
+        val manager = SocketNIOManager()
         println("Try to connect!")
         manager.connect("127.0.0.1", port).invoke {
             println("Send Request Data")
@@ -115,4 +115,4 @@ class IdentityServerTest {
         if (!good.value)
             throw fail("Response Timeout")
     }
-}
+}*/

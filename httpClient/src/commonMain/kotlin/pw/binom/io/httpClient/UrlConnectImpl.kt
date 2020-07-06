@@ -1,12 +1,11 @@
 package pw.binom.io.httpClient
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.URL
 import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.writeByte
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
-import kotlin.time.measureTimedValue
 
 internal class UrlConnectImpl(
         val method: String,
@@ -36,21 +35,19 @@ internal class UrlConnectImpl(
     private suspend fun sendRequest(withOutput: Boolean) {
         checkSent()
         requestSent = true
-
-        clientDataLength = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.let {
-            it.toULongOrNull() ?: throw RuntimeException("Can't parse Content-Length \"$it\" to unsigned long")
-        }
-        if (clientDataLength == null && withOutput) {
-            if (headers[Headers.TRANSFER_ENCODING]?.isEmpty() != false) {
-                headers.getOrPut(Headers.TRANSFER_ENCODING) { ArrayList() }.add(Headers.CHUNKED)
-                chanked = true
+        if (withOutput) {
+            clientDataLength = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.let {
+                it.toULongOrNull() ?: throw RuntimeException("Can't parse Content-Length \"$it\" to unsigned long")
             }
-        }
-        if (!chanked) {
-            chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
-        }
-        if (!withOutput && clientDataLength.let { it != null && it > 0uL }) {
-            throw IllegalStateException("Request without body must be inited without Content-Length")
+            if (clientDataLength == null && withOutput) {
+                if (headers[Headers.TRANSFER_ENCODING]?.isEmpty() != false) {
+                    headers.getOrPut(Headers.TRANSFER_ENCODING) { ArrayList() }.add(Headers.CHUNKED)
+                    chanked = true
+                }
+            }
+            if (!chanked) {
+                chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
+            }
         }
         val connection = client.borrowConnection(url)
         val buffered = connection.channel.bufferedOutput(closeStream = false)
@@ -77,8 +74,9 @@ internal class UrlConnectImpl(
                 headers = headers,
                 channel = channel,
                 connection = this,
-                flushBuffer = outputFlushSize
-
+                flushBuffer = outputFlushSize,
+                compressBufferSize = DEFAULT_BUFFER_SIZE,
+                compressLevel = 6
         )
 //        val chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
 //        if (!chanked && clientDataLength == null) {
@@ -103,7 +101,7 @@ internal class UrlConnectImpl(
             channel.channel.close()
             throw IOException("Invalid reponse line: Reponse is empty")
         }
-        if (!responseLine.startsWith("HTTP/1.1 "))
+        if (!responseLine.startsWith("HTTP/1.1 ") && !responseLine.startsWith("HTTP/1.0 "))
             throw IOException("Unsupported HTTP version. Response: \"$responseLine\"")
         val responseCode = responseLine.substring(9, 12).toInt()
         val responseHeaders = HashMap<String, ArrayList<String>>()

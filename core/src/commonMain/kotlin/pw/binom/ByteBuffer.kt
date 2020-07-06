@@ -25,7 +25,7 @@ expect class ByteBuffer : Input, Output, Closeable {
     fun get(): Byte
     fun put(value: Byte)
     fun reset(position: Int, length: Int): ByteBuffer
-    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset)
+    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset):Int
     fun clear()
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
@@ -78,7 +78,7 @@ fun ByteBuffer.empty(): ByteBuffer {
     return this
 }
 
-class ByteBufferPool(size: Int = DEFAULT_BUFFER_SIZE) : DefaultPool<ByteBuffer>(10, { ByteBuffer.alloc(size) }), Closeable {
+class ByteBufferPool(size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) : DefaultPool<ByteBuffer>(10, { ByteBuffer.alloc(size.toInt()) }), Closeable {
     override fun borrow(init: ((ByteBuffer) -> Unit)?): ByteBuffer {
         val buf = super.borrow(init)
         buf.clear()

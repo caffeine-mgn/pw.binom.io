@@ -24,7 +24,7 @@ internal object ConnectionProcessing {
         val outputBufferid = outputBuffered//connection.bufferedOutput()
 //        val buf = AsyncBufferedInput(connection)
         val reader = inputBuffered.utf8Reader()
-        val request = reader.readln()!!
+        val request = reader.readln()!!// ?: return false
         val items = request.split(' ')
 
         val req = httpRequestPool.borrow()

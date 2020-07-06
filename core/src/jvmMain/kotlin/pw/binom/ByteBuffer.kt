@@ -168,8 +168,10 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         return r
     }
 
-    actual fun write(data: ByteArray, offset: Int, length: Int){
+    actual fun write(data: ByteArray, offset: Int, length: Int):Int{
+        val l = minOf(remaining,length)
         native.put(data,offset,length)
+        return l
     }
 }
 

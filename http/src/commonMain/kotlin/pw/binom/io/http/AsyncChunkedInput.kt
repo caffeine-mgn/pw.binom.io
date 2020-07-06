@@ -5,8 +5,8 @@ import pw.binom.ByteBuffer
 import pw.binom.io.IOException
 import pw.binom.io.StreamClosedException
 
-private const val CR = 0x0D.toByte()
-private const val LF = 0x0A.toByte()
+internal const val CR = 0x0D.toByte()
+internal  const val LF = 0x0A.toByte()
 
 /**
  * Implements Async Http Chunked Transport Input

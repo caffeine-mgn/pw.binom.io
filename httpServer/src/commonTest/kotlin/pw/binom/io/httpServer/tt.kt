@@ -5,13 +5,13 @@ import pw.binom.io.*
 import pw.binom.io.file.File
 import pw.binom.io.file.FileInputStream
 import pw.binom.io.file.FileOutputStream
-import pw.binom.io.socket.nio.SingleThreadNioManager
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.neverFreeze
 import pw.binom.ssl.*
 import pw.binom.thread.Thread
 import kotlin.test.Ignore
 import kotlin.test.Test
+/*
 
 @Ignore
 class tt {
@@ -99,7 +99,7 @@ class tt {
     @Ignore
     @Test
     fun test() {
-        val manager = SingleThreadNioManager(TODO(),TODO())
+        val manager = SocketNIOManager()
 
         class H : Handler {
             override suspend fun request(req: HttpRequest, resp: HttpResponse) {
@@ -122,4 +122,4 @@ class tt {
             manager.update()
         }
     }
-}
+}*/

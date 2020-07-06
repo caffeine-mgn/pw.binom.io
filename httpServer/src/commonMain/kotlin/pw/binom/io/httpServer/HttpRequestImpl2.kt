@@ -1,9 +1,12 @@
 package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
-import pw.binom.io.*
+import pw.binom.ByteBuffer
+import pw.binom.io.http.AsyncChunkedInput
+import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.Headers
-import pw.binom.pool.DefaultPool
+import pw.binom.io.readln
+import pw.binom.io.utf8Reader
 
 internal enum class EncodeType {
     GZIP,
@@ -34,22 +37,17 @@ internal class HttpRequestImpl2 : HttpRequest {
     var keepAlive = false
         private set
 
-    fun flush(/*inputBufferPool: DefaultPool<NoCloseInput>*/) {
-        wrapped=null
-//        wrapped?.let {
-//            inputBufferPool.recycle(it)
-//            it.stream = null
-//            wrapped = null
-//        }
+    fun flush() {
+        wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: AsyncInput, allowZlib:Boolean/*, inputBufferPool: DefaultPool<NoCloseInput>*/) {
+    suspend fun init(method: String, uri: String, input: AsyncInput, allowZlib: Boolean/*, inputBufferPool: DefaultPool<NoCloseInput>*/) {
         this.method = method
         this.uri = uri
         headers.clear()
         val reader = input.utf8Reader()
         while (true) {
-            val s = reader.readln()?:break
+            val s = reader.readln() ?: break
             if (s.isEmpty())
                 break
             val items1 = s.split(": ", limit = 2)
@@ -62,14 +60,33 @@ internal class HttpRequestImpl2 : HttpRequest {
                 ?.mapNotNull {
                     when {
                         allowZlib && it == "gzip" -> EncodeType.GZIP
-                        allowZlib && it=="deflate" -> EncodeType.DEFLATE
+                        allowZlib && it == "deflate" -> EncodeType.DEFLATE
                         else -> EncodeType.IDENTITY
                     }
                 }
                 ?.firstOrNull() ?: EncodeType.IDENTITY
         keepAlive = headers[Headers.CONNECTION]?.any { it.toLowerCase() == Headers.KEEP_ALIVE } ?: false
-        wrapped = input/*inputBufferPool.borrow {
-            it.stream = input
-        }*/
+        wrapped = input
+        if (headers[Headers.TRANSFER_ENCODING]?.asSequence()?.flatMap { it.splitToSequence(',') }?.map { it.trim() }?.any { it == Headers.CHUNKED } == true) {
+            wrapped = AsyncChunkedInput(wrapped!!, false)
+        } else {
+            val contentLength = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull()
+            if (contentLength != null)
+                wrapped = AsyncContentLengthInput(
+                        stream = wrapped!!,
+                        autoCloseStream = false,
+                        contentLength = contentLength
+                )
+            else
+                wrapped = AsyncEofInput
+        }
     }
+}
+
+private object AsyncEofInput : AsyncInput {
+    override suspend fun read(dest: ByteBuffer): Int = 0
+
+    override suspend fun close() {
+    }
+
 }
