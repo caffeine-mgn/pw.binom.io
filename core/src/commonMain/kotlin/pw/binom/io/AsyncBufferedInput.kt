@@ -33,31 +33,6 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
 
     protected var closed = false
 
-//    override suspend fun skip(length: Long): Long {
-//        val buf = ByteBuffer.alloc(512)
-//        var l = length
-//        while (l > 0) {
-//            buf.reset(0, minOf(buf.capacity, l.toInt()))
-//            read(buf)
-//        }
-//        return l
-//    }
-
-//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        if (available == -1) {
-//            readed.value = 0
-//            wrote.value = stream.read(buffer, 0, buffer.size)
-//            if (wrote.value <= 0)
-//                return wrote.value
-//        }
-//
-//        val l = minOf(wrote.value - readed.value, length)
-//
-//        buffer.copyInto(data, destinationOffset = offset, startIndex = readed.value, endIndex = readed.value + l)
-//        readed.addAndGet(l)
-//        return l
-//    }
-
     protected open suspend fun fill() {
         buffer.clear()
         stream.read(buffer)

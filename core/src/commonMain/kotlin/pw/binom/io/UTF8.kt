@@ -1,16 +1,16 @@
 package pw.binom.io
 
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
+import pw.binom.writeByte
 
 object UTF8 {
 
-    fun unicodeToUtf8(text: String, out: ByteBuffer):Int {
+    fun unicodeToUtf8(text: String, out: ByteBuffer): Int {
         var len = 0
         text.forEachIndexed { index, c ->
-            len+=unicodeToUtf8(c, out)
+            len += unicodeToUtf8(c, out)
         }
         return len
     }
@@ -310,7 +310,7 @@ object UTF8 {
     }
 
     fun urlDecode(input: String): String {
-        val sb = ByteArrayOutputStream()
+        val sb = ByteArrayOutput()
         var i = 0
         while (i < input.length) {
             if (input[i] == '%') {
@@ -318,12 +318,16 @@ object UTF8 {
                 val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
                 val b2 = input[i + 1].toString().toInt(16) and 0xf
                 i += 1
-                sb.write((b1 + b2).toByte())
+                sb.writeByte((b1 + b2).toByte())
             } else {
-                sb.write(input[i].toByte())
+                sb.writeByte(input[i].toByte())
             }
             i++
         }
-        return sb.toByteArray().asUTF8String()
+        sb.trimToSize()
+        sb.data.flip()
+        val str = sb.data.asUTF8String()
+        sb.close()
+        return str
     }
 }

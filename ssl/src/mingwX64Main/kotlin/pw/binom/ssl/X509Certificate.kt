@@ -3,7 +3,7 @@ package pw.binom.ssl
 import cnames.structs.stack_st_X509
 import kotlinx.cinterop.CPointer
 import platform.openssl.*
-import pw.binom.io.ByteArrayOutputStream
+import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
 
 actual class X509Certificate internal constructor(val ptr: CPointer<X509>) : Closeable {
@@ -24,10 +24,13 @@ actual class X509Certificate internal constructor(val ptr: CPointer<X509>) : Clo
     actual fun save(): ByteArray {
         val bio = Bio.mem()
         PEM_write_bio_X509(bio.self, ptr)
-        val stream = ByteArrayOutputStream()
+        val stream = ByteArrayOutput()
         bio.copyTo(stream)
         bio.close()
-        return stream.toByteArray()
+        stream.data.flip()
+        val array = stream.data.toByteArray()
+        stream.close()
+        return array
     }
 }
 

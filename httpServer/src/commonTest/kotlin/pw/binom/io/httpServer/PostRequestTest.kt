@@ -1,12 +1,11 @@
 package pw.binom.io.httpServer
 
 import pw.binom.*
-import pw.binom.io.InfinityByteBuffer
+import pw.binom.io.*
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
 import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.io.use
 import pw.binom.pool.DefaultPool
 import pw.binom.thread.FixedThreadPool
 import kotlin.test.Test
@@ -25,6 +24,12 @@ class PostRequestTest {
         var dd = TimeSource.Monotonic.markNow()
         val server = HttpServer(manager, object : Handler {
             override suspend fun request(req: HttpRequest, resp: HttpResponse) {
+                val out = ByteArrayOutput()
+                req.input.copyTo(out,bufPool)
+                out.trimToSize()
+                out.data.clear()
+//                val text = req.input.utf8Reader().readText()
+                println("Input: [${out.data.toByteArray().map { "0x${it.toString(16).toUpperCase()}" }.joinToString(" ")}]")
 //                val p = ByteBuffer.alloc(200)
 //                req.input.read(p)
 //                p.flip()

@@ -30,11 +30,6 @@ interface AsyncInput : AsyncCloseable {
 }
 
 fun Input.asyncInput() = object : AsyncInput {
-//    override suspend fun skip(length: Long): Long =
-//            this@asyncInput.skip(length)
-
-//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int =
-//            this@asyncInput.read(data, offset, length)
 
     override suspend fun read(dest: ByteBuffer): Int =
             this@asyncInput.read(dest)

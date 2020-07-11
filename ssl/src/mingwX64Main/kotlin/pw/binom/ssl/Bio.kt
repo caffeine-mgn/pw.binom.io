@@ -2,16 +2,23 @@ package pw.binom.ssl
 
 import kotlinx.cinterop.*
 import platform.openssl.*
-import platform.posix.size_tVar
+import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.Output
 import pw.binom.io.Closeable
-import pw.binom.io.InputStream
-import pw.binom.io.OutputStream
 
 inline class Bio(val self: CPointer<BIO>) : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
             memScoped {
                 val r = BIO_read(self, data.refTo(offset), length.convert())
+                if (r < 0)
+                    TODO()
+                r
+            }
+
+    fun read(data: ByteBuffer): Int =
+            memScoped {
+                val r = BIO_read(self, (data.native + data.position), data.remaining.convert())
                 if (r < 0)
                     TODO()
                 r
@@ -52,12 +59,17 @@ inline class Bio(val self: CPointer<BIO>) : Closeable {
         }
     }
 
-    fun copyTo(stream: OutputStream, bufferLength: Int = DEFAULT_BUFFER_SIZE) {
-        val buf = ByteArray(bufferLength)
-        while (!eof) {
-            val len = read(buf)
-            if (len > 0)
-                stream.write(data = buf, length = len)
+    fun copyTo(stream: Output, bufferLength: Int = DEFAULT_BUFFER_SIZE) {
+        val buf = ByteBuffer.alloc(bufferLength)
+        try {
+            while (!eof) {
+                buf.clear()
+                read(buf)
+                buf.flip()
+                stream.write(data = buf)
+            }
+        } finally {
+            buf.close()
         }
     }
 
@@ -71,21 +83,11 @@ inline class Bio(val self: CPointer<BIO>) : Closeable {
             return Bio(bio)
         }
 
-        fun mem(data:ByteArray): Bio {
+        fun mem(data: ByteArray): Bio {
             val bio = BIO_new_mem_buf(data.refTo(0), data.size)!!
             if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_NOCLOSE, null) < 0)
                 TODO()
             return Bio(bio)
         }
-    }
-}
-
-fun InputStream.copyTo(bio: Bio, bufferLength: Int = DEFAULT_BUFFER_SIZE) {
-    val buf = ByteArray(bufferLength)
-    while (true) {
-        val l = read(buf)
-        if (l == 0)
-            return
-        bio.write(buf, l)
     }
 }

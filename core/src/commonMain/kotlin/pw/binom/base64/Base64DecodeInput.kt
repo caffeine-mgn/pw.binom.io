@@ -2,8 +2,6 @@ package pw.binom.base64
 
 import pw.binom.ByteBuffer
 import pw.binom.Input
-import pw.binom.io.EOFException
-import pw.binom.io.InputStream
 import pw.binom.io.Reader
 import kotlin.experimental.or
 
