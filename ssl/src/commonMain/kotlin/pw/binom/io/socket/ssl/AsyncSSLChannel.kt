@@ -1,11 +1,7 @@
 package pw.binom.io.socket.ssl
 
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.io.AsyncChannel
-import pw.binom.io.AsyncInputStream
-import pw.binom.io.AsyncOutputStream
-import pw.binom.io.EOFException
 
 fun SSLSession.asyncChannel(channel: AsyncChannel) =
         AsyncSSLChannel(this, channel)

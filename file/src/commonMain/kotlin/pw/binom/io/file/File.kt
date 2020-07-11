@@ -28,11 +28,6 @@ expect class File(path: String) {
 val File.isExist: Boolean
     get() = isFile || isDirectory
 
-/**
- * Returns current work directory
- */
-expect val File.Companion.workDirectory: File
-
 val File.name: String
     get() {
         val p = path.lastIndexOf(File.SEPARATOR)

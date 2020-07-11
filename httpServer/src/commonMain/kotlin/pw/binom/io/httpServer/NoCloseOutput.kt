@@ -2,8 +2,6 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
-import pw.binom.io.AsyncOutputStream
 
 internal class NoCloseOutput(val func: (NoCloseOutput) -> Unit) : AsyncOutput {
 

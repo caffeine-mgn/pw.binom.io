@@ -324,7 +324,7 @@ object UTF8 {
             }
             i++
         }
-        sb.trimToSize()
+//        sb.trimToSize()
         sb.data.flip()
         val str = sb.data.asUTF8String()
         sb.close()

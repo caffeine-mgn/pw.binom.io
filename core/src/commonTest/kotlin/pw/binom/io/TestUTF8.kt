@@ -3,6 +3,7 @@ package pw.binom.io
 import pw.binom.ByteBuffer
 import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
+import pw.binom.toByteBufferUTF8
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -10,9 +11,11 @@ import kotlin.test.assertEquals
 class TestUTF8 {
 
     private fun testWriteChar(char: Char) {
-        val s = ByteArrayOutputStream()
-        val data = ByteArray(6)
-        s.write(data, 0, UTF8.unicodeToUtf8(char, data))
+        val s = ByteArrayOutput()
+        val data = ByteBuffer.alloc(6)
+        UTF8.unicodeToUtf8(char, data)
+        data.flip()
+        s.write(data)
 
         val d = s.toByteArray()
         val e = char.toString().asUTF8ByteArray()
@@ -105,7 +108,7 @@ class TestUTF8 {
     fun testEndLine() {
         val txt = "H\r\nE"
 
-        assertEquals(txt, ByteArrayInputStream(txt.asUTF8ByteArray()).utf8Reader().readText())
+        assertEquals(txt, txt.toByteBufferUTF8().utf8Reader().readText())
 
         assertEquals(txt,
                 ByteBuffer.alloc(50).also {

@@ -13,16 +13,19 @@ class ReaderUTF82(val stream: Input) : AbstractReader() {
 
     override fun read(): Char? =
             try {
-                tmp8.reset(0,1)
-                stream.read(tmp8)
-                val firstByte = tmp8[0]
-                val size = UTF8.utf8CharSize(firstByte)
-                if (size > 0) {
-                    tmp8.clear()
-                    stream.read(tmp8)
-                    tmp8.flip()
+                tmp8.reset(0, 1)
+                if (stream.read(tmp8) > 0) {
+                    val firstByte = tmp8[0]
+                    val size = UTF8.utf8CharSize(firstByte)
+                    if (size > 0) {
+                        tmp8.clear()
+                        stream.read(tmp8)
+                        tmp8.flip()
+                    }
+                    UTF8.utf8toUnicode(firstByte, tmp8)
+                } else {
+                    null
                 }
-                UTF8.utf8toUnicode(firstByte, tmp8)
             } catch (e: EOFException) {
                 null
             }

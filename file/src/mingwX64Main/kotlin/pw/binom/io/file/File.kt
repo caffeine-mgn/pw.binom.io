@@ -73,13 +73,3 @@ actual class File actual constructor(path: String) {
 
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
 }
-
-actual val File.Companion.workDirectory: File
-    get() {
-        val data = _wgetcwd(null, 0.convert()) ?: TODO()
-        try {
-            return File(data.toKString())
-        } finally {
-            free(data)
-        }
-    }

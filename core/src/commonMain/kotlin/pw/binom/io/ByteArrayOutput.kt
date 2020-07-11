@@ -19,6 +19,18 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
         }
     }
 
+    fun toByteArray(): ByteArray {
+        val position = data.position
+        val limit = data.limit
+        try {
+            data.flip()
+            return data.toByteArray()
+        } finally {
+            data.limit = limit
+            data.position = position
+        }
+    }
+
     private inline fun checkClosed() {
         if (closed)
             throw StreamClosedException()
@@ -57,7 +69,7 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
                     this.data.capacity + _wrote + needWrite
             )
             this.data.realloc(newSize)
-            this.data.limit=this.data.capacity
+            this.data.limit = this.data.capacity
         }
         val l = this.data.write(data)
         _wrote += l

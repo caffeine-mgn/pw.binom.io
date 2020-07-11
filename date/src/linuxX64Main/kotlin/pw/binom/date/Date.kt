@@ -1,6 +1,7 @@
 package pw.binom.date
 
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import platform.posix.*
@@ -9,11 +10,16 @@ actual inline class Date(val time: Long) {
     actual companion object {
         actual val timeZoneOffset: Int
             get() = memScoped {
-                val t = alloc<timezone>()
-                val timeVal = alloc<timeval>()
-                gettimeofday(timeVal.ptr, t.ptr)
-                val r = -t.tz_minuteswest
-                r
+                val t = alloc<time_tVar>()
+                val t2 = alloc<tm>()
+                localtime_r(t.ptr, t2.ptr)
+                t2.tm_gmtoff.convert<Int>() / 60
+
+//                val t = alloc<timezone>()
+//                val timeVal = alloc<timeval>()
+//                gettimeofday(timeVal.ptr, t.ptr)
+//                val r = -t.tz_minuteswest
+//                r
             }
         actual val now: Long
             get() = memScoped {

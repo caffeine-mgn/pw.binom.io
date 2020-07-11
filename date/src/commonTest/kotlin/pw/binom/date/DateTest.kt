@@ -1,23 +1,24 @@
 package pw.binom.date
 
+import pw.binom.Environment
 import pw.binom.io.file.File
-import pw.binom.io.file.inputStream
-import pw.binom.io.file.workDirectory
+import pw.binom.io.file.read
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.io.utf8Reader
+import pw.binom.workDirectory
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DateTest {
-    private val testDate = File(File.workDirectory, "build/tmp-date/")
-    private val currentTimeZone = File(testDate, "currentTZ").inputStream!!.use {
+    private val testDate = File(File(Environment.workDirectory), "build/tmp-date/")
+    private val currentTimeZone = File(testDate, "currentTZ").read().use {
         it.utf8Reader().readText()
     }.toInt()
 
-    private val now = File(testDate, "now").inputStream!!.use {
+    private val now = File(testDate, "now").read().use {
         it.utf8Reader().readText()
     }.toLong()
 

@@ -2,8 +2,6 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncOutput
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.Output
-import pw.binom.io.AsyncOutputStream
 
 interface HttpResponse {
     var status: Int
