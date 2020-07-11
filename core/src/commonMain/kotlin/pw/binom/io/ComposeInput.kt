@@ -1,14 +1,16 @@
 package pw.binom.io
 
+import pw.binom.ByteBuffer
+import pw.binom.Input
 import pw.binom.PopResult
 import pw.binom.Stack
 
-class ComposeInputStream : InputStream {
+class ComposeInput : Input {
 
-    private val readers = Stack<InputStream>()
-    private var current = PopResult<InputStream>()
+    private val readers = Stack<Input>()
+    private var current = PopResult<Input>()
 
-    override fun read(data: ByteArray, offset: Int, length: Int): Int {
+    override fun read(dest: ByteBuffer): Int {
         while (true) {
             if (current.isEmpty && readers.isEmpty)
                 return 0
@@ -18,7 +20,7 @@ class ComposeInputStream : InputStream {
                 continue
             }
 
-            val r = current.value.read(data, offset, length)
+            val r = current.value.read(dest)
             if (r == 0) {
                 current.clear()
                 continue
@@ -36,7 +38,7 @@ class ComposeInputStream : InputStream {
         } while (!current.isEmpty)
     }
 
-    fun addFirst(reader: InputStream): ComposeInputStream {
+    fun addFirst(reader: Input): ComposeInput {
         if (!current.isEmpty) {
             readers.pushFirst(current.value)
             current.clear()
@@ -45,15 +47,19 @@ class ComposeInputStream : InputStream {
         return this
     }
 
-    fun addLast(reader: InputStream): ComposeInputStream {
+    fun addLast(reader: Input): ComposeInput {
         readers.pushLast(reader)
         return this
     }
 }
 
-operator fun InputStream.plus(other: InputStream): ComposeInputStream {
-    val s = ComposeInputStream()
-    s.addFirst(other)
-    s.addFirst(this)
-    return s
+operator fun Input.plus(other: Input): ComposeInput {
+    if (this is ComposeInput) {
+        addLast(other)
+        return this
+    }
+    val composeInput = ComposeInput()
+    composeInput.addFirst(other)
+    composeInput.addFirst(this)
+    return composeInput
 }

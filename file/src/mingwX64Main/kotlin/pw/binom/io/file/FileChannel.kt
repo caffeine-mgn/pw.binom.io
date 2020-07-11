@@ -69,12 +69,6 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         return fwrite(data.native+data.position, 1.convert(), data.remaining.convert(), handler).convert()
     }
 
-//    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        if (feof(handler) != 0)
-//            return 0
-//        return fwrite(data.refTo(offset), 1.convert(), length.convert(), handler).convert()
-//    }
-
     override fun flush() {
     }
 

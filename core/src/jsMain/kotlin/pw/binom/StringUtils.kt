@@ -1,6 +1,6 @@
 package pw.binom
 
-import pw.binom.io.ByteArrayOutputStream
+import pw.binom.io.ByteArrayOutput
 import pw.binom.io.UTF8
 import pw.binom.io.use
 
@@ -17,10 +17,14 @@ actual fun ByteArray.asUTF8String(startIndex: Int, length: Int): String {
 }
 
 actual fun String.asUTF8ByteArray(): ByteArray =
-        ByteArrayOutputStream().use {
-            val data = ByteArray(6)
+        ByteArrayOutput().use {
+            val data = ByteBuffer.alloc(6)
             forEach { char ->
-                it.write(data, 0, UTF8.unicodeToUtf8(char, data))
+                data.clear()
+                UTF8.unicodeToUtf8(char, data)
+                data.flip()
+                it.write(data)
             }
-            it.toByteArray()
+            it.data.flip()
+            it.data.toByteArray()
         }

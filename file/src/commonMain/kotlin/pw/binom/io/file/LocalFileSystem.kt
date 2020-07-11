@@ -3,10 +3,10 @@ package pw.binom.io.file
 import pw.binom.*
 import pw.binom.io.FileSystem
 import pw.binom.io.FileSystemAccess
-import pw.binom.io.copyTo
 import pw.binom.io.use
+import pw.binom.pool.DefaultPool
 
-class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : FileSystem<U> {
+class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>, val byteBufferPool: DefaultPool<ByteBuffer>) : FileSystem<U> {
     override suspend fun new(user: U, path: String): AsyncOutput {
         access.putFile(user, path)
         val file = File(root, path.removePrefix("/"))
@@ -80,9 +80,9 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
             if (!file.isExist)
                 throw FileSystem.FileNotFoundException(this.path)
 
-            FileInputStream(this.file).use { s ->
-                FileOutputStream(toFile).use { d ->
-                    s.copyTo(d)
+            this.file.read().use { s ->
+                toFile.write().use { d ->
+                    s.copyTo(d, byteBufferPool)
                 }
             }
             return EntityImpl(toFile, user)

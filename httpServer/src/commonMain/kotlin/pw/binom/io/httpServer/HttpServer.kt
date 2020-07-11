@@ -57,7 +57,7 @@ open class HttpServer(val manager: SocketNIOManager,
         HttpResponseImpl2(httpResponseBodyPool, zlibBufferSize)
     }
 
-    private fun runProcessing(connection: SocketNIOManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
+    private fun runProcessing(connection: SocketNIOManager.ConnectionRaw) {
         connection {
             val inputBufferid = bufferedInputPool.borrow { buf ->
                 buf.currentStream = it
@@ -99,7 +99,7 @@ open class HttpServer(val manager: SocketNIOManager,
     }
 
     override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
-        runProcessing(connection, null, null)
+        runProcessing(connection)
     }
 
     private val binded = ArrayList<ServerSocketChannel>()
@@ -127,11 +127,6 @@ open class HttpServer(val manager: SocketNIOManager,
 //    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
 //        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
 //    }
-
-    fun attach(state: HttpConnectionState, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)? = null) {
-        val con = manager.attach(state.channel)
-        runProcessing(con, state, handler)
-    }
 
     /**
      * Update network events

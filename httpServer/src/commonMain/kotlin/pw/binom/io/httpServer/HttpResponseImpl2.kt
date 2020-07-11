@@ -158,10 +158,6 @@ internal class HttpResponseImpl2(
         headers.getOrPut(name) { ArrayList() }.add(value)
     }
 
-    override fun detach(): HttpConnectionState {
-        TODO("Not yet implemented")
-    }
-
     var body: HttpResponseBodyImpl2? = null
 
     override suspend fun complete(autoFlushSize: UInt): HttpResponseBody {
