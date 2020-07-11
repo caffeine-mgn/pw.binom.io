@@ -10,6 +10,7 @@ import kotlin.test.assertNull
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
+/*
 
 private class SkipOutputStream : OutputStream {
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
@@ -118,4 +119,4 @@ class StringReaderTest {
         println("timeToReadByPart: $timeToReadByPart")
         println("timeToReadBase64: $timeToReadBase64")
     }
-}
+}*/

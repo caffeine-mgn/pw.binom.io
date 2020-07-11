@@ -4,6 +4,7 @@ import pw.binom.asUTF8ByteArray
 import pw.binom.io.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
+/*
 
 fun Byte.toBinary(max: Int = 6): String {
     val ss = this.toString(2)
@@ -45,4 +46,4 @@ class TestBase64EncodeOutputStream {
         }
         assertEquals("ABkaMzQ9Pj",out.toString())
     }
-}
+}*/

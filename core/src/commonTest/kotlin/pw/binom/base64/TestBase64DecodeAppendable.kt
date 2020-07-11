@@ -5,6 +5,7 @@ import pw.binom.asUTF8String
 import pw.binom.io.ByteArrayOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
+/*
 
 class TestBase64DecodeAppendable {
 
@@ -40,4 +41,4 @@ class TestBase64DecodeAppendable {
             assertEquals(-65, it[5])
         }
     }
-}
+}*/

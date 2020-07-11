@@ -1,5 +1,6 @@
 package pw.binom.io
 
+import pw.binom.ByteBuffer
 import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
 import kotlin.test.Test
@@ -107,9 +108,10 @@ class TestUTF8 {
         assertEquals(txt, ByteArrayInputStream(txt.asUTF8ByteArray()).utf8Reader().readText())
 
         assertEquals(txt,
-                ByteArrayOutputStream().also {
+                ByteBuffer.alloc(50).also {
                     it.utf8Appendable().append(txt)
                     it.flush()
+                    it.flip()
                 }.toByteArray().asUTF8String()
         )
     }

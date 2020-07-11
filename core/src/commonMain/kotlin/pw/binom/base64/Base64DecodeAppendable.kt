@@ -13,7 +13,7 @@ internal fun charFromBase64(value: Char): Byte =
             in ('0'..'9') -> (52 + value.toInt() - '0'.toInt()).toByte()
             '+' -> 62.toByte()
             '/' -> 63.toByte()
-            else -> throw IllegalArgumentException()
+            else -> throw IllegalArgumentException("Invalid char [$value] (0x${value.toInt().toString(16)})")
         }
 
 class Base64DecodeAppendable(val stream: Output) : Appendable {

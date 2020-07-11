@@ -31,7 +31,7 @@ object Base64 {
         val o = Base64DecodeAppendable(out)
         o.append(data, offset, offset + length)
         out.trimToSize()
-        out.data.empty()
+        out.data.clear()
         return out.data
     }
 }
