@@ -12,6 +12,11 @@ class AsyncBufferedInput(
 ) : AbstractAsyncBufferedInput() {
     override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
 
+    override suspend fun fill() {
+        buffer.clear()
+        super.fill()
+    }
+
     override suspend fun close() {
         try {
             super.close()
@@ -34,8 +39,8 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
     protected var closed = false
 
     protected open suspend fun fill() {
-        buffer.clear()
-        stream.read(buffer)
+        val r = stream.read(buffer)
+        println("fill: $r")
         buffer.flip()
     }
 

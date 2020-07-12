@@ -24,8 +24,9 @@ expect class ByteBuffer : Input, Output, Closeable {
     fun skip(length: Long): Long
     fun get(): Byte
     fun put(value: Byte)
+    fun compact()
     fun reset(position: Int, length: Int): ByteBuffer
-    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset):Int
+    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
     fun clear()
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
@@ -126,4 +127,14 @@ inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.bin
     } finally {
         limit = l
     }
+}
+
+inline fun ByteBuffer.forEachIndexed(func: (Int, Byte) -> Unit) {
+    for (it in position until limit)
+        func(it, this[it])
+}
+
+inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
+    for (it in position until limit)
+        func(this[it])
 }

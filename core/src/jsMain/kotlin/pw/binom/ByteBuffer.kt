@@ -175,4 +175,13 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         }
         return l
     }
+
+    actual fun compact() {
+        if (position > 0) {
+            val size = remaining
+            memcpy(native, 0, native, position, size)
+            position = size
+            limit = capacity
+        }
+    }
 }
