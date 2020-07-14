@@ -39,13 +39,13 @@ fun Reader.asAsync() = object : AsyncReader {
 
 }
 
-fun Reader.readln(): String {
+fun Reader.readln(): String? {
     val sb = StringBuilder()
     var first = true
     while (true) {
         val r = read()
         if (r == null && first)
-            throw EOFException()
+            return null
         first = false
         if (r == null)
             break
