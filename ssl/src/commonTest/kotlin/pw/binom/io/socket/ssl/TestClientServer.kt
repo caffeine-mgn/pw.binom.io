@@ -1,5 +1,5 @@
 package pw.binom.io.socket.ssl
-
+/*
 import pw.binom.Date
 import pw.binom.Thread
 import pw.binom.from
@@ -149,3 +149,4 @@ SSLContext.getInstance(SSLMethod.TLSv1_2).use {
 */
     }
 }
+*/

@@ -143,7 +143,7 @@ class ServerTest {
     @Test
     fun test() {
 
-        val manager = SingleThreadNioManager()
+        val manager = SocketNIOManager()
 
         manager.bind("127.0.0.1", port = port, handler = handler)
         clientThread.start()

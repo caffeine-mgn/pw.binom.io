@@ -48,15 +48,6 @@ class FixedThreadPool(size: Int) : ThreadPool {
     val q = SynchronizedAppendableQueue(Stack<Item>().asFiFoQueue())//WaitEventQueue<Item>()
     private val threads = Array(size) { ExecuteThread() }
 
-//    val statisticThread = Thread(Runnable {
-//        while (!Thread.currentThread.isInterrupted) {
-//            println("Thread count: ${threads.size}, jobs: ${q.size}")
-//            Thread.sleep(1000)
-//        }
-//    }).also {
-//        it.start()
-//    }
-
     class Item(val func: () -> Any?, val continuation: Continuation<Any?>?)
 
     init {
