@@ -1,13 +1,15 @@
 package pw.binom.io.httpServer
 
 import pw.binom.*
-import pw.binom.io.*
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
+import pw.binom.io.readText
+import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.pool.DefaultPool
-import pw.binom.thread.FixedThreadPool
+import pw.binom.io.use
+import pw.binom.io.utf8Reader
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -15,6 +17,7 @@ import kotlin.time.TimeSource
 
 class PostRequestTest {
 
+    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun server() {
@@ -24,12 +27,26 @@ class PostRequestTest {
         var dd = TimeSource.Monotonic.markNow()
         val server = HttpServer(manager, object : Handler {
             override suspend fun request(req: HttpRequest, resp: HttpResponse) {
-                val out = ByteArrayOutput()
-                req.input.copyTo(out,bufPool)
-                out.trimToSize()
-                out.data.clear()
+//                val out = ByteArrayOutput()
+//                req.input.copyTo(out,bufPool)
+//                out.trimToSize()
+//                out.data.clear()
+//                println("Input: [${out.data.toByteArray().map { "0x${it.toString(16).toUpperCase()}" }.joinToString(" ")}]")
+
+                req.headers.forEach { k ->
+                    k.value.forEach {
+                        println("${k.key}: $it")
+                    }
+                }
+                val input = req.multipart(bufPool)
+                if (input != null) {
+                    while (input.next()) {
+                        println("${input.formName}: [${input.utf8Reader().readText()}]")
+                    }
+                }
+
 //                val text = req.input.utf8Reader().readText()
-                println("Input: [${out.data.toByteArray().map { "0x${it.toString(16).toUpperCase()}" }.joinToString(" ")}]")
+
 //                val p = ByteBuffer.alloc(200)
 //                req.input.read(p)
 //                p.flip()
@@ -59,6 +76,8 @@ class PostRequestTest {
                         it.copyTo(resp.complete(1024u * 1024u * 2u), bufPool)
                     }
                     println("File writed!")
+                } catch (e: SocketClosedException) {
+                    //ignore
                 } catch (e: Throwable) {
                     println("Error: $e")
                     e.stackTrace.forEach {

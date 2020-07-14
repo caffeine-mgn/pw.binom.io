@@ -1,12 +1,9 @@
 package pw.binom.io.httpClient
 
 import pw.binom.*
-import pw.binom.io.http.Headers
-import pw.binom.io.readText
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
-import pw.binom.io.utf8Appendable
-import pw.binom.io.utf8Reader
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -26,6 +23,7 @@ class TestAsyncHttpClient {
         }
     }
 
+    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() {

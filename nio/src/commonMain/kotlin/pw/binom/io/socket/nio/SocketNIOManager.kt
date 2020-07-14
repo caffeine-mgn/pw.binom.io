@@ -153,106 +153,84 @@ open class SocketNIOManager : Closeable {
 
     protected open fun processIo(key: SocketSelector.SelectorKey) {
         val client = (key.attachment as ConnectionRaw?) ?: return
-        if (client.detached) {
-            return
+        try {
+            if (client.detached) {
+                return
 //                    throw IOException("Client is detached")
-        }
-        if (client.manager !== this)
-            return
-
-        if (!client.channel.isConnected) {
-            client.writeWait?.let {
-                client.writeWait = null
-                it.con.resumeWithException(SocketClosedException())
             }
-            client.readWait?.let {
-                client.readWait = null
-                it.con.resumeWithException(SocketClosedException())
+            if (client.manager !== this)
+                return
+
+            if (!client.channel.isConnected) {
+                client.writeWait?.let {
+                    client.writeWait = null
+                    it.con.resumeWithException(SocketClosedException())
+                }
+                client.readWait?.let {
+                    client.readWait = null
+                    it.con.resumeWithException(SocketClosedException())
+                }
+                client.channel.close()
+                return
             }
-            client.channel.close()
-            return
-        }
 
-        if (client.selectionKey.isCanlelled) {
-            return
-        }
-        if (client.detached)
-            return
-        var needRead = client.selectionKey.listenReadable
-        var needWrite = client.selectionKey.listenWritable || client.readWait != null
-        val writeWait = client.writeWait
+            if (client.selectionKey.isCanlelled) {
+                return
+            }
+            if (client.detached)
+                return
+            var needRead = client.selectionKey.listenReadable
+            var needWrite = client.selectionKey.listenWritable || client.readWait != null
+            val writeWait = client.writeWait
+            val readWait = client.readWait
 
-        if (key.isWritable) {
-            if (writeWait == null) {
-                needWrite = false
-            } else {
-                try {
-                    client.channel.write(writeWait.buffer)
-                    needWrite = writeWait.buffer.remaining > 0
-                    if (writeWait.buffer.remaining == 0) {
-                        client.writeWait = null
-                        writeWait.con.resume(0)
-                        needWrite = client.writeWait != null
-                    } else {
-                        needWrite = true
-                    }
-                } catch (e: Throwable) {
-                    writeWait.con.resumeWithException(e)
+            if (key.isWritable) {
+                if (writeWait == null) {
                     needWrite = false
+                } else {
+                    try {
+                        client.channel.write(writeWait.buffer)
+                        needWrite = writeWait.buffer.remaining > 0
+                        if (writeWait.buffer.remaining == 0) {
+                            client.writeWait = null
+                            writeWait.con.resume(0)
+                            needWrite = client.writeWait != null
+                        } else {
+                            needWrite = true
+                        }
+                    } catch (e: Throwable) {
+                        writeWait.con.resumeWithException(e)
+                        client.writeWait = null
+                        needWrite = false
+                    } finally {
+                    }
+                }
+            }
+            if (key.isReadable && readWait != null) {
+                client.readWait = null
+                try {
+                    readWait.con.resume(client.channel.read(readWait.buffer))
+                } catch (e: Throwable) {
+                    readWait.con.resumeWithException(e)
+                    needRead = false
                 } finally {
                 }
+
+                if (!needWrite && client.readWait != null)
+                    needWrite = true
+            } else {
+                needRead = false
             }
-        }
-        val readWait = client.readWait
-        if (key.isReadable && readWait != null) {
+            if (!key.isCanlelled)
+                key.updateListening(client.readWait != null, client.writeWait != null)
+        } catch (e: Throwable) {
+            println("ERROROROROR!!!!!!!")
+            client.readWait?.con?.resumeWithException(e)
+            client.writeWait?.con?.resumeWithException(e)
             client.readWait = null
-            try {
-                readWait.con.resume(client.channel.read(readWait.buffer))
-            } catch (e: Throwable) {
-                readWait.con.resumeWithException(e)
-                needRead = false
-            } finally {
-            }
-
-            if (!needWrite && client.readWait != null)
-                needWrite = true
-        } else {
-            needRead = false
+            client.writeWait = null
+            client.detach().close()
         }
-        /*
-        if (key.isReadable && client.fillBufWaiter != null) {
-            val buf = bufferPool.borrow()
-            try {
-                if (client.input.readRemaining <= 0) {
-                    val l = client.channel.read(buf)
-                    client.input.write(buf, 0, l)
-                }
-
-                if (client.input.readRemaining > 0) {
-                    needRead = false
-
-                    val waiter = client.fillBufWaiter
-                    client.fillBufWaiter = null
-                    waiter?.resume(Unit)
-                }
-
-            } catch (e: Throwable) {
-                val waiter = client.fillBufWaiter
-                client.fillBufWaiter = null
-                waiter?.resumeWithException(e)
-                needRead = false
-            } finally {
-                bufferPool.recycle(buf)
-            }
-
-            if (!needWrite && client.flushWaiter != null)
-                needWrite = true
-        } else {
-            needRead = false
-        }
-        */
-        if (!key.isCanlelled)
-            key.updateListening(client.readWait != null, client.writeWait != null)
     }
 
     protected open fun processAccept(key: SocketSelector.SelectorKey) {
@@ -281,14 +259,11 @@ open class SocketNIOManager : Closeable {
 
     protected fun waitEvents(timeout: Int?) {
         selector.process(timeout) { key ->
-//        if (threadPool != null) {
-//            threadPool.execute {
-//                processEvent(key)
-//            }
-//        } else {
-//
-//        }
-            processEvent(key)
+            try {
+                processEvent(key)
+            } catch (e: SocketClosedException) {
+                //ignore disconnect event
+            }
         }
     }
 

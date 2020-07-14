@@ -1,21 +1,23 @@
 package pw.binom.io.httpServer
 
 import pw.binom.*
+import pw.binom.io.ByteArrayOutput
+import pw.binom.io.httpClient.AsyncMultipartOutput
+import pw.binom.io.readText
+import pw.binom.io.utf8Appendable
+import pw.binom.io.utf8Reader
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class MultipartReaderTest {
+class AsyncMultipartInputTest {
 
     @Test
     fun findEndTest() {
         val txt = "--SPLIT\r\n\r\nANT\r\n--SPLIT\r\n\r\nON\r\n--SPLIT--\r\n"
                 .toByteBufferUTF8()
-
-        (txt.position until txt.limit).forEach {
-            println("$it -> ${txt[it].toChar2()}")
-        }
 
         val endState = EndState()
 
@@ -33,13 +35,67 @@ class MultipartReaderTest {
     }
 
     @Test
+    fun asyncMultipartInputTest() {
+        val stream = ByteArrayOutput()
+        val mulipart = AsyncMultipartOutput(stream.asyncOutput())
+        var exception: Throwable? = null
+        val userName = Random.uuid().toString()
+        val userPassword = Random.uuid().toString()
+        val bufferPool = ByteBufferPool(100u)
+        async {
+            try {
+                //-------build test data-------//
+                mulipart.part("userName")
+                mulipart.utf8Appendable().append(userName)
+                mulipart.part("userPassword")
+                mulipart.utf8Appendable().append(userPassword)
+                mulipart.part("emptyData")
+                mulipart.close()
+                stream.trimToSize()
+                stream.data.clear()
+                val testData = stream.data.clone()
+                stream.close()
+
+                //-------test-------//
+                val t = ByteBuffer.alloc(100)
+                val input = AsyncMultipartInput(
+                        separator = mulipart.boundary,
+                        stream = testData.asyncInput(),
+                        bufferPool = bufferPool
+                )
+
+                t.clear()
+                assertEquals(0, input.read(t))
+                assertTrue(input.next())
+                assertEquals("userName", input.formName)
+                assertEquals(userName, input.utf8Reader().readText())
+
+                assertTrue(input.next())
+                assertEquals("userPassword", input.formName)
+                assertEquals(userPassword, input.utf8Reader().readText())
+                assertTrue(input.next())
+                assertEquals("emptyData", input.formName)
+                t.clear()
+                assertEquals(0, input.read(t))
+                assertFalse(input.next())
+            } catch (e: Throwable) {
+                exception = e
+            }
+        }
+
+        if (exception != null)
+            throw exception!!
+    }
+
+    /*
+    @Test
     fun ReaderWithSeparatorTest() {
         val txt = "ANT\r\n--SPLIT\r\n\r\nONQ\r\n--SPLIT--\r\n"
                 .toByteBufferUTF8()
 
         txt.print()
 
-        val buffer = ByteBufferPool(50u)
+        val buffer = ByteBufferPool(15u)
         val reader = ReaderWithSeparator("SPLIT", txt.asyncInput(), buffer)
         var exception: Throwable? = null
         val t = ByteBuffer.alloc(50)
@@ -82,7 +138,7 @@ class MultipartReaderTest {
         if (exception != null)
             throw exception!!
     }
-
+*/
 /*
     @OptIn(ExperimentalStdlibApi::class)
     @Test
