@@ -5,6 +5,7 @@ import pw.binom.PopResult
 import pw.binom.io.Closeable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 fun <T> AppendableQueue<T>.synchronized() = SynchronizedAppendableQueue(this)
 
@@ -24,7 +25,10 @@ class SynchronizedAppendableQueue<T>(val q: AppendableQueue<T>) : AppendableQueu
 
     fun pop(duration: Duration): T? =
             lock.synchronize {
+                val now = TimeSource.Monotonic.markNow()
                 while (true) {
+                    if (now.elapsedNow() > duration)
+                        return@synchronize null
                     if (q.isEmpty) {
                         if (condition.wait(duration))
                             return null

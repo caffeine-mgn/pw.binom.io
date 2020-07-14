@@ -1,12 +1,10 @@
 package pw.binom.thread
 
 import pw.binom.async
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@Ignore
 class FixedThreadPoolTest {
 
     @Test
@@ -24,8 +22,6 @@ class FixedThreadPoolTest {
             }
         }
         pool.shutdown()
-//        pool.close()
-
         assertEquals(10, count)
     }
 }

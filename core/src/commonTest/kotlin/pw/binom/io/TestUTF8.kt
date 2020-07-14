@@ -118,4 +118,44 @@ class TestUTF8 {
                 }.toByteArray().asUTF8String()
         )
     }
+
+    private val test_string = "donďż˘ďľ€ďľ™t"
+
+    @Test
+    fun testUnicodeToUtf8() {
+        val out = ByteArrayOutput()
+        out.utf8Appendable().append(test_string)
+        out.data.flip()
+
+        val buffer = ByteBuffer.alloc(100)
+        test_string.forEach {
+            UTF8.unicodeToUtf8(it, buffer)
+        }
+        buffer.flip()
+
+        val bytes = "64 6f 6e c4 8f c5 bc cb 98 c4 8f c4 be e2 82 ac c4 8f c4 be e2 84 a2 74"
+                .split(' ')
+                .map { it.toUByte(16).toByte() }
+
+        assertEquals(bytes.size, buffer.remaining)
+        buffer.close()
+    }
+
+    @Test
+    fun testdd() {
+        val buffer = ByteBuffer.alloc(100)
+        test_string.forEach {
+            UTF8.unicodeToUtf8(it, buffer)
+        }
+        buffer.flip()
+
+        val sb = StringBuilder()
+        while (buffer.remaining > 0) {
+            val b = buffer.get()
+            sb.append(UTF8.utf8toUnicode(b, buffer))
+        }
+
+        assertEquals(test_string, sb.toString())
+        buffer.close()
+    }
 }

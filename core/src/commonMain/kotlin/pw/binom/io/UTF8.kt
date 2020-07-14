@@ -133,7 +133,7 @@ object UTF8 {
      * @return size of full utf8 character
      */
     fun utf8CharSize(firstByte: Byte): Int {
-        val c = firstByte.toInt()
+        val c = firstByte.toInt() and 0xFF
         return when {
             (c and 0x80) == 0 -> 1 - 1
             (c and 0xE0) == 0xC0 -> 2 - 1
@@ -141,7 +141,7 @@ object UTF8 {
             (c and 0xF8) == 0xF0 -> 4 - 1
             (c and 0xFC) == 0xF8 -> 5 - 1
             (c and 0xFE) == 0xFC -> 6 - 1
-            else -> throw IllegalArgumentException("Unknown Character #$c")
+            else -> throw IllegalArgumentException("Unknown Character 0x${c.toUByte().toString(16)}")
         }
     }
 

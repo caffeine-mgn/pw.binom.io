@@ -18,7 +18,7 @@ class ReaderUTF82(val stream: Input) : AbstractReader() {
                     val firstByte = tmp8[0]
                     val size = UTF8.utf8CharSize(firstByte)
                     if (size > 0) {
-                        tmp8.clear()
+                        tmp8.reset(0,size)
                         stream.read(tmp8)
                         tmp8.flip()
                     }
