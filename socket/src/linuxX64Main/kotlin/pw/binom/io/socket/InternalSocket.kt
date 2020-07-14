@@ -5,7 +5,10 @@ import platform.linux.*
 import platform.posix.*
 import platform.posix.free
 import platform.posix.malloc
+import pw.binom.ByteBuffer
+import pw.binom.ByteDataBuffer
 import pw.binom.io.BindException
+import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
 internal actual fun setBlocking(native: NativeSocketHolder, value: Boolean) {
@@ -34,6 +37,15 @@ internal actual fun initNativeSocket(): NativeSocketHolder =
 
 internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int =
         recv(socket.native, data.refTo(offset), length.convert(), 0).convert()
+
+internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int): Int =
+        recv(socket.native, data.refTo(offset), length.convert(), 0).convert()
+
+internal actual fun recvSocket(socket: NativeSocketHolder, dest: ByteBuffer): Int {
+    val r = recv(socket.native, dest.native + dest.position, dest.remaining.convert(), 0).convert<Int>()
+    dest.position += r
+    return r
+}
 
 internal actual fun bindSocket(socket: NativeSocketHolder, host: String, port: Int) {
     memScoped {
@@ -76,8 +88,16 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
     }
 }
 
-internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int) {
-    send(socket.native, data.refTo(offset), length.convert(), MSG_NOSIGNAL).convert<Int>()
+internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int =
+        send(socket.native, data.refTo(offset), length.convert(), MSG_NOSIGNAL).convert<Int>().convert()
+
+internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int): Int =
+        send(socket.native, data.refTo(offset), length.convert(), MSG_NOSIGNAL).convert()
+
+internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteBuffer): Int {
+    val r = send(socket.native, data.native + data.position, data.remaining.convert(), MSG_NOSIGNAL).convert<Int>()
+    data.position += r
+    return r
 }
 
 internal actual fun acceptSocket(socket: NativeSocketHolder): NativeSocketHolder {
@@ -86,6 +106,9 @@ internal actual fun acceptSocket(socket: NativeSocketHolder): NativeSocketHolder
         throw IOException("Can't accept new client")
     return NativeSocketHolder(native)
 }
+
+internal actual val NativeEvent.key: SocketSelector.SelectorKeyImpl
+    get() = data.ptr!!.asStableRef<SocketSelector.SelectorKeyImpl>().get()
 
 internal actual class NativeEpoll actual constructor(connectionCount: Int) {
     val native = epoll_create(connectionCount)
@@ -100,25 +123,31 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
         epoll_ctl(native, EPOLL_CTL_DEL, socket.native, null)
     }
 
-    actual fun add(socket: NativeSocketHolder) {
-        memScoped {
-            val event = alloc<epoll_event>()
-            event.events = (EPOLLIN or EPOLLOUT or EPOLLRDHUP).convert()
-            event.data.fd = socket.native
-            epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
-        }
-    }
+    actual fun add(socket: NativeSocketHolder, key: SocketSelector.SelectorKeyImpl): SelfRefKey =
+            memScoped {
+                val event = alloc<epoll_event>()
+                val ref = SelfRefKey(key)
+                event.events = if (key.channel is ServerSocketChannel)
+                    (EPOLLIN or EPOLLOUT or EPOLLRDHUP).convert()
+                else
+                    EPOLLRDHUP.convert()
+                event.data.fd = socket.native
+                event.data.ptr = ref.key
+                epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
+                ref
+            }
 
-    actual fun edit(socket: NativeSocketHolder, readFlag: Boolean, writeFlag: Boolean) {
+    actual fun edit(socket: NativeSocketHolder, ref: SelfRefKey, readFlag: Boolean, writeFlag: Boolean) {
         memScoped {
             val event = alloc<epoll_event>()
-            var e = 0//EPOLLRDHUP
+            var e = EPOLLRDHUP.convert<UInt>()
             if (readFlag)
-                e = e or EPOLLIN
+                e = e or EPOLLIN.convert()
             if (writeFlag)
-                e = e or EPOLLOUT
+                e = e or EPOLLOUT.convert()
             event.events = e.convert()
             event.data.fd = socket.native
+            event.data.ptr = ref.key
             epoll_ctl(native, EPOLL_CTL_MOD, socket.native, event.ptr)
         }
     }
@@ -126,13 +155,20 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
 
 actual typealias NativeEvent = epoll_event
 
+internal actual class SelfRefKey(key: SocketSelector.SelectorKeyImpl) : Closeable {
+    val key = StableRef.create(key).asCPointer()
+    override fun close() {
+        key.asStableRef<SocketSelector.SelectorKeyImpl>().dispose()
+    }
+}
+
 internal actual class NativeEpollList actual constructor(connectionCount: Int) {
-    val native = malloc((sizeOf<epoll_event>() * connectionCount).convert())!!.reinterpret<epoll_event>()
+    val native = nativeHeap.allocArray<epoll_event>(connectionCount)//malloc((sizeOf<epoll_event>() * connectionCount).convert())!!.reinterpret<epoll_event>()
     actual fun free() {
-        free(native)
+        nativeHeap.free(native)
     }
 
-    actual operator fun get(index: Int): NativeEvent = native[index]
+    actual inline operator fun get(index: Int): NativeEvent = native[index]
 }
 
 internal actual val NativeEvent.isClosed: Boolean

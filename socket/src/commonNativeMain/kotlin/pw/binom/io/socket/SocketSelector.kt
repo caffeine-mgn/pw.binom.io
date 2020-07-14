@@ -9,60 +9,68 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
         neverFreeze()
     }
 
+    private var closed = false
+
     private val native = NativeEpoll(connections)
     private val list = NativeEpollList(connections)
     override fun close() {
+        if (closed)
+            throw IllegalStateException("SocketSelector already closed")
         list.free()
         native.free()
-        elements.clear()
+        closed = true
     }
 
-    private inner class SelectorKeyImpl(override val channel: NetworkChannel, override val attachment: Any?, r: Boolean, w: Boolean) : SelectorKey {
+    internal inner class SelectorKeyImpl(override val channel: NetworkChannel,
+                                         override val attachment: Any?) : SelectorKey {
 
         private var _canlelled = false
+        lateinit var event: NativeEvent
+        lateinit var selfRef: SelfRefKey
 
         override val isCanlelled: Boolean
             get() = _canlelled
 
-        override var listenReadable: Boolean = r
-            set(value) {
-                if (value == field)
-                    return
-                field = value
-                native.edit(channel.nsocket.native, value, listenWritable)
-            }
-        override var listenWritable: Boolean = w
-            set(value) {
-                if (value == field)
-                    return
-                field = value
-                native.edit(channel.nsocket.native, listenReadable, value)
-            }
+        override var listenReadable: Boolean = false
+            private set
+        override var listenWritable: Boolean = false
+            private set
         override var isReadable: Boolean = false
         override var isWritable: Boolean = false
 
         override fun cancel() {
             if (isCanlelled)
                 throw IllegalStateException("SocketKey already cancelled")
-            elements.remove(channel.nsocket.native.code)
             native.remove(channel.nsocket.native)
+            selfRef.close()
             _canlelled = true
+            _keys -= this
+        }
+
+        override fun updateListening(read: Boolean, write: Boolean) {
+            if (listenReadable == read && listenWritable == write)
+                return
+            listenReadable = read
+            listenWritable = write
+            native.edit(channel.nsocket.native, selfRef, read, write)
         }
     }
 
-    private val elements = HashMap<Int, SelectorKeyImpl>()
+    private val _keys = HashSet<SelectorKeyImpl>()
 
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
         channel as NetworkChannel
 
-        val key = SelectorKeyImpl(channel, attachment, channel is RawSocketChannel, channel is RawSocketChannel)
+
+        val key = SelectorKeyImpl(channel, attachment)
 
 
         if (channel.nsocket.blocking)
             throw IllegalBlockingModeException()
 
-        native.add(channel.nsocket.native)
-        elements[channel.nsocket.native.code] = key
+        val ref = native.add(channel.nsocket.native, key)
+        key.selfRef = ref
+        _keys += key
         return key
     }
 
@@ -72,16 +80,19 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
             return false
         for (i in 0 until count) {
             val item = list[i]
-
-            val el = elements[item.socId] ?: continue
+            val el = item.key
             el.isReadable = item.isReadable
             el.isWritable = item.isWritable
             if (item.isClosed) {
-                when (el.channel) {
-                    is RawSocketChannel -> el.channel.socket.internalDisconnected()
+                val cc = el.channel
+                when (cc) {
+                    is RawSocketChannel -> cc.socket.internalDisconnected()
                     is RawServerSocketChannel -> el.channel.nsocket.internalDisconnected()
                 }
-//                el.cancel()
+//                when  {
+//                    isClient(cc) -> cc.socket.internalDisconnected()
+//                    isServer(cc) -> el.channel.nsocket.internalDisconnected()
+//                }
             }
             func(el)
         }
@@ -89,17 +100,18 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     }
 
     actual val keys: Collection<SelectorKey>
-        get() = elements.values
+        get() = _keys
 
     actual interface SelectorKey {
         actual val channel: Channel
         actual val attachment: Any?
         actual val isReadable: Boolean
         actual val isWritable: Boolean
-        actual var listenReadable: Boolean
-        actual var listenWritable: Boolean
+        actual val listenReadable: Boolean
+        actual val listenWritable: Boolean
         actual val isCanlelled: Boolean
         actual fun cancel()
+        actual fun updateListening(read: Boolean, write: Boolean)
     }
 
 }

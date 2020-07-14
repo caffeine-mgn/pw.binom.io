@@ -11,7 +11,7 @@ private fun executeInOtherThread(func: () -> Unit): Pair<UInt, HANDLE> {
     return memScoped {
         val thread = alloc<UIntVar>()
         val ptr = StableRef.create(func).asCPointer()
-        val handle = CreateThread(null, 0, staticCFunction<COpaquePointer?, DWORD> {
+        val handle = CreateThread(null, 0.convert(), staticCFunction<COpaquePointer?, DWORD> {
             initRuntimeIfNeeded()
             val selfPtr = it!!.asStableRef<() -> Unit>()
             val self = selfPtr.get()
@@ -21,7 +21,7 @@ private fun executeInOtherThread(func: () -> Unit): Pair<UInt, HANDLE> {
                 selfPtr.dispose()
             }
             0u
-        }, ptr, 0, thread.ptr) ?: throw IllegalStateException("Can't start new Thread")
+        }, ptr, 0.convert(), thread.ptr) ?: throw IllegalStateException("Can't start new Thread")
         thread.value to handle
     }
 }

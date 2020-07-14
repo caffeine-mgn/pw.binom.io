@@ -17,6 +17,9 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
 
         fun wrap(array: Uint8Array) =
                 wrap(Int8Array(array.buffer))
+
+        actual fun wrap(data: ByteArray) =
+                wrap(Int8Array(data.unsafeCast<Array<Byte>>()))
     }
 
     private constructor(size: Int) {
@@ -66,7 +69,7 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
         return length
     }
 
-    actual fun write(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
+    actual fun writeTo(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
         checkBounds(position, offset, length, data.size)
         for (i in 0 until length) {
             buffer[position + i] = data.buffer[i + offset]
@@ -74,11 +77,15 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
         return length
     }
 
-    actual fun read(position: Int, data: ByteDataBuffer, offset: Int, length: Int): Int {
-        checkBounds(position, offset, length, data.size)
-        for (i in 0 until length) {
-            data.buffer[i + offset] = buffer[position + i]
+    internal actual fun unsafe() {
+    }
+
+    internal actual fun safe() {
+    }
+
+    actual fun fill(element: Byte, startIndex: Int, endIndex: Int) {
+        (startIndex..endIndex).forEach {
+            buffer[it] = element
         }
-        return length
     }
 }

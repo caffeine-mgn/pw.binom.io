@@ -1,8 +1,11 @@
 package pw.binom.io
 
-class ReaderUTF8(val stream: InputStream) : AbstractReader() {
+import pw.binom.Input
+import pw.binom.tmp8
 
-    private val data = ByteArray(6)
+class ReaderUTF82(val stream: Input) : AbstractReader() {
+
+//    private val data = ByteDataBuffer.alloc(4)
 
     override fun close() {
         stream.close()
@@ -10,15 +13,22 @@ class ReaderUTF8(val stream: InputStream) : AbstractReader() {
 
     override fun read(): Char? =
             try {
-                val firstByte = stream.read()
-                val size = UTF8.utf8CharSize(firstByte)
-                if (size > 0)
-                    stream.read(data, 0, size)
-                val vv = UTF8.utf8toUnicode(firstByte, data)
-                vv
+                tmp8.reset(0, 1)
+                if (stream.read(tmp8) > 0) {
+                    val firstByte = tmp8[0]
+                    val size = UTF8.utf8CharSize(firstByte)
+                    if (size > 0) {
+                        tmp8.reset(0,size)
+                        stream.read(tmp8)
+                        tmp8.flip()
+                    }
+                    UTF8.utf8toUnicode(firstByte, tmp8)
+                } else {
+                    null
+                }
             } catch (e: EOFException) {
                 null
             }
 }
 
-fun InputStream.utf8Reader() = ReaderUTF8(this)
+fun Input.utf8Reader() = ReaderUTF82(this)

@@ -13,6 +13,11 @@ fun Closeable(func: () -> Unit) = object : Closeable {
 
 }
 
+fun closablesOf(vararg closable: Closeable) =
+        Closeable {
+            closable.forEach { it.close() }
+        }
+
 inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
     return try {
         func(this)

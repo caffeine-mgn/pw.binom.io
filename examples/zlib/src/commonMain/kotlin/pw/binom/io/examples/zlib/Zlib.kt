@@ -1,40 +1,36 @@
 package pw.binom.io.examples.zlib
 
+import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
-import pw.binom.compression.zlib.DeflaterOutputStream
-import pw.binom.compression.zlib.InflateInputStream
-import pw.binom.io.ByteArrayOutputStream
-import pw.binom.io.copyTo
+import pw.binom.compression.zlib.GZIPInput
+import pw.binom.compression.zlib.GZIPOutput
+import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
-import pw.binom.io.file.FileInputStream
-import pw.binom.io.file.FileOutputStream
+import pw.binom.io.file.channel
 import pw.binom.io.use
+import pw.binom.toByteBufferUTF8
 
-fun main(args: Array<String>) {
-    val data = "Simple Text".asUTF8ByteArray()
+fun main() {
+    val data = "Simple Text".toByteBufferUTF8()
 
     val LEVEL = 9
     val WRAP = true
 
     val file = File("Test.gz")
-    FileOutputStream(file, false).use {
-        DeflaterOutputStream(it, LEVEL, DEFAULT_BUFFER_SIZE, WRAP).use {
-            it.write(data, 0, data.size)
+
+    file.channel(AccessType.WRITE, AccessType.CREATE).use {
+        GZIPOutput(it, LEVEL, DEFAULT_BUFFER_SIZE, closeStream = true).use {
+            it.write(data)
             it.flush()
         }
     }
 
-    println("Compressed data: \"${data.asUTF8String()}\"")
-
-    val out = ByteArrayOutputStream()
-    FileInputStream(file).use {
-        InflateInputStream(it, DEFAULT_BUFFER_SIZE, WRAP).use {
-            it.copyTo(out)
+    val out = ByteBuffer.alloc(300)
+    file.channel(AccessType.READ).use {
+        GZIPInput(it, DEFAULT_BUFFER_SIZE, closeStream = true).use {
+            it.read(out)
         }
     }
-
-
-    println("Decompressed data: \"${out.toByteArray().asUTF8String()}\"")
+    out.close()
 }

@@ -1,7 +1,7 @@
 package pw.binom.base64
 
-import pw.binom.io.OutputStream
-import pw.binom.io.write
+import pw.binom.Output
+import pw.binom.writeByte
 import kotlin.experimental.or
 
 internal fun charFromBase64(value: Char): Byte =
@@ -11,10 +11,10 @@ internal fun charFromBase64(value: Char): Byte =
             in ('0'..'9') -> (52 + value.toInt() - '0'.toInt()).toByte()
             '+' -> 62.toByte()
             '/' -> 63.toByte()
-            else -> throw IllegalArgumentException()
+            else -> throw IllegalArgumentException("Invalid char [$value] (0x${value.toInt().toString(16)})")
         }
 
-class Base64DecodeAppendable(val stream: OutputStream) : Appendable {
+class Base64DecodeAppendable(val stream: Output) : Appendable {
 
     private var g = 0
     private var b = 0.toByte()
@@ -31,17 +31,17 @@ class Base64DecodeAppendable(val stream: OutputStream) : Appendable {
             }
             1 -> {
                 val write = b or (value shr 4)
-                stream.write(write)
+                stream.writeByte(write)
                 b = value shl 4
             }
             2 -> {
                 val write = b or (value shr 2)
-                stream.write(write)
+                stream.writeByte(write)
                 b = value shl 6
             }
             3 -> {
                 val write = b or (value)
-                stream.write(write)
+                stream.writeByte(write)
                 b = 0
             }
             else -> throw RuntimeException()

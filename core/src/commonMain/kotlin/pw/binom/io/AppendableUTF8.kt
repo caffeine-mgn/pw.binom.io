@@ -1,9 +1,16 @@
 package pw.binom.io
 
-class AppendableUTF8(private val stream: OutputStream) : Appendable {
-    private val data = ByteArray(6)
+import pw.binom.ByteDataBuffer
+import pw.binom.Output
+import pw.binom.tmp8
+
+class AppendableUTF8(private val stream: Output) : Appendable {
+    //private val data = ByteDataBuffer.alloc(4)
     override fun append(c: Char): AppendableUTF8 {
-        stream.write(data, 0, UTF8.unicodeToUtf8(c, data))
+        tmp8.clear()
+        val r = UTF8.unicodeToUtf8(c, tmp8)
+        tmp8.flip()
+        stream.write(tmp8)
         return this
     }
 
@@ -21,7 +28,6 @@ class AppendableUTF8(private val stream: OutputStream) : Appendable {
         }
         return this
     }
-
 }
 
-fun OutputStream.utf8Appendable() = AppendableUTF8(this)
+fun Output.utf8Appendable() = AppendableUTF8(this)

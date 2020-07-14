@@ -2,7 +2,7 @@ package pw.binom.io
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
+/*
 class StreamTest {
 
     @Test
@@ -20,3 +20,4 @@ class StreamTest {
         assertEquals(2, ByteArrayInputStream(ss.toByteArray()).readInt())
     }
 }
+*/

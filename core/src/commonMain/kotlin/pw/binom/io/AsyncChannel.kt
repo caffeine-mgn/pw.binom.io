@@ -1,6 +1,6 @@
 package pw.binom.io
 
-interface AsyncChannel : AsyncCloseable {
-    val input: AsyncInputStream
-    val output: AsyncOutputStream
-}
+import pw.binom.AsyncInput
+import pw.binom.AsyncOutput
+
+interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput

@@ -7,7 +7,7 @@ import pw.binom.atomic.AtomicBoolean
 @Suppress("UNCHECKED_CAST")
 class QueueCompose<T, F : T, S : T>(val first: Queue<F>, val second: Queue<S>) : Queue<T> {
     override val size: Int
-        get() = lock.use {
+        get() = lock.synchronize {
             first.size + second.size
         }
 
@@ -18,60 +18,60 @@ class QueueCompose<T, F : T, S : T>(val first: Queue<F>, val second: Queue<S>) :
 
     private val lock = Lock()
 
-    override fun pop(): T = lock.use {
+    override fun pop(): T = lock.synchronize {
         turn.value = !turn.value
 
         if (turn.value) {
             if (!first.isEmpty) {
-                return@use first.pop()
+                return@synchronize first.pop()
             }
 
             turn.value = !turn.value
 
             if (!second.isEmpty)
-                return@use second.pop()
+                return@synchronize second.pop()
 
             throw NoSuchElementException()
         } else {
             if (!second.isEmpty) {
-                return@use second.pop()
+                return@synchronize second.pop()
             }
 
             turn.value = !turn.value
 
             if (!first.isEmpty)
-                return@use first.pop()
+                return@synchronize first.pop()
 
             throw NoSuchElementException()
         }
     }
 
     override fun pop(dist: PopResult<T>) {
-        lock.use {
+        lock.synchronize {
             turn.value = !turn.value
 
             if (turn.value) {
                 first.pop(dist as PopResult<F>)
                 if (!dist.isEmpty) {
-                    return@use
+                    return@synchronize
                 }
 
                 turn.value = !turn.value
                 second.pop(dist as PopResult<S>)
 
                 if (!dist.isEmpty)
-                    return@use
+                    return@synchronize
             } else {
                 second.pop(dist as PopResult<S>)
                 if (!dist.isEmpty) {
-                    return@use
+                    return@synchronize
                 }
 
                 turn.value = !turn.value
 
                 first.pop(dist as PopResult<F>)
                 if (!dist.isEmpty)
-                    return@use
+                    return@synchronize
             }
         }
     }

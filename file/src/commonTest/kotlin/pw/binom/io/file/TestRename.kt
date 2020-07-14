@@ -17,7 +17,7 @@ class TestRename {
         if (dest.isExist)
             dest.delete()
 
-        FileOutputStream(source).use { }
+        source.write().use { }
 
         assertFalse(dest.isFile)
         assertTrue(source.isFile)
@@ -43,7 +43,7 @@ class TestRename {
         if (dest.isExist)
             dest.delete()
 
-        FileOutputStream(source).use { }
+        source.write().use { }
 
         assertFalse(dest.isFile)
         assertTrue(source.isFile)

@@ -9,8 +9,11 @@
 enableFeaturePreview('GRADLE_METADATA')
 rootProject.name = 'pw.binom.io'
 
+include(":env")
 include(":core")
+include(":date")
 include(":nio")
+include(":flux")
 include(":file")
 include(":db")
 include(":sqlite")
@@ -30,7 +33,8 @@ include(":ssl")
 include(":process")
 
 include(":examples:echoServer")
-include(":examples:httpServer")
+include(":examples:simpleHttpServer")
+include(":examples:nioHttpServer")
 include(":examples:clienthttp")
 include(":examples:zlib")
 include(":examples:read-write-file")

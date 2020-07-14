@@ -1,5 +1,6 @@
 package pw.binom.io.examples.echoServer
 
+import pw.binom.ByteBuffer
 import pw.binom.io.socket.RawServerSocketChannel
 import pw.binom.io.socket.RawSocketChannel
 import pw.binom.io.socket.SocketClosedException
@@ -13,19 +14,24 @@ fun main(args: Array<String>) {
     server.bind("0.0.0.0", 8899)
     selector.reg(server)
     println("Start listen port 8899")
-    val buffer = ByteArray(256)
+    val buffer = ByteBuffer.alloc(256)
     while (true) {
         selector.process {
             if (it.channel === server) {
                 val client = server.accept()!!
                 client.blocking = false
-                selector.reg(client)
+                selector.reg(client).updateListening(true, false)
                 println("Client connected")
             } else {
+                println("Client processing")
                 try {
                     val client = it.channel as RawSocketChannel
+                    buffer.clear()
+                    println("Try read ${buffer.remaining}")
                     val len = client.read(buffer)
-                    client.write(buffer, 0, len)
+                    println("Read $len")
+                    buffer.flip()
+                    client.write(buffer)
                     println("read $len bytes")
                 } catch (e: SocketClosedException) {
                     it.cancel()

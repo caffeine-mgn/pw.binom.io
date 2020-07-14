@@ -10,9 +10,13 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
     actual val size: Int
         get() = writeLen
 
-    override fun write(data: ByteArray, offset: Int, length: Int): Int {
+    private inline fun checkClosed() {
         if (closed)
             throw StreamClosedException()
+    }
+
+    override fun write(data: ByteArray, offset: Int, length: Int): Int {
+        checkClosed()
 
         if (length < 0)
             throw IndexOutOfBoundsException("Length can't be less than 0")
@@ -26,7 +30,6 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
                     ceil(buffer.size * capacityFactor).toInt(),
                     buffer.size + needWrite
             )
-
             buffer = buffer.copyOf(newSize)
         }
         data.copyInto(buffer, writeLen, offset, offset + length)
@@ -35,19 +38,16 @@ actual class ByteArrayOutputStream actual constructor(capacity: Int, private val
     }
 
     override fun flush() {
-        if (closed)
-            throw StreamClosedException()
+        checkClosed()
     }
 
     override fun close() {
-        if (closed)
-            throw StreamClosedException()
+        checkClosed()
         closed = true
     }
 
     actual fun toByteArray(): ByteArray {
-        if (closed)
-            throw StreamClosedException()
+        checkClosed()
         return if (writeLen > 0)
             buffer.copyOf(writeLen)
         else

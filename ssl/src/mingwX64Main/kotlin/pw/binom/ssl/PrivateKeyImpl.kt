@@ -2,7 +2,7 @@ package pw.binom.ssl
 
 import kotlinx.cinterop.CPointer
 import platform.openssl.*
-import pw.binom.io.ByteArrayOutputStream
+import pw.binom.io.*
 
 // Documentation https://stackoverflow.com/questions/18155559/how-does-one-access-the-raw-ecdh-public-key-private-key-and-params-inside-opens
 class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: CPointer<EVP_PKEY>) : PrivateKey {
@@ -14,10 +14,13 @@ class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: 
                     val rsa = EVP_PKEY_get1_RSA(native)?:TODO("EVP_PKEY_get1_RSA returns null")
                     val b = Bio.mem()
                     i2d_RSAPrivateKey_bio(b.self,rsa)
-                    val o = ByteArrayOutputStream()
+                    val o = ByteArrayOutput()
                     b.copyTo(o)
                     b.close()
-                    return o.toByteArray()
+                    o.data.flip()
+                    val array = o.data.toByteArray()
+                    o.close()
+                    return array
                 }
             }
 

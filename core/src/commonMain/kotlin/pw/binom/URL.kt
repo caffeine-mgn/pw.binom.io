@@ -64,6 +64,12 @@ class URL(private val path: String) {
 
     fun newURI(uri: String): URL = new(uri = uri)
 
+    fun appendDirectionURI(path: String) =
+            if (path.isEmpty())
+                this
+            else
+                newURI("${uri.removeSuffix("/")}/${path.removePrefix("/")}")
+
     fun newPort(port: Int?): URL = new(port = port)
 
     fun newHost(host: String): URL = new(host = host)

@@ -16,10 +16,11 @@ expect class SocketSelector(connections: Int) : Closeable {
         val attachment: Any?
         val isReadable: Boolean
         val isWritable: Boolean
-        var listenReadable: Boolean
-        var listenWritable: Boolean
+        val listenReadable: Boolean
+        val listenWritable: Boolean
         val isCanlelled: Boolean
         fun cancel()
+        fun updateListening(read: Boolean, write: Boolean)
     }
 }
 

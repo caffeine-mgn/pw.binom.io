@@ -1,108 +1,105 @@
 package pw.binom.io.httpServer
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.async
 import pw.binom.io.Closeable
-import pw.binom.io.IOException
-import pw.binom.io.StreamClosedException
-import pw.binom.io.readln
 import pw.binom.io.socket.ServerSocketChannel
+import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.SocketFactory
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.rawSocketFactory
-import pw.binom.ssl.SSLContext
+import pw.binom.pool.DefaultPool
+import pw.binom.printStacktrace
+import pw.binom.stackTrace
 
 /**
  * Base Http Server
  *
  * @param handler request handler
+ * @param zlibBufferSize size of zlib buffer. 0 - disable zlib
  */
-open class HttpServer(val manager: SocketNIOManager, protected val handler: Handler) : Closeable, SocketNIOManager.ConnectHandler {
+open class HttpServer(val manager: SocketNIOManager,
+                      protected val handler: Handler,
+                      poolSize: Int = 10,
+                      inputBufferSize: Int = DEFAULT_BUFFER_SIZE,
+                      outputBufferSize: Int = DEFAULT_BUFFER_SIZE,
+                      private val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE
+) : Closeable, SocketNIOManager.ConnectHandler {
 
-    private fun runProcessing(connection: SocketNIOManager.ConnectionRaw, state: HttpConnectionState?, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)?) {
+    init {
+        require(zlibBufferSize >= 0) { "zlibBufferSize must be grate or equals than 0" }
+    }
+
+    private val returnToPoolForOutput: (NoCloseOutput) -> Unit = {
+        outputBufferPool.recycle(it)
+    }
+
+    private val bufferedInputPool = DefaultPool(poolSize) {
+        PooledAsyncBufferedInput(inputBufferSize)
+    }
+
+    private val bufferedOutputPool = DefaultPool(poolSize) {
+        PoolAsyncBufferedOutput(outputBufferSize)
+    }
+
+    private val outputBufferPool = DefaultPool(poolSize) {
+        NoCloseOutput(returnToPoolForOutput)
+    }
+    private val httpRequestPool = DefaultPool(poolSize) {
+        HttpRequestImpl2()
+    }
+
+    private val httpResponseBodyPool = DefaultPool(poolSize) {
+        HttpResponseBodyImpl2()
+    }
+
+    private val httpResponsePool = DefaultPool(poolSize) {
+        HttpResponseImpl2(httpResponseBodyPool, zlibBufferSize)
+    }
+
+    private fun runProcessing(connection: SocketNIOManager.ConnectionRaw) {
         connection {
-            try {
-                while (true) {
-                    val uri: String
-                    val method: String
-                    val headers = HashMap<String, ArrayList<String>>()
-                    if (state == null) {
-                        val request = it.input.readln()
-                        val items = request.split(' ')
-                        method = items[0]
-                        uri = items.getOrNull(1) ?: ""
-                        while (true) {
-                            val s = it.input.readln()
-                            if (s.isEmpty())
-                                break
-                            val items1 = s.split(": ", limit = 2)
-
-                            headers.getOrPut(items1[0]) { ArrayList() }.add(items1.getOrNull(1) ?: "")
-                        }
-                    } else {
-                        uri = state.uri
-                        method = state.method
-                        state.requestHeaders.forEach {
-                            headers[it.key] = ArrayList(it.value)
-                        }
-                    }
-                    val request1 = HttpRequestImpl(
-                            connection = it,
-                            method = method,
-                            uri = uri,
-                            headers = headers)
-
-                    val response = HttpResponseImpl(
-                            status = state?.status ?: 404,
-                            headerSendded = state?.headerSendded ?: false,
-                            headers = state?.responseHeaders ?: mapOf(),
-                            connection = it,
-                            request = request1,
-                            keepAlive = request1.headers["Connection"]?.getOrNull(0) == "keep-alive")
-
-                    if (handler != null) {
-                        handler(request1, response)
-                    } else
-                        this.handler.request(request1, response)
-                    try {
-                        val b = ByteArray(DEFAULT_BUFFER_SIZE)
-                        while (true) {
-                            if (request1.input.read(b) == 0)
-                                break
-                        }
-                    } catch (e: StreamClosedException) {
-                        //NOP
-                    }
-                    response.output.close()
-
-
-                    if (response.disconnectFlag) {
+            val inputBufferid = bufferedInputPool.borrow { buf ->
+                buf.currentStream = it
+            }
+            val outputBufferid = bufferedOutputPool.borrow { buf ->
+                buf.currentStream = it
+            }
+            while (true) {
+                try {
+                    val keepAlive = ConnectionProcessing.process(
+                            handler = this.handler,
+                            httpRequestPool = httpRequestPool,
+                            httpResponsePool = httpResponsePool,
+                            inputBuffered = inputBufferid,
+                            outputBuffered = outputBufferid,
+                            allowZlib = zlibBufferSize > 0
+                    )
+                    if (!keepAlive) {
+                        inputBufferid.reset()
+                        bufferedInputPool.recycle(inputBufferid)
+                        outputBufferid.reset()
+                        bufferedOutputPool.recycle(outputBufferid)
+                        it.close()
                         break
                     }
-
-                    if (response.detachFlag) {
-                        return@connection
-                    }
-
-                    response.endResponse()
-
-//                    connection.output.writeln()
-//                    connection.output.writeln()
-
-                    if (response.headers["Connection"]?.singleOrNull() == "keep-alive"
-                            && response.headers["Content-Length"]?.singleOrNull()?.toLongOrNull() != null) {
-                        continue
-                    }
+                } catch (e: SocketClosedException) {
+                    break
+                } catch (e: Throwable) {
+                    e.printStacktrace()
+                    inputBufferid.reset()
+                    bufferedInputPool.recycle(inputBufferid)
+                    outputBufferid.reset()
+                    bufferedOutputPool.recycle(outputBufferid)
+                    it.close()
                     break
                 }
-                it.close()
-            } catch (e: IOException) {
-                it.close()
             }
         }
     }
 
     override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
-        runProcessing(connection, null, null)
+        runProcessing(connection)
     }
 
     private val binded = ArrayList<ServerSocketChannel>()
@@ -111,7 +108,11 @@ open class HttpServer(val manager: SocketNIOManager, protected val handler: Hand
         binded.forEach {
             it.close()
         }
-        manager.close()
+        async {
+            while (bufferedInputPool.size > 0) {
+                bufferedInputPool.borrow { it.currentStream = null }.close()
+            }
+        }
     }
 
     /**
@@ -123,19 +124,14 @@ open class HttpServer(val manager: SocketNIOManager, protected val handler: Hand
         binded += manager.bind(host = host, port = port, handler = this, factory = SocketFactory.rawSocketFactory)
     }
 
-    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
-        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
-    }
-
-    fun attach(state: HttpConnectionState, handler: ((req: HttpRequest, resp: HttpResponse) -> Unit)? = null) {
-        val con = manager.attach(state.channel)
-        runProcessing(con, state, handler)
-    }
+//    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
+//        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
+//    }
 
     /**
      * Update network events
      *
      * @param timeout Timeout for wait event
      */
-    fun update(timeout: Int? = null) = manager.update(timeout)
+//    fun update(timeout: Int? = null) = manager.update(timeout)
 }

@@ -1,8 +1,8 @@
 package pw.binom.io
 
 import pw.binom.UUID
-import pw.binom.base64.Base64DecodeInputStream
-import pw.binom.base64.Base64EncodeOutputStream
+import pw.binom.base64.Base64DecodeInput
+import pw.binom.base64.Base64EncodeOutput
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,6 +10,7 @@ import kotlin.test.assertNull
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
+/*
 
 private class SkipOutputStream : OutputStream {
     override fun write(data: ByteArray, offset: Int, length: Int): Int {
@@ -61,7 +62,7 @@ class StringReaderTest {
 
         val base64 = run {
             val sb = StringBuilder()
-            Base64EncodeOutputStream(sb).use {
+            Base64EncodeOutput(sb).use {
                 it.write(Random.nextBytes(36_000))
             }
             sb.toString()
@@ -94,7 +95,7 @@ class StringReaderTest {
 
 
             timeToReadBase64 += measureTime {
-                Base64DecodeInputStream(StringReader(base64)).use {
+                Base64DecodeInput(StringReader(base64)).use {
                     it.copyTo(SkipOutputStream())
                 }
 //                Base64DecodeInputStream(StringReader(base64)).use {
@@ -118,4 +119,4 @@ class StringReaderTest {
         println("timeToReadByPart: $timeToReadByPart")
         println("timeToReadBase64: $timeToReadBase64")
     }
-}
+}*/

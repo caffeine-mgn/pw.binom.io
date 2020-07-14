@@ -1,23 +1,79 @@
 package pw.binom.io.httpClient
 
-import pw.binom.Date
-import pw.binom.URL
-import pw.binom.async
-import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.*
-import pw.binom.io.http.Headers
-import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
-import pw.binom.io.httpServer.HttpServer
-import pw.binom.io.socket.ConnectionManager
-import pw.binom.stackTrace
-import pw.binom.thread.Thread
+import pw.binom.*
+import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.io.use
+import kotlin.test.Ignore
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
+class TestAsyncHttpClient {
+
+    val tm = ByteBuffer.alloc(1024 * 1024 * 2)
+
+    suspend fun AsyncInput.skipAll() {
+        while (true) {
+            tm.clear()
+            if (this.read(tm) == 0) {
+                break
+            }
+            tm.flip()
+        }
+    }
+
+    @Ignore
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun test() {
+//        File("path to file").channel(AccessType.READ).utf8Reader().use {
+//            while (true){
+//                val line = it.readln()?:break
+//                line.splitToSequence(',').forEachIndexed { index, s ->
+//                    if (index>1)
+//                        print("\t")
+//                    print(s)
+//                }
+//                println()
+//            }
+//        }
+        val manager = SocketNIOManager()
+        val client = AsyncHttpClient(manager)
+        var done = false
+
+        async {
+            try {
+                repeat(3) {
+                    var sipTime: Duration? = null
+                    val readTime = measureTime {
+                        println("\n\n=================[$it]=================\n")
+                        client
+                                .request("GET", URL("https://www.ntv.ru/"))
+                                .response().use {
+                                    println("Response code: ${it.responseCode}")
+                                    sipTime = measureTime {
+                                        it.skipAll()
+                                    }
+                                }
+                    }
+                    println("ReadTime $readTime, skipTime: $sipTime")
+                }
+            } catch (e: Throwable) {
+                e.printStacktrace(Console.std)
+            } finally {
+                done = true
+            }
+        }
+        while (!done) {
+            manager.update(1000)
+        }
+
+        client.close()
+    }
+}
+
+/*
 class HandlerImpl(val txt: String, val chunked: Boolean) : Handler {
     override suspend fun request(req: HttpRequest, resp: HttpResponse) {
         req.headers.forEach { k ->
@@ -32,8 +88,9 @@ class HandlerImpl(val txt: String, val chunked: Boolean) : Handler {
         }
 
         resp.status = 200
-        resp.output.utf8Appendable().append(txt)
-        resp.output.flush()
+        val out = resp.complete()
+        out.utf8Appendable().append(txt)
+        out.flush()
 
         val list = assertNotNull(req.headers["X-Server"])
         assertEquals(1, list.size)
@@ -55,12 +112,71 @@ class EmptyHandler : Handler {
 
 class TestAsyncHttpClient {
 
+/*    @Test
+    fun test() {
+        val manager = SocketNIOManager()
+        val client = AsyncHttpClient(manager)
+        async {
+            client.request("GET", URL("http://api.tlsys.org/client")).use {
+                it.addRequestHeader(Headers.CONTENT_TYPE, "application/json; charset=utf-8")
+                it.outputStream.utf8Appendable().append("""{"organization":null,"businessUnit":null,"workPlace":"fdf896f5-e622-4c84-b5b9-8fc19b66834a","client":{"card":"112","mobilePhone":null,"email":null,"validationCode":null,"availableAmount":null}}""")
+                it.outputStream.flush()
+                println("Response code: ${it.responseCode()}")
+                val reader = it.inputStream.utf8Reader()
+                var i = 0
+                while (true) {
+                    val c = reader.read()?:break
+                    print(c)
+                    i++
+                    if (i>1000)
+                        break
+                }
+                println("Break")
+            }
+        }
+        while (true) {
+            manager.update()
+        }
+    }*/
+
+
+    @Ignore
+    @Test
+    fun ttt() {
+        val manager = SocketNIOManager()
+        val client = AsyncHttpClient(manager)
+
+        var done = false
+        async {
+            try {
+                val out = ByteArrayOutputStream()
+                val r = client.request("GET", URL("https://www.google.com/"))
+                r.inputStream.copyTo(out)
+                r.getResponseHeaders().forEach {
+                    println("${it.key}: ${it.value}")
+                }
+                println("Read ${out.size}")
+            } catch (e: Throwable) {
+                println("Error: $e")
+                e.stackTrace.forEach {
+                    println(it)
+                }
+            } finally {
+                done = true
+            }
+        }
+
+        while (!done) {
+            manager.update()
+        }
+    }
+
     @Test
     fun test() {
         println("---------------test---------------")
         val txt = "Hello from server"
         var done = false
-        val manager = ConnectionManager()
+        val manager = SocketNIOManager()
         val server = HttpServer(manager, HandlerImpl(txt = txt, chunked = false))
         val port = 9747
         server.bindHTTP(host = "127.0.0.1", port = port)
@@ -87,7 +203,7 @@ class TestAsyncHttpClient {
         println("---------------chunkedTest---------------")
         val txt = "Hello from server"
         var done = false
-        val manager = ConnectionManager()
+        val manager = SocketNIOManager()
         val server = HttpServer(manager, HandlerImpl(txt = txt, chunked = true))
         val port = 9748
         server.bindHTTP(host = "127.0.0.1", port = port)
@@ -115,7 +231,7 @@ class TestAsyncHttpClient {
     @Test
     fun emptyHandler() {
         println("---------------emptyHandler---------------")
-        val manager = ConnectionManager()
+        val manager = SocketNIOManager()
         val server = HttpServer(manager, EmptyHandler())
         val clientPoll = AsyncHttpClient(server.manager)
         var done = false
@@ -157,7 +273,7 @@ class DDD {
 
     @Test
     fun test() {
-        val vv = ConnectionManager()
+        val vv = SocketNIOManager()
         val client = AsyncHttpClient(vv)
         var done = AtomicBoolean(false)
         async {
@@ -183,9 +299,9 @@ class DDD {
             println("Finish!")
         }
 
-        val start = Date.now().time
+        val start = Date.now
         while (true) {
-            val now = Date.now().time
+            val now = Date.now
             if (now > start + 10_000)
                 break
             if (done.value)
@@ -194,4 +310,6 @@ class DDD {
         }
         println("Done: $done")
     }
+
 }
+*/

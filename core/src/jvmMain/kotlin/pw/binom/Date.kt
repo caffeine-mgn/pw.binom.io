@@ -4,6 +4,7 @@ import java.util.*
 import java.util.Date as JDate
 
 
+/*
 actual class Date {
 
     private val native: JDate
@@ -49,4 +50,4 @@ actual class Date {
             return calendar.get(Calendar.DAY_OF_WEEK)
         }
 
-}
+}*/

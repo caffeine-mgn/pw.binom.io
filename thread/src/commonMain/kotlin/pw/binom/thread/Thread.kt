@@ -7,6 +7,7 @@ expect open class Thread {
 
     companion object {
         val currentThread: Thread
+
         /**
          * Block current thread on [time] milliseconds
          *
@@ -23,9 +24,11 @@ expect open class Thread {
     }
 
     open fun start()
-    val isInterrupted:Boolean
+    val isInterrupted: Boolean
     fun interrupt()
     protected open fun run()
     open val id: Long
     fun join()
 }
+
+class InterruptedException : RuntimeException()

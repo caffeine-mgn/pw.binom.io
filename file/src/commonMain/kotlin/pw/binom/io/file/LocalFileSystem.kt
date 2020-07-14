@@ -1,13 +1,17 @@
 package pw.binom.io.file
 
-import pw.binom.io.*
+import pw.binom.*
+import pw.binom.io.FileSystem
+import pw.binom.io.FileSystemAccess
+import pw.binom.io.use
+import pw.binom.pool.DefaultPool
 
-class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : FileSystem<U> {
-    override suspend fun new(user: U, path: String): AsyncOutputStream {
+class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>, val byteBufferPool: DefaultPool<ByteBuffer>) : FileSystem<U> {
+    override suspend fun new(user: U, path: String): AsyncOutput {
         access.putFile(user, path)
         val file = File(root, path.removePrefix("/"))
         file.parent?.mkdirs()
-        return FileOutputStream(file).asAsync()
+        return file.channel(AccessType.CREATE, AccessType.WRITE).asyncOutput()
     }
 
     override suspend fun get(user: U, path: String): FileSystem.Entity<U>? {
@@ -52,34 +56,44 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
         override val fileSystem: FileSystem<U>
             get() = this@LocalFileSystem
 
-        override suspend fun read(): AsyncInputStream? {
+        override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
             access.getFile(user, path)
             val file = File(root, path.removePrefix("/"))
             if (!file.isFile)
                 return null
+            val channel = file.channel(AccessType.READ)
+            if (offset > 0uL) {
+                channel.position = offset
+            }
 
-            return FileInputStream(file).asAsync()
+            return length?.let { AsyncInputWithLength(it, channel.asyncInput()) } ?: channel.asyncInput()
         }
 
-        override suspend fun copy(path: String): FileSystem.Entity<U> {
+        override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity<U> {
             access.copyFile(user, from = this.path, to = path)
 //            val fromFile = File(root, from.removePrefix("/"))
             val toFile = File(root, path.removePrefix("/"))
 
+            if (toFile.isExist && !overwrite)
+                throw FileSystem.EntityExistException(path)
+
             if (!file.isExist)
                 throw FileSystem.FileNotFoundException(this.path)
 
-            FileInputStream(this.file).use { s ->
-                FileOutputStream(toFile).use { d ->
-                    s.copyTo(d)
+            this.file.read().use { s ->
+                toFile.write().use { d ->
+                    s.copyTo(d, byteBufferPool)
                 }
             }
             return EntityImpl(toFile, user)
         }
 
-        override suspend fun move(path: String): FileSystem.Entity<U> {
+        override suspend fun move(path: String, overwrite: Boolean): FileSystem.Entity<U> {
             access.moveFile(user, this.path, path)
             val toFile = File(root, path.removePrefix("/"))
+
+            if (toFile.isExist && !overwrite)
+                throw FileSystem.EntityExistException(path)
 
             if (!file.isExist)
                 throw FileSystem.FileNotFoundException(this.path)
@@ -93,11 +107,11 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
             File(root, path.removePrefix("/")).deleteRecursive()
         }
 
-        override suspend fun rewrite(): AsyncOutputStream {
+        override suspend fun rewrite(): AsyncOutput {
             access.putFile(user, path)
             val file = File(root, path)
             file.parent?.mkdirs()
-            return FileOutputStream(file, false).asAsync()
+            return file.channel(AccessType.WRITE, AccessType.CREATE).asyncOutput()
         }
 
         override val path: String
@@ -112,4 +126,27 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>) : File
             get() = file.isFile
 
     }
+}
+
+private class AsyncInputWithLength(length: ULong, val stream: AsyncInput) : AsyncInput {
+    private var read = length
+    override suspend fun read(dest: ByteBuffer): Int {
+        if (read == 0uL)
+            return 0
+        val lim = dest.limit
+        return try {
+            val l = minOf(dest.remaining, read.toInt())
+            dest.limit = dest.position + l
+            val r = stream.read(dest)
+            read -= r.toULong()
+            r
+        } finally {
+            dest.limit = lim
+        }
+    }
+
+    override suspend fun close() {
+        stream.close()
+    }
+
 }

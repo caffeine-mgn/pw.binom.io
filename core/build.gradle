@@ -39,6 +39,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                api project(":env")
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
             }
         }
@@ -48,49 +49,31 @@ kotlin {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
                 api project(":thread")
-            }
-        }
-
-        nativeMain {
-            dependencies {
-                dependsOn commonMain
-            }
-        }
-
-        mingwCommonMain {
-            dependencies {
-                dependsOn nativeMain
-            }
-        }
-
-        mingwX64Main {
-            dependencies {
-                dependsOn mingwCommonMain
-            }
-        }
-
-        mingwX86Main {
-            dependencies {
-                dependsOn mingwCommonMain
-            }
-        }
-
-        linuxCommonMain {
-            dependencies {
-                dependsOn nativeMain
+                api project(":file")
             }
         }
 
         linuxX64Main {
             dependencies {
-                dependsOn linuxCommonMain
-                dependsOn nativeMain
+                dependsOn commonMain
             }
         }
 
         linuxArm32HfpMain {
             dependencies {
-                dependsOn linuxCommonMain
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwX64Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn linuxX64Main
             }
         }
 
@@ -119,5 +102,32 @@ kotlin {
         }
     }
 }
+
+def makeTime() {
+    def dateDir = file("$buildDir/tmp-date")
+    dateDir.mkdirs()
+    def tzFile = file("$dateDir/currentTZ")
+    tzFile.delete()
+    tzFile << TimeZone.default.getRawOffset() / 1000 / 60
+}
+
+mingwX64Test {
+    doFirst {
+        makeTime()
+    }
+}
+
+jvmTest {
+    doFirst {
+        makeTime()
+    }
+}
+
+linuxX64Test {
+    doFirst {
+        makeTime()
+    }
+}
+
 
 apply from: '../public.gradle'

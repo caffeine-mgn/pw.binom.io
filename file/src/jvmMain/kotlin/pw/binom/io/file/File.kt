@@ -48,6 +48,3 @@ val java.io.File.asBFile: File
 
 val File.asJFile: java.io.File
     get() = java.io.File(path)
-
-actual val File.Companion.workDirectory: File
-    get() = File(System.getProperty("user.dir"))

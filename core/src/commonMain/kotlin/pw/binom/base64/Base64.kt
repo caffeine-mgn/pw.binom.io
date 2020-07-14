@@ -1,22 +1,38 @@
 package pw.binom.base64
 
-import pw.binom.io.ByteArrayOutputStream
+import pw.binom.ByteBuffer
+import pw.binom.empty
+import pw.binom.io.ByteArrayOutput
 import pw.binom.io.use
+import pw.binom.writeByte
 
 object Base64 {
-    fun encode(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): String {
+
+    fun encode(data: ByteArray): String {
         val sb = StringBuilder()
-        Base64EncodeOutputStream(sb).use {
-            it.write(data = data, offset = offset, length = length)
+        Base64EncodeOutput(sb).use {
+            data.forEach { b->
+                it.writeByte(b)
+            }
         }
         return sb.toString()
     }
 
-    fun decode(data: String, offset: Int = 0, length: Int = data.length - offset): ByteArray {
-        val out = ByteArrayOutputStream()
+    fun encode(data: ByteBuffer): String {
+        val sb = StringBuilder()
+        Base64EncodeOutput(sb).use {
+            it.write(data = data)
+        }
+        return sb.toString()
+    }
+
+    fun decode(data: String, offset: Int = 0, length: Int = data.length - offset): ByteBuffer {
+        val out = ByteArrayOutput()
         val o = Base64DecodeAppendable(out)
         o.append(data, offset, offset + length)
-        return out.toByteArray()
+        out.trimToSize()
+        out.data.clear()
+        return out.data
     }
 }
 

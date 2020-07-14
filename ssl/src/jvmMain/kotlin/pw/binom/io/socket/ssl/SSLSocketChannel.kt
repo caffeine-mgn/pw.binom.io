@@ -9,11 +9,15 @@ import java.nio.ByteBuffer
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLSession
 import java.nio.channels.SocketChannel as JSocketChannel
+/*
 
+*/
 /**
  * A wrapper around a real [SocketChannel] that adds SSL support.
- */
+ *//*
+
 actual class SSLSocketChannel
+*/
 /**
  *
  * @param socketChannel The real SocketChannel.
@@ -21,7 +25,8 @@ actual class SSLSocketChannel
  * @param executorService Used to execute long running, blocking SSL operations such as certificate validation with a CA ([NEED_TASK](http://docs.oracle.com/javase/7/docs/api/javax/net/ssl/SSLEngineResult.HandshakeStatus.html#NEED_TASK))
  * @param log The logger for debug and error messages. A `null` logger will result in no log operations.
  * @throws IOException
- */
+ *//*
+
 (val wrappedSocketChannel: JSocketChannel, sslEngine: SSLEngine) : pw.binom.io.socket.SocketChannel, NetworkChannel {
     //val wrappedSocketChannel=SocketChannel.open()
 
@@ -42,7 +47,8 @@ actual class SSLSocketChannel
         sslEngineBuffer = SSLEngineBuffer(wrappedSocketChannel, sslEngine)
     }
 
-    /**
+    */
+/**
      *
      * Reads a sequence of bytes from this channel into the given buffer.
      *
@@ -66,7 +72,8 @@ actual class SSLSocketChannel
      * @throws java.nio.channels.ClosedByInterruptException If another thread interrupts the current thread while the read operation is in progress, thereby closing the channel and setting the current thread's interrupt status
      * @throws IOException If some other I/O error occurs
      * @throws IllegalArgumentException If the given applicationBuffer capacity ([ByteBuffer.capacity] is less then the application buffer size of the [SSLEngine] session application buffer size ([SSLSession.getApplicationBufferSize] this channel was constructed was.
-     */
+     *//*
+
     @Synchronized
     @Throws(IOException::class, IllegalArgumentException::class)
     fun read(applicationBuffer: ByteBuffer): Int {
@@ -115,7 +122,8 @@ actual class SSLSocketChannel
         return l
     }
 
-    /**
+    */
+/**
      *
      * Writes a sequence of bytes to this channel from the given buffer.
      *
@@ -139,7 +147,8 @@ actual class SSLSocketChannel
      * @throws java.nio.channels.ClosedByInterruptException If another thread interrupts the current thread while the read operation is in progress, thereby closing the channel and setting the current thread's interrupt status
      * @throws IOException If some other I/O error occurs
      * @throws IllegalArgumentException If the given applicationBuffer capacity ([ByteBuffer.capacity] is less then the application buffer size of the [SSLEngine] session application buffer size ([SSLSession.getApplicationBufferSize] this channel was constructed was.
-     */
+     *//*
+
     @Synchronized
     @Throws(IOException::class, IllegalArgumentException::class)
     fun write(applicationBuffer: ByteBuffer): Int {
@@ -217,4 +226,4 @@ actual class SSLSocketChannel
     override fun close() {
         implCloseSelectableChannel()
     }
-}
+}*/

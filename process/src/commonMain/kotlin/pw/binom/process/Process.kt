@@ -1,16 +1,16 @@
 package pw.binom.process
 
+import pw.binom.Input
+import pw.binom.Output
 import pw.binom.io.Closeable
-import pw.binom.io.InputStream
-import pw.binom.io.OutputStream
 
 interface Process : Closeable {
     companion object
 
     val pid: Long
-    val stdin: OutputStream
-    val stdout: InputStream
-    val stderr: InputStream
+    val stdin: Output
+    val stdout: Input
+    val stderr: Input
 
     /**
      * Returns process exit statis

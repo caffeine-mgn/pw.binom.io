@@ -1,5 +1,5 @@
 package pw.binom
-
+/*
 import pw.binom.io.ByteArrayInputStream
 import pw.binom.io.ByteArrayOutputStream
 import pw.binom.io.readln
@@ -34,3 +34,4 @@ class TestStreams {
         }
     }
 }
+*/

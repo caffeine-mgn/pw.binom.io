@@ -16,7 +16,7 @@ abstract class AbstractAsyncReader : AsyncReader {
         var i = 0
         while (i < length) {
             try {
-                data[offset + i++] = read()?:break
+                data[offset + i++] = read() ?: break
             } catch (e: EOFException) {
                 return i
             }
@@ -49,7 +49,7 @@ suspend fun AsyncReader.readText(): String {
     val sb = StringBuilder()
     while (true) {
         try {
-            sb.append(read()?:break)
+            sb.append(read() ?: break)
         } catch (e: EOFException) {
             break
         }

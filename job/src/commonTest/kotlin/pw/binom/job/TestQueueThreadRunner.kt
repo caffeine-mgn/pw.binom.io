@@ -1,8 +1,8 @@
 package pw.binom.job
 
-import pw.binom.FreezedStack
 import pw.binom.Queue
-import pw.binom.Thread
+import pw.binom.thread.FreezedStack
+import pw.binom.thread.Thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

@@ -6,6 +6,8 @@ interface AsyncAppendable {
     suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable
 }
 
+interface AsyncWriter : AsyncAppendable, AsyncCloseable
+
 fun Appendable.asAsync() = object : AsyncAppendable {
     override suspend fun append(c: Char): AsyncAppendable {
         this@asAsync.append(c)
@@ -24,3 +26,7 @@ fun Appendable.asAsync() = object : AsyncAppendable {
 
 }
 
+inline fun Appendable.appendln(text: String) = append(text).appendln()
+inline fun Appendable.appendln() = append("\n")
+suspend inline fun AsyncAppendable.appendln(text: String) = append(text).appendln()
+suspend inline fun AsyncAppendable.appendln() = append("\n")

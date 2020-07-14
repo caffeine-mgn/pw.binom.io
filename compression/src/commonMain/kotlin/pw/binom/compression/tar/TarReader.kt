@@ -1,13 +1,16 @@
 package pw.binom.compression.tar
 
+import pw.binom.ByteBuffer
+import pw.binom.Input
 import pw.binom.asUTF8String
+import pw.binom.io.Closeable
 import pw.binom.io.IOException
-import pw.binom.io.InputStream
 import pw.binom.io.StreamClosedException
+import pw.binom.set
 
-internal const val BLOCK_SIZE = 512u
+internal const val BLOCK_SIZE = 512
 
-internal fun ByteArray.oct2ToUInt(startIndex: Int = 0, length: Int = size - startIndex): UInt {
+internal fun ByteBuffer.oct2ToUInt(startIndex: Int = 0, length: Int = capacity - startIndex): UInt {
     val oct = this
     var out = 0u
     var i = startIndex
@@ -17,7 +20,7 @@ internal fun ByteArray.oct2ToUInt(startIndex: Int = 0, length: Int = size - star
     return out
 }
 
-class TarReader(private val stream: InputStream) {
+class TarReader(private val stream: Input) : Closeable {
 
     inner class TarEntity(
             val name: String,
@@ -26,44 +29,48 @@ class TarReader(private val stream: InputStream) {
             val gid: UInt,
             val type: TarEntityType,
             val mode: UInt,
-            val time:Long
-    ):InputStream{
-        override fun read(data: ByteArray, offset: Int, length: Int): Int {
-            if (currentEntity!=this)
+            val time: Long
+    ) : Input {
+        override fun read(dest: ByteBuffer): Int {
+            if (currentEntity != this)
                 throw StreamClosedException()
             val entity = this
-            val maxLength = minOf(length.toUInt(), entity.size - cursor)
-            if (maxLength == 0u)
+            val maxLength = minOf(dest.remaining, entity.size.toInt() - cursor)
+            if (maxLength == 0)
                 return 0
-            val read = stream.read(data, offset, maxLength.toInt())
-            cursor += read.toUInt()
+            val read = dest.set(dest.position, maxLength) { stream.read(it) }
+            cursor += read
             return read
         }
 
         override fun close() {
         }
-
-        override fun skip(length: Long): Long {
-            if (currentEntity!=this)
-                throw StreamClosedException()
-            val entity = this
-            val maxLength = minOf(length.toUInt(), entity.size - cursor)
-            if (maxLength == 0u)
-                return 0L
-
-            val read = stream.skip(maxLength.toLong())
-            cursor += read.toUInt()
-            return read
-        }
     }
 
     private var currentEntity: TarEntity? = null
-    private var cursor = 0u
+    private var cursor = 0
+    private val tmp = ByteBuffer.alloc(128)
+
+    fun Input.skip(length: Int) {
+        var l = length
+        while (l > 0) {
+            tmp.reset(0, minOf(tmp.capacity, l))
+            l -= read(tmp)
+        }
+    }
 
     private var end = false
 
-    private fun ByteArray.isZeroOnly() = indexOfFirst { it != 0.toByte() } == -1
-    private val header = ByteArray(BLOCK_SIZE.toInt())
+    private fun ByteBuffer.isZeroOnly() = indexOfFirst { it != 0.toByte() } == -1
+    private fun ByteBuffer.indexOfFirst(func: (Byte) -> Boolean): Int {
+        (position until limit).forEach {
+            if (func(this[it]))
+                return@indexOfFirst it
+        }
+        return -1
+    }
+
+    private val header = ByteBuffer.alloc(BLOCK_SIZE.toInt())
 
     @OptIn(ExperimentalStdlibApi::class)
     fun getNextEntity(): TarEntity? {
@@ -71,37 +78,41 @@ class TarReader(private val stream: InputStream) {
             return null
         val entity = currentEntity
         if (entity != null) {
-            var fullSize = (entity.size / BLOCK_SIZE) * BLOCK_SIZE
-            if (entity.size % BLOCK_SIZE > 0u)
-                fullSize += BLOCK_SIZE
-            if (cursor < fullSize) {
-                val needForRead = fullSize - cursor
+            var fullSize = (entity.size / BLOCK_SIZE.toUInt()) * BLOCK_SIZE.toUInt()
+            if (entity.size % BLOCK_SIZE.toUInt() > 0u)
+                fullSize += BLOCK_SIZE.toUInt()
+            if (cursor.toUInt() < fullSize) {
+                val needForRead = fullSize - cursor.toUInt()
                 if (needForRead > 0u) {
-                    val needForSkip = needForRead.toLong()
-                    if (stream.skip(needForSkip) != needForSkip)
-                        throw IllegalStateException("Can't skip a part of Tar Stream")
+                    val needForSkip = needForRead
+                    stream.skip(needForSkip.toInt())
                 }
             }
         }
+        header.clear()
         stream.read(header)
+        header.flip()
         if (header.isZeroOnly()) {
-            stream.skip(BLOCK_SIZE.toLong())
+            stream.skip(BLOCK_SIZE)
             end = true
             return null
         }
         val nameSize = header.indexOfFirst { it == 0.toByte() }
-
-        var name = header.asUTF8String(length = nameSize)
+        var name = header.set(header.position,nameSize){
+            it.asUTF8String()
+        }
         var size = header.oct2ToUInt(124, 12)
         var typeNum = header[156]
         if (typeNum == 76.toByte()) {
-            var fullSize = size / BLOCK_SIZE * BLOCK_SIZE
-            if (size % BLOCK_SIZE > 0u)
-                fullSize += BLOCK_SIZE
-            val nameBuf = ByteArray(size.toInt() - 1)
+            var fullSize = size / BLOCK_SIZE.toUInt() * BLOCK_SIZE.toUInt()
+            if (size % BLOCK_SIZE.toUInt() > 0u)
+                fullSize += BLOCK_SIZE.toUInt()
+            val nameBuf = ByteBuffer.alloc(size.toInt() - 1)//ByteArray(size.toInt() - 1)
             stream.read(nameBuf)
-            stream.skip((fullSize - size).toLong() + 1)
+            stream.skip((fullSize - size).toInt() + 1)
+            nameBuf.flip()
             name = nameBuf.asUTF8String()
+            nameBuf.close()
             stream.read(header)
             size = header.oct2ToUInt(124, 12)
             typeNum = header[156]
@@ -109,7 +120,9 @@ class TarReader(private val stream: InputStream) {
         val mode = header.oct2ToUInt(100, 8)
         val uid = header.oct2ToUInt(108, 8)
         val gid = header.oct2ToUInt(116, 8)
-        val time = header.decodeToString(136, 136 + 11).toLong()
+        val time = header.set(136,11){
+            it.asUTF8String()
+        }.toLong()
         val chksum = header.oct2ToUInt(148, 8)
         currentEntity = TarEntity(
                 name = name,
@@ -120,7 +133,11 @@ class TarReader(private val stream: InputStream) {
                 time = time,
                 type = TarEntityType.findByCode(typeNum) ?: throw IOException("Unknown Entity Type $typeNum")
         )
-        cursor = 0u
+        cursor = 0
         return currentEntity!!
+    }
+
+    override fun close() {
+        header.close()
     }
 }

@@ -1,14 +1,17 @@
 package pw.binom.io.httpServer
 
-import pw.binom.io.AsyncOutputStream
+import pw.binom.AsyncOutput
+import pw.binom.DEFAULT_BUFFER_SIZE
 
 interface HttpResponse {
     var status: Int
-    val output: AsyncOutputStream
     val headers: Map<String, List<String>>
+    var enableCompress:Boolean
     fun clearHeaders()
     fun resetHeader(name: String, value: String)
     fun addHeader(name: String, value: String)
-    fun detach(): HttpConnectionState
-    fun disconnect()
+    suspend fun complete(autoFlushSize:UInt= DEFAULT_BUFFER_SIZE.toUInt()):HttpResponseBody
+}
+
+interface HttpResponseBody:AsyncOutput{
 }

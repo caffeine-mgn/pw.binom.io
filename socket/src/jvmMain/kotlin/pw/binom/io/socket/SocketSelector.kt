@@ -20,38 +20,21 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         override val isCanlelled: Boolean
             get() = _cancelled
 
-        override var listenReadable: Boolean
-            get() {
-                if (!key.isValid)
-                    TODO()
-                return key.interestOps() and JSelectionKey.OP_READ != 0
-            }
-            set(value) {
-                if (!key.isValid)
-                    TODO()
-                if (value == listenReadable)
-                    return
-                if (value)
-                    key.interestOps(key.interestOps() or JSelectionKey.OP_READ)
-                else
-                    key.interestOps(key.interestOps() xor JSelectionKey.OP_READ)
-            }
-        override var listenWritable: Boolean
-            get() {
-                if (!key.isValid)
-                    TODO()
-                return key.interestOps() and JSelectionKey.OP_WRITE != 0
-            }
-            set(value) {
-                if (!key.isValid)
-                    TODO()
-                if (value == listenWritable)
-                    return
-                if (value)
-                    key.interestOps(key.interestOps() or JSelectionKey.OP_WRITE)
-                else
-                    key.interestOps(key.interestOps() xor JSelectionKey.OP_WRITE)
-            }
+        override fun updateListening(read: Boolean, write: Boolean) {
+            if (listenReadable == read && listenWritable == write)
+                return
+            var i = 0
+            if (read)
+                i = i or JSelectionKey.OP_READ
+            if (write)
+                i = i or JSelectionKey.OP_WRITE
+            listenReadable = read
+            listenWritable = write
+            key.interestOps(i)
+        }
+
+        override var listenReadable: Boolean = false
+        override var listenWritable: Boolean = false
         override var isReadable: Boolean = false
         override var isWritable: Boolean = false
 
@@ -66,8 +49,8 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
 
         fun rereg() {
             _cancelled = false
-            listenWritable = true
-            listenReadable = true
+            listenWritable = false
+            listenReadable = false
             cancelledKeys[channel]?.remove(this)
             if (cancelledKeys[channel]?.isEmpty() == true) {
                 cancelledKeys.remove(channel)
@@ -89,7 +72,7 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         val ss = SelectorKeyImpl(channel, attachment)
         val key = when (channel) {
             is SocketChannel -> try {
-                channel.native.register(native, JSelectionKey.OP_READ or JSelectionKey.OP_WRITE, ss)
+                channel.native.register(native, /*JSelectionKey.OP_READ or JSelectionKey.OP_WRITE*/0, ss)
             } catch (e: JIllegalBlockingModeException) {
                 throw IllegalBlockingModeException()
             }
@@ -105,14 +88,14 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
     }
 
     actual fun process(timeout: Int?, func: (SelectorKey) -> Unit): Boolean {
-        if (cancelledKeys.isNotEmpty()) {
-            cancelledKeys.forEach {
-                it.value.forEach {
-                    it.key.cancel()
-                }
-            }
-            cancelledKeys.clear()
-        }
+//        if (cancelledKeys.isNotEmpty()) {
+//            cancelledKeys.forEach {
+//                it.value.forEach {
+//                    it.key.cancel()
+//                }
+//            }
+//            cancelledKeys.clear()
+//        }
         val founded = if (timeout != null)
             native.select(timeout.toLong())
         else
@@ -123,16 +106,24 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
             return false
         }
         val itt = native.selectedKeys().iterator()
-        itt.forEach {
-            try {
-                val key = it.attachment() as SelectorKeyImpl
-                key.isReadable = it.isReadable
-                key.isWritable = it.isWritable
-                func(key)
-            } finally {
-                itt.remove()
-            }
+        while (itt.hasNext()) {
+            val key1 = itt.next()
+            itt.remove()
+            val key = key1.attachment() as SelectorKeyImpl
+            key.isReadable = key1.isReadable
+            key.isWritable = key1.isWritable
+            func(key)
         }
+//        itt.forEach {
+//            try {
+//                val key = it.attachment() as SelectorKeyImpl
+//                key.isReadable = it.isReadable
+//                key.isWritable = it.isWritable
+//                func(key)
+//            } finally {
+//                itt.remove()
+//            }
+//        }
         return true
     }
 
@@ -142,9 +133,10 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
         actual fun cancel()
         actual val isReadable: Boolean
         actual val isWritable: Boolean
-        actual var listenReadable: Boolean
-        actual var listenWritable: Boolean
+        actual val listenReadable: Boolean
+        actual val listenWritable: Boolean
         actual val isCanlelled: Boolean
+        actual fun updateListening(read: Boolean, write: Boolean)
     }
 
     actual val keys: Collection<SelectorKey>

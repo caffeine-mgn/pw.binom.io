@@ -1,9 +1,9 @@
 package pw.binom.ssl
 
 import pw.binom.io.Closeable
-import pw.binom.io.socket.ssl.SSLServerSocketChannel
+//import pw.binom.io.socket.ssl.SSLServerSocketChannel
 import pw.binom.io.socket.ssl.SSLSession
-import pw.binom.io.socket.ssl.SSLSocketFactory
+import pw.binom.io.socket.ssl.filterArray
 import java.security.SecureRandom
 import javax.net.ssl.SSLContext as JSSLContext
 import javax.net.ssl.SSLSessionContext as JSSLSessionContext
@@ -14,7 +14,7 @@ actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: Ke
     override fun close() {
     }
 
-    actual val socketFactory: SSLSocketFactory = SSLSocketFactory(this)
+//    actual val socketFactory: SSLSocketFactory = SSLSocketFactory(this)
 
     init {
         ctx.init(arrayOf(BinomX509KeyManager(keyManager)), arrayOf(BinomX509TrustManager(trustManager)), SecureRandom())
@@ -38,8 +38,8 @@ actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: Ke
         engine.useClientMode = true
         engine.wantClientAuth = false//wantClientAuthentication
         engine.needClientAuth = false//needClientAuthentication
-        engine.enabledProtocols = SSLServerSocketChannel.filterArray(engine.enabledProtocols, null, null)
-        engine.enabledCipherSuites = SSLServerSocketChannel.filterArray(engine.enabledCipherSuites, null, null)
+        engine.enabledProtocols = filterArray(engine.enabledProtocols, null, null)
+        engine.enabledCipherSuites = filterArray(engine.enabledCipherSuites, null, null)
         return SSLSession(engine)
     }
 
@@ -48,8 +48,8 @@ actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: Ke
         engine.useClientMode = false
         engine.wantClientAuth = false//wantClientAuthentication
         engine.needClientAuth = false//needClientAuthentication
-        engine.enabledProtocols = SSLServerSocketChannel.filterArray(engine.enabledProtocols, null, null)
-        engine.enabledCipherSuites = SSLServerSocketChannel.filterArray(engine.enabledCipherSuites, null, null)
+        engine.enabledProtocols = filterArray(engine.enabledProtocols, null, null)
+        engine.enabledCipherSuites = filterArray(engine.enabledCipherSuites, null, null)
         return SSLSession(engine)
     }
 }

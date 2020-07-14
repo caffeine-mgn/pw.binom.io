@@ -1,13 +1,20 @@
 package pw.binom.process
 
 import kotlinx.cinterop.convert
-import kotlinx.cinterop.refTo
-import pw.binom.io.OutputStream
+import kotlinx.cinterop.plus
+import pw.binom.ByteBuffer
+import pw.binom.Output
 
-class PipeOutput : Pipe(), OutputStream {
+class PipeOutput : Pipe(), Output {
 
-    override fun write(data: ByteArray, offset: Int, length: Int): Int =
-            platform.posix.write(write, data.refTo(offset), length.convert()).convert()
+    override fun write(data: ByteBuffer): Int {
+        val l = data.remaining
+        if (l == 0)
+            return 0
+        val wrote = platform.posix.write(write, data.native + data.position, l.convert()).convert<Int>()
+        data.position += wrote
+        return wrote
+    }
 
     override fun flush() {
     }

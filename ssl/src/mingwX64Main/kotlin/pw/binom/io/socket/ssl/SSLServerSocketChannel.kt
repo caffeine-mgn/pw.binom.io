@@ -4,10 +4,13 @@ import pw.binom.io.socket.NetworkChannel
 import pw.binom.io.socket.RawSocket
 import pw.binom.io.socket.ServerSocketChannel
 import pw.binom.io.socket.SocketChannel
+/*
 
 actual class SSLServerSocketChannel(val raw: SSLSocketServer) : ServerSocketChannel, NetworkChannel {
     override val nsocket: RawSocket
         get() = raw.raw.socket
+    override val type: Int
+        get() = 0x010b
 
     override fun bind(host: String, port: Int) {
         raw.bind(host, port)
@@ -27,4 +30,4 @@ actual class SSLServerSocketChannel(val raw: SSLSocketServer) : ServerSocketChan
         raw.close()
     }
 
-}
+}*/

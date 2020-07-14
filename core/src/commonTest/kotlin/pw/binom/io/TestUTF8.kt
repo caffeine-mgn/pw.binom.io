@@ -1,7 +1,9 @@
 package pw.binom.io
 
+import pw.binom.ByteBuffer
 import pw.binom.asUTF8ByteArray
 import pw.binom.asUTF8String
+import pw.binom.toByteBufferUTF8
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -9,9 +11,11 @@ import kotlin.test.assertEquals
 class TestUTF8 {
 
     private fun testWriteChar(char: Char) {
-        val s = ByteArrayOutputStream()
-        val data = ByteArray(6)
-        s.write(data, 0, UTF8.unicodeToUtf8(char, data))
+        val s = ByteArrayOutput()
+        val data = ByteBuffer.alloc(6)
+        UTF8.unicodeToUtf8(char, data)
+        data.flip()
+        s.write(data)
 
         val d = s.toByteArray()
         val e = char.toString().asUTF8ByteArray()
@@ -104,13 +108,54 @@ class TestUTF8 {
     fun testEndLine() {
         val txt = "H\r\nE"
 
-        assertEquals(txt, ByteArrayInputStream(txt.asUTF8ByteArray()).utf8Reader().readText())
+        assertEquals(txt, txt.toByteBufferUTF8().utf8Reader().readText())
 
         assertEquals(txt,
-                ByteArrayOutputStream().also {
+                ByteBuffer.alloc(50).also {
                     it.utf8Appendable().append(txt)
                     it.flush()
+                    it.flip()
                 }.toByteArray().asUTF8String()
         )
+    }
+
+    private val test_string = "donďż˘ďľ€ďľ™t"
+
+    @Test
+    fun testUnicodeToUtf8() {
+        val out = ByteArrayOutput()
+        out.utf8Appendable().append(test_string)
+        out.data.flip()
+
+        val buffer = ByteBuffer.alloc(100)
+        test_string.forEach {
+            UTF8.unicodeToUtf8(it, buffer)
+        }
+        buffer.flip()
+
+        val bytes = "64 6f 6e c4 8f c5 bc cb 98 c4 8f c4 be e2 82 ac c4 8f c4 be e2 84 a2 74"
+                .split(' ')
+                .map { it.toUByte(16).toByte() }
+
+        assertEquals(bytes.size, buffer.remaining)
+        buffer.close()
+    }
+
+    @Test
+    fun testdd() {
+        val buffer = ByteBuffer.alloc(100)
+        test_string.forEach {
+            UTF8.unicodeToUtf8(it, buffer)
+        }
+        buffer.flip()
+
+        val sb = StringBuilder()
+        while (buffer.remaining > 0) {
+            val b = buffer.get()
+            sb.append(UTF8.utf8toUnicode(b, buffer))
+        }
+
+        assertEquals(test_string, sb.toString())
+        buffer.close()
     }
 }

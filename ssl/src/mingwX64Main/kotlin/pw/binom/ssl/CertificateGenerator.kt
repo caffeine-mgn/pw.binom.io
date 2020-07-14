@@ -3,7 +3,6 @@ package pw.binom.ssl
 import kotlinx.cinterop.*
 import platform.openssl.*
 import platform.posix.memcpy
-import pw.binom.Date
 
 fun CPointer<X509_NAME>.addEntry(name:String,value:String){
     memScoped {

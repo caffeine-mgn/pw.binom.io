@@ -1,7 +1,7 @@
 package pw.binom.ssl
 
 import pw.binom.base64.Base64DecodeAppendable
-import pw.binom.io.ByteArrayOutputStream
+import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
 import pw.binom.io.Reader
 import pw.binom.io.readln
@@ -17,7 +17,7 @@ class PemReader(private val reader: Reader) : Closeable {
         if (!line.startsWith("-----BEGIN ") || !line.endsWith("-----"))
             throw IllegalStateException("Invalid line $line")
         val type = line.removePrefix("-----BEGIN ").removeSuffix("-----")
-        val o = ByteArrayOutputStream()
+        val o = ByteArrayOutput()
         val b = Base64DecodeAppendable(o)
 
         while (true) {
@@ -26,8 +26,11 @@ class PemReader(private val reader: Reader) : Closeable {
                 break
             b.append(line)
         }
-
-        return PemObject(type, o.toByteArray())
+        o.trimToSize()
+        o.data.clear()
+        val array = o.data.toByteArray()
+        o.close()
+        return PemObject(type, array)
     }
 
     class PemObject(val type: String, val date: ByteArray)
