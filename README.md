@@ -95,8 +95,8 @@ See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/As
 - [ ] HTTP Server: WebSocket Support
 - [x] HTTPS Server Support
 - [x] HTTPS Client Support
-- [ ] HTTP Mutipart Parser
-- [ ] HTTP Mutipart Writer
+- [x] HTTP Mutipart Parser
+- [x] HTTP Mutipart Writer
 
 #### Sync DataBase Access
 - [x] [Common SQL Interfaces](db/README.md)
