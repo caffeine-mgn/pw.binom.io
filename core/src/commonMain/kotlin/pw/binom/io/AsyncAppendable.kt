@@ -7,6 +7,7 @@ interface AsyncAppendable {
 }
 
 interface AsyncWriter : AsyncAppendable, AsyncCloseable
+interface Writer : Appendable, Closeable
 
 fun Appendable.asAsync() = object : AsyncAppendable {
     override suspend fun append(c: Char): AsyncAppendable {

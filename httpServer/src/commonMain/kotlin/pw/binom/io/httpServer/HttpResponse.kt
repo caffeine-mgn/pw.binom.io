@@ -10,6 +10,7 @@ interface HttpResponse {
     fun clearHeaders()
     fun resetHeader(name: String, value: String)
     fun addHeader(name: String, value: String)
+    var enableKeepAlive:Boolean
     suspend fun complete(autoFlushSize:UInt= DEFAULT_BUFFER_SIZE.toUInt()):HttpResponseBody
 }
 

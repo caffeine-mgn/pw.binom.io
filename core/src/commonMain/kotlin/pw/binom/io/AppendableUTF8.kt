@@ -4,7 +4,7 @@ import pw.binom.ByteDataBuffer
 import pw.binom.Output
 import pw.binom.tmp8
 
-class AppendableUTF8(private val stream: Output) : Appendable {
+class AppendableUTF8(private val stream: Output) : Writer {
     //private val data = ByteDataBuffer.alloc(4)
     override fun append(c: Char): AppendableUTF8 {
         tmp8.clear()
@@ -27,6 +27,10 @@ class AppendableUTF8(private val stream: Output) : Appendable {
             append(csq[it])
         }
         return this
+    }
+
+    override fun close() {
+        stream.close()
     }
 }
 

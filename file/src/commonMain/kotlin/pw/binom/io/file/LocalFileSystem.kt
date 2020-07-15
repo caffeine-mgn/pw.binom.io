@@ -5,8 +5,9 @@ import pw.binom.io.FileSystem
 import pw.binom.io.FileSystemAccess
 import pw.binom.io.use
 import pw.binom.pool.DefaultPool
+import pw.binom.pool.ObjectPool
 
-class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>, val byteBufferPool: DefaultPool<ByteBuffer>) : FileSystem<U> {
+class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>, val byteBufferPool: ObjectPool<ByteBuffer>) : FileSystem<U> {
     override suspend fun new(user: U, path: String): AsyncOutput {
         access.putFile(user, path)
         val file = File(root, path.removePrefix("/"))

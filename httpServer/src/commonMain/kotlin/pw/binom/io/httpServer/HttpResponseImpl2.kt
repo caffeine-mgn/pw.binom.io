@@ -158,6 +158,12 @@ internal class HttpResponseImpl2(
         headers.getOrPut(name) { ArrayList() }.add(value)
     }
 
+    override var enableKeepAlive: Boolean
+        get() = keepAlive
+        set(value) {
+            keepAlive = value
+        }
+
     var body: HttpResponseBodyImpl2? = null
 
     override suspend fun complete(autoFlushSize: UInt): HttpResponseBody {
