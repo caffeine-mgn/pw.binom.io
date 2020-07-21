@@ -113,8 +113,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolea
 
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (eof)
+        if (eof) {
             return 0
+        }
         while (true) {
             if (chunkedSize == null) {
                 readChankSize()
@@ -141,6 +142,12 @@ open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolea
             dest.limit = oldLimit
             readed += b.toULong()
             if (chunkedSize!! - readed == 0uL) {
+                staticData.clear()
+                stream.readFully(staticData)
+                val b1 = staticData[0]
+                val b2 = staticData[1]
+                if (b1 != CR || b2 != LF)
+                    throw IOException("Invalid end of chunk")
                 readChankSize()
             }
             return b

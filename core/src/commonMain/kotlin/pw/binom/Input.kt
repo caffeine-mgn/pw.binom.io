@@ -62,52 +62,52 @@ interface Input : Closeable {
 //    outputStream.flush()
 //}
 
-fun Input.readUtf8Char(): Char? {
-    tmp8.reset(0, 1)
-    return if (read(tmp8) == 0) {
+fun Input.readUtf8Char(buffer:ByteBuffer): Char? {
+    buffer.reset(0, 1)
+    return if (read(buffer) == 0) {
         null
     } else {
-        val firstByte = tmp8[0]
+        val firstByte = buffer[0]
         val size = UTF8.utf8CharSize(firstByte)
         if (size > 0) {
-            tmp8.reset(0, size)
-            read(tmp8)
+            buffer.reset(0, size)
+            read(buffer)
         }
-        UTF8.utf8toUnicode(firstByte, tmp8)
+        UTF8.utf8toUnicode(firstByte, buffer)
     }
 }
 
-fun Input.readUTF8String(): String {
-    val size = readInt()
+fun Input.readUTF8String(buffer:ByteBuffer): String {
+    val size = readInt(buffer)
     val sb = StringBuilder(size)
     repeat(size) {
-        sb.append(readUtf8Char() ?: throw EOFException())
+        sb.append(readUtf8Char(buffer) ?: throw EOFException())
     }
     return sb.toString()
 }
 
 
-fun Input.readByte(): Byte {
-    tmp8.reset(0, 1)
-    readFully(tmp8)
-    return tmp8[0]
+fun Input.readByte(buffer:ByteBuffer): Byte {
+    buffer.reset(0, 1)
+    readFully(buffer)
+    return buffer[0]
 }
 
-fun Input.readInt(): Int {
-    tmp8.reset(0, 4)
-    readFully(tmp8)
-    return Int.fromBytes(tmp8[0], tmp8[1], tmp8[2], tmp8[3])
+fun Input.readInt(buffer:ByteBuffer): Int {
+    buffer.reset(0, 4)
+    readFully(buffer)
+    return Int.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3])
 }
 
-fun Input.readShort(): Short {
-    tmp8.reset(0, 2)
-    return Short.fromBytes(tmp8[0], tmp8[1])
+fun Input.readShort(buffer:ByteBuffer): Short {
+    buffer.reset(0, 2)
+    return Short.fromBytes(buffer[0], buffer[1])
 }
 
-fun Input.readLong(): Long {
-    tmp8.reset(0, 8)
-    readFully(tmp8)
-    return Long.fromBytes(tmp8[0], tmp8[1], tmp8[2], tmp8[3], tmp8[4], tmp8[5], tmp8[6], tmp8[7])
+fun Input.readLong(buffer:ByteBuffer): Long {
+    buffer.reset(0, 8)
+    readFully(buffer)
+    return Long.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7])
 }
 
 fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>) {
@@ -135,5 +135,5 @@ suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
     }
 }
 
-fun Input.readFloat() = Float.fromBits(readInt())
-fun Input.readDouble() = Double.fromBits(readLong())
+fun Input.readFloat(buffer:ByteBuffer) = Float.fromBits(readInt(buffer))
+fun Input.readDouble(buffer:ByteBuffer) = Double.fromBits(readLong(buffer))

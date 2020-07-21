@@ -91,8 +91,6 @@ open class AsyncChunkedOutput(
         tmp.put(LF)
         tmp.put(CR)
         tmp.put(LF)
-        tmp.put(CR)
-        tmp.put(LF)
         tmp.flip()
         stream.write(tmp)
 

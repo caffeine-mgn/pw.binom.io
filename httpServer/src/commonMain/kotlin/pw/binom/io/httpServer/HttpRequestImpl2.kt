@@ -1,6 +1,7 @@
 package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
+import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.io.http.AsyncChunkedInput
 import pw.binom.io.http.AsyncContentLengthInput
@@ -29,6 +30,14 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val input: AsyncInput
         get() = wrapped!!
 
+    var _rawInput: AsyncInput? = null
+    override val rawInput: AsyncInput
+        get() = _rawInput!!
+
+    var _rawOutput: AsyncOutput? = null
+    override val rawOutput: AsyncOutput
+        get() = _rawOutput!!
+
     override val headers = HashMap<String, ArrayList<String>>()
 
     var encode = EncodeType.IDENTITY
@@ -41,7 +50,9 @@ internal class HttpRequestImpl2 : HttpRequest {
         wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: AsyncInput, allowZlib: Boolean/*, inputBufferPool: DefaultPool<NoCloseInput>*/) {
+    suspend fun init(method: String, uri: String, input: AsyncInput, output: AsyncOutput, allowZlib: Boolean) {
+        _rawInput = input
+        _rawOutput = output
         this.method = method
         this.uri = uri
         headers.clear()

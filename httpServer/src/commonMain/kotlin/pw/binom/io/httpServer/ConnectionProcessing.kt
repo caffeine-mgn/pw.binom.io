@@ -32,7 +32,8 @@ internal object ConnectionProcessing {
                 method = items[0],
                 uri = items.getOrNull(1) ?: "",
                 input = inputBuffered,
-                allowZlib = allowZlib
+                allowZlib = allowZlib,
+                output = outputBuffered
         )
 
         val resp = httpResponsePool.borrow()

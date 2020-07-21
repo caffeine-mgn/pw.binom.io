@@ -10,12 +10,17 @@ object Base64 {
 
     fun encode(data: ByteArray): String {
         val sb = StringBuilder()
-        Base64EncodeOutput(sb).use {
-            data.forEach { b->
-                it.writeByte(b)
+        val buf = ByteBuffer.alloc(1)
+        try {
+            Base64EncodeOutput(sb).use {
+                data.forEach { b ->
+                    it.writeByte(buf, b)
+                }
             }
+            return sb.toString()
+        } finally {
+            buf.close()
         }
-        return sb.toString()
     }
 
     fun encode(data: ByteBuffer): String {

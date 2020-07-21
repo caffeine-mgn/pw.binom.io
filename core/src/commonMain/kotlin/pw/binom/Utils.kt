@@ -83,8 +83,8 @@ fun Double.byteswap(): Double = Double.fromBits(toRawBits().byteswap())
 
 fun Short.Companion.fromBytes(byte0: Byte, byte1: Byte) =
         (
-                (byte0.toInt() shl 8) +
-                        (byte1.toInt() shl 0)
+                (byte0.toInt() shl 8 and 0xFF) +
+                        (byte1.toInt() shl 0 and 0xFF)
                 ).toShort()
 
 fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte): Int =

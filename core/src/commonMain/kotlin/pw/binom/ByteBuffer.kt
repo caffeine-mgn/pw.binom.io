@@ -130,11 +130,15 @@ inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.bin
 }
 
 inline fun ByteBuffer.forEachIndexed(func: (Int, Byte) -> Unit) {
-    for (it in position until limit)
+    val pos = position
+    val lim = limit
+    for (it in pos until lim)
         func(it, this[it])
 }
 
 inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
-    for (it in position until limit)
+    val pos = position
+    val lim = limit
+    for (it in pos until lim)
         func(this[it])
 }

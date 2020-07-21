@@ -6,7 +6,6 @@ import kotlin.random.Random
 
 class UUID(val mostSigBits: Long, val leastSigBits: Long) {
 
-
     companion object {
         fun create(data: ByteArray): UUID {
             if (data.size != 16)
@@ -32,26 +31,26 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
             return create(randomBytes)
         }
 
-        fun fromString(name: String): UUID {
-            val len = name.length
+        fun fromString(uuid: String): UUID {
+            val len = uuid.length
             require(len <= 36) { "UUID string too large" }
 
-            val dash1 = name.indexOf('-', 0)
-            val dash2 = name.indexOf('-', dash1 + 1)
-            val dash3 = name.indexOf('-', dash2 + 1)
-            val dash4 = name.indexOf('-', dash3 + 1)
-            val dash5 = name.indexOf('-', dash4 + 1)
+            val dash1 = uuid.indexOf('-', 0)
+            val dash2 = uuid.indexOf('-', dash1 + 1)
+            val dash3 = uuid.indexOf('-', dash2 + 1)
+            val dash4 = uuid.indexOf('-', dash3 + 1)
+            val dash5 = uuid.indexOf('-', dash4 + 1)
 
-            require(!(dash4 < 0 || dash5 >= 0)) { "Invalid UUID string: $name" }
+            require(!(dash4 < 0 || dash5 >= 0)) { "Invalid UUID string: $uuid" }
 
-            var mostSigBits: Long = name.toLong(0, dash1, 16) and 0xffffffffL
+            var mostSigBits: Long = uuid.toLong(0, dash1, 16) and 0xffffffffL
             mostSigBits = mostSigBits shl 16
-            mostSigBits = mostSigBits or (name.toLong(dash1 + 1, dash2, 16) and 0xffffL)
+            mostSigBits = mostSigBits or (uuid.toLong(dash1 + 1, dash2, 16) and 0xffffL)
             mostSigBits = mostSigBits shl 16
-            mostSigBits = mostSigBits or (name.toLong(dash2 + 1, dash3, 16) and 0xffffL)
-            var leastSigBits: Long = name.toLong(dash3 + 1, dash4, 16) and 0xffffL
+            mostSigBits = mostSigBits or (uuid.toLong(dash2 + 1, dash3, 16) and 0xffffL)
+            var leastSigBits: Long = uuid.toLong(dash3 + 1, dash4, 16) and 0xffffL
             leastSigBits = leastSigBits shl 48
-            leastSigBits = leastSigBits or (name.toLong(dash4 + 1, len, 16) and 0xffffffffffffL)
+            leastSigBits = leastSigBits or (uuid.toLong(dash4 + 1, len, 16) and 0xffffffffffffL)
             return UUID(
                     mostSigBits = mostSigBits,
                     leastSigBits = leastSigBits

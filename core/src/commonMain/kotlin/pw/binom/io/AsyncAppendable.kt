@@ -6,8 +6,8 @@ interface AsyncAppendable {
     suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable
 }
 
-interface AsyncWriter : AsyncAppendable, AsyncCloseable
-interface Writer : Appendable, Closeable
+interface AsyncWriter : AsyncAppendable, AsyncFlushable, AsyncCloseable
+interface Writer : Appendable, Flushable, Closeable
 
 fun Appendable.asAsync() = object : AsyncAppendable {
     override suspend fun append(c: Char): AsyncAppendable {

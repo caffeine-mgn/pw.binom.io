@@ -40,6 +40,7 @@ kotlin {
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":core")
                 api project(":nio")
                 api project(":ssl")
                 api project(":http")

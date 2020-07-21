@@ -1,16 +1,19 @@
 package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
+import pw.binom.AsyncOutput
 
 interface HttpRequest {
     val method: String
     val uri: String
     val contextUri: String
     val input: AsyncInput
+    val rawInput: AsyncInput
+    val rawOutput: AsyncOutput
     val headers: Map<String, List<String>>
 }
 
-fun HttpRequest.withContextURI(uri:String)=object :HttpRequest{
+fun HttpRequest.withContextURI(uri: String) = object : HttpRequest {
     override val method: String
         get() = this@withContextURI.method
     override val uri: String
@@ -19,6 +22,10 @@ fun HttpRequest.withContextURI(uri:String)=object :HttpRequest{
         get() = uri
     override val input: AsyncInput
         get() = this@withContextURI.input
+    override val rawInput: AsyncInput
+        get() = this@withContextURI.rawInput
+    override val rawOutput: AsyncOutput
+        get() = this@withContextURI.rawOutput
     override val headers: Map<String, List<String>>
         get() = this@withContextURI.headers
 }

@@ -5,7 +5,7 @@ import pw.binom.io.UTF8
 import pw.binom.pool.ObjectPool
 
 interface AsyncOutput : AsyncCloseable {
-//    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
+    //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
     suspend fun write(data: ByteBuffer): Int
     suspend fun flush()
 }
@@ -42,52 +42,52 @@ fun Output.asyncOutput() = object : AsyncOutput {
 //    }
 //}
 
-suspend fun AsyncOutput.writeUtf8Char(value: Char) {
-    tmp8.clear()
-    UTF8.unicodeToUtf8(value, tmp8)
-    tmp8.flip()
-    write(tmp8)
+suspend fun AsyncOutput.writeUtf8Char(buffer: ByteBuffer, value: Char) {
+    buffer.clear()
+    UTF8.unicodeToUtf8(value, buffer)
+    buffer.flip()
+    write(buffer)
 }
 
-suspend fun AsyncOutput.writeUTF8String(text: String) {
-    writeInt(text.length)
+suspend fun AsyncOutput.writeUTF8String(buffer: ByteBuffer, text: String) {
+    writeInt(buffer, text.length)
     text.forEach {
-        writeUtf8Char(it)
+        writeUtf8Char(buffer, it)
     }
 }
 
-suspend fun AsyncOutput.writeByte(value: Byte) {
-    tmp8.clear()
-    tmp8.put(value)
-    tmp8.flip()
-    write(tmp8)
+suspend fun AsyncOutput.writeByte(buffer: ByteBuffer, value: Byte) {
+    buffer.clear()
+    buffer.put(value)
+    buffer.flip()
+    write(buffer)
 }
 
-suspend fun AsyncOutput.writeInt(value: Int) {
-    tmp8.clear()
-    value.dump(tmp8)
-    tmp8.flip()
-    write(tmp8)
+suspend fun AsyncOutput.writeInt(buffer: ByteBuffer, value: Int) {
+    buffer.clear()
+    value.dump(buffer)
+    buffer.flip()
+    write(buffer)
 }
 
-inline suspend fun AsyncOutput.writeFloat(value: Float) {
-    writeInt(value.toBits())
+inline suspend fun AsyncOutput.writeFloat(buffer: ByteBuffer, value: Float) {
+    writeInt(buffer, value.toBits())
 }
 
-inline suspend fun AsyncOutput.writeDouble(value: Double) {
-    writeLong(value.toBits())
+inline suspend fun AsyncOutput.writeDouble(buffer: ByteBuffer, value: Double) {
+    writeLong(buffer, value.toBits())
 }
 
-suspend fun AsyncOutput.writeShort(value: Short) {
-    tmp8.clear()
-    value.dump(tmp8)
-    tmp8.flip()
-    write(tmp8)
+suspend fun AsyncOutput.writeShort(buffer: ByteBuffer, value: Short) {
+    buffer.clear()
+    value.dump(buffer)
+    buffer.flip()
+    write(buffer)
 }
 
-suspend fun AsyncOutput.writeLong(value: Long) {
-    tmp8.clear()
-    value.dump(tmp8)
-    tmp8.flip()
-    write(tmp8)
+suspend fun AsyncOutput.writeLong(buffer: ByteBuffer, value: Long) {
+    buffer.clear()
+    value.dump(buffer)
+    buffer.flip()
+    write(buffer)
 }

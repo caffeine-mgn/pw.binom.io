@@ -1,5 +1,6 @@
 package pw.binom.ssl
 
+import pw.binom.ByteBuffer
 import pw.binom.base64.Base64EncodeOutput
 import pw.binom.writeByte
 
@@ -34,14 +35,19 @@ class PemWriter(val appendable: Appendable) {
 
         }
         val o = Base64EncodeOutput(ap)
-        appendable.append("-----BEGIN ").append(type).append("-----\n")
-        data.forEach {
-            o.writeByte(it)
+        val buf = ByteBuffer.alloc(1)
+        try {
+            appendable.append("-----BEGIN ").append(type).append("-----\n")
+            data.forEach {
+                o.writeByte(buf, it)
+            }
+            o.flush()
+            o.close()
+            if (ap.lineCount > 0)
+                appendable.append("\n")
+            appendable.append("-----END $type-----\n")
+        } finally {
+            buf.close()
         }
-        o.flush()
-        o.close()
-        if (ap.lineCount > 0)
-            appendable.append("\n")
-        appendable.append("-----END $type-----\n")
     }
 }

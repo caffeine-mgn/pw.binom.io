@@ -2,7 +2,7 @@
 Kotlin IO Library.<br>
 
 ## Actual version
-Actual version is `0.1.17`
+Actual version is `0.1.18`
 
 ## Parts of library
 Library contains next parts:<br>
@@ -92,7 +92,7 @@ See [Logger](logger/src/commonMain/kotlin/pw/binom/logger/Logger.kt)
 See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer.kt)
 - [x] Basic Support Http Client<br>
 See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/AsyncHttpClient.kt)
-- [ ] HTTP Server: WebSocket Support
+- [x] HTTP Server: WebSocket Support
 - [x] HTTPS Server Support
 - [x] HTTPS Client Support
 - [x] HTTP Mutipart Parser
