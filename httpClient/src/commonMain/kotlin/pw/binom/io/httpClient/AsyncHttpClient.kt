@@ -59,14 +59,14 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         }
     }
 
-    class Connection(val sslSession: SSLSession?, val channel: AsyncChannel) : AsyncCloseable {
+    class Connection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.ConnectionRaw) : AsyncCloseable {
         override suspend fun close() {
             sslSession?.close()
             channel.close()
         }
     }
 
-    private class AliveConnection(val sslSession: SSLSession?, val channel: AsyncChannel)
+    private class AliveConnection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.ConnectionRaw)
 
     internal suspend fun borrowConnection(url: URL): Connection {
         cleanUp()
@@ -79,19 +79,19 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
 //
 //            val cc = channel.sslSession?.let { it.asyncChannel(asyncChannel) } ?: asyncChannel
 //            var cc:AsyncChannel = asyncChannel
-            var cc = channel.channel
 //            if (url.protocol == "https")
 //                cc = sslContext.clientSession(url.host, url.port ?: url.defaultPort!!).asyncChannel(cc.unwrap())
-            return Connection(channel.sslSession, cc)
+            return Connection(channel.sslSession, channel.channel, channel.rawConnection)
 //            return Connection(channel.sslSession, channel.channel)
         }
-        var connection = Connection(null, connectionManager.connect(
+        val raw = connectionManager.connect(
                 host = url.host,
                 port = port
-        ))
+        )
+        var connection = Connection(null, raw, raw)
         if (url.protocol == "https") {
             val sslSession = sslContext.clientSession(url.host, url.port ?: url.defaultPort!!)
-            connection = Connection(sslSession, sslSession.asyncChannel(connection.channel))
+            connection = Connection(sslSession, sslSession.asyncChannel(connection.channel), raw)
 
         }
         return connection
@@ -101,8 +101,7 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         cleanUp()
         val port = url.port ?: url.defaultPort ?: throw IllegalArgumentException("Unknown default port for $url")
         val key = "${url.protocol}://${url.host}:$port"
-        val cc = connection.channel//.unwrap()//.detach()
-        connections.getOrPut(key) { ArrayList() }.add(AliveConnection(connection.sslSession, cc))
+        connections.getOrPut(key) { ArrayList() }.add(AliveConnection(connection.sslSession, connection.channel, connection.rawConnection))
     }
 
     /*

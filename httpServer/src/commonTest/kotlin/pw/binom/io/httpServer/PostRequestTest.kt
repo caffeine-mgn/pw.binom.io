@@ -1,15 +1,22 @@
 package pw.binom.io.httpServer
 
-import pw.binom.*
-import pw.binom.io.*
+import pw.binom.ByteBufferPool
+import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.copyTo
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
 import pw.binom.io.http.websocket.MessageType
-import pw.binom.io.http.websocket.WebSocketHeader
+import pw.binom.io.http.websocket.WebSocketClosedException
+import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.websocket.WebSocketHandler
+import pw.binom.io.readText
 import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.io.use
+import pw.binom.io.utf8Appendable
+import pw.binom.io.utf8Reader
+import pw.binom.stackTrace
 import pw.binom.thread.Thread
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -17,61 +24,8 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-private class TestWebSocketHandler : WebSocketHandler() {
-    override suspend fun connected(request: ConnectRequest) {
-        val connection = request.accept()
-        var f = 0
-//        connection.write(MessageType.TEXT).use { stream ->
-//            stream.utf8Appendable().append("Hello! from server")
-//        }
-        while (true) {
-
-            val message = connection.read().use {
-                it.bufferedInput().utf8Reader().readText()
-            }
-            println("Input: $message")
-            if (message == "exit") {
-                connection.write(MessageType.BINARY).use { stream ->
-                    stream.utf8Appendable().append("Good by!")
-                }
-                break
-            } else {
-                connection.write(MessageType.BINARY).use { stream ->
-                    stream.utf8Appendable().append("(${f++}) Echo:")
-                    stream.flush()
-                    stream.utf8Appendable().append("$message")
-                }
-
-                connection.write(MessageType.BINARY).use { stream ->
-                    stream.utf8Appendable().append("Anton")
-                    stream.flush()
-//                    stream.utf8Appendable().append("Echo: $message")
-                }
-            }
-        }
-        connection.close()
-    }
-
-}
-
 @Ignore
 class PostRequestTest {
-
-    @Test
-    fun wsTest() {
-        val manager = SocketNIOManager()
-        val server = HttpServer(manager, TestWebSocketHandler())
-
-        try {
-            server.bindHTTP(port = 8080)
-            while (!Thread.currentThread.isInterrupted) {
-                manager.update(1000)
-            }
-        } catch (e: Throwable) {
-            println("Error!")
-            e.printStacktrace(Console.std)
-        }
-    }
 
     @OptIn(ExperimentalTime::class)
     @Test
@@ -159,7 +113,8 @@ class PostRequestTest {
             }
         } catch (e: Throwable) {
             println("Error!")
-            e.printStacktrace(Console.std)
+//            e.printStacktrace(Console.std)
+            throw e
         }
     }
 /*

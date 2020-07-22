@@ -7,6 +7,7 @@ import pw.binom.io.http.AsyncChunkedInput
 import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.Headers
 import pw.binom.io.readln
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.utf8Reader
 
 internal enum class EncodeType {
@@ -38,6 +39,11 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val rawOutput: AsyncOutput
         get() = _rawOutput!!
 
+    private var _rawConnection: SocketNIOManager.ConnectionRaw? = null
+
+    override val rawConnection: SocketNIOManager.ConnectionRaw
+        get() = _rawConnection!!
+
     override val headers = HashMap<String, ArrayList<String>>()
 
     var encode = EncodeType.IDENTITY
@@ -50,9 +56,10 @@ internal class HttpRequestImpl2 : HttpRequest {
         wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: AsyncInput, output: AsyncOutput, allowZlib: Boolean) {
+    suspend fun init(method: String, uri: String, input: AsyncInput, output: AsyncOutput, rawConnection: SocketNIOManager.ConnectionRaw, allowZlib: Boolean) {
         _rawInput = input
         _rawOutput = output
+        _rawConnection = rawConnection
         this.method = method
         this.uri = uri
         headers.clear()

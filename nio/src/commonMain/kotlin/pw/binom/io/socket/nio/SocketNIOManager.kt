@@ -4,6 +4,7 @@ import pw.binom.ByteBuffer
 import pw.binom.io.*
 import pw.binom.io.socket.*
 import pw.binom.neverFreeze
+import pw.binom.printStacktrace
 import pw.binom.start
 import pw.binom.thread.Lock
 import pw.binom.thread.synchronize
@@ -22,33 +23,38 @@ open class SocketNIOManager : Closeable {
         fun clientConnected(connection: ConnectionRaw, manager: SocketNIOManager)
     }
 
-    class Water(val buffer: ByteBuffer, val con: Continuation<Int>)
+    class IOSchedule(val buffer: ByteBuffer, val con: Continuation<Int>)
 
     inner class ConnectionRaw internal constructor(val manager: SocketNIOManager, internal val channel: SocketChannel, var attachment: Any?) : AsyncChannel {
 
         //        val input = packagePool.borrow()
 //        val output = packagePool.borrow()
-        var readWait: Water? = null
-        var writeWait: Water? = null
+        internal var readSchedule: IOSchedule? = null
+        internal var writeSchedule: IOSchedule? = null
+
+        /**
+         * Waits when socket ready for read. When that moment come will call [func].
+         * After call [func] lister will reset. And you must call [waitReadyForRead] again.
+         *
+         * @param func function for call when socket ready for read
+         */
+        fun waitReadyForRead(func: ((ConnectionRaw) -> Unit)?) {
+            readyForReadListener = func
+            if (func != null) {
+                selectionKey.updateListening(true, selectionKey.listenWritable)
+            }
+        }
+
+        internal var readyForReadListener: ((ConnectionRaw) -> Unit)? = null
 
         internal lateinit var selectionKey: SocketSelector.SelectorKey
 
         fun readInterrupt() {
-//            fillBufWaiter?.let {
-//                it.resumeWithException(ReadInterruptException())
-//                fillBufWaiter = null
-//            }
-
-            readWait?.let {
+            readSchedule?.let {
                 it.con.resumeWithException(ReadInterruptException())
-                readWait = null
+                readSchedule = null
             }
         }
-
-        //        var readWater2: WaitEvent2? = null
-//        var flushWaiter: Continuation<Unit>? = null
-//        var fillBufWaiter: Continuation<Unit>? = null
-//        var writeWater2: WaitEvent2? = null
 
         operator fun invoke(func: suspend (ConnectionRaw) -> Unit) {
             func.start(this)
@@ -65,9 +71,9 @@ open class SocketNIOManager : Closeable {
 //                it.resumeWithException(RuntimeException("Connection Detached"))
 //                fillBufWaiter = null
 //            }
-            writeWait?.let {
+            writeSchedule?.let {
                 it.con.resumeWithException(RuntimeException("Connection Detached"))
-                writeWait = null
+                writeSchedule = null
             }
             return channel
         }
@@ -78,13 +84,13 @@ open class SocketNIOManager : Closeable {
 //                flushWaiter = null
 //            }
 
-            writeWait?.let {
+            writeSchedule?.let {
                 it.con.resumeWithException(ClosedException())
-                writeWait = null
+                writeSchedule = null
             }
-            readWait?.let {
+            readSchedule?.let {
                 it.con.resumeWithException(ClosedException())
-                readWait = null
+                readSchedule = null
             }
             detach().close()
         }
@@ -112,7 +118,7 @@ open class SocketNIOManager : Closeable {
             if (l == 0)
                 return 0
             suspendCoroutine<Int> {
-                writeWait = Water(data, it)
+                writeSchedule = IOSchedule(data, it)
                 selectionKey.updateListening(
                         selectionKey.listenReadable,
                         true
@@ -133,7 +139,7 @@ open class SocketNIOManager : Closeable {
                 return 0
             }
             return suspendCoroutine {
-                readWait = Water(dest, it)
+                readSchedule = IOSchedule(dest, it)
                 selectionKey.updateListening(true, selectionKey.listenWritable)
             }
         }
@@ -156,33 +162,37 @@ open class SocketNIOManager : Closeable {
         try {
             if (client.detached) {
                 return
-//                    throw IOException("Client is detached")
             }
             if (client.manager !== this)
                 return
-
-            if (!client.channel.isConnected) {
-                client.writeWait?.let {
-                    client.writeWait = null
-                    it.con.resumeWithException(SocketClosedException())
-                }
-                client.readWait?.let {
-                    client.readWait = null
-                    it.con.resumeWithException(SocketClosedException())
-                }
-                client.channel.close()
-                return
-            }
 
             if (client.selectionKey.isCanlelled) {
                 return
             }
             if (client.detached)
                 return
+
+            val readReadyCallback = client.readyForReadListener
+            if (key.isReadable && readReadyCallback != null) {
+                client.readyForReadListener = null
+                try {
+                    readReadyCallback(client)
+                } catch (e: Throwable) {
+                    e.printStacktrace()
+                    client.readSchedule?.con?.resumeWithException(e)
+                    client.writeSchedule?.con?.resumeWithException(e)
+                    client.readSchedule = null
+                    client.writeSchedule = null
+                    key.updateListening(false, false)
+                    client.detach().close()
+                    return
+                }
+            }
+
             var needRead = client.selectionKey.listenReadable
-            var needWrite = client.selectionKey.listenWritable || client.readWait != null
-            val writeWait = client.writeWait
-            val readWait = client.readWait
+            var needWrite = client.selectionKey.listenWritable || client.readSchedule != null
+            val writeWait = client.writeSchedule
+            val readWait = client.readSchedule
 
             if (key.isWritable) {
                 if (writeWait == null) {
@@ -192,22 +202,23 @@ open class SocketNIOManager : Closeable {
                         client.channel.write(writeWait.buffer)
                         needWrite = writeWait.buffer.remaining > 0
                         if (writeWait.buffer.remaining == 0) {
-                            client.writeWait = null
+                            client.writeSchedule = null
                             writeWait.con.resume(0)
-                            needWrite = client.writeWait != null
+                            needWrite = client.writeSchedule != null
                         } else {
                             needWrite = true
                         }
                     } catch (e: Throwable) {
                         writeWait.con.resumeWithException(e)
-                        client.writeWait = null
+                        client.writeSchedule = null
                         needWrite = false
                     } finally {
                     }
                 }
             }
+
             if (key.isReadable && readWait != null) {
-                client.readWait = null
+                client.readSchedule = null
                 try {
                     readWait.con.resume(client.channel.read(readWait.buffer))
                 } catch (e: Throwable) {
@@ -216,19 +227,26 @@ open class SocketNIOManager : Closeable {
                 } finally {
                 }
 
-                if (!needWrite && client.readWait != null)
+                if (!needWrite && client.readSchedule != null)
                     needWrite = true
             } else {
                 needRead = false
             }
+
+            if (!client.channel.isConnected) {
+                key.cancel()
+            }
+
             if (!key.isCanlelled)
-                key.updateListening(client.readWait != null, client.writeWait != null)
+                key.updateListening(
+                        client.readSchedule != null || client.readyForReadListener != null,
+                        client.writeSchedule != null
+                )
         } catch (e: Throwable) {
-            println("ERROROROROR!!!!!!!")
-            client.readWait?.con?.resumeWithException(e)
-            client.writeWait?.con?.resumeWithException(e)
-            client.readWait = null
-            client.writeWait = null
+            client.readSchedule?.con?.resumeWithException(e)
+            client.writeSchedule?.con?.resumeWithException(e)
+            client.readSchedule = null
+            client.writeSchedule = null
             client.detach().close()
         }
     }

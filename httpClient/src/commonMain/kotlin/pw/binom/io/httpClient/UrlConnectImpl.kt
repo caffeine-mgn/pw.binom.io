@@ -8,6 +8,7 @@ import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
+import pw.binom.io.socket.nio.SocketNIOManager
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
@@ -179,7 +180,7 @@ internal class UrlConnectImpl(
             channel.close()
             throw InvalidSecurityKeyException()
         }
-        return ClientWebSocketConnection(resp.input, channel.channel)
+        return ClientWebSocketConnection(resp.input, channel.channel, channel.rawConnection)
     }
 
     override suspend fun close() {

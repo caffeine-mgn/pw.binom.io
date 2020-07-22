@@ -2,6 +2,7 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
+import pw.binom.io.socket.nio.SocketNIOManager
 
 interface HttpRequest {
     val method: String
@@ -10,6 +11,7 @@ interface HttpRequest {
     val input: AsyncInput
     val rawInput: AsyncInput
     val rawOutput: AsyncOutput
+    val rawConnection: SocketNIOManager.ConnectionRaw
     val headers: Map<String, List<String>>
 }
 
@@ -26,6 +28,8 @@ fun HttpRequest.withContextURI(uri: String) = object : HttpRequest {
         get() = this@withContextURI.rawInput
     override val rawOutput: AsyncOutput
         get() = this@withContextURI.rawOutput
+    override val rawConnection: SocketNIOManager.ConnectionRaw
+        get() = this@withContextURI.rawConnection
     override val headers: Map<String, List<String>>
         get() = this@withContextURI.headers
 }

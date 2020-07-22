@@ -210,7 +210,6 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
             }
 
     actual fun edit(socket: NativeSocketHolder, ref: SelfRefKey, readFlag: Boolean, writeFlag: Boolean) {
-//        println("update key: read: [$readFlag], write: [$writeFlag]")
         memScoped {
             val event = alloc<epoll_event>()
             var e = EPOLLRDHUP
