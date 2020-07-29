@@ -3,7 +3,7 @@ package pw.binom.process
 import pw.binom.io.Closeable
 
 /**
- * For work in java run "java -Xrs -jar <path to you program>"
+ * For work in java run as "java -Xrs -jar <path to you program>"
  */
 expect object Signal {
     enum class Type {
@@ -13,6 +13,9 @@ expect object Signal {
         LOGOFF,
         SHUTDOWN
     }
-    fun listen(signal:Type,handler:(Signal.Type)->Unit):Closeable
+
+    fun listen(signal: Type, handler: (Signal.Type) -> Unit): Closeable
     fun closeAll()
+
+    fun addShutdownHook(func: () -> Unit)
 }

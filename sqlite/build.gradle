@@ -1,58 +1,90 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
-String pathToHeaders(){
+def argsGenLinux(String path) {
+    return [
+            '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libsqlite3.a"
+    ]
+}
+
+String pathToHeaders() {
     return "${project(":native:native_sqlite").buildFile.parentFile}/src/main/h".toString()
 }
 
-def sqlitePackageName='platform.internal_sqlite'
+def sqlitePackageName = 'platform.internal_sqlite'
 
 kotlin {
-/*
+
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
+
+            compilations.main {
+                cinterops {
+                    sqlite {
+                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
+                        packageName sqlitePackageName
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeInterop/include"
+                    }
+                }
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxX64Main")
         }
     }
 
-    linuxArm32Hfp { // Use your target instead.
+    linuxArm32Hfp {
         binaries {
             staticLib()
+
+            compilations.main {
+                cinterops {
+                    sqlite {
+                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
+                        packageName sqlitePackageName
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeInterop/include"
+                    }
+                }
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
         }
     }
-*/
+
 
     mingwX64 { // Use your target instead.
         binaries {
             staticLib()
+
             compilations.main {
                 cinterops {
-                    nativeSqlite3 {
+                    sqlite {
+                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
                         packageName sqlitePackageName
-                        includeDirs.headerFilterOnly pathToHeaders()
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeInterop/include"
                     }
-                    kotlinOptions.freeCompilerArgs = ['-include-binary', "${project(":native:native_sqlite").buildDir}/libs/sqlite/static/mingwX64/sqlite.lib".toString()]
                 }
             }
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("mingwX64Main")
         }
     }
 
     mingwX86 { // Use your target instead.
         binaries {
             staticLib()
+
             compilations.main {
                 cinterops {
-                    nativeSqlite3 {
+                    sqlite {
+                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
                         packageName sqlitePackageName
-                        includeDirs.headerFilterOnly pathToHeaders()
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeInterop/include"
                     }
-                    kotlinOptions.freeCompilerArgs = ['-include-binary', "${project(":native:native_sqlite").buildDir}/libs/sqlite/static/mingwX86/sqlite.lib".toString()]
                 }
             }
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("mingwX86Main")
         }
     }
-    
-    jvm{
+
+    jvm {
         compilations.all {
             kotlinOptions {
                 jvmTarget = '1.8'
@@ -89,11 +121,11 @@ kotlin {
             }
         }
 
-//        linuxArm32HfpMain {
-//            dependencies {
-//                dependsOn linuxX64Main
-//            }
-//        }
+        linuxArm32HfpMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
 
         mingwX64Main {
             dependencies {
@@ -103,7 +135,7 @@ kotlin {
 
         mingwX86Main {
             dependencies {
-                dependsOn mingwX64Main
+                dependsOn linuxX64Main
             }
         }
 
@@ -129,8 +161,8 @@ kotlin {
     }
 }
 
-linkDebugStaticMingwX64{
-    dependsOn ":native:native:native_sqlite"
-}
+//linkDebugStaticMingwX64 {
+//    dependsOn ":native:native:native_sqlite"
+//}
 
 apply from: '../public.gradle'

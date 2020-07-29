@@ -31,8 +31,8 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val input: AsyncInput
         get() = wrapped!!
 
-    var _rawInput: AsyncInput? = null
-    override val rawInput: AsyncInput
+    var _rawInput: PooledAsyncBufferedInput? = null
+    override val rawInput: PooledAsyncBufferedInput
         get() = _rawInput!!
 
     var _rawOutput: AsyncOutput? = null
@@ -56,7 +56,7 @@ internal class HttpRequestImpl2 : HttpRequest {
         wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: AsyncInput, output: AsyncOutput, rawConnection: SocketNIOManager.ConnectionRaw, allowZlib: Boolean) {
+    suspend fun init(method: String, uri: String, input: PooledAsyncBufferedInput, output: AsyncOutput, rawConnection: SocketNIOManager.ConnectionRaw, allowZlib: Boolean) {
         _rawInput = input
         _rawOutput = output
         _rawConnection = rawConnection
@@ -102,6 +102,9 @@ internal class HttpRequestImpl2 : HttpRequest {
 }
 
 private object AsyncEofInput : AsyncInput {
+    override val available: Int
+        get() = 0
+
     override suspend fun read(dest: ByteBuffer): Int = 0
 
     override suspend fun close() {

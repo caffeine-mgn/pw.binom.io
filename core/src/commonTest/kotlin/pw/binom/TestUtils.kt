@@ -11,6 +11,7 @@ class TestUtils {
         val value = 258.toShort()
         assertEquals(1, value[0])
         assertEquals(2, value[1])
+
         assertEquals(value, Short.fromBytes(1, 2))
     }
 

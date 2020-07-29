@@ -18,9 +18,9 @@ kotlin {
 
                 cinterops {
                     openssl {
-                        defFile project.file("src/linuxArm32HfpMain/cinterop/openssl.def")
+                        defFile project.file("src/linuxX64Main/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxX64Main/cinterop/include"
                         includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }

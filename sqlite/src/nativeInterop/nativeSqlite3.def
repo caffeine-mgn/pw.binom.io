@@ -1,3 +1,3 @@
 headers = sqlite3.h
-headerFilter = **
+headerFilter = *
 ---

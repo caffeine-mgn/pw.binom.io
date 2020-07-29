@@ -15,8 +15,8 @@ internal object ConnectionProcessing {
 
     suspend fun process(
             rawConnection: SocketNIOManager.ConnectionRaw,
-            inputBuffered: AsyncInput,
-            outputBuffered: AsyncOutput,
+            inputBuffered: PooledAsyncBufferedInput,
+            outputBuffered: PoolAsyncBufferedOutput,
             httpRequestPool: DefaultPool<HttpRequestImpl2>,
             httpResponsePool: DefaultPool<HttpResponseImpl2>,
             handler: Handler,

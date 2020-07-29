@@ -41,6 +41,8 @@ class TestURL {
     @Test
     fun `with uri`() {
         var url = URL("http://127.0.0.1:4646")
+        assertEquals("127.0.0.1", url.host)
+        assertEquals(4646, url.port)
         url = url.newURI("${url.uri}/var")
 
         assertEquals("/var", url.uri)
@@ -48,10 +50,18 @@ class TestURL {
 
     @Test
     fun `without proto`() {
-        var url = URL("//127.0.0.1:4646")
+        val url = URL("//127.0.0.1:4646")
         assertNull(url.protocol)
         assertEquals("127.0.0.1", url.host)
         assertEquals(4646, url.port)
         assertEquals("", url.uri)
+    }
+
+    @Test
+    fun test() {
+        val url = URL("http://127.0.0.1/addr/pp:dd")
+        assertEquals("127.0.0.1", url.host)
+        assertNull(url.port)
+        assertEquals("/addr/pp:dd", url.uri)
     }
 }

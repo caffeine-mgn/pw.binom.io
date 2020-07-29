@@ -4,6 +4,8 @@ import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 
 class AsyncCheckedInput(val stream: AsyncInput, val cksum: CRC32Basic) : AsyncInput {
+    override val available: Int
+        get() = stream.available
 
 //    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
 //        var len = length

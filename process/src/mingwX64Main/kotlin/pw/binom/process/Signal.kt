@@ -37,6 +37,12 @@ actual object Signal {
         SHUTDOWN(CTRL_SHUTDOWN_EVENT)
     }
 
+    actual fun addShutdownHook(func: () -> Unit) {
+        listen(Signal.Type.CTRL_C) {
+            func()
+        }
+    }
+
     actual fun listen(signal: Type, handler: (Signal.Type) -> Unit): Closeable {
         if (!inited.compareAndSet(expected = false, new = true) || SetConsoleCtrlHandler(globalHandler, TRUE) <= 0) {
             throw RuntimeException("Can't execute SetConsoleCtrlHandler")
@@ -61,6 +67,9 @@ actual object Signal {
             it.close()
         }
         signals.clear()
+    }
+
+    actual fun addShutdownHook(func: () -> Unit) {
     }
 }
 

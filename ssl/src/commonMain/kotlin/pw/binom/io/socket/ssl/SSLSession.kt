@@ -6,7 +6,7 @@ import pw.binom.io.Closeable
 
 expect class SSLSession:Closeable {
     enum class State {
-        OK, WANT_WRITE, WANT_READ, ERROR
+        OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
     }
 
     class Status{

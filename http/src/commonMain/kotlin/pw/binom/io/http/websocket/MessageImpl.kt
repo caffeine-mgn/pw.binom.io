@@ -12,7 +12,7 @@ class MessageImpl(override val type: MessageType,
                   val input: AsyncInput,
                   private var maskFlag: Boolean,
                   private var mask: Int,
-                  private var lastFrame:Boolean
+                  private var lastFrame: Boolean
 ) : Message {
     private var inputReady = initLength
     private var closed = false
@@ -31,6 +31,9 @@ class MessageImpl(override val type: MessageType,
 
     private var cursor = 0uL
 
+    override val available: Int
+        get() = -1
+
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
         if (inputReady == 0uL && lastFrame)
@@ -43,7 +46,7 @@ class MessageImpl(override val type: MessageType,
 
             dest.position = pos1
             dest.limit = n
-            cursor=Message.encode(cursor,mask, dest)
+            cursor = Message.encode(cursor, mask, dest)
 //            dest.forEach { byte ->
 //                val b = byte xor mask[(cursor and 0x03uL).toInt()]
 //                cursor++

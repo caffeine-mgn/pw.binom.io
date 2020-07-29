@@ -6,6 +6,11 @@ import pw.binom.io.UTF8
 import pw.binom.pool.ObjectPool
 
 interface AsyncInput : AsyncCloseable {
+    /**
+     * Available Data size in bytes
+     * @return available data in bytes. If returns value less 0 it's mean that size of available data is  unknown
+     */
+    val available: Int
 //    suspend fun skip(length: Long): Long
 //    suspend fun read(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
 //    suspend fun readFully(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int {
@@ -30,6 +35,8 @@ interface AsyncInput : AsyncCloseable {
 }
 
 fun Input.asyncInput() = object : AsyncInput {
+    override val available: Int
+        get() = -1
 
     override suspend fun read(dest: ByteBuffer): Int =
             this@asyncInput.read(dest)
@@ -71,7 +78,7 @@ fun Input.asyncInput() = object : AsyncInput {
 //    }
 //}
 
-suspend fun AsyncInput.readUtf8Char(buffer:ByteBuffer): Char? {
+suspend fun AsyncInput.readUtf8Char(buffer: ByteBuffer): Char? {
     buffer.reset(0, 1)
     return if (read(buffer) == 0) {
         null
@@ -87,7 +94,7 @@ suspend fun AsyncInput.readUtf8Char(buffer:ByteBuffer): Char? {
 }
 
 
-suspend fun AsyncInput.readUTF8String(buffer:ByteBuffer): String {
+suspend fun AsyncInput.readUTF8String(buffer: ByteBuffer): String {
     val size = readInt(buffer)
     val sb = StringBuilder(size)
     repeat(size) {

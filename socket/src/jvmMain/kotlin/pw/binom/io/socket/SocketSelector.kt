@@ -6,7 +6,7 @@ import java.nio.channels.Selector
 import java.nio.channels.IllegalBlockingModeException as JIllegalBlockingModeException
 import java.nio.channels.SelectionKey as JSelectionKey
 
-actual class SocketSelector actual constructor(connections: Int) : Closeable {
+actual class SocketSelector actual constructor() : Closeable {
     override fun close() {
         native.close()
     }
@@ -88,14 +88,6 @@ actual class SocketSelector actual constructor(connections: Int) : Closeable {
     }
 
     actual fun process(timeout: Int?, func: (SelectorKey) -> Unit): Boolean {
-//        if (cancelledKeys.isNotEmpty()) {
-//            cancelledKeys.forEach {
-//                it.value.forEach {
-//                    it.key.cancel()
-//                }
-//            }
-//            cancelledKeys.clear()
-//        }
         val founded = if (timeout != null)
             native.select(timeout.toLong())
         else

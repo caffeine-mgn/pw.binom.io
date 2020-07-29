@@ -50,6 +50,9 @@ internal class UrlResponseImpl(
         }
     }
 
+    override val available: Int
+        get() = stream.available
+
     override suspend fun read(dest: ByteBuffer): Int =
             stream.read(dest)
 

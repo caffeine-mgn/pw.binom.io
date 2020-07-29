@@ -9,6 +9,9 @@ open class AsyncContentLengthInput(val stream: AsyncInput, val contentLength: UL
     override val isEof: Boolean
         get() = closed || readed >= contentLength
 
+    override val available: Int
+        get() = minOf(contentLength - readed, Int.MAX_VALUE.toULong()).toInt()
+
 //    override suspend fun skip(length: Long): Long =
 //            stream.skip(length)
 

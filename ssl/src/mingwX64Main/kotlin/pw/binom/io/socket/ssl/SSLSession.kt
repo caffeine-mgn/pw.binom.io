@@ -10,7 +10,7 @@ import pw.binom.io.Closeable
 
 actual class SSLSession(val ctx:CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val client: Boolean): Closeable {
     actual enum class State {
-        OK, WANT_WRITE, WANT_READ, ERROR
+        OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
     }
 
     actual class Status(actual val state: State, actual val bytes: Int)

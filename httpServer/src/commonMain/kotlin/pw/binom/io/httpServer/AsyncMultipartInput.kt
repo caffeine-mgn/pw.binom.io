@@ -208,9 +208,14 @@ open class AsyncMultipartInput(val separator: String, override val stream: Async
                 buffer.clear()
             }
 
-            super.fill()
-            if (findEnd(separator, buffer, endState)) {
-                buffer.limit = endState.limit
+            try {
+                super.fill()
+                if (findEnd(separator, buffer, endState)) {
+                    buffer.limit = endState.limit
+                }
+            } catch (e: Throwable) {
+                buffer.empty()
+                throw e
             }
         } while (false)
     }

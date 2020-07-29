@@ -33,6 +33,8 @@ abstract class WebSocketHandler : Handler {
                                            val rawConnection: SocketNIOManager.ConnectionRaw,
                                            override val uri: String,
                                            override val contextUri: String, override val headers: Map<String, List<String>>) : ConnectRequest {
+        var currentConnection: WebSocketConnection? = null
+
         private var resumed = false
         override suspend fun accept(headers: Map<String, List<String>>): WebSocketConnection {
             require(!resumed) { "Request already resumed" }
@@ -49,11 +51,13 @@ abstract class WebSocketHandler : Handler {
                 }
             }
             resp.complete()
-            return ServerWebSocketConnection(
+            val connection = ServerWebSocketConnection(
                     input = rawInput,
                     output = rawOutout,
                     rawConnection = rawConnection
             )
+            currentConnection = connection
+            return connection
         }
 
         override suspend fun reject() {
@@ -81,15 +85,9 @@ abstract class WebSocketHandler : Handler {
             return
         }
         val key = req.headers["Sec-WebSocket-Key"]?.singleOrNull() ?: TODO()
-        req.headers.forEach { k ->
-            k.value.forEach {
-                println("${k.key}: $it")
-            }
-        }
-
         resp.enableKeepAlive = false
         try {
-            connected(ConnectRequestImpl(
+            val con = ConnectRequestImpl(
                     key = key,
                     uri = req.uri,
                     contextUri = req.contextUri,
@@ -98,16 +96,17 @@ abstract class WebSocketHandler : Handler {
                     rawOutout = req.rawOutput,
                     rawConnection = req.rawConnection,
                     headers = req.headers
-            ))
-            println("suspend!")
-            suspendCoroutine<Unit> { }
+            )
+            connected(con)
+            if (con.currentConnection?.incomeMessageListener != null) {
+                suspendCoroutine<Unit> { }
+            }
         } catch (e: RejectedException) {
             resp.status = 403
             resp.enableKeepAlive = false
             resp.complete()
             return
         }
-        println("work next")
         /*
         val rawBuffered = req.rawInput.bufferedInput()
         println("Try read...")

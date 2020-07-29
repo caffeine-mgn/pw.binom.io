@@ -17,7 +17,12 @@ internal class PooledAsyncBufferedInput(bufferSize: Int) : AbstractAsyncBuffered
 
     override suspend fun fill() {
         buffer.clear()
-        super.fill()
+        try {
+            super.fill()
+        } catch (e: Throwable) {
+            buffer.empty()
+            throw e
+        }
     }
 
     override val stream: AsyncInput

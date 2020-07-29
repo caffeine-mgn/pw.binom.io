@@ -20,7 +20,7 @@ operator fun Short.get(index: Int): Byte {
     return ((this.toInt() ushr (8 - 8 * index)) and 0xFF).toByte()
 }
 
-fun Long.dump(data:ByteBuffer) {
+fun Long.dump(data: ByteBuffer) {
     data.put(((this ushr (56 - 8 * 0)) and 0xFF).toByte())
     data.put(((this ushr (56 - 8 * 1)) and 0xFF).toByte())
     data.put(((this ushr (56 - 8 * 2)) and 0xFF).toByte())
@@ -31,14 +31,14 @@ fun Long.dump(data:ByteBuffer) {
     data.put(((this ushr (56 - 8 * 7)) and 0xFF).toByte())
 }
 
-fun Int.dump(data:ByteBuffer) {
+fun Int.dump(data: ByteBuffer) {
     data.put(((this ushr (8 * (3 - 0)))).toByte())
     data.put(((this ushr (8 * (3 - 1)))).toByte())
     data.put(((this ushr (8 * (3 - 2)))).toByte())
     data.put(((this ushr (8 * (3 - 3)))).toByte())
 }
 
-fun Short.dump(data:ByteBuffer, offset:Int=0) {
+fun Short.dump(data: ByteBuffer, offset: Int = 0) {
     data.put(((this.toInt() ushr (8 - 8 * 0)) and 0xFF).toByte())
     data.put(((this.toInt() ushr (8 - 8 * 1)) and 0xFF).toByte())
 }
@@ -74,7 +74,7 @@ fun Int.byteswap(): Int {
 fun Short.byteswap(): Short {
     val ch1 = (this.toInt() ushr 8) and 0xFF
     val ch2 = (this.toInt() ushr 0) and 0xFF
-    return ((ch2 shl 8) + (ch1 shl 0)).toShort()
+    return ((ch2 shl 8) + ch1).toShort()
 }
 
 fun Float.byteswap(): Float = Float.fromBits(toRawBits().byteswap())
@@ -82,10 +82,7 @@ fun Double.byteswap(): Double = Double.fromBits(toRawBits().byteswap())
 
 
 fun Short.Companion.fromBytes(byte0: Byte, byte1: Byte) =
-        (
-                (byte0.toInt() shl 8 and 0xFF) +
-                        (byte1.toInt() shl 0 and 0xFF)
-                ).toShort()
+        ((byte0.toInt() and 0xFF shl 8) + (byte1.toInt() and 0xFF)).toShort()
 
 fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte): Int =
         ((byte0.toInt() and 0xFF) shl 24) +

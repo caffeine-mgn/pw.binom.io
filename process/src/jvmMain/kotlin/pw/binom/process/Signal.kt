@@ -1,9 +1,9 @@
 package pw.binom.process
 
 import pw.binom.io.Closeable
-import sun.misc.Signal as JSignal
 import sun.misc.SignalHandler
 import java.util.concurrent.CopyOnWriteArrayList
+import sun.misc.Signal as JSignal
 
 private val globalHandler = SignalHandler { sig ->
     val type = Signal.Type.values().find { it.code == sig.name } ?: return@SignalHandler
@@ -51,6 +51,12 @@ actual object Signal {
 
     actual fun closeAll() {
         signals.clear()
+    }
+
+    actual fun addShutdownHook(func: () -> Unit) {
+        Runtime.getRuntime().addShutdownHook(Thread(Runnable {
+            func()
+        }))
     }
 
 }
