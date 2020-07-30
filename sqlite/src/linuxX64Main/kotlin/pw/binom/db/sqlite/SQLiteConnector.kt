@@ -35,6 +35,9 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
             val path = if (name == null || name.isBlank()) "file::memory:" else "file:$name?mode=memory"
             return open(path)
         }
+
+        actual val TYPE: String
+            get() = "SQLite"
     }
 
     override fun createStatement(): Statement =
@@ -46,6 +49,9 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         sqlite3_prepare_v3(ctx.pointed.value, query, -1, 0u, stmt, null)
         return SQLitePrepareStatement(this, stmt)
     }
+
+    override val type: String
+        get() = TYPE
 
     override fun close() {
         sqlite3_close(ctx.pointed.value)

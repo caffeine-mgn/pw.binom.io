@@ -18,6 +18,9 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : Connection 
             val connection = JDBC4Connection("jdbc:sqlite::memory:", null, Properties ())
             return SQLiteConnector(connection)
         }
+
+        actual val TYPE: String
+            get() = "SQLite"
     }
 
     override fun createStatement(): Statement =
@@ -25,6 +28,9 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : Connection 
 
     override fun prepareStatement(query: String): PreparedStatement =
             SQLPreparedStatement(this, native.prepareStatement(query))
+
+    override val type: String
+        get() = TYPE
 
     override fun close() {
         native.close()

@@ -4,5 +4,6 @@ import pw.binom.io.Closeable
 
 interface Connection : Closeable {
     fun createStatement(): Statement
-    fun prepareStatement(query:String):PreparedStatement
+    fun prepareStatement(query: String): PreparedStatement
+    val type: String
 }
