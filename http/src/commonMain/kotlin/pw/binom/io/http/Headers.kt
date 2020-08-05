@@ -15,6 +15,8 @@ object Headers {
     const val UPGRADE = "Upgrade"
     const val WEBSOCKET = "websocket"
     const val KEEP_ALIVE = "keep-alive"
+    const val SET_COOKIE = "Set-Cookie"
+    const val COOKIE = "Cookie"
     const val HOST = "Host"
     const val ACCEPT_ENCODING = "Accept-Encoding"
     const val ACCEPT = "Accept"

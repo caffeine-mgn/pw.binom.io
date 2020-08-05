@@ -54,7 +54,7 @@ class ServerTest {
     var good2 = AtomicBoolean(false)
     val clientThread = Thread(Runnable {
         try {
-            val selector = SocketSelector(10)
+            val selector = SocketSelector()
             val client = SocketFactory.rawSocketFactory.createSocketChannel()
             client.connect("127.0.0.1", port)
             client.blocking = false

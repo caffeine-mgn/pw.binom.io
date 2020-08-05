@@ -1,12 +1,59 @@
 package pw.binom
 
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ByteBufferTest {
 
     @Test
-    fun test() {
+    fun reallocTest() {
+        var b = ByteBuffer.alloc(100)
+        b.position = 30
+        b.limit = 72
+        b = b.realloc(80)
+        assertEquals(30, b.position)
+        assertEquals(72, b.limit)
+        assertEquals(80, b.capacity)
+    }
+
+    @Test
+    fun reallocToMax() {
+        val data = ByteArray(100)
+        Random.Default.nextBytes(data)
+        var source = ByteBuffer.alloc(130)
+        data.forEach {
+            source.put(it)
+        }
+
+        source = source.realloc(200)
+        assertEquals(200, source.capacity)
+        source.clear()
+        data.forEachIndexed { index, byte ->
+            assertEquals(byte, source[index])
+        }
+    }
+
+    @Test
+    fun reallocToMin() {
+        val data = ByteArray(100)
+        Random.Default.nextBytes(data)
+        var source = ByteBuffer.alloc(130)
+
+        data.forEach {
+            source.put(it)
+        }
+
+        source = source.realloc(50)
+        assertEquals(50, source.capacity)
+        source.clear()
+        source.forEachIndexed { i, byte ->
+            assertEquals(data[i], byte)
+        }
+    }
+
+    @Test
+    fun writeTest() {
         val source = ByteBuffer.alloc(1024)
         source.put(120)
         source.put(-100)

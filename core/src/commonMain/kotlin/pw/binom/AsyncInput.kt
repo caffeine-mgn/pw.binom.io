@@ -8,21 +8,9 @@ import pw.binom.pool.ObjectPool
 interface AsyncInput : AsyncCloseable {
     /**
      * Available Data size in bytes
-     * @return available data in bytes. If returns value less 0 it's mean that size of available data is  unknown
+     * @return Available data in bytes. If returns value less 0 it's mean that size of available data is unknown
      */
     val available: Int
-//    suspend fun skip(length: Long): Long
-//    suspend fun read(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
-//    suspend fun readFully(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int {
-//        var off = offset
-//        var len = length
-//        while (len > 0) {
-//            val t = read(data, off, len)
-//            off += t
-//            len -= t
-//        }
-//        return length
-//    }
 
     suspend fun read(dest: ByteBuffer): Int
     suspend fun readFully(dest: ByteBuffer): Int {
@@ -45,38 +33,6 @@ fun Input.asyncInput() = object : AsyncInput {
         this@asyncInput.close()
     }
 }
-
-//suspend fun AsyncInput.copyTo(outputStream: Output, pool: ObjectPool<ByteDataBuffer>) {
-//    val buf = pool.borrow()
-//    try {
-//        while (true) {
-//            val len = read(buf, 0, buf.size)
-//            if (len <= 0) {
-//                break
-//            }
-//            outputStream.write(buf, 0, len)
-//        }
-//        outputStream.flush()
-//    } finally {
-//        pool.recycle(buf)
-//    }
-//}
-
-//suspend fun AsyncInput.copyTo(outputStream: AsyncOutput, pool: ObjectPool<ByteDataBuffer>) {
-//    val buf = pool.borrow()
-//    try {
-//        while (true) {
-//            val len = read(buf, 0, buf.size)
-//            if (len <= 0) {
-//                break
-//            }
-//            outputStream.write(buf, 0, len)
-//        }
-//        outputStream.flush()
-//    } finally {
-//        pool.recycle(buf)
-//    }
-//}
 
 suspend fun AsyncInput.readUtf8Char(buffer: ByteBuffer): Char? {
     buffer.reset(0, 1)
@@ -155,5 +111,13 @@ suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>) {
             break
         buf.flip()
         output.write(buf)
+    }
+}
+
+suspend fun AsyncInput.skipAll(buffer: ByteBuffer) {
+    while (true) {
+        buffer.clear()
+        if (read(buffer) == 0)
+            break
     }
 }

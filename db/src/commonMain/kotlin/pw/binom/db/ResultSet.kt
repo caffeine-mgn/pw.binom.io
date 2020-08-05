@@ -1,5 +1,6 @@
 package pw.binom.db
 
+import pw.binom.UUID
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -21,6 +22,19 @@ interface ResultSet : Closeable {
     fun getFloat(column: String): Float
     fun getBlob(column: String): ByteArray
     fun isNull(column: String): Boolean
+    fun getUUID(index: Int) = UUID.create(getBlob(index))
+    fun getUUID(column: String) = UUID.create(getBlob(column))
+
+    fun <T> map(func: (ResultSet) -> T): Iterator<T> = object : Iterator<T> {
+        private var end = this@ResultSet.next()
+        override fun hasNext(): Boolean = end
+
+        override fun next(): T {
+            val r = func(this@ResultSet)
+            end = this@ResultSet.next()
+            return r
+        }
+    }
 
     class InvalidColumnTypeException : IOException()
 

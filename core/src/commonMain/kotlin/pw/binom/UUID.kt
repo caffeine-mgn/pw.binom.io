@@ -65,11 +65,14 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
         return String(buf)
     }
 
-    fun toByteArray(output: ByteArray) {
+    fun toByteArray(): ByteArray = toByteArray(ByteArray(16))
+
+    fun toByteArray(output: ByteArray): ByteArray {
         if (output.size < 16)
             throw IllegalArgumentException()
         mostSigBits.toBytes(output, 0)
         leastSigBits.toBytes(output, 8)
+        return output
     }
 
     override fun toString(): String {
@@ -109,7 +112,7 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
     }
 }
 
-private val digits = arrayOf(
+private val digits = charArrayOf(
         '0', '1', '2', '3', '4', '5',
         '6', '7', '8', '9', 'a', 'b',
         'c', 'd', 'e', 'f', 'g', 'h',

@@ -68,8 +68,9 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
                     ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
                     this.data.capacity + _wrote + needWrite
             )
-            this.data.realloc(newSize)
-            this.data.limit = this.data.capacity
+            val new = this.data.realloc(newSize)
+            new.limit = new.capacity
+            this.data = new
         }
         val l = this.data.write(data)
         _wrote += l

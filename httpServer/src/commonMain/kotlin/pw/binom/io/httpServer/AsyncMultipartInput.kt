@@ -128,7 +128,7 @@ fun HttpRequest.multipart(bufferPool: ObjectPool<ByteBuffer>): AsyncMultipartInp
     )
 }
 
-open class AsyncMultipartInput(val separator: String, override val stream: AsyncInput, private val bufferPool: ObjectPool<ByteBuffer>) : AbstractAsyncBufferedInput() {
+open class AsyncMultipartInput(private val separator: String, override val stream: AsyncInput, private val bufferPool: ObjectPool<ByteBuffer>) : AbstractAsyncBufferedInput() {
     override val buffer = bufferPool.borrow().empty()
 
     init {

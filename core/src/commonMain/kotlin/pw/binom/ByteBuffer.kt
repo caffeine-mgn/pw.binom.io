@@ -79,7 +79,7 @@ fun ByteBuffer.empty(): ByteBuffer {
     return this
 }
 
-class ByteBufferPool(size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) : DefaultPool<ByteBuffer>(10, { ByteBuffer.alloc(size.toInt()) }), Closeable {
+class ByteBufferPool(capacity:Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) : DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), Closeable {
     override fun borrow(init: ((ByteBuffer) -> Unit)?): ByteBuffer {
         val buf = super.borrow(init)
         buf.clear()
@@ -129,7 +129,7 @@ inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.bin
     }
 }
 
-inline fun ByteBuffer.forEachIndexed(func: (Int, Byte) -> Unit) {
+inline fun ByteBuffer.forEachIndexed(func: (Index: Int, value: Byte) -> Unit) {
     val pos = position
     val lim = limit
     for (it in pos until lim)

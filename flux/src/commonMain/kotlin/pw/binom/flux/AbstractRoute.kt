@@ -35,30 +35,27 @@ abstract class AbstractRoute : Route {
             forward.request(action.req, action.resp)
             return true
         }
-        val endpoints = methods[action.req.method]
-                ?.entries
-                ?.asSequence()
-                ?.filter {
-                    action.req.contextUri.isWilcardMattech(it.key)
-                }
-                ?.sortedBy { it.key.length }
-                ?.flatMap { it.value.asSequence() }
-        if (endpoints != null) {
-            for (e in endpoints) {
-                if (e(action))
-                    return true
-            }
-        }
-
         routers.entries
                 .asSequence()
                 .filter {
                     it.key.isWilcardMattech(action.req.contextUri)
                 }
-                .sortedBy { it.key.length }
+                .sortedBy { -it.key.length }
                 .flatMap { it.value.asSequence() }
                 .forEach {
                     if (it.execute(action))
+                        return true
+                }
+        methods[action.req.method]
+                ?.entries
+                ?.asSequence()
+                ?.filter {
+                    action.req.contextUri.isWilcardMattech(it.key)
+                }
+                ?.sortedBy { -it.key.length }
+                ?.flatMap { it.value.asSequence() }
+                ?.forEach {
+                    if (it(action))
                         return true
                 }
         return false
