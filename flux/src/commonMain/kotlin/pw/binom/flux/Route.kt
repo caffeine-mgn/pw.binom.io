@@ -11,3 +11,4 @@ interface Route {
 inline fun Route.get(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("GET", path, func)
 inline fun Route.post(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("POST", path, func)
 inline fun Route.put(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("PUT", path, func)
+inline fun Route.delete(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("DELETE", path, func)
