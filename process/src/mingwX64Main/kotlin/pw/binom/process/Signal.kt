@@ -68,9 +68,6 @@ actual object Signal {
         }
         signals.clear()
     }
-
-    actual fun addShutdownHook(func: () -> Unit) {
-    }
 }
 
 private val globalHandler = staticCFunction<DWORD, WINBOOL> handler@{ signal ->
