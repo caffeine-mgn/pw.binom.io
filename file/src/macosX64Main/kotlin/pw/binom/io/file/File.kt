@@ -77,8 +77,8 @@ actual class File actual constructor(path: String) {
         get() = memScoped {
             val stat = alloc<stat>()
             if (stat(path, stat.ptr) != 0)
-                return@memScoped 0
-            return stat.st_ctim.toMillis()
+                return 0
+            return stat.st_mtimespec.tv_sec * 1000L + stat.st_mtimespec.tv_nsec / 1000000L
         }
 
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0

@@ -114,6 +114,6 @@ actual open class Thread {
         get() = interrupted.value
 
     actual fun interrupt() {
-        interrupted.value=true
+        interrupted.value = true
     }
 }

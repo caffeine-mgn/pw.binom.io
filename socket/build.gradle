@@ -15,6 +15,12 @@ kotlin {
         }
     }
 
+    macosX64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
     mingwX64 { // Use your target instead.
         binaries {
             staticLib()
@@ -96,6 +102,12 @@ kotlin {
         }
 
         linuxArm32HfpMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        macosX64Main {
             dependencies {
                 dependsOn linuxX64Main
             }
