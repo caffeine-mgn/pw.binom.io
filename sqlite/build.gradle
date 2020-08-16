@@ -1,86 +1,95 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
-def argsGenLinux(String path) {
-    return [
-            '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libsqlite3.a"
-    ]
-}
 
-String pathToHeaders() {
-    return "${project(":native:native_sqlite").buildFile.parentFile}/src/main/h".toString()
+import org.jetbrains.kotlin.konan.target.KonanTarget
+import pw.binom.plugins.BuildStaticTask
+
+def getLinkArgs(target) {
+    return [
+            '-include-binary', file("${buildDir}/native/${target.konanTarget.name}/libsqlite3.a").absolutePath
+    ]
 }
 
 def sqlitePackageName = 'platform.internal_sqlite'
 
 kotlin {
 
-    linuxX64 { // Use your target instead.
+    linuxX64 {
+        def task = it
+        task.konanTarget.name
         binaries {
             staticLib()
 
             compilations.main {
+                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
                 cinterops {
                     sqlite {
                         defFile project.file("src/nativeInterop/nativeSqlite3.def")
                         packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeInterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
                     }
                 }
             }
-            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxX64Main")
+            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
         }
     }
 
     linuxArm32Hfp {
+        def task = it
         binaries {
             staticLib()
 
             compilations.main {
+                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
                 cinterops {
                     sqlite {
                         defFile project.file("src/nativeInterop/nativeSqlite3.def")
                         packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeInterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
                     }
                 }
             }
-            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
+            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
         }
     }
 
 
-    mingwX64 { // Use your target instead.
+    mingwX64 {
+        def task = it
         binaries {
             staticLib()
 
             compilations.main {
+                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
                 cinterops {
                     sqlite {
                         defFile project.file("src/nativeInterop/nativeSqlite3.def")
                         packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeInterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
                     }
                 }
             }
-            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("mingwX64Main")
+            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
         }
     }
 
-    mingwX86 { // Use your target instead.
+    mingwX86 {
+        def task = it
         binaries {
             staticLib()
 
             compilations.main {
+                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
                 cinterops {
                     sqlite {
                         defFile project.file("src/nativeInterop/nativeSqlite3.def")
                         packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeInterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
                     }
                 }
             }
-            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("mingwX86Main")
+            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
         }
     }
 
@@ -161,8 +170,45 @@ kotlin {
     }
 }
 
-//linkDebugStaticMingwX64 {
-//    dependsOn ":native:native:native_sqlite"
-//}
+def defineBuild(KonanTarget selectTarget) {
+    BuildStaticTask task = tasks.create("buildSqlite${selectTarget.name.capitalize()}", BuildStaticTask.class)
+    task.target = selectTarget
+    task.include(file("${buildFile.parentFile}/src/native"))
+    task.compileArgs(
+            "-DSQLITE_ENABLE_FTS3",
+            "-DSQLITE_ENABLE_FTS4",
+            "-DSQLITE_ENABLE_FTS5",
+            "-DSQLITE_ENABLE_RTREE",
+            "-DSQLITE_ENABLE_DBSTAT_VTAB",
+            "-DSQLITE_ENABLE_JSON1",
+            "-DSQLITE_ENABLE_RBU",
+            "-DSQLITE_THREADSAFE=1",
+            "-DSQLITE_ENABLE_EXPLAIN_COMMENTS",
+            "-DSQLITE_ENABLE_COLUMN_METADATA=1"
+    )
+    task.compileFile(
+            file("${buildFile.parentFile}/src/native/sqlite3.c"),
+            file("${buildDir}/native/${selectTarget.name}/sqlite3.o")
+    )
+    task.staticFile = file("${buildDir}/native/${selectTarget.name}/libsqlite3.a")
+}
+
+defineBuild(KonanTarget.MINGW_X86.INSTANCE)
+defineBuild(KonanTarget.MINGW_X64.INSTANCE)
+defineBuild(KonanTarget.LINUX_X64.INSTANCE)
+defineBuild(KonanTarget.LINUX_ARM64.INSTANCE)
+defineBuild(KonanTarget.LINUX_ARM32_HFP.INSTANCE)
+
+compileKotlinLinuxX64 {
+    dependsOn buildSqliteLinux_x64
+}
+
+compileKotlinMingwX64 {
+    dependsOn buildSqliteMingw_x64
+}
+
+compileKotlinMingwX86 {
+    dependsOn buildSqliteMingw_x86
+}
 
 apply from: '../public.gradle'

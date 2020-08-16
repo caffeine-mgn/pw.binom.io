@@ -1,6 +1,9 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
+import org.jetbrains.kotlin.konan.target.KonanTarget
+import pw.binom.plugins.BuildStaticTask
+
 def argsGenLinux(String path) {
     return [
             '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libssl.a",
@@ -176,5 +179,34 @@ kotlin {
         }
     }
 }
+
+def defineCryptoBuild(KonanTarget selectTarget) {
+    BuildStaticTask task = tasks.create("buildCrypto${selectTarget.name.capitalize()}", BuildStaticTask.class)
+    task.target = selectTarget
+    task.include(file("${buildFile.parentFile}/src/native/include"))
+    task.compileArgs(
+            "-DSQLITE_ENABLE_FTS3",
+            "-DSQLITE_ENABLE_FTS4",
+            "-DSQLITE_ENABLE_FTS5",
+            "-DSQLITE_ENABLE_RTREE",
+            "-DSQLITE_ENABLE_DBSTAT_VTAB",
+            "-DSQLITE_ENABLE_JSON1",
+            "-DSQLITE_ENABLE_RBU",
+            "-DSQLITE_THREADSAFE=1",
+            "-DSQLITE_ENABLE_EXPLAIN_COMMENTS",
+            "-DSQLITE_ENABLE_COLUMN_METADATA=1"
+    )
+    fileTree(include:['**/*.c'], dir:"${buildFile.parentFile}/src/native/crypto").each {
+
+    }
+    task.compileDir(
+            file("${buildFile.parentFile}/src/native/crypto"),
+            file("${buildDir}/native/crypto/${selectTarget.name}")
+    )
+    task.staticFile = file("${buildDir}/native/crypto/${selectTarget.name}/libcrypto.a")
+}
+
+defineCryptoBuild(KonanTarget.MINGW_X86.INSTANCE)
+defineCryptoBuild(KonanTarget.MINGW_X64.INSTANCE)
 
 apply from: '../public.gradle'
