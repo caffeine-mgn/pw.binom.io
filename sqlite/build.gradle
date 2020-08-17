@@ -211,4 +211,8 @@ compileKotlinMingwX86 {
     dependsOn buildSqliteMingw_x86
 }
 
+compileKotlinLinuxArm32Hfp {
+    dependsOn buildSqliteLinux_arm32_hfp
+}
+
 apply from: '../public.gradle'

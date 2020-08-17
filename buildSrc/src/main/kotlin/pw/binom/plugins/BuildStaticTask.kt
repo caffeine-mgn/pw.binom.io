@@ -50,22 +50,26 @@ open class BuildStaticTask : DefaultTask() {
 
 
     @JvmOverloads
-    fun compileDir(sourceDir: File, objectDir: File, args: List<String>? = null) {
+    fun compileDir(sourceDir: File, objectDir: File, args: List<String>? = null, filter: ((File) -> Boolean)? = null) {
         sourceDir.list()?.forEach {
             val f = sourceDir.resolve(it)
             if (f.isFile && (f.extension.toLowerCase() == "c" || f.extension.toLowerCase() == "cpp")) {
-                compileFile(
-                        source = f,
-                        objectFile = objectDir.resolve("${f.nameWithoutExtension}.o"),
-                        args = args
-                )
+                if (filter == null || filter(f)) {
+                    println("CHeck $it   $f -> ${filter?.invoke(f)}")
+                    compileFile(
+                            source = f,
+                            objectFile = objectDir.resolve("${f.nameWithoutExtension}.o"),
+                            args = args
+                    )
+                }
             }
 
-            if (f.isDirectory) {
+            if (f.isDirectory && (filter == null || filter(f))) {
                 compileDir(
                         sourceDir = f,
                         objectDir = objectDir.resolve(it),
-                        args = args
+                        args = args,
+                        filter = filter
                 )
             }
         }
@@ -132,8 +136,8 @@ open class BuildStaticTask : DefaultTask() {
                             args
                     )
                     builder.environment().putAll(env)
-                    builder.redirectError(builder.redirectInput())
-                    builder.inheritIO()
+//                    builder.redirectError(builder.redirectInput())
+//                    builder.inheritIO()
                     val process = builder.start()
 
                     val stdout = StreamGobbler(process.inputStream)
@@ -141,7 +145,8 @@ open class BuildStaticTask : DefaultTask() {
                     stdout.start()
                     stdin.start()
                     process.waitFor()
-
+                    stdout.join()
+                    stdin.join()
                     if (process.exitValue() == 0) {
                         logger.lifecycle("Compile ${compile.source}: OK")
                     }
@@ -194,7 +199,7 @@ open class BuildStaticTask : DefaultTask() {
         results.forEach {
             if (it.code != 0) {
                 println("Can't build \"${it.source}\". Returns ${it.code}\nOutput:\n${it.result}")
-                throw GradleScriptException("Can't build \"${it.source}\".",RuntimeException(
+                throw GradleScriptException("Can't build \"${it.source}\".", RuntimeException(
                         "Output:\n${it.result}"
                 ))
             }
