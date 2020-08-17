@@ -93,6 +93,25 @@ kotlin {
         }
     }
 
+    macosX64 { // Use your target instead.
+        def task = it
+        binaries {
+            staticLib()
+            compilations.main {
+                cinterops {
+                    openssl {
+                        defFile project.file("src/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native/include"
+                    }
+                }
+
+                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+        }
+    }
+
     jvm {
         compilations.all {
             kotlinOptions {
@@ -135,6 +154,12 @@ kotlin {
         }
 
         linuxArm32HfpMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        macosX64Main {
             dependencies {
                 dependsOn linuxX64Main
             }
