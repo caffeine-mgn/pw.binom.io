@@ -3,10 +3,7 @@ package pw.binom.plugins
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleScriptException
 import org.gradle.api.InvalidUserDataException
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.StopActionException
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -55,10 +52,8 @@ open class BuildStaticTask : DefaultTask() {
             val f = sourceDir.resolve(it)
             if (f.isFile && (f.extension.toLowerCase() == "c" || f.extension.toLowerCase() == "cpp")) {
                 if (filter == null || filter(f)) {
-                    println("CHeck $it   $f -> ${filter?.invoke(f)}")
                     compileFile(
                             source = f,
-                            objectFile = objectDir.resolve("${f.nameWithoutExtension}.o"),
                             args = args
                     )
                 }
@@ -75,16 +70,21 @@ open class BuildStaticTask : DefaultTask() {
         }
     }
 
+    private val nativeObjDir by lazy {
+        project.buildDir.resolve("native").resolve("obj")
+    }
+
     @JvmOverloads
-    fun compileFile(source: File, objectFile: File, args: List<String>? = null) {
+    fun compileFile(source: File, args: List<String>? = null) {
+        val outFile = nativeObjDir.resolve("${source.nameWithoutExtension}_${source.absolutePath.hashCode() + target.hashCode()}.o")
         compiles.add(Compile(
                 source = source,
-                objectFile = objectFile,
+                objectFile = outFile,
                 args = args
         ))
         inputs.file(source)
-        outputs.file(objectFile)
-        println("Add compile $source -> $objectFile")
+        outputs.file(outFile)
+        println("Add compile $source -> $outFile")
     }
 
     private class CompileResult(val source: File, val code: Int, val result: String)
@@ -210,13 +210,17 @@ open class BuildStaticTask : DefaultTask() {
         args.add("rc")
         args.add(staticFile!!.absolutePath)
         compiles.forEach {
-            args.add(it.objectFile.absolutePath)
+            args.add(it.objectFile.name)
         }
+
+        val sum = compiles.map { it.objectFile.absolutePath.length }.sum()
+        println("Path Length: $sum")
 
         val builder = ProcessBuilder(
                 args
         )
         println("Try link: $args")
+        builder.directory(nativeObjDir)
         builder.environment().put("PATH", "$llvmBinFolder;${System.getenv("PATH")}")
         val process = builder.start()
         process.waitFor()

@@ -187,8 +187,7 @@ def defineBuild(KonanTarget selectTarget) {
             "-DSQLITE_ENABLE_COLUMN_METADATA=1"
     )
     task.compileFile(
-            file("${buildFile.parentFile}/src/native/sqlite3.c"),
-            file("${buildDir}/native/${selectTarget.name}/sqlite3.o")
+            file("${buildFile.parentFile}/src/native/sqlite3.c")
     )
     task.staticFile = file("${buildDir}/native/${selectTarget.name}/libsqlite3.a")
 }

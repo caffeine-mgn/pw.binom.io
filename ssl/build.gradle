@@ -208,8 +208,9 @@ def defineCryptoBuild(KonanTarget selectTarget) {
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448/arch_32"))
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448"))
     task.compileArgs(
-            "-DOPENSSLDIR=\"/tmp/ssl\"",
-            "-DENGINESDIR=\"/tmp/ssl/engine\""
+            "-DOPENSSLDIR=\\\"/tmp/ssl\\\"",
+            "-DENGINESDIR=\\\"/tmp/ssl/engine\\\"",
+            "-DWIN32_LEAN_AND_MEAN"
     )
     task.compileDir(
             file("${buildFile.parentFile}/src/native/crypto"),
@@ -219,21 +220,38 @@ def defineCryptoBuild(KonanTarget selectTarget) {
                 Family family = selectTarget.getFamily()
                 Architecture architecture = selectTarget.getArchitecture()
                 String filePath = it.absolutePath.replace('\\', '/')
+                if (filePath.endsWith("native/crypto/dso"))
+                    return false
+                if (filePath.endsWith("native/crypto/bn/asm/x86_64-gcc.c")) {
+                    return family != Family.MINGW
+                }
+
+                if (filePath.endsWith("native/crypto/bn/bn_div.c")) {
+                    return family != Family.MINGW
+                }
+
+                if (filePath.endsWith("native/crypto/ppccap.c")
+                || filePath.endsWith("native/crypto/s390xcap.c")
+                || filePath.endsWith("native/crypto/sparcv9cap.c")
+                ){
+                    return family != Family.MINGW
+                }
+
                 if (filePath.endsWith("native/crypto/LPdir_win.c")) {
-                    return family == Family.MINGW && architecture == Architecture.X64
+                    return false
                 }
                 if (filePath.endsWith("native/crypto/LPdir_win32.c")) {
-                    return family == Family.MINGW && architecture == Architecture.X86
+                    return false//family == Family.MINGW && architecture == Architecture.X86
                 }
                 if (filePath.endsWith("native/crypto/armcap.c")) {
                     return architecture == Architecture.ARM32 || architecture == Architecture.ARM64
                 }
 
                 if (filePath.endsWith("native/crypto/poly1305/poly1305_base2_44.c")
-                    || filePath.endsWith("native/crypto/poly1305/poly1305_ieee754.c")
-                    || filePath.endsWith("native/crypto/bn/asm/x86_64-gcc.c")
+                        || filePath.endsWith("native/crypto/poly1305/poly1305_ieee754.c")
+                        || filePath.endsWith("native/crypto/bn/asm/x86_64-gcc.c")
                 ) {
-                    return architecture != Architecture.ARM32 && architecture != Architecture.ARM64
+                    return false//architecture != Architecture.ARM32 && architecture != Architecture.ARM64
                 }
 
                 if (filePath.endsWith("native/crypto/LPdir_wince.c")
@@ -260,6 +278,7 @@ def defineCryptoBuild(KonanTarget selectTarget) {
 def defineOpensslBuild(KonanTarget selectTarget) {
     BuildStaticTask task = tasks.create("buildOpenssl${selectTarget.name.capitalize()}", BuildStaticTask.class)
     task.target = selectTarget
+
     task.include(file("${buildFile.parentFile}/src/native/include"))
     task.include(file("${buildFile.parentFile}/src/native"))
     task.include(file("${buildFile.parentFile}/src/native/crypto/modes"))
@@ -267,7 +286,27 @@ def defineOpensslBuild(KonanTarget selectTarget) {
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448"))
     task.compileArgs(
             "-DOPENSSLDIR=\"/tmp/ssl\"",
-            "-DENGINESDIR=\"/tmp/ssl/engine\""
+            "-DENGINESDIR=\"/tmp/ssl/engine\"",
+            "-DOPENSSL_USE_NODELETE",
+            "-DL_ENDIAN",
+            "-DOPENSSL_PIC",
+            "-DOPENSSL_CPUID_OBJ",
+            "-DOPENSSL_IA32_SSE2",
+            "-DOPENSSL_BN_ASM_MONT",
+            "-DOPENSSL_BN_ASM_MONT5",
+            "-DOPENSSL_BN_ASM_GF2m",
+            "-DSHA1_ASM",
+            "-DSHA256_ASM",
+            "-DSHA512_ASM",
+            "-DKECCAK1600_ASM",
+            "-DRC4_ASM",
+            "-DMD5_ASM",
+            "-DAESNI_ASM",
+            "-DVPAES_ASM",
+            "-DGHASH_ASM",
+            "-DECP_NISTZ256_ASM",
+            "-DX25519_ASM",
+            "-DPOLY1305_ASM"
     )
     task.compileDir(
             file("${buildFile.parentFile}/src/native/ssl"),
@@ -295,7 +334,6 @@ compileKotlinLinuxArm32Hfp {
     dependsOn buildCryptoLinux_arm32_hfp
     dependsOn buildOpensslLinux_arm32_hfp
 }
-
 
 
 compileKotlinMingwX64 {
