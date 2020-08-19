@@ -13,12 +13,12 @@ our @EXPORT = qw(%config %target %disabled %withargs %unified_info @disablables)
 our %config = (
   AR => "ar",
   ARFLAGS => [ "r" ],
-  CC => "gcc",
+  CC => "clang",
   CFLAGS => [ "-Wall -O3" ],
   CPPDEFINES => [  ],
   CPPFLAGS => [  ],
   CPPINCLUDES => [  ],
-  CXX => "g++",
+  CXX => "clang++",
   CXXFLAGS => [ "-Wall -O3" ],
   HASHBANGPERL => "/usr/bin/env perl",
   LDFLAGS => [  ],
@@ -37,14 +37,14 @@ our %config = (
   build_infos => [ "./build.info", "crypto/build.info", "ssl/build.info", "engines/build.info", "apps/build.info", "test/build.info", "util/build.info", "tools/build.info", "fuzz/build.info", "crypto/objects/build.info", "crypto/md4/build.info", "crypto/md5/build.info", "crypto/sha/build.info", "crypto/mdc2/build.info", "crypto/hmac/build.info", "crypto/ripemd/build.info", "crypto/whrlpool/build.info", "crypto/poly1305/build.info", "crypto/blake2/build.info", "crypto/siphash/build.info", "crypto/sm3/build.info", "crypto/des/build.info", "crypto/aes/build.info", "crypto/rc2/build.info", "crypto/rc4/build.info", "crypto/idea/build.info", "crypto/aria/build.info", "crypto/bf/build.info", "crypto/cast/build.info", "crypto/camellia/build.info", "crypto/seed/build.info", "crypto/sm4/build.info", "crypto/chacha/build.info", "crypto/modes/build.info", "crypto/bn/build.info", "crypto/ec/build.info", "crypto/rsa/build.info", "crypto/dsa/build.info", "crypto/dh/build.info", "crypto/sm2/build.info", "crypto/dso/build.info", "crypto/engine/build.info", "crypto/buffer/build.info", "crypto/bio/build.info", "crypto/stack/build.info", "crypto/lhash/build.info", "crypto/rand/build.info", "crypto/err/build.info", "crypto/evp/build.info", "crypto/asn1/build.info", "crypto/pem/build.info", "crypto/x509/build.info", "crypto/x509v3/build.info", "crypto/conf/build.info", "crypto/txt_db/build.info", "crypto/pkcs7/build.info", "crypto/pkcs12/build.info", "crypto/comp/build.info", "crypto/ocsp/build.info", "crypto/ui/build.info", "crypto/cms/build.info", "crypto/ts/build.info", "crypto/srp/build.info", "crypto/cmac/build.info", "crypto/ct/build.info", "crypto/async/build.info", "crypto/kdf/build.info", "crypto/store/build.info", "test/ossl_shim/build.info" ],
   build_type => "release",
   builddir => ".",
-  cflags => [ "-Wa,--noexecstack" ],
+  cflags => [  ],
   conf_files => [ "Configurations/00-base-templates.conf", "Configurations/10-main.conf" ],
   cppflags => [  ],
   cxxflags => [  ],
   defines => [ "NDEBUG" ],
   dirs => [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ],
   dso_defines => [ "PADLOCK_ASM" ],
-  dynamic_engines => "1",
+  dynamic_engines => "0",
   engdirs => [ "afalg" ],
   ex_libs => [  ],
   export_var_as_fn => "0",
@@ -53,19 +53,19 @@ our %config = (
   lib_defines => [ "OPENSSL_PIC", "OPENSSL_CPUID_OBJ", "OPENSSL_IA32_SSE2", "OPENSSL_BN_ASM_MONT", "OPENSSL_BN_ASM_MONT5", "OPENSSL_BN_ASM_GF2m", "SHA1_ASM", "SHA256_ASM", "SHA512_ASM", "KECCAK1600_ASM", "RC4_ASM", "MD5_ASM", "AESNI_ASM", "VPAES_ASM", "GHASH_ASM", "ECP_NISTZ256_ASM", "X25519_ASM", "POLY1305_ASM" ],
   libdir => "",
   major => "1",
-  makedepprog => "\$(CROSS_COMPILE)gcc",
+  makedepprog => "",
   minor => "1.1",
   openssl_algorithm_defines => [ "OPENSSL_NO_MD2", "OPENSSL_NO_RC5" ],
   openssl_api_defines => [  ],
-  openssl_other_defines => [ "OPENSSL_RAND_SEED_OS", "OPENSSL_NO_ASAN", "OPENSSL_NO_CRYPTO_MDEBUG", "OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE", "OPENSSL_NO_DEVCRYPTOENG", "OPENSSL_NO_EC_NISTP_64_GCC_128", "OPENSSL_NO_EGD", "OPENSSL_NO_EXTERNAL_TESTS", "OPENSSL_NO_FUZZ_AFL", "OPENSSL_NO_FUZZ_LIBFUZZER", "OPENSSL_NO_HEARTBEATS", "OPENSSL_NO_MSAN", "OPENSSL_NO_SCTP", "OPENSSL_NO_SSL_TRACE", "OPENSSL_NO_SSL3", "OPENSSL_NO_SSL3_METHOD", "OPENSSL_NO_UBSAN", "OPENSSL_NO_UNIT_TEST", "OPENSSL_NO_WEAK_SSL_CIPHERS", "OPENSSL_NO_STATIC_ENGINE" ],
+  openssl_other_defines => [ "OPENSSL_RAND_SEED_OS", "OPENSSL_NO_ASAN", "OPENSSL_NO_CRYPTO_MDEBUG", "OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE", "OPENSSL_NO_DEVCRYPTOENG", "OPENSSL_NO_EC_NISTP_64_GCC_128", "OPENSSL_NO_EGD", "OPENSSL_NO_EXTERNAL_TESTS", "OPENSSL_NO_FUZZ_AFL", "OPENSSL_NO_FUZZ_LIBFUZZER", "OPENSSL_NO_HEARTBEATS", "OPENSSL_NO_MSAN", "OPENSSL_NO_SCTP", "OPENSSL_NO_SSL_TRACE", "OPENSSL_NO_SSL3", "OPENSSL_NO_SSL3_METHOD", "OPENSSL_NO_UBSAN", "OPENSSL_NO_UNIT_TEST", "OPENSSL_NO_WEAK_SSL_CIPHERS", "OPENSSL_NO_DYNAMIC_ENGINE" ],
   openssl_sys_defines => [  ],
   openssl_thread_defines => [ "OPENSSL_THREADS" ],
   openssldir => "",
-  options => " no-asan no-buildtest-c++ no-crypto-mdebug no-crypto-mdebug-backtrace no-devcryptoeng no-ec_nistp_64_gcc_128 no-egd no-external-tests no-fuzz-afl no-fuzz-libfuzzer no-heartbeats no-md2 no-msan no-rc5 no-sctp no-ssl-trace no-ssl3 no-ssl3-method no-ubsan no-unit-test no-weak-ssl-ciphers no-zlib no-zlib-dynamic",
+  options => " no-asan no-buildtest-c++ no-crypto-mdebug no-crypto-mdebug-backtrace no-devcryptoeng no-dynamic-engine no-ec_nistp_64_gcc_128 no-egd no-external-tests no-fuzz-afl no-fuzz-libfuzzer no-heartbeats no-makedepend no-md2 no-msan no-rc5 no-sctp no-shared no-ssl-trace no-ssl3 no-ssl3-method no-ubsan no-unit-test no-weak-ssl-ciphers no-zlib no-zlib-dynamic",
   perl_archname => "x86_64-linux-gnu-thread-multi",
   perl_cmd => "/usr/bin/perl",
   perl_version => "5.30.0",
-  perlargv => [ "linux-x86_64" ],
+  perlargv => [ "linux-x86_64-clang", "no-shared" ],
   perlenv => {
       "AR" => undef,
       "ARFLAGS" => undef,
@@ -94,13 +94,13 @@ our %config = (
       "RCFLAGS" => undef,
       "RM" => undef,
       "WINDRES" => undef,
-      "__CNF_CFLAGS" => "",
-      "__CNF_CPPDEFINES" => "",
-      "__CNF_CPPFLAGS" => "",
-      "__CNF_CPPINCLUDES" => "",
-      "__CNF_CXXFLAGS" => "",
-      "__CNF_LDFLAGS" => "",
-      "__CNF_LDLIBS" => "",
+      "__CNF_CFLAGS" => undef,
+      "__CNF_CPPDEFINES" => undef,
+      "__CNF_CPPFLAGS" => undef,
+      "__CNF_CPPINCLUDES" => undef,
+      "__CNF_CXXFLAGS" => undef,
+      "__CNF_LDFLAGS" => undef,
+      "__CNF_LDLIBS" => undef,
   },
   prefix => "",
   processor => "",
@@ -111,7 +111,7 @@ our %config = (
   shlib_version_history => "",
   shlib_version_number => "1.1",
   sourcedir => ".",
-  target => "linux-x86_64",
+  target => "linux-x86_64-clang",
   tdirs => [ "ossl_shim" ],
   version => "1.1.1g",
   version_num => "0x1010107fL",
@@ -120,14 +120,14 @@ our %config = (
 our %target = (
   AR => "ar",
   ARFLAGS => "r",
-  CC => "gcc",
+  CC => "clang",
   CFLAGS => "-Wall -O3",
-  CXX => "g++",
+  CXX => "clang++",
   CXXFLAGS => "-Wall -O3",
   HASHBANGPERL => "/usr/bin/env perl",
   RANLIB => "ranlib",
   RC => "windres",
-  _conf_fname_int => [ "Configurations/00-base-templates.conf", "Configurations/00-base-templates.conf", "Configurations/10-main.conf", "Configurations/10-main.conf", "Configurations/00-base-templates.conf", "Configurations/10-main.conf", "Configurations/shared-info.pl" ],
+  _conf_fname_int => [ "Configurations/00-base-templates.conf", "Configurations/00-base-templates.conf", "Configurations/10-main.conf", "Configurations/10-main.conf", "Configurations/00-base-templates.conf", "Configurations/10-main.conf", "Configurations/10-main.conf", "Configurations/shared-info.pl" ],
   aes_asm_src => "aes_core.c aes_cbc.c vpaes-x86_64.s aesni-x86_64.s aesni-sha1-x86_64.s aesni-sha256-x86_64.s aesni-mb-x86_64.s",
   aes_obj => "aes_core.o aes_cbc.o vpaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o",
   apps_aux_src => "",
@@ -329,16 +329,19 @@ our %disabled = (
   "crypto-mdebug" => "default",
   "crypto-mdebug-backtrace" => "default",
   "devcryptoeng" => "default",
+  "dynamic-engine" => "cascade",
   "ec_nistp_64_gcc_128" => "default",
   "egd" => "default",
   "external-tests" => "default",
   "fuzz-afl" => "default",
   "fuzz-libfuzzer" => "default",
   "heartbeats" => "default",
+  "makedepend" => "unavailable",
   "md2" => "default",
   "msan" => "default",
   "rc5" => "default",
   "sctp" => "default",
+  "shared" => "option",
   "ssl-trace" => "default",
   "ssl3" => "default",
   "ssl3-method" => "default",
@@ -653,26 +656,6 @@ our %unified_info = (
             "crypto/x86cpuid.s" =>
                 [
                     "crypto/perlasm/x86asm.pl",
-                ],
-            "engines/afalg" =>
-                [
-                    "libcrypto",
-                ],
-            "engines/capi" =>
-                [
-                    "libcrypto",
-                ],
-            "engines/dasync" =>
-                [
-                    "libcrypto",
-                ],
-            "engines/ossltest" =>
-                [
-                    "libcrypto",
-                ],
-            "engines/padlock" =>
-                [
-                    "libcrypto",
                 ],
             "fuzz/asn1-test" =>
                 [
@@ -1180,6 +1163,12 @@ our %unified_info = (
                     "libcrypto.a",
                     "test/libtestutil.a",
                 ],
+            "test/cipher_overhead_test" =>
+                [
+                    "libcrypto",
+                    "libssl",
+                    "test/libtestutil.a",
+                ],
             "test/cipherbytes_test" =>
                 [
                     "libcrypto",
@@ -1602,12 +1591,6 @@ our %unified_info = (
                 [
                     "libcrypto",
                     "libssl.a",
-                    "test/libtestutil.a",
-                ],
-            "test/tls13secretstest" =>
-                [
-                    "libcrypto",
-                    "libssl",
                     "test/libtestutil.a",
                 ],
             "test/uitest" =>
@@ -3182,15 +3165,18 @@ our %unified_info = (
                 },
             "engines" =>
                 {
+                    "deps" =>
+                        [
+                            "engines/e_afalg.o",
+                            "engines/e_capi.o",
+                            "engines/e_padlock-x86_64.o",
+                            "engines/e_padlock.o",
+                        ],
                     "products" =>
                         {
-                            "dso" =>
+                            "lib" =>
                                 [
-                                    "engines/afalg",
-                                    "engines/capi",
-                                    "engines/dasync",
-                                    "engines/ossltest",
-                                    "engines/padlock",
+                                    "libcrypto",
                                 ],
                         },
                 },
@@ -3247,15 +3233,9 @@ our %unified_info = (
                             "ssl/t1_trce.o",
                             "ssl/tls13_enc.o",
                             "ssl/tls_srp.o",
-                            "ssl/packet.o",
-                            "ssl/tls13_enc.o",
                         ],
                     "products" =>
                         {
-                            "bin" =>
-                                [
-                                    "test/tls13secretstest",
-                                ],
                             "lib" =>
                                 [
                                     "libssl",
@@ -3351,11 +3331,6 @@ our %unified_info = (
         },
     "engines" =>
         [
-            "engines/afalg",
-            "engines/capi",
-            "engines/dasync",
-            "engines/ossltest",
-            "engines/padlock",
         ],
     "extra" =>
         [
@@ -8492,26 +8467,22 @@ our %unified_info = (
                 ],
             "engines/e_afalg.o" =>
                 [
+                    ".",
                     "include",
                 ],
             "engines/e_capi.o" =>
                 [
-                    "include",
-                ],
-            "engines/e_dasync.o" =>
-                [
-                    "include",
-                ],
-            "engines/e_ossltest.o" =>
-                [
+                    ".",
                     "include",
                 ],
             "engines/e_padlock-x86_64.o" =>
                 [
+                    ".",
                     "include",
                 ],
             "engines/e_padlock.o" =>
                 [
+                    ".",
                     "include",
                 ],
             "fuzz/asn1.o" =>
@@ -9144,6 +9115,11 @@ our %unified_info = (
                     ".",
                     "include",
                 ],
+            "test/cipher_overhead_test.o" =>
+                [
+                    ".",
+                    "include",
+                ],
             "test/cipherbytes_test.o" =>
                 [
                     "include",
@@ -9414,10 +9390,6 @@ our %unified_info = (
                 [
                     "include",
                 ],
-            "test/shlibloadtest.o" =>
-                [
-                    "include",
-                ],
             "test/siphash_internal_test.o" =>
                 [
                     ".",
@@ -9557,11 +9529,6 @@ our %unified_info = (
                     ".",
                     "include",
                 ],
-            "test/tls13secretstest.o" =>
-                [
-                    ".",
-                    "include",
-                ],
             "test/uitest.o" =>
                 [
                     ".",
@@ -9612,12 +9579,6 @@ our %unified_info = (
         },
     "install" =>
         {
-            "engines" =>
-                [
-                    "engines/afalg",
-                    "engines/capi",
-                    "engines/padlock",
-                ],
             "libraries" =>
                 [
                     "libcrypto",
@@ -9748,6 +9709,7 @@ our %unified_info = (
             "test/buildtest_c_x509v3",
             "test/casttest",
             "test/chacha_internal_test",
+            "test/cipher_overhead_test",
             "test/cipherbytes_test",
             "test/cipherlist_test",
             "test/ciphername_test",
@@ -9810,7 +9772,6 @@ our %unified_info = (
             "test/sanitytest",
             "test/secmemtest",
             "test/servername_test",
-            "test/shlibloadtest",
             "test/siphash_internal_test",
             "test/sm2_internal_test",
             "test/sm4_internal_test",
@@ -9830,7 +9791,6 @@ our %unified_info = (
             "test/time_offset_test",
             "test/tls13ccstest",
             "test/tls13encryptiontest",
-            "test/tls13secretstest",
             "test/uitest",
             "test/v3ext",
             "test/v3nametest",
@@ -9889,19 +9849,6 @@ our %unified_info = (
         ],
     "shared_sources" =>
         {
-            "libcrypto" =>
-                [
-                    "libcrypto.map",
-                ],
-            "libssl" =>
-                [
-                    "libssl.map",
-                ],
-        },
-    "sharednames" =>
-        {
-            "libcrypto" => "libcrypto",
-            "libssl" => "libssl",
         },
     "sources" =>
         {
@@ -12820,18 +12767,6 @@ our %unified_info = (
                 [
                     "crypto/x86_64cpuid.s",
                 ],
-            "engines/afalg" =>
-                [
-                    "engines/e_afalg.o",
-                ],
-            "engines/capi" =>
-                [
-                    "engines/e_capi.o",
-                ],
-            "engines/dasync" =>
-                [
-                    "engines/e_dasync.o",
-                ],
             "engines/e_afalg.o" =>
                 [
                     "engines/e_afalg.c",
@@ -12840,14 +12775,6 @@ our %unified_info = (
                 [
                     "engines/e_capi.c",
                 ],
-            "engines/e_dasync.o" =>
-                [
-                    "engines/e_dasync.c",
-                ],
-            "engines/e_ossltest.o" =>
-                [
-                    "engines/e_ossltest.c",
-                ],
             "engines/e_padlock-x86_64.o" =>
                 [
                     "engines/e_padlock-x86_64.s",
@@ -12855,15 +12782,6 @@ our %unified_info = (
             "engines/e_padlock.o" =>
                 [
                     "engines/e_padlock.c",
-                ],
-            "engines/ossltest" =>
-                [
-                    "engines/e_ossltest.o",
-                ],
-            "engines/padlock" =>
-                [
-                    "engines/e_padlock-x86_64.o",
-                    "engines/e_padlock.o",
                 ],
             "fuzz/asn1-test" =>
                 [
@@ -13629,6 +13547,10 @@ our %unified_info = (
                     "crypto/x509v3/v3_utl.o",
                     "crypto/x509v3/v3err.o",
                     "crypto/x86_64cpuid.o",
+                    "engines/e_afalg.o",
+                    "engines/e_capi.o",
+                    "engines/e_padlock-x86_64.o",
+                    "engines/e_padlock.o",
                 ],
             "libssl" =>
                 [
@@ -14550,6 +14472,14 @@ our %unified_info = (
                 [
                     "test/chacha_internal_test.c",
                 ],
+            "test/cipher_overhead_test" =>
+                [
+                    "test/cipher_overhead_test.o",
+                ],
+            "test/cipher_overhead_test.o" =>
+                [
+                    "test/cipher_overhead_test.c",
+                ],
             "test/cipherbytes_test" =>
                 [
                     "test/cipherbytes_test.o",
@@ -15076,14 +15006,6 @@ our %unified_info = (
                 [
                     "test/servername_test.c",
                 ],
-            "test/shlibloadtest" =>
-                [
-                    "test/shlibloadtest.o",
-                ],
-            "test/shlibloadtest.o" =>
-                [
-                    "test/shlibloadtest.c",
-                ],
             "test/siphash_internal_test" =>
                 [
                     "test/siphash_internal_test.o",
@@ -15298,16 +15220,6 @@ our %unified_info = (
             "test/tls13encryptiontest.o" =>
                 [
                     "test/tls13encryptiontest.c",
-                ],
-            "test/tls13secretstest" =>
-                [
-                    "ssl/packet.o",
-                    "ssl/tls13_enc.o",
-                    "test/tls13secretstest.o",
-                ],
-            "test/tls13secretstest.o" =>
-                [
-                    "test/tls13secretstest.c",
                 ],
             "test/uitest" =>
                 [

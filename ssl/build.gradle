@@ -4,6 +4,7 @@ apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.Family
+import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import pw.binom.plugins.BuildStaticTask
 
@@ -207,10 +208,34 @@ def defineCryptoBuild(KonanTarget selectTarget) {
     task.include(file("${buildFile.parentFile}/src/native/crypto/modes"))
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448/arch_32"))
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448"))
+    def q = "\""
+    if (HostManager.hostIsMingw){
+        q = "\\\""
+    }
     task.compileArgs(
-            "-DOPENSSLDIR=\\\"/tmp/ssl\\\"",
-            "-DENGINESDIR=\\\"/tmp/ssl/engine\\\"",
-            "-DWIN32_LEAN_AND_MEAN"
+            "-DOPENSSLDIR=$q/tmp/ssl$q",
+            "-DENGINESDIR=$q/tmp/ssl/engine$q",
+            "-DWIN32_LEAN_AND_MEAN",
+            "-DOPENSSL_USE_NODELETE",
+            "-DL_ENDIAN",
+            "-DOPENSSL_PIC",
+            "-DOPENSSL_CPUID_OBJ",
+            "-DOPENSSL_IA32_SSE2",
+            "-DOPENSSL_BN_ASM_MONT",
+            "-DOPENSSL_BN_ASM_MONT5",
+            "-DOPENSSL_BN_ASM_GF2m",
+            "-DSHA1_ASM",
+            "-DSHA256_ASM",
+            "-DSHA512_ASM",
+            "-DKECCAK1600_ASM",
+            "-DRC4_ASM",
+            "-DMD5_ASM",
+            "-DAESNI_ASM",
+            "-DVPAES_ASM",
+            "-DGHASH_ASM",
+            "-DECP_NISTZ256_ASM",
+            "-DX25519_ASM",
+            "-DPOLY1305_ASM"
     )
     task.compileDir(
             file("${buildFile.parentFile}/src/native/crypto"),
@@ -284,9 +309,8 @@ def defineOpensslBuild(KonanTarget selectTarget) {
     task.include(file("${buildFile.parentFile}/src/native/crypto/modes"))
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448/arch_32"))
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448"))
+
     task.compileArgs(
-            "-DOPENSSLDIR=\"/tmp/ssl\"",
-            "-DENGINESDIR=\"/tmp/ssl/engine\"",
             "-DOPENSSL_USE_NODELETE",
             "-DL_ENDIAN",
             "-DOPENSSL_PIC",
