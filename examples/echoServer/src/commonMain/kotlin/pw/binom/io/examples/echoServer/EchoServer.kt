@@ -8,7 +8,7 @@ import pw.binom.io.socket.SocketSelector
 
 fun main(args: Array<String>) {
     val server = RawServerSocketChannel()
-    val selector = SocketSelector(100)
+    val selector = SocketSelector()
 
     server.blocking = false
     server.bind("0.0.0.0", 8899)

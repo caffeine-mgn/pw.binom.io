@@ -1,6 +1,6 @@
 package pw.binom
 
-import kotlin.browser.window
+import kotlinx.browser.window
 import kotlin.js.Date
 
 actual val Environment.platform: Platform
