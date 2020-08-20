@@ -1,5 +1,6 @@
 package pw.binom.thread
 
+/*
 import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.atomic.AtomicBoolean
@@ -123,4 +124,4 @@ actual open class Thread {
     actual fun interrupt() {
         interrupted.value = true
     }
-}
+}*/

@@ -76,7 +76,7 @@ kotlin {
 
         macosX64Main {
             dependencies {
-                dependsOn nativeMain
+                dependsOn linuxX64Main
             }
         }
 

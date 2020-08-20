@@ -74,7 +74,7 @@ actual class Lock : Closeable {
                 val now = TimeSource.Monotonic.markNow()
                 while (true) {
                     val r = pthread_cond_timedwait(native.ptr, mutex.ptr, waitUntil.ptr)
-                    if (Thread.currentThread.isInterrupted)
+                    if (Worker.current?.isInterrupted == true)
                         throw InterruptedException()
                     if (r == ETIMEDOUT) {
                         if (now.elapsedNow() > duration)

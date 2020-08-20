@@ -1,11 +1,11 @@
 package pw.binom.process
 
 import kotlinx.cinterop.*
-import platform.posix.*
 import platform.windows.*
 import pw.binom.ByteBuffer
 import pw.binom.Input
-import pw.binom.thread.Thread
+import pw.binom.thread.Worker
+import pw.binom.thread.sleep
 
 class PipeInput(val process: WinProcess) : Pipe(), Input {
     override val handler: HANDLE
@@ -51,7 +51,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
 
     override fun read(dest: ByteBuffer): Int {
         while (true) {
-            Thread.sleep(1)
+            Worker.sleep(1)
             if (available == 0) {
                 return 0
             }

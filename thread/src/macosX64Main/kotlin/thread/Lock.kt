@@ -1,5 +1,6 @@
 package pw.binom.thread
 
+/*
 import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.atomic.AtomicInt
@@ -90,4 +91,4 @@ actual class Lock : Closeable {
             }
         }
     }
-}
+}*/

@@ -7,7 +7,6 @@ import platform.windows.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.thread.FreezedStack
-import pw.binom.thread.Thread
 
 private class SignalListener(val signal: Signal.Type, handler: (Signal.Type) -> Unit) : Closeable {
     private val handler = StableRef.create(handler).asCPointer()
@@ -73,18 +72,13 @@ actual object Signal {
 private val globalHandler = staticCFunction<DWORD, WINBOOL> handler@{ signal ->
     initRuntimeIfNeeded()
     try {
-        Thread.sleep(1000)
 //        val signalI = signal.toInt()
 //        return@handler FALSE
         val type = Signal.Type.values().find { it.code.toUInt() == signal }
-        Thread.sleep(1000)
         if (type == null) {
             return@handler FALSE
         }
-        val signalObj = signals.find { it.signal == type }
-        if (signalObj == null) {
-            return@handler FALSE
-        }
+        val signalObj = signals.find { it.signal == type } ?: return@handler FALSE
         signalObj.call(type)
         return@handler TRUE
     } catch (e: Throwable) {
