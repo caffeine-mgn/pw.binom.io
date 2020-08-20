@@ -63,6 +63,7 @@ kotlin {
             compilations.main {
                 cinterops {
                     openssl {
+//                        linkerOpts.addAll(["-l","ws2_32"])
                         defFile project.file("src/cinterop/openssl.def")
                         packageName 'platform.openssl'
                         includeDirs.headerFilterOnly "${buildFile.parent}/src/native/include"
@@ -236,6 +237,9 @@ def defineCryptoBuild(KonanTarget selectTarget) {
             "-DX25519_ASM",
             "-DPOLY1305_ASM"
     )
+    if (selectTarget == KonanTarget.MINGW_X86.INSTANCE || selectTarget == KonanTarget.MINGW_X64.INSTANCE) {
+        task.compileArgs("-DWIN32_LEAN_AND_MEAN")
+    }
     task.compileDir(
             file("${buildFile.parentFile}/src/native/crypto"),
             file("${buildDir}/native/crypto/${selectTarget.name}"),
@@ -289,10 +293,8 @@ def defineCryptoBuild(KonanTarget selectTarget) {
                         || filePath.endsWith("native/crypto/md2/md2_dgst.c")
                         || filePath.endsWith("native/crypto/md2/md2_one.c")
                 ) {
-                    println("$it -> false")
                     return false
                 }
-                println("$it -> true")
                 return true
             }
     )
