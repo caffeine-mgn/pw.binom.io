@@ -73,7 +73,7 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
         if (SSL_set1_host(ssl, connect) <= 0) {
             TODO("SSL_set1_host error")
         }
-        if (SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, connect.cstr) <= 0)
+        if (SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name.convert(), connect.cstr) <= 0)
             TODO("SSL_ctrl error")
         return SSLSession(sslCtx, ssl, true)
     }

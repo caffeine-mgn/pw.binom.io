@@ -78,14 +78,14 @@ inline class Bio(val self: CPointer<BIO>) : Closeable {
         fun mem(size: Int): Bio {
             val ptr = platform.posix.malloc(size.convert())
             val bio = BIO_new_mem_buf(ptr, size)!!
-            if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_CLOSE, null) < 0)
+            if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_CLOSE.convert(), null) < 0)
                 TODO()
             return Bio(bio)
         }
 
         fun mem(data: ByteArray): Bio {
             val bio = BIO_new_mem_buf(data.refTo(0), data.size)!!
-            if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_NOCLOSE, null) < 0)
+            if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_NOCLOSE.convert(), null) < 0)
                 TODO()
             return Bio(bio)
         }
