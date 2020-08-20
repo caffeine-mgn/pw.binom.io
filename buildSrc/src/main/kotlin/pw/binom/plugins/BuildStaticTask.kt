@@ -84,7 +84,6 @@ open class BuildStaticTask : DefaultTask() {
         ))
         inputs.file(source)
         outputs.file(outFile)
-        println("Add compile $source -> $outFile")
     }
 
     private class CompileResult(val source: File, val code: Int, val result: String)
@@ -195,10 +194,8 @@ open class BuildStaticTask : DefaultTask() {
             }
         }
 
-        println("Compiled[${results.size}]:")
         results.forEach {
             if (it.code != 0) {
-                println("Can't build \"${it.source}\". Returns ${it.code}\nOutput:\n${it.result}")
                 throw GradleScriptException("Can't build \"${it.source}\".", RuntimeException(
                         "Output:\n${it.result}"
                 ))
@@ -213,13 +210,9 @@ open class BuildStaticTask : DefaultTask() {
             args.add(it.objectFile.name)
         }
 
-        val sum = compiles.map { it.objectFile.absolutePath.length }.sum()
-        println("Path Length: $sum")
-
         val builder = ProcessBuilder(
                 args
         )
-        println("Try link: $args")
         builder.directory(nativeObjDir)
         builder.environment().put("PATH", "$llvmBinFolder;${System.getenv("PATH")}")
         val process = builder.start()

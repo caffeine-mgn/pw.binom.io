@@ -209,13 +209,12 @@ def defineCryptoBuild(KonanTarget selectTarget) {
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448/arch_32"))
     task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448"))
     def q = "\""
-    if (HostManager.hostIsMingw){
+    if (HostManager.hostIsMingw) {
         q = "\\\""
     }
     task.compileArgs(
             "-DOPENSSLDIR=$q/tmp/ssl$q",
             "-DENGINESDIR=$q/tmp/ssl/engine$q",
-            "-DWIN32_LEAN_AND_MEAN",
             "-DOPENSSL_USE_NODELETE",
             "-DL_ENDIAN",
             "-DOPENSSL_PIC",
@@ -256,9 +255,9 @@ def defineCryptoBuild(KonanTarget selectTarget) {
                 }
 
                 if (filePath.endsWith("native/crypto/ppccap.c")
-                || filePath.endsWith("native/crypto/s390xcap.c")
-                || filePath.endsWith("native/crypto/sparcv9cap.c")
-                ){
+                        || filePath.endsWith("native/crypto/s390xcap.c")
+                        || filePath.endsWith("native/crypto/sparcv9cap.c")
+                ) {
                     return family != Family.MINGW
                 }
 
@@ -332,6 +331,9 @@ def defineOpensslBuild(KonanTarget selectTarget) {
             "-DX25519_ASM",
             "-DPOLY1305_ASM"
     )
+    if (selectTarget == KonanTarget.MINGW_X86.INSTANCE || selectTarget == KonanTarget.MINGW_X64.INSTANCE) {
+        task.compileArgs("-DWIN32_LEAN_AND_MEAN")
+    }
     task.compileDir(
             file("${buildFile.parentFile}/src/native/ssl"),
             file("${buildDir}/native/ssl/${selectTarget.name}")
