@@ -347,11 +347,13 @@ defineCryptoBuild(KonanTarget.MINGW_X86.INSTANCE)
 defineCryptoBuild(KonanTarget.MINGW_X64.INSTANCE)
 defineCryptoBuild(KonanTarget.LINUX_X64.INSTANCE)
 defineCryptoBuild(KonanTarget.LINUX_ARM32_HFP.INSTANCE)
+defineCryptoBuild(KonanTarget.MACOS_X64.INSTANCE)
 
 defineOpensslBuild(KonanTarget.MINGW_X86.INSTANCE)
 defineOpensslBuild(KonanTarget.MINGW_X64.INSTANCE)
 defineOpensslBuild(KonanTarget.LINUX_X64.INSTANCE)
 defineOpensslBuild(KonanTarget.LINUX_ARM32_HFP.INSTANCE)
+defineOpensslBuild(KonanTarget.MACOS_X64.INSTANCE)
 
 compileKotlinLinuxX64 {
     dependsOn buildCryptoLinux_x64
@@ -372,6 +374,11 @@ compileKotlinMingwX64 {
 compileKotlinMingwX86 {
     dependsOn buildOpensslMingw_x86
     dependsOn buildCryptoMingw_x86
+}
+
+compileKotlinMacosX64 {
+    dependsOn buildOpensslMacos_x64
+    dependsOn buildCryptoMacos_x64
 }
 
 apply from: '../public.gradle'
