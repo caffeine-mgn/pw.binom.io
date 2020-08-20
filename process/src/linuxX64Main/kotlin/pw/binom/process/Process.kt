@@ -2,7 +2,6 @@ package pw.binom.process
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import pw.binom.thread.Thread
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 

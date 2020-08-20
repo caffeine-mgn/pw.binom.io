@@ -6,7 +6,6 @@ import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.thread.Runnable
-import pw.binom.thread.Thread
 import kotlin.random.Random
 import kotlin.test.Ignore
 import kotlin.test.Test

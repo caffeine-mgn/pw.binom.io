@@ -21,7 +21,8 @@ import platform.windows.shutdown
 import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.*
-import pw.binom.thread.Thread
+import pw.binom.thread.Worker
+import pw.binom.thread.sleep
 
 internal actual fun setBlocking(native: NativeSocketHolder, value: Boolean) {
     memScoped {
@@ -125,7 +126,7 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
             if (result1 == SOCKET_ERROR) {
                 when (platform.windows.WSAGetLastError()) {
                     platform.windows.WSAEWOULDBLOCK -> {
-                        Thread.sleep(50)
+                        Worker.sleep(50)
                         continue@LOOP
                     }
                     platform.windows.WSAEISCONN -> {

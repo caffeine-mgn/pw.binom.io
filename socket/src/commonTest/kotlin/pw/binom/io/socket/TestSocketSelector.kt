@@ -1,6 +1,7 @@
 package pw.binom.io.socket
 
-import pw.binom.thread.Thread
+import pw.binom.thread.Worker
+import pw.binom.thread.sleep
 import kotlin.test.*
 
 class TestSocketSelector {
@@ -10,9 +11,9 @@ class TestSocketSelector {
         val port = 9912
         val server = RawSocketServer()
         server.bind("127.0.0.1", port)
-        Thread.sleep(100)
+        Worker.sleep(100)
 
-        val selector = SocketSelector(100)
+        val selector = SocketSelector()
 
         val client = RawSocketChannel()
         client.blocking = false

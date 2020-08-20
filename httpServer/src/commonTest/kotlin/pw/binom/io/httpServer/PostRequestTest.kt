@@ -14,7 +14,6 @@ import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.thread.Runnable
-import pw.binom.thread.Thread
 import kotlin.jvm.Volatile
 import kotlin.test.Ignore
 import kotlin.test.Test
