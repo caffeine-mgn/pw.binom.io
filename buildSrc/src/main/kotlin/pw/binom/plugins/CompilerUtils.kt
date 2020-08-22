@@ -23,8 +23,9 @@ val targetInfoMap = mapOf(
                 sysRoot = konanDeps.resolve("target-gcc-toolchain-3-linux-x86-64/x86_64-unknown-linux-gnu/sysroot")
         ),
         KonanTarget.MACOS_X64 to TargetInfo(
-                targetName = "x86_64-apple-darwin10", // Not sure about this but it doesn't matter yet.
-                sysRoot = konanDeps.resolve("target-sysroot-10-macos_x64")
+                targetName = "x86_64-apple-macosx", // Not sure about this but it doesn't matter yet.
+                sysRoot = konanDeps.resolve("target-sysroot-10-macos_x64"),
+                clangArgs = listOf("-march=x86-64")
         ),
         KonanTarget.MINGW_X64 to TargetInfo(
                 targetName = "x86_64-w64-mingw32",

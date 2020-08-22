@@ -11,7 +11,7 @@ fun main() {
 
     val nioManager = SocketNIOManager()
     val connections = AsyncHttpClient(nioManager)
-    val byteBufferPool = ByteBufferPool()
+    val byteBufferPool = ByteBufferPool(100)
 
     val done = AtomicBoolean(false)
     async {

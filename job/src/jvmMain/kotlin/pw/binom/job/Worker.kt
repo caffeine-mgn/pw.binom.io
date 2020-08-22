@@ -1,5 +1,5 @@
 package pw.binom.job
-
+/*
 import pw.binom.io.Closeable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -95,3 +95,5 @@ private class FuturePromiseImpl<T>(private val future: CompletableFuture<T>) : F
     }
 
 }
+
+ */

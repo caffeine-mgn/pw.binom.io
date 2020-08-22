@@ -46,6 +46,14 @@ kotlin {
     macosX64 { // Use your target instead.
         binaries {
             staticLib()
+            compilations.main {
+                cinterops {
+                    signals {
+                        defFile project.file("src/cinterop/linux.def")
+                        packageName 'platform.linux'
+                    }
+                }
+            }
         }
     }
     

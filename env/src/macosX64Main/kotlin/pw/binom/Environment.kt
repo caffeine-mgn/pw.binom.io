@@ -6,7 +6,7 @@ import platform.posix.*
 
 //fun htonl(x:Int)=    (((x shr 24) and 0x000000FF) or ((x shr 8) and 0x0000FF00) or ((x shl 8) and 0x00FF0000) or ((x shl 24) and 0xFF000000))
 
-val isBigEndianPrivate = ((0xFFFFFFFF and 1) == BIG_ENDIAN)
+val isBigEndianPrivate = posix_htons(47.toShort()) == 47.toShort()//((0xFFFFFFFF and 1) == BIG_ENDIAN)
 
 /**
  * constexpr endian_t getEndianOrder() {
