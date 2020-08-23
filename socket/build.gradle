@@ -18,6 +18,14 @@ kotlin {
     macosX64 { // Use your target instead.
         binaries {
             staticLib()
+            compilations.main {
+                cinterops {
+                    networkDef {
+                        defFile project.file("src/cinterop/mac.def")
+                        packageName 'platform.darwin'
+                    }
+                }
+            }
         }
     }
 
@@ -109,7 +117,7 @@ kotlin {
 
         macosX64Main {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn commonNativeMain
             }
         }
 

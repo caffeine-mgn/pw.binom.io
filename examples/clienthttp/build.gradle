@@ -35,6 +35,14 @@ kotlin {
         }
     }
 
+    macosX64 { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+
     jvm()
 
     sourceSets {
@@ -66,6 +74,12 @@ kotlin {
         }
 
         linuxArm32HfpMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        macosX64Main {
             dependencies {
                 dependsOn commonMain
             }

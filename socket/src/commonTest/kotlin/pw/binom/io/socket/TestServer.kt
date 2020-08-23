@@ -4,15 +4,17 @@ import pw.binom.io.BindException
 import pw.binom.io.SocketException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.fail
 
 class TestServer {
     @Test
-    fun `invalid port`() {
+    fun invalidPort() {
         val port = 0xFFFF + 10
         val server = RawSocketServer()
         try {
             server.bind("127.0.0.1", port)
+            fail()
         } catch (e: IllegalArgumentException) {
             assertEquals(e.message, "port out of range:$port")
             //NOP
@@ -20,7 +22,7 @@ class TestServer {
     }
 
     @Test
-    fun `bind binded port`() {
+    fun bindBindedPort() {
         val port = 0xFFFF - 10
         val server1 = RawSocketServer()
         val server2 = RawSocketServer()
@@ -36,7 +38,7 @@ class TestServer {
     }
 
     @Test
-    fun `rebind`() {
+    fun rebind() {
         val port = 0xFFFF - 10
         val server = RawSocketServer()
         server.bind("127.0.0.1", port)

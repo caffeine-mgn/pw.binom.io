@@ -1,120 +1,102 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
-
-import org.jetbrains.kotlin.konan.target.Architecture
-import org.jetbrains.kotlin.konan.target.Family
-import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.konan.target.KonanTarget
-import pw.binom.plugins.BuildStaticTask
-
-def getLinkArgs(target) {
+def argsGenLinux(String path) {
     return [
-            '-include-binary', file("${buildDir}/native/crypto/${target.konanTarget.name}/libcrypto.a").absolutePath,
-            '-include-binary', file("${buildDir}/native/ssl/${target.konanTarget.name}/libopenssl.a").absolutePath
+            '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libssl.a",
+            '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libcrypto.a"
     ]
 }
 
 kotlin {
 
     linuxX64 { // Use your target instead.
-        def task = it
         binaries {
             staticLib()
             compilations.main {
-                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+                kotlinOptions.freeCompilerArgs = argsGenLinux("linuxX64Main")
 
                 cinterops {
                     openssl {
-                        defFile project.file("src/cinterop/openssl.def")
+                        defFile project.file("src/linuxX64Main/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxX64Main/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
             }
-            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxX64Main")
         }
     }
 
     linuxArm32Hfp { // Use your target instead.
-        def task = it
         binaries {
             staticLib()
             compilations.main {
-                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+                kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
 
                 cinterops {
                     openssl {
-                        defFile project.file("src/cinterop/openssl.def")
+                        defFile project.file("src/linuxArm32HfpMain/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
             }
-            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
         }
     }
 
     mingwX64 { // Use your target instead.
-        def task = it
         binaries {
+
+            def args = [
+                    '-include-binary', buildFile.parent + '/src/mingwX64Main/cinterop/lib/libopenssl.a'
+            ]
 
             staticLib()
             compilations.main {
                 cinterops {
                     openssl {
-//                        linkerOpts.addAll(["-l","ws2_32"])
-                        defFile project.file("src/cinterop/openssl.def")
+                        defFile project.file("src/mingwX64Main/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX64Main/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
 
-                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+                kotlinOptions.freeCompilerArgs = args
             }
-            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+            compilations.test.kotlinOptions.freeCompilerArgs = args
         }
     }
 
     mingwX86 { // Use your target instead.
-        def task = it
         binaries {
+
+            def args = [
+                    '-include-binary', buildFile.parent + '/src/mingwX86Main/cinterop/lib/libopenssl.a'
+            ]
+
             staticLib()
             compilations.main {
                 cinterops {
                     openssl {
-                        defFile project.file("src/cinterop/openssl.def")
+                        defFile project.file("src/mingwX86Main/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX86Main/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
 
-                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+                kotlinOptions.freeCompilerArgs = args
             }
-            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+            compilations.test.kotlinOptions.freeCompilerArgs = args
         }
     }
 
-    macosX64 { // Use your target instead.
-        def task = it
-        binaries {
-            staticLib()
-            compilations.main {
-                cinterops {
-                    openssl {
-                        defFile project.file("src/cinterop/openssl.def")
-                        packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native/include"
-                    }
-                }
-
-                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
-            }
-            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
-        }
-    }
-
-    jvm {
+    jvm{
         compilations.all {
             kotlinOptions {
                 jvmTarget = '1.8'
@@ -161,12 +143,6 @@ kotlin {
             }
         }
 
-        macosX64Main {
-            dependencies {
-                dependsOn linuxX64Main
-            }
-        }
-
         mingwX64Main {
             dependencies {
                 dependsOn commonMain
@@ -199,186 +175,6 @@ kotlin {
             }
         }
     }
-}
-
-def defineCryptoBuild(KonanTarget selectTarget) {
-    BuildStaticTask task = tasks.create("buildCrypto${selectTarget.name.capitalize()}", BuildStaticTask.class)
-    task.target = selectTarget
-    task.include(file("${buildFile.parentFile}/src/native/include"))
-    task.include(file("${buildFile.parentFile}/src/native"))
-    task.include(file("${buildFile.parentFile}/src/native/crypto/modes"))
-    task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448/arch_32"))
-    task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448"))
-    def q = "\""
-    if (HostManager.hostIsMingw) {
-        q = "\\\""
-    }
-    task.compileArgs(
-            "-DOPENSSLDIR=$q/tmp/ssl$q",
-            "-DENGINESDIR=$q/tmp/ssl/engine$q",
-            "-DOPENSSL_USE_NODELETE",
-            "-DL_ENDIAN",
-            "-DOPENSSL_PIC",
-            "-DOPENSSL_CPUID_OBJ",
-            "-DOPENSSL_IA32_SSE2",
-            "-DOPENSSL_BN_ASM_MONT",
-            "-DOPENSSL_BN_ASM_MONT5",
-            "-DOPENSSL_BN_ASM_GF2m",
-            "-DSHA1_ASM",
-            "-DSHA256_ASM",
-            "-DSHA512_ASM",
-            "-DKECCAK1600_ASM",
-            "-DRC4_ASM",
-            "-DMD5_ASM",
-            "-DAESNI_ASM",
-            "-DVPAES_ASM",
-            "-DGHASH_ASM",
-            "-DECP_NISTZ256_ASM",
-            "-DX25519_ASM",
-            "-DPOLY1305_ASM"
-    )
-    if (selectTarget == KonanTarget.MINGW_X86.INSTANCE || selectTarget == KonanTarget.MINGW_X64.INSTANCE) {
-        task.compileArgs("-DWIN32_LEAN_AND_MEAN")
-    }
-    task.compileDir(
-            file("${buildFile.parentFile}/src/native/crypto"),
-            file("${buildDir}/native/crypto/${selectTarget.name}"),
-            null,
-            { it ->
-                Family family = selectTarget.getFamily()
-                Architecture architecture = selectTarget.getArchitecture()
-                String filePath = it.absolutePath.replace('\\', '/')
-                if (filePath.endsWith("native/crypto/dso"))
-                    return false
-                if (filePath.endsWith("native/crypto/bn/asm/x86_64-gcc.c")) {
-                    return family != Family.MINGW
-                }
-
-                if (filePath.endsWith("native/crypto/bn/bn_div.c")) {
-                    return family != Family.MINGW
-                }
-
-                if (filePath.endsWith("native/crypto/ppccap.c")
-                        || filePath.endsWith("native/crypto/s390xcap.c")
-                        || filePath.endsWith("native/crypto/sparcv9cap.c")
-                ) {
-                    return family != Family.MINGW
-                }
-
-                if (filePath.endsWith("native/crypto/LPdir_win.c")) {
-                    return false
-                }
-                if (filePath.endsWith("native/crypto/LPdir_win32.c")) {
-                    return false//family == Family.MINGW && architecture == Architecture.X86
-                }
-                if (filePath.endsWith("native/crypto/armcap.c")) {
-                    return architecture == Architecture.ARM32 || architecture == Architecture.ARM64
-                }
-
-                if (filePath.endsWith("native/crypto/poly1305/poly1305_base2_44.c")
-                        || filePath.endsWith("native/crypto/poly1305/poly1305_ieee754.c")
-                        || filePath.endsWith("native/crypto/bn/asm/x86_64-gcc.c")
-                ) {
-                    return false//architecture != Architecture.ARM32 && architecture != Architecture.ARM64
-                }
-
-                if (filePath.endsWith("native/crypto/LPdir_wince.c")
-                        || filePath.endsWith("native/crypto/engine/eng_devcrypto.c")
-                        || filePath.endsWith("native/crypto/LPdir_nyi.c")
-                        || filePath.endsWith("native/crypto/ec/ecp_nistz256_table.c")
-                        || filePath.endsWith("native/crypto/ec/curve448/field.h")
-                        || filePath.endsWith("native/crypto/rc5")
-                        || filePath.endsWith("native/crypto/LPdir_unix.c")
-                        || filePath.endsWith("native/crypto/LPdir_vms.c")
-                        || filePath.endsWith("native/crypto/md2/md2_dgst.c")
-                        || filePath.endsWith("native/crypto/md2/md2_one.c")
-                ) {
-                    return false
-                }
-                return true
-            }
-    )
-    task.staticFile = file("${buildDir}/native/crypto/${selectTarget.name}/libcrypto.a")
-}
-
-def defineOpensslBuild(KonanTarget selectTarget) {
-    BuildStaticTask task = tasks.create("buildOpenssl${selectTarget.name.capitalize()}", BuildStaticTask.class)
-    task.target = selectTarget
-
-    task.include(file("${buildFile.parentFile}/src/native/include"))
-    task.include(file("${buildFile.parentFile}/src/native"))
-    task.include(file("${buildFile.parentFile}/src/native/crypto/modes"))
-    task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448/arch_32"))
-    task.include(file("${buildFile.parentFile}/src/native/crypto/ec/curve448"))
-
-    task.compileArgs(
-            "-DOPENSSL_USE_NODELETE",
-            "-DL_ENDIAN",
-            "-DOPENSSL_PIC",
-            "-DOPENSSL_CPUID_OBJ",
-            "-DOPENSSL_IA32_SSE2",
-            "-DOPENSSL_BN_ASM_MONT",
-            "-DOPENSSL_BN_ASM_MONT5",
-            "-DOPENSSL_BN_ASM_GF2m",
-            "-DSHA1_ASM",
-            "-DSHA256_ASM",
-            "-DSHA512_ASM",
-            "-DKECCAK1600_ASM",
-            "-DRC4_ASM",
-            "-DMD5_ASM",
-            "-DAESNI_ASM",
-            "-DVPAES_ASM",
-            "-DGHASH_ASM",
-            "-DECP_NISTZ256_ASM",
-            "-DX25519_ASM",
-            "-DPOLY1305_ASM"
-    )
-    if (selectTarget == KonanTarget.MINGW_X86.INSTANCE || selectTarget == KonanTarget.MINGW_X64.INSTANCE) {
-        task.compileArgs("-DWIN32_LEAN_AND_MEAN")
-    }
-    task.compileDir(
-            file("${buildFile.parentFile}/src/native/ssl"),
-            file("${buildDir}/native/ssl/${selectTarget.name}")
-    )
-    task.staticFile = file("${buildDir}/native/ssl/${selectTarget.name}/libopenssl.a")
-}
-
-defineCryptoBuild(KonanTarget.MINGW_X86.INSTANCE)
-defineCryptoBuild(KonanTarget.MINGW_X64.INSTANCE)
-defineCryptoBuild(KonanTarget.LINUX_X64.INSTANCE)
-defineCryptoBuild(KonanTarget.LINUX_ARM32_HFP.INSTANCE)
-defineCryptoBuild(KonanTarget.MACOS_X64.INSTANCE)
-
-defineOpensslBuild(KonanTarget.MINGW_X86.INSTANCE)
-defineOpensslBuild(KonanTarget.MINGW_X64.INSTANCE)
-defineOpensslBuild(KonanTarget.LINUX_X64.INSTANCE)
-defineOpensslBuild(KonanTarget.LINUX_ARM32_HFP.INSTANCE)
-defineOpensslBuild(KonanTarget.MACOS_X64.INSTANCE)
-
-compileKotlinLinuxX64 {
-    dependsOn buildCryptoLinux_x64
-    dependsOn buildOpensslLinux_x64
-}
-
-compileKotlinLinuxArm32Hfp {
-    dependsOn buildCryptoLinux_arm32_hfp
-    dependsOn buildOpensslLinux_arm32_hfp
-}
-
-
-compileKotlinMingwX64 {
-    dependsOn buildOpensslMingw_x64
-    dependsOn buildCryptoMingw_x64
-}
-
-compileKotlinMingwX86 {
-    dependsOn buildOpensslMingw_x86
-    dependsOn buildCryptoMingw_x86
-}
-
-compileKotlinMacosX64 {
-    dependsOn buildOpensslMacos_x64
-    dependsOn buildCryptoMacos_x64
 }
 
 apply from: '../public.gradle'

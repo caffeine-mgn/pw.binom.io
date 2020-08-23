@@ -1,5 +1,5 @@
 package pw.binom.job
-
+/*
 import pw.binom.io.Closeable
 import kotlin.native.concurrent.Future
 import kotlin.native.concurrent.FutureState
@@ -57,3 +57,5 @@ private class FuturePromiseImpl<T>(private val future: Future<T>) : FuturePromis
             return future.result as Throwable
         }
 }
+
+ */

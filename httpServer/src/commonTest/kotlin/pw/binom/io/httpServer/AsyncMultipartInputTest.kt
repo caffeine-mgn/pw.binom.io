@@ -41,7 +41,7 @@ class AsyncMultipartInputTest {
         var exception: Throwable? = null
         val userName = Random.uuid().toString()
         val userPassword = Random.uuid().toString()
-        val bufferPool = ByteBufferPool(100u)
+        val bufferPool = ByteBufferPool(100)
         async {
             try {
                 //-------build test data-------//

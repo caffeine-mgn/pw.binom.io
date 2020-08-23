@@ -147,7 +147,7 @@ open class BuildStaticTask : DefaultTask() {
                     stdout.join()
                     stdin.join()
                     if (process.exitValue() == 0) {
-                        logger.lifecycle("Compile ${compile.source}: OK")
+                        logger.lifecycle("Compile ${compile.source}: OK, ${targetInfo.targetName}")
                     }
                     CompileResult(
                             code = process.exitValue(),

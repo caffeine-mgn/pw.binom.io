@@ -4,7 +4,7 @@ import pw.binom.Queue
 import pw.binom.thread.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
+/*
 class TestQueueThreadRunner {
 
     @Test
@@ -35,3 +35,4 @@ class TestQueueThreadRunner {
         thread.join()
     }
 }
+*/
