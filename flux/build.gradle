@@ -46,6 +46,7 @@ kotlin {
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":core")
                 api project(":httpServer")
             }
         }
@@ -65,6 +66,7 @@ kotlin {
 
         mingwX64Main {
             dependencies {
+                dependsOn commonMain
             }
         }
 
@@ -76,6 +78,7 @@ kotlin {
 
         linuxX64Main {
             dependencies {
+                dependsOn commonMain
             }
         }
 

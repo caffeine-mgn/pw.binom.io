@@ -7,7 +7,7 @@ object Logger {
 
     fun getLog(pkg: String) = LoggerImpl(pkg)//loggers.getOrPut(pkg) { LoggerImpl(pkg) }
 
-    @SharedImmutable
+
     private val loggers = HashMap<String, LoggerImpl>()
 
     interface Level {

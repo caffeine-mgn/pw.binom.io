@@ -1,4 +1,5 @@
 # Binom IO
+[![Kotlin 1.4.0](https://img.shields.io/badge/Kotlin-1.4.0-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)<br><br>
 Kotlin IO Library.<br>
 
 ## Actual version
@@ -103,7 +104,9 @@ See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/As
 - [x] [SQLite Support](sqlite/README.md)
 
 
-
+## Comunity
+[Telegram](https://t.me/io_binom) <br>
+[Discord](https://discord.gg/HFYABPa)
 
 ## Using Library in Projects:
 [Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)
