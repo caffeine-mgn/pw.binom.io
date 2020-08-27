@@ -20,7 +20,7 @@ kotlin {
                     openssl {
                         defFile project.file("src/linuxX64Main/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxX64Main/cinterop/include"
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxX64Main/cinterop/include"
                         includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
@@ -39,7 +39,7 @@ kotlin {
                     openssl {
                         defFile project.file("src/linuxArm32HfpMain/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/include"
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/include"
                         includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
@@ -61,7 +61,7 @@ kotlin {
                     openssl {
                         defFile project.file("src/mingwX64Main/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX64Main/cinterop/include"
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX64Main/cinterop/include"
                         includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
@@ -85,7 +85,7 @@ kotlin {
                     openssl {
                         defFile project.file("src/mingwX86Main/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX86Main/cinterop/include"
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX86Main/cinterop/include"
                         includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
@@ -106,7 +106,7 @@ kotlin {
                     openssl {
                         defFile project.file("src/macosX64Main/cinterop/openssl.def")
                         packageName 'platform.openssl'
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/macosX64Main/cinterop/include"
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/macosX64Main/cinterop/include"
                         includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
                     }
                 }
