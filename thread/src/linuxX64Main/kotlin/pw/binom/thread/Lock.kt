@@ -4,60 +4,77 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
+import kotlin.native.concurrent.AtomicNativePtr
+import kotlin.native.concurrent.freeze
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-private const val checkTime = 100
+inline val AtomicNativePtr.cc
+    get() = this.value.reinterpret<pthread_cond_t>()!!
 
+inline val AtomicNativePtr.mm
+    get() = this.value.reinterpret<pthread_mutex_t>()!!
+
+private const val checkTime = 100
+fun <T : NativePointed> NativePtr.reinterpret() = interpretNullablePointed<T>(this)
 actual class Lock : Closeable {
 
-    private val native = cValue<pthread_mutex_t>()//nativeHeap.alloc<pthread_mutex_t>()//.malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
+    //    private val native = cValue<pthread_mutex_t>()//nativeHeap.alloc<pthread_mutex_t>()//.malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
+    private val native = AtomicNativePtr(nativeHeap.alloc<pthread_mutex_t>().rawPtr)//.malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
     private var closed = AtomicInt(0)
 
     init {
-        pthread_mutex_init(native, null)
+        pthread_mutex_init(native.mm.ptr, null)
+        freeze()
     }
 
     actual fun lock() {
-        pthread_mutex_lock(native)
+        if (pthread_mutex_lock(native.mm.ptr) != 0)
+            throw IllegalStateException("Can't lock mutex")
     }
 
     actual fun unlock() {
-        pthread_mutex_unlock(native)
+        if (pthread_mutex_unlock(native.mm.ptr) != 0)
+            throw IllegalStateException("Can't unlock mutex")
     }
 
     override fun close() {
         if (closed.value == 1)
             throw IllegalStateException("Lock already closed")
-        pthread_mutex_destroy(native)
+        pthread_mutex_destroy(native.mm.ptr)
+        nativeHeap.free(native.value)
         closed.value = 1
     }
 
     actual fun newCondition(): Lock.Condition = Condition(native)
 
-    actual class Condition(val mutex: CValue<pthread_mutex_t>) : Closeable {
-        val native = cValue<pthread_cond_t>()//nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
+    actual class Condition(val mutex: AtomicNativePtr) : Closeable {
+        //        val native = cValue<pthread_cond_t>()//nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
+        val native = AtomicNativePtr(nativeHeap.alloc<pthread_cond_t>().rawPtr)//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
-            pthread_cond_init(native, null)
+            freeze()
+            if (pthread_cond_init(native.cc.ptr, null) != 0)
+                throw IllegalStateException("Can't init Condition")
         }
 
         actual fun wait() {
-            pthread_cond_wait(native, mutex)
+                pthread_cond_wait(native.cc.ptr, mutex.mm.ptr)
         }
 
         actual fun notify() {
-            pthread_cond_signal(native)
+            pthread_cond_signal(native.cc.ptr)
+        }
+
+        actual fun notifyAll() {
+            pthread_cond_broadcast(native.cc.ptr)
         }
 
         override fun close() {
             notifyAll()
-            pthread_cond_destroy(native)
-        }
-
-        actual fun notifyAll() {
-            pthread_cond_broadcast(native)
+            pthread_cond_destroy(native.cc.ptr)
+            nativeHeap.free(native.value)
         }
 
         @OptIn(ExperimentalTime::class)
@@ -73,8 +90,8 @@ actual class Lock : Closeable {
 
                 val now = TimeSource.Monotonic.markNow()
                 while (true) {
-                    val r = pthread_cond_timedwait(native.ptr, mutex.ptr, waitUntil.ptr)
-                    if (Thread.currentThread.isInterrupted)
+                    val r = pthread_cond_timedwait(native.cc.ptr, mutex.mm.ptr, waitUntil.ptr)
+                    if (Worker.current?.isInterrupted == true)
                         throw InterruptedException()
                     if (r == ETIMEDOUT) {
                         if (now.elapsedNow() > duration)

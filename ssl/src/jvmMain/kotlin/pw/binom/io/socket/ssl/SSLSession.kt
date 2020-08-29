@@ -12,7 +12,7 @@ import javax.net.ssl.SSLEngineResult
 
 actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
     actual enum class State {
-        OK, WANT_WRITE, WANT_READ, ERROR
+        OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
     }
 
     actual class Status(actual val state: State, actual val bytes: Int)
@@ -141,7 +141,7 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
                     }
                 SSLEngineResult.Status.BUFFER_UNDERFLOW -> State.WANT_READ
                 SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO()
-                SSLEngineResult.Status.CLOSED -> TODO()
+                SSLEngineResult.Status.CLOSED -> State.CLOSED
             }
 
             return Status(

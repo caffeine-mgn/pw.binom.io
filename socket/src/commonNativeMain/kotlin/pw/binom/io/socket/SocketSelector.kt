@@ -3,7 +3,7 @@ package pw.binom.io.socket
 import pw.binom.io.Closeable
 import pw.binom.neverFreeze
 
-actual class SocketSelector actual constructor(private val connections: Int) : Closeable {
+actual class SocketSelector actual constructor() : Closeable {
 
     init {
         neverFreeze()
@@ -11,8 +11,8 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
 
     private var closed = false
 
-    private val native = NativeEpoll(connections)
-    private val list = NativeEpollList(connections)
+    private val native = NativeEpoll(1024)
+    private val list = NativeEpollList(1024)
     override fun close() {
         if (closed)
             throw IllegalStateException("SocketSelector already closed")
@@ -75,7 +75,7 @@ actual class SocketSelector actual constructor(private val connections: Int) : C
     }
 
     actual fun process(timeout: Int?, func: (SelectorKey) -> Unit): Boolean {
-        val count = native.wait(list, connections, timeout ?: -1)
+        val count = native.wait(list, 1024, timeout ?: -1)
         if (count <= 0)
             return false
         for (i in 0 until count) {

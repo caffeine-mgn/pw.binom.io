@@ -42,6 +42,20 @@ kotlin {
             staticLib()
         }
     }
+
+    macosX64 { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                cinterops {
+                    signals {
+                        defFile project.file("src/cinterop/linux.def")
+                        packageName 'platform.linux'
+                    }
+                }
+            }
+        }
+    }
     
     jvm{
         compilations.all {
@@ -94,6 +108,12 @@ kotlin {
         }
 
         linuxArm32HfpMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        macosX64Main {
             dependencies {
                 dependsOn linuxX64Main
             }

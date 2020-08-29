@@ -10,6 +10,8 @@ class AsyncClosableInput(val stream: AsyncInput) : AsyncInput {
 
     private var eof = false
     private var closed = false
+    override val available: Int
+        get() = if (eof || closed) 0 else stream.available
 //    override suspend fun skip(length: Long): Long =
 //            stream.skip(length)
 

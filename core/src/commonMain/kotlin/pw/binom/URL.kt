@@ -33,7 +33,7 @@ class URL(private val path: String) {
         val uriStart = path.indexOf('/', hostStart)
 
         val portStart = path.indexOf(':', hostStart)
-        if (portStart != -1) {
+        if (portStart != -1 && (uriStart==-1 || portStart < uriStart)) {
             host = path.substring(hostStart, portStart)
             port = path.substring(portStart + 1, if (uriStart == -1) path.length else uriStart).toInt()
         } else {

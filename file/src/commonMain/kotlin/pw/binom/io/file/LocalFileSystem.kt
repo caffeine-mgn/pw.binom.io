@@ -131,6 +131,9 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>, val by
 
 private class AsyncInputWithLength(length: ULong, val stream: AsyncInput) : AsyncInput {
     private var read = length
+    override val available: Int
+        get() = minOf(read, Int.MAX_VALUE.toULong()).toInt()
+
     override suspend fun read(dest: ByteBuffer): Int {
         if (read == 0uL)
             return 0

@@ -44,86 +44,86 @@ class WaitEventQueue<T : Any>(val loadFactor: Float = 0.75f, val compactFactor: 
     }
 }
 
-class FixedThreadPool(size: Int) : ThreadPool {
-    val q = SynchronizedAppendableQueue(Stack<Item>().asFiFoQueue())//WaitEventQueue<Item>()
-    private val threads = Array(size) { ExecuteThread() }
-
-    class Item(val func: () -> Any?, val continuation: Continuation<Any?>?)
-
-    init {
-        threads.forEach {
-            it.start()
-        }
-    }
-
-    private inner class ExecuteThread : Thread() {
-        @OptIn(ExperimentalTime::class)
-        val timeout = 1000.toDuration(DurationUnit.MILLISECONDS)
-        override fun run() {
-            while (!isInterrupted) {
-                try {
-                    val value = q.pop(timeout)
-                            ?: if (shutdown)
-                                break
-                            else
-                                continue
-                    val continuation = value.continuation
-                    if (continuation != null) {
-                        continuation.resumeWith(kotlin.runCatching { value.func() })
-                    } else {
-                        value.func()
-                    }
-
-                } catch (e: InterruptedException) {
-                    break
-                } catch (e: Throwable) {
-                    e.printStacktrace()
-                }
-            }
-        }
-    }
-
-    override suspend fun <T> executeAsync(func: () -> T): T {
-        if (shutdown)
-            throw RuntimeException("Thread Pool in Shutdown state")
-
-        return suspendCoroutine {
-            q.push(Item(func, it as Continuation<Any?>))
-        }
-    }
-
-    override fun execute(func: () -> Unit) {
-        if (shutdown)
-            throw RuntimeException("Thread Pool in Shutdown state")
-        q.push(Item(func, null))
-    }
-
-    override fun <T> resume(continuation: Continuation<T>, result: Result<T>) {
-        if (shutdown)
-            throw RuntimeException("Thread Pool in Shutdown state")
-        q.push(Item({
-            continuation.resumeWith(result)
-        }, null))
-    }
-
-    private var shutdown = false
-
-    override fun shutdown() {
-        shutdown = true
-        threads.forEach {
-            it.join()
-        }
-    }
-
-    override fun close() {
-//        statisticThread.interrupt()
-        shutdown = true
-        threads.forEach {
-            it.interrupt()
-        }
-        threads.forEach {
-            it.join()
-        }
-    }
-
-}
+//class FixedThreadPool(size: Int) : ThreadPool {
+//    val q = SynchronizedAppendableQueue(Stack<Item>().asFiFoQueue())//WaitEventQueue<Item>()
+//    private val threads = Array(size) { ExecuteThread() }
+//
+//    class Item(val func: () -> Any?, val continuation: Continuation<Any?>?)
+//
+//    init {
+//        threads.forEach {
+//            it.start()
+//        }
+//    }
+//
+//    private inner class ExecuteThread : Thread() {
+//        @OptIn(ExperimentalTime::class)
+//        val timeout = 1000.toDuration(DurationUnit.MILLISECONDS)
+//        override fun run() {
+//            while (!isInterrupted) {
+//                try {
+//                    val value = q.pop(timeout)
+//                            ?: if (shutdown)
+//                                break
+//                            else
+//                                continue
+//                    val continuation = value.continuation
+//                    if (continuation != null) {
+//                        continuation.resumeWith(kotlin.runCatching { value.func() })
+//                    } else {
+//                        value.func()
+//                    }
+//
+//                } catch (e: InterruptedException) {
+//                    break
+//                } catch (e: Throwable) {
+//                    e.printStacktrace()
+//                }
+//            }
+//        }
+//    }
+//
+//    override suspend fun <T> executeAsync(func: () -> T): T {
+//        if (shutdown)
+//            throw RuntimeException("Thread Pool in Shutdown state")
+//
+//        return suspendCoroutine {
+//            q.push(Item(func, it as Continuation<Any?>))
+//        }
+//    }
+//
+//    override fun execute(func: () -> Unit) {
+//        if (shutdown)
+//            throw RuntimeException("Thread Pool in Shutdown state")
+//        q.push(Item(func, null))
+//    }
+//
+//    override fun <T> resume(continuation: Continuation<T>, result: Result<T>) {
+//        if (shutdown)
+//            throw RuntimeException("Thread Pool in Shutdown state")
+//        q.push(Item({
+//            continuation.resumeWith(result)
+//        }, null))
+//    }
+//
+//    private var shutdown = false
+//
+//    override fun shutdown() {
+//        shutdown = true
+//        threads.forEach {
+//            it.join()
+//        }
+//    }
+//
+//    override fun close() {
+////        statisticThread.interrupt()
+//        shutdown = true
+//        threads.forEach {
+//            it.interrupt()
+//        }
+//        threads.forEach {
+//            it.join()
+//        }
+//    }
+//
+//}

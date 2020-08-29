@@ -1,11 +1,13 @@
 package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
+import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.io.http.AsyncChunkedInput
 import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.Headers
 import pw.binom.io.readln
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.utf8Reader
 
 internal enum class EncodeType {
@@ -29,6 +31,19 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val input: AsyncInput
         get() = wrapped!!
 
+    var _rawInput: PooledAsyncBufferedInput? = null
+    override val rawInput: PooledAsyncBufferedInput
+        get() = _rawInput!!
+
+    var _rawOutput: AsyncOutput? = null
+    override val rawOutput: AsyncOutput
+        get() = _rawOutput!!
+
+    private var _rawConnection: SocketNIOManager.ConnectionRaw? = null
+
+    override val rawConnection: SocketNIOManager.ConnectionRaw
+        get() = _rawConnection!!
+
     override val headers = HashMap<String, ArrayList<String>>()
 
     var encode = EncodeType.IDENTITY
@@ -41,7 +56,10 @@ internal class HttpRequestImpl2 : HttpRequest {
         wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: AsyncInput, allowZlib: Boolean/*, inputBufferPool: DefaultPool<NoCloseInput>*/) {
+    suspend fun init(method: String, uri: String, input: PooledAsyncBufferedInput, output: AsyncOutput, rawConnection: SocketNIOManager.ConnectionRaw, allowZlib: Boolean) {
+        _rawInput = input
+        _rawOutput = output
+        _rawConnection = rawConnection
         this.method = method
         this.uri = uri
         headers.clear()
@@ -84,6 +102,9 @@ internal class HttpRequestImpl2 : HttpRequest {
 }
 
 private object AsyncEofInput : AsyncInput {
+    override val available: Int
+        get() = 0
+
     override suspend fun read(dest: ByteBuffer): Int = 0
 
     override suspend fun close() {

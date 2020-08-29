@@ -11,7 +11,6 @@ import pw.binom.io.use
 import pw.binom.nextBytes
 import pw.binom.printStacktrace
 import pw.binom.thread.Runnable
-import pw.binom.thread.Thread
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -54,7 +53,7 @@ class ServerTest {
     var good2 = AtomicBoolean(false)
     val clientThread = Thread(Runnable {
         try {
-            val selector = SocketSelector(10)
+            val selector = SocketSelector()
             val client = SocketFactory.rawSocketFactory.createSocketChannel()
             client.connect("127.0.0.1", port)
             client.blocking = false

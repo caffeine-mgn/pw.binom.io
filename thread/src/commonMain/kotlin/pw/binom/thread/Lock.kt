@@ -26,28 +26,28 @@ expect class Lock : Closeable {
     }
 }
 
-class Lock2 {
+class SpinLock {
     private val atom = AtomicLong(0)
     private val count = AtomicInt(0)
 
     fun lock() {
-        if (atom.value == Thread.currentThread.id)
+        if (atom.value == Worker.current?.id?:0)
             count.increment()
         else {
             while (true) {
-                if (atom.compareAndSet(0, Thread.currentThread.id))
+                if (atom.compareAndSet(0, Worker.current?.id?:0))
                     break
-                Thread.sleep(1)
+                Worker.sleep(1)
             }
             count.increment()
         }
     }
 
     fun unlock() {
-        if (atom.value == Thread.currentThread.id)
+        if (atom.value == Worker.current?.id?:0)
             count.decrement()
         if (count.value == 0)
-            if (!atom.compareAndSet(Thread.currentThread.id, 0))
+            if (!atom.compareAndSet(Worker.current?.id?:0, 0))
                 throw IllegalStateException("Lock already free")
     }
 
@@ -56,7 +56,7 @@ class Lock2 {
     }
 }
 
-inline fun <T> Lock2.use(func: () -> T): T =
+inline fun <T> SpinLock.use(func: () -> T): T =
         try {
             lock()
             func()

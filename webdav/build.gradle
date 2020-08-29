@@ -20,6 +20,12 @@ kotlin {
         }
     }
 
+    macosX64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
     mingwX86 { // Use your target instead.
         binaries {
             staticLib()
@@ -73,6 +79,12 @@ kotlin {
         }
 
         mingwX64Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        macosX64Main {
             dependencies {
                 dependsOn linuxX64Main
             }

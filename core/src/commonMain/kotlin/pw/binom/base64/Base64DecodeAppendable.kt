@@ -1,5 +1,6 @@
 package pw.binom.base64
 
+import pw.binom.ByteBuffer
 import pw.binom.Output
 import pw.binom.writeByte
 import kotlin.experimental.or
@@ -18,6 +19,7 @@ class Base64DecodeAppendable(val stream: Output) : Appendable {
 
     private var g = 0
     private var b = 0.toByte()
+    private val buf = ByteBuffer.alloc(1)
 
     override fun append(c: Char): Appendable {
         if (c == '=') {
@@ -31,17 +33,17 @@ class Base64DecodeAppendable(val stream: Output) : Appendable {
             }
             1 -> {
                 val write = b or (value shr 4)
-                stream.writeByte(write)
+                stream.writeByte(buf, write)
                 b = value shl 4
             }
             2 -> {
                 val write = b or (value shr 2)
-                stream.writeByte(write)
+                stream.writeByte(buf, write)
                 b = value shl 6
             }
             3 -> {
                 val write = b or (value)
-                stream.writeByte(write)
+                stream.writeByte(buf, write)
                 b = 0
             }
             else -> throw RuntimeException()

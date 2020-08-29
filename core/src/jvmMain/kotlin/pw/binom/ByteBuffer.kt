@@ -143,15 +143,15 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = ByteBuffer.alloc(newSize)
         if (newSize > capacity) {
-            native.update(0, capacity) { self ->
-                new.native.update(0, capacity) { new ->
+            native.hold(0, capacity) { self ->
+                new.native.update(0, native.capacity()) { new ->
                     new.put(self)
                 }
             }
             new.position = position
             new.limit = limit
         } else {
-            native.update(0, newSize) { self ->
+            native.hold(0, newSize) { self ->
                 new.native.update(0, newSize) { new ->
                     new.put(self)
                 }
@@ -176,6 +176,23 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
 
     actual fun compact() {
         native.compact()
+    }
+}
+
+@OptIn(ExperimentalContracts::class)
+private inline fun <T> JByteBuffer.hold(offset: Int, length: Int, func: (java.nio.ByteBuffer) -> T): T {
+    contract {
+        callsInPlace(func)
+    }
+    val p = position()
+    val l = limit()
+    try {
+        position(offset)
+        limit(offset + length)
+        return func(this)
+    } finally {
+        limit(l)
+        position(p)
     }
 }
 

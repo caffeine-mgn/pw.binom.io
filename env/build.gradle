@@ -14,6 +14,12 @@ kotlin {
             staticLib()
         }
     }
+    linuxArm64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
 
     mingwX64 { // Use your target instead.
         binaries {
@@ -26,6 +32,12 @@ kotlin {
             staticLib()
         }
     }
+    macosX64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
     jvm {
         compilations.all {
             kotlinOptions {
@@ -73,6 +85,19 @@ kotlin {
                 dependsOn commonMain
             }
         }
+
+        linuxArm64Main {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        macosX64Main {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
 
         jsMain {
             dependencies {

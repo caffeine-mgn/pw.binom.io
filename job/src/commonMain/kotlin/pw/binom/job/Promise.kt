@@ -4,8 +4,7 @@ import pw.binom.AppendableQueue
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicReference
 import pw.binom.doFreeze
-import pw.binom.thread.Thread
-
+/*
 interface FuturePromise<T : Any?> {
     val isFinished: Boolean
     val isError: Boolean
@@ -115,3 +114,5 @@ open class Promise<T : Any?> : ResumableFuturePromise<T> {
         done.value = true
     }
 }
+
+ */

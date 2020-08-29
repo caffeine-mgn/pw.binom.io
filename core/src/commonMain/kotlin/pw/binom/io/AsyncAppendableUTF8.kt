@@ -1,17 +1,17 @@
 package pw.binom.io
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteDataBuffer
-import pw.binom.Output
-import pw.binom.tmp8
+import pw.binom.*
 
 class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
+
+    private val data = ByteBuffer.alloc(4)
+
     override suspend fun append(c: Char): AsyncAppendable {
         try {
-            tmp8.clear()
-            UTF8.unicodeToUtf8(c, tmp8)
-            tmp8.flip()
-            stream.write(tmp8)
+            data.clear()
+            UTF8.unicodeToUtf8(c, data)
+            data.flip()
+            stream.write(data)
         } catch (e:Throwable) {
             throw e
         }
@@ -33,8 +33,12 @@ class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
         return this
     }
 
-    override suspend fun close() {
+    override suspend fun flush() {
         stream.flush()
+    }
+
+    override suspend fun close() {
+        data.close()
         stream.close()
     }
 }

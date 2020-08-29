@@ -25,6 +25,9 @@ open class AsyncInflateInput(
         buf2.flip()
     }
 
+    override val available: Int
+        get() = -1
+
     override suspend fun read(dest: ByteBuffer): Int {
         val l = dest.remaining
         while (true) {

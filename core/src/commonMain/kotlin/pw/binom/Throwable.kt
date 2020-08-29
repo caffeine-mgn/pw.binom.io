@@ -11,4 +11,9 @@ fun Throwable.printStacktrace(output: Appendable = Console.err) {
     stackTrace.forEach {
         output.append("    at $it\n")
     }
+    val cause = this.cause
+    if (cause != null && cause !== this) {
+        output.append("Caused by: ")
+        cause.printStacktrace(output)
+    }
 }

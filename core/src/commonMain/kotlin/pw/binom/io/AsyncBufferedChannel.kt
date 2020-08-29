@@ -29,6 +29,9 @@ class AsyncBufferedChannel(
         outputBuf.flush()
     }
 
+    override val available: Int
+        get() = inputBuf.available
+
 //    override suspend fun skip(length: Long): Long =
 //            inputBuf.skip(length)
 

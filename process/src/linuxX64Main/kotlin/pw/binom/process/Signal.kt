@@ -70,4 +70,10 @@ actual object Signal {
         signals.clear()
     }
 
+    actual fun addShutdownHook(func: () -> Unit) {
+        listen(Signal.Type.CTRL_C) {
+            func()
+        }
+    }
+
 }

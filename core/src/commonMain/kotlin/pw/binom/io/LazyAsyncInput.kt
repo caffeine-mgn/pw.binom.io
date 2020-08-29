@@ -22,6 +22,9 @@ class LazyAsyncInput(private val func: suspend () -> AsyncInput) : AsyncInput {
         return stream!!
     }
 
+    override val available: Int
+        get() = stream?.available ?: -1
+
 //    override suspend fun skip(length: Long): Long {
 //        val stream = inited()
 //        return stream.skip(length)

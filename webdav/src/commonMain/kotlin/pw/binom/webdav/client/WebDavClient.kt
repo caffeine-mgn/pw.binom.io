@@ -86,12 +86,14 @@ open class WebDavClient<T : WebAuthAccess>(val client: AsyncHttpClient, val url:
                 return null
 
             return object : AsyncInput {
+                override val available: Int
+                    get() = resp.available
+
                 override suspend fun read(dest: ByteBuffer): Int = resp.read(dest)
 
                 override suspend fun close() {
                     resp.close()
                 }
-
             }
         }
 

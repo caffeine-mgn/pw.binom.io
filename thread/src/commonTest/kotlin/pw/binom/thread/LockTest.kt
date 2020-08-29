@@ -32,36 +32,36 @@ class Water(locked: Boolean) {
     }
 }
 
-@Ignore
+
 @OptIn(ExperimentalTime::class)
 class LockTest {
 
-    @Test
-    fun testLock() {
-        val lock = Lock()
-        var duration = Duration.ZERO
-        val water = Water(true)
-        closablesOf(lock).use {
-            val thread = Thread(Runnable {
-                water.unlock()
-                val vv = measureTime {
-                    lock.synchronize {
-                        println("Hello from other thread")
-                    }
-                }
-                duration = vv
-            })
-
-            lock.synchronize {
-                thread.start()
-                water.lock()
-                Thread.sleep(1000)
-            }
-
-            thread.join()
-            assertTrue(duration >= 900.0.toDuration(DurationUnit.MILLISECONDS) && duration <= 1500.0.toDuration(DurationUnit.MILLISECONDS))
-        }
-    }
+//    @Test
+//    fun testLock() {
+//        val lock = Lock()
+//        var duration = Duration.ZERO
+//        val water = Water(true)
+//        closablesOf(lock).use {
+//            val thread = Thread(Runnable {
+//                water.unlock()
+//                val vv = measureTime {
+//                    lock.synchronize {
+//                        println("Hello from other thread")
+//                    }
+//                }
+//                duration = vv
+//            })
+//
+//            lock.synchronize {
+//                thread.start()
+//                water.lock()
+//                Thread.sleep(1000)
+//            }
+//
+//            thread.join()
+//            assertTrue(duration >= 900.0.toDuration(DurationUnit.MILLISECONDS) && duration <= 1500.0.toDuration(DurationUnit.MILLISECONDS))
+//        }
+//    }
 
     @Test
     fun testCondition() {
@@ -69,32 +69,28 @@ class LockTest {
         val waterLock = Water(true)
         val lock = Lock()
         val condition = lock.newCondition()
-        var duration = Duration.ZERO
+        val worker = Worker()
         closablesOf(condition, lock).use {
-            val thread = Thread(Runnable {
+            val feature = worker.execute(condition to lock) {
                 water.unlock()
-                val vv = measureTime {
-                    lock.synchronize {
+                measureTime {
+                    it.second.synchronize {
                         try {
-                            condition.wait()
+                            it.first.wait()
                         } catch (e: Throwable) {
                             e.printStacktrace(Console.std)
                         }
-
                     }
                 }
-                duration = vv
-            })
-
-            thread.start()
+            }
             water.lock()
-            Thread.sleep(1000)
+            Worker.sleep(1000)
 
 
             lock.synchronize {
                 condition.notifyAll()
             }
-            thread.join()
+            val duration = feature.resultOrNull!!
             assertTrue(duration >= 900.0.toDuration(DurationUnit.MILLISECONDS) && duration <= 1500.0.toDuration(DurationUnit.MILLISECONDS))
         }
     }

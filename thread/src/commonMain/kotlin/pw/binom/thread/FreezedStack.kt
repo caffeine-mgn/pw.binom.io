@@ -16,7 +16,7 @@ class FreezedStack<T> : MutableIterable<T>, Closeable {
         private var first = true
 
         init {
-            check(top.value != null)
+            require(top.value != null)
         }
 
         var currentItem: Item? = null

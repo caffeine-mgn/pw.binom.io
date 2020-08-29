@@ -1,5 +1,5 @@
 package pw.binom.job
-
+/*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
@@ -58,3 +58,5 @@ fun Worker.execute(func: () -> Task): WorkerHandler {
     }
     return WorkerHandler(interruptFlag, this, promise)
 }
+
+ */

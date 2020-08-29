@@ -12,6 +12,8 @@ internal class ClosableAsyncInput(val stream: AsyncInput) : AsyncHttpInput {
     private var eof = false
     override val isEof: Boolean
         get() = eof
+    override val available: Int
+        get() = if (eof) 0 else stream.available
 
     override suspend fun read(dest: ByteBuffer): Int =
             try {

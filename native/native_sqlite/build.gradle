@@ -10,6 +10,10 @@ model {
         mingwX86 {
             architecture "mingwX86"
         }
+
+        linuxX64 {
+            architecture "linuxX64"
+        }
     }
 
     toolChains {
@@ -22,12 +26,18 @@ model {
             target("mingwX86")
             path "${System.getProperty("user.home")}/.konan/dependencies/msys2-mingw-w64-i686-clang-llvm-lld-compiler_rt-8.0.1/bin"
         }
+
+        gccX641(Gcc) {
+            target("linuxX64")
+//            path "${System.getProperty("user.home")}/.konan/dependencies/target-gcc-toolchain-3-linux-x86-64/x86_64-unknown-linux-gnu/bin"
+        }
     }
 
     components {
         sqlite(NativeLibrarySpec) {
             targetPlatform "mingwX64"
             targetPlatform "mingwX86"
+            targetPlatform "linuxX64"
             sources {
                 c {
                     source {
@@ -46,4 +56,15 @@ model {
             }
         }
     }
+}
+
+task buildLinuxX64(type: Exec) {
+    def gccPath = "${System.getProperty("user.home")}/.konan/dependencies/target-gcc-toolchain-3-linux-x86-64/x86_64-unknown-linux-gnu/bin".toString()
+    def dir = "${System.getProperty("user.home")}/.konan/dependencies/target-gcc-toolchain-3-linux-x86-64/libexec/gcc/x86_64-unknown-linux-gnu/4.8.5/".toString()
+    workingDir dir
+    environment 'PATH', "${System.getProperty("PATH")}:$dir"
+    def cSource = "${buildFile.parentFile}/src/main/c/sqlite3.c"
+    def hDir = "${buildFile.parentFile}/src/main/h"
+    def output = "${buildDir}/libs/sqlite/static/linuxX64/libsqlite"
+    commandLine "${gccPath}/gcc", '-o', output, cSource, '-I', hDir, '-lpthread', '-ldl'
 }

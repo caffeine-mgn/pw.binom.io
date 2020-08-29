@@ -2,7 +2,6 @@ package pw.binom.io.file
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import pw.binom.io.FileSystemAccess
 import kotlin.native.concurrent.freeze
 
 private fun timespec.toMillis(): Long {

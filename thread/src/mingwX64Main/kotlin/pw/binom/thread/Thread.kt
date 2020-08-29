@@ -1,8 +1,13 @@
 package pw.binom.thread
 
+/*
 import kotlinx.cinterop.*
 import platform.windows.*
 import pw.binom.atomic.AtomicBoolean
+import kotlin.native.concurrent.AtomicReference
+import kotlin.native.concurrent.FreezableAtomicReference
+import kotlin.native.concurrent.Worker
+import kotlin.native.concurrent.freeze
 
 @ThreadLocal
 private var privateCurrentThread: Thread? = null
@@ -10,14 +15,19 @@ private var privateCurrentThread: Thread? = null
 private fun executeInOtherThread(func: () -> Unit): Pair<UInt, HANDLE> {
     return memScoped {
         val thread = alloc<UIntVar>()
+        func.freeze()
         val ptr = StableRef.create(func).asCPointer()
         val handle = CreateThread(null, 0.convert(), staticCFunction<COpaquePointer?, DWORD> {
             initRuntimeIfNeeded()
-            val selfPtr = it!!.asStableRef<() -> Unit>()
+            println("start thread...")
+            val selfPtr = it!!.asStableRef<()->Unit>()
+            println("Getting ptr to thread function")
             val self = selfPtr.get()
+            println("Try to execute function...")
             try {
                 self()
             } finally {
+                println("destory thread function")
                 selfPtr.dispose()
             }
             0u
@@ -106,4 +116,4 @@ actual open class Thread {
     actual fun interrupt() {
         interrupted.value=true
     }
-}
+}*/

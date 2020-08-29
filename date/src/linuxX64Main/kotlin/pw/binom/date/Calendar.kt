@@ -41,4 +41,6 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
         get() = Date(utcTime)
 
     actual fun timeZone(timeZoneOffset: Int): Calendar = Calendar(utcTime, timeZoneOffset)
+
+    actual override fun toString(): String = timeZone(0).asStringGmt()
 }

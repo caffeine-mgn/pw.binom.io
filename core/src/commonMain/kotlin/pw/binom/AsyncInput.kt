@@ -6,18 +6,11 @@ import pw.binom.io.UTF8
 import pw.binom.pool.ObjectPool
 
 interface AsyncInput : AsyncCloseable {
-//    suspend fun skip(length: Long): Long
-//    suspend fun read(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
-//    suspend fun readFully(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int {
-//        var off = offset
-//        var len = length
-//        while (len > 0) {
-//            val t = read(data, off, len)
-//            off += t
-//            len -= t
-//        }
-//        return length
-//    }
+    /**
+     * Available Data size in bytes
+     * @return Available data in bytes. If returns value less 0 it's mean that size of available data is unknown
+     */
+    val available: Int
 
     suspend fun read(dest: ByteBuffer): Int
     suspend fun readFully(dest: ByteBuffer): Int {
@@ -30,6 +23,8 @@ interface AsyncInput : AsyncCloseable {
 }
 
 fun Input.asyncInput() = object : AsyncInput {
+    override val available: Int
+        get() = -1
 
     override suspend fun read(dest: ByteBuffer): Int =
             this@asyncInput.read(dest)
@@ -39,89 +34,61 @@ fun Input.asyncInput() = object : AsyncInput {
     }
 }
 
-//suspend fun AsyncInput.copyTo(outputStream: Output, pool: ObjectPool<ByteDataBuffer>) {
-//    val buf = pool.borrow()
-//    try {
-//        while (true) {
-//            val len = read(buf, 0, buf.size)
-//            if (len <= 0) {
-//                break
-//            }
-//            outputStream.write(buf, 0, len)
-//        }
-//        outputStream.flush()
-//    } finally {
-//        pool.recycle(buf)
-//    }
-//}
-
-//suspend fun AsyncInput.copyTo(outputStream: AsyncOutput, pool: ObjectPool<ByteDataBuffer>) {
-//    val buf = pool.borrow()
-//    try {
-//        while (true) {
-//            val len = read(buf, 0, buf.size)
-//            if (len <= 0) {
-//                break
-//            }
-//            outputStream.write(buf, 0, len)
-//        }
-//        outputStream.flush()
-//    } finally {
-//        pool.recycle(buf)
-//    }
-//}
-
-suspend fun AsyncInput.readUtf8Char():Char?{
-    tmp8.reset(0,1)
-    return if (read(tmp8) == 0) {
+suspend fun AsyncInput.readUtf8Char(buffer: ByteBuffer): Char? {
+    buffer.reset(0, 1)
+    return if (read(buffer) == 0) {
         null
     } else {
-        val firstByte = tmp8[0]
+        val firstByte = buffer[0]
         val size = UTF8.utf8CharSize(firstByte)
         if (size > 0) {
-            tmp8.reset(0,size)
-            read(tmp8)
+            buffer.reset(0, size)
+            read(buffer)
         }
-        UTF8.utf8toUnicode(firstByte, tmp8)
+        UTF8.utf8toUnicode(firstByte, buffer)
     }
 }
 
 
-suspend fun AsyncInput.readUTF8String(): String {
-    val size = readInt()
+suspend fun AsyncInput.readUTF8String(buffer: ByteBuffer): String {
+    val size = readInt(buffer)
     val sb = StringBuilder(size)
     repeat(size) {
-        sb.append(readUtf8Char() ?: throw EOFException())
+        sb.append(readUtf8Char(buffer) ?: throw EOFException())
     }
     return sb.toString()
 }
 
-suspend fun AsyncInput.readByte(): Byte {
-    tmp8.reset(0,1)
-    readFully(tmp8)
-    return tmp8[0]
+suspend fun AsyncInput.readByte(buffer: ByteBuffer): Byte {
+    buffer.reset(0, 1)
+    readFully(buffer)
+    buffer.flip()
+    return buffer[0]
 }
 
-suspend fun AsyncInput.readInt(): Int {
-    tmp8.reset(0,4)
-    readFully(tmp8)
-    return Int.fromBytes(tmp8[0], tmp8[1], tmp8[2], tmp8[3])
+suspend fun AsyncInput.readInt(buffer: ByteBuffer): Int {
+    buffer.reset(0, 4)
+    readFully(buffer)
+    buffer.flip()
+    return Int.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3])
 }
 
-suspend fun AsyncInput.readShort(): Short {
-    tmp8.reset(0,2)
-    readFully(tmp8)
-    return Short.fromBytes(tmp8[0], tmp8[1])
+suspend fun AsyncInput.readShort(buffer: ByteBuffer): Short {
+    buffer.reset(0, 2)
+    readFully(buffer)
+    buffer.flip()
+    return Short.fromBytes(buffer[0], buffer[1])
 }
 
-suspend fun AsyncInput.readLong(): Long {
-    tmp8.reset(0,8)
-    readFully(tmp8)
-    return Long.fromBytes(tmp8[0], tmp8[1], tmp8[2], tmp8[3], tmp8[4], tmp8[5], tmp8[6], tmp8[7])
+suspend fun AsyncInput.readLong(buffer: ByteBuffer): Long {
+    buffer.reset(0, 8)
+    readFully(buffer)
+    buffer.flip()
+    return Long.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7])
 }
 
-suspend inline fun AsyncInput.readFloat() = Float.fromBits(readInt())
-suspend inline fun AsyncInput.readDouble() = Double.fromBits(readLong())
+suspend inline fun AsyncInput.readFloat(buffer: ByteBuffer) = Float.fromBits(readInt(buffer))
+suspend inline fun AsyncInput.readDouble(buffer: ByteBuffer) = Double.fromBits(readLong(buffer))
 
 suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
     val buf = pool.borrow()
@@ -144,5 +111,13 @@ suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>) {
             break
         buf.flip()
         output.write(buf)
+    }
+}
+
+suspend fun AsyncInput.skipAll(buffer: ByteBuffer) {
+    while (true) {
+        buffer.clear()
+        if (read(buffer) == 0)
+            break
     }
 }

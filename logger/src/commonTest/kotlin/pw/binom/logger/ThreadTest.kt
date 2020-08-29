@@ -6,7 +6,6 @@ import pw.binom.job.Task
 import pw.binom.job.Worker
 import pw.binom.job.execute
 import pw.binom.thread.Runnable
-import pw.binom.thread.Thread
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.test.Test
 import kotlin.test.assertEquals

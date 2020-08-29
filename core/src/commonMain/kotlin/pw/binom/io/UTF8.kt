@@ -311,23 +311,28 @@ object UTF8 {
 
     fun urlDecode(input: String): String {
         val sb = ByteArrayOutput()
+        val buf = ByteBuffer.alloc(1)
         var i = 0
-        while (i < input.length) {
-            if (input[i] == '%') {
+        try {
+            while (i < input.length) {
+                if (input[i] == '%') {
+                    i++
+                    val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
+                    val b2 = input[i + 1].toString().toInt(16) and 0xf
+                    i += 1
+                    sb.writeByte(buf, (b1 + b2).toByte())
+                } else {
+                    sb.writeByte(buf, input[i].toByte())
+                }
                 i++
-                val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
-                val b2 = input[i + 1].toString().toInt(16) and 0xf
-                i += 1
-                sb.writeByte((b1 + b2).toByte())
-            } else {
-                sb.writeByte(input[i].toByte())
             }
-            i++
-        }
 //        sb.trimToSize()
-        sb.data.flip()
-        val str = sb.data.asUTF8String()
-        sb.close()
-        return str
+            sb.data.flip()
+            val str = sb.data.asUTF8String()
+            return str
+        } finally {
+            buf.close()
+            sb.close()
+        }
     }
 }

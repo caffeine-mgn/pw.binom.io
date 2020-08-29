@@ -1,8 +1,9 @@
 # Binom IO
+[![Kotlin 1.4.0](https://img.shields.io/badge/Kotlin-1.4.0-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)<br><br>
 Kotlin IO Library.<br>
 
 ## Actual version
-Actual version is `0.1.17`
+Actual version is `0.1.18`
 
 ## Parts of library
 Library contains next parts:<br>
@@ -92,7 +93,7 @@ See [Logger](logger/src/commonMain/kotlin/pw/binom/logger/Logger.kt)
 See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer.kt)
 - [x] Basic Support Http Client<br>
 See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/AsyncHttpClient.kt)
-- [ ] HTTP Server: WebSocket Support
+- [x] HTTP Server: WebSocket Support
 - [x] HTTPS Server Support
 - [x] HTTPS Client Support
 - [x] HTTP Mutipart Parser
@@ -103,7 +104,9 @@ See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/As
 - [x] [SQLite Support](sqlite/README.md)
 
 
-
+## Comunity
+[Telegram](https://t.me/io_binom) <br>
+[Discord](https://discord.gg/HFYABPa)
 
 ## Using Library in Projects:
 [Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)

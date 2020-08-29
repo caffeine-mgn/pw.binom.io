@@ -1,10 +1,15 @@
 package pw.binom.io.httpClient
 
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.URL
+import pw.binom.*
+import pw.binom.base64.Base64EncodeOutput
 import pw.binom.io.*
 import pw.binom.io.http.Headers
-import pw.binom.writeByte
+import pw.binom.io.http.websocket.HandshakeSecret
+import pw.binom.io.http.websocket.InvalidSecurityKeyException
+import pw.binom.io.http.websocket.WebSocketConnection
+import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
+import pw.binom.io.socket.nio.SocketNIOManager
+import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
 internal class UrlConnectImpl(
@@ -20,8 +25,12 @@ internal class UrlConnectImpl(
 
     init {
         headers[Headers.CONNECTION] = mutableListOf(Headers.KEEP_ALIVE)
-        headers[Headers.HOST] = mutableListOf(url.host)
+        headers[Headers.HOST] = if (url.port == url.defaultPort)
+            mutableListOf(url.host)
+        else
+            mutableListOf("${url.host}:${url.port}")
         headers[Headers.ACCEPT_ENCODING] = mutableListOf("gzip, deflate, identity")
+        headers[Headers.ACCEPT] = mutableListOf("*/*")
 //        headers[Headers.ACCEPT_ENCODING] = mutableListOf("identity")
     }
 
@@ -129,13 +138,49 @@ internal class UrlConnectImpl(
         sendRequest(false)
         val channel = channel!!
         if (chanked) {
-            channel.channel.writeByte('0'.toByte())
-            channel.channel.writeByte('\r'.toByte())
-            channel.channel.writeByte('\n'.toByte())
-            channel.channel.writeByte('\r'.toByte())
-            channel.channel.writeByte('\n'.toByte())
+            ByteBuffer.alloc(5).use { buf ->
+                buf.put('0'.toByte())
+                buf.put('\r'.toByte())
+                buf.put('\n'.toByte())
+                buf.put('\r'.toByte())
+                buf.put('\n'.toByte())
+                buf.flip()
+                channel.channel.write(buf)
+            }
         }
         return compliteRequest()
+    }
+
+    override suspend fun websocket(origin: String?): WebSocketConnection {
+        headers.remove(Headers.CONNECTION)
+        addHeader(Headers.UPGRADE, Headers.WEBSOCKET)
+        addHeader(Headers.CONNECTION, Headers.UPGRADE)
+        addHeader(Headers.SEC_WEBSOCKET_VERSION, "13")
+        if (origin != null)
+            addHeader(Headers.ORIGIN, origin)
+
+        val requestKey = StringBuilder().let { sb ->
+            val buf = ByteBuffer.alloc(16)
+            Random.nextBytes(buf)
+
+            Base64EncodeOutput(sb).use {
+                buf.clear()
+                it.write(buf)
+                buf.close()
+            }
+            sb.toString()
+        }
+        val responseKey = HandshakeSecret.generateResponse(Sha1(), requestKey)
+
+        addHeader(Headers.SEC_WEBSOCKET_KEY, requestKey)
+        sendRequest(false)
+        val channel = this.channel!!
+        val resp = compliteRequest()
+        if (resp.headers[Headers.SEC_WEBSOCKET_ACCEPT]?.singleOrNull() != responseKey) {
+            channel.close()
+            throw InvalidSecurityKeyException()
+        }
+        return ClientWebSocketConnection(resp.input, channel.channel, channel.rawConnection)
     }
 
     override suspend fun close() {

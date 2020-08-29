@@ -1,11 +1,10 @@
 package pw.binom.job
 
 import pw.binom.Queue
-import pw.binom.thread.FreezedStack
-import pw.binom.thread.Thread
+import pw.binom.thread.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
+/*
 class TestQueueThreadRunner {
 
     @Test
@@ -19,7 +18,7 @@ class TestQueueThreadRunner {
                         val data = input.pop()
                         data.promise.resume(data.value * 10)
                     }
-                    Thread.sleep(1)
+                    pw.binom.thread.Worker.sleep(1)
                 }
             }
         }
@@ -36,3 +35,4 @@ class TestQueueThreadRunner {
         thread.join()
     }
 }
+*/

@@ -2,15 +2,8 @@ package pw.binom.io
 
 class ClosedException : RuntimeException()
 
-interface Closeable {
+fun interface Closeable {
     fun close()
-}
-
-fun Closeable(func: () -> Unit) = object : Closeable {
-    override fun close() {
-        func()
-    }
-
 }
 
 fun closablesOf(vararg closable: Closeable) =

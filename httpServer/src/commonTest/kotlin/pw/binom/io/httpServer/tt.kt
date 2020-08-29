@@ -6,7 +6,6 @@ import pw.binom.io.file.File
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.neverFreeze
 import pw.binom.ssl.*
-import pw.binom.thread.Thread
 import kotlin.test.Ignore
 import kotlin.test.Test
 /*

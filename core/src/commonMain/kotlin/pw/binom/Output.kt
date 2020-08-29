@@ -9,50 +9,50 @@ interface Output : Closeable {
     fun flush()
 }
 
-fun Output.writeUtf8Char(value: Char) {
-    val size = UTF8.unicodeToUtf8(value, tmp8)
-    tmp8.reset(0,size)
-    write(tmp8)
+fun Output.writeUtf8Char(buffer:ByteBuffer, value: Char) {
+    val size = UTF8.unicodeToUtf8(value, buffer)
+    buffer.reset(0,size)
+    write(buffer)
 }
 
-fun Output.writeUTF8String(text: String) {
-    writeInt(text.length)
+fun Output.writeUTF8String(buffer:ByteBuffer, text: String) {
+    writeInt(buffer, text.length)
     text.forEach {
-        writeUtf8Char(it)
+        writeUtf8Char(buffer, it)
     }
 }
 
-fun Output.writeByte(value: Byte) {
-    tmp8[0] = value
-    tmp8.reset(0,1)
-    write(tmp8)
+fun Output.writeByte(buffer:ByteBuffer, value: Byte) {
+    buffer[0] = value
+    buffer.reset(0,1)
+    write(buffer)
 }
 
-fun Output.writeInt(value: Int) {
-    tmp8.clear()
-    value.dump(tmp8)
-    tmp8.flip()
-    write(tmp8)
+fun Output.writeInt(buffer:ByteBuffer,value: Int) {
+    buffer.clear()
+    value.dump(buffer)
+    buffer.flip()
+    write(buffer)
 }
 
-fun Output.writeShort(value: Short) {
-    tmp8.clear()
-    value.dump(tmp8)
-    tmp8.flip()
-    write(tmp8)
+fun Output.writeShort(buffer:ByteBuffer, value: Short) {
+    buffer.clear()
+    value.dump(buffer)
+    buffer.flip()
+    write(buffer)
 }
 
-fun Output.writeLong(value: Long) {
-    tmp8.clear()
-    value.dump(tmp8)
-    tmp8.flip()
-    write(tmp8)
+fun Output.writeLong(buffer:ByteBuffer,value: Long) {
+    buffer.clear()
+    value.dump(buffer)
+    buffer.flip()
+    write(buffer)
 }
 
-inline fun Output.writeFloat(value: Float) {
-    writeInt(value.toBits())
+inline fun Output.writeFloat(buffer:ByteBuffer,value: Float) {
+    writeInt(buffer, value.toBits())
 }
 
-inline fun Output.writeDouble(value: Double) {
-    writeLong(value.toBits())
+inline fun Output.writeDouble(buffer:ByteBuffer,value: Double) {
+    writeLong(buffer, value.toBits())
 }

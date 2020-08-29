@@ -7,6 +7,7 @@ import pw.binom.URL
 import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
+import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.ssl.AsyncSSLChannel
 import pw.binom.io.socket.ssl.SSLSession
@@ -58,14 +59,14 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         }
     }
 
-    class Connection(val sslSession: SSLSession?, val channel: AsyncChannel) : AsyncCloseable {
+    class Connection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.ConnectionRaw) : AsyncCloseable {
         override suspend fun close() {
             sslSession?.close()
             channel.close()
         }
     }
 
-    private class AliveConnection(val sslSession: SSLSession?, val channel: AsyncChannel)
+    private class AliveConnection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.ConnectionRaw)
 
     internal suspend fun borrowConnection(url: URL): Connection {
         cleanUp()
@@ -78,19 +79,19 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
 //
 //            val cc = channel.sslSession?.let { it.asyncChannel(asyncChannel) } ?: asyncChannel
 //            var cc:AsyncChannel = asyncChannel
-            var cc = channel.channel
 //            if (url.protocol == "https")
 //                cc = sslContext.clientSession(url.host, url.port ?: url.defaultPort!!).asyncChannel(cc.unwrap())
-            return Connection(channel.sslSession, cc)
+            return Connection(channel.sslSession, channel.channel, channel.rawConnection)
 //            return Connection(channel.sslSession, channel.channel)
         }
-        var connection = Connection(null, connectionManager.connect(
+        val raw = connectionManager.connect(
                 host = url.host,
                 port = port
-        ))
+        )
+        var connection = Connection(null, raw, raw)
         if (url.protocol == "https") {
             val sslSession = sslContext.clientSession(url.host, url.port ?: url.defaultPort!!)
-            connection = Connection(sslSession, sslSession.asyncChannel(connection.channel))
+            connection = Connection(sslSession, sslSession.asyncChannel(connection.channel), raw)
 
         }
         return connection
@@ -100,8 +101,7 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         cleanUp()
         val port = url.port ?: url.defaultPort ?: throw IllegalArgumentException("Unknown default port for $url")
         val key = "${url.protocol}://${url.host}:$port"
-        val cc = connection.channel//.unwrap()//.detach()
-        connections.getOrPut(key) { ArrayList() }.add(AliveConnection(connection.sslSession, cc))
+        connections.getOrPut(key) { ArrayList() }.add(AliveConnection(connection.sslSession, connection.channel, connection.rawConnection))
     }
 
     /*
@@ -150,6 +150,7 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         val headers: MutableMap<String, MutableList<String>>
         suspend fun upload(): UrlRequest
         suspend fun response(): UrlResponse
+        suspend fun websocket(origin: String? = null): WebSocketConnection
         fun addHeader(key: String, value: String): UrlConnect {
             headers.getOrPut(key) { ArrayList() }.add(value)
             return this
@@ -165,230 +166,8 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         val headers: Map<String, List<String>>
     }
 }
-/*
-private class UrlConnectHTTP(val method: String, val url: URL, val client: AsyncHttpClient) : AsyncHttpClient.UrlConnect {
 
-//    private suspend fun skipInput() {
-//        try {
-//            val buf = ByteArray(DEFAULT_BUFFER_SIZE)
-//            while (true) {
-//                if (inputStream.read(buf) <= 0)
-//                    break
-//            }
-//
-//            var r = 0
-//            while (connect().inputAvailable) {
-//                r += connect().input.read(buf)
-//            }
-//        } catch (e: StreamClosedException) {
-//            //NOP
-//        }
-//    }
-
-    override val inputStream = LazyAsyncInput {
-        readResponse()
-        val stream = when {
-            responseHeaders[Headers.TRANSFER_ENCODING]?.any { it == Headers.CHUNKED }
-                    ?: false -> AsyncChunkedInput(connect())
-            responseHeaders[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull() != null ->
-                AsyncContentLengthInput(connect(), responseHeaders[Headers.CONTENT_LENGTH]!!.single().toULong())
-            else -> AsyncClosableInput(connect())
-        }
-        when (val contentEncode = responseHeaders[Headers.CONTENT_ENCODING]?.lastOrNull()?.toLowerCase()) {
-            "deflate" -> AsyncInflateInput(stream = stream, wrap = true)
-            "gzip" -> AsyncGZIPInput(stream)
-            null -> stream
-            else -> throw IOException("Unsupported Content Encode \"$contentEncode\"")
-        }
-    }
-
-    override val outputStream = LazyAsyncOutput {
-        sendRequest()
-        when {
-            requestHeaders[Headers.TRANSFER_ENCODING]?.any { it == Headers.CHUNKED } == true ->
-                AsyncChunkedOutput(connect())
-            requestHeaders[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull() != null ->
-                AsyncContentLengthOutput(connect(), requestHeaders[Headers.CONTENT_LENGTH]!!.single().toULong())
-            else -> throw IllegalStateException("Unknown Output Stream Type")
-        }
-    }
-
-
-    override suspend fun responseCode(): Int {
-        readResponse()
-        return _responseCode
-    }
-
-    private var requestSend = false
-    private var responseRead = false
-    private var closed = false
-    private var _responseCode = 0
-    private val connectionKeepAlive: Boolean
-        get() = responseHeaders[Headers.CONNECTION]?.singleOrNull() == Headers.KEEP_ALIVE
-
-    private var requestHeaders = HashMap<String, ArrayList<String>>()
-    private var responseHeaders = HashMap<String, ArrayList<String>>()
-
-    override fun addRequestHeader(key: String, value: String) {
-        if (requestSend)
-            throw IllegalStateException("Headers already sended")
-        requestHeaders.getOrPut(key) { ArrayList() }.add(value)
-    }
-
-    private suspend fun sendRequest() {
-        try {
-            if (requestSend) {
-                return
-            }
-            val app = connect().utf8Appendable()
-            app.append("$method ${url.uri} HTTP/1.1\r\n")
-
-            if (!requestHeaders.containsKey(Headers.CONTENT_LENGTH))
-                addRequestHeader(Headers.TRANSFER_ENCODING, Headers.CHUNKED)
-            requestHeaders.forEach { en ->
-                en.value.forEach {
-                    app.append(en.key)
-                    app.append(": ")
-                    app.append(it)
-                    app.append("\r\n")
-                }
-            }
-            app.append("\r\n")
-            connect().flush()
-            requestSend = true
-        } catch (e: Throwable) {
-            e.stackTrace.forEach {
-                println(it)
-            }
-            throw e
-        }
-    }
-
-    private var socket: AsyncChannel? = null
-
-
-    private suspend fun readResponse() {
-        sendRequest()
-        if (responseRead)
-            return
-        try {
-            outputStream.close()
-        } catch (e: StreamClosedException) {
-            //NOP
-        }
-
-        val red = connect().utf8Reader()
-        var responseLine: String
-        while (true) {
-            responseLine = red.readln() ?: ""
-            if (responseLine.isNotEmpty())
-                break
-            break
-        }
-        _responseCode = responseLine.splitToSequence(' ').iterator().let {
-            it.next()
-            it.next()
-        }.toInt()
-        while (true) {
-            val str = red.readln() ?: ""
-            if (str.isEmpty()) {
-                break
-            }
-            val items = str.split(": ")
-            responseHeaders.getOrPut(items[0]) { ArrayList() }.add(items[1])
-        }
-        responseRead = true
-    }
-
-    private suspend fun connect(): AsyncChannel {
-        if (closed)
-            throw IllegalStateException("Connection already closed")
-        if (socket != null)
-            return socket!!
-        if (socket == null) {
-            val channel = client.pollConnection(url.protocol ?: "http", url.host, url.port ?: url.defaultPort!!)
-            if (channel != null) {
-                socket = client.connectionManager.attach(channel = channel, attachment = this)
-                if (url.protocol == "https")
-                    socket = client.sslContext.clientSession(url.host, url.port ?: url.defaultPort!!)
-                            .asyncChannel(socket!!)
-                if (url.protocol == "http") {
-                    socket = AsyncBufferedChannel(socket!!)
-                }
-//                    socket = socket!!.ssl(client.sslContext, "${url.host}:${url.port ?: url.defaultPort}")
-            }
-        }
-
-        if (socket == null) {
-            val socketFactory = SocketFactory.rawSocketFactory
-//            val socketFactory = when (url.protocol ?: "http") {
-//                "ws", "http" -> SocketFactory.rawSocketFactory
-//                "wss", "https" -> client.sslContext.socketFactory
-//                else -> throw IllegalArgumentException("Not supported protocol ${url.protocol}")
-//            }
-            var con: AsyncChannel = client.connectionManager.connect(
-                    host = url.host,
-                    port = url.port ?: url.defaultPort!!,
-                    attachment = this,
-                    factory = socketFactory
-            )
-            if (url.protocol == "https") {
-                con = client.sslContext.clientSession(url.host, url.port ?: url.defaultPort!!)
-                        .asyncChannel(con)
-//                con = con.ssl(client.sslContext, "${url.host}:${url.port ?: url.defaultPort}")
-            }
-            socket = con
-        }
-        return socket!!
-    }
-
-    override suspend fun close() {
-        if (closed)
-            return
-        readResponse()
-        val inputStream = inputStream.stream
-        if (inputStream != null) {
-            if (inputStream is AsyncContentLengthInputStream) {
-                if (!inputStream.isEof) {
-                    socket?.close()
-                    socket = null
-                    closed = true
-                    return
-                }
-            }
-
-        }
-        closed = true
-
-        val channel = socket?.unwrap()?.detach()
-        socket = null
-        if (channel?.isConnected == true) {
-            if (connectionKeepAlive) {
-                client.pushConnection(url.protocol ?: "http", url.host, url.port ?: url.defaultPort!!, channel)
-            } else {
-                channel.close()
-            }
-        }
-    }
-
-    override suspend fun getResponseHeaders(): Map<String, List<String>> {
-        readResponse()
-        return responseHeaders
-    }
-}*/
-
-//fun AsyncChannel.unwrap(): SocketNIOManager.ConnectionRaw {
-//    var c = this
-//    while (true) {
-//        when (c) {
-//            is SocketNIOManager.ConnectionRaw -> return c
-//            is AsyncSSLChannel -> c = return c//c.channel
-//            else -> throw IllegalArgumentException()
-//        }
-//    }
-//}
-
-fun AsyncChannel.unwrap(): SocketNIOManager.ConnectionRaw {
+private fun AsyncChannel.unwrap(): SocketNIOManager.ConnectionRaw {
     var c = this
     while (true) {
         when (c) {

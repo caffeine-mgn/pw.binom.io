@@ -82,7 +82,6 @@ fun Calendar.asString(): String {
         6 -> "Sat"
         else -> "Unknown ($dayOfWeek)"
     }
-
     return "$week, ${dayOfMonth.asTwo()} $month ${year + 1900} ${hours.asTwo()}:${minutes.asTwo()}:${seconds.asTwo()} GMT"
 }
 

@@ -128,7 +128,7 @@ fun HttpRequest.multipart(bufferPool: ObjectPool<ByteBuffer>): AsyncMultipartInp
     )
 }
 
-open class AsyncMultipartInput(val separator: String, override val stream: AsyncInput, private val bufferPool: ObjectPool<ByteBuffer>) : AbstractAsyncBufferedInput() {
+open class AsyncMultipartInput(private val separator: String, override val stream: AsyncInput, private val bufferPool: ObjectPool<ByteBuffer>) : AbstractAsyncBufferedInput() {
     override val buffer = bufferPool.borrow().empty()
 
     init {
@@ -208,9 +208,14 @@ open class AsyncMultipartInput(val separator: String, override val stream: Async
                 buffer.clear()
             }
 
-            super.fill()
-            if (findEnd(separator, buffer, endState)) {
-                buffer.limit = endState.limit
+            try {
+                super.fill()
+                if (findEnd(separator, buffer, endState)) {
+                    buffer.limit = endState.limit
+                }
+            } catch (e: Throwable) {
+                buffer.empty()
+                throw e
             }
         } while (false)
     }

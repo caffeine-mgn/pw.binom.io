@@ -4,6 +4,7 @@ import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.io.readln
 import pw.binom.io.socket.SocketClosedException
+import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.utf8Reader
 import pw.binom.pool.DefaultPool
 
@@ -13,9 +14,9 @@ private const val PREFIX = "ConnectionProcessing: "
 internal object ConnectionProcessing {
 
     suspend fun process(
-//            connection: SocketNIOManager.ConnectionRaw,
-            inputBuffered: AsyncInput,
-            outputBuffered: AsyncOutput,
+            rawConnection: SocketNIOManager.ConnectionRaw,
+            inputBuffered: PooledAsyncBufferedInput,
+            outputBuffered: PoolAsyncBufferedOutput,
             httpRequestPool: DefaultPool<HttpRequestImpl2>,
             httpResponsePool: DefaultPool<HttpResponseImpl2>,
             handler: Handler,
@@ -32,7 +33,9 @@ internal object ConnectionProcessing {
                 method = items[0],
                 uri = items.getOrNull(1) ?: "",
                 input = inputBuffered,
-                allowZlib = allowZlib
+                allowZlib = allowZlib,
+                output = outputBuffered,
+                rawConnection = rawConnection
         )
 
         val resp = httpResponsePool.borrow()

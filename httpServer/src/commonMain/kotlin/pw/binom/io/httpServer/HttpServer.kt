@@ -73,7 +73,8 @@ open class HttpServer(val manager: SocketNIOManager,
                             httpResponsePool = httpResponsePool,
                             inputBuffered = inputBufferid,
                             outputBuffered = outputBufferid,
-                            allowZlib = zlibBufferSize > 0
+                            allowZlib = zlibBufferSize > 0,
+                            rawConnection = it
                     )
                     if (!keepAlive) {
                         inputBufferid.reset()

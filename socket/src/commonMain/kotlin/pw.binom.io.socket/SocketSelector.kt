@@ -5,7 +5,7 @@ import pw.binom.Queue
 import pw.binom.Stack
 import pw.binom.io.Closeable
 
-expect class SocketSelector(connections: Int) : Closeable {
+expect class SocketSelector() : Closeable {
     fun reg(channel: Channel, attachment: Any? = null): SelectorKey
 
     fun process(timeout: Int? = null, func: (SelectorKey) -> Unit): Boolean
@@ -48,6 +48,7 @@ fun SocketSelector.asQueue(timeout: Int? = 1): Queue<SocketSelector.SelectorKey>
         if (list.isEmpty) {
             this@asQueue.process(timeout) {
                 list.push(it)
+                true
             }
         }
     }

@@ -26,6 +26,9 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
         return super.read(dest)
     }
 
+    override val available: Int
+        get() = -1
+
     private var headerRead = false
     private suspend fun readHeader(stream: AsyncInput): Int {
         if (headerRead)

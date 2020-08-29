@@ -26,6 +26,12 @@ kotlin {
             staticLib()
         }
     }
+
+    macosX64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
     
     jvm{
         compilations.all {
@@ -66,6 +72,12 @@ kotlin {
         }
 
         linuxArm32HfpMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        macosX64Main {
             dependencies {
                 dependsOn linuxX64Main
             }

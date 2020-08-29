@@ -4,18 +4,70 @@ import pw.binom.*
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
+import pw.binom.io.http.websocket.MessageType
+import pw.binom.io.http.websocket.WebSocketClosedException
+import pw.binom.io.httpServer.websocket.WebSocketHandler
 import pw.binom.io.readText
 import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
+import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
+import pw.binom.thread.Runnable
+import kotlin.jvm.Volatile
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
+//@Ignore
 class PostRequestTest {
+    @Volatile
+    private var done = false
+
+    private inner class Han : WebSocketHandler() {
+        override suspend fun connected(request: ConnectRequest) {
+            val con = request.accept()
+            con.write(MessageType.TEXT).utf8Appendable().use {
+                it.append("Hello from server!")
+            }
+            con.incomeMessageListener = {
+                try {
+                    println("Income")
+                    val txt = it.read().utf8Reader().use {
+                        it.readText()
+                    }
+
+                    Thread(Runnable {
+                        async {
+                            it.write(MessageType.TEXT).utf8Appendable().use {
+                                it.append("Echo $txt")
+                            }
+                        }
+                    }).start()
+
+                } catch (e: WebSocketClosedException) {
+                    println("Client disconnected")
+                } catch (e: Throwable) {
+                    done = true
+                    e.printStacktrace()
+                }
+            }
+        }
+
+    }
+
+    @Test
+    fun ws() {
+        val manager = SocketNIOManager()
+        val server = HttpServer(manager, Han())
+
+        server.bindHTTP(port = 8080)
+        while (!done) {
+            manager.update(1000)
+        }
+    }
 
     @Ignore
     @OptIn(ExperimentalTime::class)
@@ -27,12 +79,6 @@ class PostRequestTest {
         var dd = TimeSource.Monotonic.markNow()
         val server = HttpServer(manager, object : Handler {
             override suspend fun request(req: HttpRequest, resp: HttpResponse) {
-//                val out = ByteArrayOutput()
-//                req.input.copyTo(out,bufPool)
-//                out.trimToSize()
-//                out.data.clear()
-//                println("Input: [${out.data.toByteArray().map { "0x${it.toString(16).toUpperCase()}" }.joinToString(" ")}]")
-
                 req.headers.forEach { k ->
                     k.value.forEach {
                         println("${k.key}: $it")
@@ -110,7 +156,8 @@ class PostRequestTest {
             }
         } catch (e: Throwable) {
             println("Error!")
-            e.printStacktrace(Console.std)
+//            e.printStacktrace(Console.std)
+            throw e
         }
     }
 /*

@@ -27,6 +27,12 @@ kotlin {
         }
     }
 
+    macosX64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
     jvm{
         compilations.all {
             kotlinOptions {
@@ -40,6 +46,7 @@ kotlin {
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":core")
                 api project(":httpServer")
             }
         }
@@ -59,6 +66,7 @@ kotlin {
 
         mingwX64Main {
             dependencies {
+                dependsOn commonMain
             }
         }
 
@@ -70,10 +78,17 @@ kotlin {
 
         linuxX64Main {
             dependencies {
+                dependsOn commonMain
             }
         }
 
         linuxArm32HfpMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        macosX64Main {
             dependencies {
                 dependsOn linuxX64Main
             }

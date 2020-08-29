@@ -1,5 +1,6 @@
 package pw.binom.db
 
+import pw.binom.UUID
 import pw.binom.io.Closeable
 
 interface PreparedStatement : Closeable {
@@ -12,4 +13,8 @@ interface PreparedStatement : Closeable {
     fun set(index: Int, value: ByteArray)
     fun executeQuery(): ResultSet
     fun executeUpdate()
+    fun set(index: Int, value: UUID) {
+        val buf = ByteArray(16)
+        set(index, value.toByteArray(buf))
+    }
 }
