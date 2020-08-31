@@ -6,16 +6,11 @@ import pw.binom.io.Closeable
  * For work in java run as "java -Xrs -jar <path to you program>"
  */
 expect object Signal {
-    enum class Type {
-        CTRL_C,
-        CTRL_B,
-        CLOSE,
-        LOGOFF,
-        SHUTDOWN
-    }
-
-    fun listen(signal: Type, handler: (Signal.Type) -> Unit): Closeable
-    fun closeAll()
-
-    fun addShutdownHook(func: () -> Unit)
+    val isSigint:Boolean
+    val isSigbreak:Boolean
+    val isSigterm:Boolean
+    val isInterrupted:Boolean
+    val isClose:Boolean
+    val isLogoff:Boolean
+    val isShutdown:Boolean
 }

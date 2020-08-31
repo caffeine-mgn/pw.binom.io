@@ -1,62 +1,47 @@
 package pw.binom.process
 
-import pw.binom.io.Closeable
 import sun.misc.SignalHandler
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import sun.misc.Signal as JSignal
 
 private val globalHandler = SignalHandler { sig ->
-    val type = Signal.Type.values().find { it.code == sig.name } ?: return@SignalHandler
-    signals.forEach {
-        if (it.signal == type) {
-            it.call(type)
-        }
+    when (sig.name) {
+        "INT" -> Signal._isSigint.set(true)
+        "TERM" -> Signal._isSigterm.set(true)
     }
 }
-
-private class SignalListener(val signal: Signal.Type, val handler: (Signal.Type) -> Unit) : Closeable {
-    fun call(signal: Signal.Type) {
-        handler(signal)
-    }
-
-    override fun close() {
-
-    }
-}
-
-private val signals = CopyOnWriteArrayList<SignalListener>()
-private val handeled = HashSet<Signal.Type>()
 
 actual object Signal {
     private const val NOT_SUPPORTED_CODE = ""
 
-    actual enum class Type(val code: String) {
-        CTRL_C("INT"),
-        CTRL_B(NOT_SUPPORTED_CODE),
-        CLOSE("TERM"),
-        LOGOFF(NOT_SUPPORTED_CODE),
-        SHUTDOWN(NOT_SUPPORTED_CODE)
-    }
+    internal val _isSigint = AtomicBoolean(false)
+    internal val _isSigterm = AtomicBoolean(false)
+    internal val _isInterrupted = AtomicBoolean(false)
 
-    actual fun listen(signal: Type, handler: (Type) -> Unit): Closeable {
-        val listener = SignalListener(signal, handler)
-        signals += listener
-        if (signal !in handeled) {
-            JSignal.handle(JSignal(signal.code), globalHandler)
-        }
-        return Closeable {
-            signals -= listener
-        }
-    }
+    actual val isSigint: Boolean
+        get() = _isSigint.get()
 
-    actual fun closeAll() {
-        signals.clear()
-    }
+    actual val isSigbreak: Boolean
+        get() = false
 
-    actual fun addShutdownHook(func: () -> Unit) {
+    actual val isSigterm: Boolean
+        get() = _isSigterm.get()
+
+    actual val isInterrupted: Boolean
+        get() = _isInterrupted.get() || isSigint || isSigterm
+
+    actual val isClose: Boolean
+        get() = false
+    actual val isLogoff: Boolean
+        get() = false
+    actual val isShutdown: Boolean
+        get() = false
+
+    init {
         Runtime.getRuntime().addShutdownHook(Thread(Runnable {
-            func()
+            _isInterrupted.set(true)
         }))
+        JSignal.handle(JSignal("INT"), globalHandler)
+        JSignal.handle(JSignal("TERM"), globalHandler)
     }
-
 }
