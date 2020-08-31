@@ -4,9 +4,11 @@ publishing {
             name = "BinomRepository"
             def repoUser = System.getenv("REPO_USER")
             def repoPassword = System.getenv("REPO_PASSWORD")
-            def repoUrl = "http://127.0.0.1:4001"//System.getenv("REPO_URL")
+            def repoUrl = System.getenv("REPO_URL")
 
             url repoUrl
+
+            println("$repoUser:$repoPassword@$repoUrl")
 
             credentials {
                 username = repoUser
