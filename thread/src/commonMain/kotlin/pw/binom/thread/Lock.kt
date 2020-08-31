@@ -31,11 +31,11 @@ class SpinLock {
     private val count = AtomicInt(0)
 
     fun lock() {
-        if (atom.value == Worker.current?.id?:0)
+        if (atom.value == Worker.current?.id ?: 0)
             count.increment()
         else {
             while (true) {
-                if (atom.compareAndSet(0, Worker.current?.id?:0))
+                if (atom.compareAndSet(0, Worker.current?.id ?: 0))
                     break
                 Worker.sleep(1)
             }
@@ -44,10 +44,10 @@ class SpinLock {
     }
 
     fun unlock() {
-        if (atom.value == Worker.current?.id?:0)
+        if (atom.value == Worker.current?.id ?: 0)
             count.decrement()
         if (count.value == 0)
-            if (!atom.compareAndSet(Worker.current?.id?:0, 0))
+            if (!atom.compareAndSet(Worker.current?.id ?: 0, 0))
                 throw IllegalStateException("Lock already free")
     }
 
@@ -56,13 +56,18 @@ class SpinLock {
     }
 }
 
-inline fun <T> SpinLock.use(func: () -> T): T =
-        try {
-            lock()
-            func()
-        } finally {
-            unlock()
-        }
+@OptIn(ExperimentalContracts::class)
+inline fun <T> SpinLock.use(func: () -> T): T {
+    contract {
+        callsInPlace(func)
+    }
+    try {
+        lock()
+        return func()
+    } finally {
+        unlock()
+    }
+}
 
 @OptIn(ExperimentalContracts::class)
 inline fun <T> Lock.synchronize(func: () -> T): T {
