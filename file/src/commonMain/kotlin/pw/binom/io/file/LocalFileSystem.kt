@@ -4,7 +4,6 @@ import pw.binom.*
 import pw.binom.io.FileSystem
 import pw.binom.io.FileSystemAccess
 import pw.binom.io.use
-import pw.binom.pool.DefaultPool
 import pw.binom.pool.ObjectPool
 
 class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>, val byteBufferPool: ObjectPool<ByteBuffer>) : FileSystem<U> {
@@ -12,7 +11,7 @@ class LocalFileSystem<U>(val root: File, val access: FileSystemAccess<U>, val by
         access.putFile(user, path)
         val file = File(root, path.removePrefix("/"))
         file.parent?.mkdirs()
-        return file.channel(AccessType.CREATE, AccessType.WRITE).asyncOutput()
+        return file.write().asyncOutput()
     }
 
     override suspend fun get(user: U, path: String): FileSystem.Entity<U>? {

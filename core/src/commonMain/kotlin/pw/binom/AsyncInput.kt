@@ -90,28 +90,48 @@ suspend fun AsyncInput.readLong(buffer: ByteBuffer): Long {
 suspend inline fun AsyncInput.readFloat(buffer: ByteBuffer) = Float.fromBits(readInt(buffer))
 suspend inline fun AsyncInput.readDouble(buffer: ByteBuffer) = Double.fromBits(readLong(buffer))
 
-suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
+/**
+ * Copy date from [this] to [output]
+ *
+ * @receiver input
+ * @param output output
+ * @return size of copied data
+ */
+suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): ULong {
+    var out = 0uL
     val buf = pool.borrow()
     while (true) {
         buf.clear()
         val s = read(buf)
         if (s == 0)
             break
+        out += s.toULong()
         buf.flip()
         output.write(buf)
     }
+    return out
 }
 
-suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>) {
+/**
+ * Copy date from [this] to [output]
+ *
+ * @receiver input
+ * @param output output
+ * @return size of copied data
+ */
+suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>):ULong {
+    var out = 0uL
     val buf = pool.borrow()
     while (true) {
         buf.clear()
         val s = read(buf)
         if (s == 0)
             break
+        out += s.toULong()
         buf.flip()
         output.write(buf)
     }
+    return out
 }
 
 suspend fun AsyncInput.skipAll(buffer: ByteBuffer) {
