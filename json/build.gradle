@@ -32,15 +32,19 @@ kotlin {
             staticLib()
         }
     }
-    
-    jvm{
+
+    jvm {
         compilations.all {
             kotlinOptions {
                 jvmTarget = '1.8'
             }
         }
     }
-    js()
+
+    js(BOTH) {
+        browser()
+        nodejs()
+    }
 
     sourceSets {
 
@@ -59,6 +63,12 @@ kotlin {
         }
 
         nativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        jsMain {
             dependencies {
                 dependsOn commonMain
             }

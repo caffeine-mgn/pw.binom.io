@@ -32,7 +32,12 @@ kotlin {
             staticLib()
         }
     }
-    
+
+    js(BOTH){
+        browser()
+        nodejs()
+    }
+
     jvm{
         compilations.all {
             kotlinOptions {

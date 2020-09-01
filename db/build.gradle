@@ -25,7 +25,10 @@ kotlin {
             staticLib()
         }
     }
-    js()
+    js(BOTH){
+        browser()
+        nodejs()
+    }
     jvm{
         compilations.all {
             kotlinOptions {
