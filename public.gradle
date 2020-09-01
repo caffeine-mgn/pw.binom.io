@@ -2,9 +2,9 @@ publishing {
     repositories {
         maven {
             name = "BinomRepository"
-            def repoUser = System.getenv("REPO_USER")
-            def repoPassword = System.getenv("REPO_PASSWORD")
-            def repoUrl = System.getenv("REPO_URL")
+            def repoUser = project.property("binom.repo.user")
+            def repoPassword = project.property("binom.repo.password")
+            def repoUrl = project.property("binom.repo.url")
 
             url repoUrl
 
