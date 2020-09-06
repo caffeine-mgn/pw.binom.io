@@ -6,18 +6,13 @@ import pw.binom.process.Signal
 import kotlin.random.Random
 
 fun main(args: Array<String>) {
-    val port = Random.nextInt(3000, Short.MAX_VALUE.toInt() - 1).toShort()
+    val port = 8083//Random.nextInt(3000, Short.MAX_VALUE.toInt() - 1)
     println("Staring HTTP server on 0.0.0.0:$port")
     val manager = SocketNIOManager()
     val server = HttpServer(manager, ChatHandler())
 
-    var done = false
-
-    server.bindHTTP(port = 8080)
-    Signal.listen(Signal.Type.CTRL_C) {
-        done = true
-    }
-    while (!done) {
+    server.bindHTTP(port = port)
+    while (!Signal.isInterrupted) {
         manager.update(1000)
     }
     server.close()

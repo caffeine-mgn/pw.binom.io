@@ -1,13 +1,16 @@
 package pw.binom.io.socket
 
+import pw.binom.Bitset32
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.atomic.AtomicInt
+import pw.binom.concurrency.asReference
+import pw.binom.doFreeze
 import pw.binom.io.Closeable
-import pw.binom.neverFreeze
+
+private const val LISTEN_READ = 0b01
+private const val LISTEN_WRITE = 0b10
 
 actual class SocketSelector actual constructor() : Closeable {
-
-    init {
-        neverFreeze()
-    }
 
     private var closed = false
 
@@ -22,21 +25,49 @@ actual class SocketSelector actual constructor() : Closeable {
     }
 
     internal inner class SelectorKeyImpl(override val channel: NetworkChannel,
-                                         override val attachment: Any?) : SelectorKey {
+                                         attachment: Any?) : SelectorKey {
 
-        private var _canlelled = false
-        lateinit var event: NativeEvent
+        private val _attachment = attachment.asReference()
+
+        override val attachment: Any?
+            get() = _attachment.value
+
+        private var _canlelled by AtomicBoolean(false)
         lateinit var selfRef: SelfRefKey
 
         override val isCanlelled: Boolean
             get() = _canlelled
+/*
+        private var listenStatus by AtomicInt(0)
 
-        override var listenReadable: Boolean = false
+        override var listenReadable: Boolean
+            get() = Bitset32(listenStatus)[0]
+            private set(value) {
+                listenStatus = Bitset32(listenStatus).set(0, value).toInt()
+            }
+        override var listenWritable: Boolean
+            get() = Bitset32(listenStatus)[1]
+            private set(value) {
+                listenStatus = Bitset32(listenStatus).set(1, value).toInt()
+            }
+        private var status by AtomicInt(0)
+        override var isReadable: Boolean
+            get() = Bitset32(status)[0]
+            set(value) {
+                status = Bitset32(listenStatus).set(0, value).toInt()
+            }
+        override var isWritable: Boolean
+            get() = Bitset32(status)[1]
+            set(value) {
+                status = Bitset32(listenStatus).set(1, value).toInt()
+            }
+*/
+        override var listenReadable by AtomicBoolean(false)
             private set
-        override var listenWritable: Boolean = false
+        override var listenWritable by AtomicBoolean(false)
             private set
-        override var isReadable: Boolean = false
-        override var isWritable: Boolean = false
+        override var isReadable by AtomicBoolean(false)
+        override var isWritable by AtomicBoolean(false)
 
         override fun cancel() {
             if (isCanlelled)
@@ -44,19 +75,22 @@ actual class SocketSelector actual constructor() : Closeable {
             native.remove(channel.nsocket.native)
             selfRef.close()
             _canlelled = true
-            _keys -= this
+//            _keys -= this
         }
 
         override fun updateListening(read: Boolean, write: Boolean) {
-            if (listenReadable == read && listenWritable == write)
+            if (listenReadable == read && listenWritable == write) {
+                println("Cancel update becouse values is equals! $read / $write")
                 return
+            }
             listenReadable = read
             listenWritable = write
+            println("Update: $read / $write   -> $listenReadable / $listenWritable")
             native.edit(channel.nsocket.native, selfRef, read, write)
         }
     }
 
-    private val _keys = HashSet<SelectorKeyImpl>()
+//    private val _keys = HashSet<SelectorKeyImpl>()
 
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
         channel as NetworkChannel
@@ -70,14 +104,15 @@ actual class SocketSelector actual constructor() : Closeable {
 
         val ref = native.add(channel.nsocket.native, key)
         key.selfRef = ref
-        _keys += key
+//        _keys += key
         return key
     }
 
     actual fun process(timeout: Int?, func: (SelectorKey) -> Unit): Boolean {
         val count = native.wait(list, 1024, timeout ?: -1)
-        if (count <= 0)
+        if (count <= 0) {
             return false
+        }
         for (i in 0 until count) {
             val item = list[i]
             val el = item.key
@@ -100,7 +135,7 @@ actual class SocketSelector actual constructor() : Closeable {
     }
 
     actual val keys: Collection<SelectorKey>
-        get() = _keys
+        get() = emptySet()//_keys
 
     actual interface SelectorKey {
         actual val channel: Channel
@@ -114,4 +149,7 @@ actual class SocketSelector actual constructor() : Closeable {
         actual fun updateListening(read: Boolean, write: Boolean)
     }
 
+    init {
+        doFreeze()
+    }
 }

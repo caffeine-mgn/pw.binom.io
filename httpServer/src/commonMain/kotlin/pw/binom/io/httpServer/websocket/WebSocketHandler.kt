@@ -98,10 +98,11 @@ abstract class WebSocketHandler : Handler {
                     headers = req.headers
             )
             connected(con)
-            if (con.currentConnection?.incomeMessageListener != null) {
-                suspendCoroutine<Unit> { }
-            }
+//            if (con.currentConnection?.incomeMessageListener != null) {
+//                suspendCoroutine<Unit> { }
+//            }
         } catch (e: RejectedException) {
+            e.printStackTrace()
             resp.status = 403
             resp.enableKeepAlive = false
             resp.complete()

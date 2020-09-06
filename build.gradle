@@ -1,6 +1,6 @@
 buildscript {
     ext.kotlin_version = "1.4.0"
-    ext.network_version = "0.1.18"
+    ext.network_version = "0.1.19"
 
     repositories {
         mavenCentral()
@@ -20,11 +20,8 @@ allprojects {
     group = "pw.binom.io"
 
     repositories {
+        mavenLocal()
         mavenCentral()
         jcenter()
-        mavenLocal()
-        maven {
-            url "http://repo.tlsys.su/maven/releases"
-        }
     }
 }

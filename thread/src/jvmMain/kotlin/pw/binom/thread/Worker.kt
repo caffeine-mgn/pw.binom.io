@@ -1,5 +1,6 @@
 package pw.binom.thread
 
+import pw.binom.Future
 import pw.binom.uuid
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -52,7 +53,7 @@ actual class Worker actual constructor(name: String?) : Thread(name?:"Thread-${R
         start()
     }
 
-    actual fun requestTermination() = execute(Unit) {
+    actual fun requestTermination(): Future<Unit> = execute(Unit) {
         terminate.set(true)
     }
 

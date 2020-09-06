@@ -1,6 +1,9 @@
 package pw.binom.atomic
 
-class AtomicBoolean(value: Boolean) {
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
+
+class AtomicBoolean(value: Boolean) : ReadWriteProperty<Any?, Boolean> {
     private val atom = AtomicInt(boolToInt(value))
     fun compareAndSet(expected: Boolean, new: Boolean): Boolean =
             atom.compareAndSet(boolToInt(expected), boolToInt(new))
@@ -12,4 +15,10 @@ class AtomicBoolean(value: Boolean) {
         set(value: Boolean) {
             atom.value = boolToInt(value)
         }
+
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
+        this.value = value
+    }
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = this.value
 }

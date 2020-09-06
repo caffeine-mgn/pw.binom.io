@@ -1,11 +1,17 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
+def ideaActive = System.getProperty('idea.active') == 'true'
+
 kotlin {
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
         }
+    }
+
+    if (ideaActive) {
+        linuxX64("native")
     }
 
     linuxArm32Hfp { // Use your target instead.

@@ -1,5 +1,6 @@
 package pw.binom.thread
 
+import pw.binom.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 
@@ -46,4 +47,6 @@ class WorkerFuture<T> : Future<T> {
 
     override val exceptionOrNull: Throwable?
         get() = consume { it }.exceptionOrNull()
+    override val isDone: Boolean
+        get() = done.get()
 }

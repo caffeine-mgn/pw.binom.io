@@ -9,8 +9,6 @@ import pw.binom.io.socket.SocketFactory
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.rawSocketFactory
 import pw.binom.pool.DefaultPool
-import pw.binom.printStacktrace
-import pw.binom.stackTrace
 
 /**
  * Base Http Server
@@ -59,6 +57,7 @@ open class HttpServer(val manager: SocketNIOManager,
 
     private fun runProcessing(connection: SocketNIOManager.ConnectionRaw) {
         connection {
+            println("Client processing...")
             val inputBufferid = bufferedInputPool.borrow { buf ->
                 buf.currentStream = it
             }
@@ -87,7 +86,7 @@ open class HttpServer(val manager: SocketNIOManager,
                 } catch (e: SocketClosedException) {
                     break
                 } catch (e: Throwable) {
-                    e.printStacktrace()
+                    e.printStackTrace()
                     inputBufferid.reset()
                     bufferedInputPool.recycle(inputBufferid)
                     outputBufferid.reset()

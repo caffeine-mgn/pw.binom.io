@@ -56,8 +56,35 @@ class SpinLock {
     }
 }
 
+inline class SimpleSpinLock(private val lock: AtomicInt = AtomicInt(0)) {
+    fun lock() {
+        while (true) {
+            if (lock.compareAndSet(0, 1))
+                break
+            Worker.sleep(1)
+        }
+    }
+
+    fun unlock() {
+        lock.value = 0
+    }
+}
+
 @OptIn(ExperimentalContracts::class)
-inline fun <T> SpinLock.use(func: () -> T): T {
+inline fun <T> SpinLock.synchronize(func: () -> T): T {
+    contract {
+        callsInPlace(func)
+    }
+    try {
+        lock()
+        return func()
+    } finally {
+        unlock()
+    }
+}
+
+@OptIn(ExperimentalContracts::class)
+inline fun <T> SimpleSpinLock.synchronize(func: () -> T): T {
     contract {
         callsInPlace(func)
     }

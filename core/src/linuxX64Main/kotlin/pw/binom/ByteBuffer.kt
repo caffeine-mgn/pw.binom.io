@@ -2,6 +2,7 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.memcpy
+import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
 
@@ -10,14 +11,14 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
 
-    private var closed = false
+//    private var closed = false
 
     private inline fun checkClosed() {
-        if (closed)
-            throw StreamClosedException()
+//        if (closed)
+//            throw StreamClosedException()
     }
 
-    private var bytes = ByteArray(capacity)
+    private val bytes = ByteArray(capacity)
 
     //    val native: CPointer<ByteVar> = malloc(capacity.convert())!!.reinterpret()
     val native: CPointer<ByteVar> = run {
@@ -36,17 +37,25 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
             checkClosed()
             return limit - position
         }
-    actual var position: Int = 0
+
+    private var _pos by AtomicInt(0)
+
+    actual var position: Int
+        get() = _pos
         set(value) {
             require(position >= 0)
             require(position <= limit)
-            field = value
+            _pos = value
         }
-    actual var limit: Int = capacity
+
+    private var _limit by AtomicInt(capacity)
+
+    actual var limit: Int
+        get() = _limit
         set(value) {
             checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
-            field = value
+            _limit = value
             if (position > value)
                 position = value
         }
@@ -85,8 +94,8 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     override fun close() {
         checkClosed()
         //free(native)
-        bytes = ByteArray(0)
-        closed = true
+//        bytes = ByteArray(0)
+//        closed = true
     }
 
     private fun createLimitException(newLimit: Int): IllegalArgumentException {
@@ -167,5 +176,9 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
             position = size
             limit = capacity
         }
+    }
+
+    init {
+        doFreeze()
     }
 }

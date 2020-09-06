@@ -1,5 +1,7 @@
 package pw.binom.thread
 
+import pw.binom.Future
+
 expect class Worker {
     constructor(name: String? = null)
 

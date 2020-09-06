@@ -1,16 +1,9 @@
 package pw.binom.thread
 
-import pw.binom.AppendableQueue
-import pw.binom.PopResult
 import pw.binom.Stack
 import pw.binom.io.Closeable
-import pw.binom.printStacktrace
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
-import kotlin.time.toDuration
 
 class WaitEventQueue<T : Any>(val loadFactor: Float = 0.75f, val compactFactor: Float = 0.5f) : Closeable {
     private val ss = SynchronizedAppendableQueue(Stack<T>().asFiFoQueue())

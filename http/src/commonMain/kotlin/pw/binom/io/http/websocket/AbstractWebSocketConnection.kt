@@ -1,44 +1,36 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.async
+import pw.binom.*
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.concurrency.asReference
 import pw.binom.io.StreamClosedException
 import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.nio.SocketNIOManager
 
-abstract class AbstractWebSocketConnection(val rawConnection: SocketNIOManager.ConnectionRaw, val input: AsyncInput, val output: AsyncOutput) : WebSocketConnection {
+abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.ConnectionRaw, input: AsyncInput, output: AsyncOutput) : WebSocketConnection {
 
-    private val header = WebSocketHeader()
+    private val _output = output.asReference()
+    protected val output: AsyncOutput
+        get() = _output.value
+    private val _input = input.asReference()
+    protected val input
+        get() = _input.value
 
-    private var closed = false
-    private lateinit var listener: (SocketNIOManager.ConnectionRaw) -> Unit
-    override var incomeMessageListener: (suspend (WebSocketConnection) -> Unit)? = null
-        set(value) {
-            field = value
-            if (value == null) {
-                rawConnection.waitReadyForRead(null)
-            } else {
-                rawConnection.waitReadyForRead(listener)
-            }
-        }
+//    private val header = WebSocketHeader()
+    private val selfRef = this.asReference()
+
+    private var closed by AtomicBoolean(false)
+    private val holder = rawConnection.holder
 
     init {
-        listener = {
-            async {
-                try {
-                    val func = incomeMessageListener
-                    if (func != null) {
-                        while (!closed && (input.available > 0 || input.available == -1)) {
-                            func.invoke(this)
-                        }
-                        rawConnection.waitReadyForRead(listener)
-                    }
-                } catch (e: Throwable) {
-                    rawConnection.detach().close()
-                }
-            }
+        doFreeze()
+    }
+
+    override fun write(type: MessageType, func: suspend (AsyncOutput) -> Unit) {
+        checkClosed()
+        func.doFreeze()
+        holder.waitReadyForWrite {
+            async { func(write(type)) }
         }
     }
 
@@ -49,17 +41,21 @@ abstract class AbstractWebSocketConnection(val rawConnection: SocketNIOManager.C
 
     override suspend fun read(): Message {
         checkClosed()
+        val header = WebSocketHeader()
         LOOP@ while (true) {
             try {
+                println("read header")
                 WebSocketHeader.read(input, header)
                 val type = when (header.opcode) {
                     1.toByte() -> MessageType.TEXT
                     2.toByte() -> MessageType.BINARY
                     0.toByte() -> {
+                        println("Invalid message type")
                         closeTcp()
                         throw WebSocketClosedException(WebSocketClosedException.ABNORMALLY_CLOSE)
                     }
                     8.toByte() -> {
+                        println("Close message type")
                         closeTcp()
                         throw WebSocketClosedException(0)
                     }
@@ -67,6 +63,7 @@ abstract class AbstractWebSocketConnection(val rawConnection: SocketNIOManager.C
                         TODO("Unknown opcode: ${header.opcode}")
                     }
                 }
+                println("Return data")
                 return MessageImpl(
                         type = type,
                         input = input,
@@ -76,6 +73,7 @@ abstract class AbstractWebSocketConnection(val rawConnection: SocketNIOManager.C
                         lastFrame = header.finishFlag
                 )
             } catch (e: SocketClosedException) {
+                println("Socket closed!")
                 kotlin.runCatching {
                     close()
                 }
@@ -97,9 +95,10 @@ abstract class AbstractWebSocketConnection(val rawConnection: SocketNIOManager.C
     protected abstract val masking: Boolean
 
     private fun closeTcp() {
+        println("close tcp!")
         checkClosed()
         closed = true
-        rawConnection.detach().close()
+        holder.close()
     }
 
     override suspend fun close() {
@@ -111,8 +110,10 @@ abstract class AbstractWebSocketConnection(val rawConnection: SocketNIOManager.C
             v.maskFlag = masking
             v.finishFlag = true
             WebSocketHeader.write(output, v)
+            selfRef.close()
             output.flush()
         } finally {
+            println("Close WS")
             closeTcp()
         }
     }
