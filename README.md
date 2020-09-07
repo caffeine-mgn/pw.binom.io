@@ -1,4 +1,5 @@
 # Binom IO
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Kotlin 1.4.0](https://img.shields.io/badge/Kotlin-1.4.0-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)<br><br>
 Kotlin IO Library.<br>
 
@@ -14,14 +15,11 @@ Library contains next parts:<br>
 * [Http Server](httpServer)
 * [File Utils](file)
 * [Json Tools](json)
-* [RPC Tool Plugin](krpcPlugin)
-* [JSON RPC Implementation](rpcJson)
 * [XML Tools](xml)
 * [WebDav](webdav)
-* [Job Executor](job)
 * [Process API](process)
 * [SSL](ssl)
-* [Thread](thread)
+* [Concurrency](concurrency)
 
 ## Using
 ### Gradle
@@ -85,8 +83,6 @@ and Method [xml](xml/src/commonMain/kotlin/pw/binom/xml/dom/TagWriteContext.kt)
 - [x] SSL
 - [x] Logger<br>
 See [Logger](logger/src/commonMain/kotlin/pw/binom/logger/Logger.kt)
-- [x] RPC Tool Plugin. See [Plugin](krpcPlugin), [RPC Library](krpc)
-- [x] JSON RPC [Implementation](rpcJson) 
 
 #### HTTP
 - [x] Basic Support Http Server<br>
@@ -104,7 +100,7 @@ See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/As
 - [x] [SQLite Support](sqlite/README.md)
 
 
-## Comunity
+## Community
 [Telegram](https://t.me/io_binom) <br>
 [Discord](https://discord.gg/HFYABPa)
 

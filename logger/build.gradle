@@ -53,6 +53,7 @@ kotlin {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
                 api project(":date")
+                api project(":concurrency")
             }
         }
 

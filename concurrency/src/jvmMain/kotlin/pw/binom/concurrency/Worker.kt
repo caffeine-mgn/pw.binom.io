@@ -1,6 +1,7 @@
 package pw.binom.concurrency
 
 import pw.binom.Future
+import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -23,9 +24,12 @@ actual class Worker actual constructor(name: String?) {
         if (worker.isShutdown or worker.isTerminated)
             throw IllegalStateException("Worker already terminated")
 
-        val future = worker.submit {
-            runCatching { func(input) }
-        } as JFuture<Result<RESULT>>
+        val future = worker.submit(
+                Callable {
+                    val gg = runCatching { func(input) }
+                    gg
+                }
+        ) 
         return FutureWrapper(future)
     }
 

@@ -1,7 +1,13 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
+def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
+
 kotlin {
+
+    if (ideaActive) {
+        linuxX64("native")
+    }
 
     linuxX64 { // Use your target instead.
         binaries {
@@ -65,39 +71,45 @@ kotlin {
             }
         }
 
-        mingwX64Main {
+        nativeMain {
             dependencies {
                 dependsOn commonMain
+            }
+        }
+
+        mingwX64Main {
+            dependencies {
+                dependsOn nativeMain
             }
         }
 
         mingwX86Main {
             dependencies {
-                dependsOn commonMain
+                dependsOn nativeMain
             }
         }
 
         linuxX64Main {
             dependencies {
-                dependsOn commonMain
+                dependsOn nativeMain
             }
         }
 
         linuxArm32HfpMain {
             dependencies {
-                dependsOn commonMain
+                dependsOn nativeMain
             }
         }
 
         linuxArm64Main {
             dependencies {
-                dependsOn commonMain
+                dependsOn nativeMain
             }
         }
 
         macosX64Main {
             dependencies {
-                dependsOn commonMain
+                dependsOn nativeMain
             }
         }
 

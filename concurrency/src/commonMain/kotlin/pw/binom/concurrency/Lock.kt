@@ -1,8 +1,10 @@
+@file:JvmName("LockUtilsKt")
 package pw.binom.concurrency
 
 import pw.binom.io.Closeable
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.jvm.JvmName
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 

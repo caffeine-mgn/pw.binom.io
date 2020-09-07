@@ -4,10 +4,8 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.FreeEnvironmentStrings
 import platform.windows.GetEnvironmentStringsW
-import platform.windows.htonl
 import platform.windows.lstrlen
 
-val isBigEndianPrivate = htonl(47u) == 47u
 actual val Environment.isBigEndian: Boolean
     get() = isBigEndianPrivate
 
