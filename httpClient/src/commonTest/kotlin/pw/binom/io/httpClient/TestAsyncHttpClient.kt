@@ -45,22 +45,14 @@ class TestAsyncHttpClient {
         async {
             try {
                 repeat(3) {
-                    var sipTime: Duration? = null
-                    val readTime = measureTime {
-                        println("\n\n=================[$it]=================\n")
-                        client
-                                .request("GET", URL("https://www.ntv.ru/"))
-                                .response().use {
-                                    println("Response code: ${it.responseCode}")
-                                    sipTime = measureTime {
-                                        it.skipAll()
-                                    }
-                                }
-                    }
-                    println("ReadTime $readTime, skipTime: $sipTime")
+                    client
+                            .request("GET", URL("https://www.ntv.ru/"))
+                            .response().use {
+                                it.skipAll()
+                            }
                 }
             } catch (e: Throwable) {
-                e.printStacktrace(Console.std)
+                e.printStackTrace()
             } finally {
                 done = true
             }

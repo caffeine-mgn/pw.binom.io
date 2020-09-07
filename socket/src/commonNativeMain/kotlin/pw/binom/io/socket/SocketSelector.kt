@@ -80,12 +80,10 @@ actual class SocketSelector actual constructor() : Closeable {
 
         override fun updateListening(read: Boolean, write: Boolean) {
             if (listenReadable == read && listenWritable == write) {
-                println("Cancel update becouse values is equals! $read / $write")
                 return
             }
             listenReadable = read
             listenWritable = write
-            println("Update: $read / $write   -> $listenReadable / $listenWritable")
             native.edit(channel.nsocket.native, selfRef, read, write)
         }
     }

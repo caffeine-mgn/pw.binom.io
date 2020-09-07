@@ -7,9 +7,9 @@ import java.util.concurrent.Future as JFuture
 
 actual class StateHolder : Closeable {
     private val worker = Executors.newSingleThreadExecutor()
-    actual fun <T : Any> make(value: T): Future<Reference<T>> {
+    actual fun <T : Any> make(value: ()->T): Future<Reference<T>> {
         val result: JFuture<Result<Reference<T>>> = worker.submit {
-            Result.success(value.asReference())
+            Result.success(value().asReference())
         } as JFuture<Result<Reference<T>>>
 
         return FutureWrapper(result)

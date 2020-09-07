@@ -1,6 +1,7 @@
 package pw.binom.concurrency
 
 import pw.binom.Future
+import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.thread.FutureWrapper
 import kotlin.native.concurrent.TransferMode
@@ -9,9 +10,10 @@ import kotlin.native.concurrent.freeze
 
 actual class StateHolder : Closeable {
     val worker = Worker.start()
-    actual fun <T : Any> make(value: T): Future<Reference<T>> {
+    actual fun <T : Any> make(value: () -> T): Future<Reference<T>> {
+        value.doFreeze()
         val result = worker.execute(TransferMode.SAFE, { value }) {
-            Result.success(it.asReference())
+            Result.success(it().asReference())
         }
 
         return FutureWrapper(result)
@@ -33,4 +35,7 @@ actual class StateHolder : Closeable {
         worker.requestTermination(false)
     }
 
+    init {
+        doFreeze()
+    }
 }

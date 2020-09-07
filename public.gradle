@@ -8,8 +8,6 @@ publishing {
 
             url repoUrl
 
-            println("$repoUser:$repoPassword@$repoUrl")
-
             credentials {
                 username = repoUser
                 password = repoPassword

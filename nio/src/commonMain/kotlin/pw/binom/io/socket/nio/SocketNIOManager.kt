@@ -52,10 +52,7 @@ open class SocketNIOManager : Closeable {
         fun waitReadyForWrite(func: (() -> Unit)?) {
             readyForWriteListener = func?.doFreeze()
             if (func != null) {
-                println("Update ready for write")
                 selectionKey.updateListening(selectionKey.listenReadable, true)
-            } else {
-                println("func is null")
             }
         }
 
@@ -208,11 +205,8 @@ open class SocketNIOManager : Closeable {
             if (key.isWritable && readReadyCallbackW != null) {
                 client.holder.readyForWriteListener = null
                 try {
-                    println("Try to call write callback")
                     readReadyCallbackW()
-                    println("Callback called!")
                 } catch (e: Throwable) {
-                    println("ERRRO!!! #1")
                     e.printStackTrace()
                     client.readSchedule?.finish(Result.failure(e))
                     client.writeSchedule?.finish(Result.failure(e))

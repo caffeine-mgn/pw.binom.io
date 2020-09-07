@@ -16,7 +16,7 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
     protected val input
         get() = _input.value
 
-//    private val header = WebSocketHeader()
+    //    private val header = WebSocketHeader()
     private val selfRef = this.asReference()
 
     private var closed by AtomicBoolean(false)
@@ -44,26 +44,26 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
         val header = WebSocketHeader()
         LOOP@ while (true) {
             try {
-                println("read header")
                 WebSocketHeader.read(input, header)
                 val type = when (header.opcode) {
                     1.toByte() -> MessageType.TEXT
                     2.toByte() -> MessageType.BINARY
                     0.toByte() -> {
-                        println("Invalid message type")
-                        closeTcp()
+                        kotlin.runCatching {
+                            closeTcp()
+                        }
                         throw WebSocketClosedException(WebSocketClosedException.ABNORMALLY_CLOSE)
                     }
                     8.toByte() -> {
-                        println("Close message type")
-                        closeTcp()
+                        kotlin.runCatching {
+                            closeTcp()
+                        }
                         throw WebSocketClosedException(0)
                     }
                     else -> {
                         TODO("Unknown opcode: ${header.opcode}")
                     }
                 }
-                println("Return data")
                 return MessageImpl(
                         type = type,
                         input = input,
@@ -73,9 +73,8 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
                         lastFrame = header.finishFlag
                 )
             } catch (e: SocketClosedException) {
-                println("Socket closed!")
                 kotlin.runCatching {
-                    close()
+                    closeTcp()
                 }
                 throw WebSocketClosedException(WebSocketClosedException.ABNORMALLY_CLOSE)
             }
@@ -95,7 +94,6 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
     protected abstract val masking: Boolean
 
     private fun closeTcp() {
-        println("close tcp!")
         checkClosed()
         closed = true
         holder.close()
@@ -113,7 +111,6 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
             selfRef.close()
             output.flush()
         } finally {
-            println("Close WS")
             closeTcp()
         }
     }
