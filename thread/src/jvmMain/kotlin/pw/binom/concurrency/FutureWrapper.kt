@@ -21,3 +21,5 @@ inline class FutureWrapper<T>(val future: JFuture<Result<T>>) : Future<T> {
 
     override fun <R> consume(func: (Result<T>) -> R): R = func(future.get())
 }
+
+fun <T> JFuture<Result<T>>.wrap() = FutureWrapper(this)

@@ -22,7 +22,6 @@ import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.*
 import pw.binom.thread.Worker
-import pw.binom.thread.sleep
 
 internal actual fun setBlocking(native: NativeSocketHolder, value: Boolean) {
     memScoped {

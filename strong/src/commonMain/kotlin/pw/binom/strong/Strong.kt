@@ -1,6 +1,6 @@
 package pw.binom.strong
 
-import pw.binom.thread.Lock
+import pw.binom.concurrency.Lock
 import pw.binom.thread.synchronize
 import pw.binom.uuid
 import kotlin.random.Random

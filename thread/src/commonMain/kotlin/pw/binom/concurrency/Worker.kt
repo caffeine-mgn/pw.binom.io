@@ -1,4 +1,4 @@
-package pw.binom.thread
+package pw.binom.concurrency
 
 import pw.binom.Future
 

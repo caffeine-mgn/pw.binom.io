@@ -3,7 +3,6 @@ package pw.binom.concurrency
 import pw.binom.Future
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
-import pw.binom.thread.FutureWrapper
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
 import kotlin.native.concurrent.freeze

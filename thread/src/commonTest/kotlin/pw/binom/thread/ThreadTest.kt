@@ -2,6 +2,8 @@ package pw.binom.thread
 
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.sleep
 import kotlin.test.*
 
 @Ignore

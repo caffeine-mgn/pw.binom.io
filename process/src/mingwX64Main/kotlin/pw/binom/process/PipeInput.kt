@@ -5,7 +5,6 @@ import platform.windows.*
 import pw.binom.ByteBuffer
 import pw.binom.Input
 import pw.binom.thread.Worker
-import pw.binom.thread.sleep
 
 class PipeInput(val process: WinProcess) : Pipe(), Input {
     override val handler: HANDLE

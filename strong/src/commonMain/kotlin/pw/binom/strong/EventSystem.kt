@@ -1,7 +1,7 @@
 package pw.binom.strong
 
 import pw.binom.io.Closeable
-import pw.binom.thread.Lock
+import pw.binom.concurrency.Lock
 import pw.binom.thread.synchronize
 import kotlin.reflect.KClass
 

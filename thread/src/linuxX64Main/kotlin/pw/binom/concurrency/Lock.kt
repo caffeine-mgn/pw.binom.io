@@ -1,19 +1,20 @@
-package pw.binom.thread
+package pw.binom.concurrency
 
 import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
+import pw.binom.thread.InterruptedException
 import kotlin.native.concurrent.AtomicNativePtr
 import kotlin.native.concurrent.freeze
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-inline val AtomicNativePtr.cc
+private inline val AtomicNativePtr.cc
     get() = this.value.reinterpret<pthread_cond_t>()!!
 
-inline val AtomicNativePtr.mm
+private inline val AtomicNativePtr.mm
     get() = this.value.reinterpret<pthread_mutex_t>()!!
 
 private const val checkTime = 100
@@ -47,7 +48,7 @@ actual class Lock : Closeable {
         closed.value = 1
     }
 
-    actual fun newCondition(): Lock.Condition = Condition(native)
+    actual fun newCondition() = Condition(native)
 
     actual class Condition(val mutex: AtomicNativePtr) : Closeable {
         //        val native = cValue<pthread_cond_t>()//nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()

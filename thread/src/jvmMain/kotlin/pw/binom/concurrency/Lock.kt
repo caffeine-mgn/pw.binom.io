@@ -1,4 +1,4 @@
-package pw.binom.thread
+package pw.binom.concurrency
 
 import pw.binom.io.Closeable
 import java.util.concurrent.TimeUnit
@@ -49,3 +49,11 @@ actual class Lock : Closeable {
         }
     }
 }
+
+internal inline fun <T> ReentrantLock.lock(func: () -> T): T =
+        try {
+            lock()
+            func()
+        } finally {
+            unlock()
+        }

@@ -1,4 +1,4 @@
-package pw.binom.thread
+package pw.binom.concurrency
 
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.invoke

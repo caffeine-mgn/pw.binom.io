@@ -1,8 +1,6 @@
-package pw.binom.thread
+package pw.binom.concurrency
 
-import kotlinx.cinterop.StableRef
 import pw.binom.Future
-import pw.binom.io.Closeable
 import kotlin.native.concurrent.FutureState
 import kotlin.native.concurrent.Future as NativeFuture
 

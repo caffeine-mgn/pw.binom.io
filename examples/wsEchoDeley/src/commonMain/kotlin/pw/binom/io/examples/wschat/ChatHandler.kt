@@ -6,8 +6,8 @@ import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
-import pw.binom.thread.Worker
-import pw.binom.thread.sleep
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.sleep
 
 class ChatHandler : WebSocketHandler() {
 

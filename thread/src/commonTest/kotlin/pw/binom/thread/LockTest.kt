@@ -2,10 +2,12 @@ package pw.binom.thread
 
 import pw.binom.Console
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.concurrency.Lock
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.sleep
 import pw.binom.io.closablesOf
 import pw.binom.io.use
 import pw.binom.printStacktrace
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.*
