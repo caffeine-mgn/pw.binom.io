@@ -6,7 +6,6 @@ import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpClient.AsyncHttpClient
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.thread.Runnable
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -132,7 +132,7 @@ kotlin {
                 api project(":socket")
                 api project(":file")
                 api project(":date")
-                api project(":thread")
+                api project(":concurrency")
             }
         }
 

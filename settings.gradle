@@ -11,7 +11,7 @@ rootProject.name = 'pw.binom.io'
 
 include(":env")
 include(":core")
-include(":thread")
+include(":concurrency")
 include(":date")
 include(":strong")
 include(":nio")

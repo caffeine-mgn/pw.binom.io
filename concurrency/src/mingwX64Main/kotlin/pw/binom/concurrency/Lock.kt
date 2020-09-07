@@ -4,7 +4,6 @@ import kotlinx.cinterop.*
 import platform.windows.*
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
-import pw.binom.thread.InterruptedException
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource

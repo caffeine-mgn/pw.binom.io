@@ -5,7 +5,6 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.thread.Runnable
 import kotlin.random.Random
 import kotlin.test.Ignore
 import kotlin.test.Test
