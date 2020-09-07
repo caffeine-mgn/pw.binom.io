@@ -4,7 +4,6 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
-import pw.binom.thread.InterruptedException
 import kotlin.native.concurrent.AtomicNativePtr
 import kotlin.native.concurrent.freeze
 import kotlin.time.Duration
@@ -64,16 +63,16 @@ actual class Lock : Closeable {
                 pthread_cond_wait(native.cc.ptr, mutex.mm.ptr)
         }
 
-        actual fun notify() {
+        actual fun signal() {
             pthread_cond_signal(native.cc.ptr)
         }
 
-        actual fun notifyAll() {
+        actual fun signalAll() {
             pthread_cond_broadcast(native.cc.ptr)
         }
 
         override fun close() {
-            notifyAll()
+            signalAll()
             pthread_cond_destroy(native.cc.ptr)
             nativeHeap.free(native.value)
         }

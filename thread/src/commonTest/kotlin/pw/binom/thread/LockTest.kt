@@ -90,7 +90,7 @@ class LockTest {
 
 
             lock.synchronize {
-                condition.notifyAll()
+                condition.signalAll()
             }
             val duration = feature.resultOrNull!!
             assertTrue(duration >= 900.0.toDuration(DurationUnit.MILLISECONDS) && duration <= 1500.0.toDuration(DurationUnit.MILLISECONDS))

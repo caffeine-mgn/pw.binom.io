@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+import java.lang.InterruptedException as JInterruptedException
 
 actual class Lock : Closeable {
 
@@ -27,25 +28,31 @@ actual class Lock : Closeable {
     actual class Condition(val lock: ReentrantLock, val native: java.util.concurrent.locks.Condition) : Closeable {
         @JvmName("wait5")
         actual fun wait() {
-            native.await()
+            try {
+                native.await()
+            } catch (e: JInterruptedException) {
+                throw InterruptedException()
+            }
         }
 
-        @JvmName("notify5")
-        actual fun notify() {
+        actual fun signal() {
             native.signal()
         }
 
         override fun close() {
         }
 
-        @JvmName("notifyAll5")
-        actual fun notifyAll() {
+        actual fun signalAll() {
             native.signalAll()
         }
 
         @OptIn(ExperimentalTime::class)
         actual fun wait(duration: Duration): Boolean {
-            return native.await(duration.toLongMilliseconds(), TimeUnit.MILLISECONDS)
+            try {
+                return native.await(duration.toLongMilliseconds(), TimeUnit.MILLISECONDS)
+            } catch (e: JInterruptedException) {
+                throw InterruptedException()
+            }
         }
     }
 }

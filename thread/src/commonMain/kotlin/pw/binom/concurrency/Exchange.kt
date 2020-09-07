@@ -30,7 +30,7 @@ class Exchange<T : Any?> {
     fun put(value: T) {
         value?.doFreeze()
         lock.synchronize {
-            condition.notify()
+            condition.signal()
             val item = Item(value)
             item.previous = last
             last?.next = item

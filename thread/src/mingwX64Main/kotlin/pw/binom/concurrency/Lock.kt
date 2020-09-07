@@ -61,11 +61,11 @@ actual class Lock : Closeable {
             }
         }
 
-        actual fun notify() {
+        actual fun signal() {
             WakeConditionVariable(native.ptr)
         }
 
-        actual fun notifyAll() {
+        actual fun signalAll() {
             WakeAllConditionVariable(native.ptr)
         }
 

@@ -18,8 +18,8 @@ expect class Lock : Closeable {
     class Condition : Closeable {
         fun wait()
         fun wait(duration: Duration): Boolean
-        fun notify()
-        fun notifyAll()
+        fun signal()
+        fun signalAll()
     }
 }
 
