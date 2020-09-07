@@ -10,7 +10,7 @@ import pw.binom.toByteBufferUTF8
 
 fun main(args: Array<String>) {
     val data = "Simple Text".toByteBufferUTF8()
-    val bufferPool = ByteBufferPool()
+    val bufferPool = ByteBufferPool(10)
     val file = File("Simple File")
     file.write().use {
         it.write(data)

@@ -1,7 +1,7 @@
 package pw.binom.strong
 
 import pw.binom.concurrency.Lock
-import pw.binom.thread.synchronize
+import pw.binom.concurrency.synchronize
 import pw.binom.uuid
 import kotlin.random.Random
 import kotlin.reflect.KClass

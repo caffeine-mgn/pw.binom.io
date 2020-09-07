@@ -9,7 +9,14 @@ import kotlin.time.TimeSource
 /**
  * Exchange Point for exchange between different threads
  */
-class Exchange<T : Any?> {
+class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
+
+    val input: ExchangeInput<T>
+        get() = this
+
+    val output: ExchangeOutput<T>
+        get() = this
+
     class Item<T : Any?>(val value: T) {
         var next by AtomicReference<Item<T>?>(null)
         var previous by AtomicReference<Item<T>?>(null)
@@ -27,7 +34,7 @@ class Exchange<T : Any?> {
     /**
      * Put value into chain. [value] will freeze
      */
-    fun put(value: T) {
+    override fun put(value: T) {
         value?.doFreeze()
         lock.synchronize {
             condition.signal()
@@ -40,7 +47,7 @@ class Exchange<T : Any?> {
         }
     }
 
-    fun get(): T =
+    override fun get(): T =
             lock.synchronize {
                 while (last == null) {
                     condition.wait()
@@ -54,7 +61,7 @@ class Exchange<T : Any?> {
             }
 
     @OptIn(ExperimentalTime::class)
-    fun get(duration:Duration): T? =
+    override fun get(duration: Duration): T? =
             lock.synchronize {
                 val now = TimeSource.Monotonic.markNow()
                 while (last == null) {

@@ -20,7 +20,7 @@ actual class SocketSelector actual constructor() : Closeable {
         override val isCanlelled: Boolean
             get() = _cancelled
 
-        override fun updateListening(read: Boolean, write: Boolean) {
+        override fun listen(read: Boolean, write: Boolean) {
             if (listenReadable == read && listenWritable == write) {
                 return
             }

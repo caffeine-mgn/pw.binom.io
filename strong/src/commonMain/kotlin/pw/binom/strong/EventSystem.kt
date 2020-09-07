@@ -2,7 +2,7 @@ package pw.binom.strong
 
 import pw.binom.io.Closeable
 import pw.binom.concurrency.Lock
-import pw.binom.thread.synchronize
+import pw.binom.concurrency.synchronize
 import kotlin.reflect.KClass
 
 class EventSystem {
