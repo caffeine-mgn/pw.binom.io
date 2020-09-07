@@ -57,7 +57,6 @@ open class HttpServer(val manager: SocketNIOManager,
 
     private fun runProcessing(connection: SocketNIOManager.ConnectionRaw) {
         connection {
-            println("Client processing...")
             val inputBufferid = bufferedInputPool.borrow { buf ->
                 buf.currentStream = it
             }

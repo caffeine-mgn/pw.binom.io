@@ -23,7 +23,6 @@ fun main(args: Array<String>) {
                 selector.reg(client).updateListening(true, false)
                 println("Client connected")
             } else {
-                println("Client processing")
                 try {
                     val client = it.channel as RawSocketChannel
                     buffer.clear()
