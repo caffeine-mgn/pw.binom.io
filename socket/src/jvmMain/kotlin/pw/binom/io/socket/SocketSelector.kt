@@ -129,7 +129,7 @@ actual class SocketSelector actual constructor() : Closeable {
         actual val listenReadable: Boolean
         actual val listenWritable: Boolean
         actual val isCanlelled: Boolean
-        actual fun updateListening(read: Boolean, write: Boolean)
+        actual fun listen(read: Boolean, write: Boolean)
     }
 
     actual val keys: Collection<SelectorKey>

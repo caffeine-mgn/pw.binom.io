@@ -1,6 +1,5 @@
 package pw.binom.io.socket
 
-import pw.binom.Bitset32
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import pw.binom.concurrency.asReference
@@ -33,57 +32,50 @@ actual class SocketSelector actual constructor() : Closeable {
             get() = _attachment.value
 
         private var _canlelled by AtomicBoolean(false)
+
         lateinit var selfRef: SelfRefKey
 
         override val isCanlelled: Boolean
             get() = _canlelled
-/*
-        private var listenStatus by AtomicInt(0)
 
-        override var listenReadable: Boolean
-            get() = Bitset32(listenStatus)[0]
-            private set(value) {
-                listenStatus = Bitset32(listenStatus).set(0, value).toInt()
-            }
-        override var listenWritable: Boolean
-            get() = Bitset32(listenStatus)[1]
-            private set(value) {
-                listenStatus = Bitset32(listenStatus).set(1, value).toInt()
-            }
-        private var status by AtomicInt(0)
-        override var isReadable: Boolean
-            get() = Bitset32(status)[0]
-            set(value) {
-                status = Bitset32(listenStatus).set(0, value).toInt()
-            }
-        override var isWritable: Boolean
-            get() = Bitset32(status)[1]
-            set(value) {
-                status = Bitset32(listenStatus).set(1, value).toInt()
-            }
-*/
-        override var listenReadable by AtomicBoolean(false)
-            private set
-        override var listenWritable by AtomicBoolean(false)
-            private set
-        override var isReadable by AtomicBoolean(false)
-        override var isWritable by AtomicBoolean(false)
+        private var listenState by AtomicInt(0)
+
+        override val listenReadable
+            get() = listenState and LISTEN_READ != 0
+
+        override val listenWritable
+            get() = listenState and LISTEN_WRITE != 0
+
+        internal var state by AtomicInt(0)
+
+        override val isReadable
+            get() = state and LISTEN_READ != 0
+
+        override val isWritable
+            get() = state and LISTEN_WRITE != 0
 
         override fun cancel() {
-            if (isCanlelled)
+            if (isCanlelled) {
                 throw IllegalStateException("SocketKey already cancelled")
+            }
             native.remove(channel.nsocket.native)
             selfRef.close()
             _canlelled = true
 //            _keys -= this
         }
 
-        override fun updateListening(read: Boolean, write: Boolean) {
+        override fun listen(read: Boolean, write: Boolean) {
             if (listenReadable == read && listenWritable == write) {
                 return
             }
-            listenReadable = read
-            listenWritable = write
+            var status = 0
+            if (read) {
+                status = status or LISTEN_READ
+            }
+            if (write) {
+                status = status or LISTEN_WRITE
+            }
+            listenState = status
             native.edit(channel.nsocket.native, selfRef, read, write)
         }
     }
@@ -114,8 +106,12 @@ actual class SocketSelector actual constructor() : Closeable {
         for (i in 0 until count) {
             val item = list[i]
             val el = item.key
-            el.isReadable = item.isReadable
-            el.isWritable = item.isWritable
+            var s = 0
+            if (item.isReadable)
+                s = s or LISTEN_READ
+            if (item.isWritable)
+                s = s or LISTEN_WRITE
+            el.state = s
             if (item.isClosed) {
                 val cc = el.channel
                 when (cc) {
@@ -144,7 +140,7 @@ actual class SocketSelector actual constructor() : Closeable {
         actual val listenWritable: Boolean
         actual val isCanlelled: Boolean
         actual fun cancel()
-        actual fun updateListening(read: Boolean, write: Boolean)
+        actual fun listen(read: Boolean, write: Boolean)
     }
 
     init {

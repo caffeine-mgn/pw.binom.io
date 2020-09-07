@@ -26,54 +26,11 @@ class PostRequestTest {
     @Volatile
     private var done = false
 
-    private inner class Han : WebSocketHandler() {
-        override suspend fun connected(request: ConnectRequest) {
-            val con = request.accept()
-            con.write(MessageType.TEXT).utf8Appendable().use {
-                it.append("Hello from server!")
-            }
-            con.incomeMessageListener = {
-                try {
-                    println("Income")
-                    val txt = it.read().utf8Reader().use {
-                        it.readText()
-                    }
-
-                    Thread(Runnable {
-                        async {
-                            it.write(MessageType.TEXT).utf8Appendable().use {
-                                it.append("Echo $txt")
-                            }
-                        }
-                    }).start()
-
-                } catch (e: WebSocketClosedException) {
-                    println("Client disconnected")
-                } catch (e: Throwable) {
-                    done = true
-                    e.printStacktrace()
-                }
-            }
-        }
-
-    }
-
-    @Test
-    fun ws() {
-        val manager = SocketNIOManager()
-        val server = HttpServer(manager, Han())
-
-        server.bindHTTP(port = 8080)
-        while (!done) {
-            manager.update(1000)
-        }
-    }
-
     @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun server() {
-        val bufPool = ByteBufferPool(1024u * 1024u * 2u)
+        val bufPool = ByteBufferPool(10, 1024u * 1024u * 2u)
         val manager = SocketNIOManager()
         var done = false
         var dd = TimeSource.Monotonic.markNow()
@@ -123,12 +80,9 @@ class PostRequestTest {
                     }
                     println("File writed!")
                 } catch (e: SocketClosedException) {
-                    //ignore
+                    throw e
                 } catch (e: Throwable) {
-                    println("Error: $e")
-                    e.stackTrace.forEach {
-                        println(it)
-                    }
+                    e.printStackTrace()
                 }
                 dd = TimeSource.Monotonic.markNow()
 //                resp.output.write(data, 1024 * 1024)

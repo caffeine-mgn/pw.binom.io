@@ -7,11 +7,8 @@ import pw.binom.io.socket.*
 import pw.binom.thread.Lock
 import pw.binom.thread.synchronize
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 open class SocketNIOManager : Closeable {
 
@@ -45,14 +42,14 @@ open class SocketNIOManager : Closeable {
         fun waitReadyForRead(func: (() -> Unit)?) {
             readyForReadListener = func?.doFreeze()
             if (func != null) {
-                selectionKey.updateListening(true, selectionKey.listenWritable)
+                selectionKey.listen(true, selectionKey.listenWritable)
             }
         }
 
         fun waitReadyForWrite(func: (() -> Unit)?) {
             readyForWriteListener = func?.doFreeze()
             if (func != null) {
-                selectionKey.updateListening(selectionKey.listenReadable, true)
+                selectionKey.listen(selectionKey.listenReadable, true)
             }
         }
 
@@ -86,7 +83,7 @@ open class SocketNIOManager : Closeable {
                 writeSchedule = null
                 readSchedule = null
                 detached = true
-                holder.selectionKey.updateListening(false, false)
+                holder.selectionKey.listen(false, false)
                 holder.readyForReadListener = null
                 w to r
             }
@@ -135,7 +132,7 @@ open class SocketNIOManager : Closeable {
             }
             suspendCoroutine<Int> {
                 writeSchedule = IOScheduleContinuation(data, it)
-                holder.selectionKey.updateListening(
+                holder.selectionKey.listen(
                         holder.selectionKey.listenReadable,
                         true
                 )
@@ -158,7 +155,7 @@ open class SocketNIOManager : Closeable {
             }
             return suspendCoroutine {
                 readSchedule = IOScheduleContinuation(dest, it)
-                holder.selectionKey.updateListening(true, holder.selectionKey.listenWritable)
+                holder.selectionKey.listen(true, holder.selectionKey.listenWritable)
             }
         }
     }
@@ -195,7 +192,7 @@ open class SocketNIOManager : Closeable {
                     client.writeSchedule?.finish(Result.failure(e))
                     client.readSchedule = null
                     client.writeSchedule = null
-                    key.updateListening(false, false)
+                    key.listen(false, false)
                     client.detach().close()
                     return
                 }
@@ -212,7 +209,7 @@ open class SocketNIOManager : Closeable {
                     client.writeSchedule?.finish(Result.failure(e))
                     client.readSchedule = null
                     client.writeSchedule = null
-                    key.updateListening(false, false)
+                    key.listen(false, false)
                     client.detach().close()
                     return
                 }
@@ -249,14 +246,14 @@ open class SocketNIOManager : Closeable {
             }
 
             if (!key.isCanlelled)
-                key.updateListening(
+                key.listen(
                         client.readSchedule != null || client.holder.readyForReadListener != null,
                         client.writeSchedule != null || client.holder.readyForWriteListener != null
                 )
         } catch (e: Throwable) {
             println("ERROR!!! #2")
             e.printStackTrace()
-            key.updateListening(false, false)
+            key.listen(false, false)
             client.readSchedule?.finish(Result.failure(e))
             client.writeSchedule?.finish(Result.failure(e))
             client.readSchedule = null
@@ -344,7 +341,7 @@ open class SocketNIOManager : Closeable {
             val selectionKey = selector.reg(channel, connection)
             holder.selectionKey = selectionKey
             holder.doFreeze()
-            selectionKey.updateListening(false, false)
+            selectionKey.listen(false, false)
             if (func != null)
                 executeOnThread += func
             return connection

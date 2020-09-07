@@ -29,7 +29,8 @@ class WebSocketTest {
                     it.utf8Appendable().append("echo: $text")
                 }
             } catch (e: Throwable) {
-                e.printStacktrace()
+                e.printStackTrace()
+                throw e
             }
         }
     }
