@@ -1,14 +1,12 @@
 package pw.binom.strong
 
 import pw.binom.concurrency.Lock
-import pw.binom.thread.synchronize
 import pw.binom.uuid
 import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 class Strong private constructor() {
-    private val lock = Lock()
     private val beans = HashMap<String, Any>()
 
     interface Config {
@@ -71,11 +69,9 @@ class Strong private constructor() {
     }
 
     fun define(bean: Any, name: String = Random.uuid().toString()) {
-        lock.synchronize {
-            if (beans.containsKey(name))
-                throw BeanAlreadyDefinedException(name)
-            beans[name] = bean
-        }
+        if (beans.containsKey(name))
+            throw BeanAlreadyDefinedException(name)
+        beans[name] = bean
     }
 
     fun <T : Any> service(beanClass: KClass<T>, name: String? = null) = ServiceInjector(this, beanClass, name)
@@ -93,13 +89,13 @@ class Strong private constructor() {
         protected val value: T?
             get() {
                 if (bean == null)
-                    bean = strong.lock.synchronize {
+                    bean = run {
                         val vv = strong.beans.asSequence().filter {
                             beanClass.isInstance(it.value) && (name == null || it.key == name)
                         }
                         val it = vv.iterator()
                         if (!it.hasNext())
-                            return@synchronize null
+                            return@run null
                         val bb = it.next()
                         if (it.hasNext())
                             throw SeveralBeanException(beanClass, name)
