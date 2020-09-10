@@ -48,7 +48,6 @@ kotlin {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
                 api project(":date")
-                api project(":concurrency")
             }
         }
 
@@ -62,6 +61,7 @@ kotlin {
         nativeMain {
             dependencies {
                 dependsOn commonMain
+                api project(":concurrency")
             }
         }
 
@@ -73,30 +73,37 @@ kotlin {
 
         linuxArm32HfpMain {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn nativeMain
             }
         }
 
         macosX64Main {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn nativeMain
             }
         }
 
         mingwX64Main {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn nativeMain
             }
         }
 
         mingwX86Main {
             dependencies {
-                dependsOn mingwX64Main
+                dependsOn nativeMain
+            }
+        }
+
+        jsMain {
+            dependencies {
+                dependsOn commonMain
             }
         }
 
         jvmMain {
             dependencies {
+                dependsOn commonMain
                 api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
             }
         }

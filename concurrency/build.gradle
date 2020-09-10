@@ -1,7 +1,7 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
-def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
+def ideaActive = false//System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
 
 kotlin {
     linuxX64 { // Use your target instead.
