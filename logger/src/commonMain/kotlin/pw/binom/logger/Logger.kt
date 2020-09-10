@@ -1,11 +1,5 @@
 package pw.binom.logger
 
-import pw.binom.atomic.AtomicReference
-import pw.binom.concurrency.StateHolder
-import pw.binom.date.Date
-import pw.binom.doFreeze
-
-
 expect class Logger {
     companion object {
         val global: Logger
