@@ -9,6 +9,29 @@ import kotlin.test.assertEquals
 class ParserTest {
 
     @Test
+    fun test31() {
+        async {
+            val txt = """<?xml version="1.0" encoding="UTF-8"?>
+<r:dd name="KDE" title="DE"><name>df</name><b><![CDATA[TEST Hi!]]></b><test fff="sdf"/></r:dd>"""
+
+            val r = XmlRootReaderVisiter(txt.asReader().asAsync())
+
+            val sb = StringBuilder()
+            val w = XmlRootWriterVisiter(sb.asAsync())
+            try {
+                w.start()
+                r.accept(w)
+                w.end()
+            } catch (e: Throwable) {
+                println("ERROR: $e\nXML=$sb")
+                e.printStackTrace()
+                throw e
+            }
+            println("==>$sb")
+        }
+    }
+
+    @Test
     fun test() {
         async {
             val txt = "<r><bbb a=\"b\"></bbb><c>123456</c><t/></r>"
@@ -45,7 +68,8 @@ class ParserTest {
     @Test
     fun test3() {
         async {
-            val txt = """<?xml version="1.0" encoding="utf-8" ?>
+            try {
+                val txt = """<?xml version="1.0" encoding="utf-8" ?>
                 |<D:propfind xmlns:D="DAV:" xmlns:L="LCGDM:">
                 |   <D:prop>
                 |       <D:displayname/>
@@ -61,11 +85,15 @@ class ParserTest {
                 |       <D:group></D:group>
                 |   </D:prop>
                 |</D:propfind>""".trimMargin()
-            val sb = StringBuilder()
-            val root = XmlRootWriterVisiter(sb.asAsync())
-            root.start()
-            XmlRootReaderVisiter(txt.asReader().asAsync()).accept(root)
-            root.end()
+                val sb = StringBuilder()
+                val root = XmlRootWriterVisiter(sb.asAsync())
+                root.start()
+                XmlRootReaderVisiter(txt.asReader().asAsync()).accept(root)
+                root.end()
+                println(sb)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
         }
     }
 }

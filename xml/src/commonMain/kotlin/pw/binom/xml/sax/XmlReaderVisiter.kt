@@ -2,40 +2,205 @@ package pw.binom.xml.sax
 
 import pw.binom.Stack
 import pw.binom.io.*
+import pw.binom.xml.AsyncXmlLexer
+import pw.binom.xml.TokenType
+import pw.binom.xml.nextSkipEmpty
 
-class XmlReaderVisiter(reader: AsyncReader) {
-    private val reader = ComposeAsyncReader().addLast(reader)
+class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
+    constructor(reader: AsyncReader) : this(AsyncXmlLexer(reader))
 
     private class Record(val name: String, val visiter: XmlVisiter)
 
     private val visiters = Stack<Record>().asLiFoQueue()
 
+    /**
+     * Чтение начала с <
+     */
+    private suspend fun t1() {
+        if (!lexer.next()) {
+            TODO()
+        }
+        when (lexer.tokenType) {
+            TokenType.SYMBOL -> t2()
+            TokenType.SLASH -> closeTag()
+            TokenType.EXCLAMATION -> readCDATA()
+
+            else -> TODO()
+        }
+    }
+
+    /**
+     * Чтение CDATA. Прочитанно "<!"
+     */
+    private suspend fun readCDATA() {
+        if (!lexer.next())
+            TODO()
+        if (lexer.tokenType != TokenType.LEFT_BRACKET)
+            TODO()
+        if (!lexer.next())
+            TODO()
+        if (lexer.tokenType != TokenType.SYMBOL)
+            TODO()
+        if (lexer.text != "CDATA")
+            TODO()
+        if (!lexer.next())
+            TODO()
+        if (lexer.tokenType != TokenType.LEFT_BRACKET)
+            TODO()
+        val v = visiters.peek()
+        val data = StringBuilder()
+        while (true) {
+            if (!lexer.next())
+                TODO()
+            if (lexer.tokenType == TokenType.RIGHT_BRACKET) {
+                if (!lexer.next())
+                    TODO()
+                if (lexer.tokenType != TokenType.RIGHT_BRACKET)
+                    TODO()
+                if (!lexer.next())
+                    TODO()
+                if (lexer.tokenType != TokenType.TAG_END)
+                    TODO()
+                v.visiter.cdata(data.toString())
+                break
+            }
+
+            data.append(lexer.text)
+        }
+    }
+
+    /**
+     * Закрытие. "</" уже прочитано
+     */
+    private suspend fun closeTag() {
+        if (!lexer.next())
+            TODO()
+        if (lexer.tokenType != TokenType.SYMBOL)
+            TODO()
+        val visiter = visiters.peek()
+        val tagName = lexer.text
+        if (visiter.name != tagName) {
+            throw ExpectedException("Expected closing of tag [${visiter.name}] but got [$tagName]")
+        }
+        if (!lexer.next())
+            TODO()
+        if (lexer.tokenType != TokenType.TAG_END)
+            TODO()
+        visiter.visiter.end()
+        visiters.pop()
+    }
+
+    /**
+     * Чтение тега. После < идёт какой-то текст
+     */
+    private suspend fun t2() {
+        val nodeName = lexer.text
+        val subNode = visiters.peek().visiter.subNode(nodeName)
+        visiters.push(Record(nodeName, subNode))
+        subNode.start()
+        if (!lexer.nextSkipEmpty()) {
+            TODO()
+        }
+
+        suspend fun readAttribute() {
+            val attribute = lexer.text
+            if (!lexer.nextSkipEmpty())
+                TODO()
+            if (lexer.tokenType != TokenType.EQUALS) {
+                TODO("Обработка аттрибута без значения")
+            }
+            if (!lexer.nextSkipEmpty())
+                TODO()
+            if (lexer.tokenType != TokenType.STRING)
+                TODO()
+            val value = lexer.text.removePrefix("\"").removeSuffix("\"")
+            subNode.attribute(
+                    name = attribute,
+                    value = value
+            )
+        }
+
+        when (lexer.tokenType) {
+            TokenType.SYMBOL -> {
+                while (true) {
+                    readAttribute()
+                    if (!lexer.nextSkipEmpty()) {
+                        TODO()
+                    }
+                    when (lexer.tokenType) {
+                        TokenType.SYMBOL -> continue
+                        TokenType.TAG_END -> break
+                        TokenType.SLASH -> {
+                            if (!lexer.nextSkipEmpty()) {
+                                TODO()
+                            }
+                            if (lexer.tokenType != TokenType.TAG_END)
+                                TODO()
+                            subNode.end()
+                            visiters.pop()
+                            break
+                        }
+                        else -> TODO()
+                    }
+                }
+            }
+            TokenType.SLASH -> {
+                if (!lexer.nextSkipEmpty()) {
+                    TODO()
+                }
+                if (lexer.tokenType != TokenType.TAG_END)
+                    TODO()
+                subNode.end()
+                visiters.pop()
+            }
+            TokenType.TAG_END -> {
+                accept()
+            }
+            else -> TODO()
+        }
+    }
+
     private suspend fun accept() {
-        when (val char = reader.readNoSpace()) {
-            '<' -> {
-                if (reader.isNextChar { it == '!' }) {
-                    reader.addFirst("<!")
-                    visiters.peek().visiter.cdata(readCDATA())
-                } else
-                    readTag()
-            }
-            null -> {
-            }
-            else -> {
-                reader.addFirst(char)
-                visiters.peek().visiter.value(readTextBody())
+
+        var t = false
+        while (lexer.next()) {
+            when (lexer.tokenType) {
+                TokenType.TAG_START -> {
+                    t1()
+                }
+                else -> {
+                    if (lexer.text.isBlank() && !t)
+                        continue
+                    t = true
+                    visiters.peek().visiter.value(lexer.text)
+                }
             }
         }
+
+//        when (val char = reader.readNoSpace()) {
+//            '<' -> {
+//                if (reader.isNextChar { it == '!' }) {
+//                    reader.addFirst("<!")
+//                    visiters.peek().visiter.cdata(readCDATA())
+//                } else
+//                    readTag()
+//            }
+//            null -> {
+//            }
+//            else -> {
+//                reader.addFirst(char)
+//                visiters.peek().visiter.value(readTextBody())
+//            }
+//        }
     }
 
     suspend fun accept(visiter: XmlVisiter) {
         visiters.push(Record("ROOT", visiter))
-
         do {
             accept()
         } while (visiters.size > 1)
     }
-
+/*
     private suspend fun readCDATA(): String {
         if (!reader.readText("<![CDATA[")) {
             throw ExpectedException("<![CDATA[")
@@ -108,8 +273,9 @@ class XmlReaderVisiter(reader: AsyncReader) {
             subNode.attribute(attrName, reader.readString())
         }
     }
+    */
 }
-
+/*
 internal suspend fun ComposeAsyncReader.readString(): String {
     if (read() != '"')
         throw ExpectedException("\"")
@@ -193,7 +359,7 @@ internal suspend fun ComposeAsyncReader.word(): String {
     val sb = StringBuilder()
     while (true) {
         try {
-            val c = read()?:return sb.toString()
+            val c = read() ?: return sb.toString()
             if (c.isBreak && c != '.') {
                 addFirst(c)
                 return sb.toString()
@@ -204,3 +370,4 @@ internal suspend fun ComposeAsyncReader.word(): String {
         }
     }
 }
+*/

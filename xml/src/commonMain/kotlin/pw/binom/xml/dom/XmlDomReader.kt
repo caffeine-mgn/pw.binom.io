@@ -1,7 +1,7 @@
 package pw.binom.xml.dom
 
 import pw.binom.io.AsyncReader
-import pw.binom.xml.sax.XmlRootReaderVisiter
+//import pw.binom.xml.sax.XmlRootReaderVisiter
 import pw.binom.xml.sax.XmlVisiter
 
 class XmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : XmlVisiter {
@@ -89,6 +89,6 @@ class XmlDomReader private constructor(private val ctx: NameSpaceContext, tag: S
 
 suspend fun AsyncReader.xmlTree(): XmlElement? {
     val r = XmlDomReader("")
-    XmlRootReaderVisiter(this).accept(r)
+//    XmlRootReaderVisiter(this).accept(r)
     return r.node.childs.getOrNull(0)
 }

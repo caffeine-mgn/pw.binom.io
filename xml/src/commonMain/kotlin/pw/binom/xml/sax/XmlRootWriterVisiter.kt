@@ -25,6 +25,8 @@ class XmlRootWriterVisiter(val appendable: AsyncAppendable) : XmlVisiter {
     }
 
     override suspend fun value(body: String) {
+        if (body.isBlank())
+            return
         throw IllegalStateException("Root node not supports attributes")
     }
 
