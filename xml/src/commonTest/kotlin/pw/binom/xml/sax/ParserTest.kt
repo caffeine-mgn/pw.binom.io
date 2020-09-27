@@ -14,10 +14,10 @@ class ParserTest {
             val txt = """<?xml version="1.0" encoding="UTF-8"?>
 <r:dd name="KDE" title="DE"><name>df</name><b><![CDATA[TEST Hi!]]></b><test fff="sdf"/></r:dd>"""
 
-            val r = XmlRootReaderVisiter(txt.asReader().asAsync())
+            val r = XmlRootReaderVisitor(txt.asReader().asAsync())
 
             val sb = StringBuilder()
-            val w = XmlRootWriterVisiter(sb.asAsync())
+            val w = XmlRootWriterVisitor(sb.asAsync())
             try {
                 w.start()
                 r.accept(w)
@@ -39,7 +39,7 @@ class ParserTest {
             val r = XmlReaderVisiter(txt.asReader().asAsync())
 
             val sb = StringBuilder()
-            val w = XmlRootWriterVisiter(sb.asAsync())
+            val w = XmlRootWriterVisitor(sb.asAsync())
             try {
                 w.start()
                 r.accept(w)
@@ -57,9 +57,9 @@ class ParserTest {
         val txt = """<?xml version="1.0" encoding="UTF-8"?><root title="Binom"></root>"""
         async {
             val sb = StringBuilder()
-            val root = XmlRootWriterVisiter(sb.asAsync())
+            val root = XmlRootWriterVisitor(sb.asAsync())
             root.start()
-            XmlRootReaderVisiter(txt.asReader().asAsync()).accept(root)
+            XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
             root.end()
             assertEquals("""<?xml version="1.0" encoding="UTF-8"?><root title="Binom"/>""", sb.toString())
         }
@@ -86,9 +86,9 @@ class ParserTest {
                 |   </D:prop>
                 |</D:propfind>""".trimMargin()
                 val sb = StringBuilder()
-                val root = XmlRootWriterVisiter(sb.asAsync())
+                val root = XmlRootWriterVisitor(sb.asAsync())
                 root.start()
-                XmlRootReaderVisiter(txt.asReader().asAsync()).accept(root)
+                XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
                 root.end()
                 println(sb)
             } catch (e: Throwable) {

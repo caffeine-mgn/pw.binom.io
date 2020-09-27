@@ -19,7 +19,7 @@ private suspend fun String.encode(appendable: AsyncAppendable){
     }
 }
 
-class XmlWriterVisiter(val nodeName: String, val appendable: AsyncAppendable) : XmlVisiter {
+class XmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendable) : XmlVisiter {
 
     init {
         if ('<' in nodeName || '>' in nodeName)
@@ -53,14 +53,17 @@ class XmlWriterVisiter(val nodeName: String, val appendable: AsyncAppendable) : 
         progress = END
     }
 
-    override suspend fun attribute(name: String, value: String?) {
+    override suspend fun attributeName(name: String) {
         if (progress < START)
             throw IllegalStateException("Node not started")
 
         if (progress > START)
             throw IllegalStateException("Can't write attribute after body")
-
         appendable.append(" ").append(name)
+        super.attributeName(name)
+    }
+
+    override suspend fun attributeValue(value: String?) {
         if (value != null) {
             appendable.append("=\"").append(value).append("\"")
         }
@@ -87,7 +90,7 @@ class XmlWriterVisiter(val nodeName: String, val appendable: AsyncAppendable) : 
             progress = BODY
             appendable.append(">")
         }
-        return XmlWriterVisiter(name, appendable)
+        return XmlWriterVisitor(name, appendable)
     }
 
     override suspend fun cdata(body: String) {

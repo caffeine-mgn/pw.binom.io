@@ -6,7 +6,7 @@ import pw.binom.xml.AsyncXmlLexer
 import pw.binom.xml.TokenType
 import pw.binom.xml.nextSkipEmpty
 
-class XmlRootReaderVisiter(val lexer: AsyncXmlLexer) {
+class XmlRootReaderVisitor(val lexer: AsyncXmlLexer) {
     constructor(reader: AsyncReader) : this(AsyncXmlLexer(reader))
 
     suspend fun accept(visiter: XmlVisiter) {

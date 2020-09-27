@@ -11,7 +11,7 @@ class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
 
     private class Record(val name: String, val visiter: XmlVisiter)
 
-    private val visiters = Stack<Record>().asLiFoQueue()
+    private val visitors = Stack<Record>().asLiFoQueue()
 
     /**
      * Чтение начала с <
@@ -47,7 +47,7 @@ class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
             TODO()
         if (lexer.tokenType != TokenType.LEFT_BRACKET)
             TODO()
-        val v = visiters.peek()
+        val v = visitors.peek()
         val data = StringBuilder()
         while (true) {
             if (!lexer.next())
@@ -77,17 +77,17 @@ class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
             TODO()
         if (lexer.tokenType != TokenType.SYMBOL)
             TODO()
-        val visiter = visiters.peek()
+        val visitor = visitors.peek()
         val tagName = lexer.text
-        if (visiter.name != tagName) {
-            throw ExpectedException("Expected closing of tag [${visiter.name}] but got [$tagName]")
+        if (visitor.name != tagName) {
+            throw ExpectedException("Expected closing of tag [${visitor.name}] but got [$tagName]")
         }
         if (!lexer.next())
             TODO()
         if (lexer.tokenType != TokenType.TAG_END)
             TODO()
-        visiter.visiter.end()
-        visiters.pop()
+        visitor.visiter.end()
+        visitors.pop()
     }
 
     /**
@@ -95,8 +95,8 @@ class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
      */
     private suspend fun t2() {
         val nodeName = lexer.text
-        val subNode = visiters.peek().visiter.subNode(nodeName)
-        visiters.push(Record(nodeName, subNode))
+        val subNode = visitors.peek().visiter.subNode(nodeName)
+        visitors.push(Record(nodeName, subNode))
         subNode.start()
         if (!lexer.nextSkipEmpty()) {
             TODO()
@@ -137,7 +137,7 @@ class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
                             if (lexer.tokenType != TokenType.TAG_END)
                                 TODO()
                             subNode.end()
-                            visiters.pop()
+                            visitors.pop()
                             break
                         }
                         else -> TODO()
@@ -151,7 +151,7 @@ class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
                 if (lexer.tokenType != TokenType.TAG_END)
                     TODO()
                 subNode.end()
-                visiters.pop()
+                visitors.pop()
             }
             TokenType.TAG_END -> {
                 accept()
@@ -172,7 +172,7 @@ class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
                     if (lexer.text.isBlank() && !t)
                         continue
                     t = true
-                    visiters.peek().visiter.value(lexer.text)
+                    visitors.peek().visiter.value(lexer.text)
                 }
             }
         }
@@ -195,10 +195,10 @@ class XmlReaderVisiter(val lexer: AsyncXmlLexer) {
     }
 
     suspend fun accept(visiter: XmlVisiter) {
-        visiters.push(Record("ROOT", visiter))
+        visitors.push(Record("ROOT", visiter))
         do {
             accept()
-        } while (visiters.size > 1)
+        } while (visitors.size > 1)
     }
 /*
     private suspend fun readCDATA(): String {

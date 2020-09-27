@@ -2,7 +2,7 @@ package pw.binom.xml.sax
 
 import pw.binom.io.AsyncAppendable
 
-class XmlRootWriterVisiter(val appendable: AsyncAppendable) : XmlVisiter {
+class XmlRootWriterVisitor(val appendable: AsyncAppendable) : XmlVisiter {
     private var started = false
     private var endded = false
     override suspend fun start() {
@@ -39,7 +39,7 @@ class XmlRootWriterVisiter(val appendable: AsyncAppendable) : XmlVisiter {
             throw IllegalStateException("Root Node not started")
         if (endded)
             throw IllegalStateException("Root Node already closed")
-        return XmlWriterVisiter(name, appendable)
+        return XmlWriterVisitor(name, appendable)
     }
 
 }
