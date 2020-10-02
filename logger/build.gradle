@@ -33,11 +33,6 @@ kotlin {
         }
     }
 
-    js(BOTH){
-        browser()
-        nodejs()
-    }
-
     jvm{
         compilations.all {
             kotlinOptions {
@@ -60,13 +55,13 @@ kotlin {
             dependencies {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
-                api project(":job")
             }
         }
 
         nativeMain {
             dependencies {
                 dependsOn commonMain
+                api project(":concurrency")
             }
         }
 
@@ -78,30 +73,37 @@ kotlin {
 
         linuxArm32HfpMain {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn nativeMain
             }
         }
 
         macosX64Main {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn nativeMain
             }
         }
 
         mingwX64Main {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn nativeMain
             }
         }
 
         mingwX86Main {
             dependencies {
-                dependsOn mingwX64Main
+                dependsOn nativeMain
+            }
+        }
+
+        jsMain {
+            dependencies {
+                dependsOn commonMain
             }
         }
 
         jvmMain {
             dependencies {
+                dependsOn commonMain
                 api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
             }
         }

@@ -1,49 +1,51 @@
-publishing {
-    repositories {
-        maven {
-            name = "BinomRepository"
-            def repoUser = project.property("binom.repo.user")
-            def repoPassword = project.property("binom.repo.password")
-            def repoUrl = project.property("binom.repo.url")
+def repoUser = project.property("binom.repo.user")
+def repoPassword = project.property("binom.repo.password")
+def repoUrl = project.property("binom.repo.url")
 
-            url repoUrl
+def allowPublic = repoUser != null && repoPassword != null && repoUrl != null
+if (allowPublic) {
+    publishing {
+        repositories {
+            maven {
+                name = "BinomRepository"
 
-            println("$repoUser:$repoPassword@$repoUrl")
+                url repoUrl
 
-            credentials {
-                username = repoUser
-                password = repoPassword
-            }
-        }
-    }
-
-    publications.all {
-        def repoName = ""
-        if (it.name == "kotlinMultiplatform") {
-            repoName = project.name
-        } else {
-            repoName = "${project.name}-${it.name}"
-        }
-        it.groupId = project.group
-        it.artifactId = repoName
-        it.version = project.version
-
-        pom {
-            scm {
-                connection = "https://github.com/caffeine-mgn/pw.binom.io.git"
-                url = "https://github.com/caffeine-mgn/pw.binom.io"
-            }
-            developers {
-                developer {
-                    id = 'subochev'
-                    name = 'Anton Subochev'
-                    email = 'caffeine.mgn@gmail.com'
+                credentials {
+                    username = repoUser
+                    password = repoPassword
                 }
             }
-            licenses {
-                license {
-                    name = 'The Apache License, Version 2.0'
-                    url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+
+        publications.all {
+            def repoName = ""
+            if (it.name == "kotlinMultiplatform") {
+                repoName = project.name
+            } else {
+                repoName = "${project.name}-${it.name}"
+            }
+            it.groupId = project.group
+            it.artifactId = repoName
+            it.version = project.version
+
+            pom {
+                scm {
+                    connection = "https://github.com/caffeine-mgn/pw.binom.io.git"
+                    url = "https://github.com/caffeine-mgn/pw.binom.io"
+                }
+                developers {
+                    developer {
+                        id = 'subochev'
+                        name = 'Anton Subochev'
+                        email = 'caffeine.mgn@gmail.com'
+                    }
+                }
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
                 }
             }
         }

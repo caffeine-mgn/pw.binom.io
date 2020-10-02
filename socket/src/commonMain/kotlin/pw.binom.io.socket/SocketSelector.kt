@@ -20,7 +20,7 @@ expect class SocketSelector() : Closeable {
         val listenWritable: Boolean
         val isCanlelled: Boolean
         fun cancel()
-        fun updateListening(read: Boolean, write: Boolean)
+        fun listen(read: Boolean, write: Boolean)
     }
 }
 

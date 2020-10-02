@@ -24,7 +24,7 @@ class AsyncMultipartOutput(val stream: AsyncOutput, val boundary: String = gener
     companion object {
         fun generateBoundary(minusCount: Int = 24, charCount: Int = 16): String {
             if (minusCount == 0 && charCount == 0)
-                throw IllegalArgumentException("Arguments minusCount and/or charCount must be grate than 0")
+                throw IllegalArgumentException("Arguments minusCount and charCount must be grate than 0")
             val sb = StringBuilder()
             repeat(minusCount) {
                 sb.append('-')

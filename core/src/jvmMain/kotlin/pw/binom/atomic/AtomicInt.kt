@@ -1,8 +1,10 @@
 package pw.binom.atomic
 
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 import java.util.concurrent.atomic.AtomicInteger as JAtomicInt
 
-actual class AtomicInt actual constructor(value: Int) {
+actual class AtomicInt actual constructor(value: Int) : ReadWriteProperty<Any?, Int> {
     private val atom = JAtomicInt(value)
 
     actual fun compareAndSet(expected: Int, new: Int): Boolean =
@@ -27,4 +29,10 @@ actual class AtomicInt actual constructor(value: Int) {
         set(value) {
             atom.set(value)
         }
+
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
+        atom.set(value)
+    }
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): Int = atom.get()
 }

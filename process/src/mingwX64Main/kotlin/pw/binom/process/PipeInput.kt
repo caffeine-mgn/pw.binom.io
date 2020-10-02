@@ -4,8 +4,9 @@ import kotlinx.cinterop.*
 import platform.windows.*
 import pw.binom.ByteBuffer
 import pw.binom.Input
-import pw.binom.thread.Worker
-import pw.binom.thread.sleep
+import pw.binom.concurrency.sleep
+import pw.binom.concurrency.Worker as BWorker
+import kotlin.native.concurrent.Worker
 
 class PipeInput(val process: WinProcess) : Pipe(), Input {
     override val handler: HANDLE
@@ -51,7 +52,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
 
     override fun read(dest: ByteBuffer): Int {
         while (true) {
-            Worker.sleep(1)
+            BWorker.sleep(1)
             if (available == 0) {
                 return 0
             }

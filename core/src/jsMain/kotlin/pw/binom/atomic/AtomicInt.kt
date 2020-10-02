@@ -1,6 +1,9 @@
 package pw.binom.atomic
 
-actual class AtomicInt actual constructor(actual var value: Int) {
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
+
+actual class AtomicInt actual constructor(actual var value: Int): ReadWriteProperty<Any?, Int> {
     actual fun compareAndSet(expected: Int, new: Int): Boolean {
         if (value == expected) {
             value = new
@@ -30,5 +33,11 @@ actual class AtomicInt actual constructor(actual var value: Int) {
     actual fun decrement() {
         value--
     }
+
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
+        this.value=value
+    }
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
 
 }

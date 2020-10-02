@@ -10,15 +10,8 @@ class Sha1 : MessageDigest {
     var digestValid: Boolean
 
     @Synchronized
-    fun update(input: ByteArray, offset: Int, len: Int) {
-        for (i in 0 until len) {
-            update(input[i + offset])
-        }
-    }
-
-    @Synchronized
-    fun update(input: ByteArray) {
-        update(input, 0, input.size)
+    override fun update(input: ByteArray, offset: Int, len: Int) {
+        super.update(input, offset, len)
     }
 
     fun updateASCII(input: String) {
@@ -242,7 +235,9 @@ class Sha1 : MessageDigest {
             i++
         }
         update(128.toByte())
-        while (blockIndex != 56) update(0.toByte())
+        while (blockIndex != 56) {
+            update(0.toByte())
+        }
         // This should cause a transform to happen.
         update(bits)
         i = 0

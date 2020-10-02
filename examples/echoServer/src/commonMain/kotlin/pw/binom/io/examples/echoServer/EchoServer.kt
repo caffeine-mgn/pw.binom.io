@@ -20,10 +20,9 @@ fun main(args: Array<String>) {
             if (it.channel === server) {
                 val client = server.accept()!!
                 client.blocking = false
-                selector.reg(client).updateListening(true, false)
+                selector.reg(client).listen(true, false)
                 println("Client connected")
             } else {
-                println("Client processing")
                 try {
                     val client = it.channel as RawSocketChannel
                     buffer.clear()

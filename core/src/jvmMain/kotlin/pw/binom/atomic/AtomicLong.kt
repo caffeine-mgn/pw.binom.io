@@ -1,8 +1,10 @@
 package pw.binom.atomic
 
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 import java.util.concurrent.atomic.AtomicLong as JAtomicLong
 
-actual class AtomicLong actual constructor(value: Long) {
+actual class AtomicLong actual constructor(value: Long) : ReadWriteProperty<Any, Long> {
     private val atom = JAtomicLong(value)
 
     actual fun compareAndSet(expected: Long, new: Long): Boolean =
@@ -27,4 +29,10 @@ actual class AtomicLong actual constructor(value: Long) {
         set(value) {
             atom.set(value)
         }
+
+    override fun setValue(thisRef: Any, property: KProperty<*>, value: Long) {
+        atom.set(value)
+    }
+
+    override fun getValue(thisRef: Any, property: KProperty<*>): Long = atom.get()
 }

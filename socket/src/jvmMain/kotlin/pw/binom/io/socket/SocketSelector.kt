@@ -20,9 +20,10 @@ actual class SocketSelector actual constructor() : Closeable {
         override val isCanlelled: Boolean
             get() = _cancelled
 
-        override fun updateListening(read: Boolean, write: Boolean) {
-            if (listenReadable == read && listenWritable == write)
+        override fun listen(read: Boolean, write: Boolean) {
+            if (listenReadable == read && listenWritable == write) {
                 return
+            }
             var i = 0
             if (read)
                 i = i or JSelectionKey.OP_READ
@@ -63,7 +64,7 @@ actual class SocketSelector actual constructor() : Closeable {
     private val native = Selector.open()
 
     actual fun reg(channel: Channel, attachment: Any?): SelectorKey {
-        val cancelled = cancelledKeys[channel]?.firstOrNull()
+        val cancelled = cancelledKeys[channel]?.firstOrNull() as SelectorKeyImpl?
         if (cancelled != null) {
             cancelled.rereg()
             cancelled.attachment = attachment
@@ -128,7 +129,7 @@ actual class SocketSelector actual constructor() : Closeable {
         actual val listenReadable: Boolean
         actual val listenWritable: Boolean
         actual val isCanlelled: Boolean
-        actual fun updateListening(read: Boolean, write: Boolean)
+        actual fun listen(read: Boolean, write: Boolean)
     }
 
     actual val keys: Collection<SelectorKey>

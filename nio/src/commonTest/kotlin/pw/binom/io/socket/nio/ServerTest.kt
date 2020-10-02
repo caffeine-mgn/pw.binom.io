@@ -57,7 +57,7 @@ class ServerTest {
             val client = SocketFactory.rawSocketFactory.createSocketChannel()
             client.connect("127.0.0.1", port)
             client.blocking = false
-            selector.reg(client).updateListening(true, false)
+            selector.reg(client).listen(true, false)
             println("Try to read data from server")
             var write = false
             while (isExecuting()) {
@@ -73,7 +73,7 @@ class ServerTest {
                                 println("Swap mode: Read -> Write")
                                 write = true
                                 readed.flip()
-                                it.updateListening(false, true)
+                                it.listen(false, true)
                             }
                         }
                     }

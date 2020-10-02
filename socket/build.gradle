@@ -72,7 +72,7 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
-                api project(":thread")
+                api project(":concurrency")
             }
         }
 
@@ -80,8 +80,7 @@ kotlin {
             dependencies {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
-                api project(":thread")
-                api project(":job")
+                api project(":concurrency")
             }
         }
 

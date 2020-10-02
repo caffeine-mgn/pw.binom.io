@@ -1,7 +1,7 @@
 package pw.binom.xml.dom
 
 import pw.binom.io.AsyncReader
-import pw.binom.xml.sax.XmlRootReaderVisiter
+//import pw.binom.xml.sax.XmlRootReaderVisiter
 import pw.binom.xml.sax.XmlVisiter
 
 class XmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : XmlVisiter {
@@ -21,8 +21,12 @@ class XmlDomReader private constructor(private val ctx: NameSpaceContext, tag: S
     }
 
     constructor(tag: String) : this(ctx = NameSpaceContext(), tag = tag)
+    constructor() : this(tag = "")
 
-    val node = XmlElement(tag = tag, nameSpace = null)
+    val rootNode = XmlElement(
+            tag = tag,
+            nameSpace = null
+    )
 
     override suspend fun attribute(name: String, value: String?) {
         if (name == "xmlns" && value != null) {
@@ -33,27 +37,27 @@ class XmlDomReader private constructor(private val ctx: NameSpaceContext, tag: S
             ctx.prefix[name.removePrefix("xmlns:")] = ctx.pool(value)
             return
         }
-        node.attributes[Attribute(null, name)] = value
+        rootNode.attributes[Attribute(null, name)] = value
     }
 
     override suspend fun cdata(body: String) {
-        node.body = body
+        rootNode.body = body
     }
 
     private fun fixCurrentNS() {
-        if (node.nameSpace == null) {
-            if (":" !in node.tag) {
-                node.nameSpace = ctx.default
+        if (rootNode.nameSpace == null) {
+            if (":" !in rootNode.tag) {
+                rootNode.nameSpace = ctx.default
             } else {
-                val i = node.tag.indexOf(":")
-                val prefix = node.tag.substring(0, i)
+                val i = rootNode.tag.indexOf(":")
+                val prefix = rootNode.tag.substring(0, i)
                 val ns = ctx.prefix[prefix] ?: throw RuntimeException("Can't find prefix \"$prefix\"")
-                node.nameSpace = ns
-                node.tag = node.tag.substring(i + 1)
+                rootNode.nameSpace = ns
+                rootNode.tag = rootNode.tag.substring(i + 1)
             }
         }
 
-        node.attributes.forEach {
+        rootNode.attributes.forEach {
             if (it.key.nameSpace == null) {
                 if (":" !in it.key.name) {
                     it.key.nameSpace = ctx.default
@@ -78,17 +82,17 @@ class XmlDomReader private constructor(private val ctx: NameSpaceContext, tag: S
     override suspend fun subNode(name: String): XmlVisiter {
         fixCurrentNS()
         val r = XmlDomReader(ctx.copy(), name)
-        node.childs += r.node
+        r.rootNode.parent = rootNode
         return r
     }
 
     override suspend fun value(body: String) {
-        node.body = body
+        rootNode.body = body
     }
 }
 
 suspend fun AsyncReader.xmlTree(): XmlElement? {
     val r = XmlDomReader("")
-    XmlRootReaderVisiter(this).accept(r)
-    return r.node.childs.getOrNull(0)
+//    XmlRootReaderVisiter(this).accept(r)
+    return r.rootNode.childs.getOrNull(0)
 }

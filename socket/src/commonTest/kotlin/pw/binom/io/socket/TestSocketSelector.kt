@@ -1,7 +1,7 @@
 package pw.binom.io.socket
 
-import pw.binom.thread.Worker
-import pw.binom.thread.sleep
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.sleep
 import kotlin.random.Random
 import kotlin.test.*
 

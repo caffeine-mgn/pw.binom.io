@@ -4,6 +4,7 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.plus
 import pw.binom.ByteBuffer
 import pw.binom.Output
+import pw.binom.doFreeze
 
 class PipeOutput : Pipe(), Output {
 
@@ -20,5 +21,9 @@ class PipeOutput : Pipe(), Output {
     }
 
     override fun close() {
+    }
+
+    init {
+        doFreeze()
     }
 }

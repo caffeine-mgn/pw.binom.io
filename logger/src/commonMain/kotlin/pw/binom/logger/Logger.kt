@@ -1,44 +1,31 @@
 package pw.binom.logger
 
-import pw.binom.date.Date
-import kotlin.native.concurrent.SharedImmutable
+expect class Logger {
+    companion object {
+        val global: Logger
+        val consoleHandler : Handler
+        fun getLogger(pkg: String): Logger
+    }
 
-object Logger {
-
-    fun getLog(pkg: String) = LoggerImpl(pkg)//loggers.getOrPut(pkg) { LoggerImpl(pkg) }
-
-
-    private val loggers = HashMap<String, LoggerImpl>()
+    val pkg:String
+    var level: Level?
+    var handler: Handler?
+    fun log(level: Level, text: String?, exception: Throwable?)
 
     interface Level {
         val name: String
         val priority: UInt
     }
 
-    class LoggerImpl(val pkg: String) {
-        /*
-        private val _level = AtomicReference<Level?>(null)
-        var level: Level?
-            get() = _level.value
-            set(value) {
-                _level.value = value
-            }
-*/
-        fun log(level: Level, text: String) {
-            /*
-            val currentLevel = this._level.value
 
-            if (currentLevel != null && currentLevel.priority > level.priority)
-                return
-                */
-            val now = Date(Date.now).calendar()
-
-            println("${now.year}/${(now.month + 1).dateNumber()}/${now.dayOfMonth.dateNumber()} ${now.hours.dateNumber()}:${now.minutes.dateNumber()}:${now.seconds.dateNumber()} [${level.name}] [$pkg]: $text")
-        }
+    fun interface Handler {
+        fun log(logger: Logger, level: Level, text: String?, exception: Throwable?)
     }
 }
 
-private fun Int.dateNumber() =
+
+
+internal fun Int.dateNumber() =
         if (this <= 9)
             "0$this"
         else

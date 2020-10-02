@@ -5,6 +5,7 @@ import kotlinx.cinterop.plus
 import pw.binom.ByteBuffer
 import pw.binom.Input
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.doFreeze
 
 class PipeInput : Pipe(), Input {
 
@@ -26,5 +27,9 @@ class PipeInput : Pipe(), Input {
     }
 
     override fun close() {
+    }
+
+    init{
+        doFreeze()
     }
 }

@@ -14,7 +14,7 @@ import pw.binom.io.use
 
 fun main() {
     println("Environment.workDirectory: ${Environment.workDirectory}")
-    val byteDataPool = ByteBufferPool()
+    val byteDataPool = ByteBufferPool(10)
     val nioManager = SocketNIOManager()
     val server = HttpServer(nioManager, object : Handler {
         override suspend fun request(req: HttpRequest, resp: HttpResponse) {

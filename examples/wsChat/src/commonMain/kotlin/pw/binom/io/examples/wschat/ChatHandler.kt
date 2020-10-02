@@ -12,25 +12,23 @@ import pw.binom.io.utf8Reader
 class ChatHandler : WebSocketHandler() {
 
     private val clients = HashSet<WebSocketConnection>()
-    private val forDelete = ArrayList<WebSocketConnection>()
-    private suspend fun sendToClients(text: String, filter: (WebSocketConnection) -> Boolean = { true }) {
-
+    private suspend fun sendToClients(text: String, currentClient: WebSocketConnection) {
+        val forDelete = ArrayList<WebSocketConnection>()
         clients.asSequence()
-                .filter(filter)
+                .filter { it !== currentClient }
                 .forEach {
                     try {
                         it.write(MessageType.TEXT).utf8Appendable().use {
                             it.append(text)
                         }
                     } catch (e: WebSocketClosedException) {
-                        it.close()
                         forDelete.add(it)
+                        it.close()
                     }
                 }
         forDelete.forEach {
             clients.remove(it)
         }
-        forDelete.clear()
     }
 
     override suspend fun connected(request: ConnectRequest) {
@@ -44,18 +42,13 @@ class ChatHandler : WebSocketHandler() {
                 it.readText().trim()
             }
         }
-        sendToClients("$name has join to chat")
         clients += connection
-        connection.incomeMessageListener = {
-            try {
-                val txt = it.read().utf8Reader().use {
-                    it.readText().trim()
-                }
-                sendToClients("$name: $txt") { con -> it !== con }
-            } catch (e: WebSocketClosedException) {
-                clients.remove(it)
-                sendToClients("$name has leave")
-                throw e
+        println("Client connected $name")
+        while (true) {
+            connection.read().utf8Reader().use {
+                val txt = "$name: ${it.readText()}"
+                println(txt)
+                sendToClients(txt, connection)
             }
         }
     }
