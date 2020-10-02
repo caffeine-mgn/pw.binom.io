@@ -1,6 +1,7 @@
 package pw.binom.db.tarantool
 
 import pw.binom.*
+import pw.binom.concurrency.ThreadRef
 import pw.binom.db.tarantool.protocol.*
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteArrayOutput
@@ -17,7 +18,7 @@ private const val VSPACE_ID_INDEX_ID = 0
 private const val VINDEX_ID = 289
 private const val VINDEX_ID_INDEX_ID = 0
 
-class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRaw) : AsyncCloseable {
+class TarantoolConnection private constructor(private val networkThread: ThreadRef, con: SocketNIOManager.ConnectionRaw) : AsyncCloseable {
     companion object {
         suspend fun connect(manager: SocketNIOManager, host: String, port: Int, user: String?, password: String?): TarantoolConnection {
             val con = manager.connect(
@@ -35,9 +36,9 @@ class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRa
                 val salt = buf.asUTF8String().trim()
 //                println("salt: [$salt]")
                 //TODO Добавить авторизацию
-                val connection = TarantoolConnection(con)
+                val connection = TarantoolConnection(manager.threadRef, con)
                 if (user != null && password != null) {
-                    val data = connection.sendReceive(Code.AUTH, null, Utils.buildAuthPacketData(user, password, salt))
+                    val data = connection.sendReceive(Code.AUTH, null, InternalProtocolUtils.buildAuthPacketData(user, password, salt))
                     println("data: $data")
                     data.assertException()
                 }
@@ -53,12 +54,16 @@ class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRa
     private val requests = HashMap<Long, Continuation<Package>>()
     private val connectionReference = con
     private var meta: List<TarantoolSpaceMeta> = emptyList()
-    internal var schemaVersion = 0
-        private set
+    private var schemaVersion = 0
+
+    private fun checkThread() {
+        if (!networkThread.same) {
+            throw IllegalStateException("You must call Connector method from network thread")
+        }
+    }
 
     private suspend fun loadMeta(): List<TarantoolSpaceMeta> {
         metaUpdating = true
-        println("Loading Meta")
         try {
             while (true) {
                 val index = select<Any?>(VINDEX_ID, VINDEX_ID_INDEX_ID, emptyList<Int>(), 0, Int.MAX_VALUE, QueryIterator.ALL)
@@ -77,7 +82,6 @@ class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRa
         } finally {
             metaUpdating = false
         }
-        println("Meta loaded!")
     }
 
     private var metaUpdating = false
@@ -98,6 +102,7 @@ class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRa
 
     private val out = ByteArrayOutput()
     internal suspend fun sendReceive(code: Code, schemaId: Int? = null, body: Map<Any, Any?>): Package {
+        checkThread()
         val sync = syncCursor++
         return run {
             try {
@@ -107,7 +112,7 @@ class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRa
                 if (schemaId != null) {
                     headers[Key.SCHEMA_ID.id] = schemaId
                 }
-                Utils.makeMessage(
+                InternalProtocolUtils.buildMessagePackage(
                         header = headers,
                         data = body,
                         out = out
@@ -138,6 +143,7 @@ class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRa
     private var closed = false
 
     override suspend fun close() {
+        checkThread()
         if (closed) {
             throw ClosedException()
         }
@@ -158,10 +164,10 @@ class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRa
                     val size = connectionReference.readInt(buf)
                     buf.clear()
                     packageReader.limit = size
-                    val msg = Utils.unpackAsync(buf, packageReader)
+                    val msg = InternalProtocolUtils.unpack(buf, packageReader)
                     val headers = msg as Map<Int, Any?>
                     val body = if (packageReader.limit > 0) {
-                        Utils.unpackAsync(buf, packageReader) as Map<Int, Any?>
+                        InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
                     } else
                         emptyMap()
                     val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
@@ -243,7 +249,7 @@ class TarantoolConnection private constructor(con: SocketNIOManager.ConnectionRa
         return result.data
     }
 
-    suspend fun TarantoolConnection.call(function: String, args: List<Any?>) {
+    suspend fun call(function: String, args: List<Any?>) {
         val result = this.sendReceive(
                 code = Code.CALL,
                 body = mapOf(

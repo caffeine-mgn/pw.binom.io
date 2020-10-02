@@ -7,7 +7,7 @@ import pw.binom.io.IOException
 import pw.binom.io.Sha1
 import kotlin.experimental.xor
 
-internal object Utils {
+internal object InternalProtocolUtils {
 
     fun buildAuthPacketData(
             username: String,
@@ -199,7 +199,7 @@ internal object Utils {
         }
     }
 
-    fun makeMessage(header: Map<Int, Any?>, data: Map<Any, Any?>, out: ByteArrayOutput) {
+    fun buildMessagePackage(header: Map<Int, Any?>, data: Map<Any, Any?>, out: ByteArrayOutput) {
         val buf = ByteBuffer.alloc(8)
         try {
             out.writeByte(buf, (0xce).toByte())
@@ -225,12 +225,12 @@ internal object Utils {
         }
         val out = ArrayList<Any?>(size)
         repeat(size) {
-            out += unpackAsync(buf, input)
+            out += unpack(buf, input)
         }
         return out
     }
 
-    private suspend fun unpackMapAsync(size: Int, buf: ByteBuffer, input: AsyncInput): Map<Any?, Any?> {
+    private suspend fun unpackMap(size: Int, buf: ByteBuffer, input: AsyncInput): Map<Any?, Any?> {
         if (size < 0) {
             throw IllegalArgumentException("Map to unpack too large for Kotlin (more than 2^31 elements)!");
         }
@@ -239,17 +239,17 @@ internal object Utils {
         }
         val out = HashMap<Any?, Any?>()
         repeat(size) {
-            val key = unpackAsync(buf, input)
-            val value = unpackAsync(buf, input)
+            val key = unpack(buf, input)
+            val value = unpack(buf, input)
             out[key] = value
         }
         return out
     }
 
-    suspend fun unpackStringAsync(size: Int, buf: ByteBuffer, input: AsyncInput): String =
-            unpackBinAsync(size, buf, input).decodeToString()
+    suspend fun unpackString(size: Int, buf: ByteBuffer, input: AsyncInput): String =
+            unpackBytes(size, buf, input).decodeToString()
 
-    suspend fun unpackBinAsync(size: Int, buf: ByteBuffer, input: AsyncInput): ByteArray {
+    suspend fun unpackBytes(size: Int, buf: ByteBuffer, input: AsyncInput): ByteArray {
         if (size < 0) {
             throw IllegalArgumentException("ByteArray to unpack too large for Kotlin (more than 2^31 elements)!");
         }
@@ -272,7 +272,7 @@ internal object Utils {
     }
 
 
-    suspend fun unpackAsync(buf: ByteBuffer, input: AsyncInput): Any? {
+    suspend fun unpack(buf: ByteBuffer, input: AsyncInput): Any? {
         val type = input.readByte(buf)
         return when (type) {
             MP_NULL -> null
@@ -303,42 +303,42 @@ internal object Utils {
 //                    buf = buf,
 //                    input = input
 //            )
-            MP_MAP16 -> unpackMapAsync(
+            MP_MAP16 -> unpackMap(
                     size = input.readShort(buf).toInt() and MAX_16BIT,
                     buf = buf,
                     input = input
             )
-            MP_MAP32 -> unpackMapAsync(
+            MP_MAP32 -> unpackMap(
                     size = input.readInt(buf),
                     buf = buf,
                     input = input
             )
-            MP_STR8 -> unpackStringAsync(
+            MP_STR8 -> unpackString(
                     size = input.readByte(buf).toInt() and MAX_8BIT,
                     buf = buf,
                     input = input
             )
-            MP_STR16 -> unpackStringAsync(
+            MP_STR16 -> unpackString(
                     size = input.readShort(buf).toInt() and MAX_16BIT,
                     buf = buf,
                     input = input
             )
-            MP_STR32 -> unpackStringAsync(
+            MP_STR32 -> unpackString(
                     size = input.readInt(buf),
                     buf = buf,
                     input = input
             )
-            MP_BIN8 -> unpackBinAsync(
+            MP_BIN8 -> unpackBytes(
                     size = input.readByte(buf).toInt() and MAX_8BIT,
                     buf = buf,
                     input = input
             )
-            MP_BIN16 -> unpackBinAsync(
+            MP_BIN16 -> unpackBytes(
                     size = input.readShort(buf).toInt() and MAX_16BIT,
                     buf = buf,
                     input = input
             )
-            MP_BIN32 -> unpackBinAsync(
+            MP_BIN32 -> unpackBytes(
                     size = input.readInt(buf),
                     buf = buf,
                     input = input
@@ -350,9 +350,9 @@ internal object Utils {
                 } else if (typeInt >= MP_FIXARRAY_INT && typeInt <= MP_FIXARRAY_INT + MAX_4BIT) {
                     unpackListAsync(typeInt - MP_FIXARRAY_INT, buf, input)
                 } else if (typeInt.toUInt() >= MP_FIXMAP_INT.toUInt() && typeInt.toUInt() <= MP_FIXMAP_INT.toUInt() + MAX_4BIT.toUInt()) {
-                    unpackMapAsync(typeInt - MP_FIXMAP_INT, buf, input)
+                    unpackMap(typeInt - MP_FIXMAP_INT, buf, input)
                 } else if (typeInt >= MP_FIXSTR_INT && typeInt <= MP_FIXSTR_INT + MAX_5BIT) {
-                    unpackStringAsync(typeInt - MP_FIXSTR_INT, buf, input)
+                    unpackString(typeInt - MP_FIXSTR_INT, buf, input)
                 } else if (typeInt <= MAX_7BIT) {
                     // MP_FIXNUM - the value is value as an int
                     typeInt
