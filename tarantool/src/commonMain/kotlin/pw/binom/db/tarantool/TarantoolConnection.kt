@@ -34,16 +34,14 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                 con.readFully(buf)
                 buf.flip()
                 val salt = buf.asUTF8String().trim()
-//                println("salt: [$salt]")
-                //TODO Добавить авторизацию
                 val connection = TarantoolConnection(manager.threadRef, con)
                 if (user != null && password != null) {
-                    val data = connection.sendReceive(Code.AUTH, null, InternalProtocolUtils.buildAuthPacketData(user, password, salt))
-                    println("data: $data")
-                    data.assertException()
+                    connection.sendReceive(Code.AUTH, null, InternalProtocolUtils.buildAuthPacketData(user, password, salt)).assertException()
                 }
-
                 return connection
+            } catch (e: Throwable) {
+                con.close()
+                throw e
             } finally {
                 buf.close()
             }
@@ -66,8 +64,8 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         metaUpdating = true
         try {
             while (true) {
-                val index = select<Any?>(VINDEX_ID, VINDEX_ID_INDEX_ID, emptyList<Int>(), 0, Int.MAX_VALUE, QueryIterator.ALL)
-                val spaces = select<Any?>(VSPACE_ID, VSPACE_ID_INDEX_ID, emptyList<Int>(), 0, Int.MAX_VALUE, QueryIterator.ALL)
+                val index = select1<Any?>(VINDEX_ID, VINDEX_ID_INDEX_ID, emptyList<Int>(), 0, Int.MAX_VALUE, QueryIterator.ALL)
+                val spaces = select1<Any?>(VSPACE_ID, VSPACE_ID_INDEX_ID, emptyList<Int>(), 0, Int.MAX_VALUE, QueryIterator.ALL)
                 if (index.second != spaces.second) {
                     continue
                 }
@@ -158,7 +156,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                 val packageReader = AsyncInputWithCounter(connectionReference)
                 while (!closed) {
                     val vv = connectionReference.readByte(buf).toUByte()
-                    if (vv != 0xCE.toUByte()) {
+                    if (vv != 0xce.toUByte()) {
                         throw IOException("Invalid Protocol Header Response")
                     }
                     val size = connectionReference.readInt(buf)
@@ -182,7 +180,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
             } catch (e: ClosedException) {
                 //NOP
             } catch (e: Throwable) {
-                e.printStackTrace()
+                close()
             } finally {
                 buf.close()
             }
@@ -241,15 +239,11 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                 ),
                 schemaId = schemaVersion
         )
-
-
-        println("Header: ${result.header}")
-        println("Body: ${result.body}")
         result.assertException()
         return result.data
     }
 
-    suspend fun call(function: String, args: List<Any?>) {
+    suspend fun call(function: String, args: List<Any?>): Any? {
         val result = this.sendReceive(
                 code = Code.CALL,
                 body = mapOf(
@@ -257,15 +251,174 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                         Key.TUPLE.id to args
                 )
         )
-
         result.assertException()
-        println("Header: ${result.header}")
-        println("Body: ${result.body}")
-        val body = result.body
-        val err = body[Key.ERROR.id] as String?
-        if (err != null) {
-            throw RuntimeException("Tarantool Exception: $err")
-        }
+        return result.data
+    }
+
+    suspend fun select(space: String, index: String, key: Any?, offset: Int, limit: Int, iterator: QueryIterator): ResultSet {
+        val meta = getMeta()
+        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+        val indexObj = spaceObj.indexes[key] ?: throw TarantoolException("Can't find Index \"$spaceObj\".\"$index\"")
+        return select(
+                space = spaceObj.id,
+                index = indexObj.id,
+                key = key,
+                offset = offset,
+                limit = limit,
+                iterator = iterator
+        )
+    }
+
+    suspend fun <O> select(space: Int, index: Int, key: O, offset: Int, limit: Int, iterator: QueryIterator): ResultSet {
+        val result = this.sendReceive(
+                code = Code.SELECT,
+                body = mapOf(
+                        Key.SPACE.id to space,
+                        Key.INDEX.id to index,
+                        Key.KEY.id to key,
+                        Key.ITERATOR.id to iterator.value,
+                        Key.LIMIT.id to limit,
+                        Key.OFFSET.id to offset
+                )
+        )
+        result.assertException()
+        return ResultSet(result.body)
+    }
+
+
+    internal suspend fun insert(
+            space: String,
+            values: List<Any?>) {
+        val meta = getMeta()
+        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+        insert(
+                space = spaceObj.id,
+                values = values
+        )
+    }
+
+    suspend fun delete(
+            space: String,
+            keys: List<Any?>): List<List<Any?>> {
+        val meta = getMeta()
+        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+        return delete(
+                space = spaceObj.id,
+                keys = keys
+        )
+    }
+
+    suspend fun replace(
+            space: String,
+            values: List<Any?>) {
+        val meta = getMeta()
+        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+        replace(
+                space = spaceObj.id,
+                values = values
+        )
+    }
+
+    suspend fun replace(
+            space: Int,
+            values: List<Any?>) {
+
+        val result = this.sendReceive(
+                code = Code.REPLACE,
+                body = mapOf(
+                        Key.SPACE.id to space,
+                        Key.TUPLE.id to values
+                )
+        )
+        result.assertException()
+    }
+
+    suspend fun update(
+            space: String,
+            key: Any?,
+            values: List<Any?>) {
+        val meta = getMeta()
+        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+        update(
+                space = spaceObj.id,
+                key = key,
+                values = values,
+        )
+    }
+
+    suspend fun update(
+            space: Int,
+            key: Any?,
+            values: List<Any?>) {
+
+        val result = this.sendReceive(
+                code = Code.REPLACE,
+                body = mapOf(
+                        Key.SPACE.id to space,
+                        Key.KEY.id to key,
+                        Key.TUPLE.id to values,
+                )
+        )
+        result.assertException()
+    }
+
+//    suspend fun upsert(
+//            space: String,
+//            key: Any?,
+//            values: List<Any?>) {
+//        val meta = getMeta()
+//        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+//        upsert(
+//                space = spaceObj.id,
+//                key = key,
+//                values = values,
+//        )
+//    }
+
+//    suspend fun upsert(
+//            space: Int,
+//            key: Any?,
+//            values: List<Any?>) {
+//
+//        val result = this.sendReceive(
+//                code = Code.UPSERT,
+//                body = mapOf(
+//                        Key.SPACE.id to space,
+//                        Key.KEY.id to key,
+//                        Key.TUPLE.id to values,
+//                )
+//        )
+//        println("Update columns: ${result.body}")
+//        result.assertException()
+//    }
+
+    suspend fun delete(
+            space: Int,
+            keys: List<Any?>): List<List<Any?>> {
+
+        val result = this.sendReceive(
+                code = Code.DELETE,
+                body = mapOf(
+                        Key.SPACE.id to space,
+                        Key.KEY.id to keys
+                )
+        )
+        result.assertException()
+        return result.data as List<List<Any?>>
+    }
+
+    suspend fun insert(
+            space: Int,
+            values: List<Any?>) {
+
+        val result = this.sendReceive(
+                code = Code.INSERT,
+                body = mapOf(
+                        Key.SPACE.id to space,
+                        Key.TUPLE.id to values
+                )
+        )
+        result.assertException()
     }
 
     suspend fun ping() {

@@ -6,7 +6,8 @@ internal const val VSPACE_NAME_FIELD_NUMBER = 2;
 internal const val VSPACE_ENGINE_FIELD_NUMBER = 3;
 
 data class TarantoolSpaceMeta(
-        val id: Int, val name: String,
+        val id: Int,
+        val name: String,
         val engine: String,
         val format: List<SpaceField>,
         val indexes: Map<String, TarantoolIndexMeta>,

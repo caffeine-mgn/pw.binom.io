@@ -1,7 +1,7 @@
 package pw.binom.db.tarantool.protocol
 
 // Iterator info was taken from here https://github.com/tarantool/tarantool/blob/f66584c3bcdffe61d6d99a4868a9b72d62338a11/src/box/iterator_type.h#L62
-internal enum class QueryIterator(  // tuples in distance ascending order from specified point
+enum class QueryIterator(  // tuples in distance ascending order from specified point
         val value: Int) {
     EQ(0),  // key == x ASC order
     REQ(1),  // key == x DESC order

@@ -20,6 +20,7 @@ internal enum class Key(val id: Int) {
     EXPRESSION(0x27),
     UPSERT_OPS(0x28),
     DATA(0x30),
+    SQL_INFO_ROW_COUNT(0x00),
     ERROR(0x31),
     METADATA(0x32),
 

@@ -159,6 +159,11 @@ internal object InternalProtocolUtils {
             null -> out.writeByte(buffer, MP_NULL)
             true -> out.writeByte(buffer, MP_TRUE)
             false -> out.writeByte(buffer, MP_FALSE)
+            is UUID -> {
+                out.writeByte(buffer, MP_FIXEXT)
+                out.writeByte(buffer, MP_UUID)
+                out.writeUUID(buffer, value)
+            }
             is String -> write(value, buffer, out)
             is ByteBuffer -> write(value, buffer, out)
             is ByteArray -> write(value, buffer, out)
@@ -280,14 +285,10 @@ internal object InternalProtocolUtils {
             MP_TRUE -> true
             MP_FLOAT -> input.readFloat(buf)
             MP_DOUBLE -> input.readDouble(buf)
-            MP_UINT8 -> input.readByte(buf)
-            MP_UINT16 -> input.readShort(buf)
-            MP_UINT32 -> input.readInt(buf)
-            MP_UINT64 -> input.readLong(buf)
-            MP_INT8 -> input.readByte(buf)
-            MP_INT16 -> input.readShort(buf)
-            MP_INT32 -> input.readInt(buf)
-            MP_INT64 -> input.readLong(buf)
+            MP_UINT8, MP_INT8 -> input.readByte(buf)
+            MP_UINT16, MP_INT16 -> input.readShort(buf)
+            MP_UINT32, MP_INT32 -> input.readInt(buf)
+            MP_UINT64, MP_INT64 -> input.readLong(buf)
             MP_ARRAY16 -> unpackListAsync(
                     size = input.readShort(buf).toInt() and MAX_16BIT,
                     buf = buf,
@@ -298,11 +299,6 @@ internal object InternalProtocolUtils {
                     buf = buf,
                     input = input
             )
-//            0x83.toByte() -> unpackMapAsync(
-//                    size = 3,
-//                    buf = buf,
-//                    input = input
-//            )
             MP_MAP16 -> unpackMap(
                     size = input.readShort(buf).toInt() and MAX_16BIT,
                     buf = buf,
@@ -343,21 +339,21 @@ internal object InternalProtocolUtils {
                     buf = buf,
                     input = input
             )
+            MP_FIXEXT -> {
+                return when (val exType = input.readByte(buf)) {
+                    MP_UUID -> input.readUUID(buf)
+                    else -> throw IOException("Unknown Extension data type: 0x${exType.toUByte().toString(16)}")
+                }
+            }
             else -> {
                 val typeInt = (type.toInt() and 0xFF)
-                return if (typeInt >= MP_NEGATIVE_FIXNUM_INT && typeInt <= MP_NEGATIVE_FIXNUM_INT + MAX_5BIT) {
-                    typeInt
-                } else if (typeInt >= MP_FIXARRAY_INT && typeInt <= MP_FIXARRAY_INT + MAX_4BIT) {
-                    unpackListAsync(typeInt - MP_FIXARRAY_INT, buf, input)
-                } else if (typeInt.toUInt() >= MP_FIXMAP_INT.toUInt() && typeInt.toUInt() <= MP_FIXMAP_INT.toUInt() + MAX_4BIT.toUInt()) {
-                    unpackMap(typeInt - MP_FIXMAP_INT, buf, input)
-                } else if (typeInt >= MP_FIXSTR_INT && typeInt <= MP_FIXSTR_INT + MAX_5BIT) {
-                    unpackString(typeInt - MP_FIXSTR_INT, buf, input)
-                } else if (typeInt <= MAX_7BIT) {
-                    // MP_FIXNUM - the value is value as an int
-                    typeInt
-                } else
-                    throw IOException("Unknown data type: 0x${type.toUByte().toString(16)}")
+                return when {
+                    (typeInt >= MP_NEGATIVE_FIXNUM_INT && typeInt <= MP_NEGATIVE_FIXNUM_INT + MAX_5BIT) || typeInt <= MAX_7BIT -> typeInt
+                    typeInt >= MP_FIXARRAY_INT && typeInt <= MP_FIXARRAY_INT + MAX_4BIT -> unpackListAsync(typeInt - MP_FIXARRAY_INT, buf, input)
+                    typeInt.toUInt() >= MP_FIXMAP_INT.toUInt() && typeInt.toUInt() <= MP_FIXMAP_INT.toUInt() + MAX_4BIT.toUInt() -> unpackMap(typeInt - MP_FIXMAP_INT, buf, input)
+                    typeInt >= MP_FIXSTR_INT && typeInt <= MP_FIXSTR_INT + MAX_5BIT -> unpackString(typeInt - MP_FIXSTR_INT, buf, input)
+                    else -> throw IOException("Unknown data type: 0x${type.toUByte().toString(16)}")
+                }
             }
         }
     }
@@ -403,7 +399,8 @@ private const val MP_INT32 = 0xd2.toByte()
 private const val MP_INT64 = 0xd3.toByte()
 
 private const val MP_FIXARRAY = 0x90.toByte() //last 4 bits is size
-
+private const val MP_FIXEXT = 0xd8.toByte()
+private const val MP_UUID = 0x02.toByte()
 private const val MP_FIXARRAY_INT = 0x90
 private const val MP_ARRAY16 = 0xdc.toByte()
 private const val MP_ARRAY32 = 0xdd.toByte()

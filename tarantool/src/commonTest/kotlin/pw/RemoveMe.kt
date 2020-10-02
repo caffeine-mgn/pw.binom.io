@@ -26,6 +26,20 @@ class FF {
                         client.ping()
 
                         val meta = client.getMeta()
+
+                        if (meta.any { it.name == "test" }) {
+                            client.eval("box.space.test:drop()", emptyList())
+                        }
+                        client.eval("""
+                            s=box.schema.space.create('test',{engine = 'memtx'})
+                            s:format({
+                                {name = 'id', type = 'uuid', is_nullable=false},
+                                {name = 'band_name', type = 'string', is_nullable=false},
+                                {name = 'year', type = 'unsigned', is_nullable=false}
+                            })
+                            s:create_index('primary', {type = 'hash', unique=true, parts = {{field = 1, type = 'uuid', is_nullable = false}}})
+                        """)
+
                         val table = meta.find { it.name == "tester" }!!
                         val id = table.format.indexOfFirst { it.name == "id" }.takeIf { it != -1 }!! + 1
                         val bandName = table.format.indexOfFirst { it.name == "band_name" }.takeIf { it != -1 }!! + 1
@@ -43,6 +57,13 @@ class FF {
                             println("->$it")
                         }
 
+                        client.delete("tester", listOf(19))
+                        client.delete("tester", listOf(11))
+                        client.delete("tester", listOf(10))
+                        client.insert("tester", listOf(11, "234", 4565))
+                        client.update("tester", listOf(11), listOf(11, "----", 444))
+//                        client.upsert("tester", listOf(11),listOf(11,"----",444))
+                        println("0----------0")
                         val stm = client.prepare("""insert into "tester" ("id", "band_name", "year") values (?,?,?)""")
                         client.sql(stm, listOf(10, "Test Prepare", 1191))
 

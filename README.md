@@ -1,6 +1,6 @@
 # Binom IO
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.4.0](https://img.shields.io/badge/Kotlin-1.4.0-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)<br><br>
+[![Kotlin 1.4.10](https://img.shields.io/badge/Kotlin-1.4.0-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)<br><br>
 Kotlin IO Library.<br>
 
 ## Actual version
@@ -10,16 +10,19 @@ Actual version is `0.1.19`
 Library contains next parts:<br>
 * [Core IO](core)
 * [Socket Library](socket)
-* [Async NIO](nio)
+* [Async Network](nio)
 * [Http Client](httpClient)
 * [Http Server](httpServer)
-* [File Utils](file)
+* [File Tools](file)
 * [Json Tools](json)
 * [XML Tools](xml)
 * [WebDav](webdav)
 * [Process API](process)
 * [SSL](ssl)
 * [Concurrency](concurrency)
+* Sync and Async Database Access<br>
+  * [SQLIte](sqlite)
+  * [Tarantool](tarantool)
 
 ## Using
 ### Gradle
@@ -99,10 +102,17 @@ See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/As
 - [x] [Common SQL Interfaces](db/README.md)
 - [x] [SQLite Support](sqlite/README.md)
 
+#### Async DataBase Access
+- [x] [Tarantool Connector](tarantool)
+
 
 ## Community
 [Telegram](https://t.me/io_binom) <br>
 [Discord](https://discord.gg/HFYABPa)
+
+
+## Examples
+Examples [here](examples)
 
 ## Using Library in Projects:
 [Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)

@@ -7,6 +7,12 @@ import kotlin.random.Random
 class UUID(val mostSigBits: Long, val leastSigBits: Long) {
 
     companion object {
+        fun create(mostSigBits: Long, leastSigBits: Long) =
+                UUID(
+                        mostSigBits = mostSigBits,
+                        leastSigBits = leastSigBits
+                )
+
         fun create(data: ByteArray): UUID {
             if (data.size != 16)
                 throw IllegalArgumentException("data must be 16 bytes in length")

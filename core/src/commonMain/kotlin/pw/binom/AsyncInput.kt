@@ -66,6 +66,12 @@ suspend fun AsyncInput.readByte(buffer: ByteBuffer): Byte {
     return buffer[0]
 }
 
+suspend fun AsyncInput.readUUID(buffer: ByteBuffer) =
+        UUID.create(
+                mostSigBits = readLong(buffer),
+                leastSigBits = readLong(buffer)
+        )
+
 suspend fun AsyncInput.readInt(buffer: ByteBuffer): Int {
     buffer.reset(0, 4)
     readFully(buffer)
@@ -119,7 +125,7 @@ suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>)
  * @param output output
  * @return size of copied data
  */
-suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>):ULong {
+suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): ULong {
     var out = 0uL
     val buf = pool.borrow()
     while (true) {

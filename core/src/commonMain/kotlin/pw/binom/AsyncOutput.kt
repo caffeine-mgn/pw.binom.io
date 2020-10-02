@@ -56,6 +56,11 @@ suspend fun AsyncOutput.writeUTF8String(buffer: ByteBuffer, text: String) {
     }
 }
 
+suspend fun AsyncOutput.writeUUID(buffer: ByteBuffer, value: UUID) {
+    writeLong(buffer, value.mostSigBits)
+    writeLong(buffer, value.leastSigBits)
+}
+
 suspend fun AsyncOutput.writeByte(buffer: ByteBuffer, value: Byte) {
     buffer.clear()
     buffer.put(value)

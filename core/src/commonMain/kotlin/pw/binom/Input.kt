@@ -62,7 +62,7 @@ interface Input : Closeable {
 //    outputStream.flush()
 //}
 
-fun Input.readUtf8Char(buffer:ByteBuffer): Char? {
+fun Input.readUtf8Char(buffer: ByteBuffer): Char? {
     buffer.reset(0, 1)
     return if (read(buffer) == 0) {
         null
@@ -77,7 +77,13 @@ fun Input.readUtf8Char(buffer:ByteBuffer): Char? {
     }
 }
 
-fun Input.readUTF8String(buffer:ByteBuffer): String {
+fun Input.readUUID(buffer: ByteBuffer) =
+        UUID.create(
+                mostSigBits = readLong(buffer),
+                leastSigBits = readLong(buffer)
+        )
+
+fun Input.readUTF8String(buffer: ByteBuffer): String {
     val size = readInt(buffer)
     val sb = StringBuilder(size)
     repeat(size) {
@@ -87,24 +93,24 @@ fun Input.readUTF8String(buffer:ByteBuffer): String {
 }
 
 
-fun Input.readByte(buffer:ByteBuffer): Byte {
+fun Input.readByte(buffer: ByteBuffer): Byte {
     buffer.reset(0, 1)
     readFully(buffer)
     return buffer[0]
 }
 
-fun Input.readInt(buffer:ByteBuffer): Int {
+fun Input.readInt(buffer: ByteBuffer): Int {
     buffer.reset(0, 4)
     readFully(buffer)
     return Int.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3])
 }
 
-fun Input.readShort(buffer:ByteBuffer): Short {
+fun Input.readShort(buffer: ByteBuffer): Short {
     buffer.reset(0, 2)
     return Short.fromBytes(buffer[0], buffer[1])
 }
 
-fun Input.readLong(buffer:ByteBuffer): Long {
+fun Input.readLong(buffer: ByteBuffer): Long {
     buffer.reset(0, 8)
     readFully(buffer)
     return Long.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7])
@@ -135,5 +141,5 @@ suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
     }
 }
 
-fun Input.readFloat(buffer:ByteBuffer) = Float.fromBits(readInt(buffer))
-fun Input.readDouble(buffer:ByteBuffer) = Double.fromBits(readLong(buffer))
+fun Input.readFloat(buffer: ByteBuffer) = Float.fromBits(readInt(buffer))
+fun Input.readDouble(buffer: ByteBuffer) = Double.fromBits(readLong(buffer))
