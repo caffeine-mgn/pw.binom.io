@@ -20,6 +20,7 @@ actual class Worker actual constructor(name: String?) {
         val ind = InputData(this, input, func)
         ind.freeze()
         val nativeFeature = nativeWorker.execute(TransferMode.SAFE, { ind }) {
+            initRuntimeIfNeeded()
             privateCurrentWorker = it.worker
             val result = runCatching { it.func(it.input) }
             privateCurrentWorker = null

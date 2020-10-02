@@ -1,17 +1,12 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
-def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
-
 kotlin {
+
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
         }
-    }
-
-    if (ideaActive) {
-        linuxX64("native")
     }
 
     linuxArm32Hfp { // Use your target instead.
@@ -38,7 +33,7 @@ kotlin {
         }
     }
 
-    jvm {
+    jvm{
         compilations.all {
             kotlinOptions {
                 jvmTarget = '1.8'
@@ -52,6 +47,7 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
+                api project(":nio")
             }
         }
 
@@ -65,6 +61,7 @@ kotlin {
         nativeMain {
             dependencies {
                 dependsOn commonMain
+                api project(":concurrency")
             }
         }
 
@@ -76,13 +73,13 @@ kotlin {
 
         linuxArm32HfpMain {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn nativeMain
             }
         }
 
         macosX64Main {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn nativeMain
             }
         }
 
@@ -94,12 +91,19 @@ kotlin {
 
         mingwX86Main {
             dependencies {
-                dependsOn mingwX64Main
+                dependsOn nativeMain
+            }
+        }
+
+        jsMain {
+            dependencies {
+                dependsOn commonMain
             }
         }
 
         jvmMain {
             dependencies {
+                dependsOn commonMain
                 api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
             }
         }
@@ -109,7 +113,6 @@ kotlin {
                 implementation kotlin('test-junit')
             }
         }
-
         sourceSets.all {
             languageSettings {
                 progressiveMode = true

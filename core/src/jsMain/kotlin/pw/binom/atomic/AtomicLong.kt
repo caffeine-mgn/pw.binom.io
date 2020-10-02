@@ -1,6 +1,9 @@
 package pw.binom.atomic
 
-actual class AtomicLong actual constructor(actual var value: Long) {
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
+
+actual class AtomicLong actual constructor(actual var value: Long) : ReadWriteProperty<Any, Long> {
 
     actual fun compareAndSet(expected: Long, new: Long): Boolean {
         if (value == expected) {
@@ -31,4 +34,10 @@ actual class AtomicLong actual constructor(actual var value: Long) {
     actual fun decrement() {
         value--
     }
+
+    override fun setValue(thisRef: Any, property: KProperty<*>, value: Long) {
+        this.value = value
+    }
+
+    override fun getValue(thisRef: Any, property: KProperty<*>): Long = value
 }

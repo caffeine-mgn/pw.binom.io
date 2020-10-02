@@ -53,3 +53,17 @@ fun <T> (suspend () -> T).start(): FeaturePromise<T> {
 }
 
 fun <P> async(f: suspend () -> P) = f.start()
+
+fun <T> (suspend () -> T).start2(): BaseFuture<T> {
+    val promise = BaseFuture<T>()
+    this.startCoroutine(object : Continuation<T> {
+        override val context: CoroutineContext = EmptyCoroutineContext
+
+        override fun resumeWith(result: Result<T>) {
+            promise.resume(result)
+        }
+    })
+    return promise
+}
+
+fun <P> async2(f: suspend () -> P) = f.start2()

@@ -10,6 +10,7 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.time.ExperimentalTime
 
 open class SocketNIOManager : Closeable {
+    val threadRef = ThreadRef()
 
     class ReadInterruptException : RuntimeException()
     interface ConnectHandler {
@@ -27,8 +28,8 @@ open class SocketNIOManager : Closeable {
     }
 
     class SocketHolder(internal val channel: SocketChannel) : Closeable {
-        internal var readyForReadListener by AtomicReference<(() -> Unit)?>(null)
-        internal var readyForWriteListener by AtomicReference<(() -> Unit)?>(null)
+        internal val readyForReadListener = ConcurrentQueue<() -> Unit>()//by AtomicReference<(() -> Unit)?>(null)
+        internal val readyForWriteListener = ConcurrentQueue<() -> Unit>()//by AtomicReference<(() -> Unit)?>(null)
         internal lateinit var selectionKey: SocketSelector.SelectorKey
 
         /**
@@ -39,15 +40,15 @@ open class SocketNIOManager : Closeable {
          * @param func function for call when socket ready for read
          */
         fun waitReadyForRead(func: (() -> Unit)?) {
-            readyForReadListener = func?.doFreeze()
             if (func != null) {
+                readyForReadListener.push(func.doFreeze())
                 selectionKey.listen(true, selectionKey.listenWritable)
             }
         }
 
         fun waitReadyForWrite(func: (() -> Unit)?) {
-            readyForWriteListener = func?.doFreeze()
             if (func != null) {
+                readyForWriteListener.push(func.doFreeze())
                 selectionKey.listen(selectionKey.listenReadable, true)
             }
         }
@@ -83,7 +84,8 @@ open class SocketNIOManager : Closeable {
                 readSchedule = null
                 detached = true
                 holder.selectionKey.listen(false, false)
-                holder.readyForReadListener = null
+                holder.readyForReadListener.clear()
+                holder.readyForWriteListener.clear()
                 w to r
             }
             schedules.first?.let {
@@ -166,6 +168,7 @@ open class SocketNIOManager : Closeable {
 
     private val executeOnThread = ArrayList<suspend (ConnectionRaw) -> Unit>()
     private val executeThreadLock = Lock()
+    private val pop = PopResult<() -> Unit>()
 
     protected open fun processIo(key: SocketSelector.SelectorKey) {
         val client = (key.attachment as ConnectionRaw?) ?: return
@@ -182,37 +185,39 @@ open class SocketNIOManager : Closeable {
 
             val readReadyCallback = client.holder.readyForReadListener
             if (key.isReadable && readReadyCallback != null) {
-                client.holder.readyForReadListener = null
-                try {
-                    readReadyCallback()
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    client.readSchedule?.finish(Result.failure(e))
-                    client.writeSchedule?.finish(Result.failure(e))
-                    client.readSchedule = null
-                    client.writeSchedule = null
-                    key.listen(false, false)
-                    client.detach().close()
+                client.holder.readyForReadListener.pop(pop)
+                if (!pop.isEmpty) {
+                    try {
+                        pop.value()
+                    } catch (e: Throwable) {
+                        client.readSchedule?.finish(Result.failure(e))
+                        client.writeSchedule?.finish(Result.failure(e))
+                        client.readSchedule = null
+                        client.writeSchedule = null
+                        key.listen(false, false)
+                        client.detach().close()
+                        throw e
+                    }
                     return
                 }
             }
 
-            val readReadyCallbackW = client.holder.readyForWriteListener
-            if (key.isWritable && readReadyCallbackW != null) {
-                client.holder.readyForWriteListener = null
-                try {
-                    readReadyCallbackW()
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    client.readSchedule?.finish(Result.failure(e))
-                    client.writeSchedule?.finish(Result.failure(e))
-                    client.readSchedule = null
-                    client.writeSchedule = null
-                    key.listen(false, false)
-                    client.detach().close()
+            if (key.isWritable) {
+                client.holder.readyForWriteListener.pop(pop)
+                if (!pop.isEmpty) {
+                    try {
+                        pop.value()
+                    } catch (e: Throwable) {
+                        client.readSchedule?.finish(Result.failure(e))
+                        client.writeSchedule?.finish(Result.failure(e))
+                        client.readSchedule = null
+                        client.writeSchedule = null
+                        key.listen(false, false)
+                        client.detach().close()
+                        throw e
+                    }
                     return
                 }
-                return
             }
 
             val writeWait = client.writeSchedule
@@ -239,25 +244,23 @@ open class SocketNIOManager : Closeable {
             }
 
             if (!client.holder.channel.isConnected) {
-                println("Connection not connected! Close Socket!")
                 key.cancel()
                 return
             }
 
             if (!key.isCanlelled)
                 key.listen(
-                        client.readSchedule != null || client.holder.readyForReadListener != null,
-                        client.writeSchedule != null || client.holder.readyForWriteListener != null
+                        client.readSchedule != null || !client.holder.readyForReadListener.isEmpty,
+                        client.writeSchedule != null || !client.holder.readyForWriteListener.isEmpty
                 )
         } catch (e: Throwable) {
-            println("ERROR!!! #2")
-            e.printStackTrace()
             key.listen(false, false)
             client.readSchedule?.finish(Result.failure(e))
             client.writeSchedule?.finish(Result.failure(e))
             client.readSchedule = null
             client.writeSchedule = null
             client.detach().close()
+            throw e
         }
     }
 

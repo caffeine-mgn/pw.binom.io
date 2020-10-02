@@ -3,7 +3,7 @@ package pw.binom.atomic
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-actual class AtomicReference<T> actual constructor(actual var value: T) : ReadWriteProperty<Any, T> {
+actual class AtomicReference<T> actual constructor(actual var value: T) : ReadWriteProperty<Any?, T> {
     actual fun compareAndSet(expected: T, new: T): Boolean {
         if (value === expected) {
             value = new
@@ -21,9 +21,9 @@ actual class AtomicReference<T> actual constructor(actual var value: T) : ReadWr
         return new
     }
 
-    override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         this.value = value
     }
 
-    override fun getValue(thisRef: Any, property: KProperty<*>): T = value
+    override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 }

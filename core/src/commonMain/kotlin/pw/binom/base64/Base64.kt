@@ -31,13 +31,15 @@ object Base64 {
         return sb.toString()
     }
 
-    fun decode(data: String, offset: Int = 0, length: Int = data.length - offset): ByteBuffer {
+    fun decode(data: String, offset: Int = 0, length: Int = data.length - offset): ByteArray {
         val out = ByteArrayOutput()
         val o = Base64DecodeAppendable(out)
         o.append(data, offset, offset + length)
         out.trimToSize()
         out.data.clear()
-        return out.data
+        val byteArray = out.data.toByteArray()
+        out.close()
+        return byteArray
     }
 }
 

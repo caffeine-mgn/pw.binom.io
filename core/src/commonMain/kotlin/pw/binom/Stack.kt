@@ -56,7 +56,7 @@ class Stack<T> {
     }
 
     fun popFirst(): T {
-        val item = top ?: throw IllegalStateException("Stack is empty")
+        val item = top ?: throw NoSuchElementException()
 
         top = item.next
 
@@ -81,7 +81,7 @@ class Stack<T> {
     }
 
     fun popLast(): T {
-        val item = bottom ?: throw IllegalStateException("Stack is empty")
+        val item = bottom ?: throw NoSuchElementException()
         bottom = item.back
 
         if (top == item)

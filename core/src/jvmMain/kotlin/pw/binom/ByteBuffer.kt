@@ -54,6 +54,8 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
 //    }
 
     override fun write(data: ByteBuffer): Int {
+        if (data===this)
+            throw IllegalArgumentException()
         val l = minOf(remaining, data.remaining)
         length(l) { self ->
             data.length(l) { src ->

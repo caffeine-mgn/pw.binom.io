@@ -4,7 +4,7 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import java.util.concurrent.atomic.AtomicReference as JAtomicReference
 
-actual class AtomicReference<T> actual constructor(value: T): ReadWriteProperty<Any, T> {
+actual class AtomicReference<T> actual constructor(value: T): ReadWriteProperty<Any?, T> {
     private val atom = JAtomicReference(value)
 
     actual fun compareAndSet(expected: T, new: T): Boolean =
@@ -19,9 +19,9 @@ actual class AtomicReference<T> actual constructor(value: T): ReadWriteProperty<
             atom.set(value)
         }
 
-    override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         atom.set(value)
     }
 
-    override fun getValue(thisRef: Any, property: KProperty<*>): T = atom.get()
+    override fun getValue(thisRef: Any?, property: KProperty<*>): T = atom.get()
 }
