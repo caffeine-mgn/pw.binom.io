@@ -124,7 +124,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     }
 
     actual fun get(): Byte =
-            native[position++]
+            native[nextPutIndex()]
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
         this.position = position
