@@ -9,3 +9,6 @@ dependencies {
     api "pw.binom.io:httpServer:<version>"
 }
 ```
+
+## Examples
+* [Http Server](../examples/simpleHttpServer)

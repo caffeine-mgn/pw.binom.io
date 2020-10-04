@@ -8,7 +8,7 @@ package pw.binom
  * var data = Bitset32()
  * assertFalse(data[0])
  * assertFalse(data[1])
- * data=data.set(0,true)
+ * data = data.set(0,true)
  * assertTrue(data[0])
  * assertFalse(data[1])
  * ```

@@ -145,7 +145,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     }
 
     actual fun realloc(newSize: Int): ByteBuffer {
-        val new = ByteBuffer.alloc(newSize)
+        val new = alloc(newSize)
         if (newSize > capacity) {
             memcpy(new.native, 0, native, capacity)
             new.position = position
@@ -183,5 +183,19 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
             position = size
             limit = capacity
         }
+    }
+
+    /**
+     * Returns last byte. Work as [get] but don'tm move position when he reads
+     */
+    actual fun peek(): Byte =
+            native[position++]
+
+    actual fun subBuffer(index: Int, length: Int): ByteBuffer {
+        val new = alloc(length)
+        memcpy(new.native, 0, native, length)
+        new.position = minOf(position, length)
+        new.limit = minOf(limit, length)
+        return new
     }
 }

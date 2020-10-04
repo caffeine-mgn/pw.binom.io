@@ -1,7 +1,13 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
+def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
+
 kotlin {
+
+    if (ideaActive) {
+        linuxX64("nonJvmCommon")
+    }
 
     linuxX64 { // Use your target instead.
         binaries {
@@ -40,7 +46,7 @@ kotlin {
         }
     }
 
-    js(BOTH){
+    js(BOTH) {
         browser()
         nodejs()
     }
@@ -63,9 +69,13 @@ kotlin {
             }
         }
 
+        nonJvmCommon{
+            dependsOn commonMain
+        }
+
         linuxX64Main {
             dependencies {
-                dependsOn commonMain
+                dependsOn nonJvmCommon
             }
         }
 
@@ -95,6 +105,7 @@ kotlin {
 
         jsMain {
             dependencies {
+                dependsOn nonJvmCommon
                 api "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
             }
         }

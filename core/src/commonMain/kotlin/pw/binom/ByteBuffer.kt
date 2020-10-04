@@ -10,6 +10,9 @@ import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
 
+/**
+ * A part of memory. Also contents current read/write state
+ */
 expect class ByteBuffer : Input, Output, Closeable {
     companion object {
         fun alloc(size: Int): ByteBuffer
@@ -24,6 +27,11 @@ expect class ByteBuffer : Input, Output, Closeable {
     fun skip(length: Long): Long
     fun get(): Byte
     fun put(value: Byte)
+
+    /**
+     * Returns last byte. Work as [get] but don'tm move position when he reads
+     */
+    fun peek(): Byte
     fun compact()
     fun reset(position: Int, length: Int): ByteBuffer
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
@@ -31,6 +39,7 @@ expect class ByteBuffer : Input, Output, Closeable {
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
     fun toByteArray(): ByteArray
+    fun subBuffer(index: Int, length: Int): ByteBuffer
 }
 
 inline fun ByteBuffer.clone() = realloc(capacity)
@@ -79,7 +88,7 @@ fun ByteBuffer.empty(): ByteBuffer {
     return this
 }
 
-class ByteBufferPool(capacity:Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) : DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), Closeable {
+class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) : DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), Closeable {
     override fun borrow(init: ((ByteBuffer) -> Unit)?): ByteBuffer {
         val buf = super.borrow(init)
         buf.clear()
@@ -129,7 +138,7 @@ inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.bin
     }
 }
 
-inline fun ByteBuffer.forEachIndexed(func: (Index: Int, value: Byte) -> Unit) {
+inline fun ByteBuffer.forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
     val pos = position
     val lim = limit
     for (it in pos until lim)
@@ -142,3 +151,5 @@ inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
     for (it in pos until lim)
         func(this[it])
 }
+
+fun ByteArray.input() = ByteBuffer.wrap(this)

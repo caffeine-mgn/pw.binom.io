@@ -4,7 +4,6 @@ import kotlinx.cinterop.*
 import platform.posix.memcpy
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
-import pw.binom.io.StreamClosedException
 
 actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     actual companion object {
@@ -20,12 +19,18 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     private val bytes = ByteArray(capacity)
 
-    //    val native: CPointer<ByteVar> = malloc(capacity.convert())!!.reinterpret()
     val native: CPointer<ByteVar> = run {
         memScoped {
             bytes.refTo(0).getPointer(this).toLong()
         }.toCPointer<ByteVar>()!!
     }
+
+    fun refTo(position: Int): CPointer<ByteVar> =
+            memScoped {
+//                require(position > limit) { "Position must be less than Limit" }
+//                require(position >= 0) { "Position must be greatert than Limit" }
+                bytes.refTo(position).getPointer(this).reinterpret<ByteVar>()//.toLong()
+            }//.toCPointer()!!
 
     actual fun flip() {
         limit = position
@@ -119,7 +124,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     }
 
     actual fun get(): Byte =
-            native[position++]
+            native[nextPutIndex()]
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
         this.position = position
@@ -157,7 +162,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     actual fun toByteArray(): ByteArray {
         val r = ByteArray(remaining)
-        memcpy(r.refTo(0), native, remaining.convert())
+        memcpy(r.refTo(0), refTo(position), remaining.convert())
         return r
     }
 
@@ -180,5 +185,18 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     init {
         doFreeze()
+    }
+
+    actual fun peek(): Byte {
+        if (position == limit) {
+            throw NoSuchElementException()
+        }
+        return this[position]
+    }
+
+    actual fun subBuffer(index: Int, length: Int): ByteBuffer {
+        val newBytes = ByteBuffer.alloc(length)
+        memcpy(newBytes.refTo(0), refTo(index), length.convert())
+        return newBytes
     }
 }
