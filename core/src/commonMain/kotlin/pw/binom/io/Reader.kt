@@ -6,11 +6,7 @@ interface Reader : Closeable {
      */
     fun read(): Char?
 
-    fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): Int
-}
-
-abstract class AbstractReader : Reader {
-    override fun read(data: CharArray, offset: Int, length: Int): Int {
+    fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): Int{
         if (offset + length > data.size)
             throw IndexOutOfBoundsException()
         var i = 0

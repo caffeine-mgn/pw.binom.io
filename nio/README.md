@@ -12,3 +12,4 @@ dependencies {
 
 ## Examples
 * [Http Server](../examples/httpServer)
+* [Http Server](../examples/clienthttp)

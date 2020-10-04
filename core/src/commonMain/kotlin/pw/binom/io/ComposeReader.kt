@@ -3,7 +3,7 @@ package pw.binom.io
 import pw.binom.PopResult
 import pw.binom.Stack
 
-class ComposeReader : AbstractReader() {
+class ComposeReader : Reader {
     private val readers = Stack<Reader>()
     private var current = PopResult<Reader>()
 

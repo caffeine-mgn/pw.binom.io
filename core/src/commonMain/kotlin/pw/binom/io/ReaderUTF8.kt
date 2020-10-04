@@ -3,7 +3,7 @@ package pw.binom.io
 import pw.binom.ByteBuffer
 import pw.binom.Input
 
-class ReaderUTF82(val stream: Input) : AbstractReader() {
+class ReaderUTF82(val stream: Input) : Reader {
 
     private val data = ByteBuffer.alloc(4)
 

@@ -1,6 +1,6 @@
 # Binom IO
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.4.10](https://img.shields.io/badge/Kotlin-1.4.0-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)<br><br>
+[![Kotlin 1.4.10](https://img.shields.io/badge/Kotlin-1.4.10-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)<br><br>
 Kotlin IO Library.<br>
 
 ## Actual version
@@ -73,6 +73,7 @@ See [JsonWriter](json/src/commonMain/kotlin/pw/binom/json/JsonWriter.kt) and [Js
 - [ ] JsonB Tools
 - [x] [ObjectPool](core/src/commonMain/kotlin/pw/binom/pool/DefaultPool.kt)
 - [x] XML Tools<br>
+- [x] Charset Support
 See SAX Tools:
 [XmlVisiter](xml/src/commonMain/kotlin/pw/binom/xml/sax/XmlVisiter.kt),
 [XmlReaderVisiter](xml/src/commonMain/kotlin/pw/binom/xml/sax/XmlReaderVisiter.kt),

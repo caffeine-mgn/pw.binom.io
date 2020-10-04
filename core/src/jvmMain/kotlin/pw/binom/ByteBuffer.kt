@@ -54,7 +54,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
 //    }
 
     override fun write(data: ByteBuffer): Int {
-        if (data===this)
+        if (data === this)
             throw IllegalArgumentException()
         val l = minOf(remaining, data.remaining)
         length(l) { self ->
@@ -178,6 +178,25 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
 
     actual fun compact() {
         native.compact()
+    }
+
+    actual fun peek(): Byte {
+        if (position == limit) {
+            throw NoSuchElementException()
+        }
+        return get(position)
+    }
+
+    actual fun subBuffer(index: Int, length: Int): ByteBuffer {
+        val p = position
+        val l = limit
+        position = 0
+        limit = capacity
+        position = index
+        limit = index + length
+        val newBytes = JByteBuffer.allocate(length)
+        native.copyTo(newBytes)
+        return ByteBuffer(newBytes)
     }
 }
 

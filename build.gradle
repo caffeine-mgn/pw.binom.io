@@ -1,7 +1,7 @@
 buildscript {
     ext.kotlin_version = "1.4.10"
     ext.network_version = "0.1.19"
-    ext.serialization_version='1.0.0-RC'
+    ext.serialization_version = '1.0.0-RC'
 
     repositories {
         mavenCentral()
@@ -26,4 +26,21 @@ allprojects {
         mavenCentral()
         jcenter()
     }
+}
+
+task publishMingwToBinomRepo {
+    group = "publish"
+    dependsOn getTasksByName("publishMingwX86PublicationToBinomRepositoryRepository", true)
+    dependsOn getTasksByName("publishMingwX64PublicationToBinomRepositoryRepository", true)
+}
+
+task publishLinuxToBinomRepo {
+    group = "publish"
+    dependsOn getTasksByName("publishMetadataPublicationToBinomRepositoryRepository", true)
+    dependsOn getTasksByName("publishLinuxX64PublicationToBinomRepositoryRepository", true)
+    dependsOn getTasksByName("publishLinuxArm64PublicationToBinomRepositoryRepository", true)
+    dependsOn getTasksByName("publishLinuxArm32HfpPublicationToBinomRepositoryRepository", true)
+    dependsOn getTasksByName("publishKotlinMultiplatformPublicationToBinomRepositoryRepository", true)
+    dependsOn getTasksByName("publishJvmPublicationToBinomRepositoryRepository", true)
+    dependsOn getTasksByName("publishJsPublicationToBinomRepositoryRepository", true)
 }

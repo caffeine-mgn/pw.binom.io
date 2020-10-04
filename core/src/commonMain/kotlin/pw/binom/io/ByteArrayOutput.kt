@@ -62,10 +62,10 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
 //        return length
 //    }
 
-    override fun write(data: ByteBuffer): Int {
+    fun alloc(size: Int) {
         checkClosed()
 
-        val needWrite = data.remaining - (this.data.remaining)
+        val needWrite = size - (this.data.remaining)
 
         if (needWrite > 0) {
             val newSize = maxOf(
@@ -78,6 +78,25 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
             this.data = new
             old.clear()
         }
+    }
+
+    override fun write(data: ByteBuffer): Int {
+//        checkClosed()
+//
+//        val needWrite = data.remaining - (this.data.remaining)
+//
+//        if (needWrite > 0) {
+//            val newSize = maxOf(
+//                    ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
+//                    this.data.capacity + _wrote + needWrite
+//            )
+//            val old = this.data
+//            val new = this.data.realloc(newSize)
+//            new.limit = new.capacity
+//            this.data = new
+//            old.clear()
+//        }
+        alloc(data.remaining)
         val l = this.data.write(data)
         _wrote += l
         return l
