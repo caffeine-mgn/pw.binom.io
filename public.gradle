@@ -1,9 +1,8 @@
-def repoUser = project.property("binom.repo.user")
-def repoPassword = project.property("binom.repo.password")
-def repoUrl = project.property("binom.repo.url")
+if (project.hasProperty("binom.repo.url")) {
+    def repoUser = project.hasProperty("binom.repo.user") ? project.property("binom.repo.user") : null
+    def repoPassword = project.hasProperty("binom.repo.password") ? project.property("binom.repo.password") : null
+    def repoUrl = project.property("binom.repo.url")
 
-def allowPublic = repoUser != null && repoPassword != null && repoUrl != null
-if (allowPublic) {
     publishing {
         repositories {
             maven {
@@ -11,9 +10,11 @@ if (allowPublic) {
 
                 url repoUrl
 
-                credentials {
-                    username = repoUser
-                    password = repoPassword
+                if (repoUser != null && repoPassword != null) {
+                    credentials {
+                        username = repoUser
+                        password = repoPassword
+                    }
                 }
             }
         }
@@ -50,4 +51,5 @@ if (allowPublic) {
             }
         }
     }
+
 }
