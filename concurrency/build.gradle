@@ -12,6 +12,7 @@ kotlin {
 
     if (ideaActive) {
         linuxX64("native")
+        linuxX64("posix")
     }
 
     linuxArm32Hfp { // Use your target instead.
@@ -68,9 +69,15 @@ kotlin {
             }
         }
 
-        linuxX64Main {
+        posixMain {
             dependencies {
                 dependsOn nativeMain
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+                dependsOn posixMain
             }
         }
 
@@ -82,7 +89,7 @@ kotlin {
 
         macosX64Main {
             dependencies {
-                dependsOn linuxX64Main
+                dependsOn posixMain
             }
         }
 
