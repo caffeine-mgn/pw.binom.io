@@ -50,7 +50,7 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
     override fun get(): T =
             lock.synchronize {
                 while (last == null) {
-                    condition.wait()
+                    condition.await()
                 }
                 val item = last!!
                 last = item.previous
@@ -67,7 +67,7 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
                 while (last == null) {
                     if (now.elapsedNow() > duration)
                         return@synchronize null
-                    condition.wait()
+                    condition.await()
                 }
                 val item = last!!
                 last = item.previous

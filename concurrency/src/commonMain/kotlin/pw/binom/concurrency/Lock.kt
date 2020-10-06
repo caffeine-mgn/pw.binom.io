@@ -18,8 +18,14 @@ expect class Lock : Closeable {
 
     @OptIn(ExperimentalTime::class)
     class Condition : Closeable {
-        fun wait()
-        fun wait(duration: Duration): Boolean
+        fun await()
+
+        /**
+         * Stops the current thread until it receives an event. Event can send call of [signal] or [signalAll]
+         *
+         * @return [false] if the waiting time detectably elapsed before return from the method, else [true]
+         */
+        fun await(duration: Duration): Boolean
         fun signal()
         fun signalAll()
     }

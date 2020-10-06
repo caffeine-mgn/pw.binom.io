@@ -51,7 +51,7 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
 
     override fun set(index: Int, value: ByteArray) {
         checkRange(index)
-        connection.checkSqlCode(sqlite3_bind_blob(stmt, index+1, value.refTo(0), value.size, SQLITE_STATIC))
+        connection.checkSqlCode(sqlite3_bind_blob(stmt, index + 1, value.refTo(0), value.size, SQLITE_STATIC))
     }
 
     override fun executeQuery(): ResultSet {
@@ -70,6 +70,10 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
         val code = sqlite3_step(stmt)
         connection.checkSqlCode(code)
         sqlite3_reset(stmt)
+    }
+
+    override fun setNull(index: Int) {
+        connection.checkSqlCode(sqlite3_bind_null(stmt, index + 1))
     }
 
     override fun close() {

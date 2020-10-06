@@ -285,18 +285,6 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         return ResultSet(result.body)
     }
 
-
-    internal suspend fun insert(
-            space: String,
-            values: List<Any?>) {
-        val meta = getMeta()
-        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
-        insert(
-                space = spaceObj.id,
-                values = values
-        )
-    }
-
     suspend fun delete(
             space: String,
             keys: List<Any?>): List<List<Any?>> {
@@ -405,6 +393,17 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         )
         result.assertException()
         return result.data as List<List<Any?>>
+    }
+
+    suspend fun insert(
+            space: String,
+            values: List<Any?>) {
+        val meta = getMeta()
+        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+        insert(
+                space = spaceObj.id,
+                values = values,
+        )
     }
 
     suspend fun insert(

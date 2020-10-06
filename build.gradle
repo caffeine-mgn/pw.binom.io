@@ -44,3 +44,10 @@ task publishLinuxToBinomRepo {
     dependsOn getTasksByName("publishJvmPublicationToBinomRepositoryRepository", true)
     dependsOn getTasksByName("publishJsPublicationToBinomRepositoryRepository", true)
 }
+
+task cinteropAll {
+    group = "interop"
+    dependsOn getAllTasks(true).values().flatten().findAll {
+        it.name!="cinteropAll" && it.name.startsWith("cinterop")
+    }
+}

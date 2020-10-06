@@ -64,15 +64,26 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
         }
     }
 
+    /**
+     * Returns short ID with only first 8 bytes as HEX string
+     *
+     * @return first 8 bytes in HEX string
+     */
     fun toShortString(): String {
         val buf = CharArray(8)
         val msb = mostSigBits
         Long.formatUnsignedLong0(msb ushr 32, 4, buf, 0, 8)
-        return String(buf)
+        return buf.concatToString()
     }
 
     fun toByteArray(): ByteArray = toByteArray(ByteArray(16))
 
+    /**
+     * Puts UUID to [output]. [output].size must be equals 16 or more. Puts data with 0 offset
+     *
+     * @param output Array for store current uuid
+     * @param returns [output] array
+     */
     fun toByteArray(output: ByteArray): ByteArray {
         if (output.size < 16)
             throw IllegalArgumentException()

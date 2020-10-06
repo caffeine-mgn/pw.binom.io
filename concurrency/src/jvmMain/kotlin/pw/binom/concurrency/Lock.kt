@@ -27,7 +27,7 @@ actual class Lock : Closeable {
 
     actual class Condition(val lock: ReentrantLock, val native: java.util.concurrent.locks.Condition) : Closeable {
         @JvmName("wait5")
-        actual fun wait() {
+        actual fun await() {
             try {
                 native.await()
             } catch (e: JInterruptedException) {
@@ -47,7 +47,7 @@ actual class Lock : Closeable {
         }
 
         @OptIn(ExperimentalTime::class)
-        actual fun wait(duration: Duration): Boolean {
+        actual fun await(duration: Duration): Boolean {
             try {
                 return native.await(duration.toLongMilliseconds(), TimeUnit.MILLISECONDS)
             } catch (e: JInterruptedException) {

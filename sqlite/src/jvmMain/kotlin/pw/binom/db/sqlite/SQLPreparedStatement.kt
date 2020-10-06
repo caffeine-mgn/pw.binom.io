@@ -29,6 +29,10 @@ class SQLPreparedStatement(override val connection: SQLiteConnector, internal va
         native.setBytes(index + 1, value)
     }
 
+    override fun setNull(index: Int) {
+        native.setObject(index + 1, null)
+    }
+
     override fun executeQuery(): ResultSet =
             SQLiteResultSet(native.executeQuery())
 

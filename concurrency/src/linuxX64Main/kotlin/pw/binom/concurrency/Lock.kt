@@ -59,7 +59,7 @@ actual class Lock : Closeable {
                 throw IllegalStateException("Can't init Condition")
         }
 
-        actual fun wait() {
+        actual fun await() {
                 pthread_cond_wait(native.cc.ptr, mutex.mm.ptr)
         }
 
@@ -78,9 +78,9 @@ actual class Lock : Closeable {
         }
 
         @OptIn(ExperimentalTime::class)
-        actual fun wait(duration: Duration): Boolean {
+        actual fun await(duration: Duration): Boolean {
             if (duration.isInfinite()) {
-                wait()
+                await()
                 return true
             }
             return memScoped<Boolean> {

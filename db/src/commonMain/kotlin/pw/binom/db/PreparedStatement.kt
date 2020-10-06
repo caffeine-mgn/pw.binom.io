@@ -11,6 +11,7 @@ interface PreparedStatement : Closeable {
     fun set(index: Int, value: String)
     fun set(index: Int, value: Boolean)
     fun set(index: Int, value: ByteArray)
+    fun setNull(index: Int)
     fun executeQuery(): ResultSet
     fun executeUpdate()
     fun set(index: Int, value: UUID) {

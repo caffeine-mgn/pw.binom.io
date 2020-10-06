@@ -47,7 +47,7 @@ actual class Lock : Closeable {
             InitializeConditionVariable(native.ptr)
         }
 
-        actual fun wait() {
+        actual fun await() {
             while (true) {
                 val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
                 if (Worker.current?.isInterrupted == true)
@@ -73,9 +73,9 @@ actual class Lock : Closeable {
         }
 
         @OptIn(ExperimentalTime::class)
-        actual fun wait(duration: Duration): Boolean {
+        actual fun await(duration: Duration): Boolean {
             if (duration.isInfinite()) {
-                wait()
+                await()
                 return true
             }
             val now = TimeSource.Monotonic.markNow()

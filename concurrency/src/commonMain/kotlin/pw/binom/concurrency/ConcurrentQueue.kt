@@ -5,6 +5,8 @@ import pw.binom.PopResult
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
 import pw.binom.io.Closeable
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
     private var _size by AtomicInt(0)
@@ -13,6 +15,7 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
     private var top by AtomicReference<Item<T>?>(null)
     private var bottom by AtomicReference<Item<T>?>(null)
     private val lock = Lock()
+    private val condition = lock.newCondition()
 
     fun clear() {
         lock.synchronize {
@@ -30,18 +33,59 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
     override val isEmpty: Boolean
         get() = _size == 0
 
-    override fun pop(): T {
+    @OptIn(ExperimentalTime::class)
+    fun popBlocked(): T {
         lock.synchronize {
-            val item = top ?: throw NoSuchElementException()
+            while (true) {
+                val item = top
+                if (item == null) {
+                    condition.await()
+                    continue
+                }
+                top = item.next
 
-            top = item.next
-
-            if (bottom == item)
-                bottom = null
-            _size--
-            return item.value
+                if (bottom == item)
+                    bottom = null
+                _size--
+                return item.value
+            }
         }
+        throw IllegalStateException()
     }
+
+    @OptIn(ExperimentalTime::class)
+    fun popBlocked(duration: Duration): T? {
+        lock.synchronize {
+            while (true) {
+                val item = top
+                if (item == null) {
+                    if (!condition.await(duration)) {
+                        return null
+                    }
+                    continue
+                }
+                top = item.next
+
+                if (bottom == item)
+                    bottom = null
+                _size--
+                return item.value
+            }
+        }
+        throw IllegalStateException()
+    }
+
+    override fun pop(): T =
+            lock.synchronize {
+                val item = top ?: throw NoSuchElementException()
+
+                top = item.next
+
+                if (bottom == item)
+                    bottom = null
+                _size--
+                item.value
+            }
 
     override fun pop(dist: PopResult<T>) {
         lock.synchronize {
@@ -70,12 +114,15 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
             bottom?.next = i
             bottom = i
             _size++
+            condition.signal()
         }
     }
 
-    override fun peek(): T = (top ?: throw NoSuchElementException()).value
+    override fun peek(): T = lock.synchronize {
+        (top ?: throw NoSuchElementException()).value
+    }
+
     override fun close() {
         lock.close()
     }
-
 }
