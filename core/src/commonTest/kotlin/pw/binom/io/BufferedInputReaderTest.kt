@@ -31,29 +31,4 @@ class BufferedInputReaderTest {
         }
         assertNull(reader.read())
     }
-
-    @Ignore
-    @OptIn(ExperimentalTime::class)
-    @Test
-    fun bantmarch() {
-        val dataCount = 1000
-        val repeatCount = 10000
-        val input = ByteBuffer.alloc(test_data_hello_bytes_utf_8.size * dataCount)
-        val inpBuf = ByteBuffer.wrap(test_data_hello_bytes_utf_8)
-        repeat(dataCount) {
-            inpBuf.clear()
-            input.write(inpBuf)
-        }
-
-        val d = Charsets.get("utf-8").newDecoder()
-        val cc = CharBuffer.alloc(test_data_hello_text.length * dataCount)
-        val b = measureTime {
-            repeat(repeatCount) {
-                inpBuf.clear()
-                cc.clear()
-                d.decode(inpBuf, cc)
-            }
-        }
-        println("Time: $b")
-    }
 }

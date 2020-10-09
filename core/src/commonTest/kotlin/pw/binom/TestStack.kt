@@ -96,18 +96,4 @@ class TestStack {
         assertEquals("1", s.popFirst())
         assertTrue(s.isEmpty)
     }
-
-    @Ignore
-    @Test
-    fun testIsEmptyFirstLast() {
-        val s = Stack<String>()
-        s.pushFirst("1")
-        s.pushFirst("2")
-
-        assertFalse(s.isEmpty)
-        assertEquals("2", s.popLast())
-        assertFalse(s.isEmpty)
-        assertEquals("1", s.popLast())
-        assertTrue(s.isEmpty)
-    }
 }

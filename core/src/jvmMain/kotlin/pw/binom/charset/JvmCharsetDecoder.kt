@@ -7,7 +7,7 @@ import java.nio.charset.CharsetDecoder as JCharsetDecoder
 class JvmCharsetDecoder(val native: JCharsetDecoder) : CharsetDecoder {
 
     override fun decode(input: ByteBuffer, output: CharBuffer): CharsetTransformResult {
-        val r = native.decode(input.native, output.native, true)
+        val r = native.decode(input.native, output.native, false)
         when {
             r.isUnderflow -> return CharsetTransformResult.SUCCESS
             r.isOverflow -> {

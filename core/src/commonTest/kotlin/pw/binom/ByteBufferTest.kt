@@ -89,7 +89,7 @@ class ByteBufferTest {
     }
 
     @Test
-    fun compactTest() {
+    fun compactFillTest() {
         val self = ByteBuffer.alloc(10)
         repeat(self.remaining) {
             self.put(it.toByte())
@@ -106,5 +106,14 @@ class ByteBufferTest {
         assertEquals(7, self[2])
         assertEquals(8, self[3])
         assertEquals(9, self[4])
+        self.close()
+    }
+
+    @Test
+    fun compactEmptyTest() {
+        val self = ByteBuffer.alloc(10).empty()
+        self.compact()
+        assertEquals(0, self.position)
+        assertEquals(self.capacity, self.limit)
     }
 }

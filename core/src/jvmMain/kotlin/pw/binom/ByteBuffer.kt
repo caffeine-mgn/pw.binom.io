@@ -177,7 +177,11 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
     }
 
     actual fun compact() {
-        native.compact()
+        if (position == 0) {
+            native.clear()
+        } else {
+            native.compact()
+        }
     }
 
     actual fun peek(): Byte {

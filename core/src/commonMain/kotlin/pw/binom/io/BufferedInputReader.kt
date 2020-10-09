@@ -9,22 +9,20 @@ class BufferedInputReader(charset: Charset, val input: Input, bufferSize: Int = 
     private val decoder = charset.newDecoder()
     private val output = CharBuffer.alloc(charBufferSize).empty()
 
-    private val tmp = ByteBuffer.alloc(1)
     private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
     private fun checkAvailable() {
-        if (buffer.remaining == 0) {
-            buffer.clear()
-            input.read(buffer)
-            buffer.flip()
-        }
+        buffer.compact()
+        input.read(buffer)
+        buffer.flip()
     }
 
     private fun prepareBuffer() {
         if (output.remaining == 0) {
             checkAvailable()
             output.clear()
-            if (decoder.decode(buffer, output) == CharsetTransformResult.MALFORMED) {
+            val r = decoder.decode(buffer, output)
+            if (r == CharsetTransformResult.MALFORMED) {
                 throw IOException()
             }
             output.flip()
@@ -61,7 +59,6 @@ class BufferedInputReader(charset: Charset, val input: Input, bufferSize: Int = 
 
     override fun close() {
         decoder.close()
-        tmp.close()
     }
 
 }
