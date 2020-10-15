@@ -5,15 +5,21 @@ apply plugin: 'org.jetbrains.kotlin.multiplatform'
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import pw.binom.plugins.BuildStaticTask
 
+def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
+
 def getLinkArgs(target) {
     return [
-            '-include-binary', file("${buildDir}/native/${target.konanTarget.name}/libsqlite3.a").absolutePath
+            '-include-binary', file("${buildDir}/native/${target.konanTarget.name}/liblua.a").absolutePath
     ]
 }
 
-def sqlitePackageName = 'platform.internal_sqlite'
+def luaPackageName = 'platform.internal_lua'
 
 kotlin {
+
+    if (ideaActive) {
+        linuxX64("native")
+    }
 
     linuxX64 {
         def task = it
@@ -24,29 +30,10 @@ kotlin {
             compilations.main {
                 kotlinOptions.freeCompilerArgs = getLinkArgs(task)
                 cinterops {
-                    sqlite {
-                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
-                        packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
-                    }
-                }
-            }
-            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
-        }
-    }
-
-    linuxArm32Hfp {
-        def task = it
-        binaries {
-            staticLib()
-
-            compilations.main {
-                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
-                cinterops {
-                    sqlite {
-                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
-                        packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
+                    lua {
+                        defFile project.file("src/nativeInterop/lua.def")
+                        packageName luaPackageName
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeMain/lua"
                     }
                 }
             }
@@ -62,10 +49,29 @@ kotlin {
             compilations.main {
                 kotlinOptions.freeCompilerArgs = getLinkArgs(task)
                 cinterops {
-                    sqlite {
-                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
-                        packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
+                    lua {
+                        defFile project.file("src/nativeInterop/lua.def")
+                        packageName luaPackageName
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeMain/lua"
+                    }
+                }
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+        }
+    }
+
+    linuxArm32Hfp {
+        def task = it
+        binaries {
+            staticLib()
+
+            compilations.main {
+                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+                cinterops {
+                    lua {
+                        defFile project.file("src/nativeInterop/lua.def")
+                        packageName luaPackageName
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeMain/lua"
                     }
                 }
             }
@@ -82,10 +88,10 @@ kotlin {
             compilations.main {
                 kotlinOptions.freeCompilerArgs = getLinkArgs(task)
                 cinterops {
-                    sqlite {
-                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
-                        packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
+                    lua {
+                        defFile project.file("src/nativeInterop/lua.def")
+                        packageName luaPackageName
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeMain/lua"
                     }
                 }
             }
@@ -101,10 +107,10 @@ kotlin {
             compilations.main {
                 kotlinOptions.freeCompilerArgs = getLinkArgs(task)
                 cinterops {
-                    sqlite {
-                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
-                        packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
+                    lua {
+                        defFile project.file("src/nativeInterop/lua.def")
+                        packageName luaPackageName
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/nativeMain/lua"
                     }
                 }
             }
@@ -125,8 +131,7 @@ kotlin {
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
-                api project(":db")
-                api project(":file")
+                api project(":core")
             }
         }
 
@@ -146,6 +151,7 @@ kotlin {
         linuxX64Main {
             dependencies {
                 dependsOn nativeMain
+                api project(":core")
             }
         }
 
@@ -176,8 +182,7 @@ kotlin {
         jvmMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-                api 'org.xerial:sqlite-jdbc:3.31.1'
-
+                api 'org.luaj:luaj-jse:3.0.1'
             }
         }
 
@@ -196,9 +201,10 @@ kotlin {
 }
 
 def defineBuild(KonanTarget selectTarget) {
-    BuildStaticTask task = tasks.create("buildSqlite${selectTarget.name.capitalize()}", BuildStaticTask.class)
+    BuildStaticTask task = tasks.create("buildLua${selectTarget.name.capitalize()}", BuildStaticTask.class)
     task.target = selectTarget
-    task.include(file("${buildFile.parentFile}/src/native"))
+    task.compileArgs("-std=gnu99", "-DLUA_COMPAT_5_3")
+//    task.include(file("${buildFile.parentFile}/src/native"))
     task.compileArgs(
             "-DSQLITE_ENABLE_FTS3",
             "-DSQLITE_ENABLE_FTS4",
@@ -211,10 +217,13 @@ def defineBuild(KonanTarget selectTarget) {
             "-DSQLITE_ENABLE_EXPLAIN_COMMENTS",
             "-DSQLITE_ENABLE_COLUMN_METADATA=1"
     )
-    task.compileFile(
-            file("${buildFile.parentFile}/src/native/sqlite3.c")
+    task.compileDir(
+            file("${buildFile.parentFile}/src/nativeMain/lua"),
+            file("${buildDir}/native/o/${selectTarget.name}"),
+            null,
+            null
     )
-    task.staticFile = file("${buildDir}/native/${selectTarget.name}/libsqlite3.a")
+    task.staticFile = file("${buildDir}/native/${selectTarget.name}/liblua.a")
 }
 
 defineBuild(KonanTarget.MINGW_X86.INSTANCE)
@@ -222,26 +231,21 @@ defineBuild(KonanTarget.MINGW_X64.INSTANCE)
 defineBuild(KonanTarget.LINUX_X64.INSTANCE)
 defineBuild(KonanTarget.LINUX_ARM64.INSTANCE)
 defineBuild(KonanTarget.LINUX_ARM32_HFP.INSTANCE)
-defineBuild(KonanTarget.MACOS_X64.INSTANCE)
 
 compileKotlinLinuxX64 {
-    dependsOn buildSqliteLinux_x64
+    dependsOn buildLuaLinux_x64
 }
 
 compileKotlinMingwX64 {
-    dependsOn buildSqliteMingw_x64
+    dependsOn buildLuaMingw_x64
 }
 
 compileKotlinMingwX86 {
-    dependsOn buildSqliteMingw_x86
+    dependsOn buildLuaMingw_x86
 }
 
 compileKotlinLinuxArm32Hfp {
-    dependsOn buildSqliteLinux_arm32_hfp
+    dependsOn buildLuaLinux_arm32_hfp
 }
-
-//compileKotlinLinuxMacosX64 {
-//    dependsOn buildSqliteMacos_x64
-//}
 
 apply from: '../public.gradle'

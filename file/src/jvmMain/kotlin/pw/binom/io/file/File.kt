@@ -43,8 +43,8 @@ actual class File actual constructor(path: String) {
             native.renameTo(newPath.native)
 }
 
-val java.io.File.asBFile: File
+val JFile.binom: File
     get() = File(absolutePath)
 
-val File.asJFile: java.io.File
-    get() = java.io.File(path)
+val File.java: JFile
+    get() = JFile(path)

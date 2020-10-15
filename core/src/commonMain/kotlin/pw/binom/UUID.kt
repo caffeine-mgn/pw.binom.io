@@ -1,7 +1,9 @@
+@file:JvmName("UUIDUtils")
 package pw.binom
 
 import kotlin.experimental.and
 import kotlin.experimental.or
+import kotlin.jvm.JvmName
 import kotlin.random.Random
 
 class UUID(val mostSigBits: Long, val leastSigBits: Long) {
