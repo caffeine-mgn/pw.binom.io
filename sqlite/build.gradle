@@ -240,8 +240,8 @@ compileKotlinLinuxArm32Hfp {
     dependsOn buildSqliteLinux_arm32_hfp
 }
 
-//compileKotlinLinuxMacosX64 {
-//    dependsOn buildSqliteMacos_x64
-//}
+compileKotlinMacosX64 {
+    dependsOn buildSqliteMacos_x64
+}
 
 apply from: '../public.gradle'

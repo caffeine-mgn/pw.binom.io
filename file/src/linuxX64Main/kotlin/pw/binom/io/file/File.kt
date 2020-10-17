@@ -3,6 +3,7 @@ package pw.binom.io.file
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.native.concurrent.freeze
+import pw.binom.io.*
 
 private fun timespec.toMillis(): Long {
     var s = tv_sec
@@ -82,4 +83,14 @@ actual class File actual constructor(path: String) {
         }
 
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
+
+    actual fun list(): List<File> {
+        val out = ArrayList<File>()
+        iterator().use {
+            it.forEach { file ->
+                out += file
+            }
+        }
+        return out
+    }
 }

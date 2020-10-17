@@ -72,4 +72,14 @@ actual class File actual constructor(path: String) {
         }
 
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
+
+    actual fun list(): List<File> {
+        val out = ArrayList<File>()
+        iterator().use {
+            it.forEach { file ->
+                out += file
+            }
+        }
+        return out
+    }
 }
