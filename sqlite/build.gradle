@@ -54,6 +54,25 @@ kotlin {
         }
     }
 
+    macosX64 {
+        def task = it
+        binaries {
+            staticLib()
+
+            compilations.main {
+                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+                cinterops {
+                    sqlite {
+                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
+                        packageName sqlitePackageName
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
+                    }
+                }
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+        }
+    }
+
 
     mingwX64 {
         def task = it
@@ -136,6 +155,12 @@ kotlin {
             }
         }
 
+        macosX64Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
         mingwX64Main {
             dependencies {
                 dependsOn linuxX64Main
@@ -197,6 +222,7 @@ defineBuild(KonanTarget.MINGW_X64.INSTANCE)
 defineBuild(KonanTarget.LINUX_X64.INSTANCE)
 defineBuild(KonanTarget.LINUX_ARM64.INSTANCE)
 defineBuild(KonanTarget.LINUX_ARM32_HFP.INSTANCE)
+defineBuild(KonanTarget.MACOS_X64.INSTANCE)
 
 compileKotlinLinuxX64 {
     dependsOn buildSqliteLinux_x64
@@ -212,6 +238,10 @@ compileKotlinMingwX86 {
 
 compileKotlinLinuxArm32Hfp {
     dependsOn buildSqliteLinux_arm32_hfp
+}
+
+compileKotlinMacosX64 {
+    dependsOn buildSqliteMacos_x64
 }
 
 apply from: '../public.gradle'

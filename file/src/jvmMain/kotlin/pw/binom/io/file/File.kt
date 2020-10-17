@@ -3,6 +3,7 @@
 package pw.binom.io.file
 
 import java.io.File as JFile
+import pw.binom.io.*
 
 actual class File actual constructor(path: String) {
 
@@ -41,10 +42,20 @@ actual class File actual constructor(path: String) {
 
     actual fun renameTo(newPath: File): Boolean =
             native.renameTo(newPath.native)
+
+    actual fun list(): List<File> {
+        val out = ArrayList<File>()
+        iterator().use {
+            it.forEach { file ->
+                out += file
+            }
+        }
+        return out
+    }
 }
 
-val java.io.File.asBFile: File
+val JFile.binom: File
     get() = File(absolutePath)
 
-val File.asJFile: java.io.File
-    get() = java.io.File(path)
+val File.java: JFile
+    get() = JFile(path)

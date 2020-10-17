@@ -1,0 +1,8 @@
+headers = lua.h \
+lualib.h \
+lauxlib.h
+headerFilter = *.h
+---
+int doitNow(){
+    return 0;
+}

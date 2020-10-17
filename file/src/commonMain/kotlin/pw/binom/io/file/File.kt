@@ -15,6 +15,7 @@ expect class File(path: String) {
     fun delete(): Boolean
     fun mkdir(): Boolean
     fun renameTo(newPath: File): Boolean
+    fun list():List<File>
 
     companion object {
         val SEPARATOR: Char

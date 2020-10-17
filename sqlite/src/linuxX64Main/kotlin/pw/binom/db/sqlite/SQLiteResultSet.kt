@@ -63,63 +63,63 @@ class SQLiteResultSet(
             throw ArrayIndexOutOfBoundsException()
     }
 
-    private fun nullNotExpected(): Nothing = throw SQLException("Column value is null")
-
-    override fun getString(index: Int): String {
+    override fun getString(index: Int): String? {
         checkRange(index)
         return sqlite3_column_text(stmt, index)
                 ?.reinterpret<ByteVar>()
                 ?.toKStringFromUtf8()
-                ?: nullNotExpected()
     }
 
-    override fun getBlob(index: Int): ByteArray {
-        if (isNullColumn(index))
-            nullNotExpected()
+    override fun getBlob(index: Int): ByteArray? {
+        if (isNullColumn(index)) {
+            return null
+        }
         val len = sqlite3_column_bytes(stmt, index)
         return sqlite3_column_blob(stmt, index)!!.readBytes(len)
     }
 
-    override fun getBlob(column: String): ByteArray = getBlob(columnIndex(column))
+    override fun getBlob(column: String):ByteArray? = getBlob(columnIndex(column))
 
-    override fun getString(column: String) =
+    override fun getString(column: String):String? =
             getString(columnIndex(column))
 
-    override fun getBoolean(index: Int) =
-            getInt(index) > 0
+    override fun getBoolean(index: Int):Boolean? =
+            getInt(index)?.let { it>0 }
 
-    override fun getBoolean(column: String) =
-            getInt(column) > 0
+    override fun getBoolean(column: String):Boolean? =
+            getInt(column)?.let { it>0 }
 
-    override fun getInt(index: Int): Int {
+    override fun getInt(index: Int): Int? {
         checkRange(index)
         if (isNullColumn(index)) {
-            nullNotExpected()
+            return null
         }
         return sqlite3_column_int(stmt, index)
     }
 
-    override fun getInt(column: String): Int =
+    override fun getInt(column: String):Int? =
             getInt(columnIndex(column))
 
-    override fun getLong(index: Int): Long {
+    override fun getLong(index: Int): Long? {
         checkRange(index)
-        if (isNullColumn(index))
-            nullNotExpected()
+        if (isNullColumn(index)) {
+            return null
+        }
         return sqlite3_column_int64(stmt, index)
     }
 
-    override fun getLong(column: String): Long =
+    override fun getLong(column: String):Long? =
             getLong(columnIndex(column))
 
-    override fun getFloat(index: Int): Float {
+    override fun getFloat(index: Int): Float? {
         checkRange(index)
-        if (isNullColumn(index))
-            nullNotExpected()
+        if (isNullColumn(index)) {
+            return null
+        }
         return sqlite3_column_double(stmt, index).toFloat()
     }
 
-    override fun getFloat(column: String): Float =
+    override fun getFloat(column: String):Float? =
             getFloat(columnIndex(column))
 
     private fun columnIndex(name: String) =

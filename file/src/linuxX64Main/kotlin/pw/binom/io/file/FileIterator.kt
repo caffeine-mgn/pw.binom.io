@@ -6,8 +6,7 @@ import platform.posix.closedir
 import platform.posix.dirent
 import platform.posix.opendir
 import platform.posix.readdir
-import pw.binom.io.Closeable
-import pw.binom.io.IOException
+import pw.binom.io.*
 import kotlin.native.concurrent.ensureNeverFrozen
 
 actual class FileIterator internal actual constructor(private val path: File) : Iterator<File>, Closeable {
