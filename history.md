@@ -1,5 +1,8 @@
 # History
 
+### 0.1.22
+Fix bugs
+
 ### 0.1.20
 * Added charset support
 * Added BytesBitset

@@ -10,6 +10,7 @@ interface Output : Closeable {
 }
 
 fun Output.writeUtf8Char(buffer: ByteBuffer, value: Char) {
+    buffer.clear()
     val size = UTF8.unicodeToUtf8(value, buffer)
     buffer.reset(0, size)
     write(buffer)
