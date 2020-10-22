@@ -1,10 +1,7 @@
 package pw.binom.io.file
 
 import pw.binom.io.use
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class TestFile {
     @Test
@@ -30,28 +27,47 @@ class TestFile {
     @Test
     fun `directory`() {
         val f = File("dir")
-        if (f.isExist)
+        try {
+            if (f.isExist)
+                f.delete()
+            assertFalse(f.isDirectory)
+            f.mkdir()
+            assertTrue(f.isDirectory)
+            assertTrue(f.delete())
+            assertFalse(f.isDirectory)
+            assertFalse(f.delete())
+        } finally {
             f.delete()
-        assertFalse(f.isDirectory)
-        f.mkdir()
-        assertTrue(f.isDirectory)
-        assertTrue(f.delete())
-        assertFalse(f.isDirectory)
-        assertFalse(f.delete())
+        }
     }
 
     @Test
     fun `file list`() {
-        val f = File("dir1")
-        if (!f.isExist)
-            f.mkdir()
-
-        f.iterator().use {
-            it.forEach {
-                assertNotEquals("..", it.name)
-                assertNotEquals(".", it.name)
+        val file = File("dir1")
+        if (!file.isExist)
+            file.mkdir()
+        try {
+            file.iterator().use {
+                it.forEach {
+                    assertNotEquals("..", it.name)
+                    assertNotEquals(".", it.name)
+                }
             }
+        } finally {
+            file.delete()
         }
-        f.delete()
+    }
+
+    @Test
+    fun relativeTest() {
+        assertEquals("/home/subochev/tmp/test", File("/home/subochev/tmp").relative("./test").path)
+        assertEquals("/home/subochev/test", File("/home/subochev/tmp").relative("../test").path)
+        assertEquals("/home/subochev/tmp/test/m1", File("/home/subochev/tmp").relative("test/m1").path)
+        try {
+            File("/home/subochev/tmp").relative("/test/m1")
+            fail()
+        } catch (e: IllegalArgumentException) {
+            //NOP
+        }
     }
 }

@@ -24,7 +24,7 @@ if (project.hasProperty("binom.repo.url")) {
             if (it.name == "kotlinMultiplatform") {
                 repoName = project.name
             } else {
-                repoName = "${project.name}-${it.name}"
+                repoName = it.artifactId
             }
             it.groupId = project.group
             it.artifactId = repoName

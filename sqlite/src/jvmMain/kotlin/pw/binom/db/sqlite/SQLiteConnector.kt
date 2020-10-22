@@ -15,7 +15,7 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : Connection 
         }
 
         actual fun memory(name: String?): SQLiteConnector {
-            val connection = JDBC4Connection("jdbc:sqlite::memory:", null, Properties ())
+            val connection = JDBC4Connection("jdbc:sqlite::memory:", null, Properties())
             return SQLiteConnector(connection)
         }
 
@@ -23,11 +23,23 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : Connection 
             get() = "SQLite"
     }
 
+    init {
+        native.autoCommit = false
+    }
+
     override fun createStatement(): Statement =
             SQLiteStatement(this)
 
     override fun prepareStatement(query: String): PreparedStatement =
             SQLPreparedStatement(this, native.prepareStatement(query))
+
+    override fun commit() {
+        native.commit()
+    }
+
+    override fun rollback() {
+        native.rollback()
+    }
 
     override val type: String
         get() = TYPE
