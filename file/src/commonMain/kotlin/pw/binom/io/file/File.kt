@@ -100,3 +100,25 @@ fun File.deleteRecursive(): Boolean {
     }
     return delete()
 }
+
+fun File.relative(path: String): File {
+    if (path.startsWith("/") || path.startsWith("\\")) {
+        throw IllegalArgumentException("Invalid Relative Path")
+    }
+    val currentPath = this.path.split(File.SEPARATOR).toMutableList()
+    val newPath = path.split('/', '\\')
+    newPath.forEach {
+        when (it) {
+            "." -> {
+            }
+            ".." -> {
+                if (currentPath.isEmpty()) {
+                    throw IllegalArgumentException("Can't find relative from \"${this.path}\" to \"$path\"")
+                }
+                currentPath.removeLast()
+            }
+            else -> currentPath.add(it)
+        }
+    }
+    return File(currentPath.joinToString(File.SEPARATOR.toString()))
+}

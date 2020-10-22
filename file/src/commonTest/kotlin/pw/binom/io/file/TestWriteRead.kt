@@ -12,6 +12,7 @@ class TestWriteRead {
     @Test
     fun `read write`() {
         val f = File("test")
+        val buf = ByteBuffer.alloc(8)
 
 
         val data = byteArrayOf(
@@ -21,7 +22,7 @@ class TestWriteRead {
 
         f.write().use {
             data.forEach { value ->
-                it.writeByte(value)
+                it.writeByte(buf, value)
             }
         }
 
