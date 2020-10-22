@@ -3,6 +3,7 @@ package pw.binom.io.file
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.native.concurrent.freeze
+import pw.binom.io.use
 
 actual class File actual constructor(path: String) {
     actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR${name.removePrefix("/").removePrefix("\\")}")

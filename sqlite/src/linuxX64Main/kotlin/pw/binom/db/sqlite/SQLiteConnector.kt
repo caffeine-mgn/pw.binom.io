@@ -40,6 +40,14 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
             get() = "SQLite"
     }
 
+    private val beginSt = prepareStatement("BEGIN")
+    private val commitSt = prepareStatement("COMMIT")
+    private val rollbackSt = prepareStatement("ROLLBACK")
+
+    init {
+        beginSt.executeUpdate()
+    }
+
     override fun createStatement(): Statement =
             SQLiteStatement(this)
 
@@ -50,14 +58,32 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         return SQLitePrepareStatement(this, stmt)
     }
 
+    override fun commit() {
+        commitSt.executeUpdate()
+        beginSt.executeUpdate()
+    }
+
+    override fun rollback() {
+        rollbackSt.executeUpdate()
+        beginSt.executeUpdate()
+    }
+
     override val type: String
         get() = TYPE
 
     override fun close() {
-        sqlite3_close(ctx.pointed.value)
+        commitSt.executeUpdate()
+        commitSt.close()
+        rollbackSt.close()
+        beginSt.close()
+        val r = sqlite3_close(ctx.pointed.value)
+        if (r != SQLITE_OK) {
+            checkSqlCode(r)
+        }
         free(ctx)
     }
 }
+
 /*
 internal val callback = staticCFunction<COpaquePointer?, Int, CPointer<CPointerVar<ByteVar>>?, CPointer<CPointerVar<ByteVar>>?, Int> { notUsed: COpaquePointer?, argc: Int, argv: CPointer<CPointerVar<ByteVar>>?, azColName: CPointer<CPointerVar<ByteVar>>? ->
     val resultSet = notUsed!!.asStableRef<SQLiteResultSetV1>().get()
@@ -80,7 +106,7 @@ internal val callback = staticCFunction<COpaquePointer?, Int, CPointer<CPointerV
 }
 */
 internal fun SQLiteConnector.checkSqlCode(code: Int) {
-    fun msg() = sqlite3_errmsg(this.ctx.pointed.value)?.toKStringFromUtf8() ?: "Unknown Error"
+    fun msg() = sqlite3_errmsg(this.ctx.pointed!!.value)?.toKStringFromUtf8() ?: "Unknown Error"
     when (code) {
         SQLITE_OK, SQLITE_DONE, SQLITE_ROW -> return
         SQLITE_BUSY -> throw SQLException("Database is Busy")

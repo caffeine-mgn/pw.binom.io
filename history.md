@@ -1,7 +1,8 @@
 # History
 
 ### 0.1.22
-Fix bugs
+* Fix bugs in utf8 encoder
+* SQLite Autocommit fix bugs
 
 ### 0.1.20
 * Added charset support
