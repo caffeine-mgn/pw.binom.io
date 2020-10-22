@@ -28,4 +28,4 @@ jobs:
         java-version: 11
     - uses: eskatos/gradle-command-action@v1
       with:
-        arguments: publish -Dbinom.repo.url=${{ secrets.BINOM_REPO_URL }} -Dbinom.repo.user=${{ secrets.BINOM_REPO_USER }} -Dbinom.repo.password=${{ secrets.BINOM_REPO_PASSWORD }}
+        arguments: publish -Pbinom.repo.url=${{ secrets.BINOM_REPO_URL }} -Pbinom.repo.user=${{ secrets.BINOM_REPO_USER }} -Pbinom.repo.password=${{ secrets.BINOM_REPO_PASSWORD }}
