@@ -83,6 +83,12 @@ fun Input.readUUID(buffer: ByteBuffer) =
                 leastSigBits = readLong(buffer)
         )
 
+/**
+ * Reads string with format [4 bytes with string length][other bytes of utf-8 string]
+ *
+ * @param buffer temp buffer
+ * @return result string
+ */
 fun Input.readUTF8String(buffer: ByteBuffer): String {
     val size = readInt(buffer)
     val sb = StringBuilder(size)
@@ -116,29 +122,43 @@ fun Input.readLong(buffer: ByteBuffer): Long {
     return Long.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7])
 }
 
-fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>) {
-    val buf = pool.borrow()
-    while (true) {
-        buf.clear()
-        val s = read(buf)
-        if (s == 0)
-            break
-        buf.flip()
-        output.write(buf)
+fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Long {
+    var totalLength = 0L
+    val buffer = pool.borrow()
+    try {
+        while (true) {
+            buffer.clear()
+            val length = read(buffer)
+            if (length == 0)
+                break
+            totalLength += length.toLong()
+            buffer.flip()
+            output.write(buffer)
+        }
+    } finally {
+        pool.recycle(buffer)
     }
+    return totalLength
 }
 
-suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>) {
-    val buf = pool.borrow()
-    while (true) {
-        buf.clear()
-        val s = read(buf)
-        if (s == 0) {
-            break
+suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): Long {
+    var totalLength = 0L
+    val buffer = pool.borrow()
+    try {
+        while (true) {
+            buffer.clear()
+            val length = read(buffer)
+            if (length == 0) {
+                break
+            }
+            totalLength += length.toLong()
+            buffer.flip()
+            output.write(buffer)
         }
-        buf.flip()
-        output.write(buf)
+    } finally {
+        pool.recycle(buffer)
     }
+    return totalLength
 }
 
 fun Input.readFloat(buffer: ByteBuffer) = Float.fromBits(readInt(buffer))
