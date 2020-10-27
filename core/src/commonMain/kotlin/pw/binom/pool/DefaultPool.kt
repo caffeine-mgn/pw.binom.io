@@ -2,7 +2,7 @@ package pw.binom.pool
 
 open class DefaultPool<T : Any>(val capacity: Int, val new: () -> T) : ObjectPool<T> {
 
-    protected val pool = arrayOfNulls<Any>(capacity) as Array<T?>
+    protected val pool = arrayOfNulls<Any>(capacity)
     var size = 0
         protected set
 
@@ -12,8 +12,8 @@ open class DefaultPool<T : Any>(val capacity: Int, val new: () -> T) : ObjectPoo
         val index = --size
         val result = pool[index]!!
         pool[index] = null
-        init?.invoke(result)
-        return result
+        init?.invoke(result as T)
+        return result as T
     }
 
     override fun recycle(value: T) {

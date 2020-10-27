@@ -103,7 +103,7 @@ internal fun ByteDataBuffer.checkBounds(position: Int, off: Int, len: Int, size:
 class ByteDataBufferPool(size: Int = DEFAULT_BUFFER_SIZE) : DefaultPool<ByteDataBuffer>(10, { ByteDataBuffer.alloc(size) }), Closeable {
     override fun close() {
         pool.indices.forEach {
-            val element = pool[it]
+            val element = pool[it] as? ByteBuffer?
             if (element != null) {
                 element.close()
                 pool[it] = null

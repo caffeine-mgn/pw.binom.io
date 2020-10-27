@@ -98,7 +98,7 @@ class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
 
     override fun close() {
         pool.indices.forEach {
-            val element = pool[it]
+            val element = pool[it] as? ByteBuffer?
             if (element != null) {
                 element.close()
                 pool[it] = null
