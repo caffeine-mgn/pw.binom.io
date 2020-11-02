@@ -1,7 +1,5 @@
 package pw.binom.base64
 
-import pw.binom.asUTF8ByteArray
-import pw.binom.asUTF8String
 import kotlin.test.Test
 import kotlin.test.assertEquals
 /*

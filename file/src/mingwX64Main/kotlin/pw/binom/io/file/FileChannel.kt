@@ -2,14 +2,11 @@ package pw.binom.io.file
 
 import kotlinx.cinterop.convert
 import platform.posix.*
-import kotlinx.cinterop.*
-import platform.posix.*
-import kotlinx.cinterop.*
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.io.Channel
 
-actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel, FileAccess {
+actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel,
+    RandomAccess {
 
     init {
         if (AccessType.CREATE !in mode && !file.isFile)
@@ -48,7 +45,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     override fun read(dest: ByteBuffer): Int {
         if (feof(handler) != 0)
             return 0
-        val l = fread((dest.native + dest.position), 1.convert(), dest.remaining.convert(), handler).convert<Int>()
+        val l = fread((dest.refTo(dest.position)), 1.convert(), dest.remaining.convert(), handler).convert<Int>()
         dest.position += l
         return l
     }
@@ -66,7 +63,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     override fun write(data: ByteBuffer): Int {
         if (feof(handler) != 0)
             return 0
-        return fwrite(data.native+data.position, 1.convert(), data.remaining.convert(), handler).convert()
+        return fwrite(data.refTo(data.position), 1.convert(), data.remaining.convert(), handler).convert()
     }
 
     override fun flush() {

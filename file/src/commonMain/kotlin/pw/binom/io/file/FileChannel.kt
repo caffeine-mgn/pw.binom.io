@@ -6,7 +6,8 @@ enum class AccessType {
     READ, WRITE, CREATE, APPEND
 }
 
-expect class FileChannel(file: File, vararg mode: AccessType) : Channel, FileAccess {
+expect class FileChannel(file: File, vararg mode: AccessType) : Channel,
+    RandomAccess {
     actual fun skip(length: Long): Long
 }
 

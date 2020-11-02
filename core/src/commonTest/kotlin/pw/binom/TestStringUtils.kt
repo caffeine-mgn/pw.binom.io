@@ -22,19 +22,19 @@ class TestStringUtils {
 
     @Test
     fun `numbers`() {
-        val data = "123456".asUTF8ByteArray()
+        val data = "123456".encodeBytes()
         assertEquals(6, data.size)
     }
 
     @Test
     fun `latin`() {
-        val data = "ABCDEF".asUTF8ByteArray()
+        val data = "ABCDEF".encodeBytes()
         assertEquals(6, data.size)
     }
 
     @Test
     fun `russian`() {
-        val data = "АБВ".asUTF8ByteArray()
+        val data = "АБВ".encodeBytes()
         assertEquals(6, data.size)
     }
 

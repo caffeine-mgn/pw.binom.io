@@ -78,10 +78,10 @@ fun Input.readUtf8Char(buffer: ByteBuffer): Char? {
 }
 
 fun Input.readUUID(buffer: ByteBuffer) =
-        UUID.create(
-                mostSigBits = readLong(buffer),
-                leastSigBits = readLong(buffer)
-        )
+    UUID.create(
+        mostSigBits = readLong(buffer),
+        leastSigBits = readLong(buffer)
+    )
 
 /**
  * Reads string with format [4 bytes with string length][other bytes of utf-8 string]

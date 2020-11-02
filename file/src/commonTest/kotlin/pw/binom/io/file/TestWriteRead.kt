@@ -1,7 +1,6 @@
 package pw.binom.io.file
 
 import pw.binom.ByteBuffer
-import pw.binom.asUTF8ByteArray
 import pw.binom.io.use
 import pw.binom.writeByte
 import kotlin.test.Test

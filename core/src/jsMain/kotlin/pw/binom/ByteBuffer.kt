@@ -12,6 +12,12 @@ private fun memcpy(dist: Int8Array, distOffset: Int, src: Int8Array, srcOffset: 
     }
 }
 
+private fun memcpy(dist: ByteArray, distOffset: Int, src: Int8Array, srcOffset: Int, srcLength: Int = src.length - srcOffset) {
+    (srcOffset..(srcOffset + srcLength)).forEachIndexed { index, it ->
+        dist[index + distOffset] = src[it]
+    }
+}
+
 actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
@@ -199,5 +205,12 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         new.position = minOf(position, length)
         new.limit = minOf(limit, length)
         return new
+    }
+
+    actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
+        require(dest.size - offset >= length)
+        val l = minOf(remaining, length)
+        memcpy(dest,0,native, position,l)
+        return l
     }
 }

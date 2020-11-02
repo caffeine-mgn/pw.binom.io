@@ -2,7 +2,6 @@ package pw.binom.io.examples.zlib
 
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.asUTF8String
 import pw.binom.compression.zlib.GZIPInput
 import pw.binom.compression.zlib.GZIPOutput
 import pw.binom.io.file.AccessType

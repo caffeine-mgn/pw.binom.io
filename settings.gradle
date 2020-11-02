@@ -8,9 +8,10 @@ include(":date")
 include(":strong")
 include(":nio")
 include(":file")
-include(":db")
+include ":db",
+        ":db:sqlite"
+//        ":db:postgresql-async"
 include(":tarantoolClient")
-include(":sqlite")
 include(":socket")
 include(":http")
 include(":httpClient")

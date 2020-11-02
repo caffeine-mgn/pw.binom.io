@@ -1,9 +1,6 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
-import pw.binom.asUTF8ByteArray
-import pw.binom.asUTF8String
-import pw.binom.writeByte
+import pw.binom.*
 
 object UTF8 {
 
@@ -289,7 +286,7 @@ object UTF8 {
 
     fun urlEncode(input: String): String {
         val sb = StringBuilder()
-        input.asUTF8ByteArray().forEach {
+        input.encodeBytes().forEach {
             when (it) {
                 '.'.toByte(),
                 '-'.toByte(),

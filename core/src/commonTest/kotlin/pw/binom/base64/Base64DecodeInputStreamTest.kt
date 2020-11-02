@@ -1,7 +1,7 @@
 package pw.binom.base64
 
 import pw.binom.ByteBuffer
-import pw.binom.asUTF8String
+import pw.binom.decodeString
 import pw.binom.io.StringReader
 import pw.binom.io.use
 import pw.binom.nextBytes
@@ -16,7 +16,7 @@ class Base64DecodeInputStreamTest {
     fun test2() {
         val txt = "c3Vib2NoZXY6RHJvdm9zZWszMTk="
         val b = Base64.decode(txt)
-        println("b=${b.asUTF8String()}")
+        println("b=${b.decodeString()}")
     }
 
     @Test

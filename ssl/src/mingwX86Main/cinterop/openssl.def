@@ -1,6 +1,6 @@
 headers = openssl/ssl.h
 headerFilter = openssl/**
-linkerOpts = -lwsock32 -lws2_32
+linkerOpts = -lwsock32 -lws2_32 -lcrypt32
 ---
 
 int internal_BIO_should_retry(BIO *bp){

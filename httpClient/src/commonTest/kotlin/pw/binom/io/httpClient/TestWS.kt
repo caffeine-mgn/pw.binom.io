@@ -8,7 +8,6 @@ import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
-import pw.binom.printStacktrace
 import kotlin.test.Test
 
 class TestWS {
@@ -37,7 +36,7 @@ class TestWS {
 
                 wsClient.close()
             } catch (e: Throwable) {
-                e.printStacktrace()
+                e.printStackTrace()
             } finally {
                 done = true
             }
