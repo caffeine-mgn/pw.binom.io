@@ -37,13 +37,13 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
     override fun put(value: T) {
         value?.doFreeze()
         lock.synchronize {
-            condition.signal()
             val item = Item(value)
             item.previous = last
             last?.next = item
             last = item
             if (first == null)
                 first = item
+            condition.signal()
         }
     }
 
