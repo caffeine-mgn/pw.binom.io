@@ -103,19 +103,23 @@ suspend inline fun AsyncInput.readDouble(buffer: ByteBuffer) = Double.fromBits(r
  * @param output output
  * @return size of copied data
  */
-suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): ULong {
-    var out = 0uL
-    val buf = pool.borrow()
-    while (true) {
-        buf.clear()
-        val s = read(buf)
-        if (s == 0)
-            break
-        out += s.toULong()
-        buf.flip()
-        output.write(buf)
+suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): Long {
+    var totalLength = 0L
+    val buffer = pool.borrow()
+    try {
+        while (true) {
+            buffer.clear()
+            val length = read(buffer)
+            if (length == 0)
+                break
+            totalLength += length.toLong()
+            buffer.flip()
+            output.write(buffer)
+        }
+    } finally {
+        pool.recycle(buffer)
     }
-    return out
+    return totalLength
 }
 
 /**
@@ -125,19 +129,23 @@ suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>)
  * @param output output
  * @return size of copied data
  */
-suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): ULong {
-    var out = 0uL
-    val buf = pool.borrow()
-    while (true) {
-        buf.clear()
-        val s = read(buf)
-        if (s == 0)
-            break
-        out += s.toULong()
-        buf.flip()
-        output.write(buf)
+suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Long {
+    var totalLength = 0L
+    val buffer = pool.borrow()
+    try {
+        while (true) {
+            buffer.clear()
+            val length = read(buffer)
+            if (length == 0)
+                break
+            totalLength += length.toLong()
+            buffer.flip()
+            output.write(buffer)
+        }
+    } finally {
+        pool.recycle(buffer)
     }
-    return out
+    return totalLength
 }
 
 suspend fun AsyncInput.skipAll(buffer: ByteBuffer) {

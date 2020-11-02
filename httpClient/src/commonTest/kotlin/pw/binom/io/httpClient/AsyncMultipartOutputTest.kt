@@ -20,7 +20,7 @@ class AsyncMultipartOutputTest {
         var exception: Throwable? = null
         val userName = UUID.random().toString()
         val userPassword = UUID.random().toString()
-        val bufferPool = ByteBufferPool(100u)
+        val bufferPool = ByteBufferPool(10,100u)
         async {
             try {
                 mulipart.part("userName")

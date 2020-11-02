@@ -201,4 +201,11 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         memcpy(newBytes.refTo(0), refTo(index), length.convert())
         return newBytes
     }
+
+    actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
+        require(dest.size - offset >= length)
+        val l = minOf(remaining, length)
+        memcpy(dest.refTo(0),native + position,l.convert())
+        return l
+    }
 }

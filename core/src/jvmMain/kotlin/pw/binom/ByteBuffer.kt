@@ -9,7 +9,7 @@ import java.nio.ByteBuffer as JByteBuffer
 actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer =
-                ByteBuffer(JByteBuffer.allocate(size))
+            ByteBuffer(JByteBuffer.allocate(size))
 
         fun wrap(native: JByteBuffer) = ByteBuffer(native)
     }
@@ -124,8 +124,15 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         return l
     }
 
+    actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
+        require(dest.size - offset >= length)
+        val l = minOf(remaining, length)
+        native.get(dest, offset, l)
+        return l
+    }
+
     actual fun get(): Byte =
-            native.get()
+        native.get()
 
 
     actual fun reset(position: Int, length: Int): ByteBuffer {

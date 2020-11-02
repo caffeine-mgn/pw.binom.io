@@ -29,6 +29,25 @@ fun Output.writeByte(buffer: ByteBuffer, value: Byte) {
     write(buffer)
 }
 
+fun Output.writeBytes(pool: ByteBufferPool, value: ByteArray) {
+    val buf = pool.borrow()
+    try {
+        writeBytes(buf, value)
+    } finally {
+        pool.recycle(buf)
+    }
+}
+
+fun Output.writeBytes(buffer: ByteBuffer, value: ByteArray) {
+    buffer.clear()
+    var l = value.size
+    while (l > 0) {
+        buffer.write(value, value.size - l)
+        buffer.flip()
+        l -= write(buffer)
+    }
+}
+
 fun Output.writeUUID(buffer: ByteBuffer, value: UUID) {
     writeLong(buffer, value.mostSigBits)
     writeLong(buffer, value.leastSigBits)

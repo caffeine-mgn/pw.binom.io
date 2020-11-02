@@ -1,0 +1,55 @@
+package pw.binom.db.postgresql.async
+
+import pw.binom.async
+import pw.binom.charset.Charsets
+import pw.binom.io.socket.nio.SocketNIOManager
+import kotlin.test.Test
+
+class TestConnect {
+
+    @Test
+    fun test() {
+        val manager = SocketNIOManager()
+        async {
+            try {
+                println("Connection...")
+                val con = PGConnection.connect(
+                    host = "127.0.0.1",
+                    port = 5432,
+                    manager = manager,
+                    charset = Charsets.UTF8,
+                    userName = "postgres",
+                    password = "postgres",
+                    dataBase = "sellsystem"
+                )
+                println("Connected!")
+
+//                val msg = con.sendQuery("select now()")
+                val msg = con.query("update \"user\" set login='' where login=''") as QueryResponse.Status
+                println("Updated ${msg.status}")
+//                println("next2: ${con.readDesponse()}")
+//                println("next3: ${con.readDesponse()}")
+//                println("next4: ${con.readDesponse()}")
+//                println("next5: ${con.readDesponse()}")
+//                println("next6: ${con.readDesponse()}")
+//                println("next7: ${con.readDesponse()}")
+
+                val msg2 = con.query("select * from \"user\" where login='demo'")
+                msg2 as QueryResponse.Data
+                while (msg2.next()) {
+                    val row = (0 until msg2.meta.size).map {
+                        msg2[it]
+                    }.joinToString(" | ")
+                    println("->$row")
+                }
+                println("DONE!")
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+        }
+
+        while (true) {
+            manager.update()
+        }
+    }
+}

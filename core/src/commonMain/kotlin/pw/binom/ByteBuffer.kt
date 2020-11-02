@@ -27,6 +27,7 @@ expect class ByteBuffer : Input, Output, Closeable {
     fun skip(length: Long): Long
     fun get(): Byte
     fun put(value: Byte)
+    fun get(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
 
     /**
      * Returns last byte. Work as [get] but don'tm move position when he reads
@@ -60,11 +61,13 @@ fun Random.nextBytes(data: ByteBuffer) {
  * @param data source data
  * @return new [ByteBuffer].
  */
-fun ByteBuffer.Companion.wrap(data: ByteArray): ByteBuffer {
-    val out = ByteBuffer.alloc(data.size)
-    data.forEach {
-        out.put(it)
-    }
+fun ByteBuffer.Companion.wrap(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): ByteBuffer {
+    val out = alloc(length)
+    out.write(
+        data = data,
+        offset = offset,
+        length = length
+    )
     out.clear()
     return out
 }
@@ -88,7 +91,8 @@ fun ByteBuffer.empty(): ByteBuffer {
     return this
 }
 
-class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) : DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), Closeable {
+class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
+    DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), Closeable {
     override fun borrow(init: ((ByteBuffer) -> Unit)?): ByteBuffer {
         val buf = super.borrow(init)
         buf.clear()
@@ -98,7 +102,7 @@ class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
 
     override fun close() {
         pool.indices.forEach {
-            val element = pool[it]
+            val element = pool[it] as? ByteBuffer?
             if (element != null) {
                 element.close()
                 pool[it] = null

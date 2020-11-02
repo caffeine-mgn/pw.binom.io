@@ -21,7 +21,7 @@ Library contains next parts:<br>
 * [SSL](ssl)
 * [Concurrency](concurrency)
 * Sync and Async Database Access<br>
-  * [SQLIte](sqlite)
+  * [SQLIte](db/sqlite)
   * [Tarantool](tarantool)
 
 ## Using

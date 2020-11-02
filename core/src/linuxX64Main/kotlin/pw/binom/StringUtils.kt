@@ -4,13 +4,6 @@ import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.io.ByteArrayOutput
 
-@OptIn(ExperimentalStdlibApi::class)
-actual fun ByteArray.asUTF8String(startIndex: Int, length: Int): String =
-        this.decodeToString(startIndex = startIndex, endIndex = startIndex + length, throwOnInvalidSequence = true)
-
-@OptIn(ExperimentalStdlibApi::class)
-actual fun String.asUTF8ByteArray(): ByteArray = this.encodeToByteArray()
-
 actual fun String.encodeBytes(charset: Charset): ByteArray {
     val buffer = toCharArray().toCharBuffer()
     val out = ByteArrayOutput(length)
@@ -33,8 +26,12 @@ actual fun String.encodeBytes(charset: Charset): ByteArray {
     }
 }
 
-actual fun ByteArray.decodeString(charset: Charset): String {
-    val self = ByteBuffer.wrap(this)
+actual fun ByteArray.decodeString(charset: Charset, offset: Int, length: Int): String {
+    val self = ByteBuffer.wrap(
+        data = this,
+        offset = offset,
+        length = length
+    )
     var out = CharBuffer.alloc(size)
     val decoder = charset.newDecoder()
 
@@ -53,6 +50,7 @@ actual fun ByteArray.decodeString(charset: Charset): String {
             }
         }
     } finally {
+        self.close()
         decoder.close()
     }
 }

@@ -2,12 +2,12 @@ package pw.binom.io.file
 
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.plus
 import platform.posix.*
 import pw.binom.ByteBuffer
 import pw.binom.io.Channel
 
-actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel, FileAccess {
+actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel,
+    RandomAccess {
 
     init {
         if (AccessType.CREATE !in mode && !file.isFile)
@@ -47,7 +47,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     override fun read(dest: ByteBuffer): Int {
         if (feof(handler) != 0)
             return 0
-        val r = fread(dest.native + dest.position, 1.convert(), dest.remaining.convert(), handler).convert<Int>()
+        val r = fread(dest.refTo(dest.position), 1.convert(), dest.remaining.convert(), handler).convert<Int>()
         dest.position += r
         return r
     }
@@ -65,7 +65,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     override fun write(data: ByteBuffer): Int {
         if (feof(handler) != 0)
             return 0
-        val r = fwrite(data.native + data.position, 1.convert(), data.remaining.convert(), handler).convert<Int>()
+        val r = fwrite(data.refTo(data.position), 1.convert(), data.remaining.convert(), handler).convert<Int>()
         data.position += r
         return r
     }

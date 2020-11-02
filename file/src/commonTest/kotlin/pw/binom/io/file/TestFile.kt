@@ -60,9 +60,18 @@ class TestFile {
 
     @Test
     fun relativeTest() {
-        assertEquals("/home/subochev/tmp/test", File("/home/subochev/tmp").relative("./test").path)
-        assertEquals("/home/subochev/test", File("/home/subochev/tmp").relative("../test").path)
-        assertEquals("/home/subochev/tmp/test/m1", File("/home/subochev/tmp").relative("test/m1").path)
+        assertEquals(
+            "/home/subochev/tmp/test".replace('/', File.SEPARATOR),
+            File("/home/subochev/tmp").relative("./test").path
+        )
+        assertEquals(
+            "/home/subochev/test".replace('/', File.SEPARATOR),
+            File("/home/subochev/tmp").relative("../test").path
+        )
+        assertEquals(
+            "/home/subochev/tmp/test/m1".replace('/', File.SEPARATOR),
+            File("/home/subochev/tmp").relative("test/m1").path
+        )
         try {
             File("/home/subochev/tmp").relative("/test/m1")
             fail()

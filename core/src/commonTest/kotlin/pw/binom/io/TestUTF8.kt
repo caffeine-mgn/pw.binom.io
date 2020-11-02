@@ -1,8 +1,8 @@
 package pw.binom.io
 
 import pw.binom.ByteBuffer
-import pw.binom.asUTF8ByteArray
-import pw.binom.asUTF8String
+import pw.binom.decodeString
+import pw.binom.encodeBytes
 import pw.binom.toByteBufferUTF8
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,7 +18,7 @@ class TestUTF8 {
         s.write(data)
 
         val d = s.toByteArray()
-        val e = char.toString().asUTF8ByteArray()
+        val e = char.toString().encodeBytes()
 
         assertEquals(e.size, d.size)
 
@@ -28,7 +28,7 @@ class TestUTF8 {
     }
 
     private fun testReadChar(char: Char) {
-        val data = char.toString().asUTF8ByteArray()
+        val data = char.toString().encodeBytes()
         assertEquals(char, UTF8.utf8toUnicode(data[0], data, 1))
     }
 
@@ -110,12 +110,13 @@ class TestUTF8 {
 
         assertEquals(txt, txt.toByteBufferUTF8().utf8Reader().readText())
 
-        assertEquals(txt,
-                ByteBuffer.alloc(50).also {
-                    it.utf8Appendable().append(txt)
-                    it.flush()
-                    it.flip()
-                }.toByteArray().asUTF8String()
+        assertEquals(
+            txt,
+            ByteBuffer.alloc(50).also {
+                it.utf8Appendable().append(txt)
+                it.flush()
+                it.flip()
+            }.toByteArray().decodeString()
         )
     }
 
@@ -134,8 +135,8 @@ class TestUTF8 {
         buffer.flip()
 
         val bytes = "64 6f 6e c4 8f c5 bc cb 98 c4 8f c4 be e2 82 ac c4 8f c4 be e2 84 a2 74"
-                .split(' ')
-                .map { it.toUByte(16).toByte() }
+            .split(' ')
+            .map { it.toUByte(16).toByte() }
 
         assertEquals(bytes.size, buffer.remaining)
         buffer.close()

@@ -5,7 +5,8 @@ import pw.binom.io.Channel
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
 
-actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel, FileAccess {
+actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel,
+    RandomAccess {
 
     private val native = FileChannel.open(file.native.toPath(), mode.asSequence().map {
         when (it) {

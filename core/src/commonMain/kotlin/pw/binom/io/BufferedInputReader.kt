@@ -5,11 +5,16 @@ import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
 
-class BufferedInputReader(charset: Charset, val input: Input, bufferSize: Int = DEFAULT_BUFFER_SIZE, charBufferSize: Int = DEFAULT_BUFFER_SIZE / 2) : Reader {
+class BufferedInputReader(
+    charset: Charset,
+    val input: Input,
+    private val pool: ByteBufferPool,
+    charBufferSize: Int = 512
+) : Reader {
     private val decoder = charset.newDecoder()
     private val output = CharBuffer.alloc(charBufferSize).empty()
 
-    private val buffer = ByteBuffer.alloc(bufferSize).empty()
+    private val buffer = pool.borrow().empty()
 
     private fun checkAvailable() {
         buffer.compact()
@@ -38,9 +43,9 @@ class BufferedInputReader(charset: Charset, val input: Input, bufferSize: Int = 
             prepareBuffer()
             if (output.remaining > 0) {
                 counter += output.read(
-                        array = data,
-                        offset = offset,
-                        length = length
+                    array = data,
+                    offset = offset,
+                    length = length
                 )
             } else {
                 break
@@ -59,6 +64,7 @@ class BufferedInputReader(charset: Charset, val input: Input, bufferSize: Int = 
 
     override fun close() {
         decoder.close()
+        pool.recycle(buffer)
     }
 
 }
@@ -71,9 +77,13 @@ private fun Input.readByte2(buffer: ByteBuffer): Byte? {
     return buffer[0]
 }
 
-fun Input.reader(charset: Charset = Charsets.UTF8, bufferSize: Int = DEFAULT_BUFFER_SIZE, charBufferSize: Int = DEFAULT_BUFFER_SIZE / 2) = BufferedInputReader(
-        charset = charset,
-        input = this,
-        bufferSize = bufferSize,
-        charBufferSize = charBufferSize
+fun Input.bufferedReader(
+    pool: ByteBufferPool,
+    charset: Charset = Charsets.UTF8,
+    charBufferSize: Int = 512
+) = BufferedInputReader(
+    charset = charset,
+    input = this,
+    pool = pool,
+    charBufferSize = charBufferSize
 )
