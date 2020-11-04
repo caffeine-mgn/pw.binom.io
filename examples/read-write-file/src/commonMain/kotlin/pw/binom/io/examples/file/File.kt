@@ -80,7 +80,44 @@ fun usingByteBuffer() {
     }
 }
 
+fun calcMd5() {
+    val file = File("Simple File")
+    val text = "Simple Text"
+    val md5 = MD5()
+    try {
+        text.toByteBufferUTF8().use { data ->
+            file.write().use {
+                it.write(data)
+            }
+        }
+
+        ByteBuffer.alloc(512).use { readBuf ->
+            file.read().use {
+                while (true) {
+                    readBuf.clear()
+                    if (it.read(readBuf) <= 0) {
+                        break
+                    }
+                    readBuf.flip()
+                    md5.update(readBuf)
+                }
+            }
+        }
+        val hash = md5.finish()
+        val hashString = hash.map {
+            val int = it.toInt() and 0xFF
+            (int ushr 4).toString(16) + (int and 0xF).toString(16)
+        }.joinToString("")
+
+        println("Hash: $hashString")
+    } finally {
+        file.delete()
+    }
+}
+
 fun main(args: Array<String>) {
     usingByteArray()
     usingAppenderAndReader()
+    usingByteBuffer()
+    calcMd5()
 }
