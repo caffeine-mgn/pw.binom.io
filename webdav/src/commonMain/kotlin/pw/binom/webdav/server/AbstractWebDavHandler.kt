@@ -11,7 +11,7 @@ import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.pool.ObjectPool
 import pw.binom.xml.dom.findElements
-import pw.binom.xml.dom.xml
+import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
 
 private fun urlEncode(url: String) =
@@ -75,7 +75,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
         val DAV_NS = "DAV:"
         resp.status = 207
         resp.resetHeader(Headers.CONTENT_TYPE, "application/xml; charset=UTF-8")
-        xml(resp.complete().utf8Appendable()) {
+        resp.complete().utf8Appendable().writeXml {
             node("multistatus", DAV_NS) {
                 entities.forEach { e ->
                     node("response", DAV_NS) {

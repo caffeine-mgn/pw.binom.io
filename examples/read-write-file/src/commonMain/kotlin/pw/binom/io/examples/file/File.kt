@@ -6,6 +6,9 @@ import pw.binom.io.file.File
 import pw.binom.io.file.read
 import pw.binom.io.file.write
 
+/**
+ * Example: using ByteArray
+ */
 fun usingByteArray() {
     val bufferPool = ByteBufferPool(10)
     val file = File("Simple File")
@@ -32,6 +35,9 @@ fun usingByteArray() {
 
 }
 
+/**
+ * Example: using appender and reader
+ */
 fun usingAppenderAndReader() {
     val bufferPool = ByteBufferPool(10)
     val file = File("Simple File")
@@ -54,6 +60,9 @@ fun usingAppenderAndReader() {
     }
 }
 
+/**
+ * Example: read using byte buffer
+ */
 fun usingByteBuffer() {
     val bufferPool = ByteBufferPool(10)
     val file = File("Simple File")
@@ -80,6 +89,9 @@ fun usingByteBuffer() {
     }
 }
 
+/**
+ * Example: calc md5
+ */
 fun calcMd5() {
     val file = File("Simple File")
     val text = "Simple Text"
@@ -103,7 +115,7 @@ fun calcMd5() {
                 }
             }
         }
-        val hash = md5.finish()
+        val hash = md5.finish()//result md5 hash
         val hashString = hash.map {
             val int = it.toInt() and 0xFF
             (int ushr 4).toString(16) + (int and 0xF).toString(16)

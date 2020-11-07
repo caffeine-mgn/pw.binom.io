@@ -74,8 +74,8 @@ internal class Context {
     var prefixCount = 0
 }
 
-suspend fun xml(appendable: AsyncAppendable, func: suspend NodeWriter.() -> Unit) {
-    val w = XmlRootWriterVisitor(appendable)
+suspend fun AsyncAppendable.writeXml(func: suspend NodeWriter.() -> Unit) {
+    val w = XmlRootWriterVisitor(this)
     val ctx = TagWriteContext(null, Context(), w)
     w.start()
     func(ctx)
