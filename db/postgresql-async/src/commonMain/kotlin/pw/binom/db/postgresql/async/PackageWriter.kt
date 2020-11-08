@@ -66,4 +66,8 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
 //        }
     }
 
+    fun writeShort(value: Short) {
+        output.writeShort(buf16, value)
+    }
+
 }
