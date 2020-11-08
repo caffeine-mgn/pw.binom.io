@@ -3,6 +3,7 @@ package pw.binom.db.postgresql.async
 import pw.binom.async
 import pw.binom.charset.Charsets
 import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.io.use
 import kotlin.test.Test
 
 class TestConnect {
@@ -27,12 +28,6 @@ class TestConnect {
 //                val msg = con.sendQuery("select now()")
                 val msg = con.query("update \"user\" set login='' where login=''") as QueryResponse.Status
                 println("Updated ${msg.status}")
-//                println("next2: ${con.readDesponse()}")
-//                println("next3: ${con.readDesponse()}")
-//                println("next4: ${con.readDesponse()}")
-//                println("next5: ${con.readDesponse()}")
-//                println("next6: ${con.readDesponse()}")
-//                println("next7: ${con.readDesponse()}")
 
                 val msg2 = con.query("select * from \"user\" where login='demo'")
                 msg2 as QueryResponse.Data
@@ -43,6 +38,14 @@ class TestConnect {
                     println("->$row")
                 }
                 println("DONE!")
+
+                val ps = con.prepareStatement("select * from \"user\" where login=?")
+                ps.set(0, "demo")
+                ps.executeQuery().use {
+                    while (it.next()){
+                        println("->${it.getString(0)}")
+                    }
+                }
             } catch (e: Throwable) {
                 e.printStackTrace()
             }

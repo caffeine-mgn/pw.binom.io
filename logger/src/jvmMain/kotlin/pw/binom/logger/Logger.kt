@@ -6,23 +6,25 @@ import java.util.concurrent.ConcurrentHashMap
 actual class Logger(actual val pkg: String) {
     actual companion object {
         private val loggers = ConcurrentHashMap<String, Logger>()
-        actual val global: Logger = getLogger("")
+        actual val global: Logger = getLogger("").also {
+            it.handler = consoleHandler
+        }
         actual val consoleHandler: Handler = ConsoleHandler1()
         actual fun getLogger(pkg: String): Logger = loggers.getOrPut(pkg) { Logger(pkg) }
     }
 
-    actual var level: Level?=null
-    actual var handler: Handler?=null
-    actual fun log(level: Level, text: String?, exception: Throwable?){
+    actual var level: Level? = null
+    actual var handler: Handler? = null
+    actual fun log(level: Level, text: String?, exception: Throwable?) {
         var handler = handler
         if (handler == null && this !== Companion.global) {
             handler = Companion.global.handler
         }
         handler?.log(
-                logger = this,
-                level = level,
-                text = text,
-                exception = exception
+            logger = this,
+            level = level,
+            text = text,
+            exception = exception
         )
     }
 
@@ -46,21 +48,21 @@ private class ConsoleHandler1 : Logger.Handler {
 
         val sb = StringBuilder()
 
-                .append(now.year.toString())
-                .append("/")
-                .append((now.month + 1).dateNumber())
-                .append("/")
-                .append(now.dayOfMonth.dateNumber())
+            .append(now.year.toString())
+            .append("/")
+            .append((now.month + 1).dateNumber())
+            .append("/")
+            .append(now.dayOfMonth.dateNumber())
 
-                .append(" ")
+            .append(" ")
 
-                .append(now.hours.dateNumber())
-                .append(":")
-                .append(now.minutes.dateNumber())
-                .append(":")
-                .append(now.seconds.dateNumber())
+            .append(now.hours.dateNumber())
+            .append(":")
+            .append(now.minutes.dateNumber())
+            .append(":")
+            .append(now.seconds.dateNumber())
 
-                .append(" [").append(level.name).append("]")
+            .append(" [").append(level.name).append("]")
         if (logger.pkg.isNotEmpty())
             sb.append(" [${logger.pkg}]")
         sb.append(":")

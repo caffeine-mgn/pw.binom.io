@@ -3,6 +3,9 @@ package pw.binom.db.postgresql.async
 import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
+import pw.binom.db.AsyncConnection
+import pw.binom.db.AsyncPreparedStatement
+import pw.binom.db.Statement
 import pw.binom.io.BufferedOutputAppendable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
@@ -14,10 +17,11 @@ class PGConnection private constructor(
     charset: Charset,
     val userName: String,
     val password: String?
-) {
+) : AsyncConnection {
     internal var busy = false
 
     companion object {
+        const val TYPE = "PostgreSQL"
         suspend fun connect(
             host: String,
             port: Int,
@@ -100,7 +104,7 @@ class PGConnection private constructor(
         }
     }
 
-    private suspend fun sendRecive(msg: KindedMessage): KindedMessage {
+    internal suspend fun sendRecive(msg: KindedMessage): KindedMessage {
         println("Send Query $msg")
         msg.write(pw)
         pw.finishAsync(connection)
@@ -111,10 +115,6 @@ class PGConnection private constructor(
 
     internal val reader = PackageReader(this, charset, connection)
     private var credentialMessage = CredentialMessage()
-
-    suspend fun prepareStatement(query: String): UUID {
-        TODO()
-    }
 
     suspend fun readDesponse(): KindedMessage {
         val msg = KindedMessage.read(reader)
@@ -241,5 +241,27 @@ class PGConnection private constructor(
         println("o.size=${o.size}, o.data.remaining=${o.data.remaining}")
         connection.write(o.data)
         readDesponse()
+    }
+
+    override fun createStatement(): Statement {
+        TODO("Not yet implemented")
+    }
+
+    override fun prepareStatement(query: String): AsyncPreparedStatement =
+        PostgresPreparedStatement(query, this)
+
+    override fun commit() {
+        TODO("Not yet implemented")
+    }
+
+    override fun rollback() {
+        TODO("Not yet implemented")
+    }
+
+    override val type: String
+        get() = TYPE
+
+    override suspend fun close() {
+        connection.close()
     }
 }

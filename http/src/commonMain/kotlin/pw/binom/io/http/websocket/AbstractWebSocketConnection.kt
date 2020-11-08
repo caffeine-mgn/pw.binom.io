@@ -2,12 +2,18 @@ package pw.binom.io.http.websocket
 
 import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.concurrency.ThreadRef
 import pw.binom.concurrency.asReference
 import pw.binom.io.StreamClosedException
 import pw.binom.io.socket.SocketClosedException
 import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.io.use
 
-abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.ConnectionRaw, input: AsyncInput, output: AsyncOutput) : WebSocketConnection {
+abstract class AbstractWebSocketConnection(
+    rawConnection: SocketNIOManager.ConnectionRaw,
+    input: AsyncInput,
+    output: AsyncOutput
+) : WebSocketConnection {
 
     private val _output = output.asReference()
     protected val output: AsyncOutput
@@ -21,6 +27,7 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
 
     private var closed by AtomicBoolean(false)
     private val holder = rawConnection.holder
+    private val networkThread = ThreadRef()
 
     init {
         doFreeze()
@@ -29,8 +36,17 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
     override fun write(type: MessageType, func: suspend (AsyncOutput) -> Unit) {
         checkClosed()
         func.doFreeze()
-        holder.waitReadyForWrite {
-            async { func(write(type)) }
+
+        if (networkThread.same) {
+            async {
+                write(type).use {
+                    func(it)
+                }
+            }
+        } else {
+            holder.waitReadyForWrite {
+                async { func(write(type)) }
+            }
         }
     }
 
@@ -40,6 +56,9 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
     }
 
     override suspend fun read(): Message {
+        if (!networkThread.same) {
+            throw IllegalStateException("This method must be call from network thread")
+        }
         checkClosed()
         val header = WebSocketHeader()
         LOOP@ while (true) {
@@ -65,12 +84,12 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
                     }
                 }
                 return MessageImpl(
-                        type = type,
-                        input = input,
-                        initLength = header.length,
-                        mask = header.mask,
-                        maskFlag = header.maskFlag,
-                        lastFrame = header.finishFlag
+                    type = type,
+                    input = input,
+                    initLength = header.length,
+                    mask = header.mask,
+                    maskFlag = header.maskFlag,
+                    lastFrame = header.finishFlag
                 )
             } catch (e: SocketClosedException) {
                 kotlin.runCatching {
@@ -82,12 +101,15 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
     }
 
     override suspend fun write(type: MessageType): AsyncOutput {
+        if (!networkThread.same) {
+            throw IllegalStateException("This method must be call from network thread")
+        }
         checkClosed()
         return WSOutput(
-                messageType = type,
-                bufferSize = DEFAULT_BUFFER_SIZE,
-                stream = output,
-                masked = masking
+            messageType = type,
+            bufferSize = DEFAULT_BUFFER_SIZE,
+            stream = output,
+            masked = masking
         )
     }
 
@@ -100,6 +122,9 @@ abstract class AbstractWebSocketConnection(rawConnection: SocketNIOManager.Conne
     }
 
     override suspend fun close() {
+        if (!networkThread.same) {
+            throw IllegalStateException("This method must be call from network thread")
+        }
         try {
             checkClosed()
             val v = WebSocketHeader()

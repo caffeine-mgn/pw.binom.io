@@ -1,7 +1,11 @@
 # History
 
-### 0.1.24
+### 0.1.25
 * Async PostgreSQL Client
+
+### 0.1.24
+* Refactoring pw.binom.io.FileSystem
+* Fix default handler for logger
 
 ### 0.1.23
 * Added AsyncInputWithLength, for set limit of AsyncInput
