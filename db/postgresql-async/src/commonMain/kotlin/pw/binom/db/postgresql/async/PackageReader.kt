@@ -3,9 +3,7 @@ package pw.binom.db.postgresql.async
 import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.db.postgresql.async.messages.backend.*
-import pw.binom.db.postgresql.async.messages.frontend.CloseMessage
-import pw.binom.db.postgresql.async.messages.frontend.PreparedStatementOpeningMessage
-import pw.binom.db.postgresql.async.messages.frontend.QueryMessage
+import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
 
@@ -26,6 +24,9 @@ class PackageReader(connection: PGConnection, val charset: Charset, val rawInput
     val data = QueryResponse.Data(connection)
     val preparedStatementOpeningMessage = PreparedStatementOpeningMessage()
     val dataRowMessage = DataRowMessage()
+    val bindMessage = BindMessage()
+    val executeMessage = ExecuteMessage()
+    val describeMessage = DescribeMessage()
     val closeMessage = CloseMessage()
     private val limitInput = AsyncInputLimit(rawInput)
     private val columns = ArrayList<ColumnMeta>()

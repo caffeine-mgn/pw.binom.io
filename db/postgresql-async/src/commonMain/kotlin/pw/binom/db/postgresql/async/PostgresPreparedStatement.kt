@@ -1,8 +1,10 @@
 package pw.binom.db.postgresql.async
 
+import pw.binom.UUID
 import pw.binom.db.AsyncPreparedStatement
 import pw.binom.db.AsyncResultSet
 import pw.binom.db.ResultSet
+import pw.binom.db.SQLException
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.uuid
@@ -52,7 +54,7 @@ class PostgresPreparedStatement(
     private val params = arrayOfNulls<Any>(paramCount)
 
     override fun set(index: Int, value: Float) {
-        TODO("Not yet implemented")
+        params[index] = value
     }
 
     override fun set(index: Int, value: Int) {
@@ -60,7 +62,7 @@ class PostgresPreparedStatement(
     }
 
     override fun set(index: Int, value: Long) {
-        TODO("Not yet implemented")
+        params[index] = value
     }
 
     override fun set(index: Int, value: String) {
@@ -68,32 +70,41 @@ class PostgresPreparedStatement(
     }
 
     override fun set(index: Int, value: Boolean) {
-        TODO("Not yet implemented")
+        params[index] = value
     }
 
     override fun set(index: Int, value: ByteArray) {
-        TODO("Not yet implemented")
+        params[index] = value
     }
 
     override fun setNull(index: Int) {
-        TODO("Not yet implemented")
+        params[index] = null
     }
 
     override suspend fun executeQuery(): AsyncResultSet {
         val response = execute()
         if (response is QueryResponse.Data) {
-            return PostgresAsyncResultSet(response)
+            return PostgresAsyncResultSet(true, response)
         }
-        throw IllegalStateException("Query doesn't return data")
+        throw SQLException("Query doesn't return data")
     }
 
-    override suspend fun executeUpdate() {
-        TODO("Not yet implemented")
+    override suspend fun executeUpdate(): Long {
+        val response = execute()
+        if (response is QueryResponse.Status) {
+            return response.rowsAffected
+        }
+        if (response is QueryResponse.Data) {
+            response.close()
+        }
+        throw SQLException("Query returns data")
+    }
+
+    override fun set(index: Int, value: UUID) {
+        params[index] = value
     }
 
     override suspend fun close() {
-
-
         connection.sendOnly(connection.reader.closeMessage.also {
             it.portal = false
             it.statement = id.toString()
@@ -118,20 +129,20 @@ class PostgresPreparedStatement(
                 }
             )
         }
-
+        val binaryResult = true
         val portalName = id.toString()
-        connection.sendOnly(BindMessage().also {
-            it.binary = false
+        connection.sendOnly(connection.reader.bindMessage.also {
             it.statement = id.toString()
             it.portal = portalName
             it.values = params
             it.valuesTypes = types
+            it.binaryResult = binaryResult
         })
-        connection.sendOnly(DescribeMessage().also {
+        connection.sendOnly(connection.reader.describeMessage.also {
             it.statement = id.toString()
             it.portal = true
         })
-        connection.sendOnly(ExecuteMessage().also {
+        connection.sendOnly(connection.reader.executeMessage.also {
             it.statementId = portalName
             it.limit = 0
         })
@@ -154,6 +165,7 @@ class PostgresPreparedStatement(
                 connection.busy = true
                 val msg2 = connection.reader.data
                 msg2.portalName = portalName
+                msg2.binaryResult = binaryResult
                 msg2.reset(msg)
                 return msg2
             }
@@ -162,8 +174,5 @@ class PostgresPreparedStatement(
             }
             else -> TODO("msg: $msg")
         }
-
-//        println("Getting message")
-//        println("-------->${connection.readDesponse()}")
     }
 }

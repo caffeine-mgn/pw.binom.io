@@ -1,5 +1,6 @@
 package pw.binom.db.postgresql.async
 
+import pw.binom.UUID
 import pw.binom.async
 import pw.binom.charset.Charsets
 import pw.binom.db.ResultSet
@@ -40,37 +41,62 @@ class TestConnect {
                 }
                 println("DONE!")
 
-                val ps = con.prepareStatement(
-                    query = "select * from \"user\" where login=? and company_id=?",
-                    paramColumnTypes = listOf(ResultSet.ColumnType.STRING, ResultSet.ColumnType.INT)
-                )
-                ps.set(0, "demo")
-                ps.set(1, 4)
-                ps.executeQuery().use {
-                    println(it.columns.joinToString(" | "))
-                    while (it.next()) {
-                        val line = it.columns.map { name ->
-                            it.getString(name)
+//                con.prepareStatement(
+//                    query = "select * from \"user\" where login=? and company_id=?",
+//                    paramColumnTypes = listOf(ResultSet.ColumnType.STRING, ResultSet.ColumnType.INT),
+//                    resultColumnTypes = listOf(
+//                        ResultSet.ColumnType.LONG,
+//                        ResultSet.ColumnType.STRING,
+//                        ResultSet.ColumnType.LONG
+//                    )
+//                ).use { ps ->
+//                    ps.set(0, "demo")
+//                    ps.set(1, 4)
+//                    ps.executeQuery().use {
+//                        println(it.columns.joinToString(" | "))
+//                        while (it.next()) {
+//                            val line = it.columns.map { name ->
+//                                it.getString(name)
+//                            }
+//                                .joinToString(" | ")
+//                            println(line)
+//                        }
+//                    }
+//
+//                    ps.set(0, "reklama@mirteck.ru")
+//                    ps.set(1, 147)
+//                    ps.executeQuery().use {
+//                        println(it.columns.joinToString(" | "))
+//                        while (it.next()) {
+//                            val line = it.columns.map { name ->
+//                                it.getString(name)
+//                            }
+//                                .joinToString(" | ")
+//                            println(line)
+//                        }
+//                    }
+//                }
+
+
+                con.prepareStatement("select * from osmi_cards_config where id=?",
+                listOf(ResultSet.ColumnType.UUID)).use {
+                    try {
+                        it.set(0, UUID.fromString("db5d3f68-ed81-4c01-8ac8-6eb783d67eeb"))
+                        it.executeQuery().use {
+                            println(it.columns.joinToString(" | "))
+                            while (it.next()) {
+                                val line = it.columns.map { name ->
+                                    it.getString(name)
+                                }
+                                    .joinToString(" | ")
+                                println(line)
+                            }
                         }
-                            .joinToString(" | ")
-                        println(line)
+                    } catch (e:Throwable){
+                        e.printStackTrace()
+                        throw e
                     }
                 }
-
-                ps.set(0, "reklama@mirteck.ru")
-                ps.set(1, 147)
-                ps.executeQuery().use {
-                    println(it.columns.joinToString(" | "))
-                    while (it.next()) {
-                        val line = it.columns.map { name ->
-                            it.getString(name)
-                        }
-                            .joinToString(" | ")
-                        println(line)
-                    }
-                }
-
-                ps.close()
             } catch (e: Throwable) {
                 e.printStackTrace()
             }

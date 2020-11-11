@@ -1,5 +1,6 @@
 package pw.binom.db.postgresql.async
 
+import pw.binom.UUID
 import pw.binom.db.ResultSet
 
 internal object ColumnTypes {
@@ -57,6 +58,12 @@ internal object ColumnTypes {
 
     const val Inet = 869
     const val InetArray = 1041
+
+    fun getValueType(value: Any): Int? =
+        when (value) {
+            is UUID -> UUID
+            else -> null
+        }
 }
 
 /**
@@ -70,4 +77,6 @@ internal val ResultSet.ColumnType.typeInt
         ResultSet.ColumnType.LONG -> ColumnTypes.Bigserial
         ResultSet.ColumnType.FLOAT -> ColumnTypes.Real
         ResultSet.ColumnType.DOUBLE -> ColumnTypes.Double
+        ResultSet.ColumnType.UUID -> ColumnTypes.UUID
     }
+

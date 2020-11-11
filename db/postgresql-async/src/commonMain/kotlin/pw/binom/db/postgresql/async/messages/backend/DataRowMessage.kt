@@ -16,7 +16,8 @@ class DataRowMessage : KindedMessage {
         TODO("Not yet implemented")
     }
 
-    var data: Array<String?> = emptyArray()
+    var data: Array<ByteArray?> = emptyArray()
+
 
     companion object {
         suspend fun read(ctx: PackageReader): DataRowMessage {
@@ -25,8 +26,8 @@ class DataRowMessage : KindedMessage {
                 val length = ctx.input.readInt(ctx.buf16)
                 when {
                     length < 0 -> null
-                    length == 0 -> ""
-                    else -> ctx.readByteArray(length).decodeString(ctx.charset)
+                    length == 0 -> byteArrayOf()
+                    else -> ctx.readByteArray(length)
                 }
             }
             return ctx.dataRowMessage

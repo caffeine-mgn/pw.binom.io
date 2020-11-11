@@ -7,7 +7,7 @@ import pw.binom.io.AsyncCloseable
 import pw.binom.io.IOException
 
 sealed class QueryResponse {
-    class Status(val status: String, val rowsAffected: Int) : QueryResponse() {
+    class Status(val status: String, val rowsAffected: Long) : QueryResponse() {
         override fun toString(): String = "Status(status: [$status])"
     }
 
@@ -21,6 +21,7 @@ sealed class QueryResponse {
         private var closed = true
         private var ended = true
         var portalName: String? = null
+        var binaryResult = false
 
         private var current: DataRowMessage? = null
         fun reset(meta: RowDescriptionMessage) {
@@ -53,7 +54,7 @@ sealed class QueryResponse {
             }
         }
 
-        operator fun get(index: Int): String? {
+        operator fun get(index: Int): ByteArray? {
             checkClosed()
             val current = current
             check(current != null)

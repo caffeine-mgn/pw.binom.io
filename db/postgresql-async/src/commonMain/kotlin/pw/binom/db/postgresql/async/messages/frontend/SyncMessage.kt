@@ -4,7 +4,7 @@ import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
 
-object SyncMessage: KindedMessage {
+object SyncMessage : KindedMessage {
     override val kind: Byte
         get() = MessageKinds.Sync
 
@@ -13,5 +13,4 @@ object SyncMessage: KindedMessage {
         writer.startBody()
         writer.endBody()
     }
-
 }

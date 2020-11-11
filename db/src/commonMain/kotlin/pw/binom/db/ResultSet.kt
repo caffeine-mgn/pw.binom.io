@@ -28,6 +28,6 @@ interface ResultSet {
     class InvalidColumnTypeException : IOException()
 
     enum class ColumnType {
-        STRING, BOOLEAN, INT, LONG, FLOAT, DOUBLE
+        STRING, BOOLEAN, INT, LONG, FLOAT, DOUBLE, UUID
     }
 }

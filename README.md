@@ -21,8 +21,9 @@ Library contains next parts:<br>
 * [SSL](ssl)
 * [Concurrency](concurrency)
 * Sync and Async Database Access<br>
-  * [SQLIte](db/sqlite)
-  * [Tarantool](tarantool)
+  * [PostgreSQL](db/postgresql-async) Sync Mode
+  * [SQLIte](db/sqlite) Async Mode
+  * [Tarantool](tarantool) Async Mode
 
 ## Using
 ### Gradle

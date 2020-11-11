@@ -7,7 +7,7 @@ import pw.binom.db.postgresql.async.messages.MessageKinds
 
 class CommandCompleteMessage : KindedMessage {
 
-    var rowsAffected: Int = 0
+    var rowsAffected: Long = 0
     var statusMessage: String = ""
 
     override val kind: Byte
@@ -27,7 +27,7 @@ class CommandCompleteMessage : KindedMessage {
             val result = ctx.readCString()
             ctx.commandCompleteMessage.rowsAffected = when (val indexOfRowCount = result.lastIndexOf(' ')) {
                 -1 -> 0
-                else -> result.substring(indexOfRowCount).trim().toIntOrNull() ?: 0
+                else -> result.substring(indexOfRowCount).trim().toLongOrNull() ?: 0
             }
             ctx.commandCompleteMessage.statusMessage = result
             return ctx.commandCompleteMessage

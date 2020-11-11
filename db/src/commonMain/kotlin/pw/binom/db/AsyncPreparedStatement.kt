@@ -14,7 +14,7 @@ interface AsyncPreparedStatement : AsyncCloseable {
     fun set(index: Int, value: ByteArray)
     fun setNull(index: Int)
     suspend fun executeQuery(): AsyncResultSet
-    suspend fun executeUpdate()
+    suspend fun executeUpdate():Long
     fun set(index: Int, value: UUID) {
         val buf = ByteArray(16)
         set(index, value.toByteArray(buf))
