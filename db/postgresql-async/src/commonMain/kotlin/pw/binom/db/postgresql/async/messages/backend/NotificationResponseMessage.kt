@@ -1,5 +1,9 @@
-package pw.binom.db.postgresql.async
+package pw.binom.db.postgresql.async.messages.backend
 
+import pw.binom.db.postgresql.async.PackageReader
+import pw.binom.db.postgresql.async.PackageWriter
+import pw.binom.db.postgresql.async.messages.KindedMessage
+import pw.binom.db.postgresql.async.messages.MessageKinds
 import pw.binom.readInt
 
 class NotificationResponseMessage : KindedMessage {
@@ -9,10 +13,15 @@ class NotificationResponseMessage : KindedMessage {
     var payload: String = ""
 
     override val kind: Byte
-        get() = TODO("Not yet implemented")
+        get() = MessageKinds.NotificationResponse
 
     override fun write(writer: PackageWriter) {
-        TODO("Not yet implemented")
+        writer.writeCmd(MessageKinds.NotificationResponse)
+        writer.startBody()
+        writer.writeInt(backendPid)
+        writer.writeCString(channel)
+        writer.writeCString(payload)
+        writer.endBody()
     }
 
     companion object {

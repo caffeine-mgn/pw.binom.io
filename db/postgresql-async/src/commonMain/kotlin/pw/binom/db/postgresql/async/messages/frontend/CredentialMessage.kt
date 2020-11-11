@@ -1,5 +1,9 @@
-package pw.binom.db.postgresql.async
+package pw.binom.db.postgresql.async.messages.frontend
 
+import pw.binom.db.postgresql.async.messages.backend.AuthenticationMessage
+import pw.binom.db.postgresql.async.PackageWriter
+import pw.binom.db.postgresql.async.messages.KindedMessage
+import pw.binom.db.postgresql.async.messages.MessageKinds
 import pw.binom.encodeBytes
 import pw.binom.io.MD5
 import pw.binom.writeByte
@@ -74,6 +78,6 @@ class CredentialMessage : KindedMessage {
                 writer.output.writeByte(writer.buf16, 0)
             }
         }
-        writer.rewriteSize()
+        writer.endBody()
     }
 }

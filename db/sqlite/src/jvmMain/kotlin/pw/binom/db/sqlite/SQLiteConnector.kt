@@ -2,8 +2,8 @@ package pw.binom.db.sqlite
 
 import org.sqlite.jdbc4.JDBC4Connection
 import pw.binom.db.Connection
-import pw.binom.db.PreparedStatement
-import pw.binom.db.Statement
+import pw.binom.db.SyncPreparedStatement
+import pw.binom.db.SyncStatement
 import pw.binom.io.file.File
 import java.util.*
 
@@ -27,11 +27,11 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : Connection 
         native.autoCommit = false
     }
 
-    override fun createStatement(): Statement =
-            SQLiteStatement(this)
+    override fun createStatement(): SyncStatement =
+            SQLiteSyncStatement(this)
 
-    override fun prepareStatement(query: String): PreparedStatement =
-            SQLPreparedStatement(this, native.prepareStatement(query))
+    override fun prepareStatement(query: String): SyncPreparedStatement =
+            SQLSyncPreparedStatement(this, native.prepareStatement(query))
 
     override fun commit() {
         native.commit()

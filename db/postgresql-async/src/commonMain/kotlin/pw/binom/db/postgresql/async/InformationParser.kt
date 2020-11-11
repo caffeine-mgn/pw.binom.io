@@ -2,8 +2,8 @@ package pw.binom.db.postgresql.async
 
 import pw.binom.readByte
 
-object InformationParser{
-    suspend fun readTo(ctx: PackageReader,map:MutableMap<Char,String>){
+object InformationParser {
+    suspend fun readTo(ctx: PackageReader, map: MutableMap<Char, String>) {
         while (true) {
             val kind = ctx.input.readByte(ctx.buf16)
 

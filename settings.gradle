@@ -9,8 +9,8 @@ include(":strong")
 include(":nio")
 include(":file")
 include ":db",
-        ":db:sqlite"
-//        ":db:postgresql-async"
+        ":db:sqlite",
+        ":db:postgresql-async"
 include(":tarantoolClient")
 include(":socket")
 include(":http")

@@ -2,6 +2,7 @@ package pw.binom.db.postgresql.async
 
 import pw.binom.async
 import pw.binom.charset.Charsets
+import pw.binom.db.ResultSet
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
 import kotlin.test.Test
@@ -39,13 +40,37 @@ class TestConnect {
                 }
                 println("DONE!")
 
-                val ps = con.prepareStatement("select * from \"user\" where login=?")
+                val ps = con.prepareStatement(
+                    query = "select * from \"user\" where login=? and company_id=?",
+                    paramColumnTypes = listOf(ResultSet.ColumnType.STRING, ResultSet.ColumnType.INT)
+                )
                 ps.set(0, "demo")
+                ps.set(1, 4)
                 ps.executeQuery().use {
-                    while (it.next()){
-                        println("->${it.getString(0)}")
+                    println(it.columns.joinToString(" | "))
+                    while (it.next()) {
+                        val line = it.columns.map { name ->
+                            it.getString(name)
+                        }
+                            .joinToString(" | ")
+                        println(line)
                     }
                 }
+
+                ps.set(0, "reklama@mirteck.ru")
+                ps.set(1, 147)
+                ps.executeQuery().use {
+                    println(it.columns.joinToString(" | "))
+                    while (it.next()) {
+                        val line = it.columns.map { name ->
+                            it.getString(name)
+                        }
+                            .joinToString(" | ")
+                        println(line)
+                    }
+                }
+
+                ps.close()
             } catch (e: Throwable) {
                 e.printStackTrace()
             }

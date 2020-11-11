@@ -1,11 +1,19 @@
 package pw.binom.db.postgresql.async
 
 import pw.binom.db.AsyncPreparedStatement
+import pw.binom.db.AsyncResultSet
 import pw.binom.db.ResultSet
+import pw.binom.db.postgresql.async.messages.backend.*
+import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.uuid
 import kotlin.random.Random
 
-class PostgresPreparedStatement(val query: String, override val connection: PGConnection) : AsyncPreparedStatement {
+class PostgresPreparedStatement(
+    val query: String,
+    override val connection: PGConnection,
+    val paramColumnTypes: List<ResultSet.ColumnType>,
+    val resultColumnTypes: List<ResultSet.ColumnType>,
+) : AsyncPreparedStatement {
     internal var parsed = false
     private val id = Random.uuid()
     private val realQuery: String
@@ -35,6 +43,10 @@ class PostgresPreparedStatement(val query: String, override val connection: PGCo
         }
         realQuery = result.toString()
         paramCount = params
+
+        if (paramColumnTypes.isNotEmpty()) {
+            require(paramCount == paramColumnTypes.size) { "Invalid count of column type list" }
+        }
     }
 
     private val params = arrayOfNulls<Any>(paramCount)
@@ -44,7 +56,7 @@ class PostgresPreparedStatement(val query: String, override val connection: PGCo
     }
 
     override fun set(index: Int, value: Int) {
-        TODO("Not yet implemented")
+        params[index] = value
     }
 
     override fun set(index: Int, value: Long) {
@@ -67,32 +79,91 @@ class PostgresPreparedStatement(val query: String, override val connection: PGCo
         TODO("Not yet implemented")
     }
 
-    override suspend fun executeQuery(): ResultSet {
-        execute()
-        TODO("Not yet implemented")
+    override suspend fun executeQuery(): AsyncResultSet {
+        val response = execute()
+        if (response is QueryResponse.Data) {
+            return PostgresAsyncResultSet(response)
+        }
+        throw IllegalStateException("Query doesn't return data")
     }
 
     override suspend fun executeUpdate() {
         TODO("Not yet implemented")
     }
 
-    override fun close() {
-        TODO("Not yet implemented")
+    override suspend fun close() {
+
+
+        connection.sendOnly(connection.reader.closeMessage.also {
+            it.portal = false
+            it.statement = id.toString()
+        })
+        connection.sendOnly(SyncMessage)
+        check(connection.readDesponse() is CloseCompleteMessage)
+        check(connection.readDesponse() is ReadyForQueryMessage)
     }
 
-    suspend fun execute() {
-        if (!parsed) {
-
-
-            val rr = connection.sendRecive(
-                PreparedStatementOpeningMessage(
-                    statementId = id.toString(),
-                    query = realQuery,
-                    valuesTypes = listOf(ColumnTypes.Text)
-                )
-            )
-            check(rr is ReadyForQueryMessage)
-            println("!!! $rr")
+    suspend fun execute(): QueryResponse {
+        val types = if (paramColumnTypes.isEmpty()) {
+            emptyList()
+        } else {
+            paramColumnTypes.map { it.typeInt }
         }
+        if (!parsed) {
+            connection.sendOnly(
+                connection.reader.preparedStatementOpeningMessage.also {
+                    it.statementId = id.toString()
+                    it.query = realQuery
+                    it.valuesTypes = types
+                }
+            )
+        }
+
+        val portalName = id.toString()
+        connection.sendOnly(BindMessage().also {
+            it.binary = false
+            it.statement = id.toString()
+            it.portal = portalName
+            it.values = params
+            it.valuesTypes = types
+        })
+        connection.sendOnly(DescribeMessage().also {
+            it.statement = id.toString()
+            it.portal = true
+        })
+        connection.sendOnly(ExecuteMessage().also {
+            it.statementId = portalName
+            it.limit = 0
+        })
+        connection.sendOnly(SyncMessage)
+        if (!parsed) {
+            check(connection.readDesponse() is ParseCompleteMessage)
+        }
+        check(connection.readDesponse() is BindCompleteMessage)
+        parsed = true
+        val msg = connection.readDesponse()
+        return when (msg) {
+            is CommandCompleteMessage -> {
+                check(connection.readDesponse() is ReadyForQueryMessage)
+                QueryResponse.Status(
+                    status = msg.statusMessage,
+                    rowsAffected = msg.rowsAffected
+                )
+            }
+            is RowDescriptionMessage -> {
+                connection.busy = true
+                val msg2 = connection.reader.data
+                msg2.portalName = portalName
+                msg2.reset(msg)
+                return msg2
+            }
+            is ErrorMessage -> {
+                throw PostgresqlException(msg.fields['M'])
+            }
+            else -> TODO("msg: $msg")
+        }
+
+//        println("Getting message")
+//        println("-------->${connection.readDesponse()}")
     }
 }

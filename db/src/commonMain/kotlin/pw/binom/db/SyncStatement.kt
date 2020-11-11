@@ -2,8 +2,8 @@ package pw.binom.db
 
 import pw.binom.io.Closeable
 
-interface Statement : Closeable {
+interface SyncStatement : Closeable {
     val connection: Connection
-    fun executeQuery(query: String): ResultSet
+    fun executeQuery(query: String): SyncResultSet
     fun executeUpdate(query: String)
 }

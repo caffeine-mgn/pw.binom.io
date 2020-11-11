@@ -1,4 +1,4 @@
-package pw.binom.db.postgresql.async
+package pw.binom.db.postgresql.async.messages
 
 object MessageKinds{
     const val Authentication = 'R'.toByte()

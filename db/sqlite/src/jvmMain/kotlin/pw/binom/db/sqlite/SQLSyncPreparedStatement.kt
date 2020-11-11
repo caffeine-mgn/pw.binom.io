@@ -1,10 +1,10 @@
 package pw.binom.db.sqlite
 
-import pw.binom.db.PreparedStatement
+import pw.binom.db.SyncPreparedStatement
 import pw.binom.db.ResultSet
 import java.sql.PreparedStatement as JPreparedStatement
 
-class SQLPreparedStatement(override val connection: SQLiteConnector, internal val native: JPreparedStatement) : PreparedStatement {
+class SQLSyncPreparedStatement(override val connection: SQLiteConnector, internal val native: JPreparedStatement) : SyncPreparedStatement {
     override fun set(index: Int, value: Float) {
         native.setFloat(index, value)
     }

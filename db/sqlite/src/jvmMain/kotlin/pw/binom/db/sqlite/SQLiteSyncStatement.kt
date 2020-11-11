@@ -1,12 +1,12 @@
 package pw.binom.db.sqlite
 
 import pw.binom.db.ResultSet
-import pw.binom.db.Statement
+import pw.binom.db.SyncStatement
 
-class SQLiteStatement(override val connection: SQLiteConnector) : Statement {
+class SQLiteSyncStatement(override val connection: SQLiteConnector) : SyncStatement {
     private val native = connection.native.createStatement()
 
-    override fun executeQuery(query: String): ResultSet =
+    override fun executeQuery(query: String) =
             SQLiteResultSet(native.executeQuery(query))
 
     override fun executeUpdate(query: String) {

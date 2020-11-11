@@ -11,12 +11,16 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
     val output = ByteArrayOutput()
     val appender = BufferedOutputAppendable(charset, output, longPool)
     private var cmdExist = false
+    var bodyStarted = false
 
     fun startBody() {
+        check(!bodyStarted)
         output.writeInt(buf16, 0)
+        bodyStarted = true
     }
 
     fun writeCmd(cmd: Byte) {
+        check(!bodyStarted)
         if (cmdExist) {
             throw IllegalStateException("Cmd already wrote")
         }
@@ -24,7 +28,8 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
         cmdExist = true
     }
 
-    fun rewriteSize() {
+    fun endBody() {
+        check(bodyStarted)
         val pos = output.data.position
         output.data.position = if (cmdExist) 1 else 0
         val len = if (cmdExist) output.size - 1 else output.size
@@ -37,12 +42,28 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
         output.write(this.output.data)
         this.output.clear()
         cmdExist = false
+        bodyStarted = false
     }
 
     fun writeCString(text: String) {
+        check(bodyStarted)
         appender.append(text)
         appender.flush()
         output.writeByte(buf16, 0)
+    }
+
+    fun writeLengthString(text: String) {
+        check(bodyStarted)
+        val pos = output.data.position
+        output.writeInt(buf16, 0)
+
+        appender.append(text)
+        appender.flush()
+
+        val pos2 = output.data.position
+        output.data.position = pos
+        output.data.writeInt(buf16, pos2 - pos - 4)
+        output.data.position = pos2
     }
 
     override fun close() {
@@ -51,7 +72,7 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
     }
 
     fun write(data: ByteArray) {
-
+        check(bodyStarted)
         data.forEach {
             output.writeByte(buf16, it)
         }
@@ -67,7 +88,18 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
     }
 
     fun writeShort(value: Short) {
+        check(bodyStarted)
         output.writeShort(buf16, value)
+    }
+
+    fun writeInt(value: Int) {
+        check(bodyStarted)
+        output.writeInt(buf16, value)
+    }
+
+    fun writeByte(value: Byte) {
+        check(bodyStarted)
+        output.writeByte(buf16, value)
     }
 
 }

@@ -1,4 +1,9 @@
-package pw.binom.db.postgresql.async
+package pw.binom.db.postgresql.async.messages.backend
+
+import pw.binom.db.postgresql.async.PackageReader
+import pw.binom.db.postgresql.async.PackageWriter
+import pw.binom.db.postgresql.async.messages.KindedMessage
+import pw.binom.db.postgresql.async.messages.MessageKinds
 
 class CommandCompleteMessage : KindedMessage {
 
@@ -9,10 +14,13 @@ class CommandCompleteMessage : KindedMessage {
         get() = MessageKinds.CommandComplete
 
     override fun write(writer: PackageWriter) {
-        TODO("Not yet implemented")
+        writer.writeCmd(MessageKinds.CommandComplete)
+        writer.startBody()
+        writer.writeCString("$statusMessage $rowsAffected")
+        writer.endBody()
     }
 
-    override fun toString(): String = statusMessage
+    override fun toString(): String = "CommandCompleteMessage(statusMessage: [$statusMessage], rowsAffected: [$rowsAffected])"
 
     companion object {
         suspend fun read(ctx: PackageReader): CommandCompleteMessage {

@@ -1,6 +1,7 @@
-package pw.binom.db.postgresql.async
+package pw.binom.db.postgresql.async.messages
 
-import pw.binom.AsyncInput
+import pw.binom.db.postgresql.async.*
+import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.io.IOException
 import pw.binom.readByte
 import pw.binom.readInt
@@ -15,7 +16,6 @@ interface KindedMessage {
             val len = ctx.rawInput.readInt(ctx.buf16) - Int.SIZE_BYTES
             require(len >= 0)
             ctx.startBody(len)
-            println("cmd: #$cmd (${cmd.toChar()}), len: $len")
             return when (cmd) {
                 MessageKinds.Authentication -> AuthenticationMessage.read(ctx)
                 MessageKinds.Error -> ErrorMessage.read(ctx)

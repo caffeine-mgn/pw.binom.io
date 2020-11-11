@@ -5,12 +5,16 @@ import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.db.AsyncConnection
 import pw.binom.db.AsyncPreparedStatement
-import pw.binom.db.Statement
+import pw.binom.db.ResultSet
+import pw.binom.db.SyncStatement
+import pw.binom.db.postgresql.async.messages.KindedMessage
+import pw.binom.db.postgresql.async.messages.MessageKinds
+import pw.binom.db.postgresql.async.messages.backend.*
+import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
 import pw.binom.io.BufferedOutputAppendable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
 import pw.binom.io.socket.nio.SocketNIOManager
-import kotlin.coroutines.Continuation
 
 class PGConnection private constructor(
     val connection: SocketNIOManager.ConnectionRaw,
@@ -58,7 +62,7 @@ class PGConnection private constructor(
                     break
                 }
             }
-            println("COnnection done!")
+            println("Connection done!")
             val mg = pgConnection.sendQuery("SET application_name = E'$appName'")
             while (true) {
                 val msg = pgConnection.readDesponse()
@@ -104,12 +108,16 @@ class PGConnection private constructor(
         }
     }
 
-    internal suspend fun sendRecive(msg: KindedMessage): KindedMessage {
-        println("Send Query $msg")
+    internal suspend fun sendOnly(msg: KindedMessage) {
+        print("Send Query $msg...")
         msg.write(pw)
         pw.finishAsync(connection)
         connection.flush()
-        println("Getting result...")
+        println("OK")
+    }
+
+    internal suspend fun sendRecive(msg: KindedMessage): KindedMessage {
+        sendOnly(msg)
         return readDesponse()
     }
 
@@ -117,46 +125,10 @@ class PGConnection private constructor(
     private var credentialMessage = CredentialMessage()
 
     suspend fun readDesponse(): KindedMessage {
+        print("Getting message...")
         val msg = KindedMessage.read(reader)
+        println("Got: [$msg]")
         return msg
-        println("Got Message: $msg")
-        val resendMsg = when (msg) {
-            is AuthenticationMessage.AuthenticationOkMessage -> {
-//                credentialMessage.username = userName
-//                credentialMessage.password = password
-//                credentialMessage.salt = null
-//                credentialMessage.authenticationType =
-//                    AuthenticationMessage.AuthenticationChallengeMessage.AuthenticationResponseType.Ok
-//                credentialMessage
-                null
-            }
-            is AuthenticationMessage.AuthenticationChallengeCleartextMessage -> {
-                credentialMessage.username = userName
-                credentialMessage.password = password
-                credentialMessage.salt = null
-                credentialMessage.authenticationType =
-                    AuthenticationMessage.AuthenticationChallengeMessage.AuthenticationResponseType.Cleartext
-                credentialMessage
-            }
-            is AuthenticationMessage.AuthenticationChallengeMessage -> {
-                credentialMessage.username = userName
-                credentialMessage.password = password
-                credentialMessage.salt = msg.salt
-                credentialMessage.authenticationType = msg.challengeType
-                credentialMessage
-            }
-            is ErrorMessage -> {
-                throw IOException(msg.fields['M'] ?: msg.fields['R'] ?: "Error")
-            }
-            else -> TODO()
-        }
-        if (resendMsg != null) {
-            println("Resend $resendMsg")
-            resendMsg.write(pw)
-            pw.finishAsync(connection)
-            connection.flush()
-            readDesponse()
-        }
     }
 
     private suspend fun request(msg: KindedMessage): KindedMessage {
@@ -243,18 +215,30 @@ class PGConnection private constructor(
         readDesponse()
     }
 
-    override fun createStatement(): Statement {
+    override fun createStatement(): SyncStatement {
         TODO("Not yet implemented")
     }
 
     override fun prepareStatement(query: String): AsyncPreparedStatement =
-        PostgresPreparedStatement(query, this)
+        prepareStatement(query, emptyList(), emptyList())
 
-    override fun commit() {
+    fun prepareStatement(
+        query: String,
+        paramColumnTypes: List<ResultSet.ColumnType>,
+        resultColumnTypes: List<ResultSet.ColumnType> = emptyList(),
+    ): AsyncPreparedStatement =
+        PostgresPreparedStatement(
+            query = query,
+            connection = this,
+            paramColumnTypes = paramColumnTypes,
+            resultColumnTypes = resultColumnTypes
+        )
+
+    override suspend fun commit() {
         TODO("Not yet implemented")
     }
 
-    override fun rollback() {
+    override suspend fun rollback() {
         TODO("Not yet implemented")
     }
 

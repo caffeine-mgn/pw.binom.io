@@ -1,9 +1,8 @@
-package pw.binom.db.postgresql.async
+package pw.binom.db.postgresql.async.messages.frontend
 
-import pw.binom.*
-import pw.binom.charset.Charset
-import pw.binom.io.BufferedOutputAppendable
-import pw.binom.io.ByteArrayOutput
+import pw.binom.db.postgresql.async.PackageWriter
+import pw.binom.db.postgresql.async.messages.KindedMessage
+import pw.binom.db.postgresql.async.messages.MessageKinds
 
 class QueryMessage : KindedMessage {
     var query = ""
@@ -15,7 +14,7 @@ class QueryMessage : KindedMessage {
         writer.writeCmd(MessageKinds.Query)
         writer.startBody()
         writer.writeCString(query)
-        writer.rewriteSize()
+        writer.endBody()
     }
 
     override fun toString(): String = "Query [$query]"

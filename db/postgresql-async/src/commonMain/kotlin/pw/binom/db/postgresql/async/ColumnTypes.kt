@@ -1,6 +1,8 @@
 package pw.binom.db.postgresql.async
 
-object ColumnTypes {
+import pw.binom.db.ResultSet
+
+internal object ColumnTypes {
     const val Untyped = 0
     const val Bigserial = 20
     const val BigserialArray = 1016
@@ -11,6 +13,7 @@ object ColumnTypes {
     const val Integer = 23
     const val IntegerArray = 1007
     const val Numeric = 1700
+
     // Decimal is the same as Numeric on PostgreSQL
     const val NumericArray = 1231
     const val Real = 700
@@ -21,6 +24,7 @@ object ColumnTypes {
     const val Bpchar = 1042
     const val BpcharArray = 1014
     const val Varchar = 1043
+
     // Char is the same as Varchar on PostgreSQL
     const val VarcharArray = 1015
     const val Text = 25
@@ -54,3 +58,16 @@ object ColumnTypes {
     const val Inet = 869
     const val InetArray = 1041
 }
+
+/**
+ * Converts [ResultSet.ColumnType] to Postgresql Self Column Type
+ */
+internal val ResultSet.ColumnType.typeInt
+    get() = when (this) {
+        ResultSet.ColumnType.STRING -> ColumnTypes.Text
+        ResultSet.ColumnType.INT -> ColumnTypes.Integer
+        ResultSet.ColumnType.BOOLEAN -> ColumnTypes.Boolean
+        ResultSet.ColumnType.LONG -> ColumnTypes.Bigserial
+        ResultSet.ColumnType.FLOAT -> ColumnTypes.Real
+        ResultSet.ColumnType.DOUBLE -> ColumnTypes.Double
+    }
