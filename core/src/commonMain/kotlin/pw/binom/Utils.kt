@@ -82,25 +82,32 @@ fun Double.byteswap(): Double = Double.fromBits(toRawBits().byteswap())
 
 
 fun Short.Companion.fromBytes(byte0: Byte, byte1: Byte) =
-        ((byte0.toInt() and 0xFF shl 8) + (byte1.toInt() and 0xFF)).toShort()
+    ((byte0.toInt() and 0xFF shl 8) + (byte1.toInt() and 0xFF)).toShort()
 
 fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte): Int =
-        ((byte0.toInt() and 0xFF) shl 24) +
-                ((byte1.toInt() and 0xFF) shl 16) +
-                ((byte2.toInt() and 0xFF) shl 8) +
-                ((byte3.toInt() and 0xFF) shl 0)
+    ((byte0.toInt() and 0xFF) shl 24) +
+            ((byte1.toInt() and 0xFF) shl 16) +
+            ((byte2.toInt() and 0xFF) shl 8) +
+            ((byte3.toInt() and 0xFF) shl 0)
 
-fun Long.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte,
-                             byte4: Byte, byte5: Byte, byte6: Byte, byte7: Byte) =
+fun Int.Companion.fromBytes(readBuffer: ByteArray) =
+    ((readBuffer[0].toInt() and 0xFF) shl 24) +
+            ((readBuffer[1].toInt() and 0xFF) shl 16) +
+            ((readBuffer[2].toInt() and 0xFF) shl 8) +
+            ((readBuffer[3].toInt() and 0xFF) shl 0)
 
-        (byte0.toLong() and 0xFFL shl 56) +
-                ((byte1).toLong() and 0xFFL shl 48) +
-                ((byte2).toLong() and 0xFFL shl 40) +
-                ((byte3).toLong() and 0xFFL shl 32) +
-                ((byte4).toLong() and 0xFFL shl 24) +
-                (byte5.toLong() and 0xFFL shl 16) +
-                (byte6.toLong() and 0xFFL shl 8) +
-                (byte7.toLong() and 0xFFL shl 0)
+fun Long.Companion.fromBytes(
+    byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte,
+    byte4: Byte, byte5: Byte, byte6: Byte, byte7: Byte
+) =
+    (byte0.toLong() and 0xFFL shl 56) +
+            ((byte1).toLong() and 0xFFL shl 48) +
+            ((byte2).toLong() and 0xFFL shl 40) +
+            ((byte3).toLong() and 0xFFL shl 32) +
+            ((byte4).toLong() and 0xFFL shl 24) +
+            (byte5.toLong() and 0xFFL shl 16) +
+            (byte6.toLong() and 0xFFL shl 8) +
+            (byte7.toLong() and 0xFFL shl 0)
 
 fun Long.toBytes(array: ByteArray, offset: Int = 0) {
     if (array.size - offset < Long.SIZE_BYTES)

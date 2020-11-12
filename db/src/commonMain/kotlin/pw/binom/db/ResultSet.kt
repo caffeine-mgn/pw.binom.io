@@ -1,6 +1,7 @@
 package pw.binom.db
 
 import pw.binom.UUID
+import pw.binom.date.Date
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -11,19 +12,27 @@ interface ResultSet {
     fun getBoolean(index: Int): Boolean?
     fun getInt(index: Int): Int?
     fun getLong(index: Int): Long?
-    fun getFloat(index: Int): Float?
+    fun getFloat(index: Int): Float? =
+        getDouble(1)?.toFloat()
+
+    fun getDouble(index: Int): Double?
     fun getBlob(index: Int): ByteArray?
     fun isNull(index: Int): Boolean
     fun getUUID(index: Int) = getBlob(index)?.let { UUID.create(it) }
+    fun getDate(index: Int): Date?
 
     fun getString(column: String): String?
     fun getBoolean(column: String): Boolean?
     fun getInt(column: String): Int?
     fun getLong(column: String): Long?
-    fun getFloat(column: String): Float?
+    fun getFloat(column: String): Float? =
+        getDouble(column)?.toFloat()
+
+    fun getDouble(column: String): Double?
     fun getBlob(column: String): ByteArray?
     fun isNull(column: String): Boolean
     fun getUUID(column: String) = getBlob(column)?.let { UUID.create(it) }
+    fun getDate(column: String): Date?
 
     class InvalidColumnTypeException : IOException()
 
