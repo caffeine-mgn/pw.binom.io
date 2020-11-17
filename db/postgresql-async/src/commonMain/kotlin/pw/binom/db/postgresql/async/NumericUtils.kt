@@ -11,8 +11,10 @@ val decimalMode = DecimalMode(17, RoundingMode.FLOOR, -1)
 
 object NumericUtils {
     fun decode(data: ByteArray): BigDecimal {
+        check(data.size > 4)
         BigDecimal.useToStringExpanded = true
         val arrayLength = Short.fromBytes(data[0], data[1])
+        check(arrayLength > 1)
         var weight = Short.fromBytes(data[2], data[3]).toInt()
         val sign = Short.fromBytes(data[4], data[5])
         val dscale = Short.fromBytes(data[6], data[7]).toInt()
