@@ -18,6 +18,7 @@ object NumericUtils {
         val dscale = Short.fromBytes(data[6], data[7]).toInt()
         var i = 8
         var t1 = BigInteger.ZERO
+        //TODO add support of sign
 //        val decimalMode = DecimalMode((dscale-1).toLong(), RoundingMode.ROUND_HALF_AWAY_FROM_ZERO, -1)
         while (weight >= 0) {
             val d = Short.fromBytes(data[i++], data[i++])
