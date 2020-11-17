@@ -123,13 +123,7 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
             ColumnTypes.Boolean -> if ((value[0] > 0.toByte())) 1.0 else 0.0
             ColumnTypes.Double -> Double.fromBits(Long.fromBytes(value))
             ColumnTypes.Real -> Float.fromBits(Int.fromBytes(value)).toDouble()
-            ColumnTypes.Numeric -> {
-                val d=NumericUtils.decode(value)
-                val bb = d.doubleValue(true)
-                println()
-                bb
-//                throwNotSupported(dataType, value)
-            }
+            ColumnTypes.Numeric -> NumericUtils.decode(value).toString().toDouble()
             else -> throwNotSupported(dataType, value)
         }
     }

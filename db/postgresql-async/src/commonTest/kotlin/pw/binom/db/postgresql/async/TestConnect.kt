@@ -238,23 +238,14 @@ class TestConnect {
     }
 
     @Test
-    fun ff() {
-        println("BEFORE")
-        pg { con ->
-            println("Insode connection")
-        }
-        println("AFTER")
-    }
-
-    @Test
     fun decamalTest() {
-        println("Test 1.5")
         pg { con ->
             con.prepareStatement("select 1.5").use {
                 try {
                     it.executeQuery().use {
                         assertEquals(1, it.columns.size)
                         assertTrue(it.next())
+                        assertEquals(1.5, it.getDouble(0))
                         assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
                         assertFalse(it.next())
                     }
@@ -264,13 +255,13 @@ class TestConnect {
                 }
             }
         }
-        println("1.5f")
         pg { con ->
             con.prepareStatement("select 1.5f").use {
                 try {
                     it.executeQuery().use {
                         assertEquals(1, it.columns.size)
                         assertTrue(it.next())
+                        assertEquals(1.5, it.getDouble(0))
                         assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
                         assertFalse(it.next())
                     }
