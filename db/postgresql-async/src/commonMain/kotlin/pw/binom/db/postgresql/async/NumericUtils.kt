@@ -16,25 +16,24 @@ object NumericUtils {
         var weight = Short.fromBytes(data[2], data[3]).toInt()
         val sign = Short.fromBytes(data[4], data[5])
         val dscale = Short.fromBytes(data[6], data[7]).toInt()
-        var i = 8
-        var t1 = BigInteger.ZERO
+        var leftValue = BigInteger.ZERO
         //TODO add support of sign
 //        val decimalMode = DecimalMode((dscale-1).toLong(), RoundingMode.ROUND_HALF_AWAY_FROM_ZERO, -1)
+        var i = 8
         while (weight >= 0) {
-            val d = Short.fromBytes(data[i++], data[i++])
-            t1 += BigInteger.fromInt((d * 10000.0.pow(weight)).toInt())
+            val data = Short.fromBytes(data[i++], data[i++])
+            leftValue += BigInteger.fromInt((data * 10000.0.pow(weight)).toInt())
             weight--
         }
-        var t3 = BigDecimal.fromBigInteger(t1, decimalMode)
+        var totalValue = BigDecimal.fromBigInteger(leftValue, decimalMode)
         var g = 0
         while (i < data.size) {
             g++
-            val d = Short.fromBytes(data[i++], data[i++])
-            val bb = (d * 0.0001.pow(g))
-            val dd = BigDecimal.fromDouble(bb)
-            t3 = t3.add(dd, decimalMode)
+            val data = Short.fromBytes(data[i++], data[i++])
+            val dd = BigDecimal.fromDouble(data * 0.0001.pow(g))
+            totalValue = totalValue.add(dd, decimalMode)
         }
 //        t3 = t3.scale(dscale.toLong())
-        return t3
+        return totalValue
     }
 }
