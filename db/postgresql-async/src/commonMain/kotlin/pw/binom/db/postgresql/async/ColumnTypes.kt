@@ -3,7 +3,10 @@ package pw.binom.db.postgresql.async
 import pw.binom.UUID
 import pw.binom.db.ResultSet
 
-internal object ColumnTypes {
+/**
+ * [PostgreSQL Type Formats](https://www.npgsql.org/dev/types.html)
+ */
+object ColumnTypes {
     const val Untyped = 0
     const val Bigserial = 20
     const val BigserialArray = 1016

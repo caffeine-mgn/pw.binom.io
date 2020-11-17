@@ -1,5 +1,6 @@
 package pw.binom.db
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.date.Date
 import pw.binom.io.Closeable
@@ -13,7 +14,10 @@ interface ResultSet {
     fun getInt(index: Int): Int?
     fun getLong(index: Int): Long?
     fun getFloat(index: Int): Float? =
-        getDouble(1)?.toFloat()
+        getDouble(index)?.toFloat()
+
+    fun getBigDecimal(index:Int):BigDecimal?
+    fun getBigDecimal(column:String):BigDecimal?
 
     fun getDouble(index: Int): Double?
     fun getBlob(index: Int): ByteArray?

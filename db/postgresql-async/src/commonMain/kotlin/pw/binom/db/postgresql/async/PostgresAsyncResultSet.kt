@@ -1,5 +1,6 @@
 package pw.binom.db.postgresql.async
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.date.Date
 import pw.binom.date.of
@@ -99,6 +100,22 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
         TODO("Not yet implemented")
     }
 
+    override fun getBigDecimal(index: Int): BigDecimal? {
+        val value = data[index] ?: return null
+        return when (val dataType = data.meta[index].dataType) {
+            ColumnTypes.Bigserial -> BigDecimal.fromLong(Long.fromBytes(value))
+            ColumnTypes.Boolean -> if ((value[0] > 0.toByte())) BigDecimal.ONE else BigDecimal.ZERO
+            ColumnTypes.Double -> BigDecimal.fromDouble(Double.fromBits(Long.fromBytes(value)))
+            ColumnTypes.Real -> BigDecimal.fromFloat(Float.fromBits(Int.fromBytes(value)))
+
+            ColumnTypes.Numeric -> NumericUtils.decode(value)
+            else -> throwNotSupported(dataType, value)
+        }
+    }
+
+    override fun getBigDecimal(column: String): BigDecimal? =
+        getBigDecimal(getIndex(column))
+
     override fun getDouble(index: Int): Double? {
         val value = data[index] ?: return null
         return when (val dataType = data.meta[index].dataType) {
@@ -106,6 +123,13 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
             ColumnTypes.Boolean -> if ((value[0] > 0.toByte())) 1.0 else 0.0
             ColumnTypes.Double -> Double.fromBits(Long.fromBytes(value))
             ColumnTypes.Real -> Float.fromBits(Int.fromBytes(value)).toDouble()
+            ColumnTypes.Numeric -> {
+                val d=NumericUtils.decode(value)
+                val bb = d.doubleValue(true)
+                println()
+                bb
+//                throwNotSupported(dataType, value)
+            }
             else -> throwNotSupported(dataType, value)
         }
     }

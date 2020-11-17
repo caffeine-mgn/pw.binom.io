@@ -1,19 +1,27 @@
 package pw.binom.db.postgresql.async
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.async
 import pw.binom.charset.Charsets
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.sleep
 import pw.binom.db.ResultSet
 import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
+import kotlin.math.absoluteValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.measureTime
+import kotlin.time.seconds
 
 class TestConnect {
 
-    @Test
+    //    @Test
     fun test() {
         val manager = SocketNIOManager()
         async {
@@ -148,20 +156,34 @@ class TestConnect {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun pg(func: suspend (PGConnection) -> Unit) {
         val manager = SocketNIOManager()
         var done = false
         var exception: Throwable? = null
         async {
-            val con = PGConnection.connect(
-                host = "127.0.0.1",
-                port = 5432,
-                manager = manager,
-                charset = Charsets.UTF8,
-                userName = "postgres",
-                password = "postgres",
-                dataBase = "sellsystem"
-            )
+            var con: PGConnection
+            val now = TimeSource.Monotonic.markNow()
+            while (true) {
+                try {
+                    con = PGConnection.connect(
+                        host = "127.0.0.1",
+                        port = 25331,
+                        manager = manager,
+                        charset = Charsets.UTF8,
+                        userName = "postgres",
+                        password = "postgres",
+                        dataBase = "test"
+                    )
+                    break
+                } catch (e: Throwable) {
+                    if (now.elapsedNow() > 10.seconds) {
+                        exception = RuntimeException("Connection Timeout")
+                        return@async
+                    }
+                    Worker.sleep(100)
+                }
+            }
             try {
                 func(con)
             } catch (e: Throwable) {
@@ -175,12 +197,12 @@ class TestConnect {
         while (!done) {
             manager.update(500)
         }
-        if (exception!=null) {
+        if (exception != null) {
             throw exception!!
         }
     }
 
-    @Test
+    //    @Test
     fun timestampTest() {
         pg { con ->
             con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
@@ -216,15 +238,24 @@ class TestConnect {
     }
 
     @Test
+    fun ff() {
+        println("BEFORE")
+        pg { con ->
+            println("Insode connection")
+        }
+        println("AFTER")
+    }
+
+    @Test
     fun decamalTest() {
+        println("Test 1.5")
         pg { con ->
             con.prepareStatement("select 1.5").use {
                 try {
                     it.executeQuery().use {
                         assertEquals(1, it.columns.size)
                         assertTrue(it.next())
-                        assertEquals(1.5f, it.getFloat(0))
-                        assertEquals(1.5, it.getDouble(0))
+                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
                         assertFalse(it.next())
                     }
                 } catch (e: Throwable) {
@@ -233,15 +264,14 @@ class TestConnect {
                 }
             }
         }
-
+        println("1.5f")
         pg { con ->
             con.prepareStatement("select 1.5f").use {
                 try {
                     it.executeQuery().use {
                         assertEquals(1, it.columns.size)
                         assertTrue(it.next())
-                        assertEquals(1.5f, it.getFloat(0))
-                        assertEquals(1.5, it.getDouble(0))
+                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
                         assertFalse(it.next())
                     }
                 } catch (e: Throwable) {

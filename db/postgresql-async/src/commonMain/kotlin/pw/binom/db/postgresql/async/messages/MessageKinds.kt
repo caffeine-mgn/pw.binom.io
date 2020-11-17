@@ -1,5 +1,8 @@
 package pw.binom.db.postgresql.async.messages
 
+/**
+ * [PostgreSQL Message Formats](https://www.postgresql.org/docs/10/protocol-message-formats.html)
+ */
 object MessageKinds{
     const val Authentication = 'R'.toByte()
     const val BackendKeyData = 'K'.toByte()

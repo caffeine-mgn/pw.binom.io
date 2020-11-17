@@ -1,5 +1,11 @@
+import com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerStopContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
+
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: 'com.bmuschko.docker-remote-api'
 
 
 kotlin {
@@ -118,5 +124,49 @@ kotlin {
         }
     }
 }
+
+def postgresContainerId = UUID.randomUUID().toString()
+
+task createPostgres(type: DockerCreateContainer) {
+    image = 'postgres:10'
+    imageId = 'postgres:10'
+    envVars['POSTGRES_USER'] = 'postgres'
+    envVars['POSTGRES_PASSWORD'] = 'postgres'
+    withEnvVar('POSTGRES_DB', 'test')
+    println("this: ${this.class.name}")
+    this.class.methods.each {
+        println("->$it")
+    }
+    hostConfig.portBindings=['127.0.0.1:25331:5432']
+//    new DockerCreateContainer.ExposedPort("25331",[5432])
+    containerId = postgresContainerId
+    containerName = postgresContainerId
+}
+
+task startPostgres(type: DockerStartContainer) {
+    dependsOn createPostgres
+    targetContainerId postgresContainerId
+}
+
+task stopPostgres(type: DockerStopContainer){
+    targetContainerId(postgresContainerId)
+}
+
+task destoryPostgres(type:DockerRemoveContainer){
+    dependsOn stopPostgres
+    targetContainerId(postgresContainerId)
+}
+
+jvmTest.dependsOn(startPostgres)
+jvmTest.finalizedBy(destoryPostgres)
+
+linuxX64Test.dependsOn(startPostgres)
+linuxX64Test.finalizedBy(destoryPostgres)
+
+mingwX64Test.dependsOn(startPostgres)
+mingwX64Test.finalizedBy(destoryPostgres)
+
+macosX64Test.dependsOn(startPostgres)
+macosX64Test.finalizedBy(destoryPostgres)
 
 apply from: '../../public.gradle'

@@ -55,6 +55,7 @@ sealed class QueryResponse {
         }
 
         operator fun get(index: Int): ByteArray? {
+            println("index: [$index]")
             checkClosed()
             val current = current
             check(current != null)
