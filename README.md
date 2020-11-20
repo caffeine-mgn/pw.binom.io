@@ -4,7 +4,7 @@
 Kotlin IO Library.<br>
 
 ## Actual version
-Actual version is `0.1.24`
+Actual version is `0.1.25`
 
 ## Parts of library
 Library contains next parts:<br>
@@ -21,8 +21,9 @@ Library contains next parts:<br>
 * [SSL](ssl)
 * [Concurrency](concurrency)
 * Sync and Async Database Access<br>
-  * [SQLIte](db/sqlite)
-  * [Tarantool](tarantool)
+  * [PostgreSQL](db/postgresql-async) Async Mode
+  * [SQLIte](db/sqlite) Sync Mode
+  * [Tarantool](tarantool) Async Mode
 
 ## Using
 ### Gradle
@@ -105,6 +106,7 @@ See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/As
 
 #### Async DataBase Access
 - [x] [Tarantool Connector](tarantool)
+- [x] [PostgreSQL Connector](db/postgresql-async)
 
 
 ## Community

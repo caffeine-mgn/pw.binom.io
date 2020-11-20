@@ -2,6 +2,7 @@
 
 ### 0.1.25
 * Async PostgreSQL Client
+* Fix bug in ByteBuffer for native
 
 ### 0.1.24
 * Refactoring pw.binom.io.FileSystem

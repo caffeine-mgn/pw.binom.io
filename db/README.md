@@ -9,3 +9,7 @@ dependencies {
     api "pw.binom.io:db:<version>"
 }
 ```
+
+##Connectors
+* [SQLite](sqlite) Sync Mode
+* [PostgreSQL](postgresql-async) Async Mode

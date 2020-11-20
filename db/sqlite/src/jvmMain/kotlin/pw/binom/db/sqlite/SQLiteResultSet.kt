@@ -3,7 +3,7 @@ package pw.binom.db.sqlite
 import pw.binom.db.SQLException
 import java.sql.ResultSet
 
-class SQLiteResultSet(private val native: ResultSet) : pw.binom.db.ResultSet {
+class SQLiteResultSet(private val native: ResultSet) : pw.binom.db.SyncResultSet {
 
     override val columns: List<String> by lazy {
         val count = native.metaData.columnCount
