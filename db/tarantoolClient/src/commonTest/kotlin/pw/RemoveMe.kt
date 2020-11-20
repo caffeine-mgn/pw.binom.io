@@ -1,11 +1,7 @@
 package pw
 
-import pw.binom.UUID
 import pw.binom.async
 import pw.binom.db.tarantool.*
-import pw.binom.db.tarantool.protocol.Code
-import pw.binom.db.tarantool.protocol.Key
-import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.socket.nio.SocketNIOManager
 import kotlin.test.Test
 

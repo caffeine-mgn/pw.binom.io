@@ -10,8 +10,8 @@ include(":nio")
 include(":file")
 include ":db",
         ":db:sqlite",
-        ":db:postgresql-async"
-include(":tarantoolClient")
+        ":db:postgresql-async",
+        ":db:tarantoolClient"
 include(":socket")
 include(":http")
 include(":httpClient")

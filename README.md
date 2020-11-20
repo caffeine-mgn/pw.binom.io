@@ -21,8 +21,8 @@ Library contains next parts:<br>
 * [SSL](ssl)
 * [Concurrency](concurrency)
 * Sync and Async Database Access<br>
-  * [PostgreSQL](db/postgresql-async) Sync Mode
-  * [SQLIte](db/sqlite) Async Mode
+  * [PostgreSQL](db/postgresql-async) Async Mode
+  * [SQLIte](db/sqlite) Sync Mode
   * [Tarantool](tarantool) Async Mode
 
 ## Using
@@ -106,6 +106,7 @@ See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/As
 
 #### Async DataBase Access
 - [x] [Tarantool Connector](tarantool)
+- [x] [PostgreSQL Connector](db/postgresql-async)
 
 
 ## Community

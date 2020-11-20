@@ -47,6 +47,8 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
+                api project(":db")
+                api project(":date")
                 api project(":nio")
             }
         }
@@ -121,4 +123,4 @@ kotlin {
     }
 }
 
-apply from: '../public.gradle'
+apply from: '../../public.gradle'
