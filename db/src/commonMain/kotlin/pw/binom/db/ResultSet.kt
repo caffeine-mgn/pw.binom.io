@@ -1,45 +1,46 @@
 package pw.binom.db
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
+import pw.binom.date.Date
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
-interface ResultSet : Closeable {
+interface ResultSet {
 
     val columns: List<String>
-    fun next(): Boolean
     fun getString(index: Int): String?
     fun getBoolean(index: Int): Boolean?
     fun getInt(index: Int): Int?
     fun getLong(index: Int): Long?
-    fun getFloat(index: Int): Float?
+    fun getFloat(index: Int): Float? =
+        getDouble(index)?.toFloat()
+
+    fun getBigDecimal(index:Int):BigDecimal?
+    fun getBigDecimal(column:String):BigDecimal?
+
+    fun getDouble(index: Int): Double?
     fun getBlob(index: Int): ByteArray?
     fun isNull(index: Int): Boolean
     fun getUUID(index: Int) = getBlob(index)?.let { UUID.create(it) }
+    fun getDate(index: Int): Date?
 
     fun getString(column: String): String?
     fun getBoolean(column: String): Boolean?
     fun getInt(column: String): Int?
     fun getLong(column: String): Long?
-    fun getFloat(column: String): Float?
+    fun getFloat(column: String): Float? =
+        getDouble(column)?.toFloat()
+
+    fun getDouble(column: String): Double?
     fun getBlob(column: String): ByteArray?
     fun isNull(column: String): Boolean
     fun getUUID(column: String) = getBlob(column)?.let { UUID.create(it) }
-
-    fun <T> map(func: (ResultSet) -> T): Iterator<T> = object : Iterator<T> {
-        private var end = this@ResultSet.next()
-        override fun hasNext(): Boolean = end
-
-        override fun next(): T {
-            val r = func(this@ResultSet)
-            end = this@ResultSet.next()
-            return r
-        }
-    }
+    fun getDate(column: String): Date?
 
     class InvalidColumnTypeException : IOException()
 
     enum class ColumnType {
-        STRING, BOOLEAN, INT, LONG, FLOAT
+        STRING, BOOLEAN, INT, LONG, FLOAT, DOUBLE, UUID
     }
 }

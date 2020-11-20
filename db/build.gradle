@@ -44,6 +44,8 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
+                api project(":date")
+                api "com.ionspin.kotlin:bignum:0.2.2"
             }
         }
 
