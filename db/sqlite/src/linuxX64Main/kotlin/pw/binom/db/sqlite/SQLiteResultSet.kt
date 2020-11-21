@@ -1,14 +1,17 @@
 package pw.binom.db.sqlite
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
+import pw.binom.date.Date
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
+import pw.binom.db.SyncResultSet
 
 class SQLiteResultSet(
         val prepareStatement: SQLitePrepareStatement,
         var empty: Boolean
-) : ResultSet {
+) : SyncResultSet {
     private var columnCount = 0
     private val columnsMap = HashMap<String, Int>()
 
@@ -122,6 +125,22 @@ class SQLiteResultSet(
     override fun getFloat(column: String):Float? =
             getFloat(columnIndex(column))
 
+    override fun getBigDecimal(index: Int): BigDecimal? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getBigDecimal(column: String): BigDecimal? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDouble(index: Int): Double? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDouble(column: String): Double? {
+        TODO("Not yet implemented")
+    }
+
     private fun columnIndex(name: String) =
             columnsMap[name] ?: throw SQLException("Column \"$name\" not found")
 
@@ -138,6 +157,14 @@ class SQLiteResultSet(
 
     override fun isNull(column: String) =
             isNullColumn(columnIndex(column))
+
+    override fun getDate(index: Int): Date? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDate(column: String): Date? {
+        TODO("Not yet implemented")
+    }
 
     private var closed = false
 

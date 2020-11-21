@@ -1,5 +1,5 @@
-apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: pw.binom.plugins.BinomPublishPlugin
 
 def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
 
@@ -124,5 +124,3 @@ kotlin {
         }
     }
 }
-
-apply from: '../public.gradle'

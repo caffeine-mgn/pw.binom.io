@@ -2,12 +2,13 @@ package pw.binom.db.sqlite
 
 import org.sqlite.jdbc4.JDBC4Connection
 import pw.binom.db.Connection
+import pw.binom.db.SyncConnection
 import pw.binom.db.SyncPreparedStatement
 import pw.binom.db.SyncStatement
 import pw.binom.io.file.File
 import java.util.*
 
-actual class SQLiteConnector(internal val native: JDBC4Connection) : Connection {
+actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnection {
     actual companion object {
         actual fun openFile(file: File): SQLiteConnector {
             val connection = JDBC4Connection(null, file.path, Properties())

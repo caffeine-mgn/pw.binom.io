@@ -1,7 +1,6 @@
 package pw.binom.db.sqlite
 
 import pw.binom.db.SyncPreparedStatement
-import pw.binom.db.ResultSet
 import java.sql.PreparedStatement as JPreparedStatement
 
 class SQLSyncPreparedStatement(override val connection: SQLiteConnector, internal val native: JPreparedStatement) : SyncPreparedStatement {
@@ -33,7 +32,7 @@ class SQLSyncPreparedStatement(override val connection: SQLiteConnector, interna
         native.setObject(index + 1, null)
     }
 
-    override fun executeQuery(): ResultSet =
+    override fun executeQuery() =
             SQLiteResultSet(native.executeQuery())
 
     override fun executeUpdate() {

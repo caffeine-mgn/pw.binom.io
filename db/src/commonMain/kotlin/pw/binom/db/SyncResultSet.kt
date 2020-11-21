@@ -2,7 +2,7 @@ package pw.binom.db
 
 import pw.binom.io.Closeable
 
-interface SyncResultSet : ResultSet, Closeable{
+interface SyncResultSet : ResultSet, Closeable {
     fun next(): Boolean
 
     fun <T> map(func: (ResultSet) -> T): Iterator<T> = object : Iterator<T> {

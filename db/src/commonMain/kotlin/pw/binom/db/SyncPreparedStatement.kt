@@ -4,7 +4,7 @@ import pw.binom.UUID
 import pw.binom.io.Closeable
 
 interface SyncPreparedStatement : Closeable {
-    val connection: Connection
+    val connection: SyncConnection
     fun set(index: Int, value: Float)
     fun set(index: Int, value: Int)
     fun set(index: Int, value: Long)

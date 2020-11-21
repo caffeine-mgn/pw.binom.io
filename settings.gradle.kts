@@ -1,5 +1,5 @@
-enableFeaturePreview('GRADLE_METADATA')
-rootProject.name = 'pw.binom.io'
+enableFeaturePreview("GRADLE_METADATA")
+rootProject.name = "pw.binom.io"
 
 include(":env")
 include(":core")
@@ -8,10 +8,10 @@ include(":date")
 include(":strong")
 include(":nio")
 include(":file")
-include ":db",
-        ":db:sqlite",
-        ":db:postgresql-async",
-        ":db:tarantoolClient"
+include(":db")
+include(":db:sqlite")
+include(":db:postgresql-async")
+include(":db:tarantoolClient")
 include(":socket")
 include(":http")
 include(":httpClient")

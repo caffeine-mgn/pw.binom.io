@@ -5,21 +5,20 @@ import cnames.structs.sqlite3_stmt
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.free
-import pw.binom.db.Connection
-import pw.binom.db.PreparedStatement
-import pw.binom.db.SQLException
-import pw.binom.db.Statement
-import pw.binom.io.IOException
+import pw.binom.db.*
+import pw.binom.db.SyncConnection
 import pw.binom.io.file.File
+import pw.binom.io.IOException
 
-actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<sqlite3>>) : Connection {
+actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<sqlite3>>) : SyncConnection {
     actual companion object {
         actual fun openFile(file: File): SQLiteConnector =
-                open(file.path)
+            open(file.path)
 
         private fun open(path: String): SQLiteConnector {
 //            val ctx = platform.posix.malloc(sizeOf<SqliteDataBase>().convert())!!.reinterpret<SqliteDataBase>()
-            val ctx = platform.posix.malloc(sizeOf<CPointerVar<sqlite3>>().convert())!!.reinterpret<CPointerVar<sqlite3>>()
+            val ctx =
+                platform.posix.malloc(sizeOf<CPointerVar<sqlite3>>().convert())!!.reinterpret<CPointerVar<sqlite3>>()
 
             val vv = sqlite3_open(path, ctx)
             if (vv > 0) {
@@ -48,12 +47,12 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         beginSt.executeUpdate()
     }
 
-    override fun createStatement(): Statement =
-            SQLiteStatement(this)
+    override fun createStatement() =
+        SQLiteStatement(this)
 
-    override fun prepareStatement(query: String): PreparedStatement {
+    override fun prepareStatement(query: String): SyncPreparedStatement {
         val stmt = platform.posix.malloc(sizeOf<CPointerVar<sqlite3_stmt>>().convert())!!
-                .reinterpret<CPointerVar<sqlite3_stmt>>()
+            .reinterpret<CPointerVar<sqlite3_stmt>>()
         sqlite3_prepare_v3(ctx.pointed.value, query, -1, 0u, stmt, null)
         return SQLitePrepareStatement(this, stmt)
     }
@@ -84,27 +83,6 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     }
 }
 
-/*
-internal val callback = staticCFunction<COpaquePointer?, Int, CPointer<CPointerVar<ByteVar>>?, CPointer<CPointerVar<ByteVar>>?, Int> { notUsed: COpaquePointer?, argc: Int, argv: CPointer<CPointerVar<ByteVar>>?, azColName: CPointer<CPointerVar<ByteVar>>? ->
-    val resultSet = notUsed!!.asStableRef<SQLiteResultSetV1>().get()
-
-    if (!resultSet.columnsInserted) {
-        val out = ArrayList<String>(argc)
-        (0 until argc).forEach {
-            out += azColName!![it]!!.toKStringFromUtf8()
-        }
-        resultSet.columns1 = out
-        resultSet.columnsInserted = true
-    }
-
-    resultSet.addRecord(
-            Array(argc) {
-                argv!!.get(it)?.toKStringFromUtf8()
-            }
-    )
-    0
-}
-*/
 internal fun SQLiteConnector.checkSqlCode(code: Int) {
     fun msg() = sqlite3_errmsg(this.ctx.pointed!!.value)?.toKStringFromUtf8() ?: "Unknown Error"
     when (code) {

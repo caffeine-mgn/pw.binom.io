@@ -1,5 +1,5 @@
-apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: pw.binom.plugins.BinomPublishPlugin
 
 kotlin {
 
@@ -134,5 +134,3 @@ kotlin {
         }
     }
 }
-
-apply from: '../public.gradle'

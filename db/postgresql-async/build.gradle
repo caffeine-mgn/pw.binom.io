@@ -3,10 +3,9 @@ import com.bmuschko.gradle.docker.tasks.container.DockerStopContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
 
-apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'com.bmuschko.docker-remote-api'
-
+apply plugin: pw.binom.plugins.BinomPublishPlugin
 
 kotlin {
 
@@ -35,11 +34,11 @@ kotlin {
         }
     }
 
-    mingwX86 {
-        binaries {
-            staticLib()
-        }
-    }
+//    mingwX86 {
+//        binaries {
+//            staticLib()
+//        }
+//    }
 
     jvm {
         compilations.all {
@@ -98,11 +97,11 @@ kotlin {
             }
         }
 
-        mingwX86Main {
-            dependencies {
-                dependsOn linuxX64Main
-            }
-        }
+//        mingwX86Main {
+//            dependencies {
+//                dependsOn linuxX64Main
+//            }
+//        }
 
         jvmMain {
             dependencies {
@@ -133,10 +132,6 @@ task createPostgres(type: DockerCreateContainer) {
     envVars['POSTGRES_USER'] = 'postgres'
     envVars['POSTGRES_PASSWORD'] = 'postgres'
     withEnvVar('POSTGRES_DB', 'test')
-    println("this: ${this.class.name}")
-    this.class.methods.each {
-        println("->$it")
-    }
     hostConfig.portBindings=['127.0.0.1:25331:5432']
 //    new DockerCreateContainer.ExposedPort("25331",[5432])
     containerId = postgresContainerId
@@ -168,5 +163,3 @@ mingwX64Test.finalizedBy(destoryPostgres)
 
 macosX64Test.dependsOn(startPostgres)
 macosX64Test.finalizedBy(destoryPostgres)
-
-apply from: '../../public.gradle'

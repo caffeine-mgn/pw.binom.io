@@ -1,5 +1,5 @@
-apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: pw.binom.plugins.BinomPublishPlugin
 
 kotlin {
     linuxX64 { // Use your target instead.
@@ -20,11 +20,11 @@ kotlin {
         }
     }
 
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
+//    mingwX86 { // Use your target instead.
+//        binaries {
+//            staticLib()
+//        }
+//    }
     macosX64 { // Use your target instead.
         binaries {
             staticLib()
@@ -86,11 +86,11 @@ kotlin {
             }
         }
 
-        mingwX86Main {
-            dependencies {
-                dependsOn mingwX64Main
-            }
-        }
+//        mingwX86Main {
+//            dependencies {
+//                dependsOn mingwX64Main
+//            }
+//        }
 
         jvmMain {
             dependencies {
@@ -111,5 +111,3 @@ kotlin {
         }
     }
 }
-
-apply from: '../public.gradle'

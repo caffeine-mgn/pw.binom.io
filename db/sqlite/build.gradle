@@ -1,6 +1,5 @@
-apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
-
+apply plugin: pw.binom.plugins.BinomPublishPlugin
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import pw.binom.plugins.BuildStaticTask
@@ -93,24 +92,24 @@ kotlin {
         }
     }
 
-    mingwX86 {
-        def task = it
-        binaries {
-            staticLib()
-
-            compilations.main {
-                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
-                cinterops {
-                    sqlite {
-                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
-                        packageName sqlitePackageName
-                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
-                    }
-                }
-            }
-            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
-        }
-    }
+//    mingwX86 {
+//        def task = it
+//        binaries {
+//            staticLib()
+//
+//            compilations.main {
+//                kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+//                cinterops {
+//                    sqlite {
+//                        defFile project.file("src/nativeInterop/nativeSqlite3.def")
+//                        packageName sqlitePackageName
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/native"
+//                    }
+//                }
+//            }
+//            compilations.test.kotlinOptions.freeCompilerArgs = getLinkArgs(task)
+//        }
+//    }
 
     jvm {
         compilations.all {
@@ -126,6 +125,7 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":db")
+                api project(":core")
                 api project(":file")
             }
         }
@@ -167,11 +167,11 @@ kotlin {
             }
         }
 
-        mingwX86Main {
-            dependencies {
-                dependsOn linuxX64Main
-            }
-        }
+//        mingwX86Main {
+//            dependencies {
+//                dependsOn linuxX64Main
+//            }
+//        }
 
         jvmMain {
             dependencies {
@@ -217,7 +217,7 @@ def defineBuild(KonanTarget selectTarget) {
     task.staticFile = file("${buildDir}/native/${selectTarget.name}/libsqlite3.a")
 }
 
-defineBuild(KonanTarget.MINGW_X86.INSTANCE)
+//defineBuild(KonanTarget.MINGW_X86.INSTANCE)
 defineBuild(KonanTarget.MINGW_X64.INSTANCE)
 defineBuild(KonanTarget.LINUX_X64.INSTANCE)
 defineBuild(KonanTarget.LINUX_ARM64.INSTANCE)
@@ -232,9 +232,9 @@ compileKotlinMingwX64 {
     dependsOn buildSqliteMingw_x64
 }
 
-compileKotlinMingwX86 {
-    dependsOn buildSqliteMingw_x86
-}
+//compileKotlinMingwX86 {
+//    dependsOn buildSqliteMingw_x86
+//}
 
 compileKotlinLinuxArm32Hfp {
     dependsOn buildSqliteLinux_arm32_hfp
@@ -243,5 +243,3 @@ compileKotlinLinuxArm32Hfp {
 compileKotlinMacosX64 {
     dependsOn buildSqliteMacos_x64
 }
-
-apply from: '../../public.gradle'

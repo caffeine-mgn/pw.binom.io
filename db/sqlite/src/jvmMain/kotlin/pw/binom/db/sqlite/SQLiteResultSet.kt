@@ -1,9 +1,11 @@
 package pw.binom.db.sqlite
 
-import pw.binom.db.SQLException
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import pw.binom.date.Date
+import pw.binom.db.SyncResultSet
 import java.sql.ResultSet
 
-class SQLiteResultSet(private val native: ResultSet) : pw.binom.db.SyncResultSet {
+class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
 
     override val columns: List<String> by lazy {
         val count = native.metaData.columnCount
@@ -29,6 +31,22 @@ class SQLiteResultSet(private val native: ResultSet) : pw.binom.db.SyncResultSet
 
     override fun getFloat(index: Int): Float? = native.getFloat(index + 1)
     override fun getFloat(column: String): Float? = native.getFloat(column)
+    override fun getBigDecimal(index: Int): BigDecimal? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getBigDecimal(column: String): BigDecimal? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDouble(index: Int): Double? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDouble(column: String): Double? {
+        TODO("Not yet implemented")
+    }
+
     override fun getBlob(index: Int): ByteArray? {
         val stream = native.getBinaryStream(index + 1) ?: return null
         return stream.readAllBytes()
@@ -46,6 +64,14 @@ class SQLiteResultSet(private val native: ResultSet) : pw.binom.db.SyncResultSet
 
     override fun isNull(column: String): Boolean =
         native.getObject(column) == null
+
+    override fun getDate(index: Int): Date? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDate(column: String): Date? {
+        TODO("Not yet implemented")
+    }
 
     override fun close() {
         native.close()

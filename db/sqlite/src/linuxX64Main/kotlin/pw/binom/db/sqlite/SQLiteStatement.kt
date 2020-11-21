@@ -7,21 +7,18 @@ import kotlinx.cinterop.value
 import platform.internal_sqlite.SQLITE_OK
 import platform.internal_sqlite.sqlite3_errmsg
 import platform.internal_sqlite.sqlite3_exec
-import pw.binom.db.PreparedStatement
-import pw.binom.db.ResultSet
-import pw.binom.db.SQLException
-import pw.binom.db.Statement
+import pw.binom.db.*
 
-private class AResultSet(val source: ResultSet, val statement: PreparedStatement) : ResultSet by source {
+private class AResultSet(val source: SyncResultSet, val statement: SyncPreparedStatement) : SyncResultSet by source {
     override fun close() {
         source.close()
         statement.close()
     }
 }
 
-class SQLiteStatement(override val connection: SQLiteConnector) : Statement {
+class SQLiteStatement(override val connection: SQLiteConnector) : SyncStatement {
 
-    override fun executeQuery(query: String): ResultSet {
+    override fun executeQuery(query: String): SyncResultSet {
         val c = connection.prepareStatement(query)
         return AResultSet(c.executeQuery(),c)
     }

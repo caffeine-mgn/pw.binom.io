@@ -4,13 +4,12 @@ import cnames.structs.sqlite3_stmt
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.free
-import pw.binom.db.PreparedStatement
-import pw.binom.db.ResultSet
-import pw.binom.db.SQLException
+import pw.binom.db.SyncPreparedStatement
+import pw.binom.db.*
 
 class SQLitePrepareStatement(override val connection: SQLiteConnector,
                              internal val native: CPointer<CPointerVar<sqlite3_stmt>>
-) : PreparedStatement {
+) : SyncPreparedStatement {
 
     internal var openedResultSetCount = 0
 
@@ -54,7 +53,7 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
         connection.checkSqlCode(sqlite3_bind_blob(stmt, index + 1, value.refTo(0), value.size, SQLITE_STATIC))
     }
 
-    override fun executeQuery(): ResultSet {
+    override fun executeQuery(): SyncResultSet {
         val code = sqlite3_step(stmt)
         connection.checkSqlCode(code)
         val result = when (code) {

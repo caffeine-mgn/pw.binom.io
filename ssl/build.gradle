@@ -1,5 +1,5 @@
-apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: pw.binom.plugins.BinomPublishPlugin
 
 def argsGenLinux(String path) {
     return [
@@ -200,5 +200,3 @@ kotlin {
         }
     }
 }
-
-apply from: '../public.gradle'
