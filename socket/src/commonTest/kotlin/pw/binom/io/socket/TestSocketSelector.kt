@@ -19,7 +19,7 @@ class TestSocketSelector {
         val client = RawSocketChannel()
         client.blocking = false
         selector.reg(client)
-        client.connect("127.0.0.1", port)
+        client.connect(NetworkAddress.create("127.0.0.1", port))
         val serverClient = server.accept()!!
         assertEquals(1, selector.keys.size)
         selector.process(1) {

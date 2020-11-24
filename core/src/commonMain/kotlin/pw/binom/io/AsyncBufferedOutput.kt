@@ -10,12 +10,12 @@ class AsyncBufferedOutput(override val stream: AsyncOutput,
 ) : AbstractAsyncBufferedOutput() {
     override val buffer = ByteBuffer.alloc(bufferSize)
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         try {
-            super.close()
+            super.asyncClose()
         } finally {
             if (closeStream) {
-                stream.close()
+                stream.asyncClose()
             }
             buffer.close()
         }
@@ -48,7 +48,7 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
         buffer.clear()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         flush()
     }
 }

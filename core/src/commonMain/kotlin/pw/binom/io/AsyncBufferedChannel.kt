@@ -15,8 +15,8 @@ class AsyncBufferedChannel(
     private val inputBuf = bufferedInput(readBufferSize)
     private val outputBuf = bufferedOutput(writeBufferSize)
 
-    override suspend fun close() {
-        channel.close()
+    override suspend fun asyncClose() {
+        channel.asyncClose()
     }
 
     override suspend fun write(data: ByteBuffer): Int =

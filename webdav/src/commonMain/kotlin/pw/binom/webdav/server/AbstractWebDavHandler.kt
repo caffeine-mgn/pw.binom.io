@@ -144,7 +144,7 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
         try {
             //resp.resetHeader("Connection", "close")
             if (req.method == "OPTIONS") {
-                fs.useUser(user) {
+                fs.useUser2(user) {
                     fs.get(urlDecode(req.contextUri))
                     resp.resetHeader(
                         "Allow",
@@ -156,26 +156,26 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
                 return
             }
             if (req.method == "MKCOL") {
-                fs.useUser(user) {
+                fs.useUser2(user) {
                     fs.mkdir(urlDecode(req.contextUri))
                     resp.status = 201
                 }
                 return
             }
             if (req.method == "MOVE") {
-                fs.useUser(user) {
+                fs.useUser2(user) {
                     val destination = req.headers["Destination"]?.firstOrNull()?.let { URL(it) }
 
                     if (destination == null) {
                         resp.status = 406
-                        return@useUser
+                        return@useUser2
                     }
                     val destinationPath = getLocalURI(req, destination.uri).let { urlDecode(it) }
                     val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
                     val source = fs.get(urlDecode(req.contextUri))
                     if (source == null) {
                         resp.status = 404
-                        return@useUser
+                        return@useUser2
                     }
 
                     source.move(destinationPath, overwrite)
@@ -184,19 +184,19 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
                 return
             }
             if (req.method == "COPY") {
-                fs.useUser(user) {
+                fs.useUser2(user) {
                     val destination = req.headers["Destination"]?.firstOrNull()?.let { URL(it) }
 
                     if (destination == null) {
                         resp.status = 406
-                        return@useUser
+                        return@useUser2
                     }
                     val destinationPath = getLocalURI(req, destination.uri).let { urlDecode(it) }
                     val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
                     val source = fs.get(urlDecode(req.contextUri))
                     if (source == null) {
                         resp.status = 404
-                        return@useUser
+                        return@useUser2
                     }
 
                     source.copy(destinationPath, overwrite)
@@ -205,11 +205,11 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
                 return
             }
             if (req.method == "DELETE") {
-                fs.useUser(user) {
+                fs.useUser2(user) {
                     val e = fs.get(urlDecode(req.contextUri))
                     if (e == null) {
                         resp.status = 404
-                        return@useUser
+                        return@useUser2
                     }
                     e.delete()
                     resp.status = 200
@@ -217,7 +217,7 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
                 return
             }
             if (req.method == "PUT") {
-                fs.useUser(user) {
+                fs.useUser2(user) {
                     val path = urlDecode(req.contextUri)
                     val e = fs.get(path)?.rewrite() ?: fs.new(path)
 
@@ -229,12 +229,12 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
                 return
             }
             if (req.method == "GET") {
-                fs.useUser(user) {
+                fs.useUser2(user) {
                     val e = fs.get(urlDecode(req.contextUri).removeSuffix("/"))
 
                     if (e == null) {
                         resp.status = 404
-                        return@useUser
+                        return@useUser2
                     }
                     val stream = e.read()!!
                     resp.status = 200
@@ -271,3 +271,9 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
     }
 
 }
+
+private suspend fun <T> FileSystem.useUser2(user: Any?, func: suspend () -> T): T =
+    if (isSupportUserSystem && user != null)
+        useUser(user, func)
+    else
+        func()

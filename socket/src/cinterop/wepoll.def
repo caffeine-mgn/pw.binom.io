@@ -145,6 +145,11 @@ WEPOLL_EXPORT int epoll_wait(HANDLE ephnd,
 #pragma warning(pop)
 #endif
 
+SOCKADDR_STORAGE myFunc(){
+    SOCKADDR_STORAGE test;
+    return test;
+}
+
 WEPOLL_INTERNAL int nt_global_init(void);
 
 typedef LONG NTSTATUS;

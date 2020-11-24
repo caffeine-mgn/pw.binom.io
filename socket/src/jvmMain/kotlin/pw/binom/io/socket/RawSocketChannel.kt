@@ -7,6 +7,7 @@ import pw.binom.io.IOException
 import pw.binom.io.UnknownHostException
 import pw.binom.update
 import java.net.InetSocketAddress
+import java.nio.channels.SelectableChannel
 import java.nio.channels.SocketChannel as JSocketChannel
 
 actual class RawSocketChannel constructor(override val native: JSocketChannel) : SocketChannel, NetworkChannel {
@@ -40,6 +41,11 @@ actual class RawSocketChannel constructor(override val native: JSocketChannel) :
         }
     }
 
+    override val selectableChannel: SelectableChannel
+        get() = native
+    override val accepteble: Boolean
+        get() = false
+
 //    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
 //        return data.update(offset, length) { b ->
 //            try {
@@ -67,14 +73,14 @@ actual class RawSocketChannel constructor(override val native: JSocketChannel) :
 //        }
 //    }
 
-    override fun connect(host: String, port: Int) {
+    override fun connect(address: NetworkAddress) {
         try {
-            native.connect(InetSocketAddress(host, port))
+            native.connect(InetSocketAddress(address.host, address.port))
             native.finishConnect()
         } catch (e: java.net.UnknownHostException) {
             throw UnknownHostException(e.message!!)
         } catch (e: java.net.ConnectException) {
-            throw ConnectException(host, port)
+            throw ConnectException(address.host, address.port)
         }
     }
 

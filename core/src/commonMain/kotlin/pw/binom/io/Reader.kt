@@ -29,7 +29,7 @@ fun Reader.asAsync() = object : AsyncReader {
     override suspend fun read(data: CharArray, offset: Int, length: Int): Int =
             this@asAsync.read(data, offset, length)
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         this@asAsync.close()
     }
 

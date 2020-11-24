@@ -39,9 +39,9 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val rawOutput: AsyncOutput
         get() = _rawOutput!!
 
-    private var _rawConnection: SocketNIOManager.ConnectionRaw? = null
+    private var _rawConnection: SocketNIOManager.TcpConnectionRaw? = null
 
-    override val rawConnection: SocketNIOManager.ConnectionRaw
+    override val rawConnection: SocketNIOManager.TcpConnectionRaw
         get() = _rawConnection!!
 
     override val headers = HashMap<String, ArrayList<String>>()
@@ -56,7 +56,7 @@ internal class HttpRequestImpl2 : HttpRequest {
         wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: PooledAsyncBufferedInput, output: AsyncOutput, rawConnection: SocketNIOManager.ConnectionRaw, allowZlib: Boolean) {
+    suspend fun init(method: String, uri: String, input: PooledAsyncBufferedInput, output: AsyncOutput, rawConnection: SocketNIOManager.TcpConnectionRaw, allowZlib: Boolean) {
         _rawInput = input
         _rawOutput = output
         _rawConnection = rawConnection

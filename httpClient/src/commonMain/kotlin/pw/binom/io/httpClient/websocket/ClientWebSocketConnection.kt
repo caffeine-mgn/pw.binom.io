@@ -2,11 +2,10 @@ package pw.binom.io.httpClient.websocket
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
-import pw.binom.io.AsyncChannel
 import pw.binom.io.http.websocket.AbstractWebSocketConnection
 import pw.binom.io.socket.nio.SocketNIOManager
 
-class ClientWebSocketConnection(input: AsyncInput, output: AsyncOutput, rawConnection: SocketNIOManager.ConnectionRaw) : AbstractWebSocketConnection(
+class ClientWebSocketConnection(input: AsyncInput, output: AsyncOutput, rawConnection: SocketNIOManager.TcpConnectionRaw) : AbstractWebSocketConnection(
         input = input,
         output = output,
         rawConnection = rawConnection

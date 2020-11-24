@@ -10,7 +10,7 @@ import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
 
 abstract class AbstractWebSocketConnection(
-    rawConnection: SocketNIOManager.ConnectionRaw,
+    rawConnection: SocketNIOManager.TcpConnectionRaw,
     input: AsyncInput,
     output: AsyncOutput
 ) : WebSocketConnection {

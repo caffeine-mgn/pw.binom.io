@@ -10,7 +10,6 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.socket.nio.SocketNIOManager
-import kotlin.coroutines.suspendCoroutine
 
 abstract class WebSocketHandler : Handler {
 
@@ -30,7 +29,7 @@ abstract class WebSocketHandler : Handler {
                                            val resp: HttpResponse,
                                            val rawInput: AsyncInput,
                                            val rawOutout: AsyncOutput,
-                                           val rawConnection: SocketNIOManager.ConnectionRaw,
+                                           val rawConnection: SocketNIOManager.TcpConnectionRaw,
                                            override val uri: String,
                                            override val contextUri: String, override val headers: Map<String, List<String>>) : ConnectRequest {
         var currentConnection: WebSocketConnection? = null

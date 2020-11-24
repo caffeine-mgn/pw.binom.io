@@ -5,7 +5,6 @@ import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.db.*
 import pw.binom.db.postgresql.async.messages.KindedMessage
-import pw.binom.db.postgresql.async.messages.MessageKinds
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
 import pw.binom.io.BufferedOutputAppendable
@@ -14,7 +13,7 @@ import pw.binom.io.IOException
 import pw.binom.io.socket.nio.SocketNIOManager
 
 class PGConnection private constructor(
-    val connection: SocketNIOManager.ConnectionRaw,
+    val connection: SocketNIOManager.TcpConnectionRaw,
     charset: Charset,
     val userName: String,
     val password: String?

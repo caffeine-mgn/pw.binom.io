@@ -4,7 +4,7 @@ import pw.binom.io.*
 import pw.binom.io.socket.nio.SocketNIOManager
 
 class HttpServerHandler : SocketNIOManager.ConnectHandler {
-    override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
+    override fun clientConnected(connection: SocketNIOManager.TcpConnectionRaw, manager: SocketNIOManager) {
         connection {
             try {
                 val header = it.utf8Reader().readln()!!.split(' ')

@@ -58,7 +58,7 @@ actual class SocketSelector actual constructor() : Closeable {
             if (isCanlelled) {
                 throw IllegalStateException("SocketKey already cancelled")
             }
-            native.remove(channel.nsocket.native)
+            native.remove(channel.nsocket)
             selfRef.close()
             _canlelled = true
 //            _keys -= this
@@ -76,7 +76,7 @@ actual class SocketSelector actual constructor() : Closeable {
                 status = status or LISTEN_WRITE
             }
             listenState = status
-            native.edit(channel.nsocket.native, selfRef, read, write)
+            native.edit(channel.nsocket, selfRef, read, write)
         }
     }
 
@@ -89,10 +89,10 @@ actual class SocketSelector actual constructor() : Closeable {
         val key = SelectorKeyImpl(channel, attachment)
 
 
-        if (channel.nsocket.blocking)
-            throw IllegalBlockingModeException()
+//        if (channel.nsocket.blocking)
+//            throw IllegalBlockingModeException()
 
-        val ref = native.add(channel.nsocket.native, key)
+        val ref = native.add(channel.nsocket, key)
         key.selfRef = ref
 //        _keys += key
         return key
@@ -112,17 +112,13 @@ actual class SocketSelector actual constructor() : Closeable {
             if (item.isWritable)
                 s = s or LISTEN_WRITE
             el.state = s
-            if (item.isClosed) {
-                val cc = el.channel
-                when (cc) {
-                    is RawSocketChannel -> cc.socket.internalDisconnected()
-                    is RawServerSocketChannel -> el.channel.nsocket.internalDisconnected()
-                }
-//                when  {
-//                    isClient(cc) -> cc.socket.internalDisconnected()
-//                    isServer(cc) -> el.channel.nsocket.internalDisconnected()
+//            if (item.isClosed) {
+//                val cc = el.channel
+//                when (cc) {
+//                    is RawSocketChannel -> cc.socket.internalDisconnected()
+//                    is RawServerSocketChannel -> el.channel.nsocket.internalDisconnected()
 //                }
-            }
+//            }
             func(el)
         }
         return true

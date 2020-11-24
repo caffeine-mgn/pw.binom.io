@@ -59,14 +59,14 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         }
     }
 
-    class Connection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.ConnectionRaw) : AsyncCloseable {
+    class Connection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.TcpConnectionRaw) : AsyncCloseable {
         override suspend fun close() {
             sslSession?.close()
             channel.close()
         }
     }
 
-    private class AliveConnection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.ConnectionRaw)
+    private class AliveConnection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.TcpConnectionRaw)
 
     internal suspend fun borrowConnection(url: URL): Connection {
         cleanUp()
@@ -167,11 +167,11 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
     }
 }
 
-private fun AsyncChannel.unwrap(): SocketNIOManager.ConnectionRaw {
+private fun AsyncChannel.unwrap(): SocketNIOManager.TcpConnectionRaw {
     var c = this
     while (true) {
         when (c) {
-            is SocketNIOManager.ConnectionRaw -> return c
+            is SocketNIOManager.TcpConnectionRaw -> return c
             is AsyncSSLChannel -> c = c.channel
             else -> throw IllegalArgumentException()
         }

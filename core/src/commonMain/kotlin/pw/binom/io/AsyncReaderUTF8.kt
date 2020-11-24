@@ -7,9 +7,9 @@ class AsyncReaderUTF82(private val stream: AsyncInput) : AbstractAsyncReader() {
 
     private val data = ByteBuffer.alloc(4)
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         data.close()
-        stream.close()
+        stream.asyncClose()
     }
 
     override suspend fun read(): Char? =

@@ -67,7 +67,7 @@ class AsyncBufferedOutputAppendable(
         }
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         encoder.close()
     }
 

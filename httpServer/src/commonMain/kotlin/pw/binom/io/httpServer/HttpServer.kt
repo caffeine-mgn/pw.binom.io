@@ -55,7 +55,7 @@ open class HttpServer(val manager: SocketNIOManager,
         HttpResponseImpl2(httpResponseBodyPool, zlibBufferSize)
     }
 
-    private fun runProcessing(connection: SocketNIOManager.ConnectionRaw) {
+    private fun runProcessing(connection: SocketNIOManager.TcpConnectionRaw) {
         connection {
             val inputBufferid = bufferedInputPool.borrow { buf ->
                 buf.currentStream = it
@@ -97,7 +97,7 @@ open class HttpServer(val manager: SocketNIOManager,
         }
     }
 
-    override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
+    override fun clientConnected(connection: SocketNIOManager.TcpConnectionRaw, manager: SocketNIOManager) {
         runProcessing(connection)
     }
 

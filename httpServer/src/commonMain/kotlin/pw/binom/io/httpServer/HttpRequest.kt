@@ -11,7 +11,7 @@ interface HttpRequest {
     val input: AsyncInput
     val rawInput: AsyncInput
     val rawOutput: AsyncOutput
-    val rawConnection: SocketNIOManager.ConnectionRaw
+    val rawConnection: SocketNIOManager.TcpConnectionRaw
     val headers: Map<String, List<String>>
 }
 
@@ -28,7 +28,7 @@ fun HttpRequest.withContextURI(uri: String) = object : HttpRequest {
         get() = this@withContextURI.rawInput
     override val rawOutput: AsyncOutput
         get() = this@withContextURI.rawOutput
-    override val rawConnection: SocketNIOManager.ConnectionRaw
+    override val rawConnection: SocketNIOManager.TcpConnectionRaw
         get() = this@withContextURI.rawConnection
     override val headers: Map<String, List<String>>
         get() = this@withContextURI.headers

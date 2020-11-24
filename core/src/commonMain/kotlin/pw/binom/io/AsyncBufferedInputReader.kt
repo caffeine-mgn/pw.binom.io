@@ -63,7 +63,7 @@ class AsyncBufferedInputReader(
         return output.get()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         decoder.close()
         pool.recycle(buffer)
     }

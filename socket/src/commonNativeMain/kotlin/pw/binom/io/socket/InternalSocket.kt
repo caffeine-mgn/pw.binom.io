@@ -12,21 +12,36 @@ expect class NativeSocketHolder {
 internal expect class NativeEpoll {
     constructor(connectionCount: Int)
 
-    fun add(socket: NativeSocketHolder, key: SocketSelector.SelectorKeyImpl):SelfRefKey
+    fun add(socket: NativeSocketHolder, key: SocketSelector.SelectorKeyImpl): SelfRefKey
     fun remove(socket: NativeSocketHolder)
     fun free()
     fun wait(list: NativeEpollList, connectionCount: Int, timeout: Int): Int
-    fun edit(socket: NativeSocketHolder, ref:SelfRefKey, readFlag: Boolean, writeFlag: Boolean)
+    fun edit(socket: NativeSocketHolder, ref: SelfRefKey, readFlag: Boolean, writeFlag: Boolean)
 }
 
 expect class NativeEvent
-internal expect class SelfRefKey:Closeable
-internal expect val NativeEvent.key:SocketSelector.SelectorKeyImpl
+internal expect class SelfRefKey : Closeable
+
+internal expect val NativeEvent.key: SocketSelector.SelectorKeyImpl
 
 internal expect val NativeEvent.isClosed: Boolean
 internal expect val NativeEvent.isReadable: Boolean
 internal expect val NativeEvent.isWritable: Boolean
 internal expect val NativeEvent.socId: Int
+
+internal expect fun createDatagramSocket(): NativeSocketHolder
+internal expect fun bindDatagram(socket: NativeSocketHolder, address: NetworkAddress)
+internal expect fun writeDatagram(
+    socket: NativeSocketHolder,
+    data: ByteBuffer,
+    address: NetworkAddress
+)
+
+internal expect fun readDatagram(
+    socket: NativeSocketHolder,
+    data: ByteBuffer,
+    address: MutableNetworkAddress?
+)
 
 internal expect class NativeEpollList {
     constructor(connectionCount: Int)
@@ -48,8 +63,8 @@ internal expect fun bindSocket(socket: NativeSocketHolder, host: String, port: I
 internal expect fun connectSocket(native: NativeSocketHolder, host: String, port: Int)
 
 @Deprecated(level = DeprecationLevel.WARNING, message = "Use Input/Output")
-internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int):Int
+internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int
 
-internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int):Int
-internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteBuffer):Int
+internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int): Int
+internal expect fun sendSocket(socket: NativeSocketHolder, data: ByteBuffer): Int
 internal expect fun acceptSocket(socket: NativeSocketHolder): NativeSocketHolder

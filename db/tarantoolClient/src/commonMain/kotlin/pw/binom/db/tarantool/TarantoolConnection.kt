@@ -18,7 +18,7 @@ private const val VSPACE_ID_INDEX_ID = 0
 private const val VINDEX_ID = 289
 private const val VINDEX_ID_INDEX_ID = 0
 
-class TarantoolConnection private constructor(private val networkThread: ThreadRef, con: SocketNIOManager.ConnectionRaw) : AsyncCloseable {
+class TarantoolConnection private constructor(private val networkThread: ThreadRef, con: SocketNIOManager.TcpConnectionRaw) : AsyncCloseable {
     companion object {
         suspend fun connect(manager: SocketNIOManager, host: String, port: Int, user: String?, password: String?): TarantoolConnection {
             val con = manager.connect(

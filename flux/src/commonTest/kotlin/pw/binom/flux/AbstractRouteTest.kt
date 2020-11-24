@@ -22,7 +22,7 @@ class AbstractRouteTest {
                 get() = TODO("Not yet implemented")
             override val rawOutput: AsyncOutput
                 get() = TODO("Not yet implemented")
-            override val rawConnection: SocketNIOManager.ConnectionRaw
+            override val rawConnection: SocketNIOManager.TcpConnectionRaw
                 get() = TODO("Not yet implemented")
             override val headers: Map<String, List<String>>
                 get() = TODO("Not yet implemented")

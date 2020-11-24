@@ -21,7 +21,7 @@ fun Output.asyncOutput() = object : AsyncOutput {
         this@asyncOutput.flush()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         this@asyncOutput.close()
     }
 }

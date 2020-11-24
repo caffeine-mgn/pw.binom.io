@@ -3,8 +3,8 @@ package pw.binom.io.socket
 import pw.binom.doFreeze
 
 actual class RawServerSocketChannel constructor(socket: RawSocketServer) : ServerSocketChannel, NetworkChannel {
-    override val nsocket: RawSocket
-        get() = server.socket
+    override val nsocket
+        get() = server.socket.native
     override val type: Int
         get() = RAW_SOCKET_SERVER_TYPE
 
@@ -26,8 +26,8 @@ actual class RawServerSocketChannel constructor(socket: RawSocketServer) : Serve
         server.close()
     }
 
-    override fun bind(host: String, port: Int) {
-        server.bind(host, port)
+    override fun bind(address: NetworkAddress) {
+        server.bind(address.host, address.port)
     }
 
     override fun accept(): RawSocketChannel? {

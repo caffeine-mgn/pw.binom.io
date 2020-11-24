@@ -29,7 +29,7 @@ fun Input.asyncInput() = object : AsyncInput {
     override suspend fun read(dest: ByteBuffer): Int =
             this@asyncInput.read(dest)
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         this@asyncInput.close()
     }
 }

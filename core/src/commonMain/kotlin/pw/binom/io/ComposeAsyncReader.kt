@@ -41,14 +41,14 @@ class ComposeAsyncReader : AbstractAsyncReader() {
         return this
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         if (!current.isEmpty)
-            current.value.close()
+            current.value.asyncClose()
         while (true) {
             readers.popFirst(current)
             if (current.isEmpty)
                 break
-            current.value.close()
+            current.value.asyncClose()
         }
     }
 }

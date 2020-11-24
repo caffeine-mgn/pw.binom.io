@@ -25,8 +25,8 @@ class AsyncCheckedInput(val stream: AsyncInput, val cksum: CRC32Basic) : AsyncIn
         return ll
     }
 
-    override suspend fun close() {
-        stream.close()
+    override suspend fun asyncClose() {
+        stream.asyncClose()
     }
 
 //    override suspend fun skip(n: Long): Long {

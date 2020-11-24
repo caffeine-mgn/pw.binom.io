@@ -7,6 +7,7 @@ class WaitEventQueue<T : Any>(val loadFactor: Float = 0.75f, val compactFactor: 
     var value: T? = null
     override val isEmpty: Boolean
         get() = value == null
+
     override val size: Int
         get() = if (isEmpty) 0 else 1
 
