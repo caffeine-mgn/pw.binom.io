@@ -4,10 +4,6 @@ def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startPara
 
 kotlin {
 
-    if (ideaActive) {
-        linuxX64("nonJvmCommon")
-    }
-
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
@@ -68,13 +64,9 @@ kotlin {
             }
         }
 
-        nonJvmCommon{
-            dependsOn commonMain
-        }
-
         linuxX64Main {
             dependencies {
-                dependsOn nonJvmCommon
+                dependsOn commonMain
             }
         }
 
@@ -104,7 +96,7 @@ kotlin {
 
         jsMain {
             dependencies {
-                dependsOn nonJvmCommon
+                dependsOn commonMain
                 api "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
             }
         }

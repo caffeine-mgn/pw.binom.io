@@ -25,12 +25,8 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         }.toCPointer<ByteVar>()!!
     }
 
-    fun refTo(position: Int): CPointer<ByteVar> =
-        memScoped {
-//                require(position > limit) { "Position must be less than Limit" }
-//                require(position >= 0) { "Position must be greatert than Limit" }
-            bytes.refTo(position).getPointer(this).reinterpret<ByteVar>()//.toLong()
-        }//.toCPointer()!!
+    fun refTo(position: Int)=
+        bytes.refTo(position)
 
     actual fun flip() {
         limit = position
@@ -79,7 +75,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         val l = minOf(remaining, dest.remaining)
         if (l == 0)
             return l
-        memcpy(dest.native + dest.position, native + position, l.convert())
+        memcpy(dest.bytes.refTo(dest.position), bytes.refTo(position), l.convert())
         dest.position += l
         position += l
         return l
@@ -87,7 +83,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     override fun write(data: ByteBuffer): Int {
         val len = minOf(remaining, data.remaining)
-        memcpy(native + position, data.native + data.position, len.convert())
+        memcpy(bytes.refTo(position), data.bytes.refTo(data.position), len.convert())
         position += len
         data.position += len
         return len
@@ -115,16 +111,16 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     actual operator fun get(index: Int): Byte {
         checkClosed()
-        return native[index]
+        return bytes[index]
     }
 
     actual operator fun set(index: Int, value: Byte) {
         checkClosed()
-        native[index] = value
+        bytes[index] = value
     }
 
     actual fun get(): Byte =
-        native[nextPutIndex()]
+        bytes[nextPutIndex()]
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
         this.position = position
@@ -138,7 +134,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     }
 
     actual fun put(value: Byte) {
-        native[nextPutIndex()] = value
+        bytes[nextPutIndex()] = value
     }
 
     actual fun clear() {
@@ -149,11 +145,11 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = ByteBuffer.alloc(newSize)
         if (newSize > capacity) {
-            memcpy(new.native, native, capacity.convert())
+            memcpy(new.bytes.refTo(0), bytes.refTo(0), capacity.convert())
             new.position = position
             new.limit = limit
         } else {
-            memcpy(new.native, native, newSize.convert())
+            memcpy(new.bytes.refTo(0), bytes.refTo(0), newSize.convert())
             new.position = minOf(position, newSize)
             new.limit = minOf(limit, newSize)
         }
@@ -179,7 +175,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     actual fun compact() {
         if (remaining > 0) {
             val size = remaining
-            memcpy(native, refTo(position), size.convert())
+            memcpy(bytes.refTo(0), bytes.refTo(position), size.convert())
             position = size
             limit = capacity
         } else {

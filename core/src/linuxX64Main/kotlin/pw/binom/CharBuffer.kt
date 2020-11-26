@@ -10,7 +10,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         actual fun alloc(size: Int): CharBuffer = CharBuffer(ByteBuffer.alloc(size * 2))
         actual fun wrap(chars: CharArray): CharBuffer {
             val buf = ByteBuffer.alloc(chars.size * Char.SIZE_BYTES)
-            memcpy(buf.native, chars.refTo(0), (chars.size * Char.SIZE_BYTES).convert())
+            memcpy(buf.bytes.refTo(0), chars.refTo(0), (chars.size * Char.SIZE_BYTES).convert())
             return CharBuffer(buf)
         }
     }
