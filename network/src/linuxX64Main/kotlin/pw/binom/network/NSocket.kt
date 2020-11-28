@@ -97,6 +97,13 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun bind(address: NetworkAddress) {
+        memScoped {
+            bind(
+                native,
+                address.data.refTo(0).getPointer(this).reinterpret(),
+                address.size.convert()
+            )
+        }
     }
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =

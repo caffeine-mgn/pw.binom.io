@@ -35,7 +35,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
     }
 
     actual fun accept(address: NetworkAddress.Mutable?): NSocket {
-        val native = if (address==null){
+        val native = if (address == null) {
             platform.windows.accept(native, null, null)
         } else {
             memScoped {
@@ -99,9 +99,23 @@ actual class NSocket(val native: SOCKET) : Closeable {
     }
 
     actual fun connect(address: NetworkAddress) {
+        memScoped {
+            val r = platform.windows.connect(
+                native,
+                address.data.refTo(0).getPointer(this).reinterpret(),
+                address.size.convert()
+            )
+        }
     }
 
     actual fun bind(address: NetworkAddress) {
+        memScoped {
+            platform.windows.bind(
+                native,
+                address.data.refTo(0).getPointer(this).reinterpret(),
+                address.size.convert()
+            )
+        }
     }
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
@@ -123,7 +137,14 @@ actual class NSocket(val native: SOCKET) : Closeable {
         address: NetworkAddress.Mutable?
     ): Int {
         val gotBytes = if (address == null) {
-            val rr = platform.windows.recvfrom(native, data.bytes.refTo(data.position), data.remaining.convert(), 0, null, null)
+            val rr = platform.windows.recvfrom(
+                native,
+                data.bytes.refTo(data.position),
+                data.remaining.convert(),
+                0,
+                null,
+                null
+            )
             if (rr == SOCKET_ERROR) {
                 throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
             }

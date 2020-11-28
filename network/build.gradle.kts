@@ -5,7 +5,6 @@ plugins {
 apply {
     plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
 }
-//apply()
 
 kotlin {
     linuxX64 { // Use your target instead.
@@ -55,8 +54,15 @@ kotlin {
         binaries {
             framework {
             }
+            compilations["main"].cinterops {
+                create("utils") {
+                    defFile = project.file("src/cinterop/mac.def")
+                    packageName = "platform.linux"
+                }
+            }
         }
     }
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -81,6 +87,10 @@ kotlin {
         }
         val mingwX86Main by getting {
             dependsOn(mingwX64Main)
+        }
+
+        val macosX64Main by getting {
+            dependsOn(nativeMain)
         }
 
         val commonTest by getting {
