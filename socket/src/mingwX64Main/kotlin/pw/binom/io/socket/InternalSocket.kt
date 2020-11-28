@@ -167,21 +167,6 @@ internal actual fun writeDatagram(
 
         data.position += rr.toInt()
     }
-//    memScoped {
-//        val vv = cValue<sockaddr_in>()
-//        val serverAddr = alloc<sockaddr_in>()
-//        with(serverAddr) {
-//            memset(this.ptr, 0, sockaddr_in.size.convert())
-//            sin_family = AF_INET.convert()
-//            sin_addr.S_un.S_addr = if (address.host == "0.0.0.0")
-//                htons(0.convert()).convert()
-//            else
-//                platform.posix.inet_addr(address.host)
-//            sin_port = htons(address.port.convert()).convert()
-//        }
-
-
-//    }
 }
 
 internal actual fun readDatagram(

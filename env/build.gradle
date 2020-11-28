@@ -1,13 +1,13 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: pw.binom.plugins.BinomPublishPlugin
 
-def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
+//def ideaActive = System.getProperty('idea.active') == 'true' && gradle.startParameter.taskNames.isEmpty()
 
 kotlin {
 
-    if (ideaActive) {
-        linuxX64("native")
-    }
+//    if (ideaActive) {
+//        linuxX64("native")
+//    }
 
     linuxX64 { // Use your target instead.
         binaries {

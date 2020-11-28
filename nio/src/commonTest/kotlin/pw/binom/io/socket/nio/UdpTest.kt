@@ -19,7 +19,6 @@ class UdpTest {
         val port = Random.nextInt(9999 until Short.MAX_VALUE)
         val manager = SocketNIOManager()
         val server = manager.bindUDP(NetworkAddress.create(port))
-
         val client = manager.openUdp()
         var done = false
         var exception: Throwable? = null

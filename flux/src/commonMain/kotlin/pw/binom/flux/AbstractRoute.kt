@@ -38,7 +38,7 @@ abstract class AbstractRoute : Route {
         routers.entries
                 .asSequence()
                 .filter {
-                    it.key.isWilcardMattech(action.req.contextUri)
+                    it.key.isWildcardMattech(action.req.contextUri)
                 }
                 .sortedBy { -it.key.length }
                 .flatMap { it.value.asSequence() }
@@ -50,7 +50,7 @@ abstract class AbstractRoute : Route {
                 ?.entries
                 ?.asSequence()
                 ?.filter {
-                    action.req.contextUri.isWilcardMattech(it.key)
+                    action.req.contextUri.isWildcardMattech(it.key)
                 }
                 ?.sortedBy { -it.key.length }
                 ?.flatMap { it.value.asSequence() }
