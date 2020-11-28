@@ -26,6 +26,20 @@ actual class PoolSelector : Closeable {
     }
 
     private fun commonEventsToWEpoll(mode: Int): Int {
+        println("EPOLLERR=$EPOLLERR")
+        println("EPOLLET=$EPOLLET")
+        println("EPOLLHUP=$EPOLLHUP")
+        println("EPOLLIN=$EPOLLIN")
+        println("EPOLLMSG=$EPOLLMSG")
+        println("EPOLLONESHOT=$EPOLLONESHOT")
+        println("EPOLLOUT=$EPOLLOUT")
+        println("EPOLLRDBAND=$EPOLLRDBAND")
+        println("EPOLLRDHUP=$EPOLLRDHUP")
+        println("EPOLLRDNORM=$EPOLLRDNORM")
+        println("EPOLLWAKEUP=$EPOLLWAKEUP")
+        println("EPOLLWRBAND=$EPOLLWRBAND")
+        println("EPOLLWRNORM=$EPOLLWRNORM")
+
         var events = 0
         if (mode and Selector.EVENT_EPOLLIN != 0) {
             events += EPOLLIN
