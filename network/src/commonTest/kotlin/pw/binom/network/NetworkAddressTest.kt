@@ -13,7 +13,17 @@ class NetworkAddressTest {
             NetworkAddress.Immutable(Random.uuid().toString(), 9999)
             fail()
         } catch (e: UnknownHostException) {
-            //
         }
+        try {
+            NetworkAddress.Mutable().reset(Random.uuid().toString(), 9999)
+            fail()
+        } catch (e: UnknownHostException) {
+        }
+    }
+
+    @Test
+    fun knownHost() {
+        NetworkAddress.Immutable("google.com", 9999)
+        NetworkAddress.Mutable().reset("google.com", 9999)
     }
 }

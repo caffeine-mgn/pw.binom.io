@@ -11,9 +11,9 @@ actual sealed class NetworkAddress {
     var size = 0
 
     private inline fun <T> addr(f: MemScope.(CPointer<ByteVar>) -> T): T =
-        memScoped {
-            this.f(data.refTo(0).getPointer(this))
-        }
+            memScoped {
+                this.f(data.refTo(0).getPointer(this))
+            }
 
     actual val host: String
         get() {
@@ -29,11 +29,11 @@ actual sealed class NetworkAddress {
                     addr6.pointed.sin6_addr
 
                 if (inet_ntop(
-                        family.convert(),
-                        ptr.ptr,
-                        buf.refTo(0).getPointer(this),
-                        50.convert()
-                    ) == null
+                                family.convert(),
+                                ptr.ptr,
+                                buf.refTo(0).getPointer(this),
+                                50.convert()
+                        ) == null
                 ) {
                     throw RuntimeException("Can't get address. $errno, family: $family")
                 }
@@ -59,27 +59,30 @@ actual sealed class NetworkAddress {
     protected fun _reset(host: String, port: Int) {
         memScoped {
             init_sockets()
+
             val hints = alloc<addrinfo>()
             memset(hints.ptr, 0, sizeOf<addrinfo>().convert())
             hints.ai_flags = AI_CANONNAME
-            hints.ai_family = platform.posix.AF_UNSPEC
-            hints.ai_socktype = platform.posix.SOCK_STREAM
-            hints.ai_protocol = platform.posix.IPPROTO_TCP
+            hints.ai_family = AF_UNSPEC
+            hints.ai_socktype = SOCK_STREAM
+            hints.ai_protocol = IPPROTO_TCP
 
             val result = allocPointerTo<addrinfo>()
+            set_posix_errno(0)
             LOOP@ while (true) {
                 val err = getaddrinfo(host, port.toString(), hints.ptr, result.ptr)
+                if (err == EAI_AGAIN && errno == 11) {
+                    throw UnknownHostException(host)
+                }
                 when (err) {
                     0 -> break@LOOP
-                    EAI_AGAIN -> continue@LOOP
-//                    platform.windows.WSAHOST_NOT_FOUND -> throw UnknownHostException(host)
                     else -> throw RuntimeException("Unknown error: ${err}")
                 }
             }
             memcpy(
-                data.refTo(0),
-                result.value!!.pointed.ai_addr,
-                result.value!!.pointed.ai_addrlen.convert()
+                    data.refTo(0),
+                    result.value!!.pointed.ai_addr,
+                    result.value!!.pointed.ai_addrlen.convert()
             )
             size = result.value!!.pointed.ai_addrlen.convert()
             freeaddrinfo(result.value)
