@@ -13,15 +13,22 @@ actual class PoolSelector : Closeable {
         if (mode and EPOLLIN != 0) {
             events = events or Selector.EVENT_EPOLLIN
         }
+
+        if (mode and EPOLLERR == 0 && mode and EPOLLOUT != 0) {
+            return Selector.EVENT_CONNECTED
+        }
+
         if (mode and EPOLLOUT != 0) {
             events = events or Selector.EVENT_EPOLLOUT
         }
         if (mode and EPOLLRDHUP != 0) {
             events = events or Selector.EVENT_EPOLLRDHUP
         }
-        if (mode and EPOLLPRI != 0) {
-            events += Selector.EVENT_CONNECTED
-        }
+        println("got $mode -> $events")
+        println("Selector.EVENT_EPOLLRDHUP=${Selector.EVENT_EPOLLRDHUP}")
+        println("Selector.EVENT_EPOLLOUT=${Selector.EVENT_EPOLLOUT}")
+        println("Selector.EVENT_CONNECTED=${Selector.EVENT_CONNECTED}")
+        println("Selector.EVENT_EPOLLIN=${Selector.EVENT_EPOLLIN}")
         return events
     }
 
@@ -58,9 +65,24 @@ actual class PoolSelector : Closeable {
 
     actual fun attach(socket: NSocket, mode: Int, attachment: COpaquePointer?) {
         memScoped {
+            println("Attach $mode -> ${commonEventsToWEpoll(mode)}")
             val event = alloc<epoll_event>()
-            event.events = commonEventsToWEpoll(mode).toUInt()
+
+            event.events = (EPOLLERR or
+                    EPOLLHUP or
+                    EPOLLIN or
+                    EPOLLMSG or
+                    EPOLLONESHOT or
+                    EPOLLOUT or
+                    EPOLLRDBAND or
+                    EPOLLRDHUP or
+                    EPOLLRDNORM or
+                    EPOLLWAKEUP or
+                    EPOLLWRBAND or
+                    EPOLLWRNORM).convert()
+//            event.events = 0xFFFFFFFFu//commonEventsToWEpoll(mode).toUInt()
             event.data.fd = socket.native
+            event.data.u32 = 0u
             event.data.ptr = attachment
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
         }
@@ -87,6 +109,14 @@ actual class PoolSelector : Closeable {
         }
         for (i in 0 until eventCount) {
             val item = list[i]
+            println("EPOLLHUP->${item.events and EPOLLHUP.toUInt() != 0u}")
+            println("EPOLLERR->${item.events and EPOLLERR.toUInt() != 0u}")
+            println("EPOLLOUT->${item.events and EPOLLOUT.toUInt() != 0u}")
+            if (item.data.u32 == 0u) {
+                if (item.events and EPOLLOUT.toUInt() != 0u) {
+                    println("Connected!  status: ${isConnected(item.data.fd)}")
+                }
+            }
             func(item.data.ptr, wepollEventsToCommon(item.events.toInt()))
         }
         return true

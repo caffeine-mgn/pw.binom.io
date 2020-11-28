@@ -6,6 +6,10 @@ import pw.binom.io.Channel
 actual class TcpClientSocketChannel(val native: NSocket) : Channel {
     actual constructor() : this(NSocket.tcp())
 
+    init {
+        native.setBlocking(false)
+    }
+
     actual fun connect(address: NetworkAddress) {
         native.connect(address)
     }

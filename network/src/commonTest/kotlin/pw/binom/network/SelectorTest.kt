@@ -8,12 +8,23 @@ import kotlin.test.assertTrue
 class SelectorTest {
 
     @Test
-    fun timeoutTest() {
+    fun timeoutTest1() {
+        val selector = Selector()
+
+        assertFalse(selector.wait(1000) { _, mode ->
+            println("mode: $mode")
+        })
+    }
+
+    @Test
+    fun timeoutTest2() {
         val selector = Selector()
         val client = TcpClientSocketChannel()
         selector.attach(client)
 
-        assertFalse(selector.wait(1000) { _, _ -> })
+        assertFalse(selector.wait(1000) { _, mode ->
+            println("mode: $mode")
+        })
     }
 
     @Test
@@ -21,9 +32,21 @@ class SelectorTest {
         val selector = Selector()
         val client = TcpClientSocketChannel()
         selector.attach(client, Selector.EVENT_CONNECTED)
-        client.connect(NetworkAddress.Immutable("google.com", 80))
+        client.connect(NetworkAddress.Immutable("google.com", 443))
 
-        assertTrue(selector.wait(1000) { attaching, mode ->
+        assertTrue(selector.wait(10000) { attaching, mode ->
+            println("Mode: $mode")
+            assertEquals(Selector.EVENT_CONNECTED, mode)
+        })
+    }
+    @Test
+    fun connectTest2() {
+        val selector = Selector()
+        val client = TcpClientSocketChannel()
+        selector.attach(client, Selector.EVENT_CONNECTED)
+        client.connect(NetworkAddress.Immutable("127.0.0.1", 12))
+
+        assertTrue(selector.wait(10000) { attaching, mode ->
             println("Mode: $mode")
             assertEquals(Selector.EVENT_CONNECTED, mode)
         })

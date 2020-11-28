@@ -83,6 +83,7 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun setBlocking(value: Boolean) {
+        println("setBlocking($value)")
         val flags = fcntl(native, F_GETFL, 0)
         val newFlags = if (value)
             flags xor O_NONBLOCK
@@ -94,6 +95,17 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun connect(address: NetworkAddress) {
+        memScoped {
+            val r = connect(
+                native,
+                address.data.refTo(0).getPointer(this).reinterpret(),
+                address.size.convert()
+            )
+            println("Connect result: $r")
+            if (r < 0 && errno != EINPROGRESS) {
+                throw IOException("Can't connect")
+            }
+        }
     }
 
     actual fun bind(address: NetworkAddress) {
@@ -151,4 +163,17 @@ actual class NSocket(val native: Int) : Closeable {
         return gotBytes
     }
 
+}
+
+
+fun isConnected(native: Int): Boolean {
+    memScoped {
+        val error = alloc<IntVar>()
+        error.value = 0
+        val len = alloc<socklen_tVar>()
+        len.value = sizeOf<IntVar>().convert()
+        val retval = getsockopt(native, SOL_SOCKET, SO_ERROR, error.ptr, len.ptr)
+        println("retval=${retval}   ${error.value}")
+    }
+    return false
 }
