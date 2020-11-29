@@ -5,23 +5,23 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.jvm.JvmName
 
 class NetworkDispatcher : Closeable {
-    val selector = Selector2()
+    val selector = Selector.open()
 
     @JvmName("jvmWait")
     fun wait(timeout: Long = -1L) {
-        selector.wait(timeout) { attaching, mode ->
+        selector.select(timeout) { key, mode ->
             println("!event!  ${mode.toString(2)}")
-            val connection = attaching as AbstractConnection
-            if (mode and Selector2.EVENT_CONNECTED != 0) {
+            val connection = key.attachment as AbstractConnection
+            if (mode and Selector.EVENT_CONNECTED != 0) {
                 connection.connected()
             }
-            if (mode and Selector2.EVENT_ERROR != 0) {
+            if (mode and Selector.EVENT_ERROR != 0) {
                 connection.error()
             }
-            if (mode and Selector2.EVENT_EPOLLIN != 0) {
+            if (mode and Selector.EVENT_EPOLLIN != 0) {
                 connection.readyForRead()
             }
-            if (mode and Selector2.EVENT_EPOLLOUT != 0) {
+            if (mode and Selector.EVENT_EPOLLOUT != 0) {
                 connection.readyForWrite()
             }
         }

@@ -83,7 +83,6 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun setBlocking(value: Boolean) {
-        println("setBlocking($value)")
         val flags = fcntl(native, F_GETFL, 0)
         val newFlags = if (value)
             flags xor O_NONBLOCK

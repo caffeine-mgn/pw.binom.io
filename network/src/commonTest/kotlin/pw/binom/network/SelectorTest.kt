@@ -29,8 +29,6 @@ class SelectorTest {
         client.connect(NetworkAddress.Immutable("google.com", 443))
 
         assertEquals(1, selector.select(1000) { key, mode ->
-            println("Mode: ${modeToString(mode)} ${mode.toString(2)}")
-            println("EVENT_CONNECTED--->${mode and Selector.EVENT_CONNECTED}")
             assertTrue(mode and Selector.EVENT_CONNECTED != 0)
             assertTrue(mode and Selector.EVENT_EPOLLOUT != 0)
         })
@@ -46,7 +44,6 @@ class SelectorTest {
         client.connect(NetworkAddress.Immutable("127.0.0.1", 12))
 
         selector.select(5000) { key, mode ->
-            println("Mode: ${modeToString(mode)} $mode")
             assertTrue(mode and Selector.EVENT_ERROR != 0)
             client.close()
         }
