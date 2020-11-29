@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import java.net.ConnectException
+import java.nio.channels.NetworkChannel
 import java.nio.channels.SelectionKey
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
@@ -9,22 +10,27 @@ import java.nio.channels.Selector as JSelector
 private fun javaToCommon(mode: Int): Int {
     var opts = 0
     if (SelectionKey.OP_ACCEPT and mode != 0 || SelectionKey.OP_READ and mode != 0) {
-        opts = opts or Selector.EVENT_EPOLLIN
+        opts = opts or Selector.INPUT_READY
     }
 
     if (SelectionKey.OP_WRITE and mode != 0) {
-        opts = opts or Selector.EVENT_EPOLLOUT
+        opts = opts or Selector.OUTPUT_READY
     }
     return opts
 }
 
-private fun commonToJava(channel: SocketChannel, mode: Int): Int {
+private fun commonToJava(channel: NetworkChannel, mode: Int): Int {
     var opts = 0
-    if (Selector.EVENT_EPOLLIN and mode != 0) {
-        opts = opts or SelectionKey.OP_READ
+    if (Selector.INPUT_READY and mode != 0) {
+        val value = when (channel) {
+            is SocketChannel -> SelectionKey.OP_READ
+            is ServerSocketChannel -> SelectionKey.OP_ACCEPT
+            else -> throw IllegalArgumentException("Unsupported NetworkChannel: ${channel::class.java}")
+        }
+        opts = opts or value
     }
 
-    if (Selector.EVENT_EPOLLOUT and mode != 0) {
+    if (Selector.OUTPUT_READY and mode != 0) {
         require(channel is SocketChannel)
         opts = opts or SelectionKey.OP_WRITE
     }
@@ -33,11 +39,11 @@ private fun commonToJava(channel: SocketChannel, mode: Int): Int {
 
 private fun commonToJava(channel: ServerSocketChannel, mode: Int): Int {
     var opts = 0
-    if (Selector.EVENT_EPOLLIN and mode != 0) {
+    if (Selector.INPUT_READY and mode != 0) {
         opts or SelectionKey.OP_ACCEPT
     }
 
-    if (Selector.EVENT_EPOLLOUT and mode != 0) {
+    if (Selector.OUTPUT_READY and mode != 0) {
         require(channel is SocketChannel)
         opts = opts or SelectionKey.OP_WRITE
     }
@@ -54,7 +60,11 @@ class JvmSelector : Selector {
         override var listensFlag: Int
             get() = javaToCommon(native.interestOps())
             set(value) {
-                native.interestOps(commonToJava(native.channel() as SocketChannel, value))
+                try {
+                    native.interestOps(commonToJava(native.channel() as NetworkChannel, value))
+                } catch (e: Throwable) {
+                    println()
+                }
             }
         override val eventsFlag: Int
             get() = javaToCommon(native.readyOps())
@@ -81,7 +91,7 @@ class JvmSelector : Selector {
                         if (connected) {
                             it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
                             count++
-                            func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.EVENT_EPOLLOUT)
+                            func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
                             return@forEach
                         } else {
                             return@forEach

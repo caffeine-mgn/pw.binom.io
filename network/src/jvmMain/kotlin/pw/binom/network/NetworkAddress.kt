@@ -4,6 +4,7 @@ import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.UnknownHostException as JUnknownHostException
 
 actual sealed class NetworkAddress {
 
@@ -35,7 +36,11 @@ actual sealed class NetworkAddress {
         }
 
     protected fun _reset(host: String, port: Int) {
-        _native = InetSocketAddress(InetAddress.getByName(host), port)
+        try {
+            _native = InetSocketAddress(InetAddress.getByName(host), port)
+        } catch (e: JUnknownHostException) {
+            throw UnknownHostException(host)
+        }
     }
 
     actual enum class Type {

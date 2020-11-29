@@ -32,13 +32,18 @@ abstract class AbstractSelector : Selector {
         }
     }
 
-    override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?) =
-        nativeAttach(
+    override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): AbstractKey {
+        val key = nativeAttach(
             socket.native,
             epollCommonToNative(mode),
             true,
             attachment
         )
+        if (!socket.connectable) {
+            key.connected = true
+        }
+        return key
+    }
 
     override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?) =
         nativeAttach(
@@ -62,7 +67,7 @@ abstract class AbstractSelector : Selector {
             if (!key.connected) {
                 if (key.isSuccessConnected(nativeMode)) {
                     key.connected = true
-                    func(key, Selector.EVENT_CONNECTED or Selector.EVENT_EPOLLOUT)
+                    func(key, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
                     key.resetMode(epollCommonToNative(key.listensFlag))
                 } else {
                     func(key, Selector.EVENT_ERROR)

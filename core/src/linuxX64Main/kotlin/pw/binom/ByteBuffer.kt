@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.memcpy
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
+import kotlin.native.concurrent.isFrozen
 
 actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     actual companion object {
@@ -25,7 +26,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         }.toCPointer<ByteVar>()!!
     }
 
-    fun refTo(position: Int)=
+    fun refTo(position: Int) =
         bytes.refTo(position)
 
     actual fun flip() {
@@ -134,7 +135,13 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     }
 
     actual fun put(value: Byte) {
-        bytes[nextPutIndex()] = value
+        if (isFrozen) {
+            memScoped {
+                bytes.refTo(nextPutIndex()).getPointer(this)[0] = value
+            }
+        } else {
+            bytes[nextPutIndex()] = value
+        }
     }
 
     actual fun clear() {

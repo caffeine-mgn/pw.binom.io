@@ -11,7 +11,7 @@ actual class TcpServerSocketChannel : Closeable {
 
     actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? {
         val socket = native.accept(address) ?: return null
-        return TcpClientSocketChannel(socket)
+        return TcpClientSocketChannel(socket, false)
     }
 
     actual fun bind(address: NetworkAddress) {

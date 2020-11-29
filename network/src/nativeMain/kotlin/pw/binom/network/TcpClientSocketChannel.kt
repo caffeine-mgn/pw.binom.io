@@ -3,8 +3,8 @@ package pw.binom.network
 import pw.binom.ByteBuffer
 import pw.binom.io.Channel
 
-actual class TcpClientSocketChannel(val native: NSocket) : Channel {
-    actual constructor() : this(NSocket.tcp())
+actual class TcpClientSocketChannel(val native: NSocket, val connectable: Boolean) : Channel {
+    actual constructor() : this(NSocket.tcp(), true)
 
     init {
         native.setBlocking(false)

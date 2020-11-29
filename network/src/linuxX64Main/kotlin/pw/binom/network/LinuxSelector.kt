@@ -67,10 +67,10 @@ class LinuxSelector : AbstractSelector() {
 
 actual fun epollCommonToNative(mode: Int): Int {
     var events = 0
-    if (Selector.EVENT_EPOLLIN in mode) {
+    if (Selector.INPUT_READY in mode) {
         events = events or EPOLLIN
     }
-    if (Selector.EVENT_EPOLLOUT in mode) {
+    if (Selector.OUTPUT_READY in mode) {
         events = events or EPOLLOUT
     }
 
@@ -80,10 +80,10 @@ actual fun epollCommonToNative(mode: Int): Int {
 actual fun epollNativeToCommon(mode: Int): Int {
     var events = 0
     if (EPOLLIN in mode) {
-        events = events or Selector.EVENT_EPOLLIN
+        events = events or Selector.INPUT_READY
     }
     if (EPOLLOUT in mode) {
-        events = events or Selector.EVENT_EPOLLOUT
+        events = events or Selector.OUTPUT_READY
     }
     return events
 }

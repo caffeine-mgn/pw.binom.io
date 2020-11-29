@@ -18,10 +18,10 @@ class NetworkDispatcher : Closeable {
             if (mode and Selector.EVENT_ERROR != 0) {
                 connection.error()
             }
-            if (mode and Selector.EVENT_EPOLLIN != 0) {
+            if (mode and Selector.INPUT_READY != 0) {
                 connection.readyForRead()
             }
-            if (mode and Selector.EVENT_EPOLLOUT != 0) {
+            if (mode and Selector.OUTPUT_READY != 0) {
                 connection.readyForWrite()
             }
         }

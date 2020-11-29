@@ -13,7 +13,7 @@ class CrossThreadKeyHolder(val key: Selector.Key) {
             func()
         } else {
             readyForWriteListener.push(func.doFreeze())
-            key.listensFlag = key.listensFlag or Selector.EVENT_EPOLLOUT
+            key.listensFlag = key.listensFlag or Selector.OUTPUT_READY
         }
     }
 }

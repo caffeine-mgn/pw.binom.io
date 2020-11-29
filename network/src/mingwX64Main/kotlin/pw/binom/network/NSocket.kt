@@ -110,11 +110,21 @@ actual class NSocket(val native: SOCKET) : Closeable {
 
     actual fun bind(address: NetworkAddress) {
         memScoped {
-            platform.windows.bind(
+            val bindResult = platform.posix.bind(
                 native,
                 address.data.refTo(0).getPointer(this).reinterpret(),
                 address.size.convert()
             )
+            if (bindResult < 0) {
+                if (GetLastError() == 10048u) {
+                    throw BindException("Address already in use: ${address.host}:${address.port}")
+                }
+                throw IOException("Bind error. errno: [${errno}], GetLastError: [${GetLastError()}]")
+            }
+            val listenResult = platform.windows.listen(native, 1000)
+            if (listenResult < 0) {
+                throw IOException("Listen error. errno: [${errno}], GetLastError: [${GetLastError()}]")
+            }
         }
     }
 

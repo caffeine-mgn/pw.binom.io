@@ -1,12 +1,11 @@
 package pw.binom.network
 
-import pw.binom.ByteBuffer
-import pw.binom.async
-import pw.binom.nextBytes
+import pw.binom.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class AsyncResult {
     var done = false
@@ -71,34 +70,53 @@ class NetworkDispatcherTest {
 
     @Test
     fun tcpServerTest() {
-        val addr = NetworkAddress.Immutable("127.0.0.1", 13)
+        val addr = NetworkAddress.Immutable("0.0.0.0", 9967)
         val nd = NetworkDispatcher()
         val server = nd.bindTcp(addr)
-        val buf1 = ByteBuffer.alloc(512)
-        val buf2 = ByteBuffer.alloc(512)
-        Random.nextBytes(buf1)
-        buf1.flip()
-        nd.single {
-            val client = nd.tcpConnect(addr)
-            val serverClient = server.accept()!!
-            client.write(buf1)
-            serverClient.readFully(buf2)
-            buf2.flip()
+        try {
+            val buf1 = ByteBuffer.alloc(512)
+            val buf2 = ByteBuffer.alloc(512)
+            Random.nextBytes(buf1)
             buf1.flip()
-            for (i in 0 until buf1.capacity) {
-                assertEquals(buf1[i], buf2[i])
+            nd.single {
+                val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", 9967))
+                val serverClient = server.accept()!!
+                client.write(buf1)
+                serverClient.readFully(buf2)
+                buf2.flip()
+                buf1.flip()
+                for (i in 0 until buf1.capacity) {
+                    assertEquals(buf1[i], buf2[i])
+                }
             }
+        } finally {
+            server.close()
+        }
+    }
+
+    @Test
+    fun rebindTest() {
+        val addr = NetworkAddress.Immutable("0.0.0.0", Random.nextInt(1000, 5999))
+        val nd = NetworkDispatcher()
+        val a = nd.bindTcp(addr)
+        try {
+            nd.bindTcp(addr)
+            fail()
+        } catch (e: BindException) {
+            //
+        } finally {
+            a.close()
         }
     }
 }
 
 fun modeToString(mode: Int): String {
     val sb = StringBuilder()
-    if (Selector.EVENT_EPOLLOUT and mode != 0) {
+    if (Selector.OUTPUT_READY and mode != 0) {
         sb.append("EVENT_EPOLLOUT ")
     }
 
-    if (Selector.EVENT_EPOLLIN and mode != 0) {
+    if (Selector.INPUT_READY and mode != 0) {
         sb.append("EVENT_EPOLLIN ")
     }
 

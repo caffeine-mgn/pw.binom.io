@@ -2,7 +2,6 @@ package pw.binom.network
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SelectorTest {
@@ -30,7 +29,7 @@ class SelectorTest {
 
         assertEquals(1, selector.select(1000) { key, mode ->
             assertTrue(mode and Selector.EVENT_CONNECTED != 0)
-            assertTrue(mode and Selector.EVENT_EPOLLOUT != 0)
+            assertTrue(mode and Selector.OUTPUT_READY != 0)
         })
 
         assertEquals(0, selector.select(1000) { _, _ -> })
