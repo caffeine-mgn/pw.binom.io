@@ -13,11 +13,13 @@ class NetworkAddressTest {
             NetworkAddress.Immutable(Random.uuid().toString(), 9999)
             fail()
         } catch (e: UnknownHostException) {
+            println("->1")
         }
         try {
             NetworkAddress.Mutable().reset(Random.uuid().toString(), 9999)
             fail()
         } catch (e: UnknownHostException) {
+            println("->2")
         }
     }
 
