@@ -13,39 +13,40 @@ actual class PoolSelector : Closeable {
         if (mode and EPOLLIN != 0) {
             events = events or Selector.EVENT_EPOLLIN
         }
-
-        if (mode and EPOLLERR == 0 && mode and EPOLLOUT != 0) {
-            return Selector.EVENT_CONNECTED
-        }
-
         if (mode and EPOLLOUT != 0) {
             events = events or Selector.EVENT_EPOLLOUT
         }
-        if (mode and EPOLLRDHUP != 0) {
-            events = events or Selector.EVENT_EPOLLRDHUP
-        }
-        println("got $mode -> $events")
-        println("Selector.EVENT_EPOLLRDHUP=${Selector.EVENT_EPOLLRDHUP}")
-        println("Selector.EVENT_EPOLLOUT=${Selector.EVENT_EPOLLOUT}")
-        println("Selector.EVENT_CONNECTED=${Selector.EVENT_CONNECTED}")
-        println("Selector.EVENT_EPOLLIN=${Selector.EVENT_EPOLLIN}")
+
+//        if (mode and EPOLLERR == 0 && mode and EPOLLOUT != 0) {
+//            return Selector.EVENT_CONNECTED
+//        }
+//
+//
+//        if (mode and EPOLLRDHUP != 0) {
+//            events = events or Selector.EVENT_EPOLLRDHUP
+//        }
+//        println("got $mode -> $events")
+//        println("Selector.EVENT_EPOLLRDHUP=${Selector.EVENT_EPOLLRDHUP}")
+//        println("Selector.EVENT_EPOLLOUT=${Selector.EVENT_EPOLLOUT}")
+//        println("Selector.EVENT_CONNECTED=${Selector.EVENT_CONNECTED}")
+//        println("Selector.EVENT_EPOLLIN=${Selector.EVENT_EPOLLIN}")
         return events
     }
 
     private fun commonEventsToWEpoll(mode: Int): Int {
-        println("EPOLLERR=$EPOLLERR")
-        println("EPOLLET=$EPOLLET")
-        println("EPOLLHUP=$EPOLLHUP")
-        println("EPOLLIN=$EPOLLIN")
-        println("EPOLLMSG=$EPOLLMSG")
-        println("EPOLLONESHOT=$EPOLLONESHOT")
-        println("EPOLLOUT=$EPOLLOUT")
-        println("EPOLLRDBAND=$EPOLLRDBAND")
-        println("EPOLLRDHUP=$EPOLLRDHUP")
-        println("EPOLLRDNORM=$EPOLLRDNORM")
-        println("EPOLLWAKEUP=$EPOLLWAKEUP")
-        println("EPOLLWRBAND=$EPOLLWRBAND")
-        println("EPOLLWRNORM=$EPOLLWRNORM")
+//        println("EPOLLERR=$EPOLLERR")
+//        println("EPOLLET=$EPOLLET")
+//        println("EPOLLHUP=$EPOLLHUP")
+//        println("EPOLLIN=$EPOLLIN")
+//        println("EPOLLMSG=$EPOLLMSG")
+//        println("EPOLLONESHOT=$EPOLLONESHOT")
+//        println("EPOLLOUT=$EPOLLOUT")
+//        println("EPOLLRDBAND=$EPOLLRDBAND")
+//        println("EPOLLRDHUP=$EPOLLRDHUP")
+//        println("EPOLLRDNORM=$EPOLLRDNORM")
+//        println("EPOLLWAKEUP=$EPOLLWAKEUP")
+//        println("EPOLLWRBAND=$EPOLLWRBAND")
+//        println("EPOLLWRNORM=$EPOLLWRNORM")
 
         var events = 0
         if (mode and Selector.EVENT_EPOLLIN != 0) {
@@ -82,7 +83,8 @@ actual class PoolSelector : Closeable {
                     EPOLLWRNORM).convert()
 //            event.events = 0xFFFFFFFFu//commonEventsToWEpoll(mode).toUInt()
             event.data.fd = socket.native
-            event.data.u32 = 0u
+            event.data.u32 = commonEventsToWEpoll(mode).convert()
+            event.data.u64 = 0uL
             event.data.ptr = attachment
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
         }
@@ -93,12 +95,20 @@ actual class PoolSelector : Closeable {
     }
 
     actual fun edit(socket: NSocket, mode: Int, attachment: COpaquePointer?) {
+        edit2(
+            socket.native, mode, attachment
+        )
+    }
+
+    private fun edit2(socket: Int, mode: Int, attachment: COpaquePointer?) {
         memScoped {
             val event = alloc<epoll_event>()
-            event.events = commonEventsToWEpoll(mode).toUInt()
-            event.data.fd = socket.native
+            event.events = commonEventsToWEpoll(mode).convert()
+            event.data.fd = socket
             event.data.ptr = attachment
-            epoll_ctl(native, EPOLL_CTL_MOD, socket.native, event.ptr)
+            event.data.u32 = mode.toUInt()
+            event.data.u64 = 1uL
+            epoll_ctl(native, EPOLL_CTL_MOD, socket, event.ptr)
         }
     }
 
@@ -109,14 +119,31 @@ actual class PoolSelector : Closeable {
         }
         for (i in 0 until eventCount) {
             val item = list[i]
-            println("EPOLLHUP->${item.events and EPOLLHUP.toUInt() != 0u}")
-            println("EPOLLERR->${item.events and EPOLLERR.toUInt() != 0u}")
-            println("EPOLLOUT->${item.events and EPOLLOUT.toUInt() != 0u}")
-            if (item.data.u32 == 0u) {
-                if (item.events and EPOLLOUT.toUInt() != 0u) {
-                    println("Connected!  status: ${isConnected(item.data.fd)}")
+            if (item.data.u64 == 0uL) {
+                if (EPOLLERR in item.events && EPOLLHUP in item.events) {
+                    println("Error! ${aaa(item.events.convert())}")
+                    func(item.data.ptr, Selector.EVENT_ERROR)
+                    epoll_ctl(native, EPOLL_CTL_DEL, item.data.fd, null)
+                    continue
+                }
+
+                if (EPOLLERR !in item.events && EPOLLHUP !in item.events && EPOLLOUT in item.events) {
+                    edit2(
+                        item.data.fd,
+                        item.data.u32.convert(),
+                        item.data.ptr
+                    )
+                    println("Connected!  ${aaa(item.events.convert())}")
+                    func(item.data.ptr, Selector.EVENT_CONNECTED or Selector.EVENT_EPOLLOUT)
+                    continue
                 }
             }
+            println("mode: ${aaa(item.events.convert())}")
+//            if (item.data.u32 == 0u) {
+//                if (item.events and EPOLLOUT.toUInt() != 0u) {
+//                    println("Connected!  status: ${isConnected(item.data.fd)}")
+//                }
+//            }
             func(item.data.ptr, wepollEventsToCommon(item.events.toInt()))
         }
         return true
@@ -127,3 +154,45 @@ actual class PoolSelector : Closeable {
         platform.posix.close(native)
     }
 }
+
+fun aaa(mode: Int): String {
+    val sb = StringBuilder()
+    mode in mode
+    if (mode and EPOLLIN != 0)
+        sb.append("EPOLLIN ")
+    if (mode and EPOLLIN != 0)
+        sb.append("EPOLLPRI ")
+
+    if (mode and EPOLLOUT != 0)
+        sb.append("EPOLLOUT ")
+
+    if (mode and EPOLLERR != 0)
+        sb.append("EPOLLERR ")
+
+    if (mode and EPOLLHUP != 0)
+        sb.append("EPOLLHUP ")
+
+    if (mode and EPOLLRDNORM != 0)
+        sb.append("EPOLLRDNORM ")
+
+    if (mode and EPOLLRDBAND != 0)
+        sb.append("EPOLLRDBAND ")
+
+    if (mode and EPOLLWRNORM != 0)
+        sb.append("EPOLLWRNORM ")
+    if (mode and EPOLLWRBAND != 0)
+        sb.append("EPOLLWRBAND ")
+    if (mode and EPOLLMSG != 0)
+        sb.append("EPOLLMSG ")
+    if (mode and EPOLLRDHUP != 0)
+        sb.append("EPOLLRDHUP ")
+    if (mode and EPOLLONESHOT != 0)
+        sb.append("EPOLLONESHOT ")
+
+    return sb.toString()
+}
+
+private inline operator fun Int.contains(value: Int): Boolean = value and this != 0
+private inline operator fun Int.contains(value: UInt): Boolean = value.toInt() in this
+private inline operator fun UInt.contains(value: Int): Boolean = value in this.toInt()
+private inline operator fun UInt.contains(value: UInt): Boolean = value.toInt() in this.toInt()

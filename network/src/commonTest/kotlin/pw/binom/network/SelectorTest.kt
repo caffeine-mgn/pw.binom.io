@@ -43,7 +43,7 @@ class SelectorTest {
     }
 
     @Test
-    fun connectTest2() {
+    fun connectionRefusedTest() {
         val selector = Selector()
         val client = TcpClientSocketChannel()
         selector.attach(client, Selector.EVENT_CONNECTED)
@@ -52,6 +52,7 @@ class SelectorTest {
         assertTrue(selector.wait() { attaching, mode ->
             println("Mode: $mode")
             assertTrue(mode and Selector.EVENT_ERROR != 0)
+            client.close()
         })
         assertFalse(selector.wait(1000) { _, _ -> })
     }
