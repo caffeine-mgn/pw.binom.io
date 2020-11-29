@@ -11,10 +11,10 @@ actual class PoolSelector : Closeable {
     private fun wepollEventsToCommon(mode: Int): Int {
         var events = 0
         if (mode and EPOLLIN != 0) {
-            events = events or Selector.EVENT_EPOLLIN
+            events = events or Selector2.EVENT_EPOLLIN
         }
         if (mode and EPOLLOUT != 0) {
-            events = events or Selector.EVENT_EPOLLOUT
+            events = events or Selector2.EVENT_EPOLLOUT
         }
 
 //        if (mode and EPOLLERR == 0 && mode and EPOLLOUT != 0) {
@@ -49,16 +49,16 @@ actual class PoolSelector : Closeable {
 //        println("EPOLLWRNORM=$EPOLLWRNORM")
 
         var events = 0
-        if (mode and Selector.EVENT_EPOLLIN != 0) {
+        if (mode and Selector2.EVENT_EPOLLIN != 0) {
             events += EPOLLIN
         }
-        if (mode and Selector.EVENT_EPOLLOUT != 0) {
+        if (mode and Selector2.EVENT_EPOLLOUT != 0) {
             events += EPOLLOUT
         }
-        if (mode and Selector.EVENT_EPOLLRDHUP != 0) {
+        if (mode and Selector2.EVENT_EPOLLRDHUP != 0) {
             events += EPOLLRDHUP
         }
-        if (mode and Selector.EVENT_CONNECTED != 0) {
+        if (mode and Selector2.EVENT_CONNECTED != 0) {
             events = events or EPOLLPRI
         }
         return events
@@ -122,7 +122,7 @@ actual class PoolSelector : Closeable {
             if (item.data.u64 == 0uL) {
                 if (EPOLLERR in item.events && EPOLLHUP in item.events) {
                     println("Error! ${aaa(item.events.convert())}")
-                    func(item.data.ptr, Selector.EVENT_ERROR)
+                    func(item.data.ptr, Selector2.EVENT_ERROR)
                     epoll_ctl(native, EPOLL_CTL_DEL, item.data.fd, null)
                     continue
                 }
@@ -134,7 +134,7 @@ actual class PoolSelector : Closeable {
                         item.data.ptr
                     )
                     println("Connected!  ${aaa(item.events.convert())}")
-                    func(item.data.ptr, Selector.EVENT_CONNECTED or Selector.EVENT_EPOLLOUT)
+                    func(item.data.ptr, Selector2.EVENT_CONNECTED or Selector2.EVENT_EPOLLOUT)
                     continue
                 }
             }
@@ -192,7 +192,15 @@ fun aaa(mode: Int): String {
     return sb.toString()
 }
 
-private inline operator fun Int.contains(value: Int): Boolean = value and this != 0
-private inline operator fun Int.contains(value: UInt): Boolean = value.toInt() in this
-private inline operator fun UInt.contains(value: Int): Boolean = value in this.toInt()
-private inline operator fun UInt.contains(value: UInt): Boolean = value.toInt() in this.toInt()
+
+
+actual fun epollNativeToCommon(mode: Int): Int{
+    var events = 0
+    if (EPOLLIN in mode) {
+        events = events or Selector2.EVENT_EPOLLIN
+    }
+    if (EPOLLOUT in mode) {
+        events = events or Selector2.EVENT_EPOLLOUT
+    }
+    return events
+}

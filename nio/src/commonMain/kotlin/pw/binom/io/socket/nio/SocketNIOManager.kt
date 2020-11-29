@@ -11,9 +11,6 @@ open class SocketNIOManager : Closeable {
     val threadRef = ThreadRef()
 
     class ReadInterruptException : RuntimeException()
-//    fun interface ConnectHandler {
-//        fun clientConnected(connection: TcpConnectionRaw, manager: SocketNIOManager)
-//    }
 
 
     internal val selector = SocketSelector()
@@ -38,120 +35,8 @@ open class SocketNIOManager : Closeable {
             connection.close()
         }
     }
-//
-//    protected open fun processIo1(key: SocketSelector.SelectorKey) {
-//        val client = (key.attachment as TcpConnectionRaw?) ?: return
-//        try {
-//            if (client.detached) {
-//                return
-//            }
-//
-//            if (client.holder.selectionKey.isCanlelled) {
-//                return
-//            }
-//            if (client.detached)
-//                return
-//
-//            val readReadyCallback = client.holder.readyForReadListener
-//            if (key.isReadable && readReadyCallback != null) {
-//                client.holder.readyForReadListener.pop(pop)
-//                if (!pop.isEmpty) {
-//                    try {
-//                        pop.value()
-//                    } catch (e: Throwable) {
-//                        client.readSchedule?.finish(Result.failure(e))
-//                        client.writeSchedule?.finish(Result.failure(e))
-//                        client.readSchedule = null
-//                        client.writeSchedule = null
-//                        key.listen(false, false)
-//                        client.detach().close()
-//                        throw e
-//                    }
-//                    return
-//                }
-//            }
-//
-//            if (key.isWritable) {
-//                client.holder.readyForWriteListener.pop(pop)
-//                if (!pop.isEmpty) {
-//                    try {
-//                        pop.value()
-//                    } catch (e: Throwable) {
-//                        client.readSchedule?.finish(Result.failure(e))
-//                        client.writeSchedule?.finish(Result.failure(e))
-//                        client.readSchedule = null
-//                        client.writeSchedule = null
-//                        key.listen(false, false)
-//                        client.detach().close()
-//                        throw e
-//                    }
-//                    return
-//                }
-//            }
-//
-//            val writeWait = client.writeSchedule
-//
-//            if (key.isWritable && writeWait != null) {
-//                val result = runCatching { client.holder.channel.write(writeWait.buffer) }
-//                if (result.isFailure) {
-//                    client.writeSchedule = null
-//                    writeWait.finish(result)
-//                } else {
-//                    if (writeWait.buffer.remaining == 0) {
-//                        client.writeSchedule = null
-//                        writeWait.finish(result)
-//                    }
-//                }
-//                return
-//            }
-//
-//            val readWait = client.readSchedule
-//            if (key.isReadable && readWait != null) {
-//                client.readSchedule = null
-//                readWait.finish(runCatching { client.holder.channel.read(readWait.buffer) })
-//                return
-//            }
-//
-//            if (!client.holder.channel.isConnected) {
-//                key.cancel()
-//                return
-//            }
-//
-//            if (!key.isCanlelled)
-//                key.listen(
-//                    client.readSchedule != null || !client.holder.readyForReadListener.isEmpty,
-//                    client.writeSchedule != null || !client.holder.readyForWriteListener.isEmpty
-//                )
-//        } catch (e: Throwable) {
-//            key.listen(false, false)
-//            client.readSchedule?.finish(Result.failure(e))
-//            client.writeSchedule?.finish(Result.failure(e))
-//            client.readSchedule = null
-//            client.writeSchedule = null
-//            client.detach().close()
-//            throw e
-//        }
-//    }
-
-//    protected open fun processAccept(key: SocketSelector.SelectorKey) {
-//        val server = key.channel as ServerSocketChannel
-//        val cl = server.accept() ?: return@processAccept
-//        val holder = SocketHolder(cl)
-//        val connection = TcpConnectionRaw(attachment = null, holder = holder)
-//        cl.blocking = false
-//        val selectionKey = selector.reg(cl, connection)
-//        holder.selectionKey = selectionKey
-//        holder.doFreeze()
-//        val handler = key.attachment as ConnectHandler?
-//        handler?.connected(connection)
-//    }
 
     protected open fun processEvent(key: SocketSelector.SelectorKey) {
-//        if (key.channel is ServerSocketChannel) {
-//            processAccept(key)
-//        } else {
-//
-//        }
         processIo(key)
     }
 
@@ -167,9 +52,6 @@ open class SocketNIOManager : Closeable {
             }
         }
     }
-
-    fun findClient(func: (TcpConnectionRaw) -> Boolean): TcpConnectionRaw? =
-        selector.keys.asSequence().map { it.attachment as? TcpConnectionRaw }.filterNotNull().find(func)
 
     /**
      * Returns clients count
@@ -258,12 +140,6 @@ open class SocketNIOManager : Closeable {
         selector.keys.toTypedArray().forEach {
             it.cancel()
             it.channel.close()
-//            val con = (it.attachment as? ConnectionRaw) ?: return@forEach
-//            if (con.manager === this) {
-//                async {
-//                    con.close()
-//                }
-//            }
         }
         selector.close()
     }

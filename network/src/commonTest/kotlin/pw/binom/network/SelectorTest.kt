@@ -8,52 +8,48 @@ import kotlin.test.assertTrue
 class SelectorTest {
 
     @Test
-    fun timeoutTest1() {
-        val selector = Selector()
-
-        assertFalse(selector.wait(1000) { _, mode ->
-            println("mode: $mode")
-        })
+    fun selectTimeoutTest1() {
+        val selector = Selector.open()
+        assertEquals(0, selector.select(1000) { _, _ -> })
     }
 
     @Test
-    fun timeoutTest2() {
-        val selector = Selector()
+    fun selectTimeoutTest2() {
+        val selector = Selector.open()
         val client = TcpClientSocketChannel()
         selector.attach(client)
-
-        assertFalse(selector.wait(1000) { _, mode ->
-            println("mode: $mode")
-        })
+        assertEquals(0, selector.select(1000) { _, _ -> })
     }
 
     @Test
     fun connectTest() {
-        val selector = Selector()
+        val selector = Selector.open()
         val client = TcpClientSocketChannel()
         selector.attach(client)
         client.connect(NetworkAddress.Immutable("google.com", 443))
 
-        assertTrue(selector.wait(1000) { attaching, mode ->
-            println("Mode: $mode")
+        assertEquals(1, selector.select(1000) { key, mode ->
+            println("Mode: ${modeToString(mode)} ${mode.toString(2)}")
+            println("EVENT_CONNECTED--->${mode and Selector.EVENT_CONNECTED}")
             assertTrue(mode and Selector.EVENT_CONNECTED != 0)
+            assertTrue(mode and Selector.EVENT_EPOLLOUT != 0)
         })
 
-        assertFalse(selector.wait(1000) { _, _ -> })
+        assertEquals(0, selector.select(1000) { _, _ -> })
     }
 
     @Test
     fun connectionRefusedTest() {
-        val selector = Selector()
+        val selector = Selector.open()
         val client = TcpClientSocketChannel()
-        selector.attach(client, Selector.EVENT_CONNECTED)
+        selector.attach(client)
         client.connect(NetworkAddress.Immutable("127.0.0.1", 12))
 
-        assertTrue(selector.wait() { attaching, mode ->
-            println("Mode: $mode")
+        selector.select(5000) { key, mode ->
+            println("Mode: ${modeToString(mode)} $mode")
             assertTrue(mode and Selector.EVENT_ERROR != 0)
             client.close()
-        })
-        assertFalse(selector.wait(1000) { _, _ -> })
+        }
+        assertEquals(0, selector.select(1000) { _, _ -> })
     }
 }
