@@ -12,6 +12,7 @@ expect class Selector() : Closeable {
          *
          */
         val EVENT_CONNECTED: Int
+        val EVENT_ERROR: Int
     }
 
     fun attach(socket: TcpClientSocketChannel, mode: Int = 0, attachment: Any? = null)

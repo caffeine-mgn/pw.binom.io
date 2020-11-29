@@ -99,6 +99,12 @@ kotlin {
                 api(kotlin("test-annotations-common"))
             }
         }
+        val jvmTest by getting {
+            dependsOn(commonTest)
+            dependencies {
+                api(kotlin("test-junit"))
+            }
+        }
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }

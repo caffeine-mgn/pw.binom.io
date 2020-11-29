@@ -31,14 +31,21 @@ class SelectorTest {
     fun connectTest() {
         val selector = Selector()
         val client = TcpClientSocketChannel()
-        selector.attach(client, Selector.EVENT_CONNECTED)
+        selector.attach(client)
         client.connect(NetworkAddress.Immutable("google.com", 443))
 
         assertTrue(selector.wait(10000) { attaching, mode ->
             println("Mode: $mode")
-            assertEquals(Selector.EVENT_CONNECTED, mode)
+            assertTrue(mode and Selector.EVENT_CONNECTED != 0)
         })
+
+        assertFalse(selector.wait(1000) { _, _ -> })
+//        assertTrue(selector.wait(10000) { attaching, mode ->
+//            println("Mode: $mode")
+//            assertEquals(Selector.EVENT_CONNECTED, mode)
+//        })
     }
+
     @Test
     fun connectTest2() {
         val selector = Selector()
@@ -46,9 +53,9 @@ class SelectorTest {
         selector.attach(client, Selector.EVENT_CONNECTED)
         client.connect(NetworkAddress.Immutable("127.0.0.1", 12))
 
-        assertTrue(selector.wait(10000) { attaching, mode ->
+        assertTrue(selector.wait() { attaching, mode ->
             println("Mode: $mode")
-            assertEquals(Selector.EVENT_CONNECTED, mode)
+            assertTrue(mode and Selector.EVENT_ERROR != 0)
         })
     }
 }
