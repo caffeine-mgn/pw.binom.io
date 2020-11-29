@@ -34,16 +34,12 @@ class SelectorTest {
         selector.attach(client)
         client.connect(NetworkAddress.Immutable("google.com", 443))
 
-        assertTrue(selector.wait(10000) { attaching, mode ->
+        assertTrue(selector.wait(1000) { attaching, mode ->
             println("Mode: $mode")
             assertTrue(mode and Selector.EVENT_CONNECTED != 0)
         })
 
         assertFalse(selector.wait(1000) { _, _ -> })
-//        assertTrue(selector.wait(10000) { attaching, mode ->
-//            println("Mode: $mode")
-//            assertEquals(Selector.EVENT_CONNECTED, mode)
-//        })
     }
 
     @Test
@@ -57,5 +53,6 @@ class SelectorTest {
             println("Mode: $mode")
             assertTrue(mode and Selector.EVENT_ERROR != 0)
         })
+        assertFalse(selector.wait(1000) { _, _ -> })
     }
 }

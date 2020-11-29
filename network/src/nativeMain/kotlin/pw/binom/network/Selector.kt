@@ -46,5 +46,6 @@ actual class Selector : Closeable {
         actual val EVENT_EPOLLOUT: Int = 0b0010
         actual val EVENT_EPOLLRDHUP: Int = 0b0100
         actual val EVENT_CONNECTED: Int = 0b1000
+        actual val EVENT_ERROR: Int = 0b10000
     }
 }
