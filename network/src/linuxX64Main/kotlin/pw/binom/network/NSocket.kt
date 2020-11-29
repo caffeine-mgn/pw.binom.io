@@ -115,14 +115,14 @@ actual class NSocket(val native: Int) : Closeable {
                 address.size.convert()
             )
             if (bindResult < 0) {
-                if (GetLastError() == 10048u) {
+                if (errno == 10048) {
                     throw BindException("Address already in use: ${address.host}:${address.port}")
                 }
-                throw IOException("Bind error. errno: [${errno}], GetLastError: [${GetLastError()}]")
+                throw IOException("Bind error. errno: [${errno}]")
             }
             val listenResult = listen(native, 1000)
             if (listenResult < 0) {
-                throw IOException("Listen error. errno: [${errno}], GetLastError: [${GetLastError()}]")
+                throw IOException("Listen error. errno: [${errno}]")
             }
         }
     }
