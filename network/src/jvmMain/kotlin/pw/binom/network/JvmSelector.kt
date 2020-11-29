@@ -21,11 +21,20 @@ private fun javaToCommon(mode: Int): Int {
 private fun commonToJava(channel: SocketChannel, mode: Int): Int {
     var opts = 0
     if (Selector.EVENT_EPOLLIN and mode != 0) {
-        if (channel is ServerSocketChannel) {
-            opts = opts or SelectionKey.OP_ACCEPT
-        } else {
-            opts = opts or SelectionKey.OP_READ
-        }
+        opts = opts or SelectionKey.OP_READ
+    }
+
+    if (Selector.EVENT_EPOLLOUT and mode != 0) {
+        require(channel is SocketChannel)
+        opts = opts or SelectionKey.OP_WRITE
+    }
+    return opts
+}
+
+private fun commonToJava(channel: ServerSocketChannel, mode: Int): Int {
+    var opts = 0
+    if (Selector.EVENT_EPOLLIN and mode != 0) {
+        opts or SelectionKey.OP_ACCEPT
     }
 
     if (Selector.EVENT_EPOLLOUT and mode != 0) {
@@ -61,21 +70,16 @@ class JvmSelector : Selector {
             timeout == 0L -> native.selectNow()
             timeout < 0L -> native.select()
         }
-        println("---===SELECT===---")
         val keys = native.selectedKeys()
         var count = 0
         keys.forEach {
-            println("CHANNEL=${it.channel().hashCode()} event: ${jvmModeToString(it.readyOps())}, listen: ${jvmModeToString(it.interestOps())}")
             if (it.isConnectable) {
                 val cc = it.channel() as SocketChannel
                 if (cc.isConnectionPending) {
                     try {
-                        println("cc.isConnected=${cc.isConnected}")
                         val connected = cc.finishConnect()
-                        println("-->finishConnect=$connected   cc.isConnected=${cc.isConnected}")
                         if (connected) {
                             it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
-                            println("After connect: ${jvmModeToString(it.interestOps())}")
                             count++
                             func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.EVENT_EPOLLOUT)
                             return@forEach
@@ -92,13 +96,6 @@ class JvmSelector : Selector {
                     return@forEach
                 }
             }
-            println("it.isAcceptable->${it.isAcceptable}")
-            println("it.isConnectable->${it.isConnectable}")
-            println("it.isReadable->${it.isReadable}")
-            println("it.isWritable->${it.isWritable}")
-            println("it.isValid->${it.isValid}")
-            println("isConnected->${(it.channel() as SocketChannel).isConnected}")
-            println("isConnectionPending->${(it.channel() as SocketChannel).isConnectionPending}")
             count++
             func(it.attachment() as JvmKey, javaToCommon(it.readyOps()))
         }
@@ -113,11 +110,18 @@ class JvmSelector : Selector {
     }
 
     override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?): Selector.Key {
-        TODO("Not yet implemented")
+        val key = JvmKey(attachment)
+        val nn = socket.native.register(native, commonToJava(socket.native, mode), key)
+        key.native = nn
+        return key
     }
 
     override fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?): Selector.Key {
         TODO("Not yet implemented")
+    }
+
+    override fun close() {
+        native.close()
     }
 }
 

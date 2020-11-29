@@ -1,14 +1,25 @@
 package pw.binom.network
 
 import pw.binom.io.Closeable
+import java.nio.channels.ServerSocketChannel as JServerSocketChannel
 
 actual class TcpServerSocketChannel : Closeable {
-    actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? = null
-    actual fun bind(address: NetworkAddress) {
+    val native = JServerSocketChannel.open()
 
+    init {
+        native.configureBlocking(false)
+    }
+
+    actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? =
+        native.accept()?.let { TcpClientSocketChannel(it) }
+
+    actual fun bind(address: NetworkAddress) {
+        val _native = address._native
+        require(_native != null)
+        native.bind(_native)
     }
 
     override fun close() {
-        TODO("Not yet implemented")
+        native.close()
     }
 }

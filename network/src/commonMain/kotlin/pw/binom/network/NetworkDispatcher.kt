@@ -27,18 +27,31 @@ class NetworkDispatcher : Closeable {
         }
     }
 
-    suspend fun tcpConnect(address: NetworkAddress) {
+    suspend fun tcpConnect(address: NetworkAddress): TcpConnection {
         val channel = TcpClientSocketChannel()
         channel.connect(address)
         val connection = attach(channel)
         suspendCoroutine<Unit> {
             connection.connect = it
         }
+        return connection
+    }
+
+    fun bindTcp(address: NetworkAddress): TcpServerConnection {
+        val channel = TcpServerSocketChannel()
+        channel.bind(address)
+        return attach(channel)
+    }
+
+    fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
+        val con = TcpServerConnection(this, channel)
+        con.key = selector.attach(channel, 0, con)
+        return con
     }
 
     fun attach(channel: TcpClientSocketChannel): TcpConnection {
         val con = TcpConnection(channel)
-        selector.attach(channel, 0, con)
+        con.holder = CrossThreadKeyHolder(selector.attach(channel, 0, con))
         return con
     }
 

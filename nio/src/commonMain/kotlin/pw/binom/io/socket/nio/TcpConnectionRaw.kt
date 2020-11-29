@@ -16,9 +16,6 @@ import kotlin.coroutines.suspendCoroutine
 class TcpConnectionRaw internal constructor(val holder: SocketHolder, var attachment: Any?) :
     AbstractConnection(), AsyncChannel {
 
-//    internal var readSchedule: IOSchedule? = null
-//    internal var writeSchedule: IOSchedule? = null
-
     private class ReadData {
         var continuation: Continuation<Int>? = null
         var data: ByteBuffer? = null

@@ -68,10 +68,10 @@ class MingwSelector : AbstractSelector() {
 
 actual fun epollCommonToNative(mode: Int): Int {
     var events = 0u
-    if (Selector2.EVENT_EPOLLIN in mode) {
+    if (Selector.EVENT_EPOLLIN in mode) {
         events = events or EPOLLIN
     }
-    if (Selector2.EVENT_EPOLLOUT in mode) {
+    if (Selector.EVENT_EPOLLOUT in mode) {
         events = events or EPOLLOUT
     }
 
@@ -81,12 +81,48 @@ actual fun epollCommonToNative(mode: Int): Int {
 actual fun epollNativeToCommon(mode: Int): Int {
     var events = 0
     if (EPOLLIN in mode) {
-        events = events or Selector2.EVENT_EPOLLIN
+        events = events or Selector.EVENT_EPOLLIN
     }
     if (EPOLLOUT in mode) {
-        events = events or Selector2.EVENT_EPOLLOUT
+        events = events or Selector.EVENT_EPOLLOUT
     }
     return events
 }
 
 actual fun createSelector(): Selector = MingwSelector()
+
+fun modeToString(mode: UInt): String {
+    val sb = StringBuilder()
+    if (mode and EPOLLIN != 0u)
+        sb.append("EPOLLIN ")
+    if (mode and EPOLLIN != 0u)
+        sb.append("EPOLLPRI ")
+
+    if (mode and EPOLLOUT != 0u)
+        sb.append("EPOLLOUT ")
+
+    if (mode and EPOLLERR != 0u)
+        sb.append("EPOLLERR ")
+
+    if (mode and EPOLLHUP != 0u)
+        sb.append("EPOLLHUP ")
+
+    if (mode and EPOLLRDNORM != 0u)
+        sb.append("EPOLLRDNORM ")
+
+    if (mode and EPOLLRDBAND != 0u)
+        sb.append("EPOLLRDBAND ")
+
+    if (mode and EPOLLWRNORM != 0u)
+        sb.append("EPOLLWRNORM ")
+    if (mode and EPOLLWRBAND != 0u)
+        sb.append("EPOLLWRBAND ")
+    if (mode and EPOLLMSG != 0u)
+        sb.append("EPOLLMSG ")
+    if (mode and EPOLLRDHUP != 0u)
+        sb.append("EPOLLRDHUP ")
+    if (mode and EPOLLONESHOT != 0u)
+        sb.append("EPOLLONESHOT ")
+
+    return sb.toString()
+}
