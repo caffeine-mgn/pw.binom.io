@@ -78,6 +78,11 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     override fun close() {
+        memScoped {
+            val flag = alloc<IntVar>()
+            flag.value = 1
+            setsockopt(native, SOL_SOCKET, SO_REUSEADDR, flag.ptr, sizeOf<IntVar>().convert())
+        }
         shutdown(native, SHUT_RDWR)
         close(native)
     }
@@ -115,7 +120,7 @@ actual class NSocket(val native: Int) : Closeable {
                 address.size.convert()
             )
             if (bindResult < 0) {
-                if (errno == 10048) {
+                if (errno == 98) {
                     throw BindException("Address already in use: ${address.host}:${address.port}")
                 }
                 throw IOException("Bind error. errno: [${errno}]")
