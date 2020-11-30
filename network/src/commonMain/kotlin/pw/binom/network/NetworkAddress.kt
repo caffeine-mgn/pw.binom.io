@@ -16,7 +16,7 @@ expect sealed class NetworkAddress {
         fun clone(): Mutable
     }
 
-    class Immutable(host: String, port: Int) : NetworkAddress {
+    class Immutable(host: String = "0.0.0.0", port: Int) : NetworkAddress {
         fun toMutable(): Mutable
         fun toMutable(address: Mutable)
     }
