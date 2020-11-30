@@ -3,6 +3,7 @@ package pw.binom.network
 import kotlinx.cinterop.*
 import platform.linux.*
 import platform.windows.HANDLE
+import kotlin.native.concurrent.freeze
 
 class MingwSelector : AbstractSelector() {
 
@@ -22,6 +23,10 @@ class MingwSelector : AbstractSelector() {
         override fun close() {
             super.close()
             epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
+        }
+
+        init {
+//            freeze()
         }
     }
 
@@ -53,7 +58,6 @@ class MingwSelector : AbstractSelector() {
         }
         for (i in 0 until eventCount) {
             val item = list[i]
-            println("Event: ${modeToString(item.events)}")
             val keyPtr = item.data.ptr!!.asStableRef<MingwKey>()
             val key = keyPtr.get()
             func(key, item.events.convert())

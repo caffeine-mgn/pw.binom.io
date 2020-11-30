@@ -82,14 +82,14 @@ class AsyncMultipartOutput(val stream: AsyncOutput, val boundary: String = gener
         stream.flush()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         if (!first) {
             writer.append("\r\n")
             printBoundary()
             writer.append("--\r\n")
         }
         if (close) {
-            stream.close()
+            stream.asyncClose()
         }
     }
 }

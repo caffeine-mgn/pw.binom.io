@@ -157,11 +157,11 @@ open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolea
         }
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         checkClosed()
         closed = true
         if (autoCloseStream) {
-            stream.close()
+            stream.asyncClose()
         }
     }
 

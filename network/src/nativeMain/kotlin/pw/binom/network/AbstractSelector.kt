@@ -21,6 +21,9 @@ abstract class AbstractSelector : Selector {
         override var listensFlag: Int
             get() = _listensFlag
             set(value) {
+                if (_listensFlag == value) {
+                    return
+                }
                 _listensFlag = value
                 resetMode(epollCommonToNative(value))
             }

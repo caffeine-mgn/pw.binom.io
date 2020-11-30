@@ -8,7 +8,6 @@ import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
-import pw.binom.io.socket.nio.SocketNIOManager
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
@@ -72,7 +71,7 @@ internal class UrlConnectImpl(
         }
         app.append("\r\n")
         buffered.flush()
-        buffered.close()
+        buffered.asyncClose()
         channel = connection
     }
 
@@ -107,7 +106,7 @@ internal class UrlConnectImpl(
         val responseLine = vv
         if (responseLine == null) {
             channel.sslSession?.close()
-            channel.channel.close()
+            channel.channel.asyncClose()
             throw IOException("Invalid reponse line: Reponse is empty")
         }
         if (!responseLine.startsWith("HTTP/1.1 ") && !responseLine.startsWith("HTTP/1.0 "))
@@ -177,16 +176,16 @@ internal class UrlConnectImpl(
         val channel = this.channel!!
         val resp = compliteRequest()
         if (resp.headers[Headers.SEC_WEBSOCKET_ACCEPT]?.singleOrNull() != responseKey) {
-            channel.close()
+            channel.asyncClose()
             throw InvalidSecurityKeyException()
         }
         return ClientWebSocketConnection(resp.input, channel.channel, channel.rawConnection)
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         channel?.let {
             it.sslSession?.close()
-            it.channel.close()
+            it.channel.asyncClose()
         }
     }
 

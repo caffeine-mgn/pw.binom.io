@@ -47,8 +47,7 @@ kotlin {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":core")
-                api project(":socket")
-                api project(":nio")
+                api project(":network")
                 api project(":ssl")
                 api project(":compression")
                 api project(":http")

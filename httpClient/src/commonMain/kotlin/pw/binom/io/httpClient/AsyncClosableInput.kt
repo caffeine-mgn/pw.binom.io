@@ -39,7 +39,7 @@ class AsyncClosableInput(val stream: AsyncInput) : AsyncInput {
         }
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         checkClosed()
         closed = true
     }

@@ -19,15 +19,15 @@ internal class ClosableAsyncInput(val stream: AsyncInput) : AsyncHttpInput {
             try {
                 val r = stream.read(dest)
                 if (r == 0) {
-                    close()
+                    asyncClose()
                 }
                 r
             } catch (e: IOException) {
-                close()
+                asyncClose()
                 0
             }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         eof = true
     }
 

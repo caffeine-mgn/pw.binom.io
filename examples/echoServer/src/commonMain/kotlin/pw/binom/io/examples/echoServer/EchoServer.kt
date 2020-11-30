@@ -1,30 +1,25 @@
 package pw.binom.io.examples.echoServer
 
 import pw.binom.ByteBuffer
-import pw.binom.io.socket.RawServerSocketChannel
-import pw.binom.io.socket.RawSocketChannel
-import pw.binom.io.socket.SocketClosedException
-import pw.binom.io.socket.SocketSelector
+import pw.binom.network.*
 
 fun main(args: Array<String>) {
-    val server = RawServerSocketChannel()
-    val selector = SocketSelector()
+    val server = TcpServerSocketChannel()
+    val selector = Selector.open()
 
-    server.blocking = false
-    server.bind("0.0.0.0", 8899)
-    selector.reg(server)
+    server.bind(NetworkAddress.Immutable("0.0.0.0", 8899))
+    selector.attach(server, 0, server)
     println("Start listen port 8899")
     val buffer = ByteBuffer.alloc(256)
     while (true) {
-        selector.process {
-            if (it.channel === server) {
+        selector.select { key, mode ->
+            if (key.attachment === server) {
                 val client = server.accept()!!
-                client.blocking = false
-                selector.reg(client).listen(true, false)
+                selector.attach(client, Selector.INPUT_READY, client)
                 println("Client connected")
             } else {
+                val client = key.attachment as TcpClientSocketChannel
                 try {
-                    val client = it.channel as RawSocketChannel
                     buffer.clear()
                     println("Try read ${buffer.remaining}")
                     val len = client.read(buffer)
@@ -33,7 +28,8 @@ fun main(args: Array<String>) {
                     client.write(buffer)
                     println("read $len bytes")
                 } catch (e: SocketClosedException) {
-                    it.cancel()
+                    client.close()
+                    key.close()
                     println("Client disconnected")
                 }
             }

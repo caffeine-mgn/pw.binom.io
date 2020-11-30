@@ -69,24 +69,19 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override fun connected() {
-        println("TcpConnection->connected")
         connect?.resumeWith(Result.success(Unit))
     }
 
     override fun error() {
-        println("TcpConnection->error")
         connect?.resumeWith(Result.failure(SocketConnectException()))
     }
 
     override fun readyForRead(): Boolean {
         if (readData.continuation == null) {
-            println("Not need to read...")
             holder.key.removeListen(Selector.INPUT_READY)
             return false
         }
-        println("Reading...")
         val readed = runCatching { channel.read(readData.data!!) }
-        println("readed $readed")
         return if (readData.full) {
             if (readData.data!!.remaining == 0) {
                 val con = readData.continuation!!
@@ -138,7 +133,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override suspend fun flush() {
-        TODO("Not yet implemented")
+
     }
 
     override val available: Int
@@ -158,7 +153,6 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             holder.key.addListen(Selector.INPUT_READY)
         }
         if (readed <= 0) {
-            println("Socket Closed! readed: $readed")
             throw SocketClosedException()
         }
         return readed

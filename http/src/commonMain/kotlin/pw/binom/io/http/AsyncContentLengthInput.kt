@@ -47,11 +47,11 @@ open class AsyncContentLengthInput(val stream: AsyncInput, val contentLength: UL
         return r
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         checkClosed()
         closed = true
         if (autoCloseStream) {
-            stream.close()
+            stream.asyncClose()
         }
     }
 

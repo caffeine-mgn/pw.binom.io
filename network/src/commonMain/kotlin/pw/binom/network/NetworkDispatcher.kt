@@ -10,7 +10,6 @@ class NetworkDispatcher : Closeable {
     @JvmName("jvmWait")
     fun wait(timeout: Long = -1L) {
         selector.select(timeout) { key, mode ->
-            println("!event!  ${mode.toString(2)}")
             val connection = key.attachment as AbstractConnection
             if (mode and Selector.EVENT_CONNECTED != 0) {
                 connection.connected()

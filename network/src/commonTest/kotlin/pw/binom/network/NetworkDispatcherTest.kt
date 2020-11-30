@@ -88,6 +88,13 @@ class NetworkDispatcherTest {
                 for (i in 0 until buf1.capacity) {
                     assertEquals(buf1[i], buf2[i])
                 }
+                client.write(buf1)
+                serverClient.readFully(buf2)
+                buf2.flip()
+                buf1.flip()
+                for (i in 0 until buf1.capacity) {
+                    assertEquals(buf1[i], buf2[i])
+                }
             }
         } finally {
             server.close()

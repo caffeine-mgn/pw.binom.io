@@ -4,9 +4,10 @@ import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 
-class AsyncBufferedOutput(override val stream: AsyncOutput,
-                          bufferSize: Int = DEFAULT_BUFFER_SIZE,
-                          private val closeStream: Boolean
+class AsyncBufferedOutput(
+    override val stream: AsyncOutput,
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    private val closeStream: Boolean
 ) : AbstractAsyncBufferedOutput() {
     override val buffer = ByteBuffer.alloc(bufferSize)
 
@@ -53,12 +54,15 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     }
 }
 
-fun AsyncOutput.bufferedOutput(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeStream: Boolean = true): AsyncBufferedOutput {
+fun AsyncOutput.bufferedOutput(
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    closeStream: Boolean = true
+): AsyncBufferedOutput {
     if (this is AsyncBufferedOutput && this.bufferSize == bufferSize)
         return this
     return AsyncBufferedOutput(
-            stream = this,
-            bufferSize = bufferSize,
-            closeStream = closeStream
+        stream = this,
+        bufferSize = bufferSize,
+        closeStream = closeStream
     )
 }

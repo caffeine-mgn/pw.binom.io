@@ -98,12 +98,12 @@ open class AsyncChunkedOutput(
         finished = true
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         finish()
         closed = true
         tmp.close()
         if (closeStream) {
-            stream.close()
+            stream.asyncClose()
         }
     }
 

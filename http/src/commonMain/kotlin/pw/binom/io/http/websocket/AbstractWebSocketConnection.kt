@@ -5,12 +5,12 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.ThreadRef
 import pw.binom.concurrency.asReference
 import pw.binom.io.StreamClosedException
-import pw.binom.io.socket.SocketClosedException
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
+import pw.binom.network.SocketClosedException
+import pw.binom.network.TcpConnection
 
 abstract class AbstractWebSocketConnection(
-    rawConnection: SocketNIOManager.TcpConnectionRaw,
+    rawConnection: TcpConnection,
     input: AsyncInput,
     output: AsyncOutput
 ) : WebSocketConnection {
@@ -27,6 +27,7 @@ abstract class AbstractWebSocketConnection(
 
     private var closed by AtomicBoolean(false)
     private val holder = rawConnection.holder
+    private val channel = rawConnection.channel
     private val networkThread = ThreadRef()
 
     init {
@@ -118,10 +119,11 @@ abstract class AbstractWebSocketConnection(
     private fun closeTcp() {
         checkClosed()
         closed = true
-        holder.close()
+        holder.key.close()
+        channel.close()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         if (!networkThread.same) {
             throw IllegalStateException("This method must be call from network thread")
         }

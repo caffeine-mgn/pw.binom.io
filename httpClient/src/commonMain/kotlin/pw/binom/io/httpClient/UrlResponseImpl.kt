@@ -56,17 +56,17 @@ internal class UrlResponseImpl(
     override suspend fun read(dest: ByteBuffer): Int =
             stream.read(dest)
 
-    override suspend fun close() {
-        input.close()
+    override suspend fun asyncClose() {
+        input.asyncClose()
         if (!httpStream.isEof) {
-            stream.close()
-            channel.close()
+            stream.asyncClose()
+            channel.asyncClose()
         } else {
             if (keepAlive) {
                 client.recycleConnection(url, channel)
             } else {
-                stream.close()
-                channel.close()
+                stream.asyncClose()
+                channel.asyncClose()
             }
         }
     }

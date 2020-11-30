@@ -24,7 +24,9 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
     override fun readyForRead(): Boolean {
         val newChannel = channel.accept(null) ?: return true
         val acceptListener = acceptListener ?: return false
+        this.acceptListener = null
         acceptListener.resume(newChannel)
+        key.listensFlag = 0
         return false
     }
 
@@ -39,7 +41,6 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
             acceptListener = con
             key.listensFlag = Selector.INPUT_READY
         }
-//        val newChannel = channel.accept(null) ?: return null
         return dispatcher.attach(newChannel)
     }
 }
