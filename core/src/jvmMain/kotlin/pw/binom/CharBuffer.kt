@@ -10,10 +10,10 @@ import java.nio.CharBuffer as JCharBuffer
 actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Closeable {
     actual companion object {
         actual fun alloc(size: Int): CharBuffer =
-                CharBuffer(JCharBuffer.allocate(size))
+            CharBuffer(JCharBuffer.allocate(size))
 
         actual fun wrap(chars: CharArray): CharBuffer =
-                CharBuffer(JCharBuffer.wrap(chars))
+            CharBuffer(JCharBuffer.wrap(chars))
     }
 
     actual val capacity: Int
@@ -37,21 +37,21 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         get() = capacity
 
     actual override operator fun get(index: Int): Char =
-            native.get(index)
+        native.get(index)
 
     actual override fun subSequence(startIndex: Int, endIndex: Int): CharBuffer =
-            CharBuffer(native.subSequence(startIndex, endIndex))
+        CharBuffer(native.subSequence(startIndex, endIndex))
 
     override fun close() {
     }
 
     actual override fun equals(other: Any?): Boolean =
-            when (other) {
-                null -> false
-                is String -> other == toString()
-                is CharBuffer -> other.native == native
-                else -> false
-            }
+        when (other) {
+            null -> false
+            is String -> other == toString()
+            is CharBuffer -> other.native == native
+            else -> false
+        }
 
     actual operator fun set(index: Int, value: Char) {
         native.put(index, value)
@@ -125,6 +125,21 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
             new.limit = minOf(limit, newSize)
         }
         return new
+    }
+
+    actual fun subString(startIndex: Int, endIndex: Int): String {
+        if (endIndex > capacity) {
+            throw ArrayIndexOutOfBoundsException("capacity: [$capacity], startIndex: [$startIndex], endIndex: [$endIndex]")
+        }
+        val len = minOf(capacity, endIndex - startIndex)
+        if (len == 0) {
+            return ""
+        }
+        val array = CharArray(len)
+        native.hold(startIndex, len) {
+            it.get(array)
+        }
+        return array.concatToString()
     }
 }
 

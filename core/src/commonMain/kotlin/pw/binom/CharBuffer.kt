@@ -21,6 +21,7 @@ expect class CharBuffer : CharSequence, Closeable {
 
     override operator fun get(index: Int): Char
     override fun subSequence(startIndex: Int, endIndex: Int): CharBuffer
+    fun subString(startIndex: Int, endIndex: Int): String
     override fun equals(other: Any?): Boolean
     operator fun set(index: Int, value: Char)
     fun peek(): Char

@@ -146,6 +146,12 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
         }
+//        val r = channel.read(dest)
+//        if (r>0){
+//            println("return data $r")
+//            return r
+//        }
+//        println("r=$r")
         readData.full = false
         val readed = suspendCoroutine<Int> {
             readData.continuation = it

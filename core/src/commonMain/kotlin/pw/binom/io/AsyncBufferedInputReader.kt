@@ -55,6 +55,34 @@ class AsyncBufferedInputReader(
         return counter
     }
 
+    suspend fun readUntil(char: Char): String? {
+        val out = StringBuilder()
+        var exist = false
+        LOOP@ while (true) {
+            prepareBuffer()
+            if (output.remaining <= 0) {
+                break
+            }
+            for (i in output.position until output.limit) {
+                if (output[i] == char) {
+                    out.append(output.subString(output.position, i))
+                    output.position = i + 1
+                    exist = true
+                    break@LOOP
+                }
+            }
+            out.append(output.subString(output.position, output.limit))
+            output.position = output.limit
+            exist = true
+        }
+        if (!exist) {
+            return null
+        }
+        return out.toString()
+    }
+
+    override suspend fun readln(): String? = readUntil(10.toChar())
+
     override suspend fun read(): Char? {
         prepareBuffer()
         if (output.remaining == 0) {
