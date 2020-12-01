@@ -62,7 +62,7 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
             return
         }
 
-        val node = req.input.utf8Reader().xmlTree()!!
+        val node = req.input.bufferedReader(bufferPool).xmlTree()!!
 
         val properties =
             node.findElements { it.tag.endsWith("prop") }.first().childs
@@ -78,7 +78,7 @@ abstract class AbstractWebDavHandler<U : Any> : Handler {
         val DAV_NS = "DAV:"
         resp.status = 207
         resp.resetHeader(Headers.CONTENT_TYPE, "application/xml; charset=UTF-8")
-        resp.complete().utf8Appendable().writeXml {
+        resp.complete().bufferedWriter(bufferPool).writeXml {
             node("multistatus", DAV_NS) {
                 entities.forEach { e ->
                     node("response", DAV_NS) {

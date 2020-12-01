@@ -121,7 +121,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
 
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, length)
-        memcpy(array.refTo(offset), bytes.refTo(position), (len * 2).convert())
+        memcpy(array.refTo(offset), bytes.refTo(position*2), (len * 2).convert())
         position += len
         return len
     }
@@ -140,5 +140,14 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         val array = CharArray(len)
         memcpy(array.refTo(0), bytes.refTo(startIndex * Char.SIZE_BYTES), (len * Char.SIZE_BYTES).convert())
         return array.concatToString()
+    }
+
+    actual fun write(array: CharArray, offset: Int, length: Int): Int {
+        val len = minOf(remaining, minOf(array.size - offset, length))
+        memScoped {
+            memcpy(bytes.refTo(position*2), array.refTo(offset), (len * 2).convert())
+            position += len
+        }
+        return len
     }
 }

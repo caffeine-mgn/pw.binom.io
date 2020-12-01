@@ -23,7 +23,7 @@ class ChatHandler : WebSocketHandler() {
                         }
                     } catch (e: WebSocketClosedException) {
                         forDelete.add(it)
-                        it.close()
+                        it.asyncClose()
                     }
                 }
         forDelete.forEach {

@@ -141,6 +141,12 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         }
         return array.concatToString()
     }
+
+    actual fun write(array: CharArray, offset: Int, length: Int): Int {
+        val len = minOf(remaining, minOf(array.size - offset, length))
+        native.put(array, offset, len)
+        return len
+    }
 }
 
 @OptIn(ExperimentalContracts::class)

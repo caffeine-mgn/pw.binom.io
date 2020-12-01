@@ -6,7 +6,6 @@ import pw.binom.charset.Charsets
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.seconds
@@ -18,27 +17,7 @@ fun main(args: Array<String>) {
     val pool = ByteBufferPool(10)
     var time = 0.seconds
     var count = 0L
-    val static = ByteArrayOutput()
-    val txt = """<html>
-                |<title>Binom Example Web Server</title>
-                |<body>
-                |  Hello from Simple server based on <b>Binom IO</b>
-                |</body>
-                |</html>""".trimMargin()
-    static.utf8Appendable().also {
-        it.appendln("HTTP/1.1 200 OK")
-            .appendln("Server: Binom Example Server")
-            .appendln("Content-Type: text/html; charset=utf-8")
-            .appendln("Content-Length: ${txt.length}")
-            .appendln("Connection: close")
-            .appendln("")
-            .appendln("")
-            .appendln(txt)
-        it.flush()
-    }
-    static.trimToSize()
     async {
-        val c = Charsets.UTF8
         while (true) {
             count++
             val client = server.accept()!!
@@ -58,28 +37,30 @@ fun main(args: Array<String>) {
                         break
                 }
 
-//                val txt = """<html>
-//                |<title>Binom Example Web Server</title>
-//                |<body>
-//                |  Hello from Simple server based on <b>Binom IO</b>
-//                |</body>
-//                |</html>""".trimMargin()
-//                val app = client.bufferedOutput().also {
-//                    val app = it.utf8Appendable()
-//                    app.appendln("HTTP/1.1 200 OK")
-//                        .appendln("Server: Binom Example Server")
-//                        .appendln("Content-Type: text/html; charset=utf-8")
-//                        .appendln("Content-Length: ${txt.length}")
-//                        .appendln("Connection: close")
-//                        .appendln("")
-//                        .appendln("")
-//                        .appendln(txt)
-//                    it.flush()
-//                }
-                static.data.clear()
+                val static = ByteArrayOutput()
+                val txt = """<html>
+                |<title>Binom Example Web Server</title>
+                |<body>
+                |  Hello from Simple server based on <b>Binom IO</b>
+                |</body>
+                |</html>""".trimMargin()
+
+                static.bufferedWriter(pool).also {
+                    it.appendln("HTTP/1.1 200 OK\r\n")
+                        .append("Server: Binom Example Server\r\n")
+                        .append("Content-Type: text/html; charset=utf-8\r\n")
+                        .append("Content-Length: ${txt.length}\r\n")
+                        .append("Connection: close\r\n")
+                        .append("\r\n")
+                        .append("\r\n")
+                        .append(txt)
+                    it.flush()
+                }
+                static.utf8Appendable()
+                static.data.flip()
                 client.write(static.data)
+                static.close()
             } catch (e: IOException) {
-                e.printStackTrace()
                 //NOP
             } finally {
                 client.close()

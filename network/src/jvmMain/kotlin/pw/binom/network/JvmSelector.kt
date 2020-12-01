@@ -60,10 +60,8 @@ class JvmSelector : Selector {
         override var listensFlag: Int
             get() = javaToCommon(native.interestOps())
             set(value) {
-                try {
+                if (native.interestOps() != value) {
                     native.interestOps(commonToJava(native.channel() as NetworkChannel, value))
-                } catch (e: Throwable) {
-                    println()
                 }
             }
         override val eventsFlag: Int

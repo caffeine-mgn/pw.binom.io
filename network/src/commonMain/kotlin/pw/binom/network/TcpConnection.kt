@@ -1,7 +1,9 @@
 package pw.binom.network
 
 import pw.binom.ByteBuffer
+import pw.binom.forEach
 import pw.binom.io.AsyncChannel
+import pw.binom.map
 import pw.binom.popOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.suspendCoroutine
@@ -59,9 +61,10 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
         val result = runCatching { channel.write(sendData.data!!) }
         return if (sendData.data!!.remaining == 0) {
-            sendData.continuation!!.resumeWith(result)
+            val con = sendData.continuation!!
             sendData.reset()
             holder.key.removeListen(Selector.OUTPUT_READY)
+            con.resumeWith(result)
             false
         } else {
             true
@@ -109,13 +112,14 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override suspend fun asyncClose() {
-        TODO("Not yet implemented")
+        close()
     }
 
     override suspend fun write(data: ByteBuffer): Int {
         val l = data.remaining
-        if (l == 0)
+        if (l == 0) {
             return 0
+        }
 
         if (sendData.continuation != null) {
             throw IllegalStateException("Connection already have write listener")
@@ -125,6 +129,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
                 return wrote
             }
         }
+        sendData.data = data
         suspendCoroutine<Int> {
             sendData.continuation = it
             holder.key.addListen(Selector.OUTPUT_READY)
@@ -139,6 +144,29 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     override val available: Int
         get() = -1
 
+    override suspend fun readFully(dest: ByteBuffer): Int {
+        if (dest.remaining == 0) {
+            return 0
+        }
+        if (readData.continuation != null) {
+            throw IllegalStateException("Connection already have read listener")
+        }
+        val r = channel.read(dest)
+        if (r > 0 && dest.remaining == 0) {
+            return r
+        }
+        readData.full = true
+        val readed = suspendCoroutine<Int> {
+            readData.continuation = it
+            readData.data = dest
+            holder.key.addListen(Selector.INPUT_READY)
+        }
+        if (readed <= 0) {
+            throw SocketClosedException()
+        }
+        return readed
+    }
+
     override suspend fun read(dest: ByteBuffer): Int {
         if (dest.remaining == 0) {
             return 0
@@ -146,12 +174,10 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
         }
-//        val r = channel.read(dest)
-//        if (r>0){
-//            println("return data $r")
-//            return r
-//        }
-//        println("r=$r")
+        val r = channel.read(dest)
+        if (r > 0) {
+            return r
+        }
         readData.full = false
         val readed = suspendCoroutine<Int> {
             readData.continuation = it

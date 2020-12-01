@@ -156,4 +156,13 @@ inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
         func(this[it])
 }
 
+inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
+    val pos = position
+    val lim = limit
+    val output = ArrayList<T>(remaining)
+    for (it in pos until lim)
+        output += func(this[it])
+    return output
+}
+
 fun ByteArray.input() = ByteBuffer.wrap(this)

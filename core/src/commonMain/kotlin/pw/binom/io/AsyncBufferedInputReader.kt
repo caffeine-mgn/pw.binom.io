@@ -4,11 +4,12 @@ import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
+import pw.binom.pool.ObjectPool
 
 class AsyncBufferedInputReader(
     charset: Charset,
     val input: AsyncInput,
-    private val pool: ByteBufferPool,
+    private val pool: ObjectPool<ByteBuffer>,
     charBufferSize: Int = 512
 ) : AsyncReader {
     private val decoder = charset.newDecoder()
@@ -99,7 +100,7 @@ class AsyncBufferedInputReader(
 }
 
 fun AsyncInput.bufferedReader(
-    pool: ByteBufferPool,
+    pool: ObjectPool<ByteBuffer>,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = 512
 ) = AsyncBufferedInputReader(

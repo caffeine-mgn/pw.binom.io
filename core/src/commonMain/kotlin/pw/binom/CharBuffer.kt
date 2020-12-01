@@ -31,6 +31,7 @@ expect class CharBuffer : CharSequence, Closeable {
     fun clear(): CharBuffer
     override fun toString(): String
     fun read(array: CharArray, offset: Int, length: Int): Int
+    fun write(array: CharArray, offset: Int, length: Int): Int
     fun flip()
 }
 
