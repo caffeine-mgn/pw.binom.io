@@ -57,9 +57,7 @@ class AsyncBufferedOutputAppendable(
     }
 
     override suspend fun flush() {
-        println("Flush----")
         if (charBuffer.remaining == charBuffer.capacity) {
-            println("---#1")
             return
         }
         val buffer = pool.borrow()
@@ -67,13 +65,9 @@ class AsyncBufferedOutputAppendable(
             charBuffer.flip()
             while (true) {
                 buffer.clear()
-                println("Enciding ${charBuffer.remaining}...")
                 val r = encoder.encode(charBuffer, buffer)
-                println("Encode result $r")
                 buffer.flip()
-                println("Byte for send: ${buffer.remaining}")
                 if (buffer.remaining != buffer.capacity) {
-                    println("---#2")
                     output.write(buffer)
                     buffer.clear()
                 }
@@ -81,7 +75,6 @@ class AsyncBufferedOutputAppendable(
                     break
                 }
             }
-            println("---#3")
             charBuffer.clear()
         } finally {
             pool.recycle(buffer)
