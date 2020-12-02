@@ -1,10 +1,7 @@
 package pw.binom.network
 
 import java.net.ConnectException
-import java.nio.channels.NetworkChannel
-import java.nio.channels.SelectionKey
-import java.nio.channels.ServerSocketChannel
-import java.nio.channels.SocketChannel
+import java.nio.channels.*
 import java.nio.channels.Selector as JSelector
 
 private fun javaToCommon(mode: Int): Int {
@@ -23,7 +20,7 @@ private fun commonToJava(channel: NetworkChannel, mode: Int): Int {
     var opts = 0
     if (Selector.INPUT_READY and mode != 0) {
         val value = when (channel) {
-            is SocketChannel -> SelectionKey.OP_READ
+            is SocketChannel, is DatagramChannel -> SelectionKey.OP_READ
             is ServerSocketChannel -> SelectionKey.OP_ACCEPT
             else -> throw IllegalArgumentException("Unsupported NetworkChannel: ${channel::class.java}")
         }
@@ -31,7 +28,7 @@ private fun commonToJava(channel: NetworkChannel, mode: Int): Int {
     }
 
     if (Selector.OUTPUT_READY and mode != 0) {
-        require(channel is SocketChannel)
+        require(channel is SocketChannel || channel is DatagramChannel)
         opts = opts or SelectionKey.OP_WRITE
     }
     return opts
@@ -125,7 +122,10 @@ class JvmSelector : Selector {
     }
 
     override fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?): Selector.Key {
-        TODO("Not yet implemented")
+        val key = JvmKey(attachment)
+        val nn = socket.native.register(native, commonToJava(socket.native, mode), key)
+        key.native = nn
+        return key
     }
 
     override fun close() {

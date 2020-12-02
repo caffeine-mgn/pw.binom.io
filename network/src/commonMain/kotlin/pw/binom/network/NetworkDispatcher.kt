@@ -8,9 +8,10 @@ class NetworkDispatcher : Closeable {
     val selector = Selector.open()
 
     @JvmName("jvmWait")
-    fun wait(timeout: Long = -1L) {
+    fun select(timeout: Long = -1L) {
         selector.select(timeout) { key, mode ->
             val connection = key.attachment as AbstractConnection
+            println("Event $mode in $key")
             if (mode and Selector.EVENT_CONNECTED != 0) {
                 connection.connected()
             }
@@ -45,6 +46,23 @@ class NetworkDispatcher : Closeable {
     fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
         val con = TcpServerConnection(this, channel)
         con.key = selector.attach(channel, 0, con)
+        return con
+    }
+
+    fun bindUDP(address: NetworkAddress): UdpConnection {
+        val channel = UdpSocketChannel()
+        channel.bind(address)
+        return attach(channel)
+    }
+
+    fun openUdp(): UdpConnection {
+        val channel = UdpSocketChannel()
+        return attach(channel)
+    }
+
+    fun attach(channel: UdpSocketChannel): UdpConnection {
+        val con = UdpConnection(channel)
+        con.holder = CrossThreadKeyHolder(selector.attach(channel, 0, con))
         return con
     }
 

@@ -2,6 +2,7 @@ package pw.binom.network
 
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpServerSocketChannel) :
@@ -47,6 +48,8 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
     }
 
     override fun close() {
+        acceptListener?.resumeWithException(SocketClosedException())
+        acceptListener = null
         channel.close()
     }
 

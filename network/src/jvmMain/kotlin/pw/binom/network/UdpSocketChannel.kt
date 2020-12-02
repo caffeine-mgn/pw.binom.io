@@ -7,6 +7,11 @@ import java.nio.channels.DatagramChannel
 
 actual class UdpSocketChannel : Closeable {
     val native = DatagramChannel.open()
+
+    init {
+        native.configureBlocking(false)
+    }
+
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int {
         val _native = address._native
         require(_native != null)
@@ -14,13 +19,15 @@ actual class UdpSocketChannel : Closeable {
     }
 
     actual fun recv(data: ByteBuffer, address: NetworkAddress.Mutable?): Int {
-        val before = data.capacity
-        if (before == 0) {
+        val before = data.position
+        if (before == data.remaining) {
             return 0
         }
         val vv = native.receive(data.native)
-        address?._native = vv as InetSocketAddress
-        return before - data.capacity
+        if (vv != null) {
+            address?._native = vv as InetSocketAddress
+        }
+        return data.position - before
     }
 
     actual fun bind(address: NetworkAddress) {

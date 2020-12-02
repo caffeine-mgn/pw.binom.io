@@ -6,6 +6,10 @@ import pw.binom.io.Closeable
 actual class UdpSocketChannel : Closeable {
     val native = NSocket.udp()
 
+    init {
+        native.setBlocking(false)
+    }
+
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
         native.send(data, address)
 

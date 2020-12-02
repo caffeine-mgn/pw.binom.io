@@ -35,6 +35,8 @@ actual sealed class NetworkAddress {
             }
         }
 
+    override fun toString(): String = "$host:$port"
+
     protected fun _reset(host: String, port: Int) {
         try {
             _native = InetSocketAddress(InetAddress.getByName(host), port)

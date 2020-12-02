@@ -1,16 +1,12 @@
 package pw.binom.io.examples.httpServer
 
-import pw.binom.ByteBuffer
 import pw.binom.ByteBufferPool
 import pw.binom.async
 import pw.binom.charset.Charsets
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
-import pw.binom.wrap
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 import kotlin.time.seconds
 
 @OptIn(ExperimentalTime::class)
@@ -57,6 +53,6 @@ fun main(args: Array<String>) {
         }
     }
     while (true) {
-        nioManager.wait()
+        nioManager.select()
     }
 }

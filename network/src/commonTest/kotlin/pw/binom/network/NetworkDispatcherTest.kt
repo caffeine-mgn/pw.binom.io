@@ -2,6 +2,7 @@ package pw.binom.network
 
 import pw.binom.*
 import kotlin.random.Random
+import kotlin.random.nextInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -36,7 +37,7 @@ fun NetworkDispatcher.single(func: suspend () -> Unit) {
 
 fun NetworkDispatcher.run(result: AsyncResult) {
     while (!result.done) {
-        wait()
+        select()
     }
     result.finish()
 }
@@ -114,6 +115,48 @@ class NetworkDispatcherTest {
         } finally {
             a.close()
         }
+    }
+
+    @Test
+    fun udpTest() {
+        val address = NetworkAddress.Immutable(port = Random.nextInt(9999 until Short.MAX_VALUE))
+        val manager = NetworkDispatcher()
+        val server = manager.bindUDP(address)
+        val client = manager.openUdp()
+        var done = false
+        var exception: Throwable? = null
+        val request = Random.uuid().toString()
+        val response = Random.uuid().toString()
+        async {
+            try {
+                val buf = ByteBuffer.alloc(512)
+                val addr = NetworkAddress.Mutable()
+                client.write(
+                    ByteBuffer.wrap(request.encodeToByteArray()),
+                    NetworkAddress.Immutable("127.0.0.1", address.port)
+                )
+                val bytes = server.read(buf, addr)
+                buf.flip()
+                assertEquals(request, buf.toByteArray().decodeToString())
+
+                server.write(ByteBuffer.wrap(response.encodeToByteArray()), addr)
+                buf.clear()
+                client.read(buf,null)
+                buf.flip()
+                assertEquals(response, buf.toByteArray().decodeToString())
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                exception = e
+            } finally {
+                done = true
+            }
+        }
+        while (!done) {
+            println("Event!")
+            manager.select()
+        }
+        server.close()
+        exception?.let { throw it }
     }
 }
 

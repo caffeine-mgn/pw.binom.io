@@ -123,6 +123,9 @@ actual class NSocket(val native: SOCKET) : Closeable {
             }
             val listenResult = platform.windows.listen(native, 1000)
             if (listenResult < 0) {
+                if (GetLastError() == 10045u) {
+                    return
+                }
                 throw IOException("Listen error. errno: [${errno}], GetLastError: [${GetLastError()}]")
             }
         }
