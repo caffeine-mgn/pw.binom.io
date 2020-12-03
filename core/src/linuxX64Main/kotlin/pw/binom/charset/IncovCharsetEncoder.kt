@@ -6,7 +6,7 @@ import pw.binom.CharBuffer
 class IncovCharsetEncoder(name: String) : CharsetEncoder, AbstractIconv(fromCharset = NATIVE_CHARSET, toCharset = name) {
     override fun encode(input: CharBuffer, output: ByteBuffer): CharsetTransformResult =
             iconv(
-                    input.bytes,
+                    input,
                     output
             )
 }

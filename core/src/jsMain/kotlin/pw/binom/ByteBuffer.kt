@@ -6,19 +6,31 @@ import org.khronos.webgl.set
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
 
-private fun memcpy(dist: Int8Array, distOffset: Int, src: Int8Array, srcOffset: Int, srcLength: Int = src.length - srcOffset) {
+private fun memcpy(
+    dist: Int8Array,
+    distOffset: Int,
+    src: Int8Array,
+    srcOffset: Int,
+    srcLength: Int = src.length - srcOffset
+) {
     (srcOffset..(srcOffset + srcLength)).forEachIndexed { index, it ->
         dist[index + distOffset] = src[it]
     }
 }
 
-private fun memcpy(dist: ByteArray, distOffset: Int, src: Int8Array, srcOffset: Int, srcLength: Int = src.length - srcOffset) {
+private fun memcpy(
+    dist: ByteArray,
+    distOffset: Int,
+    src: Int8Array,
+    srcOffset: Int,
+    srcLength: Int = src.length - srcOffset
+) {
     (srcOffset..(srcOffset + srcLength)).forEachIndexed { index, it ->
         dist[index + distOffset] = src[it]
     }
 }
 
-actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
+actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
@@ -32,23 +44,23 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     private var native = Int8Array(capacity)//: CPointer<ByteVar> = malloc(capacity.convert())!!.reinterpret()
 
-    actual fun flip() {
+    actual override fun flip() {
         limit = position;
         position = 0;
     }
 
-    actual val remaining: Int
+    actual override val remaining: Int
         get() {
             checkClosed()
             return limit - position
         }
-    actual var position: Int = 0
+    actual override var position: Int = 0
         set(value) {
             require(position >= 0)
             require(position < limit)
             field = value
         }
-    actual var limit: Int = capacity
+    actual override var limit: Int = capacity
         set(value) {
             checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
@@ -133,7 +145,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     }
 
     actual fun get(): Byte =
-            native[position++]
+        native[position++]
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
         this.position = position
@@ -145,7 +157,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         native[position++] = value
     }
 
-    actual fun clear() {
+    actual override fun clear() {
         limit = capacity
         position = 0
     }
@@ -182,7 +194,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         return l
     }
 
-    actual fun compact() {
+    actual override fun compact() {
         if (remaining > 0) {
             val size = remaining
             memcpy(native, 0, native, position, size)
@@ -197,7 +209,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
      * Returns last byte. Work as [get] but don'tm move position when he reads
      */
     actual fun peek(): Byte =
-            native[position++]
+        native[position++]
 
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
         val new = alloc(length)
@@ -210,7 +222,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
     actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
         require(dest.size - offset >= length)
         val l = minOf(remaining, length)
-        memcpy(dest,0,native, position,l)
+        memcpy(dest, 0, native, position, l)
         return l
     }
 }

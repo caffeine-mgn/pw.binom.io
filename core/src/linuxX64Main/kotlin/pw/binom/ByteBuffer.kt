@@ -6,7 +6,7 @@ import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
 import kotlin.native.concurrent.isFrozen
 
-actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
+actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
@@ -26,15 +26,15 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         }.toCPointer<ByteVar>()!!
     }
 
-    fun refTo(position: Int) =
+    override fun refTo(position: Int) =
         bytes.refTo(position)
 
-    actual fun flip() {
+    actual override fun flip() {
         limit = position
         position = 0
     }
 
-    actual val remaining: Int
+    actual override val remaining: Int
         get() {
             checkClosed()
             return limit - position
@@ -42,7 +42,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     private var _pos by AtomicInt(0)
 
-    actual var position: Int
+    actual override var position: Int
         get() = _pos
         set(value) {
             require(position >= 0)
@@ -52,7 +52,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
 
     private var _limit by AtomicInt(capacity)
 
-    actual var limit: Int
+    actual override var limit: Int
         get() = _limit
         set(value) {
             checkClosed()
@@ -144,7 +144,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         }
     }
 
-    actual fun clear() {
+    actual override fun clear() {
         limit = capacity
         position = 0
     }
@@ -179,7 +179,7 @@ actual class ByteBuffer(actual val capacity: Int) : Input, Output, Closeable {
         return l
     }
 
-    actual fun compact() {
+    actual override fun compact() {
         if (remaining > 0) {
             val size = remaining
             memcpy(bytes.refTo(0), bytes.refTo(position), size.convert())

@@ -6,7 +6,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
 
-actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
+actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer =
             ByteBuffer(JByteBuffer.allocate(size))
@@ -20,12 +20,12 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
             throw StreamClosedException()
     }
 
-    actual fun flip() {
+    actual override fun flip() {
         checkClosed()
         native.flip()
     }
 
-    actual val remaining: Int
+    actual override val remaining: Int
         get() {
             checkClosed()
             return native.remaining()
@@ -75,7 +75,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         closed = true
     }
 
-    actual var position: Int
+    actual override var position: Int
         get() {
             checkClosed()
             return native.position()
@@ -84,7 +84,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
             checkClosed()
             native.position(value)
         }
-    actual var limit: Int
+    actual override var limit: Int
         get() {
             checkClosed()
             return native.limit()
@@ -94,7 +94,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
             native.limit(value)
         }
 
-    actual val capacity: Int
+    actual override val capacity: Int
         get() {
             checkClosed()
             return native.capacity()
@@ -145,7 +145,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         native.put(value)
     }
 
-    actual fun clear() {
+    actual override fun clear() {
         native.clear()
     }
 
@@ -183,7 +183,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         return l
     }
 
-    actual fun compact() {
+    actual override fun compact() {
         if (position == 0) {
             native.clear()
         } else {

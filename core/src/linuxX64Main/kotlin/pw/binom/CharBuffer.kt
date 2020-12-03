@@ -4,7 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.memcpy
 import pw.binom.io.Closeable
 
-actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Closeable {
+actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): CharBuffer = CharBuffer(ByteBuffer.alloc(size * Char.SIZE_BYTES))
         actual fun wrap(chars: CharArray): CharBuffer {
@@ -20,19 +20,19 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return value / 2
     }
 
-    actual val capacity: Int
+    actual override val capacity: Int
         get() = div2(bytes.capacity)
 
-    actual val remaining: Int
+    actual override val remaining: Int
         get() = div2(bytes.remaining)
 
-    actual var position: Int
+    actual override var position: Int
         get() = div2(bytes.position)
         set(value) {
             bytes.position = value * 2
         }
 
-    actual var limit: Int
+    actual override var limit: Int
         get() = div2(bytes.limit)
         set(value) {
             bytes.limit = value * 2
@@ -54,6 +54,9 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     override fun close() {
         bytes.close()
     }
+
+    override fun refTo(position: Int): CValuesRef<ByteVar> =
+        bytes.refTo(position * Char.SIZE_BYTES)
 
     actual override fun equals(other: Any?): Boolean =
         when (other) {
@@ -97,10 +100,9 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return this
     }
 
-    actual fun clear(): CharBuffer {
+    actual override fun clear() {
         position = 0
         limit = capacity
-        return this
     }
 
     actual override fun toString(): String {
@@ -115,13 +117,17 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return sb.toString()
     }
 
-    actual fun flip() {
+    actual override fun flip() {
         bytes.flip()
+    }
+
+    actual override fun compact() {
+        bytes.compact()
     }
 
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, length)
-        memcpy(array.refTo(offset), bytes.refTo(position*2), (len * 2).convert())
+        memcpy(array.refTo(offset), bytes.refTo(position * 2), (len * 2).convert())
         position += len
         return len
     }
@@ -131,7 +137,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
 
     actual fun subString(startIndex: Int, endIndex: Int): String {
         if (endIndex > capacity) {
-            throw ArrayIndexOutOfBoundsException("capacity: [$capacity], startIndex: [$startIndex], endIndex: [$endIndex]")
+            throw IndexOutOfBoundsException("capacity: [$capacity], startIndex: [$startIndex], endIndex: [$endIndex]")
         }
         val len = minOf(capacity, endIndex - startIndex)
         if (len == 0) {
@@ -145,7 +151,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, minOf(array.size - offset, length))
         memScoped {
-            memcpy(bytes.refTo(position*2), array.refTo(offset), (len * 2).convert())
+            memcpy(bytes.refTo(position * 2), array.refTo(offset), (len * 2).convert())
             position += len
         }
         return len

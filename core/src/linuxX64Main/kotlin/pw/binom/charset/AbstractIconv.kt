@@ -4,7 +4,9 @@ import kotlinx.cinterop.*
 import platform.iconv.iconv_close
 import platform.iconv.iconv_open
 import platform.posix.*
+import pw.binom.Buffer
 import pw.binom.ByteBuffer
+import pw.binom.CharBuffer
 import pw.binom.io.Closeable
 
 const val NATIVE_CHARSET = "wchar_t"
@@ -29,11 +31,7 @@ abstract class AbstractIconv(fromCharset: String, toCharset: String) : Closeable
         )
     }
 
-    protected fun iconv(input: ByteBuffer, output: ByteBuffer): CharsetTransformResult {
-        if (input === output) {
-            throw IllegalArgumentException("Input Buffer is equals Output Buffer")
-        }
-
+    protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
         memScoped {
             outputAvail.value = output.remaining.convert()
             outputPointer.value = output.refTo(output.position).getPointer(this).reinterpret()

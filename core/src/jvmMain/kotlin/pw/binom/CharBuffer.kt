@@ -7,7 +7,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import java.nio.CharBuffer as JCharBuffer
 
-actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Closeable {
+actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): CharBuffer =
             CharBuffer(JCharBuffer.allocate(size))
@@ -16,19 +16,19 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
             CharBuffer(JCharBuffer.wrap(chars))
     }
 
-    actual val capacity: Int
+    actual override val capacity: Int
         get() = native.capacity()
 
-    actual val remaining: Int
+    actual override val remaining: Int
         get() = native.remaining()
 
-    actual var position: Int
+    actual override var position: Int
         get() = native.position()
         set(value) {
             native.position(value)
         }
 
-    actual var limit: Int
+    actual override var limit: Int
         get() = native.limit()
         set(value) {
             native.limit(value)
@@ -78,11 +78,10 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         return this
     }
 
-    actual fun clear(): CharBuffer {
+    actual override fun clear() {
         native.clear()
         position = 0
         limit = capacity
-        return this
     }
 
     actual override fun toString(): String {
@@ -92,8 +91,12 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         return result
     }
 
-    actual fun flip() {
+    actual override fun flip() {
         native.flip()
+    }
+
+    actual override fun compact() {
+        native.compact()
     }
 
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
@@ -129,7 +132,7 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
 
     actual fun subString(startIndex: Int, endIndex: Int): String {
         if (endIndex > capacity) {
-            throw ArrayIndexOutOfBoundsException("capacity: [$capacity], startIndex: [$startIndex], endIndex: [$endIndex]")
+            throw IndexOutOfBoundsException("capacity: [$capacity], startIndex: [$startIndex], endIndex: [$endIndex]")
         }
         val len = minOf(capacity, endIndex - startIndex)
         if (len == 0) {
