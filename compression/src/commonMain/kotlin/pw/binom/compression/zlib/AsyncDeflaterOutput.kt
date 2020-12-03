@@ -58,11 +58,11 @@ open class AsyncDeflaterOutput(
             deflater.end()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         finish()
         deflater.close()
         if (closeStream) {
-            stream.close()
+            stream.asyncClose()
         }
     }
 }

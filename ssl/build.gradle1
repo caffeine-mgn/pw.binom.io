@@ -1,0 +1,200 @@
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: pw.binom.plugins.BinomPublishPlugin
+
+def argsGenLinux(String path) {
+    return [
+            '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libssl.a",
+            '-include-binary', buildFile.parent + "/src/$path/cinterop/lib/libcrypto.a"
+    ]
+}
+
+kotlin {
+
+    linuxX64 { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                kotlinOptions.freeCompilerArgs = argsGenLinux("linuxX64Main")
+
+                cinterops {
+                    openssl {
+                        defFile project.file("src/linuxX64Main/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
+                }
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxX64Main")
+        }
+    }
+
+    linuxArm32Hfp { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
+
+                cinterops {
+                    openssl {
+                        defFile project.file("src/linuxArm32HfpMain/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
+                }
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
+        }
+    }
+
+    mingwX64 { // Use your target instead.
+        binaries {
+
+            def args = [
+                    '-include-binary', buildFile.parent + '/src/mingwX64Main/cinterop/lib/libopenssl.a'
+            ]
+
+            staticLib()
+            compilations.main {
+                cinterops {
+                    openssl {
+                        defFile project.file("src/mingwX64Main/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX64Main/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
+                }
+
+                kotlinOptions.freeCompilerArgs = args
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = args
+        }
+    }
+
+    mingwX86 { // Use your target instead.
+        binaries {
+
+            def args = [
+                    '-include-binary', buildFile.parent + '/src/mingwX86Main/cinterop/lib/libopenssl.a'
+            ]
+
+            staticLib()
+            compilations.main {
+                cinterops {
+                    openssl {
+                        defFile project.file("src/mingwX86Main/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/mingwX86Main/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
+                }
+
+                kotlinOptions.freeCompilerArgs = args
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = args
+        }
+    }
+
+    macosX64 { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                kotlinOptions.freeCompilerArgs = argsGenLinux("macosX64Main")
+
+                cinterops {
+                    openssl {
+                        defFile project.file("src/macosX64Main/cinterop/openssl.def")
+                        packageName 'platform.openssl'
+//                        includeDirs.headerFilterOnly "${buildFile.parent}/src/macosX64Main/cinterop/include"
+                        includeDirs.headerFilterOnly "${buildFile.parent}/src/cinterop/include"
+                    }
+                }
+            }
+            compilations.test.kotlinOptions.freeCompilerArgs = argsGenLinux("linuxArm32HfpMain")
+        }
+    }
+
+    jvm{
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = '1.8'
+            }
+        }
+    }
+
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":core")
+                api project(":network")
+                api project(":file")
+                api project(":date")
+                api project(":concurrency")
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+
+        nativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+                dependsOn mingwX64Main
+            }
+        }
+
+        linuxArm32HfpMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        macosX64Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        mingwX64Main {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn mingwX64Main
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+                api group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.61'
+                api group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.61'
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
+            }
+        }
+
+        sourceSets.all {
+            languageSettings {
+                progressiveMode = true
+            }
+        }
+    }
+}

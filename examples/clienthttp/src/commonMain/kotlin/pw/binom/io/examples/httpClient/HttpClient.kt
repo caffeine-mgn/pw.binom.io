@@ -4,12 +4,12 @@ import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.httpClient.AsyncHttpClient
-import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.network.NetworkDispatcher
 
 fun main() {
     val url = URL("http://example.com/")
 
-    val nioManager = SocketNIOManager()
+    val nioManager = NetworkDispatcher()
     val connections = AsyncHttpClient(nioManager)
     val byteBufferPool = ByteBufferPool(100)
 
@@ -33,7 +33,7 @@ fun main() {
             println("Response Code: ${req.responseCode}")
             println("Response size: ${data.capacity}")
             println("Response Body: ${data.asUTF8String()}")
-            con.close()
+            con.asyncClose()
             connections.close()
         } finally {
             tempBuffer.close()
@@ -42,6 +42,6 @@ fun main() {
     }
 
     while (!done.value) {
-        nioManager.update()
+        nioManager.select()
     }
 }

@@ -30,7 +30,7 @@ private fun memcpy(
     }
 }
 
-actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Closeable, Buffer {
+actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
@@ -44,23 +44,23 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
 
     private var native = Int8Array(capacity)//: CPointer<ByteVar> = malloc(capacity.convert())!!.reinterpret()
 
-    actual override fun flip() {
+    override fun flip() {
         limit = position;
         position = 0;
     }
 
-    actual override val remaining: Int
+    override val remaining: Int
         get() {
             checkClosed()
             return limit - position
         }
-    actual override var position: Int = 0
+    override var position: Int = 0
         set(value) {
             require(position >= 0)
             require(position < limit)
             field = value
         }
-    actual override var limit: Int = capacity
+    override var limit: Int = capacity
         set(value) {
             checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
@@ -157,7 +157,7 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
         native[position++] = value
     }
 
-    actual override fun clear() {
+    override fun clear() {
         limit = capacity
         position = 0
     }
@@ -194,7 +194,7 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
         return l
     }
 
-    actual override fun compact() {
+    override fun compact() {
         if (remaining > 0) {
             val size = remaining
             memcpy(native, 0, native, position, size)

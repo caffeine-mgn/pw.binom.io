@@ -20,19 +20,19 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return value / 2
     }
 
-    actual override val capacity: Int
+    override val capacity: Int
         get() = div2(bytes.capacity)
 
-    actual override val remaining: Int
+    override val remaining: Int
         get() = div2(bytes.remaining)
 
-    actual override var position: Int
+    override var position: Int
         get() = div2(bytes.position)
         set(value) {
             bytes.position = value * 2
         }
 
-    actual override var limit: Int
+    override var limit: Int
         get() = div2(bytes.limit)
         set(value) {
             bytes.limit = value * 2
@@ -100,7 +100,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return this
     }
 
-    actual override fun clear() {
+    override fun clear() {
         position = 0
         limit = capacity
     }
@@ -117,11 +117,11 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return sb.toString()
     }
 
-    actual override fun flip() {
+    override fun flip() {
         bytes.flip()
     }
 
-    actual override fun compact() {
+    override fun compact() {
         bytes.compact()
     }
 

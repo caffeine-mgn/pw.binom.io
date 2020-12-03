@@ -45,7 +45,6 @@ kotlin {
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
-                api project(":socket")
                 api project(":concurrency")
             }
         }

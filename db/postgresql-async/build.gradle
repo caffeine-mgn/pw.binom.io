@@ -55,7 +55,7 @@ kotlin {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
                 api project(":db")
                 api project(":date")
-                api project(":nio")
+                api project(":network")
                 api project(":ssl")
             }
         }

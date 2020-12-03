@@ -231,9 +231,9 @@ open class AsyncMultipartInput(private val separator: String, override val strea
         return super.read(dest)
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         try {
-            super.close()
+            super.asyncClose()
         } finally {
             bufferPool.recycle(buffer)
         }

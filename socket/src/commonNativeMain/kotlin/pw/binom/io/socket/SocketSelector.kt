@@ -26,10 +26,10 @@ actual class SocketSelector actual constructor() : Closeable {
     internal inner class SelectorKeyImpl(override val channel: NetworkChannel,
                                          attachment: Any?) : SelectorKey {
 
-        private val _attachment = attachment.asReference()
+        private val _attachment = attachment?.asReference()
 
         override val attachment: Any?
-            get() = _attachment.value
+            get() = _attachment?.value
 
         private var _canlelled by AtomicBoolean(false)
 

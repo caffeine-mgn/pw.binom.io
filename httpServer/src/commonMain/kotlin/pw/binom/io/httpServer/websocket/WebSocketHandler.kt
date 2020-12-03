@@ -9,7 +9,7 @@ import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
-import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.network.TcpConnection
 
 abstract class WebSocketHandler : Handler {
 
@@ -29,7 +29,7 @@ abstract class WebSocketHandler : Handler {
                                            val resp: HttpResponse,
                                            val rawInput: AsyncInput,
                                            val rawOutout: AsyncOutput,
-                                           val rawConnection: SocketNIOManager.TcpConnectionRaw,
+                                           val rawConnection: TcpConnection,
                                            override val uri: String,
                                            override val contextUri: String, override val headers: Map<String, List<String>>) : ConnectRequest {
         var currentConnection: WebSocketConnection? = null
@@ -80,7 +80,7 @@ abstract class WebSocketHandler : Handler {
         ) {
             resp.status = 403
             resp.enableKeepAlive = false
-            resp.complete().close()
+            resp.complete().asyncClose()
             return
         }
         val key = req.headers["Sec-WebSocket-Key"]?.singleOrNull() ?: TODO()

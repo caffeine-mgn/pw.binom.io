@@ -24,4 +24,5 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     api "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlin_version"
+    api "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 }

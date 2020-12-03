@@ -7,8 +7,8 @@ import pw.binom.io.http.AsyncChunkedInput
 import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.Headers
 import pw.binom.io.readln
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.utf8Reader
+import pw.binom.network.TcpConnection
 
 internal enum class EncodeType {
     GZIP,
@@ -39,9 +39,9 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val rawOutput: AsyncOutput
         get() = _rawOutput!!
 
-    private var _rawConnection: SocketNIOManager.TcpConnectionRaw? = null
+    private var _rawConnection: TcpConnection? = null
 
-    override val rawConnection: SocketNIOManager.TcpConnectionRaw
+    override val rawConnection: TcpConnection
         get() = _rawConnection!!
 
     override val headers = HashMap<String, ArrayList<String>>()
@@ -56,7 +56,7 @@ internal class HttpRequestImpl2 : HttpRequest {
         wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: PooledAsyncBufferedInput, output: AsyncOutput, rawConnection: SocketNIOManager.TcpConnectionRaw, allowZlib: Boolean) {
+    suspend fun init(method: String, uri: String, input: PooledAsyncBufferedInput, output: AsyncOutput, rawConnection: TcpConnection, allowZlib: Boolean) {
         _rawInput = input
         _rawOutput = output
         _rawConnection = rawConnection
@@ -107,7 +107,7 @@ private object AsyncEofInput : AsyncInput {
 
     override suspend fun read(dest: ByteBuffer): Int = 0
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
     }
 
 }

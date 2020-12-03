@@ -6,7 +6,7 @@ import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
 import kotlin.native.concurrent.isFrozen
 
-actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Closeable, Buffer {
+actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
@@ -29,12 +29,12 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
     override fun refTo(position: Int) =
         bytes.refTo(position)
 
-    actual override fun flip() {
+    override fun flip() {
         limit = position
         position = 0
     }
 
-    actual override val remaining: Int
+    override val remaining: Int
         get() {
             checkClosed()
             return limit - position
@@ -42,7 +42,7 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
 
     private var _pos by AtomicInt(0)
 
-    actual override var position: Int
+    override var position: Int
         get() = _pos
         set(value) {
             require(position >= 0)
@@ -52,7 +52,7 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
 
     private var _limit by AtomicInt(capacity)
 
-    actual override var limit: Int
+    override var limit: Int
         get() = _limit
         set(value) {
             checkClosed()
@@ -144,7 +144,7 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
         }
     }
 
-    actual override fun clear() {
+    override fun clear() {
         limit = capacity
         position = 0
     }
@@ -179,7 +179,7 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
         return l
     }
 
-    actual override fun compact() {
+    override fun compact() {
         if (remaining > 0) {
             val size = remaining
             memcpy(bytes.refTo(0), bytes.refTo(position), size.convert())

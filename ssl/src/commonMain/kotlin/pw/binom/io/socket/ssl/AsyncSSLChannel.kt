@@ -28,8 +28,8 @@ class AsyncSSLChannel(val session: SSLSession, val channel: AsyncChannel) : Asyn
         session.writeNet(buf)
     }
 
-    override suspend fun close() {
-        channel.close()
+    override suspend fun asyncClose() {
+        channel.asyncClose()
     }
 
     override suspend fun write(data: ByteBuffer): Int {

@@ -4,7 +4,7 @@ import pw.binom.ByteDataBuffer
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.io.StreamClosedException
-import pw.binom.io.socket.SocketClosedException
+import pw.binom.network.SocketClosedException
 
 class AsyncClosableInput(val stream: AsyncInput) : AsyncInput {
 

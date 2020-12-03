@@ -17,7 +17,7 @@ internal class NoCloseOutput(val func: (NoCloseOutput) -> Unit) : AsyncOutput {
         stream!!.flush()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         func(this)
     }
 }

@@ -3,9 +3,9 @@ package pw.binom.io.httpClient.websocket
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.io.http.websocket.AbstractWebSocketConnection
-import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.network.TcpConnection
 
-class ClientWebSocketConnection(input: AsyncInput, output: AsyncOutput, rawConnection: SocketNIOManager.TcpConnectionRaw) : AbstractWebSocketConnection(
+class ClientWebSocketConnection(input: AsyncInput, output: AsyncOutput, rawConnection: TcpConnection) : AbstractWebSocketConnection(
         input = input,
         output = output,
         rawConnection = rawConnection
@@ -13,11 +13,11 @@ class ClientWebSocketConnection(input: AsyncInput, output: AsyncOutput, rawConne
     override val masking: Boolean
         get() = true
 
-    override suspend fun close() {
-        super.close()
-        input.close()
+    override suspend fun asyncClose() {
+        super.asyncClose()
+        input.asyncClose()
         if (input !== output) {
-            output.close()
+            output.asyncClose()
         }
     }
 }

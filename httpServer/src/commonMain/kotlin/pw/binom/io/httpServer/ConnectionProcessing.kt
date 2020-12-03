@@ -1,9 +1,8 @@
 package pw.binom.io.httpServer
 
-import pw.binom.io.readln
-import pw.binom.io.socket.SocketClosedException
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.utf8Reader
+import pw.binom.network.SocketClosedException
+import pw.binom.network.TcpConnection
 import pw.binom.pool.DefaultPool
 
 private const val PREFIX = "ConnectionProcessing: "
@@ -12,7 +11,7 @@ private const val PREFIX = "ConnectionProcessing: "
 internal object ConnectionProcessing {
 
     suspend fun process(
-        rawConnection: SocketNIOManager.TcpConnectionRaw,
+        rawConnection: TcpConnection,
         inputBuffered: PooledAsyncBufferedInput,
         outputBuffered: PoolAsyncBufferedOutput,
         httpRequestPool: DefaultPool<HttpRequestImpl2>,
@@ -52,7 +51,7 @@ internal object ConnectionProcessing {
             keepAlive = resp.keepAlive && !closed
             (resp.body ?: resp.complete()).let {
                 it.flush()
-                it.close()
+                it.asyncClose()
             }
             req.flush()
             resp.responseBodyPool.recycle(resp.body!!)

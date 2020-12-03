@@ -10,10 +10,12 @@ import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
 import pw.binom.io.BufferedOutputAppendable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
-import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
+import pw.binom.network.TcpConnection
 
 class PGConnection private constructor(
-    val connection: SocketNIOManager.TcpConnectionRaw,
+    val connection: TcpConnection,
     charset: Charset,
     val userName: String,
     val password: String?
@@ -26,15 +28,17 @@ class PGConnection private constructor(
             host: String,
             port: Int,
             applicationName: String = "Binom Async Client",
-            manager: SocketNIOManager,
+            manager: NetworkDispatcher,
             userName: String,
             password: String,
             dataBase: String,
             charset: Charset = Charsets.UTF8,
         ): PGConnection {
-            val connection = manager.connect(
-                host = host,
-                port = port
+            val connection = manager.tcpConnect(
+                NetworkAddress.Immutable(
+                    host = host,
+                    port = port,
+                )
             )
             val pgConnection = PGConnection(
                 connection = connection,
@@ -215,7 +219,7 @@ class PGConnection private constructor(
     override val type: String
         get() = TYPE
 
-    override suspend fun close() {
-        connection.close()
+    override suspend fun asyncClose() {
+        connection.asyncClose()
     }
 }
