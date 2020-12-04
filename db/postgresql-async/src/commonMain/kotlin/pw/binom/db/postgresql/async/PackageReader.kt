@@ -113,7 +113,7 @@ private class AsyncInputLimit(val input: AsyncInput) : AsyncInput {
         return read
     }
 
-    override suspend fun close() {
-        input.close()
+    override suspend fun asyncClose() {
+        input.asyncClose()
     }
 }

@@ -95,7 +95,7 @@ class PostgresPreparedStatement(
             return response.rowsAffected
         }
         if (response is QueryResponse.Data) {
-            response.close()
+            response.asyncClose()
         }
         throw SQLException("Query returns data")
     }
@@ -104,7 +104,7 @@ class PostgresPreparedStatement(
         params[index] = value
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         connection.sendOnly(connection.reader.closeMessage.also {
             it.portal = false
             it.statement = id.toString()

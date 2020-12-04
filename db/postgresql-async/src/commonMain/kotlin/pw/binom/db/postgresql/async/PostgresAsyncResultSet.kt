@@ -147,8 +147,8 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
         TODO("Not yet implemented")
     }
 
-    override suspend fun close() {
-        data.close()
+    override suspend fun asyncClose() {
+        data.asyncClose()
     }
 
 }

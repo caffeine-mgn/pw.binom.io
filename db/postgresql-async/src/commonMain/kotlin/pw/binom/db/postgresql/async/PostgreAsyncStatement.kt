@@ -17,12 +17,12 @@ class PostgreAsyncStatement(override val connection: PGConnection) : AsyncStatem
             return response.rowsAffected
         }
         if (response is QueryResponse.Data) {
-            response.close()
+            response.asyncClose()
         }
         throw SQLException("Query returns data")
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
     }
 
 }

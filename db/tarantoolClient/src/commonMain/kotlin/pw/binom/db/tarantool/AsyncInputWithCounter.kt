@@ -18,7 +18,7 @@ internal class AsyncInputWithCounter(val input: AsyncInput) : AsyncInput {
         return l
     }
 
-    override suspend fun close() {
-        input.close()
+    override suspend fun asyncClose() {
+        input.asyncClose()
     }
 }
