@@ -7,10 +7,10 @@ import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
 import pw.binom.io.readText
-import pw.binom.io.socket.SocketClosedException
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
 import pw.binom.io.utf8Reader
+import pw.binom.network.NetworkDispatcher
+import pw.binom.network.SocketClosedException
 import kotlin.jvm.Volatile
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -28,7 +28,7 @@ class PostRequestTest {
     @Test
     fun server() {
         val bufPool = ByteBufferPool(10, 1024u * 1024u * 2u)
-        val manager = SocketNIOManager()
+        val manager = NetworkDispatcher()
         var done = false
         var dd = TimeSource.Monotonic.markNow()
         val server = HttpServer(manager, object : Handler {
@@ -103,7 +103,7 @@ class PostRequestTest {
         try {
             server.bindHTTP(port = 8080)
             while (!done) {
-                manager.update(1000)
+                manager.select(1000)
             }
         } catch (e: Throwable) {
             println("Error!")

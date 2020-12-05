@@ -50,7 +50,7 @@ class AsyncMultipartInputTest {
                 mulipart.part("userPassword")
                 mulipart.utf8Appendable().append(userPassword)
                 mulipart.part("emptyData")
-                mulipart.close()
+                mulipart.asyncClose()
                 stream.trimToSize()
                 stream.data.clear()
                 val testData = stream.data.clone()

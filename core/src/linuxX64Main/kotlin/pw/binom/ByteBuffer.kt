@@ -45,8 +45,8 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     override var position: Int
         get() = _pos
         set(value) {
-            require(position >= 0)
-            require(position <= limit)
+            require(value >= 0)
+            require(value <= limit)
             _pos = value
         }
 
@@ -84,9 +84,19 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     override fun write(data: ByteBuffer): Int {
         val len = minOf(remaining, data.remaining)
-        memcpy(bytes.refTo(position), data.bytes.refTo(data.position), len.convert())
+        if (len <= 0) {
+            return 0
+        }
+        memScoped {
+            memcpy(
+                bytes.refTo(position).getPointer(this),
+                data.bytes.refTo(data.position).getPointer(this),
+                len.convert()
+            )
+        }
         position += len
         data.position += len
+
         return len
     }
 
@@ -117,7 +127,13 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     actual operator fun set(index: Int, value: Byte) {
         checkClosed()
-        bytes[index] = value
+        if (isFrozen) {
+            memScoped {
+                bytes.refTo(index).getPointer(this).set(0, value)
+            }
+        } else {
+            bytes[index] = value
+        }
     }
 
     actual fun get(): Byte =
@@ -148,6 +164,9 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         limit = capacity
         position = 0
     }
+
+    override val elementSizeInBytes: Int
+        get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = ByteBuffer.alloc(newSize)

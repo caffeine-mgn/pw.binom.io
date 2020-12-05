@@ -1,8 +1,8 @@
 package pw.binom.io.httpClient
 
 import pw.binom.*
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
+import pw.binom.network.NetworkDispatcher
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration
@@ -38,7 +38,7 @@ class TestAsyncHttpClient {
 //                println()
 //            }
 //        }
-        val manager = SocketNIOManager()
+        val manager = NetworkDispatcher()
         val client = AsyncHttpClient(manager)
         var done = false
 
@@ -58,7 +58,7 @@ class TestAsyncHttpClient {
             }
         }
         while (!done) {
-            manager.update(1000)
+            manager.select(1000)
         }
 
         client.close()

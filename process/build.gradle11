@@ -1,0 +1,138 @@
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: pw.binom.plugins.BinomPublishPlugin
+
+kotlin {
+
+    linuxX64 { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                cinterops {
+                    signals {
+                        defFile project.file("src/cinterop/linux.def")
+                        packageName 'platform.linux'
+                    }
+                }
+            }
+        }
+    }
+
+    linuxArm32Hfp { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                cinterops {
+                    signals {
+                        defFile project.file("src/cinterop/linux.def")
+                        packageName 'platform.linux'
+                    }
+                }
+            }
+        }
+    }
+
+    mingwX64 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
+    mingwX86 { // Use your target instead.
+        binaries {
+            staticLib()
+        }
+    }
+
+    macosX64 { // Use your target instead.
+        binaries {
+            staticLib()
+            compilations.main {
+                cinterops {
+                    signals {
+                        defFile project.file("src/cinterop/linux.def")
+                        packageName 'platform.linux'
+                    }
+                }
+            }
+        }
+    }
+    
+    jvm{
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = '1.8'
+            }
+        }
+    }
+
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                api project(":core")
+                api project(":concurrency")
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+
+        commonNativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        mingwX64Main {
+            dependencies {
+                dependsOn commonNativeMain
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn mingwX64Main
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+                dependsOn commonNativeMain
+            }
+        }
+
+        linuxArm32HfpMain {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        macosX64Main {
+            dependencies {
+                dependsOn linuxX64Main
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
+            }
+        }
+        sourceSets.all {
+            languageSettings {
+                progressiveMode = true
+            }
+        }
+    }
+}

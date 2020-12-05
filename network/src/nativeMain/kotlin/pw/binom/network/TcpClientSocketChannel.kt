@@ -14,8 +14,10 @@ actual class TcpClientSocketChannel(val native: NSocket, val connectable: Boolea
         native.connect(address)
     }
 
-    override fun read(dest: ByteBuffer): Int =
-        native.recv(dest)
+    override fun read(dest: ByteBuffer): Int{
+        val read = native.recv(dest)
+        return read
+    }
 
     override fun close() {
         native.close()

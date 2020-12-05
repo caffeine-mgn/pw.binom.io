@@ -8,4 +8,5 @@ actual interface Buffer {
     actual fun flip()
     actual fun compact()
     actual fun clear()
+    actual val elementSizeInBytes: Int
 }

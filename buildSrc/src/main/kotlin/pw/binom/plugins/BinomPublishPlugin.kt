@@ -40,7 +40,6 @@ class BinomPublishPlugin : Plugin<Project> {
             }
         }
         publishing.publications.withType(MavenPublication::class.java){
-            println("PUBLISH->${it.artifactId} :: ${it.name} :: $it")
             it.pom {
                 it.scm {
                     it.connection.set("https://github.com/caffeine-mgn/pw.binom.io.git")

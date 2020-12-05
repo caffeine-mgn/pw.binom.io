@@ -25,8 +25,7 @@ class PGConnection private constructor(
     companion object {
         const val TYPE = "PostgreSQL"
         suspend fun connect(
-            host: String,
-            port: Int,
+            address: NetworkAddress,
             applicationName: String = "Binom Async Client",
             manager: NetworkDispatcher,
             userName: String,
@@ -34,12 +33,7 @@ class PGConnection private constructor(
             dataBase: String,
             charset: Charset = Charsets.UTF8,
         ): PGConnection {
-            val connection = manager.tcpConnect(
-                NetworkAddress.Immutable(
-                    host = host,
-                    port = port,
-                )
-            )
+            val connection = manager.tcpConnect(address)
             val pgConnection = PGConnection(
                 connection = connection,
                 charset = charset,
@@ -53,11 +47,14 @@ class PGConnection private constructor(
                     "database" to dataBase,
                     "client_encoding" to charset.name,
                     "DateStyle" to "ISO",
-                    "extra_float_digits" to "2"
+//                    "extra_float_digits" to "2"
                 )
             )
             while (true) {
                 val msg = pgConnection.readDesponse()
+                if (msg is ErrorMessage) {
+                    throw PostgresqlException(msg.toString())
+                }
                 if (msg is ReadyForQueryMessage) {
                     break
                 }
@@ -139,13 +136,11 @@ class PGConnection private constructor(
         o.writeInt(buf, 0)
         o.writeShort(buf, 3)
         o.writeShort(buf, 0)
-
         val appender = BufferedOutputAppendable(Charsets.UTF8, o, pool)
         properties.forEach {
             appender.append(it.key)
             appender.flush()
             o.writeByte(buf, 0)
-
             appender.append(it.value)
             appender.flush()
             o.writeByte(buf, 0)

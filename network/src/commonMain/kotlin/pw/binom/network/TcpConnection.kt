@@ -74,6 +74,8 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override fun connected() {
+        val connect = connect
+        this.connect = null
         connect?.resumeWith(Result.success(Unit))
     }
 
@@ -82,17 +84,20 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override fun readyForRead(): Boolean {
+
         if (readData.continuation == null) {
             holder.key.removeListen(Selector.INPUT_READY)
             return false
         }
         val readed = runCatching { channel.read(readData.data!!) }
         return if (readData.full) {
-            if (readData.data!!.remaining == 0) {
+            if (readData.data!!.remaining == 0 || readed.isFailure) {
                 val con = readData.continuation!!
                 readData.reset()
-                holder.key.removeListen(Selector.INPUT_READY)
                 con.resumeWith(readed)
+                if (!closed && readData.continuation == null) {
+                    holder.key.removeListen(Selector.INPUT_READY)
+                }
                 false
             } else {
                 true
@@ -100,21 +105,25 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         } else {
             val con = readData.continuation!!
             readData.reset()
-            holder.key.removeListen(Selector.INPUT_READY)
             con.resumeWith(readed)
+            if (!closed && readData.continuation == null) {
+                holder.key.removeListen(Selector.INPUT_READY)
+            }
             false
         }
     }
 
-
+    private var closed = false
     override fun close() {
+        check(!closed) { "Connection already closed" }
+        closed = true
         readData.continuation?.resumeWithException(SocketClosedException())
         sendData.continuation?.resumeWithException(SocketClosedException())
         readData.reset()
         sendData.reset()
         holder.key.listensFlag = 0
-        channel.close()
         holder.key.close()
+        channel.close()
     }
 
     override suspend fun asyncClose() {

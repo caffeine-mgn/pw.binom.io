@@ -80,14 +80,16 @@ kotlin {
             dependsOn(nativeMain)
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(nativeMain)
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val mingwX64Main by getting {
             dependsOn(nativeMain)
         }
         val mingwX86Main by getting {
-            dependsOn(mingwX64Main)
+            dependsOn(nativeMain)
+            kotlin.srcDir("src/mingwX64Main/kotlin")
         }
 
         val macosX64Main by getting {

@@ -16,7 +16,7 @@ private fun javaToCommon(mode: Int): Int {
     return opts
 }
 
-private fun commonToJava(channel: NetworkChannel, mode: Int): Int {
+private fun commonToJava(channel: SelectableChannel, mode: Int): Int {
     var opts = 0
     if (Selector.INPUT_READY and mode != 0) {
         val value = when (channel) {
@@ -34,18 +34,18 @@ private fun commonToJava(channel: NetworkChannel, mode: Int): Int {
     return opts
 }
 
-private fun commonToJava(channel: ServerSocketChannel, mode: Int): Int {
-    var opts = 0
-    if (Selector.INPUT_READY and mode != 0) {
-        opts or SelectionKey.OP_ACCEPT
-    }
-
-    if (Selector.OUTPUT_READY and mode != 0) {
-        require(channel is SocketChannel)
-        opts = opts or SelectionKey.OP_WRITE
-    }
-    return opts
-}
+//private fun commonToJava(channel: ServerSocketChannel, mode: Int): Int {
+//    var opts = 0
+//    if (Selector.INPUT_READY and mode != 0) {
+//        opts or SelectionKey.OP_ACCEPT
+//    }
+//
+//    if (Selector.OUTPUT_READY and mode != 0) {
+//        require(channel is SocketChannel)
+//        opts = opts or SelectionKey.OP_WRITE
+//    }
+//    return opts
+//}
 
 class JvmSelector : Selector {
     private val native = JSelector.open()
@@ -54,15 +54,13 @@ class JvmSelector : Selector {
         override val attachment: Any?
     ) : Selector.Key {
         lateinit var native: SelectionKey
+
         override var listensFlag: Int
             get() = javaToCommon(native.interestOps())
             set(value) {
-                if (native.interestOps() != value) {
-                    native.interestOps(commonToJava(native.channel() as NetworkChannel, value))
-                }
+                val vv = commonToJava(native.channel(), value)
+                native.interestOps(vv)
             }
-        override val eventsFlag: Int
-            get() = javaToCommon(native.readyOps())
 
         override fun close() {
             native.cancel()
@@ -77,33 +75,46 @@ class JvmSelector : Selector {
         }
         val keys = native.selectedKeys()
         var count = 0
-        keys.forEach {
+        val iterator = keys.iterator()
+        while (iterator.hasNext()) {
+            val it = iterator.next()
+            iterator.remove()
             if (it.isConnectable) {
                 val cc = it.channel() as SocketChannel
-                if (cc.isConnectionPending) {
-                    try {
-                        val connected = cc.finishConnect()
-                        if (connected) {
-                            it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
-                            count++
-                            func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
-                            return@forEach
-                        } else {
-                            return@forEach
-                        }
-                    } catch (e: ConnectException) {
+
+//                if (cc.isConnectionPending) {
+                try {
+                    val connected = cc.finishConnect()
+                    if (connected) {
+//                        val key = it.attachment() as JvmKey
+//                            it.interestOps(commonToJava(it.channel(), key.listensFlag))
+//                            it.interestOps(0)
+//                            var vv = it.interestOps()
+//
+//                        it.interestOps(0)
                         count++
-                        func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
-                        return@forEach
+                        func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
+                        if (it.interestOps() and SelectionKey.OP_CONNECT != 0) {
+                            it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
+                        }
+                        continue
+                    } else {
+                        continue
                     }
+                } catch (e: ConnectException) {
+                    count++
+                    func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
+                    continue
                 }
-                if (it.isConnectable) {
-                    return@forEach
-                }
+//                }
+//                if (it.isConnectable) {
+//                    return@forEach
+//                }
             }
             count++
             func(it.attachment() as JvmKey, javaToCommon(it.readyOps()))
         }
+        native.selectedKeys().clear()
         return count
     }
 

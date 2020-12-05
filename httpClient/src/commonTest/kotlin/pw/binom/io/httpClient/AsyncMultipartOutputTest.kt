@@ -27,7 +27,7 @@ class AsyncMultipartOutputTest {
                 mulipart.utf8Appendable().append(userName)
                 mulipart.part("userPassword")
                 mulipart.utf8Appendable().append(userPassword)
-                mulipart.close()
+                mulipart.asyncClose()
 
                 stream.data.flip()
                 val input = AsyncMultipartInput(mulipart.boundary, stream.data.asyncInput(), bufferPool)

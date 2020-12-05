@@ -11,7 +11,6 @@ class NetworkDispatcher : Closeable {
     fun select(timeout: Long = -1L) {
         selector.select(timeout) { key, mode ->
             val connection = key.attachment as AbstractConnection
-            println("Event $mode in $key")
             if (mode and Selector.EVENT_CONNECTED != 0) {
                 connection.connected()
             }

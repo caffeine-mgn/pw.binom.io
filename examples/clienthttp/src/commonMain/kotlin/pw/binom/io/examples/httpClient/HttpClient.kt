@@ -30,9 +30,6 @@ fun main() {
             tempBuffer.trimToSize()
             tempBuffer.data.clear()
             val data = tempBuffer.data
-            println("Response Code: ${req.responseCode}")
-            println("Response size: ${data.capacity}")
-            println("Response Body: ${data.asUTF8String()}")
             con.asyncClose()
             connections.close()
         } finally {

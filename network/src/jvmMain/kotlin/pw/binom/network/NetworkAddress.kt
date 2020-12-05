@@ -14,7 +14,7 @@ actual sealed class NetworkAddress {
         get() {
             val native = _native
             require(native != null)
-            return native.hostName
+            return native.address.hostAddress
         }
 
     actual val port: Int

@@ -10,16 +10,24 @@ kotlin {
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("signals") {
+                    defFile = project.file("src/cinterop/linux.def")
+                    packageName = "platform.linux"
+                }
+            }
         }
     }
     jvm()
-    js {
-        browser()
-        nodejs()
-    }
     linuxArm32Hfp {
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("signals") {
+                    defFile = project.file("src/cinterop/linux.def")
+                    packageName = "platform.linux"
+                }
+            }
         }
     }
 
@@ -35,32 +43,40 @@ kotlin {
         }
     }
 
-    linuxArm64 {
-        binaries {
-            staticLib()
-        }
-    }
+//    linuxArm64 {
+//        binaries {
+//            staticLib {
+//            }
+//        }
+//    }
     macosX64 {
         binaries {
-            framework()
+            framework {
+            }
+            compilations["main"].cinterops {
+                create("signals") {
+                    defFile = project.file("src/cinterop/linux.def")
+                    packageName = "platform.linux"
+                }
+            }
         }
     }
 
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(project(":core"))
+                api(project(":concurrency"))
                 api(kotlin("stdlib-common"))
             }
         }
 
-        val jsMain by getting {
-            dependsOn(commonMain)
-        }
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
         val linuxArm32HfpMain by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val mingwX64Main by getting {
@@ -68,10 +84,12 @@ kotlin {
         }
         val mingwX86Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/mingwX64Main/kotlin")
         }
 
         val macosX64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val commonTest by getting {

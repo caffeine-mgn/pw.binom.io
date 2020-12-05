@@ -13,10 +13,6 @@ kotlin {
         }
     }
     jvm()
-    js {
-        browser()
-        nodejs()
-    }
     linuxArm32Hfp {
         binaries {
             staticLib()
@@ -35,11 +31,12 @@ kotlin {
         }
     }
 
-    linuxArm64 {
-        binaries {
-            staticLib()
-        }
-    }
+//    linuxArm64 {
+//        binaries {
+//            staticLib {
+//            }
+//        }
+//    }
     macosX64 {
         binaries {
             framework()
@@ -50,12 +47,12 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
+                api(project(":core"))
+                api(project(":date"))
+                api("com.ionspin.kotlin:bignum:0.2.3")
             }
         }
 
-        val jsMain by getting {
-            dependsOn(commonMain)
-        }
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
@@ -71,6 +68,10 @@ kotlin {
         }
 
         val macosX64Main by getting {
+            dependsOn(commonMain)
+        }
+
+        val jvmMain by getting {
             dependsOn(commonMain)
         }
 

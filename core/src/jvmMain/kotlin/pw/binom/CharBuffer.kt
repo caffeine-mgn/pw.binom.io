@@ -84,6 +84,9 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         limit = capacity
     }
 
+    override val elementSizeInBytes: Int
+        get() = Char.SIZE_BYTES
+
     actual override fun toString(): String {
         val p = position
         val result = native.toString()

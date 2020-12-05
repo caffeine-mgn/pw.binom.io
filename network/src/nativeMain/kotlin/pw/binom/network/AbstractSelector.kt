@@ -13,7 +13,6 @@ abstract class AbstractSelector : Selector {
         override val attachment: Any?
             get() = attachmentReference?.value
         var ptr = StableRef.create(this).asCPointer()
-        override var eventsFlag by AtomicInt(0)
         private var _listensFlag by AtomicInt(0)
 
         abstract fun isSuccessConnected(nativeMode: Int): Boolean

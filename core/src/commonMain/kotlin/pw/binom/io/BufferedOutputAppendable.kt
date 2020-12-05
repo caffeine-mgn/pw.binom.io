@@ -64,11 +64,16 @@ class BufferedOutputAppendable(
             charBuffer.flip()
             while (true) {
                 buffer.clear()
+                val oldr = charBuffer.remaining
                 val r = encoder.encode(charBuffer, buffer)
                 if (buffer.position > 0) {
                     buffer.flip()
                     output.write(buffer)
                     buffer.clear()
+                }
+                if (r == CharsetTransformResult.INPUT_OVER) {
+                    println("charBuffer.remaining: ${charBuffer.remaining}  ${charBuffer[14]}")
+                    TODO()
                 }
                 if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining == 0) {
                     break

@@ -73,14 +73,16 @@ actual class NSocket(val native: SOCKET) : Closeable {
     }
 
     actual fun recv(data: ByteBuffer): Int {
-        val r: Int = platform.windows.recv(native, data.refTo(data.position), data.capacity.convert(), 0).convert()
+        val r: Int = platform.windows.recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
         if (r < 0) {
             val error = GetLastError()
             if (error == 10035.convert<DWORD>())
                 return 0
             throw IOException("Error on send data to network. send: [$r], error: [${GetLastError()}]")
         }
-        data.position += r
+        if (r > 0) {
+            data.position += r
+        }
         return r
     }
 

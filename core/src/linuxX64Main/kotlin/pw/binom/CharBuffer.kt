@@ -105,6 +105,9 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         limit = capacity
     }
 
+    override val elementSizeInBytes: Int
+        get() = Char.SIZE_BYTES
+
     actual override fun toString(): String {
         when (remaining) {
             0 -> return ""

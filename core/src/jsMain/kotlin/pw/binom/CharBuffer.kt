@@ -70,6 +70,9 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         position = 0
     }
 
+    override val elementSizeInBytes: Int
+        get() = Char.SIZE_BYTES
+
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, length)
         chars.copyInto(array, offset, position, position + len)

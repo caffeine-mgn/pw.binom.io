@@ -4,10 +4,10 @@ import pw.binom.URL
 import pw.binom.async
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.readText
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
+import pw.binom.network.NetworkDispatcher
 import kotlin.test.Test
 
 class TestWS {
@@ -15,7 +15,7 @@ class TestWS {
     @Test
     fun test() {
         var done = false
-        val manager = SocketNIOManager()
+        val manager = NetworkDispatcher()
         async {
             try {
                 val client = AsyncHttpClient(manager)
@@ -34,7 +34,7 @@ class TestWS {
                     }
                 }
 
-                wsClient.close()
+                wsClient.asyncClose()
             } catch (e: Throwable) {
                 e.printStackTrace()
             } finally {
@@ -43,7 +43,7 @@ class TestWS {
         }
 
         while (!done) {
-            manager.update(1000)
+            manager.select(1000)
         }
     }
 }

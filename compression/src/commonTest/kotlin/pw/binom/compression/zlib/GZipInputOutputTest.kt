@@ -43,7 +43,7 @@ class GZipInputOutputTest {
             compressed.clear()
             val def = AsyncGZIPOutput(stream = compressed.asyncOutput(), level = 6, closeStream = false)
             def.write(source)
-            def.close()
+            def.asyncClose()
 
             compressed.flip()
             assertEquals(15, compressed.remaining)
@@ -51,7 +51,7 @@ class GZipInputOutputTest {
             val uncompressed = ByteBuffer.alloc(source.capacity * 2)
             val inf = AsyncGZIPInput(compressed.asyncInput(), 512)
             inf.read(uncompressed)
-            inf.close()
+            inf.asyncClose()
             uncompressed.flip()
             assertEquals(source.capacity, uncompressed.remaining)
             source.clear()

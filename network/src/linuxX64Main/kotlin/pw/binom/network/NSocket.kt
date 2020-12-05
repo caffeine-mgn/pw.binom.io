@@ -66,14 +66,17 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun recv(data: ByteBuffer): Int {
-        val r: Int = recv(native, data.refTo(data.position), data.capacity.convert(), 0).convert()
+        val r: Int = recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
         if (r < 0) {
             val error = errno
             if (error == 10035)
                 return 0
+            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}]")
             throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
         }
-        data.position += r
+        if (r > 0) {
+            data.position += r
+        }
         return r
     }
 
@@ -105,7 +108,6 @@ actual class NSocket(val native: Int) : Closeable {
                 address.data.refTo(0).getPointer(this).reinterpret(),
                 address.size.convert()
             )
-            println("Connect result: $r")
             if (r < 0 && errno != EINPROGRESS) {
                 throw IOException("Can't connect")
             }
@@ -187,7 +189,6 @@ fun isConnected(native: Int): Boolean {
         val len = alloc<socklen_tVar>()
         len.value = sizeOf<IntVar>().convert()
         val retval = getsockopt(native, SOL_SOCKET, SO_ERROR, error.ptr, len.ptr)
-        println("retval=${retval}   ${error.value}")
     }
     return false
 }

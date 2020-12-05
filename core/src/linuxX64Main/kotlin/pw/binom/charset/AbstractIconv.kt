@@ -23,37 +23,37 @@ abstract class AbstractIconv(fromCharset: String, toCharset: String) : Closeable
 
     init {
         platform.iconv.iconv(
-                iconvHandle,
-                null,
-                null,
-                outputPointer.ptr.reinterpret(),
-                outputAvail.ptr
+            iconvHandle,
+            null,
+            null,
+            outputPointer.ptr.reinterpret(),
+            outputAvail.ptr
         )
     }
 
     protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
         memScoped {
-            outputAvail.value = output.remaining.convert()
+            outputAvail.value = (output.remaining * output.elementSizeInBytes).convert()
             outputPointer.value = output.refTo(output.position).getPointer(this).reinterpret()
             inputPointer.value = input.refTo(input.position).getPointer(this).reinterpret()
-            inputAvail.value = input.remaining.convert()
+            inputAvail.value = (input.remaining * input.elementSizeInBytes).convert()
             set_posix_errno(0)
 
             val beforeIn = inputAvail.value.toInt()
             val beforeOut = outputAvail.value.toInt()
             val r = platform.iconv.iconv(
-                    iconvHandle,
+                iconvHandle,
 
-                    inputPointer.ptr.reinterpret(),
-                    inputAvail.ptr,
+                inputPointer.ptr.reinterpret(),
+                inputAvail.ptr,
 
-                    outputPointer.ptr.reinterpret(),
-                    outputAvail.ptr
+                outputPointer.ptr.reinterpret(),
+                outputAvail.ptr
             ).toInt()
             val readed = beforeIn - inputAvail.value.toInt()
             val writed = beforeOut - outputAvail.value.toInt()
-            input.position += readed
-            output.position += writed
+            input.position += readed / input.elementSizeInBytes
+            output.position += writed / output.elementSizeInBytes
             return when {
                 r != 0 && errno == E2BIG -> CharsetTransformResult.OUTPUT_OVER
                 r != 0 && errno == EILSEQ -> CharsetTransformResult.MALFORMED

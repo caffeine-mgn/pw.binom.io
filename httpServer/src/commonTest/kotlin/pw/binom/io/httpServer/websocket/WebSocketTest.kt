@@ -5,7 +5,7 @@ import pw.binom.io.*
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpClient.AsyncHttpClient
 import pw.binom.io.httpServer.HttpServer
-import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.network.NetworkDispatcher
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -40,7 +40,7 @@ class WebSocketTest {
         var done = false
         val port = Random.nextInt(3000, Short.MAX_VALUE.toInt() - 1).toShort()
 
-        val manager = SocketNIOManager()
+        val manager = NetworkDispatcher()
 
         val server = HttpServer(manager, TestWebSocketHandler())
         server.bindHTTP(port = port.toInt())
@@ -62,7 +62,7 @@ class WebSocketTest {
         }
 
         while (!done) {
-            manager.update(1000)
+            manager.select(1000)
         }
     }
 }

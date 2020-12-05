@@ -36,14 +36,11 @@ fun main(args: Array<String>) {
 //                return@async
                 while (true) {
                     try {
-                        println("read client...")
                         val input = reader.readln()?.trim() ?: break
                         val output = input.reversed()
-                        println("Readed [$output]")
                         writer.append(output).append("\r\n")
 //                        writer.appendln("GET /")
                         writer.flush()
-                        println("Response sended")
                     } catch (e: IOException) {
                         client.close()
                         break

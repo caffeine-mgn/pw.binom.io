@@ -7,6 +7,8 @@ apply {
 }
 
 kotlin {
+    this.metadata {
+    }
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
@@ -118,19 +120,27 @@ kotlin {
             dependsOn(commonMain)
         }
         val linuxX64Main by getting {
-            dependsOn(mingwX64Main)
+//            dependsOn(mingwX64Main)
+            dependsOn(commonMain)
+            kotlin.srcDir("src/mingwX64Main/kotlin")
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(linuxX64Main)
+//            dependsOn(linuxX64Main)
+            dependsOn(commonMain)
+            kotlin.srcDir("src/mingwX64Main/kotlin")
         }
 
 
         val mingwX86Main by getting {
-            dependsOn(mingwX64Main)
+//            dependsOn(mingwX64Main)
+            dependsOn(commonMain)
+            kotlin.srcDir("src/mingwX64Main/kotlin")
         }
 
         val macosX64Main by getting {
-            dependsOn(mingwX64Main)
+//            dependsOn(mingwX64Main)
+            dependsOn(commonMain)
+            kotlin.srcDir("src/mingwX64Main/kotlin")
         }
 
         val commonTest by getting {

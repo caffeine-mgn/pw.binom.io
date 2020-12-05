@@ -7,8 +7,9 @@ import pw.binom.charset.Charsets
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.sleep
 import pw.binom.db.ResultSet
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
 import kotlin.math.absoluteValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,13 +24,15 @@ class TestConnect {
 
     //    @Test
     fun test() {
-        val manager = SocketNIOManager()
+        val manager = NetworkDispatcher()
         async {
             try {
                 println("Connection...")
                 val con = PGConnection.connect(
-                    host = "127.0.0.1",
-                    port = 5432,
+                    address = NetworkAddress.Immutable(
+                        host = "localhost",
+                        port = 5432,
+                    ),
                     manager = manager,
                     charset = Charsets.UTF8,
                     userName = "postgres",
@@ -152,13 +155,13 @@ class TestConnect {
         }
 
         while (true) {
-            manager.update()
+            manager.select()
         }
     }
 
     @OptIn(ExperimentalTime::class)
     fun pg(func: suspend (PGConnection) -> Unit) {
-        val manager = SocketNIOManager()
+        val manager = NetworkDispatcher()
         var done = false
         var exception: Throwable? = null
         async {
@@ -166,15 +169,20 @@ class TestConnect {
             val now = TimeSource.Monotonic.markNow()
             while (true) {
                 try {
-                    con = PGConnection.connect(
+                    val address = NetworkAddress.Immutable(
                         host = "127.0.0.1",
                         port = 25331,
+                    )
+                    println("Connect to $address...")
+                    con = PGConnection.connect(
+                        address = address,
                         manager = manager,
                         charset = Charsets.UTF8,
                         userName = "postgres",
                         password = "postgres",
                         dataBase = "test"
                     )
+                    println("Connected!")
                     break
                 } catch (e: Throwable) {
                     if (now.elapsedNow() > 10.seconds) {
@@ -182,6 +190,8 @@ class TestConnect {
                         return@async
                     }
                     Worker.sleep(100)
+                    e.printStackTrace()
+                    throw e
                 }
             }
             try {
@@ -189,20 +199,25 @@ class TestConnect {
             } catch (e: Throwable) {
                 exception = e
             } finally {
-                con.close()
+                con.asyncClose()
                 done = true
             }
         }
 
+        var c = 0
         while (!done) {
-            manager.update(500)
+            c++
+            if (c > 300) {
+                throw RuntimeException("Out of try")
+            }
+            manager.select(1000)
         }
         if (exception != null) {
             throw exception!!
         }
     }
 
-    //    @Test
+        @Test
     fun timestampTest() {
         pg { con ->
             con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
@@ -239,15 +254,24 @@ class TestConnect {
 
     @Test
     fun decamalTest() {
+        println("#1")
         pg { con ->
+            println("#2")
             con.prepareStatement("select 1.5").use {
+                println("#3")
                 try {
+                    println("#4")
                     it.executeQuery().use {
+                        println("#5")
                         assertEquals(1, it.columns.size)
+                        println("#6")
                         assertTrue(it.next())
+                        println("#7")
                         assertEquals(1.5, it.getDouble(0))
                         assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
                         assertFalse(it.next())
+                        println("#8")
+
                     }
                 } catch (e: Throwable) {
                     e.printStackTrace()

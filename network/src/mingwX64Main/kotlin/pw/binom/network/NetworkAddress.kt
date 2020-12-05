@@ -114,6 +114,8 @@ actual sealed class NetworkAddress {
             _reset(host, port)
         }
 
+        override fun toString(): String = "$host:$port"
+
         internal constructor()
 
         actual fun toMutable(): Mutable {

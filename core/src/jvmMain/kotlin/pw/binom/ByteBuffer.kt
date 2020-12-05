@@ -149,6 +149,9 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
         native.clear()
     }
 
+    override val elementSizeInBytes: Int
+        get() = 1
+
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = ByteBuffer.alloc(newSize)
         if (newSize > capacity) {

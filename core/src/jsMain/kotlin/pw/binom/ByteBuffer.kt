@@ -162,6 +162,9 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         position = 0
     }
 
+    override val elementSizeInBytes: Int
+        get() = 1
+
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = alloc(newSize)
         if (newSize > capacity) {

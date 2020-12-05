@@ -11,9 +11,9 @@ actual sealed class NetworkAddress {
     var size = 0
 
     private inline fun <T> addr(f: MemScope.(CPointer<ByteVar>) -> T): T =
-            memScoped {
-                this.f(data.refTo(0).getPointer(this))
-            }
+        memScoped {
+            this.f(data.refTo(0).getPointer(this))
+        }
 
     actual val host: String
         get() {
@@ -29,11 +29,11 @@ actual sealed class NetworkAddress {
                     addr6.pointed.sin6_addr
 
                 if (inet_ntop(
-                                family.convert(),
-                                ptr.ptr,
-                                buf.refTo(0).getPointer(this),
-                                50.convert()
-                        ) == null
+                        family.convert(),
+                        ptr.ptr,
+                        buf.refTo(0).getPointer(this),
+                        50.convert()
+                    ) == null
                 ) {
                     throw RuntimeException("Can't get address. $errno, family: $family")
                 }
@@ -80,9 +80,9 @@ actual sealed class NetworkAddress {
                 }
             }
             memcpy(
-                    data.refTo(0),
-                    result.value!!.pointed.ai_addr,
-                    result.value!!.pointed.ai_addrlen.convert()
+                data.refTo(0),
+                result.value!!.pointed.ai_addr,
+                result.value!!.pointed.ai_addrlen.convert()
             )
             size = result.value!!.pointed.ai_addrlen.convert()
             freeaddrinfo(result.value)
@@ -118,6 +118,8 @@ actual sealed class NetworkAddress {
         }
 
         internal constructor()
+
+        override fun toString(): String = "$host:$port"
 
         actual fun toMutable(): Mutable {
             val mutable = Mutable()
