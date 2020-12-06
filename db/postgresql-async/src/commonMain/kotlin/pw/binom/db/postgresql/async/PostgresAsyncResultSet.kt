@@ -19,7 +19,7 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
         val value = data[index] ?: return null
         return when (val dataType = data.meta[index].dataType) {
             ColumnTypes.Bigserial -> Long.fromBytes(value).toString()
-            ColumnTypes.Varchar -> value.decodeString(data.connection.reader.charset)
+            ColumnTypes.Text, ColumnTypes.Varchar -> value.decodeString(data.connection.reader.charset)
             ColumnTypes.Boolean -> (value[0] > 0.toByte()).toString()
             ColumnTypes.UUID -> UUID.Companion.create(value).toString()
             else -> throwNotSupported(dataType, value)
@@ -93,12 +93,20 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
     }
 
     override fun getLong(index: Int): Long? {
-        TODO("Not yet implemented")
+        val value = data[index] ?: return null
+        return when (val dataType = data.meta[index].dataType) {
+            ColumnTypes.Bigserial -> Long.fromBytes(value)
+            ColumnTypes.Boolean -> if ((value[0] > 0.toByte())) 1L else 0L
+            ColumnTypes.Double -> Double.fromBits(Long.fromBytes(value)).toLong()
+            ColumnTypes.Real -> Float.fromBits(Int.fromBytes(value)).toLong()
+
+            ColumnTypes.Numeric -> NumericUtils.decode(value).longValue()
+            else -> throwNotSupported(dataType, value)
+        }
     }
 
-    override fun getLong(column: String): Long? {
-        TODO("Not yet implemented")
-    }
+    override fun getLong(column: String): Long? =
+        getLong(getIndex(column))
 
     override fun getBigDecimal(index: Int): BigDecimal? {
         val value = data[index] ?: return null

@@ -148,7 +148,12 @@ class PostgresPreparedStatement(
         })
         connection.sendOnly(SyncMessage)
         if (!parsed) {
-            check(connection.readDesponse() is ParseCompleteMessage)
+            val msg = connection.readDesponse()
+            if (msg is ErrorMessage) {
+                check(connection.readDesponse() is ReadyForQueryMessage)
+                throw PostgresqlException(msg.toString())
+            }
+            check(msg is ParseCompleteMessage) { "Invalid Message: $msg (${msg::class})" }
         }
         check(connection.readDesponse() is BindCompleteMessage)
         parsed = true

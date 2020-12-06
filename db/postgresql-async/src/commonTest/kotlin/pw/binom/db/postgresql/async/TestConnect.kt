@@ -27,7 +27,6 @@ class TestConnect {
         val manager = NetworkDispatcher()
         async {
             try {
-                println("Connection...")
                 val con = PGConnection.connect(
                     address = NetworkAddress.Immutable(
                         host = "localhost",
@@ -39,7 +38,6 @@ class TestConnect {
                     password = "postgres",
                     dataBase = "sellsystem"
                 )
-                println("Connected!")
 
 //                val msg = con.sendQuery("select now()")
                 val msg = con.query("update \"user\" set login='' where login=''") as QueryResponse.Status
@@ -173,7 +171,6 @@ class TestConnect {
                         host = "127.0.0.1",
                         port = 25331,
                     )
-                    println("Connect to $address...")
                     con = PGConnection.connect(
                         address = address,
                         manager = manager,
@@ -182,25 +179,28 @@ class TestConnect {
                         password = "postgres",
                         dataBase = "test"
                     )
-                    println("Connected!")
                     break
                 } catch (e: Throwable) {
                     if (now.elapsedNow() > 10.seconds) {
-                        exception = RuntimeException("Connection Timeout")
+                        exception = RuntimeException("Connection Timeout", e)
                         return@async
                     }
+//                    exception = e
                     Worker.sleep(100)
-                    e.printStackTrace()
-                    throw e
+//                    e.printStackTrace()
+//                    done = true
+//                    throw e
                 }
             }
-            try {
-                func(con)
-            } catch (e: Throwable) {
-                exception = e
-            } finally {
-                con.asyncClose()
-                done = true
+            if (!done) {
+                try {
+                    func(con)
+                } catch (e: Throwable) {
+                    exception = e
+                } finally {
+                    con.asyncClose()
+                    done = true
+                }
             }
         }
 
@@ -217,7 +217,23 @@ class TestConnect {
         }
     }
 
-        @Test
+    @Test
+    fun testString() {
+        pg { con ->
+            con.prepareStatement("""select 'Привет' """).executeQuery().also {
+                it.next()
+                assertEquals("Привет", it.getString(0))
+            }
+        }
+        pg { con ->
+            con.prepareStatement("""select 'ПрИвет' """).executeQuery().also {
+                it.next()
+                assertEquals("ПрИвет", it.getString(0))
+            }
+        }
+    }
+
+    @Test
     fun timestampTest() {
         pg { con ->
             con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
@@ -254,23 +270,15 @@ class TestConnect {
 
     @Test
     fun decamalTest() {
-        println("#1")
         pg { con ->
-            println("#2")
             con.prepareStatement("select 1.5").use {
-                println("#3")
                 try {
-                    println("#4")
                     it.executeQuery().use {
-                        println("#5")
                         assertEquals(1, it.columns.size)
-                        println("#6")
                         assertTrue(it.next())
-                        println("#7")
                         assertEquals(1.5, it.getDouble(0))
                         assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
                         assertFalse(it.next())
-                        println("#8")
 
                     }
                 } catch (e: Throwable) {

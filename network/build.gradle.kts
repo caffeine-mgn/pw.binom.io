@@ -15,10 +15,14 @@ kotlin {
     jvm()
     linuxArm32Hfp {
         binaries {
-            staticLib {
-            }
+            staticLib()
         }
     }
+//    linuxArm64 {
+//        binaries {
+//            staticLib()
+//        }
+//    }
 
     mingwX64 { // Use your target instead.
         binaries {
@@ -83,6 +87,10 @@ kotlin {
             dependsOn(nativeMain)
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }
+//        val linuxArm64Main by getting {
+//            dependsOn(nativeMain)
+//            kotlin.srcDir("src/linuxX64Main/kotlin")
+//        }
 
         val mingwX64Main by getting {
             dependsOn(nativeMain)
