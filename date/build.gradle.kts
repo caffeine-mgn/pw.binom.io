@@ -61,9 +61,11 @@ kotlin {
         }
         val linuxArm64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
         val linuxArm32HfpMain by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val mingwX64Main by getting {
@@ -71,10 +73,12 @@ kotlin {
         }
         val mingwX86Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/mingwX64Main/kotlin")
         }
 
         val macosX64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val commonTest by getting {

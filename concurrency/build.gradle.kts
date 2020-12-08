@@ -49,31 +49,42 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":core"))
+                api(kotlin("stdlib-common"))
             }
         }
 
         val linuxX64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
+            kotlin.srcDir("src/posixMain/kotlin")
         }
         val linuxArm64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
+            kotlin.srcDir("src/posixMain/kotlin")
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }
         val linuxArm32HfpMain by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
+            kotlin.srcDir("src/posixMain/kotlin")
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val mingwX64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
         }
         val mingwX86Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
             kotlin.srcDir("src/mingwX64Main/kotlin")
         }
 
         val macosX64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
+            kotlin.srcDir("src/posixMain/kotlin")
         }
 
         val commonTest by getting {
