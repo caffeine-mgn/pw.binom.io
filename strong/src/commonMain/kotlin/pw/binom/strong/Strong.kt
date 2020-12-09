@@ -55,18 +55,18 @@ class Strong private constructor() {
         if (inited) {
             throw IllegalStateException("Strong already started")
         }
-        beans.values.forEach {
+        beanOrder.forEach {
             if (it is PropertyProvider) {
                 properties.putAll(it.init())
             }
         }
 
-        beans.values.forEach {
+        beanOrder.forEach {
             if (it is ServiceProvider) {
                 it.provide()
             }
         }
-        beans.values.forEach {
+        beanOrder.forEach {
             if (it is InitializingBean) {
                 try {
                     it.init()
@@ -75,11 +75,12 @@ class Strong private constructor() {
                 }
             }
         }
-        beans.values.forEach {
+        beanOrder.forEach {
             if (it is LinkingBean) {
                 it.link()
             }
         }
+        beanOrder.clear()
         inited = true
     }
 
@@ -102,12 +103,41 @@ class Strong private constructor() {
             }
     }
 
-    fun define(bean: Any, name: String = Random.uuid().toString()) {
+    private val beanOrder = ArrayList<Any>()
+
+    /**
+     * Returns true if bean with class [klass] with default name already defined
+     *
+     * @return true if bean of class [klass] defined with default name
+     */
+    fun <T : Any> exist(klass: KClass<T>) = exist("${klass}_${klass.hashCode()}")
+
+    /**
+     * Returns true if bean with [name] already defined
+     *
+     * @return true if bean with [name] already defined
+     */
+    fun exist(name: String) = beans.containsKey(name)
+
+    /**
+     * Define [bean]. Default [name] is `[bean]::class + "_" + [bean].class.hashCode()`
+     *
+     * @param bean object for define
+     * @param name name of [bean] for define. See description of method for get default value
+     * @param ifNotExist if false on duplicate will throw [BeanAlreadyDefinedException]. If true will ignore redefine
+     */
+    fun define(bean: Any, name: String = "${bean::class}_${bean::class.hashCode()}", ifNotExist: Boolean = false) {
         if (inited) {
             throw IllegalStateException("Strong already inited")
         }
-        if (beans.containsKey(name))
-            throw BeanAlreadyDefinedException(name)
+        if (beans.containsKey(name)) {
+            if (ifNotExist) {
+                return
+            } else {
+                throw BeanAlreadyDefinedException(name)
+            }
+        }
+        beanOrder += bean
         beans[name] = bean
     }
 
