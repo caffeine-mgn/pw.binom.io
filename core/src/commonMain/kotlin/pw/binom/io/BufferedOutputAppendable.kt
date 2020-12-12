@@ -35,7 +35,7 @@ class BufferedOutputAppendable(
 
     override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
         csq ?: return this
-        if (csq is String) {
+        if (csq.length>1 && csq is String) {
             val array = csq.toCharArray()
             var pos = 0
             checkFlush()

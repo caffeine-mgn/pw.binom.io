@@ -12,7 +12,7 @@ class AsyncReaderUTF82(private val stream: AsyncInput) : AbstractAsyncReader() {
         stream.asyncClose()
     }
 
-    override suspend fun read(): Char? =
+    override suspend fun readChar(): Char? =
             try {
                 data.reset(0, 1)
                 if (stream.read(data) == 0) {

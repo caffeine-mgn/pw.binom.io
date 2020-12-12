@@ -84,6 +84,27 @@ actual sealed class NetworkAddress {
             size = result.value!!.pointed.ai_addrlen.convert()
             freeaddrinfo(result.value)
         }
+
+
+    }
+
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        if (this === other) return true
+        if (this::class != other::class) return false
+
+        other as NetworkAddress
+
+        if (host != other.host) return false
+        if (port != other.port) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = host.hashCode()
+        result = 31 * result + port.hashCode()
+        return result
     }
 
     actual enum class Type {

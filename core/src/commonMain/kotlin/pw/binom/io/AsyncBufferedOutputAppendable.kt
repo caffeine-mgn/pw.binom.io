@@ -36,7 +36,7 @@ class AsyncBufferedOutputAppendable(
 
     override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
         csq ?: return this
-        if (csq is String) {
+        if (csq.length>1 && csq is String) {
             val array = csq.toCharArray()
             var pos = 0
             checkFlush()

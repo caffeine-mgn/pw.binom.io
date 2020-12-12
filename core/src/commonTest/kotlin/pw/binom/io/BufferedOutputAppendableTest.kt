@@ -15,10 +15,11 @@ class BufferedOutputAppendableTest {
         val txt = "1234567890"
         writer.append(txt)
         writer.append(txt)
+        writer.append("\r")
         writer.flush()
         output.data.flip()
         val arr = txt.toCharArray()
-        assertEquals(arr.size * 2, output.data.remaining)
+        assertEquals(arr.size * 2+1, output.data.remaining)
         for (i in 0 until arr.size) {
             assertEquals(
                 arr[i].toByte(),
@@ -33,5 +34,11 @@ class BufferedOutputAppendableTest {
                 "Expected char: ${arr[i - arr.size]}. Index: $i"
             )
         }
+
+        assertEquals(
+            '\r'.toByte(),
+            output.data[arr.size * 2],
+            "Expected char: \\r. Index: ${output.data[arr.size * 2]}"
+        )
     }
 }

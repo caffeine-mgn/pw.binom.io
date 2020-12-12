@@ -18,10 +18,11 @@ class AsyncBufferedOutputAppendableTest {
             try {
                 writer.append(txt)
                 writer.append(txt)
+                writer.append("\r")
                 writer.flush()
                 out1.data.flip()
                 val arr = txt.toCharArray()
-                assertEquals(arr.size * 2, out1.data.remaining)
+                assertEquals(arr.size * 2+1, out1.data.remaining)
                 for (i in 0 until arr.size) {
                     assertEquals(
                         arr[i].toByte(),
@@ -36,6 +37,11 @@ class AsyncBufferedOutputAppendableTest {
                         "Expected char: ${arr[i - arr.size]}. Index: $i"
                     )
                 }
+                assertEquals(
+                    '\r'.toByte(),
+                    out1.data[arr.size * 2],
+                    "Expected char: \\r. Index: ${out1.data[arr.size * 2]}"
+                )
             } catch (e: Throwable) {
                 e.printStackTrace()
                 ex = e

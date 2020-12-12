@@ -82,9 +82,9 @@ class AsyncBufferedInputReader(
         return out.toString()
     }
 
-    override suspend fun readln(): String? = readUntil(10.toChar())
+    override suspend fun readln(): String? = readUntil(10.toChar())?.removeSuffix("\r")
 
-    override suspend fun read(): Char? {
+    override suspend fun readChar(): Char? {
         prepareBuffer()
         if (output.remaining == 0) {
             return null
