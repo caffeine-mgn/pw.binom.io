@@ -6,6 +6,7 @@
 * Remove socket library
 * Remove nio library
 * Add mq/nats client library
+* SMTP Client library
 
 ### 0.1.25
 * Async PostgreSQL Client

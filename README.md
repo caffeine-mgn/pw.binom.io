@@ -6,7 +6,7 @@ Kotlin IO Library.<br>
 
 ## Actual version
 
-Actual version is `0.1.25`
+Actual version is `0.1.26`
 
 ## Parts of library
 
@@ -23,6 +23,7 @@ Library contains next parts:<br>
 * [WebDav](webdav)
 * [Process API](process)
 * [SSL](ssl)
+* [SMTP](smtp)
 * [Concurrency](concurrency)
 * MQ Client
     * [Nats](mq/nats)
