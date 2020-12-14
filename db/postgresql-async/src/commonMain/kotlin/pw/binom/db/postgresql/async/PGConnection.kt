@@ -171,7 +171,7 @@ class PGConnection private constructor(
                 credentialMessage
             }
             is AuthenticationMessage.AuthenticationOkMessage -> null
-            else -> TODO()
+            else -> throw RuntimeException("Unknown message type [${msg::class}]")
         }
         if (authRequest != null) {
             when (val msg = request(authRequest)) {

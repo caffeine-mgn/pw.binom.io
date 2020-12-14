@@ -3,6 +3,7 @@ package pw.binom.io.httpServer
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
+import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.io.http.AsyncChunkedInput
 import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.Headers
@@ -31,8 +32,8 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val input: AsyncInput
         get() = wrapped!!
 
-    var _rawInput: PooledAsyncBufferedInput? = null
-    override val rawInput: PooledAsyncBufferedInput
+    var _rawInput: AsyncBufferedAsciiInputReader? = null
+    override val rawInput: AsyncBufferedAsciiInputReader
         get() = _rawInput!!
 
     var _rawOutput: AsyncOutput? = null
@@ -56,16 +57,16 @@ internal class HttpRequestImpl2 : HttpRequest {
         wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: PooledAsyncBufferedInput, output: AsyncOutput, rawConnection: TcpConnection, allowZlib: Boolean) {
+    suspend fun init(method: String, uri: String, input: AsyncBufferedAsciiInputReader, output: AsyncOutput, rawConnection: TcpConnection, allowZlib: Boolean) {
         _rawInput = input
         _rawOutput = output
         _rawConnection = rawConnection
         this.method = method
         this.uri = uri
         headers.clear()
-        val reader = input.utf8Reader()
+//        val reader = input.utf8Reader()
         while (true) {
-            val s = reader.readln() ?: break
+            val s = input.readln() ?: break
             if (s.isEmpty())
                 break
             val items1 = s.split(": ", limit = 2)

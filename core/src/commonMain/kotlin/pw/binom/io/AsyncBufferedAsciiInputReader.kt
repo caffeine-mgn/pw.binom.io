@@ -2,15 +2,23 @@ package pw.binom.io
 
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.empty
 import pw.binom.pool.ObjectPool
 
 class AsyncBufferedAsciiInputReader(
     val input: AsyncInput,
-    private val pool: ObjectPool<ByteBuffer>,
+    val bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncReader, AsyncInput {
+    init {
+        require(bufferSize > 4)
+    }
 
-    private val buffer = pool.borrow().empty()
+    fun reset() {
+        buffer.clear()
+    }
+
+    private val buffer = ByteBuffer.alloc(bufferSize)
 
     override val available: Int
         get() = if (buffer.remaining > 0) buffer.remaining else -1
@@ -29,7 +37,7 @@ class AsyncBufferedAsciiInputReader(
     }
 
     override suspend fun asyncClose() {
-        pool.recycle(buffer)
+        buffer.close()
         input.asyncClose()
     }
 

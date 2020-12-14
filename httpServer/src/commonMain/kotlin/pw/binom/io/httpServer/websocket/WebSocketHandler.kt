@@ -80,7 +80,7 @@ abstract class WebSocketHandler : Handler {
         ) {
             resp.status = 403
             resp.enableKeepAlive = false
-            resp.complete().asyncClose()
+            resp.complete()
             return
         }
         val key = req.headers["Sec-WebSocket-Key"]?.singleOrNull() ?: TODO()
@@ -107,30 +107,5 @@ abstract class WebSocketHandler : Handler {
             resp.complete()
             return
         }
-        /*
-        val rawBuffered = req.rawInput.bufferedInput()
-        println("Try read...")
-
-
-        val header = WebSocketHeader()
-        WebSocketHeader.read(rawBuffered, header)
-
-        println("Finish: [${header.finishFlag}], Opcode: [${header.opcode}], mask: [${header.maskFlag}], len: [${header.length}]")
-
-        val buf = ByteBuffer.alloc(header.length.toInt())
-        rawBuffered.readFully(buf)
-        buf.flip()
-        buf.forEachIndexed { i, byte ->
-            if (header.maskFlag) {
-                val b = byte xor header.mask[i and 0x03]
-                println("$i->${b}")
-            } else {
-                println("$i->${byte}")
-            }
-        }
-    } catch (e: Throwable) {
-        e.printStacktrace()
-    }
-    */
     }
 }

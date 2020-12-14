@@ -1,6 +1,6 @@
 package pw.binom.io.httpServer
 
-import pw.binom.io.utf8Reader
+import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
 import pw.binom.pool.DefaultPool
@@ -12,8 +12,9 @@ internal object ConnectionProcessing {
 
     suspend fun process(
         rawConnection: TcpConnection,
-        inputBuffered: PooledAsyncBufferedInput,
+        //inputBuffered: PooledAsyncBufferedInput,
         outputBuffered: PoolAsyncBufferedOutput,
+        asciiInputReader: AsyncBufferedAsciiInputReader,
         httpRequestPool: DefaultPool<HttpRequestImpl2>,
         httpResponsePool: DefaultPool<HttpResponseImpl2>,
         handler: Handler,
@@ -21,15 +22,15 @@ internal object ConnectionProcessing {
     ): Boolean {
         val outputBufferid = outputBuffered//connection.bufferedOutput()
 //        val buf = AsyncBufferedInput(connection)
-        val reader = inputBuffered.utf8Reader()
-        val request = reader.readln()!!// ?: return false
+//        val reader = inputBuffered.utf8Reader()
+        val request = asciiInputReader.readln()!!// ?: return false
         val items = request.split(' ')
 
         val req = httpRequestPool.borrow()
         req.init(
                 method = items[0],
                 uri = items.getOrNull(1) ?: "",
-                input = inputBuffered,
+                input = asciiInputReader,
                 allowZlib = allowZlib,
                 output = outputBuffered,
                 rawConnection = rawConnection

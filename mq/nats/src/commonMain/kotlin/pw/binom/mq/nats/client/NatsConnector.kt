@@ -9,11 +9,11 @@ import pw.binom.network.TcpConnection
 import kotlin.random.Random
 
 class NatsConnector(
-    val clientName: String?,
-    val user: String?,
-    val pass: String?,
+    val clientName: String? = null,
+    val user: String? = null,
+    val pass: String? = null,
     val dispatcher: NetworkDispatcher,
-    val tlsRequired: Boolean,
+    val tlsRequired: Boolean = false,
     val lang: String = "kotlin",
     val echo: Boolean = true,
     val autoConnectToCluster: Boolean = true,
@@ -101,32 +101,41 @@ class NatsConnector(
                         }
                     }
                 } catch (e: Throwable) {
+                    connections -= this
                     e.printStackTrace()
                 }
             }
         }
     }
 
-    val pool = ByteBufferPool(10)
+    private val pool = ByteBufferPool(10)
 
     private suspend fun parseInfoMsg(con: Connection, msg: String) {
-        val data = Json.parseToJsonElement(msg.removePrefix("INFO "))
-        con.server_id = data.jsonObject["server_id"]?.jsonPrimitive?.content
-        con.server_name = data.jsonObject["server_name"]?.jsonPrimitive?.content
-        con.client_id = data.jsonObject["client_id"]?.jsonPrimitive?.intOrNull
-        con.max_payload = data.jsonObject["max_payload"]?.jsonPrimitive?.longOrNull
-        con.proto = data.jsonObject["proto"]?.jsonPrimitive?.intOrNull
+        if (msg.startsWith("INFO ")) {
+            throw RuntimeException("Unknown message. Message: [$msg]")
+        }
+        val json = msg.removePrefix("INFO ")
+        try {
+            val data = Json.parseToJsonElement(json)
+            con.server_id = data.jsonObject["server_id"]?.jsonPrimitive?.content
+            con.server_name = data.jsonObject["server_name"]?.jsonPrimitive?.content
+            con.client_id = data.jsonObject["client_id"]?.jsonPrimitive?.intOrNull
+            con.max_payload = data.jsonObject["max_payload"]?.jsonPrimitive?.longOrNull
+            con.proto = data.jsonObject["proto"]?.jsonPrimitive?.intOrNull
 
-        if (autoConnectToCluster) {
-            data.jsonObject["connect_urls"]?.jsonArray?.forEach {
-                val items = it.jsonPrimitive.content.split(':')
-                connect(
-                    NetworkAddress.Immutable(
-                        host = items[0],
-                        port = items[1].toInt()
+            if (autoConnectToCluster) {
+                data.jsonObject["connect_urls"]?.jsonArray?.forEach {
+                    val items = it.jsonPrimitive.content.split(':')
+                    connect(
+                        NetworkAddress.Immutable(
+                            host = items[0],
+                            port = items[1].toInt()
+                        )
                     )
-                )
+                }
             }
+        } catch (e: Throwable) {
+            throw RuntimeException("Can't parse info message. Message: [$json]", e)
         }
     }
 
@@ -135,7 +144,7 @@ class NatsConnector(
         val con = Connection(
             raw = connection,
             appender = connection.bufferedWriter(pool),
-            reader = AsyncBufferedAsciiInputReader(connection, pool)
+            reader = AsyncBufferedAsciiInputReader(connection)
         )
 
         val msg = StringBuilder("CONNECT {")

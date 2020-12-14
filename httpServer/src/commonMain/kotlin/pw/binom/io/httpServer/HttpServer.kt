@@ -2,6 +2,7 @@ package pw.binom.io.httpServer
 
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.async
+import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.io.Closeable
 import pw.binom.network.*
 import pw.binom.pool.DefaultPool
@@ -30,7 +31,8 @@ open class HttpServer(
     }
 
     private val bufferedInputPool = DefaultPool(poolSize) {
-        PooledAsyncBufferedInput(inputBufferSize)
+        val p = PooledAsyncBufferedInput(inputBufferSize)
+        p to AsyncBufferedAsciiInputReader(p)
     }
 
     private val bufferedOutputPool = DefaultPool(poolSize) {
@@ -55,7 +57,7 @@ open class HttpServer(
     private suspend fun runProcessing(connection: TcpConnection) {
         val it = connection
         val inputBufferid = bufferedInputPool.borrow { buf ->
-            buf.currentStream = it
+            buf.first.currentStream = it
         }
         val outputBufferid = bufferedOutputPool.borrow { buf ->
             buf.currentStream = it
@@ -66,13 +68,14 @@ open class HttpServer(
                     handler = this.handler,
                     httpRequestPool = httpRequestPool,
                     httpResponsePool = httpResponsePool,
-                    inputBuffered = inputBufferid,
+                    asciiInputReader = inputBufferid.second,
                     outputBuffered = outputBufferid,
                     allowZlib = zlibBufferSize > 0,
                     rawConnection = it
                 )
                 if (!keepAlive) {
-                    inputBufferid.reset()
+                    inputBufferid.first.reset()
+                    inputBufferid.second.reset()
                     bufferedInputPool.recycle(inputBufferid)
                     outputBufferid.reset()
                     bufferedOutputPool.recycle(outputBufferid)
@@ -83,7 +86,8 @@ open class HttpServer(
                 break
             } catch (e: Throwable) {
                 e.printStackTrace()
-                inputBufferid.reset()
+                inputBufferid.first.reset()
+                inputBufferid.second.reset()
                 bufferedInputPool.recycle(inputBufferid)
                 outputBufferid.reset()
                 bufferedOutputPool.recycle(outputBufferid)
@@ -105,7 +109,11 @@ open class HttpServer(
         }
         async {
             while (bufferedInputPool.size > 0) {
-                bufferedInputPool.borrow { it.currentStream = null }.asyncClose()
+                bufferedInputPool.borrow {
+                    it.first.currentStream = null
+                }.let {
+                    it.second.asyncClose()
+                }
             }
         }
     }

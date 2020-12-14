@@ -6,7 +6,7 @@ interface CrossService {
     val name: String
 
     interface CrossMethod<T> : ReadOnlyProperty<Any, CrossMethod<T>> {
-        suspend operator fun invoke(params: Map<String, Any>): T
+        suspend operator fun invoke(params: Map<String, Any?>): T
     }
 
 }

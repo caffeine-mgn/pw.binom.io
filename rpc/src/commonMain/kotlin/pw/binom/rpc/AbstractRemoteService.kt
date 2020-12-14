@@ -5,11 +5,11 @@ import kotlin.reflect.KProperty
 
 abstract class AbstractRemoteService(val invoker: Invoker) : CrossService {
     interface Invoker {
-        suspend fun invoke(service: String, method: String, params: Map<String, Any>): Any?
+        suspend fun invoke(service: String, method: String, params: Map<String, Any?>): Any?
     }
 
     inner class RemoteMethod<T>(val name: String) : CrossService.CrossMethod<T> {
-        override suspend operator fun invoke(params: Map<String, Any>): T =
+        override suspend operator fun invoke(params: Map<String, Any?>): T =
             invoker.invoke(this@AbstractRemoteService.name, name, params) as T
 
         override fun getValue(thisRef: Any, property: KProperty<*>): CrossService.CrossMethod<T> = this

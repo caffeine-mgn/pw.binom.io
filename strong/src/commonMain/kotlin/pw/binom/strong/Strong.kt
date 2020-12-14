@@ -9,6 +9,7 @@ import kotlin.reflect.KProperty
 class Strong private constructor() {
     private val beans = HashMap<String, Any>()
     private var inited = false
+    private var initing = false
 
     interface PropertyProvider {
         suspend fun init(): Map<String, String>
@@ -55,6 +56,7 @@ class Strong private constructor() {
         if (inited) {
             throw IllegalStateException("Strong already started")
         }
+        initing = true
         beanOrder.forEach {
             if (it is PropertyProvider) {
                 properties.putAll(it.init())
@@ -82,6 +84,7 @@ class Strong private constructor() {
         }
         beanOrder.clear()
         inited = true
+        initing = false
     }
 
     class BeanAlreadyDefinedException(val beanName: String) : RuntimeException() {
@@ -129,6 +132,9 @@ class Strong private constructor() {
     fun define(bean: Any, name: String = "${bean::class}_${bean::class.hashCode()}", ifNotExist: Boolean = false) {
         if (inited) {
             throw IllegalStateException("Strong already inited")
+        }
+        if (initing){
+            throw IllegalStateException("Can't define bean during start process")
         }
         if (beans.containsKey(name)) {
             if (ifNotExist) {
