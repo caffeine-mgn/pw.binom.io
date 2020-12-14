@@ -1,13 +1,13 @@
 package pw.binom
 
 import pw.binom.io.AsyncCloseable
+import pw.binom.io.AsyncFlushable
 import pw.binom.io.UTF8
 import pw.binom.pool.ObjectPool
 
-interface AsyncOutput : AsyncCloseable {
+interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
     suspend fun write(data: ByteBuffer): Int
-    suspend fun flush()
 }
 
 fun Output.asyncOutput() = object : AsyncOutput {
@@ -15,7 +15,7 @@ fun Output.asyncOutput() = object : AsyncOutput {
 //            this@asyncOutput.write(data, offset, length)
 
     override suspend fun write(data: ByteBuffer): Int =
-            this@asyncOutput.write(data)
+        this@asyncOutput.write(data)
 
     override suspend fun flush() {
         this@asyncOutput.flush()

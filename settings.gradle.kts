@@ -28,6 +28,7 @@ include(":webdav")
 include(":ssl")
 include(":process")
 include(":flux")
+include(":smtp")
 
 include(":examples:echoServer")
 include(":examples:simpleHttpServer")

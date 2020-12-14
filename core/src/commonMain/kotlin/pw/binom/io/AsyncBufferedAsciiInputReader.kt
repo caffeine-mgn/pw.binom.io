@@ -3,8 +3,6 @@ package pw.binom.io
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.empty
-import pw.binom.pool.ObjectPool
 
 class AsyncBufferedAsciiInputReader(
     val input: AsyncInput,
@@ -57,3 +55,8 @@ class AsyncBufferedAsciiInputReader(
         return len
     }
 }
+
+fun AsyncInput.bufferedAsciiInputReader(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiInputReader(
+    input = this,
+    bufferSize = bufferSize
+)
