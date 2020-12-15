@@ -3,6 +3,7 @@ package pw.binom.io
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.empty
 
 class AsyncBufferedAsciiInputReader(
     val input: AsyncInput,
@@ -16,7 +17,7 @@ class AsyncBufferedAsciiInputReader(
         buffer.clear()
     }
 
-    private val buffer = ByteBuffer.alloc(bufferSize)
+    private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
     override val available: Int
         get() = if (buffer.remaining > 0) buffer.remaining else -1
@@ -54,6 +55,34 @@ class AsyncBufferedAsciiInputReader(
         }
         return len
     }
+
+    suspend fun readUntil(char: Char): String? {
+        val out = StringBuilder()
+        var exist = false
+        LOOP@ while (true) {
+            checkAvailable()
+            if (buffer.remaining <= 0) {
+                break
+            }
+            for (i in buffer.position until buffer.limit) {
+                buffer.position++
+                if (buffer[i] == char.toByte()) {
+                    exist = true
+                    break@LOOP
+                } else {
+                    out.append(buffer[i].toChar())
+                }
+
+            }
+            exist = true
+        }
+        if (!exist) {
+            return null
+        }
+        return out.toString()
+    }
+
+    override suspend fun readln(): String? = readUntil(10.toChar())?.removeSuffix("\r")
 }
 
 fun AsyncInput.bufferedAsciiInputReader(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiInputReader(

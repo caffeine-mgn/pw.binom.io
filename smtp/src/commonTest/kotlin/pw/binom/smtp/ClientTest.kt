@@ -1,12 +1,15 @@
 package pw.binom.smtp
 
+import pw.binom.ByteBuffer
 import pw.binom.async
+import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.ssl.KeyManager
 import pw.binom.ssl.PrivateKey
 import pw.binom.ssl.TrustManager
 import pw.binom.ssl.X509Certificate
+import pw.binom.wrap
 import kotlin.test.Test
 
 object EmptyKeyManager : KeyManager {
@@ -28,7 +31,7 @@ class ClientTest {
 
         async {
             try {
-                val client = Client.tls(
+                val client = SMTPClient.tls(
                     dispatcher = nd,
                     address = NetworkAddress.Immutable("smtp.yandex.ru", 465),
                     keyManager = EmptyKeyManager,
@@ -37,14 +40,34 @@ class ClientTest {
                     login = "git@tlsys.org",
                     password = "8k22thg2O9eKRJz7"
                 )
-                client.send(
-                    to = "caffeine.mgn@gmail.com",
+                client.multipart(
                     from = "git@tlsys.org",
-                    body = "From: Drozd <git@tlsys.org>\r\nTo: Drol <caffeine.mgn@gmail.com>\r\nSubject: Hello\r\n" +
-                            "Mime-Version: 1.0;\r\n" +
-                            "Content-Type: text/html; charset=\"UTF-8\";\r\n\r\n" +
-                            "<html>This is test message from <b>Kotlin</b></html>"
-                )
+                    fromAlias = "TradeLine GIT",
+                    to = "caffeine.mgn@gmail.com",
+                    toAlias = "Anton",
+                    subject = "Test Message"
+                ) {
+                    it.appendText("text/html").use {
+                        it.append("<html>Привет из <b>Kotln</b><br><br><i>Это</i> пример HTML с вложением!<br><s>Зачёрктнутый</s>")
+                    }
+
+                    it.attach(name = "my_text.txt").use {
+                        it.write(ByteBuffer.wrap("MyData in TXT file".encodeToByteArray()))
+                    }
+                }
+
+                client.multipart(
+                    from = "git@tlsys.org",
+                    fromAlias = "TradeLine GIT",
+                    to = "caffeine.mgn@gmail.com",
+                    toAlias = "Anton",
+                    subject = "Test Message"
+                ) {
+                    it.appendText("text/html").use {
+                        it.append("<html><s>Второе письмо!</s>")
+                    }
+                }
+
                 client.asyncClose()
             } catch (e: Throwable) {
                 e.printStackTrace()

@@ -80,6 +80,7 @@ class AsyncSSLChannel(val session: SSLSession, val channel: AsyncChannel) : Asyn
                     sendAll()
                 }
                 SSLSession.State.WANT_READ -> {
+                    sendAll()
                     readAll()
                 }
                 SSLSession.State.OK -> {

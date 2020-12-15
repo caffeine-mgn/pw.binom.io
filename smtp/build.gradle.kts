@@ -51,6 +51,7 @@ kotlin {
                 api(project(":core"))
                 api(project(":network"))
                 api(project(":ssl"))
+                api(project(":http"))
                 api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0")
             }
         }

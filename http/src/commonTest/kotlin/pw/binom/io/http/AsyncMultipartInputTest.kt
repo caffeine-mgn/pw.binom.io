@@ -36,7 +36,7 @@ class AsyncMultipartInputTest {
     @Test
     fun asyncMultipartInputTest() {
         val stream = ByteArrayOutput()
-        val mulipart = AsyncMultipartOutput(stream.asyncOutput())
+        val mulipart = AsyncMultipartOutput(stream.asyncOutput(), close = false)
         var exception: Throwable? = null
         val userName = Random.uuid().toString()
         val userPassword = Random.uuid().toString()
@@ -44,11 +44,11 @@ class AsyncMultipartInputTest {
         async {
             try {
                 //-------build test data-------//
-                mulipart.part("userName")
+                mulipart.formData("userName")
                 mulipart.utf8Appendable().append(userName)
-                mulipart.part("userPassword")
+                mulipart.formData("userPassword")
                 mulipart.utf8Appendable().append(userPassword)
-                mulipart.part("emptyData")
+                mulipart.formData("emptyData")
                 mulipart.asyncClose()
                 stream.trimToSize()
                 stream.data.clear()

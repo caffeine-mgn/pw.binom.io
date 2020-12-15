@@ -11,53 +11,53 @@ import pw.binom.ssl.SSLContext
 import pw.binom.ssl.SSLMethod
 import pw.binom.ssl.TrustManager
 
-class Client(val connect: AsyncChannel) : AsyncCloseable {
+class SMTPClient(val connect: AsyncChannel) : AsyncCloseable {
 
     val pool = ByteBufferPool(10)
-    val writer = connect.bufferedWriter(pool)
-    val reader = connect.bufferedReader(pool)
+    val writer = connect.bufferedAsciiInputWriter()
+    val reader = connect.bufferedAsciiInputReader()
 
     private var code = 0
     private var description: String? = null
     private var cmd: String? = null
+    private var msgStarted = true
 
     private suspend fun readCmd2() {
-        val txt = reader.readln() ?: throw IOException("Can't read smtp response")
-        println(">>$txt")
-        val items = txt.split(' ', limit = 2)
-        description = items.getOrNull(1)
-        val first = items[0]
-        if (first.length > 3) {
-            code = first.substring(0, 3).toInt()
-            cmd = first.substring(3)
-        } else {
-            code = first.toInt()
-            cmd = null
+        while (true) {
+            val txt = reader.readln() ?: throw IOException("Can't read smtp response")
+            if (txt.isBlank()) {
+                continue
+            }
+            val items = txt.split(' ', limit = 2)
+            description = items.getOrNull(1)
+            val first = items[0]
+            if (first.length > 3) {
+                code = first.substring(0, 3).toInt()
+                cmd = first.substring(3)
+            } else {
+                code = first.toInt()
+                cmd = null
+            }
+            break
         }
     }
 
-    private suspend fun start(fromAddr: String, login: String, password: String) {
+    private suspend fun start(sendFromDomain: String, login: String, password: String) {
         checkResponse(250, 220)
-
-        println("\n\nstart")
-        val fromAddr = "tlsys.org"
-        writer.append("EHLO ").append(fromAddr).append("\r\n")
+        writer.append("EHLO ").append(sendFromDomain).append("\r\n")
 
 
         writer.append("AUTH LOGIN\r\n")
         writer.flush()
         while (true) {
             readCmd2()
-            println("code: $code [$description]")
             if (code == 334) {
                 if (description == "VXNlcm5hbWU6") {
-                    println("send login.... [$login]")
                     writer.append(Base64.encode(login.encodeToByteArray())).append("\r\n")
                     writer.flush()
                     continue
                 }
                 if (description == "UGFzc3dvcmQ6") {
-                    println("send password....[$password]")
                     writer.append(Base64.encode(password.encodeToByteArray())).append("\r\n")
                     writer.flush()
                     continue
@@ -67,19 +67,49 @@ class Client(val connect: AsyncChannel) : AsyncCloseable {
                 throw IOException(description)
             }
             if (code == 235) {
-                println("Loggined!")
                 break
             }
         }
-        println("end\n\n")
     }
 
-    suspend fun send(to: String, from: String?, body: String) {
-        println("\n\nsend--start")
-        writer.append("MAIL FROM:<")
-        if (from != null) {
-            writer.append(from)
+//    suspend fun send(to: String, from: String?, body: String) {
+//        writer.append("MAIL FROM:<")
+//        if (from != null) {
+//            writer.append(from)
+//        }
+//        writer.append(">\r\n")
+//        writer.flush()
+//        checkResponse(250)
+//
+//        writer.append("RCPT TO:<").append(to).append(">\r\n")
+//        writer.flush()
+//        checkResponse(250)
+//
+//        writer.append("DATA\r\n")
+//        writer.flush()
+//        checkResponse(354)
+//
+//        writer.append(body.replace("\r\n.\r\n", "\r\n..\r\n")).append("\r\n.\r\n")
+//        writer.flush()
+//        checkResponse(250)
+//    }
+
+    suspend fun multipart(
+        from: String,
+        fromAlias: String?,
+        to: String,
+        toAlias: String?,
+        subject: String?,
+        msg: suspend (HtmlMultipartMessage) -> Unit
+    ) {
+        if (msgStarted) {
+            writer.append("RSET\r\n")
+            writer.flush()
+            checkResponse(250)
         }
+        msgStarted = true
+        writer.append("MAIL FROM:<")
+        writer.append(from)
         writer.append(">\r\n")
         writer.flush()
         checkResponse(250)
@@ -87,21 +117,25 @@ class Client(val connect: AsyncChannel) : AsyncCloseable {
         writer.append("RCPT TO:<").append(to).append(">\r\n")
         writer.flush()
         checkResponse(250)
-        println("send--end\n\n")
-
-        println("\n\ndata--start")
         writer.append("DATA\r\n")
         writer.flush()
         checkResponse(354)
-        println("data--end\n\n")
 
-        println("sending data - start")
-        writer.append(body.replace("\r\n.\r\n", "\r\n..\r\n")).append("\r\n.\r\n")
+        val m = HtmlMultipartMessage(writer)
+        m.start(
+            from = from,
+            fromAlias = fromAlias,
+            to = to,
+            toAlias = toAlias,
+            subject = subject
+        )
+        msg(m)
+        m.finish()
+        writer.append("\r\n.\r\n")
         writer.flush()
         checkResponse(250)
-//        while (true) readCmd2()
-        println("sending data - end")
     }
+
 
     private suspend fun checkResponse(cmd: Int) {
         readCmd2()
@@ -124,11 +158,11 @@ class Client(val connect: AsyncChannel) : AsyncCloseable {
             password: String,
             fromEmail: String,
             address: NetworkAddress
-        ): Client {
+        ): SMTPClient {
             val connect = dispatcher.tcpConnect(address)
-            val client = Client(connect)
+            val client = SMTPClient(connect)
             return try {
-                client.start(fromAddr = fromEmail, login = login, password = password)
+                client.start(sendFromDomain = fromEmail, login = login, password = password)
                 client
             } catch (e: Throwable) {
                 client.asyncClose()
@@ -146,14 +180,14 @@ class Client(val connect: AsyncChannel) : AsyncCloseable {
             trustManager: TrustManager,
             tlsHost: String = address.host,
             tlsPort: Int = address.port,
-        ): Client {
+        ): SMTPClient {
             val connect = dispatcher.tcpConnect(address)
             val sslContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
             val clientSession = sslContext.clientSession(tlsHost, tlsPort)
             val sslConnect = clientSession.asyncChannel(connect)
-            val client = Client(sslConnect)
+            val client = SMTPClient(sslConnect)
             return try {
-                client.start(fromAddr = fromEmail, login = login, password = password)
+                client.start(sendFromDomain = fromEmail, login = login, password = password)
                 client
             } catch (e: Throwable) {
                 client.asyncClose()
@@ -163,12 +197,9 @@ class Client(val connect: AsyncChannel) : AsyncCloseable {
     }
 
     override suspend fun asyncClose() {
-        println("Try close...")
         writer.append("QUIT\r\n")
         writer.flush()
-        println("wating quit")
         checkResponse(221, 250)
-        println("done!")
         connect.asyncClose()
     }
 }

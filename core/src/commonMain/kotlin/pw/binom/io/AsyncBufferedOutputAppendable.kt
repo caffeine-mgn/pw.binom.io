@@ -1,6 +1,9 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.AsyncOutput
+import pw.binom.ByteBuffer
+import pw.binom.CharBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
@@ -10,8 +13,9 @@ class AsyncBufferedOutputAppendable(
     charset: Charset,
     val output: AsyncOutput,
     private val pool: ObjectPool<ByteBuffer>,
-    charBufferSize: Int = DEFAULT_BUFFER_SIZE / 2
-) : AsyncAppendable, AsyncFlushable, AsyncCloseable {
+    charBufferSize: Int = DEFAULT_BUFFER_SIZE / 2,
+    val closeParent: Boolean = true
+) : AsyncWriter, AsyncFlushable, AsyncCloseable {
 
     val charBuffer = CharBuffer.alloc(charBufferSize)
     val encoder = charset.newEncoder()
@@ -36,7 +40,7 @@ class AsyncBufferedOutputAppendable(
 
     override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
         csq ?: return this
-        if (csq.length>1 && csq is String) {
+        if (csq.length > 1 && csq is String) {
             val array = csq.toCharArray()
             var pos = 0
             checkFlush()
@@ -82,17 +86,23 @@ class AsyncBufferedOutputAppendable(
     }
 
     override suspend fun asyncClose() {
+        flush()
         encoder.close()
+        if (closeParent) {
+            output.asyncClose()
+        }
     }
 }
 
 fun AsyncOutput.bufferedWriter(
     pool: ObjectPool<ByteBuffer>,
     charset: Charset = Charsets.UTF8,
-    charBufferSize: Int = 512
+    charBufferSize: Int = 512,
+    closeParent: Boolean = true
 ) = AsyncBufferedOutputAppendable(
     charset = charset,
     output = this,
     pool = pool,
-    charBufferSize = charBufferSize
+    charBufferSize = charBufferSize,
+    closeParent = closeParent
 )

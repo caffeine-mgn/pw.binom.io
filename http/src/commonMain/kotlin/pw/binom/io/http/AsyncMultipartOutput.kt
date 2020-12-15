@@ -23,7 +23,7 @@ private val BOUNDARY_CHARS = arrayOf(
 class AsyncMultipartOutput(
     val stream: AsyncOutput,
     val boundary: String = generateBoundary(),
-    private val close: Boolean = false
+    private val closeParent: Boolean = true
 ) : AsyncOutput {
     companion object {
         fun generateBoundary(minusCount: Int = 24, charCount: Int = 16): String {
@@ -46,10 +46,23 @@ class AsyncMultipartOutput(
         writer.append("--").append(boundary)
     }
 
-    suspend fun part(formName: String, headers: Map<String, List<String>> = emptyMap()) {
+    suspend fun formData(formName: String, headers: Map<String, List<String>> = emptyMap()) {
         if ("\r\n" in formName) {
             throw IllegalArgumentException("formName can't concate \\r\\n")
         }
+        internalPart(headers = headers)
+
+        writer.append("Content-Disposition: form-data; name=\"").append(formName).append("\"\r\n")
+        writer.append("\r\n")
+    }
+
+    suspend fun part(mimeType: String, headers: Map<String, List<String>> = emptyMap()) {
+        internalPart(headers = headers)
+        writer.append("Content-Type: ").append(mimeType).append("\r\n")
+        writer.append("\r\n")
+    }
+
+    private suspend fun internalPart(headers: Map<String, List<String>> = emptyMap()) {
 
         headers.forEach {
             if ("\r\n" in it.value)
@@ -63,27 +76,25 @@ class AsyncMultipartOutput(
         if (!first) {
             writer.append("\r\n")
         }
+        first = false
         printBoundary()
         writer.append("\r\n")
-
-        writer.append("Content-Disposition: form-data; name=\"").append(formName).append("\"\r\n")
         headers.forEach {
             it.value.forEach { value ->
                 writer.append(it.key).append(": ").append(value).append("\r\n")
             }
         }
-        writer.append("\r\n")
-        first = false
     }
 
     override suspend fun write(data: ByteBuffer): Int {
+        writer.flush()
         if (first)
             throw IllegalStateException("No defined part")
         return stream.write(data)
     }
 
     override suspend fun flush() {
-        stream.flush()
+        writer.flush()
     }
 
     override suspend fun asyncClose() {
@@ -91,8 +102,9 @@ class AsyncMultipartOutput(
             writer.append("\r\n")
             printBoundary()
             writer.append("--\r\n")
+            writer.flush()
         }
-        if (close) {
+        if (closeParent) {
             stream.asyncClose()
         }
     }

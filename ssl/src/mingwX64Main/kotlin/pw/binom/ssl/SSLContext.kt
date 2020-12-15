@@ -71,10 +71,11 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
         val ssl = SSL_new(sslCtx)!!
         val connect = "$host:$port"
         if (SSL_set1_host(ssl, connect) <= 0) {
-            TODO("SSL_set1_host error")
+            throw RuntimeException("Can't set SSL host to [$connect]")
         }
-        if (SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name.convert(), connect.cstr) <= 0)
-            TODO("SSL_ctrl error")
+        if (SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name.convert(), connect.cstr) <= 0) {
+            throw RuntimeException("Can't set SSL tlsext_hostname to [$connect]")
+        }
         return SSLSession(sslCtx, ssl, true)
     }
 
