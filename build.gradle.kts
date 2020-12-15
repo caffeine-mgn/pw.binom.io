@@ -1,9 +1,9 @@
 buildscript {
-    val kotlin_version = "1.4.20"
+    val kotlin_version = "1.4.21"
     extra.apply {
         set("kotlin_version", kotlin_version)
         set("network_version", pw.binom.Versions.LIB_VERSION)
-        set("serialization_version", "1.0.0-RC")
+        set("serialization_version", "1.0.1")
     }
 
     repositories {
