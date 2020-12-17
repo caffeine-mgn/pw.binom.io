@@ -26,7 +26,15 @@ interface FileSystem {
     }
 
     val isSupportUserSystem: Boolean
-    suspend fun <T> useUser(user: Any, func: suspend () -> T): T
+
+    /**
+     * If [isSupportUserSystem]==[false], then [user] not affected to execution of [func]
+     *
+     * @param user User for current execution of [func]
+     * @param func Lambda function for run with user [user]
+     * @return Returns result of [func]
+     */
+    suspend fun <T> useUser(user: Any?, func: suspend () -> T): T
 
     //    suspend fun rewriteFile(user: U, path: String): AsyncOutputStream
     suspend fun mkdir(path: String): Entity?

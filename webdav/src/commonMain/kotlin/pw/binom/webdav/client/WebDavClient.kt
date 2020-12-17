@@ -19,7 +19,14 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
     override val isSupportUserSystem: Boolean
         get() = true
 
-    override suspend fun <T> useUser(user: Any, func: suspend () -> T): T {
+    /**
+     * Set user for current execution of [func]
+     * @param user must be instance of [WebAuthAccess]
+     */
+    override suspend fun <T> useUser(user: Any?, func: suspend () -> T): T {
+        if (user == null) {
+            return func()
+        }
         require(user is WebAuthAccess)
         return suspendCoroutine { con ->
             func.startCoroutine(

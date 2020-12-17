@@ -42,7 +42,7 @@ suspend fun FileSystem.getEntitiesWithDepth(path: String, depth: Int): List<File
     return out
 }
 
-abstract class AbstractWebDavHandler<U : Any> : Handler {
+abstract class AbstractWebDavHandler<U> : Handler {
 
     protected abstract val bufferPool: ObjectPool<ByteBuffer>
 

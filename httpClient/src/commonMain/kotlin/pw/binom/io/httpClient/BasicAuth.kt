@@ -6,6 +6,6 @@ import pw.binom.base64.Base64
 import pw.binom.io.http.BasicAuth
 import kotlin.jvm.JvmName
 
-fun BasicAuth.set(req: AsyncHttpClient.UrlConnect) {
-    req.addHeader("Authorization", "Basic ${Base64.encode("$login:$password".encodeToByteArray())}")
+fun AsyncHttpClient.UrlConnect.use(auth:BasicAuth){
+    addHeader("Authorization", "Basic ${Base64.encode("${auth.login}:${auth.password}".encodeToByteArray())}")
 }
