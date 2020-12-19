@@ -1,3 +1,5 @@
+import java.util.TimeZone
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -27,18 +29,6 @@ kotlin {
         }
     }
 
-    linuxMips32 {
-        binaries {
-            staticLib()
-        }
-    }
-
-    linuxMipsel32 {
-        binaries {
-            staticLib()
-        }
-    }
-
     mingwX64 { // Use your target instead.
         binaries {
             staticLib()
@@ -56,7 +46,7 @@ kotlin {
             framework()
         }
     }
-    js(BOTH){
+    js(BOTH) {
         browser()
         nodejs()
     }
@@ -72,34 +62,24 @@ kotlin {
             dependsOn(commonMain)
         }
         val linuxArm64Main by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
-        val linuxMips32Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
-        }
-
-        val linuxMipsel32Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
-        }
-
         val mingwX64Main by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
         }
         val mingwX86Main by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
             kotlin.srcDir("src/mingwX64Main/kotlin")
         }
 
         val macosX64Main by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
@@ -120,5 +100,27 @@ kotlin {
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
+    }
+}
+
+fun makeTime() {
+    val dateDir = file("$buildDir/tmp-date")
+    dateDir.mkdirs()
+    val tzFile = file("$dateDir/currentTZ")
+    tzFile.delete()
+    tzFile.writeText((TimeZone.getDefault().rawOffset / 1000 / 60).toString())
+}
+
+tasks {
+    this["mingwX64Test"].doFirst {
+        makeTime()
+    }
+
+    this["jvmTest"].doFirst {
+        makeTime()
+    }
+
+    this["linuxX64Test"].doFirst {
+        makeTime()
     }
 }

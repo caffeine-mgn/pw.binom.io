@@ -10,9 +10,9 @@ import kotlin.experimental.xor
 internal object InternalProtocolUtils {
 
     fun buildAuthPacketData(
-            username: String,
-            password: String,
-            salt: String
+        username: String,
+        password: String,
+        salt: String
     ): Map<Any, Any?> {
         val sha1 = Sha1()
 
@@ -135,20 +135,31 @@ internal object InternalProtocolUtils {
         out.write(value)
     }
 
-    private fun writeValue(value: List<Any?>, buffer: ByteBuffer, out: Output) {
+    private fun writeListSize(size: Int, buffer: ByteBuffer, out: Output) {
         when {
-            value.size <= MAX_4BIT -> {
-                out.writeByte(buffer, (value.size or (MP_FIXARRAY.toInt() and 0xFF)).toByte());
+            size <= MAX_4BIT -> {
+                out.writeByte(buffer, (size or (MP_FIXARRAY.toInt() and 0xFF)).toByte());
             }
-            value.size <= MAX_16BIT -> {
+            size <= MAX_16BIT -> {
                 out.writeByte(buffer, MP_ARRAY16);
-                out.writeShort(buffer, value.size.toShort())
+                out.writeShort(buffer, size.toShort())
             }
             else -> {
                 out.writeByte(buffer, MP_ARRAY32);
-                out.writeInt(buffer, value.size)
+                out.writeInt(buffer, size)
             }
         }
+    }
+
+    private fun writeValue(value: Array<*>, buffer: ByteBuffer, out: Output) {
+        writeListSize(value.size, buffer, out)
+        value.forEach {
+            writeValue(it, buffer, out)
+        }
+    }
+
+    private fun writeValue(value: List<Any?>, buffer: ByteBuffer, out: Output) {
+        writeListSize(value.size, buffer, out)
         value.forEach {
             writeValue(it, buffer, out)
         }
@@ -169,6 +180,7 @@ internal object InternalProtocolUtils {
             is ByteArray -> write(value, buffer, out)
             is Pair<*, *> -> writeValue(listOf(value.first, value.second), buffer, out)
             is List<*> -> writeValue(value, buffer, out)
+            is Array<*> -> writeValue(value, buffer, out)
             is Long -> write(value, buffer, out)
             is Int -> write(value.toLong(), buffer, out)
             is Short -> write(value.toLong(), buffer, out)
@@ -252,7 +264,7 @@ internal object InternalProtocolUtils {
     }
 
     suspend fun unpackString(size: Int, buf: ByteBuffer, input: AsyncInput): String =
-            unpackBytes(size, buf, input).decodeToString()
+        unpackBytes(size, buf, input).decodeToString()
 
     suspend fun unpackBytes(size: Int, buf: ByteBuffer, input: AsyncInput): ByteArray {
         if (size < 0) {
@@ -290,54 +302,54 @@ internal object InternalProtocolUtils {
             MP_UINT32, MP_INT32 -> input.readInt(buf)
             MP_UINT64, MP_INT64 -> input.readLong(buf)
             MP_ARRAY16 -> unpackListAsync(
-                    size = input.readShort(buf).toInt() and MAX_16BIT,
-                    buf = buf,
-                    input = input
+                size = input.readShort(buf).toInt() and MAX_16BIT,
+                buf = buf,
+                input = input
             )
             MP_ARRAY32 -> unpackListAsync(
-                    size = input.readInt(buf),
-                    buf = buf,
-                    input = input
+                size = input.readInt(buf),
+                buf = buf,
+                input = input
             )
             MP_MAP16 -> unpackMap(
-                    size = input.readShort(buf).toInt() and MAX_16BIT,
-                    buf = buf,
-                    input = input
+                size = input.readShort(buf).toInt() and MAX_16BIT,
+                buf = buf,
+                input = input
             )
             MP_MAP32 -> unpackMap(
-                    size = input.readInt(buf),
-                    buf = buf,
-                    input = input
+                size = input.readInt(buf),
+                buf = buf,
+                input = input
             )
             MP_STR8 -> unpackString(
-                    size = input.readByte(buf).toInt() and MAX_8BIT,
-                    buf = buf,
-                    input = input
+                size = input.readByte(buf).toInt() and MAX_8BIT,
+                buf = buf,
+                input = input
             )
             MP_STR16 -> unpackString(
-                    size = input.readShort(buf).toInt() and MAX_16BIT,
-                    buf = buf,
-                    input = input
+                size = input.readShort(buf).toInt() and MAX_16BIT,
+                buf = buf,
+                input = input
             )
             MP_STR32 -> unpackString(
-                    size = input.readInt(buf),
-                    buf = buf,
-                    input = input
+                size = input.readInt(buf),
+                buf = buf,
+                input = input
             )
             MP_BIN8 -> unpackBytes(
-                    size = input.readByte(buf).toInt() and MAX_8BIT,
-                    buf = buf,
-                    input = input
+                size = input.readByte(buf).toInt() and MAX_8BIT,
+                buf = buf,
+                input = input
             )
             MP_BIN16 -> unpackBytes(
-                    size = input.readShort(buf).toInt() and MAX_16BIT,
-                    buf = buf,
-                    input = input
+                size = input.readShort(buf).toInt() and MAX_16BIT,
+                buf = buf,
+                input = input
             )
             MP_BIN32 -> unpackBytes(
-                    size = input.readInt(buf),
-                    buf = buf,
-                    input = input
+                size = input.readInt(buf),
+                buf = buf,
+                input = input
             )
             MP_FIXEXT -> {
                 return when (val exType = input.readByte(buf)) {
@@ -349,9 +361,21 @@ internal object InternalProtocolUtils {
                 val typeInt = (type.toInt() and 0xFF)
                 return when {
                     (typeInt >= MP_NEGATIVE_FIXNUM_INT && typeInt <= MP_NEGATIVE_FIXNUM_INT + MAX_5BIT) || typeInt <= MAX_7BIT -> typeInt
-                    typeInt >= MP_FIXARRAY_INT && typeInt <= MP_FIXARRAY_INT + MAX_4BIT -> unpackListAsync(typeInt - MP_FIXARRAY_INT, buf, input)
-                    typeInt.toUInt() >= MP_FIXMAP_INT.toUInt() && typeInt.toUInt() <= MP_FIXMAP_INT.toUInt() + MAX_4BIT.toUInt() -> unpackMap(typeInt - MP_FIXMAP_INT, buf, input)
-                    typeInt >= MP_FIXSTR_INT && typeInt <= MP_FIXSTR_INT + MAX_5BIT -> unpackString(typeInt - MP_FIXSTR_INT, buf, input)
+                    typeInt >= MP_FIXARRAY_INT && typeInt <= MP_FIXARRAY_INT + MAX_4BIT -> unpackListAsync(
+                        typeInt - MP_FIXARRAY_INT,
+                        buf,
+                        input
+                    )
+                    typeInt.toUInt() >= MP_FIXMAP_INT.toUInt() && typeInt.toUInt() <= MP_FIXMAP_INT.toUInt() + MAX_4BIT.toUInt() -> unpackMap(
+                        typeInt - MP_FIXMAP_INT,
+                        buf,
+                        input
+                    )
+                    typeInt >= MP_FIXSTR_INT && typeInt <= MP_FIXSTR_INT + MAX_5BIT -> unpackString(
+                        typeInt - MP_FIXSTR_INT,
+                        buf,
+                        input
+                    )
                     else -> throw IOException("Unknown data type: 0x${type.toUByte().toString(16)}")
                 }
             }

@@ -25,17 +25,11 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     companion object {
         suspend fun connect(
             manager: NetworkDispatcher,
-            host: String,
-            port: Int,
+            address: NetworkAddress,
             user: String?,
             password: String?
         ): TarantoolConnection {
-            val con = manager.tcpConnect(
-                NetworkAddress.Immutable(
-                    host = host,
-                    port = port
-                )
-            )
+            val con = manager.tcpConnect(address)
             val buf = ByteBuffer.alloc(64)
             try {
                 con.readFully(buf)
@@ -246,7 +240,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         return ResultSet(result.body)
     }
 
-    suspend fun eval(lua: String, args: List<Any?> = emptyList()): Any? {
+    suspend fun eval(lua: String, args: List<Any?>): Any? {
         invalidateSchema()
         val result = this.sendReceive(
             code = Code.EVAL,
@@ -260,7 +254,34 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         return result.data
     }
 
+    suspend fun eval(lua: String, vararg args: Any?): Any? {
+        invalidateSchema()
+        val result = this.sendReceive(
+            code = Code.EVAL,
+            body = mapOf(
+                Key.EXPRESSION.id to lua,
+                Key.TUPLE.id to args
+            ),
+            schemaId = schemaVersion
+        )
+        result.assertException()
+        return result.data
+    }
+
+
     suspend fun call(function: String, args: List<Any?>): Any? {
+        val result = this.sendReceive(
+            code = Code.CALL,
+            body = mapOf(
+                Key.FUNCTION.id to function,
+                Key.TUPLE.id to args
+            )
+        )
+        result.assertException()
+        return result.data
+    }
+
+    suspend fun call(function: String, vararg args: Any?): Any? {
         val result = this.sendReceive(
             code = Code.CALL,
             body = mapOf(

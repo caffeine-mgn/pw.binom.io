@@ -27,6 +27,18 @@ kotlin {
         }
     }
 
+    linuxMips32 {
+        binaries {
+            staticLib()
+        }
+    }
+
+    linuxMipsel32 {
+        binaries {
+            staticLib()
+        }
+    }
+
     mingwX64 { // Use your target instead.
         binaries {
             staticLib()
@@ -44,7 +56,7 @@ kotlin {
             framework()
         }
     }
-    js(BOTH){
+    js(BOTH) {
         browser()
         nodejs()
     }
@@ -65,6 +77,15 @@ kotlin {
             kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxArm32HfpMain by getting {
+            dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
+        }
+        val linuxMips32Main by getting {
+            dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
+        }
+
+        val linuxMipsel32Main by getting {
             dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
         }

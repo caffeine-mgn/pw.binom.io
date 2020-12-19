@@ -128,7 +128,10 @@ open class HttpServer(
         binded += connect
         async {
             while (true) {
-                clientConnected(connect.accept() ?: continue, manager)
+                val client = connect.accept() ?: continue
+                async {
+                    clientConnected(client, manager)
+                }
             }
         }
     }
