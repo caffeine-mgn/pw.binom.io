@@ -193,11 +193,10 @@ class PostRequestTest {
         println("#3")
     }*/
 
-    @Ignore
     @Test
     fun testDownload() {
         val nd = NetworkDispatcher()
-        val buf = ByteBufferPool(10)
+        val buf = ByteBufferPool(10, (DEFAULT_BUFFER_SIZE * 10).toUInt())
         val server = HttpServer(
             manager = nd,
             handler = object : Handler {
