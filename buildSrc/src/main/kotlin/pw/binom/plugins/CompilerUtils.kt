@@ -35,6 +35,11 @@ val targetInfoMap = mapOf(
                 targetName = "i686-w64-mingw32",
                 sysRoot = konanDeps.resolve("msys2-mingw-w64-i686-clang-llvm-lld-compiler_rt-8.0.1")
         ),
+        KonanTarget.LINUX_MIPSEL32 to TargetInfo(
+                targetName = "mipsel-unknown-linux-gnu",
+                sysRoot = konanDeps.resolve("target-sysroot-2-mipsel"),
+                clangArgs = listOf("-mfpu=vfp", "-mfloat-abi=hard")
+        ),
         KonanTarget.LINUX_ARM32_HFP to TargetInfo(
                 targetName = "armv6-unknown-linux-gnueabihf",
                 sysRoot = konanDeps.resolve("target-sysroot-2-raspberrypi"),

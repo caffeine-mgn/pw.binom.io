@@ -56,7 +56,7 @@ kotlin {
             framework()
         }
     }
-    js(BOTH){
+    js(BOTH) {
         browser()
         nodejs()
     }
@@ -66,6 +66,10 @@ kotlin {
             dependencies {
                 api(kotlin("stdlib-common"))
             }
+        }
+
+        val jsMain by getting {
+            dependsOn(commonMain)
         }
 
         val linuxX64Main by getting {
@@ -83,12 +87,12 @@ kotlin {
 
         val linuxMips32Main by getting {
             dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val linuxMipsel32Main by getting {
             dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val mingwX64Main by getting {
