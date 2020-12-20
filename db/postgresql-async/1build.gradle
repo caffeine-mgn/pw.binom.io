@@ -1,39 +1,46 @@
+import com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerStopContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
+
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: 'com.bmuschko.docker-remote-api'
 apply plugin: pw.binom.plugins.BinomPublishPlugin
 
 kotlin {
 
-    linuxX64 { // Use your target instead.
+    linuxX64 {
         binaries {
             staticLib()
         }
     }
 
-    linuxArm32Hfp { // Use your target instead.
+    linuxArm32Hfp {
         binaries {
             staticLib()
         }
     }
 
-    mingwX64 { // Use your target instead.
+    macosX64 {
         binaries {
             staticLib()
         }
     }
 
-//    mingwX86 { // Use your target instead.
+
+    mingwX64 {
+        binaries {
+            staticLib()
+        }
+    }
+
+//    mingwX86 {
 //        binaries {
 //            staticLib()
 //        }
 //    }
 
-    macosX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
-
-    jvm{
+    jvm {
         compilations.all {
             kotlinOptions {
                 jvmTarget = '1.8'
@@ -46,10 +53,10 @@ kotlin {
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
-                api project(":core")
                 api project(":db")
                 api project(":date")
                 api project(":network")
+                api project(":ssl")
             }
         }
 
@@ -63,7 +70,6 @@ kotlin {
         nativeMain {
             dependencies {
                 dependsOn commonMain
-                api project(":concurrency")
             }
         }
 
@@ -75,38 +81,32 @@ kotlin {
 
         linuxArm32HfpMain {
             dependencies {
-                dependsOn nativeMain
+                dependsOn linuxX64Main
             }
         }
 
         macosX64Main {
             dependencies {
-                dependsOn nativeMain
+                dependsOn linuxX64Main
             }
         }
 
         mingwX64Main {
             dependencies {
-                dependsOn nativeMain
+                dependsOn linuxX64Main
             }
         }
 
 //        mingwX86Main {
 //            dependencies {
-//                dependsOn nativeMain
+//                dependsOn linuxX64Main
 //            }
 //        }
 
-        jsMain {
-            dependencies {
-                dependsOn commonMain
-            }
-        }
-
         jvmMain {
             dependencies {
-                dependsOn commonMain
                 api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
             }
         }
 
@@ -115,6 +115,7 @@ kotlin {
                 implementation kotlin('test-junit')
             }
         }
+
         sourceSets.all {
             languageSettings {
                 progressiveMode = true
@@ -122,3 +123,42 @@ kotlin {
         }
     }
 }
+
+def postgresContainerId = UUID.randomUUID().toString()
+
+task createPostgres(type: DockerCreateContainer) {
+    image = 'postgres:10'
+    imageId = 'postgres:10'
+    envVars['POSTGRES_USER'] = 'postgres'
+    envVars['POSTGRES_PASSWORD'] = 'postgres'
+    withEnvVar('POSTGRES_DB', 'test')
+    hostConfig.portBindings=['127.0.0.1:25331:5432']
+    containerId = postgresContainerId
+    containerName = postgresContainerId
+}
+
+task startPostgres(type: DockerStartContainer) {
+    dependsOn createPostgres
+    targetContainerId postgresContainerId
+}
+
+task stopPostgres(type: DockerStopContainer){
+    targetContainerId(postgresContainerId)
+}
+
+task destoryPostgres(type:DockerRemoveContainer){
+    dependsOn stopPostgres
+    targetContainerId(postgresContainerId)
+}
+
+jvmTest.dependsOn(startPostgres)
+jvmTest.finalizedBy(destoryPostgres)
+
+linuxX64Test.dependsOn(startPostgres)
+linuxX64Test.finalizedBy(destoryPostgres)
+
+mingwX64Test.dependsOn(startPostgres)
+mingwX64Test.finalizedBy(destoryPostgres)
+
+macosX64Test.dependsOn(startPostgres)
+macosX64Test.finalizedBy(destoryPostgres)
