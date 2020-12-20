@@ -26,7 +26,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         suspend fun connect(
             manager: NetworkDispatcher,
             address: NetworkAddress,
-            user: String?,
+            userName: String?,
             password: String?
         ): TarantoolConnection {
             val con = manager.tcpConnect(address)
@@ -40,11 +40,11 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                 buf.flip()
                 val salt = buf.asUTF8String().trim()
                 val connection = TarantoolConnection(ThreadRef(), con)
-                if (user != null && password != null) {
+                if (userName != null && password != null) {
                     connection.sendReceive(
                         Code.AUTH,
                         null,
-                        InternalProtocolUtils.buildAuthPacketData(user, password, salt)
+                        InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
                     ).assertException()
                 }
                 return connection

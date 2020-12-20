@@ -26,7 +26,7 @@ class PGConnection private constructor(
         const val TYPE = "PostgreSQL"
         suspend fun connect(
             address: NetworkAddress,
-            applicationName: String = "Binom Async Client",
+            applicationName: String? = "Binom Async Client",
             manager: NetworkDispatcher,
             userName: String,
             password: String,
@@ -40,7 +40,6 @@ class PGConnection private constructor(
                 userName = userName,
                 password = password
             )
-            val appName = applicationName.replace("\\", "\\\\").replace("'", "\\'")
             pgConnection.sendFirstMessage(
                 mapOf(
                     "user" to userName,
@@ -59,7 +58,10 @@ class PGConnection private constructor(
                     break
                 }
             }
-            val mg = pgConnection.sendQuery("SET application_name = E'$appName'")
+            if (applicationName != null) {
+                val appName = applicationName?.replace("\\", "\\\\")?.replace("'", "\\'")
+                pgConnection.sendQuery("SET application_name = E'$appName'")
+            }
             while (true) {
                 val msg = pgConnection.readDesponse()
                 if (msg is ReadyForQueryMessage) {

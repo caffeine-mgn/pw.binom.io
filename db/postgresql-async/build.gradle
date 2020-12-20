@@ -133,7 +133,6 @@ task createPostgres(type: DockerCreateContainer) {
     envVars['POSTGRES_PASSWORD'] = 'postgres'
     withEnvVar('POSTGRES_DB', 'test')
     hostConfig.portBindings=['127.0.0.1:25331:5432']
-//    new DockerCreateContainer.ExposedPort("25331",[5432])
     containerId = postgresContainerId
     containerName = postgresContainerId
 }

@@ -2,21 +2,19 @@ package pw
 
 import pw.binom.async
 import pw.binom.db.tarantool.*
-import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
 import kotlin.test.Test
-
-val String.ff: String
-    get() = replace("'", "\\'")
 
 class FF {
 
     @Test
     fun test() {
-        val manager = SocketNIOManager()
+        val manager = NetworkDispatcher()
 
         async {
             try {
-                val client = TarantoolConnection.connect(manager, "127.0.0.1", 3301, "server", "server")
+                val client = TarantoolConnection.connect(manager, NetworkAddress.Immutable("127.0.0.1", 3301), "server", "server")
                 async {
                     try {
                         client.ping()
@@ -107,7 +105,7 @@ class FF {
         }
 
         while (true) {
-            manager.update(1000)
+            manager.select(1000)
         }
     }
 }
