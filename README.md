@@ -23,7 +23,7 @@ Library contains next parts:<br>
 * [WebDav](webdav)
 * [Process API](process)
 * [SSL](ssl)
-* [SMTP](smtp)
+* [SMTP Client](smtp)
 * [Concurrency](concurrency)
 * MQ Client
     * [Nats](mq/nats)
