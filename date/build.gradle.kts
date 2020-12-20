@@ -70,6 +70,7 @@ kotlin {
 
         val linuxX64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
         val linuxArm64Main by getting {
             dependsOn(commonMain)
