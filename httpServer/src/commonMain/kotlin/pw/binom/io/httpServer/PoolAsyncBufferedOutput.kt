@@ -15,8 +15,8 @@ class PoolAsyncBufferedOutput(bufferSize: Int) : AbstractAsyncBufferedOutput() {
         buffer.clear()
     }
 
-    override suspend fun close() {
-        super.close()
+    override suspend fun asyncClose() {
+        super.asyncClose()
         buffer.close()
     }
 }

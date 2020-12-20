@@ -7,28 +7,28 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import java.nio.CharBuffer as JCharBuffer
 
-actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Closeable {
+actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): CharBuffer =
-                CharBuffer(JCharBuffer.allocate(size))
+            CharBuffer(JCharBuffer.allocate(size))
 
         actual fun wrap(chars: CharArray): CharBuffer =
-                CharBuffer(JCharBuffer.wrap(chars))
+            CharBuffer(JCharBuffer.wrap(chars))
     }
 
-    actual val capacity: Int
+    override val capacity: Int
         get() = native.capacity()
 
-    actual val remaining: Int
+    override val remaining: Int
         get() = native.remaining()
 
-    actual var position: Int
+    override var position: Int
         get() = native.position()
         set(value) {
             native.position(value)
         }
 
-    actual var limit: Int
+    override var limit: Int
         get() = native.limit()
         set(value) {
             native.limit(value)
@@ -37,21 +37,21 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         get() = capacity
 
     actual override operator fun get(index: Int): Char =
-            native.get(index)
+        native.get(index)
 
     actual override fun subSequence(startIndex: Int, endIndex: Int): CharBuffer =
-            CharBuffer(native.subSequence(startIndex, endIndex))
+        CharBuffer(native.subSequence(startIndex, endIndex))
 
     override fun close() {
     }
 
     actual override fun equals(other: Any?): Boolean =
-            when (other) {
-                null -> false
-                is String -> other == toString()
-                is CharBuffer -> other.native == native
-                else -> false
-            }
+        when (other) {
+            null -> false
+            is String -> other == toString()
+            is CharBuffer -> other.native == native
+            else -> false
+        }
 
     actual operator fun set(index: Int, value: Char) {
         native.put(index, value)
@@ -78,12 +78,14 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         return this
     }
 
-    actual fun clear(): CharBuffer {
+    override fun clear() {
         native.clear()
         position = 0
         limit = capacity
-        return this
     }
+
+    override val elementSizeInBytes: Int
+        get() = Char.SIZE_BYTES
 
     actual override fun toString(): String {
         val p = position
@@ -92,8 +94,12 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         return result
     }
 
-    actual fun flip() {
+    override fun flip() {
         native.flip()
+    }
+
+    override fun compact() {
+        native.compact()
     }
 
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
@@ -125,6 +131,27 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
             new.limit = minOf(limit, newSize)
         }
         return new
+    }
+
+    actual fun subString(startIndex: Int, endIndex: Int): String {
+        if (endIndex > capacity) {
+            throw IndexOutOfBoundsException("capacity: [$capacity], startIndex: [$startIndex], endIndex: [$endIndex]")
+        }
+        val len = minOf(capacity, endIndex - startIndex)
+        if (len == 0) {
+            return ""
+        }
+        val array = CharArray(len)
+        native.hold(startIndex, len) {
+            it.get(array)
+        }
+        return array.concatToString()
+    }
+
+    actual fun write(array: CharArray, offset: Int, length: Int): Int {
+        val len = minOf(remaining, minOf(array.size - offset, length))
+        native.put(array, offset, len)
+        return len
     }
 }
 

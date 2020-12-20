@@ -13,17 +13,12 @@ import kotlin.random.Random
 /**
  * A part of memory. Also contents current read/write state
  */
-expect class ByteBuffer : Input, Output, Closeable {
+expect class ByteBuffer : Input, Output, Closeable, Buffer {
     companion object {
         fun alloc(size: Int): ByteBuffer
     }
 
     fun realloc(newSize: Int): ByteBuffer
-    fun flip()
-    val remaining: Int
-    var position: Int
-    var limit: Int
-    val capacity: Int
     fun skip(length: Long): Long
     fun get(): Byte
     fun put(value: Byte)
@@ -33,10 +28,8 @@ expect class ByteBuffer : Input, Output, Closeable {
      * Returns last byte. Work as [get] but don'tm move position when he reads
      */
     fun peek(): Byte
-    fun compact()
     fun reset(position: Int, length: Int): ByteBuffer
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
-    fun clear()
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
     fun toByteArray(): ByteArray
@@ -154,6 +147,15 @@ inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
     val lim = limit
     for (it in pos until lim)
         func(this[it])
+}
+
+inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
+    val pos = position
+    val lim = limit
+    val output = ArrayList<T>(remaining)
+    for (it in pos until lim)
+        output += func(this[it])
+    return output
 }
 
 fun ByteArray.input() = ByteBuffer.wrap(this)

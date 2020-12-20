@@ -2,26 +2,26 @@ package pw.binom
 
 import pw.binom.io.Closeable
 
-actual class CharBuffer private constructor(var chars: CharArray) : CharSequence, Closeable {
+actual class CharBuffer private constructor(var chars: CharArray) : CharSequence, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): CharBuffer =
-                CharBuffer(CharArray(size))
+            CharBuffer(CharArray(size))
 
         actual fun wrap(chars: CharArray): CharBuffer =
-                CharBuffer(chars.copyOf())
+            CharBuffer(chars.copyOf())
     }
 
-    actual val capacity: Int
+    override val capacity: Int
         get() = chars.size
-    actual val remaining: Int
+    override val remaining: Int
         get() = limit - position
-    actual var position: Int = 0
+    override var position: Int = 0
         set(value) {
             require(position >= 0)
             require(position <= limit)
             field = value
         }
-    actual var limit: Int = 0
+    override var limit: Int = 0
         set(value) {
             if (value > capacity || value < 0) throw createLimitException(value)
             field = value
@@ -32,20 +32,17 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         get() = chars.size
 
     actual fun realloc(newSize: Int): CharBuffer {
-        val new = CharArray(newSize)
-        chars.copyInto(new, 0, minOf(capacity, newSize))
-        val result = CharBuffer(new)
+        val result = wrap(chars.copyOfRange(0, minOf(capacity, newSize)))
         result.limit = limit
         result.position = position
         return result
     }
 
     actual fun get(): Char =
-            chars[nextPutIndex()]
+        chars[nextPutIndex()]
 
-    actual override fun subSequence(startIndex: Int, endIndex: Int): CharBuffer {
-        TODO("Not yet implemented")
-    }
+    actual override fun subSequence(startIndex: Int, endIndex: Int): CharBuffer =
+        wrap(chars.copyOfRange(startIndex, endIndex))
 
     actual operator fun set(index: Int, value: Char) {
         chars[index] = value
@@ -68,11 +65,13 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         return this
     }
 
-    actual fun clear(): CharBuffer {
+    override fun clear() {
         limit = capacity
         position = 0
-        return this
     }
+
+    override val elementSizeInBytes: Int
+        get() = Char.SIZE_BYTES
 
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, length)
@@ -80,16 +79,27 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         return len
     }
 
-    actual fun flip() {
+    override fun flip() {
         limit = position
         position = 0
     }
 
+    override fun compact() {
+        if (remaining > 0) {
+            val size = remaining
+            chars.copyInto(chars, 0, position, position + size)
+            position = size
+            limit = capacity
+        } else {
+            clear()
+        }
+    }
+
     actual override fun get(index: Int): Char =
-            chars[index]
+        chars[index]
 
     override fun close() {
-        TODO("Not yet implemented")
+
     }
 
     private fun nextPutIndex(): Int {
@@ -105,6 +115,18 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
             "newLimit < 0: ($newLimit < 0)"
         }
         return IllegalArgumentException(msg)
+    }
+
+    actual fun subString(startIndex: Int, endIndex: Int): String =
+        chars.concatToString(startIndex, endIndex)
+
+    actual fun write(array: CharArray, offset: Int, length: Int): Int {
+        val len = minOf(remaining, minOf(array.size - offset, length))
+        for (i in 0 until (len)) {
+            chars[position + i] = array[offset + i]
+        }
+        position += len
+        return len
     }
 
 }

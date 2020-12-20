@@ -88,7 +88,7 @@ internal class UrlRequestImpl(
 
     override suspend fun response(): AsyncHttpClient.UrlResponse {
         dataSent = true
-        ff.close()
+        ff.asyncClose()
 
 //        channel.channel.writeByte(0x0D)
 //        channel.channel.writeByte(0x0A)
@@ -113,10 +113,10 @@ internal class UrlRequestImpl(
         ff.flush()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         checkSent()
-        ff.close()
-        channel.close()
+        ff.asyncClose()
+        channel.asyncClose()
     }
 
 }

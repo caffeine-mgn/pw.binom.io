@@ -41,13 +41,13 @@ open class AsyncInflateInput(
         return l - dest.remaining
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         if (usesDefaultInflater)
             inflater.end()
         inflater.close()
         buf2.close()
         if (closeStream) {
-            stream.close()
+            stream.asyncClose()
         }
     }
 

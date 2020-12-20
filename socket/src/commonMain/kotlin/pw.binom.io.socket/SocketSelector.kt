@@ -27,41 +27,42 @@ expect class SocketSelector() : Closeable {
 /**
  * Returns [SocketSelector.SelectorKey] Queue
  */
-fun SocketSelector.asQueue(timeout: Int? = 1): Queue<SocketSelector.SelectorKey> = object : Queue<SocketSelector.SelectorKey> {
-    override val size: Int
-        get() {
-            checkFull()
-            return list.size
-        }
+fun SocketSelector.asQueue(timeout: Int? = 1): Queue<SocketSelector.SelectorKey> =
+    object : Queue<SocketSelector.SelectorKey> {
+        override val size: Int
+            get() {
+                checkFull()
+                return list.size
+            }
 
-    override fun pop(dist: PopResult<SocketSelector.SelectorKey>) {
-        if (isEmpty) {
-            dist.clear()
-        } else {
-            dist.set(pop())
-        }
-    }
-
-    private val list = Stack<SocketSelector.SelectorKey>().asFiFoQueue()
-
-    private fun checkFull() {
-        if (list.isEmpty) {
-            this@asQueue.process(timeout) {
-                list.push(it)
-                true
+        override fun pop(dist: PopResult<SocketSelector.SelectorKey>) {
+            if (isEmpty) {
+                dist.clear()
+            } else {
+                dist.set(pop())
             }
         }
-    }
 
-    override val isEmpty: Boolean
-        get() {
-            checkFull()
-            return list.isEmpty
+        private val list = Stack<SocketSelector.SelectorKey>().asFiFoQueue()
+
+        private fun checkFull() {
+            if (list.isEmpty) {
+                this@asQueue.process(timeout) {
+                    list.push(it)
+                    true
+                }
+            }
         }
 
-    override fun pop(): SocketSelector.SelectorKey {
-        checkFull()
-        return list.pop()
-    }
+        override val isEmpty: Boolean
+            get() {
+                checkFull()
+                return list.isEmpty
+            }
 
-}
+        override fun pop(): SocketSelector.SelectorKey {
+            checkFull()
+            return list.pop()
+        }
+
+    }

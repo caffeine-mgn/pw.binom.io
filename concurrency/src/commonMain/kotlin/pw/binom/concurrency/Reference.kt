@@ -7,4 +7,4 @@ expect class Reference<T : Any?>(value: T) : Closeable {
     val value: T
 }
 
-fun <T : Any?> T.asReference() = Reference(this)
+fun <T : Any> T.asReference() = Reference(this)

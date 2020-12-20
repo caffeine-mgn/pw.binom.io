@@ -3,6 +3,7 @@ package pw.binom
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.io.ByteArrayOutput
+import kotlin.math.roundToInt
 
 actual fun String.encodeBytes(charset: Charset): ByteArray {
     val buffer = toCharArray().toCharBuffer()
@@ -27,6 +28,9 @@ actual fun String.encodeBytes(charset: Charset): ByteArray {
 }
 
 actual fun ByteArray.decodeString(charset: Charset, offset: Int, length: Int): String {
+    if (this.isEmpty()) {
+        return ""
+    }
     val self = ByteBuffer.wrap(
         data = this,
         offset = offset,
@@ -34,7 +38,6 @@ actual fun ByteArray.decodeString(charset: Charset, offset: Int, length: Int): S
     )
     var out = CharBuffer.alloc(size)
     val decoder = charset.newDecoder()
-
     try {
         while (true) {
             when (decoder.decode(self, out)) {
@@ -43,7 +46,7 @@ actual fun ByteArray.decodeString(charset: Charset, offset: Int, length: Int): S
                     return out.toString()
                 }
                 CharsetTransformResult.OUTPUT_OVER -> {
-                    out = out.realloc(out.capacity + 8)
+                    out = out.realloc(out.capacity + (out.capacity * 1.7).roundToInt())
                     continue
                 }
                 CharsetTransformResult.MALFORMED, CharsetTransformResult.INPUT_OVER -> throw IllegalArgumentException("Invalid Input String")

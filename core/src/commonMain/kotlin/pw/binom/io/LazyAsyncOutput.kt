@@ -27,9 +27,9 @@ class LazyAsyncOutput(private val func: suspend () -> AsyncOutput) : AsyncOutput
         vv.flush()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         val vv = inited()
-        vv.close()
+        vv.asyncClose()
     }
 
     private var inited = false

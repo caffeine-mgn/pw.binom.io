@@ -9,13 +9,13 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.HttpServer
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.use
+import pw.binom.network.NetworkDispatcher
 
 fun main() {
     println("Environment.workDirectory: ${Environment.workDirectory}")
     val byteDataPool = ByteBufferPool(10)
-    val nioManager = SocketNIOManager()
+    val nioManager = NetworkDispatcher()
     val server = HttpServer(nioManager, object : Handler {
         override suspend fun request(req: HttpRequest, resp: HttpResponse) {
             val file = File(File(Environment.workDirectory), req.uri)
@@ -34,6 +34,6 @@ fun main() {
     }, outputBufferSize = 1024 * 1024 * 3)
     server.bindHTTP(port = 8080)
     while (true) {
-        nioManager.update()
+        nioManager.select()
     }
 }

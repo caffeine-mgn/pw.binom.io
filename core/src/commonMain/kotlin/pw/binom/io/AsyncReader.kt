@@ -4,9 +4,28 @@ interface AsyncReader : AsyncCloseable {
     /**
      * @throws EOFException throws when stream is done
      */
-    suspend fun read(): Char?
+    suspend fun readChar(): Char?
 
     suspend fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): Int
+    suspend fun readln(): String? {
+        val sb = StringBuilder()
+        try {
+            while (true) {
+                val r = readChar() ?: break
+                if (r == 10.toChar())
+                    break
+                sb.append(r)
+            }
+        } catch (e: EOFException) {
+            //NOP
+        }
+        if (sb.isEmpty())
+            return null
+        if (sb.lastOrNull() == '\r') {
+            sb.deleteAt(sb.lastIndex)
+        }
+        return sb.toString()
+    }
 }
 
 abstract class AbstractAsyncReader : AsyncReader {
@@ -16,7 +35,7 @@ abstract class AbstractAsyncReader : AsyncReader {
         var i = 0
         while (i < length) {
             try {
-                data[offset + i++] = read() ?: break
+                data[offset + i++] = readChar() ?: break
             } catch (e: EOFException) {
                 return i
             }
@@ -25,31 +44,12 @@ abstract class AbstractAsyncReader : AsyncReader {
     }
 }
 
-suspend fun AsyncReader.readln(): String? {
-    val sb = StringBuilder()
-    try {
-        while (true) {
-            val r = read() ?: break
-            if (r == 10.toChar())
-                break
-            if (r == 13.toChar()) {
-                continue
-            }
-            sb.append(r)
-        }
-    } catch (e: EOFException) {
-        //NOP
-    }
-    if (sb.isEmpty())
-        return null
-    return sb.toString()
-}
 
 suspend fun AsyncReader.readText(): String {
     val sb = StringBuilder()
     while (true) {
         try {
-            sb.append(read() ?: break)
+            sb.append(readChar() ?: break)
         } catch (e: EOFException) {
             break
         }

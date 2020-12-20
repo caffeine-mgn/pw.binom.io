@@ -22,7 +22,7 @@ class MessageImpl(override val type: MessageType,
             throw StreamClosedException()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         checkClosed()
         if (inputReady > 0uL)
             throw IllegalStateException("Current block is't finished. Remaining: [$inputReady]")

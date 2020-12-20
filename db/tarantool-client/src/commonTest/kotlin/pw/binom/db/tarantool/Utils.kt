@@ -1,0 +1,64 @@
+package pw.binom.db.tarantool
+
+import pw.binom.async
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.sleep
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.seconds
+
+@OptIn(ExperimentalTime::class)
+fun tt(func: suspend (TarantoolConnection) -> Unit) {
+    val manager = NetworkDispatcher()
+    var done = false
+    var exception: Throwable? = null
+    async {
+        var con: TarantoolConnection
+        val now = TimeSource.Monotonic.markNow()
+        while (true) {
+            try {
+                val address = NetworkAddress.Immutable(
+                    host = "127.0.0.1",
+                    port = 25321,
+                )
+                con = TarantoolConnection.connect(
+                    address = address,
+                    manager = manager,
+                    userName = "server",
+                    password = "server",
+                )
+                break
+            } catch (e: Throwable) {
+                if (now.elapsedNow() > 10.seconds) {
+                    exception = RuntimeException("Connection Timeout", e)
+                    return@async
+                }
+                Worker.sleep(100)
+            }
+        }
+        if (!done) {
+            try {
+                func(con)
+            } catch (e: Throwable) {
+                exception = e
+            } finally {
+                con.asyncClose()
+                done = true
+            }
+        }
+    }
+
+    var c = 0
+    while (!done) {
+        c++
+        if (c > 300) {
+            throw RuntimeException("Out of try")
+        }
+        manager.select(1000)
+    }
+    if (exception != null) {
+        throw exception!!
+    }
+}

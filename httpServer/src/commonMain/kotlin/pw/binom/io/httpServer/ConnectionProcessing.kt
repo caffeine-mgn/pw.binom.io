@@ -1,11 +1,8 @@
 package pw.binom.io.httpServer
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
-import pw.binom.io.readln
-import pw.binom.io.socket.SocketClosedException
-import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.io.utf8Reader
+import pw.binom.io.AsyncBufferedAsciiInputReader
+import pw.binom.network.SocketClosedException
+import pw.binom.network.TcpConnection
 import pw.binom.pool.DefaultPool
 
 private const val PREFIX = "ConnectionProcessing: "
@@ -14,25 +11,26 @@ private const val PREFIX = "ConnectionProcessing: "
 internal object ConnectionProcessing {
 
     suspend fun process(
-            rawConnection: SocketNIOManager.ConnectionRaw,
-            inputBuffered: PooledAsyncBufferedInput,
-            outputBuffered: PoolAsyncBufferedOutput,
-            httpRequestPool: DefaultPool<HttpRequestImpl2>,
-            httpResponsePool: DefaultPool<HttpResponseImpl2>,
-            handler: Handler,
-            allowZlib: Boolean
+        rawConnection: TcpConnection,
+        //inputBuffered: PooledAsyncBufferedInput,
+        outputBuffered: PoolAsyncBufferedOutput,
+        asciiInputReader: AsyncBufferedAsciiInputReader,
+        httpRequestPool: DefaultPool<HttpRequestImpl2>,
+        httpResponsePool: DefaultPool<HttpResponseImpl2>,
+        handler: Handler,
+        allowZlib: Boolean
     ): Boolean {
         val outputBufferid = outputBuffered//connection.bufferedOutput()
 //        val buf = AsyncBufferedInput(connection)
-        val reader = inputBuffered.utf8Reader()
-        val request = reader.readln()!!// ?: return false
+//        val reader = inputBuffered.utf8Reader()
+        val request = asciiInputReader.readln()!!// ?: return false
         val items = request.split(' ')
 
         val req = httpRequestPool.borrow()
         req.init(
                 method = items[0],
                 uri = items.getOrNull(1) ?: "",
-                input = inputBuffered,
+                input = asciiInputReader,
                 allowZlib = allowZlib,
                 output = outputBuffered,
                 rawConnection = rawConnection
@@ -54,7 +52,7 @@ internal object ConnectionProcessing {
             keepAlive = resp.keepAlive && !closed
             (resp.body ?: resp.complete()).let {
                 it.flush()
-                it.close()
+                it.asyncClose()
             }
             req.flush()
             resp.responseBodyPool.recycle(resp.body!!)

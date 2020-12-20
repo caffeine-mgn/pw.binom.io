@@ -80,7 +80,10 @@ class PackageReader(connection: PGConnection, val charset: Charset, val rawInput
             }
             o.writeByte(buf16, byte)
         }
-
+        if (o.size <= 0) {
+            o.close()
+            return ""
+        }
         val str = o.toByteArray().decodeString(charset)
         o.close()
         return str
@@ -113,7 +116,7 @@ private class AsyncInputLimit(val input: AsyncInput) : AsyncInput {
         return read
     }
 
-    override suspend fun close() {
-        input.close()
+    override suspend fun asyncClose() {
+        input.asyncClose()
     }
 }

@@ -48,7 +48,7 @@ kotlin {
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
-                api project(":nio")
+                api project(":network")
                 api project(":httpServer")
             }
         }

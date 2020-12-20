@@ -15,7 +15,6 @@ import pw.binom.io.socket.rawSocketFactory
 import pw.binom.io.use
 import pw.binom.io.utf8Reader
 import pw.binom.pool.DefaultPool
-import pw.binom.thread.FixedThreadPool
 import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime

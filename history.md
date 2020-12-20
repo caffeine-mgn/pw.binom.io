@@ -1,5 +1,13 @@
 # History
 
+### 0.1.26
+* UDP async client/server
+* Add network library
+* Remove socket library
+* Remove nio library
+* Add mq/nats client library
+* SMTP Client library
+
 ### 0.1.25
 * Async PostgreSQL Client
 * Fix bug in ByteBuffer for native

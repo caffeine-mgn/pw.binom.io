@@ -8,12 +8,16 @@ import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
 
-actual class SSLSession(val ctx:CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val client: Boolean): Closeable {
+actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val client: Boolean) : Closeable {
     actual enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
     }
 
-    actual class Status(actual val state: State, actual val bytes: Int)
+    actual class Status(actual val state: State, actual val bytes: Int) {
+        override fun toString(): String {
+            return "Status(state: [$state], bytes: [$bytes])"
+        }
+    }
 
     private val rbio = BIO_new(BIO_s_mem()!!)!!
     private val wbio = BIO_new(BIO_s_mem()!!)!!

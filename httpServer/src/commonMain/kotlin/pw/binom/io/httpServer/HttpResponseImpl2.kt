@@ -62,8 +62,8 @@ internal class HttpResponseBodyImpl2 : HttpResponseBody {
         wrappedOutput!!.flush()
     }
 
-    override suspend fun close() {
-        wrappedOutput!!.close()
+    override suspend fun asyncClose() {
+        wrappedOutput!!.asyncClose()
     }
 
 }

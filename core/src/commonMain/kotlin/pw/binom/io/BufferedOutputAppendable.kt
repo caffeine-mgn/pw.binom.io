@@ -29,16 +29,28 @@ class BufferedOutputAppendable(
     }
 
     override fun append(csq: CharSequence?): Appendable {
-        csq?.forEach {
-            append(it)
-        }
-        return this
+        csq ?: return this
+        return append(csq, 0, csq.lastIndex)
     }
 
     override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
         csq ?: return this
-        (start..end).forEach {
-            append(csq[it])
+        if (csq.length>1 && csq is String) {
+            val array = csq.toCharArray()
+            var pos = 0
+            checkFlush()
+            while (pos < end) {
+                val wrote = charBuffer.write(array, pos, array.size - pos)
+                if (wrote <= 0) {
+                    throw IOException("Can't append data to")
+                }
+                pos += wrote
+                checkFlush()
+            }
+        } else {
+            (start..end).forEach {
+                append(csq[it])
+            }
         }
         return this
     }
@@ -52,11 +64,16 @@ class BufferedOutputAppendable(
             charBuffer.flip()
             while (true) {
                 buffer.clear()
+                val oldr = charBuffer.remaining
                 val r = encoder.encode(charBuffer, buffer)
                 if (buffer.position > 0) {
                     buffer.flip()
                     output.write(buffer)
                     buffer.clear()
+                }
+                if (r == CharsetTransformResult.INPUT_OVER) {
+                    println("charBuffer.remaining: ${charBuffer.remaining}  ${charBuffer[14]}")
+                    TODO()
                 }
                 if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining == 0) {
                     break
@@ -74,7 +91,7 @@ class BufferedOutputAppendable(
     }
 }
 
-fun Output.bufferedAppendable(
+fun Output.bufferedWriter(
     pool: ByteBufferPool,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = DEFAULT_BUFFER_SIZE / 2,

@@ -40,8 +40,8 @@ class LazyAsyncInput(private val func: suspend () -> AsyncInput) : AsyncInput {
         return stream.read(dest)
     }
 
-    override suspend fun close() {
-        inited().close()
+    override suspend fun asyncClose() {
+        inited().asyncClose()
     }
 
 }

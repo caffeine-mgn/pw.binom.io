@@ -34,11 +34,11 @@ open class AsyncContentLengthOutput(val stream: AsyncOutput, val contentLength: 
         stream.flush()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         checkClosed()
         closed = true
         if (closeStream) {
-            stream.close()
+            stream.asyncClose()
         }
     }
 

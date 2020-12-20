@@ -3,12 +3,13 @@ package pw.binom.io.httpServer
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
+import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.io.http.AsyncChunkedInput
 import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.Headers
 import pw.binom.io.readln
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.utf8Reader
+import pw.binom.network.TcpConnection
 
 internal enum class EncodeType {
     GZIP,
@@ -31,17 +32,17 @@ internal class HttpRequestImpl2 : HttpRequest {
     override val input: AsyncInput
         get() = wrapped!!
 
-    var _rawInput: PooledAsyncBufferedInput? = null
-    override val rawInput: PooledAsyncBufferedInput
+    var _rawInput: AsyncBufferedAsciiInputReader? = null
+    override val rawInput: AsyncBufferedAsciiInputReader
         get() = _rawInput!!
 
     var _rawOutput: AsyncOutput? = null
     override val rawOutput: AsyncOutput
         get() = _rawOutput!!
 
-    private var _rawConnection: SocketNIOManager.ConnectionRaw? = null
+    private var _rawConnection: TcpConnection? = null
 
-    override val rawConnection: SocketNIOManager.ConnectionRaw
+    override val rawConnection: TcpConnection
         get() = _rawConnection!!
 
     override val headers = HashMap<String, ArrayList<String>>()
@@ -56,16 +57,16 @@ internal class HttpRequestImpl2 : HttpRequest {
         wrapped = null
     }
 
-    suspend fun init(method: String, uri: String, input: PooledAsyncBufferedInput, output: AsyncOutput, rawConnection: SocketNIOManager.ConnectionRaw, allowZlib: Boolean) {
+    suspend fun init(method: String, uri: String, input: AsyncBufferedAsciiInputReader, output: AsyncOutput, rawConnection: TcpConnection, allowZlib: Boolean) {
         _rawInput = input
         _rawOutput = output
         _rawConnection = rawConnection
         this.method = method
         this.uri = uri
         headers.clear()
-        val reader = input.utf8Reader()
+//        val reader = input.utf8Reader()
         while (true) {
-            val s = reader.readln() ?: break
+            val s = input.readln() ?: break
             if (s.isEmpty())
                 break
             val items1 = s.split(": ", limit = 2)
@@ -107,7 +108,7 @@ private object AsyncEofInput : AsyncInput {
 
     override suspend fun read(dest: ByteBuffer): Int = 0
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
     }
 
 }

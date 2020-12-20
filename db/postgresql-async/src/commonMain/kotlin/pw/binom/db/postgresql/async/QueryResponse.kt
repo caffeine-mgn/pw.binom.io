@@ -61,7 +61,7 @@ sealed class QueryResponse {
             return current.data[index]
         }
 
-        override suspend fun close() {
+        override suspend fun asyncClose() {
             checkClosed()
             try {
                 while (true) {

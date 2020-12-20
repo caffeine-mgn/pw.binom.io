@@ -17,6 +17,9 @@ fun ByteBuffer.writeZero() {
     while (s > 0) {
         ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
         val b = write(ZERO_BYTE)
+        if (b == 0) {
+            throw RuntimeException("No space for write zero")
+        }
         s -= b
     }
 }
@@ -70,16 +73,16 @@ internal fun Long.toOct(dst: ByteBuffer, dstOffset: Int, size: Int) {
 }
 
 private val magic = byteArrayOf(
-        'u'.toByte(),
-        's'.toByte(),
-        't'.toByte(),
-        'a'.toByte(),
-        'r'.toByte(),
-        0
+    'u'.toByte(),
+    's'.toByte(),
+    't'.toByte(),
+    'a'.toByte(),
+    'r'.toByte(),
+    0
 )
 private val version = byteArrayOf(
-        '0'.toByte(),
-        '0'.toByte()
+    '0'.toByte(),
+    '0'.toByte()
 )
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -141,7 +144,7 @@ class TarWriter(val stream: Output) : Closeable {
             val data = ByteArrayOutput()
 
             override fun write(data: ByteBuffer): Int =
-                    this.data.write(data)
+                this.data.write(data)
 
             override fun flush() {
                 data.flush()
@@ -211,7 +214,12 @@ internal fun ByteBuffer.calcCheckSum(): UInt {
  *
  * @return the [destination] ByteBuffer.
  */
-internal fun ByteArray.copyInto(destination: ByteBuffer, destinationOffset: Int = 0, startIndex: Int = 0, endIndex: Int = size): ByteBuffer {
+internal fun ByteArray.copyInto(
+    destination: ByteBuffer,
+    destinationOffset: Int = 0,
+    startIndex: Int = 0,
+    endIndex: Int = size
+): ByteBuffer {
     destination.set(destinationOffset, endIndex - startIndex) {
         it.write(this, startIndex, endIndex - startIndex)
     }

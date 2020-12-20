@@ -82,11 +82,11 @@ class JsonReader(reader: AsyncReader) {
     private suspend fun parseString(): String {
         val sb = StringBuilder()
         while (true) {
-            var c = reader.read()?.toInt()
+            var c = reader.readChar()?.toInt()
             if (c == '"'.toInt())
                 break
             if (c == '\\'.toInt()) {
-                c = reader.read()?.toInt()
+                c = reader.readChar()?.toInt()
                 c = when (c) {
                     'n'.toInt() -> '\n'.toInt()
                     'r'.toInt() -> '\r'.toInt()
@@ -104,7 +104,7 @@ class JsonReader(reader: AsyncReader) {
 private suspend fun ComposeAsyncReader.readNoSpace(): Char? {
     while (true) {
         try {
-            val c = read()?.toInt()
+            val c = readChar()?.toInt()
             if (c != '\r'.toInt() && c != '\n'.toInt() && c != ' '.toInt())
                 return c?.toChar()
         } catch (e: EOFException) {
@@ -116,7 +116,7 @@ private suspend fun ComposeAsyncReader.readNoSpace(): Char? {
 private suspend fun ComposeAsyncReader.skipSpaces() {
     while (true) {
         try {
-            val c = read()?.toInt()
+            val c = readChar()?.toInt()
             if (c != ' '.toInt() && c != '\n'.toInt() && c != '\r'.toInt()) {
                 addFirst(c?.toChar()?.toString()?.asReader()?.asAsync()?:break)
                 break
@@ -135,7 +135,7 @@ private suspend fun ComposeAsyncReader.word(): String {
     val sb = StringBuilder()
     while (true) {
         try {
-            val c = read() ?: return sb.toString()
+            val c = readChar() ?: return sb.toString()
             if (c.isBreak && c.toInt() != '.'.toInt()) {
                 addFirst(c)
                 return sb.toString()

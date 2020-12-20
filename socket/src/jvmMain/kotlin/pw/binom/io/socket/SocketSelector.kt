@@ -24,14 +24,19 @@ actual class SocketSelector actual constructor() : Closeable {
             if (listenReadable == read && listenWritable == write) {
                 return
             }
-            var i = 0
-            if (read)
-                i = i or JSelectionKey.OP_READ
+            var ops = 0
+            if (read) {
+                ops = if (channel.accepteble) {
+                    ops or JSelectionKey.OP_ACCEPT
+                } else {
+                    ops or JSelectionKey.OP_READ
+                }
+            }
             if (write)
-                i = i or JSelectionKey.OP_WRITE
+                ops = ops or JSelectionKey.OP_WRITE
             listenReadable = read
             listenWritable = write
-            key.interestOps(i)
+            key.interestOps(ops)
         }
 
         override var listenReadable: Boolean = false
@@ -43,8 +48,7 @@ actual class SocketSelector actual constructor() : Closeable {
             if (isCanlelled)
                 throw IllegalStateException("SocketKey already cancelled")
             cancelledKeys.getOrPut(channel) { HashSet() }.add(this)
-            listenReadable = false
-            listenWritable = false
+            listen(false, false)
             _cancelled = true
         }
 
@@ -71,19 +75,24 @@ actual class SocketSelector actual constructor() : Closeable {
             return cancelled
         }
         val ss = SelectorKeyImpl(channel, attachment)
-        val key = when (channel) {
-            is SocketChannel -> try {
-                channel.native.register(native, /*JSelectionKey.OP_READ or JSelectionKey.OP_WRITE*/0, ss)
-            } catch (e: JIllegalBlockingModeException) {
-                throw IllegalBlockingModeException()
-            }
-            is ServerSocketChannel -> try {
-                channel.native.register(native, JSelectionKey.OP_ACCEPT, ss)
-            } catch (e: JIllegalBlockingModeException) {
-                throw IllegalBlockingModeException()
-            }
-            else -> TODO()
+        val key = try {
+            channel.selectableChannel.register(native, 0, ss)
+        } catch (e: JIllegalBlockingModeException) {
+            throw IllegalBlockingModeException()
         }
+//        val key = when (channel) {
+//            is SocketChannel -> try {
+//                channel.native.register(native, /*JSelectionKey.OP_READ or JSelectionKey.OP_WRITE*/0, ss)
+//            } catch (e: JIllegalBlockingModeException) {
+//                throw IllegalBlockingModeException()
+//            }
+//            is ServerSocketChannel -> try {
+//                channel.native.register(native, JSelectionKey.OP_ACCEPT, ss)
+//            } catch (e: JIllegalBlockingModeException) {
+//                throw IllegalBlockingModeException()
+//            }
+//            else -> TODO()
+//        }
         ss.key = key
         return ss
     }
@@ -103,8 +112,9 @@ actual class SocketSelector actual constructor() : Closeable {
             val key1 = itt.next()
             itt.remove()
             val key = key1.attachment() as SelectorKeyImpl
-            key.isReadable = key1.isReadable
+            key.isReadable = key1.isReadable || key1.isAcceptable
             key.isWritable = key1.isWritable
+//            println("isReadable: [${key.isReadable}], isWritable: [${key.isWritable}]")
             func(key)
         }
 //        itt.forEach {

@@ -20,7 +20,7 @@ class AsyncChunkedInputTest {
             sb.append("Wiki")
             chunked.flush()
             sb.append("pedia")
-            sb.close()
+            sb.asyncClose()
 
             val out = output.data
             out.flip()
@@ -40,7 +40,7 @@ class AsyncChunkedInputTest {
             sb.append("Wiki")
             chunked.flush()
             sb.append("pedia")
-            sb.close()
+            sb.asyncClose()
         }
         val out = output.data
         out.flip()

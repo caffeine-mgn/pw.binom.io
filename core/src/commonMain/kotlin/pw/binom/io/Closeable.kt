@@ -20,13 +20,13 @@ inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
 }
 
 interface AsyncCloseable {
-    suspend fun close()
+    suspend fun asyncClose()
 }
 
 suspend inline fun <T : AsyncCloseable, R> T.use(func: (T) -> R): R {
     return try {
         func(this)
     } finally {
-        close()
+        asyncClose()
     }
 }

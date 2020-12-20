@@ -1,4 +1,4 @@
-# Binom JSON
+# Binom PostgreSQL Connector
 Kotlin Library for connect PostgreSQL in Async mode
 
 ## Using

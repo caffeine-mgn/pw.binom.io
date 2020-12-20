@@ -8,10 +8,12 @@ import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.socket.nio.SocketNIOManager
 import pw.binom.io.socket.ssl.AsyncSSLChannel
 import pw.binom.io.socket.ssl.SSLSession
 import pw.binom.io.socket.ssl.asyncChannel
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
+import pw.binom.network.TcpConnection
 import pw.binom.ssl.*
 
 object EmptyKeyManager : KeyManager {
@@ -23,9 +25,10 @@ object EmptyKeyManager : KeyManager {
     }
 }
 
-open class AsyncHttpClient(val connectionManager: SocketNIOManager,
-                           keyManager: KeyManager = EmptyKeyManager,
-                           trustManager: TrustManager = TrustManager.TRUST_ALL
+open class AsyncHttpClient(
+    val connectionManager: NetworkDispatcher,
+    keyManager: KeyManager = EmptyKeyManager,
+    trustManager: TrustManager = TrustManager.TRUST_ALL
 ) : Closeable {
 
     val sslContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
@@ -34,7 +37,7 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         connections.forEach {
             it.value.forEach {
                 it.sslSession?.close()
-                it.channel.unwrap().detach().close()
+                it.channel.unwrap().close()
             }
         }
         connections.clear()
@@ -59,14 +62,19 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         }
     }
 
-    class Connection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.ConnectionRaw) : AsyncCloseable {
-        override suspend fun close() {
+    class Connection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: TcpConnection) :
+        AsyncCloseable {
+        override suspend fun asyncClose() {
             sslSession?.close()
-            channel.close()
+            channel.asyncClose()
         }
     }
 
-    private class AliveConnection(val sslSession: SSLSession?, val channel: AsyncChannel, val rawConnection: SocketNIOManager.ConnectionRaw)
+    private class AliveConnection(
+        val sslSession: SSLSession?,
+        val channel: AsyncChannel,
+        val rawConnection: TcpConnection
+    )
 
     internal suspend fun borrowConnection(url: URL): Connection {
         cleanUp()
@@ -84,9 +92,11 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
             return Connection(channel.sslSession, channel.channel, channel.rawConnection)
 //            return Connection(channel.sslSession, channel.channel)
         }
-        val raw = connectionManager.connect(
+        val raw = connectionManager.tcpConnect(
+            NetworkAddress.Immutable(
                 host = url.host,
                 port = port
+            )
         )
         var connection = Connection(null, raw, raw)
         if (url.protocol == "https") {
@@ -101,7 +111,8 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
         cleanUp()
         val port = url.port ?: url.defaultPort ?: throw IllegalArgumentException("Unknown default port for $url")
         val key = "${url.protocol}://${url.host}:$port"
-        connections.getOrPut(key) { ArrayList() }.add(AliveConnection(connection.sslSession, connection.channel, connection.rawConnection))
+        connections.getOrPut(key) { ArrayList() }
+            .add(AliveConnection(connection.sslSession, connection.channel, connection.rawConnection))
     }
 
     /*
@@ -124,10 +135,10 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
     */
     fun request(method: String, url: URL, flushSize: Int = DEFAULT_BUFFER_SIZE): UrlConnect {
         return UrlConnectImpl(
-                method = method,
-                url = url,
-                client = this,
-                outputFlushSize = flushSize
+            method = method,
+            url = url,
+            client = this,
+            outputFlushSize = flushSize
         )
     }
 
@@ -167,11 +178,11 @@ open class AsyncHttpClient(val connectionManager: SocketNIOManager,
     }
 }
 
-private fun AsyncChannel.unwrap(): SocketNIOManager.ConnectionRaw {
+private fun AsyncChannel.unwrap(): TcpConnection {
     var c = this
     while (true) {
         when (c) {
-            is SocketNIOManager.ConnectionRaw -> return c
+            is TcpConnection -> return c
             is AsyncSSLChannel -> c = c.channel
             else -> throw IllegalArgumentException()
         }

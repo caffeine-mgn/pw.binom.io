@@ -9,6 +9,6 @@ class IconvCharsetDecoder(name: String) : CharsetDecoder, AbstractIconv(fromChar
     override fun decode(input: ByteBuffer, output: CharBuffer): CharsetTransformResult =
             iconv(
                     input,
-                    output.bytes
+                    output
             )
 }

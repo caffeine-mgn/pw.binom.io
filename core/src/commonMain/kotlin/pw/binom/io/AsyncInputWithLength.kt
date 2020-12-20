@@ -24,8 +24,8 @@ class AsyncInputWithLength(val input: AsyncInput, val length: Long) : AsyncInput
         return read
     }
 
-    override suspend fun close() {
-        input.close()
+    override suspend fun asyncClose() {
+        input.asyncClose()
     }
 }
 

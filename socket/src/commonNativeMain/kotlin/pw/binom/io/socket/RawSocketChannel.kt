@@ -5,8 +5,8 @@ import pw.binom.ByteDataBuffer
 import pw.binom.doFreeze
 
 actual class RawSocketChannel internal constructor(override val socket: RawSocket) : SocketChannel, NetworkChannel {
-    override val nsocket: RawSocket
-        get() = socket
+    override val nsocket
+        get() = socket.native
     override val type: Int
         get() = RAW_SOCKET_CLIENT_TYPE
     override var blocking: Boolean
@@ -44,8 +44,8 @@ actual class RawSocketChannel internal constructor(override val socket: RawSocke
     override fun write(data: ByteBuffer): Int =
             socket.write(data)
 
-    override fun connect(host: String, port: Int) {
-        socket.connect(host, port)
+    override fun connect(address: NetworkAddress) {
+        socket.connect(address.host, address.port)
     }
 
 //    override fun read(data: ByteArray, offset: Int, length: Int): Int =

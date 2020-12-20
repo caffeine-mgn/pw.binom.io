@@ -5,16 +5,17 @@ import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.db.*
 import pw.binom.db.postgresql.async.messages.KindedMessage
-import pw.binom.db.postgresql.async.messages.MessageKinds
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
 import pw.binom.io.BufferedOutputAppendable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
-import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
+import pw.binom.network.TcpConnection
 
 class PGConnection private constructor(
-    val connection: SocketNIOManager.ConnectionRaw,
+    val connection: TcpConnection,
     charset: Charset,
     val userName: String,
     val password: String?
@@ -24,42 +25,43 @@ class PGConnection private constructor(
     companion object {
         const val TYPE = "PostgreSQL"
         suspend fun connect(
-            host: String,
-            port: Int,
-            applicationName: String = "Binom Async Client",
-            manager: SocketNIOManager,
+            address: NetworkAddress,
+            applicationName: String? = "Binom Async Client",
+            manager: NetworkDispatcher,
             userName: String,
             password: String,
             dataBase: String,
             charset: Charset = Charsets.UTF8,
         ): PGConnection {
-            val connection = manager.connect(
-                host = host,
-                port = port
-            )
+            val connection = manager.tcpConnect(address)
             val pgConnection = PGConnection(
                 connection = connection,
                 charset = charset,
                 userName = userName,
                 password = password
             )
-            val appName = applicationName.replace("\\", "\\\\").replace("'", "\\'")
             pgConnection.sendFirstMessage(
                 mapOf(
                     "user" to userName,
                     "database" to dataBase,
                     "client_encoding" to charset.name,
                     "DateStyle" to "ISO",
-                    "extra_float_digits" to "2"
+//                    "extra_float_digits" to "2"
                 )
             )
             while (true) {
                 val msg = pgConnection.readDesponse()
+                if (msg is ErrorMessage) {
+                    throw PostgresqlException(msg.toString())
+                }
                 if (msg is ReadyForQueryMessage) {
                     break
                 }
             }
-            val mg = pgConnection.sendQuery("SET application_name = E'$appName'")
+            if (applicationName != null) {
+                val appName = applicationName?.replace("\\", "\\\\")?.replace("'", "\\'")
+                pgConnection.sendQuery("SET application_name = E'$appName'")
+            }
             while (true) {
                 val msg = pgConnection.readDesponse()
                 if (msg is ReadyForQueryMessage) {
@@ -136,13 +138,11 @@ class PGConnection private constructor(
         o.writeInt(buf, 0)
         o.writeShort(buf, 3)
         o.writeShort(buf, 0)
-
         val appender = BufferedOutputAppendable(Charsets.UTF8, o, pool)
         properties.forEach {
             appender.append(it.key)
             appender.flush()
             o.writeByte(buf, 0)
-
             appender.append(it.value)
             appender.flush()
             o.writeByte(buf, 0)
@@ -173,7 +173,7 @@ class PGConnection private constructor(
                 credentialMessage
             }
             is AuthenticationMessage.AuthenticationOkMessage -> null
-            else -> TODO()
+            else -> throw RuntimeException("Unknown message type [${msg::class}]")
         }
         if (authRequest != null) {
             when (val msg = request(authRequest)) {
@@ -216,7 +216,7 @@ class PGConnection private constructor(
     override val type: String
         get() = TYPE
 
-    override suspend fun close() {
-        connection.close()
+    override suspend fun asyncClose() {
+        connection.asyncClose()
     }
 }

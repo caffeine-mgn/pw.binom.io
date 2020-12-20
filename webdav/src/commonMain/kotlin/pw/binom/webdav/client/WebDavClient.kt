@@ -19,7 +19,14 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
     override val isSupportUserSystem: Boolean
         get() = true
 
-    override suspend fun <T> useUser(user: Any, func: suspend () -> T): T {
+    /**
+     * Set user for current execution of [func]
+     * @param user must be instance of [WebAuthAccess]
+     */
+    override suspend fun <T> useUser(user: Any?, func: suspend () -> T): T {
+        if (user == null) {
+            return func()
+        }
         require(user is WebAuthAccess)
         return suspendCoroutine { con ->
             func.startCoroutine(
@@ -113,8 +120,8 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
 
                 override suspend fun read(dest: ByteBuffer): Int = resp.read(dest)
 
-                override suspend fun close() {
-                    resp.close()
+                override suspend fun asyncClose() {
+                    resp.asyncClose()
                 }
             }
         }
@@ -172,7 +179,7 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
                     throw TODO("Invalid response code ${resp.responseCode}")
                 }
             } finally {
-                resp.close()
+                resp.asyncClose()
             }
         }
 
@@ -189,8 +196,8 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
                     upload.flush()
                 }
 
-                override suspend fun close() {
-                    upload.response().close()
+                override suspend fun asyncClose() {
+                    upload.response().asyncClose()
                 }
             }
         }
@@ -211,7 +218,7 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
         }
         val txt = resp.utf8Reader().readText()
         val reader = StringReader(txt).asAsync().xmlTree()!!
-        resp.close()
+        resp.asyncClose()
         return reader
             .findTag("response")
             .mapNotNull {
@@ -283,8 +290,8 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
                 upload.flush()
             }
 
-            override suspend fun close() {
-                upload.response().close()
+            override suspend fun asyncClose() {
+                upload.response().asyncClose()
             }
         }
     }

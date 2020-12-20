@@ -43,7 +43,7 @@ fun usingAppenderAndReader() {
     val file = File("Simple File")
     try {
         val text = "Simple Text"
-        file.write().bufferedAppendable(bufferPool).use {
+        file.write().bufferedWriter(bufferPool).use {
             it.append(text)
             it.flush()
         }

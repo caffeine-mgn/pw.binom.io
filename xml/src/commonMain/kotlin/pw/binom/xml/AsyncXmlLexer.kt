@@ -27,7 +27,7 @@ class AsyncXmlLexer(val reader: AsyncReader) {
         if (isEof) {
             return false
         }
-        val char = lastChar ?: reader.read()
+        val char = lastChar ?: reader.readChar()
         if (char == null) {
             isEof = true
             return false
@@ -131,7 +131,7 @@ class AsyncXmlLexer(val reader: AsyncReader) {
         sb.append(char)
         tokenType = TokenType.SYMBOL
         while (true) {
-            val c = reader.read()
+            val c = reader.readChar()
             if (c == null) {
                 isEof = true
                 text = sb.toString()
@@ -160,7 +160,7 @@ class AsyncXmlLexer(val reader: AsyncReader) {
         sb.append('"')
         tokenType = TokenType.STRING
         while (true) {
-            val c = reader.read()
+            val c = reader.readChar()
             if (c == null) {
                 isEof = true
                 lastChar = null
@@ -203,7 +203,7 @@ class AsyncXmlLexer(val reader: AsyncReader) {
         sb.append(startChar)
 
         while (true) {
-            val c = reader.read()
+            val c = reader.readChar()
             when {
                 c != null && c.isEmpty -> {
                     position++

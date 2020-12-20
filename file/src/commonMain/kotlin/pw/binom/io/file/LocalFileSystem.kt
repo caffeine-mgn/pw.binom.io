@@ -27,7 +27,7 @@ class LocalFileSystem(
     override val isSupportUserSystem: Boolean
         get() = false
 
-    override suspend fun <T> useUser(user: Any, func: suspend () -> T): T =
+    override suspend fun <T> useUser(user: Any?, func: suspend () -> T): T =
         func()
 
     override suspend fun mkdir(path: String): FileSystem.Entity {

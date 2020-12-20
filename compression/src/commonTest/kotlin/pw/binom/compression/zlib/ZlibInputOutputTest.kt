@@ -46,7 +46,7 @@ class ZlibInputOutputTest{
             compressed.clear()
             val def = AsyncDeflaterOutput(stream = compressed.asyncOutput(), level = 6, wrap = true, closeStream = false)
             def.write(source)
-            def.close()
+            def.asyncClose()
 
             compressed.flip()
             assertEquals(11, compressed.remaining)

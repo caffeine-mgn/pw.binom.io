@@ -2,12 +2,9 @@ package pw.binom.io.httpServer
 
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.async
+import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.io.Closeable
-import pw.binom.io.socket.ServerSocketChannel
-import pw.binom.io.socket.SocketClosedException
-import pw.binom.io.socket.SocketFactory
-import pw.binom.io.socket.nio.SocketNIOManager
-import pw.binom.io.socket.rawSocketFactory
+import pw.binom.network.*
 import pw.binom.pool.DefaultPool
 
 /**
@@ -16,13 +13,14 @@ import pw.binom.pool.DefaultPool
  * @param handler request handler
  * @param zlibBufferSize size of zlib buffer. 0 - disable zlib
  */
-open class HttpServer(val manager: SocketNIOManager,
-                      protected val handler: Handler,
-                      poolSize: Int = 10,
-                      inputBufferSize: Int = DEFAULT_BUFFER_SIZE,
-                      outputBufferSize: Int = DEFAULT_BUFFER_SIZE,
-                      private val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE
-) : Closeable, SocketNIOManager.ConnectHandler {
+open class HttpServer(
+    val manager: NetworkDispatcher,
+    protected val handler: Handler,
+    poolSize: Int = 10,
+    inputBufferSize: Int = DEFAULT_BUFFER_SIZE,
+    outputBufferSize: Int = DEFAULT_BUFFER_SIZE,
+    private val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE
+) : Closeable {
 
     init {
         require(zlibBufferSize >= 0) { "zlibBufferSize must be grate or equals than 0" }
@@ -33,7 +31,8 @@ open class HttpServer(val manager: SocketNIOManager,
     }
 
     private val bufferedInputPool = DefaultPool(poolSize) {
-        PooledAsyncBufferedInput(inputBufferSize)
+        val p = PooledAsyncBufferedInput(inputBufferSize)
+        p to AsyncBufferedAsciiInputReader(p)
     }
 
     private val bufferedOutputPool = DefaultPool(poolSize) {
@@ -55,53 +54,54 @@ open class HttpServer(val manager: SocketNIOManager,
         HttpResponseImpl2(httpResponseBodyPool, zlibBufferSize)
     }
 
-    private fun runProcessing(connection: SocketNIOManager.ConnectionRaw) {
-        connection {
-            val inputBufferid = bufferedInputPool.borrow { buf ->
-                buf.currentStream = it
-            }
-            val outputBufferid = bufferedOutputPool.borrow { buf ->
-                buf.currentStream = it
-            }
-            while (true) {
-                try {
-                    val keepAlive = ConnectionProcessing.process(
-                            handler = this.handler,
-                            httpRequestPool = httpRequestPool,
-                            httpResponsePool = httpResponsePool,
-                            inputBuffered = inputBufferid,
-                            outputBuffered = outputBufferid,
-                            allowZlib = zlibBufferSize > 0,
-                            rawConnection = it
-                    )
-                    if (!keepAlive) {
-                        inputBufferid.reset()
-                        bufferedInputPool.recycle(inputBufferid)
-                        outputBufferid.reset()
-                        bufferedOutputPool.recycle(outputBufferid)
-                        it.close()
-                        break
-                    }
-                } catch (e: SocketClosedException) {
-                    break
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    inputBufferid.reset()
+    private suspend fun runProcessing(connection: TcpConnection) {
+        val it = connection
+        val inputBufferid = bufferedInputPool.borrow { buf ->
+            buf.first.currentStream = it
+        }
+        val outputBufferid = bufferedOutputPool.borrow { buf ->
+            buf.currentStream = it
+        }
+        while (true) {
+            try {
+                val keepAlive = ConnectionProcessing.process(
+                    handler = this.handler,
+                    httpRequestPool = httpRequestPool,
+                    httpResponsePool = httpResponsePool,
+                    asciiInputReader = inputBufferid.second,
+                    outputBuffered = outputBufferid,
+                    allowZlib = zlibBufferSize > 0,
+                    rawConnection = it
+                )
+                if (!keepAlive) {
+                    inputBufferid.first.reset()
+                    inputBufferid.second.reset()
                     bufferedInputPool.recycle(inputBufferid)
                     outputBufferid.reset()
                     bufferedOutputPool.recycle(outputBufferid)
                     it.close()
                     break
                 }
+            } catch (e: SocketClosedException) {
+                break
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                inputBufferid.first.reset()
+                inputBufferid.second.reset()
+                bufferedInputPool.recycle(inputBufferid)
+                outputBufferid.reset()
+                bufferedOutputPool.recycle(outputBufferid)
+                it.close()
+                break
             }
         }
     }
 
-    override fun clientConnected(connection: SocketNIOManager.ConnectionRaw, manager: SocketNIOManager) {
+    private suspend fun clientConnected(connection: TcpConnection, manager: NetworkDispatcher) {
         runProcessing(connection)
     }
 
-    private val binded = ArrayList<ServerSocketChannel>()
+    private val binded = ArrayList<TcpServerConnection>()
 
     override fun close() {
         binded.forEach {
@@ -109,7 +109,11 @@ open class HttpServer(val manager: SocketNIOManager,
         }
         async {
             while (bufferedInputPool.size > 0) {
-                bufferedInputPool.borrow { it.currentStream = null }.close()
+                bufferedInputPool.borrow {
+                    it.first.currentStream = null
+                }.let {
+                    it.second.asyncClose()
+                }
             }
         }
     }
@@ -120,7 +124,16 @@ open class HttpServer(val manager: SocketNIOManager,
      * @param port Port for bind
      */
     fun bindHTTP(host: String = "0.0.0.0", port: Int) {
-        binded += manager.bind(host = host, port = port, handler = this, factory = SocketFactory.rawSocketFactory)
+        val connect = manager.bindTcp(NetworkAddress.Immutable(host = host, port = port))
+        binded += connect
+        async {
+            while (true) {
+                val client = connect.accept() ?: continue
+                async {
+                    clientConnected(client, manager)
+                }
+            }
+        }
     }
 
 //    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {

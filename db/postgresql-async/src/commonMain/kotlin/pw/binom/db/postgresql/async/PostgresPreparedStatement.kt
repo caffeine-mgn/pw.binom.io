@@ -95,7 +95,7 @@ class PostgresPreparedStatement(
             return response.rowsAffected
         }
         if (response is QueryResponse.Data) {
-            response.close()
+            response.asyncClose()
         }
         throw SQLException("Query returns data")
     }
@@ -104,7 +104,7 @@ class PostgresPreparedStatement(
         params[index] = value
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         connection.sendOnly(connection.reader.closeMessage.also {
             it.portal = false
             it.statement = id.toString()
@@ -148,7 +148,12 @@ class PostgresPreparedStatement(
         })
         connection.sendOnly(SyncMessage)
         if (!parsed) {
-            check(connection.readDesponse() is ParseCompleteMessage)
+            val msg = connection.readDesponse()
+            if (msg is ErrorMessage) {
+                check(connection.readDesponse() is ReadyForQueryMessage)
+                throw PostgresqlException(msg.toString())
+            }
+            check(msg is ParseCompleteMessage) { "Invalid Message: $msg (${msg::class})" }
         }
         check(connection.readDesponse() is BindCompleteMessage)
         parsed = true

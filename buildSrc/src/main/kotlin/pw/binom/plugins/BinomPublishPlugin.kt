@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import java.net.URI
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 const val BINOM_REPO_URL = "binom.repo.url"
 const val BINOM_REPO_USER = "binom.repo.user"
@@ -12,6 +13,7 @@ const val BINOM_REPO_PASSWORD = "binom.repo.password"
 
 class BinomPublishPlugin : Plugin<Project> {
     override fun apply(target: Project) {
+        val kotlin = target.extensions.findByName("kotlin")!! as KotlinMultiplatformExtension
         if (!target.hasProperty(BINOM_REPO_URL)) {
             return
         }

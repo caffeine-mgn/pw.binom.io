@@ -1,0 +1,115 @@
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+
+kotlin {
+    def nativeEntryPoint='pw.binom.io.examples.httpServer.main'
+
+    linuxX64 { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+
+    linuxArm32Hfp { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+
+    mingwX64 { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+
+    mingwX86 { // Use your target instead.
+        binaries {
+            executable{
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+
+    jvm()
+    
+    sourceSets {
+
+        commonMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+                implementation project(":network")
+            }
+        }
+
+        nativeMain {
+            dependencies {
+                dependsOn commonMain
+            }
+        }
+
+        mingwX64Main {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+        mingwX86Main {
+            dependencies {
+                dependsOn mingwX64Main
+            }
+        }
+
+        linuxX64Main {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+        linuxArm32HfpMain {
+            dependencies {
+                dependsOn nativeMain
+            }
+        }
+
+//        mingwMain {
+//            dependencies {
+//                dependsOn commonMain
+//                api(kotlin("stdlib"))
+//            }
+//        }
+
+        jvmMain {
+            dependencies {
+                api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            }
+        }
+    }
+}
+
+jvmJar {
+    with {
+        from {
+            (configurations.jvmRuntimeClasspath).collect {
+                it.isDirectory() ? it : zipTree(it)
+            }
+        } {
+            exclude "META-INF/*.SF"
+            exclude "META-INF/*.DSA"
+            exclude "META-INF/*.RSA"
+        }
+    }
+    manifest {
+        attributes 'Main-Class': "pw.binom.io.examples.httpServer.ReversServerKt"
+    }
+}
+
+task runMainExecutableJvm(dependsOn: jvmJar, group: "run") {
+    doLast {
+        javaexec { main = "-jar"; args jvmJar.archiveFile.get() }
+    }
+}

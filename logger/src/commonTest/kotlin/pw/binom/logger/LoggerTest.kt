@@ -34,10 +34,10 @@ class LoggerTest {
     fun threadTest2() {
         val w1 = Worker()
         val w2 = Worker()
-        val logger = AtomicReference<Logger.LoggerImpl?>(null)
+        val logger = AtomicReference<Logger?>(null)
         val f1 = w1.execute(Unit) {
             try {
-                logger.value = Logger.getLog("Test")
+                logger.value = Logger.getLogger("Test")
                 12
             } catch (e:Throwable) {
                 e.printStackTrace()
@@ -45,10 +45,10 @@ class LoggerTest {
         }
         f1.resultOrNull
         val f2 = w2.execute(Unit) {
-            assertEquals(logger.value, Logger.getLog("Test"))
+            assertEquals(logger.value, Logger.getLogger("Test"))
         }
         f2.resultOrNull
-        assertEquals(logger.value, Logger.getLog("Test"))
+        assertEquals(logger.value, Logger.getLogger("Test"))
     }
 
     @Test
@@ -57,11 +57,11 @@ class LoggerTest {
         val w1 = Worker()
         val w2 = Worker()
         val f1 = w1.execute(Unit) {
-            Logger.getLog("Test").info("Test")
+            Logger.getLogger("Test").info("Test")
             done.increment()
         }
         val f2 = w2.execute(Unit) {
-            Logger.getLog("Test").info("Test")
+            Logger.getLogger("Test").info("Test")
             done.increment()
         }
 

@@ -22,12 +22,12 @@ class AsyncBufferedInput(
         }
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         try {
-            super.close()
+            super.asyncClose()
         } finally {
             if (closeStream) {
-                stream.close()
+                stream.asyncClose()
             }
             buffer.close()
         }
@@ -55,7 +55,7 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
         return dest.write(buffer)
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         checkClosed()
         closed = true
     }

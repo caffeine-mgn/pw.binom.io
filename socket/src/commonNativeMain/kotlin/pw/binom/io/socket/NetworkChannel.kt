@@ -7,7 +7,7 @@ internal const val RAW_SOCKET_CLIENT_TYPE = 0x001b
 internal const val RAW_SOCKET_SERVER_TYPE = 0x010b
 
 actual interface NetworkChannel : Channel {
-    val nsocket: RawSocket
+    val nsocket: NativeSocketHolder
     val type: Int
 }
 

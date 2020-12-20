@@ -52,12 +52,12 @@ class WSOutput(
         super.flush()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         checkClosed()
         try {
             val needSendEnd = buffer.position == 0 && !first
             eof = true
-            super.close()
+            super.asyncClose()
 
             if (needSendEnd) {
                 val v = WebSocketHeader()

@@ -28,8 +28,8 @@ internal class PooledAsyncBufferedInput(bufferSize: Int) : AbstractAsyncBuffered
     override val stream: AsyncInput
         get() = currentStream!!
 
-    override suspend fun close() {
-        super.close()
+    override suspend fun asyncClose() {
+        super.asyncClose()
         buffer.close()
     }
 }

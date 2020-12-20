@@ -6,7 +6,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
 
-actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
+actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer =
             ByteBuffer(JByteBuffer.allocate(size))
@@ -20,12 +20,12 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
             throw StreamClosedException()
     }
 
-    actual fun flip() {
+    override fun flip() {
         checkClosed()
         native.flip()
     }
 
-    actual val remaining: Int
+    override val remaining: Int
         get() {
             checkClosed()
             return native.remaining()
@@ -75,7 +75,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         closed = true
     }
 
-    actual var position: Int
+    override var position: Int
         get() {
             checkClosed()
             return native.position()
@@ -84,7 +84,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
             checkClosed()
             native.position(value)
         }
-    actual var limit: Int
+    override var limit: Int
         get() {
             checkClosed()
             return native.limit()
@@ -94,7 +94,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
             native.limit(value)
         }
 
-    actual val capacity: Int
+    override val capacity: Int
         get() {
             checkClosed()
             return native.capacity()
@@ -145,9 +145,12 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         native.put(value)
     }
 
-    actual fun clear() {
+    override fun clear() {
         native.clear()
     }
+
+    override val elementSizeInBytes: Int
+        get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = ByteBuffer.alloc(newSize)
@@ -183,7 +186,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable {
         return l
     }
 
-    actual fun compact() {
+    override fun compact() {
         if (position == 0) {
             native.clear()
         } else {

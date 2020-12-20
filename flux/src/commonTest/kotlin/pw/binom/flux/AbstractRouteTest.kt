@@ -5,7 +5,7 @@ import pw.binom.AsyncOutput
 import pw.binom.async
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
-import pw.binom.io.socket.nio.SocketNIOManager
+import pw.binom.network.TcpConnection
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -22,7 +22,7 @@ class AbstractRouteTest {
                 get() = TODO("Not yet implemented")
             override val rawOutput: AsyncOutput
                 get() = TODO("Not yet implemented")
-            override val rawConnection: SocketNIOManager.ConnectionRaw
+            override val rawConnection: TcpConnection
                 get() = TODO("Not yet implemented")
             override val headers: Map<String, List<String>>
                 get() = TODO("Not yet implemented")

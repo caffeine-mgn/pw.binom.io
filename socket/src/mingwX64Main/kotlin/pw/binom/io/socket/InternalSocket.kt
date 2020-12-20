@@ -51,7 +51,7 @@ internal actual fun initNativeSocket(): NativeSocketHolder {
 }
 
 internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int =
-        recv(socket.native, data.refTo(offset), length.convert(), 0).convert()
+    recv(socket.native, data.refTo(offset), length.convert(), 0).convert()
 
 internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteDataBuffer, offset: Int, length: Int): Int {
     val r: Int = recv(socket.native, data.refTo(offset), length.convert(), 0).convert()
@@ -64,8 +64,8 @@ internal actual fun recvSocket(socket: NativeSocketHolder, data: ByteDataBuffer,
     return r
 }
 
-internal actual fun recvSocket(socket: NativeSocketHolder, dest: ByteBuffer): Int{
-    val r: Int = recv(socket.native, dest.native+dest.position, (dest.limit-dest.position).convert(), 0).convert()
+internal actual fun recvSocket(socket: NativeSocketHolder, dest: ByteBuffer): Int {
+    val r: Int = recv(socket.native, dest.native + dest.position, (dest.limit - dest.position).convert(), 0).convert()
     if (r < 0) {
         val error = GetLastError()
         if (error == 10035.convert<DWORD>())
@@ -115,9 +115,9 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
                 throw UnknownHostException(host)
             }
             val result1 = connect(
-                    native.native,
-                    result.value!!.pointed.ai_addr!!.pointed.ptr,
-                    result.value!!.pointed.ai_addrlen.convert()
+                native.native,
+                result.value!!.pointed.ai_addr!!.pointed.ptr,
+                result.value!!.pointed.ai_addrlen.convert()
             )
 
             freeaddrinfo(result.value)
@@ -142,11 +142,86 @@ internal actual fun connectSocket(native: NativeSocketHolder, host: String, port
     }
 }
 
+internal actual fun createDatagramSocket(): NativeSocketHolder {
+    val sockfd = socket(AF_INET, platform.windows.SOCK_DGRAM.convert(), 0)
+    if (sockfd < 0uL) {
+        throw RuntimeException("Datagram Socket Creation F");
+    }
+    return NativeSocketHolder(sockfd)
+}
+
+internal actual fun writeDatagram(
+    socket: NativeSocketHolder,
+    data: ByteBuffer,
+    address: NetworkAddress
+) {
+    address as MutableNetworkAddress
+    memScoped {
+        val rr = sendto(
+            socket.native, data.bytes.refTo(data.position).getPointer(this), data.remaining.convert(),
+            0, address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
+        )
+        if (rr == SOCKET_ERROR) {
+            throw IOException("Can't send data. Error: $errno  ${GetLastError()}")
+        }
+
+        data.position += rr.toInt()
+    }
+}
+
+internal actual fun readDatagram(
+    socket: NativeSocketHolder,
+    data: ByteBuffer,
+    address: MutableNetworkAddress?
+) {
+//    val address: MutableNetworkAddress? = null
+    if (address == null) {
+        val rr = platform.windows.recvfrom(socket.native, data.bytes.refTo(data.position), data.remaining.convert(), 0, null, null)
+        if (rr == SOCKET_ERROR) {
+            throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
+        }
+        data.position += rr.toInt()
+    } else {
+        memScoped {
+            SetLastError(0)
+            val len = allocArray<IntVar>(1)
+            len[0] = 28
+            val rr = platform.windows.recvfrom(
+                socket.native, data.bytes.refTo(data.position).getPointer(this), data.remaining.convert(), 0,
+                address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
+                len
+            )
+
+            if (rr == SOCKET_ERROR) {
+                throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
+            }
+            data.position += rr.toInt()
+            address.size = len[0]
+        }
+    }
+}
+
+internal actual fun bindDatagram(socket: NativeSocketHolder, address: NetworkAddress) {
+    memScoped {
+        val serverAddr = alloc<sockaddr_in>()
+        with(serverAddr) {
+            memset(this.ptr, 0, sockaddr_in.size.convert())
+            sin_family = AF_INET.convert()
+            sin_addr.S_un.S_addr = if (address.host == "0.0.0.0")
+                htons(0.convert()).convert()
+            else
+                platform.posix.inet_addr(address.host)
+            sin_port = htons(address.port.convert()).convert()
+        }
+        bind(socket.native, serverAddr.ptr.reinterpret(), sockaddr_in.size.convert())
+    }
+}
+
 internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteArray, offset: Int, length: Int): Int =
-        send(socket.native, data.refTo(offset), length, 0)
+    send(socket.native, data.refTo(offset), length, 0)
 
 internal actual fun sendSocket(socket: NativeSocketHolder, data: ByteBuffer): Int {
-    val r: Int = send(socket.native, data.native+data.position, data.remaining.convert(), 0).convert()
+    val r: Int = send(socket.native, data.native + data.position, data.remaining.convert(), 0).convert()
     if (r < 0) {
         val error = GetLastError()
         if (error == 10035.convert<DWORD>())
@@ -189,25 +264,25 @@ internal actual class NativeEpoll actual constructor(connectionCount: Int) {
     }
 
     actual fun wait(list: NativeEpollList, connectionCount: Int, timeout: Int): Int =
-            epoll_wait(native, list.native, connectionCount, timeout)
+        epoll_wait(native, list.native, connectionCount, timeout)
 
     actual fun remove(socket: NativeSocketHolder) {
         epoll_ctl(native, EPOLL_CTL_DEL, socket.native, null)
     }
 
     actual fun add(socket: NativeSocketHolder, key: SocketSelector.SelectorKeyImpl): SelfRefKey =
-            memScoped {
-                val event = alloc<epoll_event>()
-                val ref = SelfRefKey(key)
-                event.events = if (key.channel is ServerSocketChannel)
-                    (EPOLLIN or EPOLLOUT or EPOLLRDHUP).convert()
-                else
-                    EPOLLRDHUP.convert()
-                event.data.sock = socket.native
-                event.data.ptr = ref.key
-                epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
-                ref
-            }
+        memScoped {
+            val event = alloc<epoll_event>()
+            val ref = SelfRefKey(key)
+            event.events = if (key.channel is ServerSocketChannel)
+                (EPOLLIN or EPOLLOUT or EPOLLRDHUP).convert()
+            else
+                EPOLLRDHUP.convert()
+            event.data.sock = socket.native
+            event.data.ptr = ref.key
+            epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
+            ref
+        }
 
     actual fun edit(socket: NativeSocketHolder, ref: SelfRefKey, readFlag: Boolean, writeFlag: Boolean) {
         memScoped {

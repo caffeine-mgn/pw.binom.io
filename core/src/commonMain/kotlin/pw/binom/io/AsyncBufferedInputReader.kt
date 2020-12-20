@@ -4,11 +4,12 @@ import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
+import pw.binom.pool.ObjectPool
 
 class AsyncBufferedInputReader(
     charset: Charset,
     val input: AsyncInput,
-    private val pool: ByteBufferPool,
+    private val pool: ObjectPool<ByteBuffer>,
     charBufferSize: Int = 512
 ) : AsyncReader {
     private val decoder = charset.newDecoder()
@@ -55,7 +56,35 @@ class AsyncBufferedInputReader(
         return counter
     }
 
-    override suspend fun read(): Char? {
+    suspend fun readUntil(char: Char): String? {
+        val out = StringBuilder()
+        var exist = false
+        LOOP@ while (true) {
+            prepareBuffer()
+            if (output.remaining <= 0) {
+                break
+            }
+            for (i in output.position until output.limit) {
+                if (output[i] == char) {
+                    out.append(output.subString(output.position, i))
+                    output.position = i + 1
+                    exist = true
+                    break@LOOP
+                }
+            }
+            out.append(output.subString(output.position, output.limit))
+            output.position = output.limit
+            exist = true
+        }
+        if (!exist) {
+            return null
+        }
+        return out.toString()
+    }
+
+    override suspend fun readln(): String? = readUntil(10.toChar())?.removeSuffix("\r")
+
+    override suspend fun readChar(): Char? {
         prepareBuffer()
         if (output.remaining == 0) {
             return null
@@ -63,7 +92,7 @@ class AsyncBufferedInputReader(
         return output.get()
     }
 
-    override suspend fun close() {
+    override suspend fun asyncClose() {
         decoder.close()
         pool.recycle(buffer)
     }
@@ -71,7 +100,7 @@ class AsyncBufferedInputReader(
 }
 
 fun AsyncInput.bufferedReader(
-    pool: ByteBufferPool,
+    pool: ObjectPool<ByteBuffer>,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = 512
 ) = AsyncBufferedInputReader(
