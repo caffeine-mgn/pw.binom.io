@@ -27,7 +27,7 @@ fun Input.asyncInput() = object : AsyncInput {
         get() = -1
 
     override suspend fun read(dest: ByteBuffer): Int =
-            this@asyncInput.read(dest)
+        this@asyncInput.read(dest)
 
     override suspend fun asyncClose() {
         this@asyncInput.close()
@@ -67,10 +67,10 @@ suspend fun AsyncInput.readByte(buffer: ByteBuffer): Byte {
 }
 
 suspend fun AsyncInput.readUUID(buffer: ByteBuffer) =
-        UUID.create(
-                mostSigBits = readLong(buffer),
-                leastSigBits = readLong(buffer)
-        )
+    UUID.create(
+        mostSigBits = readLong(buffer),
+        leastSigBits = readLong(buffer)
+    )
 
 suspend fun AsyncInput.readInt(buffer: ByteBuffer): Int {
     buffer.reset(0, 4)
@@ -101,23 +101,57 @@ suspend inline fun AsyncInput.readDouble(buffer: ByteBuffer) = Double.fromBits(r
  *
  * @receiver input
  * @param output output
+ * @param tempBuffer buffer for coping data from [this] to [output]. Buffer will not close after data coped
+ * @return size of copied data
+ */
+suspend fun AsyncInput.copyTo(output: AsyncOutput, tempBuffer: ByteBuffer): Long {
+    var totalLength = 0L
+    while (true) {
+        tempBuffer.clear()
+        val length = read(tempBuffer)
+        if (length == 0)
+            break
+        totalLength += length.toLong()
+        tempBuffer.flip()
+        output.write(tempBuffer)
+    }
+    return totalLength
+}
+
+/**
+ * Copy date from [this] to [output]
+ *
+ * @receiver input
+ * @param output output
+ * @param pool for get temp coping buffer
  * @return size of copied data
  */
 suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): Long {
     var totalLength = 0L
     val buffer = pool.borrow()
     try {
-        while (true) {
-            buffer.clear()
-            val length = read(buffer)
-            if (length == 0)
-                break
-            totalLength += length.toLong()
-            buffer.flip()
-            output.write(buffer)
-        }
+        copyTo(output, buffer)
     } finally {
         pool.recycle(buffer)
+    }
+    return totalLength
+}
+
+/**
+ * Copy date from [this] to [output]
+ *
+ * @receiver input
+ * @param output output
+ * @param bufferSize coping buffer size
+ * @return size of copied data
+ */
+suspend fun AsyncInput.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {
+    var totalLength = 0L
+    val buffer = ByteBuffer.alloc(bufferSize)
+    try {
+        copyTo(output, buffer)
+    } finally {
+        buffer.close()
     }
     return totalLength
 }
