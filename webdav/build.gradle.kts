@@ -21,11 +21,11 @@ kotlin {
         }
     }
 
-    linuxArm64 {
-        binaries {
-            staticLib()
-        }
-    }
+//    linuxArm64 {
+//        binaries {
+//            staticLib()
+//        }
+//    }
 
     mingwX64 { // Use your target instead.
         binaries {
@@ -58,9 +58,9 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
-        val linuxArm64Main by getting {
-            dependsOn(commonMain)
-        }
+//        val linuxArm64Main by getting {
+//            dependsOn(commonMain)
+//        }
         val linuxArm32HfpMain by getting {
             dependsOn(commonMain)
         }
