@@ -111,7 +111,7 @@ class NatsConnector(
     private val pool = ByteBufferPool(10)
 
     private suspend fun parseInfoMsg(con: Connection, msg: String) {
-        if (msg.startsWith("INFO ")) {
+        if (!msg.startsWith("INFO ")) {
             throw RuntimeException("Unknown message. Message: [$msg]")
         }
         val json = msg.removePrefix("INFO ")
