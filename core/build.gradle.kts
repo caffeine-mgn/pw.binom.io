@@ -113,6 +113,7 @@ kotlin {
                 api(kotlin("test-annotations-common"))
                 api(project(":concurrency"))
                 api(project(":file"))
+                api(project(":env"))
             }
         }
         val jvmTest by getting {

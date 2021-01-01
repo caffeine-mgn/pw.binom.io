@@ -121,10 +121,10 @@ open class HttpServer(
     /**
      * Bind HTTP server to port [port]
      *
-     * @param port Port for bind
+     * @param address Address for bind
      */
-    fun bindHTTP(host: String = "0.0.0.0", port: Int) {
-        val connect = manager.bindTcp(NetworkAddress.Immutable(host = host, port = port))
+    fun bindHTTP(address:NetworkAddress) {
+        val connect = manager.bindTcp(address)
         binded += connect
         async {
             while (true) {

@@ -17,9 +17,7 @@ actual class Worker actual constructor(name: String?) {
 
     actual fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
 
-        val ind = InputData(this, input, func)
-        ind.freeze()
-        val nativeFeature = nativeWorker.execute(TransferMode.SAFE, { ind }) {
+        val nativeFeature = nativeWorker.execute(TransferMode.SAFE, { InputData(this, input, func) }) {
             initRuntimeIfNeeded()
             privateCurrentWorker = it.worker
             val result = runCatching { it.func(it.input) }

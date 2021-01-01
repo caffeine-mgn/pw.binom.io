@@ -47,6 +47,25 @@ fun Random.nextBytes(data: ByteBuffer) {
     }
 }
 
+fun ByteBuffer.writeShort(value: Short): ByteBuffer {
+    value.dump(this)
+    return this
+}
+
+fun ByteBuffer.writeInt(value: Int): ByteBuffer {
+    value.dump(this)
+    return this
+}
+
+fun ByteBuffer.writeLong(value: Long): ByteBuffer {
+    value.dump(this)
+    return this
+}
+
+fun ByteBuffer.readShort() = Short.fromBytes(this)
+fun ByteBuffer.readInt() = Int.fromBytes(this)
+fun ByteBuffer.readLong() = Long.fromBytes(this)
+
 /**
  * The Function make copy of [data] to new [ByteBuffer] and then return it.
  * Returns ByteBuffer with [ByteBuffer.position]=0 and [ByteBuffer.limit]=[data].size
