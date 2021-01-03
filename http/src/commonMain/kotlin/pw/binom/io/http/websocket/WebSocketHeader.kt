@@ -19,7 +19,7 @@ class WebSocketHeader {
             val second = input.readByte(buf)
 
             dest.finishFlag = first.toInt() and 0b10000000 != 0
-            dest.opcode = first and 0b111
+            dest.opcode = first and 0b1111
 
             dest.length = (second and 0b1111111.toByte()).let {
                 when (it) {

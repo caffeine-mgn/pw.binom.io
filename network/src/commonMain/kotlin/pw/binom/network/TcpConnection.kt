@@ -114,7 +114,6 @@ println("!!")
     }
 
     override fun close() {
-        println("Closing....!")
         check(!holder.key.closed) { "Connection already closed" }
         readData.continuation?.resumeWithException(SocketClosedException())
         sendData.continuation?.resumeWithException(SocketClosedException())

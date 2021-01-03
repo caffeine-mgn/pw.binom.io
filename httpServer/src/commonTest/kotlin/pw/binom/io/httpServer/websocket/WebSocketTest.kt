@@ -42,7 +42,7 @@ class WebSocketTest {
         val manager = NetworkDispatcher()
 
         val server = HttpServer(manager, TestWebSocketHandler())
-        server.bindHTTP(NetworkAddress.Immutable(host = "0.0.0.0", port = port.toInt()))
+        server.bindHTTP(NetworkAddress.Immutable(host = "0.0.0.0", port = port))
 /*
         val str = Random.uuid().toString()
         async {

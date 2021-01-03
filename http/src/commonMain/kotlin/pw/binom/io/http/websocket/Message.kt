@@ -17,3 +17,6 @@ interface Message : AsyncInput {
         }
     }
 }
+
+val Message.isCloseMessage
+    get() = type == MessageType.CLOSE

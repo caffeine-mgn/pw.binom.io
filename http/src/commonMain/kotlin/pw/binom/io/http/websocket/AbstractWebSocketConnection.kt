@@ -68,20 +68,18 @@ abstract class AbstractWebSocketConnection(
                 val type = when (header.opcode) {
                     1.toByte() -> MessageType.TEXT
                     2.toByte() -> MessageType.BINARY
-                    0.toByte() -> {
+                    8.toByte() -> MessageType.CLOSE
+//                    8.toByte() -> {
+//                        kotlin.runCatching {
+//                            closeTcp()
+//                        }
+//                        throw WebSocketClosedException(0)
+//                    }
+                    else -> {
                         kotlin.runCatching {
                             closeTcp()
                         }
                         throw WebSocketClosedException(WebSocketClosedException.ABNORMALLY_CLOSE)
-                    }
-                    8.toByte() -> {
-                        kotlin.runCatching {
-                            closeTcp()
-                        }
-                        throw WebSocketClosedException(0)
-                    }
-                    else -> {
-                        TODO("Unknown opcode: ${header.opcode}")
                     }
                 }
                 return MessageImpl(
