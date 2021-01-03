@@ -55,15 +55,30 @@ class JvmSelector : Selector {
     ) : Selector.Key {
         lateinit var native: SelectionKey
 
+        private var _closed = false
+
+        override val closed: Boolean
+            get() = _closed
+
+        private inline fun checkClosed() {
+            check(!_closed) { "SelectorKey already closed" }
+        }
+
         override var listensFlag: Int
-            get() = javaToCommon(native.interestOps())
+            get() {
+                checkClosed()
+                return javaToCommon(native.interestOps())
+            }
             set(value) {
-                val vv = commonToJava(native.channel(), value)
-                native.interestOps(vv)
+                checkClosed()
+                native.interestOps(commonToJava(native.channel(), value))
             }
 
         override fun close() {
-            native.cancel()
+            checkClosed()
+            _closed = true
+            native.interestOps(0)
+//            native.cancel()
         }
     }
 
@@ -82,16 +97,9 @@ class JvmSelector : Selector {
             if (it.isConnectable) {
                 val cc = it.channel() as SocketChannel
 
-//                if (cc.isConnectionPending) {
                 try {
                     val connected = cc.finishConnect()
                     if (connected) {
-//                        val key = it.attachment() as JvmKey
-//                            it.interestOps(commonToJava(it.channel(), key.listensFlag))
-//                            it.interestOps(0)
-//                            var vv = it.interestOps()
-//
-//                        it.interestOps(0)
                         count++
                         func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
                         if (it.interestOps() and SelectionKey.OP_CONNECT != 0) {

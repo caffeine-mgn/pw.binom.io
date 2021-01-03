@@ -7,8 +7,7 @@ import kotlin.jvm.JvmName
 class NetworkDispatcher : Closeable {
     val selector = Selector.open()
 
-    @JvmName("jvmWait")
-    fun select(timeout: Long = -1L) {
+    fun select(timeout: Long = -1L) =
         selector.select(timeout) { key, mode ->
             val connection = key.attachment as AbstractConnection
             if (mode and Selector.EVENT_CONNECTED != 0) {
@@ -24,7 +23,6 @@ class NetworkDispatcher : Closeable {
                 connection.readyForWrite()
             }
         }
-    }
 
     suspend fun tcpConnect(address: NetworkAddress): TcpConnection {
         val channel = TcpClientSocketChannel()

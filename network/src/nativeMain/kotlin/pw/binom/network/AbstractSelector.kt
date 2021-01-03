@@ -14,12 +14,24 @@ abstract class AbstractSelector : Selector {
             get() = attachmentReference?.value
         var ptr = StableRef.create(this).asCPointer()
         private var _listensFlag by AtomicInt(0)
+        private var _closed by AtomicBoolean(false)
+
+        override val closed: Boolean
+            get() = _closed
+
+        protected fun checkClosed() {
+            require(!_closed) { "SelectorKey already closed" }
+        }
 
         abstract fun isSuccessConnected(nativeMode: Int): Boolean
 
         override var listensFlag: Int
-            get() = _listensFlag
+            get() {
+                checkClosed()
+                return _listensFlag
+            }
             set(value) {
+                checkClosed()
                 if (_listensFlag == value) {
                     return
                 }
@@ -29,6 +41,8 @@ abstract class AbstractSelector : Selector {
 
         abstract fun resetMode(mode: Int)
         override fun close() {
+            _closed = true
+            checkClosed()
             attachmentReference?.close()
             ptr.asStableRef<AbstractKey>().dispose()
         }

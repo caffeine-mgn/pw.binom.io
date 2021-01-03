@@ -84,7 +84,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override fun readyForRead(): Boolean {
-
+println("!!")
         if (readData.continuation == null) {
             holder.key.removeListen(Selector.INPUT_READY)
             return false
@@ -95,7 +95,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
                 val con = readData.continuation!!
                 readData.reset()
                 con.resumeWith(readed)
-                if (!closed && readData.continuation == null) {
+                if (!holder.key.closed && readData.continuation == null) {
                     holder.key.removeListen(Selector.INPUT_READY)
                 }
                 false
@@ -106,17 +106,16 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             val con = readData.continuation!!
             readData.reset()
             con.resumeWith(readed)
-            if (!closed && readData.continuation == null) {
+            if (!holder.key.closed && readData.continuation == null) {
                 holder.key.removeListen(Selector.INPUT_READY)
             }
             false
         }
     }
 
-    private var closed = false
     override fun close() {
-        check(!closed) { "Connection already closed" }
-        closed = true
+        println("Closing....!")
+        check(!holder.key.closed) { "Connection already closed" }
         readData.continuation?.resumeWithException(SocketClosedException())
         sendData.continuation?.resumeWithException(SocketClosedException())
         readData.reset()
