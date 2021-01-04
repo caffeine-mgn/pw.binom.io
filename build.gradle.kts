@@ -1,5 +1,5 @@
 buildscript {
-    val kotlin_version = "1.4.30-M1"
+    val kotlin_version = "1.4.21"
     extra.apply {
         set("kotlin_version", kotlin_version)
         set("network_version", pw.binom.Versions.LIB_VERSION)

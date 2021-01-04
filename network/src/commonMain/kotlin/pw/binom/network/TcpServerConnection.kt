@@ -10,7 +10,7 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
 
     lateinit var key: Selector.Key
 
-    override fun readyForWrite(): Boolean {
+    override fun readyForWrite() {
         TODO("Not yet implemented")
     }
 
@@ -22,18 +22,18 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
         TODO("Not yet implemented")
     }
 
-    override fun readyForRead(): Boolean {
+    override fun readyForRead() {
         println("!!!")
         if (acceptListener == null) {
             key.listensFlag = 0
-            return false
+            return
         }
         val newChannel = channel.accept(null)
         if (newChannel == null) {
             if (acceptListener == null) {
                 key.listensFlag = 0
             }
-            return false
+            return
         }
         val acceptListener = acceptListener
         if (acceptListener == null) {
@@ -45,7 +45,7 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
         if (this.acceptListener == null) {
             key.listensFlag = 0
         }
-        return false
+        return
     }
 
     override fun close() {

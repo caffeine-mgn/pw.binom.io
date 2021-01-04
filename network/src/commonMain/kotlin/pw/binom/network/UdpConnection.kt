@@ -41,7 +41,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         channel.bind(address)
     }
 
-    override fun readyForWrite(): Boolean {
+    override fun readyForWrite() {
         val waiter = holder.readyForWriteListener.popOrNull()
         if (waiter != null) {
             var exception: Throwable? = null
@@ -55,23 +55,20 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
                 throw exception
             }
             holder.key.removeListen(Selector.OUTPUT_READY)
-            return false
+            return
         }
 
         if (sendData.continuation == null) {
             holder.key.removeListen(Selector.OUTPUT_READY)
-            return false
+            return
         }
 
         val result = runCatching { channel.send(sendData.data!!, sendData.address!!) }
-        return if (sendData.data!!.remaining == 0) {
+        if (sendData.data!!.remaining == 0) {
             val con = sendData.continuation!!
             sendData.reset()
             holder.key.removeListen(Selector.OUTPUT_READY)
             con.resumeWith(result)
-            false
-        } else {
-            true
         }
     }
 
@@ -83,28 +80,24 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         throw RuntimeException("Not supported")
     }
 
-    override fun readyForRead(): Boolean {
+    override fun readyForRead() {
         if (readData.continuation == null) {
             holder.key.removeListen(Selector.INPUT_READY)
-            return false
+            return
         }
         val readed = runCatching { channel.recv(readData.data!!, readData.address) }
-        return if (readData.full) {
+        if (readData.full) {
             if (readData.data!!.remaining == 0) {
                 val con = readData.continuation!!
                 readData.reset()
                 holder.key.removeListen(Selector.INPUT_READY)
                 con.resumeWith(readed)
-                false
-            } else {
-                true
             }
         } else {
             val con = readData.continuation!!
             readData.reset()
             holder.key.removeListen(Selector.INPUT_READY)
             con.resumeWith(readed)
-            false
         }
     }
 

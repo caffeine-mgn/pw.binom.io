@@ -41,8 +41,8 @@ abstract class AbstractSelector : Selector {
 
         abstract fun resetMode(mode: Int)
         override fun close() {
-            _closed = true
             checkClosed()
+            _closed = true
             attachmentReference?.close()
             ptr.asStableRef<AbstractKey>().dispose()
         }
@@ -87,7 +87,9 @@ abstract class AbstractSelector : Selector {
                     key.resetMode(epollCommonToNative(key.listensFlag))
                 } else {
                     func(key, Selector.EVENT_ERROR)
-                    key.close()
+                    if (!key.closed) {
+                        key.close()
+                    }
                 }
                 return@nativeSelect
             }

@@ -71,6 +71,7 @@ class JvmSelector : Selector {
             }
             set(value) {
                 checkClosed()
+                println("JSekector: (read: [${value and Selector.INPUT_READY != 0}], write: [${value and Selector.OUTPUT_READY != 0}], connect: [${value and Selector.EVENT_CONNECTED != 0}])")
                 native.interestOps(commonToJava(native.channel(), value))
             }
 

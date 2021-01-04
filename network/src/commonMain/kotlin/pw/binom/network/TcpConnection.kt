@@ -1,10 +1,7 @@
 package pw.binom.network
 
 import pw.binom.ByteBuffer
-import pw.binom.forEach
 import pw.binom.io.AsyncChannel
-import pw.binom.io.IOException
-import pw.binom.map
 import pw.binom.popOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
@@ -39,8 +36,35 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     private val readData = ReadData()
     private val sendData = SendData()
 
-    override fun readyForWrite(): Boolean {
+    private fun calcListenFlags() =
+        when {
+            readData.continuation != null && (!holder.readyForWriteListener.isEmpty || sendData.continuation != null) -> Selector.INPUT_READY or Selector.OUTPUT_READY
+            readData.continuation != null -> Selector.INPUT_READY
+            !holder.readyForWriteListener.isEmpty || sendData.continuation != null -> Selector.OUTPUT_READY
+            else -> 0
+        }
+
+    override fun readyForWrite() {
+        println("Ready for write!")
+
+
+        if (sendData.continuation != null) {
+            println("Have write continuation")
+            val result = runCatching { channel.write(sendData.data!!) }
+            if (sendData.data!!.remaining == 0) {
+                val con = sendData.continuation!!
+                sendData.reset()
+                holder.key.removeListen(Selector.OUTPUT_READY)
+                con.resumeWith(result)
+            }
+            holder.key.listensFlag = calcListenFlags()
+            return
+        } else {
+            println("No write continuation")
+        }
+
         val waiter = holder.readyForWriteListener.popOrNull()
+        println("pop net $waiter")
         if (waiter != null) {
             var exception: Throwable? = null
             try {
@@ -52,25 +76,11 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
                 holder.key.removeListen(Selector.OUTPUT_READY)
                 throw exception
             }
-            holder.key.removeListen(Selector.OUTPUT_READY)
-            return false
+            if (sendData.continuation == null) {
+                holder.key.removeListen(Selector.OUTPUT_READY)
+            }
         }
-
-        if (sendData.continuation == null) {
-            holder.key.removeListen(Selector.OUTPUT_READY)
-            return false
-        }
-
-        val result = runCatching { channel.write(sendData.data!!) }
-        return if (sendData.data!!.remaining == 0) {
-            val con = sendData.continuation!!
-            sendData.reset()
-            holder.key.removeListen(Selector.OUTPUT_READY)
-            con.resumeWith(result)
-            false
-        } else {
-            true
-        }
+        holder.key.listensFlag = calcListenFlags()
     }
 
     override fun connected() {
@@ -83,14 +93,13 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         connect?.resumeWith(Result.failure(SocketConnectException()))
     }
 
-    override fun readyForRead(): Boolean {
-println("!!")
+    override fun readyForRead() {
         if (readData.continuation == null) {
             holder.key.removeListen(Selector.INPUT_READY)
-            return false
+            return
         }
         val readed = runCatching { channel.read(readData.data!!) }
-        return if (readData.full) {
+        if (readData.full) {
             if (readData.data!!.remaining == 0 || readed.isFailure) {
                 val con = readData.continuation!!
                 readData.reset()
@@ -98,9 +107,6 @@ println("!!")
                 if (!holder.key.closed && readData.continuation == null) {
                     holder.key.removeListen(Selector.INPUT_READY)
                 }
-                false
-            } else {
-                true
             }
         } else {
             val con = readData.continuation!!
@@ -109,7 +115,6 @@ println("!!")
             if (!holder.key.closed && readData.continuation == null) {
                 holder.key.removeListen(Selector.INPUT_READY)
             }
-            false
         }
     }
 

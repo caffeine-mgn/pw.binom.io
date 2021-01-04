@@ -2,7 +2,6 @@ package pw.binom.network
 
 import pw.binom.io.Closeable
 import kotlin.coroutines.suspendCoroutine
-import kotlin.jvm.JvmName
 
 class NetworkDispatcher : Closeable {
     val selector = Selector.open()
@@ -22,6 +21,7 @@ class NetworkDispatcher : Closeable {
             if (mode and Selector.OUTPUT_READY != 0) {
                 connection.readyForWrite()
             }
+            println("update! ${mode.toString(2)}, write: [${mode and Selector.OUTPUT_READY != 0}], read: [${mode and Selector.INPUT_READY != 0}], connected: [${mode and Selector.EVENT_CONNECTED != 0}]")
         }
 
     suspend fun tcpConnect(address: NetworkAddress): TcpConnection {
