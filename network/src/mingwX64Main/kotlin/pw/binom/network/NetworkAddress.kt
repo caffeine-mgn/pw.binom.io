@@ -117,15 +117,21 @@ actual sealed class NetworkAddress {
             this._reset(host, port)
         }
 
-        actual fun toImmutable(): Immutable {
+        override fun toImmutable(): Immutable {
             val immutable = Immutable()
             memcpy(immutable.data.refTo(0), data.refTo(0), data.size.convert())
             return immutable
         }
 
+        override fun toMutable(): Mutable = clone()
+
+        override fun toMutable(address: Mutable) {
+            memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
+        }
+
         actual fun clone(): Mutable {
             val mutable = Mutable()
-            memcpy(mutable.data.refTo(0), data.refTo(0), data.size.convert())
+            toMutable(mutable)
             return mutable
         }
     }
@@ -139,14 +145,20 @@ actual sealed class NetworkAddress {
 
         internal constructor()
 
-        actual fun toMutable(): Mutable {
+        override fun toImmutable(): Immutable = this
+
+        override fun toMutable(): Mutable {
             val mutable = Mutable()
             memcpy(mutable.data.refTo(0), data.refTo(0), data.size.convert())
             return mutable
         }
 
-        actual fun toMutable(address: Mutable) {
+        override fun toMutable(address: Mutable) {
             memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
         }
     }
+
+    actual abstract fun toImmutable(): Immutable
+    actual abstract fun toMutable(): Mutable
+    actual abstract fun toMutable(address: Mutable)
 }

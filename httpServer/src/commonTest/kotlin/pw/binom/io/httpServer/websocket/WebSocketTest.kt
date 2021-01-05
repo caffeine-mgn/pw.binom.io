@@ -1,5 +1,9 @@
 package pw.binom.io.httpServer.websocket
 
+import pw.binom.ByteBuffer
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.sleep
+import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.readText
 import pw.binom.io.use
@@ -7,24 +11,37 @@ import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import pw.binom.wrap
 import kotlin.test.Test
 
 class WebSocketTest {
 
     private class TestWebSocketHandler : WebSocketHandler() {
+        val w = Worker()
         override suspend fun connected(request: ConnectRequest) {
             try {
                 println("New Connection")
                 val connection = request.accept()
                 println("Try read message from client")
-                val msg = connection.read()
-                val text = msg.use {
-                    it.utf8Reader().readText()
+                w.execute(connection) {
+                    Worker.sleep(1000)
+                    println("##1")
+                    it.write(MessageType.TEXT) {
+                        println("##2")
+                        it.write(ByteBuffer.wrap("Hello".encodeToByteArray()))
+//                        it.utf8Appendable().use { it.append("Hello!") }
+                    }
                 }
-                println("Message from client read!")
+                while (true) {
+                    val msg = connection.read()
+                    val text = msg.use {
+                        it.utf8Reader().readText()
+                    }
+                    println("Message from client read!")
 
-                connection.write(msg.type).use {
-                    it.utf8Appendable().append(text)
+                    connection.write(msg.type) {
+                        it.utf8Appendable().append("Echo: $text")
+                    }
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()

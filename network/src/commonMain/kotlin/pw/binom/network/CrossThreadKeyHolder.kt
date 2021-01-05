@@ -12,7 +12,6 @@ class CrossThreadKeyHolder(val key: Selector.Key) {
         if (networkThread.same) {
             func()
         } else {
-            println("push net. size: [${readyForWriteListener.size}], ready for write: [${key.listensFlag and Selector.OUTPUT_READY != 0}]")
             readyForWriteListener.push(func.doFreeze())
             key.addListen(Selector.OUTPUT_READY)
         }

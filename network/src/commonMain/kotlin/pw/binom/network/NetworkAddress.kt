@@ -12,12 +12,13 @@ expect sealed class NetworkAddress {
 
     class Mutable() : NetworkAddress {
         fun reset(host: String, port: Int)
-        fun toImmutable(): Immutable
         fun clone(): Mutable
     }
 
     class Immutable(host: String = "0.0.0.0", port: Int) : NetworkAddress {
-        fun toMutable(): Mutable
-        fun toMutable(address: Mutable)
+
     }
+    abstract fun toImmutable(): Immutable
+    abstract fun toMutable(): Mutable
+    abstract fun toMutable(address: Mutable)
 }

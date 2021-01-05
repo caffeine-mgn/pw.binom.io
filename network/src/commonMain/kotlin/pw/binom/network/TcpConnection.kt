@@ -45,11 +45,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         }
 
     override fun readyForWrite() {
-        println("Ready for write!")
-
-
         if (sendData.continuation != null) {
-            println("Have write continuation")
             val result = runCatching { channel.write(sendData.data!!) }
             if (sendData.data!!.remaining == 0) {
                 val con = sendData.continuation!!
@@ -59,12 +55,9 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             }
             holder.key.listensFlag = calcListenFlags()
             return
-        } else {
-            println("No write continuation")
         }
 
         val waiter = holder.readyForWriteListener.popOrNull()
-        println("pop net $waiter")
         if (waiter != null) {
             var exception: Throwable? = null
             try {

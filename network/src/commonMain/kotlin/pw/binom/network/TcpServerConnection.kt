@@ -23,7 +23,6 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
     }
 
     override fun readyForRead() {
-        println("!!!")
         if (acceptListener == null) {
             key.listensFlag = 0
             return

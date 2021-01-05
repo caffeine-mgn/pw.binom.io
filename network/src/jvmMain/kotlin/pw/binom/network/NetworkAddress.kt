@@ -73,16 +73,22 @@ actual sealed class NetworkAddress {
             _reset(host, port)
         }
 
-        actual fun toImmutable(): Immutable {
+        override fun toImmutable(): Immutable {
             require(_native != null)
             val res = Immutable()
             res._native = _native
             return res
         }
 
+        override fun toMutable(): Mutable = clone()
+
+        override fun toMutable(address: Mutable) {
+            address._native = _native
+        }
+
         actual fun clone(): Mutable {
             val res = Mutable()
-            res._native = _native
+            toMutable(res)
             return res
         }
     }
@@ -94,14 +100,20 @@ actual sealed class NetworkAddress {
 
         constructor() : super()
 
-        actual fun toMutable(): Mutable {
+        override fun toImmutable(): Immutable = this
+
+        override fun toMutable(): Mutable {
             val res = Mutable()
             res._native = _native
             return res
         }
 
-        actual fun toMutable(address: Mutable) {
+        override fun toMutable(address: Mutable) {
             address._native = _native
         }
     }
+
+    actual abstract fun toImmutable(): Immutable
+    actual abstract fun toMutable(): Mutable
+    actual abstract fun toMutable(address: Mutable)
 }

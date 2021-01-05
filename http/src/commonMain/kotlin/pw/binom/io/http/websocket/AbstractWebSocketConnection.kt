@@ -45,20 +45,13 @@ abstract class AbstractWebSocketConnection(
                 }
             }
         } else {
-            println("#->1")
             holder.waitReadyForWrite {
-                println("#->2")
                 async {
-                    try {
-                        func(write(type))
-                    } catch (e:Throwable){
-                        println("#->ERROR")
-                        e.printStackTrace()
-                    }
+                        write(type).use {
+                            func(it)
+                        }
                 }
-                println("#->3")
             }
-            println("#->4")
         }
     }
 
