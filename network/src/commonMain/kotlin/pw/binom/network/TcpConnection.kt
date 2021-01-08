@@ -66,10 +66,12 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
                 exception = e
             }
             if (exception != null) {
-                holder.key.removeListen(Selector.OUTPUT_READY)
+                if (!holder.key.closed) {
+                    holder.key.removeListen(Selector.OUTPUT_READY)
+                }
                 throw exception
             }
-            if (sendData.continuation == null) {
+            if (sendData.continuation == null && !holder.key.closed) {
                 holder.key.removeListen(Selector.OUTPUT_READY)
             }
         }
