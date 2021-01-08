@@ -5,7 +5,6 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.Future as JFuture
 
 private val currentWorker = ThreadLocal<Worker>()
 private val idSeq = AtomicLong(0)
@@ -37,8 +36,9 @@ actual class Worker actual constructor(name: String?) {
         worker.submit {
             currentWorker.set(null)
         }
+
         worker.shutdown()
-        while (worker.isTerminated) {
+        while (!worker.isTerminated) {
             worker.awaitTermination(1, TimeUnit.MINUTES)
         }
     }
