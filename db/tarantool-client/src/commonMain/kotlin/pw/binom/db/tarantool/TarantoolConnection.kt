@@ -297,13 +297,13 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         space: String,
         index: String,
         key: Any?,
-        offset: Int,
+        offset: Int?,
         limit: Int,
-        iterator: QueryIterator
+        iterator: QueryIterator?
     ): ResultSet {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
-        val indexObj = spaceObj.indexes[key] ?: throw TarantoolException("Can't find Index \"$spaceObj\".\"$index\"")
+        val indexObj = spaceObj.indexes[index] ?: throw TarantoolException("Can't find Index \"$space\".\"$index\"")
         return select(
             space = spaceObj.id,
             index = indexObj.id,
@@ -314,24 +314,28 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         )
     }
 
-    suspend fun <O> select(
+    suspend fun select(
         space: Int,
         index: Int,
-        key: O,
-        offset: Int,
+        key: Any?,
+        offset: Int?,
         limit: Int,
-        iterator: QueryIterator
+        iterator: QueryIterator?
     ): ResultSet {
+        val body = HashMap<Any, Any?>()
+        body[Key.SPACE.id] = space
+        body[Key.INDEX.id] = index
+        body[Key.LIMIT.id] = limit
+        body[Key.KEY.id] = key ?: listOf<Any>()
+        if (iterator != null) {
+            body[Key.ITERATOR.id] = iterator.value
+        }
+        if (offset != null) {
+            body[Key.OFFSET.id] = offset
+        }
         val result = this.sendReceive(
             code = Code.SELECT,
-            body = mapOf(
-                Key.SPACE.id to space,
-                Key.INDEX.id to index,
-                Key.KEY.id to key,
-                Key.ITERATOR.id to iterator.value,
-                Key.LIMIT.id to limit,
-                Key.OFFSET.id to offset
-            )
+            body = body
         )
         result.assertException()
         return ResultSet(result.body)
@@ -378,12 +382,12 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun update(
         space: String,
-        key: Any?,
-        values: List<Any?>
-    ) {
+        key: List<Any?>,
+        values: List<FieldUpdate>
+    ): Row? {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
-        update(
+        return update(
             space = spaceObj.id,
             key = key,
             values = values,
@@ -392,19 +396,22 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun update(
         space: Int,
-        key: Any?,
-        values: List<Any?>
-    ) {
+        key: List<Any?>,
+        values: List<FieldUpdate>
+    ): Row? {
 
         val result = this.sendReceive(
-            code = Code.REPLACE,
+            code = Code.UPDATE,
             body = mapOf(
                 Key.SPACE.id to space,
                 Key.KEY.id to key,
-                Key.TUPLE.id to values,
+                Key.TUPLE.id to values.map {
+                    listOf(it.operator.code, it.fieldId, it.value)
+                },
             )
         )
         result.assertException()
+        return ResultSet(result.body).firstOrNull()
     }
 
 //    suspend fun upsert(

@@ -5,6 +5,7 @@ import pw.binom.base64.Base64
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
 import pw.binom.io.Sha1
+import pw.binom.io.use
 import kotlin.experimental.xor
 
 internal object InternalProtocolUtils {
@@ -109,11 +110,8 @@ internal object InternalProtocolUtils {
     }
 
     private fun write(value: ByteArray, buffer: ByteBuffer, out: Output) {
-        val buf = ByteBuffer.wrap(value)
-        try {
-            write(buf, buffer, out)
-        } finally {
-            buf.close()
+        ByteBuffer.wrap(value).use {
+            write(it, buffer, out)
         }
     }
 
@@ -137,15 +135,16 @@ internal object InternalProtocolUtils {
 
     private fun writeListSize(size: Int, buffer: ByteBuffer, out: Output) {
         when {
+            size == 1 -> out.writeByte(buffer, MP_ARRAY1)
             size <= MAX_4BIT -> {
                 out.writeByte(buffer, (size or (MP_FIXARRAY.toInt() and 0xFF)).toByte());
             }
             size <= MAX_16BIT -> {
-                out.writeByte(buffer, MP_ARRAY16);
+                out.writeByte(buffer, MP_ARRAY16)
                 out.writeShort(buffer, size.toShort())
             }
             else -> {
-                out.writeByte(buffer, MP_ARRAY32);
+                out.writeByte(buffer, MP_ARRAY32)
                 out.writeInt(buffer, size)
             }
         }
@@ -423,6 +422,7 @@ private const val MP_INT32 = 0xd2.toByte()
 private const val MP_INT64 = 0xd3.toByte()
 
 private const val MP_FIXARRAY = 0x90.toByte() //last 4 bits is size
+private const val MP_ARRAY1 = 0x91.toByte()
 private const val MP_FIXEXT = 0xd8.toByte()
 private const val MP_UUID = 0x02.toByte()
 private const val MP_FIXARRAY_INT = 0x90

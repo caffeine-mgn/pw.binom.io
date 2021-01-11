@@ -1,5 +1,7 @@
 package pw.binom.db.tarantool.protocol
 
+import pw.binom.db.tarantool.TarantoolException
+
 internal data class Package(val header: Map<Int, Any?>, val body: Map<Int, Any?>) {
 
     fun assertException() {
@@ -7,9 +9,9 @@ internal data class Package(val header: Map<Int, Any?>, val body: Map<Int, Any?>
         if (code != 0) {
             val message = body[Key.ERROR.id] as String?
             throw if (message == null)
-                RuntimeException("Tarantool Exception")
+                TarantoolException()
             else
-                RuntimeException("Tarantool Exception: $message")
+                TarantoolException(message)
         }
     }
 
