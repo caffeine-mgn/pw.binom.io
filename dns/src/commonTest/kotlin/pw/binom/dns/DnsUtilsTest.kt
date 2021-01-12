@@ -1,5 +1,7 @@
 package pw.binom.dns
 
+import pw.binom.dns.protocol.fromDns
+import pw.binom.dns.protocol.toDnsString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

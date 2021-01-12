@@ -1,6 +1,9 @@
 package pw.binom.dns
 
 import pw.binom.*
+import pw.binom.dns.protocol.DnsHeader
+import pw.binom.dns.protocol.Query
+import pw.binom.dns.protocol.Resource
 import pw.binom.io.bufferedInput
 import pw.binom.io.bufferedOutput
 import pw.binom.network.NetworkAddress
@@ -39,7 +42,7 @@ class ClientTest {
             type = 1u
             clazz = 1u
         }
-        val r = ResourceRecord().apply {
+        val r = Resource().apply {
             name = ""
             type = 41u
             clazz = 4096u
@@ -109,7 +112,7 @@ class ClientTest {
         val buf = ByteBuffer.alloc(512)
         val header = DnsHeader()
         val q = Query()
-        val r = ResourceRecord()
+        val r = Resource()
         async {
             try {
                 val server = n.bindTcp(NetworkAddress.Immutable("0.0.0.0", 53))

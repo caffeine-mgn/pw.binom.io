@@ -1,4 +1,4 @@
-package pw.binom.dns
+package pw.binom.dns.protocol
 
 import pw.binom.ByteBuffer
 import pw.binom.fromBytes

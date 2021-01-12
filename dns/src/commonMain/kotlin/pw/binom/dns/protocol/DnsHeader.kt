@@ -1,4 +1,4 @@
-package pw.binom.dns
+package pw.binom.dns.protocol
 
 import pw.binom.*
 
@@ -91,7 +91,7 @@ class DnsHeader {
         readPackage(buf)
     }
 
-    fun readPackage(buf:ByteBuffer){
+    fun readPackage(buf: ByteBuffer) {
         id = buf.readShort()
         val flags = (buf.readShort().toInt() and 0xFFFF).toBitset32()
         qr = flags[0 + Short.SIZE_BITS]
@@ -110,10 +110,15 @@ class DnsHeader {
         add_count = buf.readShort().toUShort()
     }
 
-    fun writeStart(buf: ByteBuffer) {
-        buf.clear()
-        buf.writeShort(0)
-        buf.writeShort(id)
+    fun writeStart(dest: ByteBuffer): Int {
+        val packageStartPosition = dest.position
+        dest.writeShort(0)
+        write(dest)
+        return packageStartPosition
+    }
+
+    fun write(dest: ByteBuffer) {
+        dest.writeShort(id)
         val flags = Bitset32()
             .set(0 + Short.SIZE_BITS, qr)
             .setByte4(1 + Short.SIZE_BITS, opcode)
@@ -125,18 +130,18 @@ class DnsHeader {
             .set(10 + Short.SIZE_BITS, ad)
             .set(11 + Short.SIZE_BITS, cd)
             .setByte4(12 + Short.SIZE_BITS, rcode).toInt().let { it and 0xFFF }.toShort()
-        buf.writeShort(flags)
-        buf.writeShort(q_count.toShort())
-        buf.writeShort(ans_count.toShort())
-        buf.writeShort(auth_count.toShort())
-        buf.writeShort(add_count.toShort())
+        dest.writeShort(flags)
+        dest.writeShort(q_count.toShort())
+        dest.writeShort(ans_count.toShort())
+        dest.writeShort(auth_count.toShort())
+        dest.writeShort(add_count.toShort())
     }
 
-    fun writeEnd(data: ByteBuffer) {
-        val l = data.position
-        data.position = 0
-        data.writeShort((l - 2).toShort())
-        data.reset(0, l)
+    fun writeEnd(packageStartPosition: Int, dest: ByteBuffer) {
+        val packageEndPosition = dest.position
+        dest.position = packageStartPosition
+        dest.writeShort((packageStartPosition - packageEndPosition - Short.SIZE_BYTES).toShort())
+        dest.reset(0, packageEndPosition)
     }
 
     override fun toString(): String {
