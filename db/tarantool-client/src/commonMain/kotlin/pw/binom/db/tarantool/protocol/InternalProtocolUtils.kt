@@ -190,7 +190,7 @@ internal object InternalProtocolUtils {
                 out.writeFloat(buffer, value)
             }
             is Double -> {
-                out.writeByte(buffer, MP_FLOAT)
+                out.writeByte(buffer, MP_DOUBLE)
                 out.writeDouble(buffer, value)
             }
             else -> throw IllegalArgumentException("Unsupported Type ${value::class}")
