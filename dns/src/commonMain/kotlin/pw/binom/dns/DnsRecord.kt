@@ -62,7 +62,7 @@ data class DnsRecord(
     val queries: List<Query>,
     val ans: List<pw.binom.dns.Resource>,
     val auth: List<pw.binom.dns.Resource>,
-    val addCount: List<pw.binom.dns.Resource>,
+    val add: List<pw.binom.dns.Resource>,
 ) {
     companion object {
         suspend fun read(input: AsyncInput, buffer: ByteBuffer): DnsRecord {
@@ -95,7 +95,7 @@ data class DnsRecord(
             val auth = (0 until header.auth_count.toInt()).map {
                 r.read(src).toImmutable()
             }
-            val addCount = (0 until header.add_count.toInt()).map {
+            val add = (0 until header.add_count.toInt()).map {
                 r.read(src).toImmutable()
             }
             return DnsRecord(
@@ -113,7 +113,7 @@ data class DnsRecord(
                 queries = queries,
                 ans = ans,
                 auth = auth,
-                addCount = addCount
+                add = add
             )
         }
     }
@@ -148,7 +148,7 @@ data class DnsRecord(
         header.q_count = queries.size.toUShort()
         header.ans_count = ans.size.toUShort()
         header.auth_count = auth.size.toUShort()
-        header.add_count = addCount.size.toUShort()
+        header.add_count = add.size.toUShort()
         header.write(dest)
         val q = pw.binom.dns.protocol.Query()
         val r = Resource()
@@ -164,7 +164,7 @@ data class DnsRecord(
             it.toMutable(r)
             r.write(dest)
         }
-        addCount.forEach {
+        add.forEach {
             it.toMutable(r)
             r.write(dest)
         }
