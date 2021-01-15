@@ -4,7 +4,7 @@ import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 
-class AsyncBufferedAsciiInputWriter(
+class AsyncBufferedAsciiWriter(
     val output: AsyncOutput,
     val bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncWriter, AsyncOutput {
@@ -67,7 +67,7 @@ class AsyncBufferedAsciiInputWriter(
     }
 }
 
-fun AsyncOutput.bufferedAsciiInputWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiInputWriter(
+fun AsyncOutput.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiWriter(
     output = this,
     bufferSize = bufferSize
 )

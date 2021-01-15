@@ -27,7 +27,7 @@ class AsyncBufferedInputReader private constructor(
         charset = charset,
         input = input,
         pool = null,
-        buffer = buffer,
+        buffer = buffer.empty(),
         charBufferSize = charBufferSize,
         closeBuffer = false,
     )
@@ -41,7 +41,7 @@ class AsyncBufferedInputReader private constructor(
         charset = charset,
         input = input,
         pool = null,
-        buffer = ByteBuffer.alloc(bufferSize),
+        buffer = ByteBuffer.alloc(bufferSize).empty(),
         charBufferSize = charBufferSize,
         closeBuffer = true,
     )

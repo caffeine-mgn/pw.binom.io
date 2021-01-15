@@ -14,8 +14,8 @@ package pw.binom
  * ```
  */
 inline class Bitset32(val value: Int = 0) {
-    inline operator fun get(index: Int): Boolean = value and (1 shl (31 - index)) != 0
-    inline fun set(index: Int, value: Boolean) =
+    operator fun get(index: Int): Boolean = value and (1 shl (31 - index)) != 0
+    fun set(index: Int, value: Boolean) =
         Bitset32(
             if (value)
                 (this.value or (1 shl (31 - index)))
@@ -23,15 +23,15 @@ inline class Bitset32(val value: Int = 0) {
                 (this.value.inv() or (1 shl 31 - index)).inv()
         )
 
-    inline fun toInt() = value
-    inline fun toUInt() = toInt().toUInt()
+    fun toInt() = value
+    fun toUInt() = toInt().toUInt()
 
     /**
      * Returns byte from 4 bites using [index]
      *
      * @param index Offset for getting byte
      */
-    inline fun getByte4(index: Int) = ((value ushr (32 - 4 - index)) and 0xF).toByte()
+    fun getByte4(index: Int) = ((value ushr (32 - 4 - index)) and 0xF).toByte()
 
     /**
      * Sets 4 bits [value] to [Bitset32.value] using offset [index]. [value] must be less or equals 0xF
@@ -46,7 +46,7 @@ inline class Bitset32(val value: Int = 0) {
      * @param index offset for set data
      * @param value new value
      */
-    inline fun setByte4(index: Int, value: Byte): Bitset32 {
+    fun setByte4(index: Int, value: Byte): Bitset32 {
         require(value <= 0xF)
         val leftPart = (this.value ushr (31 - index)) shl (31 - index)
         val rightPart = (this.value shl (index + 4)) ushr (index + 4)
@@ -65,13 +65,13 @@ inline class Bitset32(val value: Int = 0) {
      *
      * @param offset Offset for getting byte
      */
-    inline fun getByte8(offset: Int): Byte =
+    fun getByte8(offset: Int): Byte =
         ((value ushr (offset - 8)) and 0xFF).toByte()
 
     /**
      * Returns value as unsigned int in radix 2
      */
-    override inline fun toString(): String = value.toBitsetString()
+    override fun toString(): String = value.toBitsetString()
 
 }
 

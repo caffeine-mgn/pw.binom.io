@@ -5,6 +5,9 @@ import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 
 class RootRouter : AbstractRoute(), Handler {
+    interface ExceptionHandler{
+        fun exception(exception:Throwable, )
+    }
 
     private class ActionImpl(override val req: HttpRequest, override val resp: HttpResponse) : Action
 
