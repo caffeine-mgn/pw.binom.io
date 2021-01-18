@@ -359,7 +359,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     suspend fun delete(
         space: String,
         keys: List<Any?>
-    ): List<List<Any?>> {
+    ): Row? {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
         return delete(
@@ -462,7 +462,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     suspend fun delete(
         space: Int,
         keys: List<Any?>
-    ): List<List<Any?>> {
+    ): Row? {
 
         val result = this.sendReceive(
             code = Code.DELETE,
@@ -472,7 +472,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
             )
         )
         result.assertException()
-        return result.data as List<List<Any?>>
+        return ResultSet(result.body).firstOrNull()
     }
 
     suspend fun insert(
