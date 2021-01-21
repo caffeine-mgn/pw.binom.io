@@ -75,11 +75,11 @@ suspend fun AsyncOutput.writeInt(buffer: ByteBuffer, value: Int) {
     write(buffer)
 }
 
-inline suspend fun AsyncOutput.writeFloat(buffer: ByteBuffer, value: Float) {
+suspend fun AsyncOutput.writeFloat(buffer: ByteBuffer, value: Float) {
     writeInt(buffer, value.toBits())
 }
 
-inline suspend fun AsyncOutput.writeDouble(buffer: ByteBuffer, value: Double) {
+suspend fun AsyncOutput.writeDouble(buffer: ByteBuffer, value: Double) {
     writeLong(buffer, value.toBits())
 }
 
@@ -95,4 +95,22 @@ suspend fun AsyncOutput.writeLong(buffer: ByteBuffer, value: Long) {
     value.dump(buffer)
     buffer.flip()
     write(buffer)
+}
+
+/**
+ * Special AsyncOutput for drop all output passed to [write]
+ */
+object NullAsyncOutput : AsyncOutput {
+    override suspend fun write(data: ByteBuffer): Int {
+        val remaining = data.remaining
+        data.empty()
+        return remaining
+    }
+
+    override suspend fun asyncClose() {
+    }
+
+    override suspend fun flush() {
+    }
+
 }

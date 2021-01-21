@@ -9,7 +9,7 @@ import java.nio.ByteBuffer as JByteBuffer
 actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer =
-            ByteBuffer(JByteBuffer.allocate(size))
+            ByteBuffer(JByteBuffer.allocateDirect(size))
 
         fun wrap(native: JByteBuffer) = ByteBuffer(native)
     }

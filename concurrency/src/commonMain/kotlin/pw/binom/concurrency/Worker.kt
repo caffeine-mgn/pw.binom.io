@@ -1,6 +1,7 @@
 package pw.binom.concurrency
 
 import pw.binom.Future
+import kotlin.coroutines.CoroutineContext
 
 expect class Worker {
     constructor(name: String? = null)
@@ -9,6 +10,7 @@ expect class Worker {
     fun requestTermination(): Future<Unit>
     val isInterrupted: Boolean
     val id: Long
+    val taskCount:Int
 
     companion object {
         val current: Worker?
@@ -16,3 +18,10 @@ expect class Worker {
 }
 
 expect fun Worker.Companion.sleep(deley: Long)
+
+class WorkerHolderElement(val worker: Worker) : CoroutineContext.Element {
+    override val key: CoroutineContext.Key<WorkerHolderElement>
+        get() = WorkerHolderElementKey
+}
+
+object WorkerHolderElementKey : CoroutineContext.Key<WorkerHolderElement>

@@ -141,24 +141,39 @@ fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Long {
     return totalLength
 }
 
-suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): Long {
+suspend fun Input.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {
+    val buffer = ByteBuffer.alloc(bufferSize)
+    return try {
+        copyTo(output, buffer)
+    } finally {
+        buffer.close()
+    }
+}
+
+suspend fun Input.copyTo(output: AsyncOutput, buffer: ByteBuffer): Long {
     var totalLength = 0L
-    val buffer = pool.borrow()
-    try {
-        while (true) {
-            buffer.clear()
-            val length = read(buffer)
-            if (length == 0) {
-                break
-            }
-            totalLength += length.toLong()
-            buffer.flip()
+    while (true) {
+        buffer.clear()
+        val length = read(buffer)
+        if (length == 0) {
+            break
+        }
+        totalLength += length.toLong()
+        buffer.flip()
+        while (buffer.remaining > 0) {
             output.write(buffer)
         }
+    }
+    return totalLength
+}
+
+suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): Long {
+    val buffer = pool.borrow()
+    return try {
+        copyTo(output, buffer)
     } finally {
         pool.recycle(buffer)
     }
-    return totalLength
 }
 
 fun Input.readFloat(buffer: ByteBuffer) = Float.fromBits(readInt(buffer))

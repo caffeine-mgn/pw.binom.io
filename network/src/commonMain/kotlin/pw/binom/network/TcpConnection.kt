@@ -53,7 +53,9 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
                 holder.key.removeListen(Selector.OUTPUT_READY)
                 con.resumeWith(result)
             }
-            holder.key.listensFlag = calcListenFlags()
+            if (sendData.continuation == null && !holder.key.closed) {
+                holder.key.listensFlag = calcListenFlags()
+            }
             return
         }
 
@@ -74,8 +76,11 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             if (sendData.continuation == null && !holder.key.closed) {
                 holder.key.removeListen(Selector.OUTPUT_READY)
             }
+        } else {
+            if (!holder.key.closed) {
+                holder.key.listensFlag = calcListenFlags()
+            }
         }
-        holder.key.listensFlag = calcListenFlags()
     }
 
     override fun connected() {

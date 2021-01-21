@@ -3,6 +3,7 @@ package pw.binom.concurrency
 import pw.binom.Future
 import pw.binom.ObjectTree
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.atomic.AtomicInt
 import pw.binom.attach
 import pw.binom.doFreeze
 import kotlin.native.concurrent.TransferMode
@@ -24,17 +25,22 @@ private fun <DATA, RESULT> getFunc(worker: Worker, input: DATA, func: (DATA) -> 
 actual class Worker actual constructor(name: String?) {
     private val nativeWorker = NativeWorker.start(errorReporting = true, name = name)
     private val _isInterrupted = AtomicBoolean(false)
+    private var _taskCount by AtomicInt(0)
+    actual val taskCount
+        get() = _taskCount
 
     actual fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
         val nativeFeature = nativeWorker.execute(TransferMode.SAFE, getFunc(this, input, func)) {
             initRuntimeIfNeeded()
             val ff = it.func.attach()
             privateCurrentWorker = it.worker
+            it.worker._taskCount++
             val result = try {
                 Result.success(ff(it.input))
             } catch (e: Throwable) {
                 Result.failure(e)
             }
+            it.worker._taskCount--
             privateCurrentWorker = null
             result
         }

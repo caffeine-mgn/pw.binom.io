@@ -189,3 +189,14 @@ suspend fun AsyncInput.skipAll(buffer: ByteBuffer) {
             break
     }
 }
+
+object EmptyAsyncInput : AsyncInput {
+    override val available: Int
+        get() = 0
+
+    override suspend fun read(dest: ByteBuffer): Int = 0
+
+    override suspend fun asyncClose() {
+    }
+
+}

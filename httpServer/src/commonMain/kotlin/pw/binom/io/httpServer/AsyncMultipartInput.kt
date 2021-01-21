@@ -15,7 +15,7 @@ import pw.binom.pool.ObjectPool
 
 fun HttpRequest.multipart(bufferPool: ObjectPool<ByteBuffer>): AsyncMultipartInput? {
     val contentType = headers[Headers.CONTENT_TYPE]?.singleOrNull() ?: return null
-    if (contentType.startsWith("multipart/form-data;") != true)
+    if (!contentType.startsWith("multipart/form-data;"))
         return null
 
     val boundary = contentType.substring(contentType.indexOf(';') + 1).trim().removePrefix("boundary=")

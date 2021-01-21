@@ -71,7 +71,9 @@ class JvmSelector : Selector {
             }
             set(value) {
                 checkClosed()
-                native.interestOps(commonToJava(native.channel(), value))
+                val javaOps=commonToJava(native.channel(), value)
+                native.selector().wakeup()
+                native.interestOps(javaOps)
             }
 
         override fun close() {

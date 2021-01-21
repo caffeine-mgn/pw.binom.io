@@ -1,10 +1,15 @@
 package pw.binom.concurrency
 
 import pw.binom.Future
+import pw.binom.atomic.AtomicInt
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 private val currentWorker = ThreadLocal<Worker>()
 private val idSeq = AtomicLong(0)
@@ -19,16 +24,19 @@ actual class Worker actual constructor(name: String?) {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     actual fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
-        if (worker.isShutdown or worker.isTerminated)
+        if (worker.isShutdown or worker.isTerminated) {
             throw IllegalStateException("Worker already terminated")
-
+        }
         val future = worker.submit(
-                Callable {
-                    val gg = runCatching { func(input) }
-                    gg
-                }
-        ) 
+            Callable {
+                _taskCount.increment()
+                val gg = measureTimedValue { runCatching { func(input) } }
+                _taskCount.decrement()
+                gg.value
+            }
+        )
         return FutureWrapper(future)
     }
 
@@ -56,6 +64,9 @@ actual class Worker actual constructor(name: String?) {
     @get:JvmName("binomGetId")
     actual val id: Long
         get() = _id
+    private var _taskCount = AtomicInt(0)
+    actual val taskCount
+        get() = _taskCount.value
 }
 
 actual fun Worker.Companion.sleep(deley: Long) {

@@ -4,20 +4,16 @@ import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 
-class AsyncBufferedAsciiWriter(
-    val output: AsyncOutput,
+abstract class AbstractAsyncBufferedAsciiWriter(
     val bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncWriter, AsyncOutput {
+    protected abstract val output: AsyncOutput
 
     init {
         require(bufferSize > 4)
     }
 
-    private val buffer = ByteBuffer.alloc(bufferSize)
-
-    fun reset() {
-        buffer.clear()
-    }
+    protected abstract val buffer: ByteBuffer
 
     private suspend fun checkFlush() {
         if (buffer.remaining == 0) {
@@ -43,9 +39,7 @@ class AsyncBufferedAsciiWriter(
 
     override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
         csq ?: return this
-        var start = start
         (start..end).forEach {
-            checkFlush()
             append(csq[it])
         }
         return this
@@ -58,6 +52,7 @@ class AsyncBufferedAsciiWriter(
                 output.write(buffer)
             }
             buffer.clear()
+            output.flush()
         }
     }
 
@@ -65,6 +60,19 @@ class AsyncBufferedAsciiWriter(
         flush()
         output.asyncClose()
     }
+}
+
+class AsyncBufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override val output: AsyncOutput) :
+    AbstractAsyncBufferedAsciiWriter(bufferSize) {
+    init {
+        require(bufferSize > 4)
+    }
+
+    fun reset() {
+        buffer.clear()
+    }
+
+    override val buffer = ByteBuffer.alloc(bufferSize)
 }
 
 fun AsyncOutput.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiWriter(
