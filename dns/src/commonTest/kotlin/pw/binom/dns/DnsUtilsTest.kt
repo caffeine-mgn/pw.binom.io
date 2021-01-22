@@ -9,7 +9,7 @@ class DnsUtilsTest {
 
     @Test
     fun stringToDns() {
-        assertEquals("\u0003www\u0006google\u0003com", "www.google.com".toDnsString())
+        assertEquals("\u0003www\u0006google\u0003com", "www.google.com".toDnsString().concatToString())
     }
 
     @Test

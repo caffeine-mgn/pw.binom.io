@@ -119,7 +119,7 @@ class NetworkDispatcherTest {
 
     @Test
     fun udpTest() {
-        val address = NetworkAddress.Immutable(port = Random.nextInt(9999 until Short.MAX_VALUE))
+        val address = NetworkAddress.Immutable(port = Random.nextInt(9999 until Short.MAX_VALUE-1))
         val manager = NetworkDispatcher()
         val server = manager.bindUDP(address)
         val client = manager.openUdp()
@@ -135,7 +135,7 @@ class NetworkDispatcherTest {
                     ByteBuffer.wrap(request.encodeToByteArray()),
                     NetworkAddress.Immutable("127.0.0.1", address.port)
                 )
-                val bytes = server.read(buf, addr)
+                server.read(buf, addr)
                 buf.flip()
                 assertEquals(request, buf.toByteArray().decodeToString())
 

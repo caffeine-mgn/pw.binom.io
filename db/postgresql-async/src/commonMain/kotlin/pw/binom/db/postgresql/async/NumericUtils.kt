@@ -12,7 +12,7 @@ import kotlin.math.pow
 object NumericUtils {
     fun decode(data: ByteArray): BigDecimal {
         check(data.size > 4)
-        BigDecimal.useToStringExpanded = true
+//        BigDecimal.useToStringExpanded = true
         val arrayLength = Short.fromBytes(data[0], data[1])
         check(arrayLength > 1)
         var weight = Short.fromBytes(data[2], data[3]).toInt()

@@ -9,6 +9,7 @@ import pw.binom.io.bufferedOutput
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 const val T_A = 1.toShort()
@@ -68,10 +69,10 @@ class ClientTest {
                 val con = n.tcpConnect(NetworkAddress.Immutable("8.8.8.8", 53))
                 val output = con.bufferedOutput()
                 val input = con.bufferedInput()
-                header.writeStart(buf)
+                val startPos = header.writeStart(buf)
                 query.write(buf)
                 r.write(buf)
-                header.writeEnd(buf)
+                header.writeEnd(startPos, buf)
                 output.write(buf)
                 output.flush()
                 header.read(input, buf)
@@ -104,9 +105,9 @@ class ClientTest {
         }
     }
 
+    @Ignore
     @Test
-    fun test2() {
-        println("15=${Bitset32(15).toString()}")
+    fun serverTest() {
         val n = NetworkDispatcher()
         var done = false
         val buf = ByteBuffer.alloc(512)

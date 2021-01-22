@@ -1,3 +1,6 @@
+import java.util.TimeZone
+import java.util.Date
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -114,6 +117,7 @@ kotlin {
                 api(kotlin("test-annotations-common"))
                 api(project(":concurrency"))
                 api(project(":file"))
+                api(project(":env"))
             }
         }
         val jvmTest by getting {
@@ -124,6 +128,37 @@ kotlin {
         }
         val linuxX64Test by getting {
             dependsOn(commonTest)
+        }
+    }
+}
+
+tasks {
+    fun prepareTime() {
+        project.buildDir.resolve("tmp-date").resolve("currentTZ")
+            .also {
+                it.parentFile.mkdirs()
+                it.writeText(TimeZone.getDefault().rawOffset.let { it / 1000 / 60 }.toString())
+            }
+        project.buildDir.resolve("tmp-date").resolve("now")
+            .also {
+                it.parentFile.mkdirs()
+                it.writeText(Date().time.toString())
+            }
+    }
+
+    val mingwX64Test by getting {
+        doFirst {
+            prepareTime()
+        }
+    }
+    val linuxX64Test by getting {
+        doFirst {
+            prepareTime()
+        }
+    }
+    val jvmTest by getting {
+        doFirst {
+            prepareTime()
         }
     }
 }

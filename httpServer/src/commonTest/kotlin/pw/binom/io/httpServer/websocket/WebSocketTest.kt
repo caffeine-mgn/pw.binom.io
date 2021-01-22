@@ -12,6 +12,7 @@ import pw.binom.io.utf8Reader
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.wrap
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 class WebSocketTest {
@@ -50,8 +51,9 @@ class WebSocketTest {
         }
     }
 
+    @Ignore
     @Test
-    fun test() {
+    fun serverTest() {
 
         var done = false
         val port = 3000//Random.nextInt(3000, Short.MAX_VALUE.toInt() - 1).toShort()

@@ -107,8 +107,8 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         readData.reset()
         sendData.reset()
         holder.key.listensFlag = 0
-        channel.close()
         holder.key.close()
+        channel.close()
     }
 
     suspend fun read(dest: ByteBuffer, address: NetworkAddress.Mutable?): Int {

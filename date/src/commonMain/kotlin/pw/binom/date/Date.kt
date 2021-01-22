@@ -1,6 +1,6 @@
 package pw.binom.date
 
-expect inline class Date(val time: Long) {
+expect inline class Date(val time: Long = now) {
     companion object {
         val timeZoneOffset: Int
         val now: Long
@@ -8,7 +8,16 @@ expect inline class Date(val time: Long) {
         /**
          * @param year full year. For example 2010
          */
-        internal fun internalOf(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int):Date
+        internal fun internalOf(
+            year: Int,
+            month: Int,
+            dayOfMonth: Int,
+            hours: Int,
+            minutes: Int,
+            seconds: Int,
+            millis: Int,
+            timeZoneOffset: Int
+        ): Date
     }
 
     fun calendar(timeZoneOffset: Int = Date.timeZoneOffset): Calendar

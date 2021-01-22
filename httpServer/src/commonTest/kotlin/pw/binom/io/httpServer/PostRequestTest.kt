@@ -194,6 +194,7 @@ class PostRequestTest {
         println("#3")
     }*/
 
+    @Ignore
     @Test
     fun testDownload() {
         val nd = NetworkDispatcher()

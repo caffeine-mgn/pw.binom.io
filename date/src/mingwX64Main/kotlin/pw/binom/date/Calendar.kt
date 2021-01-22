@@ -3,7 +3,7 @@ package pw.binom.date
 import kotlinx.cinterop.*
 import platform.posix._localtime64
 
-actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
+actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int) {
 
     private val tt = memScoped {
         val t = alloc<LongVar>()
@@ -41,5 +41,8 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
 
     actual fun timeZone(timeZoneOffset: Int): Calendar = Calendar(utcTime, timeZoneOffset)
 
-    actual override fun toString(): String = timeZone(0).asStringGmt()
+    actual override fun toString(): String =
+        asString(this, timeZoneOffsetToString(timeZoneOffset))
+
+    actual fun toString(timeZoneOffset: Int): String = timeZone(timeZoneOffset).toString()
 }

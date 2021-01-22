@@ -6,7 +6,10 @@ import java.time.ZonedDateTime
 
 actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
 
-    private val tm = ZonedDateTime.ofInstant(Instant.ofEpochMilli(utcTime + timeZoneOffset * 60), ZoneOffset.UTC)
+    private val tm = ZonedDateTime.ofInstant(
+        Instant.ofEpochMilli(utcTime + timeZoneOffset * 60),
+        ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - timeZoneOffset / 60 * 60)
+    )
 
     actual val year
         get() = tm.year
@@ -36,7 +39,15 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
         get() = Date(utcTime)
 
     actual fun timeZone(timeZoneOffset: Int): Calendar =
-            Calendar(utcTime, timeZoneOffset)
+        Calendar(utcTime, timeZoneOffset)
 
-    actual override fun toString(): String = timeZone(0).asStringGmt()
+    actual override fun toString(): String =
+        asString(this, timeZoneOffsetToString(tm.offset.totalSeconds / 60))
+
+    /**
+     * @param timeZoneOffset TimeZone offset in mintes
+     */
+    actual fun toString(timeZoneOffset: Int): String = timeZone(timeZoneOffset).toString()
+    actual val timeZoneOffset: Int
+        get() = tm.offset.totalSeconds / 60
 }

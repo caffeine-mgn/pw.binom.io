@@ -8,19 +8,21 @@ import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.network.NetworkDispatcher
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 class TestWS {
 
+    @Ignore
     @Test
-    fun test() {
+    fun serverTest() {
         var done = false
         val manager = NetworkDispatcher()
         async {
             try {
                 val client = AsyncHttpClient(manager)
                 val wsClient = client.request("GET", URL("ws://127.0.0.1:8080/"))
-                        .websocket("http://127.0.0.1:8080")
+                    .websocket("http://127.0.0.1:8080")
 
                 while (true) {
                     val msg = wsClient.read().use {
