@@ -10,6 +10,10 @@ class CrossThreadKeyHolder(val key: Selector.Key) {
     val readyForWriteListener = ConcurrentQueue<() -> Unit>()
     private val networkThread = ThreadRef()
 
+    init {
+        doFreeze()
+    }
+
     fun waitReadyForWrite(func: () -> Unit) {
         if (networkThread.same) {
             func()
@@ -38,7 +42,7 @@ suspend fun <R> CrossThreadKeyHolder.executeOnNetwork(func: suspend () -> R): R 
         }
     }
 
-private fun <T> Worker.resume(result: Result<T>, func: Reference<Continuation<T>>) {
+fun <T> Worker.resume(result: Result<T>, func: Reference<Continuation<T>>) {
     execute(result to func) {
         val f = it.second.value
         it.second.close()

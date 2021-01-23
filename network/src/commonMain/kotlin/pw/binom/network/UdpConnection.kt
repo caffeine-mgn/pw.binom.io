@@ -42,8 +42,8 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
     }
 
     override fun readyForWrite() {
-        val waiter = holder.readyForWriteListener.popOrNull()
-        if (waiter != null) {
+        while (true) {
+            val waiter = holder.readyForWriteListener.popOrNull() ?: break
             var exception: Throwable? = null
             try {
                 waiter()
@@ -54,8 +54,6 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
                 holder.key.removeListen(Selector.OUTPUT_READY)
                 throw exception
             }
-            holder.key.removeListen(Selector.OUTPUT_READY)
-            return
         }
 
         if (sendData.continuation == null) {

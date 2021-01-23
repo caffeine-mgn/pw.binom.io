@@ -45,22 +45,8 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         }
 
     override fun readyForWrite() {
-        if (sendData.continuation != null) {
-            val result = runCatching { channel.write(sendData.data!!) }
-            if (sendData.data!!.remaining == 0) {
-                val con = sendData.continuation!!
-                sendData.reset()
-                holder.key.removeListen(Selector.OUTPUT_READY)
-                con.resumeWith(result)
-            }
-            if (sendData.continuation == null && !holder.key.closed) {
-                holder.key.listensFlag = calcListenFlags()
-            }
-            return
-        }
-
-        val waiter = holder.readyForWriteListener.popOrNull()
-        if (waiter != null) {
+        while (true) {
+            val waiter = holder.readyForWriteListener.popOrNull() ?: break
             var exception: Throwable? = null
             try {
                 waiter()
@@ -76,10 +62,21 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             if (sendData.continuation == null && !holder.key.closed) {
                 holder.key.removeListen(Selector.OUTPUT_READY)
             }
-        } else {
-            if (!holder.key.closed) {
+        }
+
+        if (sendData.continuation != null) {
+            val result = runCatching { channel.write(sendData.data!!) }
+            if (sendData.data!!.remaining == 0) {
+                val con = sendData.continuation!!
+                sendData.reset()
+                holder.key.removeListen(Selector.OUTPUT_READY)
+                con.resumeWith(result)
+            }
+            if (sendData.continuation == null && !holder.key.closed) {
                 holder.key.listensFlag = calcListenFlags()
             }
+        } else {
+            holder.key.removeListen(Selector.OUTPUT_READY)
         }
     }
 

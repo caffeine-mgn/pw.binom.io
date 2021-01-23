@@ -129,18 +129,11 @@ open class HttpServer(
     fun bindHTTP(address:NetworkAddress) {
         val connect = manager.bindTcp(address)
         binded += connect
-
-        async {
+        manager.async {
             while (true) {
                 val client = connect.accept() ?: continue
-                if (executor != null) {
-                    asyncWithExecutor(executor) {
-                        clientConnected(client, manager)
-                    }
-                } else {
-                    async {
-                        clientConnected(client, manager)
-                    }
+                manager.async(executor) {
+                    clientConnected(client, manager)
                 }
             }
         }
@@ -149,11 +142,4 @@ open class HttpServer(
 //    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
 //        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
 //    }
-
-    /**
-     * Update network events
-     *
-     * @param timeout Timeout for wait event
-     */
-//    fun update(timeout: Int? = null) = manager.update(timeout)
 }

@@ -10,6 +10,7 @@ import pw.binom.ssl.PrivateKey
 import pw.binom.ssl.TrustManager
 import pw.binom.ssl.X509Certificate
 import pw.binom.wrap
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 object EmptyKeyManager : KeyManager {
@@ -23,6 +24,7 @@ object EmptyKeyManager : KeyManager {
 
 class ClientTest {
 
+    @Ignore
     @Test
     fun test() {
         val nd = NetworkDispatcher()
@@ -36,19 +38,19 @@ class ClientTest {
                     address = NetworkAddress.Immutable("smtp.yandex.ru", 465),
                     keyManager = EmptyKeyManager,
                     trustManager = TrustManager.TRUST_ALL,
-                    fromEmail = "git@tlsys.org",
-                    login = "git@tlsys.org",
-                    password = "8k22thg2O9eKRJz7"
+                    fromEmail = "test@test.org",
+                    login = "test@test.org",
+                    password = "test_password"
                 )
                 client.multipart(
-                    from = "git@tlsys.org",
-                    fromAlias = "TradeLine GIT",
-                    to = "caffeine.mgn@gmail.com",
+                    from = "test@test.org",
+                    fromAlias = "Test Binom Client",
+                    to = "test2@test.org",
                     toAlias = "Anton",
                     subject = "Test Message"
                 ) {
                     it.appendText("text/html").use {
-                        it.append("<html>Привет из <b>Kotln</b><br><br><i>Это</i> пример HTML с вложением!<br><s>Зачёрктнутый</s>")
+                        it.append("<html>Hello from <b>Kotln</b><br><br><i>This</i> is an example HTML with attachment!<br><s>Зачёрктнутый</s>")
                     }
 
                     it.attach(name = "my_text.txt").use {
@@ -64,7 +66,7 @@ class ClientTest {
                     subject = "Test Message"
                 ) {
                     it.appendText("text/html").use {
-                        it.append("<html><s>Второе письмо!</s>")
+                        it.append("<html><s>Second email! Without attachment!</s>")
                     }
                 }
 

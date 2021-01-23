@@ -143,3 +143,6 @@ Examples [here](examples)
 ## Using Library in Projects:
 
 [Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)
+
+## Support
+[Patreon](https://www.patreon.com/binom)

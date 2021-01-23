@@ -6,10 +6,7 @@ import pw.binom.concurrency.*
 import pw.binom.io.http.Headers
 import pw.binom.io.httpClient.AsyncHttpClient
 import pw.binom.io.use
-import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
-import pw.binom.network.executeOnExecutor
-import pw.binom.network.executeOnNetwork
+import pw.binom.network.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,7 +20,6 @@ class MultiThreading {
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() {
-        var paralellThreadCounter = AtomicInt(0)
         val worker = WorkerPool(10)
         val nd = NetworkDispatcher()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
@@ -34,49 +30,78 @@ class MultiThreading {
             val dataBuffer = ByteBuffer.wrap(data).clean().doFreeze()
             resp.addHeader(Headers.CONTENT_LENGTH, dataBuffer.toString())
             val completer = resp.complete().asReference()
-            val holder = req.keyHolder
-            paralellThreadCounter.increment()
-            req.keyHolder.executeOnExecutor {
+
+            println("--#1")
+            execute {
+                println("--#2")
                 Worker.sleep(1_000)
-                holder.executeOnNetwork {
+                println("--#3")
+                network {
+                    println("--#4")
                     val sent = completer.value.write(dataBuffer)
                     completer.value.flush()
+                    println("--#5: sent $sent")
                 }
+                println("--#6")
             }
+            println("--#7")
             completer.close()
-            paralellThreadCounter.decrement()
         })
 
         server.bindHTTP(NetworkAddress.Immutable("127.0.0.1", port))
 
-        suspend fun makeCall() {
+        suspend fun makeCall(name: String) {
             val client = AsyncHttpClient(nd)
-            client.request(
-                method = "GET",
-                url = URL("http://127.0.0.1:$port")
-            ).response().use { response ->
-                val buf = ByteBuffer.alloc(60).clean()
-                assertEquals(data.size, response.read(buf))
-                buf.flip()
-                val dataFromServer = buf.toByteArray()
-                data.forEachIndexed { index, byte ->
-                    assertEquals(byte, dataFromServer[index])
+            try {
+                client.request(
+                    method = "GET",
+                    url = URL("http://127.0.0.1:$port")
+                ).response().use { response ->
+                    println("$name reading...")
+                    val buf = ByteBuffer.alloc(60).clean()
+                    println("$name ok->1")
+                    assertEquals(data.size, response.read(buf))
+                    println("$name ok->2")
+                    buf.flip()
+                    println("$name ok->2")
+                    val dataFromServer = buf.toByteArray()
+                    println("$name ok->3")
+                    data.forEachIndexed { index, byte ->
+                        assertEquals(byte, dataFromServer[index])
+                    }
+                    println("$name ok->4")
+                    println("$name ok!")
                 }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                throw e
+            } finally {
+                client.close()
             }
         }
 
-        val inOrder = async2 {
-            val totalTime = measureTime {
-                val callTime1 = measureTime { makeCall() }
-                val callTime2 = measureTime { makeCall() }
-                assertTrue(callTime1 > 0.1.seconds && callTime1 < 2.0.seconds)
-                assertTrue(callTime2 > 0.1.seconds && callTime2 < 2.0.seconds)
+        val inOrder = nd.async(worker) {
+            try {
+                println("Start in order")
+                val totalTime = measureTime {
+                    println("#1")
+                    val callTime1 = measureTime { makeCall("inOrder-1") }
+                    println("#2")
+                    val callTime2 = measureTime { makeCall("inOrder-2") }
+                    assertTrue(callTime1 > 0.1.seconds && callTime1 < 2.0.seconds)
+                    assertTrue(callTime2 > 0.1.seconds && callTime2 < 2.0.seconds)
+                }
+                println("inOrder done!")
+                assertTrue(totalTime > 1.5.seconds && totalTime < 3.0.seconds)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                throw e
             }
-            assertTrue(totalTime > 1.5.seconds && totalTime < 3.0.seconds)
         }
-        val inParallel = async2 {
-            val callTime1 = async2 { makeCall() }
-            val callTime2 = async2 { makeCall() }
+//        val inParallel=Future2.success(Future2.success(1.0.seconds))
+        val inParallel = nd.async(worker) {
+            val callTime1 = nd.async(worker) { makeCall("inParallel-1") }
+            val callTime2 = nd.async(worker) { makeCall("inParallel-2") }
             val totalTime = worker.submit {
                 measureTime {
                     callTime1.join()
