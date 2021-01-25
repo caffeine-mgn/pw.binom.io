@@ -1,5 +1,6 @@
 package pw.binom.network
 
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -12,6 +13,7 @@ class SelectorTest {
         assertEquals(0, selector.select(1000) { _, _ -> })
     }
 
+    @Ignore
     @Test
     fun selectTimeoutTest2() {
         val selector = Selector.open()

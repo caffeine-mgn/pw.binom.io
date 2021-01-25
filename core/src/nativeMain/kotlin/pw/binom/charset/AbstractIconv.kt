@@ -9,12 +9,12 @@ import pw.binom.ByteBuffer
 import pw.binom.CharBuffer
 import pw.binom.io.Closeable
 
-const val NATIVE_CHARSET = "wchar_t"
+//const val NATIVE_CHARSET = "char16_t"
 
 /**
  * Abstract Charset convertor. Uses Iconv native library
  */
-abstract class AbstractIconv(fromCharset: String, toCharset: String) : Closeable {
+abstract class AbstractIconv(val fromCharset: String, val toCharset: String) : Closeable {
     private val iconvHandle = iconv_open(toCharset, fromCharset)
     private val inputAvail = nativeHeap.alloc<size_tVar>()
     private val outputAvail = nativeHeap.alloc<size_tVar>()
@@ -22,13 +22,17 @@ abstract class AbstractIconv(fromCharset: String, toCharset: String) : Closeable
     private val inputPointer = nativeHeap.allocPointerTo<CPointerVar<ByteVar>>()
 
     init {
-        platform.iconv.iconv(
+        set_posix_errno(0)
+        val r = platform.iconv.iconv(
             iconvHandle,
             null,
             null,
             outputPointer.ptr.reinterpret(),
             outputAvail.ptr
-        )
+        ).toInt()
+        if (r == -1 && errno == EBADF) {
+            throw IllegalArgumentException("Charset not supported")
+        }
     }
 
     protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
@@ -59,7 +63,7 @@ abstract class AbstractIconv(fromCharset: String, toCharset: String) : Closeable
                 r != 0 && errno == EILSEQ -> CharsetTransformResult.MALFORMED
                 r != 0 && errno == EINVAL -> CharsetTransformResult.INPUT_OVER
                 r == 0 && errno == 0 -> CharsetTransformResult.SUCCESS
-                else -> throw IllegalStateException()
+                else -> throw IllegalStateException("Iconv Exception. Errno: $errno, Result: $r")
             }
         }
     }

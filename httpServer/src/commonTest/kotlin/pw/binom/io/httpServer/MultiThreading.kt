@@ -25,6 +25,7 @@ class MultiThreading {
         val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
         val data = Random.nextBytes(30)
         val server = HttpServer(nd, executor = worker, handler = Handler { req, resp ->
+            println("")
             resp.enableCompress = true
             resp.status = 200
             val dataBuffer = ByteBuffer.wrap(data).clean().doFreeze()
@@ -94,6 +95,7 @@ class MultiThreading {
                 println("inOrder done!")
                 assertTrue(totalTime > 1.5.seconds && totalTime < 3.0.seconds)
             } catch (e: Throwable) {
+                println("Error on inOrder")
                 e.printStackTrace()
                 throw e
             }

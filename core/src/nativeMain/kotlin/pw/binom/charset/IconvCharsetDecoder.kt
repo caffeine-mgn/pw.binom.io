@@ -2,7 +2,7 @@ package pw.binom.charset
 
 import pw.binom.ByteBuffer
 import pw.binom.CharBuffer
-
+expect val NATIVE_CHARSET:String
 class IconvCharsetDecoder(name: String) : CharsetDecoder, AbstractIconv(fromCharset = name, toCharset = NATIVE_CHARSET) {
 
 
