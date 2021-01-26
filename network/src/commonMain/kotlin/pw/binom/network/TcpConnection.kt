@@ -76,8 +76,14 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
                 holder.key.listensFlag = calcListenFlags()
             }
         } else {
-            holder.key.removeListen(Selector.OUTPUT_READY)
+            if (!holder.key.closed) {
+                holder.key.removeListen(Selector.OUTPUT_READY)
+            }
         }
+    }
+
+    override fun connecting() {
+        holder.key.listensFlag=Selector.EVENT_CONNECTED
     }
 
     override fun connected() {

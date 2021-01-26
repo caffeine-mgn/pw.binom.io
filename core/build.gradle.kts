@@ -132,6 +132,7 @@ fun makeTime() {
     val tzFile = file("$dateDir/currentTZ")
     tzFile.delete()
     tzFile.writeText((TimeZone.getDefault().rawOffset / 1000 / 60).toString())
+    println("File $tzFile created")
 }
 
 tasks {
@@ -144,6 +145,10 @@ tasks {
     }
 
     this["linuxX64Test"].doFirst {
+        makeTime()
+    }
+    this["macosX64Test"].doFirst {
+        println("!!!")
         makeTime()
     }
 }

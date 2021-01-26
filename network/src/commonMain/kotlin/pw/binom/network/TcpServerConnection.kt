@@ -11,7 +11,11 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
     lateinit var key: Selector.Key
 
     override fun readyForWrite() {
-        TODO("Not yet implemented")
+
+    }
+
+    override fun connecting() {
+        throw RuntimeException("Not supported")
     }
 
     override fun connected() {
