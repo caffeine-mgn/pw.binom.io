@@ -113,6 +113,10 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
             0 -> return ""
             1 -> return get().toString()
         }
+        val bb = memScoped {
+        refTo(0).getPointer(this).toKString()
+        }
+        println("toString -> $bb")
         val sb = StringBuilder()
         forEach {
             sb.append(it)

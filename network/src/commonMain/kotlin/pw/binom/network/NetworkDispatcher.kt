@@ -66,6 +66,7 @@ class NetworkDispatcher : Closeable {
         val channel = TcpClientSocketChannel()
         channel.connect(address)
         val connection = attach(channel)
+        connection.connecting()
         suspendCoroutine<Unit> {
             connection.connect = it
         }

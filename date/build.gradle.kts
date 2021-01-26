@@ -161,4 +161,10 @@ tasks {
             prepareTime()
         }
     }
+
+    val macosX64Test by getting {
+        doFirst {
+            prepareTime()
+        }
+    }
 }

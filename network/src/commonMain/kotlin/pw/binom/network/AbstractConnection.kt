@@ -10,6 +10,7 @@ abstract class AbstractConnection : Closeable {
      * @return should return whether the connection should write more
      */
     abstract fun readyForWrite()
+    abstract fun connecting()
     abstract fun connected()
     abstract fun error()
 

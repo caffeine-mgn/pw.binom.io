@@ -3,10 +3,7 @@ package pw.binom.network
 import pw.binom.*
 import kotlin.random.Random
 import kotlin.random.nextInt
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import kotlin.test.*
 
 class AsyncResult {
     var done = false
@@ -59,13 +56,23 @@ class NetworkDispatcherTest {
     fun connectionRefusedTest() {
         val nd = NetworkDispatcher()
         var connectionRefused = false
+        println("OK!-1")
         nd.single {
+            println("OK!-2")
             try {
+                println("OK!-3")
                 nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", 12))
+                println("OK!-4")
+                fail("Invalid state")
             } catch (e: SocketConnectException) {
+                println("OK!-5")
+                println("Error: ${e is SocketConnectException}")
+                e.printStackTrace()
                 connectionRefused = true
             }
+            println("OK!-6")
         }
+        println("OK!-7")
         assertTrue(connectionRefused)
     }
 
@@ -119,9 +126,12 @@ class NetworkDispatcherTest {
 
     @Test
     fun udpTest() {
-        val address = NetworkAddress.Immutable(port = Random.nextInt(9999 until Short.MAX_VALUE-1))
+        val address =
+            NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
         val manager = NetworkDispatcher()
+        println("try bind udp $address")
         val server = manager.bindUDP(address)
+        println("binded!")
         val client = manager.openUdp()
         var done = false
         var exception: Throwable? = null
@@ -141,7 +151,7 @@ class NetworkDispatcherTest {
 
                 server.write(ByteBuffer.wrap(response.encodeToByteArray()), addr)
                 buf.clear()
-                client.read(buf,null)
+                client.read(buf, null)
                 buf.flip()
                 assertEquals(response, buf.toByteArray().decodeToString())
             } catch (e: Throwable) {

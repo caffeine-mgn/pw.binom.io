@@ -67,44 +67,42 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
+                api(project(":env"))
             }
         }
 
         val linuxX64Main by getting {
             dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxArm64Main by getting {
             dependsOn(linuxX64Main)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxArm32HfpMain by getting {
             dependsOn(linuxX64Main)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxMips32Main by getting {
             dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
-            kotlin.srcDir("src/posixMain/kotlin")
-            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
 
         val linuxMipsel32Main by getting {
             dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
-            kotlin.srcDir("src/posixMain/kotlin")
-            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
         val mingwX64Main by getting {
             dependsOn(linuxX64Main)
         }
         val mingwX86Main by getting {
             dependsOn(linuxX64Main)
-            kotlin.srcDir("src/mingwX64Main/kotlin")
+            kotlin.srcDir("src/nativeMain/kotlin")
         }
 
         val macosX64Main by getting {
             dependsOn(linuxX64Main)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            kotlin.srcDir("src/nativeMain/kotlin")
         }
 
         val commonTest by getting {
@@ -134,6 +132,7 @@ fun makeTime() {
     val tzFile = file("$dateDir/currentTZ")
     tzFile.delete()
     tzFile.writeText((TimeZone.getDefault().rawOffset / 1000 / 60).toString())
+    println("File $tzFile created")
 }
 
 tasks {
@@ -146,6 +145,10 @@ tasks {
     }
 
     this["linuxX64Test"].doFirst {
+        makeTime()
+    }
+    this["macosX64Test"].doFirst {
+        println("!!!")
         makeTime()
     }
 }

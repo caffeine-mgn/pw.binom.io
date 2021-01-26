@@ -70,6 +70,10 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         }
     }
 
+    override fun connecting() {
+        throw RuntimeException("Not supported")
+    }
+
     override fun connected() {
         throw RuntimeException("Not supported")
     }

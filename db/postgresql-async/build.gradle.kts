@@ -105,8 +105,8 @@ tasks {
         name = "createPostgres",
         type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
     ) {
-        image.set("postgres:10")
-        imageId.set("postgres:10")
+        image.set("postgres:10.15")
+        imageId.set("postgres:10.15")
         envVars.put("POSTGRES_USER", "postgres")
         envVars.put("POSTGRES_PASSWORD", "postgres")
         envVars.put("POSTGRES_DB", "test")
