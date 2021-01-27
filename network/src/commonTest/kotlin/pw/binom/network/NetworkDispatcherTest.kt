@@ -4,6 +4,10 @@ import pw.binom.*
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.test.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.measureTime
+import kotlin.time.seconds
 
 class AsyncResult {
     var done = false
@@ -32,9 +36,14 @@ fun NetworkDispatcher.single(func: suspend () -> Unit) {
     run(asyncRun(func))
 }
 
+@OptIn(ExperimentalTime::class)
 fun NetworkDispatcher.run(result: AsyncResult) {
+    val now = TimeSource.Monotonic.markNow()
     while (!result.done) {
-        select()
+        if (now.elapsedNow() > 5.0.seconds) {
+            throw RuntimeException("Timeout")
+        }
+        select(1000)
     }
     result.finish()
 }

@@ -11,10 +11,25 @@ class MingwSelector : AbstractSelector() {
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
+        fun epollCommonToNative(mode: Int): Int {
+            var events = 0u
+            if (Selector.INPUT_READY in mode) {
+                events = events or EPOLLIN
+            }
+            if (!connected && Selector.EVENT_CONNECTED in mode) {
+                events = events or EPOLLOUT
+            }
+            if (connected && Selector.OUTPUT_READY in mode) {
+                events = events or EPOLLOUT
+            }
+
+            return events.toInt()
+        }
+
         override fun resetMode(mode: Int) {
             memScoped {
                 val event = alloc<epoll_event>()
-                event.events = mode.convert()
+                event.events = epollCommonToNative(mode.convert()).convert()
                 event.data.ptr = ptr
                 epoll_ctl(list, EPOLL_CTL_MOD, socket.native, event.ptr)
             }
@@ -38,13 +53,10 @@ class MingwSelector : AbstractSelector() {
         val key = MingwKey(native, attachment, socket)
         memScoped {
             val event = alloc<epoll_event>()
-            event.events = if (connectable) {
-                0xFFFFFFFFu
-            } else {
+            if (!connectable) {
                 key.connected = true
-                mode.convert()
             }
-            key.listensFlag = mode
+            event.events = key.epollCommonToNative(mode).convert()
             event.data.ptr = key.ptr
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
         }
@@ -60,7 +72,26 @@ class MingwSelector : AbstractSelector() {
             val item = list[i]
             val keyPtr = item.data.ptr!!.asStableRef<MingwKey>()
             val key = keyPtr.get()
-            func(key, item.events.convert())
+            if (!key.connected) {
+                println("EPOLLIN=${EPOLLIN in item.events}")
+                println("EPOLLOUT=${EPOLLOUT in item.events}")
+                println("EPOLLERR=${EPOLLERR in item.events}")
+                println("EPOLLRDHUP=${EPOLLRDHUP in item.events}")
+                when {
+                    EPOLLERR in item.events || EPOLLRDHUP in item.events -> {
+                        key.resetMode(0)
+                        func(key, Selector.EVENT_ERROR)
+                    }
+                    EPOLLOUT in item.events -> {
+                        key.resetMode(0)
+                        func(key, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
+                        key.connected = true
+                    }
+                    else -> throw IllegalStateException("Unknown selector key status")
+                }
+            } else {
+                func(key, epollNativeToCommon(item.events.convert()))
+            }
         }
         return eventCount
     }
@@ -71,19 +102,7 @@ class MingwSelector : AbstractSelector() {
     }
 }
 
-actual fun epollCommonToNative(mode: Int): Int {
-    var events = 0u
-    if (Selector.INPUT_READY in mode) {
-        events = events or EPOLLIN
-    }
-    if (Selector.OUTPUT_READY in mode) {
-        events = events or EPOLLOUT
-    }
-
-    return events.toInt()
-}
-
-actual fun epollNativeToCommon(mode: Int): Int {
+fun epollNativeToCommon(mode: Int): Int {
     var events = 0
     if (EPOLLIN in mode) {
         events = events or Selector.INPUT_READY

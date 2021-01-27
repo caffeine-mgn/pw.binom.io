@@ -28,12 +28,18 @@ class SelectorTest {
         val selector = Selector.open()
         val client = TcpClientSocketChannel()
         val key = selector.attach(client)
-        key.listensFlag=0
-        client.connect(NetworkAddress.Immutable("google.com", 443))
+        try {
+            key.listensFlag = 0
+            client.connect(NetworkAddress.Immutable("google.com", 443))
 
-        assertEquals(0, selector.select(5000) { key, mode ->
+            assertEquals(0, selector.select(2000) { key, mode ->
 
-        })
+            })
+        } finally {
+            key.close()
+            client.close()
+            selector.close()
+        }
     }
 
     @Test
@@ -42,13 +48,16 @@ class SelectorTest {
         val client = TcpClientSocketChannel()
         val key = selector.attach(client)
         println("try set flags...  ${Selector.EVENT_CONNECTED}")
-        key.listensFlag=Selector.EVENT_CONNECTED
+        key.listensFlag = Selector.EVENT_CONNECTED
         println("Flag setted")
         client.connect(NetworkAddress.Immutable("google.com", 443))
 
         assertEquals(1, selector.select(5000) { key, mode ->
+            println("--1")
             assertTrue(mode and Selector.EVENT_CONNECTED != 0)
+            println("--2")
             assertTrue(mode and Selector.OUTPUT_READY != 0)
+            println("--3")
         })
 
         assertEquals(0, selector.select(1000) { _, _ -> })
@@ -62,16 +71,16 @@ class SelectorTest {
         client.connect(NetworkAddress.Immutable("127.0.0.1", 12))
 
         selector.select(5000) { key, mode ->
-            if (mode and Selector.INPUT_READY!=0) {
+            if (mode and Selector.INPUT_READY != 0) {
                 println("Selector.INPUT_READY")
             }
-            if (mode and Selector.OUTPUT_READY!=0) {
+            if (mode and Selector.OUTPUT_READY != 0) {
                 println("Selector.OUTPUT_READY")
             }
-            if (mode and Selector.EVENT_CONNECTED!=0) {
+            if (mode and Selector.EVENT_CONNECTED != 0) {
                 println("Selector.EVENT_CONNECTED")
             }
-            if (mode and Selector.EVENT_ERROR!=0) {
+            if (mode and Selector.EVENT_ERROR != 0) {
                 println("Selector.EVENT_ERROR")
             }
             assertTrue(mode and Selector.EVENT_ERROR != 0)
@@ -81,7 +90,7 @@ class SelectorTest {
     }
 
     @Test
-    fun bindTest(){
+    fun bindTest() {
         val selector = Selector.open()
         val server = TcpServerSocketChannel()
         val addr = NetworkAddress.Immutable("0.0.0.0", Random.nextInt(1000, 5999))
