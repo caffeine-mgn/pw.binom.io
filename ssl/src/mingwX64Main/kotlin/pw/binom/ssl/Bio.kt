@@ -18,7 +18,7 @@ inline class Bio(val self: CPointer<BIO>) : Closeable {
 
     fun read(data: ByteBuffer): Int =
             memScoped {
-                val r = BIO_read(self, (data.native + data.position), data.remaining.convert())
+                val r = BIO_read(self, (data.refTo(data.position)), data.remaining.convert())
                 if (r < 0)
                     TODO()
                 r

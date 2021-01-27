@@ -38,7 +38,7 @@ actual class MD5 : MessageDigest {
 
     override fun update(buffer: ByteBuffer) {
         checkInit()
-        EVP_DigestUpdate(ptr, buffer.native + buffer.position, buffer.remaining.convert())
+        EVP_DigestUpdate(ptr, buffer.refTo(buffer.position), buffer.remaining.convert())
         buffer.position = buffer.capacity
     }
 

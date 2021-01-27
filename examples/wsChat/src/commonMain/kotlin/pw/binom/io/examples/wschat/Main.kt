@@ -1,6 +1,7 @@
 package pw.binom.io.examples.wschat
 
 import pw.binom.io.httpServer.HttpServer
+import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.process.Signal
 import kotlin.random.Random
@@ -11,7 +12,7 @@ fun main(args: Array<String>) {
     val manager = NetworkDispatcher()
     val server = HttpServer(manager, ChatHandler())
 
-    server.bindHTTP(port = port)
+    server.bindHTTP(NetworkAddress.Immutable(port = port))
     while (!Signal.isInterrupted) {
         manager.select(1000)
     }

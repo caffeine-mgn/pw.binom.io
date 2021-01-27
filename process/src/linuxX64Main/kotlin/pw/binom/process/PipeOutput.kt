@@ -1,6 +1,7 @@
 package pw.binom.process
 
 import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.plus
 import pw.binom.ByteBuffer
 import pw.binom.Output
@@ -12,7 +13,7 @@ class PipeOutput : Pipe(), Output {
         val l = data.remaining
         if (l == 0)
             return 0
-        val wrote = platform.posix.write(write, data.native + data.position, l.convert()).convert<Int>()
+        val wrote = platform.posix.write(write, data.refTo(data.position), l.convert()).convert<Int>()
         data.position += wrote
         return wrote
     }

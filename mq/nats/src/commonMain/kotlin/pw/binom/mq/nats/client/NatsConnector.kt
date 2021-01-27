@@ -147,7 +147,8 @@ class NatsConnector(
             reader = AsyncBufferedAsciiInputReader(connection)
         )
 
-        val msg = StringBuilder("CONNECT {")
+        val msg = con.appender
+        msg.append("CONNECT {")
         msg
             .append("\"verbose\": false, \"tls_required\":").append(tlsRequired)
             .append(", \"lang\":\"").append(lang)
@@ -162,9 +163,10 @@ class NatsConnector(
         }
 
         msg.append("}\r\n")
-        con.appender.append(msg.toString())
+//        con.appender.append(msg.toString())
         con.appender.flush()
-        parseInfoMsg(con, con.reader.readln() ?: throw IOException("Can't connect to Nats"))
+        val connectMsg = con.reader.readln() ?: throw IOException("Can't connect to Nats")
+        parseInfoMsg(con, connectMsg)
         connections += con
         con.start()
     }
@@ -201,7 +203,6 @@ class NatsConnector(
         val con = getConnection()
         val app = con.appender
 
-//        val sb = StringBuilder()
         app.append("PUB ").append(subject)
         if (replyTo != null) {
             app.append(" ").append(replyTo)

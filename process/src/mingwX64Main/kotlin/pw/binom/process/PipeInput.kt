@@ -66,7 +66,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
             val dwWritten = alloc<UIntVar>()
 
 
-            val r = ReadFile(otherHandler, (dest.native + dest.position)!!.reinterpret(),
+            val r = ReadFile(otherHandler, (dest.refTo(dest.position)).getPointer(this).reinterpret(),
                     dest.remaining.convert(), dwWritten.ptr, null)
             if (r <= 0)
                 TODO()

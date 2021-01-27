@@ -6,6 +6,8 @@ interface AsyncAppendable {
     suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable
 }
 
+suspend fun AsyncAppendable.append(value: Boolean) = append(if (value) "true" else "false")
+
 interface AsyncWriter : AsyncAppendable, AsyncFlushable, AsyncCloseable
 interface Writer : Appendable, Flushable, Closeable
 

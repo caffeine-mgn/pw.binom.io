@@ -20,11 +20,11 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     val bytes = ByteArray(capacity)
 
-    val native: CPointer<ByteVar> = run {
-        memScoped {
-            bytes.refTo(0).getPointer(this).toLong()
-        }.toCPointer<ByteVar>()!!
-    }
+//    val native: CPointer<ByteVar> = run {
+//        memScoped {
+//            bytes.refTo(0).getPointer(this).toLong()
+//        }.toCPointer<ByteVar>()!!
+//    }
 
     override fun refTo(position: Int) =
         bytes.refTo(position)
