@@ -12,7 +12,7 @@ expect class NSocket : Closeable {
     fun setBlocking(value: Boolean)
     fun connect(address: NetworkAddress)
     fun bind(address: NetworkAddress)
-    fun accept(address: NetworkAddress.Mutable?): NSocket
+    fun accept(address: NetworkAddress.Mutable?): NSocket?
     fun send(data: ByteBuffer): Int
     fun recv(data: ByteBuffer): Int
 

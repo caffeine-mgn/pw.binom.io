@@ -25,7 +25,7 @@ class MultiThreading {
         val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
         val data = Random.nextBytes(30)
         val server = HttpServer(nd, executor = worker, handler = Handler { req, resp ->
-            println("")
+            println("REQUEST ${req.contextUri}")
             resp.enableCompress = true
             resp.status = 200
             val dataBuffer = ByteBuffer.wrap(data).clean().doFreeze()
@@ -54,9 +54,10 @@ class MultiThreading {
         suspend fun makeCall(name: String) {
             val client = AsyncHttpClient(nd)
             try {
+                println("Try make request $name...")
                 client.request(
                     method = "GET",
-                    url = URL("http://127.0.0.1:$port")
+                    url = URL("http://127.0.0.1:$port/$name")
                 ).response().use { response ->
                     println("$name reading...")
                     val buf = ByteBuffer.alloc(60).clean()
@@ -74,10 +75,13 @@ class MultiThreading {
                     println("$name ok!")
                 }
             } catch (e: Throwable) {
+                println("Errpr on $name")
                 e.printStackTrace()
                 throw e
             } finally {
+                println("try close $name")
                 client.close()
+                println("connection $name closed")
             }
         }
 
@@ -85,9 +89,9 @@ class MultiThreading {
             try {
                 println("Start in order")
                 val totalTime = measureTime {
-                    println("#1")
+                    println("prepare inOrder-1")
                     val callTime1 = measureTime { makeCall("inOrder-1") }
-                    println("#2")
+                    println("prepare inOrder-2")
                     val callTime2 = measureTime { makeCall("inOrder-2") }
                     assertTrue(callTime1 > 0.1.seconds && callTime1 < 2.0.seconds)
                     assertTrue(callTime2 > 0.1.seconds && callTime2 < 2.0.seconds)

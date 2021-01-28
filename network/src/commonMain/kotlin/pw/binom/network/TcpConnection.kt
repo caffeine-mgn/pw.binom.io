@@ -89,11 +89,23 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     override fun connected() {
         val connect = connect
         this.connect = null
+        holder.key.removeListen(Selector.EVENT_CONNECTED)
         connect?.resumeWith(Result.success(Unit))
     }
 
     override fun error() {
-        connect?.resumeWith(Result.failure(SocketConnectException()))
+        val e = SocketConnectException()
+        if (connect!=null) {
+            connect?.resumeWith(Result.failure(e))
+        }
+        if (readData.continuation!=null) {
+            readData.continuation?.resumeWith(Result.failure(e))
+            readData.reset()
+        }
+        if (sendData.continuation!=null) {
+            sendData.continuation?.resumeWith(Result.failure(e))
+            sendData.reset()
+        }
     }
 
     override fun readyForRead() {
@@ -144,12 +156,12 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
         if (sendData.continuation != null) {
             throw IllegalStateException("Connection already have write listener")
-        } else {
-            val wrote = channel.write(data)
-            if (wrote == l) {
-                return wrote
-            }
         }
+        val wrote = channel.write(data)
+        if (wrote == l) {
+            return wrote
+        }
+
         sendData.data = data
         suspendCoroutine<Int> {
             sendData.continuation = it
@@ -200,14 +212,19 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             return r
         }
         readData.full = false
-        val readed = suspendCoroutine<Int> {
-            readData.continuation = it
-            readData.data = dest
-            holder.key.addListen(Selector.INPUT_READY)
+        while (true) {
+            val readed = suspendCoroutine<Int> {
+                readData.continuation = it
+                readData.data = dest
+                holder.key.addListen(Selector.INPUT_READY)
+            }
+            if (readed == 0) {
+                continue
+            }
+            if (readed < 0) {
+                throw SocketClosedException()
+            }
+            return readed
         }
-        if (readed <= 0) {
-            throw SocketClosedException()
-        }
-        return readed
     }
 }

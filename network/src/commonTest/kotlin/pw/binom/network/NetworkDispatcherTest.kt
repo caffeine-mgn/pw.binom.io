@@ -1,9 +1,16 @@
 package pw.binom.network
 
 import pw.binom.*
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.WorkerPool
+import pw.binom.concurrency.asReference
+import pw.binom.concurrency.sleep
 import kotlin.random.Random
 import kotlin.random.nextInt
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
@@ -176,6 +183,149 @@ class NetworkDispatcherTest {
         }
         server.close()
         exception?.let { throw it }
+    }
+
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun multiThreadingTest() {
+        val address =
+            NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
+        val nd = NetworkDispatcher()
+        val server = nd.bindTcp(address)
+        val executeWorker = WorkerPool(10)
+        val serverFuture = async2 {
+            val client = server.accept()!!
+            nd.async(executeWorker) {
+                client.readFully(ByteBuffer.alloc(32).clean())
+                val clientRef = client.asReference()
+                try {
+                    execute {
+                        println("Execute in execute")
+                        Worker.sleep(1000)
+                        network {
+                            println("Server write: ${clientRef.value.write(ByteBuffer.wrap(ByteArray(64)).clean())}")
+                        }
+                    }
+                } finally {
+                    clientRef.close()
+                    client.asyncClose()
+                    println("Client done!")
+                }
+            }
+        }
+        val clientFuture = async2 {
+            println("Connection...")
+            val client2 = nd.tcpConnect(address)
+            println("Connected! Write...")
+            client2.write(ByteBuffer.wrap(ByteArray(32)).clean())
+            println("Wrote! Try read...")
+            val readTime = measureTime {
+                client2.readFully(ByteBuffer.alloc(64).clean())
+            }
+            assertTrue(readTime > 1.0.seconds && readTime < 2.0.seconds)
+            println("Readed!")
+            client2.asyncClose()
+            println("Closed!")
+        }
+        val now = TimeSource.Monotonic.markNow()
+        while (!serverFuture.isDone || !clientFuture.isDone) {
+            if (now.elapsedNow() > 10.0.seconds) {
+                throw RuntimeException("Timeout")
+            }
+            nd.select(100)
+        }
+        if (serverFuture.isFailure) {
+            throw serverFuture.exceptionOrNull!!
+        }
+        if (clientFuture.isFailure) {
+            throw clientFuture.exceptionOrNull!!
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun parallelAsync() {
+        val address =
+            NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
+        val nd = NetworkDispatcher()
+        val server = nd.bindTcp(address)
+
+        async2 {
+            try {
+                var clientCount = 0
+                while (true) {
+                    println("Server: try accept")
+                    val client = server.accept()!!
+                    println("Server: Accepted!")
+                    async2 {
+                        clientCount++
+                        println("Server: Client connected! Count: $clientCount")
+                        try {
+                            println("Server: readed ${client.readFully(ByteBuffer.alloc(32).clean())}")
+                            println("Server: wrote ${client.write(ByteBuffer.wrap(ByteArray(64)).clean())}")
+                        } catch (e: Throwable) {
+                            e.printStackTrace()
+                            throw e
+                        } finally {
+                            client.asyncClose()
+                            println("Server: Client done! Client Count: $clientCount")
+                            clientCount--
+                        }
+                    }
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                throw e
+            }
+        }
+
+        fun clientCheck(name: String) = async2 {
+            try {
+                val client2 = nd.tcpConnect(address)
+                println("Client[$name-${client2.hashCode()}]:Connected! Write...")
+                println(
+                    "Client[$name-${client2.hashCode()}]: Wrote ${
+                        client2.write(
+                            ByteBuffer.wrap(ByteArray(32)).clean()
+                        )
+                    }"
+                )
+                println("Client[$name-${client2.hashCode()}]:Wrote! Try read...")
+                val readTime = measureTime {
+                    println(
+                        "Client[$name-${client2.hashCode()}]: read ${
+                            client2.readFully(
+                                ByteBuffer.alloc(64).clean()
+                            )
+                        }"
+                    )
+                }
+//            assertTrue(readTime > 1.0.seconds && readTime < 2.0.seconds)
+                println("Client[$name-${client2.hashCode()}]:Readed!")
+                client2.asyncClose()
+                println("Client[$name-${client2.hashCode()}]:Closed!")
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                throw e
+            }
+        }
+
+        val clientFuture1 = clientCheck("1")
+        val clientFuture2 = clientCheck("2")
+        val now = TimeSource.Monotonic.markNow()
+        while (!clientFuture1.isDone || !clientFuture2.isDone) {
+            if (now.elapsedNow() > 10.0.seconds) {
+                throw RuntimeException("Timeout")
+            }
+            nd.select(100)
+        }
+        if (clientFuture1.isFailure) {
+            throw clientFuture1.exceptionOrNull!!
+        }
+        if (clientFuture2.isFailure) {
+            throw clientFuture2.exceptionOrNull!!
+        }
     }
 }
 

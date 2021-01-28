@@ -25,7 +25,7 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
-    actual fun accept(address: NetworkAddress.Mutable?): NSocket {
+    actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
         val native = if (address == null) {
             accept(native, null, null)
         } else {
@@ -42,7 +42,7 @@ actual class NSocket(val native: Int) : Closeable {
             }
         }
         if (native == -1)
-            throw IOException("Can't accept new client")
+            return null//throw IOException("Can't accept new client")
         return NSocket(native)
     }
 
@@ -170,7 +170,6 @@ actual class NSocket(val native: Int) : Closeable {
                     address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
                     len
                 )
-
                 if (rr.toInt() == -1 && errno!= EAGAIN) {
                     throw IOException("Can't read data. Error: $errno")
                 }

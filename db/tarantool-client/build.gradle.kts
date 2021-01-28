@@ -105,8 +105,8 @@ tasks {
         name = "createPostgres",
         type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
     ) {
-        image.set("tarantool/tarantool:2.6.0")
-        imageId.set("tarantool/tarantool:2.6.0")
+        image.set("tarantool/tarantool:2.6.2")
+        imageId.set("tarantool/tarantool:2.6.2")
         envVars.put("TARANTOOL_USER_NAME", "server")
         envVars.put("TARANTOOL_USER_PASSWORD", "server")
         hostConfig.portBindings.set(listOf("127.0.0.1:25321:3301"))

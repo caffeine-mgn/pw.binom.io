@@ -28,7 +28,7 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
-    actual fun accept(address: NetworkAddress.Mutable?): NSocket {
+    actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
         val native = if (address == null) {
             accept(native, null, null)
         } else {
@@ -45,7 +45,7 @@ actual class NSocket(val native: Int) : Closeable {
             }
         }
         if (native == -1)
-            throw IOException("Can't accept new client")
+            return null//throw IOException("Can't accept new client")
         return NSocket(native)
     }
 

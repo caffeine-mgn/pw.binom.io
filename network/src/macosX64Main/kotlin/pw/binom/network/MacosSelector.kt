@@ -11,64 +11,77 @@ import pw.binom.io.IOException
 
 class LinuxSelector : AbstractSelector() {
 
-    class MingwKey(val kqueueNative: Int, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
+    class MingwKey(val native: kevent, val kqueueNative: Int, attachment: Any?, socket: NSocket) :
+        AbstractKey(attachment, socket) {
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EVFILT_WRITE in nativeMode || EV_EOF !in nativeMode
+
+//        private val native = nativeHeap.alloc<kevent>()
         //TODO("nativeMode=${nativeMode.toUInt().toString(2)}")
 //            EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
         fun epollCommonToNative(mode: Int): Int {
             var events = 0
-            if (Selector.INPUT_READY in mode) {
-                events = events or EVFILT_READ
+            if (!connected && Selector.EVENT_CONNECTED and mode != 0) {
+                return EVFILT_WRITE
             }
-            if (!connected && Selector.EVENT_CONNECTED in mode) {
-                events = events or EVFILT_WRITE
+            if (connected && Selector.OUTPUT_READY and mode != 0) {
+                return EVFILT_WRITE
             }
-            if (connected && Selector.OUTPUT_READY in mode) {
-                events = events or EVFILT_WRITE
-            }
-            if (events == 0) {
-                return EVFILT_EMPTY
+            if (Selector.INPUT_READY and mode != 0) {
+                return EVFILT_READ
             }
             return events
         }
 
         override fun resetMode(mode: Int) {
-            memScoped {
-                val event = alloc<kevent>()
-                internal_EV_SET(
-                    event.ptr,
-                    socket.native,
-                    epollCommonToNative(mode),
-                    EV_ADD or EV_ENABLE or EV_CLEAR,
-                    0,
-                    0,
-                    ptr
-                )
-                if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
-                    throw IOException("Can't reset kevent filter. errno: $errno")
+
+            val n = epollCommonToNative(mode)
+//            println(
+//                "${(attachment!!)::class.simpleName}-${attachment!!.hashCode()}-Reset ${
+//                    listensFlag.toUInt().toString(2)
+//                } -> ${mode.toUInt().toString(2)}"
+//            )
+            val event = native
+            val flags = if (n == 0) EV_DISABLE or EV_CLEAR else EV_ADD or EV_CLEAR or EV_ENABLE// or EV_ONESHOT
+
+            event.filter = (if (n == 0) EVFILT_EMPTY else n).convert()
+            event.flags = flags.convert()
+
+//            internal_EV_SET(
+//                event.ptr,
+//                socket.native,
+//                if (n == 0) EVFILT_EMPTY else n,
+//                flags,
+//                0,
+//                0,
+//                ptr
+//            )
+            if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
+                if (errno == 2) {
+                    return
                 }
+                throw IOException("Can't reset kevent filter. errno: $errno")
             }
         }
 
         override fun close() {
             super.close()
-            memScoped {
-                val event = alloc<kevent>()
-                internal_EV_SET(event.ptr, socket.native, EVFILT_EMPTY, EV_ADD or EV_CLEAR, 0, 0, null)
-                if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
-                    if (errno != ENOENT) {
-                        throw IOException("Can't reset kevent filter. errno: $errno")
-                    }
-                }
-                internal_EV_SET(event.ptr, socket.native, EVFILT_EMPTY, EV_DELETE or EV_DISABLE or EV_CLEAR, 0, 0, null)
-                if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
-                    if (errno != ENOENT) {
-                        throw IOException("Can't reset kevent filter. errno: $errno")
-                    }
+
+            val event = native
+            internal_EV_SET(event.ptr, socket.native, EVFILT_EMPTY, EV_ADD or EV_CLEAR or EV_DISABLE, 0, 0, null)
+            if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
+                if (errno != ENOENT) {
+                    throw IOException("Can't reset kevent filter. errno: $errno")
                 }
             }
+            internal_EV_SET(event.ptr, socket.native, EVFILT_EMPTY, EV_DELETE or EV_CLEAR, 0, 0, null)
+            if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
+                if (errno != ENOENT) {
+                    throw IOException("Can't reset kevent filter. errno: $errno")
+                }
+            }
+            nativeHeap.free(native)
         }
     }
 
@@ -84,28 +97,27 @@ class LinuxSelector : AbstractSelector() {
 
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
-        val key = MingwKey(kqueueNative, attachment, socket)
-        memScoped {
-            val event = alloc<kevent>()
-            if (!connectable) {
-                key.connected = true
-            }
-
-
-            internal_EV_SET(
-                event.ptr,
-                socket.native,
-                key.epollCommonToNative(mode),
-                EV_ADD or EV_ENABLE,
-                0,
-                0,
-                key.ptr
-            )
-            if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
-                throw IOException("Can't set filter of kevent mode to 0b${mode.toUInt().toString(2)}, errno: $errno")
-            }
-            //key.listensFlag = mode
+        val event = nativeHeap.alloc<kevent>()
+        val key = MingwKey(event, kqueueNative, attachment, socket)
+        if (!connectable) {
+            key.connected = true
         }
+
+        val n = key.epollCommonToNative(mode)
+        val flags = if (n == 0) EV_ADD or EV_DISABLE or EV_CLEAR else EV_ADD or EV_CLEAR or EV_ENABLE
+        internal_EV_SET(
+            event.ptr,
+            socket.native,
+            if (n == 0) EVFILT_EMPTY else n,
+            flags,
+            0,
+            0,
+            key.ptr
+        )
+        if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
+            throw IOException("Can't set filter of kevent mode to 0b${mode.toUInt().toString(2)}, errno: $errno")
+        }
+        //key.listensFlag = mode
         return key
     }
 
@@ -126,34 +138,54 @@ class LinuxSelector : AbstractSelector() {
             return 0
         }
         var count = 0
+        println("----------START EVENT----------")
         for (i in 0 until eventCount) {
             val item = list[i]
-            val keyPtr = item.udata?.asStableRef<MingwKey>()?:continue
+            val keyPtr = item.udata?.asStableRef<MingwKey>() ?: continue
             val key = keyPtr.get()
-            if (key.closed){
+            if (key.closed) {
                 continue
             }
             count++
-            if (EV_EOF in item.flags) {
-                key.resetMode(0)
-                func(key, Selector.EVENT_ERROR)
-            } else {
-                if (!key.connected && EVFILT_WRITE in item.filter.toInt()) {
+
+            if (!key.connected) {
+                if (EV_EOF in item.flags && !key.closed) {
                     key.resetMode(0)
-                    func(key, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
+                    func(key, Selector.EVENT_ERROR)
+                    continue
+                }
+                if (EVFILT_WRITE == item.filter.toInt()) {
+                    key.resetMode(0)
                     key.connected = true
-                } else {
-                    var eventCode = 0
-                    if (EVFILT_WRITE in item.filter.toInt()) {
-                        eventCode = eventCode or Selector.OUTPUT_READY
+                    func(key, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
+                    continue
+                }
+                throw IllegalStateException("Unknown connection state")
+            }
+
+            try {
+                val code = when (item.filter.toInt()) {
+                    EVFILT_READ -> Selector.INPUT_READY
+                    EVFILT_WRITE -> Selector.OUTPUT_READY
+                    else -> {
+                        0
                     }
-                    if (EVFILT_READ in item.filter.toInt()) {
-                        eventCode = eventCode or Selector.INPUT_READY
-                    }
-                    func(key, eventCode)
+                }
+                println(
+                    "---[${key.attachment!!.hashCode()}]  Event ${
+                        code.toUInt().toString(2)
+                    } (listen ${key.listensFlag.toUInt().toString(2)})"
+                )
+                func(key, code)
+            } finally {
+                if (EV_EOF in item.flags && !key.closed) {
+                    key.resetMode(0)
+                    func(key, Selector.EVENT_ERROR)
                 }
             }
+
         }
+        println("----------END EVENT----------")
         return count
     }
 

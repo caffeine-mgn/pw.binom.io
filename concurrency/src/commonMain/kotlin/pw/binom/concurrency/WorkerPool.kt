@@ -23,6 +23,18 @@ fun <P> asyncWithExecutor(executor: WorkerPool, f: suspend () -> P) =
         }
     })
 
+suspend fun <T> WorkerPool.useInContext(f: suspend () -> T) {
+    suspendCoroutine<T> { con ->
+        f.startCoroutine(object : Continuation<T> {
+            override val context: CoroutineContext = con.context + ExecutorPoolHolderElement(this@useInContext)
+
+            override fun resumeWith(result: Result<T>) {
+                con.resumeWith(result)
+            }
+        })
+    }
+}
+
 fun WorkerPool.submitAsync(context: CoroutineContext = EmptyCoroutineContext, func: suspend () -> Unit) {
     func.doFreeze()
     submit {

@@ -30,7 +30,7 @@ suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R) {
             ?: throw IllegalStateException("No defined default NetworkDispatcher")
         val holder = dispatcher.crossThreadWakeUpHolder.doFreeze()
         val selfCon = it.asReference()
-        executorPool.submitAsync(NetworkHolderElement(holder)) {
+        executorPool.submitAsync(NetworkHolderElement(holder).doFreeze()) {
             val result = runCatching { func.invoke() }
             holder.waitReadyForWrite {
                 val self = selfCon.free()
