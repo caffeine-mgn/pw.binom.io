@@ -15,7 +15,6 @@ const val BINOM_REPO_PASSWORD = "binom.repo.password"
 class BinomPublishPlugin : Plugin<Project> {
     private val logger = Logger.getLogger(this::class.java.name)
     override fun apply(target: Project) {
-        println("Apply BinomPublishPlugin")
         val kotlin = target.extensions.findByName("kotlin")!! as KotlinMultiplatformExtension
         if (!target.hasProperty(BINOM_REPO_URL)) {
             logger.warning("Property [$BINOM_REPO_URL] not found publication plugin will not apply")
