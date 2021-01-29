@@ -2,15 +2,16 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
+import pw.binom.EmptyAsyncInput
 import pw.binom.empty
 import pw.binom.io.AbstractAsyncBufferedInput
 
 internal class PooledAsyncBufferedInput(bufferSize: Int) : AbstractAsyncBufferedInput() {
     override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
-    var currentStream: AsyncInput? = null
+    var currentStream: AsyncInput = EmptyAsyncInput
 
     fun reset() {
-        currentStream = null
+        currentStream = EmptyAsyncInput
         buffer.clear()
         buffer.empty()
     }
@@ -26,7 +27,7 @@ internal class PooledAsyncBufferedInput(bufferSize: Int) : AbstractAsyncBuffered
     }
 
     override val stream: AsyncInput
-        get() = currentStream!!
+        get() = currentStream
 
     override suspend fun asyncClose() {
         super.asyncClose()

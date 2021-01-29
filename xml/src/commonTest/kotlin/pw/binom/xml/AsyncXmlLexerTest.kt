@@ -3,7 +3,6 @@ package pw.binom.xml
 import pw.binom.async
 import pw.binom.io.asAsync
 import pw.binom.io.asReader
-import pw.binom.xml.internal.AsyncXmlLexer
 import kotlin.test.*
 
 class AsyncXmlLexerTest {
@@ -54,10 +53,10 @@ class AsyncXmlLexerTest {
     }
 }
 
-suspend fun AsyncXmlLexer.nextText(): String {
+suspend fun AsyncXmlLexer.nextText(): String? {
     return if (next()) {
         text
     } else {
-        ""
+        null
     }
 }

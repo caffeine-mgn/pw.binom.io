@@ -12,6 +12,7 @@ import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
 
 class PGConnection private constructor(
@@ -75,6 +76,10 @@ class PGConnection private constructor(
 
     private val pw = PackageWriter(charset, ByteBufferPool(10))
 
+    private var connected = true
+    val isConnected
+        get() = connected
+
     suspend fun sendQuery(query: String): KindedMessage {
         if (busy)
             throw IllegalStateException("Connection is busy")
@@ -113,8 +118,13 @@ class PGConnection private constructor(
     }
 
     internal suspend fun sendRecive(msg: KindedMessage): KindedMessage {
-        sendOnly(msg)
-        return readDesponse()
+        try {
+            sendOnly(msg)
+            return readDesponse()
+        } catch (e: SocketClosedException) {
+            connected = false
+            throw e
+        }
     }
 
     internal val reader = PackageReader(this, charset, connection)

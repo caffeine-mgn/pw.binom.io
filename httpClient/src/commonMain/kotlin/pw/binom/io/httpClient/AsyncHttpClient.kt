@@ -134,12 +134,16 @@ open class AsyncHttpClient(
         }
     */
     fun request(method: String, url: URL, flushSize: Int = DEFAULT_BUFFER_SIZE): UrlConnect {
-        return UrlConnectImpl(
-            method = method,
-            url = url,
-            client = this,
-            outputFlushSize = flushSize
-        )
+        when (url.protocol?.toLowerCase()) {
+            "http", "https" -> return UrlConnectImpl(
+                method = method,
+                url = url,
+                client = this,
+                outputFlushSize = flushSize
+            )
+            else -> throw IllegalArgumentException("Not supported protocol ${url.protocol}")
+        }
+
     }
 
 //    fun request(method: String, url: URL): UrlConnect {

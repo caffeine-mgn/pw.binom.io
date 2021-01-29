@@ -30,7 +30,6 @@ internal class UrlConnectImpl(
             mutableListOf("${url.host}:${url.port}")
         headers[Headers.ACCEPT_ENCODING] = mutableListOf("gzip, deflate, identity")
         headers[Headers.ACCEPT] = mutableListOf("*/*")
-//        headers[Headers.ACCEPT_ENCODING] = mutableListOf("identity")
     }
 
     private fun checkSent() {
@@ -63,10 +62,7 @@ internal class UrlConnectImpl(
         app.append("$method ${url.uri} HTTP/1.1\r\n")
         headers.forEach { en ->
             en.value.forEach {
-                app.append(en.key)
-                app.append(": ")
-                app.append(it)
-                app.append("\r\n")
+                app.append(en.key).append(": ").append(it).append("\r\n")
             }
         }
         app.append("\r\n")

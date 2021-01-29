@@ -40,12 +40,12 @@ class BufferedOutputAppendable(
             var pos = 0
             checkFlush()
             while (pos < end) {
+                checkFlush()
                 val wrote = charBuffer.write(array, pos, array.size - pos)
                 if (wrote <= 0) {
                     throw IOException("Can't append data to")
                 }
                 pos += wrote
-                checkFlush()
             }
         } else {
             (start..end).forEach {

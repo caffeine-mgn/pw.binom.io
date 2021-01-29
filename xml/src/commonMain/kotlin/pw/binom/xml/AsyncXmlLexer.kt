@@ -95,7 +95,7 @@ class AsyncXmlLexer(val reader: AsyncReader) {
                 position++
                 column++
                 tokenType = TokenType.SEMICOLON
-                ";"
+                text = ";"
                 return true
             }
             char == '"' -> {

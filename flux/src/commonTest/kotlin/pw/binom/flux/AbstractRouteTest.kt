@@ -5,6 +5,7 @@ import pw.binom.AsyncOutput
 import pw.binom.async
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
+import pw.binom.network.CrossThreadKeyHolder
 import pw.binom.network.TcpConnection
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,6 +26,8 @@ class AbstractRouteTest {
             override val rawConnection: TcpConnection
                 get() = TODO("Not yet implemented")
             override val headers: Map<String, List<String>>
+                get() = TODO("Not yet implemented")
+            override val keyHolder: CrossThreadKeyHolder
                 get() = TODO("Not yet implemented")
 
         }

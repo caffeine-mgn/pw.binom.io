@@ -20,11 +20,15 @@ actual class TcpClientSocketChannel(val native: JSocketChannel) : Channel {
     }
 
     override fun read(dest: ByteBuffer): Int {
-        val count = native.read(dest.native)
-        if (count >= 0) {
-            return count
+        try {
+            val count = native.read(dest.native)
+            if (count >= 0) {
+                return count
+            }
+            throw SocketClosedException()
+        } catch (e:Throwable){
+            throw SocketClosedException()
         }
-        throw SocketClosedException()
     }
 
     override fun close() {

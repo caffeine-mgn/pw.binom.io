@@ -88,4 +88,8 @@ private class ConsoleHandler1 : Logger.Handler {
         }
         println(sb.toString())
     }
+
+    init {
+        doFreeze()
+    }
 }

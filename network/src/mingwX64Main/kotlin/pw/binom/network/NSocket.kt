@@ -34,7 +34,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
         }
     }
 
-    actual fun accept(address: NetworkAddress.Mutable?): NSocket {
+    actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
         val native = if (address == null) {
             platform.windows.accept(native, null, null)
         } else {
@@ -52,7 +52,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
             }
         }
         if (native == INVALID_SOCKET)
-            throw IOException("Can't accept new client")
+            return null//throw IOException("Can't accept new client")
         return NSocket(native)
     }
 

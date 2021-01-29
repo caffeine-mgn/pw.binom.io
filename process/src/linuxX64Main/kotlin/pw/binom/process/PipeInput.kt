@@ -1,6 +1,7 @@
 package pw.binom.process
 
 import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.plus
 import pw.binom.ByteBuffer
 import pw.binom.Input
@@ -17,7 +18,7 @@ class PipeInput : Pipe(), Input {
         val l = dest.remaining
         if (l == 0)
             return 0
-        val r = platform.posix.read(read, dest.native + dest.position, l.convert()).convert<Int>()
+        val r = platform.posix.read(read, dest.refTo(dest.position), l.convert()).convert<Int>()
         if (r <= 0)
             endded.value = true
         else {

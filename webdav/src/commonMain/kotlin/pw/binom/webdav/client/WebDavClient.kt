@@ -1,10 +1,10 @@
 package pw.binom.webdav.client
 
 import pw.binom.*
-import pw.binom.webdav.*
 import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.httpClient.AsyncHttpClient
+import pw.binom.webdav.*
 import pw.binom.webdav.server.parseDate
 import pw.binom.xml.dom.XmlElement
 import pw.binom.xml.dom.findElements
@@ -29,6 +29,11 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
         }
         require(user is WebAuthAccess)
         return suspendCoroutine { con ->
+            val currentUser = con.context[WebAuthAccess.CurrentUserKey]
+            if (currentUser != null) {
+                con.resumeWithException(IllegalStateException("Already using User ${currentUser.user}"))
+                return@suspendCoroutine
+            }
             func.startCoroutine(
                 object : Continuation<T> {
                     override val context: CoroutineContext = con.context + WebAuthAccess.CurrentUser(user)

@@ -28,7 +28,7 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
-    actual fun accept(address: NetworkAddress.Mutable?): NSocket {
+    actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
         val native = if (address == null) {
             accept(native, null, null)
         } else {
@@ -45,7 +45,7 @@ actual class NSocket(val native: Int) : Closeable {
             }
         }
         if (native == -1)
-            throw IOException("Can't accept new client")
+            return null//throw IOException("Can't accept new client")
         return NSocket(native)
     }
 
@@ -68,10 +68,10 @@ actual class NSocket(val native: Int) : Closeable {
     actual fun recv(data: ByteBuffer): Int {
         val r: Int = recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
         if (r < 0) {
-            val error = errno
-            if (error == 10035)
+            if (errno == EAGAIN) {
                 return 0
-            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}]")
+            }
+            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}], EDEADLK=$EDEADLK")
             throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
         }
         if (r > 0) {
@@ -92,17 +92,20 @@ actual class NSocket(val native: Int) : Closeable {
 
     actual fun setBlocking(value: Boolean) {
         val flags = fcntl(native, F_GETFL, 0)
-        val newFlags = if (value)
+        val newFlags = if (value) {
             flags xor O_NONBLOCK
-        else
+        } else {
             flags or O_NONBLOCK
+        }
 
-        if (0 != fcntl(native, F_SETFL, newFlags))
+        if (0 != fcntl(native, F_SETFL, newFlags)) {
             throw IOException()
+        }
     }
 
     actual fun connect(address: NetworkAddress) {
         memScoped {
+            set_posix_errno(0)
             val r = connect(
                 native,
                 address.data.refTo(0).getPointer(this).reinterpret(),
@@ -116,6 +119,7 @@ actual class NSocket(val native: Int) : Closeable {
 
     actual fun bind(address: NetworkAddress) {
         memScoped {
+            set_posix_errno(0)
             val bindResult = bind(
                 native,
                 address.data.refTo(0).getPointer(this).reinterpret(),
@@ -125,11 +129,14 @@ actual class NSocket(val native: Int) : Closeable {
                 if (errno == 98) {
                     throw BindException("Address already in use: ${address.host}:${address.port}")
                 }
-                throw IOException("Bind error. errno: [${errno}]")
+                throw IOException("Bind error. errno: [$errno], bind: [$bindResult]")
             }
             val listenResult = listen(native, 1000)
             if (listenResult < 0) {
-                throw IOException("Listen error. errno: [${errno}]")
+                if (errno == 95) {
+                    return@memScoped
+                }
+                throw IOException("Listen error. errno: [$errno], listen: [$listenResult]")
             }
         }
     }

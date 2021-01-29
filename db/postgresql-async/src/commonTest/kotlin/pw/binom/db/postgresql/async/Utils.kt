@@ -8,6 +8,7 @@ import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
+import kotlin.time.measureTime
 import kotlin.time.seconds
 
 @OptIn(ExperimentalTime::class)
@@ -57,10 +58,9 @@ fun pg(func: suspend (PGConnection) -> Unit) {
         }
     }
 
-    var c = 0
+    val now = TimeSource.Monotonic.markNow()
     while (!done) {
-        c++
-        if (c > 300) {
+        if (now.elapsedNow() > 10.seconds) {
             throw RuntimeException("Out of try")
         }
         manager.select(1000)

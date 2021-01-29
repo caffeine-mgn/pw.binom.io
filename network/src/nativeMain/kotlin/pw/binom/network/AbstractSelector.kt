@@ -14,21 +14,35 @@ abstract class AbstractSelector : Selector {
             get() = attachmentReference?.value
         var ptr = StableRef.create(this).asCPointer()
         private var _listensFlag by AtomicInt(0)
+        private var _closed by AtomicBoolean(false)
+
+        override val closed: Boolean
+            get() = _closed
+
+        protected fun checkClosed() {
+            require(!_closed) { "SelectorKey already closed" }
+        }
 
         abstract fun isSuccessConnected(nativeMode: Int): Boolean
 
         override var listensFlag: Int
-            get() = _listensFlag
+            get() {
+                checkClosed()
+                return _listensFlag
+            }
             set(value) {
-                if (_listensFlag == value) {
-                    return
-                }
+                checkClosed()
+//                if (_listensFlag == value) {
+//                    return
+//                }
                 _listensFlag = value
-                resetMode(epollCommonToNative(value))
+                resetMode(value)
             }
 
         abstract fun resetMode(mode: Int)
         override fun close() {
+            checkClosed()
+            _closed = true
             attachmentReference?.close()
             ptr.asStableRef<AbstractKey>().dispose()
         }
@@ -37,7 +51,7 @@ abstract class AbstractSelector : Selector {
     override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): AbstractKey {
         val key = nativeAttach(
             socket.native,
-            epollCommonToNative(mode),
+            mode,
             true,
             attachment
         )
@@ -50,7 +64,7 @@ abstract class AbstractSelector : Selector {
     override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?) =
         nativeAttach(
             socket.native,
-            epollCommonToNative(mode),
+            mode,
             false,
             attachment
         )
@@ -58,7 +72,7 @@ abstract class AbstractSelector : Selector {
     override fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?) =
         nativeAttach(
             socket.native,
-            epollCommonToNative(mode),
+            mode,
             false,
             attachment
         )
@@ -67,18 +81,22 @@ abstract class AbstractSelector : Selector {
     override fun select(timeout: Long, func: (Selector.Key, mode: Int) -> Unit): Int =
         nativeSelect(timeout) { key, nativeMode ->
             if (!key.connected) {
-                if (key.isSuccessConnected(nativeMode)) {
+                if (nativeMode and Selector.EVENT_CONNECTED != 0) {
                     key.connected = true
                     func(key, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
-                    key.resetMode(epollCommonToNative(key.listensFlag))
                 } else {
-                    func(key, Selector.EVENT_ERROR)
-                    key.close()
+                    try {
+                        func(key, Selector.EVENT_ERROR)
+                    } finally {
+                        if (!key.closed) {
+                            key.close()
+                        }
+                    }
                 }
                 return@nativeSelect
             }
 
-            func(key, epollNativeToCommon(nativeMode))
+            func(key, nativeMode)
         }
 
 
@@ -86,10 +104,12 @@ abstract class AbstractSelector : Selector {
     protected abstract fun nativeSelect(timeout: Long, func: (AbstractKey, mode: Int) -> Unit): Int
 }
 
-internal expect fun epollCommonToNative(mode: Int): Int
-internal expect fun epollNativeToCommon(mode: Int): Int
+//internal expect fun epollCommonToNative(mode: Int): Int
+//internal expect fun epollNativeToCommon(mode: Int): Int
 
 internal inline operator fun Int.contains(value: Int): Boolean = value and this != 0
 internal inline operator fun Int.contains(value: UInt): Boolean = value.toInt() in this
 internal inline operator fun UInt.contains(value: Int): Boolean = value in this.toInt()
 internal inline operator fun UInt.contains(value: UInt): Boolean = value.toInt() in this.toInt()
+
+internal inline operator fun UShort.contains(value: Int): Boolean = value in toInt()

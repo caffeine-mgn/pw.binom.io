@@ -4,6 +4,7 @@ import pw.binom.AppendableQueue
 import pw.binom.PopResult
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
+import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -28,6 +29,10 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
     private class Item<T>(value: T, next: Item<T>?) {
         val value by AtomicReference(value)
         var next by AtomicReference(next)
+
+        init {
+            doFreeze()
+        }
     }
 
     override val isEmpty: Boolean
@@ -44,8 +49,9 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
                 }
                 top = item.next
 
-                if (bottom == item)
+                if (bottom == item) {
                     bottom = null
+                }
                 _size--
                 return item.value
             }
@@ -66,8 +72,9 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
                 }
                 top = item.next
 
-                if (bottom == item)
+                if (bottom == item) {
                     bottom = null
+                }
                 _size--
                 return item.value
             }
@@ -76,16 +83,17 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
     }
 
     override fun pop(): T =
-            lock.synchronize {
-                val item = top ?: throw NoSuchElementException()
+        lock.synchronize {
+            val item = top ?: throw NoSuchElementException()
 
-                top = item.next
+            top = item.next
 
-                if (bottom == item)
-                    bottom = null
-                _size--
-                item.value
+            if (bottom == item) {
+                bottom = null
             }
+            _size--
+            item.value
+        }
 
     override fun pop(dist: PopResult<T>) {
         lock.synchronize {
@@ -97,8 +105,9 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
 
             top = item.next
 
-            if (bottom == item)
+            if (bottom == item) {
                 bottom = null
+            }
             _size--
             dist.set(item.value)
         }
@@ -108,8 +117,9 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
         lock.synchronize {
             val i = Item(value, next = null)
 
-            if (top == null)
+            if (top == null) {
                 top = i
+            }
 
             bottom?.next = i
             bottom = i

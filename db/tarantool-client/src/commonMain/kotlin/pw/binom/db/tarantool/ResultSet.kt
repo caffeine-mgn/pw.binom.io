@@ -3,14 +3,19 @@ package pw.binom.db.tarantool
 import pw.binom.db.tarantool.protocol.Key
 
 
-inline class Row(private val row: List<Any?>) {
-    override fun toString(): String = "Row $row"
-    fun getValue(index: Int): Any? {
-        if (index < 0 || index >= row.size) {
+inline class Row(val values: List<Any?>) : Iterable<Any?> {
+    override fun toString(): String = "Row $values"
+    operator fun get(index: Int): Any? {
+        if (index < 0 || index >= values.size) {
             throw IllegalArgumentException("Can't get column with index $index")
         }
-        return row[index]
+        return values[index]
     }
+
+    inline val size: Int
+        get() = values.size
+
+    override fun iterator(): Iterator<Any?> = values.iterator()
 }
 
 inline class Column(private val column: Map<Int, Any>) {
@@ -31,6 +36,8 @@ inline class ResultSet constructor(val body: Map<Int, Any?>) : Iterable<Row> {
         get() = meta?.size ?: 0
 
     override fun toString(): String = "ResultSet(size: [${data.size}])"
+    val size
+        get() = data.size
 
     fun getColumn(index: Int): Column {
         val meta = meta ?: throw IllegalArgumentException("Meta not exist")

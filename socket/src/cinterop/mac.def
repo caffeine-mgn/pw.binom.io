@@ -1,7 +1,0 @@
-
----
-#include <sys/event.h>
-
-void internal_EV_SET(struct kevent* kev, int ident, int filter, int flags, int fflags, int data, void* udata){
-    EV_SET(kev, ident, filter, flags, fflags, data, udata);
-}

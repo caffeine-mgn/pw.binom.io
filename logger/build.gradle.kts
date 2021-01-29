@@ -101,6 +101,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
+                api(project(":concurrency"))
                 api(kotlin("test-annotations-common"))
             }
         }

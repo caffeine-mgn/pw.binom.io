@@ -14,7 +14,7 @@ class AsyncBufferedAsciiInputReader(
     }
 
     fun reset() {
-        buffer.clear()
+        buffer.empty()
     }
 
     private val buffer = ByteBuffer.alloc(bufferSize).empty()

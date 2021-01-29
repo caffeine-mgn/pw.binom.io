@@ -38,12 +38,12 @@ fun Int.dump(data: ByteBuffer) {
     data.put(((this ushr (8 * (3 - 3)))).toByte())
 }
 
-fun Short.dump(data: ByteBuffer, offset: Int = 0) {
+fun Short.dump(data: ByteBuffer) {
     data.put(((this.toInt() ushr (8 - 8 * 0)) and 0xFF).toByte())
     data.put(((this.toInt() ushr (8 - 8 * 1)) and 0xFF).toByte())
 }
 
-fun Long.byteswap(): Long {
+fun Long.reverse(): Long {
     val ch1 = (this ushr 56) and 0xFF
     val ch2 = (this ushr 48) and 0xFF
     val ch3 = (this ushr 40) and 0xFF
@@ -63,7 +63,7 @@ fun Long.byteswap(): Long {
             ((ch1 and 0xFF) shl 0))
 }
 
-fun Int.byteswap(): Int {
+fun Int.reverse(): Int {
     val ch1 = (this ushr 24) and 0xFF
     val ch2 = (this ushr 16) and 0xFF
     val ch3 = (this ushr 8) and 0xFF
@@ -71,18 +71,45 @@ fun Int.byteswap(): Int {
     return (ch4 shl 24) + (ch3 shl 16) + (ch2 shl 8) + (ch1 shl 0)
 }
 
-fun Short.byteswap(): Short {
+fun Short.reverse(): Short {
     val ch1 = (this.toInt() ushr 8) and 0xFF
     val ch2 = (this.toInt() ushr 0) and 0xFF
     return ((ch2 shl 8) + ch1).toShort()
 }
 
-fun Float.byteswap(): Float = Float.fromBits(toRawBits().byteswap())
-fun Double.byteswap(): Double = Double.fromBits(toRawBits().byteswap())
+fun Float.reverse(): Float = Float.fromBits(toRawBits().reverse())
+fun Double.reverse(): Double = Double.fromBits(toRawBits().reverse())
 
 
 fun Short.Companion.fromBytes(byte0: Byte, byte1: Byte) =
     ((byte0.toInt() and 0xFF shl 8) + (byte1.toInt() and 0xFF)).toShort()
+
+fun Short.Companion.fromBytes(source: ByteBuffer): Short {
+    val b0 = source.get()
+    val b1 = source.get()
+    return fromBytes(b0, b1)
+}
+
+fun Int.Companion.fromBytes(source: ByteBuffer): Int {
+    val b0 = source.get()
+    val b1 = source.get()
+    val b2 = source.get()
+    val b3 = source.get()
+    return fromBytes(b0, b1, b2, b3)
+}
+
+fun Long.Companion.fromBytes(source: ByteBuffer): Long {
+    val b0 = source.get()
+    val b1 = source.get()
+    val b2 = source.get()
+    val b3 = source.get()
+    val b4 = source.get()
+    val b5 = source.get()
+    val b6 = source.get()
+    val b7 = source.get()
+    return fromBytes(b0, b1, b2, b3, b4, b5, b6, b7)
+}
+
 
 fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte): Int =
     ((byte0.toInt() and 0xFF) shl 24) +

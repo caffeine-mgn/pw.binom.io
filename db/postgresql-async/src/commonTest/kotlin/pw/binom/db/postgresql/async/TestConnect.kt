@@ -11,15 +11,13 @@ import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.math.absoluteValue
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
+@Ignore
 class TestConnect {
 
     //    @Test

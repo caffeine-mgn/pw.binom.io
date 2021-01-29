@@ -24,24 +24,24 @@ internal object ConnectionProcessing {
 //        val buf = AsyncBufferedInput(connection)
 //        val reader = inputBuffered.utf8Reader()
         val request = asciiInputReader.readln()!!// ?: return false
-        val items = request.split(' ')
+        val items = request.split(' ', limit = 3)
 
         val req = httpRequestPool.borrow()
         req.init(
-                method = items[0],
-                uri = items.getOrNull(1) ?: "",
-                input = asciiInputReader,
-                allowZlib = allowZlib,
-                output = outputBuffered,
-                rawConnection = rawConnection
+            method = items[0],
+            uri = items.getOrNull(1) ?: "",
+            input = asciiInputReader,
+            allowZlib = allowZlib,
+            output = outputBuffered,
+            rawConnection = rawConnection
         )
 
         val resp = httpResponsePool.borrow()
         var keepAlive: Boolean
         resp.init(
-                encode = req.encode,
-                keepAlive = req.keepAlive,
-                output = outputBufferid
+            encode = req.encode,
+            keepAlive = req.keepAlive,
+            output = outputBufferid
         )
         var closed = false
         try {

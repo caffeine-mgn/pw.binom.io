@@ -5,12 +5,12 @@ import pw.binom.ByteBuffer
 import pw.binom.ByteBufferPool
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
-import pw.binom.io.AsyncBufferedAsciiInputWriter
+import pw.binom.io.AsyncBufferedAsciiWriter
 import pw.binom.io.AsyncWriter
 import pw.binom.io.bufferedWriter
 import pw.binom.io.http.AsyncMultipartOutput
 
-class HtmlMultipartMessage internal constructor(val output: AsyncBufferedAsciiInputWriter) : Message {
+class HtmlMultipartMessage internal constructor(val output: AsyncBufferedAsciiWriter) : Message {
 
     private val multipart = AsyncMultipartOutput(output, closeParent = false)
     private val pool = ByteBufferPool(1)
