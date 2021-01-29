@@ -6,21 +6,27 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import java.net.URI
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import java.util.logging.Logger
 
 const val BINOM_REPO_URL = "binom.repo.url"
 const val BINOM_REPO_USER = "binom.repo.user"
 const val BINOM_REPO_PASSWORD = "binom.repo.password"
 
 class BinomPublishPlugin : Plugin<Project> {
+    private val logger = Logger.getLogger(this::class.java.name)
     override fun apply(target: Project) {
+        println("Apply BinomPublishPlugin")
         val kotlin = target.extensions.findByName("kotlin")!! as KotlinMultiplatformExtension
         if (!target.hasProperty(BINOM_REPO_URL)) {
+            logger.warning("Property [$BINOM_REPO_URL] not found publication plugin will not apply")
             return
         }
         if (!target.hasProperty(BINOM_REPO_USER)) {
+            logger.warning("Property [$BINOM_REPO_USER] not found publication plugin will not apply")
             return
         }
         if (!target.hasProperty(BINOM_REPO_PASSWORD)) {
+            logger.warning("Property [$BINOM_REPO_PASSWORD] not found publication plugin will not apply")
             return
         }
 
