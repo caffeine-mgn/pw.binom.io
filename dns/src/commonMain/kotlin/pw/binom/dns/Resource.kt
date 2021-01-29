@@ -1,6 +1,6 @@
 package pw.binom.dns
 
-import pw.binom.dns.protocol.Resource
+import pw.binom.dns.protocol.ResourcePackage
 
 data class Resource(
     val name: String,
@@ -9,7 +9,7 @@ data class Resource(
     val ttl: UInt,
     val rdata: ByteArray,
 ) {
-    fun toMutable(resource: Resource): Resource {
+    fun toMutable(resource: ResourcePackage): ResourcePackage {
         resource.name = name
         resource.type = type
         resource.clazz = clazz

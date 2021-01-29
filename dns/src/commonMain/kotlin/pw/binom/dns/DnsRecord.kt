@@ -2,7 +2,7 @@ package pw.binom.dns
 
 import pw.binom.*
 import pw.binom.dns.protocol.DnsHeader
-import pw.binom.dns.protocol.Resource
+import pw.binom.dns.protocol.ResourcePackage
 
 data class DnsRecord(
     /**
@@ -84,8 +84,8 @@ data class DnsRecord(
         fun read(src: ByteBuffer): DnsRecord {
             val header = DnsHeader()
             header.readPackage(src)
-            val query = pw.binom.dns.protocol.Query()
-            val r = Resource()
+            val query = pw.binom.dns.protocol.QueryPackage()
+            val r = ResourcePackage()
             val queries = (0 until header.q_count.toInt()).map {
                 query.read(src).toImmutable()
             }
@@ -118,16 +118,17 @@ data class DnsRecord(
         }
     }
 
-    suspend fun write(output: AsyncOutput, buffer: ByteBuffer) {
+    suspend fun write(output: AsyncOutput, buffer: ByteBuffer): Int {
         buffer.clear()
         buffer.writeShort(0)
         write(buffer)
         val l = buffer.position
         buffer.position = 0
         buffer.writeShort((l - Short.SIZE_BYTES).toShort())
-        buffer.position = 0
+        buffer.position = l
         buffer.flip()
-        output.write(buffer)
+        println("${buffer.remaining}")
+        return output.write(buffer)
     }
 
     /**
@@ -150,8 +151,8 @@ data class DnsRecord(
         header.auth_count = auth.size.toUShort()
         header.add_count = add.size.toUShort()
         header.write(dest)
-        val q = pw.binom.dns.protocol.Query()
-        val r = Resource()
+        val q = pw.binom.dns.protocol.QueryPackage()
+        val r = ResourcePackage()
         queries.forEach {
             it.toMutable(q)
             q.write(dest)

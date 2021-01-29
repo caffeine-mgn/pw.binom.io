@@ -3,14 +3,14 @@ package pw.binom.dns.protocol
 import pw.binom.*
 import pw.binom.dns.Resource
 
-class Resource {
+class ResourcePackage {
     var name: String = ""
     var type: UShort = 0u
     var clazz: UShort = 0u
     var ttl: UInt = 0u
     var rdata: ByteArray = byteArrayOf()
 
-    fun read(buf: ByteBuffer): pw.binom.dns.protocol.Resource {
+    fun read(buf: ByteBuffer): pw.binom.dns.protocol.ResourcePackage {
         name = buf.readDns().fromDns()
         type = buf.readShort().toUShort()
         clazz = buf.readShort().toUShort()
