@@ -20,7 +20,17 @@ val HttpRequest.basicAuth: BasicAuth?
 /**
  * Adds header "WWW-Authenticate" and set status 401
  */
-fun HttpResponse.requestBasicAuth() {
+fun HttpResponse.requestBasicAuth(realm: String? = null, service: String? = null) {
+    val sb = StringBuilder("Basic")
+    if (realm != null) {
+        sb.append(" realm=\"").append(realm).append("\"")
+    }
+    if (service != null) {
+        if (realm != null) {
+            sb.append(",")
+        }
+        sb.append("service=\"").append(service).append("\"")
+    }
     resetHeader("WWW-Authenticate", "Basic")
     status = 401
 }
