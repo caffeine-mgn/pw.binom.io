@@ -1,5 +1,5 @@
 enableFeaturePreview("GRADLE_METADATA")
-rootProject.name = "pw.binom.io"
+rootProject.name = "Binom"
 
 include(":env")
 include(":core")
