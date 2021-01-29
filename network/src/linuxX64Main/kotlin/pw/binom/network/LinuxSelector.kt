@@ -5,14 +5,14 @@ import platform.linux.*
 
 class LinuxSelector : AbstractSelector() {
 
-    class MingwKey(val list: Int, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
+    class LinuxKey(val list: Int, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
         override fun resetMode(mode: Int) {
             memScoped {
                 val event = alloc<epoll_event>()
-                event.events = mode.convert()
+                event.events = epollCommonToNative(mode).convert()
                 event.data.ptr = ptr
                 epoll_ctl(list, EPOLL_CTL_MOD, socket.native, event.ptr)
             }
@@ -22,6 +22,21 @@ class LinuxSelector : AbstractSelector() {
             super.close()
             epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
         }
+
+        fun epollCommonToNative(mode: Int): Int {
+            var events = 0
+            if (Selector.INPUT_READY in mode) {
+                events = events or EPOLLIN
+            }
+            if (!connected && Selector.EVENT_CONNECTED in mode) {
+                events = events or EPOLLOUT
+            }
+            if (connected && Selector.OUTPUT_READY in mode) {
+                events = events or EPOLLOUT
+            }
+
+            return events
+        }
     }
 
     private val native = epoll_create(1000)!!
@@ -29,16 +44,14 @@ class LinuxSelector : AbstractSelector() {
 
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
-        val key = MingwKey(native, attachment, socket)
+        val key = LinuxKey(native, attachment, socket)
         memScoped {
             val event = alloc<epoll_event>()
-            event.events = if (connectable) {
-                (EPOLLOUT or EPOLLERR or EPOLLRDHUP).convert()
-            } else {
+            if (!connectable) {
                 key.connected = true
-                mode.convert()
             }
-            key.listensFlag = mode
+
+            key.listensFlag = key.epollCommonToNative(mode)
             event.data.ptr = key.ptr
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
         }
@@ -52,9 +65,25 @@ class LinuxSelector : AbstractSelector() {
         }
         for (i in 0 until eventCount) {
             val item = list[i]
-            val keyPtr = item.data.ptr!!.asStableRef<MingwKey>()
+            val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
             val key = keyPtr.get()
-            func(key, item.events.convert())
+
+            if (!key.connected) {
+                if (EPOLLERR in item.events) {
+                    key.resetMode(0)
+                    func(key, Selector.EVENT_ERROR)
+                    continue
+                }
+                if (EPOLLOUT in item.events) {
+                    key.resetMode(0)
+                    key.connected = true
+                    func(key, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
+                    continue
+                }
+                throw IllegalStateException("Unknown connection state")
+            }
+
+            func(key, epollNativeToCommon(item.events.convert()))
         }
         return eventCount
     }
@@ -65,19 +94,7 @@ class LinuxSelector : AbstractSelector() {
     }
 }
 
-actual fun epollCommonToNative(mode: Int): Int {
-    var events = 0
-    if (Selector.INPUT_READY in mode) {
-        events = events or EPOLLIN
-    }
-    if (Selector.OUTPUT_READY in mode) {
-        events = events or EPOLLOUT
-    }
-
-    return events
-}
-
-actual fun epollNativeToCommon(mode: Int): Int {
+private fun epollNativeToCommon(mode: Int): Int {
     var events = 0
     if (EPOLLIN in mode) {
         events = events or Selector.INPUT_READY
