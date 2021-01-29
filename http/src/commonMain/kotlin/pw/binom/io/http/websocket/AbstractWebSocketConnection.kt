@@ -34,6 +34,18 @@ abstract class AbstractWebSocketConnection(
         doFreeze()
     }
 
+    fun close(code: Short, body: ByteBuffer) {
+        ByteBuffer.alloc(Short.SIZE_BYTES).use { buf ->
+            buf.writeShort(code)
+            buf.flip()
+            buf.doFreeze()
+            write(MessageType.CLOSE) {
+                it.write(buf)
+                it.write(body)
+            }
+        }
+    }
+
     override fun write(type: MessageType, func: suspend (AsyncOutput) -> Unit) {
         checkClosed()
         func.doFreeze()
@@ -46,7 +58,11 @@ abstract class AbstractWebSocketConnection(
             }
         } else {
             holder.waitReadyForWrite {
-                async { func(write(type)) }
+                async {
+                    write(type).use {
+                        func(it)
+                    }
+                }
             }
         }
     }
@@ -68,20 +84,12 @@ abstract class AbstractWebSocketConnection(
                 val type = when (header.opcode) {
                     1.toByte() -> MessageType.TEXT
                     2.toByte() -> MessageType.BINARY
-                    0.toByte() -> {
+                    8.toByte() -> MessageType.CLOSE
+                    else -> {
                         kotlin.runCatching {
                             closeTcp()
                         }
                         throw WebSocketClosedException(WebSocketClosedException.ABNORMALLY_CLOSE)
-                    }
-                    8.toByte() -> {
-                        kotlin.runCatching {
-                            closeTcp()
-                        }
-                        throw WebSocketClosedException(0)
-                    }
-                    else -> {
-                        TODO("Unknown opcode: ${header.opcode}")
                     }
                 }
                 return MessageImpl(

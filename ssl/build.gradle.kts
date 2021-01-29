@@ -88,19 +88,21 @@ kotlin {
 //    }
     macosX64 {
         binaries {
-            framework {
-            }
+            framework()
+            staticLib()
             compilations["main"].cinterops {
-                create("utils") {
-                    defFile = project.file("src/cinterop/mac.def")
+                create("openssl") {
+                    defFile = project.file("src/cinterop/openssl.def")
                     packageName = "platform.openssl"
                     includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
                 }
             }
-            compilations["main"].kotlinOptions.freeCompilerArgs =
-                listOf("-include-binary", "${buildFile.parent}/src/macosX64Main/cinterop/lib/libopenssl.a")
-            compilations["test"].kotlinOptions.freeCompilerArgs =
-                listOf("-include-binary", "${buildFile.parent}/src/macosX64Main/cinterop/lib/libopenssl.a")
+            val args = listOf(
+                "-include-binary", "${buildFile.parent}/src/macosX64Main/cinterop/lib/libssl.a",
+                "-include-binary", "${buildFile.parent}/src/macosX64Main/cinterop/lib/libcrypto.a"
+            )
+            compilations["main"].kotlinOptions.freeCompilerArgs = args
+            compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
 

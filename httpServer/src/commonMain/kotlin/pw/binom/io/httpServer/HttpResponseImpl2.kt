@@ -17,12 +17,12 @@ internal class HttpResponseBodyImpl2 : HttpResponseBody {
 
     fun init(contentLength: ULong?,
              encode: EncodeType,
-             rawOutput: AsyncOutput,
+             rawOutput: PoolAsyncBufferedOutput,
              zlibBufferSize: Int,
              autoFlushSize: Int
     ) {
         this.rawOutput = rawOutput
-        var stream = rawOutput
+        var stream:AsyncOutput = rawOutput
 
         stream = when {
             contentLength != null -> {
@@ -52,9 +52,6 @@ internal class HttpResponseBodyImpl2 : HttpResponseBody {
         wrappedOutput = stream
     }
 
-//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
-//            wrappedOutput!!.write(data, offset, length)
-
     override suspend fun write(data: ByteBuffer): Int =
             wrappedOutput!!.write(data)
 
@@ -70,66 +67,34 @@ internal class HttpResponseBodyImpl2 : HttpResponseBody {
 
 internal class HttpResponseImpl2(
         val responseBodyPool: ObjectPool<HttpResponseBodyImpl2>,
-        val zlibBufferSize: Int
+        private val zlibBufferSize: Int
 ) : HttpResponse {
     override var status: Int = 404
-    private var rawOutput: AsyncOutput? = null
+        set(value) {
+            checkHeaderSent()
+            field = value
+        }
+    private var rawOutput: PoolAsyncBufferedOutput? = null
     override val headers = HashMap<String, ArrayList<String>>()
+    private val headerSent: Boolean
+        get() = body != null
+
     var keepAlive = false
         private set
-//
-//    private suspend fun completeHeader(
-//            encode: EncodeType,
-//            outputPool: DefaultPool<NoCloseOutput>
-//    ) {
-//        val buf = rawOutput!!
-//        val app = buf.utf8Appendable()
-//        app.append("HTTP/1.1 $status ${statusToText(status)}\r\n")
-//        if (keepAlive) {
-//            headers.remove(Headers.CONNECTION)
-//            app.append("${Headers.CONNECTION}: ${Headers.KEEP_ALIVE}\r\n")
-//        }
-//        val contentLength = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull()
-//        val chanked = headers[Headers.TRANSFER_ENCODING]?.singleOrNull().let {
-//            it == null || it == Headers.CHUNKED
-//        }
-//
-//        if (headers[Headers.SERVER] == null) {
-//            app.append("${Headers.SERVER}: Binom Server\r\n")
-//        }
-//
-//        val noClose = outputPool.borrow {
-//            it.stream = buf
-//        }
-//
-//         when {
-//            contentLength != null -> {
-//                headers.remove(Headers.CONTENT_LENGTH)
-//                headers.remove(Headers.TRANSFER_ENCODING)
-//                app.append("${Headers.CONTENT_LENGTH}: $contentLength\r\n")
-//            }
-//            chanked -> {
-//                headers.remove(Headers.CONTENT_LENGTH)
-//                headers.remove(Headers.TRANSFER_ENCODING)
-//                app.append("${Headers.TRANSFER_ENCODING}: ${Headers.CHUNKED}\r\n")
-//            }
-//            else -> throw RuntimeException("Unknown Transfer Encoding")
-//        }
-//        headers.forEach { item ->
-//            item.value.forEach {
-//                app.append("${item.key}: $it\r\n")
-//            }
-//        }
-//        app.append("\r\n")
-//    }
 
     var encode = EncodeType.IDENTITY
+        set(value) {
+            checkHeaderSent()
+            field = value
+        }
 
     override var enableCompress = true
 
-    fun init(encode: EncodeType,
-             keepAlive: Boolean,
-             output: AsyncOutput) {
+    fun init(
+        encode: EncodeType,
+        keepAlive: Boolean,
+        output: PoolAsyncBufferedOutput
+    ) {
         headers.clear()
         body = null
         this.encode = encode
@@ -147,32 +112,43 @@ internal class HttpResponseImpl2(
     }
 
     override fun clearHeaders() {
+        checkHeaderSent()
         headers.clear()
     }
 
     override fun resetHeader(name: String, value: String) {
+        checkHeaderSent()
         headers[name] = arrayListOf(value)
     }
 
     override fun addHeader(name: String, value: String) {
+        checkHeaderSent()
         headers.getOrPut(name) { ArrayList() }.add(value)
     }
 
     override var enableKeepAlive: Boolean
         get() = keepAlive
         set(value) {
+            checkHeaderSent()
             keepAlive = value
         }
 
     var body: HttpResponseBodyImpl2? = null
 
+    private inline fun checkHeaderSent() {
+        if (headerSent) {
+            throw IllegalStateException("HttpResponse already sent")
+        }
+    }
+
     override suspend fun complete(autoFlushSize: UInt): HttpResponseBody {
-        val buf = rawOutput!!//!!.bufferedOutput()
-        val app = buf.utf8Appendable()
-        app.append("HTTP/1.1 $status ${statusToText(status)}\r\n")
+        checkHeaderSent()
+        val buf = rawOutput!!
+//        val app = buf.utf8Appendable()
+        buf.append("HTTP/1.1 $status ${statusToText(status)}\r\n")
         if (keepAlive) {
             headers.remove(Headers.CONNECTION)
-            app.append("${Headers.CONNECTION}: ${Headers.KEEP_ALIVE}\r\n")
+            buf.append("${Headers.CONNECTION}: ${Headers.KEEP_ALIVE}\r\n")
         }
         val contentLength = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull()
         val chanked = headers[Headers.TRANSFER_ENCODING]?.singleOrNull().let {
@@ -183,22 +159,22 @@ internal class HttpResponseImpl2(
             contentLength != null -> {
                 headers.remove(Headers.CONTENT_LENGTH)
                 headers.remove(Headers.TRANSFER_ENCODING)
-                app.append("${Headers.CONTENT_LENGTH}: $contentLength\r\n")
+                buf.append("${Headers.CONTENT_LENGTH}: $contentLength\r\n")
             }
             chanked -> {
                 headers.remove(Headers.CONTENT_LENGTH)
                 headers.remove(Headers.TRANSFER_ENCODING)
-                app.append("${Headers.TRANSFER_ENCODING}: ${Headers.CHUNKED}\r\n")
+                buf.append("${Headers.TRANSFER_ENCODING}: ${Headers.CHUNKED}\r\n")
             }
             else -> throw RuntimeException("Unknown Transfer Encoding")
         }
 
         headers.forEach { item ->
             item.value.forEach {
-                app.append("${item.key}: $it\r\n")
+                buf.append("${item.key}: $it\r\n")
             }
         }
-        app.append("\r\n")
+        buf.append("\r\n")
         body = responseBodyPool.borrow {
             it.init(
                     contentLength = contentLength,

@@ -2,6 +2,7 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
+import pw.binom.network.CrossThreadKeyHolder
 import pw.binom.network.TcpConnection
 
 interface HttpRequest {
@@ -13,6 +14,7 @@ interface HttpRequest {
     val rawOutput: AsyncOutput
     val rawConnection: TcpConnection
     val headers: Map<String, List<String>>
+    val keyHolder: CrossThreadKeyHolder
 }
 
 fun HttpRequest.withContextURI(uri: String) = object : HttpRequest {
@@ -32,4 +34,6 @@ fun HttpRequest.withContextURI(uri: String) = object : HttpRequest {
         get() = this@withContextURI.rawConnection
     override val headers: Map<String, List<String>>
         get() = this@withContextURI.headers
+    override val keyHolder: CrossThreadKeyHolder
+        get() = this@withContextURI.keyHolder
 }

@@ -203,7 +203,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
 //    }
 
     actual fun readNet(dst: ByteBuffer): Int {
-        val n = BIO_read(wbio, dst.native, dst.remaining)
+        val n = BIO_read(wbio, dst.refTo(0), dst.remaining)
         if (n < 0)
             return 0
         dst.position += n
@@ -216,7 +216,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         var readed = 0
 
         while (len > 0) {
-            val n = BIO_write(rbio, dst.native + off, len);
+            val n = BIO_write(rbio, dst.refTo(off), len);
             if (n <= 0)
                 TODO()
             readed += n
@@ -235,7 +235,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
                     r,
                     0
             )
-        val n = SSL_read(ssl, dst.native + dst.position, dst.limit - dst.position)
+        val n = SSL_read(ssl, dst.refTo(dst.position), dst.limit - dst.position)
         if (n > 0) {
             dst.position += n
             return Status(
@@ -261,7 +261,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
                     r,
                     0
             )
-        val n = SSL_write(ssl, src.native + src.position, src.limit - src.position)
+        val n = SSL_write(ssl, src.refTo(src.position), src.limit - src.position)
         if (n > 0) {
             src.position += n
             return Status(

@@ -10,41 +10,45 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
 
     lateinit var key: Selector.Key
 
-    override fun readyForWrite(): Boolean {
-        TODO("Not yet implemented")
+    override fun readyForWrite() {
+
+    }
+
+    override fun connecting() {
+        throw RuntimeException("Not supported")
     }
 
     override fun connected() {
-        TODO("Not yet implemented")
+        throw RuntimeException("Not supported")
     }
 
     override fun error() {
-        TODO("Not yet implemented")
+        throw RuntimeException("Not supported")
     }
 
-    override fun readyForRead(): Boolean {
+    override fun readyForRead() {
         if (acceptListener == null) {
-            key.listensFlag = 0
-            return false
+            key.removeListen(Selector.INPUT_READY)
+            return
         }
         val newChannel = channel.accept(null)
         if (newChannel == null) {
             if (acceptListener == null) {
-                key.listensFlag = 0
+                key.removeListen(Selector.INPUT_READY)
             }
-            return false
+            return
         }
         val acceptListener = acceptListener
         if (acceptListener == null) {
-            key.listensFlag = 0
+            key.removeListen(Selector.INPUT_READY)
             throw IllegalStateException("Socket accepted, but listener is null")
         }
         this.acceptListener = null
         acceptListener.resume(newChannel)
         if (this.acceptListener == null) {
-            key.listensFlag = 0
+            key.removeListen(Selector.INPUT_READY)
         }
-        return false
+        return
     }
 
     override fun close() {
@@ -59,6 +63,12 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
         if (acceptListener != null) {
             throw IllegalStateException("Already Accepting")
         }
+
+        val newClient = channel.accept(null)
+        if (newClient!=null){
+            return dispatcher.attach(newClient)
+        }
+
         val newChannel = suspendCoroutine<TcpClientSocketChannel> { con ->
             acceptListener = con
             key.listensFlag = Selector.INPUT_READY

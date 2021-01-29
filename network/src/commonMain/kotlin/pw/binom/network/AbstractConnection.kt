@@ -9,7 +9,8 @@ abstract class AbstractConnection : Closeable {
      *
      * @return should return whether the connection should write more
      */
-    abstract fun readyForWrite(): Boolean
+    abstract fun readyForWrite()
+    abstract fun connecting()
     abstract fun connected()
     abstract fun error()
 
@@ -18,5 +19,5 @@ abstract class AbstractConnection : Closeable {
      *
      * @return should return, should the connection read more
      */
-    abstract fun readyForRead(): Boolean
+    abstract fun readyForRead()
 }

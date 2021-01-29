@@ -11,6 +11,7 @@ import pw.binom.io.file.read
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.io.utf8Reader
+import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
 import kotlin.jvm.Volatile
@@ -104,7 +105,7 @@ class PostRequestTest {
             poolSize = 10
         )
         try {
-            server.bindHTTP(port = 8080)
+            server.bindHTTP(NetworkAddress.Immutable(port = 8080))
             while (!done) {
                 manager.select(1000)
             }
@@ -193,6 +194,7 @@ class PostRequestTest {
         println("#3")
     }*/
 
+    @Ignore
     @Test
     fun testDownload() {
         val nd = NetworkDispatcher()
@@ -210,7 +212,7 @@ class PostRequestTest {
         )
 
         var done = false
-        server.bindHTTP(port = 9090)
+        server.bindHTTP(NetworkAddress.Immutable(port = 9090))
 
         while (true) {
             nd.select()

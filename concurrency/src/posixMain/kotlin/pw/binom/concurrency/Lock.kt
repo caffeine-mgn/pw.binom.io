@@ -20,8 +20,7 @@ private const val checkTime = 100
 fun <T : NativePointed> NativePtr.reinterpret() = interpretNullablePointed<T>(this)
 actual class Lock : Closeable {
 
-    //    private val native = cValue<pthread_mutex_t>()//nativeHeap.alloc<pthread_mutex_t>()//.malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
-    private val native = AtomicNativePtr(nativeHeap.alloc<pthread_mutex_t>().rawPtr)//.malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
+    private val native = AtomicNativePtr(nativeHeap.alloc<pthread_mutex_t>().rawPtr)
     private var closed = AtomicInt(0)
 
     init {
@@ -51,7 +50,8 @@ actual class Lock : Closeable {
 
     actual class Condition(val mutex: AtomicNativePtr) : Closeable {
         //        val native = cValue<pthread_cond_t>()//nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
-        val native = AtomicNativePtr(nativeHeap.alloc<pthread_cond_t>().rawPtr)//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
+        val native =
+            AtomicNativePtr(nativeHeap.alloc<pthread_cond_t>().rawPtr)//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
             freeze()
@@ -60,7 +60,7 @@ actual class Lock : Closeable {
         }
 
         actual fun await() {
-                pthread_cond_wait(native.cc.ptr, mutex.mm.ptr)
+            pthread_cond_wait(native.cc.ptr, mutex.mm.ptr)
         }
 
         actual fun signal() {

@@ -2,6 +2,8 @@ package pw.binom.io.httpServer
 
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.async
+import pw.binom.concurrency.WorkerPool
+import pw.binom.concurrency.asyncWithExecutor
 import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.io.Closeable
 import pw.binom.network.*
@@ -17,6 +19,7 @@ open class HttpServer(
     val manager: NetworkDispatcher,
     protected val handler: Handler,
     poolSize: Int = 10,
+    val executor: WorkerPool? = null,
     inputBufferSize: Int = DEFAULT_BUFFER_SIZE,
     outputBufferSize: Int = DEFAULT_BUFFER_SIZE,
     private val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE
@@ -110,7 +113,7 @@ open class HttpServer(
         async {
             while (bufferedInputPool.size > 0) {
                 bufferedInputPool.borrow {
-                    it.first.currentStream = null
+                    it.first.reset()
                 }.let {
                     it.second.asyncClose()
                 }
@@ -121,15 +124,15 @@ open class HttpServer(
     /**
      * Bind HTTP server to port [port]
      *
-     * @param port Port for bind
+     * @param address Address for bind
      */
-    fun bindHTTP(host: String = "0.0.0.0", port: Int) {
-        val connect = manager.bindTcp(NetworkAddress.Immutable(host = host, port = port))
+    fun bindHTTP(address:NetworkAddress) {
+        val connect = manager.bindTcp(address)
         binded += connect
-        async {
+        manager.async {
             while (true) {
                 val client = connect.accept() ?: continue
-                async {
+                manager.async(executor) {
                     clientConnected(client, manager)
                 }
             }
@@ -139,11 +142,4 @@ open class HttpServer(
 //    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
 //        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
 //    }
-
-    /**
-     * Update network events
-     *
-     * @param timeout Timeout for wait event
-     */
-//    fun update(timeout: Int? = null) = manager.update(timeout)
 }

@@ -2,6 +2,7 @@ package pw.binom.io.httpServer.websocket
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
+import pw.binom.io.IOException
 import pw.binom.io.Sha1
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.HandshakeSecret
@@ -25,13 +26,15 @@ abstract class WebSocketHandler : Handler {
 
     private val sha1 = Sha1()
 
-    private inner class ConnectRequestImpl(val key: String,
-                                           val resp: HttpResponse,
-                                           val rawInput: AsyncInput,
-                                           val rawOutout: AsyncOutput,
-                                           val rawConnection: TcpConnection,
-                                           override val uri: String,
-                                           override val contextUri: String, override val headers: Map<String, List<String>>) : ConnectRequest {
+    private inner class ConnectRequestImpl(
+        val key: String,
+        val resp: HttpResponse,
+        val rawInput: AsyncInput,
+        val rawOutout: AsyncOutput,
+        val rawConnection: TcpConnection,
+        override val uri: String,
+        override val contextUri: String, override val headers: Map<String, List<String>>
+    ) : ConnectRequest {
         var currentConnection: WebSocketConnection? = null
 
         private var resumed = false
@@ -51,9 +54,9 @@ abstract class WebSocketHandler : Handler {
             }
             resp.complete()
             val connection = ServerWebSocketConnection(
-                    input = rawInput,
-                    output = rawOutout,
-                    rawConnection = rawConnection
+                input = rawInput,
+                output = rawOutout,
+                rawConnection = rawConnection
             )
             currentConnection = connection
             return connection
@@ -69,14 +72,16 @@ abstract class WebSocketHandler : Handler {
     protected abstract suspend fun connected(request: ConnectRequest)
 
     override suspend fun request(req: HttpRequest, resp: HttpResponse) {
-        if (req.method != "GET")
-            TODO()
+        resp.enableKeepAlive = false
+        if (req.method != "GET") {
+            throw IOException("Invalid Http Request method. Method: [${req.method}], uri: [${req.uri}]")
+        }
         if (req.headers[Headers.CONNECTION]
-                        ?.singleOrNull()
-                        ?.splitToSequence(',')
-                        ?.map { it.trim() }
-                        ?.any { it == Headers.UPGRADE } != true
-                || req.headers[Headers.UPGRADE]?.singleOrNull() != Headers.WEBSOCKET
+                ?.singleOrNull()
+                ?.splitToSequence(',')
+                ?.map { it.trim() }
+                ?.any { it == Headers.UPGRADE } != true
+            || req.headers[Headers.UPGRADE]?.singleOrNull() != Headers.WEBSOCKET
         ) {
             resp.status = 403
             resp.enableKeepAlive = false
@@ -87,14 +92,14 @@ abstract class WebSocketHandler : Handler {
         resp.enableKeepAlive = false
         try {
             val con = ConnectRequestImpl(
-                    key = key,
-                    uri = req.uri,
-                    contextUri = req.contextUri,
-                    resp = resp,
-                    rawInput = req.rawInput,
-                    rawOutout = req.rawOutput,
-                    rawConnection = req.rawConnection,
-                    headers = req.headers
+                key = key,
+                uri = req.uri,
+                contextUri = req.contextUri,
+                resp = resp,
+                rawInput = req.rawInput,
+                rawOutout = req.rawOutput,
+                rawConnection = req.rawConnection,
+                headers = req.headers
             )
             connected(con)
 //            if (con.currentConnection?.incomeMessageListener != null) {

@@ -41,9 +41,9 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         channel.bind(address)
     }
 
-    override fun readyForWrite(): Boolean {
-        val waiter = holder.readyForWriteListener.popOrNull()
-        if (waiter != null) {
+    override fun readyForWrite() {
+        while (true) {
+            val waiter = holder.readyForWriteListener.popOrNull() ?: break
             var exception: Throwable? = null
             try {
                 waiter()
@@ -54,25 +54,24 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
                 holder.key.removeListen(Selector.OUTPUT_READY)
                 throw exception
             }
-            holder.key.removeListen(Selector.OUTPUT_READY)
-            return false
         }
 
         if (sendData.continuation == null) {
             holder.key.removeListen(Selector.OUTPUT_READY)
-            return false
+            return
         }
 
         val result = runCatching { channel.send(sendData.data!!, sendData.address!!) }
-        return if (sendData.data!!.remaining == 0) {
+        if (sendData.data!!.remaining == 0) {
             val con = sendData.continuation!!
             sendData.reset()
             holder.key.removeListen(Selector.OUTPUT_READY)
             con.resumeWith(result)
-            false
-        } else {
-            true
         }
+    }
+
+    override fun connecting() {
+        throw RuntimeException("Not supported")
     }
 
     override fun connected() {
@@ -83,28 +82,24 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         throw RuntimeException("Not supported")
     }
 
-    override fun readyForRead(): Boolean {
+    override fun readyForRead() {
         if (readData.continuation == null) {
             holder.key.removeListen(Selector.INPUT_READY)
-            return false
+            return
         }
         val readed = runCatching { channel.recv(readData.data!!, readData.address) }
-        return if (readData.full) {
+        if (readData.full) {
             if (readData.data!!.remaining == 0) {
                 val con = readData.continuation!!
                 readData.reset()
                 holder.key.removeListen(Selector.INPUT_READY)
                 con.resumeWith(readed)
-                false
-            } else {
-                true
             }
         } else {
             val con = readData.continuation!!
             readData.reset()
             holder.key.removeListen(Selector.INPUT_READY)
             con.resumeWith(readed)
-            false
         }
     }
 
@@ -114,8 +109,8 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         readData.reset()
         sendData.reset()
         holder.key.listensFlag = 0
-        channel.close()
         holder.key.close()
+        channel.close()
     }
 
     suspend fun read(dest: ByteBuffer, address: NetworkAddress.Mutable?): Int {

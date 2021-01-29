@@ -4,22 +4,32 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
 
-actual inline class Date(val time: Long) {
+actual inline class Date(val time: Long = now) {
     actual companion object {
         actual val timeZoneOffset: Int
             get() = TimeZone.getDefault().rawOffset / 1000 / 60
+        
         actual val now: Long
             get() = System.currentTimeMillis()
 
-        actual fun internalOf(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int): Date {
+        actual fun internalOf(
+            year: Int,
+            month: Int,
+            dayOfMonth: Int,
+            hours: Int,
+            minutes: Int,
+            seconds: Int,
+            millis: Int,
+            timeZoneOffset: Int
+        ): Date {
             val t = LocalDateTime.of(
-                    year,
-                    month + 1,
-                    dayOfMonth,
-                    hours,
-                    minutes,
-                    seconds,
-                    millis
+                year,
+                month + 1,
+                dayOfMonth,
+                hours,
+                minutes,
+                seconds,
+                millis
             )
             val v = t.atZone(ZoneOffset.UTC)
                     .toInstant()

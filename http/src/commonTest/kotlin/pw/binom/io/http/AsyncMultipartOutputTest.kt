@@ -15,7 +15,7 @@ class AsyncMultipartOutputTest {
     @Test
     fun test() {
         val stream = ByteArrayOutput()
-        val mulipart = AsyncMultipartOutput(stream.asyncOutput(),close = false)
+        val mulipart = AsyncMultipartOutput(stream.asyncOutput(), closeParent = false)
         var exception: Throwable? = null
         val userName = UUID.random().toString()
         val userPassword = UUID.random().toString()

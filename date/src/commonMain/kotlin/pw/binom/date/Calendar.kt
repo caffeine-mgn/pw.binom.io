@@ -1,6 +1,6 @@
 package pw.binom.date
 
-import kotlin.jvm.JvmName
+import kotlin.math.absoluteValue
 
 expect class Calendar {
     val year: Int
@@ -12,13 +12,33 @@ expect class Calendar {
     val seconds: Int
     val millisecond: Int
     val date: Date
+    val timeZoneOffset: Int
+
+    /**
+     * Returns date as string in GMT Timezone
+     */
     override fun toString(): String
+
+    /**
+     * @param timeZoneOffset TimeZone offset in mintes
+     */
+    fun toString(timeZoneOffset: Int): String
 
     fun timeZone(timeZoneOffset: Int): Calendar
 }
 
-internal fun Calendar.asStringGmt(): String {
-    val month = when (month) {
+
+internal fun timeZoneOffsetToString(offset: Int): String {
+    if (offset == 0) {
+        return ""
+    }
+    val h = offset / 60
+    val m = offset - h * 60
+    return "${if (offset < 0) "-" else "+"}${h.absoluteValue.asTwo()}:${m.absoluteValue.asTwo()}"
+}
+
+internal fun asString(calc: Calendar, timeZone: String): String {
+    val month = when (calc.month) {
         0 -> "Jan"
         1 -> "Feb"
         2 -> "Mar"
@@ -33,7 +53,7 @@ internal fun Calendar.asStringGmt(): String {
         11 -> "Dec"
         else -> "Unknown"
     }
-    val week = when (dayOfWeek) {
+    val week = when (calc.dayOfWeek) {
         0 -> "Sun"
         1 -> "Mon"
         2 -> "Tue"
@@ -41,9 +61,9 @@ internal fun Calendar.asStringGmt(): String {
         4 -> "Thu"
         5 -> "Fri"
         6 -> "Sat"
-        else -> "Unknown ($dayOfWeek)"
+        else -> "Unknown (${calc.dayOfWeek})"
     }
-    return "$week, ${dayOfMonth.asTwo()} $month ${year} ${hours.asTwo()}:${minutes.asTwo()}:${seconds.asTwo()} GMT"
+    return "$week, ${calc.dayOfMonth.asTwo()} $month ${calc.year} ${calc.hours.asTwo()}:${calc.minutes.asTwo()}:${calc.seconds.asTwo()} GMT$timeZone"
 }
 
 private fun Int.asTwo(): String =

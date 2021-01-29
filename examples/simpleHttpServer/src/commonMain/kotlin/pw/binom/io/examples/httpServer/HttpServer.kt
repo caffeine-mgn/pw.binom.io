@@ -10,6 +10,7 @@ import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.use
+import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 
 fun main() {
@@ -32,7 +33,7 @@ fun main() {
             }
         }
     }, outputBufferSize = 1024 * 1024 * 3)
-    server.bindHTTP(port = 8080)
+    server.bindHTTP(NetworkAddress.Immutable(port = 8080))
     while (true) {
         nioManager.select()
     }

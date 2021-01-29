@@ -14,7 +14,7 @@ import pw.binom.ssl.TrustManager
 class SMTPClient(val connect: AsyncChannel) : AsyncCloseable {
 
     val pool = ByteBufferPool(10)
-    val writer = connect.bufferedAsciiInputWriter()
+    val writer = connect.bufferedAsciiWriter()
     val reader = connect.bufferedAsciiInputReader()
 
     private var code = 0

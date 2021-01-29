@@ -9,13 +9,63 @@ import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
 import pw.binom.pool.ObjectPool
 
-class AsyncBufferedOutputAppendable(
+class AsyncBufferedOutputAppendable private constructor(
     charset: Charset,
     val output: AsyncOutput,
-    private val pool: ObjectPool<ByteBuffer>,
-    charBufferSize: Int = DEFAULT_BUFFER_SIZE / 2,
-    val closeParent: Boolean = true
+    private val pool: ObjectPool<ByteBuffer>?,
+    charBufferSize: Int,
+    val closeParent: Boolean,
+    private val buffer: ByteBuffer,
+    private var closeBuffer: Boolean,
 ) : AsyncWriter, AsyncFlushable, AsyncCloseable {
+
+    constructor(
+        charset: Charset = Charsets.UTF8,
+        output: AsyncOutput,
+        pool: ObjectPool<ByteBuffer>,
+        charBufferSize: Int = DEFAULT_BUFFER_SIZE / 2,
+        closeParent: Boolean = true,
+    ) : this(
+        charset = charset,
+        output = output,
+        pool = pool,
+        charBufferSize = charBufferSize,
+        closeParent = closeParent,
+        buffer = pool.borrow(),
+        closeBuffer = false,
+    )
+
+    constructor(
+        charset: Charset = Charsets.UTF8,
+        output: AsyncOutput,
+        bufferSize: Int = DEFAULT_BUFFER_SIZE,
+        charBufferSize: Int = bufferSize / 2,
+        closeParent: Boolean = true,
+    ) : this(
+        charset = charset,
+        output = output,
+        pool = null,
+        charBufferSize = charBufferSize,
+        closeParent = closeParent,
+        buffer = ByteBuffer.alloc(bufferSize),
+        closeBuffer = true,
+    )
+
+    constructor(
+        charset: Charset = Charsets.UTF8,
+        output: AsyncOutput,
+        buffer: ByteBuffer,
+        charBufferSize: Int = buffer.capacity / 2,
+        closeParent: Boolean = true,
+    ) : this(
+        charset = charset,
+        output = output,
+        pool = null,
+        charBufferSize = charBufferSize,
+        closeParent = closeParent,
+        buffer = buffer,
+        closeBuffer = false,
+    )
 
     val charBuffer = CharBuffer.alloc(charBufferSize)
     val encoder = charset.newEncoder()
@@ -64,30 +114,30 @@ class AsyncBufferedOutputAppendable(
         if (charBuffer.remaining == charBuffer.capacity) {
             return
         }
-        val buffer = pool.borrow()
-        try {
-            charBuffer.flip()
-            while (true) {
+        charBuffer.flip()
+        while (true) {
+            buffer.clear()
+            val r = encoder.encode(charBuffer, buffer)
+            buffer.flip()
+            if (buffer.remaining != buffer.capacity) {
+                output.write(buffer)
                 buffer.clear()
-                val r = encoder.encode(charBuffer, buffer)
-                buffer.flip()
-                if (buffer.remaining != buffer.capacity) {
-                    output.write(buffer)
-                    buffer.clear()
-                }
-                if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining == 0) {
-                    break
-                }
             }
-            charBuffer.clear()
-        } finally {
-            pool.recycle(buffer)
+            if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining == 0) {
+                break
+            }
         }
+        charBuffer.clear()
     }
 
     override suspend fun asyncClose() {
         flush()
         encoder.close()
+        if (closeBuffer) {
+            buffer.close()
+        } else {
+            pool?.recycle(buffer)
+        }
         if (closeParent) {
             output.asyncClose()
         }
@@ -103,6 +153,32 @@ fun AsyncOutput.bufferedWriter(
     charset = charset,
     output = this,
     pool = pool,
+    charBufferSize = charBufferSize,
+    closeParent = closeParent
+)
+
+fun AsyncOutput.bufferedWriter(
+    bufferSize: Int= DEFAULT_BUFFER_SIZE,
+    charset: Charset = Charsets.UTF8,
+    charBufferSize: Int = bufferSize/2,
+    closeParent: Boolean = true
+) = AsyncBufferedOutputAppendable(
+    charset = charset,
+    output = this,
+    bufferSize = bufferSize,
+    charBufferSize = charBufferSize,
+    closeParent = closeParent
+)
+
+fun AsyncOutput.bufferedWriter(
+    buffer: ByteBuffer,
+    charset: Charset = Charsets.UTF8,
+    charBufferSize: Int = buffer.capacity/2,
+    closeParent: Boolean = true
+) = AsyncBufferedOutputAppendable(
+    charset = charset,
+    output = this,
+    buffer = buffer,
     charBufferSize = charBufferSize,
     closeParent = closeParent
 )

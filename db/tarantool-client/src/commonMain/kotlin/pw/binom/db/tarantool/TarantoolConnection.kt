@@ -12,6 +12,7 @@ import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 private const val VSPACE_ID = 281
@@ -62,6 +63,9 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     private val connectionReference = con
     private var meta: List<TarantoolSpaceMeta> = emptyList()
     private var schemaVersion = 0
+    private var connected = true
+    val isConnected
+        get() = connected
 
     private fun checkThread() {
         if (!networkThread.same) {
@@ -88,6 +92,9 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                     TarantoolSpaceMeta.create(it, indexes)
                 }
             }
+        } catch (e: SocketClosedException) {
+            connected = false
+            throw e
         } finally {
             metaUpdating = false
         }
@@ -140,6 +147,9 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                     }
                 }
                 v
+            } catch (e: SocketClosedException) {
+                connected = false
+                throw e
             } finally {
                 out.clear()
                 if (out.data.capacity > 1024) {
@@ -187,6 +197,11 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                     requests.remove(serial)?.resumeWith(Result.success(pkg))
                 }
             } catch (e: SocketClosedException) {
+                requests.forEach {
+                    it.value.resumeWithException(e)
+                }
+                requests.clear()
+                connected = false
                 //NOP
             } catch (e: ClosedException) {
                 //NOP
@@ -212,7 +227,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun sql(stm: TarantoolStatement, args: List<Any?> = emptyList()): ResultSet {
         invalidateSchema()
-        val result = this.sendReceive(
+        val result = sendReceive(
             code = Code.EXECUTE,
             body = mapOf(
                 Key.STMT_ID.id to stm.id,
@@ -227,7 +242,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun sql(sql: String, args: List<Any?> = emptyList()): ResultSet {
         invalidateSchema()
-        val result = this.sendReceive(
+        val result = sendReceive(
             code = Code.EXECUTE,
             body = mapOf(
                 Key.SQL_TEXT.id to sql,
@@ -242,7 +257,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun eval(lua: String, args: List<Any?>): Any? {
         invalidateSchema()
-        val result = this.sendReceive(
+        val result = sendReceive(
             code = Code.EVAL,
             body = mapOf(
                 Key.EXPRESSION.id to lua,
@@ -256,7 +271,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun eval(lua: String, vararg args: Any?): Any? {
         invalidateSchema()
-        val result = this.sendReceive(
+        val result = sendReceive(
             code = Code.EVAL,
             body = mapOf(
                 Key.EXPRESSION.id to lua,
@@ -270,7 +285,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
 
     suspend fun call(function: String, args: List<Any?>): Any? {
-        val result = this.sendReceive(
+        val result = sendReceive(
             code = Code.CALL,
             body = mapOf(
                 Key.FUNCTION.id to function,
@@ -282,7 +297,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     }
 
     suspend fun call(function: String, vararg args: Any?): Any? {
-        val result = this.sendReceive(
+        val result = sendReceive(
             code = Code.CALL,
             body = mapOf(
                 Key.FUNCTION.id to function,
@@ -297,13 +312,13 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         space: String,
         index: String,
         key: Any?,
-        offset: Int,
+        offset: Int?,
         limit: Int,
-        iterator: QueryIterator
+        iterator: QueryIterator?
     ): ResultSet {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
-        val indexObj = spaceObj.indexes[key] ?: throw TarantoolException("Can't find Index \"$spaceObj\".\"$index\"")
+        val indexObj = spaceObj.indexes[index] ?: throw TarantoolException("Can't find Index \"$space\".\"$index\"")
         return select(
             space = spaceObj.id,
             index = indexObj.id,
@@ -314,24 +329,28 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         )
     }
 
-    suspend fun <O> select(
+    suspend fun select(
         space: Int,
         index: Int,
-        key: O,
-        offset: Int,
+        key: Any?,
+        offset: Int?,
         limit: Int,
-        iterator: QueryIterator
+        iterator: QueryIterator?
     ): ResultSet {
-        val result = this.sendReceive(
+        val body = HashMap<Any, Any?>()
+        body[Key.SPACE.id] = space
+        body[Key.INDEX.id] = index
+        body[Key.LIMIT.id] = limit
+        body[Key.KEY.id] = key ?: listOf<Any>()
+        if (iterator != null) {
+            body[Key.ITERATOR.id] = iterator.value
+        }
+        if (offset != null) {
+            body[Key.OFFSET.id] = offset
+        }
+        val result = sendReceive(
             code = Code.SELECT,
-            body = mapOf(
-                Key.SPACE.id to space,
-                Key.INDEX.id to index,
-                Key.KEY.id to key,
-                Key.ITERATOR.id to iterator.value,
-                Key.LIMIT.id to limit,
-                Key.OFFSET.id to offset
-            )
+            body = body
         )
         result.assertException()
         return ResultSet(result.body)
@@ -340,7 +359,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     suspend fun delete(
         space: String,
         keys: List<Any?>
-    ): List<List<Any?>> {
+    ): Row? {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
         return delete(
@@ -378,12 +397,12 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun update(
         space: String,
-        key: Any?,
-        values: List<Any?>
-    ) {
+        key: List<Any?>,
+        values: List<FieldUpdate>
+    ): Row? {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
-        update(
+        return update(
             space = spaceObj.id,
             key = key,
             values = values,
@@ -392,19 +411,22 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun update(
         space: Int,
-        key: Any?,
-        values: List<Any?>
-    ) {
+        key: List<Any?>,
+        values: List<FieldUpdate>
+    ): Row? {
 
         val result = this.sendReceive(
-            code = Code.REPLACE,
+            code = Code.UPDATE,
             body = mapOf(
                 Key.SPACE.id to space,
                 Key.KEY.id to key,
-                Key.TUPLE.id to values,
+                Key.TUPLE.id to values.map {
+                    listOf(it.operator.code, it.fieldId, it.value)
+                },
             )
         )
         result.assertException()
+        return ResultSet(result.body).firstOrNull()
     }
 
 //    suspend fun upsert(
@@ -440,7 +462,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     suspend fun delete(
         space: Int,
         keys: List<Any?>
-    ): List<List<Any?>> {
+    ): Row? {
 
         val result = this.sendReceive(
             code = Code.DELETE,
@@ -450,7 +472,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
             )
         )
         result.assertException()
-        return result.data as List<List<Any?>>
+        return ResultSet(result.body).firstOrNull()
     }
 
     suspend fun insert(

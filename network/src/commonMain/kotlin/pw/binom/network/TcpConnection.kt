@@ -1,10 +1,7 @@
 package pw.binom.network
 
 import pw.binom.ByteBuffer
-import pw.binom.forEach
 import pw.binom.io.AsyncChannel
-import pw.binom.io.IOException
-import pw.binom.map
 import pw.binom.popOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
@@ -39,9 +36,17 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     private val readData = ReadData()
     private val sendData = SendData()
 
-    override fun readyForWrite(): Boolean {
-        val waiter = holder.readyForWriteListener.popOrNull()
-        if (waiter != null) {
+    private fun calcListenFlags() =
+        when {
+            readData.continuation != null && (!holder.readyForWriteListener.isEmpty || sendData.continuation != null) -> Selector.INPUT_READY or Selector.OUTPUT_READY
+            readData.continuation != null -> Selector.INPUT_READY
+            !holder.readyForWriteListener.isEmpty || sendData.continuation != null -> Selector.OUTPUT_READY
+            else -> 0
+        }
+
+    override fun readyForWrite() {
+        while (true) {
+            val waiter = holder.readyForWriteListener.popOrNull() ?: break
             var exception: Throwable? = null
             try {
                 waiter()
@@ -49,74 +54,87 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
                 exception = e
             }
             if (exception != null) {
-                holder.key.removeListen(Selector.OUTPUT_READY)
+                if (!holder.key.closed) {
+                    holder.key.removeListen(Selector.OUTPUT_READY)
+                }
                 throw exception
             }
-            holder.key.removeListen(Selector.OUTPUT_READY)
-            return false
+            if (sendData.continuation == null && !holder.key.closed) {
+                holder.key.removeListen(Selector.OUTPUT_READY)
+            }
         }
 
-        if (sendData.continuation == null) {
-            holder.key.removeListen(Selector.OUTPUT_READY)
-            return false
-        }
-
-        val result = runCatching { channel.write(sendData.data!!) }
-        return if (sendData.data!!.remaining == 0) {
-            val con = sendData.continuation!!
-            sendData.reset()
-            holder.key.removeListen(Selector.OUTPUT_READY)
-            con.resumeWith(result)
-            false
+        if (sendData.continuation != null) {
+            val result = runCatching { channel.write(sendData.data!!) }
+            if (sendData.data!!.remaining == 0) {
+                val con = sendData.continuation!!
+                sendData.reset()
+                holder.key.removeListen(Selector.OUTPUT_READY)
+                con.resumeWith(result)
+            }
+            if (sendData.continuation == null && !holder.key.closed) {
+                holder.key.listensFlag = calcListenFlags()
+            }
         } else {
-            true
+            if (!holder.key.closed) {
+                holder.key.removeListen(Selector.OUTPUT_READY)
+            }
         }
+    }
+
+    override fun connecting() {
+        holder.key.listensFlag=Selector.EVENT_CONNECTED
     }
 
     override fun connected() {
         val connect = connect
         this.connect = null
+        holder.key.removeListen(Selector.EVENT_CONNECTED)
         connect?.resumeWith(Result.success(Unit))
     }
 
     override fun error() {
-        connect?.resumeWith(Result.failure(SocketConnectException()))
+        val e = SocketConnectException()
+        if (connect!=null) {
+            connect?.resumeWith(Result.failure(e))
+        }
+        if (readData.continuation!=null) {
+            readData.continuation?.resumeWith(Result.failure(e))
+            readData.reset()
+        }
+        if (sendData.continuation!=null) {
+            sendData.continuation?.resumeWith(Result.failure(e))
+            sendData.reset()
+        }
     }
 
-    override fun readyForRead(): Boolean {
-
+    override fun readyForRead() {
         if (readData.continuation == null) {
             holder.key.removeListen(Selector.INPUT_READY)
-            return false
+            return
         }
         val readed = runCatching { channel.read(readData.data!!) }
-        return if (readData.full) {
+        if (readData.full) {
             if (readData.data!!.remaining == 0 || readed.isFailure) {
                 val con = readData.continuation!!
                 readData.reset()
                 con.resumeWith(readed)
-                if (!closed && readData.continuation == null) {
+                if (!holder.key.closed && readData.continuation == null) {
                     holder.key.removeListen(Selector.INPUT_READY)
                 }
-                false
-            } else {
-                true
             }
         } else {
             val con = readData.continuation!!
             readData.reset()
             con.resumeWith(readed)
-            if (!closed && readData.continuation == null) {
+            if (!holder.key.closed && readData.continuation == null) {
                 holder.key.removeListen(Selector.INPUT_READY)
             }
-            false
         }
     }
 
-    private var closed = false
     override fun close() {
-        check(!closed) { "Connection already closed" }
-        closed = true
+        check(!holder.key.closed) { "Connection already closed" }
         readData.continuation?.resumeWithException(SocketClosedException())
         sendData.continuation?.resumeWithException(SocketClosedException())
         readData.reset()
@@ -138,12 +156,12 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
         if (sendData.continuation != null) {
             throw IllegalStateException("Connection already have write listener")
-        } else {
-            val wrote = channel.write(data)
-            if (wrote == l) {
-                return wrote
-            }
         }
+        val wrote = channel.write(data)
+        if (wrote == l) {
+            return wrote
+        }
+
         sendData.data = data
         suspendCoroutine<Int> {
             sendData.continuation = it
@@ -194,14 +212,19 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             return r
         }
         readData.full = false
-        val readed = suspendCoroutine<Int> {
-            readData.continuation = it
-            readData.data = dest
-            holder.key.addListen(Selector.INPUT_READY)
+        while (true) {
+            val readed = suspendCoroutine<Int> {
+                readData.continuation = it
+                readData.data = dest
+                holder.key.addListen(Selector.INPUT_READY)
+            }
+            if (readed == 0) {
+                continue
+            }
+            if (readed < 0) {
+                throw SocketClosedException()
+            }
+            return readed
         }
-        if (readed <= 0) {
-            throw SocketClosedException()
-        }
-        return readed
     }
 }

@@ -1,6 +1,6 @@
 package pw.binom.db.tarantool
 
-import pw.binom.async
+import pw.binom.async2
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.sleep
 import pw.binom.network.NetworkAddress
@@ -10,11 +10,9 @@ import kotlin.time.TimeSource
 import kotlin.time.seconds
 
 @OptIn(ExperimentalTime::class)
-fun tt(func: suspend (TarantoolConnection) -> Unit) {
+fun tarantool(func: suspend (TarantoolConnection) -> Unit) {
     val manager = NetworkDispatcher()
-    var done = false
-    var exception: Throwable? = null
-    async {
+    val done = async2 {
         var con: TarantoolConnection
         val now = TimeSource.Monotonic.markNow()
         while (true) {
@@ -32,33 +30,26 @@ fun tt(func: suspend (TarantoolConnection) -> Unit) {
                 break
             } catch (e: Throwable) {
                 if (now.elapsedNow() > 10.seconds) {
-                    exception = RuntimeException("Connection Timeout", e)
-                    return@async
+                    throw RuntimeException("Connection Timeout")
                 }
                 Worker.sleep(100)
             }
         }
-        if (!done) {
-            try {
-                func(con)
-            } catch (e: Throwable) {
-                exception = e
-            } finally {
-                con.asyncClose()
-                done = true
-            }
+        try {
+            func(con)
+        } finally {
+            con.asyncClose()
         }
     }
 
-    var c = 0
-    while (!done) {
-        c++
-        if (c > 300) {
-            throw RuntimeException("Out of try")
+    val now = TimeSource.Monotonic.markNow()
+    while (!done.isDone) {
+        if (now.elapsedNow() > 10.0.seconds) {
+            throw RuntimeException()
         }
         manager.select(1000)
     }
-    if (exception != null) {
-        throw exception!!
+    if (done.isFailure) {
+        throw done.exceptionOrNull!!
     }
 }

@@ -1,8 +1,6 @@
 package pw.binom.strong
 
-import pw.binom.uuid
 import kotlin.properties.ReadOnlyProperty
-import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -16,7 +14,7 @@ class Strong private constructor() {
     }
 
     interface Config {
-        fun apply(strong: Strong)
+        suspend fun apply(strong: Strong)
     }
 
     interface InitializingBean {
@@ -35,7 +33,7 @@ class Strong private constructor() {
 
     companion object {
 
-        fun create(vararg config: Config): Strong {
+        suspend fun create(vararg config: Config): Strong {
             val strong = Strong()
             config.forEach {
                 it.apply(strong)
@@ -46,7 +44,7 @@ class Strong private constructor() {
         }
 
         fun config(func: (Strong) -> Unit) = object : Config {
-            override fun apply(strong: Strong) {
+            override suspend fun apply(strong: Strong) {
                 func(strong)
             }
         }
@@ -133,7 +131,7 @@ class Strong private constructor() {
         if (inited) {
             throw IllegalStateException("Strong already inited")
         }
-        if (initing){
+        if (initing) {
             throw IllegalStateException("Can't define bean during start process")
         }
         if (beans.containsKey(name)) {

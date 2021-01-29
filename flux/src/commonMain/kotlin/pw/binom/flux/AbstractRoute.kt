@@ -29,7 +29,7 @@ abstract class AbstractRoute : Route {
         forwardHandler = handler
     }
 
-    suspend fun execute(action: Action): Boolean {
+    open suspend fun execute(action: Action): Boolean {
         val forward = forwardHandler
         if (forward != null) {
             forward.request(action.req, action.resp)

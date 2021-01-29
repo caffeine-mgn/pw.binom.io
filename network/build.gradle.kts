@@ -10,12 +10,24 @@ kotlin {
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/cinterop/native.def")
+                    packageName = "platform.linux"
+                }
+            }
         }
     }
     jvm()
     linuxArm32Hfp {
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/cinterop/native.def")
+                    packageName = "platform.linux"
+                }
+            }
         }
     }
 //    linuxArm64 {
@@ -32,6 +44,10 @@ kotlin {
                     defFile = project.file("src/cinterop/wepoll.def")
                     packageName = "platform.linux"
                 }
+                create("native") {
+                    defFile = project.file("src/cinterop/native.def")
+                    packageName = "platform.linux"
+                }
             }
         }
     }
@@ -42,6 +58,10 @@ kotlin {
             compilations["main"].cinterops {
                 create("wepoll") {
                     defFile = project.file("src/cinterop/wepoll.def")
+                    packageName = "platform.linux"
+                }
+                create("native") {
+                    defFile = project.file("src/cinterop/native.def")
                     packageName = "platform.linux"
                 }
             }
@@ -63,6 +83,10 @@ kotlin {
                     defFile = project.file("src/cinterop/mac.def")
                     packageName = "platform.linux"
                 }
+                create("native") {
+                    defFile = project.file("src/cinterop/native.def")
+                    packageName = "platform.linux"
+                }
             }
         }
     }
@@ -71,6 +95,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":core"))
+                api(project(":env"))
                 api(project(":concurrency"))
                 api(kotlin("stdlib-common"))
             }

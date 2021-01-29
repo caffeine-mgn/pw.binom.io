@@ -1,13 +1,17 @@
 package pw.binom.concurrency
 
+import pw.binom.ObjectTree
 import pw.binom.atomic.AtomicReference
 import pw.binom.doFreeze
 import kotlin.time.Duration
+import pw.binom.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
 /**
  * Exchange Point for exchange between different threads
+ *
+ * Object inside [Exchange] will storage as ObjectTree
  */
 class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
 
@@ -17,7 +21,7 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
     val output: ExchangeOutput<T>
         get() = this
 
-    class Item<T : Any?>(val value: T) {
+    class Item<T : Any?>(val value:T) {
         var next by AtomicReference<Item<T>?>(null)
         var previous by AtomicReference<Item<T>?>(null)
 
@@ -35,7 +39,6 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
      * Put value into chain. [value] will freeze
      */
     override fun put(value: T) {
-        value?.doFreeze()
         lock.synchronize {
             val item = Item(value)
             item.previous = last
@@ -48,34 +51,34 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
     }
 
     override fun get(): T =
-            lock.synchronize {
-                while (last == null) {
-                    condition.await()
-                }
-                val item = last!!
-                last = item.previous
-                last?.next = null
-                if (first == item)
-                    first = null
-                item.value
+        lock.synchronize {
+            while (last == null) {
+                condition.await()
             }
+            val item = last!!
+            last = item.previous
+            last?.next = null
+            if (first == item)
+                first = null
+            item.value
+        }
 
     @OptIn(ExperimentalTime::class)
     override fun get(duration: Duration): T? =
-            lock.synchronize {
-                val now = TimeSource.Monotonic.markNow()
-                while (last == null) {
-                    if (now.elapsedNow() > duration)
-                        return@synchronize null
-                    condition.await()
-                }
-                val item = last!!
-                last = item.previous
-                last?.next = null
-                if (first == item)
-                    first = null
-                item.value
+        lock.synchronize {
+            val now = TimeSource.Monotonic.markNow()
+            while (last == null) {
+                if (now.elapsedNow() > duration)
+                    return@synchronize null
+                condition.await()
             }
+            val item = last!!
+            last = item.previous
+            last?.next = null
+            if (first == item)
+                first = null
+            item.value
+        }
 
     val isEmpty
         get() = lock.synchronize {

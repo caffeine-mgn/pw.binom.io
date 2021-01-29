@@ -3,7 +3,6 @@ package pw.binom.xml.sax
 import pw.binom.async
 import pw.binom.io.asAsync
 import pw.binom.io.asReader
-import pw.binom.xml.internal.XmlReaderVisiter
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

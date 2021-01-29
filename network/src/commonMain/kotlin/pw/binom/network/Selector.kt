@@ -7,6 +7,7 @@ interface Selector : Closeable {
     interface Key : Closeable {
         val attachment: Any?
         var listensFlag: Int
+        val closed: Boolean
 
         fun addListen(code: Int) {
             listensFlag = listensFlag or code

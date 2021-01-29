@@ -5,7 +5,12 @@ import pw.binom.io.ByteArrayOutput
 import pw.binom.io.bufferedWriter
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.seconds
 
 class NatsConnectorTest {
 
@@ -50,8 +55,15 @@ class NatsConnectorTest {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     @Test
-    fun test() {
+    fun echoTest() {
+        val msg1 = "msg1"//Random.uuid().toString()
+        val msg2 = "msg2"//Random.uuid().toString()
+        var msg1ForCon1 = 0
+        var msg2ForCon1 = 0
+        var msg1ForCon2 = 0
+        var msg2ForCon2 = 0
         val nd = NetworkDispatcher()
         val connector1 = NatsConnector(
             clientName = "Binom Client",
@@ -59,12 +71,18 @@ class NatsConnectorTest {
             pass = null,
             dispatcher = nd,
             tlsRequired = false,
+            echo = false,
         ) {
-            println(
-                "connector1 => Message GOT! subject: [${it.subject}] sid: [${it.sid}], replyTo: [${it.replyTo}], data: [${
-                    it.data.toByteArray().decodeToString()
-                }]"
-            )
+            val data = it.data.toByteArray().decodeToString()
+            if (data == msg1) {
+                msg1ForCon1++
+                return@NatsConnector
+            }
+            if (data == msg2) {
+                msg2ForCon1++
+                return@NatsConnector
+            }
+            throw IllegalStateException()
         }
 
         val connector2 = NatsConnector(
@@ -73,25 +91,46 @@ class NatsConnectorTest {
             pass = null,
             dispatcher = nd,
             tlsRequired = false,
+            echo = true,
         ) {
-            println(
-                "connector2 => Message GOT! subject: [${it.subject}] sid: [${it.sid}], replyTo: [${it.replyTo}], data: [${
-                    it.data.toByteArray().decodeToString()
-                }]"
-            )
+            val data = it.data.toByteArray().decodeToString()
+            if (data == msg1) {
+                msg1ForCon2++
+                return@NatsConnector
+            }
+            if (data == msg2) {
+                msg2ForCon2++
+                return@NatsConnector
+            }
+            throw IllegalStateException()
         }
 
-        async {
+        val done = async2 {
+            val subject = Random.uuid().toShortString()
             connector1.connect(NetworkAddress.Immutable("127.0.0.1", 4222))
             connector2.connect(NetworkAddress.Immutable("127.0.0.1", 4222))
-            val t1Sub2 =     connector2.subscribe("T12")
-            val t1Sub1 =     connector1.subscribe("T12")
-            connector1.publish("T12", data = "Hello".encodeToByteArray())
+            val t1Sub2 = connector2.subscribe(subject)
+            val t1Sub1 = connector1.subscribe(subject)
+            connector1.publish(subject = subject, data = msg1.encodeToByteArray())
+            connector1.publish(subject = subject, data = msg2.encodeToByteArray())
 //            connector1.unsubscribe(t1Sub)
+//            println("try assert")
+//            assertEquals(0, msg1ForCon1)
+//            assertEquals(1, msg1ForCon2)
+//            println("assert done")
         }
-
+        val now = TimeSource.Monotonic.markNow()
         while (true) {
-            nd.select()
+            if (msg1ForCon1 == 0 && msg1ForCon2 == 1 && msg2ForCon2 == 1) {
+                break
+            }
+            if (now.elapsedNow() > 5.0.seconds) {
+                throw RuntimeException("Timeout")
+            }
+            nd.select(500)
+        }
+        if (done.isFailure) {
+            throw done.exceptionOrNull!!
         }
     }
 }

@@ -8,18 +8,19 @@ import pw.binom.io.use
 import pw.binom.io.utf8Reader
 import pw.binom.workDirectory
 import kotlin.math.abs
+import kotlin.math.absoluteValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DateTest {
     private val testDate = File(File(Environment.workDirectory), "build/tmp-date/")
-    private val currentTimeZone = File(testDate, "currentTZ").read().use {
-        it.utf8Reader().readText()
+    private val currentTimeZone = File(testDate, "currentTZ").read().utf8Reader().use {
+        it.readText()
     }.toInt()
 
-    private val now = File(testDate, "now").read().use {
-        it.utf8Reader().readText()
+    private val now = File(testDate, "now").read().utf8Reader().use {
+        it.readText()
     }.toLong()
 
     @Test
@@ -32,7 +33,7 @@ class DateTest {
         val except = now
         val actual = Date.now
         assertTrue("except: [$except], actual: [$actual]") {
-            abs(except - actual) < 10_000
+            (except - actual).absoluteValue < 10_000
         }
     }
 

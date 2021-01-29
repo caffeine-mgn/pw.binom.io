@@ -6,16 +6,50 @@ import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
 import pw.binom.pool.ObjectPool
 
-class AsyncBufferedInputReader(
+class AsyncBufferedInputReader private constructor(
     charset: Charset,
     val input: AsyncInput,
-    private val pool: ObjectPool<ByteBuffer>,
+    private val pool: ObjectPool<ByteBuffer>?,
+    private val buffer: ByteBuffer,
+    private var closeBuffer: Boolean,
     charBufferSize: Int = 512
 ) : AsyncReader {
+    constructor(charset: Charset, input: AsyncInput, pool: ObjectPool<ByteBuffer>, charBufferSize: Int = 512) : this(
+        charset = charset,
+        input = input,
+        pool = pool,
+        buffer = pool.borrow().empty(),
+        charBufferSize = charBufferSize,
+        closeBuffer = false,
+    )
+
+    constructor(charset: Charset, input: AsyncInput, buffer: ByteBuffer, charBufferSize: Int = 512) : this(
+        charset = charset,
+        input = input,
+        pool = null,
+        buffer = buffer.empty(),
+        charBufferSize = charBufferSize,
+        closeBuffer = false,
+    )
+
+    constructor(
+        charset: Charset,
+        input: AsyncInput,
+        bufferSize: Int = DEFAULT_BUFFER_SIZE,
+        charBufferSize: Int = 512
+    ) : this(
+        charset = charset,
+        input = input,
+        pool = null,
+        buffer = ByteBuffer.alloc(bufferSize).empty(),
+        charBufferSize = charBufferSize,
+        closeBuffer = true,
+    )
+
     private val decoder = charset.newDecoder()
     private val output = CharBuffer.alloc(charBufferSize).empty()
 
-    private val buffer = pool.borrow().empty()
+//    private val buffer = pool.borrow().empty()
 
     private suspend fun checkAvailable() {
         if (buffer.remaining == 0) {
@@ -94,7 +128,11 @@ class AsyncBufferedInputReader(
 
     override suspend fun asyncClose() {
         decoder.close()
-        pool.recycle(buffer)
+        if (closeBuffer) {
+            buffer.close()
+        } else {
+            pool?.recycle(buffer)
+        }
     }
 
 }
@@ -108,4 +146,26 @@ fun AsyncInput.bufferedReader(
     input = this,
     pool = pool,
     charBufferSize = charBufferSize
+)
+
+fun AsyncInput.bufferedReader(
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    charset: Charset = Charsets.UTF8,
+    charBufferSize: Int = bufferSize
+) = AsyncBufferedInputReader(
+    charset = charset,
+    input = this,
+    charBufferSize = charBufferSize,
+    bufferSize = bufferSize
+)
+
+fun AsyncInput.bufferedReader(
+    buffer: ByteBuffer,
+    charset: Charset = Charsets.UTF8,
+    charBufferSize: Int = buffer.capacity
+) = AsyncBufferedInputReader(
+    charset = charset,
+    input = this,
+    charBufferSize = charBufferSize,
+    buffer = buffer
 )

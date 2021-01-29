@@ -1,6 +1,6 @@
 package pw.binom.date
 
-actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
+actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int) {
 
 
     private val tm = kotlin.js.Date(utcTime.toDouble() + timeZoneOffset * 60.0 * 1000.0)
@@ -34,5 +34,12 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
 
     actual fun timeZone(timeZoneOffset: Int): Calendar = Calendar(utcTime, timeZoneOffset)
 
-    actual override fun toString(): String = timeZone(0).asStringGmt()
+    actual override fun toString(): String = asString(this, timeZoneOffsetToString(timeZoneOffset))
+
+    /**
+     * @param timeZoneOffset TimeZone offset in mintes
+     */
+    actual fun toString(timeZoneOffset: Int): String {
+        TODO("Not yet implemented")
+    }
 }

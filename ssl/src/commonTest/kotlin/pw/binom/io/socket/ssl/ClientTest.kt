@@ -28,16 +28,11 @@ class ClientTest {
             try {
                 val rawConnection = nd.tcpConnect(NetworkAddress.Immutable("smtp.yandex.ru", 465))
                 val sslContext = SSLContext.getInstance(SSLMethod.TLSv1_2, EmptyKeyManager, TrustManager.TRUST_ALL)
-                println("=>3")
                 val clientSession = sslContext.clientSession("smtp.yandex.ru", 465)
-                println("=>4")
                 val sslConnect = clientSession.asyncChannel(rawConnection)
-                println("=>5")
 
                 val reader = sslConnect.bufferedAsciiInputReader()
-                println("=>6")
                 println("->${reader.readln()}")
-                println("=>7")
 
             } catch (e: Throwable) {
                 e.printStackTrace()

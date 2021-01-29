@@ -8,3 +8,8 @@ expect class Reference<T : Any?>(value: T) : Closeable {
 }
 
 fun <T : Any> T.asReference() = Reference(this)
+fun <T : Any?> Reference<T>.free(): T {
+    val result = value
+    close()
+    return result
+}
