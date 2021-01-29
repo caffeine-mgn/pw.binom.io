@@ -1,5 +1,12 @@
 # History
 
+### 0.1.27
+* DNS Protocol reader/writer
+* SHA-256 MessageDigest
+* SHA-512 MessageDigest
+* Fix bugs in date
+* Add support for multithreading using async network
+
 ### 0.1.26
 * UDP async client/server
 * Add network library
