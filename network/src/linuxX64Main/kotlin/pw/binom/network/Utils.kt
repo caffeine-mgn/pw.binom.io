@@ -1,12 +1,9 @@
 package pw.binom.network
 
 import kotlinx.cinterop.convert
-import platform.linux.htonll
-import platform.linux.internal_isBigEndian
-import platform.linux.ntohll
+import platform.linux.*
 import platform.posix.*
 import pw.binom.Environment
-import pw.binom.isBigEndianPrivate
 
 actual val Short.hton: Short
     get() = htons(this.convert()).convert()
@@ -21,10 +18,10 @@ actual val Int.ntoh: Int
     get() = ntohl(convert()).convert()
 
 actual val Long.hton: Long
-    get() = htonll(convert()).convert()
+    get() = internal_htonll(convert()).convert()
 
 actual val Long.ntoh: Long
-    get() = ntohll(convert()).convert()
+    get() = internal_ntohll(convert()).convert()
 
 
 actual val Environment.isBigEndian2: Boolean

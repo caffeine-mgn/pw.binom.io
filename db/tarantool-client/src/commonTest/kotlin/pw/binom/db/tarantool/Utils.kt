@@ -45,7 +45,7 @@ fun tarantool(func: suspend (TarantoolConnection) -> Unit) {
     val now = TimeSource.Monotonic.markNow()
     while (!done.isDone) {
         if (now.elapsedNow() > 10.0.seconds) {
-            throw RuntimeException()
+            throw RuntimeException("Timeout")
         }
         manager.select(1000)
     }
