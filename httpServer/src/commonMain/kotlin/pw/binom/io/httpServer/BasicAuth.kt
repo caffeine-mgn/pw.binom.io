@@ -31,6 +31,6 @@ fun HttpResponse.requestBasicAuth(realm: String? = null, service: String? = null
         }
         sb.append("service=\"").append(service).append("\"")
     }
-    resetHeader("WWW-Authenticate", "Basic")
+    resetHeader("WWW-Authenticate", sb.toString())
     status = 401
 }
