@@ -138,7 +138,6 @@ class LinuxSelector : AbstractSelector() {
             return 0
         }
         var count = 0
-        println("----------START EVENT----------")
         for (i in 0 until eventCount) {
             val item = list[i]
             val keyPtr = item.udata?.asStableRef<MingwKey>() ?: continue
@@ -171,11 +170,6 @@ class LinuxSelector : AbstractSelector() {
                         0
                     }
                 }
-                println(
-                    "---[${key.attachment!!.hashCode()}]  Event ${
-                        code.toUInt().toString(2)
-                    } (listen ${key.listensFlag.toUInt().toString(2)})"
-                )
                 func(key, code)
             } finally {
                 if (EV_EOF in item.flags && !key.closed) {
@@ -185,7 +179,6 @@ class LinuxSelector : AbstractSelector() {
             }
 
         }
-        println("----------END EVENT----------")
         return count
     }
 

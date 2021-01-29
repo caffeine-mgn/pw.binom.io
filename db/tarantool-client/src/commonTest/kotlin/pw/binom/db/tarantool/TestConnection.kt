@@ -10,7 +10,7 @@ class TestConnection {
 
     @Test
     fun stringPass() {
-        tt { con ->
+        tarantool { con ->
             val text = "Response From Tarantool: ${Random.uuid()}"
             val response = con.eval("return '$text'")
             assertTrue(response is List<*>)
@@ -18,7 +18,7 @@ class TestConnection {
             assertEquals(text, response[0])
         }
 
-        tt { con ->
+        tarantool { con ->
             val text = "Response From Tarantool: ${Random.uuid()}"
             val response = con.eval("return ...", text, text)
             assertTrue(response is List<*>)
@@ -30,7 +30,7 @@ class TestConnection {
 
     @Test
     fun uuidPass() {
-        tt { con ->
+        tarantool { con ->
             val uuid = Random.uuid()
             val response = con.eval("return ...", uuid)
             assertTrue(response is List<*>)
@@ -41,7 +41,7 @@ class TestConnection {
 
     @Test
     fun intPass() {
-        tt { con ->
+        tarantool { con ->
             val value = Random.nextInt()
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)
@@ -52,7 +52,7 @@ class TestConnection {
 
     @Test
     fun bytesPass() {
-        tt { con ->
+        tarantool { con ->
             val response = con.eval("return type(...)", Random.nextBytes(10))
             assertTrue(response is List<*>)
             assertEquals(1, response.size)
@@ -62,7 +62,7 @@ class TestConnection {
 
     @Test
     fun listPass() {
-        tt { con ->
+        tarantool { con ->
             val value = listOf(Random.nextInt(), Random.nextInt())
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)
@@ -74,7 +74,7 @@ class TestConnection {
 
     @Test
     fun listOfListPass() {
-        tt { con ->
+        tarantool { con ->
             val value = listOf(listOf(Random.nextInt()), listOf(Random.nextInt()))
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)

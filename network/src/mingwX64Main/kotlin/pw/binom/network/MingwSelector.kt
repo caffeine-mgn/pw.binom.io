@@ -73,10 +73,6 @@ class MingwSelector : AbstractSelector() {
             val keyPtr = item.data.ptr!!.asStableRef<MingwKey>()
             val key = keyPtr.get()
             if (!key.connected) {
-                println("EPOLLIN=${EPOLLIN in item.events}")
-                println("EPOLLOUT=${EPOLLOUT in item.events}")
-                println("EPOLLERR=${EPOLLERR in item.events}")
-                println("EPOLLRDHUP=${EPOLLRDHUP in item.events}")
                 when {
                     EPOLLERR in item.events || EPOLLRDHUP in item.events -> {
                         key.resetMode(0)

@@ -127,7 +127,6 @@ data class DnsRecord(
         buffer.writeShort((l - Short.SIZE_BYTES).toShort())
         buffer.position = l
         buffer.flip()
-        println("${buffer.remaining}")
         return output.write(buffer)
     }
 
