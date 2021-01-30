@@ -95,7 +95,7 @@ fun usingByteBuffer() {
 fun calcMd5() {
     val file = File("Simple File")
     val text = "Simple Text"
-    val md5 = MD5()
+    val md5 = MD5MessageDigest()
     try {
         text.toByteBufferUTF8().use { data ->
             file.write().use {

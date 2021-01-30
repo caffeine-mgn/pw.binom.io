@@ -2,10 +2,7 @@ package pw.binom.db.tarantool.protocol
 
 import pw.binom.*
 import pw.binom.base64.Base64
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.IOException
-import pw.binom.io.Sha1
-import pw.binom.io.use
+import pw.binom.io.*
 import kotlin.experimental.xor
 
 internal object InternalProtocolUtils {
@@ -15,10 +12,10 @@ internal object InternalProtocolUtils {
         password: String,
         salt: String
     ): Map<Any, Any?> {
-        val sha1 = Sha1()
+        val sha1 = Sha1MessageDigest()
 
         val auth = ArrayList<Any>(2)
-        auth.add("chap-sha1");
+        auth.add("chap-sha1")
         sha1.update(password.encodeToByteArray())
         val p = sha1.finish()
 

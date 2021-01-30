@@ -54,6 +54,7 @@ kotlin {
                 api(project(":db"))
                 api(project(":date"))
                 api(project(":network"))
+                api(project(":ssl"))
             }
         }
 

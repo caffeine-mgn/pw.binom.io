@@ -165,7 +165,7 @@ internal class UrlConnectImpl(
             }
             sb.toString()
         }
-        val responseKey = HandshakeSecret.generateResponse(Sha1(), requestKey)
+        val responseKey = HandshakeSecret.generateResponse(Sha1MessageDigest(), requestKey)
 
         addHeader(Headers.SEC_WEBSOCKET_KEY, requestKey)
         sendRequest(false)

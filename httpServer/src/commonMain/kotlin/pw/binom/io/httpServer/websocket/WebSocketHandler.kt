@@ -4,6 +4,7 @@ import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.io.IOException
 import pw.binom.io.Sha1
+import pw.binom.io.Sha1MessageDigest
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
@@ -24,7 +25,7 @@ abstract class WebSocketHandler : Handler {
 
     private class RejectedException : RuntimeException()
 
-    private val sha1 = Sha1()
+    private val sha1 = Sha1MessageDigest()
 
     private inner class ConnectRequestImpl(
         val key: String,
