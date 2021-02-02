@@ -4,9 +4,23 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.refTo
 import platform.openssl.*
 import kotlinx.cinterop.*
+import platform.posix.errno
+import platform.posix.set_posix_errno
 import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
+import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
+import pw.binom.io.use
+import pw.binom.ssl.Bio
+
+internal fun assertError(ssl: CPointer<SSL>, ret: Int) {
+    if (ret <= 0 && SSL_get_error(ssl, ret) == SSL_ERROR_SSL) {
+        getLastError()
+        throw RuntimeException(ERR_error_string(SSL_get_error(ssl, ret).convert(), null)?.toKString())
+    }
+}
+
+fun getLastError() = ERR_error_string(ERR_peek_last_error(), null)?.toKString()
 
 actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val client: Boolean) : Closeable {
     actual enum class State {
@@ -22,10 +36,8 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
     private val rbio = BIO_new(BIO_s_mem()!!)!!
     private val wbio = BIO_new(BIO_s_mem()!!)!!
 
-    private var inited = false
-
     private fun init(): State? {
-        if (inited)
+        if (SSL_is_init_finished(ssl) != 0)
             return null
         if (client) {
             while (true) {
@@ -33,6 +45,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
                 if (n > 0) {
                     break
                 }
+                assertError(ssl, n)
                 val err = SSL_get_error(ssl, n)
                 if (err == SSL_ERROR_WANT_WRITE) {
                     return State.WANT_WRITE
@@ -43,14 +56,25 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
                 }
             }
         } else {
-            SSL_accept(ssl)
+            val n = SSL_accept(ssl)
+            assertError(ssl, n)
+            return when (val e = SSL_get_error(ssl, n)) {
+                SSL_ERROR_WANT_READ -> State.WANT_READ
+                SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
+                SSL_ERROR_SSL -> State.ERROR
+                else -> null
+            }
         }
-
-        inited = true
         return null
     }
 
     init {
+        if (client) {
+            SSL_set_connect_state(ssl)
+        } else {
+            SSL_set_accept_state(ssl)
+        }
+        SSL_ctrl((ssl), SSL_CTRL_MODE, SSL_MODE_AUTO_RETRY.convert(), null)
         SSL_set_bio(ssl, rbio, wbio)
     }
 
@@ -73,6 +97,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         var off = offset
         var readed = 0
 
+
         while (len > 0) {
             val n = BIO_write(rbio, dst.refTo(off), len);
             if (n <= 0)
@@ -91,7 +116,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         var readed = 0
 
         while (len > 0) {
-            val n = BIO_write(rbio, dst.refTo(off), len);
+            val n = BIO_write(rbio, dst.refTo(off), len)
             if (n <= 0)
                 TODO()
             readed += n
@@ -265,10 +290,11 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         if (n > 0) {
             src.position += n
             return Status(
-                    State.OK,
-                    n
+                State.OK,
+                n
             )
         }
+        assertError(ssl, n)
         val state = when (val e = SSL_get_error(ssl, n)) {
             SSL_ERROR_WANT_READ -> State.WANT_READ
             SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
@@ -276,7 +302,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
             else -> TODO("Unknown status $e")
         }
         return Status(
-                state, 0
+            state, 0
         )
     }
 

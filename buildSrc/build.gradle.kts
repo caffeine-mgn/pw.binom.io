@@ -13,7 +13,6 @@ buildscript {
 
 plugins{
         kotlin("jvm") version "1.4.21"
-        //id("kotlin-platform-jvm")
 }
 
 repositories {

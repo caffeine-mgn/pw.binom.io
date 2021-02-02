@@ -25,4 +25,6 @@ object Headers {
     const val CLOSE = "close"
     const val CONTENT_TYPE = "Content-Type"
     const val SERVER = "Server"
+    const val LOCATION = "Location"
+    const val AUTHORIZATION = "Authorization"
 }

@@ -45,6 +45,9 @@ inline class Bio(val self: CPointer<BIO>) : Closeable {
     val eof: Boolean
         get() = BIO_ctrl(self, BIO_CTRL_EOF.convert(), 0, null).convert<Int>() == 1
 
+    val size: Int
+        get() = BIO_ctrl(self, BIO_CTRL_INFO, 0, null).convert()
+
     fun reset() {
         if (BIO_ctrl(self, BIO_CTRL_RESET, 0, null) < 0)
             TODO()

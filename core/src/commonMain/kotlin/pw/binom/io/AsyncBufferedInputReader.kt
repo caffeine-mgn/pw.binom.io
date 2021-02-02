@@ -12,31 +12,47 @@ class AsyncBufferedInputReader private constructor(
     private val pool: ObjectPool<ByteBuffer>?,
     private val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
+    private val closeParent: Boolean,
     charBufferSize: Int = 512
 ) : AsyncReader {
-    constructor(charset: Charset, input: AsyncInput, pool: ObjectPool<ByteBuffer>, charBufferSize: Int = 512) : this(
+    constructor(
+        charset: Charset,
+        input: AsyncInput,
+        pool: ObjectPool<ByteBuffer>,
+        charBufferSize: Int = 512,
+        closeParent: Boolean = true,
+    ) : this(
         charset = charset,
         input = input,
         pool = pool,
         buffer = pool.borrow().empty(),
         charBufferSize = charBufferSize,
         closeBuffer = false,
+        closeParent = closeParent,
     )
 
-    constructor(charset: Charset, input: AsyncInput, buffer: ByteBuffer, charBufferSize: Int = 512) : this(
+    constructor(
+        charset: Charset,
+        input: AsyncInput,
+        buffer: ByteBuffer,
+        charBufferSize: Int = 512,
+        closeParent: Boolean = true,
+    ) : this(
         charset = charset,
         input = input,
         pool = null,
         buffer = buffer.empty(),
         charBufferSize = charBufferSize,
         closeBuffer = false,
+        closeParent = closeParent,
     )
 
     constructor(
         charset: Charset,
         input: AsyncInput,
         bufferSize: Int = DEFAULT_BUFFER_SIZE,
-        charBufferSize: Int = 512
+        charBufferSize: Int = 512,
+        closeParent: Boolean = true,
     ) : this(
         charset = charset,
         input = input,
@@ -44,6 +60,7 @@ class AsyncBufferedInputReader private constructor(
         buffer = ByteBuffer.alloc(bufferSize).empty(),
         charBufferSize = charBufferSize,
         closeBuffer = true,
+        closeParent = closeParent,
     )
 
     private val decoder = charset.newDecoder()
@@ -127,6 +144,9 @@ class AsyncBufferedInputReader private constructor(
     }
 
     override suspend fun asyncClose() {
+        if (closeParent) {
+            input.asyncClose()
+        }
         decoder.close()
         if (closeBuffer) {
             buffer.close()

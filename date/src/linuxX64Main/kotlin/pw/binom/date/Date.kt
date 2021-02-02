@@ -6,7 +6,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import platform.posix.*
 
-actual inline class Date(val time: Long) {
+actual inline class Date(val time: Long = Date.now) {
     actual companion object {
         actual val timeZoneOffset: Int
             get() = memScoped {
