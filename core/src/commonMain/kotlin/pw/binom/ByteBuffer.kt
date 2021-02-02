@@ -177,4 +177,4 @@ inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
     return output
 }
 
-fun ByteArray.input() = ByteBuffer.wrap(this)
+fun ByteArray.wrap() = ByteBuffer.wrap(this)

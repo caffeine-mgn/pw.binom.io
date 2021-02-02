@@ -7,7 +7,6 @@ import pw.binom.compression.zlib.AsyncGZIPOutput
 import pw.binom.io.http.AsyncChunkedOutput
 import pw.binom.io.http.AsyncContentLengthOutput
 import pw.binom.io.http.Headers
-import pw.binom.io.utf8Appendable
 import pw.binom.pool.ObjectPool
 
 internal class HttpResponseBodyImpl2 : HttpResponseBody {
@@ -151,27 +150,29 @@ internal class HttpResponseImpl2(
             buf.append("${Headers.CONNECTION}: ${Headers.KEEP_ALIVE}\r\n")
         }
         val contentLength = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull()
-        val chanked = headers[Headers.TRANSFER_ENCODING]?.singleOrNull().let {
+        val chunked = headers[Headers.TRANSFER_ENCODING]?.singleOrNull().let {
             it == null || it == Headers.CHUNKED
         }
-
+        if (contentLength == 0uL) {
+            headers.remove(Headers.CONTENT_ENCODING)
+        }
         when {
             contentLength != null -> {
                 headers.remove(Headers.CONTENT_LENGTH)
                 headers.remove(Headers.TRANSFER_ENCODING)
-                buf.append("${Headers.CONTENT_LENGTH}: $contentLength\r\n")
+                buf.append(Headers.CONTENT_LENGTH).append(": ").append(contentLength.toString()).append("\r\n")
             }
-            chanked -> {
+            chunked -> {
                 headers.remove(Headers.CONTENT_LENGTH)
                 headers.remove(Headers.TRANSFER_ENCODING)
-                buf.append("${Headers.TRANSFER_ENCODING}: ${Headers.CHUNKED}\r\n")
+                buf.append(Headers.TRANSFER_ENCODING).append(": ").append(Headers.CHUNKED).append("\r\n")
             }
             else -> throw RuntimeException("Unknown Transfer Encoding")
         }
 
         headers.forEach { item ->
             item.value.forEach {
-                buf.append("${item.key}: $it\r\n")
+                buf.append(item.key).append(": ").append(it).append("\r\n")
             }
         }
         buf.append("\r\n")
