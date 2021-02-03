@@ -6,7 +6,7 @@ Kotlin IO Library.<br>
 
 ## Actual version
 
-Actual version is `0.1.26`
+Actual version is `0.1.28`
 
 ## Parts of library
 
