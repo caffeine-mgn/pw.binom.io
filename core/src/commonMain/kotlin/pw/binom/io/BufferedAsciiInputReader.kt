@@ -1,14 +1,11 @@
 package pw.binom.io
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.empty
+import pw.binom.*
 
-class AsyncBufferedAsciiInputReader(
-    val input: AsyncInput,
+class BufferedAsciiInputReader(
+    val input: Input,
     val bufferSize: Int = DEFAULT_BUFFER_SIZE,
-) : AsyncReader, AsyncInput {
+) : Reader, Input {
     init {
         require(bufferSize > 4)
     }
@@ -19,10 +16,10 @@ class AsyncBufferedAsciiInputReader(
 
     private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
-    override val available: Int
+    val available: Int
         get() = if (buffer.remaining > 0) buffer.remaining else -1
 
-    private suspend fun checkAvailable() {
+    private fun checkAvailable() {
         if (buffer.remaining == 0) {
             buffer.clear()
             input.read(buffer)
@@ -30,24 +27,24 @@ class AsyncBufferedAsciiInputReader(
         }
     }
 
-    override suspend fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): Int {
         checkAvailable()
         return buffer.read(dest)
     }
 
-    override suspend fun asyncClose() {
+    override fun close() {
         buffer.close()
-        input.asyncClose()
+        input.close()
     }
 
-    override suspend fun readChar(): Char? {
+    override fun read(): Char? {
         checkAvailable()
         if (buffer.remaining <= 0)
             return null
         return buffer.get().toChar()
     }
 
-    override suspend fun read(data: CharArray, offset: Int, length: Int): Int {
+    override fun read(data: CharArray, offset: Int, length: Int): Int {
         checkAvailable()
         val len = minOf(minOf(data.size - offset, length), buffer.remaining)
         for (i in offset until offset + len) {
@@ -56,7 +53,7 @@ class AsyncBufferedAsciiInputReader(
         return len
     }
 
-    suspend fun readUntil(char: Char): String? {
+    fun readUntil(char: Char): String? {
         val out = StringBuilder()
         var exist = false
         LOOP@ while (true) {
@@ -82,10 +79,10 @@ class AsyncBufferedAsciiInputReader(
         return out.toString()
     }
 
-    override suspend fun readln(): String? = readUntil(10.toChar())?.removeSuffix("\r")
+    override fun readln(): String? = readUntil(10.toChar())?.removeSuffix("\r")
 }
 
-fun AsyncInput.bufferedAsciiReader(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiInputReader(
+fun Input.bufferedAsciiReader(bufferSize: Int = DEFAULT_BUFFER_SIZE) = BufferedAsciiInputReader(
     input = this,
     bufferSize = bufferSize
 )

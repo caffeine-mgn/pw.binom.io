@@ -13,7 +13,7 @@ interface SyncPreparedStatement : Closeable {
     fun set(index: Int, value: ByteArray)
     fun setNull(index: Int)
     fun executeQuery(): SyncResultSet
-    fun executeUpdate()
+    fun executeUpdate():Long
     fun set(index: Int, value: UUID) {
         val buf = ByteArray(16)
         set(index, value.toByteArray(buf))

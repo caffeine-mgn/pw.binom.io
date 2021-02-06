@@ -1,8 +1,12 @@
 package pw.binom.flux
 
 import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.HttpRequest
+import pw.binom.io.httpServer.HttpResponse
+import pw.binom.pool.DefaultPool
+import pw.binom.pool.ObjectPool
 
-abstract class AbstractRoute : Route {
+abstract class AbstractRoute : Route, Handler {
     private val routers = HashMap<String, ArrayList<RouteImpl>>()
     private val methods = HashMap<String, HashMap<String, ArrayList<suspend (Action) -> Boolean>>>()
     private var forwardHandler: Handler? = null
@@ -47,17 +51,24 @@ abstract class AbstractRoute : Route {
                         return true
                 }
         methods[action.req.method]
-                ?.entries
-                ?.asSequence()
-                ?.filter {
-                    action.req.contextUri.isWildcardMattech(it.key)
-                }
-                ?.sortedBy { -it.key.length }
-                ?.flatMap { it.value.asSequence() }
-                ?.forEach {
-                    if (it(action))
-                        return true
-                }
+            ?.entries
+            ?.asSequence()
+            ?.filter {
+                action.req.contextUri.isWildcardMattech(it.key)
+            }
+            ?.sortedBy { -it.key.length }
+            ?.flatMap { it.value.asSequence() }
+            ?.forEach {
+                if (it(action))
+                    return true
+            }
         return false
+    }
+
+    private class ActionImpl(override val req: HttpRequest, override val resp: HttpResponse) : Action
+
+    override suspend fun request(req: HttpRequest, resp: HttpResponse) {
+        resp.status = 404
+        execute(ActionImpl(req, resp))
     }
 }

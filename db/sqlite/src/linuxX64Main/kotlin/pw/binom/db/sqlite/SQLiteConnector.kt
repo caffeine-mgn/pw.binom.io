@@ -7,6 +7,7 @@ import platform.internal_sqlite.*
 import platform.posix.free
 import pw.binom.db.*
 import pw.binom.db.SyncConnection
+import pw.binom.doFreeze
 import pw.binom.io.file.File
 import pw.binom.io.IOException
 
@@ -45,6 +46,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
 
     init {
         beginSt.executeUpdate()
+        doFreeze()
     }
 
     override fun createStatement() =

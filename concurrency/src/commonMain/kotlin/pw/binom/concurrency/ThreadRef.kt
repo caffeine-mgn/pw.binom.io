@@ -10,6 +10,18 @@ inline class ThreadRef(private val threadId: Long = currentThreadId) {
      */
     val same
         get() = currentThreadId == threadId
+
+    fun checkSame(message: String? = null) {
+        if (!same) {
+            throw IllegalStateException(message)
+        }
+    }
+
+    fun checkNotSame(message: String? = null) {
+        if (!same) {
+            throw IllegalStateException(message)
+        }
+    }
 }
 
 internal expect val currentThreadId: Long

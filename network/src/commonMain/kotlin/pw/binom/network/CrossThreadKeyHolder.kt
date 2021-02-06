@@ -9,6 +9,8 @@ import kotlin.coroutines.suspendCoroutine
 class CrossThreadKeyHolder(val key: Selector.Key) {
     val readyForWriteListener = ConcurrentQueue<() -> Unit>()
     private val networkThread = ThreadRef()
+    val isNetworkThread
+        get() = networkThread.same
 
     init {
         doFreeze()
@@ -54,7 +56,7 @@ suspend fun <R> CrossThreadKeyHolder.executeOnExecutor(executor: WorkerPool? = n
     suspendCoroutine<R> {
         val executorPool =
             executor
-                ?: it.context[ExecutorPoolHolderKey]?.executor
+                ?: it.context[ExecutorServiceHolderKey]?.executor
                 ?: throw IllegalStateException("No defined default worker")
         val selfCon = it.asReference()
         executorPool.submitAsync {

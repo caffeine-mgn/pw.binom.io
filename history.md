@@ -2,6 +2,8 @@
 
 ### 0.1.28
 * Update Kotlin version 1.4.21 -> 1.4.30
+* Fix bugs in ssl
+* Remove library for work with json
 
 ### 0.1.27
 * DNS Protocol reader/writer

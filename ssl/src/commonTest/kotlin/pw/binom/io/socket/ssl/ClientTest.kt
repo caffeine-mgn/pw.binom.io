@@ -1,7 +1,7 @@
 package pw.binom.io.socket.ssl
 
 import pw.binom.async
-import pw.binom.io.bufferedAsciiInputReader
+import pw.binom.io.bufferedAsciiReader
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.ssl.*
@@ -31,7 +31,7 @@ class ClientTest {
                 val clientSession = sslContext.clientSession("smtp.yandex.ru", 465)
                 val sslConnect = clientSession.asyncChannel(rawConnection)
 
-                val reader = sslConnect.bufferedAsciiInputReader()
+                val reader = sslConnect.bufferedAsciiReader()
                 println("->${reader.readln()}")
 
             } catch (e: Throwable) {
