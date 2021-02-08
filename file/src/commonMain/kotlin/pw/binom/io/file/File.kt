@@ -11,6 +11,9 @@ expect class File(path: String) {
 
     val isFile: Boolean
     val isDirectory: Boolean
+    val freeSpace: Long
+    val availableSpace: Long
+    val totalSpace: Long
 
     fun delete(): Boolean
     fun mkdir(): Boolean

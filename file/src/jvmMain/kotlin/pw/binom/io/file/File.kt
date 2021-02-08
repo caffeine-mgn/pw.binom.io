@@ -2,8 +2,8 @@
 
 package pw.binom.io.file
 
+import pw.binom.io.use
 import java.io.File as JFile
-import pw.binom.io.*
 
 actual class File actual constructor(path: String) {
 
@@ -52,6 +52,15 @@ actual class File actual constructor(path: String) {
         }
         return out
     }
+
+    actual val freeSpace: Long
+        get() = JFile(path).freeSpace
+
+    actual val availableSpace: Long
+        get() = JFile(path).usableSpace
+
+    actual val totalSpace: Long
+        get() = JFile(path).totalSpace
 }
 
 val JFile.binom: File
