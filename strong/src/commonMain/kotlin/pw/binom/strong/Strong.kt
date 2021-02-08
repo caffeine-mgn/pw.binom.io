@@ -148,6 +148,9 @@ class Strong private constructor() {
     fun <T : Any> service(beanClass: KClass<T>, name: String? = null) = ServiceInjector(this, beanClass, name)
     inline fun <reified T : Any> service(name: String? = null) = service(T::class, name)
 
+    fun <T : Any> serviceMap(beanClass: KClass<T>) = ServiceMapInjector(this, beanClass)
+    inline fun <reified T : Any> serviceMap() = serviceMap(T::class)
+
     fun <T : Any> serviceList(beanClass: KClass<T>) = ServiceListInjector(this, beanClass)
     inline fun <reified T : Any> serviceList() = serviceList(T::class)
 
@@ -238,14 +241,28 @@ class Strong private constructor() {
             ?: throw NoSuchBeanException(beanClass)
     }
 
-    class ServiceListInjector<T : Any>(val strong: Strong, val beanClass: KClass<T>) {
-        operator fun getValue(thisRef: Any?, property: KProperty<*>): Map<String, T> {
-            return strong.beans.asSequence().filter {
+    class ServiceMapInjector<T : Any>(val strong: Strong, val beanClass: KClass<T>) {
+        private val map by lazy {
+            strong.beans.asSequence().filter {
                 beanClass.isInstance(it.value)
             }
                 .map { it.key to it.value as T }
                 .toMap()
         }
+
+        operator fun getValue(thisRef: Any?, property: KProperty<*>): Map<String, T> =
+            map
+    }
+
+    class ServiceListInjector<T : Any>(val strong: Strong, val beanClass: KClass<T>) {
+        private val list by lazy {
+            strong.beans.asSequence().filter {
+                beanClass.isInstance(it.value)
+            }.map { it.value as T }.toList()
+        }
+
+        operator fun getValue(thisRef: Any?, property: KProperty<*>): List<T> =
+            list
     }
 
     class NullableServiceInjector<T : Any>(strong: Strong, beanClass: KClass<T>, name: String?) :

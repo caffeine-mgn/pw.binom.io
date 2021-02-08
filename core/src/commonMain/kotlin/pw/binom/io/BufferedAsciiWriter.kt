@@ -71,6 +71,7 @@ class BufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override val ou
     }
 
     override fun close() {
+        super.close()
         buffer.close()
     }
 
