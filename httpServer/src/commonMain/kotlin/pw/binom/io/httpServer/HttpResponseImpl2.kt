@@ -70,6 +70,9 @@ internal class HttpResponseImpl2(
 ) : HttpResponse {
     override var status: Int = 404
         set(value) {
+            if (field == value) {
+                return
+            }
             checkHeaderSent()
             field = value
         }
