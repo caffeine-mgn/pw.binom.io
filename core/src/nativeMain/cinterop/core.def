@@ -1,0 +1,3 @@
+headerFilter = *.c
+---
+#include "bytebuffer.c"

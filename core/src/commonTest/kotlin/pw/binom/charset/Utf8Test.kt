@@ -38,7 +38,7 @@ class Utf8Test {
     fun decode() {
         charset.newDecoder().use { encoder ->
             val out = CharBuffer.alloc(30)
-            assertEquals(CharsetTransformResult.SUCCESS, encoder.decode(test_data_hello_text.encodeToByteArray().input(), out))
+            assertEquals(CharsetTransformResult.SUCCESS, encoder.decode(test_data_hello_text.encodeToByteArray().wrap(), out))
             out.flip()
             assertEquals(out.remaining, test_data_hello_text.length)
             out.forEachIndexed { index, value ->
