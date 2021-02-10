@@ -29,6 +29,10 @@ class Strong private constructor() {
         suspend fun provide()
     }
 
+    interface DestroyableBean {
+        suspend fun destroy()
+    }
+
     private var properties = HashMap<String, String>()
 
     companion object {
@@ -85,18 +89,27 @@ class Strong private constructor() {
         initing = false
     }
 
+    suspend fun destroy() {
+        beans.values.forEach {
+            if (it is DestroyableBean) {
+                it.destroy()
+            }
+        }
+        beans.clear()
+    }
+
     class BeanAlreadyDefinedException(val beanName: String) : RuntimeException() {
-        override val message: String?
+        override val message: String
             get() = "Bean \"$beanName\" already defined"
     }
 
     class NoSuchBeanException(val clazz: KClass<out Any>) : RuntimeException() {
-        override val message: String?
+        override val message: String
             get() = "Bean ${clazz} not found"
     }
 
     class SeveralBeanException(val clazz: KClass<out Any>, val name: String?) : RuntimeException() {
-        override val message: String?
+        override val message: String
             get() = if (name != null) {
                 "Several bean $clazz with name $name"
             } else {

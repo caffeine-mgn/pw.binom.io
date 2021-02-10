@@ -1,5 +1,6 @@
 package pw.binom.flux
 
+import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
@@ -19,16 +20,29 @@ abstract class AbstractRoute : Route, Handler {
         return r
     }
 
-    override fun endpoint(method: String, path: String, func: suspend (Action) -> Boolean) {
+    override fun detach(path: String, route: Route) {
+        val list = routers[path] ?: return
+        if (list.remove(route) && list.isEmpty()) {
+            routers.remove(path)
+        }
+    }
+
+    override fun endpoint(method: String, path: String, func: suspend (Action) -> Boolean): Closeable {
         if (forwardHandler != null)
             throw IllegalStateException("Router has already defined forward")
         methods.getOrPut(method) { HashMap() }.getOrPut(path) { ArrayList() }.add(func)
+        return Closeable {
+            methods[method]?.remove(func)
+            if (methods[method]?.isEmpty() == true) {
+                methods.remove(method)
+            }
+        }
     }
 
-    override fun forward(handler: Handler) {
+    override fun forward(handler: Handler?) {
         if (methods.isNotEmpty())
             throw IllegalStateException("Router has endpoint")
-        if (forwardHandler != null)
+        if (handler != null && forwardHandler != null)
             throw IllegalStateException("Router has already defined forward")
         forwardHandler = handler
     }

@@ -154,7 +154,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
         val gotBytes = if (address == null) {
             val rr = platform.windows.recvfrom(
                 native,
-                data.bytes.refTo(data.position),
+                data.refTo(data.position),
                 data.remaining.convert(),
                 0,
                 null,
@@ -170,7 +170,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 val len = allocArray<IntVar>(1)
                 len[0] = 28
                 val rr = platform.windows.recvfrom(
-                    native, data.bytes.refTo(data.position).getPointer(this), data.remaining.convert(), 0,
+                    native, data.refTo(data.position).getPointer(this), data.remaining.convert(), 0,
                     address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
                     len
                 )
