@@ -24,8 +24,8 @@ class StrongTest {
             s.start()
             val list by s.serviceList<A>()
             assertEquals(2, list.size)
-            assertTrue(list.values.any { it is AImpl })
-            assertTrue(list.values.any { it is ABImpl })
+            assertTrue(list.any { it is AImpl })
+            assertTrue(list.any { it is ABImpl })
         }
     }
 }

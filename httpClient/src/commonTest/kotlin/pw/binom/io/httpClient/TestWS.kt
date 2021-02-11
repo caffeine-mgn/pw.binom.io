@@ -16,6 +16,7 @@ import kotlin.test.Test
 
 class TestWS {
 
+    @Ignore
     @Test
     fun FFF() {
         val manager = NetworkDispatcher()

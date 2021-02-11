@@ -31,7 +31,9 @@ class NetworkDispatcher : Closeable {
         val future = BaseFuture<R>()
         func.startCoroutine(object : Continuation<R> {
             override val context: CoroutineContext = run {
-                var ctx = EmptyCoroutineContext + NetworkDispatcherHolderElement(this@NetworkDispatcher)
+                var ctx =
+                    CrossThreadCoroutineElement(this@NetworkDispatcher.crossThreadWakeUpHolder) +
+                            NetworkHolderElement(this@NetworkDispatcher.crossThreadWakeUpHolder)
                 if (executor != null) {
                     ctx += ExecutorServiceHolderElement(executor)
                 }

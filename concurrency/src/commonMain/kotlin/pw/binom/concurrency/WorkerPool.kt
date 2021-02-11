@@ -15,6 +15,14 @@ class ExecutorServiceHolderElement(val executor: ExecutorService) : CoroutineCon
 
 object ExecutorServiceHolderKey : CoroutineContext.Key<ExecutorServiceHolderElement>
 
+@Suppress("UNCHECKED_CAST")
+class CrossThreadCoroutineElement(val crossThreadCoroutine: CrossThreadCoroutine) : CoroutineContext.Element {
+    override val key: CoroutineContext.Key<CrossThreadCoroutineElement>
+        get() = CrossThreadCoroutineKey
+}
+
+object CrossThreadCoroutineKey : CoroutineContext.Key<CrossThreadCoroutineElement>
+
 fun <P> asyncWithExecutor(executor: ExecutorService, f: suspend () -> P) =
     f.startCoroutine(object : Continuation<P> {
         override val context: CoroutineContext = EmptyCoroutineContext + ExecutorServiceHolderElement(executor)
@@ -40,7 +48,7 @@ fun ExecutorService.submitAsync(context: CoroutineContext = EmptyCoroutineContex
     submit {
         val f = func
         f.startCoroutine(object : Continuation<Unit> {
-            override val context: CoroutineContext = context + WorkerHolderElement(Worker.current!!)
+            override val context: CoroutineContext = context + CrossThreadCoroutineElement(Worker.current!!)
 
             override fun resumeWith(result: Result<Unit>) {
             }

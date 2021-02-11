@@ -3,19 +3,20 @@ package pw.binom.network
 import pw.binom.async
 import pw.binom.concurrency.*
 import pw.binom.doFreeze
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.*
 
-class NetworkDispatcherHolderElement(val dispatcher: NetworkDispatcher) : CoroutineContext.Element {
-    override val key: CoroutineContext.Key<NetworkDispatcherHolderElement>
-        get() = NetworkDispatcherHolderElementKey
-}
+//class NetworkDispatcherHolderElement(
+//    val keyHolder: CrossThreadKeyHolder
+//) : CrossThreadCoroutineContext, CoroutineContext.Element {
+//    override val key: CoroutineContext.Key<NetworkDispatcherHolderElement>
+//        get() = NetworkDispatcherHolderElementKey
+//}
+//
+//object NetworkDispatcherHolderElementKey : CoroutineContext.Key<NetworkDispatcherHolderElement>
 
-object NetworkDispatcherHolderElementKey : CoroutineContext.Key<NetworkDispatcherHolderElement>
-
-class NetworkHolderElement(val keyHolder: CrossThreadKeyHolder) : CoroutineContext.Element {
+class NetworkHolderElement(
+    val keyHolder: CrossThreadKeyHolder
+) : CrossThreadCoroutineContext, CoroutineContext.Element {
     override val key: CoroutineContext.Key<NetworkHolderElement>
         get() = NetworkHolderElementKey
 }
@@ -27,63 +28,54 @@ suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R 
         val executorPool =
             executor
                 ?: it.context[ExecutorServiceHolderKey]?.executor
-
+        val newContext = it.context.fold(EmptyCoroutineContext as CoroutineContext) { f, s ->
+            if (s is CrossThreadCoroutineContext) {
+                f + s
+            } else {
+                f
+            }
+        }
         if (executorPool == null) {
             it.resumeWithException(IllegalStateException("No defined default worker"))
             return@suspendCoroutine
         }
-        val dispatcher = it.context[NetworkDispatcherHolderElementKey]?.dispatcher
+
+        val dispatcher = it.context[CrossThreadCoroutineKey]?.crossThreadCoroutine
         if (dispatcher == null) {
-            it.resumeWithException(IllegalStateException("No defined default NetworkDispatcher"))
+            it.resumeWithException(IllegalStateException("No defined default CrossThreadCoroutineKey"))
             return@suspendCoroutine
         }
-        val holder = dispatcher.crossThreadWakeUpHolder.doFreeze()
+        val holder = dispatcher.doFreeze()
         val selfCon = it.asReference()
-        executorPool.submitAsync(NetworkHolderElement(holder).doFreeze()) {
+        executorPool.submitAsync(newContext.doFreeze()) {
             val result = runCatching { func.invoke() }
-            holder.waitReadyForWrite {
-                val self = selfCon.free()
-                self.resumeWith(result)
-            }
+            holder.coroutine(result = result, continuation = selfCon as Reference<Continuation<Any?>>)
         }
     }
 
-suspend fun <R> network(func: suspend () -> R): R {
-    val isNetworkThread = suspendCoroutine<Boolean> { con ->
+@Suppress("UNCHECKED_CAST")
+suspend fun <R> network(func: suspend () -> R): R =
+    suspendCoroutine { con ->
         val holder = con.context[NetworkHolderElementKey]?.keyHolder
         if (holder == null) {
             con.resumeWithException(IllegalStateException("No defined default network key holder"))
             return@suspendCoroutine
         }
-        con.resume(holder.isNetworkThread)
-    }
-    return if (isNetworkThread) {
-        func()
-    } else {
-        suspendCoroutine { con ->
-            val holder = con.context[NetworkHolderElementKey]?.keyHolder
-            if (holder == null) {
-                con.resumeWithException(IllegalStateException("No defined default network key holder"))
-                return@suspendCoroutine
-            }
-            func.doFreeze()
-            val worker = con.context[WorkerHolderElementKey]?.worker
-            if (worker == null) {
-                con.resumeWithException(IllegalStateException("Can't find worker in Context"))
-                return@suspendCoroutine
-            }
-            val workerContinuation = con.asReference().doFreeze()
-            holder.waitReadyForWrite {
-                async {
-                    try {
-                        val result = runCatching { func() }
-                        worker.resume(result, workerContinuation)
-                    } catch (e: Throwable) {
-                        e.printStackTrace()
-                    }
+        func.doFreeze()
+        val worker = con.context[CrossThreadCoroutineKey]?.crossThreadCoroutine
+        if (worker == null) {
+            con.resumeWithException(IllegalStateException("Can't find worker in Context"))
+            return@suspendCoroutine
+        }
+        val workerContinuation = con.asReference().doFreeze()
+        holder.waitReadyForWrite {
+            async {
+                try {
+                    val result = runCatching { func() }
+                    worker.coroutine(result, workerContinuation as Reference<Continuation<Any?>>)
+                } catch (e: Throwable) {
+                    e.printStackTrace()
                 }
             }
         }
     }
-
-}

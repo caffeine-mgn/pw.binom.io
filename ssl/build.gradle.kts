@@ -58,8 +58,7 @@ kotlin {
                 }
             }
             val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/mingwX64Main/cinterop/lib/libssl.a",
-                "-include-binary", "${buildFile.parent}/src/mingwX64Main/cinterop/lib/libcrypto.a"
+                "-include-binary", "${buildFile.parent}/src/mingwX64Main/cinterop/lib/libopenssl.a"
             )
             compilations["main"].kotlinOptions.freeCompilerArgs = args
             compilations["test"].kotlinOptions.freeCompilerArgs = args
@@ -76,10 +75,11 @@ kotlin {
                     includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
                 }
             }
-            compilations["main"].kotlinOptions.freeCompilerArgs =
-                listOf("-include-binary", "${buildFile.parent}/src/mingwX86Main/cinterop/lib/libssl.a")
-            compilations["test"].kotlinOptions.freeCompilerArgs =
-                listOf("-include-binary", "${buildFile.parent}/src/mingwX86Main/cinterop/lib/libcrypto.a")
+            val args = listOf(
+                "-include-binary", "${buildFile.parent}/src/mingwX86Main/cinterop/lib/libopenssl.a"
+            )
+            compilations["main"].kotlinOptions.freeCompilerArgs = args
+            compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
 

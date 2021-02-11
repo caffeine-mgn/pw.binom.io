@@ -6,7 +6,7 @@ import pw.binom.doFreeze
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.suspendCoroutine
 
-class CrossThreadKeyHolder(val key: Selector.Key) {
+class CrossThreadKeyHolder(val key: Selector.Key) : CrossThreadCoroutine {
     val readyForWriteListener = ConcurrentQueue<() -> Unit>()
     private val networkThread = ThreadRef()
     val isNetworkThread
@@ -24,25 +24,13 @@ class CrossThreadKeyHolder(val key: Selector.Key) {
             key.addListen(Selector.OUTPUT_READY)
         }
     }
-}
 
-suspend fun <R> CrossThreadKeyHolder.executeOnNetwork(func: suspend () -> R): R =
-    suspendCoroutine { con ->
-        func.doFreeze()
-        val worker = con.context[WorkerHolderElementKey]?.worker
-            ?: throw IllegalStateException("Can't find worker in Context")
-        val workerContinuation = con.asReference().doFreeze()
+    override fun coroutine(result: Result<Any?>, continuation: Reference<Continuation<Any?>>) {
         waitReadyForWrite {
-            async {
-                try {
-                    val result = runCatching { func() }
-                    worker.resume(result, workerContinuation)
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                }
-            }
+            continuation.free().resumeWith(result)
         }
     }
+}
 
 fun <T> Worker.resume(result: Result<T>, func: Reference<Continuation<T>>) {
     execute(result to func) {

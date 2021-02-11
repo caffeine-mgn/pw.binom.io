@@ -6,8 +6,10 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import pw.binom.attach
 import pw.binom.doFreeze
+import kotlin.coroutines.Continuation
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.freeze
+import kotlin.native.internal.GC.resume
 import kotlin.native.concurrent.Worker as NativeWorker
 
 @ThreadLocal
@@ -22,7 +24,7 @@ private fun <DATA, RESULT> getFunc(worker: Worker, input: DATA, func: (DATA) -> 
         InputData(worker, input, func)
     }.doFreeze()
 
-actual class Worker actual constructor(name: String?) {
+actual class Worker actual constructor(name: String?) : CrossThreadCoroutine {
     private val nativeWorker = NativeWorker.start(errorReporting = true, name = name)
     private val _isInterrupted = AtomicBoolean(false)
     private var _taskCount by AtomicInt(0)
@@ -65,4 +67,12 @@ actual class Worker actual constructor(name: String?) {
 
     actual val id: Long
         get() = nativeWorker.id.toLong()
+
+    override fun coroutine(result: Result<Any?>, continuation: Reference<Continuation<Any?>>) {
+        execute(result to continuation) {
+            val f = it.second.value
+            it.second.close()
+            f.resumeWith(it.first)
+        }
+    }
 }

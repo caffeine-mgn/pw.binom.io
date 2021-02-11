@@ -6,13 +6,14 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.coroutines.Continuation
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 private val currentWorker = ThreadLocal<Worker>()
 private val idSeq = AtomicLong(0)
 
-actual class Worker actual constructor(name: String?) {
+actual class Worker actual constructor(name: String?) : CrossThreadCoroutine {
     private val _id = idSeq.incrementAndGet()
     private val worker = Executors.newSingleThreadExecutor()
 
@@ -65,6 +66,14 @@ actual class Worker actual constructor(name: String?) {
     private var _taskCount = AtomicInt(0)
     actual val taskCount
         get() = _taskCount.value
+
+    override fun coroutine(result: Result<Any?>, continuation: Reference<Continuation<Any?>>) {
+        execute(result to continuation) {
+            val f = it.second.value
+            it.second.close()
+            f.resumeWith(it.first)
+        }
+    }
 }
 
 actual fun Worker.Companion.sleep(deley: Long) {
