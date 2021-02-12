@@ -28,13 +28,7 @@ suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R 
         val executorPool =
             executor
                 ?: it.context[ExecutorServiceHolderKey]?.executor
-        val newContext = it.context.fold(EmptyCoroutineContext as CoroutineContext) { f, s ->
-            if (s is CrossThreadCoroutineContext) {
-                f + s
-            } else {
-                f
-            }
-        }
+        val newContext = it.context.buildCrossThreadContext()
         if (executorPool == null) {
             it.resumeWithException(IllegalStateException("No defined default worker"))
             return@suspendCoroutine
@@ -50,6 +44,29 @@ suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R 
         executorPool.submitAsync(newContext.doFreeze()) {
             val result = runCatching { func.invoke() }
             holder.coroutine(result = result, continuation = selfCon as Reference<Continuation<Any?>>)
+        }
+    }
+
+
+suspend fun <T> execute(worker: Worker, func: suspend () -> T): T =
+    suspendCoroutine { con ->
+        val dispatcher = con.context[CrossThreadCoroutineKey]?.crossThreadCoroutine
+        if (dispatcher == null) {
+            con.resumeWithException(IllegalStateException("No defined default CrossThreadCoroutineKey"))
+            return@suspendCoroutine
+        }
+
+        val newContext = con.context.buildCrossThreadContext()
+        newContext.doFreeze()
+        val conRef = con.asReference()
+        worker.execute(Unit) {
+            func.startCoroutine(object : Continuation<T> {
+                override val context: CoroutineContext = newContext + CrossThreadCoroutineElement(worker)
+
+                override fun resumeWith(result: Result<T>) {
+                    dispatcher.coroutine(result, conRef as Reference<Continuation<Any?>>)
+                }
+            })
         }
     }
 
