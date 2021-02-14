@@ -4,10 +4,12 @@ import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 
 interface Route {
+    fun route(path: String, route: Route)
     fun route(path: String, func: (Route.() -> Unit)? = null): Route
     fun detach(path: String,route:Route)
     fun endpoint(method: String, path: String, func: suspend (Action) -> Boolean):Closeable
     fun forward(handler: Handler?)
+    suspend fun execute(action: Action): Boolean
 }
 
 inline fun Route.get(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("GET", path, func)

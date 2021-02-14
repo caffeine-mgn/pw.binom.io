@@ -8,9 +8,13 @@ import pw.binom.pool.DefaultPool
 import pw.binom.pool.ObjectPool
 
 abstract class AbstractRoute : Route, Handler {
-    private val routers = HashMap<String, ArrayList<RouteImpl>>()
+    private val routers = HashMap<String, ArrayList<Route>>()
     private val methods = HashMap<String, HashMap<String, ArrayList<suspend (Action) -> Boolean>>>()
     private var forwardHandler: Handler? = null
+
+    override fun route(path: String, route: Route) {
+        routers.getOrPut(path) { ArrayList() }.add(route)
+    }
 
     override fun route(path: String, func: (Route.() -> Unit)?): Route {
         val r = RouteImpl()
@@ -47,7 +51,7 @@ abstract class AbstractRoute : Route, Handler {
         forwardHandler = handler
     }
 
-    open suspend fun execute(action: Action): Boolean {
+    override suspend fun execute(action: Action): Boolean {
         val forward = forwardHandler
         if (forward != null) {
             forward.request(action.req, action.resp)

@@ -77,7 +77,7 @@ class PGConnection private constructor(
     private val pw = PackageWriter(charset, ByteBufferPool(10))
 
     private var connected = true
-    val isConnected
+    override val isConnected
         get() = connected
 
     suspend fun sendQuery(query: String): KindedMessage {

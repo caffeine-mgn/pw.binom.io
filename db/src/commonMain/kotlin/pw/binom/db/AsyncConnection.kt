@@ -8,4 +8,5 @@ interface AsyncConnection : AsyncCloseable {
     suspend fun commit()
     suspend fun rollback()
     val type: String
+    val isConnected: Boolean
 }
