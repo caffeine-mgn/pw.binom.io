@@ -18,6 +18,7 @@ expect class Worker: CrossThreadCoroutine {
 }
 
 expect fun Worker.Companion.sleep(deley: Long)
+expect val Worker.Companion.availableProcessors: Int
 
 //class WorkerHolderElement(val worker: Worker) : CoroutineContext.Element {
 //    override val key: CoroutineContext.Key<WorkerHolderElement>

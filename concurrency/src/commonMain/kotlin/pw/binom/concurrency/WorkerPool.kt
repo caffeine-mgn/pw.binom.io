@@ -56,7 +56,7 @@ fun ExecutorService.submitAsync(context: CoroutineContext = EmptyCoroutineContex
     }
 }
 
-class WorkerPool(size: Int) : ExecutorService {
+class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
     private class State(size: Int) {
         var interotped = AtomicBoolean(false)
         val stoped = AtomicInt(size)

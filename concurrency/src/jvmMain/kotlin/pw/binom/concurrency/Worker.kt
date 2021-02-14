@@ -79,3 +79,6 @@ actual class Worker actual constructor(name: String?) : CrossThreadCoroutine {
 actual fun Worker.Companion.sleep(deley: Long) {
     Thread.sleep(deley)
 }
+
+actual val Worker.Companion.availableProcessors: Int
+    get() = Runtime.getRuntime().availableProcessors()
