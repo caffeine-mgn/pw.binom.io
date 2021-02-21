@@ -160,8 +160,8 @@ class NatsConnector(
             val connection = dispatcher.tcpConnect(address)
             val con = Connection(
                 raw = connection,
-                appender = connection.bufferedWriter(pool),
-                reader = AsyncBufferedAsciiInputReader(connection)
+//                appender = connection.bufferedWriter(pool),
+//                reader = AsyncBufferedAsciiInputReader(connection)
             )
 
             val msg = con.appender
