@@ -17,6 +17,7 @@ class NatsConnector(
     val lang: String = "kotlin",
     val echo: Boolean = true,
     val autoConnectToCluster: Boolean = true,
+    val servers: List<NetworkAddress>,
     val messageListener: (suspend (Message) -> Unit)?
 ) : Closeable {
     interface Message {
@@ -50,9 +51,11 @@ class NatsConnector(
 
     inner class Connection(
         val raw: TcpConnection,
-        val appender: AsyncBufferedOutputAppendable,
-        val reader: AsyncBufferedAsciiInputReader
+//        val appender: AsyncBufferedOutputAppendable,
+//        val reader: AsyncBufferedAsciiInputReader
     ) {
+        val appender = raw.bufferedAsciiWriter()
+        val reader = raw.bufferedAsciiReader()
         var server_id: String? = null
         var server_name: String? = null
         var client_id: Int? = null
@@ -64,6 +67,7 @@ class NatsConnector(
                 try {
                     while (true) {
                         val msg = reader.readln() ?: break
+                        println("msg: $msg")
                         when {
                             msg.startsWith("INFO ") -> parseInfoMsg(this, msg)
                             msg == "PING" -> {
@@ -110,11 +114,16 @@ class NatsConnector(
 
     private val pool = ByteBufferPool(10)
 
+    internal fun connected(connect: NatsConnection) {
+
+    }
+
     private suspend fun parseInfoMsg(con: Connection, msg: String) {
         if (!msg.startsWith("INFO ")) {
             throw RuntimeException("Unknown message. Message: [$msg]")
         }
         val json = msg.removePrefix("INFO ")
+        println("Parsing...")
         try {
             val data = Json.parseToJsonElement(json)
             con.server_id = data.jsonObject["server_id"]?.jsonPrimitive?.content
@@ -126,6 +135,7 @@ class NatsConnector(
             if (autoConnectToCluster) {
                 data.jsonObject["connect_urls"]?.jsonArray?.forEach {
                     val items = it.jsonPrimitive.content.split(':')
+                    println("Connecting...")
                     connect(
                         NetworkAddress.Immutable(
                             host = items[0],
@@ -137,51 +147,66 @@ class NatsConnector(
         } catch (e: Throwable) {
             throw RuntimeException("Can't parse info message. Message: [$json]", e)
         }
+        println("Parsed!")
     }
 
+    class Connection2(val address: NetworkAddress) {
+
+    }
+
+    private var conns = ArrayList<NatsConnection>()
     suspend fun connect(address: NetworkAddress) {
-        val connection = dispatcher.tcpConnect(address)
-        val con = Connection(
-            raw = connection,
-            appender = connection.bufferedWriter(pool),
-            reader = AsyncBufferedAsciiInputReader(connection)
-        )
+        try {
+            val connection = dispatcher.tcpConnect(address)
+            val con = Connection(
+                raw = connection,
+                appender = connection.bufferedWriter(pool),
+                reader = AsyncBufferedAsciiInputReader(connection)
+            )
 
-        val msg = con.appender
-        msg.append("CONNECT {")
-        msg
-            .append("\"verbose\": false, \"tls_required\":").append(tlsRequired)
-            .append(", \"lang\":\"").append(lang)
-            .append("\",\"version\":\"0.1.26\",\"protocol\":1,\"pedantic\":false")
-            .append(",\"echo\":").append(echo)
+            val msg = con.appender
+            msg.append("CONNECT {")
+            msg
+                .append("\"verbose\": false, \"tls_required\":").append(tlsRequired)
+                .append(", \"lang\":\"").append(lang)
+                .append("\",\"version\":\"0.1.28\",\"protocol\":1,\"pedantic\":false")
+                .append(",\"echo\":").append(echo)
 
-        if (clientName != null) {
-            msg.append(",\"name\":\"").append(clientName).append("\"")
+            if (clientName != null) {
+                msg.append(",\"name\":\"").append(clientName).append("\"")
+            }
+            if (user != null) {
+                msg.append(",\"user\":\"").append(user).append("\"")
+            }
+
+            msg.append("}\r\n")
+            con.appender.flush()
+            val connectMsg = con.reader.readln() ?: throw IOException("Can't connect to Nats")
+            println("msg: $connectMsg")
+            parseInfoMsg(con, connectMsg)
+            connections += con
+            con.start()
+        } catch (e: Throwable) {
+            println("Can't connect to $address")
         }
-        if (user != null) {
-            msg.append(",\"user\":\"").append(user).append("\"")
-        }
-
-        msg.append("}\r\n")
-//        con.appender.append(msg.toString())
-        con.appender.flush()
-        val connectMsg = con.reader.readln() ?: throw IOException("Can't connect to Nats")
-        parseInfoMsg(con, connectMsg)
-        connections += con
-        con.start()
     }
 
     suspend fun subscribe(subject: String, group: String? = null): UUID {
         require(subject.isNotEmpty() && " " !in subject)
         require(group == null || (group.isNotEmpty() && " " !in group))
         val subscribeId = Random.uuid()
-        val app = getConnection().appender
-        app.append("SUB ").append(subject)
-        if (group != null) {
-            app.append(" ").append(group)
+        var c = conns.size
+        conns.forEach {
+            it.subscribe(subscribeId, subject, group)
         }
-        app.append(" ").append(subscribeId.toString()).append("\r\n")
-        app.flush()
+
+//        val app = getConnection().appender
+//        app.append("SUB ").append(subject)
+//        if (group != null) {
+//            app.append(" ").append(group)
+//        }
+//        app.append(" ").append(subscribeId.toString()).append("\r\n")
+//        app.flush()
 
         return subscribeId
     }
@@ -242,6 +267,23 @@ class NatsConnector(
             } catch (e: Throwable) {
                 //ignore
             }
+        }
+    }
+
+    init {
+        servers.forEach { address ->
+            val con = NatsConnection(
+                address = address,
+                dispatcher = dispatcher,
+                tlsRequired = tlsRequired,
+                lang = lang,
+                echo = echo,
+                clientName = clientName,
+                user = user,
+                natsConnector = this
+            )
+            conns.add(con)
+            con.connect()
         }
     }
 }
