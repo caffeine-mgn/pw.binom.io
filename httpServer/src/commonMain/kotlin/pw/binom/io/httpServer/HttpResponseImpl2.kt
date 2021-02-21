@@ -143,7 +143,7 @@ internal class HttpResponseImpl2(
         }
     }
 
-    override suspend fun complete(autoFlushSize: UInt): HttpResponseBody {
+    override suspend fun complete(autoFlushSize: Int): HttpResponseBody {
         checkHeaderSent()
         val buf = rawOutput!!
 //        val app = buf.utf8Appendable()

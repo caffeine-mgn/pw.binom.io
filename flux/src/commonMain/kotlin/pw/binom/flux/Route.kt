@@ -2,6 +2,8 @@ package pw.binom.flux
 
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.HttpRequest
+import pw.binom.io.httpServer.HttpResponse
 
 interface Route {
     fun route(path: String, route: Route)
@@ -77,6 +79,10 @@ fun Route.postHandle(func: suspend (action: Action, result: Boolean) -> Unit) = 
  * @param func will be call instend original handler. As argument will be pass original [Action] and result of original handler
  */
 fun Route.wrap(func: suspend (Action, suspend (Action) -> Boolean) -> Boolean) = object : AbstractRoute() {
+    init {
+        this@wrap.forward(this)
+    }
+
     override suspend fun execute(action: Action): Boolean =
         func(action) { newAction ->
             super.execute(newAction)

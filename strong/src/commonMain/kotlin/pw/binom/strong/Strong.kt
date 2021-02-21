@@ -10,46 +10,56 @@ class Strong private constructor() {
     private var initing = false
 
     interface PropertyProvider {
-        suspend fun init(): Map<String, String>
+        suspend fun readProperties(): Map<String, String>
     }
 
     interface Config {
-        suspend fun apply(strong: Strong)
+        suspend fun apply(strong: Strong, definer: Definer)
     }
 
     interface InitializingBean {
-        suspend fun init()
+        suspend fun init(strong: Strong)
     }
 
     interface LinkingBean {
-        suspend fun link()
+        suspend fun link(strong: Strong)
     }
 
     interface ServiceProvider {
-        suspend fun provide()
+        suspend fun provide(strong: Strong, definer: Definer)
     }
 
     interface DestroyableBean {
-        suspend fun destroy()
+        suspend fun destroy(strong: Strong)
     }
 
     private var properties = HashMap<String, String>()
+
+    interface Definer {
+        /**
+         * Define [bean]. Default [name] is `[bean]::class + "_" + [bean].class.hashCode()`
+         *
+         * @param bean object for define
+         * @param name name of [bean] for define. See description of method for get default value
+         * @param ifNotExist if false on duplicate will throw [BeanAlreadyDefinedException]. If true will ignore redefine
+         */
+        fun define(bean: Any, name: String = "${bean::class}_${bean::class.hashCode()}", ifNotExist: Boolean = false)
+    }
 
     companion object {
 
         suspend fun create(vararg config: Config): Strong {
             val strong = Strong()
             config.forEach {
-                it.apply(strong)
+                it.apply(strong, strong.definer)
             }
-
 
             return strong
         }
 
-        fun config(func: (Strong) -> Unit) = object : Config {
-            override suspend fun apply(strong: Strong) {
-                func(strong)
+        fun config(func: (Strong, Definer) -> Unit) = object : Config {
+            override suspend fun apply(strong: Strong, definer: Definer) {
+                func(strong, definer)
             }
         }
     }
@@ -58,22 +68,21 @@ class Strong private constructor() {
         if (inited) {
             throw IllegalStateException("Strong already started")
         }
-        initing = true
         beanOrder.forEach {
             if (it is PropertyProvider) {
-                properties.putAll(it.init())
+                properties.putAll(it.readProperties())
             }
         }
-
-        beanOrder.forEach {
+        ArrayList(beanOrder).forEach {
             if (it is ServiceProvider) {
-                it.provide()
+                it.provide(this, definer)
             }
         }
+        initing = true
         beanOrder.forEach {
             if (it is InitializingBean) {
                 try {
-                    it.init()
+                    it.init(this)
                 } catch (e: Throwable) {
                     throw RuntimeException("Can't init bean ${it::class}", e)
                 }
@@ -81,7 +90,7 @@ class Strong private constructor() {
         }
         beanOrder.forEach {
             if (it is LinkingBean) {
-                it.link()
+                it.link(this)
             }
         }
         beanOrder.clear()
@@ -92,7 +101,7 @@ class Strong private constructor() {
     suspend fun destroy() {
         beans.values.forEach {
             if (it is DestroyableBean) {
-                it.destroy()
+                it.destroy(this)
             }
         }
         beans.clear()
@@ -133,29 +142,27 @@ class Strong private constructor() {
      */
     fun exist(name: String) = beans.containsKey(name)
 
-    /**
-     * Define [bean]. Default [name] is `[bean]::class + "_" + [bean].class.hashCode()`
-     *
-     * @param bean object for define
-     * @param name name of [bean] for define. See description of method for get default value
-     * @param ifNotExist if false on duplicate will throw [BeanAlreadyDefinedException]. If true will ignore redefine
-     */
-    fun define(bean: Any, name: String = "${bean::class}_${bean::class.hashCode()}", ifNotExist: Boolean = false) {
-        if (inited) {
-            throw IllegalStateException("Strong already inited")
-        }
-        if (initing) {
-            throw IllegalStateException("Can't define bean during start process")
-        }
-        if (beans.containsKey(name)) {
-            if (ifNotExist) {
-                return
-            } else {
-                throw BeanAlreadyDefinedException(name)
+    private val definer = DefinerImpl()
+
+    private inner class DefinerImpl : Definer {
+        override fun define(bean: Any, name: String, ifNotExist: Boolean) {
+            if (inited) {
+                throw IllegalStateException("Strong already inited")
             }
+            if (initing) {
+                throw IllegalStateException("Can't define bean during start process")
+            }
+            if (beans.containsKey(name)) {
+                if (ifNotExist) {
+                    return
+                } else {
+                    throw BeanAlreadyDefinedException(name)
+                }
+            }
+            beanOrder += bean
+            beans[name] = bean
         }
-        beanOrder += bean
-        beans[name] = bean
+
     }
 
     fun <T : Any> service(beanClass: KClass<T>, name: String? = null) = ServiceInjector(this, beanClass, name)

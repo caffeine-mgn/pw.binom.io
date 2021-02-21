@@ -89,25 +89,40 @@ class PGConnection private constructor(
     }
 
     suspend fun query(query: String): QueryResponse {
-        val msg = sendQuery(query)
-        return when (msg) {
-            is CommandCompleteMessage -> {
-                check(this.readDesponse() is ReadyForQueryMessage)
-                QueryResponse.Status(
-                    status = msg.statusMessage,
-                    rowsAffected = msg.rowsAffected
-                )
+//        val msg = sendQuery(query)
+        if (busy)
+            throw IllegalStateException("Connection is busy")
+        val msg = this.reader.queryMessage
+        msg.query = query
+        sendOnly(msg)
+        var rowsAffected = 0L
+        LOOP@ while (true) {
+            val msg = readDesponse()
+            when (msg) {
+                is ReadyForQueryMessage -> {
+                    return QueryResponse.Status(
+                        status = "",
+                        rowsAffected = rowsAffected
+                    )
+                }
+                is CommandCompleteMessage -> {
+                    rowsAffected += msg.rowsAffected
+                    continue@LOOP
+                }
+                is RowDescriptionMessage -> {
+                    busy = true
+                    val msg2 = reader.data
+                    msg2.reset(msg)
+                    return msg2
+                }
+                is ErrorMessage -> {
+                    throw PostgresqlException(msg.fields['M'])
+                }
+                is NoticeMessage -> {
+                    continue@LOOP
+                }
+                else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg]")
             }
-            is RowDescriptionMessage -> {
-                busy = true
-                val msg2 = reader.data
-                msg2.reset(msg)
-                return msg2
-            }
-            is ErrorMessage -> {
-                throw PostgresqlException(msg.fields['M'])
-            }
-            else -> throw SQLException("Unexpected Message. Message: [$msg]")
         }
     }
 
