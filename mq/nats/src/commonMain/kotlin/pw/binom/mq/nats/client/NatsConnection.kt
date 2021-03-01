@@ -2,7 +2,6 @@ package pw.binom.mq.nats.client
 
 import kotlinx.serialization.json.*
 import pw.binom.UUID
-import pw.binom.async2
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -15,7 +14,7 @@ class NatsConnection(
     val echo: Boolean,
     val clientName: String?,
     val user: String?,
-    val natsConnector: NatsConnector,
+    val natsConnector: NatsConnector3,
 ) {
     var serverId: String? = null
         private set
@@ -68,17 +67,17 @@ class NatsConnection(
         natsConnector.connected(this)
     }
 
-    fun connect() {
-        async2 {
-            val connection = dispatcher.tcpConnect(address)
-            val msg = connection.bufferedAsciiWriter()
-            val read = connection.bufferedAsciiReader()
-            msg.append("CONNECT {")
-            msg
-                .append("\"verbose\": false, \"tls_required\":").append(tlsRequired)
-                .append(", \"lang\":\"").append(lang)
-                .append("\",\"version\":\"0.1.28\",\"protocol\":1,\"pedantic\":false")
-                .append(",\"echo\":").append(echo)
+    suspend fun connect() {
+
+        val connection = dispatcher.tcpConnect(address)
+        val msg = connection.bufferedAsciiWriter()
+        val read = connection.bufferedAsciiReader()
+        msg.append("CONNECT {")
+        msg
+            .append("\"verbose\": false, \"tls_required\":").append(tlsRequired)
+            .append(", \"lang\":\"").append(lang)
+            .append("\",\"version\":\"0.1.28\",\"protocol\":1,\"pedantic\":false")
+            .append(",\"echo\":").append(echo)
 
             if (clientName != null) {
                 msg.append(",\"name\":\"").append(clientName).append("\"")
@@ -93,7 +92,6 @@ class NatsConnection(
             println("msg: $connectMsg")
             parseInfoMsg(connectMsg)
             connected(connection, read, msg)
-        }
     }
 
     suspend fun subscribe(subscribeId: UUID, subject: String, group: String?) {

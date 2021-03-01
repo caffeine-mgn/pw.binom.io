@@ -156,7 +156,7 @@ actual class NSocket(val native: Int) : Closeable {
         address: NetworkAddress.Mutable?
     ): Int {
         val gotBytes = if (address == null) {
-            val rr = recvfrom(native, data.bytes.refTo(data.position), data.remaining.convert(), 0, null, null)
+            val rr = recvfrom(native, data.refTo(data.position), data.remaining.convert(), 0, null, null)
             if (rr.toInt() == -1 && errno!= EAGAIN) {
                 throw IOException("Can't read data. Error: $errno  ${errno}")
             }
@@ -166,7 +166,7 @@ actual class NSocket(val native: Int) : Closeable {
                 val len = allocArray<socklen_tVar>(1)
                 len[0] = 28.convert()
                 val rr = recvfrom(
-                    native, data.bytes.refTo(data.position).getPointer(this), data.remaining.convert(), 0,
+                    native, data.refTo(data.position).getPointer(this), data.remaining.convert(), 0,
                     address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
                     len
                 )

@@ -197,4 +197,19 @@ inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
     return output
 }
 
+/**
+ * Makes new ByteBuffer from current [ByteArray]. Also later you must don't fogot to close created ByteBuffer
+ */
 fun ByteArray.wrap() = ByteBuffer.wrap(this)
+
+/**
+ * Makes [ByteBuffer] from current [ByteArray]. Then call [func]. And after that close created [ByteBuffer]
+ */
+inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
+    val buf = ByteBuffer.wrap(this)
+    return try {
+        func(buf)
+    } finally {
+        buf.close()
+    }
+}

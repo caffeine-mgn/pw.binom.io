@@ -1,7 +1,7 @@
 # History
 
 ### 0.1.28
-* Update Kotlin version 1.4.21 -> 1.4.30
+* Update Kotlin version 1.4.21 -> 1.4.31
 * Fix bugs in ssl
 * Remove library for work with json
 

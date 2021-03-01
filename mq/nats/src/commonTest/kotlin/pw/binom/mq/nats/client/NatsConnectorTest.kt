@@ -1,16 +1,16 @@
 package pw.binom.mq.nats.client
 
-import pw.binom.*
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.bufferedWriter
+import pw.binom.async2
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import pw.binom.uuid
+import pw.binom.wrap
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
-import kotlin.time.seconds
 
 class NatsConnectorTest {
 
@@ -22,21 +22,24 @@ class NatsConnectorTest {
             clientName = "Binom Client",
             user = null,
             pass = null,
-            dispatcher = nd,
+            networkDispatcher = nd,
             tlsRequired = false,
             echo = false,
-            servers = listOf(
+            serverList = listOf(
                 NetworkAddress.Immutable("127.0.0.1", 4222),
                 NetworkAddress.Immutable("127.0.0.1", 4223)
             )
-        ) {
-            println("->${it.data.toByteArray().decodeToString()}")
-        }
+        )
 
         async2 {
             try {
+                val msgText = Random.uuid().toString()
                 connector1.subscribe("S1", null)
-                connector1.publish("s1",null,"Hello".encodeToByteArray().wrap())
+                connector1.publish("s1", null, "Hello".encodeToByteArray().wrap())
+
+                val msg = connector1.readMessage()
+                assertNull(msg.replyTo)
+                assertEquals("Hello", msg.data.toByteArray().decodeToString())
             } catch (e: Throwable) {
                 e.printStackTrace()
             }

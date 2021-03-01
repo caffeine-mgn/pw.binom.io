@@ -1,4 +1,4 @@
-import java.util.TimeZone
+import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -114,7 +114,11 @@ kotlin {
             }
         }
     }
-    js(BOTH) {
+    println("Methods:")
+    this::class.java.declaredMethods.forEach {
+        println("---->$it")
+    }
+    js("js", BOTH) {
         browser()
         nodejs()
     }
