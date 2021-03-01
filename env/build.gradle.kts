@@ -56,7 +56,7 @@ kotlin {
             framework()
         }
     }
-    js {
+    js("js", BOTH) {
         browser()
         nodejs()
     }

@@ -75,7 +75,12 @@ class AsyncConnectionPool constructor(
         return null
     }
 
-    suspend fun getConnection(): AsyncConnection {
+    suspend fun <T> connect(func: suspend (AsyncConnection) -> T): T =
+        getConnection().use {
+            func(it)
+        }
+
+    private suspend fun getConnection(): AsyncConnection {
 
         var connection = findValidConnection()
         if (connection == null && connections.size < max) {
@@ -173,14 +178,5 @@ class AsyncConnectionPool constructor(
             closed = true
             free(this)
         }
-    }
-}
-
-suspend fun <R> AsyncConnectionPool.connect(func: suspend (AsyncConnection) -> R): R {
-    val connect = getConnection()
-    return try {
-        func(connect)
-    } finally {
-        connect.asyncClose()
     }
 }

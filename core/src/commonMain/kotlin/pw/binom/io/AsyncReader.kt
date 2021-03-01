@@ -6,7 +6,7 @@ interface AsyncReader : AsyncCloseable {
      */
     suspend fun readChar(): Char?
 
-    suspend fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): Int
+    suspend fun read(dest: CharArray, offset: Int = 0, length: Int = dest.size - offset): Int
     suspend fun readln(): String? {
         val sb = StringBuilder()
         try {

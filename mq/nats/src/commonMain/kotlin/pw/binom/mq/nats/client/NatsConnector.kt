@@ -8,6 +8,10 @@ import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketConnectException
 import pw.binom.uuid
 import pw.binom.wrap
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlin.random.Random
 
 class NatsConnector(
@@ -36,7 +40,7 @@ class NatsConnector(
     private var closed = false
     private val subscribes = HashMap<UUID, Subscribe>()
     private var connection: NatsRawConnection? = null
-    private var _serverList = ArrayList<NetworkAddress>()
+    private var _serverList = ArrayList<NetworkAddress>(serverList)
     val serverList: List<NetworkAddress>
         get() = _serverList
     var serverIndex = 0
@@ -53,88 +57,101 @@ class NatsConnector(
     ): AsyncCloseable {
         checkClosed()
         val subscribeId = Random.uuid()
-        subscribes[subscribeId] = Subscribe(
-            subscribeId = subscribeId,
-            subject = subject,
-            group = group,
-
-            )
-        if (connection == null) {
-            initProcessing()
-        } else {
-            connection?.takeIf { it.isConnected }?.subscribe(
+        checkConnection().subscribe(
                 subscribeId = subscribeId,
                 subject = subject,
                 group = group,
-            )
-        }
+        )
+        subscribes[subscribeId] = Subscribe(
+                subscribeId = subscribeId,
+                subject = subject,
+                group = group,
+        )
 
         return AsyncCloseable {
             checkClosed()
             if (subscribes.remove(subscribeId) != null) {
-                connection?.takeIf { it.isConnected }?.unsubscribe(id = subscribeId)
+                checkConnection().unsubscribe(id = subscribeId)
             }
         }
     }
 
-    suspend fun readMessage(): NatsRawConnection.Message {
-        if (connection == null) {
-            initProcessing()
-        }
-        return connection?.readMessage() ?: throw SocketConnectException()
+    suspend fun readMessage(): NatsMessage {
+        return checkConnection().readMessage()
     }
 
-    private suspend fun initProcessing() {
-        check(connection == null)
-        var attemptCount = attemptCount
-        val startIndex = serverIndex
-        var first = true
-        CONNECT_LOOP@ while (true) {
-            if (!first && startIndex == serverIndex) {
-                attemptCount--
-            }
-            if (attemptCount == -1) {
-                throw SocketConnectException()
-            }
-            first = false
-            if (serverIndex >= serverList.size) {
-                serverIndex = 0
-            }
-            val addr = serverList[serverIndex]
-            val tcpConnection = try {
-                networkDispatcher.tcpConnect(addr)
-            } catch (e: SocketConnectException) {
-                serverIndex++
-                continue@CONNECT_LOOP
-            }
-            try {
-                val connect = NatsRawConnection(
-                    channel = tcpConnection,
-                )
-                val c = connect.prepareConnect(
-                    clientName = clientName,
-                    lang = lang,
-                    echo = echo,
-                    tlsRequired = tlsRequired,
-                    user = user,
-                    pass = pass
-                )
-                val list = (serverList + c.clusterAddresses).distinct()
-                _serverList.clear()
-                _serverList.addAll(list)
-                subscribes.values.forEach {
-                    connect.subscribe(
-                        subscribeId = it.subscribeId,
-                        subject = it.subject,
-                        group = it.group
-                    )
+    private var connecting = false
+    private var connectionWaters = ArrayList<Continuation<NatsRawConnection>>()
+
+    private suspend fun checkConnection(): NatsRawConnection {
+        if (connection != null) {
+            return connection!!
+        }
+        if (connecting) {
+            return suspendCoroutine { connectionWaters.add(it) }
+        }
+        connecting = true
+        try {
+            var attemptCount = attemptCount
+            val startIndex = serverIndex
+            var first = true
+            CONNECT_LOOP@ while (true) {
+                if (!first && startIndex == serverIndex) {
+                    attemptCount--
                 }
-                this.connection = connect
-                break@CONNECT_LOOP
-            } catch (e: Throwable) {
-                serverIndex++
-                continue@CONNECT_LOOP
+                if (attemptCount == -1) {
+                    connectionWaters.forEach {
+                        it.resumeWithException(SocketConnectException())
+                    }
+                    connectionWaters.clear()
+                    throw SocketConnectException()
+                }
+                first = false
+                if (serverIndex >= serverList.size) {
+                    serverIndex = 0
+                }
+                val addr = serverList[serverIndex]
+                val tcpConnection = try {
+                    networkDispatcher.tcpConnect(addr)
+                } catch (e: SocketConnectException) {
+                    serverIndex++
+                    continue@CONNECT_LOOP
+                }
+                try {
+                    val connect = NatsRawConnection(
+                            channel = tcpConnection,
+                    )
+                    val c = connect.prepareConnect(
+                            clientName = clientName,
+                            lang = lang,
+                            echo = echo,
+                            tlsRequired = tlsRequired,
+                            user = user,
+                            pass = pass
+                    )
+                    val list = (serverList + c.clusterAddresses).distinct()
+                    _serverList.clear()
+                    _serverList.addAll(list)
+                    subscribes.values.forEach {
+                        connect.subscribe(
+                                subscribeId = it.subscribeId,
+                                subject = it.subject,
+                                group = it.group
+                        )
+                    }
+                    this.connection = connect
+                    connectionWaters.forEach {
+                        it.resume(connect)
+                    }
+                    connectionWaters.clear()
+                    return connect
+                } catch (e: Throwable) {
+                    serverIndex++
+                    continue@CONNECT_LOOP
+                }
             }
+        } finally {
+            connecting = false
         }
     }
 
@@ -151,23 +168,18 @@ class NatsConnector(
     }
 
     suspend fun publish(subject: String, replyTo: String? = null, data: ByteArray?) {
-        data?.wrap { data ->
-            publish(
+        checkConnection().publish(
                 subject = subject,
                 replyTo = replyTo,
                 data = data
-            )
-        }
+        )
     }
 
     suspend fun publish(subject: String, replyTo: String? = null, data: ByteBuffer?) {
-        if (connection == null) {
-            initProcessing()
-        }
-        connection?.publish(
-            subject = subject,
-            replyTo = replyTo,
-            data = data
-        ) ?: throw SocketConnectException()
+        checkConnection().publish(
+                subject = subject,
+                replyTo = replyTo,
+                data = data
+        )
     }
 }

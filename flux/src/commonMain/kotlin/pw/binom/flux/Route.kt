@@ -88,3 +88,18 @@ fun Route.wrap(func: suspend (Action, suspend (Action) -> Boolean) -> Boolean) =
             super.execute(newAction)
         }
 }
+
+abstract class RouteWrapper(val route: Route) : AbstractRoute() {
+    init {
+        route.forward(this)
+    }
+
+
+    protected suspend fun invokeSuper(action: Action) =
+        super.execute(action)
+
+
+    override suspend fun execute(action: Action): Boolean = wraping(action)
+
+    abstract suspend fun wraping(action: Action): Boolean
+}

@@ -3,7 +3,6 @@ package pw.binom.mq.nats.client
 import kotlinx.serialization.json.*
 import pw.binom.ByteBuffer
 import pw.binom.UUID
-import pw.binom.async2
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.SocketClosedException
@@ -16,30 +15,22 @@ class NatsRawConnection(
 ) :
     AsyncCloseable {
 
-    interface Message {
-        val connection: NatsRawConnection
-        val subject: String
-        val sid: UUID
-        val replyTo: String?
-        val data: ByteBuffer
-    }
-
     private val zeroBuff = ByteBuffer.alloc(0)
 
-    private inner class MessageImpl : Message {
+    private inner class MessageImpl : NatsMessage {
         override val connection: NatsRawConnection
             get() = this@NatsRawConnection
         override var subject: String = ""
         override var sid: UUID = UUID.random()
         override var replyTo: String? = null
-        override var data: ByteBuffer = zeroBuff
+        override var data: ByteArray = ByteArray(0)
     }
 
     private val msg = MessageImpl()
     var isConnected = false
-    var isConnecting = true
+    var isConnecting = false
     private var disconnecting = false
-    private val appender = channel.bufferedAsciiWriter()
+    private val writer = channel.bufferedAsciiWriter()
     private val reader = channel.bufferedAsciiReader()
 
     data class ConnectInfo(
@@ -59,52 +50,51 @@ class NatsRawConnection(
         lang: String = "kotlin",
         echo: Boolean = true,
         tlsRequired: Boolean = false,
+        version: String = "0.1.28",
         user: String? = null,
         pass: String? = null,
     ): ConnectInfo {
-        check(isConnecting && !isConnected)
+        check(!isConnecting) { "Connection already in preparing state" }
+        check(!isConnected) { "Connection already prepared" }
+        isConnecting = true
         try {
-            require((user == null && pass == null) || (user != null && pass != null)) { "Invalid User and Password" }
+            require((user == null && pass == null) || (user != null && pass != null)) { "Invalid User and Password arguments" }
 
-            val msg = appender
-            msg.append("CONNECT {")
-            msg
+            writer.append("CONNECT {")
                 .append("\"verbose\": false, \"tls_required\":").append(tlsRequired)
                 .append(", \"lang\":\"").append(lang)
-                .append("\",\"version\":\"0.1.28\",\"protocol\":1,\"pedantic\":false")
+                .append("\",\"version\":\"").append(version).append("\",\"protocol\":1,\"pedantic\":false")
                 .append(",\"echo\":").append(echo)
 
             if (clientName != null) {
-                msg.append(",\"name\":\"").append(clientName).append("\"")
+                writer.append(",\"name\":\"").append(clientName).append("\"")
             }
             if (user != null && pass != null) {
-                msg.append(",\"user\":\"").append(user).append("\"")
+                writer.append(",\"user\":\"").append(user).append("\"")
                     .append(",\"pass\":\"").append(pass).append("\"")
             }
 
 
 
-            msg.append("}\r\n")
-            appender.flush()
+            writer.append("}\r\n")
+            writer.flush()
             val connectMsg = reader.readln() ?: throw IOException("Can't connect to Nats")
             val info = parseInfoMsg(connectMsg)
-            isConnecting = false
             isConnected = true
             return info
-        } catch (e: Throwable) {
+        } finally {
             isConnecting = false
-            throw e
         }
     }
 
-    suspend fun readMessage(): Message {
+    suspend fun readMessage(): NatsMessage {
         READ_LOOP@ while (true) {
             val msgText = reader.readln() ?: throw SocketClosedException()
             when {
                 msgText.startsWith("INFO ") -> parseInfoMsg(msgText)
                 msgText == "PING" -> {
-                    appender.append("PONG\r\n")
-                    appender.flush()
+                    writer.append("PONG\r\n")
+                    writer.flush()
                     continue@READ_LOOP
                 }
                 msgText.startsWith("MSG ") -> {
@@ -114,24 +104,18 @@ class NatsRawConnection(
                     } else {
                         items[3].toInt()
                     }
-                    val data = ByteBuffer.alloc(size)
-                    try {
-                        reader.readFully(data)
-                        reader.readln()
-                        msg.subject = items[1]
-                        msg.sid = UUID.fromString(items[2])
-                        msg.replyTo = if (items.size == 5) {
-                            items[3]
-                        } else {
-                            null
-                        }
-                        data.flip()
-                        msg.data = data
-                        return msg
-//                        onMessage.invoke(msg)
-                    } finally {
-                        data.close()
+                    msg.subject = items[1]
+                    msg.sid = UUID.fromString(items[2])
+                    msg.replyTo = if (items.size == 5) {
+                        items[3]
+                    } else {
+                        null
                     }
+                    val data = ByteArray(size)
+                    reader.readFully(data)
+                    reader.readln()
+                    msg.data = data
+                    return msg
                 }
                 else -> throw IOException("Unknown message type. Message: [$msg]")
             }
@@ -155,7 +139,7 @@ class NatsRawConnection(
 
     suspend fun subscribe(subscribeId: UUID, subject: String, group: String?) {
         check(isConnected && !isConnecting)
-        val app = appender
+        val app = writer
         app.append("SUB ").append(subject)
         if (group != null) {
             app.append(" ").append(group)
@@ -166,31 +150,31 @@ class NatsRawConnection(
 
     suspend fun unsubscribe(id: UUID, afterMessages: Int? = null) {
         require(afterMessages == null || afterMessages >= 0)
-        appender.append("UNSUB ").append(id.toString())
+        writer.append("UNSUB ").append(id.toString())
         if (afterMessages != null) {
-            appender.append(" ").append(afterMessages.toString())
+            writer.append(" ").append(afterMessages.toString())
         }
-        appender.append("\r\n")
-        appender.flush()
+        writer.append("\r\n")
+        writer.flush()
     }
 
     suspend fun publish(subject: String, replyTo: String? = null, data: ByteBuffer?) {
         require(subject.isNotEmpty() && " " !in subject)
         require(replyTo == null || (replyTo.isNotEmpty() && " " !in replyTo))
 
-        appender.append("PUB ").append(subject)
+        writer.append("PUB ").append(subject)
         if (replyTo != null) {
-            appender.append(" ").append(replyTo)
+            writer.append(" ").append(replyTo)
         }
-        appender.append(" ").append((data?.remaining ?: 0).toString()).append("\r\n")
-        appender.flush()
+        writer.append(" ").append((data?.remaining ?: 0).toString()).append("\r\n")
+        writer.flush()
         if (data != null) {
             while (data.remaining > 0) {
-                appender.write(data)
+                writer.write(data)
             }
         }
-        appender.append("\r\n")
-        appender.flush()
+        writer.append("\r\n")
+        writer.flush()
     }
 
     suspend fun publish(subject: String, replyTo: String? = null, data: ByteArray?) {

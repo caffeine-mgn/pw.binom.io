@@ -114,10 +114,6 @@ kotlin {
             }
         }
     }
-    println("Methods:")
-    this::class.java.declaredMethods.forEach {
-        println("---->$it")
-    }
     js("js", BOTH) {
         browser()
         nodejs()

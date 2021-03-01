@@ -24,30 +24,34 @@ class NatsConnectorTest {
             pass = null,
             networkDispatcher = nd,
             tlsRequired = false,
-            echo = false,
+            echo = true,
             serverList = listOf(
                 NetworkAddress.Immutable("127.0.0.1", 4222),
                 NetworkAddress.Immutable("127.0.0.1", 4223)
             )
         )
 
-        async2 {
+        val done = async2 {
             try {
                 val msgText = Random.uuid().toString()
+                println("try subscribe")
                 connector1.subscribe("S1", null)
-                connector1.publish("s1", null, "Hello".encodeToByteArray().wrap())
+                println("Publish...")
+                connector1.publish("S1", null, "Hello".encodeToByteArray())
 
+                println("Try read...")
                 val msg = connector1.readMessage()
                 assertNull(msg.replyTo)
-                assertEquals("Hello", msg.data.toByteArray().decodeToString())
+                assertEquals("Hello", msg.data.decodeToString())
             } catch (e: Throwable) {
                 e.printStackTrace()
+                throw e
             }
         }
 
 
         val now = TimeSource.Monotonic.markNow()
-        while (true) {
+        while (!done.isDone) {
 //            if (msg1ForCon1 == 0 && msg1ForCon2 == 1 && msg2ForCon2 == 1) {
 //                break
 //            }
@@ -56,9 +60,9 @@ class NatsConnectorTest {
 //            }
             nd.select(500)
         }
-//        if (done.isFailure) {
-//            throw done.exceptionOrNull!!
-//        }
+        if (done.isFailure) {
+            throw done.exceptionOrNull!!
+        }
     }
 //
 //    @Test
