@@ -42,7 +42,7 @@ class Win1251Test {
     fun decode() {
         charset.newDecoder().use { decoder ->
             val out = CharBuffer.alloc(30)
-            assertEquals(CharsetTransformResult.SUCCESS, decoder.decode(test_data_hello_bytes_windows_1251.input(), out))
+            assertEquals(CharsetTransformResult.SUCCESS, decoder.decode(test_data_hello_bytes_windows_1251.wrap(), out))
             out.flip()
             assertEquals(out.remaining, test_data_hello_text.length)
             out.forEachIndexed { index, value ->

@@ -96,12 +96,12 @@ class TestUTF8 {
 
     @Test
     fun testEncode() {
-        assertEquals("Anton%d0%90%d0%91%20%d0%b2%d0%b3", UTF8.urlEncode("AntonАБ вг"))
+        assertEquals("Anton%d0%90%d0%91%20%d0%b2%d0%b3", UTF8.encode("AntonАБ вг"))
     }
 
     @Test
     fun testDecode() {
-        assertEquals("AntonАБ вг", UTF8.urlDecode("Anton%D0%90%D0%91%20%D0%B2%D0%B3"))
+        assertEquals("AntonАБ вг", UTF8.decode("Anton%D0%90%D0%91%20%D0%B2%D0%B3"))
     }
 
     @Test

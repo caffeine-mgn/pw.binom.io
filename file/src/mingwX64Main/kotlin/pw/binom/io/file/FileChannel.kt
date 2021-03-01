@@ -5,8 +5,9 @@ import platform.posix.*
 import pw.binom.ByteBuffer
 import pw.binom.io.Channel
 
-actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel,
-    RandomAccess {
+actual class FileChannel actual constructor(
+    file: File, vararg mode: AccessType
+) : Channel, RandomAccess {
 
     init {
         if (AccessType.CREATE !in mode && !file.isFile)

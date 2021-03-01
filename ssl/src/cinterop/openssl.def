@@ -1,8 +1,9 @@
-headers = openssl/ssl.h
+headers = openssl/ssl.h openssl/err.h openssl/evp.h
 headerFilter = openssl/**
-linkerOpts.mingw_x86= -lwsock32 -lws2_32 -lcrypt32
-linkerOpts.mingw_x64= -lwsock32 -lws2_32 -lcrypt32
+linkerOpts.mingw_x86 = -lwsock32 -lws2_32 -lcrypt32
+linkerOpts.mingw_x64 = -lwsock32 -lws2_32 -lcrypt32
 ---
+
 
 int internal_BIO_should_retry(BIO *bp){
     return BIO_test_flags(bp, BIO_FLAGS_SHOULD_RETRY);

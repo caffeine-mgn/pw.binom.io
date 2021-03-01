@@ -65,10 +65,12 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
         return result
     }
 
-    override fun executeUpdate() {
+    override fun executeUpdate(): Long {
         val code = sqlite3_step(stmt)
         connection.checkSqlCode(code)
+        val rownum = sqlite3_column_int64(stmt, 0)
         sqlite3_reset(stmt)
+        return rownum
     }
 
     override fun setNull(index: Int) {

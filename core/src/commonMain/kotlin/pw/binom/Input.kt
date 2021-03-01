@@ -122,23 +122,36 @@ fun Input.readLong(buffer: ByteBuffer): Long {
     return Long.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7])
 }
 
-fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Long {
+fun Input.copyTo(output: Output, buffer: ByteBuffer): Long {
     var totalLength = 0L
+    while (true) {
+        buffer.clear()
+        val length = read(buffer)
+        if (length == 0)
+            break
+        totalLength += length.toLong()
+        buffer.flip()
+        output.write(buffer)
+    }
+    return totalLength
+}
+
+fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Long {
     val buffer = pool.borrow()
-    try {
-        while (true) {
-            buffer.clear()
-            val length = read(buffer)
-            if (length == 0)
-                break
-            totalLength += length.toLong()
-            buffer.flip()
-            output.write(buffer)
-        }
+    return try {
+        copyTo(output, buffer)
     } finally {
         pool.recycle(buffer)
     }
-    return totalLength
+}
+
+fun Input.copyTo(output: Output, bufferSize: Int= DEFAULT_BUFFER_SIZE): Long {
+    val buffer = ByteBuffer.alloc(bufferSize)
+    return try {
+        copyTo(output, buffer)
+    } finally {
+        buffer.close()
+    }
 }
 
 suspend fun Input.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {

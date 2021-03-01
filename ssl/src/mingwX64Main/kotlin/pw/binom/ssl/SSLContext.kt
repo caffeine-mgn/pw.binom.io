@@ -5,6 +5,7 @@ import platform.openssl.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.socket.ssl.SSLSession
+import pw.binom.io.socket.ssl.getLastError
 import kotlin.native.concurrent.SharedImmutable
 
 @SharedImmutable
@@ -16,6 +17,7 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
     init {
         if (!inited) {
             OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS.convert(), null)
+            OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS.convert(), null)
             OPENSSL_init_ssl(0.convert(), null)
         }
         inited = true
@@ -46,10 +48,20 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
     private val self = StableRef.create(this)//DetachedObjectGraph(TransferMode.UNSAFE) { keyManager }
     fun server(): CPointer<SSL_CTX> {
         val serverCtx = SSL_CTX_new(server_method)!!
-        SSL_CTX_callback_ctrl(serverCtx, SSL_CTRL_SET_TLSEXT_SERVERNAME_CB, sslHostCheck().reinterpret())
-        SSL_CTX_ctrl(serverCtx, SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG, 0, self.asCPointer())
-        if (SSL_CTX_set_cipher_list(serverCtx, chiperList) != 1)
+        if (SSL_CTX_callback_ctrl(
+                serverCtx,
+                SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,
+                sslHostCheck().reinterpret()
+            ).convert<Int>() != 1
+        ) {
+            TODO("SSL_CTRL_SET_TLSEXT_SERVERNAME_CB error")
+        }
+        if (SSL_CTX_ctrl(serverCtx, SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG, 0, self.asCPointer()).convert<Int>() != 1) {
+            TODO("SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG error")
+        }
+        if (SSL_CTX_set_cipher_list(serverCtx, chiperList) != 1) {
             TODO("SSL_CTX_set_cipher_list error")
+        }
         return serverCtx
     }
 
@@ -79,14 +91,16 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
         if (SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name.convert(), connect.cstr) <= 0) {
             throw RuntimeException("Can't set SSL tlsext_hostname to [$connect]")
         }
-        return SSLSession(sslCtx, ssl, true)
+        val rr= SSLSession(sslCtx, ssl, true)
+        return rr
     }
 
     actual fun serverSession(): SSLSession {
-        val sslCtx = client()
+        val sslCtx = server()
         SSL_CTX_set_verify(sslCtx, SSL_VERIFY_NONE, null)
         val ssl = SSL_new(sslCtx)!!
-        return SSLSession(sslCtx, ssl, false)
+        val rr =  SSLSession(sslCtx, ssl, false)
+        return rr
     }
 }
 

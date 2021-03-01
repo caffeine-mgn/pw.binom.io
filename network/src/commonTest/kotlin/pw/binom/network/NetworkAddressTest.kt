@@ -2,11 +2,13 @@ package pw.binom.network
 
 import pw.binom.uuid
 import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.fail
 
 class NetworkAddressTest {
 
+    @Ignore
     @Test
     fun unknownHost() {
         try {

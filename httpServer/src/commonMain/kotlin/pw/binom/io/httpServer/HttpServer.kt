@@ -110,7 +110,7 @@ open class HttpServer(
         binded.forEach {
             it.close()
         }
-        async {
+        manager.async {
             while (bufferedInputPool.size > 0) {
                 bufferedInputPool.borrow {
                     it.first.reset()

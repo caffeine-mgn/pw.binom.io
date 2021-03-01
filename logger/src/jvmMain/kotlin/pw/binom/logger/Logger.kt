@@ -6,10 +6,10 @@ import java.util.concurrent.ConcurrentHashMap
 actual class Logger(actual val pkg: String) {
     actual companion object {
         private val loggers = ConcurrentHashMap<String, Logger>()
+        actual val consoleHandler: Handler = ConsoleHandler1()
         actual val global: Logger = getLogger("").also {
             it.handler = consoleHandler
         }
-        actual val consoleHandler: Handler = ConsoleHandler1()
         actual fun getLogger(pkg: String): Logger = loggers.getOrPut(pkg) { Logger(pkg) }
     }
 

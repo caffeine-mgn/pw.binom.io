@@ -20,6 +20,26 @@ interface Reader : Closeable {
         }
         return i
     }
+
+    fun readln(): String? {
+        val sb = StringBuilder()
+        try {
+            while (true) {
+                val r = read() ?: break
+                if (r == 10.toChar())
+                    break
+                sb.append(r)
+            }
+        } catch (e: EOFException) {
+            //NOP
+        }
+        if (sb.isEmpty())
+            return null
+        if (sb.lastOrNull() == '\r') {
+            sb.deleteAt(sb.lastIndex)
+        }
+        return sb.toString()
+    }
 }
 
 fun Reader.asAsync() = object : AsyncReader {

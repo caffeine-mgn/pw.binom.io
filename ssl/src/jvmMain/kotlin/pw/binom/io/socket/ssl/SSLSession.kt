@@ -1,10 +1,7 @@
 package pw.binom.io.socket.ssl
 
-import pw.binom.ByteDataBuffer
-import pw.binom.get
+import pw.binom.*
 import pw.binom.io.Closeable
-import pw.binom.length
-import pw.binom.update
 import java.nio.ByteBuffer
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult
@@ -244,7 +241,7 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
             return 0
         }
         dst.update(offset, l) {
-            wbio.get(it)
+            wbio.putSafeInto(it)
         }
         //wbio.flip()
         wbio.cleanup()
@@ -289,34 +286,42 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
         return length
     }
 
+    private var wbioPos = 0
+
     actual fun readNet(dst: pw.binom.ByteBuffer): Int {
-        val length=dst.remaining
         while (true) {
-            if (sslEngine.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_WRAP) {
+            if (wbioPos < wbio.position()) {
+                val p = wbio.position()
+                try {
+                    wbio.position(wbioPos)
+                    wbio.limit(p)
+                    val l = wbio.putSafeInto(dst.native)
+                    wbioPos += l
+                    return l
+                } finally {
+                    wbio.position(p)
+                    wbio.limit(wbio.capacity())
+                    if (wbioPos == p) {
+                        wbio.clear()
+                        wbioPos = 0
+                    }
+                }
+            }
+
+            val length = dst.remaining
+            while (true) {
+                if (sslEngine.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_WRAP) {
 //                val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
-                tmpBuf.clear()
-                val s = sslEngine.wrap(tmpBuf, wbio)
-                if (s.bytesConsumed() > 0)
-                    TODO()
-                if (s.status != SSLEngineResult.Status.OK)
-                    break
-            } else
-                break
+                    tmpBuf.clear()
+                    val s = sslEngine.wrap(tmpBuf, wbio)
+                    if (s.bytesConsumed() > 0)
+                        TODO()
+                    if (s.status != SSLEngineResult.Status.OK)
+                        break
+                } else
+                    return 0
+            }
         }
-        wbio.flip()
-        val l = minOf(wbio.remaining(), length)
-        if (l == 0) {
-            wbio.limit(wbio.capacity())
-            return 0
-        }
-        dst.length(l) {
-            wbio.get(it.native)
-        }
-        //wbio.flip()
-        wbio.cleanup()
-        wbio.compact()
-        wbio.limit(wbio.capacity())
-        return l
     }
 
     actual fun writeNet(dst: pw.binom.ByteBuffer): Int {

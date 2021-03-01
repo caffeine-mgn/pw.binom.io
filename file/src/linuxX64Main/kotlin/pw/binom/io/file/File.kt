@@ -1,6 +1,7 @@
 package pw.binom.io.file
 
 import kotlinx.cinterop.*
+import platform.linux.statvfs
 import platform.posix.*
 import kotlin.native.concurrent.freeze
 import pw.binom.io.*
@@ -93,4 +94,27 @@ actual class File actual constructor(path: String) {
         }
         return out
     }
+
+    actual val freeSpace: Long
+        get() =
+            memScoped {
+                val stat = alloc<statvfs>()
+                statvfs(path, stat.ptr)
+                (stat.f_bfree.toULong() * stat.f_bsize.toULong()).toLong()
+            }
+
+    actual val availableSpace: Long
+        get() =
+            memScoped {
+                val stat = alloc<statvfs>()
+                statvfs(path, stat.ptr)
+                (stat.f_bavail.toULong() * stat.f_bsize.toULong()).toLong()
+            }
+
+    actual val totalSpace: Long
+        get() = memScoped {
+            val stat = alloc<statvfs>()
+            statvfs(path, stat.ptr)
+            (stat.f_blocks.toULong() * stat.f_frsize.toULong()).toLong()
+        }
 }

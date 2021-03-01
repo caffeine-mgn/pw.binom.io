@@ -3,7 +3,7 @@ package pw.binom.concurrency
 import pw.binom.Future
 import kotlin.coroutines.CoroutineContext
 
-expect class Worker {
+expect class Worker: CrossThreadCoroutine {
     constructor(name: String? = null)
 
     fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT>
@@ -18,10 +18,11 @@ expect class Worker {
 }
 
 expect fun Worker.Companion.sleep(deley: Long)
+expect val Worker.Companion.availableProcessors: Int
 
-class WorkerHolderElement(val worker: Worker) : CoroutineContext.Element {
-    override val key: CoroutineContext.Key<WorkerHolderElement>
-        get() = WorkerHolderElementKey
-}
-
-object WorkerHolderElementKey : CoroutineContext.Key<WorkerHolderElement>
+//class WorkerHolderElement(val worker: Worker) : CoroutineContext.Element {
+//    override val key: CoroutineContext.Key<WorkerHolderElement>
+//        get() = WorkerHolderElementKey
+//}
+//
+//object WorkerHolderElementKey : CoroutineContext.Key<WorkerHolderElement>

@@ -284,7 +284,7 @@ object UTF8 {
 //        return utf8toUnicode(firstByte, data)
 //    }
 
-    fun urlEncode(input: String): String {
+    fun encode(input: String): String {
         val sb = StringBuilder()
         input.encodeBytes().forEach {
             when (it) {
@@ -306,7 +306,7 @@ object UTF8 {
         return sb.toString()
     }
 
-    fun urlDecode(input: String): String {
+    fun decode(input: String): String {
         val sb = ByteArrayOutput()
         val buf = ByteBuffer.alloc(1)
         var i = 0
@@ -332,4 +332,10 @@ object UTF8 {
             sb.close()
         }
     }
+
+    fun urlEncode(url: String) =
+        url.splitToSequence("/").map { encode(it) }.joinToString("/")
+
+    fun urlDecode(url: String) =
+        url.splitToSequence("/").map { decode(it) }.joinToString("/")
 }

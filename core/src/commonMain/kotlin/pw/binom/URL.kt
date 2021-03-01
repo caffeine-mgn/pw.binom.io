@@ -13,6 +13,7 @@ class URL(private val path: String) {
             "ws", "http" -> 80
             "wss", "https" -> 443
             "ftp" -> 21
+            "ldap" -> 386
             else -> null
         }
     }

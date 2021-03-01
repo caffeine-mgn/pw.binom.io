@@ -8,25 +8,33 @@ import pw.binom.doFreeze
 import pw.binom.popOrNull
 import kotlin.coroutines.*
 
-class ExecutorPoolHolderElement(val executor: WorkerPool) : CoroutineContext.Element {
-    override val key: CoroutineContext.Key<ExecutorPoolHolderElement>
-        get() = ExecutorPoolHolderKey
+class ExecutorServiceHolderElement(val executor: ExecutorService) : CoroutineContext.Element {
+    override val key: CoroutineContext.Key<ExecutorServiceHolderElement>
+        get() = ExecutorServiceHolderKey
 }
 
-object ExecutorPoolHolderKey : CoroutineContext.Key<ExecutorPoolHolderElement>
+object ExecutorServiceHolderKey : CoroutineContext.Key<ExecutorServiceHolderElement>
 
-fun <P> asyncWithExecutor(executor: WorkerPool, f: suspend () -> P) =
+@Suppress("UNCHECKED_CAST")
+class CrossThreadCoroutineElement(val crossThreadCoroutine: CrossThreadCoroutine) : CoroutineContext.Element {
+    override val key: CoroutineContext.Key<CrossThreadCoroutineElement>
+        get() = CrossThreadCoroutineKey
+}
+
+object CrossThreadCoroutineKey : CoroutineContext.Key<CrossThreadCoroutineElement>
+
+fun <P> asyncWithExecutor(executor: ExecutorService, f: suspend () -> P) =
     f.startCoroutine(object : Continuation<P> {
-        override val context: CoroutineContext = EmptyCoroutineContext + ExecutorPoolHolderElement(executor)
+        override val context: CoroutineContext = EmptyCoroutineContext + ExecutorServiceHolderElement(executor)
 
         override fun resumeWith(result: Result<P>) {
         }
     })
 
-suspend fun <T> WorkerPool.useInContext(f: suspend () -> T) {
+suspend fun <T> ExecutorService.useInContext(f: suspend () -> T) {
     suspendCoroutine<T> { con ->
         f.startCoroutine(object : Continuation<T> {
-            override val context: CoroutineContext = con.context + ExecutorPoolHolderElement(this@useInContext)
+            override val context: CoroutineContext = con.context + ExecutorServiceHolderElement(this@useInContext)
 
             override fun resumeWith(result: Result<T>) {
                 con.resumeWith(result)
@@ -35,12 +43,12 @@ suspend fun <T> WorkerPool.useInContext(f: suspend () -> T) {
     }
 }
 
-fun WorkerPool.submitAsync(context: CoroutineContext = EmptyCoroutineContext, func: suspend () -> Unit) {
+fun ExecutorService.submitAsync(context: CoroutineContext = EmptyCoroutineContext, func: suspend () -> Unit) {
     func.doFreeze()
     submit {
         val f = func
         f.startCoroutine(object : Continuation<Unit> {
-            override val context: CoroutineContext = context + WorkerHolderElement(Worker.current!!)
+            override val context: CoroutineContext = context + CrossThreadCoroutineElement(Worker.current!!)
 
             override fun resumeWith(result: Result<Unit>) {
             }
@@ -48,7 +56,7 @@ fun WorkerPool.submitAsync(context: CoroutineContext = EmptyCoroutineContext, fu
     }
 }
 
-class WorkerPool(size: Int, val timeForCheckTask: Int = 200) {
+class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
     private class State(size: Int) {
         var interotped = AtomicBoolean(false)
         val stoped = AtomicInt(size)
@@ -84,7 +92,7 @@ class WorkerPool(size: Int, val timeForCheckTask: Int = 200) {
         return out
     }
 
-    fun <T> submit(f: () -> T): Future2<T> {
+    override fun <T> submit(f: () -> T): Future2<T> {
         val future = BaseFuture<T>()
         val freeWorker = list.find { it.taskCount == 0 }
         if (freeWorker != null) {

@@ -71,6 +71,7 @@ class AsyncBufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override v
     }
 
     override suspend fun asyncClose() {
+        super.asyncClose()
         buffer.close()
     }
 

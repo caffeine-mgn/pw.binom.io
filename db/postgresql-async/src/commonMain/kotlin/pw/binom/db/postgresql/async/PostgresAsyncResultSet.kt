@@ -77,20 +77,32 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
         getString(getIndex(column))
 
     override fun getBoolean(index: Int): Boolean? {
-        TODO("Not yet implemented")
+        val value = data[index] ?: return null
+        return when (val dataType = data.meta[index].dataType) {
+            ColumnTypes.Bigserial -> Long.fromBytes(value) > 0
+            ColumnTypes.Text, ColumnTypes.Varchar -> value.decodeString(data.connection.reader.charset) == "true"
+            ColumnTypes.Boolean -> (value[0] > 0.toByte())
+            else -> throwNotSupported(dataType, value)
+        }
     }
 
-    override fun getBoolean(column: String): Boolean? {
-        TODO("Not yet implemented")
-    }
+    override fun getBoolean(column: String): Boolean? =
+        getBoolean(getIndex(column))
 
     override fun getInt(index: Int): Int? {
-        TODO("Not yet implemented")
+        val value = data[index] ?: return null
+        return when (val dataType = data.meta[index].dataType) {
+            ColumnTypes.Bigserial -> Long.fromBytes(value).toInt()
+            ColumnTypes.Boolean -> if ((value[0] > 0.toByte())) 1 else 0
+            ColumnTypes.Double -> Double.fromBits(Long.fromBytes(value)).toInt()
+            ColumnTypes.Real -> Float.fromBits(Int.fromBytes(value)).toInt()
+            ColumnTypes.Numeric -> NumericUtils.decode(value).intValue()
+            else -> throwNotSupported(dataType, value)
+        }
     }
 
-    override fun getInt(column: String): Int? {
-        TODO("Not yet implemented")
-    }
+    override fun getInt(column: String): Int? =
+        getInt(getIndex(column))
 
     override fun getLong(index: Int): Long? {
         val value = data[index] ?: return null
@@ -140,20 +152,21 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
         getDouble(getIndex(column))
 
     override fun getBlob(index: Int): ByteArray? {
-        TODO("Not yet implemented")
+        val value = data[index] ?: return null
+        return when (val dataType = data.meta[index].dataType) {
+            ColumnTypes.ByteA -> value
+            else -> throwNotSupported(dataType, value)
+        }
     }
 
-    override fun getBlob(column: String): ByteArray? {
-        TODO("Not yet implemented")
-    }
+    override fun getBlob(column: String): ByteArray? =
+        getBlob(getIndex(column))
 
-    override fun isNull(index: Int): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun isNull(index: Int): Boolean =
+        data[index] == null
 
-    override fun isNull(column: String): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun isNull(column: String): Boolean =
+        isNull(getIndex(column))
 
     override suspend fun asyncClose() {
         data.asyncClose()

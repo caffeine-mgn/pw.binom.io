@@ -60,10 +60,14 @@ internal class UrlConnectImpl(
         val buffered = connection.channel.bufferedOutput(closeStream = false)
         val app = buffered.utf8Appendable()
         app.append("$method ${url.uri} HTTP/1.1\r\n")
+
         headers.forEach { en ->
             en.value.forEach {
                 app.append(en.key).append(": ").append(it).append("\r\n")
             }
+        }
+        if (!headers.keys.any { it.equals(Headers.HOST, ignoreCase = true) }) {
+            app.append(Headers.HOST).append(": ").append(url.host).append("\r\n")
         }
         app.append("\r\n")
         buffered.flush()
