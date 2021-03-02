@@ -2,23 +2,26 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.memcpy
-import pw.binom.atomic.AtomicInt
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.internal.core_native.*
 import pw.binom.io.Closeable
-import kotlin.native.concurrent.isFrozen
+import pw.binom.io.ClosedException
 
 actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
 
-//    private var closed = false
+    private val native = createNativeByteBuffer(capacity)!!
+
+    private var closed by AtomicBoolean(false)
 
     private inline fun checkClosed() {
-//        if (closed)
-//            throw StreamClosedException()
+        if (closed)
+            throw ClosedException()
     }
 
-    val bytes = ByteArray(capacity)
+//    val bytes = ByteArray(capacity)
 
 //    val native: CPointer<ByteVar> = run {
 //        memScoped {
@@ -26,8 +29,9 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 //        }.toCPointer<ByteVar>()!!
 //    }
 
-    override fun refTo(position: Int) =
-        bytes.refTo(position)
+    override fun refTo(position: Int) = run {
+        nativeByteBufferRefTo(native, position) ?: throw RuntimeException("Can't get pointer to $position")
+    }
 
     override fun flip() {
         limit = position
@@ -40,24 +44,21 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
             return limit - position
         }
 
-    private var _pos by AtomicInt(0)
-
     override var position: Int
-        get() = _pos
+        get() = native.pointed.position
         set(value) {
             require(value >= 0)
             require(value <= limit)
-            _pos = value
+            native.pointed.position = value
         }
 
-    private var _limit by AtomicInt(capacity)
 
     override var limit: Int
-        get() = _limit
+        get() = native.pointed.limit
         set(value) {
             checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
-            _limit = value
+            native.pointed.limit = value
             if (position > value)
                 position = value
         }
@@ -72,42 +73,17 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         return len.toLong()
     }
 
-    override fun read(dest: ByteBuffer): Int {
-        val l = minOf(remaining, dest.remaining)
-        if (l == 0)
-            return l
-        memcpy(dest.bytes.refTo(dest.position), bytes.refTo(position), l.convert())
-        dest.position += l
-        position += l
-        return l
-    }
+    override fun read(dest: ByteBuffer): Int = nativeByteBuffer_read(native, dest.native)
 
-    override fun write(data: ByteBuffer): Int {
-        val len = minOf(remaining, data.remaining)
-        if (len <= 0) {
-            return 0
-        }
-        memScoped {
-            memcpy(
-                bytes.refTo(position).getPointer(this),
-                data.bytes.refTo(data.position).getPointer(this),
-                len.convert()
-            )
-        }
-        position += len
-        data.position += len
-
-        return len
-    }
+    override fun write(data: ByteBuffer): Int = data.read(this)
 
     override fun flush() {
     }
 
     override fun close() {
         checkClosed()
-        //free(native)
-//        bytes = ByteArray(0)
-//        closed = true
+        destroyNativeByteBuffer(native)
+        closed = true
     }
 
     private fun createLimitException(newLimit: Int): IllegalArgumentException {
@@ -122,22 +98,19 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     actual operator fun get(index: Int): Byte {
         checkClosed()
-        return bytes[index]
+        return nativeByteBuffer_getByteIndexed(native, index)
     }
 
     actual operator fun set(index: Int, value: Byte) {
         checkClosed()
-        if (isFrozen) {
-            memScoped {
-                bytes.refTo(index).getPointer(this).set(0, value)
-            }
-        } else {
-            bytes[index] = value
-        }
+        nativeByteBuffer_setByteIndexed(native, index, value)
     }
 
-    actual fun get(): Byte =
-        bytes[nextPutIndex()]
+    actual fun get(): Byte {
+        checkClosed()
+        if (position >= limit) throw IndexOutOfBoundsException()
+        return nativeByteBuffer_getNextByte(native)
+    }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
         this.position = position
@@ -145,19 +118,10 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         return this
     }
 
-    private fun nextPutIndex(): Int {
-        if (position >= limit) throw IndexOutOfBoundsException()
-        return position++
-    }
-
     actual fun put(value: Byte) {
-        if (isFrozen) {
-            memScoped {
-                bytes.refTo(nextPutIndex()).getPointer(this)[0] = value
-            }
-        } else {
-            bytes[nextPutIndex()] = value
-        }
+        checkClosed()
+        if (position >= limit) throw IndexOutOfBoundsException("Position: [$position], limit: [$limit]")
+        nativeByteBuffer_putNextByte(native, value)
     }
 
     override fun clear() {
@@ -170,22 +134,14 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = ByteBuffer.alloc(newSize)
-        if (newSize > capacity) {
-            memcpy(new.bytes.refTo(0), bytes.refTo(0), capacity.convert())
-            new.position = position
-            new.limit = limit
-        } else {
-            memcpy(new.bytes.refTo(0), bytes.refTo(0), newSize.convert())
-            new.position = minOf(position, newSize)
-            new.limit = minOf(limit, newSize)
-        }
+        nativeByteBuffer_copy(native, new.native)
         return new
     }
 
     actual fun toByteArray(): ByteArray {
         val r = ByteArray(remaining)
         if (remaining > 0) {
-            memcpy(r.refTo(0), refTo(position), remaining.convert())
+            nativeByteBuffer_copyToPtr(native, r.refTo(0))
         }
         return r
     }
@@ -201,7 +157,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     override fun compact() {
         if (remaining > 0) {
             val size = remaining
-            memcpy(bytes.refTo(0), bytes.refTo(position), size.convert())
+            memcpy(native.pointed.data, native.pointed.data + position, size.convert())
             position = size
             limit = capacity
         } else {

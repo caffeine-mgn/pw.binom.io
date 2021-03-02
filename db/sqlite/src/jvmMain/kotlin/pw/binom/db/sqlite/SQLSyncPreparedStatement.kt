@@ -33,11 +33,10 @@ class SQLSyncPreparedStatement(override val connection: SQLiteConnector, interna
     }
 
     override fun executeQuery() =
-            SQLiteResultSet(native.executeQuery())
+        SQLiteResultSet(native.executeQuery())
 
-    override fun executeUpdate() {
-        native.executeUpdate()
-    }
+    override fun executeUpdate(): Long =
+        native.executeUpdate().toLong()
 
     override fun close() {
         native.close()

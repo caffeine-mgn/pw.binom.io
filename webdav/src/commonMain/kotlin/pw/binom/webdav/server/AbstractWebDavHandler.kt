@@ -15,10 +15,10 @@ import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
 
 private fun urlEncode(url: String) =
-    url.splitToSequence("/").map { UTF8.urlEncode(it) }.joinToString("/")
+    url.splitToSequence("/").map { UTF8.encode(it) }.joinToString("/")
 
 private fun urlDecode(url: String) =
-    url.splitToSequence("/").map { UTF8.urlDecode(it) }.joinToString("/")
+    url.splitToSequence("/").map { UTF8.decode(it) }.joinToString("/")
 
 suspend fun FileSystem.getD(path: String, d: Int, out: ArrayList<FileSystem.Entity>) {
     if (d <= 0)

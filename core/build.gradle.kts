@@ -1,4 +1,4 @@
-import java.util.TimeZone
+import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -14,51 +14,107 @@ kotlin {
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/nativeMain/cinterop/core.def")
+                    packageName = "pw.binom.internal.core_native"
+                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                }
+            }
         }
     }
 
     linuxArm32Hfp {
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/nativeMain/cinterop/core.def")
+                    packageName = "pw.binom.internal.core_native"
+                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                }
+            }
         }
     }
 
     linuxArm64 {
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/nativeMain/cinterop/core.def")
+                    packageName = "pw.binom.internal.core_native"
+                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                }
+            }
         }
     }
 
     linuxMips32 {
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/nativeMain/cinterop/core.def")
+                    packageName = "pw.binom.internal.core_native"
+                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                }
+            }
         }
     }
 
     linuxMipsel32 {
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/nativeMain/cinterop/core.def")
+                    packageName = "pw.binom.internal.core_native"
+                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                }
+            }
         }
     }
 
     mingwX64 { // Use your target instead.
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/nativeMain/cinterop/core.def")
+                    packageName = "pw.binom.internal.core_native"
+                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                }
+            }
         }
     }
 
     mingwX86 { // Use your target instead.
         binaries {
             staticLib()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/nativeMain/cinterop/core.def")
+                    packageName = "pw.binom.internal.core_native"
+                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                }
+            }
         }
     }
 
     macosX64 {
         binaries {
             framework()
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/nativeMain/cinterop/core.def")
+                    packageName = "pw.binom.internal.core_native"
+                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                }
+            }
         }
     }
-    js(BOTH) {
+    js("js", BOTH) {
         browser()
         nodejs()
     }
@@ -76,11 +132,11 @@ kotlin {
             kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxArm64Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxMips32Main by getting {
@@ -93,15 +149,16 @@ kotlin {
             kotlin.srcDir("src/nativeMain/kotlin")
         }
         val mingwX64Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(commonMain)
+            kotlin.srcDir("src/nativeMain/kotlin")
         }
         val mingwX86Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
         }
 
         val macosX64Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
         }
 

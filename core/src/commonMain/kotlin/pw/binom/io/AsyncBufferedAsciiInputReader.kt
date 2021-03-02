@@ -47,13 +47,35 @@ class AsyncBufferedAsciiInputReader(
         return buffer.get().toChar()
     }
 
-    override suspend fun read(data: CharArray, offset: Int, length: Int): Int {
+    override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
         checkAvailable()
-        val len = minOf(minOf(data.size - offset, length), buffer.remaining)
+        val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
         for (i in offset until offset + len) {
-            data[i] = buffer.get().toChar()
+            dest[i] = buffer.get().toChar()
         }
         return len
+    }
+
+    suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {
+        checkAvailable()
+        val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
+        buffer.get(
+            dest = dest,
+            offset = offset,
+            length = len,
+        )
+        return len
+    }
+
+    suspend fun readFully(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {
+        var readed = 0
+        while (true) {
+            val r = read(dest, offset + readed, length - readed)
+            readed += r
+            if (readed == length) {
+                return length
+            }
+        }
     }
 
     suspend fun readUntil(char: Char): String? {
@@ -85,7 +107,7 @@ class AsyncBufferedAsciiInputReader(
     override suspend fun readln(): String? = readUntil(10.toChar())?.removeSuffix("\r")
 }
 
-fun AsyncInput.bufferedAsciiInputReader(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiInputReader(
+fun AsyncInput.bufferedAsciiReader(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiInputReader(
     input = this,
     bufferSize = bufferSize
 )

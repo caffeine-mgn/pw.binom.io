@@ -6,6 +6,7 @@ import pw.binom.io.Closeable
 import pw.binom.io.UTF8
 import pw.binom.pool.DefaultPool
 import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
@@ -37,6 +38,25 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
 }
 
 inline fun ByteBuffer.clone() = realloc(capacity)
+
+/**
+ * Allocs [ByteBuffer] with [size]. Then execute [block] and after that close created buffer
+ *
+ * @param size Size of Buffer
+ * @param block function for call with created buffer
+ */
+@OptIn(ExperimentalContracts::class)
+inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    val bytes = alloc(size)
+    return try {
+        block(bytes)
+    } finally {
+        bytes.close()
+    }
+}
 
 /**
  * Puts random bytes to free space of [data]
@@ -177,4 +197,19 @@ inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
     return output
 }
 
+/**
+ * Makes new ByteBuffer from current [ByteArray]. Also later you must don't fogot to close created ByteBuffer
+ */
 fun ByteArray.wrap() = ByteBuffer.wrap(this)
+
+/**
+ * Makes [ByteBuffer] from current [ByteArray]. Then call [func]. And after that close created [ByteBuffer]
+ */
+inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
+    val buf = ByteBuffer.wrap(this)
+    return try {
+        func(buf)
+    } finally {
+        buf.close()
+    }
+}

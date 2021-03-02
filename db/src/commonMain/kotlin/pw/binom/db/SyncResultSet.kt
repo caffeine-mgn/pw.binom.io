@@ -5,14 +5,20 @@ import pw.binom.io.Closeable
 interface SyncResultSet : ResultSet, Closeable {
     fun next(): Boolean
 
-    fun <T> map(func: (ResultSet) -> T): Iterator<T> = object : Iterator<T> {
-        private var end = this@SyncResultSet.next()
-        override fun hasNext(): Boolean = end
+    fun <T> map(mapper: (ResultSet) -> T) =
+        SyncResultSetIterator(this, mapper)
+}
 
-        override fun next(): T {
-            val r = func(this@SyncResultSet)
-            end = this@SyncResultSet.next()
-            return r
-        }
+inline fun SyncResultSet.forEach(func: (SyncResultSet) -> Unit) {
+    while (next()) {
+        func(this)
+    }
+}
+
+inline fun SyncResultSet.read(func: (SyncResultSet) -> Unit) {
+    try {
+        forEach(func)
+    } finally {
+        close()
     }
 }

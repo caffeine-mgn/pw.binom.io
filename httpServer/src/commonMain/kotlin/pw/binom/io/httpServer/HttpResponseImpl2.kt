@@ -70,6 +70,9 @@ internal class HttpResponseImpl2(
 ) : HttpResponse {
     override var status: Int = 404
         set(value) {
+            if (field == value) {
+                return
+            }
             checkHeaderSent()
             field = value
         }
@@ -140,7 +143,7 @@ internal class HttpResponseImpl2(
         }
     }
 
-    override suspend fun complete(autoFlushSize: UInt): HttpResponseBody {
+    override suspend fun complete(autoFlushSize: Int): HttpResponseBody {
         checkHeaderSent()
         val buf = rawOutput!!
 //        val app = buf.utf8Appendable()

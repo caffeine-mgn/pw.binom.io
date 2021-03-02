@@ -109,7 +109,7 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
         buf[13] = '-'
         buf[8] = '-'
 
-        return String(buf)
+        return buf.concatToString()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -140,17 +140,24 @@ private val digits = charArrayOf(
         'u', 'v', 'w', 'x', 'y', 'z')
 
 private fun Long.Companion.formatUnsignedLong0(value: Long, shift: Int, buf: CharArray, offset: Int, len: Int) {
-    var charPos = offset + len;
+    var charPos = offset + len
     val radix = 1 shl shift
-    val mask = radix - 1;
+    val mask = radix - 1
     var value = value
     do {
         buf[--charPos] = (digits[(value.toInt()) and mask]).toByte().toChar()
-        value = value ushr shift;
-    } while (charPos > offset);
+        value = value ushr shift
+    } while (charPos > offset)
 }
 
 private fun String.toLong(beginIndex: Int, endIndex: Int, radix: Int) =
-        substring(beginIndex, endIndex).toLong(radix)
+    substring(beginIndex, endIndex).toLong(radix)
 
 inline fun Random.uuid() = UUID.random()
+
+fun String.toUUID() = UUID.fromString(this)
+fun String.toUUIDOrNull() = try {
+    UUID.fromString(this)
+} catch (e: Throwable) {
+    null
+}

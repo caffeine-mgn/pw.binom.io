@@ -1,10 +1,20 @@
 package pw.binom
 
+import pw.binom.io.use
 import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ByteBufferTest {
+
+    @Test
+    fun cleanTest() {
+        ByteBuffer.alloc(64).use {
+            assertEquals(0, it.position)
+            assertEquals(it.capacity, it.limit)
+        }
+    }
 
     @Test
     fun reallocTest() {

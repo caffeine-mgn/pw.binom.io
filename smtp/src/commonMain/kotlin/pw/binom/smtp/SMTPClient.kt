@@ -15,7 +15,7 @@ class SMTPClient(val connect: AsyncChannel) : AsyncCloseable {
 
     val pool = ByteBufferPool(10)
     val writer = connect.bufferedAsciiWriter()
-    val reader = connect.bufferedAsciiInputReader()
+    val reader = connect.bufferedAsciiReader()
 
     private var code = 0
     private var description: String? = null

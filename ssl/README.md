@@ -32,15 +32,32 @@ cd %OPENSSL%
 
 #Build X64
 ```
+rmdir /s /q tmp
 make clean
 perl.exe Configure mingw64 no-zlib no-zlib-dynamic no-shared no-threads "--target=x86_64-w64-mingw32 -O3 \"--sysroot=%userprofile%/.konan/dependencies/msys2-mingw-w64-x86_64-clang-llvm-lld-compiler_rt-8.0.1\""
 make.exe build_libs -j 16
+mkdir tmp
+cd tmp
+ar -x ../libssl.a
+ar -x ../libcrypto.a
+ar -rv libopenssl.a *.o
+cp libopenssl.a %OPENSSL%/libopenssl.a
+cd %OPENSSL%
+rmdir /s /q tmp
 ```
 #Build X86
 ```
 make clean
 perl.exe Configure mingw no-shared no-threads "--target=i686-w64-mingw32 -O3 \"--sysroot=%userprofile%\.konan\dependencies\msys2-mingw-w64-i686-clang-llvm-lld-compiler_rt-8.0.1\""
 make.exe build_libs -j 16
+mkdir tmp
+cd tmp
+ar -x ../libssl.a
+ar -x ../libcrypto.a
+ar -rv libopenssl.a *.o
+cp libopenssl.a %OPENSSL%/libopenssl.a
+cd %OPENSSL%
+rmdir /s /q tmp
 ```
 
 #Build Linux X64

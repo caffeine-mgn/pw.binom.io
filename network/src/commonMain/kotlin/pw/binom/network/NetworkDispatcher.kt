@@ -27,13 +27,15 @@ class NetworkDispatcher : Closeable {
      */
     val awakener = Awakener(wakeUpConnection.holder)
 
-    fun<R> async(executor: WorkerPool? = null, func: suspend () -> R): Future2<R> {
+    fun<R> async(executor: ExecutorService? = null, func: suspend () -> R): Future2<R> {
         val future = BaseFuture<R>()
         func.startCoroutine(object : Continuation<R> {
             override val context: CoroutineContext = run {
-                var ctx = EmptyCoroutineContext + NetworkDispatcherHolderElement(this@NetworkDispatcher)
+                var ctx =
+                    CrossThreadCoroutineElement(this@NetworkDispatcher.crossThreadWakeUpHolder) +
+                            NetworkHolderElement(this@NetworkDispatcher.crossThreadWakeUpHolder)
                 if (executor != null) {
-                    ctx += ExecutorPoolHolderElement(executor)
+                    ctx += ExecutorServiceHolderElement(executor)
                 }
                 ctx
             }

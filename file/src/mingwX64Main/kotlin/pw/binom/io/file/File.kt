@@ -2,6 +2,9 @@ package pw.binom.io.file
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import platform.windows.GetDiskFreeSpaceEx
+import platform.windows.PULARGE_INTEGER
+import platform.windows._ULARGE_INTEGER
 import kotlin.native.concurrent.freeze
 import pw.binom.io.use
 
@@ -83,4 +86,51 @@ actual class File actual constructor(path: String) {
         }
         return out
     }
+
+    actual val freeSpace: Long
+        get() = memScoped {
+            val value = alloc<ULongVar>()
+            val fResult = GetDiskFreeSpaceEx!!(
+                path.wcstr.ptr,
+                null,
+                null,
+                value.ptr.reinterpret(),
+            )
+            if (fResult != 0) {
+                value.value.toLong()
+            } else {
+                0L
+            }
+        }
+    actual val availableSpace: Long
+        get() = memScoped {
+            val value = alloc<ULongVar>()
+            val fResult = GetDiskFreeSpaceEx!!(
+                path.wcstr.ptr,
+                value.ptr.reinterpret(),
+                null,
+                null,
+            )
+            if (fResult != 0) {
+                value.value.toLong()
+            } else {
+                0L
+            }
+        }
+
+    actual val totalSpace: Long
+        get() = memScoped {
+            val value = alloc<ULongVar>()
+            val fResult = GetDiskFreeSpaceEx!!(
+                path.wcstr.ptr,
+                null,
+                null,
+                value.ptr.reinterpret(),
+            )
+            if (fResult != 0) {
+                value.value.toLong()
+            } else {
+                0L
+            }
+        }
 }
