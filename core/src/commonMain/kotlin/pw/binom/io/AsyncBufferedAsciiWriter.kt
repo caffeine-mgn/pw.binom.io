@@ -4,7 +4,9 @@ import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 
-abstract class AbstractAsyncBufferedAsciiWriter : AsyncWriter, AsyncOutput {
+abstract class AbstractAsyncBufferedAsciiWriter(
+    val closeParent: Boolean
+) : AsyncWriter, AsyncOutput {
     protected abstract val output: AsyncOutput
 
     protected abstract val buffer: ByteBuffer
@@ -56,12 +58,18 @@ abstract class AbstractAsyncBufferedAsciiWriter : AsyncWriter, AsyncOutput {
 
     override suspend fun asyncClose() {
         flush()
-        output.asyncClose()
+        if (closeParent) {
+            output.asyncClose()
+        }
     }
 }
 
-class AsyncBufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override val output: AsyncOutput) :
-    AbstractAsyncBufferedAsciiWriter() {
+class AsyncBufferedAsciiWriter(
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    override val output: AsyncOutput,
+    closeParent: Boolean = true
+) :
+    AbstractAsyncBufferedAsciiWriter(closeParent = closeParent) {
     init {
         require(bufferSize > 4)
     }
@@ -78,7 +86,9 @@ class AsyncBufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override v
     override val buffer = ByteBuffer.alloc(bufferSize)
 }
 
-fun AsyncOutput.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE) = AsyncBufferedAsciiWriter(
-    output = this,
-    bufferSize = bufferSize
-)
+fun AsyncOutput.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) =
+    AsyncBufferedAsciiWriter(
+        output = this,
+        bufferSize = bufferSize,
+        closeParent = closeParent
+    )

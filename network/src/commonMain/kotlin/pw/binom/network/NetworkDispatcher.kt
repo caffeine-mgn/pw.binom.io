@@ -69,8 +69,16 @@ class NetworkDispatcher : Closeable {
         channel.connect(address)
         val connection = attach(channel)
         connection.connecting()
-        suspendCoroutine<Unit> {
-            connection.connect = it
+        try {
+            suspendCoroutine<Unit> {
+                connection.connect = it
+            }
+        } catch (e: SocketConnectException) {
+            if (e.message != null) {
+                throw e
+            } else {
+                throw SocketConnectException(address.toString(), e.cause)
+            }
         }
         return connection
     }

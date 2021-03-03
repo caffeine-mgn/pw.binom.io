@@ -24,7 +24,8 @@ dependencies {
 set MSYS=C:\msys64
 set OPENSSL=C:\TEMP\openssl-1.1.1i
 set PATH=%PATH%;%MSYS%\usr\bin;%userprofile%\.konan\dependencies\msys2-mingw-w64-x86_64-clang-llvm-lld-compiler_rt-8.0.1\bin
-set CC=clang.exe
+set CC=clang
+set CXX=clang
 set AR=llvm-ar
 set ARFLAGS=rc
 cd %OPENSSL%
@@ -63,6 +64,6 @@ rmdir /s /q tmp
 #Build Linux X64
 ```
 make clean
-perl.exe Configure linux-x86_64-clang no-shared no-threads "--target=x86_64-unknown-linux-gnu -O3 \"--sysroot=%userprofile%/.konan/dependencies/target-gcc-toolchain-3-linux-x86-64/x86_64-unknown-linux-gnu/sysroot""
+perl.exe Configure linux-x86_64 no-shared no-threads "--target=x86_64-unknown-linux-gnu -O3 \"--sysroot=%userprofile%/.konan/dependencies/target-gcc-toolchain-3-linux-x86-64/x86_64-unknown-linux-gnu/sysroot\""
 make.exe build_libs -j 16
 ```

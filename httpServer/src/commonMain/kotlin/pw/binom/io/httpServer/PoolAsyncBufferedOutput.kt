@@ -6,7 +6,7 @@ import pw.binom.NullAsyncOutput
 import pw.binom.io.AbstractAsyncBufferedAsciiWriter
 import pw.binom.io.AbstractAsyncBufferedOutput
 
-class PoolAsyncBufferedOutput(bufferSize: Int) : AbstractAsyncBufferedAsciiWriter() {
+class PoolAsyncBufferedOutput(bufferSize: Int) : AbstractAsyncBufferedAsciiWriter(closeParent = false) {
     override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize)
     var currentStream: AsyncOutput = NullAsyncOutput
 
