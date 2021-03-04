@@ -198,6 +198,7 @@ class PGConnection private constructor(
                 credentialMessage
             }
             is AuthenticationMessage.AuthenticationOkMessage -> null
+            is ErrorMessage -> throw IOException(msg.fields['M'] ?: msg.fields['R'] ?: "Error")
             else -> throw RuntimeException("Unknown message type [${msg::class}]")
         }
         if (authRequest != null) {

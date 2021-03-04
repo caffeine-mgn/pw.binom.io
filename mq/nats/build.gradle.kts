@@ -52,7 +52,7 @@ kotlin {
             dependencies {
                 api(project(":core"))
                 api(project(":network"))
-                api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
             }
         }
 
