@@ -1,14 +1,14 @@
 package pw.binom.webdav
 
-import pw.binom.base64.Base64
-import pw.binom.encodeBytes
-import pw.binom.io.httpClient.AsyncHttpClient
+import pw.binom.io.http.BasicAuth
+import pw.binom.io.http.Headers
+import pw.binom.io.httpClient.HttpRequest
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 interface WebAuthAccess {
-    suspend fun apply(connection: AsyncHttpClient.UrlConnect)
+    suspend fun apply(connection: HttpRequest)
 
     class CurrentUser<T : WebAuthAccess>(val user: T) : CoroutineContext.Element {
         override val key: CoroutineContext.Key<*>
@@ -26,8 +26,8 @@ interface WebAuthAccess {
 }
 
 class BasicAuthorization(login: String, password: String) : WebAuthAccess {
-    private val headerValue = "Basic ${Base64.encode("$login:$password".encodeBytes())}"
-    override suspend fun apply(connection: AsyncHttpClient.UrlConnect) {
-        connection.addHeader("Authorization", headerValue)
+    private val auth = BasicAuth(login = login, password = password).headerValue
+    override suspend fun apply(connection: HttpRequest) {
+        connection.headers[Headers.AUTHORIZATION] = auth
     }
 }

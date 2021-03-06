@@ -9,6 +9,7 @@ import pw.binom.io.http.AsyncChunkedOutput
 import pw.binom.io.http.AsyncContentLengthOutput
 import pw.binom.io.http.Headers
 
+@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 internal class UrlRequestImpl(
         val headers: Map<String, List<String>>,
         val channel: AsyncHttpClient.Connection,

@@ -1,10 +1,12 @@
 package pw.binom.io.httpClient
 
 import pw.binom.URL
-import pw.binom.base64.Base64
 import pw.binom.charset.Charsets
 import pw.binom.io.IOException
-import pw.binom.io.http.*
+import pw.binom.io.http.HTTPMethod
+import pw.binom.io.http.HashHeaders
+import pw.binom.io.http.Headers
+import pw.binom.io.http.forEachHeader
 import pw.binom.io.http.websocket.WebSocketConnection
 
 class DefaultHttpRequest(
@@ -15,10 +17,6 @@ class DefaultHttpRequest(
 ) : HttpRequest {
     private var closed = false
     override val headers = HashHeaders()
-
-    fun use(auth: BasicAuth) {
-        headers[Headers.AUTHORIZATION] = "Basic ${Base64.encode("${auth.login}:${auth.password}".encodeToByteArray())}"
-    }
 
     private fun checkClosed() {
         if (closed) {
@@ -57,7 +55,7 @@ class DefaultHttpRequest(
     override suspend fun writeData(): AsyncHttpRequestOutput {
         checkClosed()
         sendHeaders()
-        val encode = headers.getTransferEncoding()
+        val encode = headers.transferEncoding
         if (encode != null) {
             when (encode.toLowerCase()) {
                 Headers.CHUNKED.toLowerCase() -> {
@@ -72,7 +70,7 @@ class DefaultHttpRequest(
                 else -> throw IOException("Unknown Transfer Encoding \"$encode\"")
             }
         }
-        val len = headers.getContentLength()
+        val len = headers.contentLength
         if (len != null) {
             closed = true
             return RequestAsyncContentLengthOutput(
@@ -98,17 +96,17 @@ class DefaultHttpRequest(
         val dataChannel = writeData()
         return RequestAsyncHttpRequestWriter(
             output = dataChannel,
-            charset = headers.getCharset() ?: Charsets.UTF8
+            charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8
         )
     }
 
     override suspend fun getResponse(): HttpResponse {
         checkClosed()
-        val len = headers.getContentLength()
+        val len = headers.contentLength
         if (len != null) {
             throw IllegalStateException("Can't get Response. Header contains \"${Headers.CONTENT_LENGTH}: $len\". Expected request data $len bytes")
         }
-        val encode = headers.getTransferEncoding()
+        val encode = headers.transferEncoding
         if (encode != null) {
             throw IllegalStateException("Can't get Response. Header contains \"${Headers.TRANSFER_ENCODING}: $encode\". Expected request data")
         }

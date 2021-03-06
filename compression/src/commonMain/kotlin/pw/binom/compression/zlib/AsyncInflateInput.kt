@@ -17,6 +17,13 @@ open class AsyncInflateInput(
     private val inflater = Inflater(wrap)
     protected var usesDefaultInflater = true
     private var eof = false
+    private var busy = false
+
+    private fun checkBusy() {
+        if (busy) {
+            throw IllegalStateException("Input is busy")
+        }
+    }
 
     private suspend fun full() {
 
@@ -52,26 +59,38 @@ open class AsyncInflateInput(
         get() = -1
 
     override suspend fun read(dest: ByteBuffer): Int {
-        val l = dest.remaining
-        while (true) {
-            full()
-            if (buffer.remaining == 0 || dest.remaining == 0) {
-                break
+        checkBusy()
+        try {
+            busy = true
+            val l = dest.remaining
+            while (true) {
+                full()
+                if (buffer.remaining == 0 || dest.remaining == 0) {
+                    break
+                }
+                val r = inflater.inflate(buffer, dest)
+                if (r == 0)
+                    break
             }
-            val r = inflater.inflate(buffer, dest)
-            if (r == 0)
-                break
+            return l - dest.remaining
+        } finally {
+            busy = false
         }
-        return l - dest.remaining
     }
 
     override suspend fun asyncClose() {
-        if (usesDefaultInflater)
-            inflater.end()
-        inflater.close()
-        buffer.close()
-        if (closeStream) {
-            stream.asyncClose()
+        checkBusy()
+        try {
+            busy = true
+            if (usesDefaultInflater)
+                inflater.end()
+            inflater.close()
+            buffer.close()
+            if (closeStream) {
+                stream.asyncClose()
+            }
+        } finally {
+            busy = false
         }
     }
 

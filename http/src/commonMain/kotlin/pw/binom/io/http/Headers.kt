@@ -1,8 +1,5 @@
 package pw.binom.io.http
 
-import pw.binom.charset.Charset
-import pw.binom.charset.Charsets
-
 /**
  * Keywords in http headers
  */
@@ -37,46 +34,57 @@ interface Headers : Map<String, List<String>> {
 
     override operator fun get(key: String): List<String>?
 
-    fun getContentLength(): ULong? {
-        val txt = getSingle(CONTENT_LENGTH) ?: return null
-        return txt?.toULongOrNull()
-            ?: throw IllegalStateException("Invalid header \"${CONTENT_LENGTH}:${txt}\"")
-    }
-
-    fun getTransferEncoding() =
-        getSingle(TRANSFER_ENCODING)
-
-    fun getContentType() =
-        getSingle(CONTENT_TYPE)
-
-    fun getContentEncoding() =
-        getSingle(CONTENT_ENCODING)
-
-    fun getMimeType(): String? {
-        val charset = getContentType() ?: return null
-        val s = charset.indexOf(";")
-        return if (s == -1) {
-            charset.trim()
-        } else {
-            charset.substring(0, s).trim()
+    val contentLength: ULong?
+        get() {
+            val txt = getSingle(CONTENT_LENGTH) ?: return null
+            return txt?.toULongOrNull()
+                ?: throw IllegalStateException("Invalid header \"${CONTENT_LENGTH}:${txt}\"")
         }
 
-    }
+    val transferEncoding
+        get() = getSingle(TRANSFER_ENCODING)
 
-    fun getCharset(): Charset? {
-        val charset = getContentType()
-        return if (charset != null) {
+    val bodyExist: Boolean
+        get() = transferEncoding.equals(CHUNKED, ignoreCase = true) || contentLength ?: 0uL > 0uL
+
+    val contentType
+        get() = getSingle(CONTENT_TYPE)
+
+    /**
+     * Returns method of pack data of body
+     */
+    val contentEncoding
+        get() = getSingle(CONTENT_ENCODING)
+
+    val keepAlive
+        get() = getSingle(CONNECTION).equals(KEEP_ALIVE, ignoreCase = true)
+
+    val mimeType: String?
+        get() {
+            val charset = contentType ?: return null
             val s = charset.indexOf(";")
-            if (s == -1) {
-                null
+            return if (s == -1) {
+                charset.trim()
             } else {
-                val t = charset.substring(s + 1).trim().toLowerCase().removePrefix("charset=")
-                Charsets.get(t)
+                charset.substring(0, s).trim()
             }
-        } else {
-            null
+
         }
-    }
+
+    val charset: String?
+        get() {
+            val charset = contentType
+            return if (charset != null) {
+                val s = charset.indexOf(";")
+                if (s == -1) {
+                    null
+                } else {
+                    charset.substring(s + 1).trim().toLowerCase().removePrefix("charset=")
+                }
+            } else {
+                null
+            }
+        }
 
     fun getSingle(key: String): String? {
         val len = this[key] ?: return null

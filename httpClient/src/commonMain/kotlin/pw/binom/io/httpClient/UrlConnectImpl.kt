@@ -11,6 +11,7 @@ import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
+@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 internal class UrlConnectImpl(
         val method: String,
         val url: URL,

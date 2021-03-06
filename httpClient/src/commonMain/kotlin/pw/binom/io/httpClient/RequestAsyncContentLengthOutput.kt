@@ -15,6 +15,7 @@ class RequestAsyncContentLengthOutput(
     closeStream = false
 ) {
     override suspend fun getResponse(): HttpResponse {
+        checkClosed()
         if (!isFull) {
             throw IllegalStateException("Not all content was sent")
         }
@@ -28,8 +29,6 @@ class RequestAsyncContentLengthOutput(
     }
 
     override suspend fun asyncClose() {
-        checkClosed()
-        super.asyncClose()
-        runCatching { stream.asyncClose() }
+        getResponse().asyncClose()
     }
 }

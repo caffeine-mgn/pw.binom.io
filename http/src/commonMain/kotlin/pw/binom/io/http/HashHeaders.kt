@@ -4,6 +4,10 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
     private var body = HashMap<String, ArrayList<String>>()
     private var ref = HashMap<String, String>()
     override fun set(key: String, value: List<String>): MutableHeaders {
+        if (value.isEmpty()) {
+            remove(key)
+            return this
+        }
         val v = ref[key.toLowerCase()]
         if (v == null) {
             val list = ArrayList(value)
@@ -15,8 +19,13 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
         return this
     }
 
-    override fun set(key: String, value: String): MutableHeaders =
-        set(key, listOf(value))
+    override fun set(key: String, value: String?): MutableHeaders =
+        if (value == null) {
+            remove(key)
+            this
+        } else {
+            set(key, listOf(value))
+        }
 
     override fun add(key: String, value: List<String>): MutableHeaders {
         val v = ref[key.toLowerCase()] ?: return set(key, value)

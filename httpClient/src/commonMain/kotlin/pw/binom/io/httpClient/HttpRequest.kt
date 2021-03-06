@@ -3,7 +3,9 @@ package pw.binom.io.httpClient
 import pw.binom.AsyncOutput
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncWriter
+import pw.binom.io.http.BasicAuth
 import pw.binom.io.http.MutableHeaders
+import pw.binom.io.http.use
 import pw.binom.io.http.websocket.WebSocketConnection
 
 interface HttpRequest : AsyncCloseable {
@@ -34,10 +36,25 @@ interface HttpRequest : AsyncCloseable {
     suspend fun startWebSocket(): WebSocketConnection
 }
 
+fun <T : HttpRequest> T.setHeader(key: String, value: String): T {
+    headers[key] = value
+    return this
+}
+
+fun <T : HttpRequest> T.addHeader(key: String, value: String): T {
+    headers.add(key, value)
+    return this
+}
+
 interface AsyncHttpRequestOutput : AsyncOutput {
     suspend fun getResponse(): HttpResponse
 }
 
 interface AsyncHttpRequestWriter : AsyncWriter {
     suspend fun getResponse(): HttpResponse
+}
+
+fun <T : HttpRequest> T.use(basicAuth: BasicAuth): T {
+    headers.use(basicAuth)
+    return this
 }

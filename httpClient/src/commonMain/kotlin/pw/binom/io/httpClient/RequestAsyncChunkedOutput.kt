@@ -28,8 +28,6 @@ class RequestAsyncChunkedOutput(
     }
 
     override suspend fun asyncClose() {
-        checkClosed()
-        super.asyncClose()
-        stream.asyncClose()
+        getResponse().asyncClose()
     }
 }

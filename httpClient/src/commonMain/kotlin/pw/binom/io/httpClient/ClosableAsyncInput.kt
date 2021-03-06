@@ -8,6 +8,7 @@ import pw.binom.io.http.AsyncHttpInput
 /**
  * Stream for read http response. This stream is close when this stream can't read data from [stream]
  */
+@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 internal class ClosableAsyncInput(val stream: AsyncInput) : AsyncHttpInput {
     private var eof = false
     override val isEof: Boolean

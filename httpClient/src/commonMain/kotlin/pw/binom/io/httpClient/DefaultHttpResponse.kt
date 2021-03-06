@@ -62,10 +62,9 @@ class DefaultHttpResponse(
     }
 
     override suspend fun readData(): AsyncInput {
-        val keepAlive = keepAlive
-                && headers.getSingle(Headers.CONNECTION).equals(Headers.KEEP_ALIVE, ignoreCase = true)
+        val keepAlive = keepAlive && headers.keepAlive
         checkClosed()
-        val encode = headers.getTransferEncoding()
+        val encode = headers.transferEncoding
         var stream: AsyncInput = channel.reader
         if (encode != null) {
             if (encode.toLowerCase() != Headers.CHUNKED.toLowerCase()) {
@@ -79,7 +78,8 @@ class DefaultHttpResponse(
                 channel = channel,
             )
         } else {
-            val len = headers.getContentLength() ?: throw IOException("Invalid Http Response: Unknown size of Response")
+            val len = headers.contentLength
+                ?: throw IOException("Invalid Http Response Headers: Unknown size of Response")
             stream = ResponseAsyncContentLengthInput(
                 url = url,
                 client = client,
@@ -91,7 +91,7 @@ class DefaultHttpResponse(
         }
 
         closed = true
-        return when (val encoding = headers.getContentEncoding()?.toLowerCase()) {
+        return when (val encoding = headers.contentEncoding?.toLowerCase()) {
             "gzip" -> AsyncGZIPInput(stream, closeStream = true)
             "deflate" -> AsyncInflateInput(stream = stream, closeStream = true, wrap = true)
             null, "identity" -> stream
@@ -101,14 +101,21 @@ class DefaultHttpResponse(
 
     override suspend fun readText(): AsyncReader =
         readData().bufferedReader(
-            charset = headers.getCharset() ?: Charsets.UTF8,
+            charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8,
             closeParent = true
         )
 
     override suspend fun asyncClose() {
         checkClosed()
         try {
-            channel.asyncClose()
+            if (headers.bodyExist) {
+                channel.asyncClose()
+            } else {
+                client.recycleConnection(
+                    url = url,
+                    channel = channel
+                )
+            }
         } finally {
             closed = true
         }

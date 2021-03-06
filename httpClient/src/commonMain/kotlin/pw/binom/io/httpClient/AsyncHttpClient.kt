@@ -25,6 +25,7 @@ object EmptyKeyManager : KeyManager {
     }
 }
 
+@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 open class AsyncHttpClient(
     val connectionManager: NetworkDispatcher,
     keyManager: KeyManager = EmptyKeyManager,

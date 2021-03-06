@@ -3,7 +3,9 @@ package pw.binom.webdav.client
 import pw.binom.*
 import pw.binom.date.Date
 import pw.binom.io.*
-import pw.binom.io.httpClient.AsyncHttpClient
+import pw.binom.io.http.HTTPMethod
+import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.addHeader
 import pw.binom.webdav.*
 import pw.binom.webdav.server.parseDate
 import pw.binom.xml.dom.XmlElement
@@ -11,7 +13,7 @@ import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.xmlTree
 import kotlin.coroutines.*
 
-open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem {
+open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
 
     private fun XmlElement.findTag(name: String) =
         findElements { it.nameSpace?.url == "DAV:" && it.tag == name }
@@ -48,13 +50,13 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
 
     override suspend fun mkdir(path: String): FileSystem.Entity? {
         val allPathUrl = url.copy(uri = "${url.uri}$path")
-        val r = client.request("MKCOL", allPathUrl)
+        val r = client.request(HTTPMethod.MKCOL, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
-        val resp = r.response()
-        if (resp.responseCode == 405)
+        val responseCode = r.getResponse().use { it.responseCode }
+        if (responseCode == 405)
             return null
-        if (resp.responseCode != 201)
-            TODO("Invalid response code ${resp.responseCode}")
+        if (responseCode != 201)
+            TODO("Invalid response code $responseCode")
         val ss = path.split('/')
         return RemoteEntity(
             user = WebAuthAccess.getCurrentUser(),
@@ -106,7 +108,7 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
 
         override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
             val allPathUrl = url.appendDirectionURI(name)
-            val r = client.request("GET", allPathUrl)
+            val r = client.request(HTTPMethod.GET, allPathUrl)
             if (offset != 0uL) {
                 if (length == null) {
                     r.addHeader("Range", "bytes=$offset-")
@@ -115,15 +117,16 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
                 }
             }
             user?.apply(r)
-            val resp = r.response()
+            val resp = r.getResponse()
             if (resp.responseCode == 404)
                 return null
+            val body = resp.readData()
 
             return object : AsyncInput {
                 override val available: Int
-                    get() = resp.available
+                    get() = -1
 
-                override suspend fun read(dest: ByteBuffer): Int = resp.read(dest)
+                override suspend fun read(dest: ByteBuffer): Int = body.read(dest)
 
                 override suspend fun asyncClose() {
                     resp.asyncClose()
@@ -133,16 +136,19 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
 
         override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity {
             val destinationUrl = url.appendDirectionURI(path)
-            val r = client.request("COPY", url.appendDirectionURI(this.path).appendDirectionURI(name))
+            val r = client.request(HTTPMethod.COPY, url.appendDirectionURI(this.path).appendDirectionURI(name))
             user?.apply(r)
             r.addHeader("Destination", destinationUrl.toString())
-            if (overwrite)
+            if (overwrite) {
                 r.addHeader("Overwrite", "T")
-            val resp = r.response()
-            if (resp.responseCode == 404)
+            }
+            val responseCode = r.getResponse().use { it.responseCode }
+            if (responseCode == 404) {
                 throw FileSystem.FileNotFoundException(this.path)
-            if (resp.responseCode != 201 && resp.responseCode != 204)
-                throw TODO("Invalid response code ${resp.responseCode}")
+            }
+            if (responseCode != 201 && responseCode != 204) {
+                throw TODO("Invalid response code $responseCode")
+            }
 
             val items = path.split('/');
             return RemoteEntity(
@@ -156,15 +162,15 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
 
         override suspend fun move(path: String, overwrite: Boolean): FileSystem.Entity {
             val destinationUrl = url.appendDirectionURI(path)
-            val r = client.request("MOVE", url.appendDirectionURI(this.path).appendDirectionURI(name))
+            val r = client.request(HTTPMethod.MOVE, url.appendDirectionURI(this.path).appendDirectionURI(name))
             user?.apply(r)
             r.addHeader("Destination", destinationUrl.toString())
             if (overwrite) {
                 r.addHeader("Overwrite", "T")
             }
-            val resp = r.response()
-            if (resp.responseCode != 201 && resp.responseCode != 204)
-                throw TODO("Invalid response code ${resp.responseCode}")
+            val responseCode = r.getResponse().use { it.responseCode }
+            if (responseCode != 201 && responseCode != 204)
+                throw TODO("Invalid response code $responseCode")
 
             return RemoteEntity(
                 path = path,
@@ -176,24 +182,20 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
         }
 
         override suspend fun delete() {
-            val r = client.request("DELETE", url.appendDirectionURI(this.path).appendDirectionURI(name))
+            val r = client.request(HTTPMethod.DELETE, url.appendDirectionURI(this.path).appendDirectionURI(name))
             user?.apply(r)
-            val resp = r.response()
-            try {
-                if (resp.responseCode != 201 && resp.responseCode != 204) {
-                    throw TODO("Invalid response code ${resp.responseCode}")
-                }
-            } finally {
-                resp.asyncClose()
+            val responseCode = r.getResponse().use { it.responseCode }
+            if (responseCode != 201 && responseCode != 204) {
+                throw TODO("Invalid response code $responseCode")
             }
         }
 
         override suspend fun rewrite(): AsyncOutput {
             val allPathUrl = url.appendDirectionURI(path)
-            val r = client.request("PUT", allPathUrl)
+            val r = client.request(HTTPMethod.PUT, allPathUrl)
 //            r.addHeader("Overwrite", "T")
             user?.apply(r)
-            val upload = r.upload()
+            val upload = r.writeData()
             return object : AsyncOutput {
                 override suspend fun write(data: ByteBuffer): Int = upload.write(data)
 
@@ -202,7 +204,7 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
                 }
 
                 override suspend fun asyncClose() {
-                    upload.response().asyncClose()
+                    upload.asyncClose()
                 }
             }
         }
@@ -213,15 +215,16 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
 
     suspend fun getDir(user: WebAuthAccess?, path: String, depth: Int): Sequence<FileSystem.Entity>? {
         val allPathUrl = url.appendDirectionURI(path)
-        val r = client.request("PROPFIND", allPathUrl)
+        val r = client.request(HTTPMethod.PROPFIND, allPathUrl)
         user?.apply(r)
         r.addHeader("Depth", depth.toString())
-        val resp = r.response()
+        val resp = r.getResponse()
 //        val auth = r.getResponseHeaders()["WWW-Authenticate"]
         if (resp.responseCode == 404) {
+            resp.asyncClose()
             return null
         }
-        val txt = resp.utf8Reader().readText()
+        val txt = resp.readText().use { it.readText() }
         val reader = StringReader(txt).asAsync().xmlTree()!!
         resp.asyncClose()
         return reader
@@ -278,16 +281,16 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
 
     override suspend fun get(path: String): FileSystem.Entity? {
         val allPathUrl = url.appendDirectionURI(path)
-        val r = client.request("HEAD", allPathUrl)
+        val r = client.request(HTTPMethod.HEAD, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
         return getDir(WebAuthAccess.getCurrentUser(), path, 0)?.firstOrNull()
     }
 
     override suspend fun new(path: String): AsyncOutput {
         val allPathUrl = url.appendDirectionURI(path)
-        val r = client.request("PUT", allPathUrl)
+        val r = client.request(HTTPMethod.PUT, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
-        val upload = r.upload()
+        val upload = r.writeData()
         return object : AsyncOutput {
             override suspend fun write(data: ByteBuffer): Int = upload.write(data)
 
@@ -296,7 +299,7 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
             }
 
             override suspend fun asyncClose() {
-                upload.response().asyncClose()
+                upload.asyncClose()
             }
         }
     }

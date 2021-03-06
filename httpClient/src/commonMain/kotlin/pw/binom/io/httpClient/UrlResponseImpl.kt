@@ -11,6 +11,7 @@ import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.AsyncHttpInput
 import pw.binom.io.http.Headers
 
+@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 internal class UrlResponseImpl(
         override val responseCode: Int,
         override val headers: Map<String, List<String>>,
