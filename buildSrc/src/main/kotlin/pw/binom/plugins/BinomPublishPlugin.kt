@@ -4,8 +4,8 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
-import java.net.URI
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import java.net.URI
 import java.util.logging.Logger
 
 const val BINOM_REPO_URL = "binom.repo.url"
@@ -30,7 +30,7 @@ class BinomPublishPlugin : Plugin<Project> {
         }
 
         target.apply {
-            val conf = it.plugin("maven-publish")
+            it.plugin("maven-publish")
         }
 
         val publishing = target.extensions.findByName("publishing") as PublishingExtension
@@ -44,7 +44,7 @@ class BinomPublishPlugin : Plugin<Project> {
                 }
             }
         }
-        publishing.publications.withType(MavenPublication::class.java){
+        publishing.publications.withType(MavenPublication::class.java) {
             it.pom {
                 it.scm {
                     it.connection.set("https://github.com/caffeine-mgn/pw.binom.io.git")

@@ -18,5 +18,5 @@ interface WebSocketConnection : AsyncCloseable {
     /**
      * Send message. Can be call from not only network thread
      */
-    fun write(type: MessageType, func: suspend (AsyncOutput) -> Unit)
+    suspend fun write(type: MessageType, func: suspend (AsyncOutput) -> Unit)
 }

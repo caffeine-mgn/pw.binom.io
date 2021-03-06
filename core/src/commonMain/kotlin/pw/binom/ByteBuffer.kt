@@ -198,7 +198,7 @@ inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
 }
 
 /**
- * Makes new ByteBuffer from current [ByteArray]. Also later you must don't fogot to close created ByteBuffer
+ * Makes new ByteBuffer from current [ByteArray]. Also later you must don't forgot to close created ByteBuffer
  */
 fun ByteArray.wrap() = ByteBuffer.wrap(this)
 

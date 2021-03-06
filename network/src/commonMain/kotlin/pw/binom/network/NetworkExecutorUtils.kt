@@ -36,7 +36,7 @@ suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R 
 
         val dispatcher = it.context[CrossThreadCoroutineKey]?.crossThreadCoroutine
         if (dispatcher == null) {
-            it.resumeWithException(IllegalStateException("No defined default CrossThreadCoroutineKey"))
+            it.resumeWithException(IllegalStateException("No defined default CrossThreadCoroutineKey. Make sure you start Coroutine using NetworkDispatcher"))
             return@suspendCoroutine
         }
         val holder = dispatcher.doFreeze()

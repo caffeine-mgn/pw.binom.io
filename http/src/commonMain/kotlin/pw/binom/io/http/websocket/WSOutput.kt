@@ -1,16 +1,18 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.*
+import pw.binom.AsyncOutput
+import pw.binom.ByteBuffer
+import pw.binom.empty
 import pw.binom.io.AbstractAsyncBufferedOutput
 import pw.binom.io.StreamClosedException
-import kotlin.experimental.xor
 import kotlin.random.Random
 
 class WSOutput(
-        val messageType: MessageType,
-        val masked: Boolean,
-        override val stream: AsyncOutput,
-        bufferSize: Int) : AbstractAsyncBufferedOutput() {
+    val messageType: MessageType,
+    val masked: Boolean,
+    override val stream: AsyncOutput,
+    bufferSize: Int
+) : AbstractAsyncBufferedOutput() {
     override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
 
     private var first = true
@@ -23,7 +25,6 @@ class WSOutput(
     }
 
     override suspend fun flush() {
-//        val masked=false
         checkClosed()
         if (buffer.position > 0) {
             val v = WebSocketHeader()
@@ -31,12 +32,8 @@ class WSOutput(
             val length = buffer.position
             v.maskFlag = masked
             if (masked) {
-                val mask = Random.nextInt()
-                v.mask = mask
-                buffer.flip()
-                Message.encode(0uL, mask, buffer)
-                buffer.position = length
-                buffer.limit = buffer.capacity
+                v.mask = Random.nextInt()
+                Message.encode(v.mask, buffer)
             }
             v.length = length.toULong()
             v.opcode = if (!first)
@@ -45,7 +42,6 @@ class WSOutput(
                 when (messageType) {
                     MessageType.TEXT -> 1
                     MessageType.BINARY -> 2
-                    MessageType.CLOSE -> 8
                 }
             WebSocketHeader.write(stream, v)
             first = false

@@ -33,7 +33,7 @@ interface HttpRequest : AsyncCloseable {
      * Starts WebSocket Session.
      * Closes this [DefaultHttpRequest] and delegate control to returned [WebSocketConnection].
      */
-    suspend fun startWebSocket(): WebSocketConnection
+    suspend fun startWebSocket(origin: String? = null): WebSocketConnection
 }
 
 fun <T : HttpRequest> T.setHeader(key: String, value: String): T {

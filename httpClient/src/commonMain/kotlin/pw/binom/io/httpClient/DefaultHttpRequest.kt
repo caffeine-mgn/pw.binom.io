@@ -3,11 +3,15 @@ package pw.binom.io.httpClient
 import pw.binom.URL
 import pw.binom.charset.Charsets
 import pw.binom.io.IOException
+import pw.binom.io.Sha1MessageDigest
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
 import pw.binom.io.http.forEachHeader
+import pw.binom.io.http.websocket.HandshakeSecret
+import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
+import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
 
 class DefaultHttpRequest(
     var method: HTTPMethod,
@@ -121,8 +125,27 @@ class DefaultHttpRequest(
     }
 
 
-    override suspend fun startWebSocket(): WebSocketConnection {
-        TODO("Not yet implemented")
+    override suspend fun startWebSocket(origin: String?): WebSocketConnection {
+        headers[Headers.CONNECTION] = Headers.UPGRADE
+        headers[Headers.UPGRADE] = Headers.WEBSOCKET
+        headers[Headers.SEC_WEBSOCKET_VERSION] = "13"
+        headers[Headers.ORIGIN] = origin
+
+        val requestKey = HandshakeSecret.generateRequestKey()
+        val responseKey = HandshakeSecret.generateResponse(Sha1MessageDigest(), requestKey)
+        headers[Headers.SEC_WEBSOCKET_KEY] = requestKey
+        val resp = getResponse()
+        val respKey = resp.headers.getSingle(Headers.SEC_WEBSOCKET_ACCEPT)
+            ?: throw IOException("Invalid Server Response. Missing header \"${Headers.SEC_WEBSOCKET_ACCEPT}\"")
+        if (respKey != responseKey) {
+            throw InvalidSecurityKeyException()
+        }
+
+        return ClientWebSocketConnection(
+            input = channel.reader,
+            output = channel.writer,
+            rawConnection = channel.channel
+        )
     }
 
     override suspend fun asyncClose() {
