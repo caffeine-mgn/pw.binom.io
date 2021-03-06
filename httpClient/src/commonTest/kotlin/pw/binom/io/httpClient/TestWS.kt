@@ -11,70 +11,71 @@ import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.network.NetworkDispatcher
+import pw.binom.toURLOrNull
 import kotlin.test.Ignore
 import kotlin.test.Test
 
 class TestWS {
-
-    @Test
-    fun FFF() {
-        val manager = NetworkDispatcher()
-        val client = AsyncHttpClient(manager)
-        val vv = manager.async {
-            val client = client.request(
-                "PATCH",
-                URL("https://images.binom.pw:443/v2/test2/test/blobs/uploads/432ae7a9-dfab-4e70-abd2-1c17502fe1f8")
-            )
-            val s =
-                File("C:\\TEMP\\8\\test2\\test\\blobs\\6b4e6b132496b605fa0be86f48eac7450a74ecc43809cbe1c8834b71f9e8747f").read()
-                    .use {
-                        val s = client.upload()
-                        it.copyTo(s)
-                        s
-                    }.response()
-        }
-        while (true) {
-            if (vv.isDone) {
-                break
+    /*
+        @Test
+        fun FFF2() {
+            val manager = NetworkDispatcher()
+            val client = AsyncHttpClient(manager)
+            val vv = manager.async {
+                val client = client.request(
+                    "PATCH",
+                    URL("https://images.binom.pw:443/v2/test2/test/blobs/uploads/432ae7a9-dfab-4e70-abd2-1c17502fe1f8")
+                )
+                val s =
+                    File("C:\\TEMP\\8\\test2\\test\\blobs\\6b4e6b132496b605fa0be86f48eac7450a74ecc43809cbe1c8834b71f9e8747f").read()
+                        .use {
+                            val s = client.upload()
+                            it.copyTo(s)
+                            s
+                        }.response()
             }
-            manager.select(1000)
-        }
-
-        if (vv.isFailure) {
-            throw vv.exceptionOrNull!!
-        }
-    }
-
-    @Ignore
-    @Test
-    fun FFF() {
-        val manager = NetworkDispatcher()
-        val client = AsyncHttpClient(manager)
-        val vv = manager.async {
-            val client = client.request(
-                "PATCH",
-                URL("https://images.binom.pw:443/v2/test2/test/blobs/uploads/432ae7a9-dfab-4e70-abd2-1c17502fe1f8")
-            )
-            val s =
-                File("C:\\TEMP\\8\\test2\\test\\blobs\\6b4e6b132496b605fa0be86f48eac7450a74ecc43809cbe1c8834b71f9e8747f").read()
-                    .use {
-                        val s = client.upload()
-                        it.copyTo(s)
-                        s
-                    }.response()
-        }
-        while (true) {
-            if (vv.isDone) {
-                break
+            while (true) {
+                if (vv.isDone) {
+                    break
+                }
+                manager.select(1000)
             }
-            manager.select(1000)
+
+            if (vv.isFailure) {
+                throw vv.exceptionOrNull!!
+            }
         }
 
-        if (vv.isFailure) {
-            throw vv.exceptionOrNull!!
-        }
-    }
+        @Ignore
+        @Test
+        fun FFF() {
+            val manager = NetworkDispatcher()
+            val client = AsyncHttpClient(manager)
+            val vv = manager.async {
+                val client = client.request(
+                    "PATCH",
+                    URL("https://images.binom.pw:443/v2/test2/test/blobs/uploads/432ae7a9-dfab-4e70-abd2-1c17502fe1f8")
+                )
+                val s =
+                    File("C:\\TEMP\\8\\test2\\test\\blobs\\6b4e6b132496b605fa0be86f48eac7450a74ecc43809cbe1c8834b71f9e8747f").read()
+                        .use {
+                            val s = client.upload()
+                            it.copyTo(s)
+                            s
+                        }.response()
+            }
+            while (true) {
+                if (vv.isDone) {
+                    break
+                }
+                manager.select(1000)
+            }
 
+            if (vv.isFailure) {
+                throw vv.exceptionOrNull!!
+            }
+        }
+    */
     @Ignore
     @Test
     fun serverTest() {
@@ -83,7 +84,7 @@ class TestWS {
         async {
             try {
                 val client = AsyncHttpClient(manager)
-                val wsClient = client.request("GET", URL("ws://127.0.0.1:8080/"))
+                val wsClient = client.request("GET", "ws://127.0.0.1:8080/".toURLOrNull()!!)
                     .websocket("http://127.0.0.1:8080")
 
                 while (true) {

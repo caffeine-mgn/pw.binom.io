@@ -26,7 +26,7 @@ internal class UrlResponseImpl(
         if (headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED) {
             return@run AsyncChunkedInput(
                     input,
-                    autoCloseStream = false
+                    closeStream = false
             )
         }
 

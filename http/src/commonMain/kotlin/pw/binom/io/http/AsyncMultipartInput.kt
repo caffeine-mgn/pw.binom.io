@@ -24,8 +24,6 @@ class EndState {
 
 }
 
-//private const val CR = '\r'.toByte()
-//private const val LF = '\n'.toByte()
 internal const val MINUS = '-'.toByte()
 
 internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState): Boolean {
@@ -125,8 +123,8 @@ open class AsyncMultipartInput(private val separator: String, override val strea
     private val reader = utf8Reader()
     var formName: String? = null
         private set
-    private val _headers = HashMap<String, ArrayList<String>>()
-    val headers: Map<String, List<String>>
+    private val _headers = HashHeaders()
+    val headers: Headers
         get() = _headers
 //    private var nextBlockReady = false
 
@@ -167,7 +165,10 @@ open class AsyncMultipartInput(private val separator: String, override val strea
             if (l.isEmpty())
                 break
             val headItems = l.split(':', limit = 2)
-            _headers.getOrPut(headItems[0].trim()) { ArrayList() }.add(headItems[1].trim())
+            _headers.add(
+                key = headItems[0].trim(),
+                value = headItems[1].trim()
+            )
         }
         return true
     }

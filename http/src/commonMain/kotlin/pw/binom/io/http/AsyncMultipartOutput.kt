@@ -46,7 +46,7 @@ class AsyncMultipartOutput(
         writer.append("--").append(boundary)
     }
 
-    suspend fun formData(formName: String, headers: Map<String, List<String>> = emptyMap()) {
+    suspend fun formData(formName: String, headers: Headers = emptyHeaders()) {
         if ("\r\n" in formName) {
             throw IllegalArgumentException("formName can't concate \\r\\n")
         }
@@ -56,14 +56,21 @@ class AsyncMultipartOutput(
         writer.append("\r\n")
     }
 
-    suspend fun part(mimeType: String, headers: Map<String, List<String>> = emptyMap()) {
+    suspend fun part(mimeType: String, headers: Headers = emptyHeaders()) {
+        if (Headers.CONTENT_TYPE in headers) {
+            throw IllegalArgumentException("Headers already contains header ${Headers.CONTENT_TYPE}")
+        }
         internalPart(headers = headers)
         writer.append("Content-Type: ").append(mimeType).append("\r\n")
         writer.append("\r\n")
     }
 
-    private suspend fun internalPart(headers: Map<String, List<String>> = emptyMap()) {
+    suspend fun part(headers: Headers = emptyHeaders()) {
+        internalPart(headers = headers)
+        writer.append("\r\n")
+    }
 
+    private suspend fun internalPart(headers: Headers = emptyHeaders()) {
         headers.forEach {
             if ("\r\n" in it.value)
                 throw IllegalArgumentException("Header Name can't concate \\r\\n")

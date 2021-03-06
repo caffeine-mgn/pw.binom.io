@@ -24,7 +24,7 @@ internal class UrlConnectImpl(
 
     init {
         headers[Headers.CONNECTION] = mutableListOf(Headers.KEEP_ALIVE)
-        headers[Headers.HOST] = if (url.port == url.defaultPort)
+        headers[Headers.HOST] = if (url.port == url.getDefaultPort())
             mutableListOf(url.host)
         else
             mutableListOf("${url.host}:${url.port}")

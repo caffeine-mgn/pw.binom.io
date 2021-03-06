@@ -2,15 +2,12 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
 import pw.binom.EmptyAsyncInput
 import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.io.IOException
 import pw.binom.io.http.AsyncChunkedInput
 import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.Headers
-import pw.binom.io.readln
-import pw.binom.io.utf8Reader
 import pw.binom.network.CrossThreadKeyHolder
 import pw.binom.network.TcpConnection
 
@@ -110,7 +107,7 @@ internal class HttpRequestImpl2 : HttpRequest {
                 if (contentLength != null && contentLength > 0u)
                     AsyncContentLengthInput(
                         stream = wrapped!!,
-                        autoCloseStream = false,
+                        closeStream = false,
                         contentLength = contentLength
                     )
                 else

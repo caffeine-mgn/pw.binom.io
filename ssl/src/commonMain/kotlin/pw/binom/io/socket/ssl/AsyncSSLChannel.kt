@@ -107,6 +107,7 @@ class AsyncSSLChannel private constructor(
     override suspend fun asyncClose() {
         flush()
         if (closeParent) {
+            session.close()
             channel.asyncClose()
         }
         if (closeBuffer) {

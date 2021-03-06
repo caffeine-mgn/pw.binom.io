@@ -147,6 +147,15 @@ inline class URL internal constructor(val path: String) {
             }
             return path.substring(s, e)
         }
+    val request: String
+        get() {
+            val q = query
+            return if (q == null) {
+                uri
+            } else {
+                "$uri?$q"
+            }
+        }
     val query: String?
         get() {
             val s = path.indexOf('?')

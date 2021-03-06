@@ -4,7 +4,11 @@ import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.io.StreamClosedException
 
-open class AsyncContentLengthInput(val stream: AsyncInput, val contentLength: ULong, val autoCloseStream: Boolean = false) : AsyncHttpInput {
+open class AsyncContentLengthInput(
+    val stream: AsyncInput,
+    val contentLength: ULong,
+    val closeStream: Boolean = false
+) : AsyncHttpInput {
 
     override val isEof: Boolean
         get() = closed || readed >= contentLength
@@ -12,24 +16,8 @@ open class AsyncContentLengthInput(val stream: AsyncInput, val contentLength: UL
     override val available: Int
         get() = minOf(contentLength - readed, Int.MAX_VALUE.toULong()).toInt()
 
-//    override suspend fun skip(length: Long): Long =
-//            stream.skip(length)
-
     private var readed = 0uL
     private var closed = false
-    private val staticData = ByteArray(1)
-
-//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        checkClosed()
-//        if (isEof)
-//            return 0
-//        val r = if ((contentLength - readed < length.toULong())) {
-//            stream.read(data, offset, (contentLength - readed).toInt())
-//        } else
-//            stream.read(data, offset, length)
-//        readed += r.toULong()
-//        return r
-//    }
 
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
@@ -50,7 +38,7 @@ open class AsyncContentLengthInput(val stream: AsyncInput, val contentLength: UL
     override suspend fun asyncClose() {
         checkClosed()
         closed = true
-        if (autoCloseStream) {
+        if (closeStream) {
             stream.asyncClose()
         }
     }

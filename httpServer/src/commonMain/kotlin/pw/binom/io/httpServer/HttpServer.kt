@@ -1,9 +1,7 @@
 package pw.binom.io.httpServer
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.async
 import pw.binom.concurrency.WorkerPool
-import pw.binom.concurrency.asyncWithExecutor
 import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.io.Closeable
 import pw.binom.network.*
@@ -24,10 +22,10 @@ open class HttpServer(
     outputBufferSize: Int = DEFAULT_BUFFER_SIZE,
     private val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE
 ) : Closeable {
-
     init {
         require(zlibBufferSize >= 0) { "zlibBufferSize must be grate or equals than 0" }
     }
+    private var closed = false
 
     private val returnToPoolForOutput: (NoCloseOutput) -> Unit = {
         outputBufferPool.recycle(it)
@@ -59,44 +57,50 @@ open class HttpServer(
 
     private suspend fun runProcessing(connection: TcpConnection) {
         val it = connection
-        val inputBufferid = bufferedInputPool.borrow { buf ->
+        val rawInputBuffered = bufferedInputPool.borrow { buf ->
             buf.first.currentStream = it
         }
-        val outputBufferid = bufferedOutputPool.borrow { buf ->
+        val rawOutputBuffered = bufferedOutputPool.borrow { buf ->
             buf.currentStream = it
         }
-        while (true) {
-            try {
-                val keepAlive = ConnectionProcessing.process(
-                    handler = this.handler,
-                    httpRequestPool = httpRequestPool,
-                    httpResponsePool = httpResponsePool,
-                    asciiInputReader = inputBufferid.second,
-                    outputBuffered = outputBufferid,
-                    allowZlib = zlibBufferSize > 0,
-                    rawConnection = it
-                )
-                if (!keepAlive) {
-                    inputBufferid.first.reset()
-                    inputBufferid.second.reset()
-                    bufferedInputPool.recycle(inputBufferid)
-                    outputBufferid.reset()
-                    bufferedOutputPool.recycle(outputBufferid)
-                    it.close()
+        try {
+            while (true) {
+                if (closed) {
+                    runCatching { connection.asyncClose() }
                     break
                 }
-            } catch (e: SocketClosedException) {
-                break
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                inputBufferid.first.reset()
-                inputBufferid.second.reset()
-                bufferedInputPool.recycle(inputBufferid)
-                outputBufferid.reset()
-                bufferedOutputPool.recycle(outputBufferid)
-                it.close()
-                break
+                try {
+                    val keepAlive = ConnectionProcessing.process(
+                        handler = this.handler,
+                        httpRequestPool = httpRequestPool,
+                        httpResponsePool = httpResponsePool,
+                        asciiInputReader = rawInputBuffered.second,
+                        outputBuffered = rawOutputBuffered,
+                        allowZlib = zlibBufferSize > 0,
+                        rawConnection = it
+                    )
+                    if (!keepAlive) {
+                        rawInputBuffered.first.reset()
+                        rawInputBuffered.second.reset()
+                        bufferedInputPool.recycle(rawInputBuffered)
+                        rawOutputBuffered.reset()
+                        bufferedOutputPool.recycle(rawOutputBuffered)
+                        it.close()
+                        break
+                    }
+                } catch (e: SocketClosedException) {
+                    break
+                } catch (e: Throwable) {
+                    runCatching { connection.asyncClose() }
+                    break
+                }
             }
+        } finally {
+            rawInputBuffered.first.reset()
+            rawInputBuffered.second.reset()
+            bufferedInputPool.recycle(rawInputBuffered)
+            rawOutputBuffered.reset()
+            bufferedOutputPool.recycle(rawOutputBuffered)
         }
     }
 
@@ -106,7 +110,13 @@ open class HttpServer(
 
     private val binded = ArrayList<TcpServerConnection>()
 
+    private fun checkClosed() {
+        check(!closed) { "HttpServer already closed" }
+    }
+
     override fun close() {
+        checkClosed()
+        closed = true
         binded.forEach {
             it.close()
         }
@@ -127,10 +137,11 @@ open class HttpServer(
      * @param address Address for bind
      */
     fun bindHTTP(address:NetworkAddress) {
+        checkClosed()
         val connect = manager.bindTcp(address)
         binded += connect
         manager.async {
-            while (true) {
+            while (!closed) {
                 val client = connect.accept() ?: continue
                 manager.async(executor) {
                     clientConnected(client, manager)
@@ -138,8 +149,4 @@ open class HttpServer(
             }
         }
     }
-
-//    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
-//        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
-//    }
 }

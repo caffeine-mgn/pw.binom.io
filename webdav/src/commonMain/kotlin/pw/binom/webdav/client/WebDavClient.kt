@@ -47,7 +47,7 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
     }
 
     override suspend fun mkdir(path: String): FileSystem.Entity? {
-        val allPathUrl = url.newURI("${url.uri}$path")
+        val allPathUrl = url.copy(uri = "${url.uri}$path")
         val r = client.request("MKCOL", allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val resp = r.response()
@@ -105,7 +105,7 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
             get() = this@WebDavClient
 
         override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
-            val allPathUrl = url.newURI("${url.uri}$path/$name")
+            val allPathUrl = url.appendDirectionURI(name)
             val r = client.request("GET", allPathUrl)
             if (offset != 0uL) {
                 if (length == null) {
@@ -301,3 +301,6 @@ open class WebDavClient(val client: AsyncHttpClient, val url: URL) : FileSystem 
         }
     }
 }
+
+fun URL.appendDirectionURI(dir: String) =
+    copy(uri = "${uri.removeSuffix("/")}/${UTF8.urlEncode(dir).removePrefix("/")}")

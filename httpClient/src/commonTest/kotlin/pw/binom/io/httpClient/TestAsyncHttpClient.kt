@@ -1,64 +1,62 @@
 package pw.binom.io.httpClient
 
-import pw.binom.*
+import pw.binom.AsyncInput
+import pw.binom.ByteBuffer
+import pw.binom.async2
+import pw.binom.io.http.HTTPMethod
+import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.network.NetworkDispatcher
-import kotlin.test.Ignore
+import pw.binom.toURLOrNull
 import kotlin.test.Test
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 class TestAsyncHttpClient {
 
     val tm = ByteBuffer.alloc(1024 * 1024 * 2)
 
-    suspend fun AsyncInput.skipAll() {
+    suspend fun AsyncInput.skipAll(): Long {
+        var total = 0L
         while (true) {
             tm.clear()
-            if (this.read(tm) == 0) {
+            println("skiping ${tm.remaining} ${this::class}")
+            val l = this.read(tm)
+            if (l == 0) {
                 break
             }
+            total += l
             tm.flip()
         }
+        return total
     }
 
-    @Ignore
-    @OptIn(ExperimentalTime::class)
     @Test
+    @OptIn(ExperimentalTime::class)
     fun test() {
-//        File("path to file").channel(AccessType.READ).utf8Reader().use {
-//            while (true){
-//                val line = it.readln()?:break
-//                line.splitToSequence(',').forEachIndexed { index, s ->
-//                    if (index>1)
-//                        print("\t")
-//                    print(s)
-//                }
-//                println()
-//            }
-//        }
         val manager = NetworkDispatcher()
-        val client = AsyncHttpClient(manager)
-        var done = false
+        val client = HttpClient(manager)
 
-        async {
-            try {
-                repeat(3) {
-                    client
-                            .request("GET", URL("https://www.ntv.ru/"))
-                            .response().use {
-                                it.skipAll()
-                            }
-                }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            } finally {
-                done = true
+        val e = async2 {
+            repeat(3) {
+                val responseData = client
+                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURLOrNull()!!)
+                    .getResponse().also {
+                        println("headers:${it.headers}")
+                    }
+                    .readText().use {
+                        it.readText()
+                    }
+//                    .readData().use {
+//                        it.skipAll()
+//                    }
+                println("Read: ${responseData.length}   ->   ${if (responseData.endsWith("</body></html>")) "OK" else "ERR"}")
             }
         }
-        while (!done) {
+        while (!e.isDone) {
             manager.select(1000)
+        }
+        if (e.isFailure) {
+            throw e.exceptionOrNull!!
         }
 
         client.close()

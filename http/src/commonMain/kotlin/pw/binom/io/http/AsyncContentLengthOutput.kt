@@ -4,18 +4,11 @@ import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.io.StreamClosedException
 
-open class AsyncContentLengthOutput(val stream: AsyncOutput, val contentLength: ULong, val closeStream: Boolean = false) : AsyncOutput {
-
-//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        checkClosed()
-//        if (wrote >= contentLength)
-//            throw IllegalStateException("All Content already send")
-//        if (wrote + length.toULong() > contentLength)
-//            throw IllegalStateException("Can't send more than Content Length")
-//        val r = stream.write(data, offset, length)
-//        wrote += r.toULong()
-//        return r
-//    }
+open class AsyncContentLengthOutput(
+    val stream: AsyncOutput,
+    val contentLength: ULong,
+    val closeStream: Boolean = false
+) : AsyncOutput {
 
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
@@ -42,7 +35,12 @@ open class AsyncContentLengthOutput(val stream: AsyncOutput, val contentLength: 
         }
     }
 
-    private var wrote = 0uL
+    var wrote = 0uL
+        private set
+
+    val isFull
+        get() = wrote == contentLength
+
     private var closed = false
 
     protected fun checkClosed() {

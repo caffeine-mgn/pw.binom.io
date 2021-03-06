@@ -8,21 +8,44 @@ import pw.binom.empty
 //private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
 
 open class AsyncInflateInput(
-        val stream: AsyncInput,
-        bufferSize: Int = 512,
-        wrap: Boolean = false,
-        val closeStream: Boolean = false
+    val stream: AsyncInput,
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    wrap: Boolean = false,
+    val closeStream: Boolean = false
 ) : AsyncInput {
-    private val buf2 = ByteBuffer.alloc(bufferSize).empty()
+    private val buffer = ByteBuffer.alloc(bufferSize).empty()
     private val inflater = Inflater(wrap)
     protected var usesDefaultInflater = true
+    private var eof = false
 
-    protected suspend fun full() {
-        if (buf2.remaining > 0)
+    private suspend fun full() {
+
+//        if (eof) {
+//            return
+//        }
+//        if (buffer.remaining == 0) {
+//            buffer.clear()
+//            if (stream.read(buffer) == 0) {
+//                eof = true
+//            }
+//            buffer.flip()
+//        }
+
+        if (eof) {
             return
-        buf2.clear()
-        stream.read(buf2)
-        buf2.flip()
+        }
+        if (buffer.remaining > 0) {
+            return
+        }
+        buffer.clear()
+        while (buffer.remaining != 0) {
+            val r = stream.read(buffer)
+            if (r == 0) {
+                eof = true
+                break
+            }
+        }
+        buffer.flip()
     }
 
     override val available: Int
@@ -32,9 +55,10 @@ open class AsyncInflateInput(
         val l = dest.remaining
         while (true) {
             full()
-            if (buf2.remaining == 0 || dest.remaining == 0)
+            if (buffer.remaining == 0 || dest.remaining == 0) {
                 break
-            val r = inflater.inflate(buf2, dest)
+            }
+            val r = inflater.inflate(buffer, dest)
             if (r == 0)
                 break
         }
@@ -45,7 +69,7 @@ open class AsyncInflateInput(
         if (usesDefaultInflater)
             inflater.end()
         inflater.close()
-        buf2.close()
+        buffer.close()
         if (closeStream) {
             stream.asyncClose()
         }

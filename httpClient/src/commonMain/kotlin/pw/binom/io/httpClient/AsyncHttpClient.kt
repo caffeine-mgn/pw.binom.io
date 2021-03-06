@@ -78,19 +78,12 @@ open class AsyncHttpClient(
 
     internal suspend fun borrowConnection(url: URL): Connection {
         cleanUp()
-        val port = url.port ?: url.defaultPort ?: throw IllegalArgumentException("Unknown default port for $url")
+        val port = url.getPort()
         val key = "${url.protocol}://${url.host}:$port"
         var connectionList = connections[key]
         if (connectionList != null && !connectionList.isEmpty()) {
             val channel = connectionList.removeAt(connectionList.lastIndex)
-//            val asyncChannel = channel.channel//connectionManager.attach()
-//
-//            val cc = channel.sslSession?.let { it.asyncChannel(asyncChannel) } ?: asyncChannel
-//            var cc:AsyncChannel = asyncChannel
-//            if (url.protocol == "https")
-//                cc = sslContext.clientSession(url.host, url.port ?: url.defaultPort!!).asyncChannel(cc.unwrap())
             return Connection(channel.sslSession, channel.channel, channel.rawConnection)
-//            return Connection(channel.sslSession, channel.channel)
         }
         val raw = connectionManager.tcpConnect(
             NetworkAddress.Immutable(
@@ -100,7 +93,7 @@ open class AsyncHttpClient(
         )
         var connection = Connection(null, raw, raw)
         if (url.protocol == "https") {
-            val sslSession = sslContext.clientSession(url.host, url.port ?: url.defaultPort!!)
+            val sslSession = sslContext.clientSession(host = url.host, port = port)
             connection = Connection(sslSession, sslSession.asyncChannel(connection.channel), raw)
 
         }
@@ -109,7 +102,7 @@ open class AsyncHttpClient(
 
     internal fun recycleConnection(url: URL, connection: Connection) {
         cleanUp()
-        val port = url.port ?: url.defaultPort ?: throw IllegalArgumentException("Unknown default port for $url")
+        val port = url.getPort()
         val key = "${url.protocol}://${url.host}:$port"
         connections.getOrPut(key) { ArrayList() }
             .add(AliveConnection(connection.sslSession, connection.channel, connection.rawConnection))
@@ -192,3 +185,17 @@ private fun AsyncChannel.unwrap(): TcpConnection {
         }
     }
 }
+
+internal fun URL.getDefaultPort() =
+    when (protocol) {
+        "ws", "http" -> 80
+        "wss", "https" -> 443
+        else -> throw IllegalArgumentException("Unknown default port for $this")
+    }
+
+internal fun URL.getPort() =
+    port ?: when (protocol) {
+        "ws", "http" -> 80
+        "wss", "https" -> 443
+        else -> throw IllegalArgumentException("Unknown default port for $this")
+    }

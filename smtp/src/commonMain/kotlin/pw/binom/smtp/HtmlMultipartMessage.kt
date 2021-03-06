@@ -7,8 +7,10 @@ import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.io.AsyncBufferedAsciiWriter
 import pw.binom.io.AsyncWriter
+import pw.binom.io.UTF8
 import pw.binom.io.bufferedWriter
 import pw.binom.io.http.AsyncMultipartOutput
+import pw.binom.io.http.headersOf
 
 class HtmlMultipartMessage internal constructor(val output: AsyncBufferedAsciiWriter) : Message {
 
@@ -47,9 +49,9 @@ class HtmlMultipartMessage internal constructor(val output: AsyncBufferedAsciiWr
     suspend fun attach(mimeType: String = "application/octet-stream", name: String): AsyncOutput {
         multipart.part(
             mimeType = "$mimeType;name=$name",
-            headers = mapOf(
-                "Content-Transfer-Encoding" to listOf("Binary"),
-                "Content-Disposition" to listOf("attachment;filename=\"$name\""),
+            headers = headersOf(
+                "Content-Transfer-Encoding" to "Binary",
+                "Content-Disposition" to "attachment;filename=\"${UTF8.encode(name)}\"",
             )
         )
         multipart.flush()

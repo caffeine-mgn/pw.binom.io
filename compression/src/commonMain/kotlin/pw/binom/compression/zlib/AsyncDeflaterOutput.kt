@@ -29,7 +29,9 @@ open class AsyncDeflaterOutput(
             val l = deflater.deflate(data, buffer)
 
             buffer.flip()
-            stream.write(buffer)
+            while (buffer.remaining > 0) {
+                stream.write(buffer)
+            }
 
             if (l <= 0)
                 break

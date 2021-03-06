@@ -67,8 +67,15 @@ class AsyncBufferedOutputAppendable private constructor(
         closeBuffer = false,
     )
 
-    val charBuffer = CharBuffer.alloc(charBufferSize)
-    val encoder = charset.newEncoder()
+    private val charBuffer = CharBuffer.alloc(charBufferSize)
+    private val encoder = charset.newEncoder()
+    private var closed = false
+
+    private fun checkClosed() {
+        if (closed) {
+            throw IllegalStateException("Writer already closed")
+        }
+    }
 
     private suspend fun checkFlush() {
         if (charBuffer.remaining > 0) {
@@ -78,17 +85,20 @@ class AsyncBufferedOutputAppendable private constructor(
     }
 
     override suspend fun append(c: Char): AsyncAppendable {
+        checkClosed()
         checkFlush()
         charBuffer.put(c)
         return this
     }
 
     override suspend fun append(csq: CharSequence?): AsyncAppendable {
+        checkClosed()
         csq ?: return this
         return append(csq, 0, csq.lastIndex)
     }
 
     override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
+        checkClosed()
         csq ?: return this
         if (csq.length > 1 && csq is String) {
             val array = csq.toCharArray()
@@ -111,6 +121,7 @@ class AsyncBufferedOutputAppendable private constructor(
     }
 
     override suspend fun flush() {
+        checkClosed()
         if (charBuffer.remaining == charBuffer.capacity) {
             return
         }
@@ -131,15 +142,20 @@ class AsyncBufferedOutputAppendable private constructor(
     }
 
     override suspend fun asyncClose() {
+        checkClosed()
         flush()
-        encoder.close()
-        if (closeBuffer) {
-            buffer.close()
-        } else {
-            pool?.recycle(buffer)
-        }
-        if (closeParent) {
-            output.asyncClose()
+        try {
+            encoder.close()
+            if (closeBuffer) {
+                buffer.close()
+            } else {
+                pool?.recycle(buffer)
+            }
+            if (closeParent) {
+                output.asyncClose()
+            }
+        } finally {
+            closed = true
         }
     }
 }

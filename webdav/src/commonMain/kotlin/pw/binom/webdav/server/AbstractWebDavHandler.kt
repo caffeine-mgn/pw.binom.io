@@ -10,6 +10,7 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.pool.ObjectPool
+import pw.binom.toURLOrNull
 import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
@@ -164,7 +165,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "MOVE") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { URL(it) }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURLOrNull()!! }
 
                     if (destination == null) {
                         resp.status = 406
@@ -185,7 +186,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "COPY") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { URL(it) }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURLOrNull()!! }
 
                     if (destination == null) {
                         resp.status = 406

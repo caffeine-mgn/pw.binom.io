@@ -12,7 +12,6 @@ internal object ConnectionProcessing {
 
     suspend fun process(
         rawConnection: TcpConnection,
-        //inputBuffered: PooledAsyncBufferedInput,
         outputBuffered: PoolAsyncBufferedOutput,
         asciiInputReader: AsyncBufferedAsciiInputReader,
         httpRequestPool: DefaultPool<HttpRequestImpl2>,

@@ -99,6 +99,9 @@ open class AsyncChunkedOutput(
     }
 
     override suspend fun asyncClose() {
+        if (finished) {
+            throw IllegalStateException("Stream already finished")
+        }
         finish()
         closed = true
         tmp.close()

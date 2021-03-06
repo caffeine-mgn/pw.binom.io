@@ -27,6 +27,9 @@ actual class TcpClientSocketChannel(val native: JSocketChannel) : Channel {
             }
             throw SocketClosedException()
         } catch (e:Throwable){
+            println("-----------")
+            e.printStackTrace()
+            println("-----------")
             throw SocketClosedException()
         }
     }
