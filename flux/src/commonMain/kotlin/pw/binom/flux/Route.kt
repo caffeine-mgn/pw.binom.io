@@ -1,28 +1,51 @@
 package pw.binom.flux
 
 import pw.binom.io.Closeable
+import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
 
 interface Route {
     fun route(path: String, route: Route)
     fun route(path: String, func: (Route.() -> Unit)? = null): Route
-    fun detach(path: String,route:Route)
-    fun endpoint(method: String, path: String, func: suspend (Action) -> Boolean):Closeable
+    fun detach(path: String, route: Route)
+    fun endpoint(method: String, path: String, func: suspend (Action) -> Boolean): Closeable
+    fun endpoint(method: HTTPMethod, path: String, func: suspend (Action) -> Boolean): Closeable =
+        endpoint(
+            method = method.name,
+            path = path,
+            func = func
+        )
+
     fun forward(handler: Handler?)
     suspend fun execute(action: Action): Boolean
 }
 
-inline fun Route.get(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("GET", path, func)
-inline fun Route.head(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("HEAD", path, func)
-inline fun Route.patch(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("PATCH", path, func)
-inline fun Route.trace(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("TRACE", path, func)
-inline fun Route.options(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("OPTIONS", path, func)
-inline fun Route.connect(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("CONNECT", path, func)
-inline fun Route.post(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("POST", path, func)
-inline fun Route.put(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("PUT", path, func)
-inline fun Route.delete(path: String, noinline func: suspend (Action) -> Boolean) = endpoint("DELETE", path, func)
+inline fun Route.get(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.GET, path, func)
+
+inline fun Route.head(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.HEAD, path, func)
+
+inline fun Route.patch(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.PATCH, path, func)
+
+inline fun Route.trace(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.TRACE, path, func)
+
+inline fun Route.options(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.OPTIONS, path, func)
+
+inline fun Route.connect(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.CONNECT, path, func)
+
+inline fun Route.post(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.POST, path, func)
+
+inline fun Route.put(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.PUT, path, func)
+
+inline fun Route.delete(path: String, noinline func: suspend (Action) -> Boolean) =
+    endpoint(HTTPMethod.DELETE, path, func)
 
 /**
  * Called before request
