@@ -140,6 +140,12 @@ buildscript {
 
 Examples [here](examples)
 
+## Contribution Guidelines:
+- **CodeStyle:**
+We enforce the code style to match the official Kotlin [coding conventions](https://kotlinlang.org/docs/reference/coding-conventions.html). Read there on how to set those up for your IDE.
+- **Branching:**
+I use branching like described in `git-flow`.
+
 ## Using Library in Projects:
 
 [Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)
