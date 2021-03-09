@@ -2,7 +2,6 @@ package pw.binom.io.httpServer
 
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.async
 import pw.binom.copyTo
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
@@ -34,8 +33,8 @@ class PostRequestTest {
         val manager = NetworkDispatcher()
         var done = false
         var dd = TimeSource.Monotonic.markNow()
-        val server = HttpServer(
-            manager, object : Handler {
+        val server = HttpServer3(
+            manager, object : Handler3 {
                 override suspend fun request(req: HttpRequest, resp: HttpResponse) {
                     req.headers.forEach { k ->
                         k.value.forEach {
@@ -77,7 +76,7 @@ class PostRequestTest {
 //                    val filePath="E:\\Temp\\2\\out.txt"
                         println("Read file and copy it")
                         File(filePath).channel(AccessType.READ).use {
-                            it.copyTo(resp.complete(1024u * 1024u * 2u), bufPool)
+                            it.copyTo(resp.complete(1024 * 1024 * 2), bufPool)
                         }
                         println("File writed!")
                     } catch (e: SocketClosedException) {
@@ -199,9 +198,9 @@ class PostRequestTest {
     fun testDownload() {
         val nd = NetworkDispatcher()
         val buf = ByteBufferPool(10, (DEFAULT_BUFFER_SIZE * 10).toUInt())
-        val server = HttpServer(
+        val server = HttpServer3(
             manager = nd,
-            handler = object : Handler {
+            handler = object : Handler3 {
                 override suspend fun request(req: HttpRequest, resp: HttpResponse) {
                     resp.status = 200
                     File("C:\\TEMP\\6\\2.zip").read().use {

@@ -10,7 +10,11 @@ interface MutableHeaders : Headers {
     fun remove(key: String, value: String): Boolean
     override operator fun get(key: String): List<String>?
     fun clear()
-
+    override var acceptEncoding: List<String>?
+        get() = getSingle(Headers.ACCEPT_ENCODING)?.split(',')?.map { it.trim() }
+        set(value) {
+            this[Headers.ACCEPT_ENCODING] = value?.joinToString(", ")
+        }
     override var contentEncoding: String?
         get() = getSingle(Headers.CONTENT_ENCODING)
         set(value) {
@@ -29,13 +33,23 @@ interface MutableHeaders : Headers {
             this[Headers.TRANSFER_ENCODING] = value
         }
 
+    override var contentLength: ULong?
+        get() {
+            val txt = getSingle(Headers.CONTENT_LENGTH) ?: return null
+            return txt?.toULongOrNull()
+                ?: throw IllegalStateException("Invalid header \"${Headers.CONTENT_LENGTH}:${txt}\"")
+        }
+        set(value) {
+            this[Headers.CONTENT_LENGTH] = value?.toString()
+        }
+
     override var keepAlive: Boolean
         get() = getSingle(Headers.CONNECTION).equals(Headers.KEEP_ALIVE, ignoreCase = true)
         set(value) {
             if (value) {
                 this[Headers.CONNECTION] = Headers.KEEP_ALIVE
             } else {
-                this[Headers.CONNECTION] = null
+                this[Headers.CONNECTION] = Headers.CLOSE
             }
         }
 }

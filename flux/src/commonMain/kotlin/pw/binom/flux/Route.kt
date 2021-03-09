@@ -2,7 +2,7 @@ package pw.binom.flux
 
 import pw.binom.io.Closeable
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.Handler3
 
 interface Route {
     fun route(path: String, route: Route)
@@ -16,7 +16,7 @@ interface Route {
             func = func
         )
 
-    fun forward(handler: Handler?)
+    fun forward(handler: Handler3?)
     suspend fun execute(action: Action): Boolean
 }
 

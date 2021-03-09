@@ -1,7 +1,6 @@
 package pw.binom.io.httpServer
 
 import pw.binom.*
-import pw.binom.atomic.AtomicInt
 import pw.binom.concurrency.*
 import pw.binom.io.http.Headers
 import pw.binom.io.httpClient.AsyncHttpClient
@@ -24,7 +23,7 @@ class MultiThreading {
         val nd = NetworkDispatcher()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
         val data = Random.nextBytes(30)
-        val server = HttpServer(nd, executor = worker, handler = Handler { req, resp ->
+        val server = HttpServer3(nd, executor = worker, handler = Handler3 { req, resp ->
             println("REQUEST ${req.contextUri}")
             resp.enableCompress = true
             resp.status = 200
@@ -57,7 +56,7 @@ class MultiThreading {
                 println("Try make request $name...")
                 client.request(
                     method = "GET",
-                    url = URL("http://127.0.0.1:$port/$name")
+                    url = "http://127.0.0.1:$port/$name".toURLOrNull()!!
                 ).response().use { response ->
                     println("$name reading...")
                     val buf = ByteBuffer.alloc(60).clean()

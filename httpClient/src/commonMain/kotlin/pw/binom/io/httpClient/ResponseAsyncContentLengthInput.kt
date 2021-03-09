@@ -2,6 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
 import pw.binom.URL
+import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthInput
 
 class ResponseAsyncContentLengthInput(

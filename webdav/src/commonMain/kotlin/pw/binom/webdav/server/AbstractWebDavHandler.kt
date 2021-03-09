@@ -1,12 +1,11 @@
 package pw.binom.webdav.server
 
 import pw.binom.ByteBuffer
-import pw.binom.URL
 import pw.binom.copyTo
 import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.http.Headers
-import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.Handler3
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.pool.ObjectPool
@@ -43,7 +42,7 @@ suspend fun FileSystem.getEntitiesWithDepth(path: String, depth: Int): List<File
     return out
 }
 
-abstract class AbstractWebDavHandler<U> : Handler {
+abstract class AbstractWebDavHandler<U> : Handler3 {
 
     protected abstract val bufferPool: ObjectPool<ByteBuffer>
 

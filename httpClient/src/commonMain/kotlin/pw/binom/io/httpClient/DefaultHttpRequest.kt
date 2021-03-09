@@ -4,10 +4,7 @@ import pw.binom.URL
 import pw.binom.charset.Charsets
 import pw.binom.io.IOException
 import pw.binom.io.Sha1MessageDigest
-import pw.binom.io.http.HTTPMethod
-import pw.binom.io.http.HashHeaders
-import pw.binom.io.http.Headers
-import pw.binom.io.http.forEachHeader
+import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection

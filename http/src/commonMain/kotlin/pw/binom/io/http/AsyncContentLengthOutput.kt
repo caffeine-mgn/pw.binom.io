@@ -29,6 +29,7 @@ open class AsyncContentLengthOutput(
 
     override suspend fun asyncClose() {
         checkClosed()
+        flush()
         closed = true
         if (closeStream) {
             stream.asyncClose()

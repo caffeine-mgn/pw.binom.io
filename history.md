@@ -3,6 +3,7 @@
 ### 0.1.29
 
 * New Async HTTP Client Implement
+* New Async HTTP Server Implement
 * New URL Implement
 
 ### 0.1.28

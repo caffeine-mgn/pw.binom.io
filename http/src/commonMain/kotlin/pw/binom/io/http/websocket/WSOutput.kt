@@ -42,6 +42,7 @@ class WSOutput(
                 when (messageType) {
                     MessageType.TEXT -> 1
                     MessageType.BINARY -> 2
+                    MessageType.CLOSE -> 8
                 }
             WebSocketHeader.write(stream, v)
             first = false

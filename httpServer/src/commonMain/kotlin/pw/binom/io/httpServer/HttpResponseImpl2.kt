@@ -194,7 +194,7 @@ internal class HttpResponseImpl2(
     }
 }
 
-private fun statusToText(code: Int) =
+internal fun statusToText(code: Int) =
         when (code) {
             100 -> "Continue"
             101 -> "Switching Protocols"

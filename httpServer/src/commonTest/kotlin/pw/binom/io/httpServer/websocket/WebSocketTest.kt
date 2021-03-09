@@ -4,13 +4,14 @@ import pw.binom.ByteBuffer
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.sleep
 import pw.binom.io.http.websocket.MessageType
-import pw.binom.io.httpServer.HttpServer
+import pw.binom.io.httpServer.HttpServer3
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import pw.binom.network.execute
 import pw.binom.wrap
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -24,10 +25,10 @@ class WebSocketTest {
                 println("New Connection")
                 val connection = request.accept()
                 println("Try read message from client")
-                w.execute(connection) {
+                execute(w) {
                     Worker.sleep(1000)
                     println("##1")
-                    it.write(MessageType.TEXT) {
+                    connection.write(MessageType.TEXT) {
                         println("##2")
                         it.write(ByteBuffer.wrap("Hello".encodeToByteArray()))
 //                        it.utf8Appendable().use { it.append("Hello!") }
@@ -60,7 +61,7 @@ class WebSocketTest {
 
         val manager = NetworkDispatcher()
 
-        val server = HttpServer(manager, TestWebSocketHandler())
+        val server = HttpServer3(manager, TestWebSocketHandler())
         server.bindHTTP(NetworkAddress.Immutable(host = "0.0.0.0", port = port))
 /*
         val str = Random.uuid().toString()

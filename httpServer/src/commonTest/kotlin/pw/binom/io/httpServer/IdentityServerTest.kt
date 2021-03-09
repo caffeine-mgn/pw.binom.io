@@ -1,21 +1,40 @@
 package pw.binom.io.httpServer
 
-import pw.binom.ByteDataBuffer
-import pw.binom.atomic.AtomicBoolean
+import pw.binom.async2
 import pw.binom.io.*
-import pw.binom.io.http.Headers
-import kotlin.random.Random
-import kotlin.test.Ignore
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.fail
-import kotlin.time.DurationUnit
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.toDuration
 
-suspend inline fun AsyncAppendable.appendln(text: String) = append("$text\r\n")
-suspend inline fun AsyncAppendable.appendln() = append("\r\n")
+class IdentityServerTest {
+    @Test
+    fun test() {
+        val manager = NetworkDispatcher()
+
+        val done = async2 {
+            val server = HttpServer(
+                manager = manager,
+                handler = Handler {
+                    it.response().use {
+                        it.responseCode = 202
+                        it.headers.contentType = "text/html;charset=utf-8"
+                        it.writeText().use {
+                            it.append("Hello! Привет в UTF-8")
+                        }
+                    }
+                }
+            )
+            server.bind(NetworkAddress.Immutable("0.0.0.0", 8088))
+        }
+        while (true) {
+            val p = manager.select(1000)
+        }
+        if (done.isFailure) {
+            throw done.exceptionOrNull!!
+        }
+    }
+}
+
 /*
 
 @Ignore

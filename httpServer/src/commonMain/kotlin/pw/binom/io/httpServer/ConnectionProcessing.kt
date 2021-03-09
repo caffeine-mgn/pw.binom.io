@@ -16,7 +16,7 @@ internal object ConnectionProcessing {
         asciiInputReader: AsyncBufferedAsciiInputReader,
         httpRequestPool: DefaultPool<HttpRequestImpl2>,
         httpResponsePool: DefaultPool<HttpResponseImpl2>,
-        handler: Handler,
+        handler: Handler3,
         allowZlib: Boolean
     ): Boolean {
         val outputBufferid = outputBuffered//connection.bufferedOutput()

@@ -50,6 +50,9 @@ interface Headers : Map<String, List<String>> {
     val contentType
         get() = getSingle(CONTENT_TYPE)
 
+    val acceptEncoding
+        get() = getSingle(ACCEPT_ENCODING)?.split(',')?.map { it.trim() }
+
     /**
      * Returns method of pack data of body
      */

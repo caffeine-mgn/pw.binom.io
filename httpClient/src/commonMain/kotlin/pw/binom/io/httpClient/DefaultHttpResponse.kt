@@ -9,6 +9,7 @@ import pw.binom.io.AsyncReader
 import pw.binom.io.EOFException
 import pw.binom.io.IOException
 import pw.binom.io.bufferedReader
+import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
 

@@ -1,6 +1,6 @@
 package pw.binom.io.httpServer
 
-abstract class HandlerInterceptor(val handler: Handler) : Handler {
+abstract class HandlerInterceptor(val handler: Handler3) : Handler3 {
 
     protected abstract suspend fun catch(req: HttpRequest, resp: HttpResponse)
 

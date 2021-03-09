@@ -3,6 +3,7 @@ package pw.binom.io.httpClient
 import pw.binom.URL
 import pw.binom.io.AsyncChannel
 import pw.binom.io.Closeable
+import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.network.NetworkAddress

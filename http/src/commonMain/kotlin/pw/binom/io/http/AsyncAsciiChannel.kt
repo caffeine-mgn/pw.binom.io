@@ -1,4 +1,4 @@
-package pw.binom.io.httpClient
+package pw.binom.io.http
 
 import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable

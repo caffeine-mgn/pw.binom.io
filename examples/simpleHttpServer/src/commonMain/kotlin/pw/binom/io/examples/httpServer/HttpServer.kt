@@ -5,10 +5,10 @@ import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
 import pw.binom.io.http.Headers
-import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.Handler3
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
-import pw.binom.io.httpServer.HttpServer
+import pw.binom.io.httpServer.HttpServer3
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -17,7 +17,7 @@ fun main() {
     println("Environment.workDirectory: ${Environment.workDirectory}")
     val byteDataPool = ByteBufferPool(10)
     val nioManager = NetworkDispatcher()
-    val server = HttpServer(nioManager, object : Handler {
+    val server = HttpServer3(nioManager, object : Handler3 {
         override suspend fun request(req: HttpRequest, resp: HttpResponse) {
             val file = File(File(Environment.workDirectory), req.uri)
             if (!file.isFile) {

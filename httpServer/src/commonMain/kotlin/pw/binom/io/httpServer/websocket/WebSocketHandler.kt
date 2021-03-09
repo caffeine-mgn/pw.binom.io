@@ -3,17 +3,16 @@ package pw.binom.io.httpServer.websocket
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.io.IOException
-import pw.binom.io.Sha1
 import pw.binom.io.Sha1MessageDigest
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.Handler3
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.network.TcpConnection
 
-abstract class WebSocketHandler : Handler {
+abstract class WebSocketHandler : Handler3 {
 
     interface ConnectRequest {
         val uri: String
