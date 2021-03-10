@@ -429,35 +429,39 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         return ResultSet(result.body).firstOrNull()
     }
 
-//    suspend fun upsert(
-//            space: String,
-//            key: Any?,
-//            values: List<Any?>) {
-//        val meta = getMeta()
-//        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
-//        upsert(
-//                space = spaceObj.id,
-//                key = key,
-//                values = values,
-//        )
-//    }
+    suspend fun upsert(
+        space: String,
+        indexValues: List<Any>,
+        values: List<FieldUpdate>,
+    ) {
+        val meta = getMeta()
+        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+        upsert(
+            space = spaceObj.id,
+            indexValues = indexValues,
+            values = values,
+        )
+    }
 
-//    suspend fun upsert(
-//            space: Int,
-//            key: Any?,
-//            values: List<Any?>) {
-//
-//        val result = this.sendReceive(
-//                code = Code.UPSERT,
-//                body = mapOf(
-//                        Key.SPACE.id to space,
-//                        Key.KEY.id to key,
-//                        Key.TUPLE.id to values,
-//                )
-//        )
-//        println("Update columns: ${result.body}")
-//        result.assertException()
-//    }
+    suspend fun upsert(
+        space: Int,
+        indexValues: List<Any>,
+        values: List<FieldUpdate>,
+    ) {
+
+        val result = this.sendReceive(
+            code = Code.UPSERT,
+            body = mapOf(
+                Key.SPACE.id to space,
+                Key.UPSERT_OPS.id to values.map {
+                    listOf(it.operator.code, it.fieldId, it.value)
+                },
+                Key.TUPLE.id to indexValues,
+            )
+        )
+        println("Update columns: ${result.body}")
+        result.assertException()
+    }
 
     suspend fun delete(
         space: Int,
