@@ -24,7 +24,7 @@ class IdentityServerTest {
                     }
                 }
             )
-            server.bind(NetworkAddress.Immutable("0.0.0.0", 8088))
+            server.bindHttp(NetworkAddress.Immutable("0.0.0.0", 8088))
         }
         while (true) {
             val p = manager.select(1000)

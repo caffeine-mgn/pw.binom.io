@@ -1,6 +1,6 @@
 package pw.binom.strong
 
-import pw.binom.strong.StrongImpl.BeanAlreadyDefinedException
+import pw.binom.strong.exceptions.BeanAlreadyDefinedException
 
 interface StrongDefiner : Strong {
     /**

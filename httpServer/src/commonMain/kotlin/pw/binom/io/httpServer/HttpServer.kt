@@ -60,7 +60,7 @@ class HttpServer(
         }
     }
 
-    fun bind(address: NetworkAddress): Closeable {
+    fun bindHttp(address: NetworkAddress): Closeable {
         val server = manager.bindTcp(address)
         binds += server
         manager.async {

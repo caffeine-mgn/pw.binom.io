@@ -32,7 +32,7 @@ inline class URI internal constructor(val path: String) {
             if (port != null) {
                 sb.append(":").append(port)
             }
-            sb.append(urn)
+            sb.append(urn.raw)
             if (query != null) {
                 sb.append("?").append(query)
             }
@@ -158,7 +158,7 @@ inline class URI internal constructor(val path: String) {
             return if (q == null) {
                 urn.raw
             } else {
-                "$urn?$q"
+                "${urn.raw}?$q"
             }
         }
     val query: String?
