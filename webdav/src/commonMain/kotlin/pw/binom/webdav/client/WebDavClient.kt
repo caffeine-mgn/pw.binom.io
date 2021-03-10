@@ -13,7 +13,7 @@ import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.xmlTree
 import kotlin.coroutines.*
 
-open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
+open class WebDavClient(val client: HttpClient, val URI: URI) : FileSystem {
 
     private fun XmlElement.findTag(name: String) =
         findElements { it.nameSpace?.url == "DAV:" && it.tag == name }
@@ -50,7 +50,7 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
 
     override suspend fun mkdir(path: String): FileSystem.Entity? {
 
-        val allPathUrl = url.appendDirectionURI(path)
+        val allPathUrl = URI.appendDirectionURI(path)
         val r = client.request(HTTPMethod.MKCOL, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val responseCode = r.getResponse().use { it.responseCode }
@@ -108,7 +108,7 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
             get() = this@WebDavClient
 
         override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
-            val allPathUrl = url.appendDirectionURI(name)
+            val allPathUrl = URI.appendDirectionURI(name)
             val r = client.request(HTTPMethod.GET, allPathUrl)
             if (offset != 0uL) {
                 if (length == null) {
@@ -136,8 +136,8 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
         }
 
         override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity {
-            val destinationUrl = url.appendDirectionURI(path)
-            val r = client.request(HTTPMethod.COPY, url.appendDirectionURI(this.path).appendDirectionURI(name))
+            val destinationUrl = URI.appendDirectionURI(path)
+            val r = client.request(HTTPMethod.COPY, URI.appendDirectionURI(this.path).appendDirectionURI(name))
             user?.apply(r)
             r.addHeader("Destination", destinationUrl.toString())
             if (overwrite) {
@@ -162,8 +162,8 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
         }
 
         override suspend fun move(path: String, overwrite: Boolean): FileSystem.Entity {
-            val destinationUrl = url.appendDirectionURI(path)
-            val r = client.request(HTTPMethod.MOVE, url.appendDirectionURI(this.path).appendDirectionURI(name))
+            val destinationUrl = URI.appendDirectionURI(path)
+            val r = client.request(HTTPMethod.MOVE, URI.appendDirectionURI(this.path).appendDirectionURI(name))
             user?.apply(r)
             r.addHeader("Destination", destinationUrl.toString())
             if (overwrite) {
@@ -183,7 +183,7 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
         }
 
         override suspend fun delete() {
-            val r = client.request(HTTPMethod.DELETE, url.appendDirectionURI(this.path).appendDirectionURI(name))
+            val r = client.request(HTTPMethod.DELETE, URI.appendDirectionURI(this.path).appendDirectionURI(name))
             user?.apply(r)
             val responseCode = r.getResponse().use { it.responseCode }
             if (responseCode != 201 && responseCode != 204) {
@@ -192,7 +192,7 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
         }
 
         override suspend fun rewrite(): AsyncOutput {
-            val allPathUrl = url.appendDirectionURI(path)
+            val allPathUrl = URI.appendDirectionURI(path)
             val r = client.request(HTTPMethod.PUT, allPathUrl)
 //            r.addHeader("Overwrite", "T")
             user?.apply(r)
@@ -215,7 +215,7 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
         getDir(WebAuthAccess.getCurrentUser(), path, 1)
 
     suspend fun getDir(user: WebAuthAccess?, path: String, depth: Int): Sequence<FileSystem.Entity>? {
-        val allPathUrl = url.appendDirectionURI(path)
+        val allPathUrl = URI.appendDirectionURI(path)
         val r = client.request(HTTPMethod.PROPFIND, allPathUrl)
         user?.apply(r)
         r.addHeader("Depth", depth.toString())
@@ -281,14 +281,14 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
     }
 
     override suspend fun get(path: String): FileSystem.Entity? {
-        val allPathUrl = url.appendDirectionURI(path)
+        val allPathUrl = URI.appendDirectionURI(path)
         val r = client.request(HTTPMethod.HEAD, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
         return getDir(WebAuthAccess.getCurrentUser(), path, 0)?.firstOrNull()
     }
 
     override suspend fun new(path: String): AsyncOutput {
-        val allPathUrl = url.appendDirectionURI(path)
+        val allPathUrl = URI.appendDirectionURI(path)
         val r = client.request(HTTPMethod.PUT, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val upload = r.writeData()
@@ -306,5 +306,5 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
     }
 }
 
-private fun URL.appendDirectionURI(dir: String) =
-    copy(uri = urn.appendDirection(dir))
+private fun URI.appendDirectionURI(dir: String) =
+    copy(urn = urn.appendDirection(dir))

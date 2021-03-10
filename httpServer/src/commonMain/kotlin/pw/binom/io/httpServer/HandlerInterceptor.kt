@@ -1,14 +1,18 @@
 package pw.binom.io.httpServer
 
-abstract class HandlerInterceptor(val handler: Handler3Deprecated) : Handler3Deprecated {
+abstract class HandlerInterceptor(val handler: Handler) : Handler {
 
-    protected abstract suspend fun catch(req: HttpRequestDeprecated, resp: HttpResponseDeprecated)
+    protected abstract suspend fun catch(req: HttpRequest)
 
-    protected suspend fun invokeSuper(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
-        handler.request(req, resp)
+    protected suspend fun invokeSuper(req: HttpRequest) {
+        handler.request(req)
     }
 
-    override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
-        catch(req, resp)
+    override suspend fun request(req: HttpRequest) {
+        catch(req)
     }
+
+    //    override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
+//
+//    }
 }

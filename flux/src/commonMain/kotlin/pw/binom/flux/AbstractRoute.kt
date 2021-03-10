@@ -5,7 +5,7 @@ import pw.binom.io.httpServer.*
 
 abstract class AbstractRoute : Route, Handler {
     private val routers = HashMap<String, ArrayList<Route>>()
-    private val methods = HashMap<String, HashMap<String, ArrayList<suspend (Action) -> Boolean>>>()
+    private val methods = HashMap<String, HashMap<String, ArrayList<suspend (HttpRequest) -> Boolean>>>()
     private var forwardHandler: Handler? = null
 
     override fun route(path: String, route: Route) {
@@ -27,7 +27,7 @@ abstract class AbstractRoute : Route, Handler {
         }
     }
 
-    override fun endpoint(method: String, path: String, func: suspend (Action) -> Boolean): Closeable {
+    override fun endpoint(method: String, path: String, func: suspend (HttpRequest) -> Boolean): Closeable {
         if (forwardHandler != null)
             throw IllegalStateException("Router has already defined forward")
         methods.getOrPut(method) { HashMap() }.getOrPut(path) { ArrayList() }.add(func)
@@ -47,28 +47,28 @@ abstract class AbstractRoute : Route, Handler {
         forwardHandler = handler
     }
 
-    override suspend fun execute(action: Action): Boolean {
+    override suspend fun execute(action: HttpRequest): Boolean {
         val forward = forwardHandler
         if (forward != null) {
-            forward.request(action.req)
+            forward.request(action)
             return true
         }
         routers.entries
-                .asSequence()
-                .filter {
-                    action.req.urn.isMatch(it.key)
-                }
-                .sortedBy { -it.key.length }
-                .flatMap { it.value.asSequence() }
-                .forEach {
-                    if (it.execute(action))
-                        return true
-                }
-        methods[action.req.method]
+            .asSequence()
+            .filter {
+                action.urn.isMatch(it.key)
+            }
+            .sortedBy { -it.key.length }
+            .flatMap { it.value.asSequence() }
+            .forEach {
+                if (it.execute(action))
+                    return true
+            }
+        methods[action.method]
             ?.entries
             ?.asSequence()
             ?.filter {
-                action.req.urn.isMatch(it.key)
+                action.urn.isMatch(it.key)
             }
             ?.sortedBy { -it.key.length }
             ?.flatMap { it.value.asSequence() }
@@ -79,9 +79,7 @@ abstract class AbstractRoute : Route, Handler {
         return false
     }
 
-    private class ActionImpl(override val req: HttpRequest2) : Action
-
-    override suspend fun request(req: HttpRequest2) {
-        execute(ActionImpl(req))
+    override suspend fun request(req: HttpRequest) {
+        execute(req)
     }
 }

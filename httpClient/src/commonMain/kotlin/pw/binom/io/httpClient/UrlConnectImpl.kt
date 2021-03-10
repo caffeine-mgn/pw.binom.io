@@ -13,10 +13,10 @@ import kotlin.time.ExperimentalTime
 
 @Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 internal class UrlConnectImpl(
-        val method: String,
-        val url: URL,
-        val client: AsyncHttpClient,
-        val outputFlushSize: Int) : AsyncHttpClient.UrlConnect {
+    val method: String,
+    val URI: URI,
+    val client: AsyncHttpClient,
+    val outputFlushSize: Int) : AsyncHttpClient.UrlConnect {
     override val headers: MutableMap<String, MutableList<String>> = HashMap()
     private var requestSent = false
     private var clientDataLength: ULong? = null
@@ -25,10 +25,10 @@ internal class UrlConnectImpl(
 
     init {
         headers[Headers.CONNECTION] = mutableListOf(Headers.KEEP_ALIVE)
-        headers[Headers.HOST] = if (url.port == url.getDefaultPort())
-            mutableListOf(url.host)
+        headers[Headers.HOST] = if (URI.port == URI.getDefaultPort())
+            mutableListOf(URI.host)
         else
-            mutableListOf("${url.host}:${url.port}")
+            mutableListOf("${URI.host}:${URI.port}")
         headers[Headers.ACCEPT_ENCODING] = mutableListOf("gzip, deflate, identity")
         headers[Headers.ACCEPT] = mutableListOf("*/*")
     }
@@ -57,10 +57,10 @@ internal class UrlConnectImpl(
                 chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
             }
         }
-        val connection = client.borrowConnection(url)
+        val connection = client.borrowConnection(URI)
         val buffered = connection.channel.bufferedOutput(closeStream = false)
         val app = buffered.utf8Appendable()
-        app.append("$method ${url.urn} HTTP/1.1\r\n")
+        app.append("$method ${URI.urn} HTTP/1.1\r\n")
 
         headers.forEach { en ->
             en.value.forEach {
@@ -68,7 +68,7 @@ internal class UrlConnectImpl(
             }
         }
         if (!headers.keys.any { it.equals(Headers.HOST, ignoreCase = true) }) {
-            app.append(Headers.HOST).append(": ").append(url.host).append("\r\n")
+            app.append(Headers.HOST).append(": ").append(URI.host).append("\r\n")
         }
         app.append("\r\n")
         buffered.flush()
@@ -128,7 +128,7 @@ internal class UrlConnectImpl(
                 headers = responseHeaders,
                 channel = channel,
                 client = client,
-                url = url,
+                URI = URI,
                 input = buffered
         )
     }

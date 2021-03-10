@@ -1,12 +1,12 @@
 package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
-import pw.binom.URL
+import pw.binom.URI
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthInput
 
 class ResponseAsyncContentLengthInput(
-    val url: URL,
+    val URI: URI,
     val client: HttpClient,
     val keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
@@ -23,7 +23,7 @@ class ResponseAsyncContentLengthInput(
         super.asyncClose()
         if (keepAlive && eof) {
             client.recycleConnection(
-                url = url,
+                URI = URI,
                 channel = channel,
             )
         } else {

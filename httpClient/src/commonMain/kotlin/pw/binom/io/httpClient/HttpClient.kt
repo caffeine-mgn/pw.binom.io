@@ -1,6 +1,6 @@
 package pw.binom.io.httpClient
 
-import pw.binom.URL
+import pw.binom.URI
 import pw.binom.io.AsyncChannel
 import pw.binom.io.Closeable
 import pw.binom.io.http.AsyncAsciiChannel
@@ -22,12 +22,12 @@ class HttpClient(
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
 
-    fun recycleConnection(url: URL, channel: AsyncAsciiChannel) {
-        connections.getOrPut(url.asKey) { ArrayList() }.add(channel)
+    fun recycleConnection(URI: URI, channel: AsyncAsciiChannel) {
+        connections.getOrPut(URI.asKey) { ArrayList() }.add(channel)
     }
 
-    private suspend fun borrowConnection(url: URL): AsyncAsciiChannel {
-        val id = url.asKey
+    private suspend fun borrowConnection(URI: URI): AsyncAsciiChannel {
+        val id = URI.asKey
         val list = connections[id]
         if (list != null) {
             val con = list.removeLastOrNull()
@@ -38,39 +38,39 @@ class HttpClient(
                 return con
             }
         }
-        val port = url.getPort()
+        val port = URI.getPort()
         var channel: AsyncChannel = networkDispatcher.tcpConnect(
             NetworkAddress.Immutable(
-                host = url.host,
+                host = URI.host,
                 port = port
             )
         )
 
-        if (url.protocol == "https" || url.protocol == "wss") {
-            val sslSession = sslContext.clientSession(host = url.host, port = port)
+        if (URI.protocol == "https" || URI.protocol == "wss") {
+            val sslSession = sslContext.clientSession(host = URI.host, port = port)
             channel = sslSession.asyncChannel(channel)
         }
         return AsyncAsciiChannel(channel)
     }
 
-    suspend fun request(method: HTTPMethod, url: URL): HttpRequest {
-        val protocol = url.protocol ?: throw IllegalArgumentException("URL \"$url\" must contains protocol")
+    suspend fun request(method: HTTPMethod, URI: URI): HttpRequest {
+        val protocol = URI.protocol ?: throw IllegalArgumentException("URL \"$URI\" must contains protocol")
         if (protocol != "http" && protocol != "https" && protocol != "ws" && protocol != "wss") {
-            throw IllegalArgumentException("Protocol ${url.protocol} not supported")
+            throw IllegalArgumentException("Protocol ${URI.protocol} not supported")
         }
-        val connect = borrowConnection(url)
+        val connect = borrowConnection(URI)
         return DefaultHttpRequest(
-            url = url,
+            URI = URI,
             client = this,
             channel = connect,
             method = method
         )
     }
 
-    private val URL.asKey
+    private val URI.asKey
         get() = "${protocol ?: ""}://${host}:${port}"
 
-    private fun URL.getPort() =
+    private fun URI.getPort() =
         port ?: when (protocol) {
             "ws", "http" -> 80
             "wss", "https" -> 443

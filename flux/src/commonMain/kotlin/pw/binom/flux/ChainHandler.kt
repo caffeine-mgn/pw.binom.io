@@ -1,21 +1,19 @@
 package pw.binom.flux
 
-import pw.binom.io.httpServer.Handler3Deprecated
-import pw.binom.io.httpServer.HttpRequestDeprecated
-import pw.binom.io.httpServer.HttpResponseDeprecated
+import pw.binom.io.httpServer.*
 
 class ChainHandler(
-    private val nextChain: Handler3Deprecated,
-    private val func: suspend (req: HttpRequestDeprecated, resp: HttpResponseDeprecated) -> Boolean
-) : Handler3Deprecated {
-    override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
-        if (func(req, resp)) {
-            nextChain.request(req, resp)
+    private val nextChain: Handler,
+    private val func: suspend (req: HttpRequest) -> Boolean
+) : Handler {
+    override suspend fun request(req: HttpRequest) {
+        if (func(req)) {
+            nextChain.request(req)
         }
     }
 }
 
-fun Handler3Deprecated.chain(func: suspend (req: HttpRequestDeprecated, resp: HttpResponseDeprecated) -> Boolean) =
+fun Handler.chain(func: suspend (req: HttpRequest) -> Boolean) =
     ChainHandler(
         this,
         func

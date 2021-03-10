@@ -2,7 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
-import pw.binom.URL
+import pw.binom.URI
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
 import pw.binom.io.IOException
@@ -13,12 +13,12 @@ import pw.binom.io.http.Headers
 
 @Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 internal class UrlResponseImpl(
-        override val responseCode: Int,
-        override val headers: Map<String, List<String>>,
-        val url: URL,
-        val channel: AsyncHttpClient.Connection,
-        val input: AsyncInput,
-        val client: AsyncHttpClient
+    override val responseCode: Int,
+    override val headers: Map<String, List<String>>,
+    val URI: URI,
+    val channel: AsyncHttpClient.Connection,
+    val input: AsyncInput,
+    val client: AsyncHttpClient
 ) : AsyncHttpClient.UrlResponse {
 
     private var keepAlive = headers[Headers.CONNECTION]?.singleOrNull()?.toLowerCase() == Headers.KEEP_ALIVE.toLowerCase()
@@ -64,7 +64,7 @@ internal class UrlResponseImpl(
             channel.asyncClose()
         } else {
             if (keepAlive) {
-                client.recycleConnection(url, channel)
+                client.recycleConnection(URI, channel)
             } else {
                 stream.asyncClose()
                 channel.asyncClose()

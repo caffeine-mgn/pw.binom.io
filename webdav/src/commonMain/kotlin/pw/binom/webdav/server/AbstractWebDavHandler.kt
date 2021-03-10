@@ -7,7 +7,7 @@ import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.httpServer.*
 import pw.binom.pool.ObjectPool
-import pw.binom.toURLOrNull
+import pw.binom.toURIOrNull
 import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
@@ -44,13 +44,13 @@ abstract class AbstractWebDavHandler<U> : Handler {
 
     protected abstract val bufferPool: ObjectPool<ByteBuffer>
 
-    protected abstract fun getFS(req: HttpRequest2): FileSystem
-    protected abstract fun getUser(req: HttpRequest2): U
+    protected abstract fun getFS(req: HttpRequest): FileSystem
+    protected abstract fun getUser(req: HttpRequest): U
 
-    protected abstract fun getGlobalURI(req: HttpRequest2): URN
-    protected abstract fun getLocalURI(req: HttpRequest2, globalURI: URN): String
+    protected abstract fun getGlobalURI(req: HttpRequest): URN
+    protected abstract fun getLocalURI(req: HttpRequest, globalURI: URN): String
 
-    private suspend fun buildRropFind(req: HttpRequest2) {
+    private suspend fun buildRropFind(req: HttpRequest) {
         val fs = getFS(req)
         val user = getUser(req)
         val currentEntry = fs.get(UTF8.urlDecode(req.urn.raw))
@@ -138,7 +138,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
         }
     }
 
-    override suspend fun request(req: HttpRequest2) {
+    override suspend fun request(req: HttpRequest) {
         val user = getUser(req)
 
         val fs = getFS(req)
@@ -167,7 +167,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "MOVE") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURLOrNull()!! }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURIOrNull()!! }
 
                     if (destination == null) {
                         req.response().use {
@@ -194,7 +194,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "COPY") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURLOrNull()!! }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURIOrNull()!! }
 
                     if (destination == null) {
                         req.response().use {

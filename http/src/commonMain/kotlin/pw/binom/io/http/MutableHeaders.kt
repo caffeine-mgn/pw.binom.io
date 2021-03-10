@@ -33,6 +33,20 @@ interface MutableHeaders : Headers {
             this[Headers.TRANSFER_ENCODING] = value
         }
 
+    fun requestBasicAuth(realm: String? = null, service: String? = null) {
+        val sb = StringBuilder("Basic")
+        if (realm != null) {
+            sb.append(" realm=\"").append(realm).append("\"")
+        }
+        if (service != null) {
+            if (realm != null) {
+                sb.append(",")
+            }
+            sb.append("service=\"").append(service).append("\"")
+        }
+        this[Headers.WWW_AUTHENTICATE] = sb.toString()
+    }
+
     override var contentLength: ULong?
         get() {
             val txt = getSingle(Headers.CONTENT_LENGTH) ?: return null

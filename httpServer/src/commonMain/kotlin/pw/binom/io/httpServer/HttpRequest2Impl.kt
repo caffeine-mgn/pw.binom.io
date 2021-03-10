@@ -16,7 +16,7 @@ internal class HttpRequest2Impl(
     override val method: String,
     override val headers: Headers,
     override val urn: URN
-) : HttpRequest2 {
+) : HttpRequest {
     companion object {
         suspend fun read(channel: AsyncAsciiChannel, server: HttpServer): HttpRequest2Impl {
             val request = channel.reader.readln()!!
@@ -145,22 +145,33 @@ internal class HttpRequest2Impl(
         }
     }
 
-    override suspend fun response(): HttpResponse2 {
-        val r = readInput
+    override suspend fun response(): HttpResponse {
+        if (startedResponse != null) {
+            throw IllegalStateException("Response already got")
+        }
         ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { buf ->
             (readInput ?: readBinary()).use {
                 it.skipAll(buf)
             }
         }
-        return HttpResponse2Impl(this)
+        var r = HttpResponse2Impl(this)
+        startedResponse = r
+        return r
     }
 
+    private var startedResponse: HttpResponse2Impl? = null
+    override val response: HttpResponse?
+        get() = startedResponse
+
     override suspend fun asyncClose() {
-        TODO("Not yet implemented")
+        checkClosed()
+        response().use {
+            it.status = 404
+        }
     }
 }
 
-internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse2 {
+internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
     override var status = 404
     override val headers = HashHeaders()
 

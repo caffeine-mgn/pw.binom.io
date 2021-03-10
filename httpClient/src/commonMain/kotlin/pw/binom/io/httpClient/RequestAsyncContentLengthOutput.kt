@@ -1,11 +1,11 @@
 package pw.binom.io.httpClient
 
-import pw.binom.URL
+import pw.binom.URI
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthOutput
 
 class RequestAsyncContentLengthOutput(
-    val url: URL,
+    val URI: URI,
     val client: HttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
@@ -22,7 +22,7 @@ class RequestAsyncContentLengthOutput(
         }
         super.asyncClose()
         return DefaultHttpResponse.read(
-            url = url,
+            URI = URI,
             client = client,
             keepAlive = keepAlive,
             channel = channel,

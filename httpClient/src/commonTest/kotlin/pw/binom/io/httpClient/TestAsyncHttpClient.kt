@@ -7,7 +7,7 @@ import pw.binom.io.http.HTTPMethod
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.network.NetworkDispatcher
-import pw.binom.toURLOrNull
+import pw.binom.toURIOrNull
 import kotlin.test.Test
 import kotlin.time.ExperimentalTime
 
@@ -39,7 +39,7 @@ class TestAsyncHttpClient {
         val e = async2 {
             repeat(3) {
                 val responseData = client
-                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURLOrNull()!!)
+                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURIOrNull()!!)
                     .getResponse().also {
                         println("headers:${it.headers}")
                     }

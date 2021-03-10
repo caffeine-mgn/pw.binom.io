@@ -1,6 +1,6 @@
 package pw.binom.io.httpClient
 
-import pw.binom.URL
+import pw.binom.URI
 import pw.binom.charset.Charsets
 import pw.binom.io.IOException
 import pw.binom.io.Sha1MessageDigest
@@ -12,7 +12,7 @@ import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
 
 class DefaultHttpRequest(
     var method: HTTPMethod,
-    val url: URL,
+    val URI: URI,
     val client: HttpClient,
     val channel: AsyncAsciiChannel,
 ) : HttpRequest {
@@ -26,11 +26,11 @@ class DefaultHttpRequest(
     }
 
     init {
-        val port = url.port
+        val port = URI.port
         val host = if (port == null) {
-            url.host
+            URI.host
         } else {
-            "${url.host}:$port"
+            "${URI.host}:$port"
         }
         if (client.useKeepAlive) {
             headers[Headers.CONNECTION] = Headers.KEEP_ALIVE
@@ -41,7 +41,7 @@ class DefaultHttpRequest(
     }
 
     private suspend fun sendHeaders() {
-        channel.writer.append(method.code).append(" ").append(url.request).append(" ").append("HTTP/1.1\r\n")
+        channel.writer.append(method.code).append(" ").append(URI.request).append(" ").append("HTTP/1.1\r\n")
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append("\r\n")
         }
@@ -62,7 +62,7 @@ class DefaultHttpRequest(
                 Headers.CHUNKED.toLowerCase() -> {
                     closed = true
                     RequestAsyncChunkedOutput(
-                        url = url,
+                        URI = URI,
                         client = client,
                         keepAlive = keepAlive,
                         channel = channel,
@@ -75,7 +75,7 @@ class DefaultHttpRequest(
         if (len != null) {
             closed = true
             return RequestAsyncContentLengthOutput(
-                url = url,
+                URI = URI,
                 client = client,
                 keepAlive = keepAlive,
                 channel = channel,
@@ -86,7 +86,7 @@ class DefaultHttpRequest(
         headers[Headers.TRANSFER_ENCODING] = Headers.CHUNKED
         closed = true
         return RequestAsyncChunkedOutput(
-            url = url,
+            URI = URI,
             client = client,
             keepAlive = keepAlive,
             channel = channel,
@@ -114,7 +114,7 @@ class DefaultHttpRequest(
         sendHeaders()
         channel.writer.flush()
         return DefaultHttpResponse.read(
-            url = url,
+            URI = URI,
             client = client,
             keepAlive = keepAlive,
             channel = channel,

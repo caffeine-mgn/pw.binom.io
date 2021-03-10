@@ -4,15 +4,15 @@ import pw.binom.*
 import pw.binom.io.AsyncReader
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.httpServer.HttpRequest2
-import pw.binom.io.httpServer.HttpResponse2
+import pw.binom.io.httpServer.HttpRequest
+import pw.binom.io.httpServer.HttpResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AbstractRouteTest {
 
     class MockAction(method: String, contextUri: URN) : Action {
-        override val req = object : HttpRequest2 {
+        override val req = object : HttpRequest {
             override val method: String
                 get() = method
             override val headers: Headers
@@ -36,7 +36,7 @@ class AbstractRouteTest {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun response(): HttpResponse2 {
+            override suspend fun response(): HttpResponse {
                 TODO("Not yet implemented")
             }
 

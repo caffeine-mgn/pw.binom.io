@@ -56,7 +56,7 @@ class MultiThreading {
                 println("Try make request $name...")
                 client.request(
                     method = "GET",
-                    url = "http://127.0.0.1:$port/$name".toURLOrNull()!!
+                    URI = "http://127.0.0.1:$port/$name".toURIOrNull()!!
                 ).response().use { response ->
                     println("$name reading...")
                     val buf = ByteBuffer.alloc(60).clean()

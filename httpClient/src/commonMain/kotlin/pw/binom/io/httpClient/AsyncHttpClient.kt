@@ -3,7 +3,7 @@ package pw.binom.io.httpClient
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.URL
+import pw.binom.URI
 import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
@@ -77,10 +77,10 @@ open class AsyncHttpClient(
         val rawConnection: TcpConnection
     )
 
-    internal suspend fun borrowConnection(url: URL): Connection {
+    internal suspend fun borrowConnection(URI: URI): Connection {
         cleanUp()
-        val port = url.getPort()
-        val key = "${url.protocol}://${url.host}:$port"
+        val port = URI.getPort()
+        val key = "${URI.protocol}://${URI.host}:$port"
         var connectionList = connections[key]
         if (connectionList != null && !connectionList.isEmpty()) {
             val channel = connectionList.removeAt(connectionList.lastIndex)
@@ -88,23 +88,23 @@ open class AsyncHttpClient(
         }
         val raw = connectionManager.tcpConnect(
             NetworkAddress.Immutable(
-                host = url.host,
+                host = URI.host,
                 port = port
             )
         )
         var connection = Connection(null, raw, raw)
-        if (url.protocol == "https") {
-            val sslSession = sslContext.clientSession(host = url.host, port = port)
+        if (URI.protocol == "https") {
+            val sslSession = sslContext.clientSession(host = URI.host, port = port)
             connection = Connection(sslSession, sslSession.asyncChannel(connection.channel), raw)
 
         }
         return connection
     }
 
-    internal fun recycleConnection(url: URL, connection: Connection) {
+    internal fun recycleConnection(URI: URI, connection: Connection) {
         cleanUp()
-        val port = url.getPort()
-        val key = "${url.protocol}://${url.host}:$port"
+        val port = URI.getPort()
+        val key = "${URI.protocol}://${URI.host}:$port"
         connections.getOrPut(key) { ArrayList() }
             .add(AliveConnection(connection.sslSession, connection.channel, connection.rawConnection))
     }
@@ -127,15 +127,15 @@ open class AsyncHttpClient(
             connections.getOrPut(key) { ArrayList() }.add(socket)
         }
     */
-    fun request(method: String, url: URL, flushSize: Int = DEFAULT_BUFFER_SIZE): UrlConnect {
-        when (url.protocol?.toLowerCase()) {
+    fun request(method: String, URI: URI, flushSize: Int = DEFAULT_BUFFER_SIZE): UrlConnect {
+        when (URI.protocol?.toLowerCase()) {
             "http", "https", "ws", "wss" -> return UrlConnectImpl(
                 method = method,
-                url = url,
+                URI = URI,
                 client = this,
                 outputFlushSize = flushSize
             )
-            else -> throw IllegalArgumentException("Not supported protocol ${url.protocol}")
+            else -> throw IllegalArgumentException("Not supported protocol ${URI.protocol}")
         }
 
     }
@@ -187,14 +187,14 @@ private fun AsyncChannel.unwrap(): TcpConnection {
     }
 }
 
-internal fun URL.getDefaultPort() =
+internal fun URI.getDefaultPort() =
     when (protocol) {
         "ws", "http" -> 80
         "wss", "https" -> 443
         else -> throw IllegalArgumentException("Unknown default port for $this")
     }
 
-internal fun URL.getPort() =
+internal fun URI.getPort() =
     port ?: when (protocol) {
         "ws", "http" -> 80
         "wss", "https" -> 443

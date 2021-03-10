@@ -1,12 +1,12 @@
 package pw.binom.io.httpClient
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.URL
+import pw.binom.URI
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncChunkedOutput
 
 class RequestAsyncChunkedOutput(
-    val url: URL,
+    val URI: URI,
     val client: HttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
@@ -21,7 +21,7 @@ class RequestAsyncChunkedOutput(
         checkClosed()
         super.asyncClose()
         return DefaultHttpResponse.read(
-            url = url,
+            URI = URI,
             client = client,
             keepAlive = keepAlive,
             channel = channel,

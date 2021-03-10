@@ -1,17 +1,13 @@
 package pw.binom.io.httpClient
 
-import pw.binom.URL
 import pw.binom.async
-import pw.binom.copyTo
-import pw.binom.io.file.File
-import pw.binom.io.file.read
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.network.NetworkDispatcher
-import pw.binom.toURLOrNull
+import pw.binom.toURIOrNull
 import kotlin.test.Ignore
 import kotlin.test.Test
 
@@ -84,7 +80,7 @@ class TestWS {
         async {
             try {
                 val client = AsyncHttpClient(manager)
-                val wsClient = client.request("GET", "ws://127.0.0.1:8080/".toURLOrNull()!!)
+                val wsClient = client.request("GET", "ws://127.0.0.1:8080/".toURIOrNull()!!)
                     .websocket("http://127.0.0.1:8080")
 
                 while (true) {

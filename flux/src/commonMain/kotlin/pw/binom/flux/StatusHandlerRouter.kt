@@ -1,22 +1,24 @@
 package pw.binom.flux
 
-import pw.binom.io.httpServer.Handler3Deprecated
-import pw.binom.io.httpServer.HttpRequestDeprecated
-import pw.binom.io.httpServer.HttpResponseDeprecated
+import pw.binom.io.httpServer.*
 
 class StatusHandlerRouter(
-    private val defaultHandler: Handler3Deprecated,
+    private val defaultHandler: Handler,
     private val status: Int,
-    private val handler: suspend (req: HttpRequestDeprecated, resp: HttpResponseDeprecated) -> Unit
-) : Handler3Deprecated {
+    private val handler: suspend (req: HttpRequest) -> Unit
+) : Handler {
 
-    override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
-        defaultHandler.request(req, resp)
-        if (resp.status == status) {
-            handler
+    override suspend fun request(req: HttpRequest) {
+        defaultHandler.request(req)
+
+        if ((req.response == null && status == 404) || req.response?.status == 404) {
+            handler(req)
         }
     }
 }
 
-fun Handler3Deprecated.statusHandler(status: Int, handler: suspend (req: HttpRequestDeprecated, resp: HttpResponseDeprecated) -> Unit) =
+fun Handler.statusHandler(
+    status: Int,
+    handler: suspend (req: HttpRequest) -> Unit
+) =
     StatusHandlerRouter(this, status, handler)

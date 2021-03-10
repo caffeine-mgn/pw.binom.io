@@ -10,6 +10,7 @@ interface Headers : Map<String, List<String>> {
         const val SEC_WEBSOCKET_VERSION = "Sec-WebSocket-Version"
         const val CONTENT_LENGTH = "Content-Length"
         const val TRANSFER_ENCODING = "Transfer-Encoding"
+        const val WWW_AUTHENTICATE = "WWW-Authenticate"
         const val CHUNKED = "chunked"
         const val RANGE = "Range"
         const val ORIGIN = "Origin"

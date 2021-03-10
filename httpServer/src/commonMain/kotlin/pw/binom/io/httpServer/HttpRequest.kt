@@ -3,15 +3,16 @@ package pw.binom.io.httpServer
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.URN
-import pw.binom.io.AsyncAppendable
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncReader
 import pw.binom.io.AsyncWriter
 import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.websocket.WebSocketConnection
+import kotlin.js.JsName
+import kotlin.jvm.JvmName
 
-interface HttpRequest2 : AsyncCloseable {
+interface HttpRequest : AsyncCloseable {
     val method: String
     val headers: Headers
     val urn: URN
@@ -19,10 +20,13 @@ interface HttpRequest2 : AsyncCloseable {
     fun readText(): AsyncReader
     suspend fun acceptWebsocket(): WebSocketConnection
     suspend fun rejectWebsocket()
-    suspend fun response(): HttpResponse2
+    suspend fun response(): HttpResponse
+
+    @JsName("HttpResponse2")
+    val response: HttpResponse?
 }
 
-interface HttpResponse2 : AsyncCloseable {
+interface HttpResponse : AsyncCloseable {
     var status: Int
     val headers: MutableHeaders
     suspend fun writeBinary(): AsyncOutput

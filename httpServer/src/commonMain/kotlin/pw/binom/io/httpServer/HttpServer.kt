@@ -9,11 +9,11 @@ import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpServerConnection
 
 interface Handler {
-    suspend fun request(req: HttpRequest2)
+    suspend fun request(req: HttpRequest)
 }
 
-fun Handler(func: suspend (HttpRequest2) -> Unit) = object : Handler {
-    override suspend fun request(req: HttpRequest2) {
+fun Handler(func: suspend (HttpRequest) -> Unit) = object : Handler {
+    override suspend fun request(req: HttpRequest) {
         func(req)
     }
 

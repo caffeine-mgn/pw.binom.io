@@ -1,7 +1,7 @@
 package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
-import pw.binom.URL
+import pw.binom.URI
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
@@ -14,7 +14,7 @@ import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
 
 class DefaultHttpResponse(
-    val url: URL,
+    val URI: URI,
     val client: HttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
@@ -23,7 +23,7 @@ class DefaultHttpResponse(
 ) : HttpResponse {
     companion object {
         suspend fun read(
-            url: URL,
+            URI: URI,
             client: HttpClient,
             keepAlive: Boolean,
             channel: AsyncAsciiChannel,
@@ -44,7 +44,7 @@ class DefaultHttpResponse(
             }
 
             return DefaultHttpResponse(
-                url = url,
+                URI = URI,
                 client = client,
                 keepAlive = keepAlive,
                 channel = channel,
@@ -72,7 +72,7 @@ class DefaultHttpResponse(
                 throw IOException("Unknown Transfer Encoding \"$encode\"")
             }
             stream = ResponseAsyncChunkedInput(
-                url = url,
+                URI = URI,
                 client = client,
                 keepAlive = keepAlive,
                 stream = stream,
@@ -82,7 +82,7 @@ class DefaultHttpResponse(
             val len = headers.contentLength
                 ?: throw IOException("Invalid Http Response Headers: Unknown size of Response")
             stream = ResponseAsyncContentLengthInput(
-                url = url,
+                URI = URI,
                 client = client,
                 keepAlive = keepAlive,
                 channel = channel,
@@ -113,7 +113,7 @@ class DefaultHttpResponse(
                 channel.asyncClose()
             } else {
                 client.recycleConnection(
-                    url = url,
+                    URI = URI,
                     channel = channel
                 )
             }
