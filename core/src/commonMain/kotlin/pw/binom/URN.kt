@@ -13,7 +13,7 @@ inline class URN internal constructor(val raw: String) {
 
     /**
      * Returns variable from this urn. Will find [name] inside this, using [mask].
-     * Example: if urn=`/users/100500/info_data`, then getVariable("id", "/users/{id}/info_*") will return `100500`
+     * Example: `"/users/100500/info_data".toURN` with call getVariable("id", "/users/{id}/info_*") will return `100500`
      * @param mask mask for getting veriable
      */
     fun getVariable(name: String, mask: String): String? {
@@ -23,6 +23,9 @@ inline class URN internal constructor(val raw: String) {
         }
         return str
     }
+
+    fun appendDirection(direction: String, separator: String = "/") =
+        "${raw.removeSuffix(separator)}$separator${direction.removePrefix(separator)}".toURN
 }
 
 val String.toURN
