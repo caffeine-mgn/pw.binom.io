@@ -16,7 +16,7 @@ import pw.binom.pool.DefaultPool
 @Deprecated(message = "Use HttpServer")
 open class HttpServer3(
     val manager: NetworkDispatcher,
-    protected val handler: Handler3,
+    protected val handler: Handler3Deprecated,
     poolSize: Int = 10,
     val executor: WorkerPool? = null,
     inputBufferSize: Int = DEFAULT_BUFFER_SIZE,
@@ -29,24 +29,24 @@ open class HttpServer3(
 
     private var closed = false
 
-    private val returnToPoolForOutput: (NoCloseOutput) -> Unit = {
+    private val returnToPoolForOutput: (NoCloseOutputDeprecated) -> Unit = {
         outputBufferPool.recycle(it)
     }
 
     private val bufferedInputPool = DefaultPool(poolSize) {
-        val p = PooledAsyncBufferedInput(inputBufferSize)
+        val p = PooledAsyncBufferedInputDeprecated(inputBufferSize)
         p to AsyncBufferedAsciiInputReader(p)
     }
 
     private val bufferedOutputPool = DefaultPool(poolSize) {
-        PoolAsyncBufferedOutput(outputBufferSize)
+        PoolAsyncBufferedOutputDeprecated(outputBufferSize)
     }
 
     private val outputBufferPool = DefaultPool(poolSize) {
-        NoCloseOutput(returnToPoolForOutput)
+        NoCloseOutputDeprecated(returnToPoolForOutput)
     }
     private val httpRequestPool = DefaultPool(poolSize) {
-        HttpRequestImpl2()
+        HttpRequestImpl2Deprecated()
     }
 
     private val httpResponseBodyPool = DefaultPool(poolSize) {
@@ -54,7 +54,7 @@ open class HttpServer3(
     }
 
     private val httpResponsePool = DefaultPool(poolSize) {
-        HttpResponseImpl2(httpResponseBodyPool, zlibBufferSize)
+        HttpResponseImpl2Deprecated(httpResponseBodyPool, zlibBufferSize)
     }
 
     private suspend fun runProcessing(connection: TcpConnection) {

@@ -34,8 +34,8 @@ class PostRequestTest {
         var done = false
         var dd = TimeSource.Monotonic.markNow()
         val server = HttpServer3(
-            manager, object : Handler3 {
-                override suspend fun request(req: HttpRequest, resp: HttpResponse) {
+            manager, object : Handler3Deprecated {
+                override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
                     req.headers.forEach { k ->
                         k.value.forEach {
                             println("${k.key}: $it")
@@ -200,8 +200,8 @@ class PostRequestTest {
         val buf = ByteBufferPool(10, (DEFAULT_BUFFER_SIZE * 10).toUInt())
         val server = HttpServer3(
             manager = nd,
-            handler = object : Handler3 {
-                override suspend fun request(req: HttpRequest, resp: HttpResponse) {
+            handler = object : Handler3Deprecated {
+                override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
                     resp.status = 200
                     File("C:\\TEMP\\6\\2.zip").read().use {
                         it.copyTo(resp.complete(), buf)

@@ -1,14 +1,12 @@
 package pw.binom.flux
 
 import pw.binom.io.Closeable
-import pw.binom.io.httpServer.Handler3
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
+import pw.binom.io.httpServer.*
 
-abstract class AbstractRoute : Route, Handler3 {
+abstract class AbstractRoute : Route, Handler {
     private val routers = HashMap<String, ArrayList<Route>>()
     private val methods = HashMap<String, HashMap<String, ArrayList<suspend (Action) -> Boolean>>>()
-    private var forwardHandler: Handler3? = null
+    private var forwardHandler: Handler? = null
 
     override fun route(path: String, route: Route) {
         routers.getOrPut(path) { ArrayList() }.add(route)
@@ -41,7 +39,7 @@ abstract class AbstractRoute : Route, Handler3 {
         }
     }
 
-    override fun forward(handler: Handler3?) {
+    override fun forward(handler: Handler?) {
         if (methods.isNotEmpty())
             throw IllegalStateException("Router has endpoint")
         if (handler != null && forwardHandler != null)
@@ -52,13 +50,13 @@ abstract class AbstractRoute : Route, Handler3 {
     override suspend fun execute(action: Action): Boolean {
         val forward = forwardHandler
         if (forward != null) {
-            forward.request(action.req, action.resp)
+            forward.request(action.req)
             return true
         }
         routers.entries
                 .asSequence()
                 .filter {
-                    it.key.isWildcardMattech(action.req.contextUri)
+                    action.req.urn.isMatch(it.key)
                 }
                 .sortedBy { -it.key.length }
                 .flatMap { it.value.asSequence() }
@@ -70,7 +68,7 @@ abstract class AbstractRoute : Route, Handler3 {
             ?.entries
             ?.asSequence()
             ?.filter {
-                action.req.contextUri.isWildcardMattech(it.key)
+                action.req.urn.isMatch(it.key)
             }
             ?.sortedBy { -it.key.length }
             ?.flatMap { it.value.asSequence() }
@@ -81,10 +79,9 @@ abstract class AbstractRoute : Route, Handler3 {
         return false
     }
 
-    private class ActionImpl(override val req: HttpRequest, override val resp: HttpResponse) : Action
+    private class ActionImpl(override val req: HttpRequest2) : Action
 
-    override suspend fun request(req: HttpRequest, resp: HttpResponse) {
-        resp.status = 404
-        execute(ActionImpl(req, resp))
+    override suspend fun request(req: HttpRequest2) {
+        execute(ActionImpl(req))
     }
 }

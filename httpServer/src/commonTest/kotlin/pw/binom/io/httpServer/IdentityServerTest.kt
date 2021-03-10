@@ -16,7 +16,7 @@ class IdentityServerTest {
                 manager = manager,
                 handler = Handler {
                     it.response().use {
-                        it.responseCode = 202
+                        it.status = 202
                         it.headers.contentType = "text/html;charset=utf-8"
                         it.writeText().use {
                             it.append("Hello! Привет в UTF-8")

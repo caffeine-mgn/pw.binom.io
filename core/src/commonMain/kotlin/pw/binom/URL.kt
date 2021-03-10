@@ -8,7 +8,7 @@ inline class URL internal constructor(val path: String) {
             password: String?,
             host: String,
             port: Int?,
-            uri: String,
+            urn: URN,
             query: String?,
             hash: String?,
         ): String {
@@ -20,7 +20,7 @@ inline class URL internal constructor(val path: String) {
             if (user != null) {
                 sb.append(user)
             }
-            val auth = user != null || password != null
+
             if (password != null) {
                 sb.append(":")
                 sb.append(password)
@@ -32,7 +32,7 @@ inline class URL internal constructor(val path: String) {
             if (port != null) {
                 sb.append(":").append(port)
             }
-            sb.append(uri)
+            sb.append(urn)
             if (query != null) {
                 sb.append("?").append(query)
             }
@@ -131,12 +131,12 @@ inline class URL internal constructor(val path: String) {
             }
             return path.substring(s, e).toInt()
         }
-    val uri: String
+    val urn: URN
         get() {
             var s = path.indexOf("//") + 2
             s = path.indexOf('/', s)
             if (s == -1) {
-                return ""
+                return "".toURN
             }
             var e = path.indexOf('?')
             if (e == -1) {
@@ -145,15 +145,20 @@ inline class URL internal constructor(val path: String) {
             if (e == -1) {
                 e = path.length
             }
-            return path.substring(s, e)
+            return path.substring(s, e).toURN
         }
+
+    /**
+     *
+     * Retuns http request [urn]+[query]
+     */
     val request: String
         get() {
             val q = query
             return if (q == null) {
-                uri
+                urn.raw
             } else {
-                "$uri?$q"
+                "$urn?$q"
             }
         }
     val query: String?
@@ -183,7 +188,7 @@ inline class URL internal constructor(val path: String) {
         password: String? = this.password,
         host: String = this.host,
         port: Int? = this.port,
-        uri: String = this.uri,
+        uri: URN = this.urn,
         query: String? = this.query,
         hash: String? = this.hash,
     ) =
@@ -194,7 +199,7 @@ inline class URL internal constructor(val path: String) {
                 password = password,
                 host = host,
                 port = port,
-                uri = uri,
+                urn = uri,
                 query = query,
                 hash = hash
             )
@@ -206,7 +211,7 @@ inline class URL internal constructor(val path: String) {
         password = password,
         host = host,
         port = port,
-        uri = uri,
+        urn = urn,
         query = query,
         hash = hash
     )
@@ -237,80 +242,4 @@ fun String.toURLOrNull(): URL? {
     }
 
     return URL(this)
-}
-
-class URL2(private val path: String) {
-    val protocol: String?
-    val host: String
-    val port: Int?
-    val uri: String
-    val defaultPort: Int?
-        get() = protocol?.let { defaultPort(it) }
-
-    companion object {
-        fun defaultPort(protocol: String) = when (protocol) {
-            "ws", "http" -> 80
-            "wss", "https" -> 443
-            "ftp" -> 21
-            "ldap" -> 386
-            else -> null
-        }
-    }
-
-    init {
-        val hostStart = if (path.startsWith("//")) {
-            protocol = null
-            2
-        } else {
-            val p = path.indexOf("://")
-
-            if (p == -1)
-                throw MalformedURLException("Protocol not set in URL \"$path\"")
-            protocol = path.substring(0, p)
-            protocol.length + 3
-        }
-
-        val uriStart = path.indexOf('/', hostStart)
-
-        val portStart = path.indexOf(':', hostStart)
-        if (portStart != -1 && (uriStart==-1 || portStart < uriStart)) {
-            host = path.substring(hostStart, portStart)
-            port = path.substring(portStart + 1, if (uriStart == -1) path.length else uriStart).toInt()
-        } else {
-            host = path.substring(hostStart, if (uriStart == -1) path.length else uriStart)
-            port = null
-        }
-        uri = if (uriStart == -1)
-            ""
-        else
-            path.substring(uriStart)
-
-    }
-
-    override fun toString(): String = path
-
-    fun new(protocol: String? = this.protocol, host: String = this.host, port: Int? = this.port, uri: String = this.uri): URL {
-        val sb = StringBuilder()
-        if (protocol == null)
-            sb.append("//")
-        else
-            sb.append(protocol).append("://")
-        sb.append(host)
-        if (port != null)
-            sb.append(":").append(port)
-        sb.append(uri)
-        return URL(sb.toString())
-    }
-
-    fun newURI(uri: String): URL = new(uri = uri)
-
-    fun appendDirectionURI(path: String) =
-            if (path.isEmpty())
-                this
-            else
-                newURI("${uri.removeSuffix("/")}/${path.removePrefix("/")}")
-
-    fun newPort(port: Int?): URL = new(port = port)
-
-    fun newHost(host: String): URL = new(host = host)
 }

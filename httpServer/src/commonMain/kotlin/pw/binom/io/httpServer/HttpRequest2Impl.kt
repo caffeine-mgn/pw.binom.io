@@ -15,7 +15,7 @@ internal class HttpRequest2Impl(
     val server: HttpServer,
     override val method: String,
     override val headers: Headers,
-    override val uri: String
+    override val urn: URN
 ) : HttpRequest2 {
     companion object {
         suspend fun read(channel: AsyncAsciiChannel, server: HttpServer): HttpRequest2Impl {
@@ -43,7 +43,7 @@ internal class HttpRequest2Impl(
             }
 
             return HttpRequest2Impl(
-                uri = items.getOrNull(1) ?: "",
+                urn = (items.getOrNull(1) ?: "").toURN,
                 method = items[0],
                 channel = channel,
                 headers = headers,
@@ -141,7 +141,7 @@ internal class HttpRequest2Impl(
         checkWebSocket()
         response().use {
             it.headers.keepAlive = false
-            it.responseCode = 403
+            it.status = 403
         }
     }
 
@@ -160,8 +160,8 @@ internal class HttpRequest2Impl(
     }
 }
 
-private class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse2 {
-    override var responseCode = 404
+internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse2 {
+    override var status = 404
     override val headers = HashHeaders()
 
     init {
@@ -201,8 +201,8 @@ private class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse2 {
             throw IllegalStateException("Response doesn't support compress. Make sure you set HttpServer::zlibBufferSize more than 0")
         }
         req.channel.writer.append("HTTP/1.1 ")
-            .append(responseCode.toString()).append(" ")
-            .append(statusToText(responseCode))
+            .append(status.toString()).append(" ")
+            .append(statusToText(status))
             .append("\r\n")
         headers.forEachHeader { key, value ->
             req.channel.writer.append(key).append(": ").append(value).append("\r\n")

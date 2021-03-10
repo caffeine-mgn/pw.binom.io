@@ -5,18 +5,17 @@ import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
 import pw.binom.pool.DefaultPool
 
-private const val PREFIX = "ConnectionProcessing: "
-
+@Deprecated(message = "Will be removed")
 @OptIn(ExperimentalUnsignedTypes::class)
 internal object ConnectionProcessing {
 
     suspend fun process(
         rawConnection: TcpConnection,
-        outputBuffered: PoolAsyncBufferedOutput,
+        outputBuffered: PoolAsyncBufferedOutputDeprecated,
         asciiInputReader: AsyncBufferedAsciiInputReader,
-        httpRequestPool: DefaultPool<HttpRequestImpl2>,
-        httpResponsePool: DefaultPool<HttpResponseImpl2>,
-        handler: Handler3,
+        httpRequestPool: DefaultPool<HttpRequestImpl2Deprecated>,
+        httpResponsePool: DefaultPool<HttpResponseImpl2Deprecated>,
+        handler: Handler3Deprecated,
         allowZlib: Boolean
     ): Boolean {
         val outputBufferid = outputBuffered//connection.bufferedOutput()

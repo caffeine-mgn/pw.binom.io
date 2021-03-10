@@ -1,9 +1,9 @@
 package pw.binom.flux
 
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
+import pw.binom.io.httpServer.HttpRequest2
+import pw.binom.io.httpServer.HttpRequestDeprecated
+import pw.binom.io.httpServer.HttpResponseDeprecated
 
 interface Action {
-    val req: HttpRequest
-    val resp: HttpResponse
+    val req: HttpRequest2
 }

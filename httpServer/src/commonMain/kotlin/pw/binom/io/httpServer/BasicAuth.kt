@@ -4,10 +4,9 @@ package pw.binom.io.httpServer
 
 import pw.binom.base64.Base64
 import pw.binom.io.http.BasicAuth
-import pw.binom.io.httpClient.AsyncHttpClient
 import kotlin.jvm.JvmName
 
-val HttpRequest.basicAuth: BasicAuth?
+val HttpRequestDeprecated.basicAuth: BasicAuth?
     get() {
         val authorization = headers["Authorization"]?.singleOrNull() ?: return null
         if (!authorization.startsWith("Basic "))
@@ -20,7 +19,7 @@ val HttpRequest.basicAuth: BasicAuth?
 /**
  * Adds header "WWW-Authenticate" and set status 401
  */
-fun HttpResponse.requestBasicAuth(realm: String? = null, service: String? = null) {
+fun HttpResponseDeprecated.requestBasicAuth(realm: String? = null, service: String? = null) {
     val sb = StringBuilder("Basic")
     if (realm != null) {
         sb.append(" realm=\"").append(realm).append("\"")

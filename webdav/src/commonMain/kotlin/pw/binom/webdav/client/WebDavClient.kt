@@ -49,7 +49,7 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
     }
 
     override suspend fun mkdir(path: String): FileSystem.Entity? {
-        val allPathUrl = url.copy(uri = "${url.uri}$path")
+        val allPathUrl = url.copy(uri = "${url.urn}$path")
         val r = client.request(HTTPMethod.MKCOL, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val responseCode = r.getResponse().use { it.responseCode }
@@ -306,4 +306,4 @@ open class WebDavClient(val client: HttpClient, val url: URL) : FileSystem {
 }
 
 fun URL.appendDirectionURI(dir: String) =
-    copy(uri = "${uri.removeSuffix("/")}/${UTF8.urlEncode(dir).removePrefix("/")}")
+    copy(uri = "${urn.removeSuffix("/")}/${UTF8.urlEncode(dir).removePrefix("/")}")

@@ -60,7 +60,7 @@ internal class UrlConnectImpl(
         val connection = client.borrowConnection(url)
         val buffered = connection.channel.bufferedOutput(closeStream = false)
         val app = buffered.utf8Appendable()
-        app.append("$method ${url.uri} HTTP/1.1\r\n")
+        app.append("$method ${url.urn} HTTP/1.1\r\n")
 
         headers.forEach { en ->
             en.value.forEach {

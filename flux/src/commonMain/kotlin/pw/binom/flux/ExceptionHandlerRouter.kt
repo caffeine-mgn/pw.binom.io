@@ -1,15 +1,15 @@
 package pw.binom.flux
 
-import pw.binom.io.httpServer.Handler3
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
+import pw.binom.io.httpServer.Handler3Deprecated
+import pw.binom.io.httpServer.HttpRequestDeprecated
+import pw.binom.io.httpServer.HttpResponseDeprecated
 
 class ExceptionHandlerRouter(
-    private val defaultHandler: Handler3,
-    private val handler: suspend (req: HttpRequest, resp: HttpResponse, Throwable) -> Unit
-) : Handler3 {
+    private val defaultHandler: Handler3Deprecated,
+    private val handler: suspend (req: HttpRequestDeprecated, resp: HttpResponseDeprecated, Throwable) -> Unit
+) : Handler3Deprecated {
 
-    override suspend fun request(req: HttpRequest, resp: HttpResponse) {
+    override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
         try {
             defaultHandler.request(req, resp)
         } catch (e: Throwable) {
@@ -18,5 +18,5 @@ class ExceptionHandlerRouter(
     }
 }
 
-fun Handler3.exceptionHandler(handler: suspend (req: HttpRequest, resp: HttpResponse, Throwable) -> Unit) =
+fun Handler3Deprecated.exceptionHandler(handler: suspend (req: HttpRequestDeprecated, resp: HttpResponseDeprecated, Throwable) -> Unit) =
     ExceptionHandlerRouter(this, handler)

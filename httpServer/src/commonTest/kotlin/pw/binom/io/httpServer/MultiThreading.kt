@@ -23,7 +23,7 @@ class MultiThreading {
         val nd = NetworkDispatcher()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
         val data = Random.nextBytes(30)
-        val server = HttpServer3(nd, executor = worker, handler = Handler3 { req, resp ->
+        val server = HttpServer3(nd, executor = worker, handler = Handler3Deprecated { req, resp ->
             println("REQUEST ${req.contextUri}")
             resp.enableCompress = true
             resp.status = 200

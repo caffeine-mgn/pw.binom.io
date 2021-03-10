@@ -1,39 +1,50 @@
 package pw.binom.flux
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
-import pw.binom.async
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
-import pw.binom.network.CrossThreadKeyHolder
-import pw.binom.network.TcpConnection
+import pw.binom.*
+import pw.binom.io.AsyncReader
+import pw.binom.io.http.Headers
+import pw.binom.io.http.websocket.WebSocketConnection
+import pw.binom.io.httpServer.HttpRequest2
+import pw.binom.io.httpServer.HttpResponse2
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AbstractRouteTest {
 
-    class MockAction(method: String, contextUri: String) : Action {
-        override val req: HttpRequest = object : HttpRequest {
-            override val method: String = method
-            override val uri: String = contextUri
-            override val contextUri: String = contextUri
-            override val input: AsyncInput
+    class MockAction(method: String, contextUri: URN) : Action {
+        override val req = object : HttpRequest2 {
+            override val method: String
+                get() = method
+            override val headers: Headers
                 get() = TODO("Not yet implemented")
-            override val rawInput: AsyncInput
-                get() = TODO("Not yet implemented")
-            override val rawOutput: AsyncOutput
-                get() = TODO("Not yet implemented")
-            override val rawConnection: TcpConnection
-                get() = TODO("Not yet implemented")
-            override val headers: Map<String, List<String>>
-                get() = TODO("Not yet implemented")
-            override val keyHolder: CrossThreadKeyHolder
-                get() = TODO("Not yet implemented")
+            override val urn: URN
+                get() = contextUri
+
+            override fun readBinary(): AsyncInput {
+                TODO("Not yet implemented")
+            }
+
+            override fun readText(): AsyncReader {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun acceptWebsocket(): WebSocketConnection {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun rejectWebsocket() {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun response(): HttpResponse2 {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun asyncClose() {
+                TODO("Not yet implemented")
+            }
 
         }
-        override val resp: HttpResponse
-            get() = TODO("Not yet implemented")
-
     }
 
     @Test
@@ -48,19 +59,15 @@ class AbstractRouteTest {
             state = 1
             true
         }
-        var exception: Throwable? = null
-        async {
-            try {
-                router.execute(MockAction("GET", "/events/ssdf"))
-                assertEquals(1, state)
+        val done = async2 {
+            router.execute(MockAction("GET", "/events/ssdf".toURN))
+            assertEquals(1, state)
 
-                router.execute(MockAction("GET", "/eventss/ssdf"))
-                assertEquals(2, state)
-            } catch (e: Throwable) {
-                exception = e
-            }
+            router.execute(MockAction("GET", "/eventss/ssdf".toURN))
+            assertEquals(2, state)
         }
-        if (exception != null)
-            throw exception!!
+        if (done.isFailure) {
+            throw done.exceptionOrNull!!
+        }
     }
 }

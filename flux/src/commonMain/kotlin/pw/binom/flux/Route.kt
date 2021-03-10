@@ -2,7 +2,8 @@ package pw.binom.flux
 
 import pw.binom.io.Closeable
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.httpServer.Handler3
+import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.Handler3Deprecated
 
 interface Route {
     fun route(path: String, route: Route)
@@ -11,12 +12,12 @@ interface Route {
     fun endpoint(method: String, path: String, func: suspend (Action) -> Boolean): Closeable
     fun endpoint(method: HTTPMethod, path: String, func: suspend (Action) -> Boolean): Closeable =
         endpoint(
-            method = method.name,
+            method = method.code,
             path = path,
             func = func
         )
 
-    fun forward(handler: Handler3?)
+    fun forward(handler: Handler?)
     suspend fun execute(action: Action): Boolean
 }
 

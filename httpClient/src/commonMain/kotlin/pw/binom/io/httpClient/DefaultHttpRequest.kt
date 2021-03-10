@@ -41,7 +41,7 @@ class DefaultHttpRequest(
     }
 
     private suspend fun sendHeaders() {
-        channel.writer.append(method.name).append(" ").append(url.request).append(" ").append("HTTP/1.1\r\n")
+        channel.writer.append(method.code).append(" ").append(url.request).append(" ").append("HTTP/1.1\r\n")
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append("\r\n")
         }
