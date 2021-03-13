@@ -5,8 +5,14 @@ import kotlin.reflect.KClass
 interface Strong {
 
     companion object {
-        fun config(func: (StrongDefiner) -> Unit) = object : Config {
+        fun config(func: suspend (StrongDefiner) -> Unit) = object : Config {
             override suspend fun apply(strong: StrongDefiner) {
+                func(strong)
+            }
+        }
+
+        fun serviceProvider(func: suspend (StrongDefiner) -> Unit) = object : ServiceProvider {
+            override suspend fun provide(strong: StrongDefiner) {
                 func(strong)
             }
         }
