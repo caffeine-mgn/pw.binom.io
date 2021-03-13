@@ -45,6 +45,7 @@ class PGConnection private constructor(
                     "database" to dataBase,
                     "client_encoding" to charset.name,
                     "DateStyle" to "ISO",
+                    "TimeZone" to "GMT",
 //                    "extra_float_digits" to "2"
                 )
             )
