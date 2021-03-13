@@ -19,6 +19,7 @@ class PostgreAsyncStatement(override val connection: PGConnection) : AsyncStatem
         if (response is QueryResponse.Data) {
             response.asyncClose()
         }
+
         throw SQLException("Query returns data")
     }
 

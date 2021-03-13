@@ -18,20 +18,16 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
         output.writeInt(buf16, 0)
         bodyStarted = true
     }
-private var lastCmd:Byte?=null
     fun writeCmd(cmd: Byte) {
-        println("writeCmd(cmd: $cmd)")
         check(!bodyStarted)
         if (cmdExist) {
             throw IllegalStateException("Cmd already wrote")
         }
         output.writeByte(buf16, cmd)
         cmdExist = true
-        lastCmd=cmd
     }
 
     fun endBody() {
-        println("endBody() cmd: $lastCmd")
         check(bodyStarted)
         val pos = output.data.position
         output.data.position = if (cmdExist) 1 else 0
@@ -41,7 +37,6 @@ private var lastCmd:Byte?=null
     }
 
     suspend fun finishAsync(output: AsyncOutput) {
-        println("finishAsync() cmd: $lastCmd")
         this.output.data.flip()
         output.write(this.output.data)
         this.output.clear()

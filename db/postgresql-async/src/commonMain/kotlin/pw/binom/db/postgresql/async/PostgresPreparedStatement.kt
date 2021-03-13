@@ -110,10 +110,10 @@ class PostgresPreparedStatement(
             it.statement = id.toString()
         })
         connection.sendOnly(SyncMessage)
-        val p1 = connection.readDesponse()
-        check(p1 is CloseCompleteMessage) { "Expected CloseCompleteMessage, but actual ${p1::class}" }
-        val p2 = connection.readDesponse()
-        check(p2 is ReadyForQueryMessage) { "Expected ReadyForQueryMessage, but actual ${p1::class}" }
+        val closeMsg = connection.readDesponse()
+        check(closeMsg is CloseCompleteMessage) { "Expected CloseCompleteMessage, but actual $closeMsg" }
+        val readyForQuery = connection.readDesponse()
+        check(readyForQuery is ReadyForQueryMessage) { "Expected ReadyForQueryMessage, but actual $readyForQuery" }
     }
 
     suspend fun execute(): QueryResponse {
@@ -159,27 +159,38 @@ class PostgresPreparedStatement(
         }
         check(connection.readDesponse() is BindCompleteMessage)
         parsed = true
-        val msg = connection.readDesponse()
-        return when (msg) {
-            is CommandCompleteMessage -> {
-                check(connection.readDesponse() is ReadyForQueryMessage)
-                QueryResponse.Status(
-                    status = msg.statusMessage,
-                    rowsAffected = msg.rowsAffected
-                )
+
+        var rowsAffected = 0L
+        LOOP@ while (true) {
+            val msg = connection.readDesponse()
+            when (msg) {
+                is ReadyForQueryMessage -> {
+                    return QueryResponse.Status(
+                        status = "",
+                        rowsAffected = rowsAffected
+                    )
+                }
+                is CommandCompleteMessage -> {
+                    rowsAffected += msg.rowsAffected
+                    continue@LOOP
+                }
+                is RowDescriptionMessage -> {
+                    connection.busy = true
+                    val msg2 = connection.reader.data
+                    msg2.reset(msg)
+                    return msg2
+                }
+                is ErrorMessage -> {
+                    throw PostgresqlException(msg.fields['M'])
+                }
+                is NoticeMessage -> {
+                    continue@LOOP
+                }
+                is NoDataMessage->{
+                    continue@LOOP
+                }
+                else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg]")
             }
-            is RowDescriptionMessage -> {
-                connection.busy = true
-                val msg2 = connection.reader.data
-                msg2.portalName = portalName
-                msg2.binaryResult = binaryResult
-                msg2.reset(msg)
-                return msg2
-            }
-            is ErrorMessage -> {
-                throw PostgresqlException(msg.fields['M'])
-            }
-            else -> TODO("msg: $msg")
         }
     }
 }

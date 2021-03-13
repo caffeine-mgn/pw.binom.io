@@ -7,10 +7,7 @@ import pw.binom.db.*
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
-import pw.binom.io.BufferedOutputAppendable
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.IOException
-import pw.binom.io.bufferedAsciiWriter
+import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
@@ -42,7 +39,6 @@ class PGConnection private constructor(
                 userName = userName,
                 password = password
             )
-            println("First message:")
             pgConnection.sendFirstMessage(
                 mapOf(
                     "user" to userName,
@@ -54,7 +50,6 @@ class PGConnection private constructor(
             )
             while (true) {
                 val msg = pgConnection.readDesponse()
-                println("msg: $msg")
                 if (msg is ErrorMessage) {
                     throw PostgresqlException(msg.toString())
                 }
@@ -100,8 +95,7 @@ class PGConnection private constructor(
         sendOnly(msg)
         var rowsAffected = 0L
         LOOP@ while (true) {
-            val msg = readDesponse()
-            when (msg) {
+            when (val msg = readDesponse()) {
                 is ReadyForQueryMessage -> {
                     return QueryResponse.Status(
                         status = "",
@@ -122,6 +116,9 @@ class PGConnection private constructor(
                     throw PostgresqlException(msg.fields['M'])
                 }
                 is NoticeMessage -> {
+                    continue@LOOP
+                }
+                is NoDataMessage -> {
                     continue@LOOP
                 }
                 else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg]")
@@ -145,7 +142,8 @@ class PGConnection private constructor(
         }
     }
 
-    internal val reader = PackageReader(this, charset, connection)
+    private val rr = connection.bufferedAsciiReader(closeParent = false)
+    internal val reader = PackageReader(this, charset, rr)
     private var credentialMessage = CredentialMessage()
 
     suspend fun readDesponse(): KindedMessage {
@@ -167,7 +165,6 @@ class PGConnection private constructor(
         o.writeShort(buf, 3)
         o.writeShort(buf, 0)
         properties.forEach {
-            println("${it.key}: ${it.value}")
             o.append(it.key)
             o.writeByte(buf, 0)
             o.append(it.value)
@@ -181,10 +178,6 @@ class PGConnection private constructor(
         buf2.data.writeInt(buf, (buf2.size))
         buf2.data.position = pos
         buf2.data.flip()
-        println("Seding data with size $pos")
-        buf2.data.forEach {
-            print(" ${it.toChar()}")
-        }
         connection.write(buf2.data)
         val msg = readDesponse()
         val authRequest = when (msg) {
@@ -249,6 +242,7 @@ class PGConnection private constructor(
         get() = TYPE
 
     override suspend fun asyncClose() {
+        rr.asyncClose()
         connection.asyncClose()
     }
 }

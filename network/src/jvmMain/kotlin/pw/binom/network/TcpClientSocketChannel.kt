@@ -25,7 +25,7 @@ actual class TcpClientSocketChannel(val native: JSocketChannel) : Channel {
         } catch (e: Throwable) {
             throw SocketClosedException(e)
         }
-        if (count <= 0) {
+        if (count < 0) {
             throw SocketClosedException()
         }
         return count

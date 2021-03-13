@@ -11,7 +11,9 @@ import pw.binom.db.list
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import pw.binom.uuid
 import kotlin.math.absoluteValue
+import kotlin.random.Random
 import kotlin.test.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -172,40 +174,43 @@ class TestConnect {
     }
 
     @Test
-    fun testReadData() {
-        println("--->>>")
+    fun testInsert() {
         pg { con ->
-            println("select #1")
-            con.prepareStatement("select 1.5").use {
-                try {
-                    it.executeQuery().use {
-                        assertEquals(1, it.columns.size)
-                        assertTrue(it.next())
-                        assertEquals(1.5, it.getDouble(0))
-                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
-                        assertFalse(it.next())
+            con.createStatement().use {
+//                it.executeUpdate(
+//                    """
+//                    drop table if exists test1
+//                """
+//                )
 
-                    }
+                it.executeUpdate(
+                    """
+                    create table if not exists test1(
+                    id               uuid         not null primary key,
+                    name             text         not null
+                    )
+                """
+                )
+            }
+            con.prepareStatement("insert into test1 (id,name) values (?,?)").use {
+                try {
+                    it.set(0, Random.uuid())
+                    it.set(1, Random.uuid().toString())
+                    val update = it.executeUpdate()
                 } catch (e: Throwable) {
                     e.printStackTrace()
-                    throw e
                 }
             }
-            println("select #2")
-            con.prepareStatement("select 1.5").use {
-                try {
-                    it.executeQuery().use {
-                        assertEquals(1, it.columns.size)
-                        assertTrue(it.next())
-                        assertEquals(1.5, it.getDouble(0))
-                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
-                        assertFalse(it.next())
+            con.prepareStatement("insert into test1 (id,name) values (?,?)").use {
+                it.set(0, Random.uuid())
+                it.set(1, Random.uuid().toString())
+                it.executeUpdate()
+            }
 
-                    }
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    throw e
-                }
+            con.prepareStatement("insert into test1 (id,name) values (?,?) returning id").use {
+                it.set(0, Random.uuid())
+                it.set(1, Random.uuid().toString())
+                val insertedId = it.executeQuery().list { it.getUUID(0) }.first()
             }
         }
     }

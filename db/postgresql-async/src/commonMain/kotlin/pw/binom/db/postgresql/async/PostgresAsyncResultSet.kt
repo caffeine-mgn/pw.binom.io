@@ -155,6 +155,7 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
         val value = data[index] ?: return null
         return when (val dataType = data.meta[index].dataType) {
             ColumnTypes.ByteA -> value
+            ColumnTypes.UUID -> value
             else -> throwNotSupported(dataType, value)
         }
     }

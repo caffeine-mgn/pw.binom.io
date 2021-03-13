@@ -22,7 +22,6 @@ fun pg(func: suspend (PGConnection) -> Unit) {
         val now = TimeSource.Monotonic.markNow()
         while (true) {
             try {
-                println("Подключение")
                 val address = NetworkAddress.Immutable(
                     host = "127.0.0.1",
                     port = 25331,
@@ -38,7 +37,6 @@ fun pg(func: suspend (PGConnection) -> Unit) {
                 break
             } catch (e: Throwable) {
                 Worker.sleep(500)
-                println("Не проканало! пытаемся еще раз $e")
                 if (now.elapsedNow() > 10.seconds) {
                     exception = RuntimeException("Connection Timeout", e)
                     return@async2

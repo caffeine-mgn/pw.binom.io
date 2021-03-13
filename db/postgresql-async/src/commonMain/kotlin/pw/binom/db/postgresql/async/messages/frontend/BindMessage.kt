@@ -13,60 +13,53 @@ class BindMessage : KindedMessage {
         get() = MessageKinds.Bind
 
     override fun write(writer: PackageWriter) {
-        try {
-            if (!valuesTypes.isEmpty()) {
-                check(valuesTypes.size == values.size)
-            }
-            println("Try bind")
-            writer.writeCmd(MessageKinds.Bind)
-            println("Bindded")
-            writer.startBody()
-            writer.writeCString(statement)
-            writer.writeCString(portal)
+        if (valuesTypes.isNotEmpty()) {
+            check(valuesTypes.size == values.size)
+        }
+        writer.writeCmd(MessageKinds.Bind)
+        writer.startBody()
+        writer.writeCString(statement)
+        writer.writeCString(portal)
 
 //        writer.writeShort((values?.size ?: 0).toShort())
 //        writer.writeShort(if (binary) 1 else 0)
 //        writer.writeShort(if (binary) 1 else 0)
 
-            if (values.isEmpty() || valuesTypes.isEmpty()) {
-                writer.writeShort(0)
-            } else {
-                writer.writeShort(valuesTypes.size.toShort())
-                valuesTypes.forEach {
-                    writer.writeShort(1)
-                }
+        if (values.isEmpty() || valuesTypes.isEmpty()) {
+            writer.writeShort(0)
+        } else {
+            writer.writeShort(valuesTypes.size.toShort())
+            valuesTypes.forEach {
+                writer.writeShort(1)
             }
+        }
 
-            writer.writeShort((values.size).toShort())
+        writer.writeShort((values.size).toShort())
 //        values?.forEach {
 //            writer.writeShort(0)
 //        }
-            if (valuesTypes.isNotEmpty()) {
-                values.forEachIndexed { index, it ->
-                    TypeWriter.writeBinary(valuesTypes[index], it, writer)
-                }
-            } else {
-                values.forEach {
-                    TypeWriter.writeText(it, writer)
-                }
+        if (valuesTypes.isNotEmpty()) {
+            values.forEachIndexed { index, it ->
+                TypeWriter.writeBinary(valuesTypes[index], it, writer)
             }
-            if (binaryResult) {
-                writer.writeShort(1)
-                writer.writeShort(1)
-            } else {
-                writer.writeShort(0)
+        } else {
+            values.forEach {
+                TypeWriter.writeText(it, writer)
             }
+        }
+        if (binaryResult) {
+            writer.writeShort(1)
+            writer.writeShort(1)
+        } else {
+            writer.writeShort(0)
+        }
 //        writer.writeShort(resultColumnsTypes.size.toShort())
 //        resultColumnsTypes.forEach {
 //            writer.writeInt(it)
 //        }
 
-            writer.endBody()
-        } catch (e: Throwable) {
-            println("Error in bind!")
-            e.printStackTrace()
-            throw e
-        }
+        writer.endBody()
+
     }
 
     var statement: String = ""
