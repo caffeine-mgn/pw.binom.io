@@ -16,12 +16,14 @@ interface HttpRequest : AsyncCloseable {
      * Closes this [DefaultHttpRequest] and delegate control to returned [AsyncHttpRequestOutput].
      */
     suspend fun writeData(): AsyncHttpRequestOutput
+    suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): HttpResponse
 
     /**
      * Starts write text request
      * Closes this [DefaultHttpRequest] and delegate control to returned [AsyncHttpRequestWriter].
      */
     suspend fun writeText(): AsyncHttpRequestWriter
+    suspend fun writeText(func: suspend (AsyncHttpRequestWriter) -> Unit): HttpResponse
 
     /**
      * Starts to get HTTP response

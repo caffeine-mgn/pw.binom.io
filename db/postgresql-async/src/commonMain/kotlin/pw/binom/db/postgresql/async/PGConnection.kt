@@ -10,6 +10,7 @@ import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
 import pw.binom.io.BufferedOutputAppendable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
+import pw.binom.io.bufferedAsciiWriter
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
@@ -41,6 +42,7 @@ class PGConnection private constructor(
                 userName = userName,
                 password = password
             )
+            println("First message:")
             pgConnection.sendFirstMessage(
                 mapOf(
                     "user" to userName,
@@ -52,6 +54,7 @@ class PGConnection private constructor(
             )
             while (true) {
                 val msg = pgConnection.readDesponse()
+                println("msg: $msg")
                 if (msg is ErrorMessage) {
                     throw PostgresqlException(msg.toString())
                 }
@@ -157,29 +160,32 @@ class PGConnection private constructor(
     }
 
     private suspend fun sendFirstMessage(properties: Map<String, String>) {
-        val o = ByteArrayOutput()
-        val pool = ByteBufferPool(10)
+        val buf2 = ByteArrayOutput()
+        val o = buf2.bufferedAsciiWriter()
         val buf = ByteBuffer.alloc(8)
         o.writeInt(buf, 0)
         o.writeShort(buf, 3)
         o.writeShort(buf, 0)
-        val appender = BufferedOutputAppendable(Charsets.UTF8, o, pool)
         properties.forEach {
-            appender.append(it.key)
-            appender.flush()
+            println("${it.key}: ${it.value}")
+            o.append(it.key)
             o.writeByte(buf, 0)
-            appender.append(it.value)
-            appender.flush()
+            o.append(it.value)
             o.writeByte(buf, 0)
         }
         o.writeByte(buf, 0)
+        o.flush()
 
-        val pos = o.data.position
-        o.data.position = 0
-        o.data.writeInt(buf, (o.size))
-        o.data.position = pos
-        o.data.flip()
-        connection.write(o.data)
+        val pos = buf2.data.position
+        buf2.data.position = 0
+        buf2.data.writeInt(buf, (buf2.size))
+        buf2.data.position = pos
+        buf2.data.flip()
+        println("Seding data with size $pos")
+        buf2.data.forEach {
+            print(" ${it.toChar()}")
+        }
+        connection.write(buf2.data)
         val msg = readDesponse()
         val authRequest = when (msg) {
             is AuthenticationMessage.AuthenticationChallengeCleartextMessage -> {

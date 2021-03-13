@@ -191,6 +191,12 @@ suspend fun AsyncInput.copyTo(output: Output, bufferSize: Int = DEFAULT_BUFFER_S
     }
 }
 
+suspend fun AsyncInput.skipAll(bufferSkipSize: Int = DEFAULT_BUFFER_SIZE) {
+    ByteBuffer.alloc(bufferSkipSize) {
+        skipAll(it)
+    }
+}
+
 suspend fun AsyncInput.skipAll(buffer: ByteBuffer) {
     while (true) {
         buffer.clear()

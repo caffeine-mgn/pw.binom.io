@@ -110,8 +110,10 @@ class PostgresPreparedStatement(
             it.statement = id.toString()
         })
         connection.sendOnly(SyncMessage)
-        check(connection.readDesponse() is CloseCompleteMessage)
-        check(connection.readDesponse() is ReadyForQueryMessage)
+        val p1 = connection.readDesponse()
+        check(p1 is CloseCompleteMessage) { "Expected CloseCompleteMessage, but actual ${p1::class}" }
+        val p2 = connection.readDesponse()
+        check(p2 is ReadyForQueryMessage) { "Expected ReadyForQueryMessage, but actual ${p1::class}" }
     }
 
     suspend fun execute(): QueryResponse {

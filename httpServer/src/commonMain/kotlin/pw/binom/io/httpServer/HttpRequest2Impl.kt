@@ -38,10 +38,6 @@ internal class HttpRequest2Impl(
                 headers.add(headerKey, headerValue)
             }
 
-            headers.forEachHeader { s, s2 ->
-                println("$s: $s2")
-            }
-
             return HttpRequest2Impl(
                 urn = (items.getOrNull(1) ?: "").toURN,
                 method = items[0],

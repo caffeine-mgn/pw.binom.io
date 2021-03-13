@@ -9,6 +9,7 @@ import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
+import pw.binom.io.use
 
 class DefaultHttpRequest(
     var method: HTTPMethod,
@@ -49,19 +50,20 @@ class DefaultHttpRequest(
     }
 
     private val keepAlive
-        get() = headers[Headers.CONNECTION]
-            ?.firstOrNull()
-            .equals(Headers.KEEP_ALIVE, ignoreCase = true)
+        get() = headers.keepAlive
 
     override suspend fun writeData(): AsyncHttpRequestOutput {
         checkClosed()
+        if (headers.contentLength == null) {
+            headers.transferEncoding = Headers.CHUNKED
+        }
         sendHeaders()
         val encode = headers.transferEncoding
         if (encode != null) {
             when (encode.toLowerCase()) {
                 Headers.CHUNKED.toLowerCase() -> {
                     closed = true
-                    RequestAsyncChunkedOutput(
+                    return RequestAsyncChunkedOutput(
                         URI = URI,
                         client = client,
                         keepAlive = keepAlive,
@@ -82,15 +84,19 @@ class DefaultHttpRequest(
                 contentLength = len
             )
         }
+        throw IllegalStateException("Unknown type of Transfer Encoding")
+    }
 
-        headers[Headers.TRANSFER_ENCODING] = Headers.CHUNKED
-        closed = true
-        return RequestAsyncChunkedOutput(
-            URI = URI,
-            client = client,
-            keepAlive = keepAlive,
-            channel = channel,
-        )
+    override suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): HttpResponse {
+        val data = writeData()
+        try {
+            func(data)
+            data.flush()
+            return data.getResponse()
+        } catch (e: Throwable) {
+            runCatching { data.asyncClose() }
+            throw e
+        }
     }
 
     override suspend fun writeText(): AsyncHttpRequestWriter {
@@ -99,6 +105,18 @@ class DefaultHttpRequest(
             output = dataChannel,
             charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8
         )
+    }
+
+    override suspend fun writeText(func: suspend (AsyncHttpRequestWriter) -> Unit): HttpResponse {
+        val data = writeText()
+        try {
+            func(data)
+            data.flush()
+            return data.getResponse()
+        } catch (e: Throwable) {
+            runCatching { data.asyncClose() }
+            throw e
+        }
     }
 
     override suspend fun getResponse(): HttpResponse {

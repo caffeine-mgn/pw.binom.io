@@ -2,14 +2,15 @@ package pw.binom.compression.zlib
 
 import pw.binom.ByteBuffer
 import pw.binom.Output
+import pw.binom.io.StreamClosedException
 
 open class DeflaterOutput(
-        val stream: Output,
-        level: Int = 6,
-        bufferSize: Int = 1024,
-        wrap: Boolean = false,
-        syncFlush: Boolean = true,
-        val closeStream: Boolean = false
+    val stream: Output,
+    level: Int = 6,
+    bufferSize: Int = 1024,
+    wrap: Boolean = false,
+    syncFlush: Boolean = true,
+    val closeStream: Boolean = false
 ) : Output {
 
     private val deflater = Deflater(level, wrap, syncFlush)
@@ -21,6 +22,12 @@ open class DeflaterOutput(
         get() = deflater
 
     protected var usesDefaultDeflater = true
+    private var closed = false
+    private fun checkClosed() {
+        if (closed) {
+            throw StreamClosedException()
+        }
+    }
 
 //    private val sync = ByteArray(1)
 //
@@ -30,6 +37,7 @@ open class DeflaterOutput(
 //    }
 
     override fun write(data: ByteBuffer): Int {
+        checkClosed()
         val vv = data.remaining
         while (data.remaining > 0) {
             buffer.clear()
@@ -45,6 +53,7 @@ open class DeflaterOutput(
     }
 
     override fun flush() {
+        checkClosed()
         while (true) {
             buffer.clear()
             val r = deflater.flush(buffer)
@@ -60,6 +69,7 @@ open class DeflaterOutput(
     }
 
     protected open fun finish() {
+        checkClosed()
         deflater.finish()
         flush()
         if (usesDefaultDeflater)
@@ -69,6 +79,7 @@ open class DeflaterOutput(
     override fun close() {
         flush()
         finish()
+        closed = true
         deflater.close()
         if (closeStream) {
             stream.close()

@@ -14,7 +14,7 @@ class RequestAsyncChunkedOutput(
 ) : AsyncHttpRequestOutput, AsyncChunkedOutput(
     stream = channel.writer,
     autoFlushBuffer = autoFlushBuffer,
-    closeStream = true
+    closeStream = false
 ) {
 
     override suspend fun getResponse(): HttpResponse {

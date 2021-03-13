@@ -82,30 +82,31 @@ class TestURI {
     @Test
     fun uriTest() {
         "https://binom/olo".toURIOrNull()!!.apply {
-            assertEquals("/olo", urn)
+            assertEquals("/olo", urn.toString())
         }
 
         "https://binom/olo?q".toURIOrNull()!!.apply {
-            assertEquals("/olo", urn)
+            assertEquals("/olo", urn.toString())
         }
         "https://binom/olo?q#v".toURIOrNull()!!.apply {
-            assertEquals("/olo", urn)
+            assertEquals("/olo", urn.toString())
         }
         "https://binom/olo#v".toURIOrNull()!!.apply {
-            assertEquals("/olo", urn)
+            assertEquals("/olo", urn.toString())
         }
 
         "https://binom".toURIOrNull()!!.apply {
-            assertEquals("", urn)
+            assertEquals("", urn.toString())
         }
         "https://binom:80".toURIOrNull()!!.apply {
-            assertEquals("", urn)
+            assertEquals("", urn.toString())
         }
         "https://binom:80?q".toURIOrNull()!!.apply {
-            assertEquals("", urn)
+            assertEquals("", urn.toString())
+            assertEquals("q", query)
         }
         "https://binom:80#q".toURIOrNull()!!.apply {
-            assertEquals("", urn)
+            assertEquals("", urn.toString())
         }
     }
 
@@ -125,7 +126,7 @@ class TestURI {
     fun `protoAddresPort`() {
         val url = URI("http://127.0.0.1:4646")
         assertEquals("http", url.protocol)
-        assertEquals("", url.urn)
+        assertEquals("", url.urn.toString())
         assertEquals(4646, url.port)
     }
 
@@ -133,7 +134,7 @@ class TestURI {
     fun `protoAddresPortUri`() {
         val url = URI("http://127.0.0.1:4646/")
         assertEquals("http", url.protocol)
-        assertEquals("/", url.urn)
+        assertEquals("/", url.urn.toString())
         assertEquals(4646, url.port)
     }
 
@@ -141,7 +142,7 @@ class TestURI {
     fun `protoAddres`() {
         val url = URI("http://127.0.0.1")
         assertEquals("http", url.protocol)
-        assertEquals("", url.urn)
+        assertEquals("", url.urn.raw)
         assertNull(url.port)
     }
 
@@ -149,7 +150,7 @@ class TestURI {
     fun `protoAddresUri`() {
         val url = URI("http://127.0.0.1/")
         assertEquals("http", url.protocol)
-        assertEquals("/", url.urn)
+        assertEquals("/", url.urn.toString())
         assertNull(url.port)
     }
 
@@ -158,9 +159,9 @@ class TestURI {
         var url = URI("http://127.0.0.1:4646")
         assertEquals("127.0.0.1", url.host)
         assertEquals(4646, url.port)
-        url = url.copy(urn = "${url.urn}/var")
+        url = url.copy(urn = "${url.urn}/var".toURN)
 
-        assertEquals("/var", url.urn)
+        assertEquals("/var", url.urn.toString())
     }
 
     @Test
@@ -169,7 +170,7 @@ class TestURI {
         assertNull(url.protocol)
         assertEquals("127.0.0.1", url.host)
         assertEquals(4646, url.port)
-        assertEquals("", url.urn)
+        assertEquals("", url.urn.raw)
     }
 
     @Test

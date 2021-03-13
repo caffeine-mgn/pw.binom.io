@@ -431,7 +431,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun upsert(
         space: String,
-        indexValues: List<Any>,
+        indexValues: List<Any?>,
         values: List<FieldUpdate>,
     ) {
         val meta = getMeta()
@@ -445,7 +445,7 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     suspend fun upsert(
         space: Int,
-        indexValues: List<Any>,
+        indexValues: List<Any?>,
         values: List<FieldUpdate>,
     ) {
 
@@ -459,7 +459,6 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                 Key.TUPLE.id to indexValues,
             )
         )
-        println("Update columns: ${result.body}")
         result.assertException()
     }
 

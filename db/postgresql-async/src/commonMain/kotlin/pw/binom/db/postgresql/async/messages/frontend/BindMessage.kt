@@ -13,52 +13,60 @@ class BindMessage : KindedMessage {
         get() = MessageKinds.Bind
 
     override fun write(writer: PackageWriter) {
-        if (!valuesTypes.isEmpty()) {
-            check(valuesTypes.size == values.size)
-        }
-        writer.writeCmd(MessageKinds.Bind)
-        writer.startBody()
-        writer.writeCString(statement)
-        writer.writeCString(portal)
+        try {
+            if (!valuesTypes.isEmpty()) {
+                check(valuesTypes.size == values.size)
+            }
+            println("Try bind")
+            writer.writeCmd(MessageKinds.Bind)
+            println("Bindded")
+            writer.startBody()
+            writer.writeCString(statement)
+            writer.writeCString(portal)
 
 //        writer.writeShort((values?.size ?: 0).toShort())
 //        writer.writeShort(if (binary) 1 else 0)
 //        writer.writeShort(if (binary) 1 else 0)
 
-        if (values.isEmpty() || valuesTypes.isEmpty()) {
-            writer.writeShort(0)
-        } else {
-            writer.writeShort(valuesTypes.size.toShort())
-            valuesTypes.forEach {
-                writer.writeShort(1)
+            if (values.isEmpty() || valuesTypes.isEmpty()) {
+                writer.writeShort(0)
+            } else {
+                writer.writeShort(valuesTypes.size.toShort())
+                valuesTypes.forEach {
+                    writer.writeShort(1)
+                }
             }
-        }
 
-        writer.writeShort((values.size).toShort())
+            writer.writeShort((values.size).toShort())
 //        values?.forEach {
 //            writer.writeShort(0)
 //        }
-        if (valuesTypes.isNotEmpty()) {
-            values.forEachIndexed { index, it ->
-                TypeWriter.writeBinary(valuesTypes[index], it, writer)
+            if (valuesTypes.isNotEmpty()) {
+                values.forEachIndexed { index, it ->
+                    TypeWriter.writeBinary(valuesTypes[index], it, writer)
+                }
+            } else {
+                values.forEach {
+                    TypeWriter.writeText(it, writer)
+                }
             }
-        } else {
-            values.forEach {
-                TypeWriter.writeText(it, writer)
+            if (binaryResult) {
+                writer.writeShort(1)
+                writer.writeShort(1)
+            } else {
+                writer.writeShort(0)
             }
-        }
-        if (binaryResult) {
-            writer.writeShort(1)
-            writer.writeShort(1)
-        } else {
-            writer.writeShort(0)
-        }
 //        writer.writeShort(resultColumnsTypes.size.toShort())
 //        resultColumnsTypes.forEach {
 //            writer.writeInt(it)
 //        }
 
-        writer.endBody()
+            writer.endBody()
+        } catch (e: Throwable) {
+            println("Error in bind!")
+            e.printStackTrace()
+            throw e
+        }
     }
 
     var statement: String = ""
@@ -131,7 +139,7 @@ object TypeWriter {
         }
         val txt = when (value) {
             is String -> value
-            is Float, Double, Long, Int, UUID -> value.toString()
+            is Float, is Double, is Long, is Int, is UUID -> value.toString()
             is Boolean -> if (value) "t" else "f"
             is UUID -> value.toString()
             else -> throw SQLException("Unsopported type ${value::class}")

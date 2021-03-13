@@ -69,8 +69,8 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
 
         if (needWrite > 0) {
             val newSize = maxOf(
-                    ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
-                    this.data.capacity + _wrote + needWrite
+                ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
+                this.data.capacity + _wrote + needWrite
             )
             val old = this.data
             val new = this.data.realloc(newSize)

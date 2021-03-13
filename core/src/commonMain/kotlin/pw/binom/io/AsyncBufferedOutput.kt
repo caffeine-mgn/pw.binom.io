@@ -26,11 +26,18 @@ class AsyncBufferedOutput(
 abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     protected abstract val stream: AsyncOutput
     protected abstract val buffer: ByteBuffer
-
+    private var closed = false
     val bufferSize
         get() = buffer.capacity
 
+    private fun checkClosed() {
+        if (closed) {
+            throw StreamClosedException()
+        }
+    }
+
     override suspend fun write(data: ByteBuffer): Int {
+        checkClosed()
         var l = 0
         while (data.remaining > 0) {
             if (buffer.remaining <= 0)
@@ -41,6 +48,7 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     }
 
     override suspend fun flush() {
+        checkClosed()
         buffer.flip()
         while (buffer.remaining > 0) {
             stream.write(buffer)
@@ -50,7 +58,9 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     }
 
     override suspend fun asyncClose() {
+        checkClosed()
         flush()
+        closed = true
     }
 }
 

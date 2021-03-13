@@ -9,6 +9,7 @@ class AsyncAsciiChannel(val channel: AsyncChannel) : AsyncCloseable {
     var reader = channel.bufferedAsciiReader(closeParent = false)
     var writer = channel.bufferedAsciiWriter(closeParent = false)
     override suspend fun asyncClose() {
+        println("Closing AsyncAsciiChannel  ${hashCode()}")
         runCatching { reader.asyncClose() }
         runCatching { writer.asyncClose() }
         channel.asyncClose()

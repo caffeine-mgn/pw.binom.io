@@ -7,6 +7,7 @@ import pw.binom.charset.Charsets
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.sleep
 import pw.binom.db.ResultSet
+import pw.binom.db.list
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -17,7 +18,6 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Ignore
 class TestConnect {
 
     //    @Test
@@ -167,6 +167,45 @@ class TestConnect {
             con.prepareStatement("""select 'ПрИвет' """).executeQuery().also {
                 it.next()
                 assertEquals("ПрИвет", it.getString(0))
+            }
+        }
+    }
+
+    @Test
+    fun testReadData() {
+        println("--->>>")
+        pg { con ->
+            println("select #1")
+            con.prepareStatement("select 1.5").use {
+                try {
+                    it.executeQuery().use {
+                        assertEquals(1, it.columns.size)
+                        assertTrue(it.next())
+                        assertEquals(1.5, it.getDouble(0))
+                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
+                        assertFalse(it.next())
+
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    throw e
+                }
+            }
+            println("select #2")
+            con.prepareStatement("select 1.5").use {
+                try {
+                    it.executeQuery().use {
+                        assertEquals(1, it.columns.size)
+                        assertTrue(it.next())
+                        assertEquals(1.5, it.getDouble(0))
+                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
+                        assertFalse(it.next())
+
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    throw e
+                }
             }
         }
     }

@@ -171,7 +171,7 @@ inline class URI internal constructor(val path: String) {
             if (e == -1) {
                 e = path.length
             }
-            return path.substring(s, e)
+            return path.substring(s + 1, e)
         }
     val hash: String?
         get() {

@@ -15,6 +15,16 @@ class BufferedOutputAppendable(
     val charBuffer = CharBuffer.alloc(charBufferSize)
     val encoder = charset.newEncoder()
 
+    private var closed = false
+    val isClosed
+        get() = closed
+
+    private fun checkClosed() {
+        if (closed) {
+            throw IllegalStateException("Writer already closed")
+        }
+    }
+
     private fun checkFlush() {
         if (charBuffer.remaining > 0) {
             return
@@ -23,6 +33,7 @@ class BufferedOutputAppendable(
     }
 
     override fun append(c: Char): Appendable {
+        checkClosed()
         checkFlush()
         charBuffer.put(c)
         return this
@@ -30,32 +41,42 @@ class BufferedOutputAppendable(
 
     override fun append(csq: CharSequence?): Appendable {
         csq ?: return this
-        return append(csq, 0, csq.lastIndex)
+        return append(csq, 0, csq.length)
     }
 
     override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
+        checkClosed()
         csq ?: return this
-        if (csq.length>1 && csq is String) {
-            val array = csq.toCharArray()
-            var pos = 0
+        if (csq.isEmpty()) {
+            return this
+        }
+        if (start == end) {
             checkFlush()
-            while (pos < end) {
-                checkFlush()
-                val wrote = charBuffer.write(array, pos, array.size - pos)
-                if (wrote <= 0) {
-                    throw IOException("Can't append data to")
-                }
-                pos += wrote
-            }
+            charBuffer.put(csq[start])
+            return this
+        }
+        val array = if (csq is String) {
+            csq.toCharArray(start, end)
         } else {
-            (start..end).forEach {
-                append(csq[it])
+            CharArray(end - start) {
+                csq[it + start]
             }
         }
+        var pos = 0
+        while (pos < array.size) {
+            checkFlush()
+            val wrote = charBuffer.write(array, pos)
+            if (wrote <= 0) {
+                throw IOException("Can't append data to")
+            }
+            pos += wrote
+        }
+
         return this
     }
 
     override fun flush() {
+        checkClosed()
         if (charBuffer.remaining == charBuffer.capacity) {
             return
         }
@@ -86,6 +107,7 @@ class BufferedOutputAppendable(
     }
 
     override fun close() {
+        checkClosed()
         flush()
         encoder.close()
     }

@@ -20,7 +20,7 @@ actual object Console {
 //                }
 
         override fun write(data: ByteBuffer): Int =
-                vv.write(data.native)
+            vv.write(data.native)
 
         override fun flush() {
         }
@@ -42,7 +42,7 @@ actual object Console {
 //        }
 
         override fun read(dest: ByteBuffer): Int =
-                cc.read(dest.native)
+            cc.read(dest.native)
 
 //        override fun read(data: ByteDataBuffer, offset: Int, length: Int) =
 //                data.update(offset, length) {

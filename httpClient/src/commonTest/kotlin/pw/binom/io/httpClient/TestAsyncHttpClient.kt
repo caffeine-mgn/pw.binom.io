@@ -1,34 +1,15 @@
 package pw.binom.io.httpClient
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-import pw.binom.async2
+import pw.binom.*
 import pw.binom.io.http.HTTPMethod
+import pw.binom.io.http.Headers
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.network.NetworkDispatcher
-import pw.binom.toURIOrNull
 import kotlin.test.Test
 import kotlin.time.ExperimentalTime
 
 class TestAsyncHttpClient {
-
-    val tm = ByteBuffer.alloc(1024 * 1024 * 2)
-
-    suspend fun AsyncInput.skipAll(): Long {
-        var total = 0L
-        while (true) {
-            tm.clear()
-            println("skiping ${tm.remaining} ${this::class}")
-            val l = this.read(tm)
-            if (l == 0) {
-                break
-            }
-            total += l
-            tm.flip()
-        }
-        return total
-    }
 
     @Test
     @OptIn(ExperimentalTime::class)
@@ -37,20 +18,28 @@ class TestAsyncHttpClient {
         val client = HttpClient(manager)
 
         val e = async2 {
-            repeat(3) {
-                val responseData = client
-                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURIOrNull()!!)
-                    .getResponse().also {
-                        println("headers:${it.headers}")
-                    }
-                    .readText().use {
-                        it.readText()
-                    }
+
+            val txt = client.request(
+                HTTPMethod.POST,
+                "https://api.telegram.org/bot1488466104%3aAAF_GA3hIEwaFI9dbV4HIsLKZOP48zq3VNs/sendMessage".toURIOrNull()!!
+//                "http://172.26.139.133:8080/bot1488466104%3aAAF_GA3hIEwaFI9dbV4HIsLKZOP48zq3VNs/sendMessage".toURIOrNull()!!
+            )
+                .setHeader(Headers.CONTENT_TYPE, "application/json;charset=utf-8")
+                .writeText {
+                    it.append("""{"chat_id":"119706406","text":"Не понятно что вы от меня хотите!"}""")
+                }
+                .readData().asyncClose()
+
+//            repeat(3) {
+//                val responseData = client
+//                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURIOrNull()!!)
+//                    .getResponse().also {
+//                        println("headers:${it.headers}")
+//                    }
 //                    .readData().use {
 //                        it.skipAll()
 //                    }
-                println("Read: ${responseData.length}   ->   ${if (responseData.endsWith("</body></html>")) "OK" else "ERR"}")
-            }
+//            }
         }
         while (!e.isDone) {
             manager.select(1000)

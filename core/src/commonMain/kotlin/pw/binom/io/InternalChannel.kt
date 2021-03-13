@@ -2,7 +2,7 @@ package pw.binom.io
 
 import pw.binom.ByteBuffer
 
-class InternalChannel(val readBuffer:ByteBuffer, val writeBuffer:ByteBuffer):Channel {
+class InternalChannel(val readBuffer: ByteBuffer, val writeBuffer: ByteBuffer) : Channel {
     override fun read(dest: ByteBuffer): Int {
         val p = readBuffer.position
         readBuffer.flip()

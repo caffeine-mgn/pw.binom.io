@@ -12,6 +12,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
         private var readPosition = 0
 
         fun write(data: ByteBuffer): Int {
+            checkClosed()
             val len = minOf(writeRemaining, data.remaining)
             if (len == 0)
                 return 0
@@ -42,6 +43,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 //        }
 
         fun read(data: ByteBuffer): Int {
+            checkClosed()
             val len = minOf(readRemaining, data.remaining)
             if (len == 0)
                 return 0
@@ -121,6 +123,13 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
         }
     }
 
+    private var closed = false
+    private fun checkClosed() {
+        if (closed) {
+            throw StreamClosedException()
+        }
+    }
+
 //    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
 //        if (length == 0)
 //            return 0
@@ -137,6 +146,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 //    }
 
     override fun write(data: ByteBuffer): Int {
+        checkClosed()
         if (data.remaining == 0)
             return 0
         val len = data.remaining
@@ -150,6 +160,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
     }
 
     override fun flush() {
+        checkClosed()
     }
 
 //    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset) {
@@ -171,6 +182,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 //    }
 
     override fun read(dest: ByteBuffer): Int {
+        checkClosed()
         if (dest.remaining == 0)
             return 0
         var read = 0
@@ -217,6 +229,8 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 //    }
 
     override fun close() {
+        checkClosed()
+        closed = true
         while (!packages.isEmpty) {
             packages.popFirst().data.close()
         }

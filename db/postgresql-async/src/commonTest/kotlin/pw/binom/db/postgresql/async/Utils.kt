@@ -1,6 +1,7 @@
 package pw.binom.db.postgresql.async
 
 import pw.binom.async
+import pw.binom.async2
 import pw.binom.charset.Charsets
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.sleep
@@ -16,11 +17,12 @@ fun pg(func: suspend (PGConnection) -> Unit) {
     val manager = NetworkDispatcher()
     var done = false
     var exception: Throwable? = null
-    async {
+    async2 {
         var con: PGConnection
         val now = TimeSource.Monotonic.markNow()
         while (true) {
             try {
+                println("Подключение")
                 val address = NetworkAddress.Immutable(
                     host = "127.0.0.1",
                     port = 25331,
@@ -35,9 +37,11 @@ fun pg(func: suspend (PGConnection) -> Unit) {
                 )
                 break
             } catch (e: Throwable) {
+                Worker.sleep(500)
+                println("Не проканало! пытаемся еще раз $e")
                 if (now.elapsedNow() > 10.seconds) {
                     exception = RuntimeException("Connection Timeout", e)
-                    return@async
+                    return@async2
                 }
 //                    exception = e
                 Worker.sleep(100)
@@ -60,6 +64,9 @@ fun pg(func: suspend (PGConnection) -> Unit) {
 
     val now = TimeSource.Monotonic.markNow()
     while (!done) {
+        if (exception != null) {
+            throw exception!!
+        }
         if (now.elapsedNow() > 10.seconds) {
             throw RuntimeException("Out of try")
         }

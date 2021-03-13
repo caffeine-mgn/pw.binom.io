@@ -8,8 +8,13 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     val closeParent: Boolean
 ) : AsyncWriter, AsyncOutput {
     protected abstract val output: AsyncOutput
-
     protected abstract val buffer: ByteBuffer
+    private var closed = false
+    private fun checkClosed() {
+        if (closed) {
+            throw StreamClosedException()
+        }
+    }
 
     private suspend fun checkFlush() {
         if (buffer.remaining == 0) {
@@ -18,6 +23,7 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
 
     override suspend fun write(data: ByteBuffer): Int {
+        checkClosed()
         var r = 0
         while (data.remaining > 0) {
             checkFlush()
@@ -27,25 +33,44 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
 
     override suspend fun append(c: Char): AsyncAppendable {
+        checkClosed()
         checkFlush()
         buffer.put(c.toByte())
         return this
     }
 
     override suspend fun append(csq: CharSequence?): AsyncAppendable {
-        append(csq, 0, csq?.lastIndex ?: 0)
+        csq ?: return this
+        append(csq, 0, csq.length)
         return this
     }
 
     override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
+        checkClosed()
         csq ?: return this
-        (start..end).forEach {
-            append(csq[it])
+        if (csq.isEmpty()) {
+            return this
+        }
+        if (end == start) {
+            return append(csq[start])
+        }
+        val data = ByteArray(end - start) {
+            csq[it].toByte()
+        }
+        var pos = 0
+        while (pos < data.size) {
+            checkFlush()
+            val wrote = buffer.write(data, offset = pos)
+            if (wrote <= 0) {
+                throw IOException("Can't append data to")
+            }
+            pos += wrote
         }
         return this
     }
 
     override suspend fun flush() {
+        checkClosed()
         if (buffer.remaining != buffer.capacity) {
             buffer.flip()
             while (buffer.remaining > 0) {
@@ -57,7 +82,9 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
 
     override suspend fun asyncClose() {
+        checkClosed()
         flush()
+        closed = true
         if (closeParent) {
             output.asyncClose()
         }

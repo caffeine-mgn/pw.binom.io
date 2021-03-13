@@ -70,6 +70,8 @@ class AsyncBufferedOutputAppendable private constructor(
     private val charBuffer = CharBuffer.alloc(charBufferSize)
     private val encoder = charset.newEncoder()
     private var closed = false
+    val isClosed
+        get() = closed
 
     private fun checkClosed() {
         if (closed) {
@@ -94,29 +96,37 @@ class AsyncBufferedOutputAppendable private constructor(
     override suspend fun append(csq: CharSequence?): AsyncAppendable {
         checkClosed()
         csq ?: return this
-        return append(csq, 0, csq.lastIndex)
+        return append(csq, 0, csq.length)
     }
 
     override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
         checkClosed()
         csq ?: return this
-        if (csq.length > 1 && csq is String) {
-            val array = csq.toCharArray()
-            var pos = 0
+        if (csq.isEmpty()) {
+            return this
+        }
+        if (start == end) {
             checkFlush()
-            while (pos < end) {
-                val wrote = charBuffer.write(array, pos, array.size - pos)
-                if (wrote <= 0) {
-                    throw IOException("Can't append data to")
-                }
-                pos += wrote
-                checkFlush()
-            }
+            charBuffer.put(csq[start])
+            return this
+        }
+        val array = if (csq is String) {
+            csq.toCharArray(start, end)
         } else {
-            (start..end).forEach {
-                append(csq[it])
+            CharArray(end - start) {
+                csq[it + start]
             }
         }
+        var pos = 0
+        while (pos < array.size) {
+            checkFlush()
+            val wrote = charBuffer.write(array, pos)
+            if (wrote <= 0) {
+                throw IOException("Can't append data to")
+            }
+            pos += wrote
+        }
+
         return this
     }
 
@@ -174,9 +184,9 @@ fun AsyncOutput.bufferedWriter(
 )
 
 fun AsyncOutput.bufferedWriter(
-    bufferSize: Int= DEFAULT_BUFFER_SIZE,
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charset: Charset = Charsets.UTF8,
-    charBufferSize: Int = bufferSize/2,
+    charBufferSize: Int = bufferSize / 2,
     closeParent: Boolean = true
 ) = AsyncBufferedOutputAppendable(
     charset = charset,
@@ -189,7 +199,7 @@ fun AsyncOutput.bufferedWriter(
 fun AsyncOutput.bufferedWriter(
     buffer: ByteBuffer,
     charset: Charset = Charsets.UTF8,
-    charBufferSize: Int = buffer.capacity/2,
+    charBufferSize: Int = buffer.capacity / 2,
     closeParent: Boolean = true
 ) = AsyncBufferedOutputAppendable(
     charset = charset,

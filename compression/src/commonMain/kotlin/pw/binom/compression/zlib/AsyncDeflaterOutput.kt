@@ -2,6 +2,7 @@ package pw.binom.compression.zlib
 
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
+import pw.binom.io.StreamClosedException
 
 open class AsyncDeflaterOutput(
     val stream: AsyncOutput,
@@ -19,6 +20,7 @@ open class AsyncDeflaterOutput(
 
     protected val def
         get() = deflater
+    private var closed = false
 
     protected var usesDefaultDeflater = true
     private var busy = false
@@ -51,7 +53,14 @@ open class AsyncDeflaterOutput(
         }
     }
 
+    private fun checkClosed() {
+        if (closed) {
+            throw StreamClosedException()
+        }
+    }
+
     override suspend fun flush() {
+        checkClosed()
         checkBusy()
         try {
             busy = true
@@ -72,6 +81,7 @@ open class AsyncDeflaterOutput(
     }
 
     protected open suspend fun finish() {
+        checkClosed()
         deflater.finish()
         flush()
         if (usesDefaultDeflater)
@@ -79,9 +89,10 @@ open class AsyncDeflaterOutput(
     }
 
     override suspend fun asyncClose() {
-        finish()
-
+        checkClosed()
         checkBusy()
+        finish()
+        closed = true
         try {
             busy = true
             deflater.close()

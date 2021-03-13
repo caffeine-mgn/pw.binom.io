@@ -4,6 +4,7 @@ import pw.binom.AsyncInput
 import pw.binom.URI
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncChunkedInput
+import pw.binom.skipAll
 
 class ResponseAsyncChunkedInput(
     val URI: URI,
@@ -17,9 +18,11 @@ class ResponseAsyncChunkedInput(
 ) {
 
     override suspend fun asyncClose() {
-        val eof = isEof
+        if (!isEof){
+            skipAll()
+        }
         super.asyncClose()
-        if (keepAlive && eof) {
+        if (keepAlive) {
             client.recycleConnection(
                 URI = URI,
                 channel = channel,
