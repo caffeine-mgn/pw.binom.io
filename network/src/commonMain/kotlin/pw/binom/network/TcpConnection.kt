@@ -83,7 +83,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override fun connecting() {
-        holder.key.listensFlag=Selector.EVENT_CONNECTED
+        holder.key.listensFlag = Selector.EVENT_CONNECTED
     }
 
     override fun connected() {
@@ -95,14 +95,14 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
     override fun error() {
         val e = SocketConnectException()
-        if (connect!=null) {
+        if (connect != null) {
             connect?.resumeWith(Result.failure(e))
         }
-        if (readData.continuation!=null) {
+        if (readData.continuation != null) {
             readData.continuation?.resumeWith(Result.failure(e))
             readData.reset()
         }
-        if (sendData.continuation!=null) {
+        if (sendData.continuation != null) {
             sendData.continuation?.resumeWith(Result.failure(e))
             sendData.reset()
         }
