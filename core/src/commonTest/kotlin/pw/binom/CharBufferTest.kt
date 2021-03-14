@@ -29,14 +29,16 @@ class CharBufferTest {
         )
         println("#0")
         async {
-        d.forEach {
-            appender.append(it.key)
-            appender.flush()
-            appender.append(it.value)
-            appender.flush()
+            d.forEach {
+                appender.append(it.key)
+                appender.flush()
+                appender.append(it.value)
+                appender.flush()
+            }
         }
-        }
+        println("wrote: ${out.size}")
         out.trimToSize()
+        out.data.flip()
         println("d->${out.data.toByteArray().decodeToString()}")
 //        val txt = "HelloWorld"
 //        assertEquals(txt.substring(1, 9), txt.toCharArray().toCharBuffer().subString(1, 9))
