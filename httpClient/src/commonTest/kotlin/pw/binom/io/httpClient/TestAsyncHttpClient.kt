@@ -19,27 +19,16 @@ class TestAsyncHttpClient {
 
         val e = async2 {
 
-            val txt = client.request(
-                HTTPMethod.POST,
-                "https://api.telegram.org/bot1488466104%3aAAF_GA3hIEwaFI9dbV4HIsLKZOP48zq3VNs/sendMessage".toURIOrNull()!!
-//                "http://172.26.139.133:8080/bot1488466104%3aAAF_GA3hIEwaFI9dbV4HIsLKZOP48zq3VNs/sendMessage".toURIOrNull()!!
-            )
-                .setHeader(Headers.CONTENT_TYPE, "application/json;charset=utf-8")
-                .writeText {
-                    it.append("""{"chat_id":"119706406","text":"Не понятно что вы от меня хотите!"}""")
-                }
-                .readData().asyncClose()
-
-//            repeat(3) {
-//                val responseData = client
-//                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURIOrNull()!!)
-//                    .getResponse().also {
-//                        println("headers:${it.headers}")
-//                    }
-//                    .readData().use {
-//                        it.skipAll()
-//                    }
-//            }
+            repeat(3) {
+                val responseData = client
+                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURIOrNull()!!)
+                    .getResponse().also {
+                        println("headers:${it.headers}")
+                    }
+                    .readData().use {
+                        it.skipAll()
+                    }
+            }
         }
         while (!e.isDone) {
             manager.select(1000)

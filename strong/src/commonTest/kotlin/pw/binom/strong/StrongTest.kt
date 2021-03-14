@@ -15,12 +15,11 @@ class StrongTest {
     @Test
     fun serviceList() {
         asyncTest {
-            val s = StrongImpl.create(StrongImpl.config {
+            val s = Strong.create(Strong.config {
                 it.define(AImpl())
                 it.define(BImpl())
                 it.define(ABImpl())
             })
-            s.start()
             val list by s.serviceList<A>()
             assertEquals(2, list.size)
             assertTrue(list.any { it is AImpl })

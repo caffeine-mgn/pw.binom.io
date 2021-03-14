@@ -179,11 +179,6 @@ class PGConnection private constructor(
         buf2.data.writeInt(buf, (buf2.size))
         buf2.data.position = pos
         buf2.data.flip()
-        println("First package:")
-        buf2.data.forEach {
-            print(" ${it.toUByte().toString(16)}")
-        }
-        println("\nFirst packge done!")
         connection.write(buf2.data)
         val msg = readDesponse()
         val authRequest = when (msg) {

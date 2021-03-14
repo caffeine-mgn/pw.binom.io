@@ -139,6 +139,9 @@ class AsyncBufferedOutputAppendable private constructor(
         while (true) {
             buffer.clear()
             val r = encoder.encode(charBuffer, buffer)
+            if (r == CharsetTransformResult.MALFORMED) {
+                throw RuntimeException("Malformed String")
+            }
             buffer.flip()
             if (buffer.remaining != buffer.capacity) {
                 output.write(buffer)

@@ -11,40 +11,39 @@ import kotlin.test.assertEquals
 
 class AbstractRouteTest {
 
-    class MockAction(method: String, contextUri: URN) : Action {
-        override val req = object : HttpRequest {
-            override val method: String
-                get() = method
-            override val headers: Headers
-                get() = TODO("Not yet implemented")
-            override val urn: URN
-                get() = contextUri
+    class MockAction(method: String, contextUri: URN) : HttpRequest {
+        override val method: String=method
+        override val headers: Headers
+            get() = TODO("Not yet implemented")
+        override val urn: URN=contextUri
 
-            override fun readBinary(): AsyncInput {
-                TODO("Not yet implemented")
-            }
-
-            override fun readText(): AsyncReader {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun acceptWebsocket(): WebSocketConnection {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun rejectWebsocket() {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun response(): HttpResponse {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun asyncClose() {
-                TODO("Not yet implemented")
-            }
-
+        override fun readBinary(): AsyncInput {
+            TODO("Not yet implemented")
         }
+
+        override fun readText(): AsyncReader {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun acceptWebsocket(): WebSocketConnection {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun rejectWebsocket() {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun response(): HttpResponse {
+            TODO("Not yet implemented")
+        }
+
+        override val response: HttpResponse?
+            get() = TODO("Not yet implemented")
+
+        override suspend fun asyncClose() {
+            TODO("Not yet implemented")
+        }
+
     }
 
     @Test

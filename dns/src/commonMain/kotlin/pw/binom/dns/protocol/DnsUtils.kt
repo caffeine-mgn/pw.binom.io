@@ -25,7 +25,7 @@ internal fun String.toDnsString(): CharArray {
 internal fun CharArray.fromDns(): String {
     val name = this
     var i = 0
-    var p = ' '
+    var p:Char
 
     while (i < name.size) {
         p = name[i]

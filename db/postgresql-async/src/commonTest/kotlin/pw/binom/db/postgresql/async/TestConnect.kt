@@ -164,8 +164,6 @@ class TestConnect {
                 it.next()
                 assertEquals("Привет", it.getString(0))
             }
-        }
-        pg { con ->
             con.prepareStatement("""select 'ПрИвет' """).executeQuery().also {
                 it.next()
                 assertEquals("ПрИвет", it.getString(0))

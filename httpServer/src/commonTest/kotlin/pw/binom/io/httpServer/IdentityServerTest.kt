@@ -2,9 +2,13 @@ package pw.binom.io.httpServer
 
 import pw.binom.async2
 import pw.binom.io.*
+import pw.binom.io.http.HTTPMethod
+import pw.binom.io.httpClient.HttpClient
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import pw.binom.toURIOrNull
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class IdentityServerTest {
     @Test
@@ -25,9 +29,20 @@ class IdentityServerTest {
                 }
             )
             server.bindHttp(NetworkAddress.Immutable("0.0.0.0", 8088))
+
+            val client = HttpClient(manager)
+            val resp = client.request(HTTPMethod.GET, "http://127.0.0.1:8088/".toURIOrNull()!!)
+                .getResponse()
+                .readText().use {
+                    it.readText()
+                }
+            assertEquals("Hello! Привет в UTF-8", resp)
         }
-        while (true) {
-            val p = manager.select(1000)
+        while (!done.isDone) {
+            manager.select(1000)
+            if (done.isDone && done.isFailure) {
+                throw done.exceptionOrNull!!
+            }
         }
         if (done.isFailure) {
             throw done.exceptionOrNull!!

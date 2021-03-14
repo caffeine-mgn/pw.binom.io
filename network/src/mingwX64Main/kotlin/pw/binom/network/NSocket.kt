@@ -161,6 +161,9 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 null
             )
             if (rr == SOCKET_ERROR) {
+                if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
+                    return 0
+                }
                 throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
             }
             rr
@@ -176,6 +179,9 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 )
 
                 if (rr == SOCKET_ERROR) {
+                    if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
+                        return 0
+                    }
                     throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
                 }
                 address.size = len[0]
