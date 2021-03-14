@@ -105,10 +105,19 @@ val nats2ClasterPort = 6223
 
 
     tasks {
+
+        val pullNats = create(
+            name = "pullNats",
+            type = com.bmuschko.gradle.docker.tasks.image.DockerPullImage::class
+        ) {
+            image.set("nats:2.1.9")
+        }
+
         val createNats1 = create(
             name = "createNats1",
             type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
         ) {
+            dependsOn(pullNats)
             image.set("nats:2.1.9")
             imageId.set("nats:2.1.9")
             cmd.add("--cluster")
@@ -126,6 +135,9 @@ val nats2ClasterPort = 6223
         ) {
             dependsOn(createNats1)
             targetContainerId(natsContainerId1)
+            doLast {
+                Thread.sleep(1000)
+            }
         }
 
         val stopNats1 = create(
@@ -149,6 +161,7 @@ val nats2ClasterPort = 6223
             name = "createNats2",
             type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
         ) {
+            dependsOn(pullNats)
             image.set("nats:2.1.9")
             imageId.set("nats:2.1.9")
             cmd.add("--cluster")
@@ -166,6 +179,9 @@ val nats2ClasterPort = 6223
         ) {
             dependsOn(createNats2)
             targetContainerId(natsContainerId2)
+            doLast {
+                Thread.sleep(1000)
+            }
         }
 
         val stopNats2 = create(

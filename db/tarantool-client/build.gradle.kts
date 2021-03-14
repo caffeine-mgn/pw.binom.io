@@ -102,10 +102,19 @@ val postgresContainerId = UUID.randomUUID().toString()
 
 
 tasks {
-    val createPostgres = create(
-        name = "createPostgres",
+
+    val pullTarantool = create(
+        name = "pullTarantool",
+        type = com.bmuschko.gradle.docker.tasks.image.DockerPullImage::class
+    ) {
+        image.set("tarantool/tarantool:2.6.2")
+    }
+
+    val createTarantool = create(
+        name = "createTarantool",
         type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
     ) {
+        dependsOn(pullTarantool)
         image.set("tarantool/tarantool:2.6.2")
         imageId.set("tarantool/tarantool:2.6.2")
         envVars.put("TARANTOOL_USER_NAME", "server")
@@ -115,38 +124,41 @@ tasks {
         containerName.set(postgresContainerId)
     }
 
-    val startPostgres = create(
-        name = "startPostgres",
+    val startTarantool = create(
+        name = "startTarantool",
         type = com.bmuschko.gradle.docker.tasks.container.DockerStartContainer::class
     ) {
-        dependsOn(createPostgres)
+        dependsOn(createTarantool)
         targetContainerId(postgresContainerId)
+        doLast {
+            Thread.sleep(1000)
+        }
     }
 
-    val stopPostgres = create(
-        name = "stopPostgres",
+    val stopTarantool = create(
+        name = "stopTarantool",
         type = com.bmuschko.gradle.docker.tasks.container.DockerStopContainer::class
     ) {
         targetContainerId(postgresContainerId)
     }
 
-    val destoryPostgres = create(
-        name = "destoryPostgres",
+    val destoryTarantool = create(
+        name = "destoryTarantool",
         type = com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer::class
     ) {
-        dependsOn(stopPostgres)
+        dependsOn(stopTarantool)
         targetContainerId(postgresContainerId)
     }
 
-    this["jvmTest"].dependsOn(startPostgres)
-    this["jvmTest"].finalizedBy(destoryPostgres)
+    this["jvmTest"].dependsOn(startTarantool)
+    this["jvmTest"].finalizedBy(destoryTarantool)
 
-    this["linuxX64Test"].dependsOn(startPostgres)
-    this["linuxX64Test"].finalizedBy(destoryPostgres)
+    this["linuxX64Test"].dependsOn(startTarantool)
+    this["linuxX64Test"].finalizedBy(destoryTarantool)
 
-    this["mingwX64Test"].dependsOn(startPostgres)
-    this["mingwX64Test"].finalizedBy(destoryPostgres)
+    this["mingwX64Test"].dependsOn(startTarantool)
+    this["mingwX64Test"].finalizedBy(destoryTarantool)
 
-    this["macosX64Test"].dependsOn(startPostgres)
-    this["macosX64Test"].finalizedBy(destoryPostgres)
+    this["macosX64Test"].dependsOn(startTarantool)
+    this["macosX64Test"].finalizedBy(destoryTarantool)
 }

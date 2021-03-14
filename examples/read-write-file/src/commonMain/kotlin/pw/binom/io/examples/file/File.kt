@@ -13,12 +13,12 @@ fun usingByteArray() {
     val bufferPool = ByteBufferPool(10)
     val file = File("Simple File")
     try {
-        val data = "Simple Text".encodeBytes()
+        val data = "Simple Text".encodeToByteArray()
         file.write().use {
             it.writeBytes(bufferPool, data)
             it.flush()
         }
-        println("Write data: \"${data.decodeString()}\"")
+        println("Write data: \"${data.decodeToString()}\"")
 
         val out = ByteArrayOutput()
         file.read().use {
@@ -26,7 +26,7 @@ fun usingByteArray() {
         }
         out.trimToSize()
         out.data.clear()
-        println("Read data: \"${out.data.toByteArray().decodeString()}\"")
+        println("Read data: \"${out.data.toByteArray().decodeToString()}\"")
         out.close()
     } finally {
         bufferPool.close()
@@ -81,7 +81,7 @@ fun usingByteBuffer() {
             }
             readBuf.flip()
 
-            println("Read data: \"${readBuf.toByteArray().decodeString()}\"")
+            println("Read data: \"${readBuf.toByteArray().decodeToString()}\"")
         }
     } finally {
         bufferPool.close()
