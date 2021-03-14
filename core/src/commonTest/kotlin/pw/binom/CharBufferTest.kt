@@ -17,8 +17,8 @@ class CharBufferTest {
     @Test
     fun substringTest2() {
         val v = 'Я'.toInt()
-        val v0=v shr 8
-        val v1=v and 0xff
+        val v0 = v shr 8
+        val v1 = v and 0xff
         println("0->${v0}, 1->${v1}")
         println("size: ${Char.SIZE_BYTES}")
         val out = ByteArrayOutput()
@@ -26,7 +26,7 @@ class CharBufferTest {
         val pool = ByteBufferPool(10)
         val appender = outasync.bufferedWriter(pool)
         val d = mapOf(
-            "🠈user" to "postgres",
+            "Привет🠈user" to "postgres",
 //            "user" to "postgres",
             "database" to "test",
             "client_encoding" to "utf-8",
@@ -44,7 +44,10 @@ class CharBufferTest {
         println("wrote: ${out.size}")
         out.trimToSize()
         out.data.flip()
-        println("d->${out.data.toByteArray().decodeToString()}")
+        assertEquals(
+            "Привет\uD83E\uDC08userpostgresdatabasetestclient_encodingutf-8DateStyleISO",
+            out.data.toByteArray().decodeToString()
+        )
 //        val txt = "HelloWorld"
 //        assertEquals(txt.substring(1, 9), txt.toCharArray().toCharBuffer().subString(1, 9))
     }

@@ -37,7 +37,6 @@ inline class URN internal constructor(val raw: String) {
 
     fun getVariables(mask: String, desc: MutableMap<String, String>, ignoreDuplicate: Boolean = true) {
         pathMatch(raw, mask) { key, value ->
-            println("$key=$value")
             if (!ignoreDuplicate && desc.containsKey(key)) {
                 throw IllegalArgumentException("Duplicate Path Variable \"$key\". urn: \"$raw\", mask: \"$mask\"")
             }
