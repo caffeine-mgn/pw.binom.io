@@ -205,16 +205,7 @@ inline class URI internal constructor(val path: String) {
             )
         )
 
-    override fun toString(): String = new(
-        protocol = protocol,
-        user = user,
-        password = password,
-        host = host,
-        port = port,
-        urn = urn,
-        query = query,
-        hash = hash
-    )
+    override fun toString() = path
 }
 
 fun String.toURIOrNull(): URI? {

@@ -4,6 +4,7 @@ import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.io.IOException
 import pw.binom.io.StreamClosedException
+import pw.binom.skipAll
 
 internal const val CR = 0x0D.toByte()
 internal const val LF = 0x0A.toByte()
@@ -60,7 +61,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
             return
         }
         this.chunkedSize = chunkedSize.toULongOrNull(16)
-                ?: throw IOException("Invalid Chunk Size: \"$chunkedSize\"")
+            ?: throw IOException("Invalid Chunk Size: \"$chunkedSize\"")
         readed = 0uL
 
         if (this.chunkedSize!! == 0uL) {
@@ -120,6 +121,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
 
     override suspend fun asyncClose() {
         checkClosed()
+        if (!isEof){
+            skipAll()
+        }
         closed = true
         if (closeStream) {
             stream.asyncClose()

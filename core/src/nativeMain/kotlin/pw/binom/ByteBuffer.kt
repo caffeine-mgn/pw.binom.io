@@ -151,6 +151,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
             throw IndexOutOfBoundsException()
         val l = minOf(remaining, length)
         memcpy(refTo(position), data.refTo(offset), l.convert())
+        position += l
         return l
     }
 

@@ -126,4 +126,14 @@ class ByteBufferTest {
         assertEquals(0, self.position)
         assertEquals(self.capacity, self.limit)
     }
+
+    @Test
+    fun frozenTest() {
+        val self = ByteBuffer.alloc(10).doFreeze()
+        repeat(self.remaining) {
+            self.put(it.toByte())
+        }
+        assertEquals(10, self.position)
+
+    }
 }

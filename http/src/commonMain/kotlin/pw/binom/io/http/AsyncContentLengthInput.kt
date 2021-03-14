@@ -3,6 +3,7 @@ package pw.binom.io.http
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.io.StreamClosedException
+import pw.binom.skipAll
 
 open class AsyncContentLengthInput(
     val stream: AsyncInput,
@@ -37,6 +38,9 @@ open class AsyncContentLengthInput(
 
     override suspend fun asyncClose() {
         checkClosed()
+        if (!isEof) {
+            skipAll()
+        }
         closed = true
         if (closeStream) {
             stream.asyncClose()

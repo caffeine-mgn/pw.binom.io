@@ -59,12 +59,12 @@ internal class HttpRequest2Impl(
 
     override fun readBinary(): AsyncInput {
         checkClosed()
+        if (readInput != null) {
+            throw IllegalStateException("Already reading")
+        }
         if (!headers.bodyExist) {
             readInput = AsyncEmptyHttpInput
             return AsyncEmptyHttpInput
-        }
-        if (readInput != null) {
-            throw IllegalStateException("Already reading")
         }
         val len = headers.contentLength
         val encode = headers.transferEncoding
@@ -146,8 +146,10 @@ internal class HttpRequest2Impl(
             throw IllegalStateException("Response already got")
         }
         ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { buf ->
-            (readInput ?: readBinary()).use {
-                it.skipAll(buf)
+            if (readInput == null) {
+                readBinary().use {
+                    it.skipAll(buf)
+                }
             }
         }
         var r = HttpResponse2Impl(this)
