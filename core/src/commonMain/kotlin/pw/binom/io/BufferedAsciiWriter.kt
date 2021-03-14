@@ -40,7 +40,8 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
     }
 
     override fun append(csq: CharSequence?): Appendable {
-        append(csq, 0, csq?.lastIndex ?: 0)
+        csq ?: return this
+        append(csq, 0, csq.length)
         return this
     }
 
@@ -53,11 +54,11 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
         if (end == start) {
             return append(csq[start])
         }
-        val data = ByteArray(end - start + 1) {
+        val data = ByteArray(end - start) {
             csq[it].toByte()
         }
         var pos = 0
-        while (pos != data.size) {
+        while (pos < data.size) {
             checkFlush()
             val wrote = buffer.write(data, offset = pos)
             if (wrote <= 0) {
