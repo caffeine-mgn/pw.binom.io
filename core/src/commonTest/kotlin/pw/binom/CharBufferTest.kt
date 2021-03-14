@@ -41,7 +41,7 @@ class CharBufferTest {
                 appender.flush()
             }
         }
-        println("wrote: ${out.size}")
+        assertEquals(72, out.size)
         out.trimToSize()
         out.data.flip()
         assertEquals(
