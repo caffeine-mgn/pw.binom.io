@@ -8,7 +8,6 @@ import kotlin.test.fail
 
 class NetworkAddressTest {
 
-    @Ignore
     @Test
     fun unknownHost() {
         try {

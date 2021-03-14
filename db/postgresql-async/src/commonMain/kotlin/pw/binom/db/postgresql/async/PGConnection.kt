@@ -173,13 +173,13 @@ class PGConnection private constructor(
         }
         o.writeByte(buf, 0)
         o.flush()
-
         val pos = buf2.data.position
         buf2.data.position = 0
         buf2.data.writeInt(buf, (buf2.size))
         buf2.data.position = pos
         buf2.data.flip()
         connection.write(buf2.data)
+        connection.flush()
         val msg = readDesponse()
         val authRequest = when (msg) {
             is AuthenticationMessage.AuthenticationChallengeCleartextMessage -> {

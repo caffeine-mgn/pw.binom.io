@@ -212,19 +212,22 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             return r
         }
         readData.full = false
-        while (true) {
-            val readed = suspendCoroutine<Int> {
-                readData.continuation = it
-                readData.data = dest
-                holder.key.addListen(Selector.INPUT_READY)
-            }
-            if (readed == 0) {
-                continue
-            }
-            if (readed < 0) {
-                throw SocketClosedException()
-            }
-            return readed
+//        while (true) {
+        val readed = suspendCoroutine<Int> {
+            readData.continuation = it
+            readData.data = dest
+            holder.key.addListen(Selector.INPUT_READY)
         }
+        if (readed == 0) {
+            throw IllegalArgumentException("Assert Error: Non blocked Stream returns 0 bytes")
+        }
+//            if (readed == 0) {
+//                continue
+//            }
+//            if (readed < 0) {
+//                throw SocketClosedException()
+//            }
+        return readed
+//        }
     }
 }

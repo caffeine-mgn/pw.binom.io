@@ -158,15 +158,24 @@ class TestConnect {
     }
 
     @Test
+    fun connectTest() {
+        pg {
+
+        }
+    }
+
+    @Test
     fun testString() {
         pg { con ->
-            con.prepareStatement("""select 'Привет' """).executeQuery().also {
-                it.next()
+            con.prepareStatement("""select 'Привет' """).executeQuery().use {
+                assertTrue(it.next())
                 assertEquals("Привет", it.getString(0))
+                println("OK")
             }
-            con.prepareStatement("""select 'ПрИвет' """).executeQuery().also {
-                it.next()
+            con.prepareStatement("""select 'ПрИвет' """).executeQuery().use {
+                assertTrue(it.next())
                 assertEquals("ПрИвет", it.getString(0))
+                println("OK")
             }
         }
     }

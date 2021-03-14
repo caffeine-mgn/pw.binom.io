@@ -61,9 +61,9 @@ actual class NSocket(val native: SOCKET) : Closeable {
             val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
             if (r < 0) {
                 val error = GetLastError()
-                if (error == 10035.convert<DWORD>())
+                if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
                     return 0
-                if (error == 10038.convert<DWORD>() || error == 10054.convert<DWORD>())
+                if (error == platform.windows.WSAENOTSOCK.convert<DWORD>() || error == platform.windows.WSAECONNRESET.convert<DWORD>())
                     throw SocketClosedException()
                 throw IOException("Error on send data to network. send: [$r], error: [${GetLastError()}]")
             }
@@ -76,7 +76,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
         val r: Int = platform.windows.recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
         if (r < 0) {
             val error = GetLastError()
-            if (error == 10035.convert<DWORD>())
+            if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
                 return 0
             throw IOException("Error on send data to network. send: [$r], error: [${GetLastError()}]")
         }
@@ -161,9 +161,9 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 null
             )
             if (rr == SOCKET_ERROR) {
-                if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
-                    return 0
-                }
+//                if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
+//                    return 0
+//                }
                 throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
             }
             rr
@@ -179,9 +179,9 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 )
 
                 if (rr == SOCKET_ERROR) {
-                    if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
-                        return 0
-                    }
+//                    if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
+//                        return 0
+//                    }
                     throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
                 }
                 address.size = len[0]
