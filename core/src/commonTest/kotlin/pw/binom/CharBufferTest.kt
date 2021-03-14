@@ -13,10 +13,12 @@ class CharBufferTest {
         assertEquals(txt.substring(1, 9), txt.toCharArray().toCharBuffer().subString(1, 9))
     }
 
+
     @Test
     fun substringTest2() {
+        println("size: ${Char.SIZE_BYTES}")
         val out = ByteArrayOutput()
-        val outasync = out
+        val outasync = out.asyncOutput()
         val pool = ByteBufferPool(10)
         val appender = outasync.bufferedWriter(pool)
         val d = mapOf(
@@ -25,12 +27,17 @@ class CharBufferTest {
             "client_encoding" to "utf-8",
             "DateStyle" to "ISO",
         )
-            d.forEach {
-                appender.append(it.key)
-                appender.flush()
-                appender.append(it.value)
-                appender.flush()
-            }
+        println("#0")
+        async {
+        d.forEach {
+            appender.append(it.key)
+            appender.flush()
+            appender.append(it.value)
+            appender.flush()
+        }
+        }
+        out.trimToSize()
+        println("d->${out.data.toByteArray().decodeToString()}")
 //        val txt = "HelloWorld"
 //        assertEquals(txt.substring(1, 9), txt.toCharArray().toCharBuffer().subString(1, 9))
     }

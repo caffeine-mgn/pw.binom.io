@@ -6,7 +6,7 @@ import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
 import pw.binom.pool.ObjectPool
 
-class BufferedOutputAppendable private constructor (
+class BufferedOutputAppendable private constructor(
     charset: Charset,
     val output: Output,
     private val pool: ObjectPool<ByteBuffer>?,
