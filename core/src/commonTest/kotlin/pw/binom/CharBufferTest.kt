@@ -16,12 +16,17 @@ class CharBufferTest {
 
     @Test
     fun substringTest2() {
+        val v = 'Я'.toInt()
+        val v0=v shr 8
+        val v1=v and 0xff
+        println("0->${v0}, 1->${v1}")
         println("size: ${Char.SIZE_BYTES}")
         val out = ByteArrayOutput()
         val outasync = out.asyncOutput()
         val pool = ByteBufferPool(10)
         val appender = outasync.bufferedWriter(pool)
         val d = mapOf(
+//            "🠈user" to "postgres",
             "user" to "postgres",
             "database" to "test",
             "client_encoding" to "utf-8",
