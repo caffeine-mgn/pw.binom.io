@@ -158,6 +158,9 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         val len = minOf(remaining, minOf(array.size - offset, length))
         memScoped {
             memcpy(bytes.refTo(position * Char.SIZE_BYTES), array.refTo(offset), (len * Char.SIZE_BYTES).convert())
+            for (i in position * Char.SIZE_BYTES until len*Char.SIZE_BYTES){
+                println("[$i] -> ${bytes[i]}")
+            }
             position += len
         }
         return len
