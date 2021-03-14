@@ -2,6 +2,7 @@ package pw.binom.db.postgresql.async
 
 import pw.binom.*
 import pw.binom.charset.Charset
+import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
 import pw.binom.db.*
 import pw.binom.db.postgresql.async.messages.KindedMessage
@@ -73,11 +74,14 @@ class PGConnection private constructor(
         }
     }
 
-    private val pw = PackageWriter(charset, ByteBufferPool(10))
+    private val pw = PackageWriter(this)
 
     private var connected = true
     override val isConnected
         get() = connected
+
+
+    internal val charsetUtils = CharsetCoder(charset)
 
     suspend fun sendQuery(query: String): KindedMessage {
         if (busy)
@@ -243,6 +247,9 @@ class PGConnection private constructor(
         get() = TYPE
 
     override suspend fun asyncClose() {
+        charsetUtils.close()
+        reader.close()
+        pw.close()
         rr.asyncClose()
         connection.asyncClose()
     }

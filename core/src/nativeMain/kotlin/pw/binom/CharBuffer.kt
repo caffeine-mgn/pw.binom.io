@@ -141,7 +141,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     }
 
     actual fun realloc(newSize: Int): CharBuffer =
-        CharBuffer(bytes.realloc(newSize * 2))
+        CharBuffer(bytes.realloc(newSize * Char.SIZE_BYTES))
 
     actual fun subString(startIndex: Int, endIndex: Int): String {
         if (endIndex > capacity) {

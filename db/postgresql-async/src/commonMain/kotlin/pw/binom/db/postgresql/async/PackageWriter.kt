@@ -6,10 +6,10 @@ import pw.binom.io.BufferedOutputAppendable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
 
-class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable {
+class PackageWriter(val connection:PGConnection) : Closeable {
     val buf16 = ByteBuffer.alloc(16)
     val output = ByteArrayOutput()
-    val appender = BufferedOutputAppendable(charset, output, longPool)
+//    val appender = BufferedOutputAppendable(connection.charsetUtils, output, longPool)
     private var cmdExist = false
     var bodyStarted = false
 
@@ -46,8 +46,9 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
 
     fun writeCString(text: String) {
         check(bodyStarted)
-        appender.append(text)
-        appender.flush()
+        connection.charsetUtils.encode(text){
+            output.write(it)
+        }
         output.writeByte(buf16, 0)
     }
 
@@ -56,8 +57,9 @@ class PackageWriter(val charset: Charset, longPool: ByteBufferPool) : Closeable 
         val pos = output.data.position
         output.writeInt(buf16, 0)
 
-        appender.append(text)
-        appender.flush()
+        connection.charsetUtils.encode(text){
+            output.write(it)
+        }
 
         val pos2 = output.data.position
         output.data.position = pos

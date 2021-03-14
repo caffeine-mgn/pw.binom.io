@@ -13,6 +13,15 @@ class CharBufferTest {
         assertEquals(txt.substring(1, 9), txt.toCharArray().toCharBuffer().subString(1, 9))
     }
 
+    @Test
+    fun realloc() {
+        val b = CharBuffer.alloc(30)
+        b.position = 10
+        val n = b.realloc(50)
+        assertEquals(10, n.position)
+        assertEquals(30, n.limit)
+    }
+
 
     @Test
     fun substringTest2() {

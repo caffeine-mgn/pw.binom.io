@@ -4,7 +4,6 @@ import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.decodeString
 import pw.binom.readInt
 import pw.binom.readShort
 

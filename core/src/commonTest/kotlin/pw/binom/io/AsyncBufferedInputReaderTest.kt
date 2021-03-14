@@ -30,13 +30,16 @@ class AsyncBufferedInputReaderTest {
     @Test
     fun testPrintLn2() {
         val data = ByteBuffer.wrap("hello\nworld_world_world\nworld".encodeToByteArray())
-        val pool = ByteBufferPool(10)
 
-        val reader = AsyncBufferedInputReader(Charsets.UTF8, data.asyncInput(), pool, charBufferSize = 512)
+        val reader = data.asyncInput().bufferedReader(charset = Charsets.UTF8)
         var ex: Throwable? = null
         async {
             try {
-                assertEquals("hello", reader.readln())
+                val hello = reader.readln()!!
+                hello.forEach {
+                    println("-->${it.toInt()}")
+                }
+                assertEquals("hello", hello)
                 assertEquals("world_world_world", reader.readln())
                 assertEquals("world", reader.readln())
                 assertNull(reader.readln())

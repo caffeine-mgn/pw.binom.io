@@ -4,7 +4,6 @@ import pw.binom.db.postgresql.async.messages.backend.AuthenticationMessage
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.encodeBytes
 import pw.binom.io.MD5MessageDigest
 import pw.binom.writeByte
 
@@ -60,8 +59,9 @@ class CredentialMessage : KindedMessage {
             }
             AuthenticationMessage.AuthenticationChallengeMessage.AuthenticationResponseType.MD5 -> {
                 val md = MD5MessageDigest()
-                md.update(password!!.encodeBytes(writer.charset))
-                md.update(username.encodeBytes(writer.charset))
+
+                md.update(writer.connection.charsetUtils.encode(password!!){it.toByteArray()})
+                md.update(writer.connection.charsetUtils.encode(username){it.toByteArray()})
                 val tempDigest = md.finish()
                 val hexDigest = ByteArray(35)
                 bytesToHex(tempDigest, hexDigest, 0)

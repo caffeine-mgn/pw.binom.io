@@ -8,14 +8,11 @@ class JvmCharsetEncoder(val native: JCharsetEncoder) : CharsetEncoder {
 
     override fun encode(input: CharBuffer, output: ByteBuffer): CharsetTransformResult {
         val r = native.encode(input.native, output.native, true)
-        when {
-            r.isUnderflow -> return CharsetTransformResult.SUCCESS
-            r.isOverflow -> {
-
-                return CharsetTransformResult.OUTPUT_OVER
-            }
+        return when {
+            r.isUnderflow -> CharsetTransformResult.SUCCESS
+            r.isOverflow -> CharsetTransformResult.OUTPUT_OVER
+            else -> TODO("Not yet implemented")
         }
-        TODO("Not yet implemented")
     }
 
     override fun close() {

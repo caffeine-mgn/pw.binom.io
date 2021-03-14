@@ -6,8 +6,8 @@ import pw.binom.date.Date
 import pw.binom.date.of
 import pw.binom.db.AsyncResultSet
 import pw.binom.db.SQLException
-import pw.binom.decodeString
 import pw.binom.fromBytes
+import pw.binom.wrap
 
 class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : AsyncResultSet {
     override val columns: List<String> by lazy { data.meta.map { it.name } }
@@ -17,9 +17,10 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
 
     override fun getString(index: Int): String? {
         val value = data[index] ?: return null
+
         return when (val dataType = data.meta[index].dataType) {
             ColumnTypes.Bigserial -> Long.fromBytes(value).toString()
-            ColumnTypes.Text, ColumnTypes.Varchar -> value.decodeString(data.connection.reader.charset)
+            ColumnTypes.Text, ColumnTypes.Varchar -> data.connection.charsetUtils.decode(value)
             ColumnTypes.Boolean -> (value[0] > 0.toByte()).toString()
             ColumnTypes.UUID -> UUID.Companion.create(value).toString()
             else -> throwNotSupported(dataType, value)
@@ -80,7 +81,7 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
         val value = data[index] ?: return null
         return when (val dataType = data.meta[index].dataType) {
             ColumnTypes.Bigserial -> Long.fromBytes(value) > 0
-            ColumnTypes.Text, ColumnTypes.Varchar -> value.decodeString(data.connection.reader.charset) == "true"
+            ColumnTypes.Text, ColumnTypes.Varchar -> data.connection.charsetUtils.decode(value) == "true"
             ColumnTypes.Boolean -> (value[0] > 0.toByte())
             else -> throwNotSupported(dataType, value)
         }
