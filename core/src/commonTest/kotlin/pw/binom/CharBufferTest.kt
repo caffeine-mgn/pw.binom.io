@@ -26,8 +26,8 @@ class CharBufferTest {
         val pool = ByteBufferPool(10)
         val appender = outasync.bufferedWriter(pool)
         val d = mapOf(
-//            "🠈user" to "postgres",
-            "user" to "postgres",
+            "🠈user" to "postgres",
+//            "user" to "postgres",
             "database" to "test",
             "client_encoding" to "utf-8",
             "DateStyle" to "ISO",
