@@ -20,7 +20,7 @@ class StrongTest {
                 it.define(BImpl())
                 it.define(ABImpl())
             })
-            val list by s.serviceList<A>()
+            val list by s.injectServiceList<A>()
             assertEquals(2, list.size)
             assertTrue(list.any { it is AImpl })
             assertTrue(list.any { it is ABImpl })

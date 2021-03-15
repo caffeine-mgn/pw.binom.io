@@ -68,10 +68,10 @@ interface Strong {
     }
 }
 
-inline fun <reified T : Any> Strong.service(name: String? = null) = service(T::class, name)
-inline fun <reified T : Any> Strong.serviceMap() = serviceMap(T::class)
-inline fun <reified T : Any> Strong.serviceList() = serviceList(T::class)
-inline fun <reified T : Any> Strong.serviceOrNull(name: String? = null) = serviceOrNull(T::class, name)
+inline fun <reified T : Any> Strong.inject(name: String? = null) = service(T::class, name)
+inline fun <reified T : Any> Strong.injectServiceMap() = serviceMap(T::class)
+inline fun <reified T : Any> Strong.injectServiceList() = serviceList(T::class)
+inline fun <reified T : Any> Strong.injectOrNull(name: String? = null) = serviceOrNull(T::class, name)
 
 /**
  * Returns true if bean with class [T] with default name already defined
