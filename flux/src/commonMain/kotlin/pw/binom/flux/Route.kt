@@ -9,8 +9,8 @@ interface Route {
     fun route(path: String, route: Route)
     fun route(path: String, func: (Route.() -> Unit)? = null): Route
     fun detach(path: String, route: Route)
-    fun endpoint(method: String, path: String, func: suspend (HttpRequest) -> Boolean): Closeable
-    fun endpoint(method: HTTPMethod, path: String, func: suspend (HttpRequest) -> Boolean): Closeable =
+    fun endpoint(method: String, path: String, func: suspend (HttpRequest) -> Unit): Closeable
+    fun endpoint(method: HTTPMethod, path: String, func: suspend (HttpRequest) -> Unit): Closeable =
         endpoint(
             method = method.code,
             path = path,
@@ -18,34 +18,34 @@ interface Route {
         )
 
     fun forward(handler: Handler?)
-    suspend fun execute(action: HttpRequest): Boolean
+    suspend fun execute(action: HttpRequest)
 }
 
-inline fun Route.get(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.get(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.GET, path, func)
 
-inline fun Route.head(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.head(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.HEAD, path, func)
 
-inline fun Route.patch(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.patch(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.PATCH, path, func)
 
-inline fun Route.trace(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.trace(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.TRACE, path, func)
 
-inline fun Route.options(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.options(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.OPTIONS, path, func)
 
-inline fun Route.connect(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.connect(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.CONNECT, path, func)
 
-inline fun Route.post(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.post(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.POST, path, func)
 
-inline fun Route.put(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.put(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.PUT, path, func)
 
-inline fun Route.delete(path: String, noinline func: suspend (HttpRequest) -> Boolean) =
+inline fun Route.delete(path: String, noinline func: suspend (HttpRequest) -> Unit) =
     endpoint(HTTPMethod.DELETE, path, func)
 
 /**
@@ -68,19 +68,18 @@ inline fun Route.delete(path: String, noinline func: suspend (HttpRequest) -> Bo
  * @return new router with preHandle
  */
 fun Route.preHandle(func: suspend (HttpRequest) -> Boolean) = object : AbstractRoute() {
-    override suspend fun execute(action: HttpRequest): Boolean {
-        if (!func(action)) {
-            return true
+    override suspend fun execute(action: HttpRequest) {
+        func(action)
+        if (action.response == null) {
+            super.execute(action)
         }
-        return super.execute(action)
     }
 }
 
-fun Route.postHandle(func: suspend (action: HttpRequest, result: Boolean) -> Unit) = object : AbstractRoute() {
-    override suspend fun execute(action: HttpRequest): Boolean {
-        val result = super.execute(action)
-        func(action, result)
-        return result
+fun Route.postHandle(func: suspend (action: HttpRequest) -> Unit) = object : AbstractRoute() {
+    override suspend fun execute(action: HttpRequest) {
+        super.execute(action)
+        func(action)
     }
 }
 
@@ -102,12 +101,12 @@ fun Route.postHandle(func: suspend (action: HttpRequest, result: Boolean) -> Uni
  *
  * @param func will be call instend original handler. As argument will be pass original [Action] and result of original handler
  */
-fun Route.wrap(func: suspend (HttpRequest, suspend (HttpRequest) -> Boolean) -> Boolean) = object : AbstractRoute() {
+fun Route.wrap(func: suspend (HttpRequest, suspend (HttpRequest) -> Unit) -> Unit) = object : AbstractRoute() {
     init {
         this@wrap.forward(this)
     }
 
-    override suspend fun execute(action: HttpRequest): Boolean =
+    override suspend fun execute(action: HttpRequest) =
         func(action) { newAction ->
             super.execute(newAction)
         }
@@ -123,7 +122,7 @@ abstract class RouteWrapper(val route: Route) : AbstractRoute() {
         super.execute(action)
 
 
-    override suspend fun execute(action: HttpRequest): Boolean = wraping(action)
+    override suspend fun execute(action: HttpRequest) = wraping(action)
 
-    abstract suspend fun wraping(action: HttpRequest): Boolean
+    abstract suspend fun wraping(action: HttpRequest)
 }
