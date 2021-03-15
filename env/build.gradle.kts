@@ -66,8 +66,8 @@ kotlin {
             dependencies {
                 api(kotlin("stdlib-common"))
             }
+            kotlin.srcDir("build/gen")
         }
-
         val linuxX64Main by getting {
             dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
@@ -120,4 +120,32 @@ kotlin {
             dependsOn(commonTest)
         }
     }
+}
+
+tasks {
+    val generateVersion = create("generateVersion") {
+        val sourceDir = project.buildDir.resolve("gen/pw/binom")
+        sourceDir.mkdirs()
+        val versionSource = sourceDir.resolve("version.kt")
+        outputs.files(versionSource)
+        inputs.property("version", project.version)
+
+        versionSource.writeText(
+            """package pw.binom
+            
+const val BINOM_VERSION = "${project.version}""""
+        )
+    }
+
+    this["compileKotlinLinuxArm32Hfp"].dependsOn(generateVersion)
+    this["compileKotlinLinuxArm64"].dependsOn(generateVersion)
+    this["compileKotlinLinuxMips32"].dependsOn(generateVersion)
+    this["compileKotlinLinuxMipsel32"].dependsOn(generateVersion)
+    this["compileKotlinLinuxX64"].dependsOn(generateVersion)
+    this["compileKotlinMacosX64"].dependsOn(generateVersion)
+    this["compileKotlinMingwX64"].dependsOn(generateVersion)
+    this["compileKotlinMingwX86"].dependsOn(generateVersion)
+    this["compileKotlinJsIr"].dependsOn(generateVersion)
+    this["compileKotlinJsLegacy"].dependsOn(generateVersion)
+    this["compileKotlinJvm"].dependsOn(generateVersion)
 }
