@@ -95,7 +95,7 @@ internal class HttpRequest2Impl(
     }
 
     override fun readText(): AsyncReader {
-        val charset = headers.charset ?: throw IOException("Invalid Client Header: Missing Charset")
+        val charset = headers.charset ?: "utf-8"
         return readBinary().bufferedReader(charset = Charsets.get(charset))
     }
 
@@ -140,6 +140,9 @@ internal class HttpRequest2Impl(
             it.status = 403
         }
     }
+
+    override suspend fun <T> response(func: (HttpResponse) -> T): T =
+        response().use(func)
 
     override suspend fun response(): HttpResponse {
         if (startedResponse != null) {

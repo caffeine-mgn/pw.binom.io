@@ -1,5 +1,7 @@
 package pw.binom.io.http
 
+import pw.binom.base64.Base64
+
 /**
  * Keywords in http headers
  */
@@ -100,6 +102,16 @@ interface Headers : Map<String, List<String>> {
         }
         return len[0]
     }
+
+    val basicAuth: BasicAuth?
+        get() {
+            val authorization = getSingle(AUTHORIZATION) ?: return null
+            if (!authorization.startsWith("Basic "))
+                return null
+            val sec = Base64.decode(authorization.removePrefix("Basic ")).decodeToString()
+            val items = sec.split(':', limit = 2)
+            return BasicAuth(login = items[0], password = items[1])
+        }
 }
 
 /**

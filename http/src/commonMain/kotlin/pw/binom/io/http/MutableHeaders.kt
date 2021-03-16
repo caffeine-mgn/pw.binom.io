@@ -1,5 +1,7 @@
 package pw.binom.io.http
 
+import pw.binom.base64.Base64
+
 interface MutableHeaders : Headers {
     operator fun set(key: String, value: List<String>): MutableHeaders
     operator fun set(key: String, value: String?): MutableHeaders
