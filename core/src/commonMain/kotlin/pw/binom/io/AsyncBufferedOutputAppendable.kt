@@ -159,6 +159,7 @@ class AsyncBufferedOutputAppendable private constructor(
         flush()
         try {
             encoder.close()
+            charBuffer.close()
             if (closeBuffer) {
                 buffer.close()
             } else {
