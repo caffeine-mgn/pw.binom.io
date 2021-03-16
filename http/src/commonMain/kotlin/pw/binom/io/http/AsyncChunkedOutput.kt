@@ -90,6 +90,7 @@ open class AsyncChunkedOutput(
         finish()
         closed = true
         tmp.close()
+        buffer.close()
         if (closeStream) {
             stream.asyncClose()
         }
