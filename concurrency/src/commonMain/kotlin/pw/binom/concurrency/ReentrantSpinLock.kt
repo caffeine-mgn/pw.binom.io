@@ -7,15 +7,15 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 class ReentrantSpinLock {
-    private val atom = AtomicLong(0)
+    private val threadId = AtomicLong(0)
     private val count = AtomicInt(0)
 
     fun lock() {
-        if (atom.value == Worker.current?.id ?: 0)
+        if (threadId.value == Worker.current?.id ?: 0)
             count.increment()
         else {
             while (true) {
-                if (atom.compareAndSet(0, Worker.current?.id ?: 0))
+                if (threadId.compareAndSet(0, Worker.current?.id ?: 0))
                     break
                 Worker.sleep(1)
             }
@@ -24,10 +24,10 @@ class ReentrantSpinLock {
     }
 
     fun unlock() {
-        if (atom.value == Worker.current?.id ?: 0)
+        if (threadId.value == Worker.current?.id ?: 0)
             count.decrement()
         if (count.value == 0)
-            if (!atom.compareAndSet(Worker.current?.id ?: 0, 0))
+            if (!threadId.compareAndSet(Worker.current?.id ?: 0, 0))
                 throw IllegalStateException("Lock already free")
     }
 
