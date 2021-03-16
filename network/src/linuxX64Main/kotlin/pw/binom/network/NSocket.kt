@@ -6,6 +6,7 @@ import platform.posix.AF_INET
 import platform.posix.SOCK_STREAM
 import platform.posix.socket
 import pw.binom.ByteBuffer
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -28,7 +29,16 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
+    private val closed = AtomicBoolean(false)
+
+    private fun checkClosed() {
+        if (closed.value) {
+            throw RuntimeException("Socket already closed")
+        }
+    }
+
     actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
+        checkClosed()
         val native = if (address == null) {
             accept(native, null, null)
         } else {
@@ -50,14 +60,19 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun send(data: ByteBuffer): Int {
+        checkClosed()
         memScoped {
             val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
             if (r < 0) {
                 val error = errno.toInt()
-                if (error == 10035)
-                    return 0
-                if (error == 10038 || error == 10054)
+//                if (error == 10035)
+//                    return 0
+//                if (error == 10038 || error == 10054)
+//                    throw SocketClosedException()
+                if (error == 104) {
+                    nativeClose()
                     throw SocketClosedException()
+                }
                 throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
             }
             data.position += r
@@ -66,12 +81,18 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun recv(data: ByteBuffer): Int {
+        checkClosed()
         val r: Int = recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
         if (r < 0) {
             if (errno == EAGAIN) {
                 return 0
             }
-            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}], EDEADLK=$EDEADLK")
+            if (errno == 104) {
+                nativeClose()
+                throw SocketClosedException()
+            }
+            nativeClose()
+//            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}], EDEADLK=$EDEADLK")
             throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
         }
         if (r > 0) {
@@ -80,7 +101,7 @@ actual class NSocket(val native: Int) : Closeable {
         return r
     }
 
-    override fun close() {
+    private fun nativeClose() {
         memScoped {
             val flag = alloc<IntVar>()
             flag.value = 1
@@ -90,7 +111,17 @@ actual class NSocket(val native: Int) : Closeable {
         close(native)
     }
 
+    override fun close() {
+        checkClosed()
+        try {
+            nativeClose()
+        } finally {
+            closed.value = true
+        }
+    }
+
     actual fun setBlocking(value: Boolean) {
+        checkClosed()
         val flags = fcntl(native, F_GETFL, 0)
         val newFlags = if (value) {
             flags xor O_NONBLOCK
@@ -104,6 +135,7 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun connect(address: NetworkAddress) {
+        checkClosed()
         memScoped {
             set_posix_errno(0)
             val r = connect(
@@ -118,6 +150,7 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun bind(address: NetworkAddress) {
+        checkClosed()
         memScoped {
             set_posix_errno(0)
             val bindResult = bind(
@@ -143,6 +176,7 @@ actual class NSocket(val native: Int) : Closeable {
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
         memScoped {
+            checkClosed()
             val rr = sendto(
                 native, data.refTo(data.position).getPointer(this), data.remaining.convert(),
                 0, address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
@@ -159,6 +193,7 @@ actual class NSocket(val native: Int) : Closeable {
         data: ByteBuffer,
         address: NetworkAddress.Mutable?
     ): Int {
+        checkClosed()
         val gotBytes = if (address == null) {
             val rr = recvfrom(native, data.refTo(data.position), data.remaining.convert(), 0, null, null)
             if (rr.toInt() == -1) {

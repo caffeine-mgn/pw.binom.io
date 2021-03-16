@@ -4,6 +4,8 @@ import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.asReference
+import pw.binom.concurrency.useReference
+import pw.binom.getOrException
 import pw.binom.readByte
 import pw.binom.writeByte
 import kotlin.native.concurrent.SharedImmutable
@@ -24,19 +26,19 @@ class TcpConnectionTest {
 
         val worker = Worker()
 
-        val r = asyncRun {
+        val r = nd.async {
             val server = nd.bindTcp(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
 
             val newClient = server.accept()!!
-            worker.execute(newClient.holder to newClient.asReference()) {
-                println("net thread...   ${it.second.owner.same}")
-                assertFalse(it.second.owner.same)
-                println("Wait send...")
-                it.first.waitReadyForWrite {
-                    println("Wait net thread...")
-                    val buf = ByteBuffer.alloc(10)
-                    val connection = it.second.value
-                    asyncRun {
+            newClient.useReference { ref ->
+                execute(worker) {
+                    println("net thread...   ${ref.owner.same}")
+                    assertFalse(ref.owner.same)
+                    println("Wait send...")
+                    network {
+                        println("Wait net thread...")
+                        val buf = ByteBuffer.alloc(10)
+                        val connection = ref.value
                         connection.writeByte(buf, 42)
                         connection.flush()
                         println("wroted!")
@@ -45,17 +47,17 @@ class TcpConnectionTest {
             }
         }
 
-        val r2 = asyncRun {
+        val r2 = nd.async {
             val client = nd.tcpConnect(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
             val b = ByteBuffer.alloc(10)
             println("Reading...")
             assertEquals(42, client.readByte(b))
             println("Read")
         }
-        while (!r.done || !r2.done) {
+        while (!r.isDone || !r2.isDone) {
             nd.select(100)
         }
-        r.finish()
-        r2.finish()
+        r.getOrException()
+        r2.getOrException()
     }
 }

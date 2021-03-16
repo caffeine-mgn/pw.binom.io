@@ -11,7 +11,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
     var connect: Continuation<Unit>? = null
 
-    lateinit var holder: CrossThreadKeyHolder
+    lateinit var key: Selector.Key
 
     private class ReadData {
         var continuation: Continuation<Int>? = null
@@ -38,58 +38,39 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
     private fun calcListenFlags() =
         when {
-            readData.continuation != null && (!holder.readyForWriteListener.isEmpty || sendData.continuation != null) -> Selector.INPUT_READY or Selector.OUTPUT_READY
+            readData.continuation != null && (sendData.continuation != null) -> Selector.INPUT_READY or Selector.OUTPUT_READY
             readData.continuation != null -> Selector.INPUT_READY
-            !holder.readyForWriteListener.isEmpty || sendData.continuation != null -> Selector.OUTPUT_READY
+            sendData.continuation != null -> Selector.OUTPUT_READY
             else -> 0
         }
 
     override fun readyForWrite() {
-        while (true) {
-            val waiter = holder.readyForWriteListener.popOrNull() ?: break
-            var exception: Throwable? = null
-            try {
-                waiter()
-            } catch (e: Throwable) {
-                exception = e
-            }
-            if (exception != null) {
-                if (!holder.key.closed) {
-                    holder.key.removeListen(Selector.OUTPUT_READY)
-                }
-                throw exception
-            }
-            if (sendData.continuation == null && !holder.key.closed) {
-                holder.key.removeListen(Selector.OUTPUT_READY)
-            }
-        }
-
         if (sendData.continuation != null) {
             val result = runCatching { channel.write(sendData.data!!) }
             if (sendData.data!!.remaining == 0) {
                 val con = sendData.continuation!!
                 sendData.reset()
-                holder.key.removeListen(Selector.OUTPUT_READY)
+                key.removeListen(Selector.OUTPUT_READY)
                 con.resumeWith(result)
             }
-            if (sendData.continuation == null && !holder.key.closed) {
-                holder.key.listensFlag = calcListenFlags()
+            if (sendData.continuation == null && !key.closed) {
+                key.listensFlag = calcListenFlags()
             }
         } else {
-            if (!holder.key.closed) {
-                holder.key.removeListen(Selector.OUTPUT_READY)
+            if (!key.closed) {
+                key.removeListen(Selector.OUTPUT_READY)
             }
         }
     }
 
     override fun connecting() {
-        holder.key.listensFlag = Selector.EVENT_CONNECTED
+        key.listensFlag = Selector.EVENT_CONNECTED
     }
 
     override fun connected() {
         val connect = connect
         this.connect = null
-        holder.key.removeListen(Selector.EVENT_CONNECTED)
+        key.removeListen(Selector.EVENT_CONNECTED)
         connect?.resumeWith(Result.success(Unit))
     }
 
@@ -110,7 +91,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
     override fun readyForRead() {
         if (readData.continuation == null) {
-            holder.key.removeListen(Selector.INPUT_READY)
+            key.removeListen(Selector.INPUT_READY)
             return
         }
         val readed = runCatching { channel.read(readData.data!!) }
@@ -119,28 +100,28 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
                 val con = readData.continuation!!
                 readData.reset()
                 con.resumeWith(readed)
-                if (!holder.key.closed && readData.continuation == null) {
-                    holder.key.removeListen(Selector.INPUT_READY)
+                if (!key.closed && readData.continuation == null) {
+                    key.removeListen(Selector.INPUT_READY)
                 }
             }
         } else {
             val con = readData.continuation!!
             readData.reset()
             con.resumeWith(readed)
-            if (!holder.key.closed && readData.continuation == null) {
-                holder.key.removeListen(Selector.INPUT_READY)
+            if (!key.closed && readData.continuation == null) {
+                key.removeListen(Selector.INPUT_READY)
             }
         }
     }
 
     override fun close() {
-        check(!holder.key.closed) { "Connection already closed" }
+        check(!key.closed) { "Connection already closed" }
         readData.continuation?.resumeWithException(SocketClosedException())
         sendData.continuation?.resumeWithException(SocketClosedException())
         readData.reset()
         sendData.reset()
-        holder.key.listensFlag = 0
-        holder.key.close()
+        key.listensFlag = 0
+        key.close()
         channel.close()
     }
 
@@ -165,7 +146,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         sendData.data = data
         suspendCoroutine<Int> {
             sendData.continuation = it
-            holder.key.addListen(Selector.OUTPUT_READY)
+            key.addListen(Selector.OUTPUT_READY)
         }
         return l
     }
@@ -192,7 +173,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         val readed = suspendCoroutine<Int> {
             readData.continuation = it
             readData.data = dest
-            holder.key.addListen(Selector.INPUT_READY)
+            key.addListen(Selector.INPUT_READY)
         }
         if (readed <= 0) {
             throw SocketClosedException()
@@ -216,7 +197,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         val readed = suspendCoroutine<Int> {
             readData.continuation = it
             readData.data = dest
-            holder.key.addListen(Selector.INPUT_READY)
+            key.addListen(Selector.INPUT_READY)
         }
         if (readed == 0) {
             throw IllegalArgumentException("Assert Error: Non blocked Stream returns 0 bytes")

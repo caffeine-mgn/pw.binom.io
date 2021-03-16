@@ -3,10 +3,11 @@ package pw.binom.network
 import pw.binom.async
 import pw.binom.concurrency.*
 import pw.binom.doFreeze
+import pw.binom.io.Closeable
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.suspendCoroutine
 
-class CrossThreadKeyHolder(val key: Selector.Key) : CrossThreadCoroutine {
+class CrossThreadKeyHolder(val key: Selector.Key) : CrossThreadCoroutine, Closeable {
     val readyForWriteListener = ConcurrentQueue<() -> Unit>()
     private val networkThread = ThreadRef()
     val isNetworkThread
@@ -29,6 +30,10 @@ class CrossThreadKeyHolder(val key: Selector.Key) : CrossThreadCoroutine {
         waitReadyForWrite {
             continuation.free().resumeWith(result)
         }
+    }
+
+    override fun close() {
+        readyForWriteListener.close()
     }
 }
 

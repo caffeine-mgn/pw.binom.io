@@ -16,7 +16,6 @@ interface HttpRequestDeprecated {
     val rawOutput: AsyncOutput
     val rawConnection: TcpConnection
     val headers: Map<String, List<String>>
-    val keyHolder: CrossThreadKeyHolder
 }
 
 fun HttpRequestDeprecated.withContextURI(uri: String) = object : HttpRequestDeprecated {
@@ -36,8 +35,6 @@ fun HttpRequestDeprecated.withContextURI(uri: String) = object : HttpRequestDepr
         get() = this@withContextURI.rawConnection
     override val headers: Map<String, List<String>>
         get() = this@withContextURI.headers
-    override val keyHolder: CrossThreadKeyHolder
-        get() = this@withContextURI.keyHolder
 }
 
 fun HttpRequestDeprecated.visitGetParams(func: (key: String, value: String?) -> Boolean) {

@@ -45,6 +45,13 @@ interface Future2<T> {
     class FutureNotReadyException : IllegalStateException()
 }
 
+fun <T> Future2<T>.getOrException(): T {
+    if (isFailure) {
+        throw exceptionOrNull!!
+    }
+    return resultOrNull as T
+}
+
 private class SuccessFuture2<T>(val result: T) : Future2<T> {
 
     override val resultOrNull: T?

@@ -2,32 +2,37 @@ package pw.binom.network
 
 import pw.binom.BaseFuture
 import pw.binom.Future2
+import pw.binom.PopResult
 import pw.binom.concurrency.*
-import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import kotlin.coroutines.*
 
 class NetworkDispatcher : Closeable {
-    val selector = Selector.open()
-    private val wakeUpConnection = openUdp()
-    internal val crossThreadWakeUpHolder = wakeUpConnection.holder
+    private val selector = Selector.open()
 
-    class Awakener(val key: CrossThreadKeyHolder) {
-        fun wakeup(func: (() -> Unit)? = null) {
-            key.waitReadyForWrite { func?.invoke() }
-        }
+    //    private val wakeUpConnection = openUdp()
+    private val internalUdpContinuation = UdpSocketChannel()
+    private val internalContinuation =
+        CrossThreadKeyHolder(selector.attach(internalUdpContinuation, 0, internalUdpContinuation))
+    internal val crossThreadWakeUpHolder = internalContinuation//wakeUpConnection.holder
+    private val crossThreadWaiterResultHolder = PopResult<() -> Unit>()
 
-        init {
-            doFreeze()
-        }
-    }
+//    class Awakener(val key: CrossThreadKeyHolder) {
+//        fun wakeup(func: (() -> Unit)? = null) {
+//            key.waitReadyForWrite { func?.invoke() }
+//        }
+//
+//        init {
+//            doFreeze()
+//        }
+//    }
 
     /**
      * Special object for wakeup NetworkDispatcher in selecting mode from other thread.
      */
-    val awakener = Awakener(wakeUpConnection.holder)
+//    val awakener = Awakener(wakeUpConnection.holder)
 
-    fun<R> async(executor: ExecutorService? = null, func: suspend () -> R): Future2<R> {
+    fun <R> async(executor: ExecutorService? = null, func: suspend () -> R): Future2<R> {
         val future = BaseFuture<R>()
         func.startCoroutine(object : Continuation<R> {
             override val context: CoroutineContext = run {
@@ -49,7 +54,20 @@ class NetworkDispatcher : Closeable {
 
     fun select(timeout: Long = -1L) =
         selector.select(timeout) { key, mode ->
-            val connection = key.attachment as AbstractConnection
+            val attachment = key.attachment
+            if (attachment === internalUdpContinuation) {
+                while (true) {
+                    internalContinuation.readyForWriteListener.pop(crossThreadWaiterResultHolder)
+                    if (crossThreadWaiterResultHolder.isEmpty) {
+                        break
+                    } else {
+                        crossThreadWaiterResultHolder.value()
+                    }
+                }
+                return@select
+            }
+            val connection = attachment as AbstractConnection
+
             if (mode and Selector.EVENT_CONNECTED != 0) {
                 connection.connected()
             }
@@ -108,17 +126,21 @@ class NetworkDispatcher : Closeable {
 
     fun attach(channel: UdpSocketChannel): UdpConnection {
         val con = UdpConnection(channel)
-        con.holder = CrossThreadKeyHolder(selector.attach(channel, 0, con))
+        val key = selector.attach(channel, 0, con)
+        con.key = key
         return con
     }
 
     fun attach(channel: TcpClientSocketChannel): TcpConnection {
         val con = TcpConnection(channel)
-        con.holder = CrossThreadKeyHolder(selector.attach(channel, 0, con))
+        val key = selector.attach(channel, 0, con)
+        con.key = key
         return con
     }
 
     override fun close() {
+        internalUdpContinuation.close()
+        internalContinuation.close()
         selector.close()
     }
 }

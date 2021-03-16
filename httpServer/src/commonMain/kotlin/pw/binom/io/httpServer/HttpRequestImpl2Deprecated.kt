@@ -48,8 +48,6 @@ internal class HttpRequestImpl2Deprecated : HttpRequestDeprecated {
         get() = _rawConnection!!
 
     override val headers = HashMap<String, ArrayList<String>>()
-    override val keyHolder: CrossThreadKeyHolder
-        get() = rawConnection.holder
 
     var encode = EncodeTypeDeprecated.IDENTITY
         private set
