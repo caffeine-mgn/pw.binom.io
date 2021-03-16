@@ -5,6 +5,7 @@ import pw.binom.atomic.AtomicReference
 import pw.binom.doFreeze
 import kotlin.time.Duration
 import pw.binom.*
+import pw.binom.io.Closeable
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -13,7 +14,7 @@ import kotlin.time.TimeSource
  *
  * Object inside [Exchange] will storage as ObjectTree
  */
-class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
+class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T>, Closeable {
 
     val input: ExchangeInput<T>
         get() = this
@@ -21,7 +22,7 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
     val output: ExchangeOutput<T>
         get() = this
 
-    class Item<T : Any?>(val value:T) {
+    class Item<T : Any?>(val value: T) {
         var next by AtomicReference<Item<T>?>(null)
         var previous by AtomicReference<Item<T>?>(null)
 
@@ -87,5 +88,9 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
 
     init {
         doFreeze()
+    }
+
+    override fun close() {
+        lock.close()
     }
 }

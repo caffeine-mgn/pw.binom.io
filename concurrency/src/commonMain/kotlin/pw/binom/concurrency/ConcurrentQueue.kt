@@ -133,6 +133,7 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
     }
 
     override fun close() {
+        condition.close()
         lock.close()
     }
 }
