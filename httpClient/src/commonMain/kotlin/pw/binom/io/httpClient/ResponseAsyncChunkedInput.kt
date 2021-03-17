@@ -18,17 +18,22 @@ class ResponseAsyncChunkedInput(
 ) {
 
     override suspend fun asyncClose() {
-        if (!isEof){
-            skipAll()
-        }
-        super.asyncClose()
-        if (keepAlive) {
-            client.recycleConnection(
-                URI = URI,
-                channel = channel,
-            )
-        } else {
-            channel.asyncClose()
+        var ok = false
+        try {
+            if (!isEof) {
+                skipAll()
+            }
+            super.asyncClose()
+            ok = true
+        } finally {
+            if (ok && keepAlive) {
+                client.recycleConnection(
+                    URI = URI,
+                    channel = channel,
+                )
+            } else {
+                channel.asyncClose()
+            }
         }
     }
 }

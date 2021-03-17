@@ -151,14 +151,17 @@ class AsyncBufferedInputReader private constructor(
     }
 
     override suspend fun asyncClose() {
-        if (closeParent) {
-            input.asyncClose()
-        }
-        decoder.close()
-        if (closeBuffer) {
-            buffer.close()
-        } else {
-            pool?.recycle(buffer)
+        try {
+            if (closeParent) {
+                input.asyncClose()
+            }
+        } finally {
+            decoder.close()
+            if (closeBuffer) {
+                buffer.close()
+            } else {
+                pool?.recycle(buffer)
+            }
         }
     }
 

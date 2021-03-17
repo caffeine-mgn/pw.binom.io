@@ -206,6 +206,9 @@ inline class URI internal constructor(val path: String) {
         )
 
     override fun toString() = path
+
+    fun appendDirection(direction: String) =
+        copy(urn = urn.appendDirection(direction = direction, separator = "/"))
 }
 
 fun String.toURIOrNull(): URI? {

@@ -7,9 +7,9 @@ fun interface Closeable {
 }
 
 fun closablesOf(vararg closable: Closeable) =
-        Closeable {
-            closable.forEach { it.close() }
-        }
+    Closeable {
+        closable.forEach { it.close() }
+    }
 
 inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
     return try {
@@ -29,10 +29,9 @@ fun AsyncCloseable(func: suspend () -> Unit) = object : AsyncCloseable {
     }
 }
 
-suspend inline fun <T : AsyncCloseable, R> T.use(func: (T) -> R): R {
-    return try {
+suspend inline fun <T : AsyncCloseable, R> T.use(func: (T) -> R): R =
+    try {
         func(this)
     } finally {
         asyncClose()
     }
-}

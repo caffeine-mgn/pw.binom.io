@@ -87,12 +87,15 @@ open class AsyncChunkedOutput(
         if (finished) {
             throw IllegalStateException("Stream already finished")
         }
-        finish()
-        closed = true
-        tmp.close()
-        buffer.close()
-        if (closeStream) {
-            stream.asyncClose()
+        try {
+            finish()
+            closed = true
+            if (closeStream) {
+                stream.asyncClose()
+            }
+        } finally {
+            tmp.close()
+            buffer.close()
         }
     }
 
