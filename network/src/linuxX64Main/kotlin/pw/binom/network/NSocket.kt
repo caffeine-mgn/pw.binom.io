@@ -2,9 +2,6 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import platform.posix.AF_INET
-import platform.posix.SOCK_STREAM
-import platform.posix.socket
 import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
@@ -62,14 +59,13 @@ actual class NSocket(val native: Int) : Closeable {
     actual fun send(data: ByteBuffer): Int {
         checkClosed()
         memScoped {
-            val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
+            val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), MSG_NOSIGNAL).convert()
             if (r < 0) {
                 val error = errno.toInt()
-//                if (error == 10035)
-//                    return 0
-//                if (error == 10038 || error == 10054)
-//                    throw SocketClosedException()
-                if (error == 104) {
+                if (errno == EPIPE) {
+                    throw SocketClosedException()
+                }
+                if (error == ECONNRESET) {
                     nativeClose()
                     throw SocketClosedException()
                 }
@@ -179,9 +175,13 @@ actual class NSocket(val native: Int) : Closeable {
             checkClosed()
             val rr = sendto(
                 native, data.refTo(data.position).getPointer(this), data.remaining.convert(),
-                0, address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
+                MSG_NOSIGNAL,
+                address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
             )
             if (rr.toInt() == -1) {
+                if (errno == EPIPE) {
+                    throw SocketClosedException()
+                }
                 throw IOException("Can't send data. Error: $errno  ${errno}")
             }
 
