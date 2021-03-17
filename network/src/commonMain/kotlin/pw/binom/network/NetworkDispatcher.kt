@@ -64,6 +64,7 @@ class NetworkDispatcher : Closeable {
                         crossThreadWaiterResultHolder.value()
                     }
                 }
+                internalContinuation.key.listensFlag = 0
                 return@select
             }
             val connection = attachment as AbstractConnection
