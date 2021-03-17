@@ -37,7 +37,7 @@ actual class TcpClientSocketChannel(val native: JSocketChannel) : Channel {
 
     override fun write(data: ByteBuffer): Int =
         try {
-            var ret = native.write(data.native)
+            val ret = native.write(data.native)
             if (ret < 0) {
                 throw SocketClosedException()
             }

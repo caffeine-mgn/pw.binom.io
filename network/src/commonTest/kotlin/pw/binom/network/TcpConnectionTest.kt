@@ -1,24 +1,74 @@
 package pw.binom.network
 
-import pw.binom.ByteBuffer
+import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.asReference
-import pw.binom.concurrency.useReference
-import pw.binom.getOrException
-import pw.binom.readByte
-import pw.binom.writeByte
+import pw.binom.concurrency.*
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-
-@SharedImmutable
-private var done1 by AtomicBoolean(false)
-private var done2 by AtomicBoolean(false)
+import kotlin.test.fail
 
 class TcpConnectionTest {
+
+    @Test
+    fun writeErrorTest() {
+        val nd = NetworkDispatcher()
+        val port = Random.nextInt(1000, Short.MAX_VALUE - 100)
+        val address = NetworkAddress.Immutable("127.0.0.1", port)
+        val worker = Worker()
+        val spinLock = SpinLock()
+        val r = nd.async {
+            val server = nd.bindTcp(address)
+            Worker.sleep(500)
+            val client = nd.tcpConnect(address)
+
+            nd.async {
+                try {
+                    spinLock.synchronize {
+                        println("Try read...")
+                        val readed = ByteBuffer.alloc(5) {
+                            client.read(it)
+                        }
+                        println("Reded $readed")
+                        client.close()
+                        println("Stop client!")
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                }
+            }
+
+            val remoteClient = server.accept()!!
+            server.close()
+            ByteBuffer.alloc(10) { buf ->
+                remoteClient.write(buf)
+                execute(worker) {
+                    spinLock.lock()
+                    spinLock.unlock()
+                }
+
+                try {
+                    buf.clear()
+                    remoteClient.write(buf)
+                    remoteClient.flush()
+                    fail()
+                } catch (e: SocketClosedException) {
+                    //ok
+                }
+
+                println("Done!")
+                remoteClient.close()
+            }
+        }
+
+        while (!r.isDone) {
+            nd.select(100)
+        }
+        r.getOrException()
+    }
+
     @Test
     fun waitWriteTest() {
         val nd = NetworkDispatcher()

@@ -63,8 +63,10 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 val error = GetLastError()
                 if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
                     return 0
-                if (error == platform.windows.WSAENOTSOCK.convert<DWORD>() || error == platform.windows.WSAECONNRESET.convert<DWORD>())
+
+                if (error == platform.windows.WSAECONNABORTED.convert<DWORD>() || error == platform.windows.WSAENOTSOCK.convert<DWORD>() || error == platform.windows.WSAECONNRESET.convert<DWORD>()) {
                     throw SocketClosedException()
+                }
                 throw IOException("Error on send data to network. send: [$r], error: [${GetLastError()}]")
             }
             data.position += r

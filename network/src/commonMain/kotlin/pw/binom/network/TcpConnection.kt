@@ -2,7 +2,6 @@ package pw.binom.network
 
 import pw.binom.ByteBuffer
 import pw.binom.io.AsyncChannel
-import pw.binom.popOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -116,13 +115,16 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
     override fun close() {
         check(!key.closed) { "Connection already closed" }
-        readData.continuation?.resumeWithException(SocketClosedException())
-        sendData.continuation?.resumeWithException(SocketClosedException())
-        readData.reset()
-        sendData.reset()
-        key.listensFlag = 0
-        key.close()
-        channel.close()
+        try {
+            key.listensFlag = 0
+            key.close()
+            channel.close()
+        } finally {
+            readData.continuation?.resumeWithException(SocketClosedException())
+            sendData.continuation?.resumeWithException(SocketClosedException())
+            readData.reset()
+            sendData.reset()
+        }
     }
 
     override suspend fun asyncClose() {
