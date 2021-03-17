@@ -64,6 +64,7 @@ class BufferedInputReader(
 
     override fun close() {
         decoder.close()
+        output.close()
         pool.recycle(buffer)
     }
 

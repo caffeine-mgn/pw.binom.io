@@ -54,6 +54,7 @@ class NetworkDispatcher : Closeable {
 
     fun select(timeout: Long = -1L) =
         selector.select(timeout) { key, mode ->
+            println("mode: [$mode], key=[$key]")
             val attachment = key.attachment
             if (attachment === internalUdpContinuation) {
                 while (true) {
