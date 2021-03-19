@@ -1,5 +1,6 @@
 package pw.binom.db
 
+import pw.binom.io.AsyncCloseable
 import pw.binom.io.use
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -17,7 +18,7 @@ class AsyncConnectionPool constructor(
     val waitFreeConnection: Boolean = true,
     val gcInterval: Duration = 1.0.minutes,
     val factory: suspend () -> AsyncConnection,
-) {
+) : AsyncCloseable {
     private val connections = ArrayList<AsyncConnectionPooled>(max)
 
     private val waiters = ArrayList<Continuation<AsyncConnection>>()
@@ -177,6 +178,12 @@ class AsyncConnectionPool constructor(
             checkClosed()
             closed = true
             free(this)
+        }
+    }
+
+    override suspend fun asyncClose() {
+        connections.forEach {
+            it.asyncClose()
         }
     }
 }
