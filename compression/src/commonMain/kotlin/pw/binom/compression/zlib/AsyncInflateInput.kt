@@ -82,10 +82,11 @@ open class AsyncInflateInput(
         checkBusy()
         try {
             busy = true
-            if (usesDefaultInflater)
+            if (usesDefaultInflater) {
                 inflater.end()
-            inflater.close()
-            buffer.close()
+            }
+            runCatching { inflater.close() }
+            runCatching { buffer.close() }
             if (closeStream) {
                 stream.asyncClose()
             }

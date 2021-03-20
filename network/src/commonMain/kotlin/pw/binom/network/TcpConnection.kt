@@ -74,16 +74,16 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override fun error() {
-        val e = SocketConnectException()
         if (connect != null) {
+            val e = SocketConnectException()
             connect?.resumeWith(Result.failure(e))
         }
         if (readData.continuation != null) {
-            readData.continuation?.resumeWith(Result.failure(e))
+            readData.continuation?.resumeWith(Result.failure(SocketClosedException()))
             readData.reset()
         }
         if (sendData.continuation != null) {
-            sendData.continuation?.resumeWith(Result.failure(e))
+            sendData.continuation?.resumeWith(Result.failure(SocketClosedException()))
             sendData.reset()
         }
     }
@@ -177,7 +177,8 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             readData.data = dest
             key.addListen(Selector.INPUT_READY)
         }
-        if (readed <= 0) {
+        if (readed == 0) {
+            runCatching { channel.close() }
             throw SocketClosedException()
         }
         return readed
@@ -202,7 +203,8 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             key.addListen(Selector.INPUT_READY)
         }
         if (readed == 0) {
-            throw IllegalArgumentException("Assert Error: Non blocked Stream returns 0 bytes")
+            runCatching { channel.close() }
+            throw SocketClosedException()
         }
 //            if (readed == 0) {
 //                continue

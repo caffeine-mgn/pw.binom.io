@@ -80,7 +80,8 @@ open class DeflaterOutput(
         flush()
         finish()
         closed = true
-        deflater.close()
+        runCatching { deflater.close()}
+        buffer.close()
         if (closeStream) {
             stream.close()
         }

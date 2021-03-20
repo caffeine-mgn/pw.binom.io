@@ -31,29 +31,28 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
             password: String?
         ): TarantoolConnection {
             val con = manager.tcpConnect(address)
-            val buf = ByteBuffer.alloc(64)
-            try {
-                con.readFully(buf)
-                buf.flip()
-                val version = buf.asUTF8String().trim().substring(10)
-                buf.clear()
-                con.readFully(buf)
-                buf.flip()
-                val salt = buf.asUTF8String().trim()
-                val connection = TarantoolConnection(ThreadRef(), con)
-                if (userName != null && password != null) {
-                    connection.sendReceive(
-                        Code.AUTH,
-                        null,
-                        InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
-                    ).assertException()
+            ByteBuffer.alloc(64) { buf ->
+                try {
+                    con.readFully(buf)
+                    buf.flip()
+                    val version = buf.asUTF8String().trim().substring(10)
+                    buf.clear()
+                    con.readFully(buf)
+                    buf.flip()
+                    val salt = buf.asUTF8String().trim()
+                    val connection = TarantoolConnection(ThreadRef(), con)
+                    if (userName != null && password != null) {
+                        connection.sendReceive(
+                            Code.AUTH,
+                            null,
+                            InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
+                        ).assertException()
+                    }
+                    return connection
+                } catch (e: Throwable) {
+                    con.close()
+                    throw e
                 }
-                return connection
-            } catch (e: Throwable) {
-                con.close()
-                throw e
-            } finally {
-                buf.close()
             }
         }
     }
@@ -172,43 +171,42 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
 
     init {
         async2 {
-            val buf = ByteBuffer.alloc(8)
-            try {
-                val packageReader = AsyncInputWithCounter(connectionReference)
-                while (!closed) {
-                    val vv = connectionReference.readByte(buf).toUByte()
-                    if (vv != 0xce.toUByte()) {
-                        throw IOException("Invalid Protocol Header Response")
+            ByteBuffer.alloc(8) { buf ->
+                try {
+                    val packageReader = AsyncInputWithCounter(connectionReference)
+                    while (!closed) {
+                        val vv = connectionReference.readByte(buf).toUByte()
+                        if (vv != 0xce.toUByte()) {
+                            throw IOException("Invalid Protocol Header Response")
+                        }
+                        val size = connectionReference.readInt(buf)
+                        buf.clear()
+                        packageReader.limit = size
+                        val msg = InternalProtocolUtils.unpack(buf, packageReader)
+                        val headers = msg as Map<Int, Any?>
+                        val body = if (packageReader.limit > 0) {
+                            InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
+                        } else
+                            emptyMap()
+                        val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
+                        val pkg = Package(
+                            header = headers,
+                            body = body
+                        )
+                        requests.remove(serial)?.resumeWith(Result.success(pkg))
                     }
-                    val size = connectionReference.readInt(buf)
-                    buf.clear()
-                    packageReader.limit = size
-                    val msg = InternalProtocolUtils.unpack(buf, packageReader)
-                    val headers = msg as Map<Int, Any?>
-                    val body = if (packageReader.limit > 0) {
-                        InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
-                    } else
-                        emptyMap()
-                    val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
-                    val pkg = Package(
-                        header = headers,
-                        body = body
-                    )
-                    requests.remove(serial)?.resumeWith(Result.success(pkg))
+                } catch (e: SocketClosedException) {
+                    requests.forEach {
+                        it.value.resumeWithException(e)
+                    }
+                    requests.clear()
+                    connected = false
+                    //NOP
+                } catch (e: ClosedException) {
+                    //NOP
+                } catch (e: Throwable) {
+                    asyncClose()
                 }
-            } catch (e: SocketClosedException) {
-                requests.forEach {
-                    it.value.resumeWithException(e)
-                }
-                requests.clear()
-                connected = false
-                //NOP
-            } catch (e: ClosedException) {
-                //NOP
-            } catch (e: Throwable) {
-                asyncClose()
-            } finally {
-                buf.close()
             }
         }
     }

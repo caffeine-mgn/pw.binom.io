@@ -20,7 +20,10 @@ class PoolAsyncBufferedOutputDeprecated(bufferSize: Int) : AbstractAsyncBuffered
     }
 
     override suspend fun asyncClose() {
-        super.asyncClose()
-        buffer.close()
+        try {
+            super.asyncClose()
+        } finally {
+            buffer.close()
+        }
     }
 }

@@ -16,7 +16,8 @@ internal class UrlConnectImpl(
     val method: String,
     val URI: URI,
     val client: AsyncHttpClient,
-    val outputFlushSize: Int) : AsyncHttpClient.UrlConnect {
+    val outputFlushSize: Int
+) : AsyncHttpClient.UrlConnect {
     override val headers: MutableMap<String, MutableList<String>> = HashMap()
     private var requestSent = false
     private var clientDataLength: ULong? = null
@@ -54,7 +55,8 @@ internal class UrlConnectImpl(
                 }
             }
             if (!chanked) {
-                chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
+                chanked =
+                    clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
             }
         }
         val connection = client.borrowConnection(URI)
@@ -80,12 +82,12 @@ internal class UrlConnectImpl(
         sendRequest(true)
         val channel = channel!!
         return UrlRequestImpl(
-                headers = headers,
-                channel = channel,
-                connection = this,
-                flushBuffer = outputFlushSize,
-                compressBufferSize = DEFAULT_BUFFER_SIZE,
-                compressLevel = 6
+            headers = headers,
+            channel = channel,
+            connection = this,
+            flushBuffer = outputFlushSize,
+            compressBufferSize = DEFAULT_BUFFER_SIZE,
+            compressLevel = 6
         )
 //        val chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
 //        if (!chanked && clientDataLength == null) {
@@ -124,12 +126,12 @@ internal class UrlConnectImpl(
         }
         this.channel = null
         return UrlResponseImpl(
-                responseCode = responseCode,
-                headers = responseHeaders,
-                channel = channel,
-                client = client,
-                URI = URI,
-                input = buffered
+            responseCode = responseCode,
+            headers = responseHeaders,
+            channel = channel,
+            client = client,
+            URI = URI,
+            input = buffered
         )
     }
 
@@ -138,7 +140,7 @@ internal class UrlConnectImpl(
         sendRequest(false)
         val channel = channel!!
         if (chanked) {
-            ByteBuffer.alloc(5).use { buf ->
+            ByteBuffer.alloc(5) { buf ->
                 buf.put('0'.toByte())
                 buf.put('\r'.toByte())
                 buf.put('\n'.toByte())
@@ -160,13 +162,13 @@ internal class UrlConnectImpl(
             addHeader(Headers.ORIGIN, origin)
 
         val requestKey = StringBuilder().let { sb ->
-            val buf = ByteBuffer.alloc(16)
-            Random.nextBytes(buf)
-
-            Base64EncodeOutput(sb).use {
-                buf.clear()
-                it.write(buf)
-                buf.close()
+            ByteBuffer.alloc(16) { buf ->
+                Random.nextBytes(buf)
+                Base64EncodeOutput(sb).use {
+                    buf.clear()
+                    it.write(buf)
+                    buf.close()
+                }
             }
             sb.toString()
         }

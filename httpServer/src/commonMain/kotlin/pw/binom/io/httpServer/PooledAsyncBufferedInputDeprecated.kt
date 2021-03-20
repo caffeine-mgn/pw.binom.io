@@ -31,7 +31,10 @@ internal class PooledAsyncBufferedInputDeprecated(bufferSize: Int) : AbstractAsy
         get() = currentStream
 
     override suspend fun asyncClose() {
-        super.asyncClose()
-        buffer.close()
+        try {
+            super.asyncClose()
+        } finally {
+            buffer.close()
+        }
     }
 }

@@ -95,7 +95,8 @@ open class AsyncDeflaterOutput(
         closed = true
         try {
             busy = true
-            deflater.close()
+            runCatching { deflater.close() }
+            runCatching { buffer.close() }
             if (closeStream) {
                 stream.asyncClose()
             }

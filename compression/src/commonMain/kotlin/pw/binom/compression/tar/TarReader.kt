@@ -1,12 +1,9 @@
 package pw.binom.compression.tar
 
-import pw.binom.ByteBuffer
-import pw.binom.Input
-import pw.binom.asUTF8String
+import pw.binom.*
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import pw.binom.io.StreamClosedException
-import pw.binom.set
 
 internal const val BLOCK_SIZE = 512
 
@@ -23,13 +20,13 @@ internal fun ByteBuffer.oct2ToUInt(startIndex: Int = 0, length: Int = capacity -
 class TarReader(private val stream: Input) : Closeable {
 
     inner class TarEntity(
-            val name: String,
-            val size: UInt,
-            val uid: UInt,
-            val gid: UInt,
-            val type: TarEntityType,
-            val mode: UInt,
-            val time: Long
+        val name: String,
+        val size: UInt,
+        val uid: UInt,
+        val gid: UInt,
+        val type: TarEntityType,
+        val mode: UInt,
+        val time: Long
     ) : Input {
         override fun read(dest: ByteBuffer): Int {
             if (currentEntity != this)
@@ -98,7 +95,7 @@ class TarReader(private val stream: Input) : Closeable {
             return null
         }
         val nameSize = header.indexOfFirst { it == 0.toByte() }
-        var name = header.set(header.position,nameSize){
+        var name = header.set(header.position, nameSize) {
             it.asUTF8String()
         }
         var size = header.oct2ToUInt(124, 12)
@@ -107,12 +104,13 @@ class TarReader(private val stream: Input) : Closeable {
             var fullSize = size / BLOCK_SIZE.toUInt() * BLOCK_SIZE.toUInt()
             if (size % BLOCK_SIZE.toUInt() > 0u)
                 fullSize += BLOCK_SIZE.toUInt()
-            val nameBuf = ByteBuffer.alloc(size.toInt() - 1)//ByteArray(size.toInt() - 1)
-            stream.read(nameBuf)
-            stream.skip((fullSize - size).toInt() + 1)
-            nameBuf.flip()
-            name = nameBuf.asUTF8String()
-            nameBuf.close()
+            ByteBuffer.alloc(size.toInt() - 1) { nameBuf ->
+                stream.read(nameBuf)
+                stream.skip((fullSize - size).toInt() + 1)
+                nameBuf.flip()
+                name = nameBuf.asUTF8String()
+                nameBuf.close()
+            }
             stream.read(header)
             size = header.oct2ToUInt(124, 12)
             typeNum = header[156]
@@ -120,24 +118,25 @@ class TarReader(private val stream: Input) : Closeable {
         val mode = header.oct2ToUInt(100, 8)
         val uid = header.oct2ToUInt(108, 8)
         val gid = header.oct2ToUInt(116, 8)
-        val time = header.set(136,11){
+        val time = header.set(136, 11) {
             it.asUTF8String()
         }.toLong()
         val chksum = header.oct2ToUInt(148, 8)
         currentEntity = TarEntity(
-                name = name,
-                size = size,
-                uid = uid,
-                gid = gid,
-                mode = mode,
-                time = time,
-                type = TarEntityType.findByCode(typeNum) ?: throw IOException("Unknown Entity Type $typeNum")
+            name = name,
+            size = size,
+            uid = uid,
+            gid = gid,
+            mode = mode,
+            time = time,
+            type = TarEntityType.findByCode(typeNum) ?: throw IOException("Unknown Entity Type $typeNum")
         )
         cursor = 0
         return currentEntity!!
     }
 
     override fun close() {
+        tmp.close()
         header.close()
     }
 }

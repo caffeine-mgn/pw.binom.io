@@ -1,7 +1,6 @@
 package pw.binom.network
 
-import pw.binom.BaseFuture
-import pw.binom.Future2
+import pw.binom.NonFreezableFuture
 import pw.binom.PopResult
 import pw.binom.concurrency.*
 import pw.binom.io.Closeable
@@ -9,31 +8,20 @@ import kotlin.coroutines.*
 
 class NetworkDispatcher : Closeable {
     private val selector = Selector.open()
-
-    //    private val wakeUpConnection = openUdp()
     private val internalUdpContinuation = UdpSocketChannel()
     private val internalContinuation =
         CrossThreadKeyHolder(selector.attach(internalUdpContinuation, 0, internalUdpContinuation))
-    internal val crossThreadWakeUpHolder = internalContinuation//wakeUpConnection.holder
+    internal val crossThreadWakeUpHolder = internalContinuation
     private val crossThreadWaiterResultHolder = PopResult<() -> Unit>()
 
-//    class Awakener(val key: CrossThreadKeyHolder) {
-//        fun wakeup(func: (() -> Unit)? = null) {
-//            key.waitReadyForWrite { func?.invoke() }
-//        }
-//
-//        init {
-//            doFreeze()
-//        }
-//    }
+    suspend fun yield() {
+        suspendCoroutine<Unit> {
+            internalContinuation.waitReadyForWrite { it.resume(Unit) }
+        }
+    }
 
-    /**
-     * Special object for wakeup NetworkDispatcher in selecting mode from other thread.
-     */
-//    val awakener = Awakener(wakeUpConnection.holder)
-
-    fun <R> async(executor: ExecutorService? = null, func: suspend () -> R): Future2<R> {
-        val future = BaseFuture<R>()
+    fun <R> async(executor: ExecutorService? = null, func: suspend () -> R): NonFreezableFuture<R> {
+        val future = NonFreezableFuture<R>()
         func.startCoroutine(object : Continuation<R> {
             override val context: CoroutineContext = run {
                 var ctx =
@@ -54,7 +42,6 @@ class NetworkDispatcher : Closeable {
 
     fun select(timeout: Long = -1L) =
         selector.select(timeout) { key, mode ->
-            println("mode: [$mode], key=[$key]")
             val attachment = key.attachment
             if (attachment === internalUdpContinuation) {
                 while (true) {

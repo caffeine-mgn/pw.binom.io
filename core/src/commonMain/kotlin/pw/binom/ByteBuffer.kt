@@ -4,6 +4,7 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.io.UTF8
+import pw.binom.io.use
 import pw.binom.pool.DefaultPool
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -50,12 +51,7 @@ inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): 
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
-    val bytes = alloc(size)
-    return try {
-        block(bytes)
-    } finally {
-        bytes.close()
-    }
+    return alloc(size).use(block)
 }
 
 /**

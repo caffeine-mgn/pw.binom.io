@@ -213,8 +213,7 @@ internal object InternalProtocolUtils {
     }
 
     fun buildMessagePackage(header: Map<Int, Any?>, data: Map<Any, Any?>, out: ByteArrayOutput) {
-        val buf = ByteBuffer.alloc(8)
-        try {
+        ByteBuffer.alloc(8) { buf ->
             out.writeByte(buf, (0xce).toByte())
             out.writeInt(buf, 0)
             writeValue(header, buf, out)
@@ -224,8 +223,6 @@ internal object InternalProtocolUtils {
             out.data.writeInt(buf, l - 5)
             out.data.position = 0
             out.data.limit = l
-        } finally {
-            buf.close()
         }
     }
 
@@ -421,7 +418,7 @@ private const val MP_INT64 = 0xd3.toByte()
 private const val MP_FIXARRAY = 0x90.toByte() //last 4 bits is size
 private const val MP_ARRAY1 = 0x91.toByte()
 private const val MP_FIXEXT = 0xd8.toByte()
-private const val MP_DECIMAL  = 0x01.toByte()
+private const val MP_DECIMAL = 0x01.toByte()
 private const val MP_UUID = 0x02.toByte()
 private const val MP_FIXARRAY_INT = 0x90
 private const val MP_ARRAY16 = 0xdc.toByte()

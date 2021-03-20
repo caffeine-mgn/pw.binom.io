@@ -12,6 +12,10 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
 
+    init {
+        BYTE_BUFFER_COUNTER.increment()
+    }
+
     private val native = createNativeByteBuffer(capacity)!!
 
     private var closed by AtomicBoolean(false)
@@ -83,6 +87,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     override fun close() {
         checkClosed()
         destroyNativeByteBuffer(native)
+        BYTE_BUFFER_COUNTER.decrement()
         closed = true
     }
 

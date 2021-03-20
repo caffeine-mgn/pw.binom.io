@@ -183,7 +183,7 @@ class AsyncConnectionPool constructor(
 
     override suspend fun asyncClose() {
         connections.forEach {
-            it.asyncClose()
+            runCatching { it.asyncClose() }
         }
     }
 }

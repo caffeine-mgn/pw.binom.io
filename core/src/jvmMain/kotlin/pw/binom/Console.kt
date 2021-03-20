@@ -27,11 +27,11 @@ actual object Console {
 
     }
 
-    actual val stdChannel: Output = Out(System.out)
-    actual val errChannel: Output = Out(System.err)
+    actual val stdChannel: Output = Out(java.lang.System.out)
+    actual val errChannel: Output = Out(java.lang.System.err)
 
     actual val inChannel: Input = object : Input {
-        val cc = Channels.newChannel(System.`in`)
+        val cc = Channels.newChannel(java.lang.System.`in`)
 //        override fun skip(length: Long): Long {
 //            var l = length
 //            while (l > 0) {

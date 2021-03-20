@@ -3,6 +3,7 @@ package pw.binom.compression.zlib
 import pw.binom.ByteBuffer
 import pw.binom.Output
 import pw.binom.io.CRC32
+import pw.binom.io.use
 
 class GZIPOutput(
         stream: Output,
@@ -42,9 +43,21 @@ class GZIPOutput(
     override fun finish() {
         writeHeader()
         super.finish()
-        val trailer = ByteBuffer.alloc(TRAILER_SIZE)
-        writeTrailer(trailer)
-        stream.write(trailer)
+
+        fun write(buf: ByteBuffer) {
+            writeTrailer(buf)
+            buf.flip()
+            stream.write(buf)
+        }
+
+        if (buf.remaining > TRAILER_SIZE) {
+            buf.clear()
+            write(buf)
+        } else {
+            ByteBuffer.alloc(TRAILER_SIZE).use { trailer ->
+                write(trailer)
+            }
+        }
     }
 
     private fun writeTrailer(buf: ByteBuffer) {

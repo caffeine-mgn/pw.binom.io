@@ -1,6 +1,10 @@
 package pw.binom
 
+import pw.binom.atomic.AtomicLong
 import pw.binom.base64.shl
+
+val SELECTOR_COUNTER = AtomicLong(0)
+val BYTE_BUFFER_COUNTER = AtomicLong(0)
 
 operator fun Long.get(index: Int): Byte {
     if (index !in 0..7)

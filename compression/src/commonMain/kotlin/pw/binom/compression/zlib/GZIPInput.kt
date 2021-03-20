@@ -25,9 +25,12 @@ class GZIPInput(
     }
 
     override fun close() {
-        tmpbuf.close()
-        tt.close()
-        super.close()
+        try {
+            super.close()
+        } finally {
+            tmpbuf.close()
+            tt.close()
+        }
     }
 
 //    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {

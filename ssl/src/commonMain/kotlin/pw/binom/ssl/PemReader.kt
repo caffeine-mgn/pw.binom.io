@@ -4,7 +4,7 @@ import pw.binom.base64.Base64DecodeAppendable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
 import pw.binom.io.Reader
-import pw.binom.io.readln
+import pw.binom.io.use
 
 class PemReader(private val reader: Reader) : Closeable {
     override fun close() {
@@ -18,19 +18,19 @@ class PemReader(private val reader: Reader) : Closeable {
             throw IllegalStateException("Invalid line $line")
         val type = line.removePrefix("-----BEGIN ").removeSuffix("-----")
         val o = ByteArrayOutput()
-        val b = Base64DecodeAppendable(o)
-
-        while (true) {
-            line = reader.readln() ?: break
-            if (line == "-----END $type-----")
-                break
-            b.append(line)
+        return Base64DecodeAppendable(o).use { b ->
+            while (true) {
+                line = reader.readln() ?: break
+                if (line == "-----END $type-----")
+                    break
+                b.append(line)
+            }
+            o.trimToSize()
+            o.data.clear()
+            val array = o.data.toByteArray()
+            o.close()
+            PemObject(type, array)
         }
-        o.trimToSize()
-        o.data.clear()
-        val array = o.data.toByteArray()
-        o.close()
-        return PemObject(type, array)
     }
 
     class PemObject(val type: String, val date: ByteArray)

@@ -1,7 +1,7 @@
 package pw.binom.base64
 
 import pw.binom.ByteBuffer
-import pw.binom.empty
+import pw.binom.alloc
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.use
 import pw.binom.writeByte
@@ -10,16 +10,13 @@ object Base64 {
 
     fun encode(data: ByteArray): String {
         val sb = StringBuilder()
-        val buf = ByteBuffer.alloc(1)
-        try {
-            Base64EncodeOutput(sb).use {
+        return ByteBuffer.alloc(1) { buf ->
+            Base64EncodeOutput(sb).use { encoder ->
                 data.forEach { b ->
-                    it.writeByte(buf, b)
+                    encoder.writeByte(buf, b)
                 }
             }
-            return sb.toString()
-        } finally {
-            buf.close()
+            sb.toString()
         }
     }
 
@@ -33,8 +30,9 @@ object Base64 {
 
     fun decode(data: String, offset: Int = 0, length: Int = data.length - offset): ByteArray {
         val out = ByteArrayOutput()
-        val o = Base64DecodeAppendable(out)
-        o.append(data, offset, offset + length)
+        Base64DecodeAppendable(out).use { o ->
+            o.append(data, offset, offset + length)
+        }
         out.trimToSize()
         out.data.clear()
         val byteArray = out.data.toByteArray()

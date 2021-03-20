@@ -113,4 +113,13 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
         }
         return b
     }
+
+    override suspend fun asyncClose() {
+        try {
+            super.asyncClose()
+        } finally {
+            tt.close()
+            tmpbuf.close()
+        }
+    }
 }

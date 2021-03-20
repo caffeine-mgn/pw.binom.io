@@ -5,6 +5,8 @@
 * New Async HTTP Client Implement
 * New Async HTTP Server Implement
 * New URL Implement
+* URN Implement
+* Fix Memory Leak on Linux
 
 ### 0.1.28
 

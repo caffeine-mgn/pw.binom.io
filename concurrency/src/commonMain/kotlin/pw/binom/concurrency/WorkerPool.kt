@@ -1,6 +1,6 @@
 package pw.binom.concurrency
 
-import pw.binom.BaseFuture
+import pw.binom.FreezableFuture
 import pw.binom.Future2
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
@@ -93,7 +93,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
     }
 
     override fun <T> submit(f: () -> T): Future2<T> {
-        val future = BaseFuture<T>()
+        val future = FreezableFuture<T>()
         val freeWorker = list.find { it.taskCount == 0 }
         if (freeWorker != null) {
             freeWorker.execute(
@@ -119,7 +119,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
         return future
     }
 
-    private data class ExecuteParams<T>(val future: BaseFuture<T>, val worker: Worker, val f: () -> T, val state: State)
+    private data class ExecuteParams<T>(val future: FreezableFuture<T>, val worker: Worker, val f: () -> T, val state: State)
 
     init {
         doFreeze()

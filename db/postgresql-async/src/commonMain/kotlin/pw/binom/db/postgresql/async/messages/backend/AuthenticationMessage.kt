@@ -5,7 +5,7 @@ import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.readInt
+import pw.binom.*
 
 const val AuthenticationOk = 0
 const val AuthenticationKerberosV5 = 2
@@ -58,16 +58,16 @@ sealed class AuthenticationMessage : KindedMessage {
                 AuthenticationCleartextPassword -> AuthenticationChallengeCleartextMessage
                 AuthenticationMD5Password -> {
                     val buf2 = ByteArray(ctx.length - Int.SIZE_BYTES)
-                    val tmp2 = ByteBuffer.alloc(buf2.size)
-                    while (true) {
-                        ctx.input.read(tmp2)
-                        if (tmp2.remaining==0) {
-                            break
+                    ByteBuffer.alloc(buf2.size) { tmp2 ->
+                        while (true) {
+                            ctx.input.read(tmp2)
+                            if (tmp2.remaining == 0) {
+                                break
+                            }
                         }
+                        tmp2.flip()
+                        tmp2.get(buf2)
                     }
-                    tmp2.flip()
-                    tmp2.get(buf2)
-                    tmp2.close()
 //                    var l = buf2.size
 //                    while (l > 0) {
 //                        buf.position = 0

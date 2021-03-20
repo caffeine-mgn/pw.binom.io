@@ -11,15 +11,22 @@ import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.websocket.ServerWebSocketConnection
 
 internal class HttpRequest2Impl(
-    val channel: AsyncAsciiChannel,
+    val channel: ServerAsyncAsciiChannel,
     val server: HttpServer,
     override val method: String,
     override val headers: Headers,
     override val urn: URN
 ) : HttpRequest {
     companion object {
-        suspend fun read(channel: AsyncAsciiChannel, server: HttpServer): HttpRequest2Impl {
+        suspend fun read(
+            channel: ServerAsyncAsciiChannel,
+            server: HttpServer,
+            isNewConnect: Boolean
+        ): HttpRequest2Impl {
             val request = channel.reader.readln()!!
+            if (!isNewConnect) {
+                server.browConnection(channel)
+            }
             val items = request.split(' ', limit = 3)
 
             val headers = HashHeaders()
@@ -148,14 +155,14 @@ internal class HttpRequest2Impl(
         if (startedResponse != null) {
             throw IllegalStateException("Response already got")
         }
-        ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { buf ->
+        ByteBuffer.alloc(DEFAULT_BUFFER_SIZE) { buf ->
             if (readInput == null) {
                 readBinary().use {
                     it.skipAll(buf)
                 }
             }
         }
-        var r = HttpResponse2Impl(this)
+        val r = HttpResponse2Impl(this)
         startedResponse = r
         return r
     }
@@ -192,7 +199,7 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
             } == true -> "deflate"
             else -> "identity"
         }
-        headers.keepAlive = req.headers.keepAlive
+        headers.keepAlive = req.server.maxIdleTime > 0 && req.headers.keepAlive
     }
 
     private var closed = false
@@ -303,7 +310,7 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
         sendRequest()
         req.channel.writer.flush()
         if (req.headers.keepAlive && headers.keepAlive) {
-            req.server.clientProcessing(req.channel)
+            req.server.clientReProcessing(req.channel)
         } else {
             runCatching { req.channel.asyncClose() }
         }
@@ -326,7 +333,7 @@ private class AsyncContentLengthOutput2(
         }
         super.asyncClose()
         if (keepAlive) {
-            req.server.clientProcessing(req.channel)
+            req.server.clientReProcessing(req.channel)
         } else {
             req.channel.asyncClose()
         }
@@ -345,7 +352,7 @@ private class AsyncChunkedOutput2(
     override suspend fun asyncClose() {
         super.asyncClose()
         if (keepAlive) {
-            req.server.clientProcessing(req.channel)
+            req.server.clientReProcessing(req.channel)
         } else {
             req.channel.asyncClose()
         }

@@ -163,27 +163,29 @@ class PGConnection private constructor(
     }
 
     private suspend fun sendFirstMessage(properties: Map<String, String>) {
-        val buf2 = ByteArrayOutput()
-        val o = buf2.bufferedAsciiWriter()
-        val buf = ByteBuffer.alloc(8)
-        o.writeInt(buf, 0)
-        o.writeShort(buf, 3)
-        o.writeShort(buf, 0)
-        properties.forEach {
-            o.append(it.key)
-            o.writeByte(buf, 0)
-            o.append(it.value)
-            o.writeByte(buf, 0)
+        ByteArrayOutput().use { buf2 ->
+            val o = buf2.bufferedAsciiWriter()
+            ByteBuffer.alloc(8) { buf ->
+                o.writeInt(buf, 0)
+                o.writeShort(buf, 3)
+                o.writeShort(buf, 0)
+                properties.forEach {
+                    o.append(it.key)
+                    o.writeByte(buf, 0)
+                    o.append(it.value)
+                    o.writeByte(buf, 0)
+                }
+                o.writeByte(buf, 0)
+                o.flush()
+                val pos = buf2.data.position
+                buf2.data.position = 0
+                buf2.data.writeInt(buf, (buf2.size))
+                buf2.data.position = pos
+                buf2.data.flip()
+            }
+            connection.write(buf2.data)
+            connection.flush()
         }
-        o.writeByte(buf, 0)
-        o.flush()
-        val pos = buf2.data.position
-        buf2.data.position = 0
-        buf2.data.writeInt(buf, (buf2.size))
-        buf2.data.position = pos
-        buf2.data.flip()
-        connection.write(buf2.data)
-        connection.flush()
         val msg = readDesponse()
         val authRequest = when (msg) {
             is AuthenticationMessage.AuthenticationChallengeCleartextMessage -> {

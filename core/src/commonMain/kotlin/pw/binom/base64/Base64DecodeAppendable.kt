@@ -2,20 +2,21 @@ package pw.binom.base64
 
 import pw.binom.ByteBuffer
 import pw.binom.Output
+import pw.binom.io.Closeable
 import pw.binom.writeByte
 import kotlin.experimental.or
 
 internal fun charFromBase64(value: Char): Byte =
-        when (value) {
-            in ('A'..'Z') -> (value.toInt() - 'A'.toInt()).toByte()
-            in ('a'..'z') -> (26 + value.toInt() - 'a'.toInt()).toByte()
-            in ('0'..'9') -> (52 + value.toInt() - '0'.toInt()).toByte()
-            '+' -> 62.toByte()
-            '/' -> 63.toByte()
-            else -> throw IllegalArgumentException("Invalid char [$value] (0x${value.toInt().toString(16)})")
-        }
+    when (value) {
+        in ('A'..'Z') -> (value.toInt() - 'A'.toInt()).toByte()
+        in ('a'..'z') -> (26 + value.toInt() - 'a'.toInt()).toByte()
+        in ('0'..'9') -> (52 + value.toInt() - '0'.toInt()).toByte()
+        '+' -> 62.toByte()
+        '/' -> 63.toByte()
+        else -> throw IllegalArgumentException("Invalid char [$value] (0x${value.toInt().toString(16)})")
+    }
 
-class Base64DecodeAppendable(val stream: Output) : Appendable {
+class Base64DecodeAppendable(val stream: Output) : Appendable, Closeable {
 
     private var g = 0
     private var b = 0.toByte()
@@ -65,5 +66,9 @@ class Base64DecodeAppendable(val stream: Output) : Appendable {
             append(csq[it])
         }
         return this
+    }
+
+    override fun close() {
+        buf.close()
     }
 }

@@ -121,10 +121,11 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
 
     override suspend fun asyncClose() {
         checkClosed()
-        if (!isEof){
+        if (!isEof) {
             skipAll()
         }
         closed = true
+        staticData.close()
         if (closeStream) {
             stream.asyncClose()
         }

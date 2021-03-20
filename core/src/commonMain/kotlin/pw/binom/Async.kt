@@ -22,11 +22,11 @@ class FeaturePromise<T> {
 }
 
 suspend fun <T> FeaturePromise<T>.await(): T =
-        suspendCoroutine {
-            this.onResume { result ->
-                it.resumeWith(result)
-            }
+    suspendCoroutine {
+        this.onResume { result ->
+            it.resumeWith(result)
         }
+    }
 
 fun <P, T> (suspend (P) -> T).start(value: P): FeaturePromise<T> {
     val promise = FeaturePromise<T>()
@@ -51,8 +51,8 @@ fun <T> (suspend () -> T).start() {
 
 fun <P> async(f: suspend () -> P) = f.start()
 
-fun <T> (suspend () -> T).start2(): BaseFuture<T> {
-    val promise = BaseFuture<T>()
+fun <T> (suspend () -> T).start2(): NonFreezableFuture<T> {
+    val promise = NonFreezableFuture<T>()
     this.startCoroutine(object : Continuation<T> {
         override val context: CoroutineContext = EmptyCoroutineContext
 

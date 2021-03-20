@@ -105,15 +105,18 @@ class AsyncSSLChannel private constructor(
     }
 
     override suspend fun asyncClose() {
-        flush()
-        if (closeParent) {
-            session.close()
-            channel.asyncClose()
-        }
-        if (closeBuffer) {
-            buffer.close()
-        } else {
-            pool?.recycle(buffer)
+        try {
+            flush()
+            if (closeParent) {
+                session.close()
+                channel.asyncClose()
+            }
+        } finally {
+            if (closeBuffer) {
+                buffer.close()
+            } else {
+                pool?.recycle(buffer)
+            }
         }
     }
 

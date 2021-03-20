@@ -7,12 +7,8 @@ interface Future2<T> {
 
     companion object {
         fun <T> success(result: T): Future2<T> = SuccessFuture2(result)
+        fun <T> fail(result: Throwable): Future2<T> = FailFuture2(result)
     }
-
-    /**
-     * Function will call on Future has done. Can be called on other thread. [func] will be freeze
-     */
-    var onDone: ((Result<T>) -> Unit)?
 
     /**
      * Getting current result value. If Future not ready will throw FutureNotReadyException
@@ -44,6 +40,7 @@ interface Future2<T> {
      * Throws whan future not ready
      */
     class FutureNotReadyException : IllegalStateException()
+    class FutureAlreadyResumedException : IllegalStateException()
 }
 
 fun <T> Future2<T>.getOrException(): T {
@@ -54,7 +51,6 @@ fun <T> Future2<T>.getOrException(): T {
 }
 
 private class SuccessFuture2<T>(val result: T) : Future2<T> {
-
     override val resultOrNull: T?
         get() = result
     override val isSuccess: Boolean
@@ -63,14 +59,53 @@ private class SuccessFuture2<T>(val result: T) : Future2<T> {
         get() = null
     override val isDone: Boolean
         get() = true
-    override var onDone: ((Result<T>) -> Unit)?
-        get() = null
-        set(value) {
-            value?.invoke(Result.success(result))
-        }
 }
 
-class BaseFuture<T> : Future2<T> {
+private class FailFuture2<T>(val result: Throwable) : Future2<T> {
+    override val resultOrNull: T?
+        get() = null
+    override val isSuccess: Boolean
+        get() = false
+    override val exceptionOrNull: Throwable?
+        get() = result
+    override val isDone: Boolean
+        get() = true
+}
+
+class NonFreezableFuture<T> : Future2<T> {
+    init {
+        neverFreeze()
+    }
+
+    private var result: Any? = null
+    override val resultOrNull: T?
+        get() = if (isSuccess) result as T else null
+    override var isSuccess: Boolean = false
+        get() {
+            if (!isDone) {
+                throw Future2.FutureNotReadyException()
+            }
+            return field
+        }
+        private set
+
+    override val exceptionOrNull: Throwable?
+        get() = if (!isSuccess) result as Throwable else null
+
+    override var isDone: Boolean = false
+        private set
+
+    fun resume(result: Result<T>) {
+        if (isDone) {
+            throw Future2.FutureAlreadyResumedException()
+        }
+        isDone = true
+        isSuccess = result.isSuccess
+        this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
+    }
+}
+
+class FreezableFuture<T> : Future2<T> {
 
     override val resultOrNull: T?
         get() {
@@ -102,32 +137,14 @@ class BaseFuture<T> : Future2<T> {
     override val isDone: Boolean
         get() = _isDone.value
 
-    private var onDoneEvent by AtomicReference<((Result<T>) -> Unit)?>(null)
     private var result by AtomicReference<Any?>(null)
-    override var onDone: ((Result<T>) -> Unit)?
-        get() = onDoneEvent
-        set(value) {
-            onDoneEvent = null
-            val r = result
-            if (r != null) {
-                if (value != null) {
-                    val res = if (isSuccess) Result.success(r as T) else Result.failure(r as Throwable)
-                    value.invoke(res)
-                }
-                return
-            }
-            onDoneEvent = value
-        }
 
     fun resume(result: Result<T>) {
         if (!_isDone.compareAndSet(false, true)) {
-            throw IllegalStateException("Future already resumed")
+            throw Future2.FutureAlreadyResumedException()
         }
         _isSuccess.value = result.isSuccess
         this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
-        val r = onDoneEvent
-        onDoneEvent = null
-        r?.invoke(result)
     }
 }
 
