@@ -75,13 +75,13 @@ class PGConnection private constructor(
         }
     }
 
-    private val pw = PackageWriter(this)
+    private val packageWriter = PackageWriter(this)
     internal val charsetUtils = CharsetCoder(charset)
     private var connected = true
     override val isConnected
         get() = connected
-    private val rr = connection.bufferedAsciiReader(closeParent = false)
-    internal val reader = PackageReader(this, charset, rr)
+    private val packageReader = connection.bufferedAsciiReader(closeParent = false)
+    internal val reader = PackageReader(this, charset, packageReader)
     private var credentialMessage = CredentialMessage()
     override val type: String
         get() = TYPE
@@ -135,8 +135,8 @@ class PGConnection private constructor(
     }
 
     internal suspend fun sendOnly(msg: KindedMessage) {
-        msg.write(pw)
-        pw.finishAsync(connection)
+        msg.write(packageWriter)
+        packageWriter.finishAsync(connection)
         connection.flush()
     }
 
@@ -157,8 +157,8 @@ class PGConnection private constructor(
     }
 
     private suspend fun request(msg: KindedMessage): KindedMessage {
-        msg.write(pw)
-        pw.finishAsync(connection)
+        msg.write(packageWriter)
+        packageWriter.finishAsync(connection)
         return readDesponse()
     }
 
@@ -247,13 +247,13 @@ class PGConnection private constructor(
 
     override suspend fun asyncClose() {
         try {
-            sendOnly(Terminate())
-            reader.close()
-            connection.asyncClose()
+            runCatching { sendOnly(Terminate()) }
+            runCatching { reader.close() }
+            runCatching { connection.asyncClose() }
         } finally {
             charsetUtils.close()
-            pw.close()
-            rr.asyncClose()
+            packageWriter.close()
+            packageReader.asyncClose()
         }
     }
 }
