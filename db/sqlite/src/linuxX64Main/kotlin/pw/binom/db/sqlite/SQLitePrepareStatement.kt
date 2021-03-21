@@ -4,6 +4,7 @@ import cnames.structs.sqlite3_stmt
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.free
+import pw.binom.date.Date
 import pw.binom.db.SyncPreparedStatement
 import pw.binom.db.*
 
@@ -51,6 +52,10 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
     override fun set(index: Int, value: ByteArray) {
         checkRange(index)
         connection.checkSqlCode(sqlite3_bind_blob(stmt, index + 1, value.refTo(0), value.size, SQLITE_STATIC))
+    }
+
+    override fun set(index: Int, value: Date) {
+        set(index, value.time)
     }
 
     override fun executeQuery(): SyncResultSet {

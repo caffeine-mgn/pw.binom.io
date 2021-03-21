@@ -1,6 +1,7 @@
 package pw.binom.db.postgresql.async
 
 import pw.binom.UUID
+import pw.binom.date.Date
 import pw.binom.db.AsyncPreparedStatement
 import pw.binom.db.AsyncResultSet
 import pw.binom.db.ResultSet
@@ -74,6 +75,10 @@ class PostgresPreparedStatement(
     }
 
     override fun set(index: Int, value: ByteArray) {
+        params[index] = value
+    }
+
+    override fun set(index: Int, value: Date) {
         params[index] = value
     }
 

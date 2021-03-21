@@ -1,6 +1,8 @@
 package pw.binom.db.sqlite
 
+import pw.binom.date.Date
 import pw.binom.db.SyncPreparedStatement
+import java.sql.Timestamp
 import java.sql.PreparedStatement as JPreparedStatement
 
 class SQLSyncPreparedStatement(override val connection: SQLiteConnector, internal val native: JPreparedStatement) : SyncPreparedStatement {
@@ -26,6 +28,10 @@ class SQLSyncPreparedStatement(override val connection: SQLiteConnector, interna
 
     override fun set(index: Int, value: ByteArray) {
         native.setBytes(index + 1, value)
+    }
+
+    override fun set(index: Int, value: Date) {
+        native.setTimestamp(index, Timestamp(value.time))
     }
 
     override fun setNull(index: Int) {

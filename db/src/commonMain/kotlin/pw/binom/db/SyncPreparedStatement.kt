@@ -1,6 +1,7 @@
 package pw.binom.db
 
 import pw.binom.UUID
+import pw.binom.date.Date
 import pw.binom.io.Closeable
 
 interface SyncPreparedStatement : Closeable {
@@ -11,6 +12,7 @@ interface SyncPreparedStatement : Closeable {
     fun set(index: Int, value: String)
     fun set(index: Int, value: Boolean)
     fun set(index: Int, value: ByteArray)
+    fun set(index: Int, value: Date)
     fun setNull(index: Int)
     fun executeQuery(): SyncResultSet
     fun executeUpdate():Long

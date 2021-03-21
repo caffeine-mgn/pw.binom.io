@@ -1,5 +1,6 @@
 package pw.binom.net
 
+import pw.binom.MalformedURLException
 import pw.binom.io.UTF8
 
 inline class URI internal constructor(val fullPath: String) {
@@ -240,6 +241,15 @@ inline class URI internal constructor(val fullPath: String) {
         appendQuery(key = key, value = value.toString())
 }
 
+/**
+ * Convert current string to [URI]. If current string is invalid URI will throw MalformedURLException
+ * @throws MalformedURLException If current string is invalid URI
+ */
+fun String.toURI() = toURIOrNull ?: throw MalformedURLException()
+
+/**
+ * Convert current string to [URI]. If current string is invalid URI will return null
+ */
 val String.toURIOrNull
     get(): URI? {
         val p = indexOf("//")

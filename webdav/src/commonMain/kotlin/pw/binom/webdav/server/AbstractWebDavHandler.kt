@@ -1,22 +1,16 @@
 package pw.binom.webdav.server
 
 import pw.binom.ByteBuffer
-import pw.binom.net.Path
 import pw.binom.copyTo
 import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.httpServer.*
+import pw.binom.net.Path
+import pw.binom.net.toURI
 import pw.binom.pool.ObjectPool
-import pw.binom.net.toURIOrNull
 import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
-
-//private fun urlEncode(url: String) =
-//    url.splitToSequence("/").map { UTF8.encode(it) }.joinToString("/")
-//
-//private fun urlDecode(url: String) =
-//    url.splitToSequence("/").map { UTF8.decode(it) }.joinToString("/")
 
 suspend fun FileSystem.getD(path: String, d: Int, out: ArrayList<FileSystem.Entity>) {
     if (d <= 0)
@@ -167,7 +161,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "MOVE") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURIOrNull!! }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURI() }
 
                     if (destination == null) {
                         req.response().use {
@@ -194,7 +188,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "COPY") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURIOrNull!! }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURI() }
 
                     if (destination == null) {
                         req.response().use {

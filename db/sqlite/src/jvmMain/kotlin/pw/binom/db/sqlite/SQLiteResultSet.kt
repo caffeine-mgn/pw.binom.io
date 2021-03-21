@@ -17,20 +17,49 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
     }
 
     override fun next() = native.next()
-    override fun getString(index: Int): String? = native.getString(index + 1)
-    override fun getString(column: String): String? = native.getString(column)
+    override fun getString(index: Int): String? {
+        native.getObject(index) ?: return null
+        return native.getString(index + 1)
+    }
+
+    override fun getString(column: String): String? {
+        native.getObject(column) ?: return null
+        return native.getString(column)
+    }
 
     override fun getBoolean(index: Int): Boolean? = getInt(index + 1)?.let { it > 0 }
     override fun getBoolean(column: String): Boolean? = getInt(column)?.let { it > 0 }
 
-    override fun getInt(index: Int): Int? = native.getInt(index + 1)
-    override fun getInt(column: String): Int? = native.getInt(column)
+    override fun getInt(index: Int): Int? {
+        native.getObject(index) ?: return null
+        return native.getInt(index + 1)
+    }
 
-    override fun getLong(index: Int): Long? = native.getLong(index + 1)
-    override fun getLong(column: String): Long? = native.getLong(column)
+    override fun getInt(column: String): Int? {
+        native.getObject(column) ?: return null
+        return native.getInt(column)
+    }
 
-    override fun getFloat(index: Int): Float? = native.getFloat(index + 1)
-    override fun getFloat(column: String): Float? = native.getFloat(column)
+    override fun getLong(index: Int): Long? {
+        native.getObject(index) ?: return null
+        return native.getLong(index + 1)
+    }
+
+    override fun getLong(column: String): Long? {
+        native.getObject(column) ?: return null
+        return native.getLong(column)
+    }
+
+    override fun getFloat(index: Int): Float? {
+        native.getObject(index) ?: return null
+        return native.getFloat(index + 1)
+    }
+
+    override fun getFloat(column: String): Float? {
+        native.getObject(column) ?: return null
+        return native.getFloat(column)
+    }
+
     override fun getBigDecimal(index: Int): BigDecimal? {
         TODO("Not yet implemented")
     }
@@ -40,11 +69,13 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
     }
 
     override fun getDouble(index: Int): Double? {
-        TODO("Not yet implemented")
+        native.getObject(index) ?: return null
+        return native.getDouble(index)
     }
 
     override fun getDouble(column: String): Double? {
-        TODO("Not yet implemented")
+        native.getObject(column) ?: return null
+        return native.getDouble(column)
     }
 
     override fun getBlob(index: Int): ByteArray? {
@@ -66,11 +97,13 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
         native.getObject(column) == null
 
     override fun getDate(index: Int): Date? {
-        TODO("Not yet implemented")
+        native.getObject(index) ?: return null
+        return Date(native.getTimestamp(index).time)
     }
 
     override fun getDate(column: String): Date? {
-        TODO("Not yet implemented")
+        native.getObject(column) ?: return null
+        return Date(native.getTimestamp(column).time)
     }
 
     override fun close() {

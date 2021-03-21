@@ -3,6 +3,7 @@ package pw.binom.db.sqlite
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
+import platform.posix.getlogin
 import pw.binom.date.Date
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
@@ -115,11 +116,7 @@ class SQLiteResultSet(
             getLong(columnIndex(column))
 
     override fun getFloat(index: Int): Float? {
-        checkRange(index)
-        if (isNullColumn(index)) {
-            return null
-        }
-        return sqlite3_column_double(stmt, index).toFloat()
+        return getDouble(index)?.toFloat()
     }
 
     override fun getFloat(column: String):Float? =
@@ -134,12 +131,15 @@ class SQLiteResultSet(
     }
 
     override fun getDouble(index: Int): Double? {
-        TODO("Not yet implemented")
+        checkRange(index)
+        if (isNullColumn(index)) {
+            return null
+        }
+        return sqlite3_column_double(stmt, index)
     }
 
-    override fun getDouble(column: String): Double? {
-        TODO("Not yet implemented")
-    }
+    override fun getDouble(column: String): Double? =
+        getDouble(columnIndex(column))
 
     private fun columnIndex(name: String) =
             columnsMap[name] ?: throw SQLException("Column \"$name\" not found")
@@ -153,18 +153,16 @@ class SQLiteResultSet(
     }
 
     private inline fun isNullColumn(index: Int) =
-            sqlite3_column_type(stmt, index) == SQLITE_NULL
+        sqlite3_column_type(stmt, index) == SQLITE_NULL
 
     override fun isNull(column: String) =
-            isNullColumn(columnIndex(column))
+        isNullColumn(columnIndex(column))
 
-    override fun getDate(index: Int): Date? {
-        TODO("Not yet implemented")
-    }
+    override fun getDate(index: Int): Date? =
+        getLong(index)?.let { Date(it) }
 
-    override fun getDate(column: String): Date? {
-        TODO("Not yet implemented")
-    }
+    override fun getDate(column: String): Date? =
+        getDate(columnIndex(column))
 
     private var closed = false
 
