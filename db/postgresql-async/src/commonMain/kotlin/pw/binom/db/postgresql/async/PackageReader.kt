@@ -73,6 +73,7 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
     override fun close() {
         buf16.close()
         buf64.close()
+        output.close()
     }
 
     suspend fun readCString(): String =
@@ -97,8 +98,6 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
         }
         return out
     }
-
-
 
 
 }

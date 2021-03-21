@@ -1,9 +1,11 @@
 package pw.binom.db
 
 import pw.binom.io.AsyncCloseable
+import pw.binom.io.StreamClosedException
 import pw.binom.io.use
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -174,16 +176,24 @@ class AsyncConnectionPool constructor(
             }
         }
 
-        override suspend fun asyncClose() {
+        suspend fun asyncCloseStream() {
             checkClosed()
             closed = true
+            stream.asyncClose()
+        }
+
+        override suspend fun asyncClose() {
             free(this)
         }
     }
 
     override suspend fun asyncClose() {
         connections.forEach {
-            runCatching { it.asyncClose() }
+            runCatching { it.asyncCloseStream() }
+        }
+        connections.clear()
+        waiters.forEach {
+            it.resumeWithException(StreamClosedException())
         }
     }
 }

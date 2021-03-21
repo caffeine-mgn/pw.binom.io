@@ -1,7 +1,7 @@
 package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
-import pw.binom.URI
+import pw.binom.net.URI
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput

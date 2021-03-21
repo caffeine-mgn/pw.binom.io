@@ -1,10 +1,11 @@
-package pw.binom
+package pw.binom.net
+
+import pw.binom.pathMatch
 
 /**
- * Contains URN String
- * @see <a href="https://en.wikipedia.org/wiki/Uniform_Resource_Name">URN</a>
+ * Contains Path String
  */
-inline class URN internal constructor(val raw: String) {
+inline class Path internal constructor(val raw: String) {
     /**
      * Returns true if this urn match for [mask]. Path Variables is support.
      * Example: `"/users/100500/info_data".toURN.isMatch("/users/{id}/info_*")` returns true
@@ -38,7 +39,7 @@ inline class URN internal constructor(val raw: String) {
     fun getVariables(mask: String, desc: MutableMap<String, String>, ignoreDuplicate: Boolean = true) {
         pathMatch(raw, mask) { key, value ->
             if (!ignoreDuplicate && desc.containsKey(key)) {
-                throw IllegalArgumentException("Duplicate Path Variable \"$key\". urn: \"$raw\", mask: \"$mask\"")
+                throw IllegalArgumentException("Duplicate Path Variable \"$key\". path: \"$raw\", mask: \"$mask\"")
             }
             desc[key] = value
             true
@@ -48,11 +49,15 @@ inline class URN internal constructor(val raw: String) {
     fun eachVariables(mask: String, func: (key: String, value: String) -> Boolean) =
         pathMatch(raw, mask, func = func)
 
-    fun appendDirection(direction: String, separator: String = "/") =
-        "${raw.removeSuffix(separator)}$separator${direction.removePrefix(separator)}".toURN
+    fun append(path: String, direction: Boolean = true) =
+        if (direction) {
+            "${raw.removeSuffix("/")}/${path.removePrefix("/")}".toPath
+        } else {
+            "$raw$path".toPath
+        }
 
     override fun toString(): String = raw
 }
 
-val String.toURN
-    get() = URN(this)
+val String.toPath
+    get() = Path(this)

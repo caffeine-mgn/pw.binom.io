@@ -1,0 +1,269 @@
+package pw.binom.net
+
+import pw.binom.io.UTF8
+
+inline class URI internal constructor(val fullPath: String) {
+    companion object {
+        fun new(
+            protocol: String?,
+            user: String?,
+            password: String?,
+            host: String,
+            port: Int?,
+            path: Path,
+            query: Query?,
+            fragment: String?,
+        ): String {
+            val sb = StringBuilder()
+            if (protocol != null) {
+                sb.append(protocol).append(":")
+            }
+            sb.append("//")
+            if (user != null) {
+                sb.append(user)
+            }
+
+            if (password != null) {
+                sb.append(":")
+                sb.append(password)
+            }
+            if (user != null) {
+                sb.append("@")
+            }
+            sb.append(host)
+            if (port != null) {
+                sb.append(":").append(port)
+            }
+            sb.append(path.raw)
+            if (query != null) {
+                sb.append("?").append(query)
+            }
+            if (fragment != null) {
+                sb.append("#").append(fragment)
+            }
+            return sb.toString()
+        }
+    }
+
+    val protocol: String?
+        get() {
+            val p = fullPath.indexOf("//")
+            if (p == 0) {
+                return null
+            }
+            return fullPath.substring(0, p - 1)
+        }
+    val user: String?
+        get() {
+            val p1 = fullPath.indexOf('@')
+            if (p1 == -1) {
+                return null
+            }
+            val p = fullPath.indexOf("//") + 2
+            val b = fullPath.indexOf(':', p + 2)
+            if (b == -1 || b > p1) {
+                return fullPath.substring(p, p1)
+            }
+
+            return fullPath.substring(p, b)
+        }
+    val password: String?
+        get() {
+            val p1 = fullPath.indexOf('@')
+            if (p1 == -1) {
+                return null
+            }
+            val p = fullPath.indexOf("//") + 2
+            val b = fullPath.indexOf(':', p + 2)
+            if (b == -1 || b > p1) {
+                return null
+            }
+
+            return fullPath.substring(b + 1, p1)
+        }
+    val host: String
+        get() {
+            var p = fullPath.indexOf('@') + 1
+            if (p == 0) {
+                p = fullPath.indexOf("//") + 2
+            }
+
+            var e = fullPath.indexOf(':', p + 1)
+            if (e == -1) {
+                e = fullPath.indexOf('/', p + 1)
+            }
+            if (e == -1) {
+                e = fullPath.indexOf('?', p + 1)
+            }
+
+            if (e == -1) {
+                e = fullPath.indexOf('#', p + 1)
+            }
+            if (e == -1) {
+                e = fullPath.length
+            }
+            val t = fullPath.substring(p, e)
+            return fullPath.substring(p, e)
+        }
+    val port: Int?
+        get() {
+            var s = fullPath.indexOf("//") + 2
+            s = fullPath.indexOf(":", s)
+            val c = fullPath.indexOf('@')
+            if (c != -1) {
+                s = fullPath.indexOf(":", c + 1)
+                if (s == -1) {
+                    return null
+                }
+            }
+            if (s == -1) {
+                return null
+            }
+            s++
+
+            val hash = fullPath.indexOf('#', s)
+            val query = fullPath.indexOf('?', s)
+            val end = fullPath.indexOf('/', s)
+            var e = fullPath.length
+            e = when {
+                end != -1 && end < e -> end
+                query != -1 && query < e -> query
+                hash != -1 && hash < e -> hash
+                else -> e
+            }
+            return fullPath.substring(s, e).toInt()
+        }
+    val path: Path
+        get() {
+            var s = fullPath.indexOf("//") + 2
+            s = fullPath.indexOf('/', s)
+            if (s == -1) {
+                return "".toPath
+            }
+            var e = fullPath.indexOf('?')
+            if (e == -1) {
+                e = fullPath.indexOf('#')
+            }
+            if (e == -1) {
+                e = fullPath.length
+            }
+            return fullPath.substring(s, e).toPath
+        }
+
+    /**
+     *
+     * Retuns http request [path]+[query]
+     */
+    val request: String
+        get() {
+            val q = query
+            return if (q == null) {
+                path.raw
+            } else {
+                "${path.raw}?$q"
+            }
+        }
+    val query: Query?
+        get() {
+            val s = fullPath.indexOf('?')
+            if (s == -1) {
+                return null
+            }
+            var e = fullPath.indexOf('#')
+            if (e == -1) {
+                e = fullPath.length
+            }
+            return fullPath.substring(s + 1, e).toQuery
+        }
+    val fragment: String?
+        get() {
+            val s = fullPath.indexOf('#')
+            if (s == -1) {
+                return null
+            }
+            return fullPath.substring(s)
+        }
+
+    fun copy(
+        protocol: String? = this.protocol,
+        user: String? = this.user,
+        password: String? = this.password,
+        host: String = this.host,
+        port: Int? = this.port,
+        path: Path = this.path,
+        query: Query? = this.query,
+        fragment: String? = this.fragment,
+    ) =
+        URI(
+            new(
+                protocol = protocol,
+                user = user,
+                password = password,
+                host = host,
+                port = port,
+                path = path,
+                query = query,
+                fragment = fragment
+            )
+        )
+
+    override fun toString() = fullPath
+
+    /**
+     * Append [path] to current uri path and returns new URI
+     * @param path Path for append
+     * @param direction flag for add "/" between old value of path and appending [path]
+     * @param encode flag for automatic encode appending [path]
+     * @return URI with appended [path]
+     */
+    fun appendPath(path: String, direction: Boolean = true, encode: Boolean = false) =
+        copy(
+            path = this.path.append(path = if (encode) UTF8.urlEncode(path) else path, direction = direction)
+        )
+
+    fun appendQuery(key: String, value: String? = null): URI =
+        copy(query = query?.append(key = key, value = value) ?: Query.new(key = key, value = value))
+
+    fun appendQuery(key: String, value: Int) =
+        appendQuery(key = key, value = value.toString())
+
+    fun appendQuery(key: String, value: Long) =
+        appendQuery(key = key, value = value.toString())
+
+    fun appendQuery(key: String, value: Float) =
+        appendQuery(key = key, value = value.toString())
+
+    fun appendQuery(key: String, value: Byte) =
+        appendQuery(key = key, value = value.toString())
+
+    fun appendQuery(key: String, value: Boolean) =
+        appendQuery(key = key, value = value.toString())
+}
+
+val String.toURIOrNull
+    get(): URI? {
+        val p = indexOf("//")
+        if (p == -1) {
+            return null
+        }
+        if (indexOf("//", p + 1) != -1) {
+            return null
+        }
+        val q = indexOf("?")
+        if (q != -1 && q < p) {
+            return null
+        }
+        if (indexOf("?", q + 1) != -1) {
+            return null
+        }
+
+        val h = indexOf("#")
+        if (h != -1 && q > 0 && h < q) {
+            return null
+        }
+        if (indexOf("#", h + 1) != -1) {
+            return null
+        }
+
+        return URI(this)
+    }

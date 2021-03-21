@@ -2,7 +2,7 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
-import pw.binom.URN
+import pw.binom.net.Path
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncReader
 import pw.binom.io.AsyncWriter
@@ -10,12 +10,11 @@ import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.websocket.WebSocketConnection
 import kotlin.js.JsName
-import kotlin.jvm.JvmName
 
 interface HttpRequest : AsyncCloseable {
     val method: String
     val headers: Headers
-    val urn: URN
+    val urn: Path
     fun readBinary(): AsyncInput
     fun readText(): AsyncReader
     suspend fun acceptWebsocket(): WebSocketConnection

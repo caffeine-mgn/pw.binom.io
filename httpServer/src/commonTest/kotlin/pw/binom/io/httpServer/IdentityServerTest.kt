@@ -6,7 +6,6 @@ import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
-import pw.binom.toURIOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

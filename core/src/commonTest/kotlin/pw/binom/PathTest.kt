@@ -1,10 +1,10 @@
 package pw.binom
 
+import pw.binom.net.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
-class URNTest {
+class PathTest {
     @Test
     fun testPath() {
 //        assertTrue("/123/hello".toURN.isMatch("/{id}/hello"))
@@ -15,7 +15,7 @@ class URNTest {
 //            assertEquals("hello", it.getVariable("id", "/*/{id}"))
 //        }
 
-        "/my_address/my_name".toURN.getVariables("/{id}/{name}").also {
+        "/my_address/my_name".toPath.getVariables("/{id}/{name}").also {
             assertEquals("my_address", it["id"])
             assertEquals("my_name", it["name"])
         }

@@ -1,7 +1,7 @@
 package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
-import pw.binom.URI
+import pw.binom.net.URI
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.skipAll

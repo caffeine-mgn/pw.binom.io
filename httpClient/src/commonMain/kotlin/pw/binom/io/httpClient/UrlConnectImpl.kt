@@ -8,6 +8,7 @@ import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
+import pw.binom.net.URI
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
@@ -62,7 +63,7 @@ internal class UrlConnectImpl(
         val connection = client.borrowConnection(URI)
         val buffered = connection.channel.bufferedOutput(closeStream = false)
         val app = buffered.utf8Appendable()
-        app.append("$method ${URI.urn} HTTP/1.1\r\n")
+        app.append("$method ${URI.path} HTTP/1.1\r\n")
 
         headers.forEach { en ->
             en.value.forEach {

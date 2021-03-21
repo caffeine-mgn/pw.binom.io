@@ -8,6 +8,7 @@ import pw.binom.db.*
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
+import pw.binom.db.postgresql.async.messages.frontend.Terminate
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -75,13 +76,16 @@ class PGConnection private constructor(
     }
 
     private val pw = PackageWriter(this)
-
+    internal val charsetUtils = CharsetCoder(charset)
     private var connected = true
     override val isConnected
         get() = connected
+    private val rr = connection.bufferedAsciiReader(closeParent = false)
+    internal val reader = PackageReader(this, charset, rr)
+    private var credentialMessage = CredentialMessage()
+    override val type: String
+        get() = TYPE
 
-
-    internal val charsetUtils = CharsetCoder(charset)
 
     suspend fun sendQuery(query: String): KindedMessage {
         if (busy)
@@ -92,7 +96,6 @@ class PGConnection private constructor(
     }
 
     suspend fun query(query: String): QueryResponse {
-//        val msg = sendQuery(query)
         if (busy)
             throw IllegalStateException("Connection is busy")
         val msg = this.reader.queryMessage
@@ -147,9 +150,6 @@ class PGConnection private constructor(
         }
     }
 
-    private val rr = connection.bufferedAsciiReader(closeParent = false)
-    internal val reader = PackageReader(this, charset, rr)
-    private var credentialMessage = CredentialMessage()
 
     suspend fun readDesponse(): KindedMessage {
         val msg = KindedMessage.read(reader)
@@ -245,14 +245,15 @@ class PGConnection private constructor(
         query("rollback")
     }
 
-    override val type: String
-        get() = TYPE
-
     override suspend fun asyncClose() {
-        charsetUtils.close()
-        reader.close()
-        pw.close()
-        rr.asyncClose()
-        connection.asyncClose()
+        try {
+            sendOnly(Terminate())
+            reader.close()
+            connection.asyncClose()
+        } finally {
+            charsetUtils.close()
+            pw.close()
+            rr.asyncClose()
+        }
     }
 }

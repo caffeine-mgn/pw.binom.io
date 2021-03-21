@@ -9,13 +9,15 @@ import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.websocket.ServerWebSocketConnection
+import pw.binom.net.Path
+import pw.binom.net.toPath
 
 internal class HttpRequest2Impl(
     val channel: ServerAsyncAsciiChannel,
     val server: HttpServer,
     override val method: String,
     override val headers: Headers,
-    override val urn: URN
+    override val urn: Path
 ) : HttpRequest {
     companion object {
         suspend fun read(
@@ -46,7 +48,7 @@ internal class HttpRequest2Impl(
             }
 
             return HttpRequest2Impl(
-                urn = (items.getOrNull(1) ?: "").toURN,
+                urn = (items.getOrNull(1) ?: "").toPath,
                 method = items[0],
                 channel = channel,
                 headers = headers,

@@ -1,13 +1,13 @@
 package pw.binom.webdav.server
 
 import pw.binom.ByteBuffer
-import pw.binom.URN
+import pw.binom.net.Path
 import pw.binom.copyTo
 import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.httpServer.*
 import pw.binom.pool.ObjectPool
-import pw.binom.toURIOrNull
+import pw.binom.net.toURIOrNull
 import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
@@ -47,8 +47,8 @@ abstract class AbstractWebDavHandler<U> : Handler {
     protected abstract fun getFS(req: HttpRequest): FileSystem
     protected abstract fun getUser(req: HttpRequest): U
 
-    protected abstract fun getGlobalURI(req: HttpRequest): URN
-    protected abstract fun getLocalURI(req: HttpRequest, globalURI: URN): String
+    protected abstract fun getGlobalURI(req: HttpRequest): Path
+    protected abstract fun getLocalURI(req: HttpRequest, globalURI: Path): String
 
     private suspend fun buildRropFind(req: HttpRequest) {
         val fs = getFS(req)
@@ -84,9 +84,9 @@ abstract class AbstractWebDavHandler<U> : Handler {
                             node("href", DAV_NS) {
 
                                 if (e.isFile)
-                                    value(getGlobalURI(req).appendDirection(UTF8.urlEncode(e.path)).raw)
+                                    value(getGlobalURI(req).append(UTF8.urlEncode(e.path)).raw)
                                 else
-                                    value(getGlobalURI(req).appendDirection(UTF8.urlEncode(e.path + "/")).raw)
+                                    value(getGlobalURI(req).append(UTF8.urlEncode(e.path + "/")).raw)
                             }
                             node("propstat", DAV_NS) {
                                 node("prop", DAV_NS) {
@@ -167,7 +167,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "MOVE") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURIOrNull()!! }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURIOrNull!! }
 
                     if (destination == null) {
                         req.response().use {
@@ -175,7 +175,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                         }
                         return@useUser2
                     }
-                    val destinationPath = getLocalURI(req, destination.urn).let { UTF8.urlDecode(it) }
+                    val destinationPath = getLocalURI(req, destination.path).let { UTF8.urlDecode(it) }
                     val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
                     val source = fs.get(UTF8.urlDecode(req.urn.raw))
                     if (source == null) {
@@ -194,7 +194,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "COPY") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURIOrNull()!! }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURIOrNull!! }
 
                     if (destination == null) {
                         req.response().use {
@@ -202,7 +202,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                         }
                         return@useUser2
                     }
-                    val destinationPath = getLocalURI(req, destination.urn).let { UTF8.urlDecode(it) }
+                    val destinationPath = getLocalURI(req, destination.path).let { UTF8.urlDecode(it) }
                     val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
                     val source = fs.get(UTF8.urlDecode(req.urn.raw))
                     if (source == null) {

@@ -9,7 +9,6 @@ import pw.binom.io.http.forEachHeader
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.use
 import pw.binom.network.NetworkDispatcher
-import pw.binom.toURIOrNull
 
 fun main() {
     val url = "http://example.com/".toURIOrNull()!!

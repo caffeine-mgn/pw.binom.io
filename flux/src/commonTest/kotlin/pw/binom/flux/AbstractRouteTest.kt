@@ -6,16 +6,18 @@ import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
+import pw.binom.net.Path
+import pw.binom.net.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AbstractRouteTest {
 
-    class MockAction(method: String, contextUri: URN) : HttpRequest {
+    class MockAction(method: String, contextUri: Path) : HttpRequest {
         override val method: String=method
         override val headers: Headers
             get() = TODO("Not yet implemented")
-        override val urn: URN=contextUri
+        override val urn: Path =contextUri
 
         override fun readBinary(): AsyncInput {
             TODO("Not yet implemented")
@@ -59,10 +61,10 @@ class AbstractRouteTest {
             true
         }
         val done = async2 {
-            router.execute(MockAction("GET", "/events/ssdf".toURN))
+            router.execute(MockAction("GET", "/events/ssdf".toPath))
             assertEquals(1, state)
 
-            router.execute(MockAction("GET", "/eventss/ssdf".toURN))
+            router.execute(MockAction("GET", "/eventss/ssdf".toPath))
             assertEquals(2, state)
         }
         if (done.isFailure) {

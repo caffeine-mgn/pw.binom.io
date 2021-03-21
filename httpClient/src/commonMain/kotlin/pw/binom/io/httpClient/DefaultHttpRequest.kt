@@ -1,6 +1,6 @@
 package pw.binom.io.httpClient
 
-import pw.binom.URI
+import pw.binom.net.URI
 import pw.binom.charset.Charsets
 import pw.binom.io.IOException
 import pw.binom.io.Sha1MessageDigest
@@ -9,7 +9,6 @@ import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
-import pw.binom.io.use
 
 class DefaultHttpRequest(
     var method: HTTPMethod,

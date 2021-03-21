@@ -6,6 +6,7 @@ import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.addHeader
+import pw.binom.net.URI
 import pw.binom.webdav.*
 import pw.binom.webdav.server.parseDate
 import pw.binom.xml.dom.XmlElement
@@ -307,4 +308,4 @@ open class WebDavClient(val client: HttpClient, val URI: URI) : FileSystem {
 }
 
 private fun URI.appendDirectionURI(dir: String) =
-    copy(urn = urn.appendDirection(dir))
+    copy(path = path.append(dir))

@@ -63,6 +63,9 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     private var meta: List<TarantoolSpaceMeta> = emptyList()
     private var schemaVersion = 0
     private var connected = true
+    private var metaUpdating = false
+    private val out = ByteArrayOutput()
+    private var closed = false
     val isConnected
         get() = connected
 
@@ -99,7 +102,6 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         }
     }
 
-    private var metaUpdating = false
     suspend fun getMeta(): List<TarantoolSpaceMeta> {
         invalidateSchema()
         return meta
@@ -115,7 +117,6 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         neverFreeze()
     }
 
-    private val out = ByteArrayOutput()
     internal suspend fun sendReceive(code: Code, schemaId: Int? = null, body: Map<Any, Any?>): Package {
         checkThread()
         val sync = syncCursor++
@@ -158,14 +159,13 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         }
     }
 
-    private var closed = false
-
     override suspend fun asyncClose() {
         checkThread()
         if (closed) {
             throw ClosedException()
         }
         closed = true
+        out.close()
         connectionReference.close()
     }
 

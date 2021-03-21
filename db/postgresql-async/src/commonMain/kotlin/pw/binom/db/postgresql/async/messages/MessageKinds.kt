@@ -9,7 +9,6 @@ object MessageKinds{
     const val Bind = 'B'.toByte()
     const val BindComplete = '2'.toByte()
     const val CommandComplete = 'C'.toByte()
-    const val Close = 'X'.toByte()
     const val CloseStatementOrPortal = 'C'.toByte()
     const val CloseComplete = '3'.toByte()
     const val DataRow = 'D'.toByte()
@@ -29,4 +28,5 @@ object MessageKinds{
     const val RowDescription = 'T'.toByte()
     const val ReadyForQuery = 'Z'.toByte()
     const val Sync = 'S'.toByte()
+    const val Terminate = 'X'.toByte()
 }

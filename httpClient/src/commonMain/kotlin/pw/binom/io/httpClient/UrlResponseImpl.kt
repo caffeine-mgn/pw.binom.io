@@ -2,7 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
-import pw.binom.URI
+import pw.binom.net.URI
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
 import pw.binom.io.IOException

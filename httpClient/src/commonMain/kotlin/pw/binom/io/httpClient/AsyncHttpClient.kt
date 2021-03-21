@@ -3,7 +3,7 @@ package pw.binom.io.httpClient
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.URI
+import pw.binom.net.URI
 import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable

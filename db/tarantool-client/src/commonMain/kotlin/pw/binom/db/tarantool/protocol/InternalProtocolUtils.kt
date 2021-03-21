@@ -85,25 +85,26 @@ internal object InternalProtocolUtils {
     }
 
     private fun write(value: String, buffer: ByteBuffer, out: Output) {
-        val data = value.toByteBufferUTF8()
-        when {
-            data.capacity <= MAX_5BIT -> {
-                out.writeByte(buffer, (data.capacity or (MP_FIXSTR.toInt() and 0xFF)).toByte())
+        value.toByteBufferUTF8().use { data ->
+            when {
+                data.capacity <= MAX_5BIT -> {
+                    out.writeByte(buffer, (data.capacity or (MP_FIXSTR.toInt() and 0xFF)).toByte())
+                }
+                data.capacity <= MAX_8BIT -> {
+                    out.writeByte(buffer, MP_STR8)
+                    out.writeByte(buffer, data.capacity.toByte())
+                }
+                data.capacity <= MAX_16BIT -> {
+                    out.writeByte(buffer, MP_STR16);
+                    out.writeShort(buffer, data.capacity.toShort())
+                }
+                else -> {
+                    out.writeByte(buffer, MP_STR32);
+                    out.writeInt(buffer, data.capacity)
+                }
             }
-            data.capacity <= MAX_8BIT -> {
-                out.writeByte(buffer, MP_STR8)
-                out.writeByte(buffer, data.capacity.toByte())
-            }
-            data.capacity <= MAX_16BIT -> {
-                out.writeByte(buffer, MP_STR16);
-                out.writeShort(buffer, data.capacity.toShort())
-            }
-            else -> {
-                out.writeByte(buffer, MP_STR32);
-                out.writeInt(buffer, data.capacity)
-            }
+            out.write(data)
         }
-        out.write(data);
     }
 
     private fun write(value: ByteArray, buffer: ByteBuffer, out: Output) {
