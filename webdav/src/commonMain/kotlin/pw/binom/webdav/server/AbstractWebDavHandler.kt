@@ -53,7 +53,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
     private suspend fun buildRropFind(req: HttpRequest) {
         val fs = getFS(req)
         val user = getUser(req)
-        val currentEntry = fs.get(UTF8.urlDecode(req.urn.raw))
+        val currentEntry = fs.get(UTF8.urlDecode(req.path.raw))
 
         if (currentEntry == null) {
             req.response().use { it.status = 404 }
@@ -70,7 +70,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 }.toMutableSet()
         val depth = req.headers["Depth"]?.firstOrNull()?.toInt() ?: 0
         val entities = fs.getEntitiesWithDepth(
-            UTF8.urlDecode(req.urn.raw),
+            UTF8.urlDecode(req.path.raw),
             depth
         )!!//if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
         val DAV_NS = "DAV:"
@@ -146,7 +146,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             //resp.resetHeader("Connection", "close")
             if (req.method == "OPTIONS") {
                 fs.useUser2(user) {
-                    fs.get(UTF8.urlDecode(req.urn.raw))
+                    fs.get(UTF8.urlDecode(req.path.raw))
                     req.response().use {
                         it.headers["Allow"] =
                             "GET, POST, OPTIONS, HEAD, MKCOL, PUT, PROPFIND, PROPPATCH, ORDERPATCH, DELETE, MOVE, COPY, GETLIB, LOCK, UNLOCK"
@@ -158,7 +158,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "MKCOL") {
                 fs.useUser2(user) {
-                    fs.mkdir(UTF8.urlDecode(req.urn.raw))
+                    fs.mkdir(UTF8.urlDecode(req.path.raw))
                     req.response().use {
                         it.status = 201
                     }
@@ -177,7 +177,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                     }
                     val destinationPath = getLocalURI(req, destination.path).let { UTF8.urlDecode(it) }
                     val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
-                    val source = fs.get(UTF8.urlDecode(req.urn.raw))
+                    val source = fs.get(UTF8.urlDecode(req.path.raw))
                     if (source == null) {
                         req.response().use {
                             it.status = 404
@@ -204,7 +204,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                     }
                     val destinationPath = getLocalURI(req, destination.path).let { UTF8.urlDecode(it) }
                     val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
-                    val source = fs.get(UTF8.urlDecode(req.urn.raw))
+                    val source = fs.get(UTF8.urlDecode(req.path.raw))
                     if (source == null) {
                         req.response().use {
                             it.status = 404
@@ -221,7 +221,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "DELETE") {
                 fs.useUser2(user) {
-                    val e = fs.get(UTF8.urlDecode(req.urn.raw))
+                    val e = fs.get(UTF8.urlDecode(req.path.raw))
                     if (e == null) {
                         req.response().use {
                             it.status = 404
@@ -237,7 +237,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "PUT") {
                 fs.useUser2(user) {
-                    val path = UTF8.urlDecode(req.urn.raw)
+                    val path = UTF8.urlDecode(req.path.raw)
                     val e = fs.get(path)?.rewrite() ?: fs.new(path)
 
                     e.use {
@@ -253,7 +253,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "GET") {
                 fs.useUser2(user) {
-                    val e = fs.get(UTF8.urlDecode(req.urn.raw).removeSuffix("/"))
+                    val e = fs.get(UTF8.urlDecode(req.path.raw).removeSuffix("/"))
 
                     if (e == null) {
                         req.response().use {

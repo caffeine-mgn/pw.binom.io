@@ -1,12 +1,13 @@
 package pw.binom.flux
 
 import pw.binom.io.Closeable
-import pw.binom.io.httpServer.*
+import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.use
 
 abstract class AbstractRoute : Route, Handler {
     private val routers = HashMap<String, ArrayList<Route>>()
-    private val methods = HashMap<String, HashMap<String, ArrayList<suspend (HttpRequest) -> Unit>>>()
+    private val methods = HashMap<String, HashMap<String, ArrayList<suspend (FluxHttpRequest) -> Unit>>>()
     private var forwardHandler: Handler? = null
 
     override fun route(path: String, route: Route) {
@@ -28,7 +29,7 @@ abstract class AbstractRoute : Route, Handler {
         }
     }
 
-    override fun endpoint(method: String, path: String, func: suspend (HttpRequest) -> Unit): Closeable {
+    override fun endpoint(method: String, path: String, func: suspend (FluxHttpRequest) -> Unit): Closeable {
         if (forwardHandler != null)
             throw IllegalStateException("Router has already defined forward")
         methods.getOrPut(method) { HashMap() }.getOrPut(path) { ArrayList() }.add(func)
@@ -58,9 +59,9 @@ abstract class AbstractRoute : Route, Handler {
             routers.entries
                 .asSequence()
                 .filter {
-                    action.urn.isMatch(it.key)
+                    action.path.isMatch(it.key)
                 }
-                .sortedBy { -it.key.length }
+//                .sortedBy { -it.key.length }
                 .flatMap { it.value.asSequence() }
                 .forEach {
                     it.execute(action)
@@ -74,18 +75,18 @@ abstract class AbstractRoute : Route, Handler {
                 ?.entries
                 ?.asSequence()
                 ?.filter {
-                    action.urn.isMatch(it.key)
+                    action.path.isMatch(it.key)
                 }
-                ?.sortedBy { -it.key.length }
-                ?.flatMap { it.value.asSequence() }
-                ?.forEach {
-                    it(action)
-                    if (action.response != null) {
-                        return
+//                ?.sortedBy { -it.key.length }
+                ?.forEach { route ->
+                    route.value.forEach {
+                        it(FluxHttpRequestImpl(route.key, action))
+                        if (action.response != null) {
+                            return
+                        }
                     }
                 }
         }
-        return
     }
 
     override suspend fun request(req: HttpRequest) {

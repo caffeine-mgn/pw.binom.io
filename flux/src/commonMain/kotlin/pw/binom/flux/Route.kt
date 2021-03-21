@@ -9,8 +9,8 @@ interface Route {
     fun route(path: String, route: Route)
     fun route(path: String, func: (Route.() -> Unit)? = null): Route
     fun detach(path: String, route: Route)
-    fun endpoint(method: String, path: String, func: suspend (HttpRequest) -> Unit): Closeable
-    fun endpoint(method: HTTPMethod, path: String, func: suspend (HttpRequest) -> Unit): Closeable =
+    fun endpoint(method: String, path: String, func: suspend (FluxHttpRequest) -> Unit): Closeable
+    fun endpoint(method: HTTPMethod, path: String, func: suspend (FluxHttpRequest) -> Unit): Closeable =
         endpoint(
             method = method.code,
             path = path,
@@ -21,31 +21,31 @@ interface Route {
     suspend fun execute(action: HttpRequest)
 }
 
-inline fun Route.get(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.get(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.GET, path, func)
 
-inline fun Route.head(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.head(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.HEAD, path, func)
 
-inline fun Route.patch(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.patch(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.PATCH, path, func)
 
-inline fun Route.trace(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.trace(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.TRACE, path, func)
 
-inline fun Route.options(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.options(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.OPTIONS, path, func)
 
-inline fun Route.connect(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.connect(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.CONNECT, path, func)
 
-inline fun Route.post(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.post(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.POST, path, func)
 
-inline fun Route.put(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.put(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.PUT, path, func)
 
-inline fun Route.delete(path: String, noinline func: suspend (HttpRequest) -> Unit) =
+inline fun Route.delete(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.DELETE, path, func)
 
 /**

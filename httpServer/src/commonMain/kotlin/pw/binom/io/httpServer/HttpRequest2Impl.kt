@@ -10,14 +10,16 @@ import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.websocket.ServerWebSocketConnection
 import pw.binom.net.Path
+import pw.binom.net.Query
 import pw.binom.net.toPath
+import pw.binom.net.toQuery
 
 internal class HttpRequest2Impl(
     val channel: ServerAsyncAsciiChannel,
     val server: HttpServer,
     override val method: String,
     override val headers: Headers,
-    override val urn: Path
+    override val request: String
 ) : HttpRequest {
     companion object {
         suspend fun read(
@@ -48,7 +50,7 @@ internal class HttpRequest2Impl(
             }
 
             return HttpRequest2Impl(
-                urn = (items.getOrNull(1) ?: "").toPath,
+                request = (items.getOrNull(1) ?: ""),
                 method = items[0],
                 channel = channel,
                 headers = headers,
@@ -65,6 +67,26 @@ internal class HttpRequest2Impl(
     }
 
     private var readInput: AsyncHttpInput? = null
+
+    override val path: Path
+        get() {
+            val p = request.indexOf('?')
+            return if (p >= 0) {
+                request.substring(0, p).toPath
+            } else {
+                request.toPath
+            }
+        }
+
+    override val query: Query?
+        get() {
+            val p = request.indexOf('?')
+            return if (p < 0) {
+                null
+            } else {
+                request.substring(p + 1).toQuery
+            }
+        }
 
     override fun readBinary(): AsyncInput {
         checkClosed()

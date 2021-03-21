@@ -9,12 +9,15 @@ import pw.binom.io.AsyncWriter
 import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.websocket.WebSocketConnection
+import pw.binom.net.Query
 import kotlin.js.JsName
 
 interface HttpRequest : AsyncCloseable {
     val method: String
     val headers: Headers
-    val urn: Path
+    val path: Path
+    val query:Query?
+    val request:String
     fun readBinary(): AsyncInput
     fun readText(): AsyncReader
     suspend fun acceptWebsocket(): WebSocketConnection
