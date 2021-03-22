@@ -1,9 +1,11 @@
 package pw.binom.db.postgresql.async.messages.frontend
 
 import pw.binom.UUID
+import pw.binom.date.Date
 import pw.binom.db.SQLException
 import pw.binom.db.postgresql.async.ColumnTypes
 import pw.binom.db.postgresql.async.PackageWriter
+import pw.binom.db.postgresql.async.PostgresqlException
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
 import pw.binom.writeUUID
@@ -15,6 +17,13 @@ class BindMessage : KindedMessage {
     override fun write(writer: PackageWriter) {
         if (valuesTypes.isNotEmpty()) {
             check(valuesTypes.size == values.size)
+        }
+        if (valuesTypes.isEmpty()) {
+            values.forEach {
+                if (!TypeWriter.isValidTextBindParam(it)) {
+                    throw PostgresqlException("Can't bind \"$it\". Type \"${it?.let { it::class }}\" not supported")
+                }
+            }
         }
         writer.writeCmd(MessageKinds.Bind)
         writer.startBody()
@@ -125,6 +134,18 @@ object TypeWriter {
         }
     }
 
+    fun isValidTextBindParam(value: Any?) =
+        when (value) {
+            null,
+            is ByteArray,
+            is String,
+            is Float, is Double, is Long, is Int, is UUID,
+            is Boolean,
+            is Date,
+            is UUID -> true
+            else -> false
+        }
+
     fun writeText(value: Any?, writer: PackageWriter) {
         if (value == null) {
             writer.writeInt(-1)
@@ -132,12 +153,38 @@ object TypeWriter {
         }
         val txt = when (value) {
             is String -> value
+            is ByteArray -> {
+                val sb = StringBuilder("\\x")
+                value.forEach {
+                    sb.append(it.toString(16))
+                }
+                sb.toString()
+            }
             is Float, is Double, is Long, is Int, is UUID -> value.toString()
             is Boolean -> if (value) "t" else "f"
             is UUID -> value.toString()
-            else -> throw SQLException("Unsopported type ${value::class}")
+            is Date -> {
+                val calendar = value.calendar(0)
+                "${calendar.year}-${(calendar.month + 1).asTwo()}-${calendar.dayOfMonth.asTwo()} " +
+                        "${calendar.hours.asTwo()}:${calendar.minutes.asTwo()}:${calendar.seconds.asTwo()}" +
+                        ".${calendar.millisecond.asThree()}000"
+            }
+            else -> throw SQLException("Unsupported type ${value::class}")
         }
 
         writer.writeLengthString(txt)
     }
 }
+
+private fun Int.asTwo() =
+    when {
+        this > 9 -> this.toString()
+        else -> "0$this"
+    }
+
+private fun Int.asThree() =
+    when {
+        this >= 100 -> this.toString()
+        this >= 10 -> "0$this"
+        else -> "00$this"
+    }

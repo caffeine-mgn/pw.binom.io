@@ -51,9 +51,10 @@ class PooledAsyncConnection(val pool: AsyncConnectionPool, val connection: Async
     }
 
     override suspend fun asyncClose() {
-        prepareStatements.forEach {
+        prepareStatements.toTypedArray().forEach {
             it.asyncClose()
         }
+        prepareStatements.clear()
         pool.free(this)
     }
 }

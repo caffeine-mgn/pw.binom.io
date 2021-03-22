@@ -4,21 +4,16 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.async
 import pw.binom.charset.Charsets
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.sleep
+import pw.binom.date.Date
 import pw.binom.db.ResultSet
-import pw.binom.db.list
+import pw.binom.db.firstOrNull
+import pw.binom.db.map
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.uuid
-import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.test.*
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.measureTime
-import kotlin.time.seconds
 
 class TestConnect {
 
@@ -158,6 +153,72 @@ class TestConnect {
     }
 
     @Test
+    fun invalidPreparedStatement() {
+        pg {
+            try {
+                it.prepareStatement("select * from ooooo").use {
+                    it.executeUpdate()
+                }
+                fail()
+            } catch (e: PostgresqlException) {
+                //ok
+            }
+        }
+    }
+
+    @Test
+    fun dateArgumentTest() {
+        pg {
+            it.executeUpdate(
+                """
+                create table if not exists date_argument_test
+                (
+                    id bigserial not null primary key,
+                    date_column timestamp
+                )
+            """
+            )
+            it.executeUpdate("""insert into date_argument_test (id,date_column) values(1,'2018-02-01 11:42:39.425000') """)
+            val date = it.prepareStatement("select date_column from date_argument_test where date_column>?").use {
+                it.executeQuery(Date(0)).firstOrNull {
+                    it.getDate(0)
+                }
+            }
+            assertEquals(1517571759425L, date!!.time)
+        }
+    }
+
+    @Test
+    fun missingColumn() {
+        pg {
+            it.executeUpdate(
+                """
+                create table if not exists missing_column_test
+                (
+                    id bigserial not null primary key,
+                    amount bigint not null,
+                    "end" timestamp,
+                    start timestamp not null,
+                    account_id bigint,
+                    member_id bigint
+                )
+            """
+            )
+
+            try {
+                it.prepareStatement("select sum(amount) from missing_column_test where company_id=?").use {
+                    it.executeQuery(10).use {
+
+                    }
+                }
+                fail()
+            } catch (e: PostgresqlException) {
+                //ok
+            }
+        }
+    }
+
+    @Test
     fun noClosePrepareStatementSet() {
         pg {
             it.prepareStatement("select 1")
@@ -233,7 +294,7 @@ class TestConnect {
             con.prepareStatement("insert into test1 (id,name) values (?,?) returning id").use {
                 it.set(0, Random.uuid())
                 it.set(1, Random.uuid().toString())
-                val insertedId = it.executeQuery().list { it.getUUID(0) }.first()
+                val insertedId = it.executeQuery().map { it.getUUID(0) }.first()
             }
         }
     }

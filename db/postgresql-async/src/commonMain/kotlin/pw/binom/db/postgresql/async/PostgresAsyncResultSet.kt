@@ -55,7 +55,10 @@ class PostgresAsyncResultSet(
                 Long.fromBytes(value).toDatetime()
             }
             else -> {
-                throw SQLException("Unknown Column Type. id: [$dataType], size: [${value.size}], data: [${data}]")
+                val hex = value.joinToString(" ") { it.toString(16) }
+                throw SQLException(
+                    "Unknown Column Type. id: [$dataType], size: [${value.size}], value: [0x$hex]"
+                )
             }
         }
     }

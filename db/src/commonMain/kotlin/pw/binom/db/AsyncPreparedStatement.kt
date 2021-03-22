@@ -26,6 +26,7 @@ interface AsyncPreparedStatement : AsyncCloseable {
             is ByteArray -> set(index, value)
             is Date -> set(index, value)
             is UUID -> set(index, value)
+            else -> throw SQLException("Can't set value \"$value\" for argument #$index. Type \"${value::class}\" not supported")
         }
     }
 

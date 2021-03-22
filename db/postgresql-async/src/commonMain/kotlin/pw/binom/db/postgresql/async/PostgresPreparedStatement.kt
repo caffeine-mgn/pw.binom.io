@@ -174,7 +174,16 @@ class PostgresPreparedStatement(
             }
             check(msg is ParseCompleteMessage) { "Invalid Message: $msg (${msg::class})" }
         }
-        check(connection.readDesponse() is BindCompleteMessage)
+        val msg = connection.readDesponse()
+        when (msg) {
+            is ErrorMessage -> {
+                check(connection.readDesponse() is ReadyForQueryMessage)
+                throw PostgresqlException(msg.toString())
+            }
+            is BindCompleteMessage -> {
+                //ok
+            }
+        }
         parsed = true
 
         var rowsAffected = 0L
