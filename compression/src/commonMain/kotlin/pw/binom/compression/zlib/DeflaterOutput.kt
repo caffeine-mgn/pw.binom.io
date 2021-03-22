@@ -44,6 +44,7 @@ open class DeflaterOutput(
             val l = deflater.deflate(data, buffer)
             if (l > 0) {
                 buffer.flip()
+                println("Wrote ${buffer.remaining}")
                 stream.write(buffer)
             }
 
@@ -60,7 +61,8 @@ open class DeflaterOutput(
             val r = deflater.flush(buffer)
             buffer.flip()
             if (buffer.remaining > 0) {
-                val pp = stream.write(buffer)
+                println("Flush ${buffer.remaining}")
+                stream.write(buffer)
 
             }
             if (!r)

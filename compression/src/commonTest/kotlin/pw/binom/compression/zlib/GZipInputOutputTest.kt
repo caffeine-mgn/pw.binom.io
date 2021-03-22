@@ -19,6 +19,7 @@ class GZipInputOutputTest {
         def.close()
 
         compressed.flip()
+        println("Wrote: ${compressed.remaining}")
         assertEquals(15, compressed.remaining)
 
         val uncompressed = ByteBuffer.alloc(source.capacity * 2)

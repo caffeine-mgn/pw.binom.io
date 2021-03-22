@@ -48,7 +48,7 @@ class GZIPOutput(
             buf.clear()
             writeTrailer(buf)
             buf.flip()
-            println("Treller: ${stream.write(buf)}")
+            stream.write(buf)
             stream.flush()
         }
 
