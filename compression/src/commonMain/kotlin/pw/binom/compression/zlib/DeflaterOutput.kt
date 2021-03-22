@@ -45,11 +45,9 @@ open class DeflaterOutput(
         while (data.remaining > 0) {
             buffer.clear()
             val l = deflater.deflate(data, buffer)
-            if (l > 0) {
-                buffer.flip()
-                println("wrote-${buffer.remaining}")
-                stream.write(buffer)
-            }
+            buffer.flip()
+            println("write-${buffer.remaining}-$l")
+            stream.write(buffer)
 
 //            if (l <= 0)
 //                break
