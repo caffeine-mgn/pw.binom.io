@@ -12,6 +12,9 @@ open class DeflaterOutput(
     syncFlush: Boolean = true,
     val closeStream: Boolean = false
 ) : Output {
+    init {
+        println("Deflater($level, $wrap, $syncFlush)")
+    }
 
     private val deflater = Deflater(level, wrap, syncFlush)
     private val buffer = ByteBuffer.alloc(bufferSize)
@@ -44,7 +47,7 @@ open class DeflaterOutput(
             val l = deflater.deflate(data, buffer)
             if (l > 0) {
                 buffer.flip()
-                println("Wrote ${buffer.remaining}")
+                println("wrote-${buffer.remaining}")
                 stream.write(buffer)
             }
 
@@ -61,7 +64,7 @@ open class DeflaterOutput(
             val r = deflater.flush(buffer)
             buffer.flip()
             if (buffer.remaining > 0) {
-                println("Flush ${buffer.remaining}")
+                println("flush-${buffer.remaining}")
                 stream.write(buffer)
 
             }
