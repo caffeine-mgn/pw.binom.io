@@ -158,6 +158,22 @@ class TestConnect {
     }
 
     @Test
+    fun noClosePrepareStatementSet() {
+        pg {
+            it.prepareStatement("select 1")
+        }
+    }
+
+    @Test
+    fun noCloseResultSet() {
+        pg {
+            it.prepareStatement("select 1").use {
+                it.executeQuery()
+            }
+        }
+    }
+
+    @Test
     fun connectTest() {
         pg {
 

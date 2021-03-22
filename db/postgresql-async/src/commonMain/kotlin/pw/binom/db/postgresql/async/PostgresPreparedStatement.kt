@@ -21,6 +21,12 @@ class PostgresPreparedStatement(
     private val id = Random.uuid()
     private val realQuery: String
     private val paramCount: Int
+    internal var lastOpenResultSet: PostgresAsyncResultSet? = null
+
+    private suspend fun checkClosePreviousResultSet() {
+        lastOpenResultSet?.let { if (!it.isClosed) it.asyncClose() }
+        lastOpenResultSet = null
+    }
 
     init {
         val result = StringBuilder(query.length + 16)
@@ -87,14 +93,18 @@ class PostgresPreparedStatement(
     }
 
     override suspend fun executeQuery(): AsyncResultSet {
+        checkClosePreviousResultSet()
         val response = execute()
         if (response is QueryResponse.Data) {
-            return PostgresAsyncResultSet(true, response)
+            val q = PostgresAsyncResultSet(true, response)
+            lastOpenResultSet = q
+            return q
         }
         throw SQLException("Query doesn't return data")
     }
 
     override suspend fun executeUpdate(): Long {
+        checkClosePreviousResultSet()
         val response = execute()
         if (response is QueryResponse.Status) {
             return response.rowsAffected
@@ -110,6 +120,8 @@ class PostgresPreparedStatement(
     }
 
     override suspend fun asyncClose() {
+        checkClosePreviousResultSet()
+        connection.prepareStatements.remove(this)
         connection.sendOnly(connection.reader.closeMessage.also {
             it.portal = false
             it.statement = id.toString()
@@ -191,7 +203,7 @@ class PostgresPreparedStatement(
                 is NoticeMessage -> {
                     continue@LOOP
                 }
-                is NoDataMessage->{
+                is NoDataMessage -> {
                     continue@LOOP
                 }
                 else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg]")

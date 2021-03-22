@@ -225,17 +225,22 @@ class PGConnection private constructor(
     override fun prepareStatement(query: String): AsyncPreparedStatement =
         prepareStatement(query, emptyList(), emptyList())
 
+    internal var prepareStatements = HashSet<PostgresPreparedStatement>()
+
     fun prepareStatement(
         query: String,
         paramColumnTypes: List<ResultSet.ColumnType>,
         resultColumnTypes: List<ResultSet.ColumnType> = emptyList(),
-    ): AsyncPreparedStatement =
-        PostgresPreparedStatement(
+    ): AsyncPreparedStatement {
+        val pst = PostgresPreparedStatement(
             query = query,
             connection = this,
             paramColumnTypes = paramColumnTypes,
             resultColumnTypes = resultColumnTypes
         )
+        prepareStatements.add(pst)
+        return pst
+    }
 
     override suspend fun commit() {
         query("commit")
@@ -246,6 +251,10 @@ class PGConnection private constructor(
     }
 
     override suspend fun asyncClose() {
+        prepareStatements.toTypedArray().forEach {
+            it.asyncClose()
+        }
+        prepareStatements.clear()
         try {
             runCatching { sendOnly(Terminate()) }
             runCatching { reader.close() }

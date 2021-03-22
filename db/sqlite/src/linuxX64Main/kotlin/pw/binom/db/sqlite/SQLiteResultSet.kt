@@ -3,15 +3,13 @@ package pw.binom.db.sqlite
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
-import platform.posix.getlogin
 import pw.binom.date.Date
-import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.SyncResultSet
 
 class SQLiteResultSet(
-        val prepareStatement: SQLitePrepareStatement,
-        var empty: Boolean
+    val prepareStatement: SQLitePrepareStatement,
+    var empty: Boolean
 ) : SyncResultSet {
     private var columnCount = 0
     private val columnsMap = HashMap<String, Int>()
@@ -23,8 +21,8 @@ class SQLiteResultSet(
         val out = ArrayList<String>(columnCount)
         (0 until columnCount).forEach {
             val name = sqlite3_column_origin_name(stmt, it)!!
-                    .reinterpret<ByteVar>()
-                    .toKStringFromUtf8()
+                .reinterpret<ByteVar>()
+                .toKStringFromUtf8()
             out += name
             columnsMap[name] = it
         }
@@ -53,8 +51,8 @@ class SQLiteResultSet(
                 true
             }
             SQLITE_ERROR -> throw SQLException(
-                    sqlite3_errmsg(prepareStatement.connection.ctx.pointed!!.value)?.toKStringFromUtf8()
-                            ?: "Unknown Error"
+                sqlite3_errmsg(prepareStatement.connection.ctx.pointed!!.value)?.toKStringFromUtf8()
+                    ?: "Unknown Error"
             )
             SQLITE_MISUSE -> throw SQLException("Database is Misuse")
             else -> throw SQLException()
@@ -70,8 +68,8 @@ class SQLiteResultSet(
     override fun getString(index: Int): String? {
         checkRange(index)
         return sqlite3_column_text(stmt, index)
-                ?.reinterpret<ByteVar>()
-                ?.toKStringFromUtf8()
+            ?.reinterpret<ByteVar>()
+            ?.toKStringFromUtf8()
     }
 
     override fun getBlob(index: Int): ByteArray? {
@@ -82,16 +80,16 @@ class SQLiteResultSet(
         return sqlite3_column_blob(stmt, index)!!.readBytes(len)
     }
 
-    override fun getBlob(column: String):ByteArray? = getBlob(columnIndex(column))
+    override fun getBlob(column: String): ByteArray? = getBlob(columnIndex(column))
 
-    override fun getString(column: String):String? =
-            getString(columnIndex(column))
+    override fun getString(column: String): String? =
+        getString(columnIndex(column))
 
-    override fun getBoolean(index: Int):Boolean? =
-            getInt(index)?.let { it>0 }
+    override fun getBoolean(index: Int): Boolean? =
+        getInt(index)?.let { it > 0 }
 
-    override fun getBoolean(column: String):Boolean? =
-            getInt(column)?.let { it>0 }
+    override fun getBoolean(column: String): Boolean? =
+        getInt(column)?.let { it > 0 }
 
     override fun getInt(index: Int): Int? {
         checkRange(index)
@@ -101,8 +99,8 @@ class SQLiteResultSet(
         return sqlite3_column_int(stmt, index)
     }
 
-    override fun getInt(column: String):Int? =
-            getInt(columnIndex(column))
+    override fun getInt(column: String): Int? =
+        getInt(columnIndex(column))
 
     override fun getLong(index: Int): Long? {
         checkRange(index)
@@ -112,15 +110,15 @@ class SQLiteResultSet(
         return sqlite3_column_int64(stmt, index)
     }
 
-    override fun getLong(column: String):Long? =
-            getLong(columnIndex(column))
+    override fun getLong(column: String): Long? =
+        getLong(columnIndex(column))
 
     override fun getFloat(index: Int): Float? {
         return getDouble(index)?.toFloat()
     }
 
-    override fun getFloat(column: String):Float? =
-            getFloat(columnIndex(column))
+    override fun getFloat(column: String): Float? =
+        getFloat(columnIndex(column))
 
     override fun getBigDecimal(index: Int): BigDecimal? {
         TODO("Not yet implemented")
@@ -142,7 +140,7 @@ class SQLiteResultSet(
         getDouble(columnIndex(column))
 
     private fun columnIndex(name: String) =
-            columnsMap[name] ?: throw SQLException("Column \"$name\" not found")
+        columnsMap[name] ?: throw SQLException("Column \"$name\" not found")
 
     private inline val stmt
         get() = prepareStatement.native[0]

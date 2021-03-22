@@ -9,7 +9,10 @@ import pw.binom.db.SQLException
 import pw.binom.fromBytes
 import pw.binom.wrap
 
-class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : AsyncResultSet {
+class PostgresAsyncResultSet(
+    binary: Boolean,
+    val data: QueryResponse.Data,
+) : AsyncResultSet {
     override val columns: List<String> by lazy { data.meta.map { it.name } }
 
     override suspend fun next(): Boolean =
@@ -170,7 +173,11 @@ class PostgresAsyncResultSet(binary: Boolean, val data: QueryResponse.Data) : As
     override fun isNull(column: String): Boolean =
         isNull(getIndex(column))
 
+    var isClosed = false
+        private set
+
     override suspend fun asyncClose() {
+        isClosed = true
         data.asyncClose()
     }
 

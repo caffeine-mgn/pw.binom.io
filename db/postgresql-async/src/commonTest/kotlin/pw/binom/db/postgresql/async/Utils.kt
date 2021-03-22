@@ -5,6 +5,8 @@ import pw.binom.async2
 import pw.binom.charset.Charsets
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.sleep
+import pw.binom.getOrException
+import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.time.ExperimentalTime
@@ -15,64 +17,36 @@ import kotlin.time.seconds
 @OptIn(ExperimentalTime::class)
 fun pg(func: suspend (PGConnection) -> Unit) {
     val manager = NetworkDispatcher()
-    var done = false
-    var exception: Throwable? = null
-    async2 {
-        var con: PGConnection
-        val now = TimeSource.Monotonic.markNow()
-        while (true) {
-            try {
-                println("Trying to connect")
-                val address = NetworkAddress.Immutable(
-                    host = "127.0.0.1",
-                    port = 25331,
-                )
-                con = PGConnection.connect(
-                    address = address,
-                    manager = manager,
-                    charset = Charsets.UTF8,
-                    userName = "postgres",
-                    password = "postgres",
-                    dataBase = "test"
-                )
-                println("Connected to db")
-                break
-            } catch (e: Throwable) {
-                if (now.elapsedNow() > 10.seconds) {
-                    exception = RuntimeException("Connection Timeout", e)
-                    return@async2
-                }
-//                    exception = e
-                Worker.sleep(100)
-                e.printStackTrace()
-//                    done = true
-//                    throw e
-            }
-        }
-        if (!done) {
-            try {
-                println("Start test function")
-                func(con)
-            } catch (e: Throwable) {
-                exception = e
-            } finally {
-                con.asyncClose()
-                done = true
-            }
+    val done = manager.async {
+        val address = NetworkAddress.Immutable(
+            host = "127.0.0.1",
+            port = 25331,
+        )
+        PGConnection.connect(
+            address = address,
+            manager = manager,
+            charset = Charsets.UTF8,
+            userName = "postgres",
+            password = "postgres",
+            dataBase = "test"
+        ).use { con ->
+            println("Connected to db")
+            println("Start test function")
+            func(con)
         }
     }
 
     val now = TimeSource.Monotonic.markNow()
-    while (!done) {
-        if (exception != null) {
-            throw exception!!
+    while (true) {
+        if (done.isDone && done.isFailure) {
+            throw done.exceptionOrNull!!
         }
         if (now.elapsedNow() > 10.seconds) {
             throw RuntimeException("Out of try")
         }
+        if (done.isDone) {
+            break
+        }
         manager.select(1000)
-    }
-    if (exception != null) {
-        throw exception!!
     }
 }
