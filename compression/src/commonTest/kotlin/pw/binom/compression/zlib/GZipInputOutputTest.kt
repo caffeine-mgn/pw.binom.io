@@ -20,7 +20,7 @@ class GZipInputOutputTest {
 
         compressed.flip()
         println("Total Wrote: ${compressed.remaining}")
-        assertEquals(15, compressed.remaining)
+        assertEquals(23, compressed.remaining)
 
         val uncompressed = ByteBuffer.alloc(source.capacity * 2)
         val inf = GZIPInput(compressed, 512)
@@ -29,6 +29,7 @@ class GZipInputOutputTest {
         uncompressed.flip()
         assertEquals(source.capacity, uncompressed.remaining)
         source.clear()
+        println("r=${compressed.remaining}")
         assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
     }
 
@@ -47,7 +48,7 @@ class GZipInputOutputTest {
             def.asyncClose()
 
             compressed.flip()
-            assertEquals(15, compressed.remaining)
+            assertEquals(23, compressed.remaining)
 
             val uncompressed = ByteBuffer.alloc(source.capacity * 2)
             val inf = AsyncGZIPInput(compressed.asyncInput(), 512)

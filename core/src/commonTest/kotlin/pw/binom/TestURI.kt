@@ -2,6 +2,7 @@ package pw.binom
 
 import pw.binom.net.URI
 import pw.binom.net.toPath
+import pw.binom.net.toQuery
 import pw.binom.net.toURIOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -112,7 +113,7 @@ class TestURI {
         }
         "https://binom:80?q".toURIOrNull!!.apply {
             assertEquals("", path.toString())
-            assertEquals("q", query)
+            assertEquals("q".toQuery, query)
         }
         "https://binom:80#q".toURIOrNull!!.apply {
             assertEquals("", path.toString())

@@ -13,7 +13,7 @@ open class DeflaterOutput(
     val closeStream: Boolean = false
 ) : Output {
     init {
-        println("Deflater($level, $wrap, $syncFlush)")
+        require(bufferSize >= 10) { "bufferSize must be more or equals than 10" }
     }
 
     private val deflater = Deflater(level, wrap, syncFlush)
@@ -46,11 +46,7 @@ open class DeflaterOutput(
             buffer.clear()
             val l = deflater.deflate(data, buffer)
             buffer.flip()
-            println("write-${buffer.remaining}-$l")
             stream.write(buffer)
-
-//            if (l <= 0)
-//                break
         }
         return vv
     }
@@ -62,7 +58,6 @@ open class DeflaterOutput(
             val r = deflater.flush(buffer)
             buffer.flip()
             if (buffer.remaining > 0) {
-                println("flush-${buffer.remaining}")
                 stream.write(buffer)
 
             }

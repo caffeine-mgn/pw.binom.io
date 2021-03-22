@@ -21,7 +21,7 @@ class InflateInputTest {
             def.asyncClose()
 
             compressed.flip()
-            assertEquals(15, compressed.remaining)
+            assertEquals(5, compressed.remaining)
         }.getOrException()
     }
 }

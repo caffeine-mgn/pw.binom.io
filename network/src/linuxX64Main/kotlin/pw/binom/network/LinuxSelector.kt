@@ -88,7 +88,6 @@ class LinuxSelector : AbstractSelector() {
             } else {
                 val common = epollNativeToCommon(item.events.convert())
                 if (common == 0) {
-                    println("Invalid epoll mode. Native: [${modeToString(item.events.convert())}]")
                     throw IllegalStateException("Invalid epoll mode. Native: [${modeToString(item.events.convert())}]")
                 }
                 func(key, common)
