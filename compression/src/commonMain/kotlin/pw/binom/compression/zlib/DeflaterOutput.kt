@@ -42,12 +42,13 @@ open class DeflaterOutput(
         while (data.remaining > 0) {
             buffer.clear()
             val l = deflater.deflate(data, buffer)
+            if (l > 0) {
+                buffer.flip()
+                stream.write(buffer)
+            }
 
-            buffer.flip()
-            stream.write(buffer)
-
-            if (l <= 0)
-                break
+//            if (l <= 0)
+//                break
         }
         return vv
     }
@@ -80,7 +81,7 @@ open class DeflaterOutput(
         flush()
         finish()
         closed = true
-        runCatching { deflater.close()}
+        runCatching { deflater.close() }
         buffer.close()
         if (closeStream) {
             stream.close()

@@ -36,7 +36,7 @@ class ZlibInputOutputTest{
 
     @Test
     fun testAsync() {
-        async {
+        async2 {
             val source =TestData.SOURCE_DATA.clone()
             source.clear()
             val compressed = ByteBuffer.alloc(TestData.SOURCE_DATA.capacity * 2)
@@ -62,7 +62,7 @@ class ZlibInputOutputTest{
             assertEquals(source.capacity, uncompressed.remaining)
             source.clear()
             assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
-        }
+        }.getOrException()
     }
 }
 /*
