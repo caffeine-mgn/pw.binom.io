@@ -6,17 +6,17 @@ import pw.binom.io.CRC32
 import pw.binom.io.use
 
 class GZIPOutput(
-        stream: Output,
-        level: Int,
-        bufferSize: Int = 1024,
-        closeStream: Boolean
+    stream: Output,
+    level: Int,
+    bufferSize: Int = 1024,
+    closeStream: Boolean
 ) : DeflaterOutput(
-        stream = stream,
-        bufferSize = bufferSize,
-        level = level,
-        wrap = false,
-        syncFlush = false,
-        closeStream = closeStream
+    stream = stream,
+    bufferSize = bufferSize,
+    level = level,
+    wrap = false,
+    syncFlush = false,
+    closeStream = closeStream
 ) {
     private val crc = CRC32()
 
@@ -44,18 +44,19 @@ class GZIPOutput(
         writeHeader()
         super.finish()
 
-        fun write(buf: ByteBuffer) {
+        fun writeFinal(buf: ByteBuffer) {
+            buf.clear()
             writeTrailer(buf)
             buf.flip()
-            stream.write(buf)
+            println("Treller: ${stream.write(buf)}")
+            stream.flush()
         }
 
-        if (buf.remaining > TRAILER_SIZE) {
-            buf.clear()
-            write(buf)
+        if (buf.capacity > TRAILER_SIZE) {
+            writeFinal(buf)
         } else {
             ByteBuffer.alloc(TRAILER_SIZE).use { trailer ->
-                write(trailer)
+                writeFinal(trailer)
             }
         }
     }
@@ -82,8 +83,9 @@ class GZIPOutput(
 
     private var headerWrited = false
     private fun writeHeader() {
-        if (headerWrited)
+        if (headerWrited) {
             return
+        }
         header.clear()
         stream.write(header)
         headerWrited = true

@@ -78,7 +78,6 @@ open class DeflaterOutput(
     }
 
     override fun close() {
-        flush()
         finish()
         closed = true
         runCatching { deflater.close() }
