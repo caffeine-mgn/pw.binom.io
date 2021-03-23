@@ -4,6 +4,7 @@ import pw.binom.async
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.readText
 import pw.binom.io.use
+import pw.binom.net.toURI
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.network.NetworkDispatcher
@@ -79,7 +80,7 @@ class TestWS {
         async {
             try {
                 val client = AsyncHttpClient(manager)
-                val wsClient = client.request("GET", "ws://127.0.0.1:8080/".toURIOrNull()!!)
+                val wsClient = client.request("GET", "ws://127.0.0.1:8080/".toURI())
                     .websocket("http://127.0.0.1:8080")
 
                 while (true) {

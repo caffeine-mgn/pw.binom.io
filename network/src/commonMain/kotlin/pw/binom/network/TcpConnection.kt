@@ -79,12 +79,14 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             connect?.resumeWith(Result.failure(e))
         }
         if (readData.continuation != null) {
-            readData.continuation?.resumeWith(Result.failure(SocketClosedException()))
+            val c = readData.continuation
             readData.reset()
+            c?.resumeWith(Result.failure(SocketClosedException()))
         }
         if (sendData.continuation != null) {
-            sendData.continuation?.resumeWith(Result.failure(SocketClosedException()))
+            val c = sendData.continuation
             sendData.reset()
+            c?.resumeWith(Result.failure(SocketClosedException()))
         }
     }
 
