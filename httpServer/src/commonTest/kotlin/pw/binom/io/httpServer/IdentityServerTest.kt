@@ -4,6 +4,7 @@ import pw.binom.async2
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
+import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.test.Test
@@ -30,7 +31,7 @@ class IdentityServerTest {
             server.bindHttp(NetworkAddress.Immutable("0.0.0.0", 8088))
 
             val client = HttpClient(manager)
-            val resp = client.request(HTTPMethod.GET, "http://127.0.0.1:8088/".toURIOrNull()!!)
+            val resp = client.request(HTTPMethod.GET, "http://127.0.0.1:8088/".toURI())
                 .getResponse()
                 .readText().use {
                     it.readText()

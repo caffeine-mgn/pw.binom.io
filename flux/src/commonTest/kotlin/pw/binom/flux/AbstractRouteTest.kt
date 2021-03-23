@@ -7,6 +7,7 @@ import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.net.Path
+import pw.binom.net.Query
 import pw.binom.net.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,7 +18,11 @@ class AbstractRouteTest {
         override val method: String=method
         override val headers: Headers
             get() = TODO("Not yet implemented")
-        override val urn: Path =contextUri
+        override val path: Path =contextUri
+        override val query: Query?
+            get() = null
+        override val request: String
+            get() = TODO("Not yet implemented")
 
         override fun readBinary(): AsyncInput {
             TODO("Not yet implemented")
@@ -39,8 +44,12 @@ class AbstractRouteTest {
             TODO("Not yet implemented")
         }
 
+        override suspend fun <T> response(func: (HttpResponse) -> T): T {
+            TODO("Not yet implemented")
+        }
+
         override val response: HttpResponse?
-            get() = TODO("Not yet implemented")
+            get() = null
 
         override suspend fun asyncClose() {
             TODO("Not yet implemented")

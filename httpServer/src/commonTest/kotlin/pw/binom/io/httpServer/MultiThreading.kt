@@ -5,6 +5,7 @@ import pw.binom.concurrency.*
 import pw.binom.io.http.Headers
 import pw.binom.io.httpClient.AsyncHttpClient
 import pw.binom.io.use
+import pw.binom.net.toURI
 import pw.binom.network.*
 import kotlin.random.Random
 import kotlin.test.Ignore
@@ -57,7 +58,7 @@ class MultiThreading {
                 println("Try make request $name...")
                 client.request(
                     method = "GET",
-                    URI = "http://127.0.0.1:$port/$name".toURIOrNull()!!
+                    URI = "http://127.0.0.1:$port/$name".toURI()!!
                 ).response().use { response ->
                     println("$name reading...")
                     val buf = ByteBuffer.alloc(60).clean()
