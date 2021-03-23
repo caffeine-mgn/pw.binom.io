@@ -195,7 +195,8 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
             SSL_ERROR_WANT_READ -> State.WANT_READ
             SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
             SSL_ERROR_SSL -> State.ERROR
-            else -> TODO("Unknown status $e")
+            SSL_ERROR_ZERO_RETURN -> State.CLOSED
+            else -> TODO("Unknown status $e on write")
         }
         return Status(
                 state, 0
@@ -272,7 +273,8 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
             SSL_ERROR_WANT_READ -> State.WANT_READ
             SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
             SSL_ERROR_SSL -> State.ERROR
-            else -> TODO("Unknown status $e")
+            SSL_ERROR_ZERO_RETURN->State.CLOSED
+            else -> TODO("Unknown status $e on read")
         }
         return Status(
                 state, 0
@@ -299,7 +301,8 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
             SSL_ERROR_WANT_READ -> State.WANT_READ
             SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
             SSL_ERROR_SSL -> State.ERROR
-            else -> TODO("Unknown status $e")
+            SSL_ERROR_ZERO_RETURN -> State.CLOSED
+            else -> TODO("Unknown status $e on write")
         }
         return Status(
             state, 0
