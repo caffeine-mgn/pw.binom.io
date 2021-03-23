@@ -18,6 +18,7 @@ import kotlin.time.seconds
 
 class MultiThreading {
 
+    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() {

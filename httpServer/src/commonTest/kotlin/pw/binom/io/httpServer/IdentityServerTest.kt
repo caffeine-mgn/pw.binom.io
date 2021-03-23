@@ -7,6 +7,7 @@ import pw.binom.io.httpClient.HttpClient
 import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -14,7 +15,7 @@ class IdentityServerTest {
     @Test
     fun test() {
         val manager = NetworkDispatcher()
-
+        val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
         val done = async2 {
             val server = HttpServer(
                 manager = manager,
@@ -28,10 +29,10 @@ class IdentityServerTest {
                     }
                 }
             )
-            server.bindHttp(NetworkAddress.Immutable("0.0.0.0", 8088))
+            server.bindHttp(NetworkAddress.Immutable("127.0.0.1", port))
 
             val client = HttpClient(manager)
-            val resp = client.request(HTTPMethod.GET, "http://127.0.0.1:8088/".toURI())
+            val resp = client.request(HTTPMethod.GET, "http://127.0.0.1:$port/".toURI())
                 .getResponse()
                 .readText().use {
                     it.readText()

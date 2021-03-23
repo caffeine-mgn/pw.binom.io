@@ -11,6 +11,7 @@ import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.network.execute
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -35,7 +36,8 @@ class KeepAliveTest {
             handler = okHandler,
             maxIdleTime = 1_000
         )
-        val addr = NetworkAddress.Immutable("127.0.0.1", 33838)
+        val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
+        val addr = NetworkAddress.Immutable("127.0.0.1", port)
         server.bindHttp(addr)
 
         val d = nd.async {
