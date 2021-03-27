@@ -41,22 +41,23 @@ class DateTest {
     fun ofTest() {
         val date = Date.of(
                 year = 1989,
-                month = 0,
+                month = 1,
                 dayOfMonth = 5,
                 hours = 13,
                 minutes = 0,
                 seconds = 0,
                 millis = 0,
-                timeZoneOffset = Date.timeZoneOffset
+                timeZoneOffset = 0
         )
-        assertEquals(599997600000L, date.time)
+        assertEquals(600008400000L, date.time)
+        println("->${date.calendar().toString()}")
     }
 
     @Test
     fun calendarTest() {
         val date = Date.of(
                 year = 1989,
-                month = 0,
+                month = 1,
                 dayOfMonth = 5,
                 hours = 13,
                 minutes = 0,
@@ -66,7 +67,7 @@ class DateTest {
         ).calendar(0)
 
         assertEquals(1989, date.year, "year")
-        assertEquals(0, date.month, "month")
+        assertEquals(1, date.month, "month")
         assertEquals(5, date.dayOfMonth, "dayOfMonth")
         assertEquals(13, date.hours, "hour")
         assertEquals(0, date.seconds, "second")

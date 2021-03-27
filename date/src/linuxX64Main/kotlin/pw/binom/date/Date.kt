@@ -31,21 +31,30 @@ actual inline class Date(val time: Long = Date.now) {
         /**
          * @param year full year. For example 2010
          */
-        actual fun internalOf(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int): Date =
-                memScoped {
-                    val t = alloc<tm>()
-                    t.tm_year = year - 1900
-                    t.tm_mon = month
-                    t.tm_mday = dayOfMonth
-                    t.tm_hour = hours
-                    t.tm_min = minutes
-                    t.tm_sec = seconds
-                    val tx = timeZoneOffset - Date.timeZoneOffset
-                    val r = (mktime(t.ptr) - tx * 60L) * 1000L
-                    Date(r)
-                }
+        actual fun internalOf(
+            year: Int,
+            month: Int,
+            dayOfMonth: Int,
+            hours: Int,
+            minutes: Int,
+            seconds: Int,
+            millis: Int,
+            timeZoneOffset: Int
+        ): Date =
+            memScoped {
+                val t = alloc<tm>()
+                t.tm_year = year - 1900
+                t.tm_mon = month - 1
+                t.tm_mday = dayOfMonth
+                t.tm_hour = hours
+                t.tm_min = minutes
+                t.tm_sec = seconds
+                val tx = timeZoneOffset// - Date.timeZoneOffset
+                val r = (mktime(t.ptr) - tx * 60L) * 1000L
+                Date(r)
+            }
     }
 
     actual fun calendar(timeZoneOffset: Int): Calendar =
-            Calendar(time, timeZoneOffset)
+        Calendar(time, timeZoneOffset)
 }

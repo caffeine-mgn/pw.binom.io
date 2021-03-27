@@ -1,21 +1,27 @@
 package pw.binom.date
 
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
 
+    init {
+        val bb = Instant.ofEpochMilli(utcTime)
+        println("bb=$bb")
+    }
+
     private val tm = ZonedDateTime.ofInstant(
-        Instant.ofEpochMilli(utcTime + timeZoneOffset * 60),
-        ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - timeZoneOffset / 60 * 60)
-    )
+        Instant.ofEpochMilli(utcTime),
+        ZoneOffset.ofTotalSeconds(0)
+    ).withZoneSameInstant(ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - timeZoneOffset / 60 * 60))
 
     actual val year
         get() = tm.year
 
     actual val month
-        get() = tm.month.value - 1
+        get() = tm.month.value
 
     actual val dayOfMonth
         get() = tm.dayOfMonth
