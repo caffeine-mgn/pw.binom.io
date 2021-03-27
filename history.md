@@ -7,6 +7,7 @@
 * New URL Implement
 * URN Implement
 * Fix Memory Leak on Linux
+* Date parser/formater
 
 ### 0.1.28
 
