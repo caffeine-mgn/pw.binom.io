@@ -1,14 +1,100 @@
 package pw.binom.strong
 
+import pw.binom.io.AsyncCloseable
+import pw.binom.io.Closeable
 import pw.binom.strong.exceptions.BeanAlreadyDefinedException
+import pw.binom.uuid
+import kotlin.jvm.JvmName
+import kotlin.random.Random
 
-interface StrongDefiner : Strong {
-    /**
-     * Define [bean]. Default [name] is `[bean]::class + "_" + [bean].class.hashCode()`
-     *
-     * @param bean object for define
-     * @param name name of [bean] for define. See description of method for get default value
-     * @param ifNotExist if false on duplicate will throw [BeanAlreadyDefinedException]. If true will ignore redefine
-     */
-    fun define(bean: Any, name: String = "${bean::class}_${bean::class.hashCode()}", ifNotExist: Boolean = false)
+interface StrongDefiner : Strong, Definer
+
+inline fun <reified T : Closeable> StrongDefiner.lazyDefineClosable(
+    name: String = "${T::class}_${T::class.hashCode()}",
+    ifNotExist: Boolean = false,
+    noinline func: suspend (StrongDefiner) -> T
+) {
+    define(
+        bean = object : Strong.ServiceProvider {
+            override suspend fun provide(strong: StrongDefiner) {
+                defineClosable(func(strong))
+            }
+        },
+        name = name,
+        ifNotExist = ifNotExist,
+    )
+}
+
+@JvmName("lazyDefineAsyncCloseable")
+inline fun <reified T : AsyncCloseable> StrongDefiner.lazyDefineClosable(
+    name: String = "${T::class}_${T::class.hashCode()}",
+    ifNotExist: Boolean = false,
+    noinline func: suspend (StrongDefiner) -> T
+) {
+    define(
+        bean = object : Strong.ServiceProvider {
+            override suspend fun provide(strong: StrongDefiner) {
+                defineClosable(func(strong))
+            }
+        },
+        name = name,
+        ifNotExist = ifNotExist,
+    )
+}
+
+inline fun <reified T : Any> StrongDefiner.lazyDefine(
+    name: String = "${T::class}_${T::class.hashCode()}",
+    ifNotExist: Boolean = false,
+    noinline func: suspend (StrongDefiner) -> T
+) {
+    define(
+        bean = object : Strong.ServiceProvider {
+            override suspend fun provide(strong: StrongDefiner) {
+                func(strong)
+            }
+        },
+        name = name,
+        ifNotExist = ifNotExist
+    )
+}
+
+fun StrongDefiner.defineClosable(
+    bean: AsyncCloseable,
+    name: String = "${bean::class}_${bean::class.hashCode()}",
+    ifNotExist: Boolean = false
+) {
+    define(
+        bean = bean,
+        name = name,
+        ifNotExist = ifNotExist,
+    )
+    executeOnDestroy {
+        bean.asyncClose()
+    }
+}
+
+fun StrongDefiner.defineClosable(
+    bean: Closeable,
+    name: String = "${bean::class}_${bean::class.hashCode()}",
+    ifNotExist: Boolean = false
+) {
+    define(
+        bean = bean,
+        name = name,
+        ifNotExist = ifNotExist,
+    )
+    executeOnDestroy {
+        bean.close()
+    }
+}
+
+fun StrongDefiner.executeOnDestroy(func: suspend () -> Unit) {
+    define(
+        bean = object : Strong.DestroyableBean {
+            override suspend fun destroy(strong: Strong) {
+                func()
+            }
+        },
+        name = Random.uuid().toString()
+    )
 }

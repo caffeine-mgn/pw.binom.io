@@ -22,7 +22,6 @@ interface Strong {
             config.forEach {
                 it.apply(strong)
             }
-
             strong.start()
             return strong
         }

@@ -19,6 +19,12 @@ kotlin {
         }
     }
 
+    linuxArm64 {
+        binaries {
+            staticLib()
+        }
+    }
+
     mingwX64 { // Use your target instead.
         binaries {
             staticLib()
@@ -26,12 +32,6 @@ kotlin {
     }
 
     mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
-
-    linuxArm64 {
         binaries {
             staticLib()
         }
@@ -47,6 +47,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":strong"))
+                api(project(":process"))
                 api(project(":network"))
             }
         }
@@ -55,6 +56,10 @@ kotlin {
             dependsOn(commonMain)
         }
         val linuxArm32HfpMain by getting {
+            dependsOn(commonMain)
+        }
+
+        val linuxArm64Main by getting {
             dependsOn(commonMain)
         }
 

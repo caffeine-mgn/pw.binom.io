@@ -1,4 +1,5 @@
 package pw.binom.strong
 
-class BeanProvider {
+interface BeanProvider<T : Any> {
+    fun provide(strong: Strong): T
 }
