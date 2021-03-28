@@ -2,7 +2,9 @@ package pw.binom.flux
 
 import pw.binom.*
 import pw.binom.io.AsyncReader
+import pw.binom.io.AsyncWriter
 import pw.binom.io.http.Headers
+import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
@@ -15,10 +17,10 @@ import kotlin.test.assertEquals
 class AbstractRouteTest {
 
     class MockAction(method: String, contextUri: Path) : HttpRequest {
-        override val method: String=method
+        override val method: String = method
         override val headers: Headers
             get() = TODO("Not yet implemented")
-        override val path: Path =contextUri
+        override val path: Path = contextUri
         override val query: Query?
             get() = null
         override val request: String
@@ -41,15 +43,17 @@ class AbstractRouteTest {
         }
 
         override suspend fun response(): HttpResponse {
-            TODO("Not yet implemented")
+            val r = HttpResponseMock()
+            response = r
+            return r
         }
 
         override suspend fun <T> response(func: (HttpResponse) -> T): T {
             TODO("Not yet implemented")
         }
 
-        override val response: HttpResponse?
-            get() = null
+        override var response: HttpResponse? = null
+            private set
 
         override suspend fun asyncClose() {
             TODO("Not yet implemented")
@@ -61,12 +65,13 @@ class AbstractRouteTest {
     fun testOrder() {
         val router = RootRouter()
         var state = 0
-        router.get("/*") {
-            state = 2
-            true
-        }
         router.get("/events/*") {
             state = 1
+            it.response()
+            true
+        }
+        router.get("/*") {
+            state = 2
             true
         }
         val done = async2 {
@@ -80,4 +85,23 @@ class AbstractRouteTest {
             throw done.exceptionOrNull!!
         }
     }
+}
+
+class HttpResponseMock : HttpResponse {
+    override var status: Int = 404
+    override val headers: MutableHeaders
+        get() = TODO("Not yet implemented")
+
+    override suspend fun writeBinary(): AsyncOutput {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun writeText(): AsyncWriter {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun asyncClose() {
+        TODO("Not yet implemented")
+    }
+
 }

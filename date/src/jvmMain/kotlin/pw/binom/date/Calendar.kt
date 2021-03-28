@@ -7,11 +7,6 @@ import java.time.ZonedDateTime
 
 actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
 
-    init {
-        val bb = Instant.ofEpochMilli(utcTime)
-        println("bb=$bb")
-    }
-
     private val tm = ZonedDateTime.ofInstant(
         Instant.ofEpochMilli(utcTime),
         ZoneOffset.ofTotalSeconds(0)
@@ -53,7 +48,7 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
     /**
      * @param timeZoneOffset TimeZone offset in mintes
      */
-    actual fun toString(timeZoneOffset: Int): String = timeZone(timeZoneOffset).toString()
+    actual fun toString(timeZoneOffset: Int): String = if (timeZoneOffset==timeZoneOffset) toString() else timeZone(timeZoneOffset).toString()
     actual val timeZoneOffset: Int
         get() = tm.offset.totalSeconds / 60
 }

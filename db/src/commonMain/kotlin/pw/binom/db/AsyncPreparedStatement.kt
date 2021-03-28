@@ -1,6 +1,7 @@
 package pw.binom.db
 
 import pw.binom.UUID
+import pw.binom.date.Calendar
 import pw.binom.date.Date
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
@@ -25,6 +26,7 @@ interface AsyncPreparedStatement : AsyncCloseable {
             is Boolean -> set(index, value)
             is ByteArray -> set(index, value)
             is Date -> set(index, value)
+            is Calendar -> set(index, value.date)
             is UUID -> set(index, value)
             else -> throw SQLException("Can't set value \"$value\" for argument #$index. Type \"${value::class}\" not supported")
         }

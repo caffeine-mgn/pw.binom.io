@@ -32,7 +32,7 @@ actual inline class Date(val time: Long = now) {
                     hours,
                     minutes,
                     seconds,
-                    millis * 1000,
+                    millis * 1_000_000,
                     ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - (timeZoneOffset / 60 * 60))
                 ).toInstant().toEpochMilli()
             )

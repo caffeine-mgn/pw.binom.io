@@ -17,7 +17,7 @@ class DateParserTest {
             assertEquals(0, seconds)
             assertEquals(3 * 60, timeZoneOffset)
         }
-        "yyyy-MM-dd HH:mm:ssXXX".toDatePattern().parseOrNull("1989-01-05 10:31:44+03:00")!!.calendar(3 * 60).apply {
+        "yyyy-MM-dd HH:mm:ss.SSSXXX".toDatePattern().parseOrNull("1989-01-05 10:31:44.456+03:00")!!.calendar(3 * 60).apply {
             println("--->${this.toString()}")
             assertEquals(1989, year)
             assertEquals(1, month)
@@ -25,6 +25,7 @@ class DateParserTest {
             assertEquals(10, hours)
             assertEquals(31, minutes)
             assertEquals(44, seconds)
+            assertEquals(456, millisecond)
             assertEquals(3 * 60, timeZoneOffset)
         }
     }

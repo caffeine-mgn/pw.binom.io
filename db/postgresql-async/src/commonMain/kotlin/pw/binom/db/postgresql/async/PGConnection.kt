@@ -225,6 +225,9 @@ class PGConnection private constructor(
     override fun prepareStatement(query: String): AsyncPreparedStatement =
         prepareStatement(query, emptyList(), emptyList())
 
+    override fun isReadyForQuery(): Boolean =
+        isConnected && !busy
+
     internal var prepareStatements = HashSet<PostgresPreparedStatement>()
 
     fun prepareStatement(

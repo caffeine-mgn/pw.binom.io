@@ -80,7 +80,6 @@ class NatsRawConnection(
             writer.append("}\r\n")
             writer.flush()
             val connectMsg = reader.readln() ?: throw IOException("Can't connect to Nats")
-            println("Nats Info: $connectMsg")
             val info = parseInfoMsg(connectMsg)
             isConnected = true
             return info

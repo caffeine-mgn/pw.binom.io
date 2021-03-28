@@ -17,7 +17,9 @@ sealed class Pattern {
                 MMM.find(format, position) -> MMM
                 u.find(format, position) -> u
                 ss.find(format, position) -> ss
+                SSS.find(format, position) -> SSS
                 XXX.find(format, position) -> XXX
+                XX.find(format, position) -> XX
                 Z.find(format, position) -> Z
                 MINUS.find(format, position) -> MINUS
                 SLASH.find(format, position) -> SLASH
@@ -281,6 +283,66 @@ sealed class Pattern {
                 12 -> "Dec"
                 else -> throw IllegalArgumentException()
             }
+    }
+
+    object SSS : Pattern() {
+        override fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "SSS", 0, len)
+
+        override val len: Int
+            get() = 3
+
+        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+            if (position + 3 > text.length) {
+                return -1
+            }
+            val hours = text.substring(position, position + len).toIntOrNull() ?: return -1
+            set(FieldType.MILLISECOND, hours)
+            return 3
+        }
+
+        override fun toString(calendar: Calendar): String =
+            calendar.millisecond.toString()
+
+    }
+
+    /**
+     * Timezone. Example: "-07:00"
+     */
+    object XX : Pattern() {
+        override fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "XX", 0, len)
+
+        override val len: Int
+            get() = 2
+
+        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+            if (position + 3 > text.length) {
+                return -1
+            }
+            val sign = text[position]
+            val add = when (sign) {
+                '+' -> true
+                '-' -> false
+                else -> return -1
+            }
+            if (text[position + 1] !in '0'..'9') {
+                return -1
+            }
+            if (text[position + 2] !in '0'..'9') {
+                return -1
+            }
+            val h = text.substring(position + 1, position + 3).toInt()
+            set(FieldType.TIME_ZONE, h * 60 * if (add) 1 else -1)
+            return 6
+        }
+
+        override fun toString(calendar: Calendar): String {
+            val t = calendar.timeZoneOffset.absoluteValue
+            val h = t / 60
+            val m = t - h * 60
+            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}:${m.as2()}"
+        }
     }
 
     /**

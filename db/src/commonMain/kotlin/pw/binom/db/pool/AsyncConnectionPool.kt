@@ -42,6 +42,10 @@ class AsyncConnectionPool constructor(
     private fun getOneWater(): Continuation<PooledAsyncConnection>? =
         waiters.removeLastOrNull()
 
+    fun prepareStatement(sql: String) {
+        PooledAsyncPreparedStatement2(this, sql)
+    }
+
     suspend fun cleanUp(): Int {
         if (cleaning) {
             return 0
@@ -103,7 +107,7 @@ class AsyncConnectionPool constructor(
     }
 
     suspend fun borrow() = getConnectionAnyWay()
-    suspend fun <T> borrow(func: suspend (AsyncConnection) -> T): T =
+    suspend fun <T> borrow(func: suspend (PooledAsyncConnection) -> T): T =
         borrow().use {
             func(it)
         }
@@ -212,6 +216,12 @@ class AsyncConnectionPool constructor(
 //            free(con)
 //        }
 //    }
+
+    internal suspend fun free(sql: String) {
+        connections.forEach {
+            it.free(sql)
+        }
+    }
 
     internal suspend fun free(connection: PooledAsyncConnection) {
         cleanUp()

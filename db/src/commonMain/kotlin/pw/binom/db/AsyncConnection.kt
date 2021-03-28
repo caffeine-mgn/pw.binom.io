@@ -9,6 +9,7 @@ interface AsyncConnection : AsyncCloseable {
 
     fun createStatement(): AsyncStatement
     fun prepareStatement(query: String): AsyncPreparedStatement
+    fun isReadyForQuery(): Boolean
     suspend fun commit()
     suspend fun rollback()
     suspend fun executeUpdate(sql: String) =

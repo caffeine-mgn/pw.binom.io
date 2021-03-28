@@ -8,10 +8,11 @@ import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.forEachHeader
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.use
+import pw.binom.net.toURI
 import pw.binom.network.NetworkDispatcher
 
 fun main() {
-    val url = "http://example.com/".toURIOrNull()!!
+    val url = "http://example.com/".toURI()
 
     val nioManager = NetworkDispatcher()
     val connections = HttpClient(nioManager)

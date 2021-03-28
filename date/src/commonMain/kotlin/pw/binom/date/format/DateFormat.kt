@@ -1,8 +1,9 @@
 package pw.binom.date.format
 
+import pw.binom.date.Calendar
 import pw.binom.date.Date
 
-inline class DataParser internal constructor(private val format: Array<Pattern>) {
+inline class DateFormat internal constructor(private val format: Array<Pattern>) {
     fun parseOrNull(text: String, defaultTimezoneOffset: Int = Date.timeZoneOffset): Date? {
         var year = 0
         var month = 0
@@ -53,6 +54,14 @@ inline class DataParser internal constructor(private val format: Array<Pattern>)
         )
     }
 
+    fun toString(calendar: Calendar): String {
+        val sb = StringBuilder()
+        format.forEach {
+            sb.append(it.toString(calendar))
+        }
+        return sb.toString()
+    }
+
     companion object {
         internal fun parsePatternList(format: String): Array<Pattern> {
             var index = 0
@@ -69,4 +78,4 @@ inline class DataParser internal constructor(private val format: Array<Pattern>)
     }
 }
 
-fun String.toDatePattern() = DataParser(DataParser.parsePatternList(this))
+fun String.toDatePattern() = DateFormat(DateFormat.parsePatternList(this))

@@ -5,6 +5,7 @@ import pw.binom.UUID
 import pw.binom.async
 import pw.binom.charset.Charsets
 import pw.binom.date.Date
+import pw.binom.date.parseIsoDate
 import pw.binom.db.ResultSet
 import pw.binom.db.firstOrNull
 import pw.binom.db.map
@@ -178,13 +179,92 @@ class TestConnect {
                 )
             """
             )
-            it.executeUpdate("""insert into date_argument_test (id,date_column) values(1,'2018-02-01 11:42:39.425000') """)
-            val date = it.prepareStatement("select date_column from date_argument_test where date_column>?").use {
-                it.executeQuery(Date(0)).firstOrNull {
+            it.executeUpdate("""insert into date_argument_test (id,date_column) values(1,'2018-02-01 11:42:39.425') """)
+            it.executeUpdate("commit")
+            val date = it.prepareStatement("select date_column from date_argument_test").use {
+                it.executeQuery().firstOrNull {
                     it.getDate(0)
                 }
             }
-            assertEquals(1517571759425L, date!!.time)
+            assertEquals("2018-02-01 11:42:39.425".parseIsoDate(0)!!.time, date!!.time)
+        }
+    }
+
+    @Test
+    fun blolbTest() {
+        pg {
+            val vv = byteArrayOf(97)
+            val sb = StringBuilder(vv.size * 2 + 2)
+            sb.append("\\x")
+            vv.forEach {
+                val value = it.toInt() and 0xFF
+                value.toString(16)
+                val first = value shr 4
+                val second = value and 0xF
+                sb.append(first.toString(16))
+                    .append(second.toString(16))
+            }
+            println("--->\"$sb\"")
+            it.executeUpdate(
+                """
+                create table if not exists blob_test
+                (
+                    id bigserial primary key,
+                    data bytea not null
+                )
+            """
+            )
+            it.executeUpdate("insert into blob_test (id, data) values (1,'\\x61')")
+            it.prepareStatement(
+                """
+        select data from "blob_test"
+            """
+            ).executeQuery().map {
+                it.getBlob(0)!!.also {
+                    assertEquals(1, it.size)
+                    assertEquals(97, it[0])
+                }
+            }
+            it.createStatement().use {
+                it.executeQuery(
+                    """
+        select data from "blob_test"
+            """
+                ).map {
+                    it.getBlob(0)!!.also {
+                        assertEquals(1, it.size)
+                        assertEquals(97, it[0])
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun doubleTest() {
+        pg {
+            it.executeUpdate(
+                """
+                create table if not exists double_test
+                (
+                    id bigserial primary key,
+                    amount double precision not null,
+                    exp timestamp without time zone
+                )
+            """
+            )
+            it.executeUpdate("insert into double_test (id, amount, exp) values (1,10, '2021-03-29 10:00:00')")
+            it.prepareStatement(
+                """
+        select
+            amount,
+            exp
+        from "double_test"
+            """
+            ).executeQuery().map {
+                assertEquals(10.0, it.getDouble(0))
+                assertEquals(1617012000000L, it.getDate(1)!!.time)
+            }
         }
     }
 
@@ -301,29 +381,29 @@ class TestConnect {
 
     @Test
     fun timestampTest() {
-        pg { con ->
-            con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
-                try {
-                    it.executeQuery().use {
-                        assertEquals(1, it.columns.size)
-                        assertTrue(it.next())
-                        assertEquals(1578239016000L, it.getDate(0)!!.time)
-                        assertFalse(it.next())
-                    }
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    throw e
-                }
-            }
-        }
+//        pg { con ->
+//            con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
+//                try {
+//                    it.executeQuery().use {
+//                        assertEquals(1, it.columns.size)
+//                        assertTrue(it.next())
+//                        assertEquals(1578239016000L, it.getDate(0)!!.time)
+//                        assertFalse(it.next())
+//                    }
+//                } catch (e: Throwable) {
+//                    e.printStackTrace()
+//                    throw e
+//                }
+//            }
+//        }
 
         pg { con ->
-            con.prepareStatement("SELECT TIMESTAMPTZ '2020-01-05 15:43:36.000000'").use {
+            con.prepareStatement("SELECT TIMESTAMPTZ '2020-01-05 15:43:36.000'").use {
                 try {
                     it.executeQuery().use {
                         assertEquals(1, it.columns.size)
                         assertTrue(it.next())
-                        assertEquals(1578239016000L, it.getDate(0)!!.time)
+                        assertEquals("2020-01-05 15:43:36.000".parseIsoDate(0)!!.time, it.getDate(0)!!.time)
                         assertFalse(it.next())
                     }
                 } catch (e: Throwable) {
@@ -370,6 +450,4 @@ class TestConnect {
             }
         }
     }
-
-
 }

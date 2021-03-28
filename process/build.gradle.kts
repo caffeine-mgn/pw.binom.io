@@ -31,6 +31,18 @@ kotlin {
         }
     }
 
+    linuxArm64 {
+        binaries {
+            staticLib()
+            compilations["main"].cinterops {
+                create("signals") {
+                    defFile = project.file("src/cinterop/linux.def")
+                    packageName = "platform.linux"
+                }
+            }
+        }
+    }
+
     mingwX64 { // Use your target instead.
         binaries {
             staticLib()
@@ -43,12 +55,6 @@ kotlin {
         }
     }
 
-//    linuxArm64 {
-//        binaries {
-//            staticLib {
-//            }
-//        }
-//    }
     macosX64 {
         binaries {
             framework {
@@ -75,6 +81,11 @@ kotlin {
             dependsOn(commonMain)
         }
         val linuxArm32HfpMain by getting {
+            dependsOn(commonMain)
+            kotlin.srcDir("src/linuxX64Main/kotlin")
+        }
+
+        val linuxArm64Main by getting {
             dependsOn(commonMain)
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }

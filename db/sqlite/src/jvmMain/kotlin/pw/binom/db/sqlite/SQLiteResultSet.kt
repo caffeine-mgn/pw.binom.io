@@ -31,7 +31,7 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
     override fun getBoolean(column: String): Boolean? = getInt(column)?.let { it > 0 }
 
     override fun getInt(index: Int): Int? {
-        native.getObject(index) ?: return null
+        native.getObject(index+1) ?: return null
         return native.getInt(index + 1)
     }
 
@@ -41,7 +41,7 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
     }
 
     override fun getLong(index: Int): Long? {
-        native.getObject(index) ?: return null
+        native.getObject(index+1) ?: return null
         return native.getLong(index + 1)
     }
 
@@ -51,7 +51,7 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
     }
 
     override fun getFloat(index: Int): Float? {
-        native.getObject(index) ?: return null
+        native.getObject(index+1) ?: return null
         return native.getFloat(index + 1)
     }
 
@@ -69,8 +69,8 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
     }
 
     override fun getDouble(index: Int): Double? {
-        native.getObject(index) ?: return null
-        return native.getDouble(index)
+        native.getObject(index+1) ?: return null
+        return native.getDouble(index+1)
     }
 
     override fun getDouble(column: String): Double? {
@@ -97,8 +97,8 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
         native.getObject(column) == null
 
     override fun getDate(index: Int): Date? {
-        native.getObject(index) ?: return null
-        return Date(native.getTimestamp(index).time)
+        native.getObject(index+1) ?: return null
+        return Date(native.getTimestamp(index+1).time)
     }
 
     override fun getDate(column: String): Date? {

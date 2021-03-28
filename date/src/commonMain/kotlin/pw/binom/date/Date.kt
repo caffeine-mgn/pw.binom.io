@@ -25,6 +25,18 @@ expect inline class Date(val time: Long = now) {
     fun calendar(timeZoneOffset: Int = Date.timeZoneOffset): Calendar
 }
 
+fun Date.Companion.of(calendar: Calendar) =
+    of(
+        year = calendar.year,
+        month = calendar.month,
+        dayOfMonth = calendar.dayOfMonth,
+        hours = calendar.hours,
+        minutes = calendar.minutes,
+        seconds = calendar.seconds,
+        millis = calendar.millisecond,
+        timeZoneOffset = calendar.timeZoneOffset,
+    )
+
 fun Date.Companion.of(
     year: Int,
     month: Int,
@@ -36,5 +48,6 @@ fun Date.Companion.of(
     timeZoneOffset: Int = 0
 ): Date {
     require(month >= 1 && month <= 12) { "Invalid value of month. Valid values 1-12" }
+    require(millis >= 0 && millis <= 999) { "Invalid value of millis. Valid values 0-999" }
     return internalOf(year, month, dayOfMonth, hours, minutes, seconds, millis, timeZoneOffset)
 }

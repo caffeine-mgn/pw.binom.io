@@ -148,7 +148,7 @@ class PostgresPreparedStatement(
                 }
             )
         }
-        val binaryResult = true
+        val binaryResult = false
         val portalName = id.toString()
         connection.sendOnly(connection.reader.bindMessage.also {
             it.statement = id.toString()

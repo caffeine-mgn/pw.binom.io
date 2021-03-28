@@ -42,7 +42,7 @@ actual inline class Date(val time: Long = now) {
                 t.tm_sec = seconds
                 val tx = timeZoneOffset - Date.timeZoneOffset
                 val r = (_mktime64(t.ptr) - tx * 60L) * 1000L
-                Date(r)
+                Date(r+millis)
             }
     }
 
