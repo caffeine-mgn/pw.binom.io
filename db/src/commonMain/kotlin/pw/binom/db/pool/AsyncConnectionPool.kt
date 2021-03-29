@@ -21,10 +21,10 @@ class AsyncConnectionPool constructor(
     val waitFreeConnection: Boolean = true,
     val factory: suspend () -> AsyncConnection,
 ) : AsyncCloseable {
-    private val connections = HashSet<PooledAsyncConnection>(maxConnections)
-    private val idleConnection = ArrayList<PooledAsyncConnection>(maxConnections)
+    private val connections = HashSet<PooledAsyncConnectionImpl>(maxConnections)
+    private val idleConnection = ArrayList<PooledAsyncConnectionImpl>(maxConnections)
 
-    private val waiters = ArrayList<Continuation<PooledAsyncConnection>>()
+    private val waiters = ArrayList<Continuation<PooledAsyncConnectionImpl>>()
 
     val idleConnectionCount
         get() = idleConnection.size
@@ -35,11 +35,10 @@ class AsyncConnectionPool constructor(
     /**
      * Set for connection for delete
      */
-    private
-    val forRemove = HashSet<PooledAsyncConnection>()
+    private val forRemove = HashSet<PooledAsyncConnectionImpl>()
     private var cleaning = false
 
-    private fun getOneWater(): Continuation<PooledAsyncConnection>? =
+    private fun getOneWater(): Continuation<PooledAsyncConnectionImpl>? =
         waiters.removeLastOrNull()
 
     fun prepareStatement(sql: String) {
@@ -74,7 +73,7 @@ class AsyncConnectionPool constructor(
         return count
     }
 
-    private suspend fun getConnectionAnyWay(): PooledAsyncConnection {
+    private suspend fun getConnectionAnyWay(): PooledAsyncConnectionImpl {
         while (true) {
             val connection = idleConnection.removeLastOrNull()
             if (connection != null) {
@@ -87,7 +86,7 @@ class AsyncConnectionPool constructor(
             }
 
             if (connections.size < maxConnections) {
-                val con = PooledAsyncConnection(this, factory())
+                val con = PooledAsyncConnectionImpl(this, factory())
                 connections.add(con)
                 return con
             }
@@ -95,7 +94,7 @@ class AsyncConnectionPool constructor(
                 throw IllegalStateException("No free connections")
             }
 
-            val con = suspendCoroutine<PooledAsyncConnection> { waiters += it }
+            val con = suspendCoroutine<PooledAsyncConnectionImpl> { waiters += it }
             if (!con.checkValid()) {
                 connections -= con
                 forRemove += con
@@ -106,124 +105,18 @@ class AsyncConnectionPool constructor(
         }
     }
 
-    suspend fun borrow() = getConnectionAnyWay()
-    suspend fun <T> borrow(func: suspend (PooledAsyncConnection) -> T): T =
-        borrow().use {
+    suspend fun <T> borrow(func: suspend PooledAsyncConnectionImpl.() -> T): T =
+        getConnectionAnyWay().use {
             func(it)
         }
 
-//    suspend fun update(sql: String, arguments: List<Any?>): Long =
-//        getConnection { con ->
-//            try {
-//                if (arguments.isEmpty()) {
-//                    con.createStatement().use {
-//                        it.executeUpdate(sql)
-//                    }
-//                } else {
-//                    con.prepareStatement(sql).use { st ->
-//                        arguments.forEachIndexed { index, arg ->
-//                            st.setValue(index, arg)
-//                        }
-//                        st.executeUpdate()
-//                    }
-//                }
-//            } catch (e: SQLException) {
-//                throw SQLException("Can't execute \"$sql\"", e)
-//            }
-//        }
-
-//    suspend fun update(sql: String, vararg arguments: Any?): Long =
-//        getConnection { con ->
-//            try {
-//                if (arguments.isEmpty()) {
-//                    con.createStatement().use {
-//                        it.executeUpdate(sql)
-//                    }
-//                } else {
-//                    con.prepareStatement(sql).use { st ->
-//                        arguments.forEachIndexed { index, arg ->
-//                            st.setValue(index, arg)
-//                        }
-//                        st.executeUpdate()
-//                    }
-//                }
-//            } catch (e: SQLException) {
-//                throw SQLException("Can't execute \"$sql\"", e)
-//            }
-//        }
-
-//    suspend fun updateBatch(sql: String, values: List<List<Any?>>): Long {
-//        var count = 0L
-//        getConnection { con ->
-//            try {
-//                con.prepareStatement(sql).use { st ->
-//                    values.forEach { arguments ->
-//                        arguments.forEachIndexed { index, arg ->
-//                            st.setValue(index, arg)
-//                        }
-//                        count += st.executeUpdate()
-//                    }
-//                }
-//            } catch (e: SQLException) {
-//                throw SQLException("Can't execute \"$sql\"", e)
-//            }
-//        }
-//        return count
-//    }
-
-//    suspend fun <T> selectAll(sql: String, vararg arguments: Any?, mapper: suspend (ResultSet) -> T) =
-//        getConnection { con ->
-//            try {
-//                con.prepareStatement(sql).use { st ->
-//                    arguments.forEachIndexed { index, arg ->
-//                        st.setValue(index, arg)
-//                    }
-//                    st.executeQuery().list {
-//                        mapper(it)
-//                    }
-//                }
-//            } catch (e: SQLException) {
-//                throw SQLException("Can't execute \"$sql\"", e)
-//            }
-//        }
-
-//    suspend fun <T> selectFirst(sql: String, vararg arguments: Any?, mapper: suspend (ResultSet) -> T) {
-//        getConnection { con ->
-//            try {
-//                con.prepareStatement(sql).use { st ->
-//                    arguments.forEachIndexed { index, arg ->
-//                        st.setValue(index, arg)
-//                    }
-//                    st.executeQuery().use {
-//                        if (it.next()) {
-//                            mapper(it)
-//                        } else {
-//                            it.asyncClose()
-//                        }
-//                    }
-//                }
-//            } catch (e: SQLException) {
-//                throw SQLException("Can't execute \"$sql\"", e)
-//            }
-//        }
-//    }
-
-//    private suspend fun <T> getConnection(func: suspend (AsyncConnection) -> T): T {
-//        val con = getConnectionAnyWay()
-//        return try {
-//            func(con.connection)
-//        } finally {
-//            free(con)
-//        }
-//    }
-
     internal suspend fun free(sql: String) {
         connections.forEach {
-            it.free(sql)
+            it.closePreparedStatement(sql)
         }
     }
 
-    internal suspend fun free(connection: PooledAsyncConnection) {
+    internal suspend fun free(connection: PooledAsyncConnectionImpl) {
         cleanUp()
         val w = getOneWater()
         if (w == null) {
