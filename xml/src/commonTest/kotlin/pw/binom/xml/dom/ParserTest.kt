@@ -12,7 +12,7 @@ class ParserTest {
     @Test
     fun test() {
         val txt = """<?xml version="1.0" encoding="UTF-8"?><ns1:Response ns1:name="Anton" xmlns:ns1="http://binom.pw"><value><ns1:TestData ns1:value="OLOLO"/></value></ns1:Response>"""
-        val r = XmlDomReader()
+        val r = AsyncXmlDomReader()
         async {
             XmlRootReaderVisitor(txt.asReader().asAsync()).accept(r)
         }

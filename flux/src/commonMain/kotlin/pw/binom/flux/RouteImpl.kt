@@ -1,3 +1,3 @@
 package pw.binom.flux
 
-internal class RouteImpl : Route, AbstractRoute()
+internal class RouteImpl(override val serialization: Serialization) : Route, AbstractRoute()

@@ -6,6 +6,7 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 
 interface Route {
+    val serialization: Serialization
     fun route(path: String, route: Route)
     fun route(path: String, func: (Route.() -> Unit)? = null): Route
     fun detach(path: String, route: Route)
@@ -68,6 +69,9 @@ inline fun Route.delete(path: String, noinline func: suspend (FluxHttpRequest) -
  * @return new router with preHandle
  */
 fun Route.preHandle(func: suspend (HttpRequest) -> Boolean) = object : AbstractRoute() {
+    override val serialization: Serialization
+        get() = this@preHandle.serialization
+
     override suspend fun execute(action: HttpRequest) {
         func(action)
         if (action.response == null) {
@@ -77,6 +81,8 @@ fun Route.preHandle(func: suspend (HttpRequest) -> Boolean) = object : AbstractR
 }
 
 fun Route.postHandle(func: suspend (action: HttpRequest) -> Unit) = object : AbstractRoute() {
+    override val serialization: Serialization
+        get() = this@postHandle.serialization
     override suspend fun execute(action: HttpRequest) {
         super.execute(action)
         func(action)
@@ -102,9 +108,13 @@ fun Route.postHandle(func: suspend (action: HttpRequest) -> Unit) = object : Abs
  * @param func will be call instend original handler. As argument will be pass original [Action] and result of original handler
  */
 fun Route.wrap(func: suspend (HttpRequest, suspend (HttpRequest) -> Unit) -> Unit) = object : AbstractRoute() {
+
     init {
         this@wrap.forward(this)
     }
+
+    override val serialization: Serialization
+        get() = this@wrap.serialization
 
     override suspend fun execute(action: HttpRequest) =
         func(action) { newAction ->

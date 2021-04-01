@@ -11,7 +11,7 @@ class WriterTest {
     fun test() {
         async {
             val sb = StringBuilder()
-            val b = XmlWriterVisitor("root", sb.asAsync())
+            val b = AsyncXmlWriterVisitor("root", sb.asAsync())
             b.start()
             b.attribute("name", "root-node")
             b.subNode("node1").apply {

@@ -15,7 +15,7 @@ abstract class AbstractRoute : Route, Handler {
     }
 
     override fun route(path: String, func: (Route.() -> Unit)?): Route {
-        val r = RouteImpl()
+        val r = RouteImpl(serialization)
         routers.getOrPut(path) { ArrayList() }.add(r)
         if (func != null)
             func(r)
@@ -77,10 +77,9 @@ abstract class AbstractRoute : Route, Handler {
                 ?.filter {
                     action.path.isMatch(it.key)
                 }
-//                ?.sortedBy { -it.key.length }
                 ?.forEach { route ->
                     route.value.forEach {
-                        it(FluxHttpRequestImpl(route.key, action))
+                        it(FluxHttpRequestImpl(mask = route.key, serialization = serialization, request = action))
                         if (action.response != null) {
                             return
                         }

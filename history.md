@@ -8,6 +8,8 @@
 * URN Implement
 * Fix Memory Leak on Linux
 * Date parser/formater
+* XML KSerializer
+* Update Kotlin version 1.4.31 -> 1.4.32
 
 ### 0.1.28
 

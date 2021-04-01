@@ -15,6 +15,7 @@ interface Headers : Map<String, List<String>> {
         const val WWW_AUTHENTICATE = "WWW-Authenticate"
         const val CHUNKED = "chunked"
         const val RANGE = "Range"
+        const val ACCEPT_CHARSET = "Accept-Charset"
         const val ORIGIN = "Origin"
         const val CONNECTION = "Connection"
         const val UPGRADE = "Upgrade"

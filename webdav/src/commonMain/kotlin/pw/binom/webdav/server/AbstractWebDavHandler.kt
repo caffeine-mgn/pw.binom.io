@@ -60,7 +60,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             node.findElements { it.tag.endsWith("prop") }.first().childs
                 .asSequence()
                 .map {
-                    it.nameSpace?.url to it.tag
+                    it.nameSpace to it.tag
                 }.toMutableSet()
         val depth = req.headers["Depth"]?.firstOrNull()?.toInt() ?: 0
         val entities = fs.getEntitiesWithDepth(

@@ -17,7 +17,7 @@ import kotlin.coroutines.*
 open class WebDavClient(val client: HttpClient, val URI: URI) : FileSystem {
 
     private fun XmlElement.findTag(name: String) =
-        findElements { it.nameSpace?.url == "DAV:" && it.tag == name }
+        findElements { it.nameSpace == "DAV:" && it.tag == name }
 
     override val isSupportUserSystem: Boolean
         get() = true

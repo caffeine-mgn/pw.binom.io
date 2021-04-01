@@ -1,5 +1,6 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("kotlinx-serialization")
 }
 
 apply {
@@ -7,13 +8,21 @@ apply {
 }
 
 kotlin {
+    jvm()
+
     linuxX64 { // Use your target instead.
         binaries {
             staticLib()
         }
     }
-    jvm()
+
     linuxArm32Hfp {
+        binaries {
+            staticLib()
+        }
+    }
+
+    linuxArm64 {
         binaries {
             staticLib()
         }
@@ -31,12 +40,6 @@ kotlin {
         }
     }
 
-//    linuxArm64 {
-//        binaries {
-//            staticLib()
-//        }
-//    }
-
     macosX64 {
         binaries {
             framework()
@@ -46,13 +49,15 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":core"))
-                api(project(":httpServer"))
+                api(project(":xml"))
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
             }
         }
 
         val linuxX64Main by getting {
+            dependsOn(commonMain)
+        }
+        val linuxArm64Main by getting {
             dependsOn(commonMain)
         }
         val linuxArm32HfpMain by getting {
