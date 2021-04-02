@@ -29,13 +29,19 @@ class AsyncBufferedAsciiInputReader(
         if (eof) {
             return
         }
+
         if (buffer.remaining == 0) {
-            buffer.clear()
-            if (stream.read(buffer) == 0) {
-                eof = true
+            try {
+                buffer.clear()
+                if (stream.read(buffer) == 0) {
+                    eof = true
+                }
+                buffer.flip()
+            } catch (e: Throwable) {
+                buffer.empty()
             }
-            buffer.flip()
         }
+
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
