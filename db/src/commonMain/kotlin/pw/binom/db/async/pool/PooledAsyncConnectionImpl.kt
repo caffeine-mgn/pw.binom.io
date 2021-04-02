@@ -1,9 +1,9 @@
-package pw.binom.db.pool
+package pw.binom.db.async.pool
 
 import pw.binom.date.Date
-import pw.binom.db.AsyncConnection
-import pw.binom.db.AsyncPreparedStatement
-import pw.binom.db.AsyncStatement
+import pw.binom.db.async.AsyncConnection
+import pw.binom.db.async.AsyncPreparedStatement
+import pw.binom.db.async.AsyncStatement
 import pw.binom.io.use
 import kotlin.time.ExperimentalTime
 
@@ -15,7 +15,7 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPool, val connection: A
     private val forRemove = HashMap<String, AsyncPreparedStatement>()
 
 
-    override fun usePreparedStatement(sql: String): AsyncPreparedStatement {
+    override suspend fun usePreparedStatement(sql: String): AsyncPreparedStatement {
         val p = forRemove.remove(sql)
         if (p != null) {
             createdPreparedStatement[sql] = p
@@ -77,10 +77,10 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPool, val connection: A
         return true
     }
 
-    override fun createStatement(): AsyncStatement = connection.createStatement()
+    override suspend fun createStatement(): AsyncStatement = connection.createStatement()
     internal val prepareStatements = HashSet<PooledAsyncPreparedStatement>()
 
-    override fun prepareStatement(query: String): AsyncPreparedStatement {
+    override suspend fun prepareStatement(query: String): AsyncPreparedStatement {
         val pst = connection.prepareStatement(query)
         val pooledPst = PooledAsyncPreparedStatement(this, pst)
         prepareStatements += pooledPst

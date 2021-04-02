@@ -1,5 +1,6 @@
 package pw.binom.strong
 
+import pw.binom.getOrException
 import pw.binom.io.use
 import pw.binom.network.NetworkDispatcher
 import pw.binom.process.Signal
@@ -21,7 +22,7 @@ object StrongApplication {
                     throw StartupException(initProcess.exceptionOrNull!!)
                 }
             }
-            val strong = initProcess.resultOrNull!!
+            val strong = initProcess.getOrException()
 
             while (!Signal.isInterrupted) {
                 networkDispatcher.select()

@@ -1,11 +1,11 @@
-package pw.binom.db.pool
+package pw.binom.db.async.pool
 
-import pw.binom.db.AsyncConnection
-import pw.binom.db.AsyncPreparedStatement
-import pw.binom.db.AsyncResultSet
+import pw.binom.db.async.AsyncConnection
+import pw.binom.db.async.AsyncPreparedStatement
+import pw.binom.db.async.AsyncResultSet
 
 interface PooledAsyncConnection: AsyncConnection {
-    fun usePreparedStatement(sql: String): AsyncPreparedStatement
+    suspend fun usePreparedStatement(sql: String): AsyncPreparedStatement
     suspend fun closePreparedStatement(sql: String)
 
     suspend fun <T> execute(

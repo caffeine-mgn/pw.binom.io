@@ -1,9 +1,8 @@
-package pw.binom.db.pool
+package pw.binom.db.async.pool
 
-import pw.binom.db.AsyncResultSet
+import pw.binom.db.async.AsyncResultSet
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.use
-import kotlin.jvm.JvmName
 
 class PooledAsyncPreparedStatement2(val pool: AsyncConnectionPool, val sql: String) : AsyncCloseable {
     override suspend fun asyncClose() {

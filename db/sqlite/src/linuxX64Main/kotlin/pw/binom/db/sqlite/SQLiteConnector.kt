@@ -6,15 +6,27 @@ import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.free
 import pw.binom.db.*
-import pw.binom.db.SyncConnection
+import pw.binom.db.sync.SyncConnection
+import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.doFreeze
 import pw.binom.io.file.File
 import pw.binom.io.IOException
+import pw.binom.io.file.FileNotFoundException
+import pw.binom.io.file.isExist
+import pw.binom.io.file.parent
 
 actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<sqlite3>>) : SyncConnection {
     actual companion object {
-        actual fun openFile(file: File): SQLiteConnector =
-            open(file.path)
+        actual fun openFile(file: File): SQLiteConnector {
+            val parent = file.parent?:throw FileNotFoundException("File ${file.path} not found")
+            if (!parent.isExist){
+                throw FileNotFoundException("Direction ${file.path} is not found")
+            }
+            if (!parent.isDirectory){
+                throw FileNotFoundException("Path ${file.path} is not direction")
+            }
+            return open(file.path)
+        }
 
         private fun open(path: String): SQLiteConnector {
 //            val ctx = platform.posix.malloc(sizeOf<SqliteDataBase>().convert())!!.reinterpret<SqliteDataBase>()

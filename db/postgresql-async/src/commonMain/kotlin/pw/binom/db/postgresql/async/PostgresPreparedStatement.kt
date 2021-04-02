@@ -2,8 +2,8 @@ package pw.binom.db.postgresql.async
 
 import pw.binom.UUID
 import pw.binom.date.Date
-import pw.binom.db.AsyncPreparedStatement
-import pw.binom.db.AsyncResultSet
+import pw.binom.db.async.AsyncPreparedStatement
+import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.postgresql.async.messages.backend.*
@@ -60,35 +60,35 @@ class PostgresPreparedStatement(
 
     private val params = arrayOfNulls<Any>(paramCount)
 
-    override fun set(index: Int, value: Float) {
+    override suspend fun set(index: Int, value: Float) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: Int) {
+    override suspend fun set(index: Int, value: Int) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: Long) {
+    override suspend fun set(index: Int, value: Long) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: String) {
+    override suspend fun set(index: Int, value: String) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: Boolean) {
+    override suspend fun set(index: Int, value: Boolean) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: ByteArray) {
+    override suspend fun set(index: Int, value: ByteArray) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: Date) {
+    override suspend fun set(index: Int, value: Date) {
         params[index] = value
     }
 
-    override fun setNull(index: Int) {
+    override suspend fun setNull(index: Int) {
         params[index] = null
     }
 
@@ -115,7 +115,7 @@ class PostgresPreparedStatement(
         throw SQLException("Query returns data")
     }
 
-    override fun set(index: Int, value: UUID) {
+    override suspend fun set(index: Int, value: UUID) {
         params[index] = value
     }
 

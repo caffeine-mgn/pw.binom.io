@@ -26,7 +26,7 @@ inline class Query internal constructor(val raw: String) {
         }
     }
 
-    fun forEach(func: (key: String, value: String?) -> Unit) {
+    fun search(func: (key: String, value: String?) -> Boolean) {
         if (raw.isEmpty()) {
             return
         }
@@ -36,8 +36,52 @@ inline class Query internal constructor(val raw: String) {
                     return@forEach
                 }
                 val items = it.split('=', limit = 2)
-                func(UTF8.decode(items[0]), items.getOrNull(1)?.let { UTF8.decode(it) })
+                if (func(UTF8.decode(items[0]), items.getOrNull(1)?.let { UTF8.decode(it) }))
+                    return
             }
+    }
+
+    /**
+     * Search first query param named as [key]. If [key] not found returns null
+     *
+     * Also perhaps key found, but value is null. In this case result will be null
+     */
+    fun firstOrNull(key: String): String? {
+        var result: String? = null
+        search { qkey, value ->
+            if (qkey == key) {
+                result = value
+                return@search false
+            }
+            return@search true
+        }
+        return result
+    }
+
+    /**
+     * Search any key named as [key]. If [key] exist returns null, in other case returns false
+     */
+    fun isExist(key: String): Boolean {
+        var result = false
+        search { qkey, value ->
+            if (qkey == key) {
+                result = true
+                return@search false
+            }
+            return@search true
+        }
+        return result
+    }
+
+    fun findAll(key: String): List<String?> {
+        val result = ArrayList<String?>()
+        search { qkey, value ->
+            if (key == qkey) {
+                result += value
+            }
+            true
+        }
+        return result
     }
 
     override fun toString(): String = raw

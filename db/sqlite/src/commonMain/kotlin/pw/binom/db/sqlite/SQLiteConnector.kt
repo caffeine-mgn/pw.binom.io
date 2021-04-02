@@ -1,7 +1,6 @@
 package pw.binom.db.sqlite
 
-import pw.binom.db.Connection
-import pw.binom.db.SyncConnection
+import pw.binom.db.sync.SyncConnection
 import pw.binom.io.file.File
 
 expect class SQLiteConnector : SyncConnection {

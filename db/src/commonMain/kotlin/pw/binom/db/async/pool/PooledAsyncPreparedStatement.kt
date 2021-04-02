@@ -1,6 +1,6 @@
-package pw.binom.db.pool
+package pw.binom.db.async.pool
 
-import pw.binom.db.AsyncPreparedStatement
+import pw.binom.db.async.AsyncPreparedStatement
 
 class PooledAsyncPreparedStatement(
     val pooledConnection: PooledAsyncConnectionImpl,

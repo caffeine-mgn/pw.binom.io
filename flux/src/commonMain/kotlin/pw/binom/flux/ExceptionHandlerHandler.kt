@@ -2,7 +2,7 @@ package pw.binom.flux
 
 import pw.binom.io.httpServer.*
 
-class ExceptionHandlerRouter(
+class ExceptionHandlerHandler(
     private val defaultHandler: Handler,
     private val handler: suspend (req: HttpRequest, Throwable) -> Unit
 ) : Handler {
@@ -17,4 +17,4 @@ class ExceptionHandlerRouter(
 }
 
 fun Handler.exceptionHandler(handler: suspend (req: HttpRequest, Throwable) -> Unit) =
-    ExceptionHandlerRouter(this, handler)
+    ExceptionHandlerHandler(this, handler)

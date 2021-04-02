@@ -5,6 +5,8 @@ import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
 import pw.binom.db.*
+import pw.binom.db.async.AsyncConnection
+import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
@@ -219,10 +221,10 @@ class PGConnection private constructor(
 
     }
 
-    override fun createStatement() =
+    override suspend fun createStatement() =
         PostgreAsyncStatement(this)
 
-    override fun prepareStatement(query: String): AsyncPreparedStatement =
+    override suspend fun prepareStatement(query: String): AsyncPreparedStatement =
         prepareStatement(query, emptyList(), emptyList())
 
     override fun isReadyForQuery(): Boolean =

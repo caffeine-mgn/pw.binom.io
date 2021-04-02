@@ -78,6 +78,9 @@ interface Headers : Map<String, List<String>> {
 
         }
 
+    val location: String?
+        get() = getSingle(LOCATION)
+
     val charset: String?
         get() {
             val charset = contentType

@@ -13,24 +13,29 @@ interface MutableHeaders : Headers {
     override operator fun get(key: String): List<String>?
     fun clear()
     override var acceptEncoding: List<String>?
-        get() = getSingle(Headers.ACCEPT_ENCODING)?.split(',')?.map { it.trim() }
+        get() = super.acceptEncoding
         set(value) {
             this[Headers.ACCEPT_ENCODING] = value?.joinToString(", ")
         }
     override var contentEncoding: String?
-        get() = getSingle(Headers.CONTENT_ENCODING)
+        get() = super.contentEncoding
         set(value) {
             this[Headers.CONTENT_ENCODING] = value
         }
 
     override var contentType: String?
-        get() = getSingle(Headers.CONTENT_TYPE)
+        get() = super.contentType
         set(value) {
             this[Headers.CONTENT_TYPE] = value
         }
 
+    override var location: String?
+        get() = super.location
+        set(value) {
+            set(Headers.LOCATION, value)
+        }
     override var transferEncoding: String?
-        get() = getSingle(Headers.TRANSFER_ENCODING)
+        get() = super.transferEncoding
         set(value) {
             this[Headers.TRANSFER_ENCODING] = value
         }
@@ -50,17 +55,13 @@ interface MutableHeaders : Headers {
     }
 
     override var contentLength: ULong?
-        get() {
-            val txt = getSingle(Headers.CONTENT_LENGTH) ?: return null
-            return txt?.toULongOrNull()
-                ?: throw IllegalStateException("Invalid header \"${Headers.CONTENT_LENGTH}:${txt}\"")
-        }
+        get() = super.contentLength
         set(value) {
             this[Headers.CONTENT_LENGTH] = value?.toString()
         }
 
     override var keepAlive: Boolean
-        get() = getSingle(Headers.CONNECTION).equals(Headers.KEEP_ALIVE, ignoreCase = true)
+        get() = super.keepAlive
         set(value) {
             if (value) {
                 this[Headers.CONNECTION] = Headers.KEEP_ALIVE

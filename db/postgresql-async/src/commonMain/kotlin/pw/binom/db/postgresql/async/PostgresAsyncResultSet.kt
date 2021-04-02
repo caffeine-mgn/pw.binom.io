@@ -3,13 +3,10 @@ package pw.binom.db.postgresql.async
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.date.Date
-import pw.binom.date.format.toDatePattern
 import pw.binom.date.of
 import pw.binom.date.parseIsoDate
-import pw.binom.db.AsyncResultSet
+import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.SQLException
-import pw.binom.fromBytes
-import pw.binom.wrap
 
 @OptIn(ExperimentalStdlibApi::class)
 class PostgresAsyncResultSet(

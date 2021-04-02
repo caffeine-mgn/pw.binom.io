@@ -172,8 +172,10 @@ internal class HttpRequest2Impl(
         }
     }
 
-    override suspend fun <T> response(func: (HttpResponse) -> T): T =
-        response().use(func)
+    override suspend fun <T> response(func: suspend (HttpResponse) -> T): T =
+        response().use {
+            func(it)
+        }
 
     override suspend fun response(): HttpResponse {
         if (startedResponse != null) {

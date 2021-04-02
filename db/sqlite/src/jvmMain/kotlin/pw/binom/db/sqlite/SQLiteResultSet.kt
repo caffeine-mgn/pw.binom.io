@@ -2,7 +2,7 @@ package pw.binom.db.sqlite
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.date.Date
-import pw.binom.db.SyncResultSet
+import pw.binom.db.sync.SyncResultSet
 import java.sql.ResultSet
 
 class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {

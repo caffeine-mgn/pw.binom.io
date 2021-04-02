@@ -1,7 +1,7 @@
-package pw.binom.db.pool
+package pw.binom.db.async.pool
 
 import pw.binom.date.Date
-import pw.binom.db.AsyncConnection
+import pw.binom.db.async.AsyncConnection
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.StreamClosedException
 import pw.binom.io.use

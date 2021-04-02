@@ -5,7 +5,7 @@ import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import pw.binom.date.Date
 import pw.binom.db.SQLException
-import pw.binom.db.SyncResultSet
+import pw.binom.db.sync.SyncResultSet
 
 class SQLiteResultSet(
     val prepareStatement: SQLitePrepareStatement,

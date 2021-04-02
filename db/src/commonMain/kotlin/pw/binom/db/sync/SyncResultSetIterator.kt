@@ -1,5 +1,6 @@
-package pw.binom.db
+package pw.binom.db.sync
 
+import pw.binom.db.ResultSet
 import pw.binom.io.Closeable
 
 class SyncResultSetIterator<T>(val resultSet: SyncResultSet, val mapper: (ResultSet) -> T) : Iterator<T>, Closeable {
