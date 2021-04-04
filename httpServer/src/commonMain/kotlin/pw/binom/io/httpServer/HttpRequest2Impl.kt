@@ -27,7 +27,7 @@ internal class HttpRequest2Impl(
             server: HttpServer,
             isNewConnect: Boolean
         ): HttpRequest2Impl {
-            val request = channel.reader.readln()!!
+            val request = channel.reader.readln() ?: throw IOException("Invalid HTTP Header")
             if (!isNewConnect) {
                 server.browConnection(channel)
             }

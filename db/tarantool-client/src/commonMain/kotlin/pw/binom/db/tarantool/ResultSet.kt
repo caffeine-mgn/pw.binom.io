@@ -38,6 +38,15 @@ inline class ResultSet constructor(val body: Map<Int, Any?>) : Iterable<Row> {
     override fun toString(): String = "ResultSet(size: [${data.size}])"
     val size
         get() = data.size
+    val columnNames: List<String>?
+        get() {
+            val meta = meta ?: return null
+            val list = ArrayList<String>(columnSize)
+            repeat(columnSize) {
+                list += meta[it][0] as String
+            }
+            return list
+        }
 
     fun getColumn(index: Int): Column {
         val meta = meta ?: throw IllegalArgumentException("Meta not exist")
