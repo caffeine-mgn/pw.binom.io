@@ -50,12 +50,14 @@ actual class Lock : Closeable {
         actual fun await() {
             while (true) {
                 val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
-                if (Worker.current?.isInterrupted == true)
+                if (Worker.current?.isInterrupted == true) {
                     throw InterruptedException()
+                }
                 if (r == 0) {
                     val e = GetLastError()
-                    if (e != ERROR_TIMEOUT.convert<DWORD>())
+                    if (e != ERROR_TIMEOUT.convert<DWORD>()) {
                         throw RuntimeException("Error in wait lock. Error: #$e")
+                    }
                 } else break
             }
         }
@@ -81,8 +83,9 @@ actual class Lock : Closeable {
             val now = TimeSource.Monotonic.markNow()
             while (true) {
                 val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
-                if (Worker.current?.isInterrupted == true)
+                if (Worker.current?.isInterrupted == true) {
                     throw InterruptedException()
+                }
                 if (r == 0) {
                     val e = GetLastError()
                     if (e != ERROR_TIMEOUT.convert<DWORD>()) {

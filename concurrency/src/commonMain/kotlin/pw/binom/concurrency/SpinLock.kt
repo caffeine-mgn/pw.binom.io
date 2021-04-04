@@ -7,8 +7,9 @@ import kotlin.contracts.contract
 inline class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) {
     fun lock() {
         while (true) {
-            if (lock.compareAndSet(expected = false, new = true))
+            if (lock.compareAndSet(expected = false, new = true)) {
                 break
+            }
             Worker.sleep(1)
         }
     }

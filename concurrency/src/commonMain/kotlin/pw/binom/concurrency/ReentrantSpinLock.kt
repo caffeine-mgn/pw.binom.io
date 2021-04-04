@@ -15,8 +15,9 @@ class ReentrantSpinLock {
             count.increment()
         else {
             while (true) {
-                if (threadId.compareAndSet(0, Worker.current?.id ?: 0))
+                if (threadId.compareAndSet(0, Worker.current?.id ?: 0)) {
                     break
+                }
                 Worker.sleep(1)
             }
             count.increment()

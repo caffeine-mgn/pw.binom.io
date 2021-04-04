@@ -53,7 +53,11 @@ fun Output.writeBytes(buffer: ByteBuffer, value: ByteArray) {
     while (l > 0) {
         buffer.write(value, value.size - l)
         buffer.flip()
-        l -= write(buffer)
+        val wrote = write(buffer)
+        if (wrote<=0) {
+            throw RuntimeException("Can't write bytes")
+        }
+        l -= wrote
     }
 }
 
