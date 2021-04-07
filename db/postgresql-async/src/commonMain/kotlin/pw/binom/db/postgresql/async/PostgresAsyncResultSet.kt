@@ -97,7 +97,7 @@ class PostgresAsyncResultSet(
 
     override fun getBoolean(index: Int): Boolean? {
         val value = getString(index) ?: return null
-        return value == "true"
+        return value == "t" || value == "true"
 //        val value = data[index] ?: return null
 //        return when (val dataType = data.meta[index].dataType) {
 //            ColumnTypes.Bigserial -> Long.fromBytes(value) > 0

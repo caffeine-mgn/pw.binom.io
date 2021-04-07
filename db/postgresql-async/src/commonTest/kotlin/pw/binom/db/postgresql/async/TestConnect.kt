@@ -153,6 +153,15 @@ class TestConnect {
     }
 
     @Test
+    fun numArgTest(){
+        pg{
+            it.prepareStatement("select $1").use {
+                it.executeQuery("1").firstOrNull { it.getString(0) }
+            }
+        }
+    }
+
+    @Test
     fun invalidPreparedStatement() {
         pg {
             try {

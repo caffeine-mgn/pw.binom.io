@@ -51,6 +51,15 @@ class PostgresPreparedStatement(
             }
         }
         realQuery = result.toString()
+        params = 0
+        var i = -1
+        while (true) {
+            i = realQuery.indexOf('$', i + 1)
+            if (i == -1) {
+                break
+            }
+            params++
+        }
         paramCount = params
 
         if (paramColumnTypes.isNotEmpty()) {
