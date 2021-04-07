@@ -8,7 +8,7 @@ import pw.binom.io.use
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-class PooledAsyncConnectionImpl(val pool: AsyncConnectionPool, val connection: AsyncConnection) :
+class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connection: AsyncConnection) :
     PooledAsyncConnection, AsyncConnection by connection {
 
     private val createdPreparedStatement = HashMap<String, AsyncPreparedStatement>()

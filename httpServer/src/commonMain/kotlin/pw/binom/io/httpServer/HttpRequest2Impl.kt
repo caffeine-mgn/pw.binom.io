@@ -13,6 +13,7 @@ import pw.binom.net.Path
 import pw.binom.net.Query
 import pw.binom.net.toPath
 import pw.binom.net.toQuery
+import pw.binom.network.SocketClosedException
 
 internal class HttpRequest2Impl(
     val channel: ServerAsyncAsciiChannel,
@@ -27,7 +28,7 @@ internal class HttpRequest2Impl(
             server: HttpServer,
             isNewConnect: Boolean
         ): HttpRequest2Impl {
-            val request = channel.reader.readln() ?: throw IOException("Invalid HTTP Header")
+            val request = channel.reader.readln() ?: throw SocketClosedException()
             if (!isNewConnect) {
                 server.browConnection(channel)
             }
@@ -171,11 +172,6 @@ internal class HttpRequest2Impl(
             it.status = 403
         }
     }
-
-    override suspend fun <T> response(func: suspend (HttpResponse) -> T): T =
-        response().use {
-            func(it)
-        }
 
     override suspend fun response(): HttpResponse {
         if (startedResponse != null) {

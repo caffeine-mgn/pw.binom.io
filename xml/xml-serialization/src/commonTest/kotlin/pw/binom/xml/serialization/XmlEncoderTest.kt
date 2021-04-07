@@ -53,7 +53,7 @@ class XmlEncoderTest {
         async2 {
             root.accept(AsyncXmlRootWriterVisitor(sb.asAsync()))
         }
-        val vv = Xml(module).decode(TestData.serializer(), xx)
+        val vv = Xml(module).decodeFromXmlElement(TestData.serializer(), xx)
         println("Before: $oo")
         println("After: $vv")
 

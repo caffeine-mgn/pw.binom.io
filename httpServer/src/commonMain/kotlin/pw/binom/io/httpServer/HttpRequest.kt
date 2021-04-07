@@ -26,7 +26,10 @@ interface HttpRequest : AsyncCloseable {
     suspend fun acceptWebsocket(): WebSocketConnection
     suspend fun rejectWebsocket()
     suspend fun response(): HttpResponse
-    suspend fun <T> response(func: suspend (HttpResponse) -> T): T
+    suspend fun <T> response(func: suspend (HttpResponse) -> T): T =
+        response().use {
+            func(it)
+        }
 
     @JsName("HttpResponse2")
     val response: HttpResponse?
