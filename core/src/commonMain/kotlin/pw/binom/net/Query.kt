@@ -1,6 +1,7 @@
 package pw.binom.net
 
 import pw.binom.io.UTF8
+import kotlin.jvm.JvmName
 
 inline class Query internal constructor(val raw: String) {
     companion object {
@@ -10,6 +11,58 @@ inline class Query internal constructor(val raw: String) {
             } else {
                 Query("${UTF8.encode(key)}=${UTF8.encode(value)}")
             }
+        }
+
+        /**
+         * Creates new query from [map]
+         */
+        @JvmName("new2")
+        fun new(map: Map<String, List<String?>>): Query {
+            val sb = StringBuilder()
+            var first = true
+            map.forEach {
+                if (it.value.isEmpty()) {
+                    return@forEach
+                }
+                if (!first) {
+                    sb.append("&")
+                }
+                first = false
+                it.value.forEach { value ->
+                    sb.append(
+                        if (value == null) {
+                            UTF8.encode(it.key)
+                        } else {
+                            "${UTF8.encode(it.key)}=${UTF8.encode(value)}"
+                        }
+                    )
+                }
+            }
+            return sb.toString().toQuery
+        }
+
+        /**
+         * Creates new query from [map]
+         */
+        fun new(map: Map<String, String?>): Query {
+            val sb = StringBuilder()
+            var first = true
+            map.forEach {
+                if (!first) {
+                    sb.append("&")
+                }
+                first = false
+                val value = it.value
+                sb.append(
+                    if (value == null) {
+                        UTF8.encode(it.key)
+                    } else {
+                        "${UTF8.encode(it.key)}=${UTF8.encode(value)}"
+                    }
+                )
+
+            }
+            return sb.toString().toQuery
         }
     }
 
@@ -46,7 +99,7 @@ inline class Query internal constructor(val raw: String) {
      *
      * Also perhaps key found, but value is null. In this case result will be null
      */
-    fun firstOrNull(key: String): String? {
+    fun firstFirstOrNull(key: String): String? {
         var result: String? = null
         search { qkey, value ->
             if (qkey == key) {
@@ -59,7 +112,8 @@ inline class Query internal constructor(val raw: String) {
     }
 
     /**
-     * Search any key named as [key]. If [key] exist returns null, in other case returns false
+     * Search any key named as [key]. If [key] exist returns true, in other case returns false.
+     * If value found and value is null will return true
      */
     fun isExist(key: String): Boolean {
         var result = false
@@ -73,6 +127,9 @@ inline class Query internal constructor(val raw: String) {
         return result
     }
 
+    /**
+     * Returns all values of [key]
+     */
     fun findAll(key: String): List<String?> {
         val result = ArrayList<String?>()
         search { qkey, value ->
@@ -82,6 +139,29 @@ inline class Query internal constructor(val raw: String) {
             true
         }
         return result
+    }
+
+    /**
+     * Search all values and keys and store them in to [dst]. Default value of [dst] is [HashMap]
+     */
+    fun toMap(dst: MutableMap<String, ArrayList<String?>> = HashMap()): Map<String, List<String?>> {
+        search { key, value ->
+            dst.getOrPut(key) { ArrayList() }.add(value)
+            false
+        }
+        return dst
+    }
+
+    /**
+     * Search all values and keys and store them in to [dst]. Default value of [dst] is [HashMap]
+     * If some key has several values will store in to [dst] last value
+     */
+    fun toDistinctMap(dst: MutableMap<String, String?> = HashMap()): Map<String, String?> {
+        search { key, value ->
+            dst[key] = value
+            false
+        }
+        return dst
     }
 
     override fun toString(): String = raw

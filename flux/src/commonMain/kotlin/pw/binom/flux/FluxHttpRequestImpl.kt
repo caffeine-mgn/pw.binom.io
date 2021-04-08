@@ -5,8 +5,13 @@ import pw.binom.io.httpServer.HttpRequest
 
 class FluxHttpRequestImpl(val mask: String, val serialization: Serialization, request: HttpRequest) : FluxHttpRequest,
     HttpRequest by request {
-    override fun getPathVariable(name: String): String? = path.getVariable(name = name, mask = mask)
-    override fun getPathVariables() = path.getVariables(mask = mask)
+    override val pathVariables: Map<String, String> by lazy {
+        path.getVariables(mask = mask)
+    }
+    override val queryVariables: Map<String, List<String?>> by lazy {
+        query?.toMap() ?: emptyMap()
+    }
+
     override suspend fun <T : Any> readRequest(serializer: KSerializer<T>): T =
         serialization.decode(
             request = this,
@@ -14,11 +19,11 @@ class FluxHttpRequestImpl(val mask: String, val serialization: Serialization, re
         )
 
     override suspend fun <T : Any> writeResponse(serializer: KSerializer<T>, value: T) {
-        var r = response
-        if (r == null) {
-            r = response()
-            r.status = 200
-        }
+//        var r = response
+//        if (r == null) {
+//            r = response()
+//            r.status = 200
+//        }
         try {
             serialization.encode(
                 request = this,
@@ -26,7 +31,7 @@ class FluxHttpRequestImpl(val mask: String, val serialization: Serialization, re
                 serializer = serializer
             )
         } finally {
-            r.asyncClose()
+            response?.asyncClose()
         }
     }
 }

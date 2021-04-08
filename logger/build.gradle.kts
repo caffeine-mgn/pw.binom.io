@@ -50,6 +50,7 @@ kotlin {
             dependencies {
                 api(project(":core"))
                 api(project(":date"))
+                api(project(":concurrency"))
             }
         }
 

@@ -25,8 +25,10 @@ class ReentrantSpinLock {
     }
 
     fun unlock() {
-        if (threadId.value == Worker.current?.id ?: 0)
-            count.decrement()
+        if (threadId.value != Worker.current?.id ?: 0) {
+            throw IllegalStateException("Only locking thread can call unlock")
+        }
+        count.decrement()
         if (count.value == 0)
             if (!threadId.compareAndSet(Worker.current?.id ?: 0, 0))
                 throw IllegalStateException("Lock already free")
