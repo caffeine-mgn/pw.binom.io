@@ -3,13 +3,17 @@ package pw.binom.strong
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-class ServiceListInjector<T : Any>(val strong: StrongImpl, val beanClass: KClass<T>) {
+internal class ServiceListInjector<T : Any>(
+    val strong: StrongImpl,
+    val beanClass: KClass<T>
+) : ServiceProvider<List<T>> {
     private val list by lazy {
-        strong.beans.asSequence().filter {
-            beanClass.isInstance(it.value)
-        }.map { it.value as T }.toList()
+        strong.findBean(beanClass as KClass<Any>, null).map { it.value as T }.toList()
     }
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): List<T> =
+    override operator fun getValue(thisRef: Any?, property: KProperty<*>): List<T> =
         list
+
+    override val service: List<T>
+        get() = list
 }

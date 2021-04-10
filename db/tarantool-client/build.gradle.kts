@@ -162,3 +162,4 @@ tasks {
     this["macosX64Test"].dependsOn(startTarantool)
     this["macosX64Test"].finalizedBy(destoryTarantool)
 }
+apply<pw.binom.plugins.DocsPlugin>()

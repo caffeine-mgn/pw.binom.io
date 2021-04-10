@@ -103,7 +103,8 @@ class DefaultHttpResponse(
     override suspend fun readText(): AsyncReader =
         readData().bufferedReader(
             charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8,
-            closeParent = true
+            closeParent = true,
+            bufferSize = client.bufferSize,
         )
 
     override suspend fun asyncClose() {

@@ -3,7 +3,15 @@ package pw.binom.logger
 import pw.binom.atomic.AtomicReference
 import pw.binom.concurrency.FrozenHashMap
 
-class Logger(val pkg: String) {
+/**
+ * Logger class
+ */
+class Logger(
+    /**
+     * Logger package name. Meta information
+     */
+    val pkg: String
+    ) {
     companion object {
         private val allLoggers = FrozenHashMap<String, Logger>()
         val global: Logger = Logger("")
@@ -16,7 +24,13 @@ class Logger(val pkg: String) {
             allLoggers.getOrPut(pkg) { Logger(pkg) }
     }
 
+    /**
+     * Logger handler
+     */
     interface Handler {
+        /**
+         * Logs in async mode
+         */
         suspend fun log(
             logger: Logger,
             level: Level,
@@ -25,6 +39,9 @@ class Logger(val pkg: String) {
             exception: Throwable?
         )
 
+        /**
+         * Logs in sync mode
+         */
         fun logSync(
             logger: Logger,
             level: Level,
@@ -58,14 +75,11 @@ class Logger(val pkg: String) {
         )
     }
 
+    /**
+     * Log level. Used for filter logs by level
+     */
     interface Level {
         val name: String
         val priority: UInt
     }
 }
-
-internal fun Int.dateNumber() =
-    if (this <= 9)
-        "0$this"
-    else
-        this.toString()

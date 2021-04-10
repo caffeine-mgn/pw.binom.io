@@ -4,6 +4,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import java.net.URI
 import java.util.logging.Logger
@@ -32,6 +33,15 @@ class BinomPublishPlugin : Plugin<Project> {
         target.apply {
             it.plugin("maven-publish")
         }
+//        val commonMainSourceSet = kotlin.sourceSets.findByName("commonMain")
+//        println("Source Sets: ${kotlin.sourceSets.asMap}")ByteBuffer
+        val sourceData = target.tasks.findByName("metadataSourcesJar") as Jar
+        val sourceJarTask = target.tasks.create("commonSourcesJar", Jar::class.java) {
+            it.dependsOn(sourceData)
+            val dir = target.zipTree(sourceData.outputs.files.files.first())
+            it.from(dir)
+            it.archiveClassifier.set("sources")
+        }
 
         val publishing = target.extensions.findByName("publishing") as PublishingExtension
         publishing.repositories {
@@ -42,6 +52,11 @@ class BinomPublishPlugin : Plugin<Project> {
                     it.username = target.property(BINOM_REPO_USER) as String
                     it.password = target.property(BINOM_REPO_PASSWORD) as String
                 }
+            }
+        }
+        if (sourceJarTask != null) {
+            publishing.publications.create("commonSources", MavenPublication::class.java) {
+                it.artifact(sourceJarTask)
             }
         }
         publishing.publications.withType(MavenPublication::class.java) {

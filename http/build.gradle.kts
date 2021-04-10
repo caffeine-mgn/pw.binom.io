@@ -86,3 +86,4 @@ kotlin {
         }
     }
 }
+apply<pw.binom.plugins.DocsPlugin>()

@@ -168,3 +168,4 @@ tasks {
         }
     }
 }
+apply<pw.binom.plugins.DocsPlugin>()

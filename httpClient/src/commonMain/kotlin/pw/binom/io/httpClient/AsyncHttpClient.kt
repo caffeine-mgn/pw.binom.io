@@ -80,7 +80,7 @@ open class AsyncHttpClient(
     internal suspend fun borrowConnection(URI: URI): Connection {
         cleanUp()
         val port = URI.getPort()
-        val key = "${URI.protocol}://${URI.host}:$port"
+        val key = "${URI.schema}://${URI.host}:$port"
         var connectionList = connections[key]
         if (connectionList != null && !connectionList.isEmpty()) {
             val channel = connectionList.removeAt(connectionList.lastIndex)
@@ -93,7 +93,7 @@ open class AsyncHttpClient(
             )
         )
         var connection = Connection(null, raw, raw)
-        if (URI.protocol == "https") {
+        if (URI.schema == "https") {
             val sslSession = sslContext.clientSession(host = URI.host, port = port)
             connection = Connection(sslSession, sslSession.asyncChannel(connection.channel), raw)
 
@@ -104,7 +104,7 @@ open class AsyncHttpClient(
     internal fun recycleConnection(URI: URI, connection: Connection) {
         cleanUp()
         val port = URI.getPort()
-        val key = "${URI.protocol}://${URI.host}:$port"
+        val key = "${URI.schema}://${URI.host}:$port"
         connections.getOrPut(key) { ArrayList() }
             .add(AliveConnection(connection.sslSession, connection.channel, connection.rawConnection))
     }
@@ -128,14 +128,14 @@ open class AsyncHttpClient(
         }
     */
     fun request(method: String, URI: URI, flushSize: Int = DEFAULT_BUFFER_SIZE): UrlConnect {
-        when (URI.protocol?.toLowerCase()) {
+        when (URI.schema?.toLowerCase()) {
             "http", "https", "ws", "wss" -> return UrlConnectImpl(
                 method = method,
                 URI = URI,
                 client = this,
                 outputFlushSize = flushSize
             )
-            else -> throw IllegalArgumentException("Not supported protocol ${URI.protocol}")
+            else -> throw IllegalArgumentException("Not supported protocol ${URI.schema}")
         }
 
     }
@@ -188,14 +188,14 @@ private fun AsyncChannel.unwrap(): TcpConnection {
 }
 
 internal fun URI.getDefaultPort() =
-    when (protocol) {
+    when (schema) {
         "ws", "http" -> 80
         "wss", "https" -> 443
         else -> throw IllegalArgumentException("Unknown default port for $this")
     }
 
 internal fun URI.getPort() =
-    port ?: when (protocol) {
+    port ?: when (schema) {
         "ws", "http" -> 80
         "wss", "https" -> 443
         else -> throw IllegalArgumentException("Unknown default port for $this")

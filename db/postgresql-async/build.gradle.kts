@@ -161,3 +161,4 @@ tasks {
     this["macosX64Test"].dependsOn(startPostgres)
     this["macosX64Test"].finalizedBy(destoryPostgres)
 }
+apply<pw.binom.plugins.DocsPlugin>()

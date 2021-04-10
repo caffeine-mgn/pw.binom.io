@@ -5,32 +5,34 @@ import kotlin.reflect.KClass
 interface Strong {
 
     companion object {
-        fun config(func: suspend (StrongDefiner) -> Unit) = object : Config {
-            override suspend fun apply(strong: StrongDefiner) {
+        fun config(func: suspend (Definer) -> Unit) = object : Config {
+            override suspend fun apply(strong: Definer) {
                 func(strong)
             }
         }
 
-        fun serviceProvider(func: suspend (StrongDefiner) -> Unit) = object : ServiceProvider {
-            override suspend fun provide(strong: StrongDefiner) {
+        fun serviceProvider(func: suspend (Definer) -> Unit) = object : ServiceProvider {
+            override suspend fun provide(strong: Definer) {
                 func(strong)
             }
         }
 
-        suspend fun create(vararg config: Strong.Config): StrongImpl {
+        suspend fun create(vararg config: Strong.Config): Strong {
+            val d = DefinerImpl()
             val strong = StrongImpl()
             config.forEach {
-                it.apply(strong)
+                it.apply(d)
             }
-            strong.start()
+            strong.start(d.createBeans())
             return strong
         }
     }
 
-    fun <T : Any> service(beanClass: KClass<T>, name: String? = null): ServiceInjector<T>
-    fun <T : Any> serviceMap(beanClass: KClass<T>): ServiceMapInjector<T>
-    fun <T : Any> serviceList(beanClass: KClass<T>): ServiceListInjector<T>
-    fun <T : Any> serviceOrNull(beanClass: KClass<T>, name: String? = null): NullableServiceInjector<T>
+    fun <T : Any> service(beanClass: KClass<T>, name: String? = null): pw.binom.strong.ServiceProvider<T>
+    fun <T : Any> serviceMap(beanClass: KClass<T>): pw.binom.strong.ServiceProvider<Map<String, T>>
+    fun <T : Any> serviceList(beanClass: KClass<T>): pw.binom.strong.ServiceProvider<List<T>>
+    fun <T : Any> serviceOrNull(beanClass: KClass<T>, name: String? = null): pw.binom.strong.ServiceProvider<T?>
+    suspend fun destroy()
 
     /**
      * Returns true if bean with [name] already defined
@@ -47,7 +49,7 @@ interface Strong {
     operator fun <T : Any> contains(clazz: KClass<T>): Boolean
 
     interface Config {
-        suspend fun apply(strong: StrongDefiner)
+        suspend fun apply(strong: Definer)
     }
 
     interface InitializingBean {
@@ -59,7 +61,7 @@ interface Strong {
     }
 
     interface ServiceProvider {
-        suspend fun provide(strong: StrongDefiner)
+        suspend fun provide(strong: Definer)
     }
 
     interface DestroyableBean {

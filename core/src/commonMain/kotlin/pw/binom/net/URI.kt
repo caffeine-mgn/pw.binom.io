@@ -6,7 +6,7 @@ import pw.binom.io.UTF8
 inline class URI internal constructor(val fullPath: String) {
     companion object {
         fun new(
-            protocol: String?,
+            schema: String?,
             user: String?,
             password: String?,
             host: String,
@@ -16,8 +16,8 @@ inline class URI internal constructor(val fullPath: String) {
             fragment: String?,
         ): String {
             val sb = StringBuilder()
-            if (protocol != null) {
-                sb.append(protocol).append(":")
+            if (schema != null) {
+                sb.append(schema).append(":")
             }
             sb.append("//")
             if (user != null) {
@@ -46,7 +46,7 @@ inline class URI internal constructor(val fullPath: String) {
         }
     }
 
-    val protocol: String?
+    val schema: String?
         get() {
             val p = fullPath.indexOf("//")
             if (p == 0) {
@@ -186,7 +186,7 @@ inline class URI internal constructor(val fullPath: String) {
         }
 
     fun copy(
-        protocol: String? = this.protocol,
+        schema: String? = this.schema,
         user: String? = this.user,
         password: String? = this.password,
         host: String = this.host,
@@ -197,7 +197,7 @@ inline class URI internal constructor(val fullPath: String) {
     ) =
         URI(
             new(
-                protocol = protocol,
+                schema = schema,
                 user = user,
                 password = password,
                 host = host,

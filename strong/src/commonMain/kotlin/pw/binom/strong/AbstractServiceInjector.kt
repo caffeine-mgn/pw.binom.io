@@ -4,7 +4,7 @@ import pw.binom.strong.exceptions.SeveralBeanException
 import kotlin.reflect.KClass
 
 abstract class AbstractServiceInjector<T : Any, RESULT> internal constructor(
-    val strong: StrongImpl,
+    internal var strong: StrongImpl,
     val beanClass: KClass<T>,
     val name: String?
 ) : ServiceProvider<RESULT> {
@@ -17,10 +17,7 @@ abstract class AbstractServiceInjector<T : Any, RESULT> internal constructor(
         }
         if (bean == null)
             bean = run {
-                val vv = strong.beans.asSequence().filter {
-                    beanClass.isInstance(it.value) && (name == null || it.key == name)
-                }
-                val it = vv.iterator()
+                val it = strong.findBean(beanClass as KClass<Any>,name).iterator()
                 if (!it.hasNext())
                     return@run null
                 val bb = it.next()

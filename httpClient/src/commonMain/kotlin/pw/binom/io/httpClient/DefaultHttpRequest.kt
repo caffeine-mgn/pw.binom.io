@@ -102,6 +102,7 @@ class DefaultHttpRequest(
         val dataChannel = writeData()
         return RequestAsyncHttpRequestWriter(
             output = dataChannel,
+            bufferSize = client.bufferSize,
             charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8
         )
     }

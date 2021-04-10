@@ -3,15 +3,15 @@ package pw.binom.strong
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-class ServiceMapInjector<T : Any>(val strong: StrongImpl, val beanClass: KClass<T>) {
+internal class ServiceMapInjector<T : Any>(val strong: StrongImpl, val beanClass: KClass<T>) :
+    ServiceProvider<Map<String,T>>{
     private val map by lazy {
-        strong.beans.asSequence().filter {
-            beanClass.isInstance(it.value)
-        }
-            .map { it.key to it.value as T }
+        strong.findBean(beanClass as KClass<Any>,null).map { it.key to it.value as T }
             .toMap()
     }
+    override val service: Map<String, T>
+        get() = map
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): Map<String, T> =
-        map
+    override operator fun getValue(thisRef: Any?, property: KProperty<*>): Map<String, T> =
+        service
 }

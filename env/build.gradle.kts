@@ -149,3 +149,4 @@ const val BINOM_VERSION = "${project.version}""""
     this["compileKotlinJsLegacy"].dependsOn(generateVersion)
     this["compileKotlinJvm"].dependsOn(generateVersion)
 }
+apply<pw.binom.plugins.DocsPlugin>()

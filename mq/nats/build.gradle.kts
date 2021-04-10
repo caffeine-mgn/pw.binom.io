@@ -226,3 +226,4 @@ val nats2ClasterPort = 6223
         this["macosX64Test"].dependsOn(startNats2)
         this["macosX64Test"].finalizedBy(destoryNats2)
     }
+apply<pw.binom.plugins.DocsPlugin>()
