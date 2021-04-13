@@ -120,7 +120,7 @@ fun ByteBuffer.empty(): ByteBuffer {
 }
 
 class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
-    DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), Closeable {
+    DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), ByteBufferAllocator, Closeable {
     override fun borrow(init: ((ByteBuffer) -> Unit)?): ByteBuffer {
         val buf = super.borrow(init)
         buf.clear()

@@ -1,43 +1,45 @@
 package pw.binom.strong
 
 import pw.binom.strong.exceptions.BeanAlreadyDefinedException
+import pw.binom.strong.exceptions.BeanCreateException
 import pw.binom.strong.exceptions.NoSuchBeanException
 import kotlin.reflect.KClass
 
 internal class DefinerImpl : Definer {
 
-    private var internalDefinitions = HashMap<String, Any>()
+    private val internalDefinitions = HashMap<String, Any>()
     private val internalBeans = HashMap<KClass<Any>, HashMap<String, (Strong) -> Any>>()
+    private var currentDef = HashMap<String, Any>()
 
     val beans: Map<KClass<Any>, Map<String, (Strong) -> Any>>
         get() = internalBeans
 
     override suspend fun define(bean: Any, name: String?, ifNotExist: Boolean) {
         val name = name ?: bean::class.genDefaultName()
-        if (internalDefinitions.containsKey(name)) {
+        if (currentDef.containsKey(name)) {
             throw BeanAlreadyDefinedException(name)
         }
         internalDefinitions[name] = bean
+        currentDef[name] = bean
     }
 
     override fun <T : Any> findDefine(clazz: KClass<T>, name: String?): T {
-        val bean = internalDefinitions.entries.find { clazz.isInstance(it.value) && (name == null || name == it.key) }
+        val bean = currentDef.entries.find { clazz.isInstance(it.value) && (name == null || name == it.key) }
             ?: throw NoSuchBeanException(clazz, name)
         return bean.value as T
     }
 
     override fun <T : Any> bean(clazz: KClass<T>, name: String?, ifNotExist: Boolean, bean: (Strong) -> T) {
         val map = internalBeans.getOrPut(bean::class as KClass<Any>) { HashMap() }
-        val name = name ?: bean::class.genDefaultName()
+        val name = name ?: clazz.genDefaultName()
         if (map.containsKey(name)) {
             throw BeanAlreadyDefinedException(name)
         }
         map[name] = bean
     }
 
-    suspend fun createBeans(): List<Pair<String, Any>> {
+    suspend fun createBeans(strong: StrongImpl): List<Pair<String, Any>> {
         val needInit = HashMap<String, BeanEntity>()
-        val strong = StrongImpl()
 
         val foundDefinitions = HashMap<String, Any>()
 
@@ -50,8 +52,9 @@ internal class DefinerImpl : Definer {
                 deps = strong.dependencies,
             )
         }
-
-        while (beans.isNotEmpty() || internalDefinitions.isNotEmpty()) {
+        println("Getting all beans...")
+        val oo = HashSet<Any>()
+        do {
             internalDefinitions.forEach { e ->
                 foundDefinitions[e.key] = e.value
             }
@@ -60,22 +63,27 @@ internal class DefinerImpl : Definer {
                     initBean(it)
                 }
             }
-            internalDefinitions = HashMap()
             internalBeans.clear()
-            internalDefinitions = foundDefinitions
+            internalDefinitions.clear()
+            currentDef = HashMap(foundDefinitions)
             needInit.values.forEach {
+                if (it.obj in oo) {
+                    return@forEach
+                }
                 if (it.obj is Strong.ServiceProvider) {
                     it.obj.provide(this)
                 }
+                oo += it.obj
             }
-        }
+        } while (internalBeans.isNotEmpty() || internalDefinitions.isNotEmpty())
 
+        println("Resolving depndencies needInit size: ${needInit.size}")
         needInit.forEach { entity ->
             entity.value.deps.forEach { dep ->
                 when (dep) {
                     is StrongImpl.Dependency.ClassDependency -> {
                         if (dep.name != null) {
-                            if (internalDefinitions[dep.name]?.let { dep.clazz.isInstance(it) } == true) {
+                            if (foundDefinitions[dep.name]?.let { dep.clazz.isInstance(it) } == true) {
                                 return@forEach
                             }
                             val depBean = needInit[dep.name]
@@ -86,12 +94,16 @@ internal class DefinerImpl : Definer {
                                 entity.value.depsEntity.add(depBean)
                             }
                         } else {
-                            if (internalDefinitions.values.any { dep.clazz.isInstance(it) }) {
+                            if (foundDefinitions.values.any { dep.clazz.isInstance(it) }) {
                                 return@forEach
                             }
                             val depBean = needInit.values.find { dep.clazz.isInstance(it.obj) }
                             if (depBean == null && dep.require) {
-                                throw NoSuchBeanException(dep.clazz, null)
+                                throw BeanCreateException(
+                                    entity.value.obj::class,
+                                    entity.key,
+                                    NoSuchBeanException(dep.clazz, null)
+                                )
                             }
                         }
                     }
@@ -112,8 +124,11 @@ internal class DefinerImpl : Definer {
             bean.depsEntity.forEach {
                 init(it)
             }
+            println("saw ${bean.obj::class}")
             inited += bean
+            initList += bean
         }
+        println("Making order load list   needInit.size: ${needInit.size}")
         needInit.values.forEach {
             init(it)
         }

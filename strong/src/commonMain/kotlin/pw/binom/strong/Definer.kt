@@ -24,7 +24,7 @@ interface Definer {
     )
 }
 
-fun <T : Any> KClass<T>.genDefaultName() = "${this}_${this.hashCode()}"
+fun <T : Any> KClass<T>.genDefaultName() = "${this.toString().removePrefix("class ")}_${this.hashCode()}"
 
 inline fun <reified T : Any> Definer.bean(
     name: String? = null,

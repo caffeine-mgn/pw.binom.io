@@ -90,10 +90,5 @@ abstract class AbstractRoute : Route, Handler {
 
     override suspend fun request(req: HttpRequest) {
         execute(req)
-        if (req.response == null) {
-            req.response().use {
-                it.status = 404
-            }
-        }
     }
 }

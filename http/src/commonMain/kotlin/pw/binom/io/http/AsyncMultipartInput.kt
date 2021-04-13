@@ -7,6 +7,7 @@ import pw.binom.io.AbstractAsyncBufferedInput
 import pw.binom.io.IOException
 import pw.binom.io.utf8Reader
 import pw.binom.pool.ObjectPool
+import pw.binom.skipAll
 
 class EndState {
     enum class Type {
@@ -111,7 +112,11 @@ internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState):
     }
 }
 
-open class AsyncMultipartInput(private val separator: String, override val stream: AsyncInput, private val bufferPool: ObjectPool<ByteBuffer>) : AbstractAsyncBufferedInput() {
+open class AsyncMultipartInput(
+    private val separator: String,
+    override val stream: AsyncInput,
+    private val bufferPool: ObjectPool<ByteBuffer>
+) : AbstractAsyncBufferedInput() {
     override val buffer = bufferPool.borrow().empty()
 
     init {
@@ -137,6 +142,14 @@ open class AsyncMultipartInput(private val separator: String, override val strea
                 throw IOException("Invalid Input Multipart data: Invalid first data line [$firstLine]")
             }
         } else {
+            if (!isBlockEof) {
+                val buf = bufferPool.borrow()
+                try {
+                    skipAll(buf)
+                } finally {
+                    bufferPool.recycle(buf)
+                }
+            }
             formName = null
             _headers.clear()
         }
@@ -210,8 +223,11 @@ open class AsyncMultipartInput(private val separator: String, override val strea
         endState.type = EndState.Type.BLOCK_EOF
     }
 
+    val isBlockEof
+        get() = buffer.remaining == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)
+
     override suspend fun read(dest: ByteBuffer): Int {
-        if (buffer.remaining == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)) {
+        if (isBlockEof) {
             return 0
         }
         return super.read(dest)
