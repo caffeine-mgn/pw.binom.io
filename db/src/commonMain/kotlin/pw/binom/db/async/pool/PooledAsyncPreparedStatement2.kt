@@ -1,6 +1,8 @@
 package pw.binom.db.async.pool
 
+import pw.binom.db.SQLQueryNamedArguments
 import pw.binom.db.async.AsyncResultSet
+import pw.binom.db.async.map
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.use
 
@@ -16,30 +18,73 @@ class PooledAsyncPreparedStatement2(val pool: AsyncConnectionPoolImpl, val sql: 
         connection.usePreparedStatement(sql).executeUpdate(*args)
 }
 
-inline class SelectQuery(val sql: String) {
+inline class SelectQuery(val query: SQLQueryNamedArguments) {
+
+    constructor(sql: String) : this(SQLQueryNamedArguments.parse(sql))
+
     suspend fun <T> execute(
         connection: PooledAsyncConnection,
-        vararg args: Any?,
+        vararg args: Pair<String, Any?>,
         processing: suspend (AsyncResultSet) -> T
     ) =
-        connection.usePreparedStatement(sql).executeQuery(*args).use {
+        connection.usePreparedStatement(query.sql).executeQuery(*query.buildArguments(*args)).use {
             processing(it)
         }
 
     fun <T : Any> mapper(mapper: suspend (AsyncResultSet) -> T) =
-        SelectQueryWithMapper(sql, mapper)
+        SelectQueryWithMapper(query, mapper)
 }
 
-inline class UpdateQuery(val sql: String) {
-    suspend fun execute(connection: PooledAsyncConnection, vararg args: Any?): Long =
-        connection.usePreparedStatement(sql).executeUpdate(*args)
+inline class UpdateQuery(val query: SQLQueryNamedArguments) {
+    constructor(sql: String) : this(SQLQueryNamedArguments.parse(sql))
+    suspend fun execute(connection: PooledAsyncConnection, vararg args: Pair<String, Any?>): Long =
+        connection.usePreparedStatement(query.sql).executeUpdate(*query.buildArguments(*args))
 
-    fun <T : Any> args(applier: suspend (T) -> Array<Any?>) =
+    fun <T : Any> args(applier: suspend (T) -> Array<Pair<String, Any?>>) =
         UpdateQueryWithParam(
-            sql = sql,
+            query = query,
             applier = applier
         )
 }
 
-class SelectQueryWithMapper<T : Any>(val sql: String, val mapper: suspend (AsyncResultSet) -> T)
-class UpdateQueryWithParam<T : Any>(val sql: String, val applier: suspend (T) -> Array<Any?>)
+suspend fun <T : Any> PooledAsyncConnection.selectOneOrNull(
+    query: SelectQueryWithMapper<T>,
+    vararg args: Pair<String, Any?>
+): T? =
+    usePreparedStatement(query.query.sql).executeQuery(*query.query.buildArguments(*args)).use {
+        if (it.next()) {
+            query.mapper(it)
+        } else {
+            null
+        }
+    }
+
+suspend fun <T : Any> PooledAsyncConnection.update(query: UpdateQueryWithParam<T>, value: T) =
+    usePreparedStatement(query.query.sql).executeUpdate(*query.query.buildArguments(*query.applier(value)))
+
+suspend fun <T : Any> PooledAsyncConnection.selectAll(
+    query: SelectQueryWithMapper<T>,
+    vararg args: Pair<String, Any?>
+): List<T> =
+    usePreparedStatement(query.query.sql).executeQuery(query.query.buildArguments(*args)).use {
+        it.map(query.mapper)
+    }
+
+class SelectQueryWithMapper<T : Any>(val query: SQLQueryNamedArguments, val mapper: suspend (AsyncResultSet) -> T)
+class UpdateQueryWithParam<T : Any>(
+    val query: SQLQueryNamedArguments,
+    val applier: suspend (T) -> Array<Pair<String, Any?>>
+)
+
+suspend fun <T> PooledAsyncConnection.execute(
+    query: SelectQuery,
+    vararg args: Pair<String, Any?>,
+    processing: suspend (AsyncResultSet) -> T
+): T =
+    query.execute(this, *args) { processing(it) }
+
+suspend fun PooledAsyncConnection.execute(
+    query: UpdateQuery,
+    vararg args: Pair<String, Any?>,
+) =
+    query.execute(this, *args)

@@ -302,7 +302,7 @@ sealed class Pattern {
         }
 
         override fun toString(calendar: Calendar): String =
-            calendar.millisecond.toString()
+            calendar.millisecond.as4()
 
     }
 

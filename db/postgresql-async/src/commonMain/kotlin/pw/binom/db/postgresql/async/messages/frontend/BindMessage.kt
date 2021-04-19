@@ -165,13 +165,12 @@ object TypeWriter {
             is UUID -> value.toString()
             is Date -> {
                 val calendar = value.calendar(0)
-                "${calendar.year}-${(calendar.month + 1).asTwo()}-${calendar.dayOfMonth.asTwo()} " +
+                "${calendar.year}-${(calendar.month).asTwo()}-${calendar.dayOfMonth.asTwo()} " +
                         "${calendar.hours.asTwo()}:${calendar.minutes.asTwo()}:${calendar.seconds.asTwo()}" +
                         ".${calendar.millisecond.asThree()}000"
             }
             else -> throw SQLException("Unsupported type ${value::class}")
         }
-
         writer.writeLengthString(txt)
     }
 }

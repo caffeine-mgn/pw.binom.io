@@ -128,9 +128,7 @@ class PostgresPreparedStatement(
         params[index] = value
     }
 
-    override suspend fun asyncClose() {
-        checkClosePreviousResultSet()
-        connection.prepareStatements.remove(this)
+    private suspend fun deleteSelf() {
         connection.sendOnly(connection.reader.closeMessage.also {
             it.portal = false
             it.statement = id.toString()
@@ -142,12 +140,19 @@ class PostgresPreparedStatement(
         check(readyForQuery is ReadyForQueryMessage) { "Expected ReadyForQueryMessage, but actual $readyForQuery" }
     }
 
+    override suspend fun asyncClose() {
+        checkClosePreviousResultSet()
+        connection.prepareStatements.remove(this)
+        deleteSelf()
+    }
+
     suspend fun execute(): QueryResponse {
         val types = if (paramColumnTypes.isEmpty()) {
             emptyList()
         } else {
             paramColumnTypes.map { it.typeInt }
         }
+        var justParsed = false
         if (!parsed) {
             connection.sendOnly(
                 connection.reader.preparedStatementOpeningMessage.also {
@@ -156,6 +161,7 @@ class PostgresPreparedStatement(
                     it.valuesTypes = types
                 }
             )
+            justParsed = true
         }
         val binaryResult = false
         val portalName = id.toString()
@@ -187,6 +193,9 @@ class PostgresPreparedStatement(
         when (msg) {
             is ErrorMessage -> {
                 check(connection.readDesponse() is ReadyForQueryMessage)
+                if (justParsed) {
+                    deleteSelf()
+                }
                 throw PostgresqlException(msg.toString())
             }
             is BindCompleteMessage -> {
