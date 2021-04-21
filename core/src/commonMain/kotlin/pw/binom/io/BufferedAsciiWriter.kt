@@ -85,11 +85,14 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
         checkClosed()
         flush()
         closed = true
-        output.close()
     }
 }
 
-class BufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override val output: Output) :
+class BufferedAsciiWriter(
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    val closeParent: Boolean,
+    override val output: Output
+) :
     AbstractBufferedAsciiWriter() {
     init {
         require(bufferSize > 4)
@@ -100,15 +103,22 @@ class BufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override val ou
     }
 
     override fun close() {
-        super.close()
-        buffer.close()
+        try {
+            super.close()
+        } finally {
+            buffer.close()
+            if (closeParent) {
+                output.close()
+            }
+        }
     }
 
     override val buffer = ByteBuffer.alloc(bufferSize)
 }
 
-fun Output.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE) =
+fun Output.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) =
     BufferedAsciiWriter(
         output = this,
-        bufferSize = bufferSize
+        bufferSize = bufferSize,
+        closeParent = closeParent,
     )

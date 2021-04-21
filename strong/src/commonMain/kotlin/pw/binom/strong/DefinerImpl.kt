@@ -52,7 +52,6 @@ internal class DefinerImpl : Definer {
                 deps = strong.dependencies,
             )
         }
-        println("Getting all beans...")
         val oo = HashSet<Any>()
         do {
             internalDefinitions.forEach { e ->
@@ -77,7 +76,6 @@ internal class DefinerImpl : Definer {
             }
         } while (internalBeans.isNotEmpty() || internalDefinitions.isNotEmpty())
 
-        println("Resolving depndencies needInit size: ${needInit.size}")
         needInit.forEach { entity ->
             entity.value.deps.forEach { dep ->
                 when (dep) {
@@ -124,11 +122,9 @@ internal class DefinerImpl : Definer {
             bean.depsEntity.forEach {
                 init(it)
             }
-            println("saw ${bean.obj::class}")
             inited += bean
             initList += bean
         }
-        println("Making order load list   needInit.size: ${needInit.size}")
         needInit.values.forEach {
             init(it)
         }

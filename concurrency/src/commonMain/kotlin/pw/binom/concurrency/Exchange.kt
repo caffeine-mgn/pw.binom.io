@@ -22,9 +22,9 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T>, Closeable {
     val output: ExchangeOutput<T>
         get() = this
 
-    class Item<T : Any?>(val value: T) {
-        var next by AtomicReference<Item<T>?>(null)
-        var previous by AtomicReference<Item<T>?>(null)
+    class Item<T>(val value: T?) {
+        var next = AtomicReference<Item<T>?>(null)
+        var previous = AtomicReference<Item<T>?>(null)
 
         init {
             doFreeze()
@@ -42,8 +42,8 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T>, Closeable {
     override fun put(value: T) {
         lock.synchronize {
             val item = Item(value)
-            item.previous = last
-            last?.next = item
+            item.previous.value = last
+            last?.next?.value = item
             last = item
             if (first == null)
                 first = item
@@ -57,11 +57,15 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T>, Closeable {
                 condition.await()
             }
             val item = last!!
-            last = item.previous
-            last?.next = null
+            last = item.previous.value
+            last?.next?.value = null
             if (first == item)
                 first = null
-            item.value
+
+            val value = item.value as T
+            item.next.value = null
+            item.previous.value = null
+            value
         }
 
     @OptIn(ExperimentalTime::class)
@@ -74,11 +78,14 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T>, Closeable {
                 condition.await()
             }
             val item = last!!
-            last = item.previous
-            last?.next = null
+            last = item.previous.value
+            last?.next?.value = null
             if (first == item)
                 first = null
-            item.value
+            val value = item.value
+            item.next.value = null
+            item.previous.value = null
+            value
         }
 
     val isEmpty

@@ -2,8 +2,12 @@ package pw.binom
 
 import pw.binom.atomic.AtomicLong
 import pw.binom.base64.shl
+import kotlin.native.concurrent.SharedImmutable
 
+@SharedImmutable
 val SELECTOR_COUNTER = AtomicLong(0)
+
+@SharedImmutable
 val BYTE_BUFFER_COUNTER = AtomicLong(0)
 
 operator fun Long.get(index: Int): Byte {

@@ -34,6 +34,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 //    }
 
     override fun refTo(position: Int) = run {
+        checkClosed()
         nativeByteBufferRefTo(native, position) ?: throw RuntimeException("Can't get pointer to $position")
     }
 
@@ -49,8 +50,12 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         }
 
     override var position: Int
-        get() = native.pointed.position
+        get() {
+            checkClosed()
+            return native.pointed.position
+        }
         set(value) {
+            checkClosed()
             require(value >= 0)
             require(value <= limit)
             native.pointed.position = value
@@ -58,7 +63,10 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
 
     override var limit: Int
-        get() = native.pointed.limit
+        get() {
+            checkClosed()
+            return native.pointed.limit
+        }
         set(value) {
             checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
@@ -77,11 +85,18 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         return len.toLong()
     }
 
-    override fun read(dest: ByteBuffer): Int = nativeByteBuffer_read(native, dest.native)
+    override fun read(dest: ByteBuffer): Int {
+        checkClosed()
+        return nativeByteBuffer_read(native, dest.native)
+    }
 
-    override fun write(data: ByteBuffer): Int = data.read(this)
+    override fun write(data: ByteBuffer): Int {
+        checkClosed()
+        return data.read(this)
+    }
 
     override fun flush() {
+        checkClosed()
     }
 
     override fun close() {
@@ -118,6 +133,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
+        checkClosed()
         this.position = position
         limit = position + length
         return this
@@ -130,6 +146,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     override fun clear() {
+        checkClosed()
         limit = capacity
         position = 0
     }
@@ -138,12 +155,14 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
+        checkClosed()
         val new = ByteBuffer.alloc(newSize)
         nativeByteBuffer_copy(native, new.native)
         return new
     }
 
     actual fun toByteArray(): ByteArray {
+        checkClosed()
         val r = ByteArray(remaining)
         if (remaining > 0) {
             nativeByteBuffer_copyToPtr(native, r.refTo(0))
@@ -152,6 +171,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
+        checkClosed()
         if (offset + length > data.size)
             throw IndexOutOfBoundsException()
         val l = minOf(remaining, length)
@@ -161,6 +181,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     override fun compact() {
+        checkClosed()
         if (remaining > 0) {
             val size = remaining
             memcpy(native.pointed.data, native.pointed.data + position, size.convert())
@@ -176,6 +197,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     actual fun peek(): Byte {
+        checkClosed()
         if (position == limit) {
             throw NoSuchElementException()
         }
@@ -183,12 +205,14 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
+        checkClosed()
         val newBytes = ByteBuffer.alloc(length)
         memcpy(newBytes.refTo(0), refTo(index), length.convert())
         return newBytes
     }
 
     actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
+        checkClosed()
         require(dest.size - offset >= length)
         val l = minOf(remaining, length)
         memcpy(dest.refTo(0), refTo(position), l.convert())

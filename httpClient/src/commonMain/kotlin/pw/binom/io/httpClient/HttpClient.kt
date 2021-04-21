@@ -28,8 +28,8 @@ class HttpClient(
         connections.getOrPut(URI.asKey) { ArrayList() }.add(channel)
     }
 
-    private suspend fun borrowConnection(URI: URI): AsyncAsciiChannel {
-        val id = URI.asKey
+    private suspend fun borrowConnection(uri: URI): AsyncAsciiChannel {
+        val id = uri.asKey
         val list = connections[id]
         if (list != null) {
             val con = list.removeLastOrNull()
@@ -40,16 +40,16 @@ class HttpClient(
                 return con
             }
         }
-        val port = URI.getPort()
+        val port = uri.getPort()
         var channel: AsyncChannel = networkDispatcher.tcpConnect(
             NetworkAddress.Immutable(
-                host = URI.host,
+                host = uri.host,
                 port = port
             )
         )
 
-        if (URI.schema == "https" || URI.schema == "wss") {
-            val sslSession = sslContext.clientSession(host = URI.host, port = port)
+        if (uri.schema == "https" || uri.schema == "wss") {
+            val sslSession = sslContext.clientSession(host = uri.host, port = port)
             channel = sslSession.asyncChannel(channel)
         }
         return AsyncAsciiChannel(channel = channel, bufferSize = bufferSize)

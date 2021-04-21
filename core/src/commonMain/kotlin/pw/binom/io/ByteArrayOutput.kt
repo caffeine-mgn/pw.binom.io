@@ -76,7 +76,7 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
             val new = this.data.realloc(newSize)
             new.limit = new.capacity
             this.data = new
-            old.clear()
+            old.close()
         }
     }
 

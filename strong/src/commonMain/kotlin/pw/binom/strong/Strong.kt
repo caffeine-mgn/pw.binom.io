@@ -20,18 +20,11 @@ interface Strong {
         suspend fun create(vararg config: Strong.Config): Strong {
             val d = DefinerImpl()
             val strong = StrongImpl()
-            println("Applying config")
             config.forEach {
                 it.apply(d)
             }
-            println("Create beans")
             val beans = d.createBeans(strong)
-            println("Beans:")
-            beans.forEachIndexed { index, pair ->
-                println("${index+1}. ${pair.first} -> ${pair.second::class}")
-            }
             strong.start(beans)
-            println("Strong started")
             return strong
         }
     }
