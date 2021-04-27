@@ -5,16 +5,19 @@ import platform.posix.memset
 import platform.zlib.*
 import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
+import kotlin.native.internal.createCleaner
 
+@OptIn(ExperimentalStdlibApi::class)
 actual class Inflater actual constructor(wrap: Boolean) : Closeable {
     internal val native = nativeHeap.alloc<z_stream_s>()//malloc(sizeOf<z_stream_s>().convert())!!.reinterpret<z_stream_s>()
 
-    private var closed = false
+    private var closed = AtomicBoolean(false)
 
     private fun checkClosed() {
-        if (closed)
+        if (closed.value)
             throw IllegalStateException("Stream already closed")
     }
 
@@ -23,13 +26,19 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
 
         if (inflateInit2(native.ptr, if (wrap) 15 else -15) != Z_OK)
             throw IOException("inflateInit2() error")
+
+        createCleaner(this){self->
+            if (!self.closed.value){
+                self.close()
+            }
+        }
     }
 
     override fun close() {
         checkClosed()
         inflateEnd(native.ptr)
         nativeHeap.free(native)
-        closed = true
+        closed.value = true
     }
 
     actual fun end() {

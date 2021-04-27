@@ -126,7 +126,6 @@ class BufferedInputReader(
             }
         } finally {
             output.close()
-            decoder.close()
             if (closeBuffer) {
                 buffer.close()
             } else {

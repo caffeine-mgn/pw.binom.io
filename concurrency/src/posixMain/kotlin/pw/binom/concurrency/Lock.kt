@@ -6,6 +6,7 @@ import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
 import kotlin.native.concurrent.AtomicNativePtr
 import kotlin.native.concurrent.freeze
+import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -18,6 +19,7 @@ private inline val AtomicNativePtr.mm
 
 private const val checkTime = 100
 fun <T : NativePointed> NativePtr.reinterpret() = interpretNullablePointed<T>(this)
+@OptIn(ExperimentalStdlibApi::class)
 actual class Lock : Closeable {
 
     private val native = AtomicNativePtr(nativeHeap.alloc<pthread_mutex_t>().rawPtr)
@@ -25,6 +27,10 @@ actual class Lock : Closeable {
 
     init {
         pthread_mutex_init(native.mm.ptr, null)
+        createCleaner(native){native->
+            pthread_mutex_destroy(native.mm.ptr)
+            nativeHeap.free(native.value)
+        }
         freeze()
     }
 
@@ -41,8 +47,7 @@ actual class Lock : Closeable {
     override fun close() {
         if (closed.value == 1)
             throw IllegalStateException("Lock already closed")
-        pthread_mutex_destroy(native.mm.ptr)
-        nativeHeap.free(native.value)
+
         closed.value = 1
     }
 
@@ -54,9 +59,13 @@ actual class Lock : Closeable {
             AtomicNativePtr(nativeHeap.alloc<pthread_cond_t>().rawPtr)//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
-            freeze()
             if (pthread_cond_init(native.cc.ptr, null) != 0)
                 throw IllegalStateException("Can't init Condition")
+            createCleaner(native) { native ->
+                pthread_cond_destroy(native.cc.ptr)
+                nativeHeap.free(native.value)
+            }
+            freeze()
         }
 
         actual fun await() {
@@ -72,9 +81,6 @@ actual class Lock : Closeable {
         }
 
         override fun close() {
-            signalAll()
-            pthread_cond_destroy(native.cc.ptr)
-            nativeHeap.free(native.value)
         }
 
         @OptIn(ExperimentalTime::class)

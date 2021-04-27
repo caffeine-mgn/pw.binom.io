@@ -6,19 +6,21 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.internal.core_native.*
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
+import kotlin.native.internal.createCleaner
 
+@OptIn(ExperimentalStdlibApi::class)
 actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
 
+    private val native = createNativeByteBuffer(capacity)!!
+    private var closed by AtomicBoolean(false)
+
     init {
         BYTE_BUFFER_COUNTER.increment()
     }
 
-    private val native = createNativeByteBuffer(capacity)!!
-
-    private var closed by AtomicBoolean(false)
 
     private inline fun checkClosed() {
         if (closed)
@@ -194,6 +196,11 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     init {
         doFreeze()
+        createCleaner(this) { self ->
+            if (!self.closed) {
+                self.close()
+            }
+        }
     }
 
     actual fun peek(): Byte {

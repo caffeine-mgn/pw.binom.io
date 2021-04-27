@@ -4,12 +4,15 @@ import kotlinx.cinterop.*
 import platform.windows.*
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
+import kotlin.native.concurrent.freeze
+import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
 private const val checkTime = 100
 
+@OptIn(ExperimentalStdlibApi::class)
 actual class Lock : Closeable {
 
     //    val native2 = CreateMutex!!(null, FALSE, null)!!
@@ -19,6 +22,10 @@ actual class Lock : Closeable {
 
     init {
         InitializeCriticalSection(native.ptr)
+        createCleaner(native) { native ->
+            DeleteCriticalSection(native.ptr)
+            nativeHeap.free(native)
+        }
     }
 
     actual fun lock() {
@@ -32,19 +39,22 @@ actual class Lock : Closeable {
     override fun close() {
         if (closed.value == 1)
             throw IllegalStateException("Lock already closed")
-        DeleteCriticalSection(native.ptr)
-        nativeHeap.free(native)
+
         closed.value = 1
     }
 
     actual fun newCondition(): Condition =
-            Condition(native)
+        Condition(native)
 
     actual class Condition(val lock: CRITICAL_SECTION) : Closeable {
-        val native = nativeHeap.alloc<CONDITION_VARIABLE>()//malloc(sizeOf<CONDITION_VARIABLE>().convert())!!.reinterpret<CONDITION_VARIABLE>()
+        val native =
+            nativeHeap.alloc<CONDITION_VARIABLE>()
 
         init {
             InitializeConditionVariable(native.ptr)
+            createCleaner(native) { native ->
+                nativeHeap.free(native)
+            }
         }
 
         actual fun await() {
@@ -71,7 +81,7 @@ actual class Lock : Closeable {
         }
 
         override fun close() {
-            nativeHeap.free(native)
+
         }
 
         @OptIn(ExperimentalTime::class)

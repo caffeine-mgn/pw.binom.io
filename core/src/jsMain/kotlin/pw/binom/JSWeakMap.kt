@@ -7,3 +7,10 @@ external class JSWeakMap {
     fun get(k: dynamic): dynamic
     fun delete(k: dynamic)
 }
+
+@JsName("WeakRef")
+external class JSWeakRef {
+    constructor(value: dynamic)
+
+    fun deref(): dynamic
+}

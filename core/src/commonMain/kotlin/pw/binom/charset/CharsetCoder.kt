@@ -81,8 +81,6 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
     }
 
     override fun close() {
-        encoder.close()
-        decoder.close()
         charBuffer.close()
         byteBuffer.close()
     }

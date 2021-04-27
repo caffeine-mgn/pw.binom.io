@@ -346,7 +346,7 @@ class FrozenMutableEntry<K, V>(key: K, value: V) : MutableMap.MutableEntry<K, V>
 
     override val key by AtomicReference(key)
     override var value by AtomicReference(value)
-    var nextValue by AtomicReference<FrozenMutableEntry<K, V>?>(null)
+    internal var nextValue by AtomicReference<FrozenMutableEntry<K, V>?>(null)
 
     override fun setValue(newValue: V): V {
         newValue?.doFreeze()

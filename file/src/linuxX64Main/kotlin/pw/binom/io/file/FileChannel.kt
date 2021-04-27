@@ -4,7 +4,9 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import platform.posix.*
 import pw.binom.ByteBuffer
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Channel
+import pw.binom.io.ClosedException
 
 actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel,
     RandomAccess {
@@ -33,7 +35,8 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     }) ?: throw FileNotFoundException(file.path)
 
     actual fun skip(length: Long): Long {
-        memScoped {  }
+        checkClosed()
+        memScoped { }
         if (length == 0L)
             return 0L
         if (feof(handler) != 0)
@@ -45,6 +48,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     }
 
     override fun read(dest: ByteBuffer): Int {
+        checkClosed()
         if (feof(handler) != 0)
             return 0
         val r = fread(dest.refTo(dest.position), 1.convert(), dest.remaining.convert(), handler).convert<Int>()
@@ -58,11 +62,22 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 //        return fread(data.refTo(offset.convert()), 1.convert(), length.convert(), handler).convert()
 //    }
 
+    private val closed = AtomicBoolean(false)
+
+    private fun checkClosed() {
+        if (closed.value) {
+            throw ClosedException()
+        }
+    }
+
     override fun close() {
+        checkClosed()
         fclose(handler)
+        closed.value = true
     }
 
     override fun write(data: ByteBuffer): Int {
+        checkClosed()
         if (feof(handler) != 0)
             return 0
         val r = fwrite(data.refTo(data.position), 1.convert(), data.remaining.convert(), handler).convert<Int>()
@@ -77,6 +92,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 //    }
 
     override fun flush() {
+        checkClosed()
     }
 
     private fun gotoEnd() {

@@ -16,8 +16,4 @@ class JvmCharsetDecoder(val native: JCharsetDecoder) : CharsetDecoder {
         }
         TODO("Обработать ошибку не недостаточности входных данных")
     }
-
-    override fun close() {
-    }
-
 }

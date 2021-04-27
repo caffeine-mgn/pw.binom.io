@@ -7,14 +7,19 @@ import platform.posix.*
 import pw.binom.Buffer
 import pw.binom.ByteBuffer
 import pw.binom.CharBuffer
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.doFreeze
 import pw.binom.io.Closeable
+import kotlin.native.concurrent.AtomicInt
+import kotlin.native.internal.createCleaner
 
 //const val NATIVE_CHARSET = "char16_t"
 
 /**
  * Abstract Charset convertor. Uses Iconv native library
  */
-abstract class AbstractIconv(val fromCharset: String, val toCharset: String) : Closeable {
+@OptIn(ExperimentalStdlibApi::class)
+abstract class AbstractIconv(val fromCharset: String, val toCharset: String) {
     private val iconvHandle = iconv_open(toCharset, fromCharset)
     private val inputAvail = nativeHeap.alloc<size_tVar>()
     private val outputAvail = nativeHeap.alloc<size_tVar>()
@@ -32,6 +37,11 @@ abstract class AbstractIconv(val fromCharset: String, val toCharset: String) : C
         ).toInt()
         if (r == -1 && errno == EBADF) {
             throw IllegalArgumentException("Charset not supported")
+        }
+        hashCode()
+        doFreeze()
+        createCleaner(this) { self ->
+            self.close()
         }
     }
 
@@ -68,7 +78,7 @@ abstract class AbstractIconv(val fromCharset: String, val toCharset: String) : C
         }
     }
 
-    override fun close() {
+    private fun close() {
         iconv_close(iconvHandle)
         nativeHeap.free(inputAvail)
         nativeHeap.free(outputAvail)
