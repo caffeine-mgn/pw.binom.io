@@ -16,7 +16,7 @@ open class AlwaysNewAllocator(val size: Int = DEFAULT_BUFFER_SIZE) : ByteBufferA
     }
 }
 
-object DEFAULT_BUTEBUFFER_ALLOCATOR : ByteBufferAllocator {
+object DEFAULT_BYTEBUFFER_ALLOCATOR : ByteBufferAllocator {
     override fun borrow(init: ((ByteBuffer) -> Unit)?): ByteBuffer {
         val obj = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
         init?.invoke(obj)

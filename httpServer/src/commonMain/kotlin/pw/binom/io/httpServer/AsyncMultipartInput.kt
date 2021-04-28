@@ -1,14 +1,10 @@
 package pw.binom.io.httpServer
 
-import pw.binom.ByteBuffer
 import pw.binom.ByteBufferAllocator
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.DEFAULT_BUTEBUFFER_ALLOCATOR
+import pw.binom.DEFAULT_BYTEBUFFER_ALLOCATOR
 import pw.binom.io.http.AsyncMultipartInput
-import pw.binom.io.http.Headers
-import pw.binom.pool.ObjectPool
 
-fun HttpRequest.multipart(bufferPool: ByteBufferAllocator = DEFAULT_BUTEBUFFER_ALLOCATOR): AsyncMultipartInput? {
+fun HttpRequest.multipart(bufferPool: ByteBufferAllocator = DEFAULT_BYTEBUFFER_ALLOCATOR): AsyncMultipartInput? {
     val contentType = headers.contentType ?: return null
     if (!contentType.startsWith("multipart/form-data;"))
         return null
