@@ -8,4 +8,5 @@ interface SyncConnection:Closeable{
     fun commit()
     fun rollback()
     val type: String
+    val isConnected:Boolean
 }

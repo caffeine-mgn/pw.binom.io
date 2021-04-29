@@ -15,15 +15,23 @@ class AsyncBufferedAsciiInputReader(
     }
 
     private var eof = false
+    private var closed = false
 
     fun reset() {
+        checkClosed()
         buffer.empty()
+    }
+
+    private fun checkClosed() {
+        if (closed) {
+            throw ClosedException()
+        }
     }
 
     private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
     override val available: Int
-        get() = if (buffer.remaining > 0) buffer.remaining else -1
+        get() = if (closed) 0 else if (buffer.remaining > 0) buffer.remaining else -1
 
     private suspend fun full() {
         if (eof) {
@@ -45,11 +53,14 @@ class AsyncBufferedAsciiInputReader(
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
+        checkClosed()
         full()
         return buffer.read(dest)
     }
 
     override suspend fun asyncClose() {
+        checkClosed()
+        closed = true
         buffer.close()
         if (closeParent) {
             stream.asyncClose()
@@ -57,6 +68,7 @@ class AsyncBufferedAsciiInputReader(
     }
 
     override suspend fun readChar(): Char? {
+        checkClosed()
         full()
         if (buffer.remaining <= 0)
             return null
@@ -64,6 +76,7 @@ class AsyncBufferedAsciiInputReader(
     }
 
     override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
+        checkClosed()
         full()
         val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
         for (i in offset until offset + len) {
@@ -73,6 +86,7 @@ class AsyncBufferedAsciiInputReader(
     }
 
     suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {
+        checkClosed()
         full()
         val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
         buffer.get(
@@ -84,6 +98,7 @@ class AsyncBufferedAsciiInputReader(
     }
 
     suspend fun readFully(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {
+        checkClosed()
         var readed = 0
         while (true) {
             val r = read(dest, offset + readed, length - readed)
@@ -95,6 +110,7 @@ class AsyncBufferedAsciiInputReader(
     }
 
     suspend fun readUntil(char: Char): String? {
+        checkClosed()
         val out = StringBuilder()
         var exist = false
         LOOP@ while (true) {

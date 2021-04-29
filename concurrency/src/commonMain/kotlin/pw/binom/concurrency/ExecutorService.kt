@@ -1,7 +1,7 @@
 package pw.binom.concurrency
 
-import pw.binom.Future2
+import pw.binom.Future
 
 interface ExecutorService {
-    fun <T> submit(f: () -> T): Future2<T>
+    fun <T> submit(f: () -> T): Future<T>
 }

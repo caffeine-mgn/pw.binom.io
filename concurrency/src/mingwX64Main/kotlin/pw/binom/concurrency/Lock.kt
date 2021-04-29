@@ -13,10 +13,7 @@ import kotlin.time.TimeSource
 private const val checkTime = 100
 
 @OptIn(ExperimentalStdlibApi::class)
-actual class Lock : Closeable {
-
-    //    val native2 = CreateMutex!!(null, FALSE, null)!!
-    var closed = AtomicInt(0)
+actual class Lock {
 
     private val native = nativeHeap.alloc<CRITICAL_SECTION>()
 
@@ -36,17 +33,10 @@ actual class Lock : Closeable {
         LeaveCriticalSection(native.ptr)
     }
 
-    override fun close() {
-        if (closed.value == 1)
-            throw IllegalStateException("Lock already closed")
-
-        closed.value = 1
-    }
-
     actual fun newCondition(): Condition =
         Condition(native)
 
-    actual class Condition(val lock: CRITICAL_SECTION) : Closeable {
+    actual class Condition(val lock: CRITICAL_SECTION) {
         val native =
             nativeHeap.alloc<CONDITION_VARIABLE>()
 
@@ -78,10 +68,6 @@ actual class Lock : Closeable {
 
         actual fun signalAll() {
             WakeAllConditionVariable(native.ptr)
-        }
-
-        override fun close() {
-
         }
 
         @OptIn(ExperimentalTime::class)

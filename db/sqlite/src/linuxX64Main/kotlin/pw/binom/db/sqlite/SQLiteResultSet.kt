@@ -107,6 +107,7 @@ class SQLiteResultSet(
         if (isNullColumn(index)) {
             return null
         }
+        sqlite3_column_type(stmt,index)
         return sqlite3_column_int64(stmt, index)
     }
 

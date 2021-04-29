@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import pw.binom.*
+import pw.binom.concurrency.execute
 import pw.binom.pool.ObjectPool
 
 suspend fun Input.copyToAsync(output: AsyncOutput, tempBuffer: ByteBuffer): Long {

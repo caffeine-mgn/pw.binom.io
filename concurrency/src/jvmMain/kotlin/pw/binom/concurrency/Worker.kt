@@ -1,3 +1,4 @@
+@file:JvmName("WorkerUtilsKt")
 package pw.binom.concurrency
 
 import pw.binom.Future

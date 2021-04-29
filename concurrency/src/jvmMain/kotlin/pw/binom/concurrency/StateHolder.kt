@@ -4,7 +4,6 @@ import pw.binom.Future
 import pw.binom.io.Closeable
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
-import java.util.concurrent.Future as JFuture
 
 actual class StateHolder : Closeable {
     private val worker = Executors.newSingleThreadExecutor()

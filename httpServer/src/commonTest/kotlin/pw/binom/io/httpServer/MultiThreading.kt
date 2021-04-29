@@ -130,7 +130,7 @@ class MultiThreading {
     }
 }
 
-fun <T> Future2<T>.join(deley: Long = 50L): T {
+fun <T> Future<T>.join(deley: Long = 50L): T {
     while (!isDone) {
         Worker.sleep(deley)
     }

@@ -129,7 +129,6 @@ class NetworkDispatcher : Closeable {
 
     override fun close() {
         internalUdpContinuation.close()
-        internalContinuation.close()
         selector.close()
     }
 }

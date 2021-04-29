@@ -9,7 +9,7 @@ import pw.binom.io.Closeable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
+class ConcurrentQueue<T> : AppendableQueue<T> {
     private var _size by AtomicInt(0)
     override val size: Int
         get() = _size
@@ -130,10 +130,5 @@ class ConcurrentQueue<T> : AppendableQueue<T>, Closeable {
 
     override fun peek(): T = lock.synchronize {
         (top ?: throw NoSuchElementException()).value
-    }
-
-    override fun close() {
-        condition.close()
-        lock.close()
     }
 }

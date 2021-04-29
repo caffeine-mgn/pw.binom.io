@@ -79,15 +79,17 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
     }
 
     override fun getBlob(index: Int): ByteArray? {
-        val stream = native.getBinaryStream(index + 1) ?: return null
-        return stream.readAllBytes()
+        return native.getObject(index) as ByteArray?
+//        val stream = native.getBinaryStream(index + 1) ?: return null
+//        return stream.readAllBytes()
     }
 
     override fun getBlob(column: String): ByteArray? {
-        val b = native.getBlob(column) ?: return null
-        val buf = ByteArray(b.length().toInt())
-        b.getBytes(0, buf.size)
-        return buf
+        return native.getObject(column) as ByteArray?
+//        val b = native.getBlob(column) ?: return null
+//        val buf = ByteArray(b.length().toInt())
+//        b.getBytes(0, buf.size)
+//        return buf
     }
 
     override fun isNull(index: Int) =

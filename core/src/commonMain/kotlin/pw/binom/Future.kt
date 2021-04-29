@@ -3,11 +3,11 @@ package pw.binom
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicReference
 
-interface Future2<T> {
+interface Future<T> {
 
     companion object {
-        fun <T> success(result: T): Future2<T> = SuccessFuture2(result)
-        fun <T> fail(result: Throwable): Future2<T> = FailFuture2(result)
+        fun <T> success(result: T): Future<T> = SuccessFuture(result)
+        fun <T> fail(result: Throwable): Future<T> = FailFuture(result)
     }
 
     /**
@@ -43,14 +43,14 @@ interface Future2<T> {
     class FutureAlreadyResumedException : IllegalStateException()
 }
 
-fun <T> Future2<T>.getOrException(): T {
+fun <T> Future<T>.getOrException(): T {
     if (isFailure) {
         throw exceptionOrNull!!
     }
     return resultOrNull as T
 }
 
-private class SuccessFuture2<T>(val result: T) : Future2<T> {
+private class SuccessFuture<T>(val result: T) : Future<T> {
     override val resultOrNull: T?
         get() = result
     override val isSuccess: Boolean
@@ -61,7 +61,7 @@ private class SuccessFuture2<T>(val result: T) : Future2<T> {
         get() = true
 }
 
-private class FailFuture2<T>(val result: Throwable) : Future2<T> {
+private class FailFuture<T>(val result: Throwable) : Future<T> {
     override val resultOrNull: T?
         get() = null
     override val isSuccess: Boolean
@@ -72,7 +72,7 @@ private class FailFuture2<T>(val result: Throwable) : Future2<T> {
         get() = true
 }
 
-class NonFreezableFuture<T> : Future2<T> {
+class NonFreezableFuture<T> : Future<T> {
     init {
         neverFreeze()
     }
@@ -83,7 +83,7 @@ class NonFreezableFuture<T> : Future2<T> {
     override var isSuccess: Boolean = false
         get() {
             if (!isDone) {
-                throw Future2.FutureNotReadyException()
+                throw Future.FutureNotReadyException()
             }
             return field
         }
@@ -97,7 +97,7 @@ class NonFreezableFuture<T> : Future2<T> {
 
     fun resume(result: Result<T>) {
         if (isDone) {
-            throw Future2.FutureAlreadyResumedException()
+            throw Future.FutureAlreadyResumedException()
         }
         isDone = true
         isSuccess = result.isSuccess
@@ -105,12 +105,12 @@ class NonFreezableFuture<T> : Future2<T> {
     }
 }
 
-class FreezableFuture<T> : Future2<T> {
+class FreezableFuture<T> : Future<T> {
 
     override val resultOrNull: T?
         get() {
             if (!isDone) {
-                throw Future2.FutureNotReadyException()
+                throw Future.FutureNotReadyException()
             }
             return if (isSuccess) {
                 result as T
@@ -122,7 +122,7 @@ class FreezableFuture<T> : Future2<T> {
     override val isSuccess: Boolean
         get() {
             if (!isDone) {
-                throw Future2.FutureNotReadyException()
+                throw Future.FutureNotReadyException()
             }
             return _isSuccess.value
         }
@@ -141,36 +141,9 @@ class FreezableFuture<T> : Future2<T> {
 
     fun resume(result: Result<T>) {
         if (!_isDone.compareAndSet(false, true)) {
-            throw Future2.FutureAlreadyResumedException()
+            throw Future.FutureAlreadyResumedException()
         }
         _isSuccess.value = result.isSuccess
         this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
     }
-}
-
-interface Future<T> {
-    val resultOrNull: T?
-    val isSuccess: Boolean
-    val isFailure: Boolean
-        get() = !isSuccess
-    val exceptionOrNull: Throwable?
-    val isDone: Boolean
-
-    fun <R> consume(func: (Result<T>) -> R): R
-
-    companion object {
-        fun <T> success(result: T): Future<T> = SuccessFuture(result)
-    }
-}
-
-private class SuccessFuture<T>(result: T) : Future<T> {
-    override val resultOrNull: T? = result
-    override val isSuccess: Boolean
-        get() = true
-    override val exceptionOrNull: Throwable?
-        get() = null
-
-    override fun <R> consume(func: (Result<T>) -> R): R = func(Result.success(resultOrNull as T))
-    override val isDone: Boolean
-        get() = true
 }

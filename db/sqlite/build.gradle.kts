@@ -138,7 +138,7 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                api("org.xerial:sqlite-jdbc:3.31.1")
+                api("org.xerial:sqlite-jdbc:3.34.0")
             }
         }
         val jvmTest by getting {

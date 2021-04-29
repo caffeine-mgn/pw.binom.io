@@ -14,7 +14,7 @@ import kotlin.time.TimeSource
  *
  * Object inside [Exchange] will storage as ObjectTree
  */
-class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T>, Closeable {
+class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
 
     val input: ExchangeInput<T>
         get() = this
@@ -95,9 +95,5 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T>, Closeable {
 
     init {
         doFreeze()
-    }
-
-    override fun close() {
-        lock.close()
     }
 }

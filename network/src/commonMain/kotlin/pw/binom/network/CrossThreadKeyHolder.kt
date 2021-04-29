@@ -7,7 +7,7 @@ import pw.binom.io.Closeable
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.suspendCoroutine
 
-class CrossThreadKeyHolder(val key: Selector.Key) : CrossThreadCoroutine, Closeable {
+class CrossThreadKeyHolder(val key: Selector.Key) : CrossThreadCoroutine {
     val readyForWriteListener = ConcurrentQueue<() -> Unit>()
     private val networkThread = ThreadRef()
     val isNetworkThread
@@ -30,10 +30,6 @@ class CrossThreadKeyHolder(val key: Selector.Key) : CrossThreadCoroutine, Closea
         waitReadyForWrite {
             continuation.free().resumeWith(result)
         }
-    }
-
-    override fun close() {
-        readyForWriteListener.close()
     }
 }
 

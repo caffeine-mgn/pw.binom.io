@@ -99,7 +99,7 @@ inline class Query internal constructor(val raw: String) {
      *
      * Also perhaps key found, but value is null. In this case result will be null
      */
-    fun firstFirstOrNull(key: String): String? {
+    fun firstOrNull(key: String): String? {
         var result: String? = null
         search { qkey, value ->
             if (qkey == key) {

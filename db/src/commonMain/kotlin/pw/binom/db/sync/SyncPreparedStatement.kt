@@ -18,11 +18,12 @@ interface SyncPreparedStatement : Closeable {
     fun set(index: Int, value: Date)
     fun setNull(index: Int)
     fun executeQuery(): SyncResultSet
-    fun executeUpdate():Long
+    fun executeUpdate(): Long
     fun set(index: Int, value: UUID) {
         val buf = ByteArray(16)
         set(index, value.toByteArray(buf))
     }
+
     fun setValue(index: Int, value: Any?) {
         when (value) {
             null -> setNull(index)

@@ -5,10 +5,12 @@ import cnames.structs.sqlite3_stmt
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.free
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.db.*
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.doFreeze
+import pw.binom.io.ClosedException
 import pw.binom.io.file.File
 import pw.binom.io.IOException
 import pw.binom.io.file.FileNotFoundException
@@ -18,11 +20,11 @@ import pw.binom.io.file.parent
 actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<sqlite3>>) : SyncConnection {
     actual companion object {
         actual fun openFile(file: File): SQLiteConnector {
-            val parent = file.parent?:throw FileNotFoundException("File ${file.path} not found")
-            if (!parent.isExist){
+            val parent = file.parent ?: throw FileNotFoundException("File ${file.path} not found")
+            if (!parent.isExist) {
                 throw FileNotFoundException("Direction ${file.path} is not found")
             }
-            if (!parent.isDirectory){
+            if (!parent.isDirectory) {
                 throw FileNotFoundException("Path ${file.path} is not direction")
             }
             return open(file.path)
@@ -55,16 +57,26 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     private val beginSt = prepareStatement("BEGIN")
     private val commitSt = prepareStatement("COMMIT")
     private val rollbackSt = prepareStatement("ROLLBACK")
+    private val closed = AtomicBoolean(false)
 
     init {
         beginSt.executeUpdate()
         doFreeze()
     }
 
-    override fun createStatement() =
-        SQLiteStatement(this)
+    private fun checkClosed() {
+        if (closed.value) {
+            throw ClosedException()
+        }
+    }
+
+    override fun createStatement():SQLiteStatement{
+        checkClosed()
+        return SQLiteStatement(this)
+    }
 
     override fun prepareStatement(query: String): SyncPreparedStatement {
+        checkClosed()
         val stmt = platform.posix.malloc(sizeOf<CPointerVar<sqlite3_stmt>>().convert())!!
             .reinterpret<CPointerVar<sqlite3_stmt>>()
         sqlite3_prepare_v3(ctx.pointed.value, query, -1, 0u, stmt, null)
@@ -72,28 +84,37 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     }
 
     override fun commit() {
+        checkClosed()
         commitSt.executeUpdate()
         beginSt.executeUpdate()
     }
 
     override fun rollback() {
+        checkClosed()
         rollbackSt.executeUpdate()
         beginSt.executeUpdate()
     }
 
     override val type: String
         get() = TYPE
+    override val isConnected: Boolean
+        get() = !closed.value
 
     override fun close() {
-        commitSt.executeUpdate()
-        commitSt.close()
-        rollbackSt.close()
-        beginSt.close()
-        val r = sqlite3_close(ctx.pointed.value)
-        if (r != SQLITE_OK) {
-            checkSqlCode(r)
+        checkClosed()
+        try {
+            commitSt.executeUpdate()
+            commitSt.close()
+            rollbackSt.close()
+            beginSt.close()
+            val r = sqlite3_close(ctx.pointed.value)
+            if (r != SQLITE_OK) {
+                checkSqlCode(r)
+            }
+        } finally {
+            closed.value = true
+            free(ctx)
         }
-        free(ctx)
     }
 }
 
