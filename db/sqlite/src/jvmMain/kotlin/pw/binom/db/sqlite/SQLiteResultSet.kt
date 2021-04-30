@@ -100,12 +100,12 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
 
     override fun getDate(index: Int): Date? {
         native.getObject(index + 1) ?: return null
-        return Date(native.getTimestamp(index + 1).time)
+        return Date(native.getLong(index + 1))
     }
 
     override fun getDate(column: String): Date? {
         native.getObject(column) ?: return null
-        return Date(native.getTimestamp(column).time)
+        return Date(native.getLong(column))
     }
 
     override fun close() {
