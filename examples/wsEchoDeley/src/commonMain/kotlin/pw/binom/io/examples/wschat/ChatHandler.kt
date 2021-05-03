@@ -3,9 +3,9 @@ package pw.binom.io.examples.wschat
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpServer.websocket.WebSocketHandler
 import pw.binom.concurrency.Worker
+import pw.binom.concurrency.execute
 import pw.binom.concurrency.sleep
 import pw.binom.io.*
-import pw.binom.network.execute
 import pw.binom.network.network
 
 class ChatHandler : WebSocketHandler() {
