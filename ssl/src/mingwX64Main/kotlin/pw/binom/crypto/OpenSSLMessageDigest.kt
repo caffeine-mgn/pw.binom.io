@@ -1,8 +1,9 @@
-package pw.binom.io
+package pw.binom.crypto
 
 import kotlinx.cinterop.*
 import platform.openssl.*
 import pw.binom.ByteBuffer
+import pw.binom.io.MessageDigest
 
 abstract class OpenSSLMessageDigest : MessageDigest {
     private var ptr: CPointer<EVP_MD_CTX>? = null

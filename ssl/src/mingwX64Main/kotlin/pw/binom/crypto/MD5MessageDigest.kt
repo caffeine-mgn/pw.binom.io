@@ -1,8 +1,4 @@
-package pw.binom.io
-
-import kotlinx.cinterop.CPointer
-import platform.openssl.EVP_MD
-import platform.openssl.EVP_md5
+package pw.binom.crypto
 
 actual class MD5MessageDigest : MessageDigest, OpenSSLMessageDigest() {
 

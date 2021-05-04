@@ -1,5 +1,6 @@
 package pw.binom.io.socket.ssl
 
+import pw.binom.crypto.HMac
 import pw.binom.io.*
 import kotlin.test.Test
 import kotlin.test.assertEquals

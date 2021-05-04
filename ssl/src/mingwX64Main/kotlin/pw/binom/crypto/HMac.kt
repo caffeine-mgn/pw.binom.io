@@ -1,8 +1,9 @@
-package pw.binom.io
+package pw.binom.crypto
 
 import kotlinx.cinterop.*
 import platform.openssl.*
 import pw.binom.ByteBuffer
+import pw.binom.io.MessageDigest
 
 actual class HMac actual constructor(val algorithm: Algorithm, val key: ByteArray) : MessageDigest {
     private var ctx: CPointer<HMAC_CTX>? = null

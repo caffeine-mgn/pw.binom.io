@@ -1,6 +1,7 @@
-package pw.binom.io
+package pw.binom.crypto
 
 import pw.binom.ByteBuffer
+import pw.binom.io.MessageDigest
 import java.security.MessageDigest as JMessageDigest
 
 abstract class AbstractJavaMessageDigest : MessageDigest {

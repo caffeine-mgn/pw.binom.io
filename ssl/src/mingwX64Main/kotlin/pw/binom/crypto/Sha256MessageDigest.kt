@@ -1,9 +1,4 @@
-package pw.binom.io
-
-import kotlinx.cinterop.CPointer
-import platform.openssl.EVP_MD
-import platform.openssl.EVP_sha256
-import platform.openssl.SHA256_DIGEST_LENGTH
+package pw.binom.crypto
 
 actual class Sha256MessageDigest : MessageDigest, OpenSSLMessageDigest() {
 

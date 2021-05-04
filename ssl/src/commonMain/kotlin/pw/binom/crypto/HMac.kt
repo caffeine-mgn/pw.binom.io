@@ -1,6 +1,8 @@
-package pw.binom.io
+package pw.binom.crypto
 
-expect class HMac:MessageDigest {
+import pw.binom.io.MessageDigest
+
+expect class HMac: MessageDigest {
     constructor(algorithm: Algorithm, key:ByteArray)
 
     enum class Algorithm {
