@@ -13,7 +13,7 @@ actual class HMac actual constructor(algorithm: Algorithm, key: ByteArray) : Mes
     }
 
     actual enum class Algorithm(val code: String) {
-        SHA512("HmacSHA512"), SHA1("HmacSHA1")
+        SHA512("HmacSHA512"), SHA1("HmacSHA1"), MD5("HmacMD5")
     }
 
     override fun init() {
