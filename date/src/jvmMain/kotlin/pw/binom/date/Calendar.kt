@@ -1,7 +1,6 @@
 package pw.binom.date
 
 import java.time.Instant
-import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
@@ -43,7 +42,7 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
         Calendar(utcTime, timeZoneOffset)
 
     actual override fun toString(): String =
-        asString(this, timeZoneOffsetToString(tm.offset.totalSeconds / 60))
+        asStringRfc822(this, timeZoneOffsetToString(tm.offset.totalSeconds / 60))
 
     /**
      * @param timeZoneOffset TimeZone offset in mintes

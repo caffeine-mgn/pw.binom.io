@@ -71,7 +71,8 @@ inline class DateFormat internal constructor(private val format: Array<Pattern>)
                     "Can't parse near \"${format.substring(index)}\" on column ${index + 1}"
                 )
                 list += pattern
-                index += pattern.len
+                val len = pattern.len(format, index)
+                index += len
             }
             return list.toTypedArray()
         }

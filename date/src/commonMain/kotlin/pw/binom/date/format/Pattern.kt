@@ -8,13 +8,15 @@ sealed class Pattern {
     companion object {
         fun find(format: String, position: Int): Pattern? =
             when {
+                CustomText.find(format, position) -> CustomText(format, position)
                 yyyy.find(format, position) -> yyyy
+                MMM.find(format, position) -> MMM
                 MM.find(format, position) -> MM
                 dd.find(format, position) -> dd
                 HH.find(format, position) -> HH
                 mm_.find(format, position) -> mm_
                 EEE.find(format, position) -> EEE
-                MMM.find(format, position) -> MMM
+                COMMA.find(format, position) -> COMMA
                 u.find(format, position) -> u
                 ss.find(format, position) -> ss
                 SSS.find(format, position) -> SSS
@@ -32,6 +34,7 @@ sealed class Pattern {
 
     abstract fun find(text: String, position: Int): Boolean
     abstract val len: Int
+    open fun len(text: String, position: Int): Int = if (find(text, position)) len else -1
     abstract fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int
     abstract fun toString(calendar: Calendar): String
 
@@ -105,6 +108,33 @@ sealed class Pattern {
         override fun toString(calendar: Calendar): String = calendar.dayOfMonth.as2()
     }
 
+    class CustomText(pattern: String, val start: Int) : Pattern() {
+        companion object {
+            fun find(text: String, position: Int): Boolean =
+                text[position] == '\'' && (text.indexOf("'", position + 1) != -1)
+        }
+
+        override fun find(text: String, position: Int): Boolean =
+            text[position] == '\'' && (text.indexOf("'", position + 1) != -1)
+
+        override val len: Int = pattern.indexOf("'", start + 1) - start + 1
+        val text = pattern.substring(start + 1, start + len - 1)
+
+        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+            return text.length
+//            text.regionMatches(position, text, 0, text.length)
+//            TODO("Not yet implemented")
+        }
+
+        override fun toString(calendar: Calendar): String =
+            text
+
+//        override fun len(text: String, position: Int): Int {
+//            val end = text.indexOf("'", position + 1)
+//            return end - position + 1
+//        }
+    }
+
     /**
      * Hours. Example: "31"
      */
@@ -112,6 +142,7 @@ sealed class Pattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "HH", 0, len)
 
+        override fun len(text: String, position: Int): Int = 2
         override val len: Int
             get() = 2
 
@@ -518,6 +549,26 @@ sealed class Pattern {
             }
 
         override fun toString(calendar: Calendar): String = "/"
+    }
+
+    /**
+     * ","
+     */
+    object COMMA : Pattern() {
+        override fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, ",", 0, len)
+
+        override val len: Int
+            get() = 1
+
+        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int =
+            if (text[position] == ',') {
+                1
+            } else {
+                -1
+            }
+
+        override fun toString(calendar: Calendar): String = ","
     }
 
     /**

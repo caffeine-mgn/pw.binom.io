@@ -52,7 +52,7 @@ internal fun timeZoneOffsetToString(offset: Int): String {
     return "${if (offset < 0) "-" else "+"}${h.absoluteValue.asTwo()}:${m.absoluteValue.asTwo()}"
 }
 
-internal fun asString(calc: Calendar, timeZone: String): String {
+internal fun asStringRfc822(calc: Calendar, timeZone: String): String {
     val month = when (calc.month) {
         0 -> "Jan"
         1 -> "Feb"

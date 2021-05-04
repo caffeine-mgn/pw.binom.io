@@ -43,7 +43,7 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
     actual fun timeZone(timeZoneOffset: Int): Calendar = Calendar(utcTime, timeZoneOffset)
 
     actual override fun toString(): String =
-        asString(this, timeZoneOffsetToString(timeZoneOffset))
+        asStringRfc822(this, timeZoneOffsetToString(timeZoneOffset))
 
     actual fun toString(timeZoneOffset: Int): String = timeZone(timeZoneOffset).toString()
 }
