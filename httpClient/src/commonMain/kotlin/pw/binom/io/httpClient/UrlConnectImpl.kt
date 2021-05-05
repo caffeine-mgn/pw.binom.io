@@ -2,6 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.*
 import pw.binom.base64.Base64EncodeOutput
+import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.HandshakeSecret

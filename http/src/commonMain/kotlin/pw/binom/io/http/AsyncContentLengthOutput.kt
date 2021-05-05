@@ -13,14 +13,25 @@ open class AsyncContentLengthOutput(
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
         if (wrote >= contentLength) {
-            throw IllegalStateException("All Content already send. ContentLength: [$contentLength], data.remaining: [${data.remaining}]")
+            return 0
+//            throw IllegalStateException("All Content already send. ContentLength: [$contentLength], data.remaining: [${data.remaining}]")
         }
+        var lim = data.limit
         if (wrote + data.remaining.toULong() > contentLength) {
-            throw IllegalStateException("Can't send more than Content Length. ContentLength: [$contentLength], data.remaining: [${data.remaining}]")
+            val l = data.position + (contentLength - wrote).toInt()
+            if (l == 0) {
+                return 0
+            }
+            data.limit = l
+//            throw IllegalStateException("Can't send more than Content Length. ContentLength: [$contentLength], data.remaining: [${data.remaining}]")
         }
-        val r = stream.write(data)
-        wrote += r.toULong()
-        return r
+        try {
+            val r = stream.write(data)
+            wrote += r.toULong()
+            return r
+        } finally {
+            data.limit = lim
+        }
     }
 
     override suspend fun flush() {

@@ -166,7 +166,8 @@ inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.bin
         limit = position + length
         return func(this)
     } finally {
-        limit = l
+        this.limit = l
+        this.position = o
     }
 }
 

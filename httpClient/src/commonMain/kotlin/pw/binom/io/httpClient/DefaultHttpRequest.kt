@@ -3,7 +3,7 @@ package pw.binom.io.httpClient
 import pw.binom.net.URI
 import pw.binom.charset.Charsets
 import pw.binom.io.IOException
-import pw.binom.io.Sha1MessageDigest
+import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
@@ -11,8 +11,8 @@ import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
 
 class DefaultHttpRequest(
-    var method: HTTPMethod,
-    val URI: URI,
+    override var method: HTTPMethod,
+    override val uri: URI,
     val client: HttpClient,
     val channel: AsyncAsciiChannel,
 ) : HttpRequest {
@@ -26,11 +26,11 @@ class DefaultHttpRequest(
     }
 
     init {
-        val port = URI.port
+        val port = uri.port
         val host = if (port == null) {
-            URI.host
+            uri.host
         } else {
-            "${URI.host}:$port"
+            "${uri.host}:$port"
         }
         if (client.useKeepAlive) {
             headers[Headers.CONNECTION] = Headers.KEEP_ALIVE
@@ -41,7 +41,7 @@ class DefaultHttpRequest(
     }
 
     private suspend fun sendHeaders() {
-        channel.writer.append(method.code).append(" ").append(URI.request).append(" ").append("HTTP/1.1\r\n")
+        channel.writer.append(method.code).append(" ").append(uri.request).append(" ").append("HTTP/1.1\r\n")
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append("\r\n")
         }
@@ -63,7 +63,7 @@ class DefaultHttpRequest(
                 Headers.CHUNKED.toLowerCase() -> {
                     closed = true
                     return RequestAsyncChunkedOutput(
-                        URI = URI,
+                        URI = uri,
                         client = client,
                         keepAlive = keepAlive,
                         channel = channel,
@@ -76,7 +76,7 @@ class DefaultHttpRequest(
         if (len != null) {
             closed = true
             return RequestAsyncContentLengthOutput(
-                URI = URI,
+                URI = uri,
                 client = client,
                 keepAlive = keepAlive,
                 channel = channel,
@@ -122,7 +122,7 @@ class DefaultHttpRequest(
     override suspend fun getResponse(): HttpResponse {
         checkClosed()
         val len = headers.contentLength
-        if (len != null) {
+        if (len != null && len > 0uL) {
             throw IllegalStateException("Can't get Response. Header contains \"${Headers.CONTENT_LENGTH}: $len\". Expected request data $len bytes")
         }
         val encode = headers.transferEncoding
@@ -132,7 +132,7 @@ class DefaultHttpRequest(
         sendHeaders()
         channel.writer.flush()
         return DefaultHttpResponse.read(
-            URI = URI,
+            URI = uri,
             client = client,
             keepAlive = keepAlive,
             channel = channel,
@@ -164,7 +164,10 @@ class DefaultHttpRequest(
     }
 
     override suspend fun asyncClose() {
-        checkClosed()
+        if (closed) {
+            return
+        }
         channel.asyncClose()
+        closed = true
     }
 }

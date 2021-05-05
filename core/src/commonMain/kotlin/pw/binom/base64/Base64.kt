@@ -29,16 +29,19 @@ object Base64 {
                 newOld(0)
                 "${byteToBase64(ff)}${byteToBase64((data and 63))}"
             }
-            else -> throw IllegalArgumentException("Argument counter shoul be between 0 and 2")
+            else -> throw IllegalArgumentException("Argument counter shoul be between 0 and 2. Got $counter")
         }
 
     fun encode(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): String {
-        val sb = StringBuilder((length*1.5).roundToInt())
+        val sb = StringBuilder((length * 1.5).roundToInt())
         var counter = 0
         var old = 0.toByte()
-        for (i in offset until offset+length) {
+        for (i in offset until offset + length) {
             sb.append(encodeByte(counter, old, data[i]) { old = it })
             counter++
+            if (counter == 3) {
+                counter = 0
+            }
         }
         when (counter) {
             1 -> sb.append(byteToBase64(old)).append("==")

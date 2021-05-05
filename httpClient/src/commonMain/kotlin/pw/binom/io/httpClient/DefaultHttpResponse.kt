@@ -79,8 +79,8 @@ class DefaultHttpResponse(
                 channel = channel,
             )
         } else {
-            val len = headers.contentLength
-                ?: throw IOException("Invalid Http Response Headers: Unknown size of Response")
+            val len = headers.contentLength ?: 0uL
+//                ?: throw IOException("Invalid Http Response Headers: Unknown size of Response")
             stream = ResponseAsyncContentLengthInput(
                 URI = URI,
                 client = client,
@@ -108,7 +108,9 @@ class DefaultHttpResponse(
         )
 
     override suspend fun asyncClose() {
-        checkClosed()
+        if (closed) {
+            return
+        }
         try {
             if (headers.bodyExist) {
                 channel.asyncClose()

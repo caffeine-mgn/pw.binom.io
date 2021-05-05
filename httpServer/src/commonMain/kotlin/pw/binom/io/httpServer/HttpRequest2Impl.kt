@@ -4,6 +4,7 @@ import pw.binom.*
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncDeflaterOutput
 import pw.binom.compression.zlib.AsyncGZIPOutput
+import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret

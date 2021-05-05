@@ -1,8 +1,8 @@
 package pw.binom.io.http
 
 class HashHeaders : MutableHeaders, Map<String, List<String>> {
-    private var body = HashMap<String, ArrayList<String>>()
-    private var ref = HashMap<String, String>()
+    private var body = LinkedHashMap<String, ArrayList<String>>()
+    private var ref = LinkedHashMap<String, String>()
     override fun set(key: String, value: List<String>): MutableHeaders {
         if (value.isEmpty()) {
             remove(key)

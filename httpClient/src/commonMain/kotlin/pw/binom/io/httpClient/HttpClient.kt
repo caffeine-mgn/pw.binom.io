@@ -24,7 +24,7 @@ class HttpClient(
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
 
-    fun recycleConnection(URI: URI, channel: AsyncAsciiChannel) {
+    internal fun recycleConnection(URI: URI, channel: AsyncAsciiChannel) {
         connections.getOrPut(URI.asKey) { ArrayList() }.add(channel)
     }
 
@@ -55,14 +55,14 @@ class HttpClient(
         return AsyncAsciiChannel(channel = channel, bufferSize = bufferSize)
     }
 
-    suspend fun request(method: HTTPMethod, URI: URI): HttpRequest {
-        val schema = URI.schema ?: throw IllegalArgumentException("URL \"$URI\" must contains protocol")
+    suspend fun request(method: HTTPMethod, uri: URI): HttpRequest {
+        val schema = uri.schema ?: throw IllegalArgumentException("URL \"$uri\" must contains protocol")
         if (schema != "http" && schema != "https" && schema != "ws" && schema != "wss") {
-            throw IllegalArgumentException("Schema ${URI.schema} is not supported")
+            throw IllegalArgumentException("Schema ${uri.schema} is not supported")
         }
-        val connect = borrowConnection(URI)
+        val connect = borrowConnection(uri)
         return DefaultHttpRequest(
-            URI = URI,
+            uri = uri,
             client = this,
             channel = connect,
             method = method

@@ -78,6 +78,10 @@ interface Headers : Map<String, List<String>> {
 
         }
 
+    val names
+        get() = keys
+
+
     val location: String?
         get() = getSingle(LOCATION)
 

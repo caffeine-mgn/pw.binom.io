@@ -3,7 +3,7 @@ package pw.binom.io.httpServer.websocket
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.io.IOException
-import pw.binom.io.Sha1MessageDigest
+import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
