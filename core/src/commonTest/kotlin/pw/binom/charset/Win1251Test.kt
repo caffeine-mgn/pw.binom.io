@@ -11,7 +11,7 @@ class Win1251Test {
 
     @Test
     fun encode() {
-        charset.newEncoder().use { encoder ->
+        val encoder = charset.newEncoder()
             val out = ByteBuffer.alloc(30)
             assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(test_data_hello_text.toCharBuffer(), out))
             out.flip()
@@ -19,13 +19,13 @@ class Win1251Test {
 
             out.forEachIndexed { index, value ->
                 assertEquals(test_data_hello_bytes_windows_1251[index], value)
-            }
+
         }
     }
 
     @Test
     fun encodeOutputOver() {
-        charset.newEncoder().use { encoder ->
+        val encoder = charset.newEncoder()
             val out = ByteBuffer.alloc(30)
             out.limit = 2
             val input = test_data_hello_text.toCharBuffer()
@@ -35,12 +35,12 @@ class Win1251Test {
             out.limit = out.capacity
             assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(input, out))
             assertEquals(6, out.position)
-        }
+
     }
 
     @Test
     fun decode() {
-        charset.newDecoder().use { decoder ->
+        val decoder = charset.newDecoder()
             val out = CharBuffer.alloc(30)
             assertEquals(CharsetTransformResult.SUCCESS, decoder.decode(test_data_hello_bytes_windows_1251.wrap(), out))
             out.flip()
@@ -48,6 +48,6 @@ class Win1251Test {
             out.forEachIndexed { index, value ->
                 assertEquals(test_data_hello_text[index], value)
             }
-        }
+
     }
 }

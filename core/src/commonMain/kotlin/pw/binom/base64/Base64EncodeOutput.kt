@@ -2,6 +2,7 @@ package pw.binom.base64
 
 import pw.binom.ByteBuffer
 import pw.binom.Output
+import pw.binom.io.ClosedException
 import pw.binom.io.StreamClosedException
 import kotlin.experimental.and
 import kotlin.experimental.or
@@ -25,33 +26,42 @@ class Base64EncodeOutput(private val appendable: Appendable) : Output {
 
     private fun write(data: Byte) {
         checkClosed()
-        when (counter) {
-            0 -> {
-                val ff = data shr 2
-                old = ((data and 3) shl 4)
-                appendable.append(byteToBase64(ff))
-            }
-            1 -> {
-                val ff = old or (data shr 4)
-                old = ((data and 15) shl 2)
-                appendable.append(byteToBase64(ff))
-            }
-            2 -> {
-                val ff = old or (data shr 6)
-                old = 0
-                appendable.append(byteToBase64(ff))
-                appendable.append(byteToBase64((data and 63)))
-            }
+        val result = Base64.encodeByte(
+            counter,old,data
+        ){
+            old=it
         }
+        appendable.append(result)
         counter++
         if (counter == 3)
             counter = 0
+//        when (counter) {
+//            0 -> {
+//                val ff = data shr 2
+//                old = ((data and 3) shl 4)
+//                appendable.append(byteToBase64(ff))
+//            }
+//            1 -> {
+//                val ff = old or (data shr 4)
+//                old = ((data and 15) shl 2)
+//                appendable.append(byteToBase64(ff))
+//            }
+//            2 -> {
+//                val ff = old or (data shr 6)
+//                old = 0
+//                appendable.append(byteToBase64(ff))
+//                appendable.append(byteToBase64((data and 63)))
+//            }
+//        }
+//        counter++
+//        if (counter == 3)
+//            counter = 0
     }
 
     private var closed = false
     private fun checkClosed() {
         if (closed) {
-            throw StreamClosedException()
+            throw ClosedException()
         }
     }
 

@@ -1,9 +1,6 @@
 package pw.binom
 
-import pw.binom.net.URI
-import pw.binom.net.toPath
-import pw.binom.net.toQuery
-import pw.binom.net.toURIOrNull
+import pw.binom.net.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -15,6 +12,30 @@ class TestURI {
     fun appendPathTest() {
         val input = "http://example.com/test".toURIOrNull!!.appendPath("user").toString()
         assertEquals("http://example.com/test/user", input)
+    }
+
+    @Test
+    fun encodeTest() {
+        "http://example.com/123%20456?gender=m%20w".toURI().also {
+            assertEquals("/123 456", it.path.raw)
+            assertEquals("m w", it.query!!.findAll("gender").single())
+        }
+    }
+
+    @Test
+    fun newTest() {
+        val uri = URI.new(
+            schema = "https",
+            user = null,
+            password = null,
+            host = "example.com",
+            port = 3301,
+            path = "/123 456".toPath,
+            query = Query.new(mapOf("gender" to "m w")),
+            fragment = "ff nn"
+        )
+
+        assertEquals("https://example.com:3301/123%20456?gender=m%20w#ff%20nn",uri.toString())
     }
 
     @Test

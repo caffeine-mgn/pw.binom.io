@@ -35,12 +35,12 @@ inline class URI internal constructor(val fullPath: String) {
             if (port != null) {
                 sb.append(":").append(port)
             }
-            sb.append(path.raw)
+            sb.append(path.raw.split('/').map { UTF8.encode(it) }.joinToString("/"))
             if (query != null) {
                 sb.append("?").append(query)
             }
             if (fragment != null) {
-                sb.append("#").append(fragment)
+                sb.append("#").append(UTF8.encode(fragment))
             }
             return sb.toString()
         }
@@ -148,12 +148,12 @@ inline class URI internal constructor(val fullPath: String) {
             if (e == -1) {
                 e = fullPath.length
             }
-            return fullPath.substring(s, e).toPath
+            return fullPath.substring(s, e).split('/').map { UTF8.decode(it) }.joinToString("/").toPath
         }
 
     /**
      *
-     * Retuns http request [path]+[query]
+     * Returns http request [path]+[query]
      */
     val request: String
         get() {
@@ -182,7 +182,7 @@ inline class URI internal constructor(val fullPath: String) {
             if (s == -1) {
                 return null
             }
-            return fullPath.substring(s)
+            return UTF8.decode(fullPath.substring(s))
         }
 
     fun copy(
@@ -208,6 +208,9 @@ inline class URI internal constructor(val fullPath: String) {
             )
         )
 
+    /**
+     * Returns full encoded uri
+     */
     override fun toString() = fullPath
 
     /**
@@ -242,13 +245,15 @@ inline class URI internal constructor(val fullPath: String) {
 }
 
 /**
- * Convert current string to [URI]. If current string is invalid URI will throw MalformedURLException
+ * Convert current string to [URI]. If current string is invalid URI will throw [MalformedURLException]
+ * Input string should be url encoded
  * @throws MalformedURLException If current string is invalid URI
  */
-fun String.toURI() = toURIOrNull ?: throw MalformedURLException()
+fun String.toURI() = toURIOrNull ?: throw MalformedURLException(this)
 
 /**
  * Convert current string to [URI]. If current string is invalid URI will return null
+ * Input string should be url encoded
  */
 val String.toURIOrNull
     get(): URI? {
