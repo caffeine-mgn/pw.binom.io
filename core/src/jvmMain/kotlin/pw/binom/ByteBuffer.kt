@@ -131,21 +131,26 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
         return l
     }
 
-    actual fun get(): Byte =
-        native.get()
+    actual fun get(): Byte {
+        checkClosed()
+        return native.get()
+    }
 
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
+        checkClosed()
         native.position(position)
         native.limit(position + length)
         return this
     }
 
     actual fun put(value: Byte) {
+        checkClosed()
         native.put(value)
     }
 
     override fun clear() {
+        checkClosed()
         native.clear()
     }
 

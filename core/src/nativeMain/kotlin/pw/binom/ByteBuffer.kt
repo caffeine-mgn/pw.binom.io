@@ -103,6 +103,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     override fun close() {
         checkClosed()
+        println("Closing ${hashCode()}")
         destroyNativeByteBuffer(native)
         BYTE_BUFFER_COUNTER.decrement()
         closed = true
@@ -197,6 +198,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     init {
         doFreeze()
         createCleaner(this) { self ->
+            println("Time to close self! ${self.hashCode()}")
             if (!self.closed) {
                 self.close()
             }
