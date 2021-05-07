@@ -4,8 +4,8 @@ import kotlinx.cinterop.*
 import platform.posix.memset
 import platform.zlib.*
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import kotlin.native.internal.createCleaner
@@ -26,7 +26,7 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
 
         if (inflateInit2(native.ptr, if (wrap) 15 else -15) != Z_OK)
             throw IOException("inflateInit2() error")
-
+        doFreeze()
         createCleaner(this){self->
             if (!self.closed.value){
                 self.close()
