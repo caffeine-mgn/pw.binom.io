@@ -86,10 +86,11 @@ class SQLitePrepareStatement(
     }
 
     override fun close() {
-        if (openedResultSetCount > 0)
+        if (openedResultSetCount > 0) {
             throw SQLException("Not all ResultSet closed")
+        }
         sqlite3_clear_bindings(stmt)
         sqlite3_finalize(stmt)
-        free(native)
+        nativeHeap.free(native)
     }
 }

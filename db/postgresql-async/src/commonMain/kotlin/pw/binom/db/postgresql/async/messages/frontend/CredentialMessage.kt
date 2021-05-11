@@ -1,10 +1,10 @@
 package pw.binom.db.postgresql.async.messages.frontend
 
+import pw.binom.crypto.MD5MessageDigest
 import pw.binom.db.postgresql.async.messages.backend.AuthenticationMessage
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.io.MD5MessageDigest
 import pw.binom.writeByte
 
 private val lookup = byteArrayOf(

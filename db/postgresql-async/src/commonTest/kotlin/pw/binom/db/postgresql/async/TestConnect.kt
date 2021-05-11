@@ -25,7 +25,7 @@ class TestConnect {
                 val con = PGConnection.connect(
                     address = NetworkAddress.Immutable(
                         host = "localhost",
-                        port = 5432,
+                        port = 25432,
                     ),
                     manager = manager,
                     charset = Charsets.UTF8,

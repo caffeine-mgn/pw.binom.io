@@ -2,6 +2,7 @@ package pw.binom.db.tarantool.protocol
 
 import pw.binom.*
 import pw.binom.base64.Base64
+import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import kotlin.experimental.xor
 

@@ -13,13 +13,6 @@ import java.util.*
 actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnection {
     actual companion object {
         actual fun openFile(file: File): SQLiteConnector {
-            val parent = file.parent ?: throw FileNotFoundException("File ${file.path} not found")
-            if (!parent.isExist) {
-                throw FileNotFoundException("Direction ${file.path} is not found")
-            }
-            if (!parent.isDirectory) {
-                throw FileNotFoundException("Path ${file.path} is not direction")
-            }
             val connection = JDBC4Connection(null, file.path, Properties())
             return SQLiteConnector(connection)
         }

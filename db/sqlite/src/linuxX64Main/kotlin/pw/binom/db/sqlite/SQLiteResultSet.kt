@@ -9,7 +9,7 @@ import pw.binom.db.sync.SyncResultSet
 
 class SQLiteResultSet(
     val prepareStatement: SQLitePrepareStatement,
-    var empty: Boolean
+    var empty: Boolean,
 ) : SyncResultSet {
     private var columnCount = 0
     private val columnsMap = HashMap<String, Int>()

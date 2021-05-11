@@ -23,7 +23,7 @@ private class AResultSet(val source: SyncResultSet, val statement: SyncPreparedS
 class SQLiteStatement(override val connection: SQLiteConnector) : SyncStatement {
 
     override fun executeQuery(query: String): SyncResultSet {
-        return connection.prepareStatement(query).use { c ->
+        return connection.prepareStatement(query).let { c ->
             AResultSet(c.executeQuery(), c)
         }
     }
