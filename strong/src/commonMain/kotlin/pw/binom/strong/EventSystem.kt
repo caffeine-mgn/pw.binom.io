@@ -17,7 +17,7 @@ class EventSystem {
                 if (list != null) {
                     list.remove(listener)
                     if (list.isEmpty()) {
-                        listeners.remove(list)
+                        listeners.remove(objectClass)
                     }
                 }
             }

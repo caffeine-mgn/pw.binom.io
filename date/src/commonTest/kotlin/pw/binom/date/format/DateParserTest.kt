@@ -19,7 +19,6 @@ class DateParserTest {
         }
         "yyyy-MM-dd HH:mm:ss.SSSXXX".toDatePattern().parseOrNull("1989-01-05 10:31:44.456+03:00")!!.calendar(3 * 60)
             .apply {
-                println("--->${this.toString()}")
                 assertEquals(1989, year)
                 assertEquals(1, month)
                 assertEquals(5, dayOfMonth)
@@ -44,7 +43,7 @@ class DateParserTest {
             timeZoneOffset = 0,
         )
         val str = date.rfc822()
-        assertEquals("Sat, 01 Jan 1989 01:01:01 GMT", str)
+        assertEquals("Sun, 01 Jan 1989 01:01:01 GMT", str)
         assertEquals(date.time, str.parseRfc822Date()!!.time)
     }
 }

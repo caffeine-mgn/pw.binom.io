@@ -11,6 +11,7 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import kotlin.native.concurrent.AtomicInt
+import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
 //const val NATIVE_CHARSET = "char16_t"
@@ -20,52 +21,67 @@ import kotlin.native.internal.createCleaner
  */
 @OptIn(ExperimentalStdlibApi::class)
 abstract class AbstractIconv(val fromCharset: String, val toCharset: String) {
-    private val iconvHandle = iconv_open(toCharset, fromCharset)
-    private val inputAvail = nativeHeap.alloc<size_tVar>()
-    private val outputAvail = nativeHeap.alloc<size_tVar>()
-    private val outputPointer = nativeHeap.allocPointerTo<CPointerVar<ByteVar>>()
-    private val inputPointer = nativeHeap.allocPointerTo<CPointerVar<ByteVar>>()
+
+    private class Resource(fromCharset: String,toCharset: String){
+        val iconvHandle = iconv_open(toCharset, fromCharset)
+        val inputAvail = nativeHeap.alloc<size_tVar>()
+        val outputAvail = nativeHeap.alloc<size_tVar>()
+        val outputPointer = nativeHeap.allocPointerTo<CPointerVar<ByteVar>>()
+        val inputPointer = nativeHeap.allocPointerTo<CPointerVar<ByteVar>>()
+
+        init {
+            set_posix_errno(0)
+            val r = platform.iconv.iconv(
+                iconvHandle,
+                null,
+                null,
+                outputPointer.ptr.reinterpret(),
+                outputAvail.ptr
+            ).toInt()
+            if (r == -1 && errno == EBADF) {
+                throw IllegalArgumentException("Charset not supported")
+            }
+        }
+
+        fun dispose() {
+            iconv_close(iconvHandle)
+            nativeHeap.free(inputAvail)
+            nativeHeap.free(outputAvail)
+            nativeHeap.free(outputPointer)
+            nativeHeap.free(inputPointer)
+        }
+    }
+    private val resource = Resource(fromCharset,toCharset).freeze()
+
+    private val cleaner = createCleaner(resource) { self ->
+        self.dispose()
+    }
 
     init {
-        set_posix_errno(0)
-        val r = platform.iconv.iconv(
-            iconvHandle,
-            null,
-            null,
-            outputPointer.ptr.reinterpret(),
-            outputAvail.ptr
-        ).toInt()
-        if (r == -1 && errno == EBADF) {
-            throw IllegalArgumentException("Charset not supported")
-        }
-        hashCode()
-        doFreeze()
-        createCleaner(this) { self ->
-            self.close()
-        }
+        freeze()
     }
 
     protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
         memScoped {
-            outputAvail.value = (output.remaining * output.elementSizeInBytes).convert()
-            outputPointer.value = output.refTo(output.position).getPointer(this).reinterpret()
-            inputPointer.value = input.refTo(input.position).getPointer(this).reinterpret()
-            inputAvail.value = (input.remaining * input.elementSizeInBytes).convert()
+            resource.outputAvail.value = (output.remaining * output.elementSizeInBytes).convert()
+            resource.outputPointer.value = output.refTo(output.position).getPointer(this).reinterpret()
+            resource.inputPointer.value = input.refTo(input.position).getPointer(this).reinterpret()
+            resource.inputAvail.value = (input.remaining * input.elementSizeInBytes).convert()
             set_posix_errno(0)
 
-            val beforeIn = inputAvail.value.toInt()
-            val beforeOut = outputAvail.value.toInt()
+            val beforeIn = resource.inputAvail.value.toInt()
+            val beforeOut = resource.outputAvail.value.toInt()
             val r = platform.iconv.iconv(
-                iconvHandle,
+                resource.iconvHandle,
 
-                inputPointer.ptr.reinterpret(),
-                inputAvail.ptr,
+                resource.inputPointer.ptr.reinterpret(),
+                resource.inputAvail.ptr,
 
-                outputPointer.ptr.reinterpret(),
-                outputAvail.ptr
+                resource.outputPointer.ptr.reinterpret(),
+                resource.outputAvail.ptr
             ).toInt()
-            val readed = beforeIn - inputAvail.value.toInt()
-            val writed = beforeOut - outputAvail.value.toInt()
+            val readed = beforeIn - resource.inputAvail.value.toInt()
+            val writed = beforeOut - resource.outputAvail.value.toInt()
             input.position += readed / input.elementSizeInBytes
             output.position += writed / output.elementSizeInBytes
             return when {
@@ -76,13 +92,5 @@ abstract class AbstractIconv(val fromCharset: String, val toCharset: String) {
                 else -> throw IllegalStateException("Iconv Exception. Errno: $errno, Result: $r")
             }
         }
-    }
-
-    private fun close() {
-        iconv_close(iconvHandle)
-        nativeHeap.free(inputAvail)
-        nativeHeap.free(outputAvail)
-        nativeHeap.free(outputPointer)
-        nativeHeap.free(inputPointer)
     }
 }

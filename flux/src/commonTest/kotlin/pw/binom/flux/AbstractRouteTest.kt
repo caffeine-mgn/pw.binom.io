@@ -48,10 +48,6 @@ class AbstractRouteTest {
             return r
         }
 
-        override suspend fun <T> response(func: (HttpResponse) -> T): T {
-            TODO("Not yet implemented")
-        }
-
         override var response: HttpResponse? = null
             private set
 

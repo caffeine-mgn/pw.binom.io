@@ -10,6 +10,7 @@ import pw.binom.atomic.AtomicLong
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
+import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -35,12 +36,15 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         memset(native.ptr, 0, sizeOf<z_stream_s>().convert())
         if (deflateInit2(native.ptr, level.convert(), Z_DEFLATED, if (wrap) 15 else -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
             throw IOException("deflateInit() error")
-        doFreeze()
-        createCleaner(this){self->
-            if (!self.closed.value){
-                self.close()
-            }
-        }
+    }
+
+    private val cleaner = createCleaner(native){self->
+        deflateEnd(self.ptr)
+        nativeHeap.free(self)
+    }
+
+    init {
+        freeze()
     }
 
 
@@ -52,8 +56,6 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
 
     override fun close() {
         checkClosed()
-        deflateEnd(native.ptr)
-        nativeHeap.free(native)
         closed.value = true
     }
 

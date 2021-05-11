@@ -1,6 +1,7 @@
 package pw.binom.io.examples.file
 
 import pw.binom.*
+import pw.binom.crypto.MD5MessageDigest
 import pw.binom.io.*
 import pw.binom.io.file.File
 import pw.binom.io.file.read

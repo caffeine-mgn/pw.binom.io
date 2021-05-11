@@ -1,10 +1,7 @@
 package pw.binom.network
 
 import pw.binom.*
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.WorkerPool
-import pw.binom.concurrency.asReference
-import pw.binom.concurrency.sleep
+import pw.binom.concurrency.*
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.test.Test
@@ -194,7 +191,7 @@ class NetworkDispatcherTest {
         val nd = NetworkDispatcher()
         val server = nd.bindTcp(address)
         val executeWorker = WorkerPool(10)
-        val serverFuture = async2 {
+        val serverFuture = async2<Unit> {
             val client = server.accept()!!
             nd.async(executeWorker) {
                 client.readFully(ByteBuffer.alloc(32).clean())

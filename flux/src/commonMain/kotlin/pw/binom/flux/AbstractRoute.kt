@@ -34,7 +34,10 @@ abstract class AbstractRoute : Route, Handler {
             throw IllegalStateException("Router has already defined forward")
         methods.getOrPut(method) { HashMap() }.getOrPut(path) { ArrayList() }.add(func)
         return Closeable {
-            methods[method]?.remove(func)
+            methods[method]?.get(path)?.remove(func)
+            if (methods[method]?.get(path)?.isEmpty() == true) {
+                methods[method]?.remove(path)
+            }
             if (methods[method]?.isEmpty() == true) {
                 methods.remove(method)
             }

@@ -8,11 +8,13 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
+import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
 @OptIn(ExperimentalStdlibApi::class)
 actual class Inflater actual constructor(wrap: Boolean) : Closeable {
-    internal val native = nativeHeap.alloc<z_stream_s>()//malloc(sizeOf<z_stream_s>().convert())!!.reinterpret<z_stream_s>()
+    internal val native =
+        nativeHeap.alloc<z_stream_s>()//malloc(sizeOf<z_stream_s>().convert())!!.reinterpret<z_stream_s>()
 
     private var closed = AtomicBoolean(false)
 
@@ -26,18 +28,19 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
 
         if (inflateInit2(native.ptr, if (wrap) 15 else -15) != Z_OK)
             throw IOException("inflateInit2() error")
-        doFreeze()
-        createCleaner(this){self->
-            if (!self.closed.value){
-                self.close()
-            }
-        }
+    }
+
+    private val cleaner = createCleaner(native) { self ->
+        inflateEnd(self.ptr)
+        nativeHeap.free(self)
+    }
+
+    init {
+        freeze()
     }
 
     override fun close() {
         checkClosed()
-        inflateEnd(native.ptr)
-        nativeHeap.free(native)
         closed.value = true
     }
 

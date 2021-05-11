@@ -19,10 +19,16 @@ actual class Lock {
 
     init {
         InitializeCriticalSection(native.ptr)
-        createCleaner(native) { native ->
-            DeleteCriticalSection(native.ptr)
-            nativeHeap.free(native)
-        }
+
+    }
+
+    private val cleaner = createCleaner(native) { native ->
+        DeleteCriticalSection(native.ptr)
+        nativeHeap.free(native)
+    }
+
+    init {
+        freeze()
     }
 
     actual fun lock() {
@@ -42,9 +48,14 @@ actual class Lock {
 
         init {
             InitializeConditionVariable(native.ptr)
-            createCleaner(native) { native ->
-                nativeHeap.free(native)
-            }
+        }
+
+        private val cleaner = createCleaner(native) { native ->
+            nativeHeap.free(native)
+        }
+
+        init {
+            freeze()
         }
 
         actual fun await() {

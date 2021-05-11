@@ -3,6 +3,7 @@ package pw.binom.network
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.ThreadRef
 import pw.binom.concurrency.WorkerPool
+import pw.binom.concurrency.execute
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

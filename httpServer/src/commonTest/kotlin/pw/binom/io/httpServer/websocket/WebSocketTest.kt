@@ -2,6 +2,7 @@ package pw.binom.io.httpServer.websocket
 
 import pw.binom.ByteBuffer
 import pw.binom.concurrency.Worker
+import pw.binom.concurrency.execute
 import pw.binom.concurrency.sleep
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpServer.HttpServer3
@@ -11,7 +12,6 @@ import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
-import pw.binom.network.execute
 import pw.binom.wrap
 import kotlin.test.Ignore
 import kotlin.test.Test

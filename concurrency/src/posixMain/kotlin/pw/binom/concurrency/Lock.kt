@@ -19,6 +19,7 @@ private inline val AtomicNativePtr.mm
 
 private const val checkTime = 100
 fun <T : NativePointed> NativePtr.reinterpret() = interpretNullablePointed<T>(this)
+
 @OptIn(ExperimentalStdlibApi::class)
 actual class Lock {
 
@@ -26,10 +27,14 @@ actual class Lock {
 
     init {
         pthread_mutex_init(native.mm.ptr, null)
-        createCleaner(native){native->
-            pthread_mutex_destroy(native.mm.ptr)
-            nativeHeap.free(native.value)
-        }
+    }
+
+    private val cleaner = createCleaner(native) { native ->
+        pthread_mutex_destroy(native.mm.ptr)
+        nativeHeap.free(native.value)
+    }
+
+    init {
         freeze()
     }
 
@@ -53,10 +58,14 @@ actual class Lock {
         init {
             if (pthread_cond_init(native.cc.ptr, null) != 0)
                 throw IllegalStateException("Can't init Condition")
-            createCleaner(native) { native ->
-                pthread_cond_destroy(native.cc.ptr)
-                nativeHeap.free(native.value)
-            }
+        }
+
+        private val cleaner = createCleaner(native) { native ->
+            pthread_cond_destroy(native.cc.ptr)
+            nativeHeap.free(native.value)
+        }
+
+        init {
             freeze()
         }
 
