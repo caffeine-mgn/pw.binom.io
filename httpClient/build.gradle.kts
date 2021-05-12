@@ -12,7 +12,13 @@ kotlin {
             staticLib()
         }
     }
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "11"
+            }
+        }
+    }
     linuxArm32Hfp {
         binaries {
             staticLib()

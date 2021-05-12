@@ -20,7 +20,8 @@ data class TargetInfo(val targetName: String, val sysRoot: File, val clangArgs: 
 val targetInfoMap = mapOf(
         KonanTarget.LINUX_X64 to TargetInfo(
                 targetName = "x86_64-unknown-linux-gnu",
-                sysRoot = konanDeps.resolve("target-gcc-toolchain-3-linux-x86-64/x86_64-unknown-linux-gnu/sysroot")
+                sysRoot = konanDeps.resolve("x86_64-unknown-linux-gnu-gcc-8.3.0-glibc-2.19-kernel-4.9-2/x86_64-unknown-linux-gnu/sysroot")
+//                1.4.32 - sysRoot = konanDeps.resolve("target-gcc-toolchain-3-linux-x86-64/x86_64-unknown-linux-gnu/sysroot")
         ),
         KonanTarget.MACOS_X64 to TargetInfo(
                 targetName = "x86_64-apple-macosx",
@@ -42,7 +43,8 @@ val targetInfoMap = mapOf(
         ),
         KonanTarget.LINUX_ARM32_HFP to TargetInfo(
                 targetName = "armv6-unknown-linux-gnueabihf",
-                sysRoot = konanDeps.resolve("target-sysroot-2-raspberrypi"),
+                sysRoot = konanDeps.resolve("arm-unknown-linux-gnueabihf-gcc-8.3.0-glibc-2.19-kernel-4.9-2/arm-unknown-linux-gnueabihf/sysroot"),
+                //1.4.32 - arm-unknown-linux-gnueabihf-gcc-8.3.0-glibc-2.19-kernel-4.9-2
                 clangArgs = listOf("-mfpu=vfp", "-mfloat-abi=hard")
         ),
         KonanTarget.ANDROID_ARM32 to TargetInfo(

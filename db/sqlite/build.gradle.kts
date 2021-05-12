@@ -29,7 +29,13 @@ kotlin {
             compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
         }
     }
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "11"
+            }
+        }
+    }
     linuxArm32Hfp {
         binaries {
             staticLib()
