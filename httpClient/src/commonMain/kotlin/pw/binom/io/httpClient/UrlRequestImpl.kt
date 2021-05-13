@@ -35,7 +35,7 @@ internal class UrlRequestImpl(
             encode
                     .asSequence()
                     .flatMap { it.splitToSequence(',') }
-                    .map { it.trim().toLowerCase() }
+                    .map { it.trim().lowercase() }
                     .forEach {
                         stream = when (it) {
                             "chunked" -> AsyncChunkedOutput(
@@ -73,7 +73,7 @@ internal class UrlRequestImpl(
     }
 
     private val stream = run {
-        val contentEncode = headers[Headers.CONTENT_ENCODING]?.lastOrNull()?.toLowerCase()
+        val contentEncode = headers[Headers.CONTENT_ENCODING]?.lastOrNull()?.lowercase()
 
         when (contentEncode) {
             "gzip" -> AsyncGZIPOutput(httpStream, closeStream = true, level = compressLevel, bufferSize = compressBufferSize)

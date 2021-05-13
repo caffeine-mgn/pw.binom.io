@@ -128,7 +128,7 @@ open class AsyncHttpClient(
         }
     */
     fun request(method: String, URI: URI, flushSize: Int = DEFAULT_BUFFER_SIZE): UrlConnect {
-        when (URI.schema?.toLowerCase()) {
+        when (URI.schema?.lowercase()) {
             "http", "https", "ws", "wss" -> return UrlConnectImpl(
                 method = method,
                 URI = URI,

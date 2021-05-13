@@ -93,7 +93,7 @@ interface Headers : Map<String, List<String>> {
                 if (s == -1) {
                     null
                 } else {
-                    charset.substring(s + 1).trim().toLowerCase().removePrefix("charset=")
+                    charset.substring(s + 1).trim().lowercase().removePrefix("charset=")
                 }
             } else {
                 null

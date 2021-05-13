@@ -8,11 +8,11 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
             remove(key)
             return this
         }
-        val v = ref[key.toLowerCase()]
+        val v = ref[key.lowercase()]
         if (v == null) {
             val list = ArrayList(value)
             body[key] = list
-            ref[key.toLowerCase()] = key
+            ref[key.lowercase()] = key
         } else {
             body[v]!!.addAll(value)
         }
@@ -28,13 +28,13 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
         }
 
     override fun add(key: String, value: List<String>): MutableHeaders {
-        val v = ref[key.toLowerCase()] ?: return set(key, value)
+        val v = ref[key.lowercase()] ?: return set(key, value)
         body[v]!!.addAll(value)
         return this
     }
 
     override fun add(key: String, value: String): MutableHeaders {
-        val v = ref[key.toLowerCase()] ?: return set(key, value)
+        val v = ref[key.lowercase()] ?: return set(key, value)
         body[v]!!.add(value)
         return this
     }
@@ -49,13 +49,13 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
     }
 
     override fun remove(key: String): MutableHeaders {
-        val v = ref.remove(key.toLowerCase()) ?: return this
+        val v = ref.remove(key.lowercase()) ?: return this
         body.remove(v)
         return this
     }
 
     override fun remove(key: String, value: String): Boolean {
-        val low = key.toLowerCase()
+        val low = key.lowercase()
         val v = ref[low] ?: return false
         val list = body[v]!!
         list.remove(value)
@@ -67,7 +67,7 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
     }
 
     override fun get(key: String): MutableList<String>? {
-        val v = ref[key.toLowerCase()] ?: return null
+        val v = ref[key.lowercase()] ?: return null
         return body[v]!!
     }
 
@@ -88,10 +88,10 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
     override val values: Collection<List<String>>
         get() = body.values
 
-    override fun containsKey(key: String): Boolean = key.toLowerCase() in ref
+    override fun containsKey(key: String): Boolean = key.lowercase() in ref
 
     override fun containsValue(value: List<String>): Boolean =
-        value.all { it.toLowerCase() in ref }
+        value.all { it.lowercase() in ref }
 
     override fun isEmpty(): Boolean =
         ref.isEmpty()

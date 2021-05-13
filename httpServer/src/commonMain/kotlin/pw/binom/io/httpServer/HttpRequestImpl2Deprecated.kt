@@ -88,7 +88,7 @@ internal class HttpRequestImpl2Deprecated : HttpRequestDeprecated {
         }
         encode = headers[Headers.ACCEPT_ENCODING]?.flatMap {
             it.split(',')
-        }?.map { it.trim().toLowerCase() }?.map {
+        }?.map { it.trim().lowercase() }?.map {
             when {
                 allowZlib && it == "gzip" -> EncodeTypeDeprecated.GZIP
                 allowZlib && it == "deflate" -> EncodeTypeDeprecated.DEFLATE
@@ -96,7 +96,7 @@ internal class HttpRequestImpl2Deprecated : HttpRequestDeprecated {
             }
         }
             ?.firstOrNull() ?: EncodeTypeDeprecated.IDENTITY
-        keepAlive = headers[Headers.CONNECTION]?.any { it.toLowerCase() == Headers.KEEP_ALIVE } ?: false
+        keepAlive = headers[Headers.CONNECTION]?.any { it.lowercase() == Headers.KEEP_ALIVE } ?: false
         wrapped = input
         wrapped =
             if (headers[Headers.TRANSFER_ENCODING]?.asSequence()?.flatMap { it.splitToSequence(',') }?.map { it.trim() }

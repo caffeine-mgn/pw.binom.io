@@ -59,8 +59,8 @@ class DefaultHttpRequest(
         sendHeaders()
         val encode = headers.transferEncoding
         if (encode != null) {
-            when (encode.toLowerCase()) {
-                Headers.CHUNKED.toLowerCase() -> {
+            when (encode.lowercase()) {
+                Headers.CHUNKED.lowercase() -> {
                     closed = true
                     return RequestAsyncChunkedOutput(
                         URI = uri,

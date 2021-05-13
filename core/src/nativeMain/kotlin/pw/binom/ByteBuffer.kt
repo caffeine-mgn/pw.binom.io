@@ -103,7 +103,6 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     override fun close() {
         checkClosed()
-        println("Closing ${hashCode()}")
         BYTE_BUFFER_COUNTER.decrement()
         closed = true
     }

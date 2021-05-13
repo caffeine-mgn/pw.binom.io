@@ -21,7 +21,7 @@ internal class UrlResponseImpl(
     val client: AsyncHttpClient
 ) : AsyncHttpClient.UrlResponse {
 
-    private var keepAlive = headers[Headers.CONNECTION]?.singleOrNull()?.toLowerCase() == Headers.KEEP_ALIVE.toLowerCase()
+    private var keepAlive = headers[Headers.CONNECTION]?.singleOrNull()?.lowercase() == Headers.KEEP_ALIVE.lowercase()
 
     private val httpStream: AsyncHttpInput = run {
         if (headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED) {
@@ -41,7 +41,7 @@ internal class UrlResponseImpl(
         return@run ClosableAsyncInput(input)
     }
     private val stream = run {
-        val contentEncode = headers[Headers.CONTENT_ENCODING]?.lastOrNull()?.toLowerCase()
+        val contentEncode = headers[Headers.CONTENT_ENCODING]?.lastOrNull()?.lowercase()
 
         when (contentEncode) {
             "gzip" -> AsyncGZIPInput(httpStream, closeStream = true)

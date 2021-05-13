@@ -164,7 +164,7 @@ open class AsyncMultipartInput(
 
         val head = reader.readln() ?: throw IOException("Can't read part data header")
         val items = head.split(':', limit = 2)
-        if (items[0].toLowerCase() != "content-disposition")
+        if (items[0].lowercase() != "content-disposition")
             throw IOException("Invalid part header \"${items[0]}\"")
         val headValues = items[1].split(';').map { it.trim() }
         if ("form-data" != headValues[0])

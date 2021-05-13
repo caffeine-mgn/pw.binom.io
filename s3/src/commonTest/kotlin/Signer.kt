@@ -98,7 +98,7 @@ class Signer private constructor(
         this.canonicalHeaders = HashMap<String, String>()
         val headers: Headers = request.headers
         for (name in headers.names) {
-            val signedHeader = name.toLowerCase()
+            val signedHeader = name.lowercase()
             if (!ignored_headers.contains(signedHeader)) {
                 // Convert and add header values as per
                 // https://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
@@ -151,7 +151,7 @@ class Signer private constructor(
     lateinit var signature: String
     private fun setSignature() {
         val digest = sumHmac(this.signingKey, this.stringToSign.encodeToByteArray())
-        this.signature = Base16.encode(digest).toLowerCase()
+        this.signature = Base16.encode(digest).lowercase()
     }
 
     lateinit var authorization: String
@@ -162,19 +162,19 @@ object Digest {
     fun sha256Hash(string: String): String {
         val sha256Digest = Sha256MessageDigest()
         sha256Digest.update(string.encodeToByteArray())
-        return Base16.encode(sha256Digest.finish()).toLowerCase()
+        return Base16.encode(sha256Digest.finish()).lowercase()
     }
 
     fun sha256Hash(data:ByteBuffer): String {
         val sha256Digest = Sha256MessageDigest()
         sha256Digest.update(data)
-        return Base16.encode(sha256Digest.finish()).toLowerCase()
+        return Base16.encode(sha256Digest.finish()).lowercase()
     }
 
     fun md5Hash(data:ByteBuffer): String {
         val md5Digest = MD5MessageDigest()
         md5Digest.update(data)
-        return Base64.encode(md5Digest.finish()).toLowerCase()
+        return Base64.encode(md5Digest.finish()).lowercase()
     }
 }
 

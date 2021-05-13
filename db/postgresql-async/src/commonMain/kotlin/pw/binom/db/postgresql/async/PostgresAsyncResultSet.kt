@@ -38,7 +38,7 @@ class PostgresAsyncResultSet(
     }
 
     private fun getIndex(column: String): Int {
-        val p = columns.indexOfFirst { it.toLowerCase() == column.toLowerCase() }
+        val p = columns.indexOfFirst { it.lowercase() == column.lowercase() }
         if (p == -1) {
             throw IllegalStateException("Column \"$column\" not found")
         }

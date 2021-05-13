@@ -68,7 +68,7 @@ class DefaultHttpResponse(
         val encode = headers.transferEncoding
         var stream: AsyncInput = channel.reader
         if (encode != null) {
-            if (encode.toLowerCase() != Headers.CHUNKED.toLowerCase()) {
+            if (encode.lowercase() != Headers.CHUNKED.lowercase()) {
                 throw IOException("Unknown Transfer Encoding \"$encode\"")
             }
             stream = ResponseAsyncChunkedInput(
@@ -92,7 +92,7 @@ class DefaultHttpResponse(
         }
 
         closed = true
-        return when (val encoding = headers.contentEncoding?.toLowerCase()) {
+        return when (val encoding = headers.contentEncoding?.lowercase()) {
             "gzip" -> AsyncGZIPInput(stream, closeStream = true)
             "deflate" -> AsyncInflateInput(stream = stream, closeStream = true, wrap = true)
             null, "identity" -> stream
