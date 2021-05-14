@@ -114,7 +114,7 @@ buildscript {
 - [x] Basic Support Http Server<br>
   See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer.kt)
 - [x] Basic Support Http Client<br>
-  See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/AsyncHttpClient.kt)
+  See [HttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/HttpClient.kt)
 - [x] HTTP Server: WebSocket Support
 - [x] HTTPS Server Support
 - [x] HTTPS Client Support
