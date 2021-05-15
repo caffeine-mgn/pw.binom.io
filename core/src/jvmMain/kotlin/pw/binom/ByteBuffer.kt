@@ -2,6 +2,7 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
+import pw.binom.io.use
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
@@ -254,4 +255,13 @@ private inline fun JByteBuffer.copyTo(buffer: JByteBuffer): Int {
     val l = minOf(buffer.remaining(), remaining())
     buffer.put(buffer)
     return l
+}
+
+actual inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
+    val b = alloc(size)
+    return try {
+        block(b)
+    } finally {
+        b.close()
+    }
 }

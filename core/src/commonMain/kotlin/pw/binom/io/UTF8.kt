@@ -316,9 +316,9 @@ object UTF8 {
                         val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
                         val b2 = input[i + 1].toString().toInt(16) and 0xf
                         i += 1
-                        sb.writeByte(buf, (b1 + b2).toByte())
+                        sb.writeByte((b1 + b2).toByte())
                     } else {
-                        sb.writeByte(buf, input[i].toByte())
+                        sb.writeByte(input[i].code.toByte())
                     }
                     i++
                 }

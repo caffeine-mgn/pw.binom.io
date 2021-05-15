@@ -16,8 +16,6 @@ class NatsRawConnection(
 ) :
     AsyncCloseable {
 
-    private val zeroBuff = ByteBuffer.alloc(0)
-
     private inner class MessageImpl : NatsMessage {
         override val connection: NatsRawConnection
             get() = this@NatsRawConnection
@@ -192,7 +190,6 @@ class NatsRawConnection(
     }
 
     override suspend fun asyncClose() {
-        zeroBuff.close()
         disconnecting = true
         isConnected = false
         isConnecting = false

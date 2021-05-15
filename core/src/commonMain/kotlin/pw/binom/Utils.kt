@@ -10,6 +10,9 @@ val SELECTOR_COUNTER = AtomicLong(0)
 @SharedImmutable
 val BYTE_BUFFER_COUNTER = AtomicLong(0)
 
+@SharedImmutable
+val BYTE_BUFFER_COUNTER2 = AtomicLong(0)
+
 operator fun Long.get(index: Int): Byte {
     if (index !in 0..7)
         throw IndexOutOfBoundsException()

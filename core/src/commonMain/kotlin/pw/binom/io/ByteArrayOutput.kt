@@ -41,27 +41,11 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
             throw StreamClosedException()
     }
 
-//    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        checkClosed()
-//
-//        if (length < 0)
-//            throw IndexOutOfBoundsException("Length can't be less than 0")
-//
-//        if (length == 0)
-//            return 0
-//        val needWrite = length - (this.data.size - _wrote)
-//
-//        if (needWrite > 0) {
-//            val newSize = maxOf(
-//                    ceil(this.data.size.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
-//                    this.data.size + _wrote + needWrite
-//            )
-//            this.data = this.data.realloc(newSize)
-//        }
-//        data.copyInto(this.data, _wrote, offset, offset + length)
-//        _wrote += length
-//        return length
-//    }
+    fun writeByte(byte: Byte) {
+        alloc(1)
+        data.put(byte)
+        _wrote++
+    }
 
     fun alloc(size: Int) {
         checkClosed()
@@ -82,21 +66,6 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
     }
 
     override fun write(data: ByteBuffer): Int {
-//        checkClosed()
-//
-//        val needWrite = data.remaining - (this.data.remaining)
-//
-//        if (needWrite > 0) {
-//            val newSize = maxOf(
-//                    ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
-//                    this.data.capacity + _wrote + needWrite
-//            )
-//            val old = this.data
-//            val new = this.data.realloc(newSize)
-//            new.limit = new.capacity
-//            this.data = new
-//            old.clear()
-//        }
         alloc(data.remaining)
         val l = this.data.write(data)
         _wrote += l

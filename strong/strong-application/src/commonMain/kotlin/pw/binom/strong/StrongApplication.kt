@@ -6,6 +6,8 @@ import pw.binom.network.NetworkDispatcher
 import pw.binom.process.Signal
 import pw.binom.strong.exceptions.StartupException
 import pw.binom.strong.exceptions.StrongException
+import kotlin.time.TimeSource
+import kotlin.time.measureTime
 
 object StrongApplication {
     fun start(vararg config: Strong.Config) {
@@ -25,15 +27,14 @@ object StrongApplication {
             val strong = initProcess.getOrException()
 
             while (!Signal.isInterrupted) {
-                networkDispatcher.select()
+                networkDispatcher.select(1000)
             }
-
             val destroyFuture = networkDispatcher.async {
                 strong.destroy()
             }
 
             while (!destroyFuture.isDone) {
-                networkDispatcher.select()
+                networkDispatcher.select(100)
             }
             if (destroyFuture.isFailure) {
                 throw StrongException("Can't destroy Strong", destroyFuture.exceptionOrNull!!)

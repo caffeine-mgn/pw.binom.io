@@ -49,7 +49,12 @@ fun ByteDataBuffer.realloc(size: Int): ByteDataBuffer {
     return new
 }
 
-fun ByteDataBuffer.copyInto(destination: ByteDataBuffer, destinationOffset: Int = 0, startIndex: Int = 0, endIndex: Int = minOf(size, destination.size - destinationOffset)) {
+fun ByteDataBuffer.copyInto(
+    destination: ByteDataBuffer,
+    destinationOffset: Int = 0,
+    startIndex: Int = 0,
+    endIndex: Int = minOf(size, destination.size - destinationOffset)
+) {
     writeTo(startIndex, destination, destinationOffset, endIndex - startIndex)
 }
 
@@ -100,7 +105,8 @@ internal fun ByteDataBuffer.checkBounds(position: Int, off: Int, len: Int, size:
         throw IndexOutOfBoundsException()
 }
 
-class ByteDataBufferPool(size: Int = DEFAULT_BUFFER_SIZE) : DefaultPool<ByteDataBuffer>(10, { ByteDataBuffer.alloc(size) }), Closeable {
+class ByteDataBufferPool(size: Int = DEFAULT_BUFFER_SIZE) :
+    DefaultPool<ByteDataBuffer>(10, { ByteDataBuffer.alloc(size) }), Closeable {
     override fun close() {
         pool.indices.forEach {
             val element = pool[it] as? ByteBuffer?
@@ -111,14 +117,4 @@ class ByteDataBufferPool(size: Int = DEFAULT_BUFFER_SIZE) : DefaultPool<ByteData
         }
         this.size = 0
     }
-}
-
-fun ByteBuffer.asUTF8String(): String {
-    val sb = StringBuilder()
-    while (remaining>0) {
-        val first = get()
-        val size = UTF8.utf8CharSize(first)
-        sb.append(UTF8.utf8toUnicode(first, this))
-    }
-    return sb.toString()
 }

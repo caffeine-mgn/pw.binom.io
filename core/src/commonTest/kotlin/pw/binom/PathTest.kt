@@ -5,6 +5,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PathTest {
+
+    @Test
+    fun testAppend(){
+        assertEquals("/test/user","/test".toPath.append("user").toString())
+    }
+
     @Test
     fun testPath() {
 //        assertTrue("/123/hello".toURN.isMatch("/{id}/hello"))

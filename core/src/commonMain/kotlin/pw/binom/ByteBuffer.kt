@@ -12,6 +12,11 @@ import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
 
+private val _ZERO = ByteBuffer.alloc(0)
+
+val ByteBuffer.Companion.ZERO
+    get() = _ZERO
+
 /**
  * A part of memory. Also contents current read/write state
  */
@@ -46,13 +51,7 @@ inline fun ByteBuffer.clone() = realloc(capacity)
  * @param size Size of Buffer
  * @param block function for call with created buffer
  */
-@OptIn(ExperimentalContracts::class)
-inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
-    contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
-    }
-    return alloc(size).use(block)
-}
+expect inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T
 
 /**
  * Puts random bytes to free space of [data]
@@ -209,4 +208,17 @@ inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
     } finally {
         buf.close()
     }
+}
+
+fun ByteBuffer.asUTF8String(): String {
+    if (remaining == 0) {
+        return ""
+    }
+    val sb = StringBuilder(remaining)
+    while (remaining > 0) {
+        val first = get()
+        val size = UTF8.utf8CharSize(first)
+        sb.append(UTF8.utf8toUnicode(first, this))
+    }
+    return sb.toString()
 }

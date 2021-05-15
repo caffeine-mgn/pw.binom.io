@@ -5,6 +5,7 @@ import org.khronos.webgl.get
 import org.khronos.webgl.set
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
+import pw.binom.io.use
 
 private fun memcpy(
     dist: Int8Array,
@@ -227,5 +228,14 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         val l = minOf(remaining, length)
         memcpy(dest, 0, native, position, l)
         return l
+    }
+}
+
+actual inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
+    val b = alloc(size)
+    return try {
+        block(b)
+    } finally {
+        b.close()
     }
 }

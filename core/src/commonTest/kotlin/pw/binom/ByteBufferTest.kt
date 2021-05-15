@@ -8,6 +8,27 @@ import kotlin.test.assertEquals
 
 class ByteBufferTest {
 
+    fun ff() {
+        val bb = ByteBuffer.alloc(100)
+    }
+
+    @Test
+    fun flipTest() {
+        val b = ByteBuffer.alloc(30)
+        b.put(10)
+        b.put(10)
+        b.flip()
+        assertEquals(0, b.position)
+        assertEquals(2, b.limit)
+    }
+
+    @Test
+    fun test() {
+        ff()
+        println("OLOLO")
+        System.gc()
+    }
+
     @Test
     fun cleanTest() {
         ByteBuffer.alloc(64).use {

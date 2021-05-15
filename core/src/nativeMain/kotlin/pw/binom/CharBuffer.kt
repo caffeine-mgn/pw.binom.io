@@ -57,7 +57,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         bytes.close()
     }
 
-    override fun refTo(position: Int): CValuesRef<ByteVar> =
+    override fun refTo(position: Int) =
         bytes.refTo(position * Char.SIZE_BYTES)
 
     actual override fun equals(other: Any?): Boolean =
@@ -116,7 +116,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
             1 -> return get().toString()
         }
         val bb = memScoped {
-        refTo(0).getPointer(this).toKString()
+            refTo(0).getPointer(this).toKString()
         }
         val sb = StringBuilder()
         forEach {
