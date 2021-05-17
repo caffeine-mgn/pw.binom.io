@@ -1,9 +1,11 @@
 package pw.binom.net
 
 import pw.binom.io.UTF8
+import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmName
 
-inline class Query internal constructor(val raw: String) {
+@JvmInline
+value class Query internal constructor(val raw: String) {
     companion object {
         fun new(key: String, value: String? = null): Query {
             return if (value == null) {

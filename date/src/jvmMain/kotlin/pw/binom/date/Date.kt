@@ -6,7 +6,8 @@ import java.time.ZonedDateTime
 import java.util.*
 import kotlin.math.min
 
-actual inline class Date(val time: Long = now) {
+@JvmInline
+actual value class Date(val time: Long = now) {
     actual companion object {
         actual val timeZoneOffset: Int
             get() = TimeZone.getDefault().rawOffset / 1000 / 60

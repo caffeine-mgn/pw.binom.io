@@ -1,6 +1,9 @@
 package pw.binom.date
 
-expect inline class Date(val time: Long = now) {
+import kotlin.jvm.JvmInline
+
+@JvmInline
+expect value class Date(val time: Long = now) {
     companion object {
         val timeZoneOffset: Int
         val now: Long

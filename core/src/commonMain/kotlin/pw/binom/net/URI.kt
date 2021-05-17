@@ -2,8 +2,10 @@ package pw.binom.net
 
 import pw.binom.MalformedURLException
 import pw.binom.io.UTF8
+import kotlin.jvm.JvmInline
 
-inline class URI internal constructor(val fullPath: String) {
+@JvmInline
+value class URI internal constructor(val fullPath: String) {
     companion object {
         fun new(
             schema: String?,

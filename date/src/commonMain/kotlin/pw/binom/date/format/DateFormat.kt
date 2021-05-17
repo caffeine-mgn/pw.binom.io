@@ -2,8 +2,10 @@ package pw.binom.date.format
 
 import pw.binom.date.Calendar
 import pw.binom.date.Date
+import kotlin.jvm.JvmInline
 
-inline class DateFormat internal constructor(private val format: Array<Pattern>) {
+@JvmInline
+value class DateFormat internal constructor(private val format: Array<Pattern>) {
     fun parseOrNull(text: String, defaultTimezoneOffset: Int = Date.timeZoneOffset): Date? {
         var year = 0
         var month = 0

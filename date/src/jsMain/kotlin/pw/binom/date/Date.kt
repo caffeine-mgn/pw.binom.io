@@ -1,6 +1,6 @@
 package pw.binom.date
 
-actual inline class Date(val time: Long) {
+actual value class Date(val time: Long) {
     actual companion object {
         actual val timeZoneOffset: Int
             get() = js("new Date().getTimezoneOffset()")

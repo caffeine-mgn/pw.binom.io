@@ -1,11 +1,13 @@
 package pw.binom.net
 
 import pw.binom.pathMatch
+import kotlin.jvm.JvmInline
 
 /**
  * Contains Path String
  */
-inline class Path internal constructor(val raw: String) {
+@JvmInline
+value class Path internal constructor(val raw: String) {
     /**
      * Returns true if this urn match for [mask]. Path Variables is support.
      * Example: `"/users/100500/info_data".toURN.isMatch("/users/{id}/info_*")` returns true

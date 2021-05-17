@@ -4,7 +4,7 @@ import pw.binom.Future
 import kotlin.native.concurrent.FutureState
 import kotlin.native.concurrent.Future as NativeFuture
 
-inline class FutureWrapper<T>(val native: NativeFuture<Result<T>>) : Future<T> {
+value class FutureWrapper<T>(val native: NativeFuture<Result<T>>) : Future<T> {
 
     override val resultOrNull: T?
         get() = native.result.getOrNull()
@@ -17,7 +17,7 @@ inline class FutureWrapper<T>(val native: NativeFuture<Result<T>>) : Future<T> {
         get() = native.state == FutureState.COMPUTED || native.state == FutureState.THROWN
 }
 
-internal inline class FutureUnit(val native: NativeFuture<Unit>) : Future<Unit> {
+internal value class FutureUnit(val native: NativeFuture<Unit>) : Future<Unit> {
 
     override val resultOrNull: Unit
         get() = native.result

@@ -5,6 +5,7 @@ import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.map
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.use
+import kotlin.jvm.JvmInline
 
 class PooledAsyncPreparedStatement2(val pool: AsyncConnectionPoolImpl, val sql: String) : AsyncCloseable {
     override suspend fun asyncClose() {
@@ -18,7 +19,8 @@ class PooledAsyncPreparedStatement2(val pool: AsyncConnectionPoolImpl, val sql: 
         connection.usePreparedStatement(sql).executeUpdate(*args)
 }
 
-inline class SelectQuery(val query: SQLQueryNamedArguments) {
+@JvmInline
+value class SelectQuery(val query: SQLQueryNamedArguments) {
 
     constructor(sql: String) : this(SQLQueryNamedArguments.parse(sql))
 
@@ -35,7 +37,8 @@ inline class SelectQuery(val query: SQLQueryNamedArguments) {
         SelectQueryWithMapper(query, mapper)
 }
 
-inline class UpdateQuery(val query: SQLQueryNamedArguments) {
+@JvmInline
+value class UpdateQuery(val query: SQLQueryNamedArguments) {
     constructor(sql: String) : this(SQLQueryNamedArguments.parse(sql))
     suspend fun execute(connection: PooledAsyncConnection, vararg args: Pair<String, Any?>): Long =
         connection.usePreparedStatement(query.sql).executeUpdate(*query.buildArguments(*args))

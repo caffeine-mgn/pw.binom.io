@@ -1,3 +1,6 @@
 package pw.binom.db.tarantool
 
-inline class TarantoolStatement(internal val id: Int)
+import kotlin.jvm.JvmInline
+
+@JvmInline
+value class TarantoolStatement(internal val id: Int)

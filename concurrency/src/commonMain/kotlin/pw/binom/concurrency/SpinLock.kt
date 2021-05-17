@@ -3,8 +3,10 @@ package pw.binom.concurrency
 import pw.binom.atomic.AtomicBoolean
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.jvm.JvmInline
 
-inline class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) {
+@JvmInline
+value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) {
     fun lock() {
         while (true) {
             if (lock.compareAndSet(expected = false, new = true)) {

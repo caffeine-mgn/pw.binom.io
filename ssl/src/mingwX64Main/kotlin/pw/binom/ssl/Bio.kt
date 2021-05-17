@@ -7,7 +7,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.*
 import pw.binom.io.Closeable
 
-inline class Bio(val self: CPointer<BIO>) : Closeable {
+value class Bio(val self: CPointer<BIO>) : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
         memScoped {
             val r = BIO_read(self, data.refTo(offset), length.convert())
