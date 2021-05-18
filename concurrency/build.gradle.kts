@@ -121,6 +121,7 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
+                api(project(":network"))
             }
         }
         val jvmTest by getting {

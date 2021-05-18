@@ -1,0 +1,87 @@
+package pw.binom.concurrency
+
+import pw.binom.atomic.AtomicReference
+import pw.binom.getOrException
+import pw.binom.network.NetworkDispatcher
+import kotlin.test.Test
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+
+@OptIn(ExperimentalTime::class)
+class DeadlineTimerTest {
+
+    @Test
+    fun addAllAndWait() {
+        val deadlineTimer = DeadlineTimer()
+        val now = TimeSource.Monotonic.markNow()
+        var f1 by AtomicReference<Duration?>(null)
+        var f2 by AtomicReference<Duration?>(null)
+        var f3 by AtomicReference<Duration?>(null)
+        var f4 by AtomicReference<Duration?>(null)
+        deadlineTimer.delay(Duration.seconds(1.0)) {
+            f1 = now.elapsedNow()
+        }
+        deadlineTimer.delay(Duration.seconds(2)) {
+            f2 = now.elapsedNow()
+        }
+        deadlineTimer.delay(Duration.seconds(3)) {
+            f3 = now.elapsedNow()
+        }
+        deadlineTimer.delay(Duration.seconds(6)) {
+            f4 = now.elapsedNow()
+        }
+        Worker.sleep(4000)
+        assertNotNull(f1)
+        assertNotNull(f2)
+        assertNotNull(f3)
+        assertNull(f4)
+
+        assertTrue(f1!! >= Duration.seconds(1) && f1!! < Duration.seconds(1.1))
+        assertTrue(f2!! >= Duration.seconds(2) && f2!! < Duration.seconds(2.1))
+        assertTrue(f3!! >= Duration.seconds(3) && f2!! < Duration.seconds(3.1))
+    }
+
+    @Test
+    fun addInWait() {
+        val deadlineTimer = DeadlineTimer()
+        var f1 by AtomicReference<Duration?>(null)
+        var f2 by AtomicReference<Duration?>(null)
+        val now = TimeSource.Monotonic.markNow()
+        deadlineTimer.delay(Duration.Companion.seconds(2)) {
+            f1 = now.elapsedNow()
+        }
+
+        Worker.sleep(1000)
+        deadlineTimer.delay(Duration.Companion.seconds(1)) {
+            f2 = now.elapsedNow()
+        }
+        Worker.sleep(2000)
+        assertNotNull(f1)
+        assertNotNull(f2)
+        assertTrue(f1!! >= Duration.seconds(2) && f1!! < Duration.seconds(2.1))
+        assertTrue(f2!! >= Duration.seconds(2) && f2!! < Duration.seconds(2.1))
+    }
+
+    @Test
+    fun asyncDelayTest() {
+        val nd = NetworkDispatcher()
+        val deadlineTimer = DeadlineTimer()
+
+        val future = nd.async {
+            val now = TimeSource.Monotonic.markNow()
+            val currentThread = ThreadRef()
+            deadlineTimer.delay(Duration.seconds(1))
+            val f1 = now.elapsedNow()
+            assertTrue(f1 >= Duration.seconds(1) && f1 < Duration.seconds(1.1))
+            assertTrue(currentThread.same)
+        }
+        while (!future.isDone) {
+            nd.select(1000)
+        }
+        future.getOrException()
+    }
+}

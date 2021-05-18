@@ -10,7 +10,7 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-private const val checkTime = 100
+private const val checkTime = 50
 
 @OptIn(ExperimentalStdlibApi::class)
 actual class Lock {

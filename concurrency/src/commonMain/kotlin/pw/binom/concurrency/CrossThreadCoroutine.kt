@@ -7,7 +7,7 @@ import kotlin.coroutines.*
  * Object must be frozen, because it will be pass to other thread
  */
 fun interface CrossThreadCoroutine {
-    fun coroutine(result: Result<Any?>,continuation:Reference<Continuation<Any?>>)
+    fun coroutine(result: Result<Any?>, continuation: Reference<Continuation<Any?>>)
 }
 
 suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R =
@@ -20,12 +20,7 @@ suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R 
             it.resumeWithException(IllegalStateException("No defined default worker"))
             return@suspendCoroutine
         }
-
-        val dispatcher = it.context[CrossThreadCoroutineKey]?.crossThreadCoroutine
-        if (dispatcher == null) {
-            it.resumeWithException(IllegalStateException("No defined default CrossThreadCoroutineKey. Make sure you start Coroutine using NetworkDispatcher"))
-            return@suspendCoroutine
-        }
+        val dispatcher = it.getCrossThreadCoroutine() ?: return@suspendCoroutine
         val holder = dispatcher.doFreeze()
         val selfCon = it.asReference()
         executorPool.submitAsync(newContext.doFreeze()) {
@@ -36,11 +31,7 @@ suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R 
 
 suspend fun <T> execute(worker: Worker, func: suspend () -> T): T =
     suspendCoroutine { con ->
-        val dispatcher = con.context[CrossThreadCoroutineKey]?.crossThreadCoroutine
-        if (dispatcher == null) {
-            con.resumeWithException(IllegalStateException("No defined default CrossThreadCoroutineKey"))
-            return@suspendCoroutine
-        }
+        val dispatcher = con.getCrossThreadCoroutine() ?: return@suspendCoroutine
 
         val newContext = con.context.buildCrossThreadContext()
         newContext.doFreeze()
@@ -55,3 +46,15 @@ suspend fun <T> execute(worker: Worker, func: suspend () -> T): T =
             })
         }
     }
+
+/**
+ * Returns coroutine continuation from other thread
+ */
+fun <T> Continuation<T>.getCrossThreadCoroutine(): CrossThreadCoroutine? {
+    val result = context[CrossThreadCoroutineKey]?.crossThreadCoroutine
+    if (result == null) {
+        resumeWithException(IllegalStateException("No defined default CrossThreadCoroutineKey. Make sure you start Coroutine using NetworkDispatcher or other Dispatcher"))
+        return null
+    }
+    return result
+}
