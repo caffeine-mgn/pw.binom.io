@@ -51,6 +51,7 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun get(): T =
         lock.synchronize {
             while (last == null) {

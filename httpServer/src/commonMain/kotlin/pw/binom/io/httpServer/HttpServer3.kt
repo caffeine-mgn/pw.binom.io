@@ -4,6 +4,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.concurrency.WorkerPool
 import pw.binom.io.AsyncBufferedAsciiInputReader
 import pw.binom.io.Closeable
+import pw.binom.io.ClosedException
 import pw.binom.network.*
 import pw.binom.pool.DefaultPool
 
@@ -113,7 +114,7 @@ open class HttpServer3(
     private val binded = ArrayList<TcpServerConnection>()
 
     private fun checkClosed() {
-        check(!closed) { "HttpServer already closed" }
+        check(!closed) { throw ClosedException() }
     }
 
     override fun close() {

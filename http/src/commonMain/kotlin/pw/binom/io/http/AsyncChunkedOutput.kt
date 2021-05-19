@@ -50,8 +50,7 @@ open class AsyncChunkedOutput(
         tmp.put(CR)
         tmp.put(LF)
         tmp.flip()
-//        tmp.reset(1,2)
-        val bb = stream.write(tmp)
+        stream.write(tmp)
         stream.flush()
         buffer.clear()
     }
@@ -70,7 +69,7 @@ open class AsyncChunkedOutput(
             return
         flush()
         tmp.clear()
-        tmp.put('0'.toByte())
+        tmp.put('0'.code.toByte())
         tmp.put(CR)
         tmp.put(LF)
         tmp.put(CR)

@@ -121,7 +121,7 @@ private fun sslServerCheck() = staticCFunction<CPointer<X509_STORE_CTX>, COpaque
         -1
 }
 
-private fun sslHostCheck() = staticCFunction<CPointer<SSL>, CPointer<IntVar>, COpaquePointer, Int> { ssl, ad, arg ->
+private fun sslHostCheck() = staticCFunction<CPointer<SSL>, CPointer<IntVar>, COpaquePointer, Int> { ssl, _, arg ->
     val self = arg.asStableRef<SSLContext>().get()
     val hostName = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)?.toKString()
     val private = self.keyManager.getPrivate(hostName)

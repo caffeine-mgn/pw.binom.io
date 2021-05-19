@@ -58,7 +58,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         } else {
             val n = SSL_accept(ssl)
             assertError(ssl, n)
-            return when (val e = SSL_get_error(ssl, n)) {
+            return when (SSL_get_error(ssl, n)) {
                 SSL_ERROR_WANT_READ -> State.WANT_READ
                 SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
                 SSL_ERROR_SSL -> State.ERROR

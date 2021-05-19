@@ -18,8 +18,8 @@ value class Mutex(val handler: HANDLE) {
         val lockDuration = if (dd.isInfinite())
             INFINITE
         else
-            dd.toLongMilliseconds().toUInt()
-        dd.toLongMilliseconds()
+            dd.inWholeMilliseconds.toUInt()
+        dd.inWholeMilliseconds
         return when (val out = WaitForSingleObject(handler, lockDuration)) {
             WAIT_FAILED -> throw RuntimeException("Can't block Mutex. Error #${GetLastError()}")
             WAIT_ABANDONED, WAIT_OBJECT_0 -> true

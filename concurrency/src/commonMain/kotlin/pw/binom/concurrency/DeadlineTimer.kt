@@ -85,15 +85,14 @@ class DeadlineTimer(val errorProcessing: ((Throwable) -> Unit)? = null) : Closea
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     suspend fun delay(delay: Duration) {
         suspendCoroutine<Unit> { con ->
             val dispatcher = con.getCrossThreadCoroutine() ?: return@suspendCoroutine
             dispatcher.doFreeze()
             val conRef = con.asReference()
             delay(delay) {
-//                println("!   ${dispatcher}")
                 dispatcher.coroutine(Result.success(Unit), conRef as Reference<Continuation<Any?>>)
-//                println("2   ${dispatcher}")
             }
         }
     }

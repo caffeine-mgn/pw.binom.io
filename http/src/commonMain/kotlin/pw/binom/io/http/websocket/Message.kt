@@ -19,7 +19,7 @@ interface Message : AsyncInput {
 
         fun encode(cursor: ULong, mask: Int, data: ByteBuffer): ULong {
             var cursorLocal = cursor
-            data.forEachIndexed { i, byte ->
+            data.forEachIndexed { _, byte ->
                 data.put(byte xor mask[(cursorLocal and 0x03uL).toInt()])
                 cursorLocal++
             }

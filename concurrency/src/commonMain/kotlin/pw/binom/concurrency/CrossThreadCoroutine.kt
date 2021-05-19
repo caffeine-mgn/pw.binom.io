@@ -10,6 +10,7 @@ fun interface CrossThreadCoroutine {
     fun coroutine(result: Result<Any?>, continuation: Reference<Continuation<Any?>>)
 }
 
+@Suppress("UNCHECKED_CAST")
 suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R =
     suspendCoroutine {
         val executorPool =
@@ -29,6 +30,7 @@ suspend fun <R> execute(executor: WorkerPool? = null, func: suspend () -> R): R 
         }
     }
 
+@Suppress("UNCHECKED_CAST")
 suspend fun <T> execute(worker: Worker, func: suspend () -> T): T =
     suspendCoroutine { con ->
         val dispatcher = con.getCrossThreadCoroutine() ?: return@suspendCoroutine

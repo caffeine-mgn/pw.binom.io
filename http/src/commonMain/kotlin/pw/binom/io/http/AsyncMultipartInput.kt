@@ -25,7 +25,7 @@ class EndState {
 
 }
 
-internal const val MINUS = '-'.toByte()
+internal const val MINUS = '-'.code.toByte()
 
 internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState): Boolean {
     var state = 0
@@ -48,7 +48,7 @@ internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState):
             state == 3 -> if (b == MINUS) state++ else reset()
             state >= 4 && state - 4 < separator.length -> {
                 val c = separator[state - 4]
-                if (c.toByte() == b) {
+                if (c.code.toByte() == b) {
                     state++
                 } else {
                     reset()

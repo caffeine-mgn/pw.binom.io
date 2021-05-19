@@ -9,27 +9,27 @@ class PemWriter(val appendable: Appendable) {
     fun write(type: String, data: ByteArray) {
         val ap = object : Appendable {
             var lineCount = 0
-            override fun append(c: Char): Appendable {
+            override fun append(value: Char): Appendable {
                 if (lineCount >= 64) {
                     appendable.append("\n")
                     lineCount = 0
                 }
                 lineCount++
-                appendable.append(c)
+                appendable.append(value)
                 return this
             }
 
-            override fun append(csq: CharSequence?): Appendable {
-                csq?.forEach {
+            override fun append(value: CharSequence?): Appendable {
+                value?.forEach {
                     append(it)
                 }
                 return this
             }
 
-            override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
-                csq ?: return this
-                for (i in start..end) {
-                    append(csq[i])
+            override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): Appendable {
+                value ?: return this
+                for (i in startIndex..endIndex) {
+                    append(value[i])
                 }
                 return this
             }

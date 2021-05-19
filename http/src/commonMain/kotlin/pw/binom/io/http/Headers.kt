@@ -41,7 +41,7 @@ interface Headers : Map<String, List<String>> {
     val contentLength: ULong?
         get() {
             val txt = getSingle(CONTENT_LENGTH) ?: return null
-            return txt?.toULongOrNull()
+            return txt.toULongOrNull()
                 ?: throw IllegalStateException("Invalid header \"${CONTENT_LENGTH}:${txt}\"")
         }
 

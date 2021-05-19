@@ -30,7 +30,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
             if (r == 13.toByte()) {
                 continue
             }
-            sb.append(r.toChar())
+            sb.append(r.toInt().toChar())
         }
     }
 

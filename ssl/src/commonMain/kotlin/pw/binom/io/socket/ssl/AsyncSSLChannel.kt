@@ -1,9 +1,7 @@
 package pw.binom.io.socket.ssl
 
-import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.charset.Charset
 import pw.binom.empty
 import pw.binom.io.AsyncChannel
 import pw.binom.pool.ObjectPool
@@ -99,7 +97,7 @@ class AsyncSSLChannel private constructor(
 
     private suspend fun readAll() {
         buffer.clear()
-        val read = channel.read(buffer)
+        channel.read(buffer)
         buffer.flip()
         session.writeNet(buffer)
     }
