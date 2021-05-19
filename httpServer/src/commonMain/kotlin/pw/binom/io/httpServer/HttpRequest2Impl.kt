@@ -64,7 +64,7 @@ internal class HttpRequest2Impl(
     private val closed = false
     private fun checkClosed() {
         if (closed) {
-            throw IllegalStateException("Already closed")
+            throw ClosedException()
         }
     }
 
