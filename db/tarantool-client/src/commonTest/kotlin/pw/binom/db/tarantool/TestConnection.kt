@@ -1,6 +1,6 @@
 package pw.binom.db.tarantool
 
-import pw.binom.uuid
+import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,7 +11,7 @@ class TestConnection {
     @Test
     fun stringPass() {
         tarantool { con ->
-            val text = "Response From Tarantool: ${Random.uuid()}"
+            val text = "Response From Tarantool: ${Random.nextUuid()}"
             val response = con.eval("return '$text'")
             assertTrue(response is List<*>)
             assertEquals(1, response.size)
@@ -19,7 +19,7 @@ class TestConnection {
         }
 
         tarantool { con ->
-            val text = "Response From Tarantool: ${Random.uuid()}"
+            val text = "Response From Tarantool: ${Random.nextUuid()}"
             val response = con.eval("return ...", text, text)
             assertTrue(response is List<*>)
             assertEquals(2, response.size)
@@ -31,7 +31,7 @@ class TestConnection {
     @Test
     fun uuidPass() {
         tarantool { con ->
-            val uuid = Random.uuid()
+            val uuid = Random.nextUuid()
             val response = con.eval("return ...", uuid)
             assertTrue(response is List<*>)
             assertEquals(1, response.size)

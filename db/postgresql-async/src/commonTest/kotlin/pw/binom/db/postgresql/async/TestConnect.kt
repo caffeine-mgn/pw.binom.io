@@ -11,7 +11,7 @@ import pw.binom.db.async.map
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
-import pw.binom.uuid
+import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.*
 
@@ -366,22 +366,22 @@ class TestConnect {
             }
             con.prepareStatement("insert into test1 (id,name) values (?,?)").use {
                 try {
-                    it.set(0, Random.uuid())
-                    it.set(1, Random.uuid().toString())
+                    it.set(0, Random.nextUuid())
+                    it.set(1, Random.nextUuid().toString())
                     val update = it.executeUpdate()
                 } catch (e: Throwable) {
                     e.printStackTrace()
                 }
             }
             con.prepareStatement("insert into test1 (id,name) values (?,?)").use {
-                it.set(0, Random.uuid())
-                it.set(1, Random.uuid().toString())
+                it.set(0, Random.nextUuid())
+                it.set(1, Random.nextUuid().toString())
                 it.executeUpdate()
             }
 
             con.prepareStatement("insert into test1 (id,name) values (?,?) returning id").use {
-                it.set(0, Random.uuid())
-                it.set(1, Random.uuid().toString())
+                it.set(0, Random.nextUuid())
+                it.set(1, Random.nextUuid().toString())
                 val insertedId = it.executeQuery().map { it.getUUID(0) }.first()
             }
         }

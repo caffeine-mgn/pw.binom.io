@@ -12,6 +12,7 @@ import pw.binom.io.httpServer.HttpRequestDeprecated
 import pw.binom.io.httpServer.HttpResponseDeprecated
 import pw.binom.network.TcpConnection
 
+@Deprecated("Not use it")
 abstract class WebSocketHandler : Handler3Deprecated {
 
     interface ConnectRequest {

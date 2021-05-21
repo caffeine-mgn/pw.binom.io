@@ -14,6 +14,7 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
             body[key] = list
             ref[key.lowercase()] = key
         } else {
+            body[v]!!.clear()
             body[v]!!.addAll(value)
         }
         return this

@@ -167,7 +167,6 @@ internal class HttpRequest2Impl(
 
     override suspend fun rejectWebsocket() {
         checkClosed()
-        checkWebSocket()
         response().use {
             it.headers.keepAlive = false
             it.status = 403
@@ -178,8 +177,8 @@ internal class HttpRequest2Impl(
         if (startedResponse != null) {
             throw IllegalStateException("Response already got")
         }
-        ByteBuffer.alloc(DEFAULT_BUFFER_SIZE) { buf ->
-            if (readInput == null) {
+        if (readInput == null) {
+            ByteBuffer.alloc(DEFAULT_BUFFER_SIZE) { buf ->
                 readBinary().use {
                     it.skipAll(buf)
                 }
@@ -255,6 +254,7 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
     internal suspend fun sendHeadersAndFree() {
         checkClosed()
         sendRequest()
+        req.channel.writer.flush()
         closed = true
     }
 

@@ -1,12 +1,5 @@
 package pw.binom.strong
 
-import pw.binom.io.AsyncCloseable
-import pw.binom.io.Closeable
-import pw.binom.strong.exceptions.BeanAlreadyDefinedException
-import pw.binom.uuid
-import kotlin.jvm.JvmName
-import kotlin.random.Random
-
 //interface StrongDefiner : Strong, Definer
 
 //inline fun <reified T : Closeable> StrongDefiner.lazyDefineClosable(

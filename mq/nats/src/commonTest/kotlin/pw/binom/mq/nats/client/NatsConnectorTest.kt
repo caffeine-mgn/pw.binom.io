@@ -3,8 +3,7 @@ package pw.binom.mq.nats.client
 import pw.binom.async2
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
-import pw.binom.uuid
-import pw.binom.wrap
+import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,7 +32,7 @@ class NatsConnectorTest {
 
         val done = async2 {
             try {
-                val msgText = Random.uuid().toString()
+                val msgText = Random.nextUuid().toString()
                 println("try subscribe")
                 connector1.subscribe("S1", null)
                 println("Publish...")

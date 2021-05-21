@@ -3,66 +3,58 @@ package pw.binom.io.httpServer.websocket
 import pw.binom.ByteBuffer
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.execute
+import pw.binom.concurrency.joinAndGetOrThrow
 import pw.binom.concurrency.sleep
+import pw.binom.getOrException
+import pw.binom.io.*
+import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.MessageType
+import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.HttpRequest
+import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.httpServer.HttpServer3
-import pw.binom.io.readText
-import pw.binom.io.use
-import pw.binom.io.utf8Appendable
-import pw.binom.io.utf8Reader
+import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import pw.binom.nextUuid
 import pw.binom.wrap
+import kotlin.random.Random
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class WebSocketTest {
 
-    private class TestWebSocketHandler : WebSocketHandler() {
+    private class TestWebSocketHandler(val testMsg: String) : Handler {
         val w = Worker()
-        override suspend fun connected(request: ConnectRequest) {
-            try {
-                println("New Connection")
-                val connection = request.accept()
-                println("Try read message from client")
-                execute(w) {
-                    Worker.sleep(1000)
-                    println("##1")
-                    connection.write(MessageType.TEXT) {
-                        println("##2")
-                        it.write(ByteBuffer.wrap("Hello".encodeToByteArray()))
-//                        it.utf8Appendable().use { it.append("Hello!") }
-                    }
-                }
-                while (true) {
-                    val msg = connection.read()
-                    val text = msg.use {
-                        it.utf8Reader().readText()
-                    }
-                    println("Message from client read!")
 
-                    connection.write(msg.type) {
-                        it.utf8Appendable().append("Echo: $text")
-                    }
-                }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                throw e
-            }
+        override suspend fun request(req: HttpRequest) {
+            val ws = req.acceptWebsocket()
+            val text = ws.read().bufferedAsciiReader().use { it.readText() }
+            assertEquals(testMsg, text)
+            ws.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append("Echo ").append(testMsg) }
         }
     }
 
-    @Ignore
     @Test
     fun serverTest() {
-
+        val testMsg = Random.nextUuid().toString()
         var done = false
         val port = 3000//Random.nextInt(3000, Short.MAX_VALUE.toInt() - 1).toShort()
 
         val manager = NetworkDispatcher()
 
-        val server = HttpServer3(manager, TestWebSocketHandler())
-        server.bindHTTP(NetworkAddress.Immutable(host = "0.0.0.0", port = port))
+        val server = HttpServer(manager, TestWebSocketHandler(testMsg))
+        server.bindHttp(NetworkAddress.Immutable(host = "0.0.0.0", port = port))
+
+        val f = manager.async {
+            val cl = HttpClient(manager)
+            val con = cl.request(HTTPMethod.GET, "http://127.0.0.1:$port".toURI()).startWebSocket()
+            con.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append(testMsg) }
+            val text = con.read().bufferedAsciiReader().use { it.readText() }
+            assertEquals("Echo $testMsg", text)
+        }
 /*
         val str = Random.uuid().toString()
         async {
@@ -80,8 +72,9 @@ class WebSocketTest {
             }
         }
 */
-        while (!done) {
+        while (!f.isDone) {
             manager.select(1000)
         }
+        f.joinAndGetOrThrow()
     }
 }

@@ -53,6 +53,7 @@ class WSOutput(
     override suspend fun asyncClose() {
         checkClosed()
         try {
+            flush()
             val needSendEnd = buffer.position == 0 && !first
             eof = true
             super.asyncClose()

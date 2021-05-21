@@ -2,7 +2,7 @@ package pw.binom.io.file
 
 import pw.binom.ByteBuffer
 import pw.binom.io.use
-import pw.binom.uuid
+import pw.binom.nextUuid
 import pw.binom.writeByte
 import kotlin.random.Random
 import kotlin.test.Test
@@ -15,7 +15,7 @@ class TestWriteRead {
     @Test
     fun openUnknown() {
         assertTrue(assertFails {
-            File(Random.uuid().toString()).read()
+            File(Random.nextUuid().toString()).read()
         } is FileNotFoundException)
     }
 

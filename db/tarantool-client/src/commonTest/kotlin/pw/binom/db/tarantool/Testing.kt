@@ -1,7 +1,7 @@
 package pw.binom.db.tarantool
 
 import pw.binom.db.tarantool.protocol.QueryIterator
-import pw.binom.uuid
+import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,7 +11,7 @@ class Testing {
 
     @Test
     fun updateTest() {
-        val schemaName = Random.uuid().toShortString()
+        val schemaName = Random.nextUuid().toShortString()
         tarantool {
             it.eval(
                 """
@@ -45,11 +45,11 @@ s:create_index('login_pwd',
 )
     """
             )
-            val id = Random.uuid()
-            val login = Random.uuid().toString()
+            val id = Random.nextUuid()
+            val login = Random.nextUuid().toString()
             val password = Random.nextBytes(10)
             val newPassword = Random.nextBytes(10)
-            it.insert(schemaName, listOf(Random.uuid(), Random.uuid().toString(), Random.nextBytes(10)))
+            it.insert(schemaName, listOf(Random.nextUuid(), Random.nextUuid().toString(), Random.nextBytes(10)))
             it.insert(schemaName, listOf(id, login, password))
             println("Try update")
             it.update(

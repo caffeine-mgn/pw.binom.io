@@ -1,7 +1,7 @@
 package pw.binom.db.tarantool
 
 import pw.binom.db.tarantool.protocol.QueryIterator
-import pw.binom.uuid
+import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,7 +10,7 @@ class UpsertTest {
 
     @Test
     fun updateTest() {
-        val schemaName = Random.uuid().toShortString()
+        val schemaName = Random.nextUuid().toShortString()
         tarantool {
             it.eval(
                 """
@@ -43,9 +43,9 @@ s:create_index('primary',
                 assertEquals(0, it.size)
             }
 
-            val data1 = Random.uuid()
-            val data2 = Random.uuid()
-            val id = Random.uuid()
+            val data1 = Random.nextUuid()
+            val data2 = Random.nextUuid()
+            val id = Random.nextUuid()
             it.upsert(
                 space = schemaName,
                 indexValues = listOf(id, data1),

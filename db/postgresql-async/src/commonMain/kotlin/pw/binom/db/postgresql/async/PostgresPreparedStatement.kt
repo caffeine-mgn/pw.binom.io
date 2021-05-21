@@ -8,7 +8,7 @@ import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
-import pw.binom.uuid
+import pw.binom.nextUuid
 import kotlin.random.Random
 
 class PostgresPreparedStatement(
@@ -18,7 +18,7 @@ class PostgresPreparedStatement(
     val resultColumnTypes: List<ResultSet.ColumnType>,
 ) : AsyncPreparedStatement {
     internal var parsed = false
-    private val id = Random.uuid()
+    private val id = Random.nextUuid()
     private val realQuery: String
     private val paramCount: Int
     internal var lastOpenResultSet: PostgresAsyncResultSet? = null
