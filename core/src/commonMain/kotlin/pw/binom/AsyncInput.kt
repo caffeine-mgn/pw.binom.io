@@ -17,7 +17,10 @@ interface AsyncInput : AsyncCloseable {
     suspend fun readFully(dest: ByteBuffer): Int {
         val length = dest.remaining
         while (dest.remaining > 0) {
-            read(dest)
+            val read = read(dest)
+            if (read == 0) {
+                throw EOFException()
+            }
         }
         return length
     }

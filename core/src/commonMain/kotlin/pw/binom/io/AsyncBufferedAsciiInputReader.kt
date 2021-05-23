@@ -47,6 +47,7 @@ class AsyncBufferedAsciiInputReader(
                 buffer.flip()
             } catch (e: Throwable) {
                 buffer.empty()
+                throw e
             }
         }
 
