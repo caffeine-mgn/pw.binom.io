@@ -153,6 +153,7 @@ internal class HttpRequest2Impl(
         }
         val sha1 = Sha1MessageDigest()
         val resp = response() as HttpResponse2Impl
+        resp.status = 101
         resp.headers[Headers.CONNECTION] = Headers.UPGRADE
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.headers[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
