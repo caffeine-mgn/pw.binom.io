@@ -67,7 +67,7 @@ fun ByteDataBuffer.Companion.alloc(size: Int, func: (Int) -> Byte): ByteDataBuff
 }
 
 fun Random.nextBytes(data: ByteDataBuffer) {
-    (0 until data.size).forEachIndexed { index, i ->
+    (0 until data.size).forEachIndexed { index, _ ->
         data[index] = nextInt().toByte()
     }
 }

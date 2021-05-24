@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import pw.binom.ByteBuffer
+import pw.binom.CancelledException
 import pw.binom.popOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
@@ -100,11 +101,12 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
     }
 
     suspend fun read(dest: ByteBuffer, address: NetworkAddress.Mutable?): Int {
+        if (readData.continuation != null) {
+            readData.continuation?.resumeWith(Result.failure(CancelledException()))
+            readData.continuation=null
+        }
         if (dest.remaining == 0) {
             return 0
-        }
-        if (readData.continuation != null) {
-            throw IllegalStateException("Connection already have read listener")
         }
         val r = channel.recv(dest, address)
         if (r > 0) {

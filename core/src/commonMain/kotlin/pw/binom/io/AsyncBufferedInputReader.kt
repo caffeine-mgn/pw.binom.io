@@ -94,7 +94,7 @@ class AsyncBufferedInputReader private constructor(
         }
     }
 
-    override suspend fun read(data: CharArray, offset: Int, length: Int): Int {
+    override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
         if (length == 0) {
             return 0
         }
@@ -103,7 +103,7 @@ class AsyncBufferedInputReader private constructor(
             prepareBuffer()
             if (output.remaining > 0) {
                 counter += output.read(
-                    array = data,
+                    array = dest,
                     offset = offset,
                     length = length
                 )

@@ -6,6 +6,7 @@ open class DefaultPool<T : Any>(val capacity: Int, val new: () -> T) : ObjectPoo
     var size = 0
         protected set
 
+    @Suppress("UNCHECKED_CAST")
     override fun borrow(init: ((T) -> Unit)?): T {
         if (size == 0)
             return new().also { init?.invoke(it) }

@@ -210,13 +210,18 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
         val p = position
         val l = limit
-        position = 0
-        limit = capacity
-        position = index
-        limit = index + length
-        val newBytes = JByteBuffer.allocate(length)
-        native.copyTo(newBytes)
-        return ByteBuffer(newBytes)
+        try {
+            position = 0
+            limit = capacity
+            position = index
+            limit = index + length
+            val newBytes = JByteBuffer.allocate(length)
+            native.copyTo(newBytes)
+            return ByteBuffer(newBytes)
+        } finally {
+            position = p
+            limit = l
+        }
     }
 }
 

@@ -150,10 +150,10 @@ private fun Long.Companion.formatUnsignedLong0(value: Long, shift: Int, buf: Cha
     var charPos = offset + len
     val radix = 1 shl shift
     val mask = radix - 1
-    var value = value
+    var value2 = value
     do {
-        buf[--charPos] = (digits[(value.toInt()) and mask])
-        value = value ushr shift
+        buf[--charPos] = (digits[(value2.toInt()) and mask])
+        value2 = value2 ushr shift
     } while (charPos > offset)
 }
 

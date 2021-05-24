@@ -105,7 +105,6 @@ value class URI internal constructor(val fullPath: String) {
             if (e == -1) {
                 e = fullPath.length
             }
-            val t = fullPath.substring(p, e)
             return fullPath.substring(p, e)
         }
     val port: Int?

@@ -26,7 +26,7 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
         charBuffer.flip()
         byteBuffer.clear()
         LOOP@ while (true) {
-            when (val result = encoder.encode(charBuffer, byteBuffer)) {
+            when (encoder.encode(charBuffer, byteBuffer)) {
                 CharsetTransformResult.OUTPUT_OVER -> {
                     val newByteBuffer =
                         byteBuffer.realloc((byteBuffer.capacity.toFloat() * 1.7f).roundToInt() + 8)

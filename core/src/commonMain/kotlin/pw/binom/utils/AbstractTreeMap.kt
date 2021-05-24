@@ -6,6 +6,7 @@ import kotlin.native.concurrent.SharedImmutable
 private var RED = -1
 private var BLACK = 1
 
+@Suppress("UNCHECKED_CAST")
 @SharedImmutable
 private val COMPARATOR: Comparator<Any> = Comparator<Any> { a, b ->
     a as Comparable<Any>
@@ -16,6 +17,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
     private var root: Node<K, V>? = null
     private var modCount = 0
     private var _size = 0
+    @Suppress("UNCHECKED_CAST")
     var comparator = COMPARATOR as Comparator<K>
 
     constructor(comparator: Comparator<K>) : this() {

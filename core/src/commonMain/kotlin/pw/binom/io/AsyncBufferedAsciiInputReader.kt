@@ -107,6 +107,9 @@ class AsyncBufferedAsciiInputReader(
             if (readed == length) {
                 return length
             }
+            if (r == 0) {
+                throw EOFException()
+            }
         }
     }
 
@@ -121,7 +124,7 @@ class AsyncBufferedAsciiInputReader(
             }
             for (i in buffer.position until buffer.limit) {
                 buffer.position++
-                if (buffer[i] == char.toByte()) {
+                if (buffer[i] == char.code.toByte()) {
                     exist = true
                     break@LOOP
                 } else {

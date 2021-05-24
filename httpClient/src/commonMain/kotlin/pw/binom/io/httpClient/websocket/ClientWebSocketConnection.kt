@@ -16,9 +16,5 @@ class ClientWebSocketConnection(input: AsyncInput, output: AsyncOutput, rawConne
 
     override suspend fun asyncClose() {
         super.asyncClose()
-        input.asyncClose()
-        if (input !== output) {
-            output.asyncClose()
-        }
     }
 }

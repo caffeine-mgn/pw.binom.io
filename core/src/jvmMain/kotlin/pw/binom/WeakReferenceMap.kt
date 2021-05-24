@@ -8,7 +8,7 @@ actual class WeakReferenceMap<K : Any, V : Any> actual constructor() {
         native[key] = value
     }
 
-    actual operator fun get(key: K): V? = native.get(key) as? V?
+    actual operator fun get(key: K): V? = native[key]
     actual fun delete(key: K) {
         native.remove(key)
     }

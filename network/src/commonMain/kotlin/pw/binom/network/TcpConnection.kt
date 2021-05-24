@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import pw.binom.ByteBuffer
+import pw.binom.CancelledException
 import pw.binom.io.AsyncChannel
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
@@ -187,11 +188,12 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
+        if (readData.continuation != null) {
+            readData.continuation?.resumeWith(Result.failure(CancelledException()))
+            readData.continuation = null
+        }
         if (dest.remaining == 0) {
             return 0
-        }
-        if (readData.continuation != null) {
-            throw IllegalStateException("Connection already have read listener")
         }
         val r = channel.read(dest)
         if (r > 0) {

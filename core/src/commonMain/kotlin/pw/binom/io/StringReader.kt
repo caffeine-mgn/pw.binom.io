@@ -4,7 +4,6 @@ class StringReader(data: String) : Reader {
     private var cursor = 0
     private var closed = false
 
-    @OptIn(ExperimentalStdlibApi::class)
     private val data = data.toCharArray()
     override fun read(): Char? {
         if (closed)

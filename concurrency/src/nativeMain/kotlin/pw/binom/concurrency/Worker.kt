@@ -20,7 +20,7 @@ private fun <DATA, RESULT> getFunc(worker: Worker, input: DATA, func: (DATA) -> 
         InputData(worker, input, func)
     }.doFreeze()
 
-actual class Worker actual constructor(name: String?) : CrossThreadCoroutine {
+actual class Worker actual constructor(name: String?) : CrossThreadCoroutine, Executor {
     private val nativeWorker = NativeWorker.start(errorReporting = true, name = name)
     private val _isInterrupted = AtomicBoolean(false)
     private var _taskCount by AtomicInt(0)
@@ -69,6 +69,12 @@ actual class Worker actual constructor(name: String?) : CrossThreadCoroutine {
             val f = it.second.value
             it.second.close()
             f.resumeWith(it.first)
+        }
+    }
+
+    override fun execute(func: suspend () -> Unit) {
+        execute(func.doFreeze()) {
+            async2(it)
         }
     }
 }

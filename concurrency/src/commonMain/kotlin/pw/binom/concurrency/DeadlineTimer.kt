@@ -1,13 +1,13 @@
 package pw.binom.concurrency
 
+import pw.binom.TimeoutException
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.popOrNull
 import pw.binom.utils.TreeMap
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.*
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -85,6 +85,32 @@ class DeadlineTimer(val errorProcessing: ((Throwable) -> Unit)? = null) : Closea
         }
     }
 
+    /**
+     * Starts [func] in current thread. If [func] can't execute in [delay] duration will throw [TimeoutException]
+     */
+    suspend fun <T> timeout(delay: Duration, func: suspend () -> T): T =
+        suspendCoroutine { con ->
+            val dispatcher = con.getCrossThreadCoroutine() ?: return@suspendCoroutine
+            val functionDone = AtomicBoolean(false)
+            func.startCoroutine(object : Continuation<T> {
+                override val context: CoroutineContext = con.context
+
+                override fun resumeWith(result: Result<T>) {
+                    if (functionDone.compareAndSet(false, true)) {
+                        con.resumeWith(result = result)
+                    }
+                }
+            })
+            val conRef = con.asReference()
+            delay(delay) {
+                if (functionDone.compareAndSet(false, true)) {
+                    dispatcher.coroutine(Result.failure(TimeoutException()), conRef as Reference<Continuation<Any?>>)
+                } else {
+                    conRef.close()
+                }
+            }
+        }
+
     @Suppress("UNCHECKED_CAST")
     suspend fun delay(delay: Duration) {
         suspendCoroutine<Unit> { con ->
@@ -108,3 +134,4 @@ class DeadlineTimer(val errorProcessing: ((Throwable) -> Unit)? = null) : Closea
         worker.requestTermination().joinAndGetOrThrow()
     }
 }
+

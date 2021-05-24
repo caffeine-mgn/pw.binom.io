@@ -3,16 +3,13 @@ package pw.binom.base64
 import pw.binom.ByteBuffer
 import pw.binom.Output
 import pw.binom.io.ClosedException
-import pw.binom.io.StreamClosedException
-import kotlin.experimental.and
-import kotlin.experimental.or
 
 
 internal fun byteToBase64(value: Byte): Char =
     when (value) {
-        in (0..25) -> ('A'.toInt() + value).toChar()
-        in (26..51) -> ('a'.toInt() + value - 26).toChar()
-        in (52..61) -> ('0'.toInt() + value - 52).toChar()
+        in (0..25) -> ('A'.code + value).toChar()
+        in (26..51) -> ('a'.code + value - 26).toChar()
+        in (52..61) -> ('0'.code + value - 52).toChar()
         62.toByte() -> '+'
         63.toByte() -> '/'
         else -> throw IllegalArgumentException()
@@ -27,9 +24,9 @@ class Base64EncodeOutput(private val appendable: Appendable) : Output {
     private fun write(data: Byte) {
         checkClosed()
         val result = Base64.encodeByte(
-            counter,old,data
-        ){
-            old=it
+            counter, old, data
+        ) {
+            old = it
         }
         appendable.append(result)
         counter++

@@ -42,7 +42,7 @@ interface Future<T> {
     class FutureNotReadyException : IllegalStateException()
     class FutureAlreadyResumedException : IllegalStateException()
 }
-
+@Suppress("UNCHECKED_CAST")
 fun <T> Future<T>.getOrException(): T {
     if (isFailure) {
         throw exceptionOrNull!!
@@ -66,12 +66,13 @@ private class FailFuture<T>(val result: Throwable) : Future<T> {
         get() = null
     override val isSuccess: Boolean
         get() = false
-    override val exceptionOrNull: Throwable?
+    override val exceptionOrNull
         get() = result
     override val isDone: Boolean
         get() = true
 }
 
+@Suppress("UNCHECKED_CAST")
 class NonFreezableFuture<T> : Future<T> {
     init {
         neverFreeze()
@@ -104,7 +105,7 @@ class NonFreezableFuture<T> : Future<T> {
         this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
     }
 }
-
+@Suppress("UNCHECKED_CAST")
 class FreezableFuture<T> : Future<T> {
 
     override val resultOrNull: T?
@@ -118,6 +119,7 @@ class FreezableFuture<T> : Future<T> {
                 null
             }
         }
+
     private var _isSuccess = AtomicBoolean(false)
     override val isSuccess: Boolean
         get() {

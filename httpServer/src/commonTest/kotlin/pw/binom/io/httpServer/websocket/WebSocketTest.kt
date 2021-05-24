@@ -9,6 +9,7 @@ import pw.binom.getOrException
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.MessageType
+import pw.binom.io.http.websocket.WebSocketClosedException
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
@@ -27,20 +28,19 @@ import kotlin.test.assertEquals
 class WebSocketTest {
 
     private class TestWebSocketHandler(val testMsg: String) : Handler {
-        val w = Worker()
-
         override suspend fun request(req: HttpRequest) {
             val ws = req.acceptWebsocket()
-            val text = ws.read().bufferedAsciiReader().use { it.readText() }
-            assertEquals(testMsg, text)
-            ws.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append("Echo ").append(testMsg) }
+            while (true) {
+                val text = ws.read().bufferedAsciiReader().use { it.readText() }
+                assertEquals(testMsg, text)
+                ws.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append("Echo ").append(testMsg) }
+            }
         }
     }
 
     @Test
     fun serverTest() {
         val testMsg = Random.nextUuid().toString()
-        var done = false
         val port = 3000//Random.nextInt(3000, Short.MAX_VALUE.toInt() - 1).toShort()
 
         val manager = NetworkDispatcher()
@@ -54,24 +54,17 @@ class WebSocketTest {
             con.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append(testMsg) }
             val text = con.read().bufferedAsciiReader().use { it.readText() }
             assertEquals("Echo $testMsg", text)
+            con.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append(testMsg) }
+            val text2 = con.read().bufferedAsciiReader().use { it.readText() }
+            assertEquals("Echo $testMsg", text2)
+            con.asyncClose()
+
+            val con2 = cl.request(HTTPMethod.GET, "http://127.0.0.1:$port".toURI()).startWebSocket()
+            con2.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append(testMsg) }
+            val text3 = con2.read().bufferedAsciiReader().use { it.readText() }
+            assertEquals("Echo $testMsg", text3)
+            server.asyncClose()
         }
-/*
-        val str = Random.uuid().toString()
-        async {
-            AsyncHttpClient(manager).use { client ->
-                val ws = client.request("GET", URL("ws://127.0.0.1:$port"))
-                    .websocket()
-                ws.write(MessageType.TEXT).utf8Appendable().use {
-                    it.append(str)
-                    it.flush()
-                }
-                ws.read().use {
-                    assertEquals("echo: $str", it.utf8Reader().readText())
-                    done = true
-                }
-            }
-        }
-*/
         while (!f.isDone) {
             manager.select(1000)
         }

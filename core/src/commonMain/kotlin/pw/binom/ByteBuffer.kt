@@ -103,7 +103,7 @@ fun ByteBuffer.Companion.wrap(data: ByteArray, offset: Int = 0, length: Int = da
  * Makes ByteBuffer from [this] String. Returns new clean ByteBuffer
  */
 fun String.toByteBufferUTF8(): ByteBuffer {
-    val len = sumBy {
+    val len = sumOf {
         UTF8.unicodeToUtf8Size(it)
     }
     val buf = ByteBuffer.alloc(len)
@@ -217,7 +217,6 @@ fun ByteBuffer.asUTF8String(): String {
     val sb = StringBuilder(remaining)
     while (remaining > 0) {
         val first = get()
-        val size = UTF8.utf8CharSize(first)
         sb.append(UTF8.utf8toUnicode(first, this))
     }
     return sb.toString()

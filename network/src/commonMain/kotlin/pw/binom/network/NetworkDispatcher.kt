@@ -3,8 +3,20 @@ package pw.binom.network
 import pw.binom.NonFreezableFuture
 import pw.binom.PopResult
 import pw.binom.concurrency.*
+import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import kotlin.coroutines.*
+
+private class NetworkExecutor(val con: CrossThreadKeyHolder, val ref: Reference<NetworkDispatcher>) : Executor {
+    override fun execute(func: suspend () -> Unit) {
+        con.waitReadyForWrite {
+            ref.value.async {
+                func()
+            }
+        }
+    }
+
+}
 
 class NetworkDispatcher : Closeable {
     private val selector = Selector.open()
@@ -13,6 +25,12 @@ class NetworkDispatcher : Closeable {
         CrossThreadKeyHolder(selector.attach(internalUdpContinuation, 0, internalUdpContinuation))
     internal val crossThreadWakeUpHolder = internalContinuation
     private val crossThreadWaiterResultHolder = PopResult<() -> Unit>()
+    private val selfReference = this.asReference()
+
+    /**
+     * Network executor. Can be use for execute some code on network thread
+     */
+    val executor: Executor = NetworkExecutor(internalContinuation, selfReference).doFreeze()
 
     suspend fun yield() {
         suspendCoroutine<Unit> {
@@ -130,5 +148,6 @@ class NetworkDispatcher : Closeable {
     override fun close() {
         internalUdpContinuation.close()
         selector.close()
+        selfReference.close()
     }
 }

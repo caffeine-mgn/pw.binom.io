@@ -8,12 +8,12 @@ import kotlin.experimental.or
 
 internal fun charFromBase64(value: Char): Byte =
     when (value) {
-        in ('A'..'Z') -> (value.toInt() - 'A'.toInt()).toByte()
-        in ('a'..'z') -> (26 + value.toInt() - 'a'.toInt()).toByte()
-        in ('0'..'9') -> (52 + value.toInt() - '0'.toInt()).toByte()
+        in ('A'..'Z') -> (value.code - 'A'.code).toByte()
+        in ('a'..'z') -> (26 + value.code - 'a'.code).toByte()
+        in ('0'..'9') -> (52 + value.code - '0'.code).toByte()
         '+' -> 62.toByte()
         '/' -> 63.toByte()
-        else -> throw IllegalArgumentException("Invalid char [$value] (0x${value.toInt().toString(16)})")
+        else -> throw IllegalArgumentException("Invalid char [$value] (0x${value.code.toString(16)})")
     }
 
 class Base64DecodeAppendable(val stream: Output) : Appendable, Closeable {
@@ -22,28 +22,28 @@ class Base64DecodeAppendable(val stream: Output) : Appendable, Closeable {
     private var b = 0.toByte()
     private val buf = ByteBuffer.alloc(1)
 
-    override fun append(c: Char): Appendable {
-        if (c == '=') {
+    override fun append(value: Char): Appendable {
+        if (value == '=') {
             g++
             return this
         }
-        val value = charFromBase64(c)
+        val value2 = charFromBase64(value)
         when (g) {
             0 -> {
-                b = b or (value shl 2)
+                b = b or (value2 shl 2)
             }
             1 -> {
-                val write = b or (value shr 4)
+                val write = b or (value2 shr 4)
                 stream.writeByte(buf, write)
-                b = value shl 4
+                b = value2 shl 4
             }
             2 -> {
-                val write = b or (value shr 2)
+                val write = b or (value2 shr 2)
                 stream.writeByte(buf, write)
-                b = value shl 6
+                b = value2 shl 6
             }
             3 -> {
-                val write = b or (value)
+                val write = b or (value2)
                 stream.writeByte(buf, write)
                 b = 0
             }
@@ -55,15 +55,15 @@ class Base64DecodeAppendable(val stream: Output) : Appendable, Closeable {
         return this
     }
 
-    override fun append(csq: CharSequence?): Appendable {
-        csq ?: throw IllegalArgumentException("Argument is null")
-        return append(csq, 0, csq.length)
+    override fun append(value: CharSequence?): Appendable {
+        value ?: throw IllegalArgumentException("Argument is null")
+        return append(value, 0, value.length)
     }
 
-    override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
-        csq ?: throw IllegalArgumentException("Argument is null")
-        (start until end).forEach {
-            append(csq[it])
+    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): Appendable {
+        value ?: throw IllegalArgumentException("Argument is null")
+        (startIndex until endIndex).forEach {
+            append(value[it])
         }
         return this
     }

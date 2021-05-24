@@ -12,7 +12,7 @@ internal fun ByteBuffer.oct2ToUInt(startIndex: Int = 0, length: Int = capacity -
     var out = 0u
     var i = startIndex
     while ((i < startIndex + length) && oct[i] != 0.toByte()) {
-        out = (out shl 3) or (oct[i++] - '0'.toByte()).toUInt()
+        out = (out shl 3) or (oct[i++] - '0'.code.toByte()).toUInt()
     }
     return out
 }
@@ -67,12 +67,12 @@ class TarReader(private val stream: Input) : Closeable {
         return -1
     }
 
-    private val header = ByteBuffer.alloc(BLOCK_SIZE.toInt())
+    private val header = ByteBuffer.alloc(BLOCK_SIZE)
 
-    @OptIn(ExperimentalStdlibApi::class)
     fun getNextEntity(): TarEntity? {
-        if (end)
+        if (end) {
             return null
+        }
         val entity = currentEntity
         if (entity != null) {
             var fullSize = (entity.size / BLOCK_SIZE.toUInt()) * BLOCK_SIZE.toUInt()

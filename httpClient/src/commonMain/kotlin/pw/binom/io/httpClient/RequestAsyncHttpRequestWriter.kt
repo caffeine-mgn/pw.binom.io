@@ -34,21 +34,21 @@ class RequestAsyncHttpRequestWriter(
         return output.getResponse()
     }
 
-    override suspend fun append(c: Char): AsyncAppendable {
+    override suspend fun append(value: Char): AsyncAppendable {
         checkClosed()
-        writer.append(c)
+        writer.append(value)
         return this
     }
 
-    override suspend fun append(csq: CharSequence?): AsyncAppendable {
+    override suspend fun append(value: CharSequence?): AsyncAppendable {
         checkClosed()
-        writer.append(csq)
+        writer.append(value)
         return this
     }
 
-    override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
+    override suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable {
         checkClosed()
-        writer.append(csq, start, end)
+        writer.append(value, startIndex, endIndex)
         return this
     }
 

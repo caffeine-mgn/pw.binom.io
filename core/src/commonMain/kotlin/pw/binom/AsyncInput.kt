@@ -18,7 +18,7 @@ interface AsyncInput : AsyncCloseable {
         val length = dest.remaining
         while (dest.remaining > 0) {
             val read = read(dest)
-            if (read == 0) {
+            if (read == 0 && dest.remaining > 0) {
                 throw EOFException()
             }
         }

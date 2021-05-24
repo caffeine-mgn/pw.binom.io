@@ -3,7 +3,7 @@ package pw.binom.concurrency
 import pw.binom.Future
 import pw.binom.getOrException
 
-expect class Worker : CrossThreadCoroutine {
+expect class Worker : CrossThreadCoroutine, Executor {
     constructor(name: String? = null)
 
     fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT>

@@ -32,30 +32,30 @@ abstract class AbstractAsyncBufferedAsciiWriter(
         return r
     }
 
-    override suspend fun append(c: Char): AsyncAppendable {
+    override suspend fun append(value: Char): AsyncAppendable {
         checkClosed()
         checkFlush()
-        buffer.put(c.toByte())
+        buffer.put(value.code.toByte())
         return this
     }
 
-    override suspend fun append(csq: CharSequence?): AsyncAppendable {
-        csq ?: return this
-        append(csq, 0, csq.length)
+    override suspend fun append(value: CharSequence?): AsyncAppendable {
+        value ?: return this
+        append(value, 0, value.length)
         return this
     }
 
-    override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
+    override suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable {
         checkClosed()
-        csq ?: return this
-        if (csq.isEmpty()) {
+        value ?: return this
+        if (value.isEmpty()) {
             return this
         }
-        if (end == start) {
-            return append(csq[start])
+        if (endIndex == startIndex) {
+            return append(value[startIndex])
         }
-        val data = ByteArray(end - start) {
-            csq[it].toByte()
+        val data = ByteArray(endIndex - startIndex) {
+            value[it].code.toByte()
         }
         var pos = 0
         while (pos < data.size) {

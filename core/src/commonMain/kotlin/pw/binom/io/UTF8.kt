@@ -6,14 +6,14 @@ object UTF8 {
 
     fun unicodeToUtf8(text: String, out: ByteBuffer): Int {
         var len = 0
-        text.forEachIndexed { index, c ->
-            len += unicodeToUtf8(c, out)
+        text.forEach { char ->
+            len += unicodeToUtf8(char, out)
         }
         return len
     }
 
     fun unicodeToUtf8(char: Char, out: ByteBuffer): Int {
-        val utf = char.toInt()
+        val utf = char.code
         return when {
             utf <= 0x7F -> {
                 // Plain ASCII
@@ -59,7 +59,7 @@ object UTF8 {
      * @return size of full utf8 character in bytes
      */
     fun unicodeToUtf8(char: Char, out: ByteArray): Int {
-        val utf = char.toInt()
+        val utf = char.code
         return when {
             utf <= 0x7F -> {
                 // Plain ASCII
@@ -98,7 +98,7 @@ object UTF8 {
     }
 
     fun unicodeToUtf8Size(char: Char): Int {
-        val utf = char.toInt()
+        val utf = char.code
         return when {
             utf <= 0x7F -> {
                 // Plain ASCII
@@ -288,13 +288,13 @@ object UTF8 {
         val sb = StringBuilder()
         input.encodeToByteArray().forEach {
             when (it) {
-                '.'.toByte(),
-                '-'.toByte(),
-                '_'.toByte(),
-                '*'.toByte(),
-                in 'a'.toByte()..'z'.toByte(),
-                in 'A'.toByte()..'Z'.toByte(),
-                in '0'.toByte()..'9'.toByte()
+                '.'.code.toByte(),
+                '-'.code.toByte(),
+                '_'.code.toByte(),
+                '*'.code.toByte(),
+                in 'a'.code.toByte()..'z'.code.toByte(),
+                in 'A'.code.toByte()..'Z'.code.toByte(),
+                in '0'.code.toByte()..'9'.code.toByte()
                 -> sb.append(it.toChar())
                 else -> {
                     val bb1 = ((it.toInt() and 0xf0) shr 4)

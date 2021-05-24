@@ -1,9 +1,9 @@
 package pw.binom.io
 
 interface AsyncAppendable {
-    suspend fun append(c: Char): AsyncAppendable
-    suspend fun append(csq: CharSequence?): AsyncAppendable
-    suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable
+    suspend fun append(value: Char): AsyncAppendable
+    suspend fun append(value: CharSequence?): AsyncAppendable
+    suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable
 }
 
 suspend fun AsyncAppendable.append(value: Boolean) = append(if (value) "true" else "false")
@@ -12,18 +12,18 @@ interface AsyncWriter : AsyncAppendable, AsyncFlushable, AsyncCloseable
 interface Writer : Appendable, Flushable, Closeable
 
 fun Appendable.asAsync() = object : AsyncAppendable {
-    override suspend fun append(c: Char): AsyncAppendable {
-        this@asAsync.append(c)
+    override suspend fun append(value: Char): AsyncAppendable {
+        this@asAsync.append(value)
         return this
     }
 
-    override suspend fun append(csq: CharSequence?): AsyncAppendable {
-        this@asAsync.append(csq)
+    override suspend fun append(value: CharSequence?): AsyncAppendable {
+        this@asAsync.append(value)
         return this
     }
 
-    override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
-        this@asAsync.append(csq, start, end)
+    override suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable {
+        this@asAsync.append(value, startIndex, endIndex)
         return this
     }
 

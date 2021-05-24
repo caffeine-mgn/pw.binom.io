@@ -86,35 +86,35 @@ class AsyncBufferedOutputAppendable private constructor(
         flush()
     }
 
-    override suspend fun append(c: Char): AsyncAppendable {
+    override suspend fun append(value: Char): AsyncAppendable {
         checkClosed()
         checkFlush()
-        charBuffer.put(c)
+        charBuffer.put(value)
         return this
     }
 
-    override suspend fun append(csq: CharSequence?): AsyncAppendable {
+    override suspend fun append(value: CharSequence?): AsyncAppendable {
         checkClosed()
-        csq ?: return this
-        return append(csq, 0, csq.length)
+        value ?: return this
+        return append(value, 0, value.length)
     }
 
-    override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
+    override suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable {
         checkClosed()
-        csq ?: return this
-        if (csq.isEmpty()) {
+        value ?: return this
+        if (value.isEmpty()) {
             return this
         }
-        if (start == end) {
+        if (startIndex == endIndex) {
             checkFlush()
-            charBuffer.put(csq[start])
+            charBuffer.put(value[startIndex])
             return this
         }
-        val array = if (csq is String) {
-            csq.toCharArray(start, end)
+        val array = if (value is String) {
+            value.toCharArray(startIndex, endIndex)
         } else {
-            CharArray(end - start) {
-                csq[it + start]
+            CharArray(endIndex - startIndex) {
+                value[it + startIndex]
             }
         }
         var pos = 0

@@ -7,6 +7,7 @@ import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
+import pw.binom.io.http.websocket.WebSocketClosedException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
 
@@ -150,6 +151,9 @@ class DefaultHttpRequest(
         val responseKey = HandshakeSecret.generateResponse(Sha1MessageDigest(), requestKey)
         headers[Headers.SEC_WEBSOCKET_KEY] = requestKey
         val resp = getResponse()
+        if (resp.responseCode != 101) {
+            throw IOException("Invalid Response code: ${resp.responseCode}")
+        }
         val respKey = resp.headers.getSingle(Headers.SEC_WEBSOCKET_ACCEPT)
             ?: throw IOException("Invalid Server Response. Missing header \"${Headers.SEC_WEBSOCKET_ACCEPT}\"")
         if (respKey != responseKey) {

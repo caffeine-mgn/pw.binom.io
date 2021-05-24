@@ -119,7 +119,7 @@ value class Query internal constructor(val raw: String) {
      */
     fun isExist(key: String): Boolean {
         var result = false
-        search { qkey, value ->
+        search { qkey, _ ->
             if (qkey == key) {
                 result = true
                 return@search false

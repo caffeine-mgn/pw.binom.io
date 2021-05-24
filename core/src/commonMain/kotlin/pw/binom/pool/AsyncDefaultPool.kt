@@ -6,6 +6,7 @@ open class AsyncDefaultPool<T : Any>(val capacity: Int, val new: suspend () -> T
     var size = 0
         protected set
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun borrow(init: ((T) -> Unit)?): T {
         if (size == 0)
             return new().also { init?.invoke(it) }
