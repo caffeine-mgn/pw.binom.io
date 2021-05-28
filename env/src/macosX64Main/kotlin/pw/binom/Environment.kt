@@ -62,3 +62,6 @@ actual val Environment.currentTimeNanoseconds: Long
     }
 
 actual fun Environment.getEnv(name: String): String? = getenv(name)?.toKString()
+
+actual val Environment.userDirectory: String
+    get() = getEnv("HOME") ?: ""

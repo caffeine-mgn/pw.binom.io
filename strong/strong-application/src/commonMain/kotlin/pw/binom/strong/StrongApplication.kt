@@ -25,7 +25,6 @@ object StrongApplication {
                 }
             }
             val strong = initProcess.getOrException()
-
             while (!Signal.isInterrupted) {
                 networkDispatcher.select(1000)
             }

@@ -52,3 +52,6 @@ actual val Environment.workDirectory: String
             free(data)
         }
     }
+
+actual val Environment.userDirectory: String
+    get() = getEnv("USERPROFILE") ?: ""

@@ -18,3 +18,5 @@ actual val Environment.currentTimeMillis: Long
     get() = Date.now().toLong()
 actual val Environment.currentTimeNanoseconds: Long
     get() = (window.performance.now() * 1000000.0).toLong()
+actual val Environment.userDirectory: String
+    get() = throw RuntimeException("Not supported")
