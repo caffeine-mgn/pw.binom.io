@@ -3,8 +3,8 @@ package pw.binom.utils
 import pw.binom.doFreeze
 import kotlin.native.concurrent.SharedImmutable
 
-private var RED = -1
-private var BLACK = 1
+private const val RED = -1
+private const val BLACK = 1
 
 @Suppress("UNCHECKED_CAST")
 @SharedImmutable
