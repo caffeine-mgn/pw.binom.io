@@ -10,9 +10,9 @@ private val dp5 = "yyyy-MM-dd HH:mm:ss.SSS".toDatePattern()
 private val dp6 = "yyyy-MM-dd HH:mm:ssXX".toDatePattern()
 
 fun Calendar.iso8601() = dp4.toString(this)
-fun Date.iso8601(timeZoneOffset: Int = Date.timeZoneOffset) = calendar(timeZoneOffset).iso8601()
+fun Date.iso8601(timeZoneOffset: Int = Date.systemZoneOffset) = calendar(timeZoneOffset).iso8601()
 
-fun String.parseIso8601Date(defaultTimezoneOffset: Int = Date.timeZoneOffset): Date? =
+fun String.parseIso8601Date(defaultTimezoneOffset: Int = Date.systemZoneOffset): Date? =
     dp1.parseOrNull(this, defaultTimezoneOffset)
         ?: dp2.parseOrNull(this, defaultTimezoneOffset)
         ?: dp3.parseOrNull(this, defaultTimezoneOffset)

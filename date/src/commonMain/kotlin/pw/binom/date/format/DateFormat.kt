@@ -6,7 +6,7 @@ import kotlin.jvm.JvmInline
 
 @JvmInline
 value class DateFormat internal constructor(private val format: Array<Pattern>) {
-    fun parseOrNull(text: String, defaultTimezoneOffset: Int = Date.timeZoneOffset): Date? {
+    fun parseOrNull(text: String, defaultTimezoneOffset: Int = Date.systemZoneOffset): Date? {
         var year = 0
         var month = 0
         var dayOfMonth = 0
@@ -63,6 +63,9 @@ value class DateFormat internal constructor(private val format: Array<Pattern>) 
         }
         return sb.toString()
     }
+
+    fun toString(date: Date, timeZoneOffset: Int = Date.systemZoneOffset): String =
+        toString(date.calendar(timeZoneOffset = timeZoneOffset))
 
     companion object {
         internal fun parsePatternList(format: String): Array<Pattern> {

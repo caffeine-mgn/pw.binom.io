@@ -5,7 +5,7 @@ import kotlin.jvm.JvmInline
 @JvmInline
 expect value class Date(val time: Long = nowTime) {
     companion object {
-        val timeZoneOffset: Int
+        val systemZoneOffset: Int
         val nowTime: Long
         val now: Date
 
@@ -26,7 +26,7 @@ expect value class Date(val time: Long = nowTime) {
         ): Date
     }
 
-    fun calendar(timeZoneOffset: Int = Date.timeZoneOffset): Calendar
+    fun calendar(timeZoneOffset: Int = Date.systemZoneOffset): Calendar
 }
 
 fun Date.Companion.of(calendar: Calendar) =

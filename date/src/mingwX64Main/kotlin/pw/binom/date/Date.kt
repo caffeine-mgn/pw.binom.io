@@ -7,7 +7,7 @@ import platform.posix.*
 
 actual value class Date(val time: Long = nowTime) {
     actual companion object {
-        actual val timeZoneOffset: Int
+        actual val systemZoneOffset: Int
             get() = memScoped {
                 val t = alloc<timezone>()
                 val timeVal = alloc<timeval>()
@@ -40,7 +40,7 @@ actual value class Date(val time: Long = nowTime) {
                 t.tm_hour = hours
                 t.tm_min = minutes
                 t.tm_sec = seconds
-                val tx = timeZoneOffset - Date.timeZoneOffset
+                val tx = timeZoneOffset - Date.systemZoneOffset
                 val r = (_mktime64(t.ptr) - tx * 60L) * 1000L
                 Date(r + millis)
             }

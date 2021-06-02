@@ -7,7 +7,7 @@ import java.util.*
 @JvmInline
 actual value class Date(val time: Long = nowTime) {
     actual companion object {
-        actual val timeZoneOffset: Int
+        actual val systemZoneOffset: Int
             get() = TimeZone.getDefault().rawOffset / 1000 / 60
 
         actual val nowTime: Long

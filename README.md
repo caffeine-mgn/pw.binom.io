@@ -94,6 +94,7 @@ buildscript {
   and [JsonReader](json/src/commonMain/kotlin/pw/binom/json/JsonReader.kt)
 - [ ] JsonB Tools
 - [x] [ObjectPool](core/src/commonMain/kotlin/pw/binom/pool/DefaultPool.kt)
+- [x] [Date](date)
 - [x] XML Tools<br>
 - [x] Charset Support See SAX Tools:
   [XmlVisiter](xml/src/commonMain/kotlin/pw/binom/xml/sax/XmlVisiter.kt),

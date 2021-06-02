@@ -24,7 +24,7 @@ class DateTest {
 
     @Test
     fun timeZone() {
-        assertEquals(currentTimeZone, Date.timeZoneOffset)
+        assertEquals(currentTimeZone, Date.systemZoneOffset)
     }
 
     @Test

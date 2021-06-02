@@ -7,7 +7,7 @@ class IsoParserTest {
 
     @Test
     fun test() {
-        println("->${Date.timeZoneOffset}")
+        println("->${Date.systemZoneOffset}")
         "2021-03-29".parseIso8601Date(0)!!.calendar(0).apply {
             assertEquals(2021, year)
             assertEquals(3, month)
