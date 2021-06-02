@@ -333,7 +333,7 @@ sealed class Pattern {
         }
 
         override fun toString(calendar: Calendar): String =
-            calendar.millisecond.as4()
+            calendar.millisecond.as3()
 
     }
 
@@ -596,6 +596,14 @@ private fun Int.as2() =
     when {
         this < 10 -> "0$this"
         this >= 10 && this <= 99 -> toString()
+        else -> throw IllegalArgumentException()
+    }
+
+private fun Int.as3() =
+    when {
+        this < 10 -> "00$this"
+        this < 100 -> "0$this"
+        this < 1000 -> "$this"
         else -> throw IllegalArgumentException()
     }
 

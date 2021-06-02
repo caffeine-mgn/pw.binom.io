@@ -56,11 +56,11 @@ class HttpServer(
         idleConnections -= channel
     }
 
-    private var lastIdleCheckTime = Date.now
+    private var lastIdleCheckTime = Date.nowTime
 
     suspend fun forceIdleCheck(): Int {
         var count = 0
-        val now = Date.now
+        val now = Date.nowTime
         lastIdleCheckTime = now
 
         val it = idleConnections.iterator()
@@ -79,7 +79,7 @@ class HttpServer(
     }
 
     private suspend fun idleCheck() {
-        val now = Date.now
+        val now = Date.nowTime
         if (now - lastIdleCheckTime < idleCheckInterval) {
             return
         }

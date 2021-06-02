@@ -4,7 +4,7 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.async
 import pw.binom.charset.Charsets
-import pw.binom.date.parseIsoDate
+import pw.binom.date.parseIso8601Date
 import pw.binom.db.ResultSet
 import pw.binom.db.async.firstOrNull
 import pw.binom.db.async.map
@@ -194,7 +194,7 @@ class TestConnect {
                     it.getDate(0)
                 }
             }
-            assertEquals("2018-02-01 11:42:39.425".parseIsoDate(0)!!.time, date!!.time)
+            assertEquals("2018-02-01 11:42:39.425".parseIso8601Date(0)!!.time, date!!.time)
         }
     }
 
@@ -411,7 +411,7 @@ class TestConnect {
                     it.executeQuery().use {
                         assertEquals(1, it.columns.size)
                         assertTrue(it.next())
-                        assertEquals("2020-01-05 15:43:36.000".parseIsoDate(0)!!.time, it.getDate(0)!!.time)
+                        assertEquals("2020-01-05 15:43:36.000".parseIso8601Date(0)!!.time, it.getDate(0)!!.time)
                         assertFalse(it.next())
                     }
                 } catch (e: Throwable) {

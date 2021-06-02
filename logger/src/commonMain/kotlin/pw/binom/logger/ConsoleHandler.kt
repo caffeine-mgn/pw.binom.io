@@ -2,7 +2,6 @@ package pw.binom.logger
 
 import pw.binom.date.Date
 import pw.binom.date.format.toDatePattern
-import kotlin.math.exp
 
 private val dataPattern = "yyyy/MM/dd HH:mm:ssXXX".toDatePattern()
 
@@ -33,7 +32,7 @@ object ConsoleHandler : Logger.Handler {
         val currentLevel = logger.level
         if (currentLevel != null && currentLevel.priority > level.priority)
             return
-        val now = Date(Date.now).calendar()
+        val now = Date(Date.nowTime).calendar()
 
 
         val sb = StringBuilder()

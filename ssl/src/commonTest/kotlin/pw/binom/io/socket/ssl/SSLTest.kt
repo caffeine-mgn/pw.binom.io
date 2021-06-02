@@ -1,10 +1,7 @@
 package pw.binom.io.socket.ssl
 
 import pw.binom.*
-import pw.binom.concurrency.WorkerPool
 import pw.binom.date.Date
-import pw.binom.date.of
-import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.ssl.*
@@ -46,7 +43,7 @@ class SSLTest {
         val public2 = X509Builder(
             pair = pair1,
             notBefore = Date(),
-            notAfter = Date(Date.now + 1000 * 60 * 60),
+            notAfter = Date(Date.nowTime + 1000 * 60 * 60),
             serialNumber = 10,
             issuer = "DC=localhost",
             subject = "CN=localhost",

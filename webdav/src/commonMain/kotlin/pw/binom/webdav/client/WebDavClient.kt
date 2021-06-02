@@ -62,7 +62,7 @@ open class WebDavClient(val client: HttpClient, val URI: URI) : FileSystem {
         val ss = path.split('/')
         return RemoteEntity(
             user = WebAuthAccess.getCurrentUser(),
-            lastModified = Date.now,
+            lastModified = Date.nowTime,
             path = ss.subList(0, ss.lastIndex - 1).joinToString("/"),
             isFile = false,
             length = 0

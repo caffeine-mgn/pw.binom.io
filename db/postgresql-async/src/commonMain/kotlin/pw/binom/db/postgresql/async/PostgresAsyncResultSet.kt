@@ -4,7 +4,7 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.date.Date
 import pw.binom.date.of
-import pw.binom.date.parseIsoDate
+import pw.binom.date.parseIso8601Date
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.SQLException
 
@@ -57,7 +57,7 @@ class PostgresAsyncResultSet(
 //        val value = data[index] ?: return null
 //        val vv = getString(1)
         val value = getString(index) ?: return null
-        return value.parseIsoDate(0) ?: throw IllegalArgumentException("Can't parse \"$value\" to date")
+        return value.parseIso8601Date(0) ?: throw IllegalArgumentException("Can't parse \"$value\" to date")
 //        println("vv=$vv   ${vv?.parseIsoDate(0)?.calendar(0)?.toString()}")
 //        return when (val dataType = data.meta[index].dataType) {
 //            ColumnTypes.Timestamp -> {

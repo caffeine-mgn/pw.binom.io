@@ -1,18 +1,16 @@
 package pw.binom.date
 
-import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.*
-import kotlin.math.min
 
 @JvmInline
-actual value class Date(val time: Long = now) {
+actual value class Date(val time: Long = nowTime) {
     actual companion object {
         actual val timeZoneOffset: Int
             get() = TimeZone.getDefault().rawOffset / 1000 / 60
 
-        actual val now: Long
+        actual val nowTime: Long
             get() = System.currentTimeMillis()
 
         actual fun internalOf(
@@ -53,6 +51,9 @@ actual value class Date(val time: Long = now) {
 //                .toInstant()
 //            return Date(v.toEpochMilli() - (timeZoneOffset * 60L * 1000L))
         }
+
+        actual val now: Date
+            get() = Date(nowTime)
     }
 
     actual fun calendar(timeZoneOffset: Int): Calendar =

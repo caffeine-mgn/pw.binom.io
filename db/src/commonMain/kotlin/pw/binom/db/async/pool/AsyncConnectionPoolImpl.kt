@@ -2,7 +2,6 @@ package pw.binom.db.async.pool
 
 import pw.binom.date.Date
 import pw.binom.db.async.AsyncConnection
-import pw.binom.io.AsyncCloseable
 import pw.binom.io.StreamClosedException
 import pw.binom.io.use
 import kotlin.coroutines.Continuation
@@ -55,7 +54,7 @@ class AsyncConnectionPoolImpl constructor(
             val it = idleConnection.iterator()
             while (it.hasNext()) {
                 val e = it.next()
-                if (Date.now - e.lastActive > idleTime.inMilliseconds.toLong()) {
+                if (Date.nowTime - e.lastActive > idleTime.inMilliseconds.toLong()) {
                     it.remove()
                     connections -= e
                     forRemove += e

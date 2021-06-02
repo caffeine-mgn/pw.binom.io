@@ -5,10 +5,10 @@ import pw.binom.io.AsyncChannel
 import pw.binom.io.http.AsyncAsciiChannel
 
 class ServerAsyncAsciiChannel(channel: AsyncChannel) : AsyncAsciiChannel(channel) {
-    var lastActive = Date.now
+    var lastActive = Date.nowTime
         private set
 
     fun activeUpdate() {
-        lastActive = Date.now
+        lastActive = Date.nowTime
     }
 }

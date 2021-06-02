@@ -6,7 +6,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import platform.posix.*
 
-actual value class Date(val time: Long = Date.now) {
+actual value class Date(val time: Long = Date.nowTime) {
     actual companion object {
         actual val timeZoneOffset: Int
             get() = memScoped {
@@ -21,7 +21,7 @@ actual value class Date(val time: Long = Date.now) {
 //                val r = -t.tz_minuteswest
 //                r
             }
-        actual val now: Long
+        actual val nowTime: Long
             get() = memScoped {
                 val ff = alloc<timespec>()
                 clock_gettime(CLOCK_REALTIME, ff.ptr)
@@ -53,6 +53,9 @@ actual value class Date(val time: Long = Date.now) {
                 val r = (mktime(t.ptr) - tx * 60L) * 1000L
                 Date(r)
             }
+
+        actual val now: Date
+            get() = Date(nowTime)
     }
 
     actual fun calendar(timeZoneOffset: Int): Calendar =

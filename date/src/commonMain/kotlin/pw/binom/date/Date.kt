@@ -3,10 +3,11 @@ package pw.binom.date
 import kotlin.jvm.JvmInline
 
 @JvmInline
-expect value class Date(val time: Long = now) {
+expect value class Date(val time: Long = nowTime) {
     companion object {
         val timeZoneOffset: Int
-        val now: Long
+        val nowTime: Long
+        val now: Date
 
         /**
          * @param year full year. For example 2010
@@ -53,4 +54,10 @@ fun Date.Companion.of(
     require(month >= 1 && month <= 12) { "Invalid value of month. Valid values 1-12" }
     require(millis >= 0 && millis <= 999) { "Invalid value of millis. Valid values 0-999" }
     return internalOf(year, month, dayOfMonth, hours, minutes, seconds, millis, timeZoneOffset)
+}
+
+operator fun Date.compareTo(expDate: Date): Int = when {
+    time > expDate.time -> 1
+    time < expDate.time -> -1
+    else -> 0
 }

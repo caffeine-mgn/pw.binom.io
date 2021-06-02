@@ -33,12 +33,12 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
         }
     }
 
-    private var lastCheckTime = Date.now
+    private var lastCheckTime = Date.nowTime
     var lastActive = 0L
         private set
 
     fun updateActive() {
-        lastActive = Date.now
+        lastActive = Date.nowTime
     }
 
     private var invalid = false
@@ -63,7 +63,7 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
             return false
         }
         clean()
-        if (Date.now - lastCheckTime > pool.pingTime.inMilliseconds.toLong()) {
+        if (Date.nowTime - lastCheckTime > pool.pingTime.inMilliseconds.toLong()) {
             if (isReadyForQuery()) {
                 try {
                     connection.createStatement().use { it.executeQuery("select 1").asyncClose() }
@@ -72,7 +72,7 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
                     return false
                 }
             }
-            lastCheckTime = Date.now
+            lastCheckTime = Date.nowTime
         }
         return true
     }

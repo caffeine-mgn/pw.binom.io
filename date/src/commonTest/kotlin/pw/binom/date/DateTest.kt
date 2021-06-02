@@ -7,7 +7,6 @@ import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.io.utf8Reader
 import pw.binom.workDirectory
-import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,7 +30,7 @@ class DateTest {
     @Test
     fun nowTest() {
         val except = now
-        val actual = Date.now
+        val actual = Date.nowTime
         assertTrue("except: [$except], actual: [$actual]") {
             (except - actual).absoluteValue < 10_000
         }
@@ -50,7 +49,6 @@ class DateTest {
                 timeZoneOffset = 0
         )
         assertEquals(600008400000L, date.time)
-        println("->${date.calendar().toString()}")
     }
 
     @Test
