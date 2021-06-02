@@ -60,13 +60,19 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
 
     private var acceptListener: Continuation<TcpClientSocketChannel>? = null
 
+    fun interruptAccepting(): Boolean {
+        val continuation = acceptListener ?: return false
+        continuation.resumeWithException(CancelledException())
+        acceptListener = null
+        return true
+    }
+
     suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection? {
         if (acceptListener != null) {
-            acceptListener?.resumeWith(Result.failure(CancelledException()))
-            acceptListener = null
+            throw IllegalStateException("Connection already have read listener")
         }
 
-        val newClient = channel.accept(null)
+        val newClient = channel.accept(address)
         if (newClient != null) {
             return dispatcher.attach(newClient)
         }

@@ -36,6 +36,13 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     private val readData = ReadData()
     private val sendData = SendData()
 
+    fun interruptReading(): Boolean {
+        val continuation = readData.continuation ?: return false
+        continuation.resumeWithException(CancelledException())
+        readData.reset()
+        return true
+    }
+
     private fun calcListenFlags() =
         when {
             readData.continuation != null && (sendData.continuation != null) -> Selector.INPUT_READY or Selector.OUTPUT_READY
@@ -189,8 +196,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
     override suspend fun read(dest: ByteBuffer): Int {
         if (readData.continuation != null) {
-            readData.continuation?.resumeWith(Result.failure(CancelledException()))
-            readData.continuation = null
+            throw IllegalStateException("Connection already have read listener")
         }
         if (dest.remaining == 0) {
             return 0

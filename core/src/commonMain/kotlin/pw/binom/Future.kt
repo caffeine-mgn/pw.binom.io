@@ -42,6 +42,10 @@ interface Future<T> {
     class FutureNotReadyException : IllegalStateException()
     class FutureAlreadyResumedException : IllegalStateException()
 }
+
+/**
+ * If [isFailure] will throw exception. Also returns result
+ */
 @Suppress("UNCHECKED_CAST")
 fun <T> Future<T>.getOrException(): T {
     if (isFailure) {
@@ -105,6 +109,7 @@ class NonFreezableFuture<T> : Future<T> {
         this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
     }
 }
+
 @Suppress("UNCHECKED_CAST")
 class FreezableFuture<T> : Future<T> {
 

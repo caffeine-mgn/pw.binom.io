@@ -8,9 +8,13 @@ import pw.binom.io.ClosedException
 import pw.binom.popOrNull
 import pw.binom.utils.TreeMap
 import kotlin.coroutines.*
+import kotlin.native.concurrent.SharedImmutable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
+
+@SharedImmutable
+private val CLOSE_MARKER: () -> Unit = {}.doFreeze()
 
 @OptIn(ExperimentalTime::class)
 class DeadlineTimer(val errorProcessing: ((Throwable) -> Unit)? = null) : Closeable {
@@ -25,13 +29,19 @@ class DeadlineTimer(val errorProcessing: ((Throwable) -> Unit)? = null) : Closea
         doFreeze()
         worker.execute(Unit) {
             val tasks = TreeMap<Duration, ArrayList<() -> Unit>>()
-            while (!closedFlag.value) {
+            MAIN_WORKER_LOOP@ while (!closedFlag.value) {
                 if (tasks.isEmpty() && queue.isEmpty) {
                     val e = queue.popBlocked()
+                    if (e.second === CLOSE_MARKER) {
+                        break
+                    }
                     tasks.getOrPut(e.first) { ArrayList() }.add(e.second)
                 } else {
                     while (!queue.isEmpty) {
                         val e = queue.popOrNull() ?: break
+                        if (e.second === CLOSE_MARKER) {
+                            break@MAIN_WORKER_LOOP
+                        }
                         tasks.getOrPut(e.first) { ArrayList() }.add(e.second)
                     }
                 }
@@ -69,6 +79,7 @@ class DeadlineTimer(val errorProcessing: ((Throwable) -> Unit)? = null) : Closea
                     }
                 }
             }
+            tasks.clear()
 
         }
     }
@@ -131,6 +142,7 @@ class DeadlineTimer(val errorProcessing: ((Throwable) -> Unit)? = null) : Closea
         lock.synchronize {
             condition.signal()
         }
+        queue.push((Duration.seconds(123) to CLOSE_MARKER).doFreeze())
         worker.requestTermination().joinAndGetOrThrow()
     }
 }

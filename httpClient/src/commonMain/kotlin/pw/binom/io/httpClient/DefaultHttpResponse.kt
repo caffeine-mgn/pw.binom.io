@@ -1,6 +1,8 @@
 package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
+import pw.binom.CancelledException
+import pw.binom.TimeoutException
 import pw.binom.net.URI
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
@@ -12,6 +14,8 @@ import pw.binom.io.bufferedReader
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 class DefaultHttpResponse(
     val URI: URI,
@@ -22,35 +26,52 @@ class DefaultHttpResponse(
     override val headers: Headers
 ) : HttpResponse {
     companion object {
+        @OptIn(ExperimentalTime::class)
         suspend fun read(
-            URI: URI,
+            uri: URI,
             client: HttpClient,
             keepAlive: Boolean,
             channel: AsyncAsciiChannel,
+            timeout: Duration?,
         ): HttpResponse {
-            val title = channel.reader.readln() ?: throw EOFException()
-            if (!title.startsWith("HTTP/1.1 ") && !title.startsWith("HTTP/1.0 ")) {
-                throw IOException("Unsupported HTTP version. Response: \"$title\"")
-            }
-            val responseCode = title.substring(9, 12).toInt()
-            val headers = HashHeaders()
-            while (true) {
-                val str = channel.reader.readln() ?: throw EOFException()
-                if (str.isEmpty()) {
-                    break
+            var headerReadFlag = false
+            if (timeout != null) {
+                client.networkDispatcher.async {
+                    client.deadlineTimer.delay(timeout)
+                    if (!headerReadFlag) {
+                        client.interruptAndClose(channel)
+                    }
                 }
-                val items = str.split(": ")
-                headers.add(key = items[0], value = items[1])
             }
+            try {
+                val title = channel.reader.readln() ?: throw EOFException()
+                if (!title.startsWith("HTTP/1.1 ") && !title.startsWith("HTTP/1.0 ")) {
+                    throw IOException("Unsupported HTTP version. Response: \"$title\"")
+                }
+                val responseCode = title.substring(9, 12).toInt()
+                val headers = HashHeaders()
+                while (true) {
+                    val str = channel.reader.readln() ?: throw EOFException()
+                    if (str.isEmpty()) {
+                        break
+                    }
+                    val items = str.split(": ")
+                    headers.add(key = items[0], value = items[1])
+                }
 
-            return DefaultHttpResponse(
-                URI = URI,
-                client = client,
-                keepAlive = keepAlive,
-                channel = channel,
-                responseCode = responseCode,
-                headers = headers,
-            )
+                return DefaultHttpResponse(
+                    URI = uri,
+                    client = client,
+                    keepAlive = keepAlive,
+                    channel = channel,
+                    responseCode = responseCode,
+                    headers = headers,
+                )
+            } catch (e: CancelledException) {
+                throw TimeoutException("Can't get headers from request to $uri")
+            } finally {
+                headerReadFlag = true
+            }
         }
     }
 
@@ -113,7 +134,7 @@ class DefaultHttpResponse(
         }
         try {
             if (headers.bodyExist) {
-                channel.asyncClose()
+                client.interruptAndClose(channel)
             } else {
                 client.recycleConnection(
                     URI = URI,

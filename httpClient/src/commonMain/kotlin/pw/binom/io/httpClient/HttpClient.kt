@@ -1,18 +1,23 @@
 package pw.binom.io.httpClient
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.concurrency.DeadlineTimer
 import pw.binom.net.URI
 import pw.binom.io.AsyncChannel
 import pw.binom.io.Closeable
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
+import pw.binom.io.socket.ssl.AsyncSSLChannel
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import pw.binom.network.TcpConnection
 import pw.binom.ssl.KeyManager
 import pw.binom.ssl.SSLContext
 import pw.binom.ssl.SSLMethod
 import pw.binom.ssl.TrustManager
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 class HttpClient(
     val networkDispatcher: NetworkDispatcher,
@@ -21,6 +26,7 @@ class HttpClient(
     trustManager: TrustManager = TrustManager.TRUST_ALL,
     val bufferSize: Int = DEFAULT_BUFFER_SIZE
 ) : Closeable {
+    internal val deadlineTimer = DeadlineTimer()
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
 
@@ -55,7 +61,21 @@ class HttpClient(
         return AsyncAsciiChannel(channel = channel, bufferSize = bufferSize)
     }
 
-    suspend fun request(method: HTTPMethod, uri: URI): HttpRequest {
+    internal suspend fun interruptAndClose(channel: AsyncAsciiChannel) {
+        var c = channel.channel
+        while (c !is TcpConnection) {
+            c = when (c) {
+                is TcpConnection -> c
+                is AsyncSSLChannel -> c.channel
+                else -> TODO()
+            }
+        }
+        c.interruptReading()
+        channel.asyncClose()
+    }
+
+    @OptIn(ExperimentalTime::class)
+    suspend fun request(method: HTTPMethod, uri: URI, timeout: Duration? = null): HttpRequest {
         val schema = uri.schema ?: throw IllegalArgumentException("URL \"$uri\" must contains protocol")
         if (schema != "http" && schema != "https" && schema != "ws" && schema != "wss") {
             throw IllegalArgumentException("Schema ${uri.schema} is not supported")
@@ -65,7 +85,8 @@ class HttpClient(
             uri = uri,
             client = this,
             channel = connect,
-            method = method
+            method = method,
+            timeout = timeout,
         )
     }
 
@@ -80,6 +101,7 @@ class HttpClient(
         }
 
     override fun close() {
+        deadlineTimer.close()
         sslContext.close()
     }
 }

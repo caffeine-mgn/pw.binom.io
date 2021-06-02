@@ -6,11 +6,43 @@ import pw.binom.io.http.Headers
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.toURI
+import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlin.test.fail
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.measureTime
 
 class TestAsyncHttpClient {
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun timeoutTest() {
+        val manager = NetworkDispatcher()
+        val client = HttpClient(manager)
+        manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", 34636))
+        val now = TimeSource.Monotonic.markNow()
+        val e = manager.async {
+            try {
+                client.request(HTTPMethod.GET, "http://127.0.0.1:34636".toURI(), Duration.seconds(3))
+                    .getResponse()
+                    .responseCode
+                fail()
+            } catch (e: TimeoutException) {
+                val time = now.elapsedNow()
+                println("Real timeout: $time")
+                assertTrue(time >= Duration.Companion.seconds(3) && time < Duration.Companion.seconds(4))
+            }
+        }
+        while (!e.isDone) {
+            manager.select(1000)
+        }
+        e.getOrException()
+        client.close()
+    }
 
     @Test
     @OptIn(ExperimentalTime::class)
@@ -34,9 +66,7 @@ class TestAsyncHttpClient {
         while (!e.isDone) {
             manager.select(1000)
         }
-        if (e.isFailure) {
-            throw e.exceptionOrNull!!
-        }
+        e.getOrException()
 
         client.close()
     }

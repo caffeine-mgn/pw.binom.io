@@ -7,15 +7,18 @@ import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
-import pw.binom.io.http.websocket.WebSocketClosedException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
-class DefaultHttpRequest(
+@OptIn(ExperimentalTime::class)
+class DefaultHttpRequest constructor(
     override var method: HTTPMethod,
     override val uri: URI,
     val client: HttpClient,
     val channel: AsyncAsciiChannel,
+    val timeout: Duration?,
 ) : HttpRequest {
     private var closed = false
     override val headers = HashHeaders()
@@ -68,6 +71,7 @@ class DefaultHttpRequest(
                         client = client,
                         keepAlive = keepAlive,
                         channel = channel,
+                        timeout = timeout,
                     )
                 }
                 else -> throw IOException("Unknown Transfer Encoding \"$encode\"")
@@ -81,7 +85,8 @@ class DefaultHttpRequest(
                 client = client,
                 keepAlive = keepAlive,
                 channel = channel,
-                contentLength = len
+                contentLength = len,
+                timeout = timeout,
             )
         }
         throw IllegalStateException("Unknown type of Transfer Encoding")
@@ -133,10 +138,11 @@ class DefaultHttpRequest(
         sendHeaders()
         channel.writer.flush()
         return DefaultHttpResponse.read(
-            URI = uri,
+            uri = uri,
             client = client,
             keepAlive = keepAlive,
             channel = channel,
+            timeout = timeout,
         )
     }
 

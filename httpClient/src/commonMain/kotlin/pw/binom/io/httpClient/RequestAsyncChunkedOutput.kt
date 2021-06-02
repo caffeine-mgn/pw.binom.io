@@ -4,12 +4,16 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.net.URI
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncChunkedOutput
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
-class RequestAsyncChunkedOutput(
+@OptIn(ExperimentalTime::class)
+class RequestAsyncChunkedOutput constructor(
     val URI: URI,
     val client: HttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
+    val timeout: Duration?,
     autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncHttpRequestOutput, AsyncChunkedOutput(
     stream = channel.writer,
@@ -21,10 +25,11 @@ class RequestAsyncChunkedOutput(
         checkClosed()
         super.asyncClose()
         return DefaultHttpResponse.read(
-            URI = URI,
+            uri = URI,
             client = client,
             keepAlive = keepAlive,
             channel = channel,
+            timeout = timeout,
         )
     }
 

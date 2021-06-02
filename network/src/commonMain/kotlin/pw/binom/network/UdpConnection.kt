@@ -100,10 +100,16 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         channel.close()
     }
 
+    fun interruptReading(): Boolean {
+        val continuation = readData.continuation ?: return false
+        continuation.resumeWithException(CancelledException())
+        readData.reset()
+        return true
+    }
+
     suspend fun read(dest: ByteBuffer, address: NetworkAddress.Mutable?): Int {
         if (readData.continuation != null) {
-            readData.continuation?.resumeWith(Result.failure(CancelledException()))
-            readData.continuation=null
+            throw IllegalStateException("Connection already have read listener")
         }
         if (dest.remaining == 0) {
             return 0

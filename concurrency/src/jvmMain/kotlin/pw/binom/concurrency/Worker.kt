@@ -3,11 +3,11 @@
 package pw.binom.concurrency
 
 import pw.binom.Future
+import pw.binom.NonFreezableFuture
 import pw.binom.async2
 import pw.binom.atomic.AtomicInt
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.Continuation
 import kotlin.time.ExperimentalTime
@@ -42,15 +42,14 @@ actual class Worker actual constructor(name: String?) : CrossThreadCoroutine, Ex
         return FutureWrapper(future)
     }
 
-    actual fun requestTermination(): Future<Unit> = execute(Unit) {
+    actual fun requestTermination(): Future<Unit> {
+        val future = NonFreezableFuture<Unit>()
         worker.submit {
             currentWorker.set(null)
+            future.resume(Result.success(Unit))
         }
-
         worker.shutdown()
-        while (!worker.isTerminated) {
-            worker.awaitTermination(1, TimeUnit.MINUTES)
-        }
+        return future
     }
 
     @get:JvmName("binomIsInterrupted")

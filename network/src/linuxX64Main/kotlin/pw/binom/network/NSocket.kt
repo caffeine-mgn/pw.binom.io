@@ -51,8 +51,9 @@ actual class NSocket(val native: Int) : Closeable {
                 rr
             }
         }
-        if (native == -1)
-            return null//throw IOException("Can't accept new client")
+        if (native == -1) {
+            return null
+        }
         return NSocket(native)
     }
 

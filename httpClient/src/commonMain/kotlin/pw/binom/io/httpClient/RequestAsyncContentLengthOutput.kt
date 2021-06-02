@@ -3,13 +3,17 @@ package pw.binom.io.httpClient
 import pw.binom.net.URI
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthOutput
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
-class RequestAsyncContentLengthOutput(
+@OptIn(ExperimentalTime::class)
+class RequestAsyncContentLengthOutput constructor(
     val URI: URI,
     val client: HttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
-    contentLength: ULong
+    contentLength: ULong,
+    val timeout: Duration?,
 ) : AsyncHttpRequestOutput, AsyncContentLengthOutput(
     stream = channel.writer,
     contentLength = contentLength,
@@ -22,10 +26,11 @@ class RequestAsyncContentLengthOutput(
         }
         super.asyncClose()
         return DefaultHttpResponse.read(
-            URI = URI,
+            uri = URI,
             client = client,
             keepAlive = keepAlive,
             channel = channel,
+            timeout = timeout,
         )
     }
 
