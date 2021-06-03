@@ -70,7 +70,6 @@ class DeadlineTimerTest {
     fun asyncDelayTest() {
         val nd = NetworkDispatcher()
         val deadlineTimer = DeadlineTimer()
-
         val future = nd.async {
             val now = TimeSource.Monotonic.markNow()
             val currentThread = ThreadRef()
@@ -83,5 +82,29 @@ class DeadlineTimerTest {
             nd.select(1000)
         }
         future.getOrException()
+    }
+
+    @Test
+    fun delayTest() {
+        val deadlineTimer = DeadlineTimer()
+        val nd = NetworkDispatcher()
+
+        val d1 = nd.async {
+            deadlineTimer.delay(Duration.seconds(1.1))
+        }
+        val d2 = nd.async {
+            deadlineTimer.delay(Duration.seconds(1.2))
+        }
+        val d3 = nd.async {
+            deadlineTimer.delay(Duration.seconds(1))
+        }
+
+        while (!d1.isDone || !d2.isDone || !d3.isDone) {
+            nd.select(100)
+        }
+        d1.joinAndGetOrThrow()
+        d2.joinAndGetOrThrow()
+        d3.joinAndGetOrThrow()
+        deadlineTimer.close()
     }
 }

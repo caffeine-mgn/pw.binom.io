@@ -55,12 +55,14 @@ class DeadlineTimer(val errorProcessing: ((Throwable) -> Unit)? = null) : Closea
                             errorProcessing?.invoke(e)
                         }
                     }
+                    continue
                 }
                 val signal =
                     lock.synchronize { condition.await(c.key - startTime.elapsedNow()) }
                 if (closedFlag.value) {
-                    return@execute
+                    break@MAIN_WORKER_LOOP
                 }
+
                 if (signal) {
                     continue
                     //wakeup by signal
