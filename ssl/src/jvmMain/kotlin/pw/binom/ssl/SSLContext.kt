@@ -1,7 +1,6 @@
 package pw.binom.ssl
 
 import pw.binom.io.Closeable
-//import pw.binom.io.socket.ssl.SSLServerSocketChannel
 import pw.binom.io.socket.ssl.SSLSession
 import java.security.SecureRandom
 import javax.net.ssl.SSLContext as JSSLContext
