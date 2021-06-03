@@ -1,89 +1,84 @@
 package pw.binom.io.httpServer
 
 import pw.binom.*
-import pw.binom.concurrency.*
-import pw.binom.io.http.Headers
-import pw.binom.io.httpClient.AsyncHttpClient
+import pw.binom.concurrency.DeadlineTimer
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.WorkerPool
+import pw.binom.concurrency.sleep
+import pw.binom.io.ByteArrayOutput
+import pw.binom.io.http.HTTPMethod
+import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.use
 import pw.binom.net.toURI
-import pw.binom.network.*
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
 import kotlin.random.Random
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
 class MultiThreading {
 
-    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() {
         val worker = WorkerPool(10)
         val nd = NetworkDispatcher()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
-        val data = Random.nextBytes(30)
-        val server = HttpServer3(nd, executor = worker, handler = Handler3Deprecated { req, resp ->
-            println("REQUEST ${req.contextUri}")
-            resp.enableCompress = true
+        val data = ByteArray(120) { it.toByte() }
+        val t = DeadlineTimer()
+        val server = HttpServer(nd, handler = Handler { r ->
+            val resp = r.response()
             resp.status = 200
-            val dataBuffer = ByteBuffer.wrap(data).clean().doFreeze()
-            resp.addHeader(Headers.CONTENT_LENGTH, dataBuffer.toString())
-            val completer = resp.complete().asReference()
-
-            println("--#1")
-            execute {
-                println("--#2")
-                Worker.sleep(1_000)
-                println("--#3")
-                network {
-                    println("--#4")
-                    val sent = completer.value.write(dataBuffer)
-                    completer.value.flush()
-                    println("--#5: sent $sent")
-                }
-                println("--#6")
-            }
-            println("--#7")
-            completer.close()
+            val dataBuffer = ByteBuffer.wrap(data).clean()
+//            resp.headers.contentLength = dataBuffer.remaining.toULong()
+            t.delay(Duration.seconds(1))
+            resp.writeBinary(dataBuffer)
         })
 
-        server.bindHTTP(NetworkAddress.Immutable("127.0.0.1", port))
+        server.bindHttp(NetworkAddress.Immutable("127.0.0.1", port))
 
         suspend fun makeCall(name: String) {
-            val client = AsyncHttpClient(nd)
-            try {
-                println("Try make request $name...")
-                client.request(
-                    method = "GET",
-                    URI = "http://127.0.0.1:$port/$name".toURI()!!
-                ).response().use { response ->
-                    println("$name reading...")
-                    val buf = ByteBuffer.alloc(60).clean()
-                    println("$name ok->1")
-                    assertEquals(data.size, response.read(buf))
-                    println("$name ok->2")
-                    buf.flip()
-                    println("$name ok->2")
-                    val dataFromServer = buf.toByteArray()
-                    println("$name ok->3")
-                    data.forEachIndexed { index, byte ->
-                        assertEquals(byte, dataFromServer[index])
+            HttpClient(nd).use { client ->
+                try {
+                    println("Try make request $name...")
+                    client.request(
+                        method = HTTPMethod.GET,
+                        uri = "http://127.0.0.1:$port/$name".toURI(),
+                    ).getResponse().use { response ->
+                        println("$name reading...${response.responseCode}  ${response.headers.contentLength}")
+                        println("$name ok->1")
+                        val oo = ByteArrayOutput()
+                        response.readData().use { it.copyTo(oo) }
+                        val buf = oo.data
+                        buf.flip()
+                        if (data.size != buf.remaining) {
+                            println("Invalid body")
+                            buf.forEachIndexed { index, value ->
+                                println("$index -> $value = ${data[index] == value}")
+                            }
+                        }
+                        assertEquals(data.size, buf.remaining)
+                        println("$name ok->2")
+
+                        println("$name ok->2")
+                        val dataFromServer = buf.toByteArray()
+                        println("$name ok->3")
+                        data.forEachIndexed { index, byte ->
+                            assertEquals(byte, dataFromServer[index])
+                        }
+                        println("$name ok->4")
+                        println("$name ok!")
                     }
-                    println("$name ok->4")
-                    println("$name ok!")
+                } catch (e: Throwable) {
+                    println("Errpr on $name")
+                    e.printStackTrace()
+                    throw e
                 }
-            } catch (e: Throwable) {
-                println("Errpr on $name")
-                e.printStackTrace()
-                throw e
-            } finally {
-                println("try close $name")
-                client.close()
-                println("connection $name closed")
             }
         }
 
@@ -95,7 +90,7 @@ class MultiThreading {
                     val callTime1 = measureTime { makeCall("inOrder-1") }
                     println("prepare inOrder-2")
                     val callTime2 = measureTime { makeCall("inOrder-2") }
-                    assertTrue(callTime1 > 0.1.seconds && callTime1 < 2.0.seconds)
+                    assertTrue("callTime1=$callTime1") { callTime1 > 0.1.seconds && callTime1 < 2.0.seconds }
                     assertTrue(callTime2 > 0.1.seconds && callTime2 < 2.0.seconds)
                 }
                 println("inOrder done!")
@@ -107,9 +102,9 @@ class MultiThreading {
             }
         }
 //        val inParallel=Future2.success(Future2.success(1.0.seconds))
-        val inParallel = nd.async(worker) {
-            val callTime1 = nd.async(worker) { makeCall("inParallel-1") }
-            val callTime2 = nd.async(worker) { makeCall("inParallel-2") }
+        val inParallel = nd.async {
+            val callTime1 = nd.async { makeCall("inParallel-1") }
+            val callTime2 = nd.async { makeCall("inParallel-2") }
             val totalTime = worker.submit {
                 measureTime {
                     callTime1.join()

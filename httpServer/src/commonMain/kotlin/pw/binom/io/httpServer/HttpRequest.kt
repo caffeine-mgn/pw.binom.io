@@ -52,6 +52,7 @@ interface HttpResponse : AsyncCloseable {
     suspend fun writeBinary(data: ByteBuffer) {
         writeBinary().use {
             it.write(data)
+            it.flush()
         }
     }
 
@@ -65,6 +66,7 @@ interface HttpResponse : AsyncCloseable {
     suspend fun writeText(text: String) {
         writeText().use {
             it.append(text)
+            it.flush()
         }
     }
 }
