@@ -3,7 +3,6 @@ package pw.binom.network
 import kotlinx.cinterop.*
 import platform.linux.*
 import platform.windows.HANDLE
-import kotlin.native.concurrent.freeze
 
 class MingwSelector : AbstractSelector() {
 
@@ -115,7 +114,7 @@ fun modeToString(mode: UInt): String {
     val sb = StringBuilder()
     if (mode and EPOLLIN != 0u)
         sb.append("EPOLLIN ")
-    if (mode and EPOLLIN != 0u)
+    if (mode and EPOLLPRI != 0u)
         sb.append("EPOLLPRI ")
 
     if (mode and EPOLLOUT != 0u)

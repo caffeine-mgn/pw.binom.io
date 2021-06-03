@@ -10,8 +10,10 @@ interface Input : Closeable {
     fun read(dest: ByteBuffer): Int
     fun readFully(dest: ByteBuffer): Int {
         val length = dest.remaining
-        while (dest.remaining > 0) {
-            read(dest)
+        while (dest.remaining > 0 && dest.remaining > 0) {
+            if (read(dest) == 0) {
+                throw EOFException()
+            }
         }
         return length
     }
@@ -145,23 +147,15 @@ fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Long {
     }
 }
 
-fun Input.copyTo(output: Output, bufferSize: Int= DEFAULT_BUFFER_SIZE): Long {
-    val buffer = ByteBuffer.alloc(bufferSize)
-    return try {
+fun Input.copyTo(output: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
+    ByteBuffer.alloc(bufferSize) { buffer ->
         copyTo(output, buffer)
-    } finally {
-        buffer.close()
     }
-}
 
-suspend fun Input.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {
-    val buffer = ByteBuffer.alloc(bufferSize)
-    return try {
+suspend fun Input.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
+    ByteBuffer.alloc(bufferSize) { buffer ->
         copyTo(output, buffer)
-    } finally {
-        buffer.close()
     }
-}
 
 suspend fun Input.copyTo(output: AsyncOutput, buffer: ByteBuffer): Long {
     var totalLength = 0L

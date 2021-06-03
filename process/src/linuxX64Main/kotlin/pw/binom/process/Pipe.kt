@@ -5,7 +5,7 @@ import platform.posix.malloc
 import platform.posix.pipe
 
 abstract class Pipe {
-    private val fds = malloc((sizeOf<IntVar>() * 2).convert())!!.reinterpret<IntVar>()!!
+    private val fds = nativeHeap.allocArray<IntVar>(2)//((sizeOf<IntVar>() * 2).convert())!!.reinterpret<IntVar>()!!
     val read: Int
         get() = fds[0]
 
@@ -17,6 +17,6 @@ abstract class Pipe {
     }
 
     fun free() {
-        platform.posix.free(fds)
+        nativeHeap.free(fds)
     }
 }

@@ -1,65 +1,72 @@
 package pw.binom.io.httpClient
 
 import pw.binom.*
+import pw.binom.io.http.HTTPMethod
+import pw.binom.io.http.Headers
+import pw.binom.io.readText
 import pw.binom.io.use
+import pw.binom.net.toURI
+import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
-import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 import kotlin.time.measureTime
 
 class TestAsyncHttpClient {
 
-    val tm = ByteBuffer.alloc(1024 * 1024 * 2)
-
-    suspend fun AsyncInput.skipAll() {
-        while (true) {
-            tm.clear()
-            if (this.read(tm) == 0) {
-                break
-            }
-            tm.flip()
-        }
-    }
-
-    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
-    fun test() {
-//        File("path to file").channel(AccessType.READ).utf8Reader().use {
-//            while (true){
-//                val line = it.readln()?:break
-//                line.splitToSequence(',').forEachIndexed { index, s ->
-//                    if (index>1)
-//                        print("\t")
-//                    print(s)
-//                }
-//                println()
-//            }
-//        }
+    fun timeoutTest() {
         val manager = NetworkDispatcher()
-        val client = AsyncHttpClient(manager)
-        var done = false
-
-        async {
+        val client = HttpClient(manager)
+        manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", 34636))
+        val now = TimeSource.Monotonic.markNow()
+        val e = manager.async {
             try {
-                repeat(3) {
-                    client
-                            .request("GET", URL("https://www.ntv.ru/"))
-                            .response().use {
-                                it.skipAll()
-                            }
-                }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            } finally {
-                done = true
+                client.request(HTTPMethod.GET, "http://127.0.0.1:34636".toURI(), Duration.seconds(3))
+                    .getResponse()
+                    .responseCode
+                fail()
+            } catch (e: TimeoutException) {
+                val time = now.elapsedNow()
+                println("Real timeout: $time")
+                assertTrue(time >= Duration.Companion.seconds(3) && time < Duration.Companion.seconds(4))
             }
         }
-        while (!done) {
+        while (!e.isDone) {
             manager.select(1000)
         }
+        e.getOrException()
+        client.close()
+    }
+
+    @Test
+    @OptIn(ExperimentalTime::class)
+    fun test() {
+        val manager = NetworkDispatcher()
+        val client = HttpClient(manager)
+
+        val e = async2 {
+
+            repeat(3) {
+                val responseData = client
+                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURI())
+                    .getResponse().also {
+                        println("headers:${it.headers}")
+                    }
+                    .readData().use {
+                        it.skipAll()
+                    }
+            }
+        }
+        while (!e.isDone) {
+            manager.select(1000)
+        }
+        e.getOrException()
 
         client.close()
     }

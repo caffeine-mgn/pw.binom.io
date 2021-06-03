@@ -29,13 +29,13 @@ interface AsyncReader : AsyncCloseable {
 }
 
 abstract class AbstractAsyncReader : AsyncReader {
-    override suspend fun read(data: CharArray, offset: Int, length: Int): Int {
-        if (offset + length > data.size)
+    override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
+        if (offset + length > dest.size)
             throw IndexOutOfBoundsException()
         var i = 0
         while (i < length) {
             try {
-                data[offset + i++] = readChar() ?: break
+                dest[offset + i++] = readChar() ?: break
             } catch (e: EOFException) {
                 return i
             }

@@ -1,12 +1,12 @@
 package pw.binom.ssl
 
-import org.bouncycastle.jcajce.provider.asymmetric.dh.KeyPairGeneratorSpi
 import pw.binom.io.Closeable
+import java.security.KeyPairGenerator
 
 actual object KeyGenerator {
 
     actual fun generate(algorithm: KeyAlgorithm, keySize: Int): KeyPair {
-        val keyPairGenerator = KeyPairGeneratorSpi.getInstance(algorithm.str)
+        val keyPairGenerator = KeyPairGenerator.getInstance(algorithm.str)
         keyPairGenerator.initialize(keySize)
         return KeyPair(algorithm, keyPairGenerator.generateKeyPair())
     }

@@ -1,6 +1,7 @@
 package pw.binom.ssl
 
 import pw.binom.ByteBuffer
+import pw.binom.alloc
 import pw.binom.base64.Base64EncodeOutput
 import pw.binom.writeByte
 
@@ -8,35 +9,34 @@ class PemWriter(val appendable: Appendable) {
     fun write(type: String, data: ByteArray) {
         val ap = object : Appendable {
             var lineCount = 0
-            override fun append(c: Char): Appendable {
+            override fun append(value: Char): Appendable {
                 if (lineCount >= 64) {
                     appendable.append("\n")
                     lineCount = 0
                 }
                 lineCount++
-                appendable.append(c)
+                appendable.append(value)
                 return this
             }
 
-            override fun append(csq: CharSequence?): Appendable {
-                csq?.forEach {
+            override fun append(value: CharSequence?): Appendable {
+                value?.forEach {
                     append(it)
                 }
                 return this
             }
 
-            override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
-                csq ?: return this
-                for (i in start..end) {
-                    append(csq[i])
+            override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): Appendable {
+                value ?: return this
+                for (i in startIndex..endIndex) {
+                    append(value[i])
                 }
                 return this
             }
 
         }
         val o = Base64EncodeOutput(ap)
-        val buf = ByteBuffer.alloc(1)
-        try {
+        ByteBuffer.alloc(1) { buf ->
             appendable.append("-----BEGIN ").append(type).append("-----\n")
             data.forEach {
                 o.writeByte(buf, it)
@@ -46,8 +46,6 @@ class PemWriter(val appendable: Appendable) {
             if (ap.lineCount > 0)
                 appendable.append("\n")
             appendable.append("-----END $type-----\n")
-        } finally {
-            buf.close()
         }
     }
 }

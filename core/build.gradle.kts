@@ -9,7 +9,13 @@ apply {
 }
 
 kotlin {
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+//                jvmTarget = "11"
+            }
+        }
+    }
 
     linuxX64 { // Use your target instead.
         binaries {
@@ -183,29 +189,20 @@ kotlin {
     }
 }
 
-fun makeTime() {
+fun makeTimeFile() {
     val dateDir = file("$buildDir/tmp-date")
     dateDir.mkdirs()
     val tzFile = file("$dateDir/currentTZ")
     tzFile.delete()
     tzFile.writeText((TimeZone.getDefault().rawOffset / 1000 / 60).toString())
-    println("File $tzFile created")
 }
 
 tasks {
-    this["mingwX64Test"].doFirst {
-        makeTime()
-    }
-
-    this["jvmTest"].doFirst {
-        makeTime()
-    }
-
-    this["linuxX64Test"].doFirst {
-        makeTime()
-    }
-    this["macosX64Test"].doFirst {
-        println("!!!")
-        makeTime()
+    withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest::class).forEach {
+        it.doFirst {
+            makeTimeFile()
+        }
     }
 }
+
+apply<pw.binom.plugins.DocsPlugin>()

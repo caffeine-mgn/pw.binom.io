@@ -25,11 +25,11 @@ internal fun String.toDnsString(): CharArray {
 internal fun CharArray.fromDns(): String {
     val name = this
     var i = 0
-    var p = ' '
+    var p:Char
 
     while (i < name.size) {
         p = name[i]
-        val c = p.toInt() and 0xFF
+        val c = p.code and 0xFF
         if (c <= size) {
             for (j in 0 until c) {
                 name[i] = name[i + 1]
@@ -74,7 +74,7 @@ fun ByteBuffer.readDns(): CharArray {
         throw RuntimeException("Can't find end of dns name")
     }
     val out = CharArray(endIndex - position) {
-        get().toChar()
+        get().toInt().toChar()
     }
     check(get() == 0.toByte())
     return out
@@ -82,7 +82,7 @@ fun ByteBuffer.readDns(): CharArray {
 
 fun ByteBuffer.writeDns(text: CharArray) {
     text.forEach {
-        put(it.toByte())
+        put(it.code.toByte())
     }
     put(0.toByte())
 }

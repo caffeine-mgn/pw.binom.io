@@ -1,4 +1,4 @@
-# Binom JSON
+# Binom DB
 Kotlin Library for use DataBase Access
 
 ## Using

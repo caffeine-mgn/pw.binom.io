@@ -1,12 +1,12 @@
 # Binom IO
 
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.4.31](https://img.shields.io/badge/Kotlin-1.4.31-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)<br><br>
+[![Kotlin 1.5.10](https://img.shields.io/badge/Kotlin-1.5.10-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org) <br><br>
 Kotlin IO Library.<br>
 
 ## Actual version
 
-Actual version is `0.1.28`
+Actual version is `0.1.29`
 
 ## Parts of library
 
@@ -94,6 +94,7 @@ buildscript {
   and [JsonReader](json/src/commonMain/kotlin/pw/binom/json/JsonReader.kt)
 - [ ] JsonB Tools
 - [x] [ObjectPool](core/src/commonMain/kotlin/pw/binom/pool/DefaultPool.kt)
+- [x] [Date](date)
 - [x] XML Tools<br>
 - [x] Charset Support See SAX Tools:
   [XmlVisiter](xml/src/commonMain/kotlin/pw/binom/xml/sax/XmlVisiter.kt),
@@ -114,7 +115,7 @@ buildscript {
 - [x] Basic Support Http Server<br>
   See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer.kt)
 - [x] Basic Support Http Client<br>
-  See [AsyncHttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/AsyncHttpClient.kt)
+  See [HttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/HttpClient.kt)
 - [x] HTTP Server: WebSocket Support
 - [x] HTTPS Server Support
 - [x] HTTPS Client Support
@@ -132,13 +133,21 @@ buildscript {
 - [x] [PostgreSQL Connector](db/postgresql-async)
 
 ## Community
-
 [Telegram](https://t.me/io_binom) <br>
 [Discord](https://discord.gg/HFYABPa)
 
+## Author and Founder
+Anton Subochev [Telegram](https://t.me/Caffeine_mgn), [Facebook](https://www.facebook.com/caffeine.mgn), [Github](https://github.com/caffeine-mgn)
+
 ## Examples
 
-Examples [here](examples)
+You can find examples [here](examples)
+
+## Contribution Guidelines:
+- **CodeStyle:**
+We enforce the code style to match the official Kotlin [coding conventions](https://kotlinlang.org/docs/reference/coding-conventions.html). Read there on how to set those up for your IDE.
+- **Branching:**
+I use branching like described in `git-flow`.
 
 ## Using Library in Projects:
 

@@ -1,6 +1,9 @@
 package pw.binom
 
-inline class BytesBitArray(val data: ByteArray) {
+import kotlin.jvm.JvmInline
+
+@JvmInline
+value class BytesBitArray(val data: ByteArray) {
     operator fun get(index: Int): Boolean {
         val value = data[index / Byte.SIZE_BITS].toInt() and 0xFF
         return (value ushr (index % Byte.SIZE_BITS)) == 1

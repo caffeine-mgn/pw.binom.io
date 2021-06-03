@@ -3,19 +3,20 @@ package pw.binom.compression.zlib
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.io.CRC32
+import pw.binom.io.use
 
 class AsyncGZIPOutput(
-        stream: AsyncOutput,
-        level: Int,
-        bufferSize: Int = 512,
-        closeStream: Boolean = false
+    stream: AsyncOutput,
+    level: Int,
+    bufferSize: Int = 512,
+    closeStream: Boolean = false
 ) : AsyncDeflaterOutput(
-        stream = stream,
-        bufferSize = bufferSize,
-        level = level,
-        wrap = false,
-        syncFlush = false,
-        closeStream = closeStream
+    stream = stream,
+    bufferSize = bufferSize,
+    level = level,
+    wrap = false,
+    syncFlush = false,
+    closeStream = closeStream
 ) {
     private val crc = CRC32()
 
@@ -42,10 +43,21 @@ class AsyncGZIPOutput(
     override suspend fun finish() {
         writeHeader()
         super.finish()
-        val trailer = ByteBuffer.alloc(TRAILER_SIZE)
-        writeTrailer(trailer)
-        trailer.flip()
-        stream.write(trailer)
+
+        suspend fun write(buf: ByteBuffer) {
+            writeTrailer(buf)
+            buf.flip()
+            stream.write(buf)
+        }
+
+        if (buf.remaining > TRAILER_SIZE) {
+            buf.clear()
+            write(buf)
+        } else {
+            ByteBuffer.alloc(TRAILER_SIZE).use { trailer ->
+                write(trailer)
+            }
+        }
     }
 
     private fun writeTrailer(buf: ByteBuffer) {

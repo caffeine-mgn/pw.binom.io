@@ -2,7 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
-import pw.binom.URL
+import pw.binom.net.URI
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
 import pw.binom.io.IOException
@@ -11,22 +11,23 @@ import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.io.http.AsyncHttpInput
 import pw.binom.io.http.Headers
 
+@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 internal class UrlResponseImpl(
-        override val responseCode: Int,
-        override val headers: Map<String, List<String>>,
-        val url: URL,
-        val channel: AsyncHttpClient.Connection,
-        val input: AsyncInput,
-        val client: AsyncHttpClient
+    override val responseCode: Int,
+    override val headers: Map<String, List<String>>,
+    val URI: URI,
+    val channel: AsyncHttpClient.Connection,
+    val input: AsyncInput,
+    val client: AsyncHttpClient
 ) : AsyncHttpClient.UrlResponse {
 
-    private var keepAlive = headers[Headers.CONNECTION]?.singleOrNull()?.toLowerCase() == Headers.KEEP_ALIVE.toLowerCase()
+    private var keepAlive = headers[Headers.CONNECTION]?.singleOrNull()?.lowercase() == Headers.KEEP_ALIVE.lowercase()
 
     private val httpStream: AsyncHttpInput = run {
         if (headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED) {
             return@run AsyncChunkedInput(
                     input,
-                    autoCloseStream = false
+                    closeStream = false
             )
         }
 
@@ -40,7 +41,7 @@ internal class UrlResponseImpl(
         return@run ClosableAsyncInput(input)
     }
     private val stream = run {
-        val contentEncode = headers[Headers.CONTENT_ENCODING]?.lastOrNull()?.toLowerCase()
+        val contentEncode = headers[Headers.CONTENT_ENCODING]?.lastOrNull()?.lowercase()
 
         when (contentEncode) {
             "gzip" -> AsyncGZIPInput(httpStream, closeStream = true)
@@ -63,7 +64,7 @@ internal class UrlResponseImpl(
             channel.asyncClose()
         } else {
             if (keepAlive) {
-                client.recycleConnection(url, channel)
+                client.recycleConnection(URI, channel)
             } else {
                 stream.asyncClose()
                 channel.asyncClose()

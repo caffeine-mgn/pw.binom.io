@@ -14,38 +14,22 @@ import pw.binom.io.UTF8
  * @param closeStream flag for auto close [stream] when this stream will close
  */
 open class AsyncChunkedOutput(
-        val stream: AsyncOutput,
-        private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
-        val closeStream: Boolean = false
+    val stream: AsyncOutput,
+    private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
+    val closeStream: Boolean = false
 ) : AsyncOutput {
     private var closed = false
     private var finished = false
-    val buffer = ByteBuffer.alloc(autoFlushBuffer)
-//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        checkClosed()
-//        var l = length
-//        var o = offset
-//        while (l > 0) {
-//            if (bufferPos == buffer.size) {
-//                flush()
-//            }
-//            val r = minOf(l, (buffer.size - bufferPos))
-//            data.writeTo(o, buffer, bufferPos, r)
-//            l -= r
-//            o += r
-//            bufferPos += r
-//        }
-//        return length
-//    }
+    private val buffer = ByteBuffer.alloc(autoFlushBuffer)
 
     private val tmp = ByteBuffer.alloc(50)
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
         val len = data.remaining
         while (true) {
-            if (data.remaining==0)
+            if (data.remaining == 0)
                 break
-            if (buffer.remaining==0) {
+            if (buffer.remaining == 0) {
                 buffer.flip()
                 sendBuffer()
             }
@@ -54,7 +38,7 @@ open class AsyncChunkedOutput(
         return len
     }
 
-    private suspend fun sendBuffer(){
+    private suspend fun sendBuffer() {
         tmp.clear()
         UTF8.unicodeToUtf8((buffer.remaining).toString(16), tmp)
         tmp.put(CR)
@@ -66,8 +50,7 @@ open class AsyncChunkedOutput(
         tmp.put(CR)
         tmp.put(LF)
         tmp.flip()
-//        tmp.reset(1,2)
-        val bb = stream.write(tmp)
+        stream.write(tmp)
         stream.flush()
         buffer.clear()
     }
@@ -86,7 +69,7 @@ open class AsyncChunkedOutput(
             return
         flush()
         tmp.clear()
-        tmp.put('0'.toByte())
+        tmp.put('0'.code.toByte())
         tmp.put(CR)
         tmp.put(LF)
         tmp.put(CR)
@@ -99,11 +82,19 @@ open class AsyncChunkedOutput(
     }
 
     override suspend fun asyncClose() {
-        finish()
-        closed = true
-        tmp.close()
-        if (closeStream) {
-            stream.asyncClose()
+        checkClosed()
+        if (finished) {
+            throw IllegalStateException("Stream already finished")
+        }
+        try {
+            finish()
+            closed = true
+            if (closeStream) {
+                stream.asyncClose()
+            }
+        } finally {
+            tmp.close()
+            buffer.close()
         }
     }
 

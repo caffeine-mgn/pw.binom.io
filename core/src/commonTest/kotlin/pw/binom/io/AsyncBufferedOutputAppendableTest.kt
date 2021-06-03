@@ -20,6 +20,7 @@ class AsyncBufferedOutputAppendableTest {
                 writer.append(txt)
                 writer.append("\r")
                 writer.flush()
+                println("Result: ${out1.toByteArray().decodeToString()}")
                 out1.data.flip()
                 val arr = txt.toCharArray()
                 assertEquals(arr.size * 2+1, out1.data.remaining)

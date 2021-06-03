@@ -4,6 +4,7 @@ package pw.binom
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.jvm.JvmName
+import kotlin.native.concurrent.SharedImmutable
 import kotlin.random.Random
 
 class UUID(val mostSigBits: Long, val leastSigBits: Long) {
@@ -94,6 +95,11 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
         return output
     }
 
+    fun dump(dest:ByteBuffer){
+        mostSigBits.dump(dest)
+        leastSigBits.dump(dest)
+    }
+
     override fun toString(): String {
         val lsb = leastSigBits
         val msb = mostSigBits
@@ -131,6 +137,7 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
     }
 }
 
+@SharedImmutable
 private val digits = charArrayOf(
         '0', '1', '2', '3', '4', '5',
         '6', '7', '8', '9', 'a', 'b',
@@ -143,17 +150,17 @@ private fun Long.Companion.formatUnsignedLong0(value: Long, shift: Int, buf: Cha
     var charPos = offset + len
     val radix = 1 shl shift
     val mask = radix - 1
-    var value = value
+    var value2 = value
     do {
-        buf[--charPos] = (digits[(value.toInt()) and mask]).toByte().toChar()
-        value = value ushr shift
+        buf[--charPos] = (digits[(value2.toInt()) and mask])
+        value2 = value2 ushr shift
     } while (charPos > offset)
 }
 
 private fun String.toLong(beginIndex: Int, endIndex: Int, radix: Int) =
     substring(beginIndex, endIndex).toLong(radix)
 
-inline fun Random.uuid() = UUID.random()
+inline fun Random.nextUuid() = UUID.random()
 
 fun String.toUUID() = UUID.fromString(this)
 fun String.toUUIDOrNull() = try {

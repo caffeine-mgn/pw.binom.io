@@ -1,9 +1,11 @@
 package pw.binom.db.tarantool
 
 import pw.binom.db.tarantool.protocol.Key
+import kotlin.jvm.JvmInline
 
 
-inline class Row(val values: List<Any?>) : Iterable<Any?> {
+@JvmInline
+value class Row(val values: List<Any?>) : Iterable<Any?> {
     override fun toString(): String = "Row $values"
     operator fun get(index: Int): Any? {
         if (index < 0 || index >= values.size) {
@@ -18,7 +20,8 @@ inline class Row(val values: List<Any?>) : Iterable<Any?> {
     override fun iterator(): Iterator<Any?> = values.iterator()
 }
 
-inline class Column(private val column: Map<Int, Any>) {
+@JvmInline
+value class Column(private val column: Map<Int, Any>) {
     val name
         get() = column[0]!! as String
     val type
@@ -27,7 +30,8 @@ inline class Column(private val column: Map<Int, Any>) {
     override fun toString(): String = "Column(name: [$name], type: [$type])"
 }
 
-inline class ResultSet constructor(val body: Map<Int, Any?>) : Iterable<Row> {
+@JvmInline
+value class ResultSet constructor(val body: Map<Int, Any?>) : Iterable<Row> {
     private inline val data
         get() = body[Key.DATA.id] as List<List<Any?>>
     private inline val meta
@@ -38,6 +42,15 @@ inline class ResultSet constructor(val body: Map<Int, Any?>) : Iterable<Row> {
     override fun toString(): String = "ResultSet(size: [${data.size}])"
     val size
         get() = data.size
+    val columnNames: List<String>?
+        get() {
+            val meta = meta ?: return null
+            val list = ArrayList<String>(columnSize)
+            repeat(columnSize) {
+                list += meta[it][0] as String
+            }
+            return list
+        }
 
     fun getColumn(index: Int): Column {
         val meta = meta ?: throw IllegalArgumentException("Meta not exist")

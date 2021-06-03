@@ -7,7 +7,13 @@ apply {
 }
 
 kotlin {
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+//                jvmTarget = "11"
+            }
+        }
+    }
 
     linuxX64 { // Use your target instead.
         binaries {
@@ -50,6 +56,7 @@ kotlin {
             dependencies {
                 api(project(":core"))
                 api(project(":date"))
+                api(project(":concurrency"))
             }
         }
 
@@ -116,3 +123,4 @@ kotlin {
         }
     }
 }
+apply<pw.binom.plugins.DocsPlugin>()

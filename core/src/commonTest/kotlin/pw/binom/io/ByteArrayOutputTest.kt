@@ -10,8 +10,8 @@ class ByteArrayOutputTest {
     @Test
     fun reallocBigPartTest() {
         val out = ByteArrayOutput(
-                capacity = 512,
-                capacityFactor = 1.7f
+            capacity = 512,
+            capacityFactor = 1.7f
         )
 
         val pp = ByteBuffer.alloc(1024)
@@ -21,26 +21,38 @@ class ByteArrayOutputTest {
 
         assertEquals(1024, out.data.capacity)
         assertEquals(0, out.data.remaining)
+
         out.data.clear()
-        out.data.forEachIndexed { i, byte ->
-            assertEquals(pp[i], byte)
+        println("-->out.data=${out.data.hashCode()}")
+        println("-->${out.data[0]}")
+        var kk = out.data
+        System.gc()
+        for (i in kk.position until kk.limit) {
+            println("1->$i   ${kk.hashCode()}")
         }
-        out.trimToSize()
-        out.data.clear()
         out.data.forEachIndexed { i, byte ->
-            assertEquals(pp[i], byte)
+            println("2->$i   ${out.data.hashCode()}")
+//            println("->$byte")
+//            assertEquals(pp[i], byte)
         }
+        println("Test done! $out $kk")
+//        out.trimToSize()
+//        out.data.clear()
+//        println("--->${out.data[0]}")
+//        out.data.forEachIndexed { i, byte ->
+//            assertEquals(pp[i], byte)
+//        }
     }
 
     @Test
     fun reallocShortPartTest() {
         val out = ByteArrayOutput(
-                capacity = 10,
-                capacityFactor = 1.7f
+            capacity = 10,
+            capacityFactor = 1.7f
         )
         val tmp = ByteBuffer.alloc(1)
         val pp = ByteBuffer.alloc(50)
-        repeat(pp.capacity){
+        repeat(pp.capacity) {
             pp.put(it.toByte())
         }
         pp.clear()

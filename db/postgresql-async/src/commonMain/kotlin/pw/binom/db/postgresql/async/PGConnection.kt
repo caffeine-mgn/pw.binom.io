@@ -2,14 +2,16 @@ package pw.binom.db.postgresql.async
 
 import pw.binom.*
 import pw.binom.charset.Charset
+import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
 import pw.binom.db.*
+import pw.binom.db.async.AsyncConnection
+import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
-import pw.binom.io.BufferedOutputAppendable
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.IOException
+import pw.binom.db.postgresql.async.messages.frontend.Terminate
+import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
@@ -47,6 +49,7 @@ class PGConnection private constructor(
                     "database" to dataBase,
                     "client_encoding" to charset.name,
                     "DateStyle" to "ISO",
+                    "TimeZone" to "GMT",
 //                    "extra_float_digits" to "2"
                 )
             )
@@ -74,11 +77,17 @@ class PGConnection private constructor(
         }
     }
 
-    private val pw = PackageWriter(charset, ByteBufferPool(10))
-
+    private val packageWriter = PackageWriter(this)
+    internal val charsetUtils = CharsetCoder(charset)
     private var connected = true
     override val isConnected
         get() = connected
+    private val packageReader = connection.bufferedAsciiReader(closeParent = false)
+    internal val reader = PackageReader(this, charset, packageReader)
+    private var credentialMessage = CredentialMessage()
+    override val type: String
+        get() = TYPE
+
 
     suspend fun sendQuery(query: String): KindedMessage {
         if (busy)
@@ -89,7 +98,6 @@ class PGConnection private constructor(
     }
 
     suspend fun query(query: String): QueryResponse {
-//        val msg = sendQuery(query)
         if (busy)
             throw IllegalStateException("Connection is busy")
         val msg = this.reader.queryMessage
@@ -97,8 +105,7 @@ class PGConnection private constructor(
         sendOnly(msg)
         var rowsAffected = 0L
         LOOP@ while (true) {
-            val msg = readDesponse()
-            when (msg) {
+            when (val msg = readDesponse()) {
                 is ReadyForQueryMessage -> {
                     return QueryResponse.Status(
                         status = "",
@@ -121,14 +128,17 @@ class PGConnection private constructor(
                 is NoticeMessage -> {
                     continue@LOOP
                 }
+                is NoDataMessage -> {
+                    continue@LOOP
+                }
                 else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg]")
             }
         }
     }
 
     internal suspend fun sendOnly(msg: KindedMessage) {
-        msg.write(pw)
-        pw.finishAsync(connection)
+        msg.write(packageWriter)
+        packageWriter.finishAsync(connection)
         connection.flush()
     }
 
@@ -142,8 +152,6 @@ class PGConnection private constructor(
         }
     }
 
-    internal val reader = PackageReader(this, charset, connection)
-    private var credentialMessage = CredentialMessage()
 
     suspend fun readDesponse(): KindedMessage {
         val msg = KindedMessage.read(reader)
@@ -151,35 +159,36 @@ class PGConnection private constructor(
     }
 
     private suspend fun request(msg: KindedMessage): KindedMessage {
-        msg.write(pw)
-        pw.finishAsync(connection)
+        msg.write(packageWriter)
+        packageWriter.finishAsync(connection)
         return readDesponse()
     }
 
     private suspend fun sendFirstMessage(properties: Map<String, String>) {
-        val o = ByteArrayOutput()
-        val pool = ByteBufferPool(10)
-        val buf = ByteBuffer.alloc(8)
-        o.writeInt(buf, 0)
-        o.writeShort(buf, 3)
-        o.writeShort(buf, 0)
-        val appender = BufferedOutputAppendable(Charsets.UTF8, o, pool)
-        properties.forEach {
-            appender.append(it.key)
-            appender.flush()
-            o.writeByte(buf, 0)
-            appender.append(it.value)
-            appender.flush()
-            o.writeByte(buf, 0)
+        ByteArrayOutput().use { buf2 ->
+            buf2.bufferedAsciiWriter(closeParent = false).use { o ->
+                ByteBuffer.alloc(8) { buf ->
+                    o.writeInt(buf, 0)
+                    o.writeShort(buf, 3)
+                    o.writeShort(buf, 0)
+                    properties.forEach {
+                        o.append(it.key)
+                        o.writeByte(buf, 0)
+                        o.append(it.value)
+                        o.writeByte(buf, 0)
+                    }
+                    o.writeByte(buf, 0)
+                    o.flush()
+                    val pos = buf2.data.position
+                    buf2.data.position = 0
+                    buf2.data.writeInt(buf, (buf2.size))
+                    buf2.data.position = pos
+                    buf2.data.flip()
+                }
+                connection.write(buf2.data)
+                connection.flush()
+            }
         }
-        o.writeByte(buf, 0)
-
-        val pos = o.data.position
-        o.data.position = 0
-        o.data.writeInt(buf, (o.size))
-        o.data.position = pos
-        o.data.flip()
-        connection.write(o.data)
         val msg = readDesponse()
         val authRequest = when (msg) {
             is AuthenticationMessage.AuthenticationChallengeCleartextMessage -> {
@@ -213,23 +222,31 @@ class PGConnection private constructor(
 
     }
 
-    override fun createStatement() =
+    override suspend fun createStatement() =
         PostgreAsyncStatement(this)
 
-    override fun prepareStatement(query: String): AsyncPreparedStatement =
+    override suspend fun prepareStatement(query: String): AsyncPreparedStatement =
         prepareStatement(query, emptyList(), emptyList())
+
+    override fun isReadyForQuery(): Boolean =
+        isConnected && !busy
+
+    internal var prepareStatements = HashSet<PostgresPreparedStatement>()
 
     fun prepareStatement(
         query: String,
         paramColumnTypes: List<ResultSet.ColumnType>,
         resultColumnTypes: List<ResultSet.ColumnType> = emptyList(),
-    ): AsyncPreparedStatement =
-        PostgresPreparedStatement(
+    ): AsyncPreparedStatement {
+        val pst = PostgresPreparedStatement(
             query = query,
             connection = this,
             paramColumnTypes = paramColumnTypes,
             resultColumnTypes = resultColumnTypes
         )
+        prepareStatements.add(pst)
+        return pst
+    }
 
     override suspend fun commit() {
         query("commit")
@@ -239,10 +256,19 @@ class PGConnection private constructor(
         query("rollback")
     }
 
-    override val type: String
-        get() = TYPE
-
     override suspend fun asyncClose() {
-        connection.asyncClose()
+        prepareStatements.toTypedArray().forEach {
+            it.asyncClose()
+        }
+        prepareStatements.clear()
+        try {
+            runCatching { sendOnly(Terminate()) }
+            runCatching { reader.close() }
+            runCatching { connection.asyncClose() }
+        } finally {
+            charsetUtils.close()
+            packageWriter.close()
+            packageReader.asyncClose()
+        }
     }
 }

@@ -6,7 +6,6 @@ import pw.binom.ByteDataBuffer
 /**
  * https://stackoverflow.com/questions/27939882/fast-crc-algorithm
  */
-@ExperimentalUnsignedTypes
 open class CRC32Basic(private val poly: UInt, private val init: UInt) {
     private var crc = init
 

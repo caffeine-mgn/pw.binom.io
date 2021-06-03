@@ -20,14 +20,19 @@ kotlin {
                 }
             }
             val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/linuxX64Main/cinterop/lib/libssl.a",
-                "-include-binary", "${buildFile.parent}/src/linuxX64Main/cinterop/lib/libcrypto.a"
+                "-include-binary", "${buildFile.parent}/src/linuxX64Main/cinterop/lib/libopenssl.a"
             )
             compilations["main"].kotlinOptions.freeCompilerArgs = args
             compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+//                jvmTarget = "11"
+            }
+        }
+    }
     linuxArm32Hfp {
         binaries {
             staticLib()
@@ -39,8 +44,7 @@ kotlin {
                 }
             }
             val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/lib/libssl.a",
-                "-include-binary", "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/lib/libcrypto.a"
+                "-include-binary", "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/lib/libopenssl.a"
             )
             compilations["main"].kotlinOptions.freeCompilerArgs = args
             compilations["test"].kotlinOptions.freeCompilerArgs = args
@@ -101,8 +105,7 @@ kotlin {
                 }
             }
             val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/macosX64Main/cinterop/lib/libssl.a",
-                "-include-binary", "${buildFile.parent}/src/macosX64Main/cinterop/lib/libcrypto.a"
+                "-include-binary", "${buildFile.parent}/src/macosX64Main/cinterop/lib/libopenssl.a"
             )
             compilations["main"].kotlinOptions.freeCompilerArgs = args
             compilations["test"].kotlinOptions.freeCompilerArgs = args
@@ -172,3 +175,4 @@ kotlin {
         }
     }
 }
+apply<pw.binom.plugins.DocsPlugin>()

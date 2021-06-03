@@ -1,8 +1,6 @@
 package pw.binom.io
 
 import pw.binom.ByteBuffer
-import pw.binom.decodeString
-import pw.binom.encodeBytes
 import pw.binom.toByteBufferUTF8
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,7 +16,7 @@ class TestUTF8 {
         s.write(data)
 
         val d = s.toByteArray()
-        val e = char.toString().encodeBytes()
+        val e = char.toString().encodeToByteArray()
 
         assertEquals(e.size, d.size)
 
@@ -28,7 +26,7 @@ class TestUTF8 {
     }
 
     private fun testReadChar(char: Char) {
-        val data = char.toString().encodeBytes()
+        val data = char.toString().encodeToByteArray()
         assertEquals(char, UTF8.utf8toUnicode(data[0], data, 1))
     }
 
@@ -116,7 +114,7 @@ class TestUTF8 {
                 it.utf8Appendable().append(txt)
                 it.flush()
                 it.flip()
-            }.toByteArray().decodeString()
+            }.toByteArray().decodeToString()
         )
     }
 

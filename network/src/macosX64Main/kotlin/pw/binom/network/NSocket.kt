@@ -25,6 +25,14 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
+    init{
+        memScoped {
+            val flag = alloc<IntVar>()
+            flag.value = 1
+            setsockopt(native, SOL_SOCKET, SO_NOSIGPIPE, flag.ptr, sizeOf<IntVar>().convert())
+        }
+    }
+
     actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
         val native = if (address == null) {
             accept(native, null, null)
@@ -50,11 +58,9 @@ actual class NSocket(val native: Int) : Closeable {
         memScoped {
             val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
             if (r < 0) {
-                val error = errno.toInt()
-                if (error == 10035)
-                    return 0
-                if (error == 10038 || error == 10054)
+                if (errno == EPIPE) {
                     throw SocketClosedException()
+                }
                 throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
             }
             data.position += r
@@ -146,8 +152,9 @@ actual class NSocket(val native: Int) : Closeable {
             if (rr.toInt() == -1) {
                 throw IOException("Can't send data. Error: $errno  ${errno}")
             }
-
-            data.position += rr.toInt()
+            if (rr > 0) {
+                data.position += rr.toInt()
+            }
             rr
         }.convert()
 

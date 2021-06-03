@@ -1,5 +1,7 @@
 #include <stdatomic.h>
-
+#ifndef NULL
+#define NULL (0)
+#endif
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 typedef struct nativeByteBuffer {

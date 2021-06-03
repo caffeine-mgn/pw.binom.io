@@ -15,3 +15,6 @@ actual val Environment.currentTimeMillis: Long
 
 actual val Environment.currentTimeNanoseconds: Long
     get() = System.nanoTime()
+
+actual val Environment.userDirectory: String
+    get() = System.getProperty("user.home")

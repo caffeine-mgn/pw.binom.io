@@ -37,6 +37,12 @@ open class BuildStaticTask : DefaultTask() {
 
     var optimizationLevel: Int = 3
 
+    @InputFiles
+    val inputSourceFiles = ArrayList<File>()
+
+    @OutputFiles
+    val outputObjectFiles = ArrayList<File>()
+
     fun compileArgs(vararg args: String) {
         this.compileArgs.addAll(args)
     }
@@ -53,18 +59,18 @@ open class BuildStaticTask : DefaultTask() {
             if (f.isFile && (f.extension.toLowerCase() == "c" || f.extension.toLowerCase() == "cpp")) {
                 if (filter == null || filter(f)) {
                     compileFile(
-                            source = f,
-                            args = args
+                        source = f,
+                        args = args
                     )
                 }
             }
 
             if (f.isDirectory && (filter == null || filter(f))) {
                 compileDir(
-                        sourceDir = f,
-                        objectDir = objectDir.resolve(it),
-                        args = args,
-                        filter = filter
+                    sourceDir = f,
+                    objectDir = objectDir.resolve(it),
+                    args = args,
+                    filter = filter
                 )
             }
         }
@@ -76,14 +82,17 @@ open class BuildStaticTask : DefaultTask() {
 
     @JvmOverloads
     fun compileFile(source: File, args: List<String>? = null) {
-        val outFile = nativeObjDir.resolve("${source.nameWithoutExtension}_${source.absolutePath.hashCode() + target.hashCode()}.o")
-        compiles.add(Compile(
+        val outFile =
+            nativeObjDir.resolve("${source.nameWithoutExtension}_${source.absolutePath.hashCode() + target.hashCode()}.o")
+        compiles.add(
+            Compile(
                 source = source,
                 objectFile = outFile,
                 args = args
-        ))
-        inputs.file(source)
-        outputs.file(outFile)
+            )
+        )
+        inputSourceFiles.add(source)
+        outputObjectFiles.add(outFile)
     }
 
     private class CompileResult(val source: File, val code: Int, val result: String)
@@ -99,7 +108,8 @@ open class BuildStaticTask : DefaultTask() {
         }
         val env = HashMap<String, String>()
         if (HostManager.hostIsMac && target == KonanTarget.MACOS_X64) {
-            env["CPATH"] = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+            env["CPATH"] =
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
         }
         val osPathSeparator = if (HostManager.hostIsMingw) {
             ';'
@@ -109,52 +119,52 @@ open class BuildStaticTask : DefaultTask() {
         env["PATH"] = "$llvmBinFolder$osPathSeparator${System.getenv("PATH")}"
 
         fun runCompile(compile: Compile): CompileResult =
-                run {
-                    val targetInfo = targetInfoMap.getValue(target)
+            run {
+                val targetInfo = targetInfoMap.getValue(target)
 
-                    val args = ArrayList<String>()
-                    args.add(llvmBinFolder.resolve("clang").absolutePath.executable)
+                val args = ArrayList<String>()
+                args.add(llvmBinFolder.resolve("clang").absolutePath.executable)
 //            args.add(llvmBinFolder.resolve("gcc").absolutePath.executable)
-                    args.add("-c")
-                    args.add("-O$optimizationLevel")
-                    args.add("-Wall")
-                    args.add("--target=${targetInfo.targetName}")
-                    args.add("--sysroot=${targetInfo.sysRoot}")
-                    args.addAll(targetInfo.clangArgs)
-                    args.addAll(this.compileArgs)
-                    if (compile.args != null) {
-                        args.addAll(compile.args)
-                    }
-                    args.add("-o")
-                    args.add(compile.objectFile.absolutePath)
-                    args.add(compile.source.absolutePath)
-                    includes.forEach {
-                        args.add("-I${it.absolutePath}")
-                    }
-                    val builder = ProcessBuilder(
-                            args
-                    )
-                    builder.environment().putAll(env)
+                args.add("-c")
+                args.add("-O$optimizationLevel")
+                args.add("-Wall")
+                args.add("--target=${targetInfo.targetName}")
+                args.add("--sysroot=${targetInfo.sysRoot}")
+                args.addAll(targetInfo.clangArgs)
+                args.addAll(this.compileArgs)
+                if (compile.args != null) {
+                    args.addAll(compile.args)
+                }
+                args.add("-o")
+                args.add(compile.objectFile.absolutePath)
+                args.add(compile.source.absolutePath)
+                includes.forEach {
+                    args.add("-I${it.absolutePath}")
+                }
+                val builder = ProcessBuilder(
+                    args
+                )
+                builder.environment().putAll(env)
 //                    builder.redirectError(builder.redirectInput())
 //                    builder.inheritIO()
-                    val process = builder.start()
+                val process = builder.start()
 
-                    val stdout = StreamGobbler(process.inputStream)
-                    val stdin = StreamGobbler(process.errorStream)
-                    stdout.start()
-                    stdin.start()
-                    process.waitFor()
-                    stdout.join()
-                    stdin.join()
-                    if (process.exitValue() == 0) {
-                        logger.lifecycle("Compile ${compile.source}: OK, ${targetInfo.targetName}")
-                    }
-                    CompileResult(
-                            code = process.exitValue(),
-                            result = stdout.out.toString() + stdin.out.toString(),
-                            source = compile.source
-                    )
+                val stdout = StreamGobbler(process.inputStream)
+                val stdin = StreamGobbler(process.errorStream)
+                stdout.start()
+                stdin.start()
+                process.waitFor()
+                stdout.join()
+                stdin.join()
+                if (process.exitValue() == 0) {
+                    logger.lifecycle("Compile ${compile.source}: OK, ${targetInfo.targetName}")
                 }
+                CompileResult(
+                    code = process.exitValue(),
+                    result = stdout.out.toString() + stdin.out.toString(),
+                    source = compile.source
+                )
+            }
 
 
         var threadPool: ExecutorService? = null
@@ -179,9 +189,9 @@ open class BuildStaticTask : DefaultTask() {
                     c
                 } else
                     CompileResult(
-                            source = File(""),
-                            code = 1,
-                            result = ""
+                        source = File(""),
+                        code = 1,
+                        result = ""
                     )
             }
         }
@@ -196,9 +206,11 @@ open class BuildStaticTask : DefaultTask() {
 
         results.forEach {
             if (it.code != 0) {
-                throw GradleScriptException("Can't build \"${it.source}\".", RuntimeException(
+                throw GradleScriptException(
+                    "Can't build \"${it.source}\".", RuntimeException(
                         "Output:\n${it.result}"
-                ))
+                    )
+                )
             }
         }
 
@@ -211,14 +223,17 @@ open class BuildStaticTask : DefaultTask() {
         }
 
         val builder = ProcessBuilder(
-                args
+            args
         )
         builder.directory(nativeObjDir)
         builder.environment().put("PATH", "$llvmBinFolder;${System.getenv("PATH")}")
         val process = builder.start()
         process.waitFor()
         if (process.exitValue() != 0) {
-            throw GradleScriptException("Can't execute link static library", RuntimeException("Can't link: Linked returns ${process.exitValue()}"))
+            throw GradleScriptException(
+                "Can't execute link static library",
+                RuntimeException("Can't link: Linked returns ${process.exitValue()}")
+            )
         }
     }
 

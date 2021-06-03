@@ -1,9 +1,7 @@
 package pw.binom.compression.zlib
 
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
-import pw.binom.update
 import java.util.zip.Inflater as JInflater
 
 actual class Inflater actual constructor(wrap: Boolean) : Closeable {

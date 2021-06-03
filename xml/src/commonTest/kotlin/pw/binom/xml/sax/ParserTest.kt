@@ -17,7 +17,7 @@ class ParserTest {
             val r = XmlRootReaderVisitor(txt.asReader().asAsync())
 
             val sb = StringBuilder()
-            val w = XmlRootWriterVisitor(sb.asAsync())
+            val w = AsyncXmlRootWriterVisitor(sb.asAsync())
             try {
                 w.start()
                 r.accept(w)
@@ -36,10 +36,10 @@ class ParserTest {
         async {
             val txt = "<r><bbb a=\"b\"></bbb><c>123456</c><t/></r>"
 
-            val r = XmlReaderVisiter(txt.asReader().asAsync())
+            val r = AsyncXmlReaderVisiter(txt.asReader().asAsync())
 
             val sb = StringBuilder()
-            val w = XmlRootWriterVisitor(sb.asAsync())
+            val w = AsyncXmlRootWriterVisitor(sb.asAsync())
             try {
                 w.start()
                 r.accept(w)
@@ -57,7 +57,7 @@ class ParserTest {
         val txt = """<?xml version="1.0" encoding="UTF-8"?><root title="Binom"></root>"""
         async {
             val sb = StringBuilder()
-            val root = XmlRootWriterVisitor(sb.asAsync())
+            val root = AsyncXmlRootWriterVisitor(sb.asAsync())
             root.start()
             XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
             root.end()
@@ -86,7 +86,7 @@ class ParserTest {
                 |   </D:prop>
                 |</D:propfind>""".trimMargin()
                 val sb = StringBuilder()
-                val root = XmlRootWriterVisitor(sb.asAsync())
+                val root = AsyncXmlRootWriterVisitor(sb.asAsync())
                 root.start()
                 XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
                 root.end()

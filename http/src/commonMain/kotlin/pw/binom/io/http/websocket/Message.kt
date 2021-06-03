@@ -8,9 +8,18 @@ interface Message : AsyncInput {
     val type: MessageType
 
     companion object {
+
+        fun encode(mask: Int, data: ByteBuffer) {
+            val length = data.position
+            data.flip()
+            encode(0uL, mask, data)
+            data.position = length
+            data.limit = data.capacity
+        }
+
         fun encode(cursor: ULong, mask: Int, data: ByteBuffer): ULong {
             var cursorLocal = cursor
-            data.forEachIndexed { i, byte ->
+            data.forEachIndexed { _, byte ->
                 data.put(byte xor mask[(cursorLocal and 0x03uL).toInt()])
                 cursorLocal++
             }
@@ -18,17 +27,6 @@ interface Message : AsyncInput {
         }
     }
 
-    suspend fun readCloseCode(): Short {
-        if (type != MessageType.CLOSE) {
-            throw IllegalStateException("Message is not close type")
-        }
-        return ByteBuffer.alloc(Short.SIZE_BITS).use { buf ->
-            read(buf)
-            buf.flip()
-            buf.readShort()
-        }
-    }
+    val isCloseMessage
+        get() = type == MessageType.CLOSE
 }
-
-val Message.isCloseMessage
-    get() = type == MessageType.CLOSE

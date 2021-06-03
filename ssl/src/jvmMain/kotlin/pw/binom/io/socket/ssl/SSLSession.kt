@@ -7,7 +7,7 @@ import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult
 
 
-actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
+actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
     actual enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
     }
@@ -103,11 +103,11 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
                 }
             SSLEngineResult.Status.BUFFER_UNDERFLOW -> TODO()
             SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO("wbio size=${wbio.remaining()}")
-            SSLEngineResult.Status.CLOSED -> TODO()
+            SSLEngineResult.Status.CLOSED -> State.CLOSED
         }
         return Status(
-                state,
-                s.bytesConsumed()
+            state,
+            s.bytesConsumed()
         )
     }
 
@@ -142,8 +142,8 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
             }
 
             return Status(
-                    state,
-                    s.bytesProduced()
+                state,
+                s.bytesProduced()
             )
         } catch (e: Throwable) {
             throw e
@@ -196,11 +196,11 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
                     }
                 SSLEngineResult.Status.BUFFER_UNDERFLOW -> TODO()
                 SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO("wbio size=${wbio.remaining()}")
-                SSLEngineResult.Status.CLOSED -> TODO()
+                SSLEngineResult.Status.CLOSED -> State.CLOSED
             }
             Status(
-                    state,
-                    s.bytesConsumed()
+                state,
+                s.bytesConsumed()
             )
         }
     }
@@ -371,8 +371,8 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
                 clientData.read(dst)
             }
             return Status(
-                    State.OK,
-                    l
+                State.OK,
+                l
             )
         }
     }
@@ -396,11 +396,11 @@ actual class SSLSession(private val sslEngine: SSLEngine): Closeable {
                 }
             SSLEngineResult.Status.BUFFER_UNDERFLOW -> TODO()
             SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO("wbio size=${wbio.remaining()}")
-            SSLEngineResult.Status.CLOSED -> TODO()
+            SSLEngineResult.Status.CLOSED -> State.CLOSED
         }
         return Status(
-                state,
-                s.bytesConsumed()
+            state,
+            s.bytesConsumed()
         )
     }
 

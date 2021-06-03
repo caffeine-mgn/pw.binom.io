@@ -1,7 +1,6 @@
 package pw.binom.xml.sax
 
 import pw.binom.io.AsyncReader
-import pw.binom.io.ComposeAsyncReader
 import pw.binom.xml.AsyncXmlLexer
 import pw.binom.xml.TokenType
 import pw.binom.xml.nextSkipEmpty
@@ -9,7 +8,7 @@ import pw.binom.xml.nextSkipEmpty
 class XmlRootReaderVisitor(val lexer: AsyncXmlLexer) {
     constructor(reader: AsyncReader) : this(AsyncXmlLexer(reader))
 
-    suspend fun accept(visiter: XmlVisiter) {
+    suspend fun accept(visiter: AsyncXmlVisiter) {
         if (!lexer.nextSkipEmpty())
             TODO()
         if (lexer.tokenType != TokenType.TAG_START) {
@@ -42,7 +41,7 @@ class XmlRootReaderVisitor(val lexer: AsyncXmlLexer) {
             TODO()
         }
 
-        val root = XmlReaderVisiter(lexer)
+        val root = AsyncXmlReaderVisiter(lexer)
         root.accept(visiter)
     }
 }

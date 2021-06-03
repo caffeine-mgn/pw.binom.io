@@ -12,7 +12,13 @@ kotlin {
             staticLib()
         }
     }
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+//                jvmTarget = "11"
+            }
+        }
+    }
     linuxArm32Hfp {
         binaries {
             staticLib()
@@ -48,6 +54,7 @@ kotlin {
             dependencies {
                 api(project(":core"))
                 api(project(":httpServer"))
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
             }
         }
 
@@ -86,3 +93,4 @@ kotlin {
         }
     }
 }
+apply<pw.binom.plugins.DocsPlugin>()

@@ -37,7 +37,7 @@ class WebSocketHeader {
         }
 
         suspend fun write(output: AsyncOutput, src: WebSocketHeader) {
-            ByteBuffer.alloc(8).use { buf ->
+            ByteBuffer.alloc(8) { buf ->
                 var value = src.opcode and 0b111
                 if (src.finishFlag) {
                     value = value or 0b10000000.toByte()
@@ -66,7 +66,9 @@ class WebSocketHeader {
     }
 
     override fun toString(): String =
-            "WebSocketHeader(opcode=$opcode, length=$length, maskFlag=$maskFlag, mask=${mask.toUInt().toString(2)}, finishFlag=$finishFlag)"
+        "WebSocketHeader(opcode=$opcode, length=$length, maskFlag=$maskFlag, mask=${
+            mask.toUInt().toString(2)
+        }, finishFlag=$finishFlag)"
 
 
 }

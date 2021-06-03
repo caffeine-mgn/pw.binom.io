@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import pw.binom.*
+import pw.binom.concurrency.execute
 import pw.binom.pool.ObjectPool
 
 suspend fun Input.copyToAsync(output: AsyncOutput, tempBuffer: ByteBuffer): Long {
@@ -46,11 +47,7 @@ suspend fun AsyncInput.copyToAsync(output: Output, pool: ObjectPool<ByteBuffer>)
     }
 }
 
-suspend fun AsyncInput.copyToAsync(output: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {
-    val buffer = ByteBuffer.alloc(bufferSize)
-    try {
-        return copyToAsync(output, buffer)
-    } finally {
-        buffer.close()
+suspend fun AsyncInput.copyToAsync(output: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
+    ByteBuffer.alloc(bufferSize) { buffer ->
+        copyToAsync(output, buffer)
     }
-}

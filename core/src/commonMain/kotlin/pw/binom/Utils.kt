@@ -1,6 +1,18 @@
 package pw.binom
 
+import pw.binom.atomic.AtomicLong
 import pw.binom.base64.shl
+import kotlin.jvm.JvmName
+import kotlin.native.concurrent.SharedImmutable
+
+@SharedImmutable
+val SELECTOR_COUNTER = AtomicLong(0)
+
+@SharedImmutable
+val BYTE_BUFFER_COUNTER = AtomicLong(0)
+
+@SharedImmutable
+val BYTE_BUFFER_COUNTER2 = AtomicLong(0)
 
 operator fun Long.get(index: Int): Byte {
     if (index !in 0..7)
@@ -90,6 +102,7 @@ fun Short.Companion.fromBytes(source: ByteBuffer): Short {
     return fromBytes(b0, b1)
 }
 
+@JvmName("Int_fromBytes3")
 fun Int.Companion.fromBytes(source: ByteBuffer): Int {
     val b0 = source.get()
     val b1 = source.get()
@@ -111,12 +124,14 @@ fun Long.Companion.fromBytes(source: ByteBuffer): Long {
 }
 
 
+@JvmName("Int_fromBytes1")
 fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte): Int =
     ((byte0.toInt() and 0xFF) shl 24) +
             ((byte1.toInt() and 0xFF) shl 16) +
             ((byte2.toInt() and 0xFF) shl 8) +
             ((byte3.toInt() and 0xFF) shl 0)
 
+@JvmName("Int_fromBytes2")
 fun Int.Companion.fromBytes(readBuffer: ByteArray) =
     ((readBuffer[0].toInt() and 0xFF) shl 24) +
             ((readBuffer[1].toInt() and 0xFF) shl 16) +

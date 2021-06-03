@@ -26,15 +26,17 @@ interface Reader : Closeable {
         try {
             while (true) {
                 val r = read() ?: break
-                if (r == 10.toChar())
+                if (r == 10.toChar()) {
                     break
+                }
                 sb.append(r)
             }
         } catch (e: EOFException) {
             //NOP
         }
-        if (sb.isEmpty())
+        if (sb.isEmpty()) {
             return null
+        }
         if (sb.lastOrNull() == '\r') {
             sb.deleteAt(sb.lastIndex)
         }
@@ -46,8 +48,8 @@ fun Reader.asAsync() = object : AsyncReader {
     override suspend fun readChar(): Char? =
             this@asAsync.read()
 
-    override suspend fun read(data: CharArray, offset: Int, length: Int): Int =
-            this@asAsync.read(data, offset, length)
+    override suspend fun read(dest: CharArray, offset: Int, length: Int): Int =
+            this@asAsync.read(dest, offset, length)
 
     override suspend fun asyncClose() {
         this@asAsync.close()
@@ -55,25 +57,25 @@ fun Reader.asAsync() = object : AsyncReader {
 
 }
 
-fun Reader.readln(): String? {
-    val sb = StringBuilder()
-    var first = true
-    while (true) {
-        val r = read()
-        if (r == null && first)
-            return null
-        first = false
-        if (r == null)
-            break
-
-        if (r == 10.toChar())
-            break
-        if (r == 13.toChar())
-            continue
-        sb.append(r)
-    }
-    return sb.toString()
-}
+//fun Reader.readln(): String? {
+//    val sb = StringBuilder()
+//    var first = true
+//    while (true) {
+//        val r = read()
+//        if (r == null && first)
+//            return null
+//        first = false
+//        if (r == null)
+//            break
+//
+//        if (r == 10.toChar())
+//            break
+//        if (r == 13.toChar())
+//            continue
+//        sb.append(r)
+//    }
+//    return sb.toString()
+//}
 
 fun Reader.readText(): String {
     val sb = StringBuilder()

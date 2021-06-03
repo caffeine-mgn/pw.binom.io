@@ -2,6 +2,7 @@ package pw.binom.db.tarantool.protocol
 
 import pw.binom.*
 import pw.binom.base64.Base64
+import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import kotlin.experimental.xor
 
@@ -85,25 +86,26 @@ internal object InternalProtocolUtils {
     }
 
     private fun write(value: String, buffer: ByteBuffer, out: Output) {
-        val data = value.toByteBufferUTF8()
-        when {
-            data.capacity <= MAX_5BIT -> {
-                out.writeByte(buffer, (data.capacity or (MP_FIXSTR.toInt() and 0xFF)).toByte())
+        value.toByteBufferUTF8().use { data ->
+            when {
+                data.capacity <= MAX_5BIT -> {
+                    out.writeByte(buffer, (data.capacity or (MP_FIXSTR.toInt() and 0xFF)).toByte())
+                }
+                data.capacity <= MAX_8BIT -> {
+                    out.writeByte(buffer, MP_STR8)
+                    out.writeByte(buffer, data.capacity.toByte())
+                }
+                data.capacity <= MAX_16BIT -> {
+                    out.writeByte(buffer, MP_STR16);
+                    out.writeShort(buffer, data.capacity.toShort())
+                }
+                else -> {
+                    out.writeByte(buffer, MP_STR32);
+                    out.writeInt(buffer, data.capacity)
+                }
             }
-            data.capacity <= MAX_8BIT -> {
-                out.writeByte(buffer, MP_STR8)
-                out.writeByte(buffer, data.capacity.toByte())
-            }
-            data.capacity <= MAX_16BIT -> {
-                out.writeByte(buffer, MP_STR16);
-                out.writeShort(buffer, data.capacity.toShort())
-            }
-            else -> {
-                out.writeByte(buffer, MP_STR32);
-                out.writeInt(buffer, data.capacity)
-            }
+            out.write(data)
         }
-        out.write(data);
     }
 
     private fun write(value: ByteArray, buffer: ByteBuffer, out: Output) {
@@ -213,8 +215,7 @@ internal object InternalProtocolUtils {
     }
 
     fun buildMessagePackage(header: Map<Int, Any?>, data: Map<Any, Any?>, out: ByteArrayOutput) {
-        val buf = ByteBuffer.alloc(8)
-        try {
+        ByteBuffer.alloc(8) { buf ->
             out.writeByte(buf, (0xce).toByte())
             out.writeInt(buf, 0)
             writeValue(header, buf, out)
@@ -224,8 +225,6 @@ internal object InternalProtocolUtils {
             out.data.writeInt(buf, l - 5)
             out.data.position = 0
             out.data.limit = l
-        } finally {
-            buf.close()
         }
     }
 
@@ -421,7 +420,7 @@ private const val MP_INT64 = 0xd3.toByte()
 private const val MP_FIXARRAY = 0x90.toByte() //last 4 bits is size
 private const val MP_ARRAY1 = 0x91.toByte()
 private const val MP_FIXEXT = 0xd8.toByte()
-private const val MP_DECIMAL  = 0x01.toByte()
+private const val MP_DECIMAL = 0x01.toByte()
 private const val MP_UUID = 0x02.toByte()
 private const val MP_FIXARRAY_INT = 0x90
 private const val MP_ARRAY16 = 0xdc.toByte()

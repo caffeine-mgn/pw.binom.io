@@ -15,7 +15,13 @@ kotlin {
             staticLib()
         }
     }
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+//                jvmTarget = "11"
+            }
+        }
+    }
     linuxArm32Hfp {
         binaries {
             staticLib()
@@ -101,10 +107,18 @@ val postgresContainerId = UUID.randomUUID().toString()
 
 
 tasks {
+    val pullPostgres = create(
+        name = "pullPostgres",
+        type = com.bmuschko.gradle.docker.tasks.image.DockerPullImage::class
+    ) {
+        image.set("postgres:10.15")
+    }
+
     val createPostgres = create(
         name = "createPostgres",
         type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
     ) {
+        dependsOn(pullPostgres)
         image.set("postgres:10.15")
         imageId.set("postgres:10.15")
         envVars.put("POSTGRES_USER", "postgres")
@@ -121,6 +135,9 @@ tasks {
     ) {
         dependsOn(createPostgres)
         targetContainerId(postgresContainerId)
+        doLast {
+            Thread.sleep(1000)
+        }
     }
 
     val stopPostgres = create(
@@ -150,3 +167,4 @@ tasks {
     this["macosX64Test"].dependsOn(startPostgres)
     this["macosX64Test"].finalizedBy(destoryPostgres)
 }
+apply<pw.binom.plugins.DocsPlugin>()

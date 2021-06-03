@@ -31,29 +31,28 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
             password: String?
         ): TarantoolConnection {
             val con = manager.tcpConnect(address)
-            val buf = ByteBuffer.alloc(64)
-            try {
-                con.readFully(buf)
-                buf.flip()
-                val version = buf.asUTF8String().trim().substring(10)
-                buf.clear()
-                con.readFully(buf)
-                buf.flip()
-                val salt = buf.asUTF8String().trim()
-                val connection = TarantoolConnection(ThreadRef(), con)
-                if (userName != null && password != null) {
-                    connection.sendReceive(
-                        Code.AUTH,
-                        null,
-                        InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
-                    ).assertException()
+            ByteBuffer.alloc(64) { buf ->
+                try {
+                    con.readFully(buf)
+                    buf.flip()
+                    val version = buf.asUTF8String().trim().substring(10)
+                    buf.clear()
+                    con.readFully(buf)
+                    buf.flip()
+                    val salt = buf.asUTF8String().trim()
+                    val connection = TarantoolConnection(ThreadRef(), con)
+                    if (userName != null && password != null) {
+                        connection.sendReceive(
+                            Code.AUTH,
+                            null,
+                            InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
+                        ).assertException()
+                    }
+                    return connection
+                } catch (e: Throwable) {
+                    con.close()
+                    throw e
                 }
-                return connection
-            } catch (e: Throwable) {
-                con.close()
-                throw e
-            } finally {
-                buf.close()
             }
         }
     }
@@ -64,6 +63,9 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
     private var meta: List<TarantoolSpaceMeta> = emptyList()
     private var schemaVersion = 0
     private var connected = true
+    private var metaUpdating = false
+    private val out = ByteArrayOutput()
+    private var closed = false
     val isConnected
         get() = connected
 
@@ -100,7 +102,6 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         }
     }
 
-    private var metaUpdating = false
     suspend fun getMeta(): List<TarantoolSpaceMeta> {
         invalidateSchema()
         return meta
@@ -116,7 +117,6 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         neverFreeze()
     }
 
-    private val out = ByteArrayOutput()
     internal suspend fun sendReceive(code: Code, schemaId: Int? = null, body: Map<Any, Any?>): Package {
         checkThread()
         val sync = syncCursor++
@@ -159,56 +159,54 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         }
     }
 
-    private var closed = false
-
     override suspend fun asyncClose() {
         checkThread()
         if (closed) {
             throw ClosedException()
         }
         closed = true
+        out.close()
         connectionReference.close()
     }
 
     init {
         async2 {
-            val buf = ByteBuffer.alloc(8)
-            try {
-                val packageReader = AsyncInputWithCounter(connectionReference)
-                while (!closed) {
-                    val vv = connectionReference.readByte(buf).toUByte()
-                    if (vv != 0xce.toUByte()) {
-                        throw IOException("Invalid Protocol Header Response")
+            ByteBuffer.alloc(8) { buf ->
+                try {
+                    val packageReader = AsyncInputWithCounter(connectionReference)
+                    while (!closed) {
+                        val vv = connectionReference.readByte(buf).toUByte()
+                        if (vv != 0xce.toUByte()) {
+                            throw IOException("Invalid Protocol Header Response")
+                        }
+                        val size = connectionReference.readInt(buf)
+                        buf.clear()
+                        packageReader.limit = size
+                        val msg = InternalProtocolUtils.unpack(buf, packageReader)
+                        val headers = msg as Map<Int, Any?>
+                        val body = if (packageReader.limit > 0) {
+                            InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
+                        } else
+                            emptyMap()
+                        val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
+                        val pkg = Package(
+                            header = headers,
+                            body = body
+                        )
+                        requests.remove(serial)?.resumeWith(Result.success(pkg))
                     }
-                    val size = connectionReference.readInt(buf)
-                    buf.clear()
-                    packageReader.limit = size
-                    val msg = InternalProtocolUtils.unpack(buf, packageReader)
-                    val headers = msg as Map<Int, Any?>
-                    val body = if (packageReader.limit > 0) {
-                        InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
-                    } else
-                        emptyMap()
-                    val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
-                    val pkg = Package(
-                        header = headers,
-                        body = body
-                    )
-                    requests.remove(serial)?.resumeWith(Result.success(pkg))
+                } catch (e: SocketClosedException) {
+                    requests.forEach {
+                        it.value.resumeWithException(e)
+                    }
+                    requests.clear()
+                    connected = false
+                    //NOP
+                } catch (e: ClosedException) {
+                    //NOP
+                } catch (e: Throwable) {
+                    asyncClose()
                 }
-            } catch (e: SocketClosedException) {
-                requests.forEach {
-                    it.value.resumeWithException(e)
-                }
-                requests.clear()
-                connected = false
-                //NOP
-            } catch (e: ClosedException) {
-                //NOP
-            } catch (e: Throwable) {
-                asyncClose()
-            } finally {
-                buf.close()
             }
         }
     }
@@ -429,35 +427,38 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         return ResultSet(result.body).firstOrNull()
     }
 
-//    suspend fun upsert(
-//            space: String,
-//            key: Any?,
-//            values: List<Any?>) {
-//        val meta = getMeta()
-//        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
-//        upsert(
-//                space = spaceObj.id,
-//                key = key,
-//                values = values,
-//        )
-//    }
+    suspend fun upsert(
+        space: String,
+        indexValues: List<Any?>,
+        values: List<FieldUpdate>,
+    ) {
+        val meta = getMeta()
+        val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
+        upsert(
+            space = spaceObj.id,
+            indexValues = indexValues,
+            values = values,
+        )
+    }
 
-//    suspend fun upsert(
-//            space: Int,
-//            key: Any?,
-//            values: List<Any?>) {
-//
-//        val result = this.sendReceive(
-//                code = Code.UPSERT,
-//                body = mapOf(
-//                        Key.SPACE.id to space,
-//                        Key.KEY.id to key,
-//                        Key.TUPLE.id to values,
-//                )
-//        )
-//        println("Update columns: ${result.body}")
-//        result.assertException()
-//    }
+    suspend fun upsert(
+        space: Int,
+        indexValues: List<Any?>,
+        values: List<FieldUpdate>,
+    ) {
+
+        val result = this.sendReceive(
+            code = Code.UPSERT,
+            body = mapOf(
+                Key.SPACE.id to space,
+                Key.UPSERT_OPS.id to values.map {
+                    listOf(it.operator.code, it.fieldId, it.value)
+                },
+                Key.TUPLE.id to indexValues,
+            )
+        )
+        result.assertException()
+    }
 
     suspend fun delete(
         space: Int,

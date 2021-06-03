@@ -35,14 +35,6 @@ kotlin {
         }
     }
 
-    jvm {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = '1.8'
-            }
-        }
-    }
-
     sourceSets {
 
         commonMain {
@@ -98,25 +90,25 @@ kotlin {
     }
 }
 
-jvmJar {
-    with {
-        from {
-            (configurations.jvmRuntimeClasspath).collect {
-                it.isDirectory() ? it : zipTree(it)
-            }
-        } {
-            exclude "META-INF/*.SF"
-            exclude "META-INF/*.DSA"
-            exclude "META-INF/*.RSA"
-        }
-    }
-    manifest {
-        attributes 'Main-Class': "pw.binom.io.examples.httpServer.HttpServerKt"
-    }
-}
-
-task runMainExecutableJvm(dependsOn: jvmJar, group: "run") {
-    doLast {
-        javaexec { main = "-jar"; args jvmJar.archiveFile.get() }
-    }
-}
+//jvmJar {
+//    with {
+//        from {
+//            (configurations.jvmRuntimeClasspath).collect {
+//                it.isDirectory() ? it : zipTree(it)
+//            }
+//        } {
+//            exclude "META-INF/*.SF"
+//            exclude "META-INF/*.DSA"
+//            exclude "META-INF/*.RSA"
+//        }
+//    }
+//    manifest {
+//        attributes 'Main-Class': "pw.binom.io.examples.httpServer.HttpServerKt"
+//    }
+//}
+//
+//task runMainExecutableJvm(dependsOn: jvmJar, group: "run") {
+//    doLast {
+//        javaexec { main = "-jar"; args jvmJar.archiveFile.get() }
+//    }
+//}

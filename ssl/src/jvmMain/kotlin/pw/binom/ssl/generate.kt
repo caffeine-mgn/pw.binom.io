@@ -31,8 +31,8 @@ actual fun X509Builder.generate(): X509Certificate {
 
             certGen.setIssuerDN(X500Principal(issuer))
 
-            certGen.setNotBefore(java.util.Date(notBefore!!.time))
-            certGen.setNotAfter(java.util.Date(notAfter!!.time))
+            certGen.setNotBefore(java.util.Date(notBefore.time))
+            certGen.setNotAfter(java.util.Date(notAfter.time))
 
             certGen.setPublicKey(pair.native.public)
             certGen.setSignatureAlgorithm("SHA512withRSA")

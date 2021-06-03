@@ -2,64 +2,71 @@ package pw.binom.io.httpServer
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
-import pw.binom.io.UTF8
-import pw.binom.network.CrossThreadKeyHolder
-import pw.binom.network.TcpConnection
+import pw.binom.ByteBuffer
+import pw.binom.io.AsyncCloseable
+import pw.binom.io.AsyncReader
+import pw.binom.io.AsyncWriter
+import pw.binom.io.http.Headers
+import pw.binom.io.http.MutableHeaders
+import pw.binom.io.http.websocket.WebSocketConnection
+import pw.binom.io.use
+import pw.binom.net.Path
+import pw.binom.net.Query
+import pw.binom.wrap
+import kotlin.js.JsName
 
-interface HttpRequest {
+interface HttpRequest : AsyncCloseable {
     val method: String
-    val uri: String
-    val contextUri: String
-    val input: AsyncInput
-    val rawInput: AsyncInput
-    val rawOutput: AsyncOutput
-    val rawConnection: TcpConnection
-    val headers: Map<String, List<String>>
-    val keyHolder: CrossThreadKeyHolder
+    val headers: Headers
+    val path: Path
+    val query: Query?
+    val request: String
+    fun readBinary(): AsyncInput
+    fun readText(): AsyncReader
+    suspend fun acceptWebsocket(): WebSocketConnection
+    suspend fun rejectWebsocket()
+    suspend fun response(): HttpResponse
+    suspend fun <T> response(func: suspend (HttpResponse) -> T): T =
+        response().use {
+            func(it)
+        }
+
+    @JsName("HttpResponse2")
+    val response: HttpResponse?
 }
 
-fun HttpRequest.withContextURI(uri: String) = object : HttpRequest {
-    override val method: String
-        get() = this@withContextURI.method
-    override val uri: String
-        get() = this@withContextURI.uri
-    override val contextUri: String
-        get() = uri
-    override val input: AsyncInput
-        get() = this@withContextURI.input
-    override val rawInput: AsyncInput
-        get() = this@withContextURI.rawInput
-    override val rawOutput: AsyncOutput
-        get() = this@withContextURI.rawOutput
-    override val rawConnection: TcpConnection
-        get() = this@withContextURI.rawConnection
-    override val headers: Map<String, List<String>>
-        get() = this@withContextURI.headers
-    override val keyHolder: CrossThreadKeyHolder
-        get() = this@withContextURI.keyHolder
-}
-
-fun HttpRequest.visitGetParams(func: (key: String, value: String?) -> Boolean) {
-    val p = contextUri.lastIndexOf('?')
-    if (p == -1) {
-        return
+interface HttpResponse : AsyncCloseable {
+    var status: Int
+    val headers: MutableHeaders
+    fun setContentType(value: String): HttpResponse {
+        headers.contentType = value
+        return this
     }
 
-    contextUri.substring(p + 1).split('&').forEach {
-        val items = it.split('=', limit = 2)
-        if (items.size == 1) {
-            func(UTF8.decode(items[0]), null)
-        } else {
-            func(UTF8.decode(items[0]), UTF8.decode(items[1]))
+    fun setStatus(status: Int): HttpResponse {
+        this.status = status
+        return this
+    }
+
+    suspend fun writeBinary(): AsyncOutput
+    suspend fun writeBinary(data: ByteBuffer) {
+        writeBinary().use {
+            it.write(data)
+            it.flush()
         }
     }
-}
 
-fun HttpRequest.parseGetParams(): Map<String, List<String?>> {
-    val out = HashMap<String, ArrayList<String?>>()
-    visitGetParams { key, value ->
-        out.getOrPut(key) { ArrayList() }.add(value)
-        true
+    suspend fun writeBinary(data: ByteArray) {
+        data.wrap {
+            writeBinary(it)
+        }
     }
-    return out
+
+    suspend fun writeText(): AsyncWriter
+    suspend fun writeText(text: String) {
+        writeText().use {
+            it.append(text)
+            it.flush()
+        }
+    }
 }

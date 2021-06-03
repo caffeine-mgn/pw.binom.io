@@ -3,6 +3,7 @@ package pw.binom
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.EOFException
 import pw.binom.io.UTF8
+import pw.binom.io.use
 import pw.binom.pool.ObjectPool
 
 interface AsyncInput : AsyncCloseable {
@@ -16,7 +17,10 @@ interface AsyncInput : AsyncCloseable {
     suspend fun readFully(dest: ByteBuffer): Int {
         val length = dest.remaining
         while (dest.remaining > 0) {
-            read(dest)
+            val read = read(dest)
+            if (read == 0 && dest.remaining > 0) {
+                throw EOFException()
+            }
         }
         return length
     }
@@ -157,14 +161,10 @@ suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>)
  * @param bufferSize coping buffer size
  * @return size of copied data
  */
-suspend fun AsyncInput.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {
-    val buffer = ByteBuffer.alloc(bufferSize)
-    try {
-        return copyTo(output, buffer)
-    } finally {
-        buffer.close()
+suspend fun AsyncInput.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
+    ByteBuffer.alloc(bufferSize) { buffer ->
+        copyTo(output, buffer)
     }
-}
 
 /**
  * Copy date from [this] to [output]
@@ -182,12 +182,14 @@ suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Lon
     }
 }
 
-suspend fun AsyncInput.copyTo(output: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {
-    val buffer = ByteBuffer.alloc(bufferSize)
-    try {
-        return copyTo(output, buffer)
-    } finally {
-        buffer.close()
+suspend fun AsyncInput.copyTo(output: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
+    ByteBuffer.alloc(bufferSize) { buffer ->
+        copyTo(output, buffer)
+    }
+
+suspend fun AsyncInput.skipAll(bufferSkipSize: Int = DEFAULT_BUFFER_SIZE) {
+    ByteBuffer.alloc(bufferSkipSize) {
+        skipAll(it)
     }
 }
 

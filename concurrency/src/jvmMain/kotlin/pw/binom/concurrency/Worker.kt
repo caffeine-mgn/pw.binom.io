@@ -1,10 +1,13 @@
+@file:JvmName("WorkerUtilsKt")
+
 package pw.binom.concurrency
 
 import pw.binom.Future
+import pw.binom.NonFreezableFuture
+import pw.binom.async2
 import pw.binom.atomic.AtomicInt
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.Continuation
 import kotlin.time.ExperimentalTime
@@ -13,7 +16,7 @@ import kotlin.time.measureTimedValue
 private val currentWorker = ThreadLocal<Worker>()
 private val idSeq = AtomicLong(0)
 
-actual class Worker actual constructor(name: String?) : CrossThreadCoroutine {
+actual class Worker actual constructor(name: String?) : CrossThreadCoroutine, Executor {
     private val _id = idSeq.incrementAndGet()
     private val worker = Executors.newSingleThreadExecutor()
 
@@ -39,15 +42,14 @@ actual class Worker actual constructor(name: String?) : CrossThreadCoroutine {
         return FutureWrapper(future)
     }
 
-    actual fun requestTermination(): Future<Unit> = execute(Unit) {
+    actual fun requestTermination(): Future<Unit> {
+        val future = NonFreezableFuture<Unit>()
         worker.submit {
             currentWorker.set(null)
+            future.resume(Result.success(Unit))
         }
-
         worker.shutdown()
-        while (!worker.isTerminated) {
-            worker.awaitTermination(1, TimeUnit.MINUTES)
-        }
+        return future
     }
 
     @get:JvmName("binomIsInterrupted")
@@ -72,6 +74,16 @@ actual class Worker actual constructor(name: String?) : CrossThreadCoroutine {
             val f = it.second.value
             it.second.close()
             f.resumeWith(it.first)
+        }
+    }
+
+    override fun execute(func: suspend () -> Unit) {
+        worker.submit {
+            _taskCount.increment()
+            runCatching {
+                async2(func)
+            }
+            _taskCount.decrement()
         }
     }
 }

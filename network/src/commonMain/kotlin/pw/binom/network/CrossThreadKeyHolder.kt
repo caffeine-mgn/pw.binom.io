@@ -3,6 +3,7 @@ package pw.binom.network
 import pw.binom.async
 import pw.binom.concurrency.*
 import pw.binom.doFreeze
+import pw.binom.io.Closeable
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.suspendCoroutine
 

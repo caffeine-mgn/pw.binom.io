@@ -1,14 +1,13 @@
 package pw.binom.io
 
-import pw.binom.encodeBytes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class TestCRC32 {
 
     @Test
-    fun `CRC-32`() {
-        val data = "1".encodeBytes()
+    fun CRC_32() {
+        val data = "1".encodeToByteArray()
 
         val crc = CRC32()
 
@@ -17,8 +16,8 @@ class TestCRC32 {
     }
 
     @Test
-    fun `CRC-32C`() {
-        val data = "1".encodeBytes()
+    fun CRC_32C() {
+        val data = "1".encodeToByteArray()
 
         val crc = CRC32C()
 

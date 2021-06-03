@@ -2,12 +2,22 @@ package pw.binom
 
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncFlushable
+import pw.binom.io.IOException
 import pw.binom.io.UTF8
 import pw.binom.pool.ObjectPool
 
 interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
     suspend fun write(data: ByteBuffer): Int
+
+    suspend fun writeFully(data: ByteBuffer) {
+        while (data.remaining > 0) {
+            val wrote = write(data)
+            if (wrote <= 0) {
+                throw IOException("Can't write data")
+            }
+        }
+    }
 }
 
 fun Output.asyncOutput() = object : AsyncOutput {

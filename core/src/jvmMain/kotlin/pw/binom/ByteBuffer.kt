@@ -2,6 +2,7 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
+import pw.binom.io.use
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
@@ -131,21 +132,26 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
         return l
     }
 
-    actual fun get(): Byte =
-        native.get()
+    actual fun get(): Byte {
+        checkClosed()
+        return native.get()
+    }
 
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
+        checkClosed()
         native.position(position)
         native.limit(position + length)
         return this
     }
 
     actual fun put(value: Byte) {
+        checkClosed()
         native.put(value)
     }
 
     override fun clear() {
+        checkClosed()
         native.clear()
     }
 
@@ -204,13 +210,18 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
         val p = position
         val l = limit
-        position = 0
-        limit = capacity
-        position = index
-        limit = index + length
-        val newBytes = JByteBuffer.allocate(length)
-        native.copyTo(newBytes)
-        return ByteBuffer(newBytes)
+        try {
+            position = 0
+            limit = capacity
+            position = index
+            limit = index + length
+            val newBytes = JByteBuffer.allocate(length)
+            native.copyTo(newBytes)
+            return ByteBuffer(newBytes)
+        } finally {
+            position = p
+            limit = l
+        }
     }
 }
 
@@ -249,4 +260,13 @@ private inline fun JByteBuffer.copyTo(buffer: JByteBuffer): Int {
     val l = minOf(buffer.remaining(), remaining())
     buffer.put(buffer)
     return l
+}
+
+actual inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
+    val b = alloc(size)
+    return try {
+        block(b)
+    } finally {
+        b.close()
+    }
 }

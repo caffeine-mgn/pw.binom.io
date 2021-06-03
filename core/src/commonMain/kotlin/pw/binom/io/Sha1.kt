@@ -21,7 +21,7 @@ class Sha1 : MessageDigest {
         len = input.length
         i = 0
         while (i < len) {
-            x = (input[i].toInt() and 0xff).toByte()
+            x = (input[i].code and 0xff).toByte()
             update(x)
             i++
         }
@@ -213,11 +213,11 @@ class Sha1 : MessageDigest {
         blockIndex = 0
     }
 
-    override fun update(b: Byte) {
+    override fun update(byte: Byte) {
         val mask = 8 * (blockIndex and 3)
         count += 8
         block!![blockIndex shr 2] = block!![blockIndex shr 2] and (0xff shl mask).inv()
-        block!![blockIndex shr 2] = block!![blockIndex shr 2] or (b.toInt() and 0xff shl mask)
+        block!![blockIndex shr 2] = block!![blockIndex shr 2] or (byte.toInt() and 0xff shl mask)
         blockIndex++
         if (blockIndex == 64) {
             transform()
@@ -227,9 +227,7 @@ class Sha1 : MessageDigest {
 
     override fun finish(): ByteArray {
         val bits = ByteArray(8)
-        var i: Int
-        var j: Int
-        i = 0
+        var i = 0
         while (i < 8) {
             bits[i] = (count ushr (7 - i) * 8 and 0xff).toByte()
             i++
@@ -255,12 +253,10 @@ class Sha1 : MessageDigest {
     fun digout(): String {
         val sb = StringBuilder()
         for (i in 0..19) {
-            var c1: Char
-            var c2: Char
-            c1 = (digestBits[i].toInt() ushr 4 and 0xf).toChar()
-            c2 = (digestBits[i] and 0xf).toChar()
-            c1 = (if (c1.toInt() > 9) 'a'.toInt() + (c1.toInt() - 10) else '0' + c1.toInt()) as Char
-            c2 = (if (c2.toInt() > 9) 'a'.toInt() + (c2.toInt() - 10) else '0' + c2.toInt()) as Char
+            var c1: Char = (digestBits[i].toInt() ushr 4 and 0xf).toChar()
+            var c2: Char = (digestBits[i] and 0xf).toChar()
+            c1 = (if (c1.code > 9) 'a'.code + (c1.code - 10) else '0' + c1.code) as Char
+            c2 = (if (c2.code > 9) 'a'.code + (c2.code - 10) else '0' + c2.code) as Char
             sb.append(c1)
             sb.append(c2)
             /*            if (((i+1) % 4) == 0)

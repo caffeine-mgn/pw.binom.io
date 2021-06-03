@@ -1,5 +1,7 @@
 package pw.binom
 
+import kotlin.jvm.JvmInline
+
 /**
  * Implements bitset based on [Int]. Index 0 is the most left bit. For example: index 30 in value 0b010 is 1, index 31 and 29 is 0
  *
@@ -13,7 +15,8 @@ package pw.binom
  * assertFalse(data[1])
  * ```
  */
-inline class Bitset32(val value: Int = 0) {
+@JvmInline
+value class Bitset32(val value: Int = 0) {
     operator fun get(index: Int): Boolean = value and (1 shl (31 - index)) != 0
     fun set(index: Int, value: Boolean) =
         Bitset32(

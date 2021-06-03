@@ -82,8 +82,17 @@ class LinuxSelector : AbstractSelector() {
                 }
                 throw IllegalStateException("Unknown connection state")
             }
-
-            func(key, epollNativeToCommon(item.events.convert()))
+            if (EPOLLHUP in item.events) {
+                NSocket(item.data.fd).close()
+                key.close()
+            } else {
+                val common = epollNativeToCommon(item.events.convert())
+                if (common == 0) {
+                    println("Invalid epoll mode. Native: [${modeToString(item.events.convert())}]")
+                    throw IllegalStateException("Invalid epoll mode. Native: [${modeToString(item.events.convert())}]")
+                }
+                func(key, common)
+            }
         }
         return eventCount
     }
@@ -101,6 +110,9 @@ private fun epollNativeToCommon(mode: Int): Int {
     }
     if (EPOLLOUT in mode) {
         events = events or Selector.OUTPUT_READY
+    }
+    if (EPOLLHUP in mode) {
+        events = events or Selector.EVENT_ERROR
     }
     return events
 }

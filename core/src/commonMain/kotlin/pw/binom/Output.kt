@@ -1,12 +1,21 @@
 package pw.binom
 
 import pw.binom.io.Closeable
+import pw.binom.io.IOException
 import pw.binom.io.UTF8
 
 interface Output : Closeable {
     //    fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
     fun write(data: ByteBuffer): Int
     fun flush()
+    fun writeFully(data: ByteBuffer) {
+        while (data.remaining > 0) {
+            val wrote = write(data)
+            if (wrote <= 0) {
+                throw IOException("Can't write data")
+            }
+        }
+    }
 }
 
 fun Output.writeUtf8Char(buffer: ByteBuffer, value: Char) {
@@ -44,7 +53,11 @@ fun Output.writeBytes(buffer: ByteBuffer, value: ByteArray) {
     while (l > 0) {
         buffer.write(value, value.size - l)
         buffer.flip()
-        l -= write(buffer)
+        val wrote = write(buffer)
+        if (wrote<=0) {
+            throw RuntimeException("Can't write bytes")
+        }
+        l -= wrote
     }
 }
 

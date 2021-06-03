@@ -1,22 +1,24 @@
 package pw.binom.flux
 
-import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
+import pw.binom.io.httpServer.*
 
 class StatusHandlerRouter(
     private val defaultHandler: Handler,
     private val status: Int,
-    private val handler: suspend (req: HttpRequest, resp: HttpResponse) -> Unit
+    private val handler: suspend (req: HttpRequest) -> Unit
 ) : Handler {
 
-    override suspend fun request(req: HttpRequest, resp: HttpResponse) {
-        defaultHandler.request(req, resp)
-        if (resp.status == status) {
-            handler
+    override suspend fun request(req: HttpRequest) {
+        defaultHandler.request(req)
+
+        if ((req.response == null && status == 404) || req.response?.status == 404) {
+            handler(req)
         }
     }
 }
 
-fun Handler.statusHandler(status: Int, handler: suspend (req: HttpRequest, resp: HttpResponse) -> Unit) =
+fun Handler.statusHandler(
+    status: Int,
+    handler: suspend (req: HttpRequest) -> Unit
+) =
     StatusHandlerRouter(this, status, handler)

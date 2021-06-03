@@ -1,38 +1,23 @@
 package pw.binom.concurrency
 
-import pw.binom.atomic.AtomicInt
-import pw.binom.atomic.AtomicLong
-import pw.binom.doFreeze
+import pw.binom.atomic.AtomicBoolean
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.jvm.JvmInline
 
-class SpinLock {
-    private val atom = AtomicLong(0)
-    private val count = AtomicInt(0)
-
+@JvmInline
+value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) {
     fun lock() {
-        if (atom.value == Worker.current?.id ?: 0)
-            count.increment()
-        else {
-            while (true) {
-                if (atom.compareAndSet(0, Worker.current?.id ?: 0))
-                    break
-                Worker.sleep(1)
+        while (true) {
+            if (lock.compareAndSet(expected = false, new = true)) {
+                break
             }
-            count.increment()
+            Worker.sleep(1)
         }
     }
 
     fun unlock() {
-        if (atom.value == Worker.current?.id ?: 0)
-            count.decrement()
-        if (count.value == 0)
-            if (!atom.compareAndSet(Worker.current?.id ?: 0, 0))
-                throw IllegalStateException("Lock already free")
-    }
-
-    init {
-        doFreeze()
+        lock.value = false
     }
 }
 

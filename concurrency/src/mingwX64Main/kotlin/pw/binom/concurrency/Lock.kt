@@ -4,21 +4,31 @@ import kotlinx.cinterop.*
 import platform.windows.*
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
+import kotlin.native.concurrent.freeze
+import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-private const val checkTime = 100
+private const val checkTime = 50
 
-actual class Lock : Closeable {
-
-    //    val native2 = CreateMutex!!(null, FALSE, null)!!
-    var closed = AtomicInt(0)
+@OptIn(ExperimentalStdlibApi::class)
+actual class Lock {
 
     private val native = nativeHeap.alloc<CRITICAL_SECTION>()
 
     init {
         InitializeCriticalSection(native.ptr)
+
+    }
+
+    private val cleaner = createCleaner(native) { native ->
+        DeleteCriticalSection(native.ptr)
+        nativeHeap.free(native)
+    }
+
+    init {
+        freeze()
     }
 
     actual fun lock() {
@@ -29,33 +39,36 @@ actual class Lock : Closeable {
         LeaveCriticalSection(native.ptr)
     }
 
-    override fun close() {
-        if (closed.value == 1)
-            throw IllegalStateException("Lock already closed")
-        DeleteCriticalSection(native.ptr)
-        nativeHeap.free(native)
-        closed.value = 1
-    }
-
     actual fun newCondition(): Condition =
-            Condition(native)
+        Condition(native)
 
-    actual class Condition(val lock: CRITICAL_SECTION) : Closeable {
-        val native = nativeHeap.alloc<CONDITION_VARIABLE>()//malloc(sizeOf<CONDITION_VARIABLE>().convert())!!.reinterpret<CONDITION_VARIABLE>()
+    actual class Condition(val lock: CRITICAL_SECTION) {
+        val native =
+            nativeHeap.alloc<CONDITION_VARIABLE>()
 
         init {
             InitializeConditionVariable(native.ptr)
         }
 
+        private val cleaner = createCleaner(native) { native ->
+            nativeHeap.free(native)
+        }
+
+        init {
+            freeze()
+        }
+
         actual fun await() {
             while (true) {
                 val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
-                if (Worker.current?.isInterrupted == true)
+                if (Worker.current?.isInterrupted == true) {
                     throw InterruptedException()
+                }
                 if (r == 0) {
                     val e = GetLastError()
-                    if (e != ERROR_TIMEOUT.convert<DWORD>())
+                    if (e != ERROR_TIMEOUT.convert<DWORD>()) {
                         throw RuntimeException("Error in wait lock. Error: #$e")
+                    }
                 } else break
             }
         }
@@ -68,10 +81,6 @@ actual class Lock : Closeable {
             WakeAllConditionVariable(native.ptr)
         }
 
-        override fun close() {
-            nativeHeap.free(native)
-        }
-
         @OptIn(ExperimentalTime::class)
         actual fun await(duration: Duration): Boolean {
             if (duration.isInfinite()) {
@@ -81,8 +90,9 @@ actual class Lock : Closeable {
             val now = TimeSource.Monotonic.markNow()
             while (true) {
                 val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
-                if (Worker.current?.isInterrupted == true)
+                if (Worker.current?.isInterrupted == true) {
                     throw InterruptedException()
+                }
                 if (r == 0) {
                     val e = GetLastError()
                     if (e != ERROR_TIMEOUT.convert<DWORD>()) {

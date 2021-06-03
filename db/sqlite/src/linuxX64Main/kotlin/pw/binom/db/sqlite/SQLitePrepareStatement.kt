@@ -4,11 +4,14 @@ import cnames.structs.sqlite3_stmt
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.free
-import pw.binom.db.SyncPreparedStatement
+import pw.binom.date.Date
+import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.*
+import pw.binom.db.sync.SyncResultSet
 
-class SQLitePrepareStatement(override val connection: SQLiteConnector,
-                             internal val native: CPointer<CPointerVar<sqlite3_stmt>>
+class SQLitePrepareStatement(
+    override val connection: SQLiteConnector,
+    internal val native: CPointer<CPointerVar<sqlite3_stmt>>
 ) : SyncPreparedStatement {
 
     internal var openedResultSetCount = 0
@@ -53,6 +56,10 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
         connection.checkSqlCode(sqlite3_bind_blob(stmt, index + 1, value.refTo(0), value.size, SQLITE_STATIC))
     }
 
+    override fun set(index: Int, value: Date) {
+        set(index, value.time)
+    }
+
     override fun executeQuery(): SyncResultSet {
         val code = sqlite3_step(stmt)
         connection.checkSqlCode(code)
@@ -66,11 +73,12 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
     }
 
     override fun executeUpdate(): Long {
+        val before = sqlite3_total_changes(connection.ctx.pointed.value)
         val code = sqlite3_step(stmt)
         connection.checkSqlCode(code)
         val rownum = sqlite3_column_int64(stmt, 0)
         sqlite3_reset(stmt)
-        return rownum
+        return (sqlite3_total_changes(connection.ctx.pointed.value) - before).toLong()
     }
 
     override fun setNull(index: Int) {
@@ -78,10 +86,11 @@ class SQLitePrepareStatement(override val connection: SQLiteConnector,
     }
 
     override fun close() {
-        if (openedResultSetCount > 0)
+        if (openedResultSetCount > 0) {
             throw SQLException("Not all ResultSet closed")
+        }
         sqlite3_clear_bindings(stmt)
         sqlite3_finalize(stmt)
-        free(native)
+        nativeHeap.free(native)
     }
 }

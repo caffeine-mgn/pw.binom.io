@@ -4,12 +4,18 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.io.UTF8
+import pw.binom.io.use
 import pw.binom.pool.DefaultPool
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
+
+private val _ZERO = ByteBuffer.alloc(0)
+
+val ByteBuffer.Companion.ZERO
+    get() = _ZERO
 
 /**
  * A part of memory. Also contents current read/write state
@@ -45,18 +51,7 @@ inline fun ByteBuffer.clone() = realloc(capacity)
  * @param size Size of Buffer
  * @param block function for call with created buffer
  */
-@OptIn(ExperimentalContracts::class)
-inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
-    contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
-    }
-    val bytes = alloc(size)
-    return try {
-        block(bytes)
-    } finally {
-        bytes.close()
-    }
-}
+expect inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T
 
 /**
  * Puts random bytes to free space of [data]
@@ -108,7 +103,7 @@ fun ByteBuffer.Companion.wrap(data: ByteArray, offset: Int = 0, length: Int = da
  * Makes ByteBuffer from [this] String. Returns new clean ByteBuffer
  */
 fun String.toByteBufferUTF8(): ByteBuffer {
-    val len = sumBy {
+    val len = sumOf {
         UTF8.unicodeToUtf8Size(it)
     }
     val buf = ByteBuffer.alloc(len)
@@ -124,7 +119,7 @@ fun ByteBuffer.empty(): ByteBuffer {
 }
 
 class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
-    DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), Closeable {
+    DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), ByteBufferAllocator, Closeable {
     override fun borrow(init: ((ByteBuffer) -> Unit)?): ByteBuffer {
         val buf = super.borrow(init)
         buf.clear()
@@ -170,7 +165,8 @@ inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.bin
         limit = position + length
         return func(this)
     } finally {
-        limit = l
+        this.limit = l
+        this.position = o
     }
 }
 
@@ -198,7 +194,7 @@ inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
 }
 
 /**
- * Makes new ByteBuffer from current [ByteArray]. Also later you must don't fogot to close created ByteBuffer
+ * Makes new ByteBuffer from current [ByteArray]. Also later you must don't forgot to close created ByteBuffer
  */
 fun ByteArray.wrap() = ByteBuffer.wrap(this)
 
@@ -212,4 +208,16 @@ inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
     } finally {
         buf.close()
     }
+}
+
+fun ByteBuffer.asUTF8String(): String {
+    if (remaining == 0) {
+        return ""
+    }
+    val sb = StringBuilder(remaining)
+    while (remaining > 0) {
+        val first = get()
+        sb.append(UTF8.utf8toUnicode(first, this))
+    }
+    return sb.toString()
 }

@@ -1,145 +1,148 @@
 package pw.binom.io.httpServer
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.async
-import pw.binom.concurrency.WorkerPool
-import pw.binom.concurrency.asyncWithExecutor
-import pw.binom.io.AsyncBufferedAsciiInputReader
+import pw.binom.System
+import pw.binom.date.Date
+import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
-import pw.binom.network.*
-import pw.binom.pool.DefaultPool
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
+import pw.binom.network.SocketClosedException
+import pw.binom.network.TcpServerConnection
+
+interface Handler {
+    suspend fun request(req: HttpRequest)
+}
+
+fun Handler(func: suspend (HttpRequest) -> Unit) = object : Handler {
+    override suspend fun request(req: HttpRequest) {
+        func(req)
+    }
+
+}
 
 /**
  * Base Http Server
  *
  * @param handler request handler
  * @param zlibBufferSize size of zlib buffer. 0 - disable zlib
+ * @param errorHandler handler for error during request processing
  */
-open class HttpServer(
+class HttpServer(
     val manager: NetworkDispatcher,
-    protected val handler: Handler,
-    poolSize: Int = 10,
-    val executor: WorkerPool? = null,
-    inputBufferSize: Int = DEFAULT_BUFFER_SIZE,
-    outputBufferSize: Int = DEFAULT_BUFFER_SIZE,
-    private val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE
-) : Closeable {
-
-    init {
-        require(zlibBufferSize >= 0) { "zlibBufferSize must be grate or equals than 0" }
+    val handler: Handler,
+    val maxIdleTime: Long = 10_000,
+    val idleCheckInterval: Long = 30_000,
+    internal val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE,
+    val errorHandler: (Throwable) -> Unit = { e ->
+        RuntimeException(
+            "Exception during http processing",
+            e
+        ).printStackTrace()
     }
-
-    private val returnToPoolForOutput: (NoCloseOutput) -> Unit = {
-        outputBufferPool.recycle(it)
-    }
-
-    private val bufferedInputPool = DefaultPool(poolSize) {
-        val p = PooledAsyncBufferedInput(inputBufferSize)
-        p to AsyncBufferedAsciiInputReader(p)
-    }
-
-    private val bufferedOutputPool = DefaultPool(poolSize) {
-        PoolAsyncBufferedOutput(outputBufferSize)
-    }
-
-    private val outputBufferPool = DefaultPool(poolSize) {
-        NoCloseOutput(returnToPoolForOutput)
-    }
-    private val httpRequestPool = DefaultPool(poolSize) {
-        HttpRequestImpl2()
-    }
-
-    private val httpResponseBodyPool = DefaultPool(poolSize) {
-        HttpResponseBodyImpl2()
-    }
-
-    private val httpResponsePool = DefaultPool(poolSize) {
-        HttpResponseImpl2(httpResponseBodyPool, zlibBufferSize)
-    }
-
-    private suspend fun runProcessing(connection: TcpConnection) {
-        val it = connection
-        val inputBufferid = bufferedInputPool.borrow { buf ->
-            buf.first.currentStream = it
+) : AsyncCloseable {
+    private var closed = false
+    private fun checkClosed() {
+        if (closed) {
+            throw IllegalStateException("Already closed")
         }
-        val outputBufferid = bufferedOutputPool.borrow { buf ->
-            buf.currentStream = it
+    }
+
+    private val binds = ArrayList<TcpServerConnection>()
+
+    private val idleConnections = HashSet<ServerAsyncAsciiChannel>()
+
+    internal fun browConnection(channel: ServerAsyncAsciiChannel) {
+        idleConnections -= channel
+    }
+
+    private var lastIdleCheckTime = Date.nowTime
+
+    suspend fun forceIdleCheck(): Int {
+        var count = 0
+        val now = Date.nowTime
+        lastIdleCheckTime = now
+
+        val it = idleConnections.iterator()
+        while (it.hasNext()) {
+            val e = it.next()
+            if (now - e.lastActive > maxIdleTime) {
+                count++
+                it.remove()
+                runCatching { e.asyncClose() }
+            }
         }
-        while (true) {
+        if (count > 0) {
+            System.gc()
+        }
+        return count
+    }
+
+    private suspend fun idleCheck() {
+        val now = Date.nowTime
+        if (now - lastIdleCheckTime < idleCheckInterval) {
+            return
+        }
+        forceIdleCheck()
+    }
+
+    val idleConnectionSize: Int
+        get() = idleConnections.size
+
+    internal fun clientReProcessing(channel: ServerAsyncAsciiChannel) {
+        channel.activeUpdate()
+        idleConnections += channel
+        clientProcessing(channel = channel, isNewConnect = false)
+    }
+
+    internal fun clientProcessing(channel: ServerAsyncAsciiChannel, isNewConnect: Boolean) {
+        manager.async {
             try {
-                val keepAlive = ConnectionProcessing.process(
-                    handler = this.handler,
-                    httpRequestPool = httpRequestPool,
-                    httpResponsePool = httpResponsePool,
-                    asciiInputReader = inputBufferid.second,
-                    outputBuffered = outputBufferid,
-                    allowZlib = zlibBufferSize > 0,
-                    rawConnection = it
-                )
-                if (!keepAlive) {
-                    inputBufferid.first.reset()
-                    inputBufferid.second.reset()
-                    bufferedInputPool.recycle(inputBufferid)
-                    outputBufferid.reset()
-                    bufferedOutputPool.recycle(outputBufferid)
-                    it.close()
-                    break
-                }
+                val req = HttpRequest2Impl.read(channel = channel, server = this, isNewConnect = isNewConnect)
+                handler.request(req)
+                idleCheck()
             } catch (e: SocketClosedException) {
-                break
+                runCatching { channel.asyncClose() }
             } catch (e: Throwable) {
-                e.printStackTrace()
-                inputBufferid.first.reset()
-                inputBufferid.second.reset()
-                bufferedInputPool.recycle(inputBufferid)
-                outputBufferid.reset()
-                bufferedOutputPool.recycle(outputBufferid)
-                it.close()
-                break
+                runCatching { channel.asyncClose() }
+                runCatching { errorHandler(e) }
             }
         }
     }
 
-    private suspend fun clientConnected(connection: TcpConnection, manager: NetworkDispatcher) {
-        runProcessing(connection)
-    }
-
-    private val binded = ArrayList<TcpServerConnection>()
-
-    override fun close() {
-        binded.forEach {
-            it.close()
-        }
+    fun bindHttp(address: NetworkAddress): Closeable {
+        val server = manager.bindTcp(address)
+        binds += server
         manager.async {
-            while (bufferedInputPool.size > 0) {
-                bufferedInputPool.borrow {
-                    it.first.reset()
-                }.let {
-                    it.second.asyncClose()
+            while (!closed) {
+                var channel: ServerAsyncAsciiChannel? = null
+                try {
+                    idleCheck()
+                    val client = server.accept(null) ?: continue
+                    channel = ServerAsyncAsciiChannel(client)
+                    clientProcessing(channel = channel, isNewConnect = true)
+                } catch (e: Throwable) {
+                    runCatching { channel?.asyncClose() }
                 }
             }
         }
-    }
-
-    /**
-     * Bind HTTP server to port [port]
-     *
-     * @param address Address for bind
-     */
-    fun bindHTTP(address:NetworkAddress) {
-        val connect = manager.bindTcp(address)
-        binded += connect
-        manager.async {
-            while (true) {
-                val client = connect.accept() ?: continue
-                manager.async(executor) {
-                    clientConnected(client, manager)
-                }
-            }
+        return Closeable {
+            checkClosed()
+            binds -= server
+            server.close()
         }
     }
 
-//    fun bindHTTPS(ssl: SSLContext, host: String = "0.0.0.0", port: Int) {
-//        binded += manager.bind(host = host, port = port, handler = this, factory = ssl.socketFactory)
-//    }
+    override suspend fun asyncClose() {
+        checkClosed()
+        closed = true
+        binds.forEach {
+            runCatching { it.close() }
+        }
+        binds.clear()
+        idleConnections.forEach {
+            runCatching { it.asyncClose() }
+        }
+        idleConnections.clear()
+    }
 }

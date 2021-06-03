@@ -3,17 +3,17 @@ package pw.binom.io.httpServer.websocket
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.io.IOException
-import pw.binom.io.Sha1
-import pw.binom.io.Sha1MessageDigest
+import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
+import pw.binom.io.httpServer.Handler3Deprecated
+import pw.binom.io.httpServer.HttpRequestDeprecated
+import pw.binom.io.httpServer.HttpResponseDeprecated
 import pw.binom.network.TcpConnection
 
-abstract class WebSocketHandler : Handler {
+@Deprecated("Not use it")
+abstract class WebSocketHandler : Handler3Deprecated {
 
     interface ConnectRequest {
         val uri: String
@@ -29,7 +29,7 @@ abstract class WebSocketHandler : Handler {
 
     private inner class ConnectRequestImpl(
         val key: String,
-        val resp: HttpResponse,
+        val resp: HttpResponseDeprecated,
         val rawInput: AsyncInput,
         val rawOutout: AsyncOutput,
         val rawConnection: TcpConnection,
@@ -72,7 +72,7 @@ abstract class WebSocketHandler : Handler {
 
     protected abstract suspend fun connected(request: ConnectRequest)
 
-    override suspend fun request(req: HttpRequest, resp: HttpResponse) {
+    override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
         resp.enableKeepAlive = false
         if (req.method != "GET") {
             throw IOException("Invalid Http Request method. Method: [${req.method}], uri: [${req.uri}]")

@@ -17,8 +17,4 @@ class UTF8CharsetEncoder : CharsetEncoder {
             UTF8.unicodeToUtf8(input.get(), output)
         }
     }
-
-    override fun close() {
-    }
-
 }

@@ -4,6 +4,7 @@ import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.io.IOException
 import pw.binom.io.StreamClosedException
+import pw.binom.skipAll
 
 internal const val CR = 0x0D.toByte()
 internal const val LF = 0x0A.toByte()
@@ -12,9 +13,9 @@ internal const val LF = 0x0A.toByte()
  * Implements Async Http Chunked Transport Input
  *
  * @param stream real output stream
- * @param autoCloseStream flag for auto close [stream] when this stream will close
+ * @param closeStream flag for auto close [stream] when this stream will close
  */
-open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolean = false) : AsyncHttpInput {
+open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = false) : AsyncHttpInput {
 
     private suspend fun AsyncInput.readLineCRLF(): String {
         val sb = StringBuilder()
@@ -29,7 +30,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolea
             if (r == 13.toByte()) {
                 continue
             }
-            sb.append(r.toChar())
+            sb.append(r.toInt().toChar())
         }
     }
 
@@ -51,45 +52,6 @@ open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolea
     private var eof = false
     private var closed = false
 
-//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        checkClosed()
-//        if (eof)
-//            return 0
-//        while (true) {
-//            if (chunkedSize == null) {
-//                val chunkedSize = stream.readLineCRLF()
-//                this.chunkedSize = chunkedSize.toULongOrNull(16)
-//                        ?: throw IOException("Invalid Chunk Size: \"$chunkedSize\"")
-////                this.chunkedSize = this.chunkedSize!!
-//                readed = 0uL
-//            }
-//
-//            if (chunkedSize == 0uL) {
-//                stream.readFully(staticData)
-//                val b1 = staticData[0]
-//                val b2 = staticData[1]
-//                if (b1 != CR || b2 != LF)
-//                    throw IOException("Invalid end body  $b1  $b2")
-//                eof = true
-//                return 0
-//            }
-//            if (chunkedSize!! - readed == 0uL) {
-//                chunkedSize = null
-//                stream.readFully(staticData)
-//                val b1 = staticData[0]
-//                val b2 = staticData[1]
-//                if (b1 != CR || b2 != LF)
-//                    throw IOException("Invalid end of chunk")
-//                continue
-//            }
-//
-//            val r = minOf(chunkedSize!! - readed, length.toULong())
-//            val b = stream.read(data, offset, r.toInt())
-//            readed += b.toULong()
-//            return b
-//        }
-//    }
-
     private suspend fun readChankSize() {
         if (eof)
             return
@@ -99,7 +61,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolea
             return
         }
         this.chunkedSize = chunkedSize.toULongOrNull(16)
-                ?: throw IOException("Invalid Chunk Size: \"$chunkedSize\"")
+            ?: throw IOException("Invalid Chunk Size: \"$chunkedSize\"")
         readed = 0uL
 
         if (this.chunkedSize!! == 0uL) {
@@ -159,8 +121,12 @@ open class AsyncChunkedInput(val stream: AsyncInput, val autoCloseStream: Boolea
 
     override suspend fun asyncClose() {
         checkClosed()
+        if (!isEof) {
+            skipAll()
+        }
         closed = true
-        if (autoCloseStream) {
+        staticData.close()
+        if (closeStream) {
             stream.asyncClose()
         }
     }

@@ -4,17 +4,74 @@ import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
+import pw.binom.pool.ObjectPool
 
 class BufferedInputReader(
     charset: Charset,
     val input: Input,
-    private val pool: ByteBufferPool,
+    private val pool: ObjectPool<ByteBuffer>?,
+    private val buffer: ByteBuffer,
+    private var closeBuffer: Boolean,
+    private val closeParent: Boolean,
     charBufferSize: Int = 512
+//    charset: Charset,
+//    val input: Input,
+//    private val pool: ByteBufferPool,
+//    charBufferSize: Int = 512
 ) : Reader {
+
+    constructor(
+        charset: Charset,
+        input: Input,
+        pool: ObjectPool<ByteBuffer>,
+        charBufferSize: Int = 512,
+        closeParent: Boolean = true,
+    ) : this(
+        charset = charset,
+        input = input,
+        pool = pool,
+        buffer = pool.borrow().empty(),
+        charBufferSize = charBufferSize,
+        closeBuffer = false,
+        closeParent = closeParent,
+    )
+
+    constructor(
+        charset: Charset,
+        input: Input,
+        buffer: ByteBuffer,
+        charBufferSize: Int = 512,
+        closeParent: Boolean = true,
+    ) : this(
+        charset = charset,
+        input = input,
+        pool = null,
+        buffer = buffer.empty(),
+        charBufferSize = charBufferSize,
+        closeBuffer = false,
+        closeParent = closeParent,
+    )
+
+    constructor(
+        charset: Charset,
+        input: Input,
+        bufferSize: Int = DEFAULT_BUFFER_SIZE,
+        charBufferSize: Int = 512,
+        closeParent: Boolean = true,
+    ) : this(
+        charset = charset,
+        input = input,
+        pool = null,
+        buffer = ByteBuffer.alloc(bufferSize).empty(),
+        charBufferSize = charBufferSize,
+        closeBuffer = true,
+        closeParent = closeParent,
+    )
+
     private val decoder = charset.newDecoder()
     private val output = CharBuffer.alloc(charBufferSize).empty()
 
-    private val buffer = pool.borrow().empty()
+//    private val buffer = pool.borrow().empty()
 
     private fun checkAvailable() {
         buffer.compact()
@@ -63,8 +120,18 @@ class BufferedInputReader(
     }
 
     override fun close() {
-        decoder.close()
-        pool.recycle(buffer)
+        try {
+            if (closeParent) {
+                input.close()
+            }
+        } finally {
+            output.close()
+            if (closeBuffer) {
+                buffer.close()
+            } else {
+                pool?.recycle(buffer)
+            }
+        }
     }
 
 }
@@ -86,4 +153,16 @@ fun Input.bufferedReader(
     input = this,
     pool = pool,
     charBufferSize = charBufferSize
+)
+fun Input.bufferedReader(
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    charset: Charset = Charsets.UTF8,
+    charBufferSize: Int = bufferSize,
+    closeParent: Boolean = true,
+) = BufferedInputReader(
+    charset = charset,
+    input = this,
+    charBufferSize = charBufferSize,
+    bufferSize = bufferSize,
+    closeParent = closeParent,
 )

@@ -4,7 +4,7 @@ import pw.binom.ByteBuffer
 import pw.binom.io.Closeable
 
 expect class Deflater : Closeable {
-    constructor(level: Int=6, wrap: Boolean=true, syncFlush: Boolean=true)
+    constructor(level: Int = 6, wrap: Boolean = true, syncFlush: Boolean = true)
 
     val totalIn: Long
     val totalOut: Long

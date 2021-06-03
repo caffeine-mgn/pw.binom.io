@@ -8,10 +8,10 @@ import pw.binom.io.EOFException
 import pw.binom.io.IOException
 
 class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boolean = false) : AsyncInflateInput(
-        stream = stream,
-        bufferSize = bufferSize,
-        wrap = false,
-        closeStream = closeStream
+    stream = stream,
+    bufferSize = bufferSize,
+    wrap = false,
+    closeStream = closeStream
 ) {
     private val crc = CRC32()
     private val tmpbuf = ByteBuffer.alloc(128)
@@ -112,5 +112,14 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
             throw IOException("read() returned value out of range -1..255: " + b)
         }
         return b
+    }
+
+    override suspend fun asyncClose() {
+        try {
+            super.asyncClose()
+        } finally {
+            tt.close()
+            tmpbuf.close()
+        }
     }
 }

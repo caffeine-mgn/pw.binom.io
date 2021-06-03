@@ -10,6 +10,7 @@ import pw.binom.ByteDataBuffer
  *
  * @param func real thread provider
  */
+@Deprecated(message = "Not use it")
 class LazyAsyncOutput(private val func: suspend () -> AsyncOutput) : AsyncOutput {
 
 //    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
@@ -18,16 +19,27 @@ class LazyAsyncOutput(private val func: suspend () -> AsyncOutput) : AsyncOutput
 //    }
 
     override suspend fun write(data: ByteBuffer): Int {
+        checkClosed()
         val vv = inited()
         return vv.write(data)
     }
 
+    private var closed = false
+    private fun checkClosed() {
+        if (closed) {
+            throw StreamClosedException()
+        }
+    }
+
     override suspend fun flush() {
+        checkClosed()
         val vv = inited()
         vv.flush()
     }
 
     override suspend fun asyncClose() {
+        checkClosed()
+        closed = true
         val vv = inited()
         vv.asyncClose()
     }

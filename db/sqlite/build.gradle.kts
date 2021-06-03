@@ -29,7 +29,13 @@ kotlin {
             compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
         }
     }
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+//                jvmTarget = "11"
+            }
+        }
+    }
     linuxArm32Hfp {
         binaries {
             staticLib()
@@ -138,7 +144,7 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                api("org.xerial:sqlite-jdbc:3.31.1")
+                api("org.xerial:sqlite-jdbc:3.34.0")
             }
         }
         val jvmTest by getting {
@@ -188,3 +194,4 @@ tasks["compileKotlinMingwX64"].dependsOn(mingwX64Compile)
 tasks["compileKotlinMingwX86"].dependsOn(mingwX86Compile)
 tasks["compileKotlinLinuxArm32Hfp"].dependsOn(linuxArm32HfpCompile)
 tasks["compileKotlinMacosX64"].dependsOn(macosX64Compile)
+apply<pw.binom.plugins.DocsPlugin>()

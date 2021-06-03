@@ -1,5 +1,6 @@
 package pw.binom.io.socket.ssl
 
+import pw.binom.crypto.*
 import pw.binom.io.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -47,5 +48,14 @@ class MessageDigestTest {
         val result = m.finish()
 
         assertEquals("202CB962AC59075B964B07152D234B70", result.toHex().toUpperCase())
+    }
+
+    @Test
+    fun hmac() {
+        val key = ByteArray(16) { it.toByte() }
+        val m = HMac(HMac.Algorithm.SHA1, key)
+        m.update("123".encodeToByteArray())
+        val result = m.finish()
+        assertEquals("685E1FBDF866764979DAE46D15A62CCCDAFC307F", result.toHex().toUpperCase())
     }
 }

@@ -1,13 +1,13 @@
 package pw.binom.xml.dom
 
 import pw.binom.io.AsyncAppendable
-import pw.binom.xml.sax.XmlRootWriterVisitor
-import pw.binom.xml.sax.XmlVisiter
+import pw.binom.xml.sax.AsyncXmlRootWriterVisitor
+import pw.binom.xml.sax.AsyncXmlVisiter
 
 private class TagWriteContext constructor(
         private val parent: TagWriteContext?,
         private val context: Context,
-        private val writerVisiter: XmlVisiter) : NodeBodyWriter {
+        private val writerVisiter: AsyncXmlVisiter) : NodeBodyWriter {
     private val prefixMap = HashMap<String, String>()
 
     private fun prefix(uri: String): String? = prefixMap[uri] ?: parent?.prefix(uri)
@@ -75,7 +75,7 @@ internal class Context {
 }
 
 suspend fun AsyncAppendable.writeXml(func: suspend NodeWriter.() -> Unit) {
-    val w = XmlRootWriterVisitor(this)
+    val w = AsyncXmlRootWriterVisitor(this)
     val ctx = TagWriteContext(null, Context(), w)
     w.start()
     func(ctx)

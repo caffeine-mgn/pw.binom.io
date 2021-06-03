@@ -17,6 +17,7 @@ import kotlin.time.seconds
 
 class ClientTest {
 
+    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() {

@@ -1,6 +1,7 @@
 package pw.binom.mq.nats.client
 
 import kotlinx.serialization.json.*
+import pw.binom.BINOM_VERSION
 import pw.binom.ByteBuffer
 import pw.binom.UUID
 import pw.binom.io.*
@@ -14,8 +15,6 @@ class NatsRawConnection(
 //    val onMessage: suspend (Message) -> Unit
 ) :
     AsyncCloseable {
-
-    private val zeroBuff = ByteBuffer.alloc(0)
 
     private inner class MessageImpl : NatsMessage {
         override val connection: NatsRawConnection
@@ -50,7 +49,7 @@ class NatsRawConnection(
         lang: String = "kotlin",
         echo: Boolean = true,
         tlsRequired: Boolean = false,
-        version: String = "0.1.28",
+        version: String = BINOM_VERSION,
         user: String? = null,
         pass: String? = null,
     ): ConnectInfo {
@@ -191,7 +190,6 @@ class NatsRawConnection(
     }
 
     override suspend fun asyncClose() {
-        zeroBuff.close()
         disconnecting = true
         isConnected = false
         isConnecting = false

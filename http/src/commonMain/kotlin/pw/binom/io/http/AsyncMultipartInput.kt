@@ -7,6 +7,7 @@ import pw.binom.io.AbstractAsyncBufferedInput
 import pw.binom.io.IOException
 import pw.binom.io.utf8Reader
 import pw.binom.pool.ObjectPool
+import pw.binom.skipAll
 
 class EndState {
     enum class Type {
@@ -24,9 +25,7 @@ class EndState {
 
 }
 
-//private const val CR = '\r'.toByte()
-//private const val LF = '\n'.toByte()
-internal const val MINUS = '-'.toByte()
+internal const val MINUS = '-'.code.toByte()
 
 internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState): Boolean {
     var state = 0
@@ -49,7 +48,7 @@ internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState):
             state == 3 -> if (b == MINUS) state++ else reset()
             state >= 4 && state - 4 < separator.length -> {
                 val c = separator[state - 4]
-                if (c.toByte() == b) {
+                if (c.code.toByte() == b) {
                     state++
                 } else {
                     reset()
@@ -113,7 +112,11 @@ internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState):
     }
 }
 
-open class AsyncMultipartInput(private val separator: String, override val stream: AsyncInput, private val bufferPool: ObjectPool<ByteBuffer>) : AbstractAsyncBufferedInput() {
+open class AsyncMultipartInput(
+    private val separator: String,
+    override val stream: AsyncInput,
+    private val bufferPool: ObjectPool<ByteBuffer>
+) : AbstractAsyncBufferedInput() {
     override val buffer = bufferPool.borrow().empty()
 
     init {
@@ -125,8 +128,8 @@ open class AsyncMultipartInput(private val separator: String, override val strea
     private val reader = utf8Reader()
     var formName: String? = null
         private set
-    private val _headers = HashMap<String, ArrayList<String>>()
-    val headers: Map<String, List<String>>
+    private val _headers = HashHeaders()
+    val headers: Headers
         get() = _headers
 //    private var nextBlockReady = false
 
@@ -139,6 +142,14 @@ open class AsyncMultipartInput(private val separator: String, override val strea
                 throw IOException("Invalid Input Multipart data: Invalid first data line [$firstLine]")
             }
         } else {
+            if (!isBlockEof) {
+                val buf = bufferPool.borrow()
+                try {
+                    skipAll(buf)
+                } finally {
+                    bufferPool.recycle(buf)
+                }
+            }
             formName = null
             _headers.clear()
         }
@@ -153,7 +164,7 @@ open class AsyncMultipartInput(private val separator: String, override val strea
 
         val head = reader.readln() ?: throw IOException("Can't read part data header")
         val items = head.split(':', limit = 2)
-        if (items[0].toLowerCase() != "content-disposition")
+        if (items[0].lowercase() != "content-disposition")
             throw IOException("Invalid part header \"${items[0]}\"")
         val headValues = items[1].split(';').map { it.trim() }
         if ("form-data" != headValues[0])
@@ -167,7 +178,10 @@ open class AsyncMultipartInput(private val separator: String, override val strea
             if (l.isEmpty())
                 break
             val headItems = l.split(':', limit = 2)
-            _headers.getOrPut(headItems[0].trim()) { ArrayList() }.add(headItems[1].trim())
+            _headers.add(
+                key = headItems[0].trim(),
+                value = headItems[1].trim()
+            )
         }
         return true
     }
@@ -209,8 +223,11 @@ open class AsyncMultipartInput(private val separator: String, override val strea
         endState.type = EndState.Type.BLOCK_EOF
     }
 
+    val isBlockEof
+        get() = buffer.remaining == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)
+
     override suspend fun read(dest: ByteBuffer): Int {
-        if (buffer.remaining == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)) {
+        if (isBlockEof) {
             return 0
         }
         return super.read(dest)

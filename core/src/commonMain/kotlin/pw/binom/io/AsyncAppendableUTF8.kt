@@ -6,10 +6,10 @@ class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
 
     private val data = ByteBuffer.alloc(4)
 
-    override suspend fun append(c: Char): AsyncAppendable {
+    override suspend fun append(value: Char): AsyncAppendable {
         try {
             data.clear()
-            UTF8.unicodeToUtf8(c, data)
+            UTF8.unicodeToUtf8(value, data)
             data.flip()
             stream.write(data)
         } catch (e:Throwable) {
@@ -18,17 +18,17 @@ class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
         return this
     }
 
-    override suspend fun append(csq: CharSequence?): AsyncAppendable {
-        csq?.forEach {
+    override suspend fun append(value: CharSequence?): AsyncAppendable {
+        value?.forEach {
             append(it)
         }
         return this
     }
 
-    override suspend fun append(csq: CharSequence?, start: Int, end: Int): AsyncAppendable {
-        csq ?: return this
-        (start..end).forEach {
-            append(csq[it])
+    override suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable {
+        value ?: return this
+        (startIndex..endIndex).forEach {
+            append(value[it])
         }
         return this
     }

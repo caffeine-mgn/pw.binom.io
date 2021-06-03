@@ -7,7 +7,13 @@ apply {
 }
 
 kotlin {
-    jvm()
+    jvm {
+        compilations.all {
+            kotlinOptions {
+//                jvmTarget = "11"
+            }
+        }
+    }
 
     linuxX64 { // Use your target instead.
         binaries {
@@ -115,6 +121,7 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
+                api(project(":network"))
             }
         }
         val jvmTest by getting {
@@ -128,3 +135,4 @@ kotlin {
         }
     }
 }
+apply<pw.binom.plugins.DocsPlugin>()

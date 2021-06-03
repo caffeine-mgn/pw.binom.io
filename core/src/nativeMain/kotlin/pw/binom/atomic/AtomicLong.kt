@@ -1,11 +1,15 @@
 package pw.binom.atomic
 
+import pw.binom.doFreeze
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.native.concurrent.AtomicLong as NAtomicLong
 
 actual class AtomicLong actual constructor(value: Long) : ReadWriteProperty<Any, Long> {
     private val atom = NAtomicLong(value)
+    init {
+        doFreeze()
+    }
 
     actual fun compareAndSet(expected: Long, new: Long): Boolean =
             atom.compareAndSet(expected, new)

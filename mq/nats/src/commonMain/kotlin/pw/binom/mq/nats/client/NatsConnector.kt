@@ -6,8 +6,7 @@ import pw.binom.io.AsyncCloseable
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketConnectException
-import pw.binom.uuid
-import pw.binom.wrap
+import pw.binom.nextUuid
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -56,7 +55,7 @@ class NatsConnector(
         group: String? = defaultGroup,
     ): AsyncCloseable {
         checkClosed()
-        val subscribeId = Random.uuid()
+        val subscribeId = Random.nextUuid()
         checkConnection().subscribe(
                 subscribeId = subscribeId,
                 subject = subject,

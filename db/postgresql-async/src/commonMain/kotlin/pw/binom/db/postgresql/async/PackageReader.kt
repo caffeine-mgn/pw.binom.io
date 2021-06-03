@@ -2,12 +2,16 @@ package pw.binom.db.postgresql.async
 
 import pw.binom.*
 import pw.binom.charset.Charset
+import pw.binom.charset.CharsetTransformResult
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
+import pw.binom.io.IOException
+import pw.binom.io.use
+import kotlin.math.roundToInt
 
-class PackageReader(connection: PGConnection, val charset: Charset, val rawInput: AsyncInput) : Closeable {
+class PackageReader(val connection: PGConnection, val charset: Charset, val rawInput: AsyncInput) : Closeable {
     val buf16 = ByteBuffer.alloc(16)
     val buf64 = ByteBuffer.alloc(64)
     val output = ByteArrayOutput()
@@ -69,25 +73,24 @@ class PackageReader(connection: PGConnection, val charset: Charset, val rawInput
     override fun close() {
         buf16.close()
         buf64.close()
+        output.close()
     }
 
-    suspend fun readCString(): String {
-        val o = ByteArrayOutput()
-        while (true) {
-            val byte = input.readByte(buf16)
-            if (byte == 0.toByte()) {
-                break
+    suspend fun readCString(): String =
+        ByteArrayOutput().use { o ->
+            while (true) {
+                val byte = input.readByte(buf16)
+                if (byte == 0.toByte()) {
+                    break
+                }
+                o.writeByte(buf16, byte)
             }
-            o.writeByte(buf16, byte)
+            if (o.size <= 0) {
+                return ""
+            }
+            o.data.flip()
+            connection.charsetUtils.decode(o.data)
         }
-        if (o.size <= 0) {
-            o.close()
-            return ""
-        }
-        val str = o.toByteArray().decodeString(charset)
-        o.close()
-        return str
-    }
 
     suspend fun readByteArray(length: Int): ByteArray {
         val out = ByteArray(length) {
@@ -95,6 +98,8 @@ class PackageReader(connection: PGConnection, val charset: Charset, val rawInput
         }
         return out
     }
+
+
 }
 
 private class AsyncInputLimit(val input: AsyncInput) : AsyncInput {

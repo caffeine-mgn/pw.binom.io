@@ -1,5 +1,6 @@
 package pw.binom.network
 
+import pw.binom.CancelledException
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -59,13 +60,20 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
 
     private var acceptListener: Continuation<TcpClientSocketChannel>? = null
 
+    fun interruptAccepting(): Boolean {
+        val continuation = acceptListener ?: return false
+        continuation.resumeWithException(CancelledException())
+        acceptListener = null
+        return true
+    }
+
     suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection? {
         if (acceptListener != null) {
-            throw IllegalStateException("Already Accepting")
+            throw IllegalStateException("Connection already have read listener")
         }
 
-        val newClient = channel.accept(null)
-        if (newClient!=null){
+        val newClient = channel.accept(address)
+        if (newClient != null) {
             return dispatcher.attach(newClient)
         }
 

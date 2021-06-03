@@ -6,6 +6,7 @@ import pw.binom.ByteBuffer
 import pw.binom.io.StreamClosedException
 import pw.binom.network.SocketClosedException
 
+@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 class AsyncClosableInput(val stream: AsyncInput) : AsyncInput {
 
     private var eof = false

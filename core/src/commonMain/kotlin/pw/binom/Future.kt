@@ -1,17 +1,14 @@
 package pw.binom
 
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicReference
 
-interface Future2<T> {
+interface Future<T> {
 
     companion object {
-        fun <T> success(result: T): Future2<T> = SuccessFuture2(result)
+        fun <T> success(result: T): Future<T> = SuccessFuture(result)
+        fun <T> fail(result: Throwable): Future<T> = FailFuture(result)
     }
-
-    /**
-     * Function will call on Future has done. Can be called on other thread. [func] will be freeze
-     */
-    var onDone: ((Result<T>) -> Unit)?
 
     /**
      * Getting current result value. If Future not ready will throw FutureNotReadyException
@@ -43,10 +40,21 @@ interface Future2<T> {
      * Throws whan future not ready
      */
     class FutureNotReadyException : IllegalStateException()
+    class FutureAlreadyResumedException : IllegalStateException()
 }
 
-private class SuccessFuture2<T>(val result: T) : Future2<T> {
+/**
+ * If [isFailure] will throw exception. Also returns result
+ */
+@Suppress("UNCHECKED_CAST")
+fun <T> Future<T>.getOrException(): T {
+    if (isFailure) {
+        throw exceptionOrNull!!
+    }
+    return resultOrNull as T
+}
 
+private class SuccessFuture<T>(val result: T) : Future<T> {
     override val resultOrNull: T?
         get() = result
     override val isSuccess: Boolean
@@ -55,77 +63,94 @@ private class SuccessFuture2<T>(val result: T) : Future2<T> {
         get() = null
     override val isDone: Boolean
         get() = true
-    override var onDone: ((Result<T>) -> Unit)?
-        get() = null
-        set(value) {
-            value?.invoke(Result.success(result))
-        }
 }
 
-class BaseFuture<T> : Future2<T> {
+private class FailFuture<T>(val result: Throwable) : Future<T> {
+    override val resultOrNull: T?
+        get() = null
+    override val isSuccess: Boolean
+        get() = false
+    override val exceptionOrNull
+        get() = result
+    override val isDone: Boolean
+        get() = true
+}
+
+@Suppress("UNCHECKED_CAST")
+class NonFreezableFuture<T> : Future<T> {
+    init {
+        neverFreeze()
+    }
+
+    private var result: Any? = null
+    override val resultOrNull: T?
+        get() = if (isSuccess) result as T else null
+    override var isSuccess: Boolean = false
+        get() {
+            if (!isDone) {
+                throw Future.FutureNotReadyException()
+            }
+            return field
+        }
+        private set
+
+    override val exceptionOrNull: Throwable?
+        get() = if (!isSuccess) result as Throwable else null
+
+    override var isDone: Boolean = false
+        private set
+
+    fun resume(result: Result<T>) {
+        if (isDone) {
+            throw Future.FutureAlreadyResumedException()
+        }
+        isDone = true
+        isSuccess = result.isSuccess
+        this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+class FreezableFuture<T> : Future<T> {
 
     override val resultOrNull: T?
         get() {
-            val r = result ?: throw Future2.FutureNotReadyException()
-            return r.getOrNull()
+            if (!isDone) {
+                throw Future.FutureNotReadyException()
+            }
+            return if (isSuccess) {
+                result as T
+            } else {
+                null
+            }
         }
+
+    private var _isSuccess = AtomicBoolean(false)
     override val isSuccess: Boolean
         get() {
-            val r = result ?: throw Future2.FutureNotReadyException()
-            return r.isSuccess
+            if (!isDone) {
+                throw Future.FutureNotReadyException()
+            }
+            return _isSuccess.value
         }
     override val exceptionOrNull: Throwable?
-        get() {
-            val r = result ?: throw Future2.FutureNotReadyException()
-            return r.exceptionOrNull()
-        }
-    override val isDone: Boolean
-        get() = result != null
-    private var onDoneEvent by AtomicReference<((Result<T>) -> Unit)?>(null)
-    private var result by AtomicReference<Result<T>?>(null)
-    override var onDone: ((Result<T>) -> Unit)?
-        get() = onDoneEvent
-        set(value) {
-            onDoneEvent = null
-            val r = result
-            if (r != null) {
-                value?.invoke(r)
-                return
+        get() =
+            if (isSuccess) {
+                null
+            } else {
+                result as Throwable
             }
-            onDoneEvent = value?.doFreeze()
-        }
+    private var _isDone = AtomicBoolean(false)
+    override val isDone: Boolean
+        get() = _isDone.value
+
+    private var result by AtomicReference<Any?>(null)
 
     fun resume(result: Result<T>) {
-        this.result = result.doFreeze()
-        val r = onDoneEvent
-        onDoneEvent = null
-        r?.invoke(result)
+        if (!_isDone.compareAndSet(false, true)) {
+            throw Future.FutureAlreadyResumedException()
+        }
+        _isSuccess.value = result.isSuccess
+        this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
     }
-}
-
-interface Future<T> {
-    val resultOrNull: T?
-    val isSuccess: Boolean
-    val isFailure: Boolean
-        get() = !isSuccess
-    val exceptionOrNull: Throwable?
-    val isDone: Boolean
-
-    fun <R> consume(func: (Result<T>) -> R): R
-
-    companion object {
-        fun <T> success(result: T): Future<T> = SuccessFuture(result)
-    }
-}
-
-private class SuccessFuture<T>(result: T) : Future<T> {
-    override val resultOrNull: T? = result
-    override val isSuccess: Boolean
-        get() = true
-    override val exceptionOrNull: Throwable?
-        get() = null
-
-    override fun <R> consume(func: (Result<T>) -> R): R = func(Result.success(resultOrNull as T))
-    override val isDone: Boolean
-        get() = true
 }

@@ -1,15 +1,16 @@
 package pw.binom.date
 
-import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.*
 
-actual inline class Date(val time: Long = now) {
+@JvmInline
+actual value class Date(val time: Long = nowTime) {
     actual companion object {
-        actual val timeZoneOffset: Int
+        actual val systemZoneOffset: Int
             get() = TimeZone.getDefault().rawOffset / 1000 / 60
-        
-        actual val now: Long
+
+        actual val nowTime: Long
             get() = System.currentTimeMillis()
 
         actual fun internalOf(
@@ -22,21 +23,39 @@ actual inline class Date(val time: Long = now) {
             millis: Int,
             timeZoneOffset: Int
         ): Date {
-            val t = LocalDateTime.of(
-                year,
-                month + 1,
-                dayOfMonth,
-                hours,
-                minutes,
-                seconds,
-                millis
+            return Date(
+                ZonedDateTime.of(
+                    year,
+                    month,
+                    dayOfMonth,
+                    hours,
+                    minutes,
+                    seconds,
+                    millis * 1_000_000,
+                    ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - (timeZoneOffset / 60 * 60))
+                ).toInstant().toEpochMilli()
             )
-            val v = t.atZone(ZoneOffset.UTC)
-                    .toInstant()
-            return Date((v.epochSecond - timeZoneOffset * 60L) * 1000L + v.nano)
+
+
+//
+//            val t = LocalDateTime.of(
+//                year,
+//                month,
+//                dayOfMonth,
+//                hours,
+//                minutes,
+//                seconds,
+//                millis
+//            )
+//            val v = t.atZone(ZoneOffset.UTC)
+//                .toInstant()
+//            return Date(v.toEpochMilli() - (timeZoneOffset * 60L * 1000L))
         }
+
+        actual val now: Date
+            get() = Date(nowTime)
     }
 
     actual fun calendar(timeZoneOffset: Int): Calendar =
-            Calendar(time, timeZoneOffset)
+        Calendar(time, timeZoneOffset)
 }

@@ -1,6 +1,5 @@
 package pw.binom.strong
 
-import pw.binom.async2
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -21,8 +20,7 @@ class StrongTest {
                 it.define(BImpl())
                 it.define(ABImpl())
             })
-            s.start()
-            val list by s.serviceList<A>()
+            val list by s.injectServiceList<A>()
             assertEquals(2, list.size)
             assertTrue(list.any { it is AImpl })
             assertTrue(list.any { it is ABImpl })

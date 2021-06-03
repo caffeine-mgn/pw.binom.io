@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import pw.binom.io.Closeable
+import java.net.InetSocketAddress
 import java.net.BindException as JBindException
 import java.nio.channels.ServerSocketChannel as JServerSocketChannel
 
@@ -11,8 +12,13 @@ actual class TcpServerSocketChannel : Closeable {
         native.configureBlocking(false)
     }
 
-    actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? =
-        native.accept()?.let { TcpClientSocketChannel(it) }
+    actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel?{
+        val s = native.accept()
+        if (s!=null && address!=null){
+            address._native=s.remoteAddress as InetSocketAddress
+        }
+        return s?.let { TcpClientSocketChannel(it) }
+    }
 
     actual fun bind(address: NetworkAddress) {
         try {

@@ -8,6 +8,7 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
     protected abstract val output: Output
 
     protected abstract val buffer: ByteBuffer
+    private var closed = false
 
     private fun checkFlush() {
         if (buffer.remaining == 0) {
@@ -15,7 +16,14 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
         }
     }
 
+    private fun checkClosed() {
+        if (closed) {
+            throw StreamClosedException()
+        }
+    }
+
     override fun write(data: ByteBuffer): Int {
+        checkClosed()
         var r = 0
         while (data.remaining > 0) {
             checkFlush()
@@ -24,26 +32,45 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
         return r
     }
 
-    override fun append(c: Char): Appendable {
+    override fun append(value: Char): Appendable {
+        checkClosed()
         checkFlush()
-        buffer.put(c.toByte())
+        buffer.put(value.code.toByte())
         return this
     }
 
-    override fun append(csq: CharSequence?): Appendable {
-        append(csq, 0, csq?.lastIndex ?: 0)
+    override fun append(value: CharSequence?): Appendable {
+        value ?: return this
+        append(value, 0, value.length)
         return this
     }
 
-    override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
-        csq ?: return this
-        (start..end).forEach {
-            append(csq[it])
+    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): Appendable {
+        checkClosed()
+        value ?: return this
+        if (value.isEmpty()) {
+            return this
+        }
+        if (endIndex == startIndex) {
+            return append(value[startIndex])
+        }
+        val data = ByteArray(endIndex - startIndex) {
+            value[it].code.toByte()
+        }
+        var pos = 0
+        while (pos < data.size) {
+            checkFlush()
+            val wrote = buffer.write(data, offset = pos)
+            if (wrote <= 0) {
+                throw IOException("Can't append data to")
+            }
+            pos += wrote
         }
         return this
     }
 
     override fun flush() {
+        checkClosed()
         if (buffer.remaining != buffer.capacity) {
             buffer.flip()
             while (buffer.remaining > 0) {
@@ -55,12 +82,17 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
     }
 
     override fun close() {
+        checkClosed()
         flush()
-        output.close()
+        closed = true
     }
 }
 
-class BufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override val output: Output) :
+class BufferedAsciiWriter(
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    val closeParent: Boolean,
+    override val output: Output
+) :
     AbstractBufferedAsciiWriter() {
     init {
         require(bufferSize > 4)
@@ -71,14 +103,22 @@ class BufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, override val ou
     }
 
     override fun close() {
-        super.close()
-        buffer.close()
+        try {
+            super.close()
+        } finally {
+            buffer.close()
+            if (closeParent) {
+                output.close()
+            }
+        }
     }
 
     override val buffer = ByteBuffer.alloc(bufferSize)
 }
 
-fun Output.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE) = BufferedAsciiWriter(
-    output = this,
-    bufferSize = bufferSize
-)
+fun Output.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) =
+    BufferedAsciiWriter(
+        output = this,
+        bufferSize = bufferSize,
+        closeParent = closeParent,
+    )

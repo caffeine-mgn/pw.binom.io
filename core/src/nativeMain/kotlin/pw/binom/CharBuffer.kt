@@ -2,6 +2,8 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.memcpy
+import platform.posix.wchar_t
+import platform.posix.wchar_tVar
 import pw.binom.io.Closeable
 
 actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Closeable, Buffer {
@@ -55,7 +57,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         bytes.close()
     }
 
-    override fun refTo(position: Int): CValuesRef<ByteVar> =
+    override fun refTo(position: Int) =
         bytes.refTo(position * Char.SIZE_BYTES)
 
     actual override fun equals(other: Any?): Boolean =
@@ -114,7 +116,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
             1 -> return get().toString()
         }
         val bb = memScoped {
-        refTo(0).getPointer(this).toKString()
+            refTo(0).getPointer(this).toKString()
         }
         val sb = StringBuilder()
         forEach {
@@ -139,7 +141,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     }
 
     actual fun realloc(newSize: Int): CharBuffer =
-        CharBuffer(bytes.realloc(newSize * 2))
+        CharBuffer(bytes.realloc(newSize * Char.SIZE_BYTES))
 
     actual fun subString(startIndex: Int, endIndex: Int): String {
         if (endIndex > capacity) {
@@ -157,7 +159,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, minOf(array.size - offset, length))
         memScoped {
-            memcpy(bytes.refTo(position * 2), array.refTo(offset), (len * 2).convert())
+            memcpy(bytes.refTo(position * Char.SIZE_BYTES), array.refTo(offset), (len * Char.SIZE_BYTES).convert())
             position += len
         }
         return len

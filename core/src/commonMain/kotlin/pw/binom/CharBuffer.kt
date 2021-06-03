@@ -25,8 +25,8 @@ expect class CharBuffer : CharSequence, Closeable, Buffer {
     fun put(value: Char)
     fun reset(position: Int, length: Int): CharBuffer
     override fun toString(): String
-    fun read(array: CharArray, offset: Int, length: Int): Int
-    fun write(array: CharArray, offset: Int, length: Int): Int
+    fun read(array: CharArray, offset: Int = 0, length: Int = array.size - offset): Int
+    fun write(array: CharArray, offset: Int = 0, length: Int = array.size - offset): Int
 }
 
 /**

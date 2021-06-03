@@ -1,13 +1,14 @@
 package pw.binom.db.postgresql.async
 
 import pw.binom.UUID
-import pw.binom.db.AsyncPreparedStatement
-import pw.binom.db.AsyncResultSet
+import pw.binom.date.Date
+import pw.binom.db.async.AsyncPreparedStatement
+import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
-import pw.binom.uuid
+import pw.binom.nextUuid
 import kotlin.random.Random
 
 class PostgresPreparedStatement(
@@ -17,9 +18,15 @@ class PostgresPreparedStatement(
     val resultColumnTypes: List<ResultSet.ColumnType>,
 ) : AsyncPreparedStatement {
     internal var parsed = false
-    private val id = Random.uuid()
+    private val id = Random.nextUuid()
     private val realQuery: String
     private val paramCount: Int
+    internal var lastOpenResultSet: PostgresAsyncResultSet? = null
+
+    private suspend fun checkClosePreviousResultSet() {
+        lastOpenResultSet?.let { if (!it.isClosed) it.asyncClose() }
+        lastOpenResultSet = null
+    }
 
     init {
         val result = StringBuilder(query.length + 16)
@@ -44,6 +51,15 @@ class PostgresPreparedStatement(
             }
         }
         realQuery = result.toString()
+        params = 0
+        var i = -1
+        while (true) {
+            i = realQuery.indexOf('$', i + 1)
+            if (i == -1) {
+                break
+            }
+            params++
+        }
         paramCount = params
 
         if (paramColumnTypes.isNotEmpty()) {
@@ -53,43 +69,51 @@ class PostgresPreparedStatement(
 
     private val params = arrayOfNulls<Any>(paramCount)
 
-    override fun set(index: Int, value: Float) {
+    override suspend fun set(index: Int, value: Float) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: Int) {
+    override suspend fun set(index: Int, value: Int) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: Long) {
+    override suspend fun set(index: Int, value: Long) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: String) {
+    override suspend fun set(index: Int, value: String) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: Boolean) {
+    override suspend fun set(index: Int, value: Boolean) {
         params[index] = value
     }
 
-    override fun set(index: Int, value: ByteArray) {
+    override suspend fun set(index: Int, value: ByteArray) {
         params[index] = value
     }
 
-    override fun setNull(index: Int) {
+    override suspend fun set(index: Int, value: Date) {
+        params[index] = value
+    }
+
+    override suspend fun setNull(index: Int) {
         params[index] = null
     }
 
     override suspend fun executeQuery(): AsyncResultSet {
+        checkClosePreviousResultSet()
         val response = execute()
         if (response is QueryResponse.Data) {
-            return PostgresAsyncResultSet(true, response)
+            val q = PostgresAsyncResultSet(true, response)
+            lastOpenResultSet = q
+            return q
         }
         throw SQLException("Query doesn't return data")
     }
 
     override suspend fun executeUpdate(): Long {
+        checkClosePreviousResultSet()
         val response = execute()
         if (response is QueryResponse.Status) {
             return response.rowsAffected
@@ -100,18 +124,26 @@ class PostgresPreparedStatement(
         throw SQLException("Query returns data")
     }
 
-    override fun set(index: Int, value: UUID) {
+    override suspend fun set(index: Int, value: UUID) {
         params[index] = value
     }
 
-    override suspend fun asyncClose() {
+    private suspend fun deleteSelf() {
         connection.sendOnly(connection.reader.closeMessage.also {
             it.portal = false
             it.statement = id.toString()
         })
         connection.sendOnly(SyncMessage)
-        check(connection.readDesponse() is CloseCompleteMessage)
-        check(connection.readDesponse() is ReadyForQueryMessage)
+        val closeMsg = connection.readDesponse()
+        check(closeMsg is CloseCompleteMessage) { "Expected CloseCompleteMessage, but actual $closeMsg" }
+        val readyForQuery = connection.readDesponse()
+        check(readyForQuery is ReadyForQueryMessage) { "Expected ReadyForQueryMessage, but actual $readyForQuery" }
+    }
+
+    override suspend fun asyncClose() {
+        checkClosePreviousResultSet()
+        connection.prepareStatements.remove(this)
+        deleteSelf()
     }
 
     suspend fun execute(): QueryResponse {
@@ -120,6 +152,7 @@ class PostgresPreparedStatement(
         } else {
             paramColumnTypes.map { it.typeInt }
         }
+        var justParsed = false
         if (!parsed) {
             connection.sendOnly(
                 connection.reader.preparedStatementOpeningMessage.also {
@@ -128,8 +161,9 @@ class PostgresPreparedStatement(
                     it.valuesTypes = types
                 }
             )
+            justParsed = true
         }
-        val binaryResult = true
+        val binaryResult = false
         val portalName = id.toString()
         connection.sendOnly(connection.reader.bindMessage.also {
             it.statement = id.toString()
@@ -155,29 +189,52 @@ class PostgresPreparedStatement(
             }
             check(msg is ParseCompleteMessage) { "Invalid Message: $msg (${msg::class})" }
         }
-        check(connection.readDesponse() is BindCompleteMessage)
-        parsed = true
         val msg = connection.readDesponse()
-        return when (msg) {
-            is CommandCompleteMessage -> {
-                check(connection.readDesponse() is ReadyForQueryMessage)
-                QueryResponse.Status(
-                    status = msg.statusMessage,
-                    rowsAffected = msg.rowsAffected
-                )
-            }
-            is RowDescriptionMessage -> {
-                connection.busy = true
-                val msg2 = connection.reader.data
-                msg2.portalName = portalName
-                msg2.binaryResult = binaryResult
-                msg2.reset(msg)
-                return msg2
-            }
+        when (msg) {
             is ErrorMessage -> {
-                throw PostgresqlException(msg.fields['M'])
+                check(connection.readDesponse() is ReadyForQueryMessage)
+                if (justParsed) {
+                    deleteSelf()
+                }
+                throw PostgresqlException(msg.toString())
             }
-            else -> TODO("msg: $msg")
+            is BindCompleteMessage -> {
+                //ok
+            }
+        }
+        parsed = true
+
+        var rowsAffected = 0L
+        LOOP@ while (true) {
+            val msg = connection.readDesponse()
+            when (msg) {
+                is ReadyForQueryMessage -> {
+                    return QueryResponse.Status(
+                        status = "",
+                        rowsAffected = rowsAffected
+                    )
+                }
+                is CommandCompleteMessage -> {
+                    rowsAffected += msg.rowsAffected
+                    continue@LOOP
+                }
+                is RowDescriptionMessage -> {
+                    connection.busy = true
+                    val msg2 = connection.reader.data
+                    msg2.reset(msg)
+                    return msg2
+                }
+                is ErrorMessage -> {
+                    throw PostgresqlException(msg.fields['M'])
+                }
+                is NoticeMessage -> {
+                    continue@LOOP
+                }
+                is NoDataMessage -> {
+                    continue@LOOP
+                }
+                else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg]")
+            }
         }
     }
 }

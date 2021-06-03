@@ -65,20 +65,27 @@ class AsyncBufferedInputReader private constructor(
 
     private val decoder = charset.newDecoder()
     private val output = CharBuffer.alloc(charBufferSize).empty()
+    private var eof = false
 
 //    private val buffer = pool.borrow().empty()
 
-    private suspend fun checkAvailable() {
+    private suspend fun full() {
+        if (eof) {
+            return
+        }
         if (buffer.remaining == 0) {
             buffer.clear()
-            input.read(buffer)
+            val r = input.read(buffer)
+            if (r == 0) {
+                eof = true
+            }
             buffer.flip()
         }
     }
 
     private suspend fun prepareBuffer() {
         if (output.remaining == 0) {
-            checkAvailable()
+            full()
             output.clear()
             if (decoder.decode(buffer, output) == CharsetTransformResult.MALFORMED) {
                 throw IOException()
@@ -87,7 +94,7 @@ class AsyncBufferedInputReader private constructor(
         }
     }
 
-    override suspend fun read(data: CharArray, offset: Int, length: Int): Int {
+    override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
         if (length == 0) {
             return 0
         }
@@ -96,7 +103,7 @@ class AsyncBufferedInputReader private constructor(
             prepareBuffer()
             if (output.remaining > 0) {
                 counter += output.read(
-                    array = data,
+                    array = dest,
                     offset = offset,
                     length = length
                 )
@@ -144,14 +151,17 @@ class AsyncBufferedInputReader private constructor(
     }
 
     override suspend fun asyncClose() {
-        if (closeParent) {
-            input.asyncClose()
-        }
-        decoder.close()
-        if (closeBuffer) {
-            buffer.close()
-        } else {
-            pool?.recycle(buffer)
+        try {
+            if (closeParent) {
+                input.asyncClose()
+            }
+        } finally {
+            output.close()
+            if (closeBuffer) {
+                buffer.close()
+            } else {
+                pool?.recycle(buffer)
+            }
         }
     }
 
@@ -160,32 +170,38 @@ class AsyncBufferedInputReader private constructor(
 fun AsyncInput.bufferedReader(
     pool: ObjectPool<ByteBuffer>,
     charset: Charset = Charsets.UTF8,
-    charBufferSize: Int = 512
+    charBufferSize: Int = 512,
+    closeParent: Boolean = true,
 ) = AsyncBufferedInputReader(
     charset = charset,
     input = this,
     pool = pool,
-    charBufferSize = charBufferSize
+    charBufferSize = charBufferSize,
+    closeParent = closeParent,
 )
 
 fun AsyncInput.bufferedReader(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charset: Charset = Charsets.UTF8,
-    charBufferSize: Int = bufferSize
+    charBufferSize: Int = bufferSize,
+    closeParent: Boolean = true,
 ) = AsyncBufferedInputReader(
     charset = charset,
     input = this,
     charBufferSize = charBufferSize,
-    bufferSize = bufferSize
+    bufferSize = bufferSize,
+    closeParent = closeParent,
 )
 
 fun AsyncInput.bufferedReader(
     buffer: ByteBuffer,
     charset: Charset = Charsets.UTF8,
-    charBufferSize: Int = buffer.capacity
+    charBufferSize: Int = buffer.capacity,
+    closeParent: Boolean = true,
 ) = AsyncBufferedInputReader(
     charset = charset,
     input = this,
     charBufferSize = charBufferSize,
-    buffer = buffer
+    buffer = buffer,
+    closeParent = closeParent,
 )

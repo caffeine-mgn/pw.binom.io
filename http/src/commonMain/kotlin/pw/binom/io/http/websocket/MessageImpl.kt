@@ -7,12 +7,13 @@ import pw.binom.get
 import pw.binom.io.StreamClosedException
 import kotlin.experimental.xor
 
-class MessageImpl(override val type: MessageType,
-                  initLength: ULong,
-                  val input: AsyncInput,
-                  private var maskFlag: Boolean,
-                  private var mask: Int,
-                  private var lastFrame: Boolean
+class MessageImpl(
+    override val type: MessageType,
+    initLength: ULong,
+    val input: AsyncInput,
+    private var maskFlag: Boolean,
+    private var mask: Int,
+    private var lastFrame: Boolean
 ) : Message {
     private var inputReady = initLength
     private var closed = false
@@ -25,14 +26,22 @@ class MessageImpl(override val type: MessageType,
     override suspend fun asyncClose() {
         checkClosed()
         if (inputReady > 0uL)
-            throw IllegalStateException("Current block is't finished. Remaining: [$inputReady]")
+            throw IllegalStateException("Current block isn't finished. Remaining: [$inputReady]")
         closed = true
     }
 
     private var cursor = 0uL
 
+    val lastPart
+        get() = lastFrame
+
     override val available: Int
-        get() = -1
+        get() =
+            when {
+                inputReady == 0uL && lastFrame -> 0
+                inputReady > 0uL -> inputReady.toInt()
+                else -> -1
+            }
 
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
@@ -47,17 +56,15 @@ class MessageImpl(override val type: MessageType,
             dest.position = pos1
             dest.limit = n
             cursor = Message.encode(cursor, mask, dest)
-//            dest.forEach { byte ->
-//                val b = byte xor mask[(cursor and 0x03uL).toInt()]
-//                cursor++
-//                dest.put(b)
-//            }
             dest.limit = lim1
             n
         } else {
-            input.read(dest)
+            val lim1 = dest.limit
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
+            val n = input.read(dest)
+            dest.limit=lim1
+            n
         }
-
         inputReady -= read.toULong()
 
         if (inputReady == 0uL && !lastFrame) {

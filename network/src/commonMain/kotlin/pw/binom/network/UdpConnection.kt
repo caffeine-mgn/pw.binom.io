@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import pw.binom.ByteBuffer
+import pw.binom.CancelledException
 import pw.binom.popOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
@@ -8,7 +9,7 @@ import kotlin.coroutines.suspendCoroutine
 
 class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
 
-    lateinit var holder: CrossThreadKeyHolder
+    lateinit var key: Selector.Key
 
     private class ReadData {
         var continuation: Continuation<Int>? = null
@@ -42,22 +43,8 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
     }
 
     override fun readyForWrite() {
-        while (true) {
-            val waiter = holder.readyForWriteListener.popOrNull() ?: break
-            var exception: Throwable? = null
-            try {
-                waiter()
-            } catch (e: Throwable) {
-                exception = e
-            }
-            if (exception != null) {
-                holder.key.removeListen(Selector.OUTPUT_READY)
-                throw exception
-            }
-        }
-
         if (sendData.continuation == null) {
-            holder.key.removeListen(Selector.OUTPUT_READY)
+            key.removeListen(Selector.OUTPUT_READY)
             return
         }
 
@@ -65,7 +52,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         if (sendData.data!!.remaining == 0) {
             val con = sendData.continuation!!
             sendData.reset()
-            holder.key.removeListen(Selector.OUTPUT_READY)
+            key.removeListen(Selector.OUTPUT_READY)
             con.resumeWith(result)
         }
     }
@@ -84,7 +71,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
 
     override fun readyForRead() {
         if (readData.continuation == null) {
-            holder.key.removeListen(Selector.INPUT_READY)
+            key.removeListen(Selector.INPUT_READY)
             return
         }
         val readed = runCatching { channel.recv(readData.data!!, readData.address) }
@@ -92,13 +79,13 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
             if (readData.data!!.remaining == 0) {
                 val con = readData.continuation!!
                 readData.reset()
-                holder.key.removeListen(Selector.INPUT_READY)
+                key.removeListen(Selector.INPUT_READY)
                 con.resumeWith(readed)
             }
         } else {
             val con = readData.continuation!!
             readData.reset()
-            holder.key.removeListen(Selector.INPUT_READY)
+            key.removeListen(Selector.INPUT_READY)
             con.resumeWith(readed)
         }
     }
@@ -108,17 +95,24 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         sendData.continuation?.resumeWithException(SocketClosedException())
         readData.reset()
         sendData.reset()
-        holder.key.listensFlag = 0
-        holder.key.close()
+        key.listensFlag = 0
+        key.close()
         channel.close()
     }
 
+    fun interruptReading(): Boolean {
+        val continuation = readData.continuation ?: return false
+        continuation.resumeWithException(CancelledException())
+        readData.reset()
+        return true
+    }
+
     suspend fun read(dest: ByteBuffer, address: NetworkAddress.Mutable?): Int {
-        if (dest.remaining == 0) {
-            return 0
-        }
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
+        }
+        if (dest.remaining == 0) {
+            return 0
         }
         val r = channel.recv(dest, address)
         if (r > 0) {
@@ -129,7 +123,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
             readData.continuation = it
             readData.data = dest
             readData.address = address
-            holder.key.addListen(Selector.INPUT_READY)
+            key.addListen(Selector.INPUT_READY)
         }
         if (readed < 0) {
             throw SocketClosedException()
@@ -155,7 +149,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         sendData.address = address
         suspendCoroutine<Int> {
             sendData.continuation = it
-            holder.key.addListen(Selector.OUTPUT_READY)
+            key.addListen(Selector.OUTPUT_READY)
         }
         return l
     }

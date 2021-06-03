@@ -6,14 +6,14 @@ object UTF8 {
 
     fun unicodeToUtf8(text: String, out: ByteBuffer): Int {
         var len = 0
-        text.forEachIndexed { index, c ->
-            len += unicodeToUtf8(c, out)
+        text.forEach { char ->
+            len += unicodeToUtf8(char, out)
         }
         return len
     }
 
     fun unicodeToUtf8(char: Char, out: ByteBuffer): Int {
-        val utf = char.toInt()
+        val utf = char.code
         return when {
             utf <= 0x7F -> {
                 // Plain ASCII
@@ -59,7 +59,7 @@ object UTF8 {
      * @return size of full utf8 character in bytes
      */
     fun unicodeToUtf8(char: Char, out: ByteArray): Int {
-        val utf = char.toInt()
+        val utf = char.code
         return when {
             utf <= 0x7F -> {
                 // Plain ASCII
@@ -98,7 +98,7 @@ object UTF8 {
     }
 
     fun unicodeToUtf8Size(char: Char): Int {
-        val utf = char.toInt()
+        val utf = char.code
         return when {
             utf <= 0x7F -> {
                 // Plain ASCII
@@ -286,15 +286,15 @@ object UTF8 {
 
     fun encode(input: String): String {
         val sb = StringBuilder()
-        input.encodeBytes().forEach {
+        input.encodeToByteArray().forEach {
             when (it) {
-                '.'.toByte(),
-                '-'.toByte(),
-                '_'.toByte(),
-                '*'.toByte(),
-                in 'a'.toByte()..'z'.toByte(),
-                in 'A'.toByte()..'Z'.toByte(),
-                in '0'.toByte()..'9'.toByte()
+                '.'.code.toByte(),
+                '-'.code.toByte(),
+                '_'.code.toByte(),
+                '*'.code.toByte(),
+                in 'a'.code.toByte()..'z'.code.toByte(),
+                in 'A'.code.toByte()..'Z'.code.toByte(),
+                in '0'.code.toByte()..'9'.code.toByte()
                 -> sb.append(it.toChar())
                 else -> {
                     val bb1 = ((it.toInt() and 0xf0) shr 4)
@@ -306,32 +306,26 @@ object UTF8 {
         return sb.toString()
     }
 
-    fun decode(input: String): String {
-        val sb = ByteArrayOutput()
-        val buf = ByteBuffer.alloc(1)
-        var i = 0
-        try {
-            while (i < input.length) {
-                if (input[i] == '%') {
+    fun decode(input: String): String =
+        ByteArrayOutput().use { sb ->
+            ByteBuffer.alloc(1).use { buf ->
+                var i = 0
+                while (i < input.length) {
+                    if (input[i] == '%') {
+                        i++
+                        val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
+                        val b2 = input[i + 1].toString().toInt(16) and 0xf
+                        i += 1
+                        sb.writeByte((b1 + b2).toByte())
+                    } else {
+                        sb.writeByte(input[i].code.toByte())
+                    }
                     i++
-                    val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
-                    val b2 = input[i + 1].toString().toInt(16) and 0xf
-                    i += 1
-                    sb.writeByte(buf, (b1 + b2).toByte())
-                } else {
-                    sb.writeByte(buf, input[i].toByte())
                 }
-                i++
+                sb.data.flip()
+                sb.data.asUTF8String()
             }
-//        sb.trimToSize()
-            sb.data.flip()
-            val str = sb.data.asUTF8String()
-            return str
-        } finally {
-            buf.close()
-            sb.close()
         }
-    }
 
     fun urlEncode(url: String) =
         url.splitToSequence("/").map { encode(it) }.joinToString("/")

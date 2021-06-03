@@ -1,31 +1,33 @@
 package pw.binom.io.examples.httpClient
 
-import pw.binom.*
-import pw.binom.atomic.AtomicBoolean
+import pw.binom.ByteBufferPool
+import pw.binom.async2
+import pw.binom.copyTo
 import pw.binom.io.ByteArrayOutput
-import pw.binom.io.httpClient.AsyncHttpClient
+import pw.binom.io.http.HTTPMethod
+import pw.binom.io.http.forEachHeader
+import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.use
+import pw.binom.net.toURI
 import pw.binom.network.NetworkDispatcher
 
 fun main() {
-    val url = URL("http://example.com/")
+    val url = "http://example.com/".toURI()
 
     val nioManager = NetworkDispatcher()
-    val connections = AsyncHttpClient(nioManager)
+    val connections = HttpClient(nioManager)
     val byteBufferPool = ByteBufferPool(100)
 
-    val done = AtomicBoolean(false)
-    async {
+    val done = async2 {
         val tempBuffer = ByteArrayOutput()
         try {
-            val con = connections.request("GET", url)
-            val req = con.response()
-            req.headers.forEach { key ->
-                key.value.forEach {
-                    println("${key.key}: $it")
-                }
+            val con = connections.request(HTTPMethod.GET, url)
+            val req = con.getResponse()
+            println("Headers:")
+            req.headers.forEachHeader { key, value ->
+                println("$key: $value")
             }
-
-            req.copyTo(tempBuffer, byteBufferPool)
+            req.readData().use { it.copyTo(tempBuffer, byteBufferPool) }
 
             tempBuffer.trimToSize()
             tempBuffer.data.clear()
@@ -34,11 +36,13 @@ fun main() {
             connections.close()
         } finally {
             tempBuffer.close()
-            done.value = true
         }
     }
 
-    while (!done.value) {
+    while (!done.isDone) {
         nioManager.select()
+    }
+    if (done.isFailure) {
+        throw done.exceptionOrNull!!
     }
 }

@@ -6,10 +6,11 @@ import pw.binom.Input
 import pw.binom.empty
 
 open class InflateInput(
-        val stream: Input,
-        bufferSize: Int = 512,
-        wrap: Boolean = false,
-        val closeStream: Boolean = false) : Input {
+    val stream: Input,
+    bufferSize: Int = 512,
+    wrap: Boolean = false,
+    val closeStream: Boolean = false
+) : Input {
     private val buf2 = ByteBuffer.alloc(bufferSize).empty()
     private val inflater = Inflater(wrap)
     protected var usesDefaultInflater = true
@@ -70,8 +71,8 @@ open class InflateInput(
 
     override fun close() {
         if (usesDefaultInflater)
-            inflater.end()
-        inflater.close()
+            runCatching { inflater.end() }
+        runCatching { inflater.close() }
         buf2.close()
         if (closeStream) {
             stream.close()

@@ -28,7 +28,8 @@ interface FileSystem {
     val isSupportUserSystem: Boolean
 
     /**
-     * If [isSupportUserSystem]==[false], then [user] not affected to execution of [func]
+     * If [isSupportUserSystem]==[false], then [user] not affected to execution of [func].
+     * If [isSupportUserSystem]==[true] will put [user] into context and will use during [func] execution
      *
      * @param user User for current execution of [func]
      * @param func Lambda function for run with user [user]

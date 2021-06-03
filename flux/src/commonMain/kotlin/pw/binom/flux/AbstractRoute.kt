@@ -3,13 +3,11 @@ package pw.binom.flux
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.httpServer.HttpResponse
-import pw.binom.pool.DefaultPool
-import pw.binom.pool.ObjectPool
+import pw.binom.io.use
 
 abstract class AbstractRoute : Route, Handler {
     private val routers = HashMap<String, ArrayList<Route>>()
-    private val methods = HashMap<String, HashMap<String, ArrayList<suspend (Action) -> Boolean>>>()
+    private val methods = HashMap<String, HashMap<String, ArrayList<suspend (FluxHttpRequest) -> Unit>>>()
     private var forwardHandler: Handler? = null
 
     override fun route(path: String, route: Route) {
@@ -17,7 +15,7 @@ abstract class AbstractRoute : Route, Handler {
     }
 
     override fun route(path: String, func: (Route.() -> Unit)?): Route {
-        val r = RouteImpl()
+        val r = RouteImpl(serialization)
         routers.getOrPut(path) { ArrayList() }.add(r)
         if (func != null)
             func(r)
@@ -31,12 +29,15 @@ abstract class AbstractRoute : Route, Handler {
         }
     }
 
-    override fun endpoint(method: String, path: String, func: suspend (Action) -> Boolean): Closeable {
+    override fun endpoint(method: String, path: String, func: suspend (FluxHttpRequest) -> Unit): Closeable {
         if (forwardHandler != null)
             throw IllegalStateException("Router has already defined forward")
         methods.getOrPut(method) { HashMap() }.getOrPut(path) { ArrayList() }.add(func)
         return Closeable {
-            methods[method]?.remove(func)
+            methods[method]?.get(path)?.remove(func)
+            if (methods[method]?.get(path)?.isEmpty() == true) {
+                methods[method]?.remove(path)
+            }
             if (methods[method]?.isEmpty() == true) {
                 methods.remove(method)
             }
@@ -51,42 +52,46 @@ abstract class AbstractRoute : Route, Handler {
         forwardHandler = handler
     }
 
-    override suspend fun execute(action: Action): Boolean {
+    override suspend fun execute(action: HttpRequest) {
         val forward = forwardHandler
         if (forward != null) {
-            forward.request(action.req, action.resp)
-            return true
+            forward.request(action)
+            return
         }
-        routers.entries
+        if (routers.entries.isNotEmpty()) {
+            routers.entries
                 .asSequence()
                 .filter {
-                    it.key.isWildcardMattech(action.req.contextUri)
+                    action.path.isMatch(it.key)
                 }
-                .sortedBy { -it.key.length }
+//                .sortedBy { -it.key.length }
                 .flatMap { it.value.asSequence() }
                 .forEach {
-                    if (it.execute(action))
-                        return true
+                    it.execute(action)
+                    if (action.response != null) {
+                        return
+                    }
                 }
-        methods[action.req.method]
-            ?.entries
-            ?.asSequence()
-            ?.filter {
-                action.req.contextUri.isWildcardMattech(it.key)
-            }
-            ?.sortedBy { -it.key.length }
-            ?.flatMap { it.value.asSequence() }
-            ?.forEach {
-                if (it(action))
-                    return true
-            }
-        return false
+        }
+        if (methods.isNotEmpty()) {
+            methods[action.method]
+                ?.entries
+                ?.asSequence()
+                ?.filter {
+                    action.path.isMatch(it.key)
+                }
+                ?.forEach { route ->
+                    route.value.forEach {
+                        it(FluxHttpRequestImpl(mask = route.key, serialization = serialization, request = action))
+                        if (action.response != null) {
+                            return
+                        }
+                    }
+                }
+        }
     }
 
-    private class ActionImpl(override val req: HttpRequest, override val resp: HttpResponse) : Action
-
-    override suspend fun request(req: HttpRequest, resp: HttpResponse) {
-        resp.status = 404
-        execute(ActionImpl(req, resp))
+    override suspend fun request(req: HttpRequest) {
+        execute(req)
     }
 }

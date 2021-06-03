@@ -8,7 +8,7 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
 
     private val tt = memScoped {
         val t = alloc<time_tVar>()
-        val tx = timeZoneOffset - Date.timeZoneOffset
+        val tx = timeZoneOffset - Date.systemZoneOffset
         t.value = (utcTime / 1000L + tx * 60L).convert()
         localtime(t.ptr)!!.pointed
     }
@@ -17,7 +17,7 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
         get() = tt.tm_year + 1900
 
     actual val month
-        get() = tt.tm_mon
+        get() = tt.tm_mon + 1
 
     actual val dayOfMonth
         get() = tt.tm_mday
@@ -43,7 +43,7 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
     actual fun timeZone(timeZoneOffset: Int): Calendar = Calendar(utcTime, timeZoneOffset)
 
     actual override fun toString(): String =
-        asString(this, timeZoneOffsetToString(timeZoneOffset))
+        asStringRfc822(this, timeZoneOffsetToString(timeZoneOffset))
 
     actual fun toString(timeZoneOffset: Int): String = timeZone(timeZoneOffset).toString()
 }

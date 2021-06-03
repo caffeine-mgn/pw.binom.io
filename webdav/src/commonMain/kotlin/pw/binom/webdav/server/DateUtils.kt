@@ -3,7 +3,7 @@ package pw.binom.webdav.server
 import pw.binom.date.*
 
 
-fun Date.toUTC() = Date(time - Date.timeZoneOffset.toLong() * 60 * 1000)
+fun Date.toUTC() = Date(time - Date.systemZoneOffset.toLong() * 60 * 1000)
 
 fun String.parseDate(): Date {
     //Sat, 30 May 2020 02:05:17 GMT

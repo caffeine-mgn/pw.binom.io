@@ -5,12 +5,32 @@ import platform.posix.memset
 import platform.zlib.*
 import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.atomic.AtomicLong
+import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
+import kotlin.native.concurrent.freeze
+import kotlin.native.internal.createCleaner
 
+@OptIn(ExperimentalStdlibApi::class)
 actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlush: Boolean) : Closeable {
 
     internal val native = nativeHeap.alloc<z_stream_s>()
+    private var closed = AtomicBoolean(false)
+
+    private var _totalIn by AtomicLong(0)
+    private var _totalOut by AtomicLong(0)
+
+    actual val totalIn: Long
+        get() = _totalIn
+    actual val totalOut: Long
+        get() = _totalOut
+
+    private var _finishing by AtomicBoolean(false)
+    private var _finished by AtomicBoolean(false)
+    actual val finished: Boolean
+        get() = _finished
 
     init {
         memset(native.ptr, 0, sizeOf<z_stream_s>().convert())
@@ -18,37 +38,31 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
             throw IOException("deflateInit() error")
     }
 
-    private var closed = false
+    private val cleaner = createCleaner(native){self->
+        deflateEnd(self.ptr)
+        nativeHeap.free(self)
+    }
+
+    init {
+        freeze()
+    }
+
+
 
     private fun checkClosed() {
-        if (closed)
+        if (closed.value)
             throw IllegalStateException("Stream already closed")
     }
 
     override fun close() {
         checkClosed()
-        val vv = deflateEnd(native.ptr)
-        nativeHeap.free(native)
-        closed = true
+        closed.value = true
     }
 
     actual fun end() {
         checkClosed()
         deflateEnd(native.ptr)
     }
-
-    private var _totalIn: Long = 0
-    private var _totalOut: Long = 0
-
-    actual val totalIn: Long
-        get() = _totalIn
-    actual val totalOut: Long
-        get() = _totalOut
-
-    private var _finishing: Boolean = false
-    private var _finished: Boolean = false
-    actual val finished: Boolean
-        get() = _finished
 
     actual fun finish() {
         checkClosed()

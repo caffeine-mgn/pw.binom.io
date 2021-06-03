@@ -66,4 +66,9 @@ rmdir /s /q tmp
 make clean
 perl.exe Configure linux-x86_64 no-shared no-threads "--target=x86_64-unknown-linux-gnu -O3 \"--sysroot=%userprofile%/.konan/dependencies/target-gcc-toolchain-3-linux-x86-64/x86_64-unknown-linux-gnu/sysroot\""
 make.exe build_libs -j 16
+mkdir tmp
+cd tmp
+ar -x ../libssl.a
+ar -x ../libcrypto.a
+ar -rv libopenssl.a *.o
 ```

@@ -8,7 +8,7 @@ import kotlin.jvm.JvmName
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-expect class Lock : Closeable {
+expect class Lock {
     constructor()
 
     fun lock()
@@ -17,7 +17,7 @@ expect class Lock : Closeable {
     fun newCondition(): Condition
 
     @OptIn(ExperimentalTime::class)
-    class Condition : Closeable {
+    class Condition {
         fun await()
 
         /**
