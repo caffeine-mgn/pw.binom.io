@@ -43,7 +43,7 @@ actual class Lock {
         @OptIn(ExperimentalTime::class)
         actual fun await(duration: Duration): Boolean {
             try {
-                return native.await(duration.toLongMilliseconds(), TimeUnit.MILLISECONDS)
+                return native.await(duration.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             } catch (e: JInterruptedException) {
                 throw InterruptedException()
             }
