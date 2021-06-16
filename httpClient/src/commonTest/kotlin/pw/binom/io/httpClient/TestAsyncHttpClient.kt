@@ -2,8 +2,6 @@ package pw.binom.io.httpClient
 
 import pw.binom.*
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.http.Headers
-import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
@@ -14,7 +12,6 @@ import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
-import kotlin.time.measureTime
 
 class TestAsyncHttpClient {
 
@@ -27,7 +24,7 @@ class TestAsyncHttpClient {
         val now = TimeSource.Monotonic.markNow()
         val e = manager.async {
             try {
-                client.request(HTTPMethod.GET, "http://127.0.0.1:34636".toURI(), Duration.seconds(3))
+                client.connect(HTTPMethod.GET, "http://127.0.0.1:34636".toURI(), Duration.seconds(3))
                     .getResponse()
                     .responseCode
                 fail()
@@ -54,7 +51,7 @@ class TestAsyncHttpClient {
 
             repeat(3) {
                 val responseData = client
-                    .request(HTTPMethod.GET, "https://www.ntv.ru/".toURI())
+                    .connect(HTTPMethod.GET, "https://www.ntv.ru/".toURI())
                     .getResponse().also {
                         println("headers:${it.headers}")
                     }

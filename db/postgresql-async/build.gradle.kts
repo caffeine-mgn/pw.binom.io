@@ -111,7 +111,7 @@ tasks {
         name = "pullPostgres",
         type = com.bmuschko.gradle.docker.tasks.image.DockerPullImage::class
     ) {
-        image.set("postgres:10.15")
+        image.set("postgres:11.12")
     }
 
     val createPostgres = create(
@@ -119,8 +119,8 @@ tasks {
         type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
     ) {
         dependsOn(pullPostgres)
-        image.set("postgres:10.15")
-        imageId.set("postgres:10.15")
+        image.set("postgres:11.12")
+        imageId.set("postgres:11.12")
         envVars.put("POSTGRES_USER", "postgres")
         envVars.put("POSTGRES_PASSWORD", "postgres")
         envVars.put("POSTGRES_DB", "test")

@@ -13,6 +13,7 @@ import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -23,6 +24,7 @@ import kotlin.time.seconds
 
 class MultiThreading {
 
+    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() {
@@ -46,8 +48,8 @@ class MultiThreading {
             HttpClient(nd).use { client ->
                 try {
                     println("Try make request $name...")
-                    client.request(
-                        method = HTTPMethod.GET,
+                    client.connect(
+                        method = HTTPMethod.GET.code,
                         uri = "http://127.0.0.1:$port/$name".toURI(),
                     ).getResponse().use { response ->
                         println("$name reading...${response.responseCode}  ${response.headers.contentLength}")
@@ -105,13 +107,17 @@ class MultiThreading {
         val inParallel = nd.async {
             val callTime1 = nd.async { makeCall("inParallel-1") }
             val callTime2 = nd.async { makeCall("inParallel-2") }
-            val totalTime = worker.submit {
-                measureTime {
-                    callTime1.join()
-                    callTime2.join()
-                }
+            measureTime {
+                callTime1.join()
+                callTime2.join()
             }
-            totalTime
+//            val totalTime = worker.submit {
+//                measureTime {
+//                    callTime1.join()
+//                    callTime2.join()
+//                }
+//            }
+//            totalTime
         }
 
 
@@ -120,7 +126,7 @@ class MultiThreading {
             nd.select(500)
         }
         inOrder.join()
-        val totalTime = inParallel.join().join()
+        val totalTime = inParallel.join()
         assertTrue(totalTime > 0.1.seconds && totalTime < 2.0.seconds)
     }
 }

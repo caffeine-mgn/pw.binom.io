@@ -1,27 +1,18 @@
 package pw.binom.io.httpServer.websocket
 
-import pw.binom.ByteBuffer
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.execute
 import pw.binom.concurrency.joinAndGetOrThrow
-import pw.binom.concurrency.sleep
-import pw.binom.getOrException
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.MessageType
-import pw.binom.io.http.websocket.WebSocketClosedException
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpServer
-import pw.binom.io.httpServer.HttpServer3
 import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.nextUuid
-import pw.binom.wrap
 import kotlin.random.Random
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -50,7 +41,7 @@ class WebSocketTest {
 
         val f = manager.async {
             val cl = HttpClient(manager)
-            val con = cl.request(HTTPMethod.GET, "http://127.0.0.1:$port".toURI()).startWebSocket()
+            val con = cl.connect(HTTPMethod.GET.code, "http://127.0.0.1:$port".toURI()).startWebSocket()
             con.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append(testMsg) }
             val text = con.read().bufferedAsciiReader().use { it.readText() }
             assertEquals("Echo $testMsg", text)
@@ -59,7 +50,7 @@ class WebSocketTest {
             assertEquals("Echo $testMsg", text2)
             con.asyncClose()
 
-            val con2 = cl.request(HTTPMethod.GET, "http://127.0.0.1:$port".toURI()).startWebSocket()
+            val con2 = cl.connect(HTTPMethod.GET.code, "http://127.0.0.1:$port".toURI()).startWebSocket()
             con2.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append(testMsg) }
             val text3 = con2.read().bufferedAsciiReader().use { it.readText() }
             assertEquals("Echo $testMsg", text3)

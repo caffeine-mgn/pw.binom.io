@@ -21,7 +21,7 @@ fun main() {
     val done = async2 {
         val tempBuffer = ByteArrayOutput()
         try {
-            val con = connections.request(HTTPMethod.GET, url)
+            val con = connections.connect(HTTPMethod.GET.code, url)
             val req = con.getResponse()
             println("Headers:")
             req.headers.forEachHeader { key, value ->

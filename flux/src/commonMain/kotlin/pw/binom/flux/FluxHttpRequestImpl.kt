@@ -1,6 +1,7 @@
 package pw.binom.flux
 
 import kotlinx.serialization.KSerializer
+import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.HttpRequest
 
 class FluxHttpRequestImpl(val mask: String, val serialization: Serialization, request: HttpRequest) : FluxHttpRequest,
@@ -18,17 +19,19 @@ class FluxHttpRequestImpl(val mask: String, val serialization: Serialization, re
             serializer = serializer
         )
 
-    override suspend fun <T : Any> writeResponse(serializer: KSerializer<T>, value: T) {
-//        var r = response
-//        if (r == null) {
-//            r = response()
-//            r.status = 200
-//        }
+    override suspend fun <T : Any> finishResponse(
+        serializer: KSerializer<T>,
+        value: T,
+        headers: Headers,
+        statusCode: Int?,
+    ) {
         try {
             serialization.encode(
                 request = this,
                 value = value,
-                serializer = serializer
+                serializer = serializer,
+                headers = headers,
+                statusCode = statusCode,
             )
         } finally {
             response?.asyncClose()

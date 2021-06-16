@@ -9,191 +9,191 @@ import pw.binom.io.http.AsyncContentLengthOutput
 import pw.binom.io.http.Headers
 import pw.binom.pool.ObjectPool
 
-internal class HttpResponseBodyImpl2 : HttpResponseBodyDeprecated {
-
-    private var rawOutput: AsyncOutput? = null
-    private var wrappedOutput: AsyncOutput? = null
-
-    fun init(contentLength: ULong?,
-             encode: EncodeTypeDeprecated,
-             rawOutput: PoolAsyncBufferedOutputDeprecated,
-             zlibBufferSize: Int,
-             autoFlushSize: Int
-    ) {
-        this.rawOutput = rawOutput
-        var stream:AsyncOutput = rawOutput
-
-        stream = when {
-            contentLength != null -> {
-                AsyncContentLengthOutput(
-                        stream = stream,
-                        contentLength = contentLength,
-                        closeStream = false
-                )
-            }
-            else -> {
-                AsyncChunkedOutput(
-                        stream = stream,
-                        autoFlushBuffer = autoFlushSize,
-                        closeStream = false
-                )
-            }
-        }
-
-        stream =
-                when (encode) {
-                    EncodeTypeDeprecated.GZIP -> AsyncGZIPOutput(stream = stream, level = 6, bufferSize = zlibBufferSize, closeStream = stream != rawOutput)
-                    EncodeTypeDeprecated.DEFLATE -> AsyncDeflaterOutput(stream, 6, wrap = true, bufferSize = zlibBufferSize, closeStream = stream != rawOutput)
-                    EncodeTypeDeprecated.IDENTITY -> stream
-                }
-
-
-        wrappedOutput = stream
-    }
-
-    override suspend fun write(data: ByteBuffer): Int =
-            wrappedOutput!!.write(data)
-
-    override suspend fun flush() {
-        wrappedOutput!!.flush()
-    }
-
-    override suspend fun asyncClose() {
-        wrappedOutput!!.asyncClose()
-    }
-
-}
-
-@Deprecated(message = "Will be removed")
-internal class HttpResponseImpl2Deprecated(
-        val responseBodyPool: ObjectPool<HttpResponseBodyImpl2>,
-        private val zlibBufferSize: Int
-) : HttpResponseDeprecated {
-    override var status: Int = 404
-        set(value) {
-            if (field == value) {
-                return
-            }
-            checkHeaderSent()
-            field = value
-        }
-    private var rawOutput: PoolAsyncBufferedOutputDeprecated? = null
-    override val headers = HashMap<String, ArrayList<String>>()
-    private val headerSent: Boolean
-        get() = body != null
-
-    var keepAlive = false
-        private set
-
-    var encode = EncodeTypeDeprecated.IDENTITY
-        set(value) {
-            checkHeaderSent()
-            field = value
-        }
-
-    override var enableCompress = true
-
-    fun init(
-        encode: EncodeTypeDeprecated,
-        keepAlive: Boolean,
-        output: PoolAsyncBufferedOutputDeprecated
-    ) {
-        headers.clear()
-        body = null
-        this.encode = encode
-        status = 404
-        this.keepAlive = keepAlive
-        enableCompress = true
-
-        val encodeHeader = when (encode) {
-            EncodeTypeDeprecated.GZIP -> "gzip"
-            EncodeTypeDeprecated.DEFLATE -> "deflate"
-            EncodeTypeDeprecated.IDENTITY -> "identity"
-        }
-        resetHeader(Headers.CONTENT_ENCODING, encodeHeader)
-        rawOutput = output
-    }
-
-    override fun clearHeaders() {
-        checkHeaderSent()
-        headers.clear()
-    }
-
-    override fun resetHeader(name: String, value: String) {
-        checkHeaderSent()
-        headers[name] = arrayListOf(value)
-    }
-
-    override fun addHeader(name: String, value: String) {
-        checkHeaderSent()
-        headers.getOrPut(name) { ArrayList() }.add(value)
-    }
-
-    override var enableKeepAlive: Boolean
-        get() = keepAlive
-        set(value) {
-            checkHeaderSent()
-            keepAlive = value
-        }
-
-    var body: HttpResponseBodyImpl2? = null
-
-    private inline fun checkHeaderSent() {
-        if (headerSent) {
-            throw IllegalStateException("HttpResponse already sent")
-        }
-    }
-
-    override suspend fun complete(autoFlushSize: Int): HttpResponseBodyDeprecated {
-        checkHeaderSent()
-        val buf = rawOutput!!
-//        val app = buf.utf8Appendable()
-        buf.append("HTTP/1.1 $status ${statusToText(status)}\r\n")
-        if (keepAlive) {
-            headers.remove(Headers.CONNECTION)
-            buf.append("${Headers.CONNECTION}: ${Headers.KEEP_ALIVE}\r\n")
-        }
-        val contentLength = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull()
-        val chunked = headers[Headers.TRANSFER_ENCODING]?.singleOrNull().let {
-            it == null || it == Headers.CHUNKED
-        }
-        if (contentLength == 0uL) {
-            headers.remove(Headers.CONTENT_ENCODING)
-        }
-        when {
-            contentLength != null -> {
-                headers.remove(Headers.CONTENT_LENGTH)
-                headers.remove(Headers.TRANSFER_ENCODING)
-                buf.append(Headers.CONTENT_LENGTH).append(": ").append(contentLength.toString()).append("\r\n")
-            }
-            chunked -> {
-                headers.remove(Headers.CONTENT_LENGTH)
-                headers.remove(Headers.TRANSFER_ENCODING)
-                buf.append(Headers.TRANSFER_ENCODING).append(": ").append(Headers.CHUNKED).append("\r\n")
-            }
-            else -> throw RuntimeException("Unknown Transfer Encoding")
-        }
-
-        headers.forEach { item ->
-            item.value.forEach {
-                buf.append(item.key).append(": ").append(it).append("\r\n")
-            }
-        }
-        buf.append("\r\n")
-        body = responseBodyPool.borrow {
-            it.init(
-                    contentLength = contentLength,
-                    encode = encode,
-                    rawOutput = rawOutput!!,
-                    zlibBufferSize = if (enableCompress) zlibBufferSize else 0,
-                    autoFlushSize = autoFlushSize.toInt()
-            )
-        }
-        rawOutput = null
-        buf.flush()
-        return body!!
-    }
-}
+//internal class HttpResponseBodyImpl2 : HttpResponseBodyDeprecated {
+//
+//    private var rawOutput: AsyncOutput? = null
+//    private var wrappedOutput: AsyncOutput? = null
+//
+//    fun init(contentLength: ULong?,
+//             encode: EncodeTypeDeprecated,
+//             rawOutput: PoolAsyncBufferedOutputDeprecated,
+//             zlibBufferSize: Int,
+//             autoFlushSize: Int
+//    ) {
+//        this.rawOutput = rawOutput
+//        var stream:AsyncOutput = rawOutput
+//
+//        stream = when {
+//            contentLength != null -> {
+//                AsyncContentLengthOutput(
+//                        stream = stream,
+//                        contentLength = contentLength,
+//                        closeStream = false
+//                )
+//            }
+//            else -> {
+//                AsyncChunkedOutput(
+//                        stream = stream,
+//                        autoFlushBuffer = autoFlushSize,
+//                        closeStream = false
+//                )
+//            }
+//        }
+//
+//        stream =
+//                when (encode) {
+//                    EncodeTypeDeprecated.GZIP -> AsyncGZIPOutput(stream = stream, level = 6, bufferSize = zlibBufferSize, closeStream = stream != rawOutput)
+//                    EncodeTypeDeprecated.DEFLATE -> AsyncDeflaterOutput(stream, 6, wrap = true, bufferSize = zlibBufferSize, closeStream = stream != rawOutput)
+//                    EncodeTypeDeprecated.IDENTITY -> stream
+//                }
+//
+//
+//        wrappedOutput = stream
+//    }
+//
+//    override suspend fun write(data: ByteBuffer): Int =
+//            wrappedOutput!!.write(data)
+//
+//    override suspend fun flush() {
+//        wrappedOutput!!.flush()
+//    }
+//
+//    override suspend fun asyncClose() {
+//        wrappedOutput!!.asyncClose()
+//    }
+//
+//}
+//
+//@Deprecated(message = "Will be removed")
+//internal class HttpResponseImpl2Deprecated(
+//        val responseBodyPool: ObjectPool<HttpResponseBodyImpl2>,
+//        private val zlibBufferSize: Int
+//) : HttpResponseDeprecated {
+//    override var status: Int = 404
+//        set(value) {
+//            if (field == value) {
+//                return
+//            }
+//            checkHeaderSent()
+//            field = value
+//        }
+//    private var rawOutput: PoolAsyncBufferedOutputDeprecated? = null
+//    override val headers = HashMap<String, ArrayList<String>>()
+//    private val headerSent: Boolean
+//        get() = body != null
+//
+//    var keepAlive = false
+//        private set
+//
+//    var encode = EncodeTypeDeprecated.IDENTITY
+//        set(value) {
+//            checkHeaderSent()
+//            field = value
+//        }
+//
+//    override var enableCompress = true
+//
+//    fun init(
+//        encode: EncodeTypeDeprecated,
+//        keepAlive: Boolean,
+//        output: PoolAsyncBufferedOutputDeprecated
+//    ) {
+//        headers.clear()
+//        body = null
+//        this.encode = encode
+//        status = 404
+//        this.keepAlive = keepAlive
+//        enableCompress = true
+//
+//        val encodeHeader = when (encode) {
+//            EncodeTypeDeprecated.GZIP -> "gzip"
+//            EncodeTypeDeprecated.DEFLATE -> "deflate"
+//            EncodeTypeDeprecated.IDENTITY -> "identity"
+//        }
+//        resetHeader(Headers.CONTENT_ENCODING, encodeHeader)
+//        rawOutput = output
+//    }
+//
+//    override fun clearHeaders() {
+//        checkHeaderSent()
+//        headers.clear()
+//    }
+//
+//    override fun resetHeader(name: String, value: String) {
+//        checkHeaderSent()
+//        headers[name] = arrayListOf(value)
+//    }
+//
+//    override fun addHeader(name: String, value: String) {
+//        checkHeaderSent()
+//        headers.getOrPut(name) { ArrayList() }.add(value)
+//    }
+//
+//    override var enableKeepAlive: Boolean
+//        get() = keepAlive
+//        set(value) {
+//            checkHeaderSent()
+//            keepAlive = value
+//        }
+//
+//    var body: HttpResponseBodyImpl2? = null
+//
+//    private inline fun checkHeaderSent() {
+//        if (headerSent) {
+//            throw IllegalStateException("HttpResponse already sent")
+//        }
+//    }
+//
+//    override suspend fun complete(autoFlushSize: Int): HttpResponseBodyDeprecated {
+//        checkHeaderSent()
+//        val buf = rawOutput!!
+////        val app = buf.utf8Appendable()
+//        buf.append("HTTP/1.1 $status ${statusToText(status)}\r\n")
+//        if (keepAlive) {
+//            headers.remove(Headers.CONNECTION)
+//            buf.append("${Headers.CONNECTION}: ${Headers.KEEP_ALIVE}\r\n")
+//        }
+//        val contentLength = headers[Headers.CONTENT_LENGTH]?.singleOrNull()?.toULongOrNull()
+//        val chunked = headers[Headers.TRANSFER_ENCODING]?.singleOrNull().let {
+//            it == null || it == Headers.CHUNKED
+//        }
+//        if (contentLength == 0uL) {
+//            headers.remove(Headers.CONTENT_ENCODING)
+//        }
+//        when {
+//            contentLength != null -> {
+//                headers.remove(Headers.CONTENT_LENGTH)
+//                headers.remove(Headers.TRANSFER_ENCODING)
+//                buf.append(Headers.CONTENT_LENGTH).append(": ").append(contentLength.toString()).append("\r\n")
+//            }
+//            chunked -> {
+//                headers.remove(Headers.CONTENT_LENGTH)
+//                headers.remove(Headers.TRANSFER_ENCODING)
+//                buf.append(Headers.TRANSFER_ENCODING).append(": ").append(Headers.CHUNKED).append("\r\n")
+//            }
+//            else -> throw RuntimeException("Unknown Transfer Encoding")
+//        }
+//
+//        headers.forEach { item ->
+//            item.value.forEach {
+//                buf.append(item.key).append(": ").append(it).append("\r\n")
+//            }
+//        }
+//        buf.append("\r\n")
+//        body = responseBodyPool.borrow {
+//            it.init(
+//                    contentLength = contentLength,
+//                    encode = encode,
+//                    rawOutput = rawOutput!!,
+//                    zlibBufferSize = if (enableCompress) zlibBufferSize else 0,
+//                    autoFlushSize = autoFlushSize.toInt()
+//            )
+//        }
+//        rawOutput = null
+//        buf.flush()
+//        return body!!
+//    }
+//}
 
 internal fun statusToText(code: Int) =
         when (code) {

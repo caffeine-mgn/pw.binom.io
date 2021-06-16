@@ -88,7 +88,7 @@ class AsyncBufferedInputReader private constructor(
             full()
             output.clear()
             if (decoder.decode(buffer, output) == CharsetTransformResult.MALFORMED) {
-                throw IOException()
+                throw IOException("Input string is malformed")
             }
             output.flip()
         }

@@ -10,7 +10,9 @@ import pw.binom.io.Closeable
 value class Bio(val self: CPointer<BIO>) : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
         memScoped {
-            val r = BIO_read(self, data.refTo(offset), length.convert())
+            val r = data.usePinned { data ->
+                BIO_read(self, data.addressOf(offset), length.convert())
+            }
             if (r < 0)
                 TODO()
             r
@@ -21,12 +23,15 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
             val r = BIO_read(self, (data.refTo(data.position)), data.remaining.convert())
             if (r < 0)
                 TODO()
+            data.position += r
             r
         }
 
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
         memScoped {
-            val r = BIO_write(self, data.refTo(offset), length.convert())
+            val r = data.usePinned { data ->
+                BIO_write(self, data.addressOf(offset), length.convert())
+            }
             if (r < 0)
                 TODO()
             r

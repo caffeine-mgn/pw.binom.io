@@ -166,6 +166,7 @@ class PGConnection private constructor(
 
     private suspend fun sendFirstMessage(properties: Map<String, String>) {
         ByteArrayOutput().use { buf2 ->
+            println("#1")
             buf2.bufferedAsciiWriter(closeParent = false).use { o ->
                 ByteBuffer.alloc(8) { buf ->
                     o.writeInt(buf, 0)
@@ -185,11 +186,18 @@ class PGConnection private constructor(
                     buf2.data.position = pos
                     buf2.data.flip()
                 }
-                connection.write(buf2.data)
+                buf2.data.forEachIndexed { index, value ->
+                    println("$index -> $value")
+                }
+                val wrote = connection.write(buf2.data)
+                println("Wrote: $wrote")
                 connection.flush()
             }
+            println("#2")
         }
+        println("#3")
         val msg = readDesponse()
+        println("#4")
         val authRequest = when (msg) {
             is AuthenticationMessage.AuthenticationChallengeCleartextMessage -> {
                 credentialMessage.username = userName

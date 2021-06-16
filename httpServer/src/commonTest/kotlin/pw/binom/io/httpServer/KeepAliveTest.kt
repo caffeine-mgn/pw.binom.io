@@ -42,7 +42,7 @@ class KeepAliveTest {
 
         val d = nd.async {
             val client = HttpClient(nd)
-            client.request(HTTPMethod.GET, "http://127.0.0.1:${addr.port}".toURI()).getResponse().readText()
+            client.connect(HTTPMethod.GET.code, "http://127.0.0.1:${addr.port}".toURI()).getResponse().readText()
                 .use { it.readText() }
             assertEquals(1, server.idleConnectionSize)
             server.forceIdleCheck()

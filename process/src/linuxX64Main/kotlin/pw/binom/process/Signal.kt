@@ -7,7 +7,6 @@ import kotlin.native.concurrent.AtomicInt
 
 private val signalListener = staticCFunction<Int, Unit> handler@{ signal ->
     initRuntimeIfNeeded()
-    println("signal: $signal")
     when (signal) {
         SIGINT -> Signal._isSigint.value = 1
         platform.linux.internal_SIGBREAK -> Signal._isSigbreak.value = 1

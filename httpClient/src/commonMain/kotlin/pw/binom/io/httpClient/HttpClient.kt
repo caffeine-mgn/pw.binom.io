@@ -19,6 +19,7 @@ import pw.binom.ssl.TrustManager
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class HttpClient(
     val networkDispatcher: NetworkDispatcher,
     val useKeepAlive: Boolean = true,
@@ -74,8 +75,7 @@ class HttpClient(
         channel.asyncClose()
     }
 
-    @OptIn(ExperimentalTime::class)
-    suspend fun request(method: HTTPMethod, uri: URI, timeout: Duration? = null): HttpRequest {
+    suspend fun connect(method: String, uri: URI, timeout: Duration? = null): HttpRequest {
         val schema = uri.schema ?: throw IllegalArgumentException("URL \"$uri\" must contains protocol")
         if (schema != "http" && schema != "https" && schema != "ws" && schema != "wss") {
             throw IllegalArgumentException("Schema ${uri.schema} is not supported")
@@ -90,18 +90,22 @@ class HttpClient(
         )
     }
 
-    private val URI.asKey
-        get() = "${schema ?: ""}://${host}:${port}"
-
-    private fun URI.getPort() =
-        port ?: when (schema) {
-            "ws", "http" -> 80
-            "wss", "https" -> 443
-            else -> throw IllegalArgumentException("Unknown default port for $this")
-        }
-
     override fun close() {
         deadlineTimer.close()
         sslContext.close()
     }
 }
+
+private val URI.asKey
+    get() = "${schema ?: ""}://${host}:${port}"
+
+private fun URI.getPort() =
+    port ?: when (schema) {
+        "ws", "http" -> 80
+        "wss", "https" -> 443
+        else -> throw IllegalArgumentException("Unknown default port for $this")
+    }
+
+@OptIn(ExperimentalTime::class)
+suspend fun HttpClient.connect(method: HTTPMethod, uri: URI, timeout: Duration? = null) =
+    connect(method.code, uri, timeout)

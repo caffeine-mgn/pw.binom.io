@@ -32,7 +32,7 @@ class IdentityServerTest {
             server.bindHttp(NetworkAddress.Immutable("127.0.0.1", port))
 
             val client = HttpClient(manager)
-            val resp = client.request(HTTPMethod.GET, "http://127.0.0.1:$port/".toURI())
+            val resp = client.connect(HTTPMethod.GET.code, "http://127.0.0.1:$port/".toURI())
                 .getResponse()
                 .readText().use {
                     it.readText()

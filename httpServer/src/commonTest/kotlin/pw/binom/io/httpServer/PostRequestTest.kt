@@ -193,28 +193,28 @@ class PostRequestTest {
         println("#3")
     }*/
 
-    @Ignore
-    @Test
-    fun testDownload() {
-        val nd = NetworkDispatcher()
-        val buf = ByteBufferPool(10, (DEFAULT_BUFFER_SIZE * 10).toUInt())
-        val server = HttpServer3(
-            manager = nd,
-            handler = object : Handler3Deprecated {
-                override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
-                    resp.status = 200
-                    File("C:\\TEMP\\6\\2.zip").read().use {
-                        it.copyTo(resp.complete(), buf)
-                    }
-                }
-            }
-        )
-
-        var done = false
-        server.bindHTTP(NetworkAddress.Immutable(port = 9090))
-
-        while (true) {
-            nd.select()
-        }
-    }
+//    @Ignore
+//    @Test
+//    fun testDownload() {
+//        val nd = NetworkDispatcher()
+//        val buf = ByteBufferPool(10, (DEFAULT_BUFFER_SIZE * 10).toUInt())
+//        val server = HttpServer3(
+//            manager = nd,
+//            handler = object : Handler3Deprecated {
+//                override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
+//                    resp.status = 200
+//                    File("C:\\TEMP\\6\\2.zip").read().use {
+//                        it.copyTo(resp.complete(), buf)
+//                    }
+//                }
+//            }
+//        )
+//
+//        var done = false
+//        server.bindHTTP(NetworkAddress.Immutable(port = 9090))
+//
+//        while (true) {
+//            nd.select()
+//        }
+//    }
 }

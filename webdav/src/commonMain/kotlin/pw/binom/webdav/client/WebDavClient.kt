@@ -3,6 +3,7 @@ package pw.binom.webdav.client
 import pw.binom.*
 import pw.binom.date.Date
 import pw.binom.io.*
+import pw.binom.io.httpClient.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.addHeader
@@ -55,7 +56,7 @@ open class WebDavClient constructor(val client: HttpClient, val URI: URI, val ti
     override suspend fun mkdir(path: String): FileSystem.Entity? {
 
         val allPathUrl = URI.appendDirectionURI(path)
-        val r = client.request(HTTPMethod.MKCOL, allPathUrl, timeout = timeout)
+        val r = client.connect(HTTPMethod.MKCOL, allPathUrl, timeout = timeout)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val responseCode = r.getResponse().use { it.responseCode }
         if (responseCode == 405) {
@@ -115,7 +116,7 @@ open class WebDavClient constructor(val client: HttpClient, val URI: URI, val ti
 
         override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
             val allPathUrl = URI.appendDirectionURI(name)
-            val r = client.request(HTTPMethod.GET, allPathUrl, timeout = timeout)
+            val r = client.connect(HTTPMethod.GET, allPathUrl, timeout = timeout)
             if (offset != 0uL) {
                 if (length == null) {
                     r.addHeader("Range", "bytes=$offset-")
@@ -143,7 +144,7 @@ open class WebDavClient constructor(val client: HttpClient, val URI: URI, val ti
 
         override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity {
             val destinationUrl = URI.appendDirectionURI(path)
-            val r = client.request(
+            val r = client.connect(
                 HTTPMethod.COPY,
                 URI.appendDirectionURI(this.path).appendDirectionURI(name),
                 timeout = timeout
@@ -173,7 +174,7 @@ open class WebDavClient constructor(val client: HttpClient, val URI: URI, val ti
 
         override suspend fun move(path: String, overwrite: Boolean): FileSystem.Entity {
             val destinationUrl = URI.appendDirectionURI(path)
-            val r = client.request(
+            val r = client.connect(
                 HTTPMethod.MOVE,
                 URI.appendDirectionURI(this.path).appendDirectionURI(name),
                 timeout = timeout
@@ -197,7 +198,7 @@ open class WebDavClient constructor(val client: HttpClient, val URI: URI, val ti
         }
 
         override suspend fun delete() {
-            val r = client.request(
+            val r = client.connect(
                 HTTPMethod.DELETE,
                 URI.appendDirectionURI(this.path).appendDirectionURI(name),
                 timeout = timeout
@@ -211,7 +212,7 @@ open class WebDavClient constructor(val client: HttpClient, val URI: URI, val ti
 
         override suspend fun rewrite(): AsyncOutput {
             val allPathUrl = URI.appendDirectionURI(path)
-            val r = client.request(HTTPMethod.PUT, allPathUrl, timeout = timeout)
+            val r = client.connect(HTTPMethod.PUT, allPathUrl, timeout = timeout)
 //            r.addHeader("Overwrite", "T")
             user?.apply(r)
             val upload = r.writeData()
@@ -234,7 +235,7 @@ open class WebDavClient constructor(val client: HttpClient, val URI: URI, val ti
 
     suspend fun getDir(user: WebAuthAccess?, path: String, depth: Int): Sequence<FileSystem.Entity>? {
         val allPathUrl = URI.appendDirectionURI(path)
-        val r = client.request(HTTPMethod.PROPFIND, allPathUrl, timeout = timeout)
+        val r = client.connect(HTTPMethod.PROPFIND, allPathUrl, timeout = timeout)
         user?.apply(r)
         r.addHeader("Depth", depth.toString())
         val resp = r.getResponse()
@@ -300,14 +301,14 @@ open class WebDavClient constructor(val client: HttpClient, val URI: URI, val ti
 
     override suspend fun get(path: String): FileSystem.Entity? {
         val allPathUrl = URI.appendDirectionURI(path)
-        val r = client.request(HTTPMethod.HEAD, allPathUrl, timeout = timeout)
+        val r = client.connect(HTTPMethod.HEAD, allPathUrl, timeout = timeout)
         WebAuthAccess.getCurrentUser()?.apply(r)
         return getDir(WebAuthAccess.getCurrentUser(), path, 0)?.firstOrNull()
     }
 
     override suspend fun new(path: String): AsyncOutput {
         val allPathUrl = URI.appendDirectionURI(path)
-        val r = client.request(HTTPMethod.PUT, allPathUrl, timeout = timeout)
+        val r = client.connect(HTTPMethod.PUT, allPathUrl, timeout = timeout)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val upload = r.writeData()
         return object : AsyncOutput {
