@@ -134,7 +134,7 @@ buildscript {
 
 ## Community
 [Telegram](https://t.me/io_binom) <br>
-[Discord](https://discord.gg/HFYABPa)
+[Discord](https://discord.gg/8fJp7bX9tz)
 
 ## Author and Founder
 Anton Subochev [Telegram](https://t.me/Caffeine_mgn), [Facebook](https://www.facebook.com/caffeine.mgn), [Github](https://github.com/caffeine-mgn)
