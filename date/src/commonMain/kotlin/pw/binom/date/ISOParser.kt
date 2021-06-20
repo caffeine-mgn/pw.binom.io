@@ -8,6 +8,7 @@ private val dp3 = "yyyy-MM-dd HH:mm:ssXXX".toDatePattern()
 private val dp4 = "yyyy-MM-dd HH:mm:ss.SSSXXX".toDatePattern()
 private val dp5 = "yyyy-MM-dd HH:mm:ss.SSS".toDatePattern()
 private val dp6 = "yyyy-MM-dd HH:mm:ssXX".toDatePattern()
+private val dp7 = "yyyy-MM-dd HH:mm:ss.SSSXX".toDatePattern()
 
 fun Calendar.iso8601() = dp4.toString(this)
 fun Date.iso8601(timeZoneOffset: Int = Date.systemZoneOffset) = calendar(timeZoneOffset).iso8601()
@@ -19,3 +20,4 @@ fun String.parseIso8601Date(defaultTimezoneOffset: Int = Date.systemZoneOffset):
         ?: dp4.parseOrNull(this, defaultTimezoneOffset)
         ?: dp5.parseOrNull(this, defaultTimezoneOffset)
         ?: dp6.parseOrNull(this, defaultTimezoneOffset)
+        ?: dp7.parseOrNull(this, defaultTimezoneOffset)
