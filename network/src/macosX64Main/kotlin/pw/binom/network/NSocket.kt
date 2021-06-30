@@ -90,7 +90,7 @@ actual class NSocket(val native: Int) : Closeable {
         return r
     }
 
-    override fun close() {
+    private fun nativeClose(){
         memScoped {
             val flag = alloc<IntVar>()
             flag.value = 1
@@ -98,6 +98,10 @@ actual class NSocket(val native: Int) : Closeable {
         }
         shutdown(native, SHUT_RDWR)
         close(native)
+    }
+
+    override fun close() {
+        nativeClose()
     }
 
     actual fun setBlocking(value: Boolean) {
