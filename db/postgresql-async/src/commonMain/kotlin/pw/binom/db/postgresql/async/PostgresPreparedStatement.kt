@@ -185,7 +185,7 @@ class PostgresPreparedStatement(
             val msg = connection.readDesponse()
             if (msg is ErrorMessage) {
                 check(connection.readDesponse() is ReadyForQueryMessage)
-                throw PostgresqlException(msg.toString())
+                throw PostgresqlException("$msg. Query: $realQuery")
             }
             check(msg is ParseCompleteMessage) { "Invalid Message: $msg (${msg::class})" }
         }
@@ -196,7 +196,7 @@ class PostgresPreparedStatement(
                 if (justParsed) {
                     deleteSelf()
                 }
-                throw PostgresqlException(msg.toString())
+                throw PostgresqlException("$msg. Query: $realQuery")
             }
             is BindCompleteMessage -> {
                 //ok
@@ -225,7 +225,7 @@ class PostgresPreparedStatement(
                     return msg2
                 }
                 is ErrorMessage -> {
-                    throw PostgresqlException(msg.fields['M'])
+                    throw PostgresqlException("${msg.fields['M']}. Query: $realQuery")
                 }
                 is NoticeMessage -> {
                     continue@LOOP

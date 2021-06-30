@@ -123,7 +123,7 @@ class PGConnection private constructor(
                     return msg2
                 }
                 is ErrorMessage -> {
-                    throw PostgresqlException(msg.fields['M'])
+                    throw PostgresqlException("${msg.fields['M']}. Query: $query")
                 }
                 is NoticeMessage -> {
                     continue@LOOP
@@ -131,7 +131,7 @@ class PGConnection private constructor(
                 is NoDataMessage -> {
                     continue@LOOP
                 }
-                else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg]")
+                else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg], Query: [$query]")
             }
         }
     }
