@@ -61,6 +61,10 @@ actual class NSocket(val native: Int) : Closeable {
                 if (errno == EPIPE) {
                     throw SocketClosedException()
                 }
+                if (errno == EBADF){
+                    nativeClose()
+                    throw SocketClosedException()
+                }
                 throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
             }
             data.position += r
@@ -74,8 +78,11 @@ actual class NSocket(val native: Int) : Closeable {
             if (errno == EAGAIN) {
                 return 0
             }
-            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}], EDEADLK=$EDEADLK")
-            throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
+            if (errno == EBADF){
+                nativeClose()
+                throw SocketClosedException()
+            }
+            throw IOException("Error on read data to network. send: [$r], error: [${errno}]")
         }
         if (r > 0) {
             data.position += r

@@ -4,6 +4,7 @@
 
 * Fix bugs
 * Update Kotlin version 1.5.10 -> 1.5.20
+* Add support of AtomicDouble
 
 ### 0.1.29
 

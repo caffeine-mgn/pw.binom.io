@@ -3,7 +3,7 @@ package pw.binom.date
 actual value class Date(val time: Long = nowTime) {
     actual companion object {
         actual val systemZoneOffset: Int
-            get() = js("new Date().getTimezoneOffset()")
+            get() = -js("new Date().getTimezoneOffset()").unsafeCast<Int>()
         actual val nowTime: Long
             get() = js("new Date().getTime()").unsafeCast<Double>().toLong()
 
