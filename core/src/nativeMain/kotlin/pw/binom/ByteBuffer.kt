@@ -190,10 +190,20 @@ actual class ByteBuffer(override val capacity: Int, val autoClean: Boolean) : In
 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
         checkClosed()
+        require(offset >= 0) { "Offset argument should be more or equals 0. Actual value is $offset" }
+        require(length >= 0) { "Length argument should be more or equals 0. Actual value is $length" }
+        if (length == 0) {
+            return 0
+        }
         if (offset + length > data.size)
             throw IndexOutOfBoundsException()
         val len = minOf(remaining, length)
-        memcpy(refTo(position), data.refTo(offset), len.convert())
+        if (len == 0) {
+            return 0
+        }
+        data.usePinned { data ->
+            memcpy(refTo(position), data.addressOf(offset), len.convert())
+        }
         position += len
         return len
     }

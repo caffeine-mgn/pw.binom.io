@@ -14,7 +14,7 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class DefaultHttpRequest constructor(
-    override var method: HTTPMethod,
+    override var method: String,
     override val uri: URI,
     val client: HttpClient,
     val channel: AsyncAsciiChannel,
@@ -45,7 +45,7 @@ class DefaultHttpRequest constructor(
     }
 
     private suspend fun sendHeaders() {
-        channel.writer.append(method.code).append(" ").append(uri.request).append(" ").append("HTTP/1.1\r\n")
+        channel.writer.append(method).append(" ").append(uri.request).append(" ").append("HTTP/1.1\r\n")
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append("\r\n")
         }

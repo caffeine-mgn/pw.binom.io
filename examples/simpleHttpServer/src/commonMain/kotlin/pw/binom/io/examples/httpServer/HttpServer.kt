@@ -5,7 +5,6 @@ import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
 import pw.binom.io.file.relative
-import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.*
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
@@ -25,7 +24,7 @@ fun main() {
                     resp.headers.contentLength = file.size.toULong()
                     resp.status = 200
                     file.channel(AccessType.READ).use { channel ->
-                        resp.writeBinary().use { out ->
+                        resp.startWriteBinary().use { out ->
                             channel.copyTo(out)
                         }
                     }

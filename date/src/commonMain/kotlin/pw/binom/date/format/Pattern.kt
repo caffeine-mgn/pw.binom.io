@@ -1,7 +1,6 @@
 package pw.binom.date.format
 
 import pw.binom.date.Calendar
-import kotlin.jvm.JvmName
 import kotlin.math.absoluteValue
 
 sealed class Pattern {
@@ -20,6 +19,7 @@ sealed class Pattern {
                 u.find(format, position) -> u
                 ss.find(format, position) -> ss
                 SSS.find(format, position) -> SSS
+                SSm.find(format, position) -> SSm
                 XXX.find(format, position) -> XXX
                 XX.find(format, position) -> XX
                 Z.find(format, position) -> Z
@@ -334,7 +334,26 @@ sealed class Pattern {
 
         override fun toString(calendar: Calendar): String =
             calendar.millisecond.as3()
+    }
 
+    object SSm : Pattern() {
+        override fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "SS", 0, len)
+
+        override val len: Int
+            get() = 2
+
+        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+            if (position + 2 > text.length) {
+                return -1
+            }
+            val hours = text.substring(position, position + len).toIntOrNull()?.let { it * 10 } ?: return -1
+            set(FieldType.MILLISECOND, hours)
+            return 2
+        }
+
+        override fun toString(calendar: Calendar): String =
+            calendar.millisecond.as2()
     }
 
     /**

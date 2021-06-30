@@ -8,12 +8,10 @@ import kotlin.test.Test
 class X509CertificateTest {
     @Test
     fun test() {
-
         val pairRoot = KeyGenerator.generate(
             KeyAlgorithm.RSA,
             2048
         )
-
 
         val pair1 = KeyGenerator.generate(
             KeyAlgorithm.RSA,
@@ -30,7 +28,6 @@ class X509CertificateTest {
             sign = pairRoot.createPrivateKey()
         ).generate()
         public2.toString()
-
         val keyPair = KeyGenerator.generate(KeyAlgorithm.RSA, 2048)
         val cer = X509Builder(
             pair = keyPair,
@@ -43,5 +40,6 @@ class X509CertificateTest {
 
         println("->\n${Base64.encode(cer.save())}")
         val bb = X509Certificate.load(public2.save())
+        println("#5")
     }
 }

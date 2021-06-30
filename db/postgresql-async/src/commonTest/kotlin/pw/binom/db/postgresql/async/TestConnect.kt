@@ -342,6 +342,12 @@ class TestConnect {
                 assertEquals("ПрИвет", it.getString(0))
                 println("OK")
             }
+
+            con.prepareStatement("""select '' """).executeQuery().use {
+                assertTrue(it.next())
+                assertEquals("", it.getString(0))
+                println("OK")
+            }
         }
     }
 

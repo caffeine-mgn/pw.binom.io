@@ -88,11 +88,11 @@ class HttpResponseMock : HttpResponse {
     override val headers: MutableHeaders
         get() = TODO("Not yet implemented")
 
-    override suspend fun writeBinary(): AsyncOutput {
+    override suspend fun startWriteBinary(): AsyncOutput {
         TODO("Not yet implemented")
     }
 
-    override suspend fun writeText(): AsyncWriter {
+    override suspend fun startWriteText(): AsyncWriter {
         TODO("Not yet implemented")
     }
 

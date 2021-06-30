@@ -1,5 +1,11 @@
 # History
 
+### 0.1.30
+
+* Fix bugs
+* Update Kotlin version 1.5.10 -> 1.5.20
+* Add support of AtomicDouble
+
 ### 0.1.29
 
 * New Async HTTP Client Implement
@@ -9,7 +15,7 @@
 * Fix Memory Leak on Linux
 * Date parser/formater
 * XML KSerializer
-* Update Kotlin version 1.4.31 -> 1.4.32
+* Update Kotlin version 1.4.31 -> 1.5.10
 * Fix bugs in postgresql connector
 
 ### 0.1.28

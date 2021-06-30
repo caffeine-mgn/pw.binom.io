@@ -185,7 +185,7 @@ class PGConnection private constructor(
                     buf2.data.position = pos
                     buf2.data.flip()
                 }
-                connection.write(buf2.data)
+                val wrote = connection.write(buf2.data)
                 connection.flush()
             }
         }

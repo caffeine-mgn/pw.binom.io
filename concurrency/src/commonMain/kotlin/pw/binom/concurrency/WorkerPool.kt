@@ -98,10 +98,11 @@ class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
         if (freeWorker != null) {
             freeWorker.execute(
                 ExecuteParams(
-                    future = future, f = f,
+                    future = future,
+                    f = f,
                     state = state,
                     worker = freeWorker,
-                )
+                ).doFreeze()
             ) {
                 it.future.resume(runCatching(it.f))
                 if (freeWorker.taskCount == 1) {

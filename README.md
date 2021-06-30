@@ -1,12 +1,12 @@
 # Binom IO
 
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.5.10](https://img.shields.io/badge/Kotlin-1.5.10-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org) <br><br>
+[![Kotlin 1.5.20](https://img.shields.io/badge/Kotlin-1.5.20-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org) <br><br>
 Kotlin IO Library.<br>
 
 ## Actual version
 
-Actual version is `0.1.29`
+Actual version is `0.1.30`
 
 ## Parts of library
 
@@ -134,7 +134,7 @@ buildscript {
 
 ## Community
 [Telegram](https://t.me/io_binom) <br>
-[Discord](https://discord.gg/HFYABPa)
+[Discord](https://discord.gg/8fJp7bX9tz)
 
 ## Author and Founder
 Anton Subochev [Telegram](https://t.me/Caffeine_mgn), [Facebook](https://www.facebook.com/caffeine.mgn), [Github](https://github.com/caffeine-mgn)

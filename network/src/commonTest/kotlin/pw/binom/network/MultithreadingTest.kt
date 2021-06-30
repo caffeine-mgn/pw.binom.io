@@ -30,7 +30,9 @@ class MultithreadingTest {
                     network {
                         assertTrue(networkThread.same)
                         flag2 = true
+                        Unit
                     }
+                    Unit
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()

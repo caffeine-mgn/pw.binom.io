@@ -33,19 +33,19 @@ interface NavigableMap<K,V>:SortedMap<K,V> {
      * if there is no such key.
      * @param key the key
      */
-    fun floorEntry(key:K):Map.Entry<K,V>
+    fun floorEntry(key:K):Map.Entry<K,V>?
 
     /**
      * Returns a key-value mapping associated with the least key greater than or equal to the given key, or null
      * if there is no such key.
      * @param key the key
      */
-    fun ceilingEntry(key:K):Map.Entry<K,V>
+    fun ceilingEntry(key:K):Map.Entry<K,V>?
 
     /**
      * Returns a key-value mapping associated with the least key strictly greater than the given key, or null
      * if there is no such key.
      * @param key the key
      */
-    fun higherEntry( key:K):Map.Entry<K,V>
+    fun higherEntry( key:K):Map.Entry<K,V>?
 }

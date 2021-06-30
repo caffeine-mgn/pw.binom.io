@@ -23,7 +23,7 @@ class IdentityServerTest {
                     it.response().use {
                         it.status = 202
                         it.headers.contentType = "text/html;charset=utf-8"
-                        it.writeText().use {
+                        it.startWriteText().use {
                             it.append("Hello! Привет в UTF-8")
                         }
                     }
@@ -32,7 +32,7 @@ class IdentityServerTest {
             server.bindHttp(NetworkAddress.Immutable("127.0.0.1", port))
 
             val client = HttpClient(manager)
-            val resp = client.request(HTTPMethod.GET, "http://127.0.0.1:$port/".toURI())
+            val resp = client.connect(HTTPMethod.GET.code, "http://127.0.0.1:$port/".toURI())
                 .getResponse()
                 .readText().use {
                     it.readText()

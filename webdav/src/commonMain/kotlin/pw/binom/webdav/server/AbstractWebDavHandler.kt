@@ -70,7 +70,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
         val DAV_NS = "DAV:"
         resp.status = 207
         resp.headers.contentType = "application/xml; charset=UTF-8"
-        resp.writeText().use {
+        resp.startWriteText().use {
             it.writeXml {
                 node("multistatus", DAV_NS) {
                     entities.forEach { e ->
@@ -259,7 +259,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                     req.response().use {
                         it.status = 200
                         it.headers.contentLength = e.length.toULong()
-                        it.writeBinary().use { b ->
+                        it.startWriteBinary().use { b ->
                             stream.use {
                                 it.copyTo(b, bufferPool)
                             }

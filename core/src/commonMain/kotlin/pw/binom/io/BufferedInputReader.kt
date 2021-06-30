@@ -85,7 +85,7 @@ class BufferedInputReader(
             output.clear()
             val r = decoder.decode(buffer, output)
             if (r == CharsetTransformResult.MALFORMED) {
-                throw IOException()
+                throw IOException("Input string is malformed")
             }
             output.flip()
         }

@@ -44,6 +44,10 @@ kotlin {
             staticLib()
         }
     }
+    js {
+        browser()
+        nodejs()
+    }
 
     macosX64 {
         binaries {

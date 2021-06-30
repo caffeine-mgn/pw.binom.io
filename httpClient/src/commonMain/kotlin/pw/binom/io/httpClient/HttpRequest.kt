@@ -12,7 +12,7 @@ import pw.binom.net.URI
 
 interface HttpRequest : AsyncCloseable {
     val headers: MutableHeaders
-    val method: HTTPMethod
+    val method: String
     val uri: URI
 
     /**
