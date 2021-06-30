@@ -38,33 +38,47 @@ interface HttpRequest : AsyncCloseable {
 interface HttpResponse : AsyncCloseable {
     var status: Int
     val headers: MutableHeaders
-    fun setContentType(value: String): HttpResponse {
+    fun contentType(value: String): HttpResponse {
         headers.contentType = value
         return this
     }
 
-    fun setStatus(status: Int): HttpResponse {
+    fun status(status: Int): HttpResponse {
         this.status = status
         return this
     }
 
-    suspend fun writeBinary(): AsyncOutput
-    suspend fun writeBinary(data: ByteBuffer) {
-        writeBinary().use {
+    suspend fun startWriteBinary(): AsyncOutput
+    suspend fun sendBinary(data: ByteBuffer) {
+        startWriteBinary().use {
             it.write(data)
             it.flush()
         }
     }
 
-    suspend fun writeBinary(data: ByteArray) {
+    suspend fun <T> sendBinary(func: suspend (AsyncOutput) -> T): T =
+        startWriteBinary().use {
+            val result = func(it)
+            it.flush()
+            result
+        }
+
+    suspend fun sendBinary(data: ByteArray) {
         data.wrap {
-            writeBinary(it)
+            sendBinary(it)
         }
     }
 
-    suspend fun writeText(): AsyncWriter
-    suspend fun writeText(text: String) {
-        writeText().use {
+    suspend fun <T> sendText(func: suspend (AsyncWriter) -> T): T =
+        startWriteText().use {
+            val result = func(it)
+            it.flush()
+            result
+        }
+
+    suspend fun startWriteText(): AsyncWriter
+    suspend fun sendText(text: String) {
+        startWriteText().use {
             it.append(text)
             it.flush()
         }

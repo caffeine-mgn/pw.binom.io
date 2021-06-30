@@ -11,8 +11,4 @@ abstract class HandlerInterceptor(val handler: Handler) : Handler {
     override suspend fun request(req: HttpRequest) {
         catch(req)
     }
-
-    //    override suspend fun request(req: HttpRequestDeprecated, resp: HttpResponseDeprecated) {
-//
-//    }
 }

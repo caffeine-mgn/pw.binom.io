@@ -23,7 +23,7 @@ class IdentityServerTest {
                     it.response().use {
                         it.status = 202
                         it.headers.contentType = "text/html;charset=utf-8"
-                        it.writeText().use {
+                        it.startWriteText().use {
                             it.append("Hello! Привет в UTF-8")
                         }
                     }

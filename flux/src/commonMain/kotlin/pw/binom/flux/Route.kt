@@ -22,31 +22,31 @@ interface Route {
     suspend fun execute(action: HttpRequest)
 }
 
-inline fun Route.get(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.get(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.GET, path, func)
 
-inline fun Route.head(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.head(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.HEAD, path, func)
 
-inline fun Route.patch(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.patch(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.PATCH, path, func)
 
-inline fun Route.trace(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.trace(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.TRACE, path, func)
 
-inline fun Route.options(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.options(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.OPTIONS, path, func)
 
-inline fun Route.connect(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.connect(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.CONNECT, path, func)
 
-inline fun Route.post(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.post(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.POST, path, func)
 
-inline fun Route.put(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.put(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.PUT, path, func)
 
-inline fun Route.delete(path: String, noinline func: suspend (FluxHttpRequest) -> Unit) =
+fun Route.delete(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.DELETE, path, func)
 
 /**

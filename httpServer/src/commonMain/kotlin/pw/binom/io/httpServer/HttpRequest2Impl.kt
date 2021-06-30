@@ -259,7 +259,7 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
         closed = true
     }
 
-    override suspend fun writeBinary(): AsyncOutput {
+    override suspend fun startWriteBinary(): AsyncOutput {
         checkClosed()
         responseStarted = true
         if (req.headers.keepAlive != headers.keepAlive) {
@@ -317,9 +317,9 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
         return str
     }
 
-    override suspend fun writeText(): AsyncWriter {
+    override suspend fun startWriteText(): AsyncWriter {
         val charset = Charsets.get(headers.charset ?: "utf-8")
-        return writeBinary().bufferedWriter(charset = charset)
+        return startWriteBinary().bufferedWriter(charset = charset)
     }
 
     override suspend fun asyncClose() {

@@ -39,7 +39,7 @@ class MultiThreading {
             val dataBuffer = ByteBuffer.wrap(data).clean()
 //            resp.headers.contentLength = dataBuffer.remaining.toULong()
             t.delay(Duration.seconds(1))
-            resp.writeBinary(dataBuffer)
+            resp.sendBinary(dataBuffer)
         })
 
         server.bindHttp(NetworkAddress.Immutable("127.0.0.1", port))
