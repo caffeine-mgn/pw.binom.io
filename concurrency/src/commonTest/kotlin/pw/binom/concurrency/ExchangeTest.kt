@@ -7,7 +7,11 @@ import pw.binom.doFreeze
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 private class Data(var value: Int)
 
@@ -77,5 +81,16 @@ class ExchangeTest {
         if (exceptionExist) {
             fail("Exception in Worker1")
         }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun getDelayTest() {
+        val e = Exchange<Int>()
+        val now = TimeSource.Monotonic.markNow()
+        e.get(Duration.seconds(1))
+        val duration = now.elapsedNow().inWholeMilliseconds
+        assertTrue(duration > 1000)
+        assertTrue(duration < 1500)
     }
 }

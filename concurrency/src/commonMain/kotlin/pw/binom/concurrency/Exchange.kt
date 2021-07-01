@@ -76,7 +76,7 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
             while (last == null) {
                 if (now.elapsedNow() > duration)
                     return@synchronize null
-                condition.await()
+                condition.await(duration)
             }
             val item = last!!
             last = item.previous.value
