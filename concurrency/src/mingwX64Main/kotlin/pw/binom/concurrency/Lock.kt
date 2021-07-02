@@ -2,8 +2,6 @@ package pw.binom.concurrency
 
 import kotlinx.cinterop.*
 import platform.windows.*
-import pw.binom.atomic.AtomicInt
-import pw.binom.io.Closeable
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
@@ -89,10 +87,7 @@ actual class Lock {
             }
             val now = TimeSource.Monotonic.markNow()
             while (true) {
-                val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
-                if (Worker.current?.isInterrupted == true) {
-                    throw InterruptedException()
-                }
+                val r = SleepConditionVariableCS(native.ptr, lock.ptr, duration.inWholeMilliseconds.convert())
                 if (r == 0) {
                     val e = GetLastError()
                     if (e != ERROR_TIMEOUT.convert<DWORD>()) {

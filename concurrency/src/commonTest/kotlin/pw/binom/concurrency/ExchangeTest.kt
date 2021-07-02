@@ -90,7 +90,23 @@ class ExchangeTest {
         val now = TimeSource.Monotonic.markNow()
         e.get(Duration.seconds(1))
         val duration = now.elapsedNow().inWholeMilliseconds
-        assertTrue(duration > 1000)
+        assertTrue(duration >= 1000)
         assertTrue(duration < 1500)
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun getDelayTest2() {
+        val e = Exchange<Int>()
+        val w = Worker()
+        w.execute(e) {e->
+            Worker.sleep(500)
+            e.put(100)
+        }
+        val now = TimeSource.Monotonic.markNow()
+        e.get(Duration.seconds(1))
+        val duration = now.elapsedNow().inWholeMilliseconds
+        assertTrue(duration >= 500)
+        assertTrue(duration < 1000)
     }
 }

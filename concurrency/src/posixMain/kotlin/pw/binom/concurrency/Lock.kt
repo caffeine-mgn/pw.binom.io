@@ -2,14 +2,11 @@ package pw.binom.concurrency
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import pw.binom.atomic.AtomicInt
-import pw.binom.io.Closeable
 import kotlin.native.concurrent.AtomicNativePtr
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
 
 private inline val AtomicNativePtr.cc
     get() = this.value.reinterpret<pthread_cond_t>()!!
@@ -23,15 +20,15 @@ fun <T : NativePointed> NativePtr.reinterpret() = interpretNullablePointed<T>(th
 @OptIn(ExperimentalStdlibApi::class)
 actual class Lock {
 
-    private val native = AtomicNativePtr(nativeHeap.alloc<pthread_mutex_t>().rawPtr)
+    private val native = nativeHeap.alloc<pthread_mutex_t>()
 
     init {
-        pthread_mutex_init(native.mm.ptr, null)
+        pthread_mutex_init(native.ptr, null)
     }
 
     private val cleaner = createCleaner(native) { native ->
-        pthread_mutex_destroy(native.mm.ptr)
-        nativeHeap.free(native.value)
+        pthread_mutex_destroy(native.ptr)
+        nativeHeap.free(native)
     }
 
     init {
@@ -39,30 +36,30 @@ actual class Lock {
     }
 
     actual fun lock() {
-        if (pthread_mutex_lock(native.mm.ptr) != 0)
+        if (pthread_mutex_lock(native.ptr) != 0)
             throw IllegalStateException("Can't lock mutex")
     }
 
     actual fun unlock() {
-        if (pthread_mutex_unlock(native.mm.ptr) != 0)
+        if (pthread_mutex_unlock(native.ptr) != 0)
             throw IllegalStateException("Can't unlock mutex")
     }
 
     actual fun newCondition() = Condition(native)
 
-    actual class Condition(val mutex: AtomicNativePtr) {
+    actual class Condition(val mutex: pthread_mutex_t) {
         //        val native = cValue<pthread_cond_t>()//nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
         val native =
-            AtomicNativePtr(nativeHeap.alloc<pthread_cond_t>().rawPtr)//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
+            nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
-            if (pthread_cond_init(native.cc.ptr, null) != 0)
+            if (pthread_cond_init(native.ptr, null) != 0)
                 throw IllegalStateException("Can't init Condition")
         }
 
         private val cleaner = createCleaner(native) { native ->
-            pthread_cond_destroy(native.cc.ptr)
-            nativeHeap.free(native.value)
+            pthread_cond_destroy(native.ptr)
+            nativeHeap.free(native)
         }
 
         init {
@@ -70,15 +67,15 @@ actual class Lock {
         }
 
         actual fun await() {
-            pthread_cond_wait(native.cc.ptr, mutex.mm.ptr)
+            pthread_cond_wait(native.ptr, mutex.ptr)
         }
 
         actual fun signal() {
-            pthread_cond_signal(native.cc.ptr)
+            pthread_cond_signal(native.ptr)
         }
 
         actual fun signalAll() {
-            pthread_cond_broadcast(native.cc.ptr)
+            pthread_cond_broadcast(native.ptr)
         }
 
         @OptIn(ExperimentalTime::class)
@@ -88,21 +85,17 @@ actual class Lock {
                 return true
             }
             return memScoped<Boolean> {
+                val now = alloc<timeval>()
                 val waitUntil = alloc<timespec>()
-                clock_gettime(CLOCK_REALTIME, waitUntil.ptr)
-                waitUntil.tv_nsec = (checkTime * 1000000L).convert()
-
-                val now = TimeSource.Monotonic.markNow()
+                gettimeofday(now.ptr, null)
+                waitUntil.set(now, duration)
                 while (true) {
-                    val r = pthread_cond_timedwait(native.cc.ptr, mutex.mm.ptr, waitUntil.ptr)
+                    val r = pthread_cond_timedwait(native.ptr, mutex.ptr, waitUntil.ptr)
                     if (Worker.current?.isInterrupted == true) {
                         throw InterruptedException()
                     }
                     if (r == ETIMEDOUT) {
-                        if (now.elapsedNow() > duration)
-                            return@memScoped false
-                        else
-                            continue
+                        return@memScoped false
                     }
                     if (r == 0)
                         return@memScoped true
@@ -112,4 +105,12 @@ actual class Lock {
             }
         }
     }
+}
+
+@OptIn(ExperimentalTime::class)
+private fun timespec.set(base: timeval, diff: Duration) {
+    val nsecDiff = Duration.microseconds(base.tv_usec) + diff
+
+    tv_sec = base.tv_sec + nsecDiff.inWholeSeconds.toInt()
+    tv_nsec = (nsecDiff.inWholeNanoseconds - nsecDiff.inWholeSeconds * 1_000_000_000).convert()
 }

@@ -71,7 +71,6 @@ actual class NSocket(val native: Int) : Closeable {
                     throw SocketClosedException()
                 }
                 if (errno == EBADF){
-                    nativeClose()
                     throw SocketClosedException()
                 }
                 throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
@@ -93,7 +92,6 @@ actual class NSocket(val native: Int) : Closeable {
                 throw SocketClosedException()
             }
             if (errno == EBADF){
-                nativeClose()
                 throw SocketClosedException()
             }
             nativeClose()

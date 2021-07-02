@@ -22,7 +22,7 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
     val output: ExchangeOutput<T>
         get() = this
 
-    class Item<T>(val value: T?) {
+    private class Item<T>(val value: T?) {
         var next = AtomicReference<Item<T>?>(null)
         var previous = AtomicReference<Item<T>?>(null)
 
@@ -74,8 +74,9 @@ class Exchange<T : Any?> : ExchangeInput<T>, ExchangeOutput<T> {
         lock.synchronize {
             val now = TimeSource.Monotonic.markNow()
             while (last == null) {
-                if (now.elapsedNow() > duration)
+                if (now.elapsedNow() > duration) {
                     return@synchronize null
+                }
                 condition.await(duration)
             }
             val item = last!!
