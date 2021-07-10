@@ -99,7 +99,7 @@ class JvmSelector : Selector {
                     timeout > 0L -> native.select(timeout)
                     timeout == 0L -> native.selectNow()
                     timeout < 0L -> native.select()
-                    else -> throw IllegalArgumentException()
+                    else -> throw IllegalArgumentException("Invalid timeout $timeout")
                 }
             }
             val keys = native.selectedKeys()

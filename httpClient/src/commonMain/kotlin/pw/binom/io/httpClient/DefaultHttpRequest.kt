@@ -16,7 +16,7 @@ import kotlin.time.ExperimentalTime
 class DefaultHttpRequest constructor(
     override var method: String,
     override val uri: URI,
-    val client: HttpClient,
+    val client: BaseHttpClient,
     val channel: AsyncAsciiChannel,
     val timeout: Duration?,
 ) : HttpRequest {

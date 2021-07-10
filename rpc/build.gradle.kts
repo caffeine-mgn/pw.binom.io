@@ -19,7 +19,7 @@ kotlin {
             }
         }
     }
-    js {
+    js("js", BOTH) {
         browser()
         nodejs()
     }

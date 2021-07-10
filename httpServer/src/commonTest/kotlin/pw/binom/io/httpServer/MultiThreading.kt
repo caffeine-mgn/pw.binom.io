@@ -7,7 +7,7 @@ import pw.binom.concurrency.WorkerPool
 import pw.binom.concurrency.sleep
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.BaseHttpClient
 import pw.binom.io.use
 import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
@@ -45,7 +45,7 @@ class MultiThreading {
         server.bindHttp(NetworkAddress.Immutable("127.0.0.1", port))
 
         suspend fun makeCall(name: String) {
-            HttpClient(nd).use { client ->
+            BaseHttpClient(nd).use { client ->
                 try {
                     println("Try make request $name...")
                     client.connect(

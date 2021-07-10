@@ -19,7 +19,7 @@ enum class QueryIterator(  // tuples in distance ascending order from specified 
     companion object {
         fun valueOf(value: Int) = values()
                 .find { value == it.value }
-                ?: throw IllegalArgumentException()
+                ?: throw IllegalArgumentException("Can't find value $value in enum QueryIterator")
 
     }
 }

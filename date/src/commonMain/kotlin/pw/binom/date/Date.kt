@@ -49,7 +49,7 @@ fun Date.Companion.of(
     minutes: Int,
     seconds: Int,
     millis: Int,
-    timeZoneOffset: Int = 0
+    timeZoneOffset: Int = systemZoneOffset
 ): Date {
     require(month >= 1 && month <= 12) { "Invalid value of month. Valid values 1-12" }
     require(millis >= 0 && millis <= 999) { "Invalid value of millis. Valid values 0-999" }

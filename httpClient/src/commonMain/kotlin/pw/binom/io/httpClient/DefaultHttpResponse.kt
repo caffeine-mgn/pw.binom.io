@@ -19,7 +19,7 @@ import kotlin.time.ExperimentalTime
 
 class DefaultHttpResponse(
     val URI: URI,
-    val client: HttpClient,
+    val client: BaseHttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     override val responseCode: Int,
@@ -29,7 +29,7 @@ class DefaultHttpResponse(
         @OptIn(ExperimentalTime::class)
         suspend fun read(
             uri: URI,
-            client: HttpClient,
+            client: BaseHttpClient,
             keepAlive: Boolean,
             channel: AsyncAsciiChannel,
             timeout: Duration?,

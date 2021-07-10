@@ -9,7 +9,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 class RequestAsyncContentLengthOutput constructor(
     val URI: URI,
-    val client: HttpClient,
+    val client: BaseHttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     contentLength: ULong,

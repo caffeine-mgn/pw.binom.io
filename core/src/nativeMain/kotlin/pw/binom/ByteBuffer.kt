@@ -4,16 +4,15 @@ import kotlinx.cinterop.*
 import platform.posix.memcpy
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
-import pw.binom.internal.core_native.*
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
-import kotlin.native.internal.GC
 import kotlin.native.internal.createCleaner
 
 @OptIn(ExperimentalStdlibApi::class)
-actual class ByteBuffer(override val capacity: Int, val autoClean: Boolean) : Input, Output,
-    Closeable,
-    Buffer {
+actual class ByteBuffer(
+    override val capacity: Int,
+    val autoClean: Boolean
+) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size, true)
     }

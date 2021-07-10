@@ -121,7 +121,7 @@ sealed class Pattern {
         val text = pattern.substring(start + 1, start + len - 1)
 
         override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
-            return text.length
+            return this.text.length
 //            text.regionMatches(position, text, 0, text.length)
 //            TODO("Not yet implemented")
         }
@@ -235,7 +235,7 @@ sealed class Pattern {
                 4 -> "Thu"
                 5 -> "Fri"
                 6 -> "Sat"
-                else -> throw IllegalArgumentException()
+                else -> throw IllegalArgumentException("Unknown day of week ${calendar.dayOfWeek}")
             }
     }
 
@@ -312,7 +312,7 @@ sealed class Pattern {
                 10 -> "Oct"
                 11 -> "Nov"
                 12 -> "Dec"
-                else -> throw IllegalArgumentException()
+                else -> throw IllegalArgumentException("Unknown month ${calendar.month}")
             }
     }
 
@@ -615,7 +615,7 @@ private fun Int.as2() =
     when {
         this < 10 -> "0$this"
         this >= 10 && this <= 99 -> toString()
-        else -> throw IllegalArgumentException()
+        else -> throw IllegalArgumentException("Input integer $this should be in interval 0..99")
     }
 
 private fun Int.as3() =
@@ -623,7 +623,7 @@ private fun Int.as3() =
         this < 10 -> "00$this"
         this < 100 -> "0$this"
         this < 1000 -> "$this"
-        else -> throw IllegalArgumentException()
+        else -> throw IllegalArgumentException("Input integer $this should be in interval 0..999")
     }
 
 private fun Int.as4() =
@@ -632,5 +632,5 @@ private fun Int.as4() =
         this < 100 -> "00$this"
         this < 1000 -> "0$this"
         this >= 1000 && this <= 9999 -> toString()
-        else -> throw IllegalArgumentException()
+        else -> throw IllegalArgumentException("Input integer $this should be in interval 0..9999")
     }

@@ -5,7 +5,7 @@ import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.httpClient.*
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.BaseHttpClient
 import pw.binom.io.httpClient.addHeader
 import pw.binom.net.URI
 import pw.binom.webdav.*
@@ -18,7 +18,7 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-open class WebDavClient constructor(val client: HttpClient, val URI: URI, val timeout: Duration?) : FileSystem {
+open class WebDavClient constructor(val client: BaseHttpClient, val URI: URI, val timeout: Duration?) : FileSystem {
 
     private fun XmlElement.findTag(name: String) =
         findElements { it.nameSpace == "DAV:" && it.tag == name }

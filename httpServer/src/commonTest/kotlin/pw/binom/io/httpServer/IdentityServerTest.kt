@@ -3,7 +3,7 @@ package pw.binom.io.httpServer
 import pw.binom.async2
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.BaseHttpClient
 import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -31,7 +31,7 @@ class IdentityServerTest {
             )
             server.bindHttp(NetworkAddress.Immutable("127.0.0.1", port))
 
-            val client = HttpClient(manager)
+            val client = BaseHttpClient(manager)
             val resp = client.connect(HTTPMethod.GET.code, "http://127.0.0.1:$port/".toURI())
                 .getResponse()
                 .readText().use {

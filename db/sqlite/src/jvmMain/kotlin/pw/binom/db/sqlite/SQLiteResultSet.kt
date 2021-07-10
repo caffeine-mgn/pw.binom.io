@@ -108,6 +108,9 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
         return Date(native.getLong(column))
     }
 
+    override fun columnIndex(column: String): Int =
+        native.findColumn(column)
+
     override fun close() {
         native.close()
     }

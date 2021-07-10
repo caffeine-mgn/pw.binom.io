@@ -48,6 +48,10 @@ kotlin {
             framework()
         }
     }
+    js("js", BOTH) {
+        browser()
+        nodejs()
+    }
 
     sourceSets {
         val commonMain by getting {

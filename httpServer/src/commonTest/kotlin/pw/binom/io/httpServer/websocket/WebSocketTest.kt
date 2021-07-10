@@ -4,7 +4,7 @@ import pw.binom.concurrency.joinAndGetOrThrow
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.MessageType
-import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.BaseHttpClient
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpServer
@@ -40,7 +40,7 @@ class WebSocketTest {
         server.bindHttp(NetworkAddress.Immutable(host = "0.0.0.0", port = port))
 
         val f = manager.async {
-            val cl = HttpClient(manager)
+            val cl = BaseHttpClient(manager)
             val con = cl.connect(HTTPMethod.GET.code, "http://127.0.0.1:$port".toURI()).startWebSocket()
             con.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append(testMsg) }
             val text = con.read().bufferedAsciiReader().use { it.readText() }

@@ -37,6 +37,7 @@ interface ResultSet {
     fun isNull(column: String): Boolean
     fun getUUID(column: String) = getBlob(column)?.let { UUID.create(it) }
     fun getDate(column: String): Date?
+    fun columnIndex(column:String):Int
 
     class InvalidColumnTypeException : IOException()
 

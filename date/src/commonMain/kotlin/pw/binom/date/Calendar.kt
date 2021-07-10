@@ -53,32 +53,7 @@ internal fun timeZoneOffsetToString(offset: Int): String {
 }
 
 internal fun asStringRfc822(calc: Calendar, timeZone: String): String {
-    val month = when (calc.month) {
-        0 -> "Jan"
-        1 -> "Feb"
-        2 -> "Mar"
-        3 -> "Apr"
-        4 -> "May"
-        5 -> "Jun"
-        6 -> "Jul"
-        7 -> "Aug"
-        8 -> "Sep"
-        9 -> "Oct"
-        10 -> "Nov"
-        11 -> "Dec"
-        else -> "Unknown"
-    }
-    val week = when (calc.dayOfWeek) {
-        0 -> "Sun"
-        1 -> "Mon"
-        2 -> "Tue"
-        3 -> "Wed"
-        4 -> "Thu"
-        5 -> "Fri"
-        6 -> "Sat"
-        else -> "Unknown (${calc.dayOfWeek})"
-    }
-    return "$week, ${calc.dayOfMonth.asTwo()} $month ${calc.year} ${calc.hours.asTwo()}:${calc.minutes.asTwo()}:${calc.seconds.asTwo()} GMT$timeZone"
+    return calc.rfc822()
 }
 
 private fun Int.asTwo(): String =

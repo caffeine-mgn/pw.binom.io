@@ -5,7 +5,7 @@ import pw.binom.concurrency.execute
 import pw.binom.concurrency.sleep
 import pw.binom.getOrException
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.BaseHttpClient
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.toURI
@@ -41,7 +41,7 @@ class KeepAliveTest {
         server.bindHttp(addr)
 
         val d = nd.async {
-            val client = HttpClient(nd)
+            val client = BaseHttpClient(nd)
             client.connect(HTTPMethod.GET.code, "http://127.0.0.1:${addr.port}".toURI()).getResponse().readText()
                 .use { it.readText() }
             assertEquals(1, server.idleConnectionSize)

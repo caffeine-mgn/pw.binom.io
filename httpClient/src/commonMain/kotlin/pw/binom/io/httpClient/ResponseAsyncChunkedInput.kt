@@ -8,7 +8,7 @@ import pw.binom.skipAll
 
 class ResponseAsyncChunkedInput(
     val URI: URI,
-    val client: HttpClient,
+    val client: BaseHttpClient,
     val keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     stream: AsyncInput,

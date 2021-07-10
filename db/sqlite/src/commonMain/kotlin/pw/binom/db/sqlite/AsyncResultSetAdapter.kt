@@ -106,6 +106,11 @@ class AsyncResultSetAdapter(val ref: Reference<SyncResultSet>, val worker: Worke
             it.value.getDate(column)
         }.joinAndGetOrThrow()
 
+    override fun columnIndex(column: String): Int =
+        worker.execute(ref) {
+            it.value.columnIndex(column)
+        }.joinAndGetOrThrow()
+
     override suspend fun asyncClose() {
         execute(worker) {
             ref.value.close()
