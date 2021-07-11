@@ -46,4 +46,6 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
         asStringRfc822(this, timeZoneOffsetToString(timeZoneOffset))
 
     actual fun toString(timeZoneOffset: Int): String = timeZone(timeZoneOffset).toString()
+
+    actual fun toDate(): Date = Date.new(this)
 }

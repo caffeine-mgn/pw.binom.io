@@ -29,7 +29,7 @@ expect value class Date(val time: Long = nowTime) {
     fun calendar(timeZoneOffset: Int = Date.systemZoneOffset): Calendar
 }
 
-fun Date.Companion.of(calendar: Calendar) =
+internal fun Date.Companion.new(calendar: Calendar) =
     of(
         year = calendar.year,
         month = calendar.month,
@@ -42,13 +42,13 @@ fun Date.Companion.of(calendar: Calendar) =
     )
 
 fun Date.Companion.of(
-    year: Int,
-    month: Int,
-    dayOfMonth: Int,
-    hours: Int,
-    minutes: Int,
-    seconds: Int,
-    millis: Int,
+    year: Int = 1970,
+    month: Int = 1,
+    dayOfMonth: Int = 0,
+    hours: Int = 0,
+    minutes: Int = 0,
+    seconds: Int = 0,
+    millis: Int = 0,
     timeZoneOffset: Int = systemZoneOffset
 ): Date {
     require(month >= 1 && month <= 12) { "Invalid value of month. Valid values 1-12" }

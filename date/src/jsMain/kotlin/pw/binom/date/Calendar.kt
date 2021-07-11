@@ -39,7 +39,8 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
     /**
      * @param timeZoneOffset TimeZone offset in mintes
      */
-    actual fun toString(timeZoneOffset: Int): String {
-        TODO("Not yet implemented")
-    }
+    actual fun toString(timeZoneOffset: Int): String =
+        if (timeZoneOffset == timeZoneOffset) toString() else timeZone(timeZoneOffset).toString()
+
+    actual fun toDate(): Date = Date.new(this)
 }

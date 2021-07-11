@@ -38,6 +38,7 @@ expect class Calendar {
      * @param timeZoneOffset TimeZone offset in mintes
      */
     fun timeZone(timeZoneOffset: Int): Calendar
+    fun toDate():Date
 }
 
 /**
