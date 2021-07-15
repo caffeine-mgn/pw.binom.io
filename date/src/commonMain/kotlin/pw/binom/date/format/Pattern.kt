@@ -3,7 +3,7 @@ package pw.binom.date.format
 import pw.binom.date.Calendar
 import kotlin.math.absoluteValue
 
-sealed class Pattern {
+sealed interface Pattern {
     companion object {
         fun find(format: String, position: Int): Pattern? =
             when {
@@ -22,6 +22,7 @@ sealed class Pattern {
                 SSm.find(format, position) -> SSm
                 XXX.find(format, position) -> XXX
                 XX.find(format, position) -> XX
+                X.find(format, position) -> X
                 Z.find(format, position) -> Z
                 MINUS.find(format, position) -> MINUS
                 SLASH.find(format, position) -> SLASH
@@ -33,8 +34,7 @@ sealed class Pattern {
     }
 
     abstract fun find(text: String, position: Int): Boolean
-    abstract val len: Int
-    open fun len(text: String, position: Int): Int = if (find(text, position)) len else -1
+    open fun len(text: String, position: Int): Int
     abstract fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int
     abstract fun toString(calendar: Calendar): String
 
@@ -42,10 +42,15 @@ sealed class Pattern {
         YEAR, MONTH, DAY_OF_MONTH, DAY_OF_WEAK, HOURS, MINUTES, SECONDS, MILLISECOND, TIME_ZONE
     }
 
+    interface ConstLengthPattern : Pattern {
+        val len: Int
+        override fun len(text: String, position: Int): Int = if (find(text, position)) len else -1
+    }
+
     /**
      * Year. Example: "2021"
      */
-    object yyyy : Pattern() {
+    object yyyy : ConstLengthPattern {
         override fun find(text: String, position: Int) =
             text.regionMatches(position, "yyyy", 0, len)
 
@@ -67,7 +72,7 @@ sealed class Pattern {
     /**
      * Month. Example: "04"
      */
-    object MM : Pattern() {
+    object MM : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "MM", 0, len)
 
@@ -89,7 +94,7 @@ sealed class Pattern {
     /**
      * Day of month. Example: "15"
      */
-    object dd : Pattern() {
+    object dd : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "dd", 0, len)
 
@@ -108,7 +113,7 @@ sealed class Pattern {
         override fun toString(calendar: Calendar): String = calendar.dayOfMonth.as2()
     }
 
-    class CustomText(pattern: String, val start: Int) : Pattern() {
+    class CustomText(pattern: String, val start: Int) : ConstLengthPattern {
         companion object {
             fun find(text: String, position: Int): Boolean =
                 text[position] == '\'' && (text.indexOf("'", position + 1) != -1)
@@ -120,25 +125,17 @@ sealed class Pattern {
         override val len: Int = pattern.indexOf("'", start + 1) - start + 1
         val text = pattern.substring(start + 1, start + len - 1)
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
-            return this.text.length
-//            text.regionMatches(position, text, 0, text.length)
-//            TODO("Not yet implemented")
-        }
+        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int =
+            this.text.length
 
         override fun toString(calendar: Calendar): String =
             text
-
-//        override fun len(text: String, position: Int): Int {
-//            val end = text.indexOf("'", position + 1)
-//            return end - position + 1
-//        }
     }
 
     /**
      * Hours. Example: "31"
      */
-    object HH : Pattern() {
+    object HH : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "HH", 0, len)
 
@@ -161,7 +158,7 @@ sealed class Pattern {
     /**
      * Minutes. Example: "31"
      */
-    object mm_ : Pattern() {
+    object mm_ : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "mm", 0, len)
 
@@ -181,7 +178,7 @@ sealed class Pattern {
     }
 
     //Seconds. Example: "31"
-    object ss : Pattern() {
+    object ss : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "ss", 0, len)
 
@@ -201,7 +198,7 @@ sealed class Pattern {
     }
 
     //Day of week. Example: "Mon"
-    object EEE : Pattern() {
+    object EEE : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "EEE", 0, len)
 
@@ -247,7 +244,7 @@ sealed class Pattern {
      *
      * Example: "3"
      */
-    object u : Pattern() {
+    object u : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text[position] == 'u'
 
@@ -268,7 +265,7 @@ sealed class Pattern {
     /**
      * Month. Example: "Feb"
      */
-    object MMM : Pattern() {
+    object MMM : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "MMM", 0, len)
 
@@ -316,7 +313,7 @@ sealed class Pattern {
             }
     }
 
-    object SSS : Pattern() {
+    object SSS : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "SSS", 0, len)
 
@@ -336,7 +333,7 @@ sealed class Pattern {
             calendar.millisecond.as3()
     }
 
-    object SSm : Pattern() {
+    object SSm : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "SS", 0, len)
 
@@ -352,19 +349,24 @@ sealed class Pattern {
             return 2
         }
 
-        override fun toString(calendar: Calendar): String =
-            calendar.millisecond.as2()
+        override fun toString(calendar: Calendar): String {
+            var r = calendar.millisecond
+            while (r > 100) {
+                r = r / 10
+            }
+            return r.as2()
+        }
     }
 
     /**
-     * Timezone. Example: "-07:00"
+     * Timezone. Example: "-0700"
      */
-    object XX : Pattern() {
+    object X : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "XX", 0, len)
+            text.regionMatches(position, "X", 0, len)
 
         override val len: Int
-            get() = 2
+            get() = 1
 
         override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
             if (position + 3 > text.length) {
@@ -384,21 +386,66 @@ sealed class Pattern {
             }
             val h = text.substring(position + 1, position + 3).toInt()
             set(FieldType.TIME_ZONE, h * 60 * if (add) 1 else -1)
-            return 6
+            return 3
+        }
+
+        override fun toString(calendar: Calendar): String {
+            val t = calendar.timeZoneOffset.absoluteValue
+            val h = t / 60
+            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}"
+        }
+    }
+
+    /**
+     * Timezone. Example: "-0700"
+     */
+    object XX : ConstLengthPattern {
+        override fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "XX", 0, len)
+
+        override val len: Int
+            get() = 2
+
+        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+            if (position + 5 > text.length) {
+                return -1
+            }
+            val sign = text[position]
+            val add = when (sign) {
+                '+' -> true
+                '-' -> false
+                else -> return -1
+            }
+            if (text[position + 1] !in '0'..'9') {
+                return -1
+            }
+            if (text[position + 2] !in '0'..'9') {
+                return -1
+            }
+            if (text[position + 3] !in '0'..'9') {
+                return -1
+            }
+            if (text[position + 4] !in '0'..'9') {
+                return -1
+            }
+            val h = text.substring(position + 1, position + 3).toInt()
+            val m = text.substring(position + 3, position + 5).toInt()
+            set(FieldType.TIME_ZONE, h * 60 + m * if (add) 1 else -1)
+            return 5
         }
 
         override fun toString(calendar: Calendar): String {
             val t = calendar.timeZoneOffset.absoluteValue
             val h = t / 60
             val m = t - h * 60
-            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}:${m.as2()}"
+            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
         }
     }
 
     /**
      * Timezone. Example: "-07:00"
      */
-    object XXX : Pattern() {
+    object XXX : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "XXX", 0, len)
 
@@ -447,7 +494,7 @@ sealed class Pattern {
     /**
      * Timezone. Example: "-0700"
      */
-    object Z : Pattern() {
+    object Z : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "XXX", 0, len)
 
@@ -493,7 +540,7 @@ sealed class Pattern {
     /**
      * "-"
      */
-    object MINUS : Pattern() {
+    object MINUS : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "-", 0, len)
 
@@ -513,7 +560,7 @@ sealed class Pattern {
     /**
      * ":"
      */
-    object DOUBLE_POINT : Pattern() {
+    object DOUBLE_POINT : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, ":", 0, len)
 
@@ -533,7 +580,7 @@ sealed class Pattern {
     /**
      * "."
      */
-    object POINT : Pattern() {
+    object POINT : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, ".", 0, len)
 
@@ -553,7 +600,7 @@ sealed class Pattern {
     /**
      * "/"
      */
-    object SLASH : Pattern() {
+    object SLASH : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "/", 0, len)
 
@@ -573,7 +620,7 @@ sealed class Pattern {
     /**
      * ","
      */
-    object COMMA : Pattern() {
+    object COMMA : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, ",", 0, len)
 
@@ -593,7 +640,7 @@ sealed class Pattern {
     /**
      * " "
      */
-    object SPACE : Pattern() {
+    object SPACE : ConstLengthPattern {
         override fun find(text: String, position: Int): Boolean =
             text[position] == ' '
 

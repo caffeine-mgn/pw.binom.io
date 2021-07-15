@@ -4,7 +4,7 @@ import kotlin.reflect.KClass
 
 internal class StrongImpl : Strong {
 
-    private var beans = HashMap<String, Any>()
+    internal var beans = HashMap<String, Any>()
 
     sealed class Dependency {
         class ClassDependency(val clazz: KClass<Any>, val name: String?, val require: Boolean) : Dependency()
@@ -62,24 +62,25 @@ internal class StrongImpl : Strong {
     }
 
     private lateinit var beanOrder: List<Pair<String, Any>>
-    suspend fun start(beans: List<Pair<String, Any>>) {
-        beanOrder = beans
-        beans.forEach {
-            this.beans[it.first] = it.second
-        }
 
-        beans.forEach {
-            val bean = it.second
-            if (bean is Strong.InitializingBean) {
-                bean.init(this)
-            }
-        }
-
-        beans.forEach {
-            val bean = it.second
-            if (bean is Strong.LinkingBean) {
-                bean.link(this)
-            }
-        }
-    }
+//    suspend fun start(beans: List<Pair<String, Any>>) {
+//        beanOrder = beans
+//        beans.forEach {
+//            this.beans[it.first] = it.second
+//        }
+//
+//        beans.forEach {
+//            val bean = it.second
+//            if (bean is Strong.InitializingBean) {
+//                bean.init(this)
+//            }
+//        }
+//
+//        beans.forEach {
+//            val bean = it.second
+//            if (bean is Strong.LinkingBean) {
+//                bean.link(this)
+//            }
+//        }
+//    }
 }

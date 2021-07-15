@@ -1,8 +1,13 @@
 package pw.binom.strong
 
+import pw.binom.strong.exceptions.StrongException
 import kotlin.reflect.KClass
 
 interface Strong {
+    abstract class Bean {
+        protected val strong: Strong =
+            STRONG_LOCAL ?: throw IllegalStateException("Bean should be created during strong starts")
+    }
 
     companion object {
         fun config(func: suspend (Definer) -> Unit) = object : Config {
@@ -11,20 +16,22 @@ interface Strong {
             }
         }
 
-        fun serviceProvider(func: suspend (Definer) -> Unit) = object : ServiceProvider {
-            override suspend fun provide(strong: Definer) {
-                func(strong)
-            }
-        }
+//        fun serviceProvider(func: suspend (Definer) -> Unit) = object : ServiceProvider {
+//            override suspend fun provide(definer: Definer) {
+//                func(definer)
+//            }
+//        }
 
         suspend fun create(vararg config: Strong.Config): Strong {
-            val d = DefinerImpl()
+            if (STRONG_LOCAL != null) {
+                throw StrongException("Can't start strong inside strong")
+            }
+            val d = InternalDefiner()
             val strong = StrongImpl()
             config.forEach {
                 it.apply(d)
             }
-            val beans = d.createBeans(strong)
-            strong.start(beans)
+            Starter(strongImpl = strong, startDefiner = d).start()
             return strong
         }
     }
@@ -61,9 +68,17 @@ interface Strong {
         suspend fun link(strong: Strong)
     }
 
-    interface ServiceProvider {
-        suspend fun provide(strong: Definer)
+    interface BeanFactory<T : Any> {
+        val type: KClass<T>
+        val name: String
+            get() = type.genDefaultName()
+
+        suspend fun provide(strong: Strong): T?
     }
+
+//    interface ServiceProvider {
+//        suspend fun provide(definer: Definer)
+//    }
 
     interface DestroyableBean {
         suspend fun destroy(strong: Strong)

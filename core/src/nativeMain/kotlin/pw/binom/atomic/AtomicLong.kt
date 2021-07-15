@@ -5,7 +5,7 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.native.concurrent.AtomicLong as NAtomicLong
 
-actual class AtomicLong actual constructor(value: Long) : ReadWriteProperty<Any, Long> {
+actual class AtomicLong actual constructor(value: Long) : ReadWriteProperty<Any?, Long> {
     private val atom = NAtomicLong(value)
     init {
         doFreeze()
@@ -34,9 +34,9 @@ actual class AtomicLong actual constructor(value: Long) : ReadWriteProperty<Any,
             atom.value = value
         }
 
-    override fun setValue(thisRef: Any, property: KProperty<*>, value: Long) {
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) {
         atom.value = value
     }
 
-    override fun getValue(thisRef: Any, property: KProperty<*>): Long = atom.value
+    override fun getValue(thisRef: Any?, property: KProperty<*>): Long = atom.value
 }

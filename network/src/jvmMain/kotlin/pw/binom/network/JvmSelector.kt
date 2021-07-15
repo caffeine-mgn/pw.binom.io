@@ -2,6 +2,7 @@ package pw.binom.network
 
 import pw.binom.concurrency.ThreadRef
 import java.net.ConnectException
+import java.net.SocketException
 import java.nio.channels.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -124,6 +125,10 @@ class JvmSelector : Selector {
                             continue
                         }
                     } catch (e: ConnectException) {
+                        count++
+                        func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
+                        continue
+                    } catch (e: SocketException){
                         count++
                         func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
                         continue

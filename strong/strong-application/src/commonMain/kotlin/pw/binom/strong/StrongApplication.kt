@@ -6,15 +6,13 @@ import pw.binom.network.NetworkDispatcher
 import pw.binom.process.Signal
 import pw.binom.strong.exceptions.StartupException
 import pw.binom.strong.exceptions.StrongException
-import kotlin.time.TimeSource
-import kotlin.time.measureTime
 
 object StrongApplication {
     fun start(vararg config: Strong.Config) {
         NetworkDispatcher().use { networkDispatcher ->
             val initProcess = networkDispatcher.async {
                 Strong.create(
-                    *(arrayOf(Strong.config { it.define(networkDispatcher) }) + config)
+                    *(arrayOf(Strong.config { it.bean { networkDispatcher } }) + config)
                 )
             }
 

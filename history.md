@@ -1,8 +1,12 @@
 # History
 
+### 0.1.31
+* Bug fix
+* Update Kotlin version 1.5.20 -> 1.5.21
+
 ### 0.1.30
 
-* Fix bugs
+* Bug fix
 * Update Kotlin version 1.5.10 -> 1.5.20
 * Add support of AtomicDouble
 
@@ -11,7 +15,7 @@
 * New Async HTTP Client Implement
 * New Async HTTP Server Implement
 * New URL Implement
-* URN Implement
+* URI Implement
 * Fix Memory Leak on Linux
 * Date parser/formater
 * XML KSerializer

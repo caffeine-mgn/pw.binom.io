@@ -14,8 +14,8 @@ interface Definer {
      * @param name name of [bean] for define. See description of method for get default value
      * @param ifNotExist if false on duplicate will throw [BeanAlreadyDefinedException]. If true will ignore redefine
      */
-    suspend fun define(bean: Any, name: String? = null, ifNotExist: Boolean = false)
-    fun <T : Any> findDefine(clazz: KClass<T>, name: String? = null): T
+//    suspend fun define(bean: Any, name: String? = null, ifNotExist: Boolean = false)
+//    fun <T : Any> findDefine(clazz: KClass<T>, name: String? = null): T
     fun <T : Any> bean(
         clazz: KClass<T>,
         name: String? = null,
@@ -59,6 +59,10 @@ inline fun <reified T : Closeable> Definer.beanClosable(
         }
     }
 }
+/*
+inline fun <reified T : Any> Definer.findDefine(name: String? = null) =
+    findDefine(T::class, name)
+*/
 
 @JvmName("beanAsyncCloseable")
 inline fun <reified T : AsyncCloseable> Definer.beanAsyncCloseable(
@@ -66,21 +70,19 @@ inline fun <reified T : AsyncCloseable> Definer.beanAsyncCloseable(
     ifNotExist: Boolean = false,
     noinline bean: (Strong) -> T
 ) {
+    val defName = T::class.genDefaultName()
     bean(
         clazz = T::class,
-        name = name,
+        name = defName,
         ifNotExist = ifNotExist,
         bean = bean,
     )
     bean(name = "${T::class.genDefaultName()}_closable") {
         object : Strong.DestroyableBean {
             override suspend fun destroy(strong: Strong) {
-                val bean = strong.injectOrNull<T>(name = name).service as AsyncCloseable?
+                val bean = strong.injectOrNull<T>(name = defName).service as AsyncCloseable?
                 bean?.asyncClose()
             }
         }
     }
 }
-
-inline fun <reified T : Any> Definer.findDefine(name: String? = null) =
-    findDefine(T::class, name)
