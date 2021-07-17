@@ -7,6 +7,13 @@ import kotlin.test.assertEquals
 class IsoParserTest {
 
     @Test
+    fun ss(){
+        val ii = iso
+        val bb  = "2021-03-29 10:17:33".parseIso8601Date(0)!!.calendar(0)
+        println("->$bb")
+    }
+
+    @Test
     fun test() {
         "2021-03-29".parseIso8601Date(0)!!.calendar(0).apply {
             assertEquals(2021, year)

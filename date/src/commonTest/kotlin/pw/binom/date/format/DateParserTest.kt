@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 class DateParserTest {
     @Test
     fun test() {
-        assertEquals("2021-06-02 01:20:18.698+00:00", Date(1622596818698L).iso8601(0))
+        assertEquals("2021-06-02T01:20:18.698+00:00", Date(1622596818698L).iso8601(0))
 
         "yyyy-MM-dd".toDatePattern().parseOrNull("1989-01-05")!!.calendar(3 * 60).apply {
             assertEquals(1989, year)
@@ -46,5 +46,74 @@ class DateParserTest {
         val str = date.rfc822()
         assertEquals("Sun, 01 Jan 1989 01:01:01 GMT", str)
         assertEquals(date.time, str.parseRfc822Date()!!.time)
+    }
+
+    @Test
+    fun optionalTest1() {
+        val pattern = "HH[:]mm".toDatePattern()
+        fun assert(date: Calendar) {
+            assertEquals(1, date.month)
+            assertEquals(1, date.dayOfMonth)
+            assertEquals(0, date.year)
+            assertEquals(14, date.hours)
+            assertEquals(32, date.minutes)
+            assertEquals(0, date.seconds)
+            assertEquals(0, date.millisecond)
+            assertEquals(Date.systemZoneOffset, date.timeZoneOffset)
+        }
+        assert(pattern.parseOrNull("14:32")!!.calendar())
+        assert(pattern.parseOrNull("1432")!!.calendar())
+    }
+
+    @Test
+    fun optionalTest2() {
+        val pattern = "[yyyy[-]MM ]HHmm".toDatePattern()
+        fun assert(date: Calendar) {
+            assertEquals(1, date.month)
+            assertEquals(1, date.dayOfMonth)
+            assertEquals(0, date.year)
+            assertEquals(14, date.hours)
+            assertEquals(32, date.minutes)
+            assertEquals(0, date.seconds)
+            assertEquals(0, date.millisecond)
+            assertEquals(Date.systemZoneOffset, date.timeZoneOffset)
+        }
+        assert(pattern.parseOrNull("1432")!!.calendar())
+        assert(pattern.parseOrNull("000001 1432")!!.calendar())
+        assert(pattern.parseOrNull("0000-01 1432")!!.calendar())
+    }
+
+    @Test
+    fun optionalTest3(){
+        val pattern = "yyyy[-]".toDatePattern()
+
+        fun assert(date: Calendar) {
+            assertEquals(1, date.month)
+            assertEquals(1, date.dayOfMonth)
+            assertEquals(2021, date.year)
+            assertEquals(0, date.hours)
+            assertEquals(0, date.minutes)
+            assertEquals(0, date.seconds)
+            assertEquals(0, date.millisecond)
+            assertEquals(Date.systemZoneOffset, date.timeZoneOffset)
+        }
+        assert(pattern.parseOrNull("2021")!!.calendar())
+        assert(pattern.parseOrNull("2021-")!!.calendar())
+    }
+
+    @Test
+    fun orTest() {
+        val pattern = "yyyy[(-|.|/| )]MM[(-|.|/| )]dd".toDatePattern()
+
+        fun assert(date: Calendar) {
+            assertEquals(8, date.month)
+            assertEquals(2, date.dayOfMonth)
+            assertEquals(2021, date.year)
+        }
+        assert(pattern.parseOrNull("2021-08-02")!!.calendar())
+        assert(pattern.parseOrNull("2021.08.02")!!.calendar())
+        assert(pattern.parseOrNull("2021 08.02")!!.calendar())
+        assert(pattern.parseOrNull("202108.02")!!.calendar())
+        assert(pattern.parseOrNull("20210802")!!.calendar())
     }
 }

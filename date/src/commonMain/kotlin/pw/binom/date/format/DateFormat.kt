@@ -5,56 +5,179 @@ import pw.binom.date.Date
 import kotlin.jvm.JvmInline
 
 @JvmInline
-value class DateFormat internal constructor(private val format: Array<Pattern>) {
-    fun parseOrNull(text: String, defaultTimezoneOffset: Int = Date.systemZoneOffset): Date? {
+value class DateFormat internal constructor(val format: Array<Pattern>) {
+    data class DateFormatParseResult(val format: DateFormat, val length: Int)
+    data class ParseResult(val date: Date, val length: Int)
+
+    val length
+        get() = format.sumOf { it.patternLength }
+
+    fun parseOrNull(text: String, defaultTimezoneOffset: Int = Date.systemZoneOffset): Date? =
+        parse3(
+            text = text,
+            defaultTimezoneOffset = defaultTimezoneOffset,
+        )?.date
+
+    override fun toString(): String = format.joinToString(separator = "")
+    internal fun parse2(
+        text: String,
+        defaultTimezoneOffset: Int = Date.systemZoneOffset,
+        returnNullOnEof: Boolean = true,
+        position: Int = 0,
+        set: ((Pattern.FieldType, Int) -> Unit)?
+    ): Int {
+        var index = position
+        var i = 0
+        while (index < text.length) {
+            if (i >= format.size) {
+                if (returnNullOnEof) {
+                    return -1
+                } else {
+                    break
+                }
+            }
+            val size = format[i].parse(
+                text = text,
+                position = index,
+                defaultTimezoneOffset = defaultTimezoneOffset,
+                set = set,
+            )
+            if (size == -1) {
+                println("not found on format ${this}, on item ${i}")
+                return -1
+            }
+            println()
+            i++
+            index += size
+        }
+        if (i < format.size) {
+            for (f in i until format.size) {
+                if (format[f] !is Pattern.Optional) {
+                    println("end is not optional on format $this")
+                    return -1
+                }
+            }
+        }
+        return index - position
+    }
+
+    internal fun parse3(
+        text: String,
+        defaultTimezoneOffset: Int = Date.systemZoneOffset,
+        returnNullOnEof: Boolean = true,
+        position: Int = 0,
+    ): ParseResult? {
         var year = 0
-        var month = 0
-        var dayOfMonth = 0
+        var month = 1
+        var dayOfMonth = 1
         var hours = 0
         var minutes = 0
         var seconds = 0
         var millis = 0
         var timeZoneOffset = defaultTimezoneOffset
-
-        var index = 0
-        var i = 0
-        while (index < text.length) {
-            if (i >= format.size) {
-                return null
+        val l = parse2(
+            text = text,
+            defaultTimezoneOffset = defaultTimezoneOffset,
+            returnNullOnEof = returnNullOnEof,
+            position = position,
+        ) { type, value ->
+            when (type) {
+                Pattern.FieldType.YEAR -> year = value
+                Pattern.FieldType.MONTH -> month = value
+                Pattern.FieldType.DAY_OF_MONTH -> dayOfMonth = value
+                Pattern.FieldType.HOURS -> hours = value
+                Pattern.FieldType.MINUTES -> minutes = value
+                Pattern.FieldType.SECONDS -> seconds = value
+                Pattern.FieldType.MILLISECOND -> millis = value
+                Pattern.FieldType.TIME_ZONE -> timeZoneOffset = value
             }
-            val size = format[i].parse(text, index) { type, value ->
-                when (type) {
-                    Pattern.FieldType.YEAR -> year = value
-                    Pattern.FieldType.MONTH -> month = value
-                    Pattern.FieldType.DAY_OF_MONTH -> dayOfMonth = value
-                    Pattern.FieldType.HOURS -> hours = value
-                    Pattern.FieldType.MINUTES -> minutes = value
-                    Pattern.FieldType.SECONDS -> seconds = value
-                    Pattern.FieldType.MILLISECOND -> millis = value
-                    Pattern.FieldType.TIME_ZONE -> timeZoneOffset = value
-                }
-            }
-            if (size == -1) {
-                return null
-            }
-            i++
-            index += size
         }
-
-        if (i != format.size) {
+        if (l == -1) {
             return null
         }
-        return Date.internalOf(
-            year = year,
-            month = month,
-            dayOfMonth = dayOfMonth,
-            hours = hours,
-            minutes = minutes,
-            seconds = seconds,
-            millis = millis,
-            timeZoneOffset = timeZoneOffset,
+        return ParseResult(
+            date = Date.internalOf(
+                year = year,
+                month = month,
+                dayOfMonth = dayOfMonth,
+                hours = hours,
+                minutes = minutes,
+                seconds = seconds,
+                millis = millis,
+                timeZoneOffset = timeZoneOffset,
+            ),
+            length = l
         )
     }
+
+//    internal fun parse(
+//        text: String,
+//        defaultTimezoneOffset: Int = Date.systemZoneOffset,
+//        returnNullOnEof: Boolean = true,
+//        position: Int = 0,
+//    ): ParseResult? {
+//        var year = 0
+//        var month = 1
+//        var dayOfMonth = 1
+//        var hours = 0
+//        var minutes = 0
+//        var seconds = 0
+//        var millis = 0
+//        var timeZoneOffset = defaultTimezoneOffset
+//
+//        var index = position
+//        var i = 0
+//        while (index < text.length) {
+//            if (i >= format.size) {
+//                if (returnNullOnEof) {
+//                    return null
+//                } else {
+//                    break
+//                }
+//            }
+//            val size = format[i].parse(
+//                text = text,
+//                position = index,
+//                defaultTimezoneOffset = defaultTimezoneOffset,
+//            ) { type, value ->
+//                when (type) {
+//                    Pattern.FieldType.YEAR -> year = value
+//                    Pattern.FieldType.MONTH -> month = value
+//                    Pattern.FieldType.DAY_OF_MONTH -> dayOfMonth = value
+//                    Pattern.FieldType.HOURS -> hours = value
+//                    Pattern.FieldType.MINUTES -> minutes = value
+//                    Pattern.FieldType.SECONDS -> seconds = value
+//                    Pattern.FieldType.MILLISECOND -> millis = value
+//                    Pattern.FieldType.TIME_ZONE -> timeZoneOffset = value
+//                }
+//            }
+//            if (size == -1) {
+//                return null
+//            }
+//            i++
+//            index += size
+//        }
+//        if (i < format.size) {
+//            for (f in i until format.size) {
+//                if (format[i] !is Pattern.Optional) {
+//                    return null
+//                }
+//            }
+//        }
+//        return ParseResult(
+//            date = Date.internalOf(
+//                year = year,
+//                month = month,
+//                dayOfMonth = dayOfMonth,
+//                hours = hours,
+//                minutes = minutes,
+//                seconds = seconds,
+//                millis = millis,
+//                timeZoneOffset = timeZoneOffset,
+//            ),
+//            length = index - position
+//        )
+//    }
 
     fun toString(calendar: Calendar): String {
         val sb = StringBuilder()
@@ -66,22 +189,21 @@ value class DateFormat internal constructor(private val format: Array<Pattern>) 
 
     fun toString(date: Date, timeZoneOffset: Int = Date.systemZoneOffset): String =
         toString(date.calendar(timeZoneOffset = timeZoneOffset))
-
     companion object {
-        internal fun parsePatternList(format: String): Array<Pattern> {
-            var index = 0
+        internal fun parsePatternList(format: String, position: Int = 0): DateFormatParseResult {
+            var index = position
             val list = ArrayList<Pattern>()
             while (index < format.length) {
                 val pattern = Pattern.find(format, index) ?: throw IllegalArgumentException(
                     "Can't parse near \"${format.substring(index)}\" on column ${index + 1}"
                 )
                 list += pattern
-                val len = pattern.len(format, index)
+                val len = pattern.patternLength
                 index += len
             }
-            return list.toTypedArray()
+            return DateFormatParseResult(DateFormat(list.toTypedArray()), index)
         }
     }
 }
 
-fun String.toDatePattern() = DateFormat(DateFormat.parsePatternList(this))
+fun String.toDatePattern() = DateFormat.parsePatternList(this).format
