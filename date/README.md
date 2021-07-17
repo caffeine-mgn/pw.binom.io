@@ -30,7 +30,7 @@ Kotlin Library for work with Date
 
 
 
-Month name using `MMM` pattern
+Month name using in `MMM` pattern
 
 |Value|Month name|
 |---|---|
