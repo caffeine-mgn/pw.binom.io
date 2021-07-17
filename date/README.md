@@ -14,7 +14,6 @@ Kotlin Library for work with Date
 |`HH`|Hours on 24 format|`23`|
 |`mm`|Minutes|`57`|
 |`EEE`|3 chars name of day of week. Uses only for converting date to string|`Tue`|
-|`,`|Char `,`|`,`|
 |`u`|Number day of week. 1 - Sunday, 7 - Saturday. Uses only for converting date to string|`3`|
 |`ss`|Number of seconds|`44`|
 |SSS|3 number of milliseconds|`035`|
@@ -22,6 +21,7 @@ Kotlin Library for work with Date
 |XXX|Timezone|`-07:00`|
 |XX|Timezone|`-0700`|
 |X|Timezone|`-07`|
+|`,`|Char `,`|`,`|
 |`-`|Char `-`|`-`|
 |`/`|Char `/`|`/`|
 |`:`|Char `:`|`:`|
