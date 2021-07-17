@@ -5,7 +5,7 @@ Kotlin Library for work with Date
 ## Date pattern descriptions
 |Pattern|Description|Example|
 |----|---|-----|
-|`(`patterns separated with "\|"`)`|Can be use parse one of pattern in side `(` and `)`|`yyyy-MM-dd( \|T)HH:mm:ss`. In this cast date and time can be separated one of two chars ` ` or `T`|
+|`(`patterns separated with "\|"`)`|Can be use parse one of pattern in side `(` and `)`|`yyyy-MM-dd( \|T)HH:mm:ss`. In this cast date and time can be separated one of two chars ` ` or `T`. Both `2021-01-05T11:55:37` and `2021-01-05 11:55:37` is valid|
 |`[`optional pattern`]`|Uses for define some part of pattern that can be lost|`HH:mm[:ss]`. Part with seconds can be lost, and it's valid input data|
 |`yyyy`|Year in 4 numbers|`2021`|
 |`MMM`|Month name in 3 chars|`Feb`|
@@ -28,6 +28,8 @@ Kotlin Library for work with Date
 |`.`|Char `.`|`.`|
 |` ` (space)|Char ` `|` `|
 
+Also, you can include in side `(...)` or `[...]` other `(...)` or `[...]` pattern. For example
+`yyyy-MM-dd[('T'| )HH:mm[.(SSS|SS)][(XXX|XX|X)]]`.
 
 
 Month name using in `MMM` pattern
