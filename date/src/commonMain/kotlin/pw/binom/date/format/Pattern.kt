@@ -482,7 +482,7 @@ sealed interface Pattern {
             if (text[position] !in '1'..'7') {
                 return -1
             }
-            set?.invoke(FieldType.DAY_OF_MONTH, text[position].toString().toInt())
+            set?.invoke(FieldType.DAY_OF_WEAK, text[position].toString().toInt())
             return 1
         }
 
@@ -767,7 +767,7 @@ sealed interface Pattern {
             get() = 3
 
         fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "XXX", 0, patternLength)
+            text.regionMatches(position, "Z", 0, patternLength)
 
         override fun parse(
             text: String,
