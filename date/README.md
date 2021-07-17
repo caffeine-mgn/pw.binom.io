@@ -5,7 +5,7 @@ Kotlin Library for work with Date
 ## Date pattern descriptions
 |Pattern|Description|Example|
 |----|---|-----|
-|(patterns separated with \|)|Can be use |dfdfdf|
+|(patterns separated with "\|")|Can be use parse one of pattern in side `(` and `)`|`yyyy-MM-dd( \|T)`|
 
 ## Using
 
