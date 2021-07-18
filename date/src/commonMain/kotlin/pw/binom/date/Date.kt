@@ -44,7 +44,7 @@ internal fun Date.Companion.new(calendar: Calendar) =
 fun Date.Companion.of(
     year: Int = 1970,
     month: Int = 1,
-    dayOfMonth: Int = 0,
+    dayOfMonth: Int = 1,
     hours: Int = 0,
     minutes: Int = 0,
     seconds: Int = 0,
@@ -61,3 +61,17 @@ operator fun Date.compareTo(expDate: Date): Int = when {
     time < expDate.time -> -1
     else -> 0
 }
+
+//internal fun getJulianDay(day: Int, month: Int, year: Int): Int {
+//    val a = (14 - month) / 12
+//    val y = year + 4800 - a
+//    val m = month + 12 * a - 3
+//
+//    return if ((year > 1582) || (year == 1582 && month > 10) ||
+//        (year == 1582 && month == 10 && day < 15)
+//    ) {
+//        day + (153 * m + 2) / 5 + 365 * y + y / 4 - y / 100 + y / 400 - 32045
+//    } else {
+//        day + (153 * m + 2) / 5 + 365 * y + y / 4 - 32045
+//    }
+//}

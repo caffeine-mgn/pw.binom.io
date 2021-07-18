@@ -3,7 +3,7 @@ package pw.binom.date.format
 import pw.binom.date.Calendar
 import kotlin.math.absoluteValue
 
-sealed interface Pattern {
+internal sealed interface Pattern {
     companion object {
         fun find(format: String, position: Int): Pattern? {
             val or = Or.parse(text = format, position)
@@ -183,7 +183,6 @@ sealed interface Pattern {
             defaultTimezoneOffset: Int,
             set: ((FieldType, Int) -> Unit)?,
         ): Int {
-            println("Try optional parse \"${text.substring(position)}\" for format $this")
             val d = format.parse2(
                 text = text,
                 position = position,
@@ -192,10 +191,8 @@ sealed interface Pattern {
                 set = null
             )
             if (d == -1) {
-                println("not found :(")
                 return 0
             }
-            println("Founded \"${text.substring(position,position+d)}\". Format: $this")
             val r = format.parse2(
                 text = text,
                 position = position,
@@ -969,14 +966,14 @@ sealed interface Pattern {
     }
 }
 
-private fun Int.as2() =
+internal fun Int.as2() =
     when {
         this < 10 -> "0$this"
         this >= 10 && this <= 99 -> toString()
         else -> throw IllegalArgumentException("Input integer $this should be in interval 0..99")
     }
 
-private fun Int.as3() =
+internal fun Int.as3() =
     when {
         this < 10 -> "00$this"
         this < 100 -> "0$this"
@@ -984,7 +981,7 @@ private fun Int.as3() =
         else -> throw IllegalArgumentException("Input integer $this should be in interval 0..999")
     }
 
-private fun Int.as4() =
+internal fun Int.as4() =
     when {
         this < 10 -> "000$this"
         this < 100 -> "00$this"

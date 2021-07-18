@@ -1,5 +1,7 @@
 package pw.binom.date
 
+import pw.binom.date.format.as2
+import kotlin.js.JsName
 import kotlin.math.absoluteValue
 
 expect class Calendar {
@@ -9,6 +11,10 @@ expect class Calendar {
      * Month, from 1 (January) to 12 (December)
      */
     val month: Int
+
+    /**
+     * Day of month, first day of month is 1
+     */
     val dayOfMonth: Int
     val dayOfWeek: Int
     val hours: Int
@@ -20,6 +26,7 @@ expect class Calendar {
     /**
      * Timezone offset in minutes
      */
+    @JsName("tzo")
     val timeZoneOffset: Int
 
     /**
@@ -50,18 +57,11 @@ internal fun timeZoneOffsetToString(offset: Int): String {
     }
     val h = offset / 60
     val m = offset - h * 60
-    return "${if (offset < 0) "-" else "+"}${h.absoluteValue.asTwo()}:${m.absoluteValue.asTwo()}"
+    return "${if (offset < 0) "-" else "+"}${h.absoluteValue.as2()}:${m.absoluteValue.as2()}"
 }
 
-internal fun asStringRfc822(calc: Calendar, timeZone: String): String {
-    return calc.rfc822()
-}
-
-private fun Int.asTwo(): String =
-    if (this > 9)
-        toString()
-    else
-        "0$this"
+internal fun asStringRfc822(calc: Calendar, timeZone: String): String =
+    calc.rfc822()
 
 fun Calendar.copy(
     year: Int = this.year,

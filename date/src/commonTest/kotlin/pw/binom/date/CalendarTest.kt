@@ -1,9 +1,18 @@
 package pw.binom.date
 
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CalendarTest {
+
+    @Ignore
+    @Test
+    fun zeroTest() {
+        Date(TestData.ZERO_TIME).calendar(0).also {
+            assertEquals(0, it.year)
+        }
+    }
 
     @Test
     fun monthTest() {

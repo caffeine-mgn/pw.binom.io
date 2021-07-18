@@ -16,11 +16,11 @@ Kotlin Library for work with Date
 |`EEE`|3 chars name of day of week. Uses only for converting date to string|`Tue`|
 |`u`|Number day of week. 1 - Sunday, 7 - Saturday. Uses only for converting date to string|`3`|
 |`ss`|Number of seconds|`44`|
-|SSS|3 number of milliseconds|`035`|
-|SS|2 number of milliseconds|`44`|
-|XXX|Timezone|`-07:00`|
-|XX|Timezone|`-0700`|
-|X|Timezone|`-07`|
+|`SSS`|3 number of milliseconds|`035`|
+|`SS`|2 number of milliseconds|`44`|
+|`XXX`|Timezone|`-07:00`|
+|`XX`|Timezone|`-0700`|
+|`X`|Timezone|`-07`|
 |`,`|Char `,`|`,`|
 |`-`|Char `-`|`-`|
 |`/`|Char `/`|`/`|

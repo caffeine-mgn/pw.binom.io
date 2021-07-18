@@ -35,21 +35,6 @@ actual value class Date(val time: Long = nowTime) {
                     ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - (timeZoneOffset / 60 * 60))
                 ).toInstant().toEpochMilli()
             )
-
-
-//
-//            val t = LocalDateTime.of(
-//                year,
-//                month,
-//                dayOfMonth,
-//                hours,
-//                minutes,
-//                seconds,
-//                millis
-//            )
-//            val v = t.atZone(ZoneOffset.UTC)
-//                .toInstant()
-//            return Date(v.toEpochMilli() - (timeZoneOffset * 60L * 1000L))
         }
 
         actual val now: Date

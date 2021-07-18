@@ -2,7 +2,7 @@ package pw.binom.date
 
 import pw.binom.date.format.toDatePattern
 //val iso = "yyyy-MM-dd[( |'T')HH:mm:ss[.(SS|SSS)][(X|XX|XXX)]]".toDatePattern()
-val iso = "yyyy-MM-dd[('T'| )HH:mm[:ss[.(SSS|SS)]]][(XXX|XX|X)]".toDatePattern()
+private val iso = "yyyy-MM-dd[('T'| )HH:mm[:ss[.(SSS|SS)]]][(XXX|XX|X)]".toDatePattern()
 //private val dp1 = "yyyy-MM-dd".toDatePattern()
 //private val dp2 = "yyyy-MM-dd HH:mm:ss".toDatePattern()
 //private val dp3 = "yyyy-MM-dd HH:mm:ssXXX".toDatePattern()

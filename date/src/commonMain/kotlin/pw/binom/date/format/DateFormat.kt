@@ -43,17 +43,14 @@ value class DateFormat internal constructor(val format: Array<Pattern>) {
                 set = set,
             )
             if (size == -1) {
-                println("not found on format ${this}, on item ${i}")
                 return -1
             }
-            println()
             i++
             index += size
         }
         if (i < format.size) {
             for (f in i until format.size) {
                 if (format[f] !is Pattern.Optional) {
-                    println("end is not optional on format $this")
                     return -1
                 }
             }
@@ -67,7 +64,7 @@ value class DateFormat internal constructor(val format: Array<Pattern>) {
         returnNullOnEof: Boolean = true,
         position: Int = 0,
     ): ParseResult? {
-        var year = 0
+        var year = 1970
         var month = 1
         var dayOfMonth = 1
         var hours = 0

@@ -1,6 +1,7 @@
 package pw.binom.date
 
 import kotlin.math.absoluteValue
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -12,6 +13,13 @@ class DateTest {
     @Test
     fun timeZone() {
         assertEquals(currentTimeZone, Date.systemZoneOffset)
+    }
+
+    @Ignore
+    @Test
+    fun zeroTimeTest() {
+        val zeroTime = Date.of(year = 0, timeZoneOffset = 0).time
+        assertEquals(TestData.ZERO_TIME, zeroTime)
     }
 
     @Test
