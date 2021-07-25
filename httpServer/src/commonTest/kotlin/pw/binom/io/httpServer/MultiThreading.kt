@@ -1,10 +1,7 @@
 package pw.binom.io.httpServer
 
 import pw.binom.*
-import pw.binom.concurrency.DeadlineTimer
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.WorkerPool
-import pw.binom.concurrency.sleep
+import pw.binom.concurrency.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.BaseHttpClient
@@ -32,7 +29,7 @@ class MultiThreading {
         val nd = NetworkDispatcher()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
         val data = ByteArray(120) { it.toByte() }
-        val t = DeadlineTimer()
+        val t = DeadlineTimer.create()
         val server = HttpServer(nd, handler = Handler { r ->
             val resp = r.response()
             resp.status = 200

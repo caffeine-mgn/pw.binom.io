@@ -2,9 +2,9 @@ package pw.binom.io.httpClient
 
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.concurrency.DeadlineTimer
+import pw.binom.concurrency.DeadlineTimerImpl
 import pw.binom.net.URI
 import pw.binom.io.AsyncChannel
-import pw.binom.io.Closeable
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.socket.ssl.AsyncSSLChannel
@@ -27,7 +27,7 @@ class BaseHttpClient(
     trustManager: TrustManager = TrustManager.TRUST_ALL,
     val bufferSize: Int = DEFAULT_BUFFER_SIZE
 ) : HttpClient {
-    internal val deadlineTimer = DeadlineTimer()
+    internal val deadlineTimer = DeadlineTimer.create()
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
 

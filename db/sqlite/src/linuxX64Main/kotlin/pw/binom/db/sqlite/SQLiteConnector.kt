@@ -6,6 +6,7 @@ import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.db.*
+import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.doFreeze
@@ -92,6 +93,9 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
 
     override val isConnected: Boolean
         get() = !closed.value
+
+    override val dbInfo: DatabaseInfo
+        get() = SQLiteSQLDatabaseInfo
 
     override fun close() {
         checkClosed()

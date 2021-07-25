@@ -18,6 +18,7 @@ open class BuildStaticTask : DefaultTask() {
 
     private class Compile(val source: File, val objectFile: File, val args: List<String>?)
 
+    @Input
     var target: KonanTarget = HostManager.host
 
     private var compiles = ArrayList<Compile>()
@@ -27,7 +28,7 @@ open class BuildStaticTask : DefaultTask() {
     var multiThread = true
 
     @Input
-    private val compileArgs = ArrayList<String>()
+    val compileArgs = ArrayList<String>()
 
     @OutputFile
     var staticFile: File? = null
@@ -35,6 +36,7 @@ open class BuildStaticTask : DefaultTask() {
     @Input
     var debugBuild: Boolean = false
 
+    @Input
     var optimizationLevel: Int = 3
 
     @InputFiles

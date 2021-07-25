@@ -4,9 +4,12 @@ import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
-import pw.binom.db.*
+import pw.binom.db.ResultSet
+import pw.binom.db.SQLException
+import pw.binom.db.TransactionMode
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
+import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
@@ -82,6 +85,22 @@ class PGConnection private constructor(
     private var connected = true
     override val isConnected
         get() = connected
+    override val dbInfo: DatabaseInfo
+        get() = PostgreSQLDatabaseInfo
+
+    override suspend fun setTransactionMode(mode: TransactionMode) {
+        if (transactionStarted) {
+            query("SET TRANSACTION ${mode.pg}")
+        }
+        _transactionMode = mode
+    }
+
+    private var transactionStarted = false
+    private var _transactionMode: TransactionMode = TransactionMode.READ_COMMITTED
+
+    override val transactionMode: TransactionMode
+        get() = _transactionMode
+
     private val packageReader = connection.bufferedAsciiReader(closeParent = false)
     internal val reader = PackageReader(this, charset, packageReader)
     private var credentialMessage = CredentialMessage()
@@ -231,6 +250,22 @@ class PGConnection private constructor(
     override fun isReadyForQuery(): Boolean =
         isConnected && !busy
 
+    val TransactionMode.pg
+    get()=when (this) {
+        TransactionMode.SERIALIZABLE -> "SERIALIZABLE"
+        TransactionMode.READ_COMMITTED -> "READ COMMITTED"
+        TransactionMode.REPEATABLE_READ -> "REPEATABLE READ"
+        TransactionMode.READ_UNCOMMITTED -> "READ UNCOMMITTED"
+    }
+
+    override suspend fun beginTransaction() {
+        if (transactionStarted) {
+            throw IllegalStateException("Transaction already started")
+        }
+        query("begin TRANSACTION ISOLATION LEVEL ${transactionMode.pg}")
+        transactionStarted = true
+    }
+
     internal var prepareStatements = HashSet<PostgresPreparedStatement>()
 
     fun prepareStatement(
@@ -248,12 +283,21 @@ class PGConnection private constructor(
         return pst
     }
 
+
     override suspend fun commit() {
+        if (!transactionStarted) {
+            throw IllegalStateException("Transaction not started")
+        }
         query("commit")
+        transactionStarted = false
     }
 
     override suspend fun rollback() {
+        if (!transactionStarted) {
+            throw IllegalStateException("Transaction not started")
+        }
         query("rollback")
+        transactionStarted = false
     }
 
     override suspend fun asyncClose() {

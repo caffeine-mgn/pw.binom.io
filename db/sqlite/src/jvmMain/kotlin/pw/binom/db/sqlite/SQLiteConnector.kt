@@ -1,6 +1,7 @@
 package pw.binom.db.sqlite
 
 import org.sqlite.jdbc4.JDBC4Connection
+import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.sync.SyncStatement
@@ -26,6 +27,13 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnect
             get() = "SQLite"
     }
 
+    override val type: String
+        get() = TYPE
+    override val isConnected: Boolean
+        get() = !native.isClosed
+    override val dbInfo: DatabaseInfo
+        get() = SQLiteSQLDatabaseInfo
+
     init {
         native.autoCommit = false
     }
@@ -37,17 +45,13 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnect
         SQLSyncPreparedStatement(this, native.prepareStatement(query))
 
     override fun commit() {
+        native.transactionIsolation
         native.commit()
     }
 
     override fun rollback() {
         native.rollback()
     }
-
-    override val type: String
-        get() = TYPE
-    override val isConnected: Boolean
-        get() = !native.isClosed
 
     override fun close() {
         native.close()

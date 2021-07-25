@@ -16,7 +16,7 @@ class DeadlineTimerTest {
 
     @Test
     fun addAllAndWait() {
-        val deadlineTimer = DeadlineTimer()
+        val deadlineTimer = DeadlineTimerImpl()
         val now = TimeSource.Monotonic.markNow()
         var f1 by AtomicReference<Duration?>(null)
         var f2 by AtomicReference<Duration?>(null)
@@ -47,7 +47,7 @@ class DeadlineTimerTest {
 
     @Test
     fun addInWait() {
-        val deadlineTimer = DeadlineTimer()
+        val deadlineTimer = DeadlineTimerImpl()
         var f1 by AtomicReference<Duration?>(null)
         var f2 by AtomicReference<Duration?>(null)
         val now = TimeSource.Monotonic.markNow()
@@ -69,7 +69,7 @@ class DeadlineTimerTest {
     @Test
     fun asyncDelayTest() {
         val nd = NetworkDispatcher()
-        val deadlineTimer = DeadlineTimer()
+        val deadlineTimer = DeadlineTimerImpl()
         val future = nd.async {
             val now = TimeSource.Monotonic.markNow()
             val currentThread = ThreadRef()
@@ -86,7 +86,7 @@ class DeadlineTimerTest {
 
     @Test
     fun delayTest() {
-        val deadlineTimer = DeadlineTimer()
+        val deadlineTimer = DeadlineTimerImpl()
         val nd = NetworkDispatcher()
 
         val d1 = nd.async {
