@@ -7,7 +7,7 @@ import pw.binom.io.use
 
 class AsyncGZIPOutput(
     stream: AsyncOutput,
-    level: Int,
+    level: Int = 6,
     bufferSize: Int = 512,
     closeStream: Boolean = false
 ) : AsyncDeflaterOutput(
