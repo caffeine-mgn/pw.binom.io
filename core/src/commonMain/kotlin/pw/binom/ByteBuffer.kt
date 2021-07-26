@@ -158,8 +158,8 @@ inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.bin
     contract {
         callsInPlace(func)
     }
-    val l = limit
-    val o = position
+    val l = this.limit
+    val o = this.position
     try {
         this.position = position
         limit = position + length
