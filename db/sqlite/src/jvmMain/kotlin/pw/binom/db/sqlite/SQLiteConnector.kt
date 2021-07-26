@@ -1,14 +1,12 @@
 package pw.binom.db.sqlite
 
 import org.sqlite.jdbc4.JDBC4Connection
+import pw.binom.db.SQLException
 import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.sync.SyncStatement
 import pw.binom.io.file.File
-import pw.binom.io.file.FileNotFoundException
-import pw.binom.io.file.isExist
-import pw.binom.io.file.parent
 import java.util.*
 
 actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnection {
@@ -34,23 +32,37 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnect
     override val dbInfo: DatabaseInfo
         get() = SQLiteSQLDatabaseInfo
 
+    private val beginPt = native.prepareStatement("begin")
+    private val commitPt = native.prepareStatement("commit")
+    private val rollbackPt = native.prepareStatement("rollback")
+
     init {
         native.autoCommit = false
+        commitPt.executeUpdate()
+//        native.createStatement().use{
+//            it.executeUpdate("commit;")
+//        }
     }
 
     override fun createStatement(): SyncStatement =
         SQLiteSyncStatement(this)
 
     override fun prepareStatement(query: String): SyncPreparedStatement =
-        SQLSyncPreparedStatement(this, native.prepareStatement(query))
+        try {
+            SQLSyncPreparedStatement(this, native.prepareStatement(query))
+        } catch (e: Throwable) {
+            throw SQLException("Can't execute query \"$query\"", e)
+        }
 
     override fun commit() {
-        native.transactionIsolation
-        native.commit()
+        commitPt.executeUpdate()
+//        native.transactionIsolation
+//        native.commit()
     }
 
     override fun rollback() {
-        native.rollback()
+        rollbackPt.executeUpdate()
+//        native.rollback()
     }
 
     override fun close() {

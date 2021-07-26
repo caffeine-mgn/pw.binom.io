@@ -11,7 +11,7 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
         val count = native.metaData.columnCount
         val out = ArrayList<String>(count)
         (0 until count).forEach {
-            native.metaData.getColumnName(it + 1)
+            out += native.metaData.getColumnName(it + 1)
         }
         out
     }

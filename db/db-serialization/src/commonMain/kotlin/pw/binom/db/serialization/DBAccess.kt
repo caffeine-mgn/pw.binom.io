@@ -18,6 +18,13 @@ interface DBAccess {
         vararg args: Pair<String, Any?>
     ): Long
 
+    suspend fun <T : Any> upsert(
+        serializer: KSerializer<T>,
+        value: T,
+        excludeUpdate: Set<String> = emptySet(),
+        updateOnly: Set<String> = emptySet()
+    )
+
     suspend fun update(query: String, vararg args: Pair<String, Any?>): Long
     suspend fun <T : Any> find(serializer: KSerializer<T>, key: Any): T?
     suspend fun delete(serializer: KSerializer<out Any>, id: Any): Boolean
@@ -47,6 +54,19 @@ suspend inline fun <reified T : Any> DBAccess.deleteFrom(
     vararg args: Pair<String, Any?>
 ) =
     deleteFrom(from = T::class.serializer(), queryCondition = queryCondition, args = args)
+
+@OptIn(InternalSerializationApi::class)
+suspend inline fun <reified T : Any> DBAccess.upsert(
+    value: T,
+    excludeUpdate: Set<String> = emptySet(),
+    updateOnly: Set<String> = emptySet()
+) =
+    upsert(
+        serializer = T::class.serializer(),
+        value = value,
+        excludeUpdate = excludeUpdate,
+        updateOnly = updateOnly
+    )
 
 @OptIn(InternalSerializationApi::class)
 suspend inline fun <reified T : Any> DBAccess.selectFrom(

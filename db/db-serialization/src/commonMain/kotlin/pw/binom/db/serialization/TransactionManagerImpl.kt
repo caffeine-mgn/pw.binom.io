@@ -26,9 +26,9 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
         return if (txContext == null) {
             connectionPool.borrow {
                 val cc = TransactionContextElement(this)
+                beginTransaction()
+                cc.transactionStarted = true
                 try {
-                    beginTransaction()
-                    cc.transactionStarted = true
                     val result = suspendCoroutine<T> { con ->
                         function.startCoroutine(this, object : Continuation<T> {
                             override val context: CoroutineContext = con.context + cc
@@ -54,8 +54,9 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
             }
         } else {
             if (!txContext.transactionStarted) {
+                txContext.connection.beginTransaction()
+                txContext.transactionStarted = true
                 try {
-                    txContext.connection.beginTransaction()
                     val result = function(txContext.connection)
                     if (txContext.rollback) {
                         txContext.connection.rollback()
@@ -66,9 +67,17 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                 } catch (e: Throwable) {
                     txContext.connection.rollback()
                     throw  e
+                } finally {
+                    txContext.transactionStarted = false
+                    txContext.rollback = false
                 }
             } else {
-                function(txContext.connection)
+                try {
+                    function(txContext.connection)
+                } catch (e: Throwable) {
+                    txContext.rollback = true
+                    throw e
+                }
             }
         }
     }

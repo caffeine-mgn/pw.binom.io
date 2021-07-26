@@ -8,12 +8,23 @@ import kotlin.jvm.JvmName
 val <T : Any> KSerializer<T>.tableName: String
     get() {
         val descriptor = descriptor
+        val useQuotes = descriptor.annotations.any { it is UseQuotes }
         descriptor.annotations.forEach {
             if (it is TableName) {
-                return it.tableName
+                return if (useQuotes) {
+                    "\"${it.tableName}\""
+                } else {
+                    it.tableName
+                }
+
             }
         }
-        return descriptor.serialName
+        return if (useQuotes) {
+            "\"${descriptor.serialName}\""
+        } else {
+            descriptor.serialName
+        }
+
     }
 
 @get:JvmName("getIdColumn2")
