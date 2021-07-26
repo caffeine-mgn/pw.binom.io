@@ -1,12 +1,12 @@
 # Binom IO
 
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.5.20](https://img.shields.io/badge/Kotlin-1.5.20-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org) <br><br>
+[![Kotlin 1.5.21](https://img.shields.io/badge/Kotlin-1.5.21-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org) <br><br>
 Kotlin IO Library.<br>
 
 ## Actual version
 
-Actual version is `0.1.30`
+Actual version is `0.1.31`
 
 ## Parts of library
 
