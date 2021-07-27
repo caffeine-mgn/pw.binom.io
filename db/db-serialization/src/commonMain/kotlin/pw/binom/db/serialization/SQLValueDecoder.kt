@@ -2,11 +2,13 @@ package pw.binom.db.serialization
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.db.ResultSet
+import pw.binom.db.SQLException
 
 class SQLValueDecoder(
     val classDescriptor: SerialDescriptor,
@@ -19,7 +21,12 @@ class SQLValueDecoder(
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        TODO("Not yet implemented")
+        return when {
+            descriptor == ByteArraySerializer().descriptor -> ByteArraySQLCompositeDecoder(
+                data = resultSet.getBlob(columnName)!!, serializersModule = serializersModule
+            )
+            else -> throw SQLException("")
+        }
     }
 
     override fun decodeBoolean(): Boolean =

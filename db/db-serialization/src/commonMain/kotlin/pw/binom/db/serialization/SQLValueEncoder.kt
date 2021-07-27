@@ -2,6 +2,7 @@ package pw.binom.db.serialization
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
@@ -16,6 +17,18 @@ class SQLValueEncoder(
 ) : Encoder {
 
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
+
+    override fun beginCollection(descriptor: SerialDescriptor, collectionSize: Int): CompositeEncoder {
+        return when {
+            descriptor == ByteArraySerializer().descriptor -> ByteArraySQLCollectionCompositeEncoder(
+                map = map,
+                columnName = columnName,
+                serializersModule = serializersModule,
+                collectionSize = collectionSize,
+            )
+            else -> throw SerializationException("Not supported collection ${descriptor.serialName}")
+        }
+    }
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
         TODO("Not yet implemented")
