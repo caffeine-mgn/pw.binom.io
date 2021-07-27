@@ -2,7 +2,6 @@
 
 package pw.binom.io.file
 
-import pw.binom.io.use
 import java.io.File as JFile
 
 actual class File actual constructor(path: String) {
@@ -45,11 +44,10 @@ actual class File actual constructor(path: String) {
 
     actual fun list(): List<File> {
         val out = ArrayList<File>()
-        iterator().use {
-            it.forEach { file ->
-                out += file
-            }
+        iterator().forEach { file ->
+            out += file
         }
+
         return out
     }
 

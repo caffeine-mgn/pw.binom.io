@@ -2,7 +2,6 @@ package pw.binom.io.file
 
 import pw.binom.*
 import pw.binom.io.FileSystem
-import pw.binom.io.FileSystemAccess
 import pw.binom.io.use
 import pw.binom.io.withLimit
 import pw.binom.pool.ObjectPool
@@ -49,11 +48,10 @@ class LocalFileSystem(
 
     private suspend fun File.listEntities(): Sequence<EntityImpl> {
         val out = ArrayList<EntityImpl>()
-        this.iterator().use {
-            it.forEach {
-                out += EntityImpl(it)
-            }
+        this.iterator().forEach {
+            out += EntityImpl(it)
         }
+
 
         return out.asSequence()
     }

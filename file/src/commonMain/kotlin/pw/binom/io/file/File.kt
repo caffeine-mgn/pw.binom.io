@@ -101,12 +101,11 @@ fun File.deleteRecursive(): Boolean {
     if (isFile)
         return delete()
     if (isDirectory) {
-        iterator().use {
-            it.forEach {
-                if (!it.deleteRecursive())
-                    return false
-            }
+        iterator().forEach {
+            if (!it.deleteRecursive())
+                return false
         }
+
     }
     return delete()
 }
