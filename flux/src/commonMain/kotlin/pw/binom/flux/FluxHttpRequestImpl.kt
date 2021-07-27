@@ -6,9 +6,7 @@ import pw.binom.io.httpServer.HttpRequest
 
 class FluxHttpRequestImpl(val mask: String, val serialization: Serialization, request: HttpRequest) : FluxHttpRequest,
     HttpRequest by request {
-    override val pathVariables: Map<String, String> by lazy {
-        path.getVariables(mask = mask)
-    }
+    override val pathVariables: Map<String, String> by lazy { path.getVariables(mask = mask)!! }
     override val queryVariables: Map<String, List<String?>> by lazy {
         query?.toMap() ?: emptyMap()
     }
