@@ -1,6 +1,11 @@
 package pw.binom.io
 
-class ClosedException : RuntimeException()
+class ClosedException : RuntimeException {
+    constructor()
+    constructor(message: String?) : super(message)
+    constructor(message: String?, cause: Throwable?) : super(message, cause)
+    constructor(cause: Throwable?) : super(cause)
+}
 
 fun interface Closeable {
     fun close()
@@ -12,11 +17,20 @@ fun closablesOf(vararg closable: Closeable) =
     }
 
 inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
-    return try {
+
+    val result = try {
         func(this)
-    } finally {
-        close()
+    } catch (funcException: Throwable) {
+        try {
+            close()
+        } catch (closeException: Throwable) {
+            closeException.addSuppressed(funcException)
+            throw closeException
+        }
+        throw funcException
     }
+    close()
+    return result
 }
 
 interface AsyncCloseable {
@@ -29,9 +43,18 @@ fun AsyncCloseable(func: suspend () -> Unit) = object : AsyncCloseable {
     }
 }
 
-suspend inline fun <T : AsyncCloseable, R> T.use(func: (T) -> R): R =
-    try {
+suspend inline fun <T : AsyncCloseable, R> T.use(func: (T) -> R): R {
+    val result = try {
         func(this)
-    } finally {
-        asyncClose()
+    } catch (funcException: Throwable) {
+        try {
+            asyncClose()
+        } catch (closeException: Throwable) {
+            closeException.addSuppressed(funcException)
+            throw closeException
+        }
+        throw funcException
     }
+    asyncClose()
+    return result
+}

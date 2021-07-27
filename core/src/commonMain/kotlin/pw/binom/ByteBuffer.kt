@@ -4,10 +4,8 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.io.UTF8
-import pw.binom.io.use
 import pw.binom.pool.DefaultPool
 import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
@@ -154,19 +152,34 @@ inline fun <T> pw.binom.ByteBuffer.length(length: Int, func: (pw.binom.ByteBuffe
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.binom.ByteBuffer) -> T): T {
+inline fun <T> ByteBuffer.holdState(func: (ByteBuffer) -> T): T {
     contract {
         callsInPlace(func)
     }
-    val l = this.limit
-    val o = this.position
+    val oldLimit = this.limit
+    val oldPosition = this.position
+    try {
+        return func(this)
+    } finally {
+        this.limit = oldLimit
+        this.position = oldPosition
+    }
+}
+
+@OptIn(ExperimentalContracts::class)
+inline fun <T> ByteBuffer.set(position: Int, length: Int, func: (pw.binom.ByteBuffer) -> T): T {
+    contract {
+        callsInPlace(func)
+    }
+    val oldLimit = this.limit
+    val oldPosition = this.position
     try {
         this.position = position
         limit = position + length
         return func(this)
     } finally {
-        this.limit = l
-        this.position = o
+        this.limit = oldLimit
+        this.position = oldPosition
     }
 }
 
