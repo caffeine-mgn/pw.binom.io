@@ -12,6 +12,9 @@ open class AsyncContentLengthInput(
 ) : AsyncHttpInput {
 
     override val isEof: Boolean
+        get() = eof
+
+    private val eof
         get() = closed || readed >= contentLength
 
     override val available: Int
@@ -22,7 +25,7 @@ open class AsyncContentLengthInput(
 
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (isEof)
+        if (eof)
             return 0
         val r = if ((contentLength - readed < dest.remaining.toULong())) {
             val oldLimit = dest.limit

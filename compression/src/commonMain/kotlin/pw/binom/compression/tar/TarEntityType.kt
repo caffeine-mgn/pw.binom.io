@@ -1,6 +1,6 @@
 package pw.binom.compression.tar
 
-enum class TarEntityType(val num: Byte) {
+enum class TarEntityType(internal val num: Byte) {
     REGULAR(47),
     NORMAL(48),
     HARDLINK(49),
@@ -12,6 +12,7 @@ enum class TarEntityType(val num: Byte) {
     CONTIGUOUS(55);
 
     companion object {
-        fun findByCode(code: Byte) = values().find { it.num == code }
+        private val byCode = values().associateBy { it.num }
+        fun findByCode(code: Byte) = byCode[code]
     }
 }

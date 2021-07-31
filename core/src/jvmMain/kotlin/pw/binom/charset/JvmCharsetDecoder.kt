@@ -8,12 +8,11 @@ class JvmCharsetDecoder(val native: JCharsetDecoder) : CharsetDecoder {
 
     override fun decode(input: ByteBuffer, output: CharBuffer): CharsetTransformResult {
         val r = native.decode(input.native, output.native, false)
-        when {
-            r.isUnderflow -> return CharsetTransformResult.SUCCESS
-            r.isOverflow -> {
-                return CharsetTransformResult.OUTPUT_OVER
-            }
+        return when {
+            r.isUnderflow -> CharsetTransformResult.SUCCESS
+            r.isOverflow -> CharsetTransformResult.OUTPUT_OVER
+            r.isMalformed->CharsetTransformResult.MALFORMED
+            else->TODO("Invalid state of decoder")
         }
-        TODO("Обработать ошибку не недостаточности входных данных")
     }
 }

@@ -63,8 +63,8 @@ actual class ByteBuffer(
         }
         set(value) {
             checkClosed()
-            require(value >= 0)
-            require(value <= limit)
+            require(value >= 0){"position should be more or equal 0"}
+            require(value <= limit){"position should be less or equal limit"}
             _position.value = value
         }
 
@@ -242,7 +242,7 @@ actual class ByteBuffer(
 
     actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
         checkClosed()
-        require(dest.size - offset >= length)
+        require(dest.size - offset >= length){"length more then available space"}
         val l = minOf(remaining, length)
         memcpy(dest.refTo(0), refTo(position), l.convert())
         return l

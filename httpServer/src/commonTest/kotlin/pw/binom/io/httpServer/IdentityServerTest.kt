@@ -1,9 +1,11 @@
 package pw.binom.io.httpServer
 
 import pw.binom.async2
-import pw.binom.io.*
+import pw.binom.io.http.Encoding
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.BaseHttpClient
+import pw.binom.io.readText
+import pw.binom.io.use
 import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -23,6 +25,8 @@ class IdentityServerTest {
                     it.response().use {
                         it.status = 202
                         it.headers.contentType = "text/html;charset=utf-8"
+                        it.headers.contentEncoding = "gzip"
+                        it.headers.transferEncoding = Encoding.CHUNKED
                         it.startWriteText().use {
                             it.append("Hello! Привет в UTF-8")
                         }

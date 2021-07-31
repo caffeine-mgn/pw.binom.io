@@ -3,7 +3,9 @@ package pw.binom.io.httpServer
 import pw.binom.*
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncDeflaterOutput
+import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncGZIPOutput
+import pw.binom.compression.zlib.AsyncInflateInput
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import pw.binom.io.http.*
@@ -68,7 +70,7 @@ internal class HttpRequest2Impl(
         }
     }
 
-    private var readInput: AsyncHttpInput? = null
+    private var readInput: AsyncInput? = null
 
     override val path: Path
         get() {
@@ -99,32 +101,56 @@ internal class HttpRequest2Impl(
             readInput = AsyncEmptyHttpInput
             return AsyncEmptyHttpInput
         }
-        val len = headers.contentLength
-        val encode = headers.transferEncoding
-        if (encode != null && len != null) {
-            throw IOException("Invalid Client Headers. Conflict Headers: \"${Headers.CONTENT_LENGTH}: $len\" and \"${Headers.TRANSFER_ENCODING}: $encode\"")
-        }
-        if (len != null) {
+        val contentLength = headers.contentLength
+        val transferEncoding = headers.getTransferEncodingList()
+        var stream: AsyncInput = channel.reader
+        if (contentLength != null) {
             val input = AsyncContentLengthInput(
-                stream = channel.reader,
-                contentLength = len,
+                stream = stream,
+                contentLength = contentLength,
                 closeStream = false
             )
-            readInput = input
-            return input
+            stream = input
         }
-        if (encode != null) {
-            if (encode.equals(Headers.CHUNKED, ignoreCase = true)) {
-                val input = AsyncChunkedInput(
-                    stream = channel.reader,
-                    closeStream = false
-                )
-                readInput = input
-                return input
-            }
-            throw IOException("Invalid ${Headers.TRANSFER_ENCODING}")
+
+        fun wrap(name: String, stream: AsyncInput) = when (name) {
+            Encoding.IDENTITY -> stream
+            Encoding.CHUNKED -> AsyncChunkedInput(
+                stream = stream,
+                closeStream = false,
+            )
+            Encoding.GZIP -> AsyncGZIPInput(
+                stream = stream,
+                closeStream = false,
+            )
+            Encoding.DEFLATE -> AsyncInflateInput(
+                stream = stream,
+                wrap = true,
+                closeStream = false
+            )
+            else -> null
         }
-        throw IOException("Invalid Client Headers")
+
+        for (i in transferEncoding.lastIndex downTo 0) {
+            stream = wrap(transferEncoding[i], stream)
+                ?: throw IOException("Not supported encoding \"${transferEncoding[i]}\"")
+        }
+        readInput = stream
+        return stream
+//
+//        if (transferEncoding != null) {
+//            if (transferEncoding.equals(Encoding.CHUNKED, ignoreCase = true)) {
+//                val input = AsyncChunkedInput(
+//                    stream = stream,
+//                    closeStream = false
+//                )
+//                stream=input
+//                readInput = input
+//                return input
+//            }
+//            throw IOException("Invalid ${Headers.TRANSFER_ENCODING}")
+//        }
+//        throw IOException("Invalid Client Headers")
     }
 
     override fun readText(): AsyncReader {
@@ -279,9 +305,7 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
             headers.transferEncoding = "chunked"
         }
         val transferEncoding = headers.getTransferEncodingList()
-        val contentEncoding =
-            headers.contentEncoding?.split(',')?.mapNotNull { it.trim().lowercase().takeIf { it.isNotBlank() } }
-                ?: emptyList()
+        val contentEncoding = headers.getContentEncodingList()
 
         val baseResponse = HttpResponseOutput(req = req, keepAlive = headers.keepAlive)
 
@@ -292,18 +316,18 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
         }
 
         fun wrap(name: String, stream: AsyncOutput) = when (name) {
-            "identity" -> stream
-            "chunked" -> AsyncChunkedOutput(
+            Encoding.IDENTITY -> stream
+            Encoding.CHUNKED -> AsyncChunkedOutput(
                 stream = stream,
                 closeStream = stream !== req.channel.writer,
             )
-            "gzip" -> AsyncGZIPOutput(
+            Encoding.GZIP -> AsyncGZIPOutput(
                 stream = stream,
                 level = 6,
                 closeStream = true,
                 bufferSize = req.server.zlibBufferSize,
             )
-            "deflate" -> AsyncDeflaterOutput(
+            Encoding.DEFLATE -> AsyncDeflaterOutput(
                 stream = stream,
                 level = 6,
                 closeStream = true,
@@ -321,11 +345,13 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
                 closeStream = true
             )
         }
-        transferEncoding.reversed().forEach {
+        for (i in transferEncoding.lastIndex downTo 0) {
+            val it = transferEncoding[i]
             resultOutput = wrap(it, resultOutput) ?: throw IOException("Not supported encoding \"$it\"")
         }
 
-        contentEncoding.forEach {
+        for (i in contentEncoding.lastIndex downTo 0) {
+            val it = contentEncoding[i]
             resultOutput = wrap(it, resultOutput) ?: throw IOException("Not supported encoding \"$it\"")
         }
 
@@ -344,9 +370,9 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
             return
         }
         checkClosed()
-        if (headers.bodyExist) {
-            throw IllegalStateException("Require Http Response Body")
-        }
+//        if (headers.bodyExist && req.method.lowercase() != "head") {
+//            throw IllegalStateException("Require Http Response Body")
+//        }
         headers.contentLength = 0uL
         sendRequest()
         req.channel.writer.flush()

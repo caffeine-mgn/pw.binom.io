@@ -51,7 +51,6 @@ interface HttpResponse : AsyncCloseable {
     suspend fun startWriteBinary(): AsyncOutput
     suspend fun sendBinary(data: ByteBuffer) {
         startWriteBinary().use {
-            println("writing content into ${it::class}")
             it.write(data)
             it.flush()
         }

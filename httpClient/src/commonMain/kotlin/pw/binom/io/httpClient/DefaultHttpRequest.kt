@@ -58,13 +58,13 @@ class DefaultHttpRequest constructor(
     override suspend fun writeData(): AsyncHttpRequestOutput {
         checkClosed()
         if (headers.contentLength == null) {
-            headers.transferEncoding = Headers.CHUNKED
+            headers.transferEncoding = Encoding.CHUNKED
         }
         sendHeaders()
         val encode = headers.transferEncoding
         if (encode != null) {
             when (encode.lowercase()) {
-                Headers.CHUNKED.lowercase() -> {
+                Encoding.CHUNKED.lowercase() -> {
                     closed = true
                     return RequestAsyncChunkedOutput(
                         URI = uri,

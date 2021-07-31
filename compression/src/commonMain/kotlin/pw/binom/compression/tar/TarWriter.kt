@@ -33,6 +33,10 @@ internal fun Int.forPart(partSize: Int): Int {
 }
 
 private fun Output.writeZero(size: Int) {
+    if (size == 0) {
+        return
+    }
+    require(size > 0)
     var s = size
     while (s > 0) {
         ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
@@ -89,7 +93,7 @@ private val version = byteArrayOf(
 
 private val longLink = "././@LongLink".encodeToByteArray()
 
-class TarWriter(val stream: Output) : Closeable {
+class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable {
 
     private var entityWriting = false
 
@@ -114,7 +118,7 @@ class TarWriter(val stream: Output) : Closeable {
                 (nameBytes.capacity + 1).toUInt().toOct(block, 124, 12)
 
                 block.calcCheckSum().toOct(block, 148, 7)
-                block[155] = ' '.toByte()
+                block[155] = ' '.code.toByte()
                 stream.write(block)
                 stream.write(nameBytes)
                 var fullSize = (nameBytes.capacity + 1).forPart(BLOCK_SIZE.toInt())
@@ -154,13 +158,17 @@ class TarWriter(val stream: Output) : Closeable {
                 data.size.toUInt().toOct(block, 124, 12)
 
                 block.calcCheckSum().toOct(block, 148, 7)
-                block[155] = ' '.toByte()
-                stream.write(block)
+                block[155] = ' '.code.toByte()
+                stream.writeFully(block)
                 block.close()
-                data.trimToSize()
-                data.data.clear()
-                stream.write(data.data)
-                stream.writeZero(BLOCK_SIZE - data.size % BLOCK_SIZE)
+                data.flush()
+                data.data.flip()
+                stream.writeFully(data.data)
+                val mod = data.size % BLOCK_SIZE
+                if (mod > 0) {
+                    val emptyBytes = BLOCK_SIZE - mod
+                    stream.writeZero(emptyBytes)
+                }
                 entityWriting = false
                 data.close()
             }
@@ -184,6 +192,9 @@ class TarWriter(val stream: Output) : Closeable {
         stream.writeZero(BLOCK_SIZE.toInt())
         isFinished = true
         stream.flush()
+        if (closeStream) {
+            stream.close()
+        }
     }
 
 }
