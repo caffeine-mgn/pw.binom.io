@@ -8,7 +8,7 @@ class TestFile {
     fun `file Exist`() {
         val f = File("testFile")
         assertFalse(f.isExist)
-        f.write().use { }
+        f.openWrite().use { }
         assertTrue(f.isExist)
         assertTrue(f.isFile)
         assertFalse(f.isDirectory)
@@ -19,7 +19,7 @@ class TestFile {
     @Test
     fun `delete file`() {
         val f = File("testFile")
-        f.write().use { }
+        f.openWrite().use { }
         f.delete()
         assertFalse(f.isFile)
     }

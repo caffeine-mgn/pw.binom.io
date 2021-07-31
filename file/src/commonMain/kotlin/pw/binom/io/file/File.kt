@@ -78,6 +78,27 @@ val File.extension: String
         }
     }
 
+fun File.takeIfExist(): File? {
+    if (!isExist) {
+        return null
+    }
+    return this
+}
+
+fun File.takeIfDirection(): File? {
+    if (!isDirectory) {
+        return null
+    }
+    return this
+}
+
+fun File.takeIfFile(): File? {
+    if (!isFile) {
+        return null
+    }
+    return this
+}
+
 internal fun replacePath(path: String): String {
     val invalidSeparator = when (File.SEPARATOR) {
         '/' -> '\\'
@@ -87,14 +108,17 @@ internal fun replacePath(path: String): String {
     return path.replace(invalidSeparator, File.SEPARATOR)
 }
 
-fun File.mkdirs(): Boolean {
+fun File.mkdirs(): File? {
     if (isFile)
-        return false
+        return null
     if (isDirectory)
-        return true
-    if (parent?.mkdirs() == false)
-        return false
-    return mkdir()
+        return this
+    if (parent?.mkdirs() == null)
+        return null
+    if (!mkdir()) {
+        return null
+    }
+    return this
 }
 
 fun File.deleteRecursive(): Boolean {
@@ -133,7 +157,7 @@ fun File.relative(path: String): File {
 }
 
 fun File.append(text: String, charset: Charset = Charsets.UTF8) {
-    write(true).bufferedWriter(charset = charset).use {
+    openWrite(true).bufferedWriter(charset = charset).use {
         it.append(text)
     }
 }
@@ -146,7 +170,7 @@ fun File.rewrite(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charBufferSize: Int = bufferSize / 2,
 ) {
-    write(false).bufferedWriter(charset = charset, bufferSize = bufferSize, charBufferSize = charBufferSize).use {
+    openWrite(false).bufferedWriter(charset = charset, bufferSize = bufferSize, charBufferSize = charBufferSize).use {
         it.append(text)
     }
 }
@@ -159,7 +183,7 @@ fun File.readText(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charBufferSize: Int = bufferSize,
 ) =
-    read().bufferedReader(
+    openRead().bufferedReader(
         charset = charset,
         bufferSize = bufferSize,
         charBufferSize = charBufferSize

@@ -1,5 +1,6 @@
 package pw.binom.compression.zlib
 
+import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.Input
 import pw.binom.io.CRC32
@@ -128,3 +129,10 @@ class GZIPInput(
         return b
     }
 }
+
+fun Input.gzip(bufferSize: Int = 1024, closeStream: Boolean = true) =
+    GZIPInput(
+        stream = this,
+        bufferSize = bufferSize,
+        closeStream = closeStream,
+    )

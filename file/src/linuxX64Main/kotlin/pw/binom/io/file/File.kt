@@ -1,10 +1,12 @@
 package pw.binom.io.file
 
-import kotlinx.cinterop.*
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
 import platform.linux.statvfs
 import platform.posix.*
 import kotlin.native.concurrent.freeze
-import pw.binom.io.*
 
 private fun timespec.toMillis(): Long {
     var s = tv_sec
@@ -87,10 +89,8 @@ actual class File actual constructor(path: String) {
 
     actual fun list(): List<File> {
         val out = ArrayList<File>()
-        iterator().use {
-            it.forEach { file ->
-                out += file
-            }
+        iterator().forEach { file ->
+            out += file
         }
         return out
     }

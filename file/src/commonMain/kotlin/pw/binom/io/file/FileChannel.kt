@@ -17,8 +17,17 @@ fun File.channel(vararg mode: AccessType): FileChannel {
     return FileChannel(this, *mode)
 }
 
-inline fun File.read() = channel(AccessType.READ)
-inline fun File.write(append: Boolean = false) =
+/**
+ * Open file for read
+ */
+inline fun File.openRead() = channel(AccessType.READ)
+
+/**
+ * Open file for write
+ *
+ * @param append flag for append exists file. Default - false
+ */
+inline fun File.openWrite(append: Boolean = false) =
         if (append)
             channel(AccessType.WRITE, AccessType.CREATE, AccessType.APPEND)
         else

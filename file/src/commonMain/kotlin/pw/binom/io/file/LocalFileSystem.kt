@@ -12,8 +12,8 @@ class LocalFileSystem(
 ) : FileSystem {
     override suspend fun new(path: String): AsyncOutput {
         val file = File(root, path.removePrefix("/"))
-        file.parent?.mkdirs()
-        return file.write().asyncOutput()
+        file.parent?.mkdirs()?:throw FileSystem.FileNotFoundException(file.parent?.path?:"")
+        return file.openWrite().asyncOutput()
     }
 
     override suspend fun get(path: String): FileSystem.Entity? {
@@ -31,7 +31,7 @@ class LocalFileSystem(
 
     override suspend fun mkdir(path: String): FileSystem.Entity {
         val file = File(root, path.removePrefix("/"))
-        file.mkdirs()
+        file.mkdirs()?:throw FileSystem.FileNotFoundException(file.path)
         return EntityImpl(file)
     }
 
@@ -64,7 +64,7 @@ class LocalFileSystem(
             val file = File(root, path.removePrefix("/"))
             if (!file.isFile)
                 return null
-            val channel = file.read()
+            val channel = file.openRead()
             if (offset > 0uL) {
                 channel.position = offset
             }
@@ -81,8 +81,8 @@ class LocalFileSystem(
             if (!file.isExist)
                 throw FileSystem.FileNotFoundException(this.path)
 
-            this.file.read().use { s ->
-                toFile.write().use { d ->
+            this.file.openRead().use { s ->
+                toFile.openWrite().use { d ->
                     s.copyTo(d, byteBufferPool)
                 }
             }
@@ -108,8 +108,8 @@ class LocalFileSystem(
 
         override suspend fun rewrite(): AsyncOutput {
             val file = File(root, path)
-            file.parent?.mkdirs()
-            return file.write().asyncOutput()
+            file.parent?.mkdirs()?:throw FileSystem.FileNotFoundException(file.parent?.path?:"")
+            return file.openWrite().asyncOutput()
         }
 
         override val path: String

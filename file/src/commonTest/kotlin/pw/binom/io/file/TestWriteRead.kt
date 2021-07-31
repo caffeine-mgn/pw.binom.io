@@ -30,7 +30,7 @@ class TestWriteRead {
             0x49, -0x53, 0x28, 0x01, 0x00, 0x00, 0x00, -0x1, -0x1
         )
 
-        f.write().use {
+        f.openWrite().use {
             data.forEach { value ->
                 it.writeByte(buf, value)
             }

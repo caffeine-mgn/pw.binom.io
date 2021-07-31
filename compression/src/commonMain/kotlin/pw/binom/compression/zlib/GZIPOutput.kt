@@ -7,9 +7,9 @@ import pw.binom.io.use
 
 class GZIPOutput(
     stream: Output,
-    level: Int,
+    level: Int = 6,
     bufferSize: Int = 1024,
-    closeStream: Boolean
+    closeStream: Boolean = true
 ) : DeflaterOutput(
     stream = stream,
     bufferSize = bufferSize,
@@ -91,6 +91,14 @@ class GZIPOutput(
         headerWrited = true
     }
 }
+
+fun Output.gzip(level: Int = 6, bufferSize: Int = 1024, closeStream: Boolean = true) =
+    GZIPOutput(
+        stream = this,
+        level = level,
+        bufferSize = bufferSize,
+        closeStream = closeStream,
+    )
 
 private val header = ByteBuffer.alloc(10).also {
     it.put(GZIP_MAGIC1)  // Magic number (short)

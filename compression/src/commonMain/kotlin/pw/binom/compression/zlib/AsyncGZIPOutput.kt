@@ -2,6 +2,7 @@ package pw.binom.compression.zlib
 
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
+import pw.binom.Output
 import pw.binom.io.CRC32
 import pw.binom.io.use
 
@@ -9,7 +10,7 @@ class AsyncGZIPOutput(
     stream: AsyncOutput,
     level: Int = 6,
     bufferSize: Int = 512,
-    closeStream: Boolean = false
+    closeStream: Boolean = true
 ) : AsyncDeflaterOutput(
     stream = stream,
     bufferSize = bufferSize,
@@ -88,6 +89,14 @@ class AsyncGZIPOutput(
         headerWrited = true
     }
 }
+
+fun AsyncOutput.gzip(level: Int = 6, bufferSize: Int = 1024, closeStream: Boolean = true) =
+    AsyncGZIPOutput(
+        stream = this,
+        level = level,
+        bufferSize = bufferSize,
+        closeStream = closeStream,
+    )
 
 private val header = ByteBuffer.alloc(10).also {
     it.put(GZIP_MAGIC1)// Magic number (short)
