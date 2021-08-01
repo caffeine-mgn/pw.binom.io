@@ -32,7 +32,7 @@ class WebSocketTest {
     @Test
     fun serverTest() {
         val testMsg = Random.nextUuid().toString()
-        val port = 3000//Random.nextInt(3000, Short.MAX_VALUE.toInt() - 1).toShort()
+        val port = Random.nextInt(3000, Short.MAX_VALUE.toInt() - 1)
 
         val manager = NetworkDispatcher()
 

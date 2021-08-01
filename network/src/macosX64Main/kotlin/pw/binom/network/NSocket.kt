@@ -33,6 +33,22 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
+    actual val port: Int?
+        get() {
+            return memScoped {
+                val sin = alloc<sockaddr_in>()
+                val addrlen = alloc<socklen_tVar>()
+                addrlen.value = sizeOf<sockaddr_in>().convert()
+                val r = getsockname(native, sin.ptr.reinterpret(), addrlen.ptr)
+                if (r==0) {
+                    ntohs(sin.sin_port).toInt()
+                } else {
+                    //println("getsockname=$c, errno=${errno},GetLastError()=${GetLastError()}")
+                    null
+                }
+            }
+        }
+
     actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
         val native = if (address == null) {
             accept(native, null, null)

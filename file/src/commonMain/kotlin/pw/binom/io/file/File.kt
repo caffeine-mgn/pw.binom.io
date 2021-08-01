@@ -1,12 +1,14 @@
 package pw.binom.io.file
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.Environment
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.io.bufferedReader
 import pw.binom.io.bufferedWriter
 import pw.binom.io.readText
 import pw.binom.io.use
+import pw.binom.workDirectory
 
 expect class File(path: String) {
     constructor(parent: File, name: String)
@@ -189,3 +191,6 @@ fun File.readText(
         charBufferSize = charBufferSize
     )
         .use { it.readText() }
+
+val Environment.workDirectoryFile
+    get() = File(Environment.workDirectory)

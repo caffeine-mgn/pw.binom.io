@@ -33,4 +33,7 @@ actual class TcpServerSocketChannel : Closeable {
     override fun close() {
         native.close()
     }
+
+    actual val port: Int
+        get() = native.socket().localPort
 }

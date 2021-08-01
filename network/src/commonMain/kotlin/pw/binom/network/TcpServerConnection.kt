@@ -15,6 +15,9 @@ class TcpServerConnection(val dispatcher: NetworkDispatcher, val channel: TcpSer
 
     }
 
+    val port
+        get() = channel.port
+
     override fun connecting() {
         throw RuntimeException("Not supported")
     }

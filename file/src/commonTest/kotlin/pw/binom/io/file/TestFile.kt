@@ -47,11 +47,9 @@ class TestFile {
         if (!file.isExist)
             file.mkdir()
         try {
-            file.iterator().use {
-                it.forEach {
-                    assertNotEquals("..", it.name)
-                    assertNotEquals(".", it.name)
-                }
+            file.iterator().forEach {
+                assertNotEquals("..", it.name)
+                assertNotEquals(".", it.name)
             }
         } finally {
             file.delete()

@@ -149,6 +149,25 @@ kotlin {
 }
 
 tasks {
+
+    fun createTaskNow(target: String) = create("generateTestDateTime$target") {
+        val sourceDir = project.buildDir.resolve("gen/pw/binom/date")
+        sourceDir.mkdirs()
+        val versionSource = sourceDir.resolve("test_data.kt")
+        outputs.files(versionSource)
+        inputs.property("version", project.version)
+
+        doLast {
+            versionSource.writeText(
+                """package pw.binom.date
+            
+val test_data_currentTZ get() = ${TimeZone.getDefault().rawOffset.let { it / 1000 / 60 }}
+val test_data_now get() = ${Date().time}
+"""
+            )
+        }
+    }
+/*
     val generateTestData = create("generateTestDateTim") {
         val sourceDir = project.buildDir.resolve("gen/pw/binom/date")
         sourceDir.mkdirs()
@@ -164,43 +183,44 @@ val test_data_now get() = ${Date().time}
 """
         )
     }
+    */
 
     val mingwX64Test by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("MingwX64"))
     }
     val linuxX64Test by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("LinuxX64"))
     }
     val jvmTest by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("Jvm"))
     }
 
     val macosX64Test by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("MacosX64"))
     }
 
     val jsLegacyBrowserTest by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("JsLegacyBrowser"))
     }
 
     val jsLegacyNodeTest by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("JsLegacyNode"))
     }
 
     val jsLegacyTest by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("JsLegacy"))
     }
 
     val jsIrTest by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("JsIr"))
     }
 
     val jsIrNodeTest by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("JsIrNode"))
     }
 
     val jsIrBrowserTest by getting {
-        dependsOn(generateTestData)
+        dependsOn(createTaskNow("JsIrBrowser"))
     }
 }
 apply<pw.binom.plugins.DocsPlugin>()

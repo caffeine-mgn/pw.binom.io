@@ -6,7 +6,6 @@ import pw.binom.copyTo
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
-import pw.binom.io.file.read
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.io.utf8Reader

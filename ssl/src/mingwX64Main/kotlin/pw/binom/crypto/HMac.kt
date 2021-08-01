@@ -43,20 +43,24 @@ actual class HMac actual constructor(val algorithm: Algorithm, val key: ByteArra
     override fun update(buffer: ByteBuffer) {
         checkInit()
         memScoped {
-            HMAC_Update(ctx, buffer.refTo(0).getPointer(this).reinterpret(), buffer.remaining.convert())
+            buffer.ref { bufferPtr, remaining ->
+                HMAC_Update(ctx, bufferPtr.getPointer(this).reinterpret(), remaining.convert())
+            }
         }
     }
 
     override fun finish(): ByteArray {
         checkInit()
         val out = ByteArray(algorithm.size)
-        memScoped {
-            val size = alloc<UIntVar>()
-            HMAC_Final(ctx, out.refTo(0).getPointer(this).reinterpret(), size.ptr)
-            if (size.value != out.size.convert<UInt>()) {
-                TODO()
+        out.usePinned { outPinned ->
+            memScoped {
+                val size = alloc<UIntVar>()
+                HMAC_Final(ctx, outPinned.addressOf(0).getPointer(this).reinterpret(), size.ptr)
+                if (size.value != out.size.convert<UInt>()) {
+                    TODO()
+                }
+                HMAC_CTX_free(ctx)
             }
-            HMAC_CTX_free(ctx)
         }
         return out
     }

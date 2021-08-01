@@ -22,6 +22,7 @@ class DateTest {
         assertEquals(TestData.ZERO_TIME, zeroTime)
     }
 
+    @Ignore
     @Test
     fun nowTest() {
         val except = now

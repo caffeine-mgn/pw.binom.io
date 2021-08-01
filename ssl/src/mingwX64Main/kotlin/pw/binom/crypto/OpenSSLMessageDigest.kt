@@ -41,7 +41,9 @@ abstract class OpenSSLMessageDigest : MessageDigest {
 
     override fun update(buffer: ByteBuffer) {
         checkInit()
-        EVP_DigestUpdate(ptr, buffer.refTo(buffer.position), buffer.remaining.convert())
+        buffer.ref { bufferPtr, remaining ->
+            EVP_DigestUpdate(ptr, bufferPtr, remaining.convert())
+        }
         buffer.position = buffer.limit
     }
 

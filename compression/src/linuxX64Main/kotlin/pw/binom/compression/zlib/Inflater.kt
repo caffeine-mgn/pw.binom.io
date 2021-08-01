@@ -49,22 +49,26 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
     }
 
     actual fun inflate(input: ByteBuffer, output: ByteBuffer): Int {
-        memScoped {
-            native.avail_out = output.remaining.convert()
-            native.next_out = (output.refTo(output.position)).getPointer(this).reinterpret()
+        return output.refTo(output.position){outputPtr->
+            input.refTo(input.position){inputPtr->
+                memScoped {
+                    native.avail_out = output.remaining.convert()
+                    native.next_out = (outputPtr).getPointer(this).reinterpret()
 
-            native.avail_in = input.remaining.convert()
-            native.next_in = (input.refTo(input.position)).getPointer(this).reinterpret()
-            val freeOutput = output.remaining
-            val freeInput = input.remaining
-            val r = inflate(native.ptr, Z_NO_FLUSH)
-            if (r != Z_OK && r != Z_STREAM_END)
-                throw IOException("inflate() returns [${zlibConsts(r)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")
-            val wrote = freeOutput - native.avail_out.convert<Int>()
+                    native.avail_in = input.remaining.convert()
+                    native.next_in = (inputPtr).getPointer(this).reinterpret()
+                    val freeOutput = output.remaining
+                    val freeInput = input.remaining
+                    val r = inflate(native.ptr, Z_NO_FLUSH)
+                    if (r != Z_OK && r != Z_STREAM_END)
+                        throw IOException("inflate() returns [${zlibConsts(r)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")
+                    val wrote = freeOutput - native.avail_out.convert<Int>()
 
-            input.position += freeInput - native.avail_in.convert<Int>()
-            output.position += wrote
-            return wrote
+                    input.position += freeInput - native.avail_in.convert<Int>()
+                    output.position += wrote
+                    return@memScoped wrote
+                }
+            }
         }
     }
 }

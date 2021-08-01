@@ -16,19 +16,19 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
             CharBuffer(JCharBuffer.wrap(chars))
     }
 
-    override val capacity: Int
+    actual override val capacity: Int
         get() = native.capacity()
 
-    override val remaining: Int
+    actual override val remaining: Int
         get() = native.remaining()
 
-    override var position: Int
+    actual override var position: Int
         get() = native.position()
         set(value) {
             native.position(value)
         }
 
-    override var limit: Int
+    actual override var limit: Int
         get() = native.limit()
         set(value) {
             native.limit(value)
@@ -78,13 +78,13 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         return this
     }
 
-    override fun clear() {
+    actual override fun clear() {
         native.clear()
         position = 0
         limit = capacity
     }
 
-    override val elementSizeInBytes: Int
+    actual override val elementSizeInBytes: Int
         get() = Char.SIZE_BYTES
 
     actual override fun toString(): String {
@@ -94,11 +94,11 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         return result
     }
 
-    override fun flip() {
+    actual override fun flip() {
         native.flip()
     }
 
-    override fun compact() {
+    actual override fun compact() {
         native.compact()
     }
 

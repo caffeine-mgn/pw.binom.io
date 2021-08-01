@@ -22,10 +22,10 @@ abstract class AbstractWebSocketConnection(
     private val _input = input.asReference()
     protected val input
         get() = _input.value
-    private val selfRef = this.asReference()
+//    private val selfRef = this.asReference()
 
     private var closed by AtomicBoolean(false)
-    private val channel = rawConnection.asReference()
+//    private val channel = rawConnection.asReference()
     private val networkThread = ThreadRef()
 
     var receivedCloseMessage by AtomicBoolean(false)
@@ -126,13 +126,16 @@ abstract class AbstractWebSocketConnection(
     protected abstract val masking: Boolean
 
     private suspend fun closeTcp() {
+        if (closed){
+            return
+        }
         closed = true
-        channel.close()
+//        channel.close()
         _input.close()
         _output.close()
-        selfRef.close()
+//        selfRef.close()
 
-        channel.value.asyncClose()
+//        channel.value.asyncClose()
         runCatching { input.asyncClose() }
         runCatching { output.asyncClose() }
     }

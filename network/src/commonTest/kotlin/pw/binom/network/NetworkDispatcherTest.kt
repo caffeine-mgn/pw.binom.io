@@ -66,6 +66,13 @@ class NetworkDispatcherTest {
     }
 
     @Test
+    fun serverPortGetTest() {
+        val nd = NetworkDispatcher()
+        val server = nd.bindTcp(NetworkAddress.Immutable(port = 0))
+        assertTrue(server.port > 0)
+    }
+
+    @Test
     fun connectionRefusedTest() {
         val nd = NetworkDispatcher()
         var connectionRefused = false
@@ -91,16 +98,17 @@ class NetworkDispatcherTest {
 
     @Test
     fun tcpServerTest() {
-        val addr = NetworkAddress.Immutable("0.0.0.0", 9967)
+        val addr = NetworkAddress.Immutable("0.0.0.0", 0)
         val nd = NetworkDispatcher()
         val server = nd.bindTcp(addr)
+        val port = server.port
         try {
             val buf1 = ByteBuffer.alloc(512)
             val buf2 = ByteBuffer.alloc(512)
             Random.nextBytes(buf1)
             buf1.flip()
             nd.single {
-                val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", 9967))
+                val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", port))
                 val serverClient = server.accept()!!
                 client.write(buf1)
                 serverClient.readFully(buf2)
@@ -124,12 +132,14 @@ class NetworkDispatcherTest {
 
     @Test
     fun rebindTest() {
-        val addr = NetworkAddress.Immutable("0.0.0.0", Random.nextInt(1000, 5999))
+        val addr = NetworkAddress.Immutable("127.0.0.1", port = 50905)
         val nd = NetworkDispatcher()
         val a = nd.bindTcp(addr)
+        val port = a.port
+        assertTrue(port > 0)
         try {
-            nd.bindTcp(addr)
-            fail()
+            nd.bindTcp(NetworkAddress.Immutable("127.0.0.1", port = port))
+            fail("Port rebind success on 127.0.0.1:$port")
         } catch (e: BindException) {
             //
         } finally {
@@ -187,9 +197,10 @@ class NetworkDispatcherTest {
     @Test
     fun multiThreadingTest() {
         val address =
-            NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
+            NetworkAddress.Immutable(host = "127.0.0.1", port = 0)
         val nd = NetworkDispatcher()
         val server = nd.bindTcp(address)
+        val port = server.port
         val executeWorker = WorkerPool(10)
         val serverFuture = async2<Unit> {
             val client = server.accept()!!
@@ -213,7 +224,7 @@ class NetworkDispatcherTest {
         }
         val clientFuture = async2 {
             println("Connection...")
-            val client2 = nd.tcpConnect(address)
+            val client2 = nd.tcpConnect(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
             println("Connected! Write...")
             client2.write(ByteBuffer.wrap(ByteArray(32)).clean())
             println("Wrote! Try read...")

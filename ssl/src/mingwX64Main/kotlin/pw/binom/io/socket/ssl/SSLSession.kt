@@ -1,17 +1,13 @@
 package pw.binom.io.socket.ssl
 
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.convert
 import kotlinx.cinterop.refTo
+import kotlinx.cinterop.toKString
 import platform.openssl.*
-import kotlinx.cinterop.*
-import platform.posix.errno
-import platform.posix.set_posix_errno
 import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
-import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
-import pw.binom.io.use
-import pw.binom.ssl.Bio
 
 internal fun assertError(ssl: CPointer<SSL>, ret: Int) {
     if (ret <= 0 && SSL_get_error(ssl, ret) == SSL_ERROR_SSL) {
@@ -229,7 +225,9 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
 //    }
 
     actual fun readNet(dst: ByteBuffer): Int {
-        val n = BIO_read(wbio, dst.refTo(0), dst.remaining)
+        val n = dst.ref{ dstPtr,remaining ->
+            BIO_read(wbio, dstPtr, remaining)
+        }
         if (n < 0)
             return 0
         dst.position += n
@@ -242,7 +240,9 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         var readed = 0
 
         while (len > 0) {
-            val n = BIO_write(rbio, dst.refTo(off), len);
+            val n = dst.refTo(off) { dstPtr ->
+                BIO_write(rbio, dstPtr, len)
+            }
             if (n <= 0)
                 TODO()
             readed += n
@@ -258,15 +258,17 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         val r = init()
         if (r != null)
             return Status(
-                    r,
-                    0
+                r,
+                0
             )
-        val n = SSL_read(ssl, dst.refTo(dst.position), dst.limit - dst.position)
+        val n = dst.refTo(dst.position) { dstPtr ->
+            SSL_read(ssl, dstPtr, dst.remaining)
+        }
         if (n > 0) {
             dst.position += n
             return Status(
-                    State.OK,
-                    n
+                State.OK,
+                n
             )
         }
         val state = when (val e = SSL_get_error(ssl, n)) {
@@ -285,10 +287,12 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         val r = init()
         if (r != null)
             return Status(
-                    r,
-                    0
+                r,
+                0
             )
-        val n = SSL_write(ssl, src.refTo(src.position), src.limit - src.position)
+        val n = src.ref { srcPtr, remaining ->
+            SSL_write(ssl, srcPtr, remaining)
+        }
         if (n > 0) {
             src.position += n
             return Status(

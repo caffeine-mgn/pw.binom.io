@@ -31,10 +31,10 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
             val ctx = nativeHeap.allocArray<CPointerVar<sqlite3>>(1)
             val errorNum = sqlite3_open_v2(path, ctx, SQLITE_OPEN_READWRITE or SQLITE_OPEN_CREATE, null)
             if (errorNum > 0) {
-                sqlite3_errmsg(ctx.pointed.value)?.toKString()
+                val msg = sqlite3_errmsg(ctx.pointed.value)?.toKString()
                 sqlite3_close(ctx.pointed.value)
                 nativeHeap.free(ctx)
-                throw IOException("Can't open Data Base $path")
+                throw IOException("Can't open Data Base \"$path\": $msg")
             }
             return SQLiteConnector(ctx)
         }

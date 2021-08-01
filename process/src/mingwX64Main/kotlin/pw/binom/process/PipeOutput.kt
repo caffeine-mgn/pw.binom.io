@@ -24,8 +24,13 @@ class PipeOutput : Pipe(), Output {
         memScoped {
             val dwWritten = alloc<UIntVar>()
 
-            val r = WriteFile(writePipe.pointed.value, (data.refTo(data.position)).getPointer(this).reinterpret(),
-                    data.remaining.convert(), dwWritten.ptr, null)
+
+            val r = data.ref { dataPtr, _ ->
+                WriteFile(
+                    writePipe.pointed.value, dataPtr.getPointer(this).reinterpret(),
+                    data.remaining.convert(), dwWritten.ptr, null
+                )
+            }
             if (r <= 0)
                 TODO()
             val wrote = dwWritten.value.toInt()

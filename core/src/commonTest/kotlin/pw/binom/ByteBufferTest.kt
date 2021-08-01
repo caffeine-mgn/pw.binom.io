@@ -86,6 +86,7 @@ class ByteBufferTest {
     @Test
     fun writeTest() {
         val source = ByteBuffer.alloc(1024)
+        println("#1------------")
         source.put(120)
         source.put(-100)
         source.put(-29)
@@ -107,13 +108,18 @@ class ByteBufferTest {
         dest.clear()
         dest.position = 2
         assertEquals(9, dest.write(source))
-
+        println("#2------------")
         source.clear()
         dest.clear()
+
         (2 until 11).forEach {
-            assertEquals(source[it], dest[it])
+            println("$it -> ${source[it]}==${dest[it]}")
         }
 
+        (2 until 11).forEach {
+            assertEquals(source[it], dest[it],"index: $it")
+        }
+        println("#3------------")
         (11 until dest.limit).forEach {
             assertEquals(0, dest[it])
         }

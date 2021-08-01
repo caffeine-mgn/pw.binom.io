@@ -15,7 +15,7 @@ class TestWriteRead {
     @Test
     fun openUnknown() {
         assertTrue(assertFails {
-            File(Random.nextUuid().toString()).read()
+            File(Random.nextUuid().toString()).openRead()
         } is FileNotFoundException)
     }
 
@@ -36,7 +36,7 @@ class TestWriteRead {
             }
         }
 
-        f.read().use {
+        f.openRead().use {
             val input = ByteBuffer.alloc(data.size * 2)
             assertEquals(data.size, it.read(input))
             input.flip()

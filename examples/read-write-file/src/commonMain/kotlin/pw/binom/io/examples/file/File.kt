@@ -4,7 +4,7 @@ import pw.binom.*
 import pw.binom.crypto.MD5MessageDigest
 import pw.binom.io.*
 import pw.binom.io.file.File
-import pw.binom.io.file.read
+import pw.binom.io.file.openRead
 import pw.binom.io.file.openWrite
 
 /**
@@ -22,7 +22,7 @@ fun usingByteArray() {
         println("Write data: \"${data.decodeToString()}\"")
 
         val out = ByteArrayOutput()
-        file.read().use {
+        file.openRead().use {
             it.copyTo(out, bufferPool)
         }
         out.trimToSize()
@@ -50,7 +50,7 @@ fun usingAppenderAndReader() {
         }
         println("Write data: \"$text\"")
 
-        val read = file.read().bufferedReader(bufferPool).use {
+        val read = file.openRead().bufferedReader(bufferPool).use {
             it.readText()
         }
 
@@ -77,7 +77,7 @@ fun usingByteBuffer() {
         println("Write data: \"$text\"")
         ByteBuffer.alloc(512).use { readBuf ->
 
-            val read = file.read().use {
+            val read = file.openRead().use {
                 it.read(readBuf)
             }
             readBuf.flip()
@@ -105,7 +105,7 @@ fun calcMd5() {
         }
 
         ByteBuffer.alloc(512).use { readBuf ->
-            file.read().use {
+            file.openRead().use {
                 while (true) {
                     readBuf.clear()
                     if (it.read(readBuf) <= 0) {

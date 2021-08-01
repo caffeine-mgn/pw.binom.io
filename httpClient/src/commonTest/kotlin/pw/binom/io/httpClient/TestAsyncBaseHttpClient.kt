@@ -51,7 +51,7 @@ class TestAsyncBaseHttpClient {
 
             repeat(3) {
                 val responseData = client
-                    .connect(HTTPMethod.GET, "https://www.ntv.ru/".toURI())
+                    .connect(HTTPMethod.GET, "https://google.com/".toURI())
                     .getResponse().also {
                         println("headers:${it.headers}")
                     }
