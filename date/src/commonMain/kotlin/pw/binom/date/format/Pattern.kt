@@ -28,6 +28,7 @@ internal sealed interface Pattern {
                 ss.find(format, position) -> ss
                 SSS.find(format, position) -> SSS
                 SSm.find(format, position) -> SSm
+                Sm.find(format, position) -> Sm
                 XXX.find(format, position) -> XXX
                 XX.find(format, position) -> XX
                 X.find(format, position) -> X
@@ -600,6 +601,34 @@ internal sealed interface Pattern {
                 r = r / 10
             }
             return r.as2()
+        }
+
+        override fun toString(): String = "SS"
+    }
+
+    object Sm : Pattern {
+        override val patternLength: Int
+            get() = 1
+
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "S", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            if (position + 1 > text.length) {
+                return -1
+            }
+            val hours = text.substring(position, position + patternLength).toIntOrNull()?.let { it * 100 } ?: return -1
+            set?.invoke(FieldType.MILLISECOND, hours)
+            return 1
+        }
+
+        override fun toString(calendar: Calendar): String {
+            return (calendar.millisecond/100).toString()
         }
 
         override fun toString(): String = "SS"
