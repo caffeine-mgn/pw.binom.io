@@ -21,7 +21,12 @@ private const val VSPACE_ID_INDEX_ID = 0
 private const val VINDEX_ID = 289
 private const val VINDEX_ID_INDEX_ID = 0
 
-class TarantoolConnection private constructor(private val networkThread: ThreadRef, con: TcpConnection) :
+@Suppress("UNCHECKED_CAST")
+class TarantoolConnection private constructor(
+    private val networkThread: ThreadRef,
+    val manager: NetworkDispatcher,
+    con: TcpConnection
+) :
     AsyncCloseable {
     companion object {
         suspend fun connect(
@@ -40,7 +45,8 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
                     con.readFully(buf)
                     buf.flip()
                     val salt = buf.asUTF8String().trim()
-                    val connection = TarantoolConnection(ThreadRef(), con)
+                    val connection = TarantoolConnection(networkThread = ThreadRef(), manager = manager, con = con)
+                    connection.connect()
                     if (userName != null && password != null) {
                         connection.sendReceive(
                             Code.AUTH,
@@ -169,44 +175,42 @@ class TarantoolConnection private constructor(private val networkThread: ThreadR
         connectionReference.close()
     }
 
-    init {
-        async2 {
-            ByteBuffer.alloc(8) { buf ->
-                try {
-                    val packageReader = AsyncInputWithCounter(connectionReference)
-                    while (!closed) {
-                        val vv = connectionReference.readByte(buf).toUByte()
-                        if (vv != 0xce.toUByte()) {
-                            throw IOException("Invalid Protocol Header Response")
-                        }
-                        val size = connectionReference.readInt(buf)
-                        buf.clear()
-                        packageReader.limit = size
-                        val msg = InternalProtocolUtils.unpack(buf, packageReader)
-                        val headers = msg as Map<Int, Any?>
-                        val body = if (packageReader.limit > 0) {
-                            InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
-                        } else
-                            emptyMap()
-                        val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
-                        val pkg = Package(
-                            header = headers,
-                            body = body
-                        )
-                        requests.remove(serial)?.resumeWith(Result.success(pkg))
+    private suspend fun connect() {
+        ByteBuffer.alloc(8) { buf ->
+            try {
+                val packageReader = AsyncInputWithCounter(connectionReference)
+                while (!closed) {
+                    val vv = connectionReference.readByte(buf).toUByte()
+                    if (vv != 0xce.toUByte()) {
+                        throw IOException("Invalid Protocol Header Response")
                     }
-                } catch (e: SocketClosedException) {
-                    requests.forEach {
-                        it.value.resumeWithException(e)
-                    }
-                    requests.clear()
-                    connected = false
-                    //NOP
-                } catch (e: ClosedException) {
-                    //NOP
-                } catch (e: Throwable) {
-                    asyncClose()
+                    val size = connectionReference.readInt(buf)
+                    buf.clear()
+                    packageReader.limit = size
+                    val msg = InternalProtocolUtils.unpack(buf, packageReader)
+                    val headers = msg as Map<Int, Any?>
+                    val body = if (packageReader.limit > 0) {
+                        InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
+                    } else
+                        emptyMap()
+                    val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
+                    val pkg = Package(
+                        header = headers,
+                        body = body
+                    )
+                    requests.remove(serial)?.resumeWith(Result.success(pkg))
                 }
+            } catch (e: SocketClosedException) {
+                requests.forEach {
+                    it.value.resumeWithException(e)
+                }
+                requests.clear()
+                connected = false
+                //NOP
+            } catch (e: ClosedException) {
+                //NOP
+            } catch (e: Throwable) {
+                asyncClose()
             }
         }
     }

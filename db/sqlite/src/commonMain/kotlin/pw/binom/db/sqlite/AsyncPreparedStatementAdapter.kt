@@ -1,5 +1,7 @@
 package pw.binom.db.sqlite
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.concurrency.Reference
 import pw.binom.concurrency.Worker
@@ -20,6 +22,24 @@ class AsyncPreparedStatementAdapter(
 
     init {
         doFreeze()
+    }
+
+    override suspend fun set(index: Int, value: BigInteger) {
+        execute(worker) {
+            ref.value.set(index, value)
+        }
+    }
+
+    override suspend fun set(index: Int, value: BigDecimal) {
+        execute(worker) {
+            ref.value.set(index, value)
+        }
+    }
+
+    override suspend fun set(index: Int, value: Double) {
+        execute(worker) {
+            ref.value.set(index, value)
+        }
     }
 
     override suspend fun set(index: Int, value: Float) {

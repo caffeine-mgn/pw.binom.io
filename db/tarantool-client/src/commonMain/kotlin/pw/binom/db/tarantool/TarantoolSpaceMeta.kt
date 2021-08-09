@@ -13,6 +13,7 @@ data class TarantoolSpaceMeta(
         val indexes: Map<String, TarantoolIndexMeta>,
 ) {
     companion object {
+        @Suppress("UNCHECKED_CAST")
         fun create(spaceTuple: List<Any?>, indexTuples: List<List<Any?>>): TarantoolSpaceMeta {
             val id = (spaceTuple[VSPACE_ID_FIELD_NUMBER] as Number).toInt()
             val fields = (spaceTuple[VSPACE_FORMAT_FIELD_NUMBER] as (List<Map<String, Any>>)).map {

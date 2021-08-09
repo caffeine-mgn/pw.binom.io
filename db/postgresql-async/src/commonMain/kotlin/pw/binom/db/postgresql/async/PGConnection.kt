@@ -122,16 +122,19 @@ class PGConnection private constructor(
         val msg = this.reader.queryMessage
         msg.query = query
         sendOnly(msg)
+        var statusMsg: String? = null
         var rowsAffected = 0L
         LOOP@ while (true) {
-            when (val msg = readDesponse()) {
+            val msg = readDesponse()
+            when (msg) {
                 is ReadyForQueryMessage -> {
                     return QueryResponse.Status(
-                        status = "",
+                        status = statusMsg ?: "",
                         rowsAffected = rowsAffected
                     )
                 }
                 is CommandCompleteMessage -> {
+                    statusMsg = msg.statusMessage
                     rowsAffected += msg.rowsAffected
                     continue@LOOP
                 }
@@ -142,6 +145,7 @@ class PGConnection private constructor(
                     return msg2
                 }
                 is ErrorMessage -> {
+                    check(readDesponse() is ReadyForQueryMessage)
                     throw PostgresqlException("${msg.fields['M']}. Query: $query")
                 }
                 is NoticeMessage -> {
@@ -262,8 +266,14 @@ class PGConnection private constructor(
         if (transactionStarted) {
             throw IllegalStateException("Transaction already started")
         }
-        query("begin TRANSACTION ISOLATION LEVEL ${transactionMode.pg}")
+        val q = query("begin TRANSACTION ISOLATION LEVEL ${transactionMode.pg}")
         transactionStarted = true
+        if (q !is QueryResponse.Status) {
+            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+        }
+        if (q.status != "BEGIN") {
+            throw SQLException("Invalid response. Excepted Status \"BEGIN\", but got ${q.status}")
+        }
     }
 
     internal var prepareStatements = HashSet<PostgresPreparedStatement>()
@@ -288,16 +298,28 @@ class PGConnection private constructor(
         if (!transactionStarted) {
             throw IllegalStateException("Transaction not started")
         }
-        query("commit")
+        val q = query("commit")
         transactionStarted = false
+        if (q !is QueryResponse.Status) {
+            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+        }
+        if (q.status != "COMMIT") {
+            throw SQLException("Invalid response. Excepted Status \"COMMIT\", but got ${q.status}")
+        }
     }
 
     override suspend fun rollback() {
         if (!transactionStarted) {
             throw IllegalStateException("Transaction not started")
         }
-        query("rollback")
+        val q = query("rollback")
         transactionStarted = false
+        if (q !is QueryResponse.Status) {
+            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+        }
+        if (q.status != "ROLLBACK") {
+            throw SQLException("Invalid response. Excepted Status \"ROLLBACK\", but got ${q.status}")
+        }
     }
 
     override suspend fun asyncClose() {

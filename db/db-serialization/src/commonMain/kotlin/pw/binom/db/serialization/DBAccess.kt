@@ -3,65 +3,104 @@ package pw.binom.db.serialization
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
+import pw.binom.db.async.DatabaseInfo
 
 interface DBAccess {
     suspend fun <T : Any> select(query: String, vararg args: Pair<String, Any?>, result: KSerializer<T>): List<T>
-    suspend fun <T : Any> selectFrom(
-        from: KSerializer<T>,
-        queryCondition: String? = null,
-        vararg args: Pair<String, Any?>
-    ): List<T>
 
-    suspend fun deleteFrom(
-        from: KSerializer<out Any>,
-        queryCondition: String? = null,
-        vararg args: Pair<String, Any?>
-    ): Long
+    suspend fun update(query: String, vararg args: Pair<String, Any?>): Long
 
-    suspend fun <T : Any> upsert(
+    val dbDatabaseInfo: DatabaseInfo
+
+    /**
+     * Replace [value] or insert if [value] already exist
+     * Make sure you defined annotation [IndexColumn] for index columns
+     */
+    suspend fun <T : Any> upsertEntity(
         serializer: KSerializer<T>,
         value: T,
         excludeUpdate: Set<String> = emptySet(),
         updateOnly: Set<String> = emptySet()
     )
 
-    suspend fun update(query: String, vararg args: Pair<String, Any?>): Long
-    suspend fun <T : Any> find(serializer: KSerializer<T>, key: Any): T?
-    suspend fun delete(serializer: KSerializer<out Any>, id: Any): Boolean
+    suspend fun deleteEntityFrom(
+        from: KSerializer<out Any>,
+        queryCondition: String? = null,
+        args: Array<out Pair<String, Any?>> = emptyArray(),
+        tableName: String? = null,
+    ): Long
+
+    suspend fun <T : Any> selectEntityFrom(
+        fromSerializer: KSerializer<T>,
+        queryCondition: String? = null,
+        args: Array<out Pair<String, Any?>> = emptyArray(),
+        tableName: String? = null,
+    ): List<T>
+
+    suspend fun <T : Any> find(
+        serializer: KSerializer<T>,
+        key: Any,
+        tableName: String? = null,
+    ): T?
+
+    suspend fun deleteEntityFrom(
+        serializer: KSerializer<out Any>,
+        id: Any,
+        tableName: String? = null,
+    ): Boolean
 
     /**
      * @param byColumns columns for select conditions. By default (when no define any columns) use field with `@Id`
      */
-    suspend fun <T : Any> update(serializer: KSerializer<T>, value: T, vararg byColumns: String): Boolean
-    suspend fun <T : Any> insert(serializer: KSerializer<T>, value: T): Boolean
+    suspend fun <T : Any> updateEntity(
+        serializer: KSerializer<T>,
+        value: T,
+        tableName: String? = null,
+        excludeColumns: Array<String> = emptyArray(),
+        byColumns: Array<String> = emptyArray()
+    ): Boolean
+
+    suspend fun <T : Any> insertEntity(
+        tableName: String? = null,
+        serializer: KSerializer<T>,
+        value: T,
+    ): Boolean
 }
 
 @OptIn(InternalSerializationApi::class)
-suspend inline fun <reified T : Any> DBAccess.delete(value: T) =
-    delete(T::class.serializer(), value)
-
-@OptIn(InternalSerializationApi::class)
-suspend inline fun <reified T : Any> DBAccess.update(value: T, vararg byColumns: String) =
-    update(serializer = T::class.serializer(), value = value, byColumns = byColumns)
-
-@OptIn(InternalSerializationApi::class)
-suspend inline fun <reified T : Any> DBAccess.insert(value: T) =
-    insert(T::class.serializer(), value)
-
-@OptIn(InternalSerializationApi::class)
-suspend inline fun <reified T : Any> DBAccess.deleteFrom(
-    queryCondition: String? = null,
-    vararg args: Pair<String, Any?>
+suspend inline fun <reified T : Any> DBAccess.updateEntity(
+    value: T,
+    tableName: String? = null,
+    byColumns: Array<String> = emptyArray(),
+    excludeColumns: Array<String> = emptyArray(),
 ) =
-    deleteFrom(from = T::class.serializer(), queryCondition = queryCondition, args = args)
+    updateEntity(
+        serializer = T::class.serializer(),
+        value = value,
+        tableName = tableName,
+        excludeColumns = excludeColumns,
+        byColumns = byColumns
+    )
 
 @OptIn(InternalSerializationApi::class)
-suspend inline fun <reified T : Any> DBAccess.upsert(
+suspend inline fun <reified T : Any> DBAccess.insertEntity(value: T, tableName: String? = null) =
+    insertEntity(serializer = T::class.serializer(), value = value, tableName = tableName)
+
+@OptIn(InternalSerializationApi::class)
+suspend inline fun <reified T : Any> DBAccess.deleteEntityFrom(
+    queryCondition: String? = null,
+    tableName: String? = null,
+    args: Array<out Pair<String, Any?>> = emptyArray(),
+) =
+    deleteEntityFrom(from = T::class.serializer(), queryCondition = queryCondition, args = args, tableName = tableName)
+
+@OptIn(InternalSerializationApi::class)
+suspend inline fun <reified T : Any> DBAccess.upsertEntity(
     value: T,
     excludeUpdate: Set<String> = emptySet(),
     updateOnly: Set<String> = emptySet()
 ) =
-    upsert(
+    upsertEntity(
         serializer = T::class.serializer(),
         value = value,
         excludeUpdate = excludeUpdate,
@@ -69,8 +108,14 @@ suspend inline fun <reified T : Any> DBAccess.upsert(
     )
 
 @OptIn(InternalSerializationApi::class)
-suspend inline fun <reified T : Any> DBAccess.selectFrom(
+suspend inline fun <reified T : Any> DBAccess.selectEntityFrom(
     queryCondition: String? = null,
-    vararg args: Pair<String, Any?>
+    args: Array<Pair<String, Any?>> = emptyArray(),
+    tableName: String? = null,
 ) =
-    selectFrom(from = T::class.serializer(), queryCondition = queryCondition, args = args)
+    selectEntityFrom(
+        fromSerializer = T::class.serializer(),
+        queryCondition = queryCondition,
+        args = args,
+        tableName = tableName
+    )

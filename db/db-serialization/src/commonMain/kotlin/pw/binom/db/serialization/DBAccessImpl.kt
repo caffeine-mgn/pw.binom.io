@@ -2,7 +2,10 @@ package pw.binom.db.serialization
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.encoding.CompositeDecoder
 import pw.binom.db.DatabaseEngine
+import pw.binom.db.SQLException
+import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.async.pool.PooledAsyncConnection
 import pw.binom.io.use
 
@@ -47,15 +50,16 @@ internal class DBAccessImpl(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    override suspend fun <T : Any> selectFrom(
-        from: KSerializer<T>,
+    override suspend fun <T : Any> selectEntityFrom(
+        fromSerializer: KSerializer<T>,
         queryCondition: String?,
-        vararg args: Pair<String, Any?>
+        args: Array<out Pair<String, Any?>>,
+        tableName: String?,
     ): List<T> {
         val sb = StringBuilder()
         sb.append("SELECT ")
-        val table = from.tableName
-        val descriptor = from.descriptor
+        val table = tableName ?: fromSerializer.tableName
+        val descriptor = fromSerializer.descriptor
         repeat(descriptor.elementsCount) {
             if (it > 0) {
                 sb.append(", ")
@@ -73,22 +77,23 @@ internal class DBAccessImpl(
         if (queryCondition != null) {
             sb.append(" ").append(queryCondition)
         }
-        return select(query = sb.toString(), args = *args, result = from)
+        return select(query = sb.toString(), args = *args, result = fromSerializer)
     }
 
-    override suspend fun deleteFrom(
+    override suspend fun deleteEntityFrom(
         from: KSerializer<out Any>,
         queryCondition: String?,
-        vararg args: Pair<String, Any?>
+        args: Array<out Pair<String, Any?>>,
+        tableName: String?,
     ): Long {
-        val sb = StringBuilder("delete from ").append(from.tableName)
+        val sb = StringBuilder("delete from ").append(tableName ?: from.tableName)
         if (queryCondition != null) {
             sb.append(" ").append(queryCondition)
         }
         return update(query = sb.toString(), args = args)
     }
 
-    override suspend fun <T : Any> upsert(
+    override suspend fun <T : Any> upsertEntity(
         serializer: KSerializer<T>,
         value: T,
         excludeUpdate: Set<String>,
@@ -100,10 +105,47 @@ internal class DBAccessImpl(
         val sb = StringBuilder()
         sb.append(SQLSerialization.insertQuery(serializer))
         val args = sql.nameParams(serializer, value)
+        val descriptor = serializer.descriptor
+        val indexColumns = HashSet<String>()
+        descriptor.annotations.forEach {
+            if (it !is Index || !it.unique) {
+                return@forEach
+            }
+            it.columns.forEach { column ->
+                val index = descriptor.getElementIndex(column)
+                if (index == CompositeDecoder.UNKNOWN_NAME) {
+                    throw SQLException("Column with name \"$column\" not found in ${descriptor.serialName}")
+                }
+                val useQuotes = descriptor.getElementAnnotations(index).any { it is UseQuotes }
+                val columnName = if (useQuotes) {
+                    "\"$column\""
+                } else {
+                    column
+                }
+                indexColumns += columnName
+            }
+        }
+        (0 until serializer.descriptor.elementsCount).forEach { index ->
+            val indexColumn = descriptor.getElementAnnotations(index).any { it is IndexColumn }
+            if (!indexColumn) {
+                return@forEach
+            }
+            val useQuotes = descriptor.getElementAnnotations(index).any { it is UseQuotes }
+            val name = serializer.descriptor.getElementName(index)
+            val columnName = if (useQuotes) {
+                "\"$name\""
+            } else {
+                name
+            }
+            indexColumns += columnName
+        }
         when (con.dbInfo.engine) {
             DatabaseEngine.POSTGRESQL,
             DatabaseEngine.SQLITE -> {
-                sb.append(" on conflict (*) do update set ")
+                if (indexColumns.isEmpty()) {
+                    throw IllegalArgumentException("Not found any index column in ${serializer.descriptor.serialName}")
+                }
+                sb.append(" on conflict (${indexColumns.joinToString(separator = ",")}) do update set ")
                 var first = true
                 repeat(serializer.descriptor.elementsCount) { elNum ->
                     val elName = serializer.descriptor.getElementName(elNum)
@@ -146,17 +188,31 @@ internal class DBAccessImpl(
     override suspend fun update(query: String, vararg args: Pair<String, Any?>): Long {
         val realQuery = getSqlQuery(query)
         val statement = con.usePreparedStatement(realQuery.sql)
-        return statement.executeUpdate(*realQuery.buildArguments(*args))
+        return try {
+            statement.executeUpdate(*realQuery.buildArguments(*args))
+        } catch (e: Throwable) {
+            throw SQLException("Can't execute query \"$query\"", e)
+        }
     }
 
-    override suspend fun <T : Any> update(serializer: KSerializer<T>, value: T, vararg byColumns: String): Boolean {
+    override val dbDatabaseInfo: DatabaseInfo
+        get() = con.dbInfo
+
+    override suspend fun <T : Any> updateEntity(
+        serializer: KSerializer<T>,
+        value: T,
+        tableName: String?,
+        excludeColumns: Array<String>,
+        byColumns: Array<String>,
+    ): Boolean {
         val values = sql.nameParams(serializer, value)
         val id = serializer.getIdColumn()
         val sb = StringBuilder()
         sb.append(
             SQLSerialization.updateQuery(
                 serializer = serializer,
-                excludes = if (byColumns.isEmpty()) setOf(id) else setOf(*byColumns),
+                excludes = (if (byColumns.isEmpty()) setOf(id) else setOf(*byColumns)) + excludeColumns,
+                tableName = tableName
             )
         )
         sb.append(" where ")
@@ -173,22 +229,23 @@ internal class DBAccessImpl(
         return update(query = sb.toString(), args = values) >= 1L
     }
 
-    override suspend fun <T : Any> find(serializer: KSerializer<T>, key: Any): T? {
+    override suspend fun <T : Any> find(serializer: KSerializer<T>, key: Any, tableName: String?): T? {
         val id = serializer.getIdColumn()
-        return selectFrom(
-            from = serializer,
+        return selectEntityFrom(
+            fromSerializer = serializer,
             queryCondition = "where $id=:$id limit 1",
-            id to key
+            tableName = tableName,
+            args = arrayOf(id to key),
         ).firstOrNull()
     }
 
-    override suspend fun delete(serializer: KSerializer<out Any>, id: Any): Boolean {
+    override suspend fun deleteEntityFrom(serializer: KSerializer<out Any>, id: Any, tableName: String?): Boolean {
         val idColumn = serializer.getIdColumn()
-        return update("delete from ${serializer.tableName} where $idColumn=:id", "id" to id) > 0L
+        return update("delete from ${tableName ?: serializer.tableName} where $idColumn=:id", "id" to id) > 0L
     }
 
-    override suspend fun <T : Any> insert(serializer: KSerializer<T>, value: T): Boolean {
-        val query = SQLSerialization.insertQuery(serializer)
+    override suspend fun <T : Any> insertEntity(tableName: String?, serializer: KSerializer<T>, value: T): Boolean {
+        val query = SQLSerialization.insertQuery(serializer, tableName = tableName)
         return update(query = query, args = sql.nameParams(serializer, value)) > 0L
     }
 }

@@ -14,8 +14,14 @@ class SQLCompositeDecoder(
     val resultSet: ResultSet,
     override val serializersModule: SerializersModule,
 ) : CompositeDecoder {
-    override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean =
-        resultSet.getBoolean((columnPrefix ?: "") + descriptor.getElementName(index))!!
+
+    private fun columnNotFound(name: String): Nothing =
+        throw SerializationException("Column \"$name\" not found. Actual columns: ${resultSet.columns.map { "\"$it\"" }}")
+
+    override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean {
+        val column = (columnPrefix ?: "") + descriptor.getElementName(index)
+        return resultSet.getBoolean(column) ?: columnNotFound(column)
+    }
 
     override fun decodeByteElement(descriptor: SerialDescriptor, index: Int): Byte =
         resultSet.getInt((columnPrefix ?: "") + descriptor.getElementName(index))!!.toByte()

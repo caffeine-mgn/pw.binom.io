@@ -163,6 +163,7 @@ internal object InternalProtocolUtils {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun writeValue(value: Any?, buffer: ByteBuffer, out: Output) {
         when (value) {
             null -> out.writeByte(buffer, MP_NULL)

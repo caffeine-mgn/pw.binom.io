@@ -9,6 +9,7 @@ const val VINDEX_PARTS_FIELD_NUMBER = 5
 const val VINDEX_PART_FIELD = 0
 const val VINDEX_PART_TYPE = 1
 
+@Suppress("UNCHECKED_CAST")
 data class TarantoolIndexMeta(
         val id: Int,
         val name: String,

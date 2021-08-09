@@ -6,7 +6,7 @@ import kotlin.coroutines.*
 
 class TransactionContextElement(val connection: PooledAsyncConnection) :
     CoroutineContext.Element {
-    var rollback = false
+    var rollbackOnly = false
     var transactionStarted: Boolean = false
     override val key: CoroutineContext.Key<TransactionContextElement>
         get() = TransactionContextElementKey
@@ -22,94 +22,111 @@ private suspend fun getCurrentTransactionContext() =
 class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : TransactionManager {
     override suspend fun <T> re(function: suspend (PooledAsyncConnection) -> T): T {
         val txContext = getCurrentTransactionContext()
+        return when {
+            txContext == null -> {
+                connectionPool.borrow {
+                    val cc = TransactionContextElement(this)
+                    beginTransaction()
+                    cc.transactionStarted = true
+                    try {
+                        val result = suspendCoroutine<T> { con ->
+                            function.startCoroutine(this, object : Continuation<T> {
+                                override val context: CoroutineContext = con.context + cc
 
-        return if (txContext == null) {
-            connectionPool.borrow {
-                val cc = TransactionContextElement(this)
-                beginTransaction()
-                cc.transactionStarted = true
-                try {
-                    val result = suspendCoroutine<T> { con ->
-                        function.startCoroutine(this, object : Continuation<T> {
-                            override val context: CoroutineContext = con.context + cc
-
-                            override fun resumeWith(result: Result<T>) {
-                                con.resumeWith(result)
+                                override fun resumeWith(result: Result<T>) {
+                                    con.resumeWith(result)
+                                }
+                            })
+                        }
+                        if (cc.rollbackOnly) {
+                            rollback()
+                        } else {
+                            commit()
+                        }
+                        result
+                    } catch (e: Throwable) {
+                        if (!cc.rollbackOnly) {
+                            try {
+                                rollback()
+                            } catch (ex: Throwable) {
+                                ex.addSuppressed(e)
+                                throw ex
                             }
-                        })
+                        }
+                        throw e
+                    } finally {
+                        cc.rollbackOnly = false
+                        cc.transactionStarted = false
                     }
-                    if (cc.rollback) {
-                        rollback()
-                    } else {
-                        commit()
-                    }
-                    result
-                } catch (e: Throwable) {
-                    rollback()
-                    throw e
-                } finally {
-                    cc.rollback = false
-                    cc.transactionStarted = false
                 }
             }
-        } else {
-            if (!txContext.transactionStarted) {
+            !txContext.transactionStarted -> {
                 txContext.connection.beginTransaction()
                 txContext.transactionStarted = true
                 try {
                     val result = function(txContext.connection)
-                    if (txContext.rollback) {
+                    if (txContext.rollbackOnly) {
                         txContext.connection.rollback()
                     } else {
                         txContext.connection.commit()
                     }
                     result
                 } catch (e: Throwable) {
-                    txContext.connection.rollback()
+                    if (!txContext.rollbackOnly) {
+                        try {
+                            txContext.connection.rollback()
+                        } catch (ex: Throwable) {
+                            ex.addSuppressed(e)
+                            throw ex
+                        }
+                    }
                     throw  e
                 } finally {
                     txContext.transactionStarted = false
-                    txContext.rollback = false
+                    txContext.rollbackOnly = false
                 }
-            } else {
-                try {
-                    function(txContext.connection)
-                } catch (e: Throwable) {
-                    txContext.rollback = true
-                    throw e
-                }
+            }
+            else -> try {
+                function(txContext.connection)
+            } catch (e: Throwable) {
+                txContext.rollbackOnly = true
+                throw e
             }
         }
     }
+
 
     override suspend fun <T> new(function: suspend (PooledAsyncConnection) -> T): T {
         return connectionPool.borrow {
             val cc = TransactionContextElement(this)
             beginTransaction()
             cc.transactionStarted = true
-            suspendCoroutine<T> { con ->
-                val newContext = con.context.minusKey(TransactionContextElementKey) + cc
-                function.startCoroutine(this, object : Continuation<T> {
-                    override val context: CoroutineContext = newContext
-
-                    override fun resumeWith(result: Result<T>) {
-                        con.resumeWith(result)
-                    }
-                })
-            }
             try {
-                val result = function(this)
-                if (cc.rollback) {
+                val result = suspendCoroutine<T> { con ->
+                    val newContext = con.context.minusKey(TransactionContextElementKey) + cc
+                    function.startCoroutine(this, object : Continuation<T> {
+                        override val context: CoroutineContext = newContext
+                        override fun resumeWith(result: Result<T>) {
+                            con.resumeWith(result)
+                        }
+                    })
+                }
+                if (cc.rollbackOnly) {
                     rollback()
                 } else {
                     commit()
                 }
                 result
             } catch (e: Throwable) {
-                rollback()
+                try {
+                    rollback()
+                } catch (ex: Throwable) {
+                    ex.addSuppressed(e)
+                    throw ex
+                }
                 throw e
             } finally {
-                cc.rollback = false
+                cc.rollbackOnly = false
                 cc.transactionStarted = false
             }
         }
@@ -118,21 +135,28 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
     override suspend fun <T> su(function: suspend (PooledAsyncConnection) -> T): T {
         val txContext = getCurrentTransactionContext()
 
-        return if (txContext == null) {
-            connectionPool.borrow {
-                val cc = TransactionContextElement(this)
-                suspendCoroutine { con ->
-                    function.startCoroutine(this, object : Continuation<T> {
-                        override val context: CoroutineContext = con.context + cc
-
-                        override fun resumeWith(result: Result<T>) {
-                            con.resumeWith(result)
-                        }
-                    })
+        return when (txContext) {
+            null -> {
+                connectionPool.borrow {
+                    val cc = TransactionContextElement(this)
+                    suspendCoroutine { con ->
+                        function.startCoroutine(this, object : Continuation<T> {
+                            override val context: CoroutineContext = con.context + cc
+                            override fun resumeWith(result: Result<T>) {
+                                con.resumeWith(result)
+                            }
+                        })
+                    }
                 }
             }
-        } else {
-            function(txContext.connection)
+            else -> try {
+                function(txContext.connection)
+            } catch (e: Throwable) {
+                if (txContext.transactionStarted) {
+                    txContext.rollbackOnly = true
+                }
+                throw e
+            }
         }
     }
 }
