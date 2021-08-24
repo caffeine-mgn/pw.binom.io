@@ -36,10 +36,8 @@ class AsyncInputWithLength(val input: AsyncInput, val length: Long) : AsyncInput
  * @return new AsyncInput with limit
  */
 fun AsyncInput.withLimit(max: Long): AsyncInputWithLength {
-    if (this is AsyncInputWithLength) {
-        if (this.length < max) {
-            return this
-        }
+    if (this is AsyncInputWithLength && this.length < max) {
+        return this
     }
     return AsyncInputWithLength(this, max)
 }

@@ -10,7 +10,7 @@ import pw.binom.strong.exceptions.StrongException
 object StrongApplication {
     fun start(vararg config: Strong.Config) {
         NetworkDispatcher().use { networkDispatcher ->
-            val initProcess = networkDispatcher.async {
+            val initProcess = networkDispatcher.startCoroutine {
                 Strong.create(
                     *(arrayOf(Strong.config { it.bean { networkDispatcher } }) + config)
                 )
@@ -26,7 +26,7 @@ object StrongApplication {
             while (!Signal.isInterrupted) {
                 networkDispatcher.select(1000)
             }
-            val destroyFuture = networkDispatcher.async {
+            val destroyFuture = networkDispatcher.startCoroutine {
                 strong.destroy()
             }
 

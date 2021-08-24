@@ -3,6 +3,7 @@ package pw.binom.network
 import pw.binom.ByteBuffer
 import pw.binom.CancelledException
 import pw.binom.io.AsyncChannel
+import pw.binom.neverFreeze
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -206,7 +207,6 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             return r
         }
         readData.full = false
-//        while (true) {
         val readed = suspendCoroutine<Int> {
             readData.continuation = it
             readData.data = dest
@@ -216,13 +216,10 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             runCatching { channel.close() }
             throw SocketClosedException()
         }
-//            if (readed == 0) {
-//                continue
-//            }
-//            if (readed < 0) {
-//                throw SocketClosedException()
-//            }
         return readed
-//        }
+    }
+
+    init {
+        neverFreeze()
     }
 }

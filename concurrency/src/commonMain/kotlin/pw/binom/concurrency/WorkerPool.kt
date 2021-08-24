@@ -4,6 +4,8 @@ import pw.binom.FreezableFuture
 import pw.binom.Future
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
+import pw.binom.coroutine.CrossThreadContinuation
+import pw.binom.coroutine.Dispatcher
 import pw.binom.doFreeze
 import pw.binom.popOrNull
 import kotlin.coroutines.*
@@ -15,13 +17,13 @@ class ExecutorServiceHolderElement(val executor: ExecutorService) : CoroutineCon
 
 object ExecutorServiceHolderKey : CoroutineContext.Key<ExecutorServiceHolderElement>
 
-@Suppress("UNCHECKED_CAST")
-class CrossThreadCoroutineElement(val crossThreadCoroutine: CrossThreadCoroutine) : CoroutineContext.Element {
-    override val key: CoroutineContext.Key<CrossThreadCoroutineElement>
-        get() = CrossThreadCoroutineKey
-}
-
-object CrossThreadCoroutineKey : CoroutineContext.Key<CrossThreadCoroutineElement>
+//@Suppress("UNCHECKED_CAST")
+//class CrossThreadCoroutineElement(val crossThreadCoroutine: CrossThreadCoroutine) : CoroutineContext.Element {
+//    override val key: CoroutineContext.Key<CrossThreadCoroutineElement>
+//        get() = CrossThreadCoroutineKey
+//}
+//
+//object CrossThreadCoroutineKey : CoroutineContext.Key<CrossThreadCoroutineElement>
 
 fun <P> asyncWithExecutor(executor: ExecutorService, f: suspend () -> P) =
     f.startCoroutine(object : Continuation<P> {
@@ -43,20 +45,20 @@ suspend fun <T> ExecutorService.useInContext(f: suspend () -> T) {
     }
 }
 
-fun ExecutorService.submitAsync(context: CoroutineContext = EmptyCoroutineContext, func: suspend () -> Unit) {
-    func.doFreeze()
-    submit {
-        val f = func
-        f.startCoroutine(object : Continuation<Unit> {
-            override val context: CoroutineContext = context + CrossThreadCoroutineElement(Worker.current!!)
+//fun ExecutorService.submitAsync(context: CoroutineContext = EmptyCoroutineContext, func: suspend () -> Unit) {
+//    func.doFreeze()
+//    submit {
+//        val f = func
+//        f.startCoroutine(object : Continuation<Unit> {
+//            override val context: CoroutineContext = context + CrossThreadCoroutineElement(WorkerImpl.current!!)
+//
+//            override fun resumeWith(result: Result<Unit>) {
+//            }
+//        })
+//    }
+//}
 
-            override fun resumeWith(result: Result<Unit>) {
-            }
-        })
-    }
-}
-
-class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
+class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, Dispatcher {
     private class State(size: Int) {
         var interotped = AtomicBoolean(false)
         val stoped = AtomicInt(size)
@@ -68,7 +70,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
     }
 
     private val state = State(size)
-    private val list = Array(size) { Worker() }
+    private val list = Array(size) { Worker.create() }
 
     fun shutdown() {
         if (state.interotped.value) {
@@ -76,7 +78,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
         }
         state.interotped.value = true
         while (state.stoped.value != 0) {
-            Worker.sleep(50)
+            sleep(50)
         }
     }
 
@@ -120,9 +122,40 @@ class WorkerPool(size: Int = Worker.availableProcessors) : ExecutorService {
         return future
     }
 
-    private data class ExecuteParams<T>(val future: FreezableFuture<T>, val worker: Worker, val f: () -> T, val state: State)
+    private data class ExecuteParams<T>(
+        val future: FreezableFuture<T>,
+        val worker: Worker,
+        val f: () -> T,
+        val state: State
+    )
 
     init {
         doFreeze()
+    }
+
+    override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
+        val future = FreezableFuture<T>()
+        submit {
+            WorkerImpl.current!!.startCoroutine(onDone = { future.resume(it) }, context = context, func = func)
+        }
+        return future
+    }
+
+    override fun <T> startCoroutine(
+        context: CoroutineContext,
+        continuation: CrossThreadContinuation<T>,
+        func: suspend () -> T
+    ) {
+        submit {
+            WorkerImpl.current!!.startCoroutine(
+                continuation = continuation,
+                context = context,
+                func = func
+            )
+        }
+    }
+
+    override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>) {
+        throw IllegalStateException("Can't resume Coroutine on Pool")
     }
 }

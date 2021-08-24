@@ -48,6 +48,9 @@ interface Future<T> {
  */
 @Suppress("UNCHECKED_CAST")
 fun <T> Future<T>.getOrException(): T {
+    if (!isDone) {
+        throw IllegalStateException("Future not completed yet")
+    }
     if (isFailure) {
         throw exceptionOrNull!!
     }
@@ -152,5 +155,9 @@ class FreezableFuture<T> : Future<T> {
         }
         _isSuccess.value = result.isSuccess
         this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
+    }
+
+    init {
+        doFreeze()
     }
 }

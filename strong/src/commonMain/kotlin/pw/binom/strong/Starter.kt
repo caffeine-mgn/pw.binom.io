@@ -52,7 +52,7 @@ internal class Starter(
     private val dd = startDefiner
     private val strongWithDeps = StrongWithDependenciesSpy(strongImpl)
 
-    private class OO(val obj: Any, val name: String, val deps: List<ClassDependency>) {
+    private class BeanConfig(val obj: Any, val name: String, val primary: Boolean, val deps: List<ClassDependency>) {
         var inited = false
         var linked = false
         var initing = false
@@ -61,7 +61,7 @@ internal class Starter(
         fun isReadyForInit() = !nodes.any { !it.inited }
         fun isReadyForLink() = !nodes.any { !it.linked }
 
-        val nodes = HashSet<OO>()
+        val nodes = HashSet<BeanConfig>()
         val resultBeanClass: KClass<out Any>
             get() {
                 if (obj is Strong.BeanFactory<out Any>) {
@@ -83,19 +83,41 @@ internal class Starter(
         }
     }
 
-    private val createdBeans = ArrayList<OO>()
+    private val createdBeans = ArrayList<BeanConfig>()
 
     private fun init() {
         val beanFromConfig = dd.getLastDefinitions().map {
             val bean = it.init(strongWithDeps)
             val deps = strongWithDeps.getLastDependencies()
-            OO(
+            BeanConfig(
                 obj = bean,
                 name = it.name,
                 deps = deps,
+                primary = it.primary,
             )
         }
         createdBeans.addAll(beanFromConfig)
+    }
+
+    private fun makeDestroysTree(): List<BeanConfig> {
+        val dd = LinkedHashSet<BeanConfig>()
+        fun ff(b: BeanConfig) {
+            if (b in dd) {
+                return
+            }
+            if (b.obj !is Strong.DestroyableBean) {
+                return
+            }
+            b.nodes.forEach {
+                ff(it)
+            }
+            dd += b
+        }
+
+        createdBeans.forEach {
+            ff(it)
+        }
+        return dd.toList()
     }
 
     private fun makeTree() {
@@ -134,7 +156,7 @@ internal class Starter(
         }
     }
 
-    private suspend fun callInit(o: OO, from: OO?) {
+    private suspend fun callInit(o: BeanConfig, from: BeanConfig?) {
         if (o.inited) {
             return
         }
@@ -152,7 +174,7 @@ internal class Starter(
         o.inited = true
     }
 
-    private suspend fun callLink(o: OO, from: OO?) {
+    private suspend fun callLink(o: BeanConfig, from: BeanConfig?) {
         if (o.linked) {
             return
         }
@@ -169,29 +191,30 @@ internal class Starter(
         if (o.obj is Strong.BeanFactory<out Any>) {
             val newBean = o.obj.provide(strongWithDeps)
             if (newBean != null) {
-                createdBeans += OO(
+                createdBeans += BeanConfig(
                     obj = newBean,
                     name = o.obj.name,
                     deps = strongWithDeps.getLastDependencies(),
+                    primary = o.primary,
                 )
             }
         }
         o.linking = false
         o.linked = true
-        strongImpl.beans[o.name] = o.obj
+        strongImpl.beans[o.name] = BeanEntity(o.obj, o.primary)
     }
 
     fun checkCycle() {
         if (createdBeans.isEmpty()) {
             return
         }
-        val objs = LinkedHashSet<OO>()
+        val objs = LinkedHashSet<BeanConfig>()
 
-        fun ff(oo: OO) {
-            if (oo in objs) {
+        fun ff(beanConfig: BeanConfig) {
+            if (beanConfig in objs) {
                 return
             }
-            oo.nodes.forEach {
+            beanConfig.nodes.forEach {
                 objs += it
                 ff(it)
             }
@@ -212,6 +235,7 @@ internal class Starter(
             init()
             makeTree()
             checkCycle()
+            strongImpl.beanOrder = makeDestroysTree().map { it.name to it.obj }
 
             strongWithDeps.initFinish()
             var listForStart = ArrayList(createdBeans)
@@ -230,7 +254,8 @@ internal class Starter(
                         } else {
                             it.inited = true
                         }
-                        strongImpl.beans[it.name] = it.obj
+                        it.obj
+                        strongImpl.beans[it.name] = BeanEntity(bean = it.obj, primary = it.primary)
                         continue@LOOP
                     }
                     if (!it.linked) {

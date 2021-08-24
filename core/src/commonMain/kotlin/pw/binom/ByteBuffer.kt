@@ -50,6 +50,16 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
     fun subBuffer(index: Int, length: Int): ByteBuffer
 }
 
+fun ByteBuffer.getOrNull(index: Int) =
+    if (index < position || index >= limit) {
+        null
+    } else {
+        get(index)
+    }
+
+val ByteBuffer.indices: IntRange
+    get() = IntRange(position, limit - 1)
+
 inline fun ByteBuffer.clone() = realloc(capacity)
 
 /**
@@ -87,6 +97,8 @@ fun ByteBuffer.writeLong(value: Long): ByteBuffer {
 fun ByteBuffer.readShort() = Short.fromBytes(this)
 fun ByteBuffer.readInt() = Int.fromBytes(this)
 fun ByteBuffer.readLong() = Long.fromBytes(this)
+fun ByteBuffer.readFloat() = Float.fromBits(readInt())
+fun ByteBuffer.readDouble() = Double.fromBits(readLong())
 
 /**
  * The Function make copy of [data] to new [ByteBuffer] and then return it.

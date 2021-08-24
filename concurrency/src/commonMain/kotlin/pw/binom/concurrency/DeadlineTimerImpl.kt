@@ -2,12 +2,15 @@ package pw.binom.concurrency
 
 import pw.binom.TimeoutException
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.coroutine.getDispatcherOrNull
 import pw.binom.doFreeze
-import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.popOrNull
 import pw.binom.utils.TreeMap
-import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.suspendCoroutine
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -18,9 +21,9 @@ private val CLOSE_MARKER: () -> Unit = {}.doFreeze()
 
 @OptIn(ExperimentalTime::class)
 class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : DeadlineTimer {
-    private val lock = Lock()
+    private val lock = ReentrantLock()
     private val condition = lock.newCondition()
-    private val worker = Worker()
+    private val worker = Worker.create()
     private val startTime = TimeSource.Monotonic.markNow()
     private val queue = ConcurrentQueue<Pair<Duration, () -> Unit>>()
     private val closedFlag = AtomicBoolean(false)
@@ -96,7 +99,7 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
 
     override suspend fun <T> timeout(delay: Duration, func: suspend () -> T): T =
         suspendCoroutine { con ->
-            val dispatcher = con.getCrossThreadCoroutine() ?: return@suspendCoroutine
+            val dispatcher = con.context.getDispatcherOrNull() ?: return@suspendCoroutine
             val functionDone = AtomicBoolean(false)
             func.startCoroutine(object : Continuation<T> {
                 override val context: CoroutineContext = con.context
@@ -110,7 +113,10 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
             val conRef = con.asReference()
             delay(delay) {
                 if (functionDone.compareAndSet(false, true)) {
-                    dispatcher.coroutine(Result.failure(TimeoutException()), conRef as Reference<Continuation<Any?>>)
+                    dispatcher.resume(
+                        result = Result.failure(TimeoutException()),
+                        continuation = conRef as Reference<Continuation<Any?>>
+                    )
                 } else {
                     conRef.close()
                 }
@@ -119,12 +125,9 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun delay(delay: Duration) {
-        suspendCoroutine<Unit> { con ->
-            val dispatcher = con.getCrossThreadCoroutine() ?: return@suspendCoroutine
-            dispatcher.doFreeze()
-            val conRef = con.asReference()
+        suspendManagedCoroutine<Unit> {
             delay(delay) {
-                dispatcher.coroutine(Result.success(Unit), conRef as Reference<Continuation<Any?>>)
+                it.coroutine(Result.success(Unit))
             }
         }
     }

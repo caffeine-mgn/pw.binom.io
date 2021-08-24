@@ -12,7 +12,13 @@ internal class InternalDefiner : Definer {
         return l
     }
 
-    override fun <T : Any> bean(clazz: KClass<T>, name: String?, ifNotExist: Boolean, bean: (Strong) -> T) {
+    override fun <T : Any> bean(
+        clazz: KClass<T>,
+        primary: Boolean,
+        name: String?,
+        ifNotExist: Boolean,
+        bean: (Strong) -> T
+    ) {
         val defName = clazz.genDefaultName()
         val defEx = alreadyDefined[name]
         if (defEx != null) {
@@ -23,6 +29,7 @@ internal class InternalDefiner : Definer {
             name = clazz.genDefaultName(),
             clazz = clazz,
             init = bean,
+            primary = primary,
         )
     }
 }

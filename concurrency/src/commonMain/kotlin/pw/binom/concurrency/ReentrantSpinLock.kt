@@ -6,7 +6,7 @@ import pw.binom.doFreeze
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-class ReentrantSpinLock {
+class ReentrantSpinLock:Lock {
     private val threadId = AtomicLong(0)
     private val count = AtomicInt(0)
 

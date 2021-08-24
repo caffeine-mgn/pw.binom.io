@@ -18,6 +18,7 @@ interface Definer {
 //    fun <T : Any> findDefine(clazz: KClass<T>, name: String? = null): T
     fun <T : Any> bean(
         clazz: KClass<T>,
+        primary: Boolean = false,
         name: String? = null,
         ifNotExist: Boolean = false,
         bean: (Strong) -> T
@@ -28,6 +29,7 @@ fun <T : Any> KClass<T>.genDefaultName() = "${this.toString().removePrefix("clas
 
 inline fun <reified T : Any> Definer.bean(
     name: String? = null,
+    primary: Boolean = false,
     ifNotExist: Boolean = false,
     noinline bean: (Strong) -> T
 ) {
@@ -36,12 +38,14 @@ inline fun <reified T : Any> Definer.bean(
         name = name,
         ifNotExist = ifNotExist,
         bean = bean,
+        primary = primary,
     )
 }
 
 inline fun <reified T : Closeable> Definer.beanClosable(
     name: String? = null,
     ifNotExist: Boolean = false,
+    primary: Boolean = false,
     noinline bean: (Strong) -> T
 ) {
     bean(
@@ -49,6 +53,7 @@ inline fun <reified T : Closeable> Definer.beanClosable(
         name = name,
         ifNotExist = ifNotExist,
         bean = bean,
+        primary = primary,
     )
     bean(name = "${T::class.genDefaultName()}_closable") {
         object : Strong.DestroyableBean {

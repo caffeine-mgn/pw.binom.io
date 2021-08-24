@@ -1,12 +1,89 @@
 package pw.binom.strong
 
 import pw.binom.strong.exceptions.StrongException
+import kotlin.properties.PropertyDelegateProvider
+import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
+
+private class LazyInitPropertyDelegateProvider<T>(val init: suspend () -> T) :
+    PropertyDelegateProvider<Strong.Bean, AfterInit<T>> {
+    lateinit var delegator: AfterInit<T>
+    override fun provideDelegate(thisRef: Strong.Bean, property: KProperty<*>): AfterInit<T> {
+        delegator = AfterInit(fieldName = property.name, init = init)
+        return delegator
+    }
+}
+
+private class AfterInit<T>(val fieldName: String, val init: suspend () -> T) : ReadOnlyProperty<Strong.Bean, T> {
+    private var inited = false
+    private var value: T? = null
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getValue(thisRef: Strong.Bean, property: KProperty<*>): T {
+        if (!inited) {
+            throw StrongException("Value not inited yet. Make sure Strong.Bean.init or Strong.Bean.link called")
+        }
+        return value as T
+    }
+
+    suspend fun initValue() {
+        if (inited) {
+            return
+        }
+        inited = true
+        value = init()
+    }
+
+}
 
 interface Strong {
-    abstract class Bean {
+    abstract class Bean : InitializingBean, LinkingBean {
         protected val strong: Strong =
             STRONG_LOCAL ?: throw IllegalStateException("Bean should be created during strong starts")
+        private var inits: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null
+        private var links: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null
+        protected fun <T> onInit(func: suspend () -> T): PropertyDelegateProvider<Strong.Bean, ReadOnlyProperty<Strong.Bean, T>> {
+            val delegateProvider = LazyInitPropertyDelegateProvider(func)
+            if (inits == null) {
+                inits = ArrayList()
+            }
+            inits!!.add(delegateProvider)
+            return delegateProvider
+        }
+
+        protected fun <T> onLink(func: suspend () -> T): PropertyDelegateProvider<Strong.Bean, ReadOnlyProperty<Strong.Bean, T>> {
+            val delegateProvider = LazyInitPropertyDelegateProvider(func)
+            if (links == null) {
+                links = ArrayList()
+            }
+            links!!.add(delegateProvider)
+            return delegateProvider
+        }
+
+        override suspend fun init(strong: Strong) {
+            inits?.forEach {
+                try {
+                    it.delegator.initValue()
+                } catch (e: Throwable) {
+                    throw StrongException("Can't init ${this::class}.${it.delegator.fieldName}", e)
+                }
+            }
+            inits?.clear()
+            inits = null
+        }
+
+        override suspend fun link(strong: Strong) {
+            links?.forEach {
+                try {
+                    it.delegator.initValue()
+                } catch (e: Throwable) {
+                    throw StrongException("Can't init ${this::class}.${it.delegator.fieldName}", e)
+                }
+            }
+            links?.clear()
+            links = null
+        }
     }
 
     companion object {

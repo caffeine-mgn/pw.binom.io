@@ -43,6 +43,7 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         CharBuffer(native.subSequence(startIndex, endIndex))
 
     override fun close() {
+        //Do nothing
     }
 
     actual override fun equals(other: Any?): Boolean =

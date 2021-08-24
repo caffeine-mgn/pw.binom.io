@@ -73,6 +73,7 @@ class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : O
     }
 
     override fun flush() {
+        //Do nothing
     }
 
     override fun close() {

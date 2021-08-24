@@ -4,7 +4,7 @@ import kotlin.reflect.KClass
 
 internal class StrongImpl : Strong {
 
-    internal var beans = HashMap<String, Any>()
+    internal var beans = HashMap<String, BeanEntity>()
 
     sealed class Dependency {
         class ClassDependency(val clazz: KClass<Any>, val name: String?, val require: Boolean) : Dependency()
@@ -18,10 +18,9 @@ internal class StrongImpl : Strong {
     fun defining() {
         internalDependencies.clear()
     }
-
     fun findBean(clazz: KClass<Any>, name: String?) =
         beans.asSequence().filter {
-            clazz.isInstance(it.value) && (name == null || it.key == name)
+            clazz.isInstance(it.value.bean) && (name == null || it.key == name)
         }
 
     override fun <T : Any> service(beanClass: KClass<T>, name: String?): ServiceProvider<T> {
@@ -61,26 +60,5 @@ internal class StrongImpl : Strong {
         TODO("Not yet implemented")
     }
 
-    private lateinit var beanOrder: List<Pair<String, Any>>
-
-//    suspend fun start(beans: List<Pair<String, Any>>) {
-//        beanOrder = beans
-//        beans.forEach {
-//            this.beans[it.first] = it.second
-//        }
-//
-//        beans.forEach {
-//            val bean = it.second
-//            if (bean is Strong.InitializingBean) {
-//                bean.init(this)
-//            }
-//        }
-//
-//        beans.forEach {
-//            val bean = it.second
-//            if (bean is Strong.LinkingBean) {
-//                bean.link(this)
-//            }
-//        }
-//    }
+    internal lateinit var beanOrder: List<Pair<String, Any>>
 }

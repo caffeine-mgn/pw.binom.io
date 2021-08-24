@@ -14,8 +14,6 @@ import kotlin.native.concurrent.AtomicInt
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
-//const val NATIVE_CHARSET = "char16_t"
-
 /**
  * Abstract Charset convertor. Uses Iconv native library
  */
