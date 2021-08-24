@@ -1,3 +1,4 @@
+import pw.binom.eachKotlinCompile
 import java.util.*
 
 plugins {
@@ -140,7 +141,7 @@ kotlin {
             dependsOn(commonTest)
         }
 
-        val jsTest by getting{
+        val jsTest by getting {
             dependencies {
                 api(kotlin("test-js"))
             }
@@ -149,32 +150,10 @@ kotlin {
 }
 
 tasks {
-
-    fun createTaskNow(target: String) = create("generateTestDateTime$target") {
+    fun generateDate() {
         val sourceDir = project.buildDir.resolve("gen/pw/binom/date")
         sourceDir.mkdirs()
         val versionSource = sourceDir.resolve("test_data.kt")
-        outputs.files(versionSource)
-        inputs.property("version", project.version)
-
-        doLast {
-            versionSource.writeText(
-                """package pw.binom.date
-            
-val test_data_currentTZ get() = ${TimeZone.getDefault().rawOffset.let { it / 1000 / 60 }}
-val test_data_now get() = ${Date().time}
-"""
-            )
-        }
-    }
-/*
-    val generateTestData = create("generateTestDateTim") {
-        val sourceDir = project.buildDir.resolve("gen/pw/binom/date")
-        sourceDir.mkdirs()
-        val versionSource = sourceDir.resolve("test_data.kt")
-        outputs.files(versionSource)
-        inputs.property("version", project.version)
-
         versionSource.writeText(
             """package pw.binom.date
             
@@ -183,44 +162,12 @@ val test_data_now get() = ${Date().time}
 """
         )
     }
-    */
 
-    val mingwX64Test by getting {
-        dependsOn(createTaskNow("MingwX64"))
-    }
-    val linuxX64Test by getting {
-        dependsOn(createTaskNow("LinuxX64"))
-    }
-    val jvmTest by getting {
-        dependsOn(createTaskNow("Jvm"))
-    }
 
-    val macosX64Test by getting {
-        dependsOn(createTaskNow("MacosX64"))
-    }
-
-    val jsLegacyBrowserTest by getting {
-        dependsOn(createTaskNow("JsLegacyBrowser"))
-    }
-
-    val jsLegacyNodeTest by getting {
-        dependsOn(createTaskNow("JsLegacyNode"))
-    }
-
-    val jsLegacyTest by getting {
-        dependsOn(createTaskNow("JsLegacy"))
-    }
-
-    val jsIrTest by getting {
-        dependsOn(createTaskNow("JsIr"))
-    }
-
-    val jsIrNodeTest by getting {
-        dependsOn(createTaskNow("JsIrNode"))
-    }
-
-    val jsIrBrowserTest by getting {
-        dependsOn(createTaskNow("JsIrBrowser"))
+    eachKotlinCompile {
+        it.doFirst {
+            generateDate()
+        }
     }
 }
 apply<pw.binom.plugins.DocsPlugin>()

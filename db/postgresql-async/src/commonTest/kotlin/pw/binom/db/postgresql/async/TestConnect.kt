@@ -2,7 +2,6 @@ package pw.binom.db.postgresql.async
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
-import pw.binom.async
 import pw.binom.charset.Charsets
 import pw.binom.date.parseIso8601Date
 import pw.binom.db.ResultSet
@@ -172,6 +171,35 @@ class TestConnect {
             } catch (e: PostgresqlException) {
                 //ok
             }
+        }
+    }
+
+    @Test
+    fun portalCloseTestTest() {
+        pg { connect ->
+            connect.executeUpdate(
+                """
+create table member_tag
+(
+	member_id bigint not null,
+	tag_id bigint not null,
+	constraint member_tag_pkey
+		primary key (member_id, tag_id)
+);
+            """
+            )
+            connect.beginTransaction()
+            connect.prepareStatement("delete from member_tag where member_id=? and tag_id=?").use { ps ->
+                ps.set(0, 0)
+                ps.set(1, 0)
+                repeat(30) {
+                    ps.executeUpdate()
+                    ps.executeUpdate()
+                    ps.executeUpdate()
+                    ps.executeUpdate()
+                }
+            }
+            connect.commit()
         }
     }
 

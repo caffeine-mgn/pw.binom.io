@@ -11,11 +11,11 @@ class DescribeMessage: KindedMessage {
     override fun write(writer: PackageWriter) {
         writer.writeCmd(MessageKinds.Describe)
         writer.startBody()
-        writer.writeByte(if (portal) 'P'.toByte() else 'S'.toByte())
+        writer.writeByte(if (portal) 'P'.code.toByte() else 'S'.code.toByte())
         writer.writeCString(statement)
         writer.endBody()
     }
 
     var statement: String = ""
-    var portal=true
+    var portal = true
 }
