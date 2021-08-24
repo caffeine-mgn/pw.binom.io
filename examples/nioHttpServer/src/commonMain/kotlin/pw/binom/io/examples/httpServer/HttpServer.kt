@@ -5,6 +5,7 @@ import pw.binom.async
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.seconds
@@ -14,7 +15,7 @@ fun main(args: Array<String>) {
     val nioManager = NetworkDispatcher()
     val server = nioManager.bindTcp(NetworkAddress.Immutable(port = 8080))
     val pool = ByteBufferPool(10)
-    var time = 0.seconds
+    var time = Duration.seconds(0)
     var count = 0L
     async {
         while (true) {

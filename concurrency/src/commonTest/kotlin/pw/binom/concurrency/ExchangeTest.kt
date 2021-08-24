@@ -22,10 +22,10 @@ private var done1 by AtomicBoolean(false)
 private var done2 by AtomicBoolean(false)
 
 @SharedImmutable
-private val exchange1 = Exchange<ObjectTree<Data>>()
+private val exchange1 = BlockingExchange<ObjectTree<Data>>()
 
 @SharedImmutable
-private val exchange2 = Exchange<ObjectTree<Data>>()
+private val exchange2 = BlockingExchange<ObjectTree<Data>>()
 
 @SharedImmutable
 private var exceptionExist by AtomicBoolean(false)
@@ -36,8 +36,8 @@ class ExchangeTest {
     fun passTest() {
         exchange1.doFreeze()
         exchange2.doFreeze()
-        val w1 = Worker()
-        val w2 = Worker()
+        val w1 = Worker.create()
+        val w2 = Worker.create()
 
         w1.execute(null) {
             println("w1->1")
@@ -76,7 +76,7 @@ class ExchangeTest {
         }
 
         while (!done1 || !done2) {
-            Worker.sleep(100)
+            sleep(100)
         }
         if (exceptionExist) {
             fail("Exception in Worker1")
@@ -86,7 +86,7 @@ class ExchangeTest {
     @OptIn(ExperimentalTime::class)
     @Test
     fun getDelayTest() {
-        val e = Exchange<Int>()
+        val e = BlockingExchange<Int>()
         val now = TimeSource.Monotonic.markNow()
         e.get(Duration.seconds(1))
         val duration = now.elapsedNow().inWholeMilliseconds
@@ -97,10 +97,10 @@ class ExchangeTest {
     @OptIn(ExperimentalTime::class)
     @Test
     fun getDelayTest2() {
-        val e = Exchange<Int>()
-        val w = Worker()
+        val e = BlockingExchange<Int>()
+        val w = Worker.create()
         w.execute(e) {e->
-            Worker.sleep(500)
+            sleep(500)
             e.put(100)
         }
         val now = TimeSource.Monotonic.markNow()

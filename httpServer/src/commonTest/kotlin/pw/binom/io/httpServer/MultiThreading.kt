@@ -2,6 +2,7 @@ package pw.binom.io.httpServer
 
 import pw.binom.*
 import pw.binom.concurrency.*
+import pw.binom.coroutine.fork
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.BaseHttpClient
@@ -81,7 +82,7 @@ class MultiThreading {
             }
         }
 
-        val inOrder = nd.async(worker) {
+        val inOrder = nd.startCoroutine {
             try {
                 println("Start in order")
                 val totalTime = measureTime {
@@ -101,9 +102,9 @@ class MultiThreading {
             }
         }
 //        val inParallel=Future2.success(Future2.success(1.0.seconds))
-        val inParallel = nd.async {
-            val callTime1 = nd.async { makeCall("inParallel-1") }
-            val callTime2 = nd.async { makeCall("inParallel-2") }
+        val inParallel = nd.startCoroutine {
+            val callTime1 = fork { makeCall("inParallel-1") }
+            val callTime2 = fork { makeCall("inParallel-2") }
             measureTime {
                 callTime1.join()
                 callTime2.join()
@@ -130,7 +131,7 @@ class MultiThreading {
 
 fun <T> Future<T>.join(deley: Long = 50L): T {
     while (!isDone) {
-        Worker.sleep(deley)
+        sleep(deley)
     }
     if (isFailure) {
         throw exceptionOrNull!!

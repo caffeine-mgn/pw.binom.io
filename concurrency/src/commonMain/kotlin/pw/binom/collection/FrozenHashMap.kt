@@ -1,7 +1,9 @@
-package pw.binom.concurrency
+package pw.binom.collection
 
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
 import pw.binom.doFreeze
 import kotlin.math.absoluteValue
 

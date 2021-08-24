@@ -1,8 +1,10 @@
 package pw.binom.io.httpServer
 
 import pw.binom.concurrency.Worker
-import pw.binom.concurrency.execute
+import pw.binom.concurrency.WorkerImpl
+import pw.binom.concurrency.create
 import pw.binom.concurrency.sleep
+import pw.binom.coroutine.start
 import pw.binom.getOrException
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.BaseHttpClient
@@ -29,7 +31,7 @@ class KeepAliveTest {
 
     @Test
     fun test() {
-        val w = Worker()
+        val w = Worker.create()
         val nd = NetworkDispatcher()
         val server = HttpServer(
             manager = nd,
@@ -40,15 +42,15 @@ class KeepAliveTest {
         val addr = NetworkAddress.Immutable("127.0.0.1", port)
         server.bindHttp(addr)
 
-        val d = nd.async {
+        val d = nd.startCoroutine {
             val client = BaseHttpClient(nd)
             client.connect(HTTPMethod.GET.code, "http://127.0.0.1:${addr.port}".toURI()).getResponse().readText()
                 .use { it.readText() }
             assertEquals(1, server.idleConnectionSize)
             server.forceIdleCheck()
             assertEquals(1, server.idleConnectionSize)
-            execute(w) {
-                Worker.sleep(1500)
+            w.start {
+                sleep(1500)
             }
             assertEquals(1, server.forceIdleCheck())
             assertEquals(0, server.idleConnectionSize)

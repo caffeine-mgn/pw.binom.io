@@ -22,7 +22,7 @@ class TestAsyncBaseHttpClient {
         val client = BaseHttpClient(manager)
         manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", 34636))
         val now = TimeSource.Monotonic.markNow()
-        val e = manager.async {
+        val e = manager.startCoroutine {
             try {
                 client.connect(HTTPMethod.GET, "http://127.0.0.1:34636".toURI(), Duration.seconds(3))
                     .getResponse()

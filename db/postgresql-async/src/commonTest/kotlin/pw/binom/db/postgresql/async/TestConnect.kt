@@ -19,7 +19,7 @@ class TestConnect {
     //    @Test
     fun test() {
         val manager = NetworkDispatcher()
-        async {
+        manager.startCoroutine {
             try {
                 val con = PGConnection.connect(
                     address = NetworkAddress.Immutable(

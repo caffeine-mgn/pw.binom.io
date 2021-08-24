@@ -1,13 +1,16 @@
 package pw.binom.io.httpServer.websocket
 
 import pw.binom.concurrency.joinAndGetOrThrow
-import pw.binom.io.*
+import pw.binom.io.bufferedAsciiReader
+import pw.binom.io.bufferedAsciiWriter
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpClient.BaseHttpClient
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpServer
+import pw.binom.io.readText
+import pw.binom.io.use
 import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -39,7 +42,7 @@ class WebSocketTest {
         val server = HttpServer(manager, TestWebSocketHandler(testMsg))
         server.bindHttp(NetworkAddress.Immutable(host = "0.0.0.0", port = port))
 
-        val f = manager.async {
+        val f = manager.startCoroutine {
             val cl = BaseHttpClient(manager)
             val con = cl.connect(HTTPMethod.GET.code, "http://127.0.0.1:$port".toURI()).startWebSocket()
             con.write(MessageType.TEXT).bufferedAsciiWriter().use { it.append(testMsg) }

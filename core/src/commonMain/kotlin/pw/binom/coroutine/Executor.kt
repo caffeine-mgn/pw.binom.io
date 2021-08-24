@@ -1,4 +1,4 @@
-package pw.binom.concurrency
+package pw.binom.coroutine
 
 interface Executor {
     fun execute(func: suspend () -> Unit)

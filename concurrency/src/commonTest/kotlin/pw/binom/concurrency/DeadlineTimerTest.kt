@@ -34,7 +34,7 @@ class DeadlineTimerTest {
         deadlineTimer.delay(Duration.seconds(6)) {
             f4 = now.elapsedNow()
         }
-        Worker.sleep(4000)
+        sleep(4000)
         assertNotNull(f1)
         assertNotNull(f2)
         assertNotNull(f3)
@@ -55,11 +55,11 @@ class DeadlineTimerTest {
             f1 = now.elapsedNow()
         }
 
-        Worker.sleep(1000)
+        sleep(1000)
         deadlineTimer.delay(Duration.Companion.seconds(1)) {
             f2 = now.elapsedNow()
         }
-        Worker.sleep(2000)
+        sleep(2000)
         assertNotNull(f1)
         assertNotNull(f2)
         assertTrue(f1!! >= Duration.seconds(2) && f1!! < Duration.seconds(2.1))
@@ -70,7 +70,7 @@ class DeadlineTimerTest {
     fun asyncDelayTest() {
         val nd = NetworkDispatcher()
         val deadlineTimer = DeadlineTimerImpl()
-        val future = nd.async {
+        val future = nd.startCoroutine {
             val now = TimeSource.Monotonic.markNow()
             val currentThread = ThreadRef()
             deadlineTimer.delay(Duration.seconds(1))
@@ -89,17 +89,18 @@ class DeadlineTimerTest {
         val deadlineTimer = DeadlineTimerImpl()
         val nd = NetworkDispatcher()
 
-        val d1 = nd.async {
+        val d1 = nd.startCoroutine {
             deadlineTimer.delay(Duration.seconds(1.1))
         }
-        val d2 = nd.async {
+        val d2 = nd.startCoroutine {
             deadlineTimer.delay(Duration.seconds(1.2))
         }
-        val d3 = nd.async {
+        val d3 = nd.startCoroutine {
             deadlineTimer.delay(Duration.seconds(1))
         }
 
         while (!d1.isDone || !d2.isDone || !d3.isDone) {
+//            println("d1=${d1.isDone}, d2=${d2.isDone}, d3=${d3.isDone}")
             nd.select(100)
         }
         d1.joinAndGetOrThrow()

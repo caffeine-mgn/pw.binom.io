@@ -18,7 +18,7 @@ class IdentityServerTest {
     fun test() {
         val manager = NetworkDispatcher()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 1)
-        val done = async2 {
+        val done = manager.startCoroutine {
             val server = HttpServer(
                 manager = manager,
                 handler = Handler {

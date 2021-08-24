@@ -1,14 +1,14 @@
 package pw.binom.io.httpClient
 
-import pw.binom.net.URI
 import pw.binom.charset.Charsets
-import pw.binom.io.IOException
 import pw.binom.crypto.Sha1MessageDigest
+import pw.binom.io.IOException
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
+import pw.binom.net.URI
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -169,7 +169,8 @@ class DefaultHttpRequest constructor(
         return ClientWebSocketConnection(
             input = channel.reader,
             output = channel.writer,
-            rawConnection = channel.channel
+            rawConnection = channel.channel,
+            networkDispatcher = client.networkDispatcher,
         )
     }
 

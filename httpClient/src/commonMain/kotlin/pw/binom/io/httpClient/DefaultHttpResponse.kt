@@ -37,7 +37,7 @@ class DefaultHttpResponse(
         ): HttpResponse {
             var headerReadFlag = false
             if (timeout != null) {
-                client.networkDispatcher.async {
+                client.networkDispatcher.startCoroutine {
                     client.deadlineTimer.delay(timeout)
                     if (!headerReadFlag) {
                         client.interruptAndClose(channel)

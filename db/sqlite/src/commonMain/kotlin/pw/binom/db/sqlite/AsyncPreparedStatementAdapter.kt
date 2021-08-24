@@ -3,10 +3,8 @@ package pw.binom.db.sqlite
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
-import pw.binom.concurrency.Reference
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.asReference
-import pw.binom.concurrency.execute
+import pw.binom.concurrency.*
+import pw.binom.coroutine.start
 import pw.binom.date.Date
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
@@ -25,73 +23,73 @@ class AsyncPreparedStatementAdapter(
     }
 
     override suspend fun set(index: Int, value: BigInteger) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: BigDecimal) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Double) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Float) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Int) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Long) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: String) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Boolean) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: ByteArray) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Date) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun setNull(index: Int) {
-        execute(worker) {
+        worker.start {
             ref.value.setNull(index)
         }
     }
 
     override suspend fun executeQuery(): AsyncResultSet {
-        val out = execute(worker) {
+        val out = worker.start {
             val r = ref.value.executeQuery()
             r.asReference() to r.columns
         }
@@ -103,14 +101,14 @@ class AsyncPreparedStatementAdapter(
     }
 
     override suspend fun setValue(index: Int, value: Any?) {
-        execute(worker) {
+        worker.start {
             ref.value.setValue(index, value)
         }
     }
 
     override suspend fun executeQuery(vararg arguments: Any?): AsyncResultSet {
         arguments.doFreeze()
-        val out = execute(worker) {
+        val out = worker.start {
             val r = ref.value.executeQuery(*arguments)
             r.asReference() to r.columns
         }
@@ -123,24 +121,24 @@ class AsyncPreparedStatementAdapter(
 
     override suspend fun executeUpdate(vararg arguments: Any?): Long {
         arguments.doFreeze()
-        return execute(worker) {
+        return worker.start {
             ref.value.executeUpdate(*arguments)
         }
     }
 
     override suspend fun set(index: Int, value: UUID) {
-        execute(worker) {
+        worker.start {
             ref.value.set(index, value)
         }
     }
 
     override suspend fun executeUpdate(): Long =
-        execute(worker) {
+        worker.start {
             ref.value.executeUpdate()
         }
 
     override suspend fun asyncClose() {
-        execute(worker) {
+        worker.start {
             ref.value.close()
         }
         ref.close()

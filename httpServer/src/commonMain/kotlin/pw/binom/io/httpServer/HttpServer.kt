@@ -5,10 +5,7 @@ import pw.binom.System
 import pw.binom.date.Date
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
-import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
-import pw.binom.network.SocketClosedException
-import pw.binom.network.TcpServerConnection
+import pw.binom.network.*
 
 interface Handler {
     suspend fun request(req: HttpRequest)
@@ -96,7 +93,7 @@ class HttpServer(
     }
 
     internal fun clientProcessing(channel: ServerAsyncAsciiChannel, isNewConnect: Boolean) {
-        manager.async {
+        manager.startCoroutine {
             try {
                 val req = HttpRequest2Impl.read(channel = channel, server = this, isNewConnect = isNewConnect)
                 handler.request(req)
@@ -113,7 +110,7 @@ class HttpServer(
     fun bindHttp(address: NetworkAddress): Closeable {
         val server = manager.bindTcp(address)
         binds += server
-        manager.async {
+        manager.startCoroutine {
             while (!closed) {
                 var channel: ServerAsyncAsciiChannel? = null
                 try {

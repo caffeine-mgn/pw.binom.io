@@ -1,9 +1,9 @@
 package pw.binom.network
 
 import pw.binom.*
-import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.*
-import kotlin.native.concurrent.SharedImmutable
+import pw.binom.coroutine.fork
+import pw.binom.coroutine.start
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,18 +17,18 @@ class TcpConnectionTest {
         val nd = NetworkDispatcher()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 100)
         val address = NetworkAddress.Immutable("127.0.0.1", port)
-        val worker = Worker()
+        val worker = Worker.create()
         val spinLock = SpinLock()
-        val r = nd.async {
+        val r = nd.startCoroutine {
             val server = nd.bindTcp(address)
-            Worker.sleep(500)
+            sleep(500)
             val client = nd.tcpConnect(address)
-
-            nd.async {
+            fork {
                 try {
                     spinLock.synchronize {
                         println("Try read...")
                         val readed = ByteBuffer.alloc(5) {
+                            println("try read...")
                             client.read(it)
                         }
                         println("Reded $readed")
@@ -39,12 +39,13 @@ class TcpConnectionTest {
                     e.printStackTrace()
                 }
             }
-
+println("Wait client connect")
             val remoteClient = server.accept()!!
+            println("Client connected")
             server.close()
             ByteBuffer.alloc(10) { buf ->
                 remoteClient.write(buf)
-                execute(worker) {
+                worker.start {
                     spinLock.lock()
                     spinLock.unlock()
                 }
@@ -66,7 +67,7 @@ class TcpConnectionTest {
         while (!r.isDone) {
             nd.select(100)
         }
-        r.getOrException()
+        r.joinAndGetOrThrow()
     }
 
     @Test
@@ -74,18 +75,18 @@ class TcpConnectionTest {
         val nd = NetworkDispatcher()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 100)
 
-        val worker = Worker()
+        val worker = Worker.create()
 
-        val r = nd.async {
+        val r = nd.startCoroutine {
             val server = nd.bindTcp(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
 
             val newClient = server.accept()!!
             newClient.useReference { ref ->
-                execute(worker) {
+                worker.start {
                     println("net thread...   ${ref.owner.same}")
                     assertFalse(ref.owner.same)
                     println("Wait send...")
-                    network {
+                    nd.start {
                         println("Wait net thread...")
                         val buf = ByteBuffer.alloc(10)
                         val connection = ref.value
@@ -97,7 +98,7 @@ class TcpConnectionTest {
             }
         }
 
-        val r2 = nd.async {
+        val r2 = nd.startCoroutine{
             val client = nd.tcpConnect(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
             val b = ByteBuffer.alloc(10)
             println("Reading...")

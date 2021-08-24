@@ -1,10 +1,8 @@
 package pw.binom.db.sqlite
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import pw.binom.concurrency.Reference
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.execute
-import pw.binom.concurrency.joinAndGetOrThrow
+import pw.binom.concurrency.*
+import pw.binom.coroutine.start
 import pw.binom.date.Date
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.sync.SyncResultSet
@@ -12,7 +10,7 @@ import pw.binom.db.sync.SyncResultSet
 class AsyncResultSetAdapter(val ref: Reference<SyncResultSet>, val worker: Worker, override val columns: List<String>) :
     AsyncResultSet {
     override suspend fun next(): Boolean =
-        execute(worker) {
+        worker.start {
             ref.value.next()
         }
 
@@ -112,7 +110,7 @@ class AsyncResultSetAdapter(val ref: Reference<SyncResultSet>, val worker: Worke
         }.joinAndGetOrThrow()
 
     override suspend fun asyncClose() {
-        execute(worker) {
+        worker.start {
             ref.value.close()
         }
         ref.close()

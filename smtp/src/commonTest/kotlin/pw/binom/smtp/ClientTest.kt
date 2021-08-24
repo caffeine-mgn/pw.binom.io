@@ -30,7 +30,7 @@ class ClientTest {
     fun test() {
         val networkDispatcher = NetworkDispatcher()
 
-        val feature = async2 {
+        val feature = networkDispatcher.startCoroutine {
             val client = SMTPClient.tls(
                 dispatcher = networkDispatcher,
                 address = NetworkAddress.Immutable("smtp.yandex.ru", 465),

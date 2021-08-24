@@ -1,7 +1,7 @@
 package pw.binom.logger
 
 import pw.binom.atomic.AtomicReference
-import pw.binom.concurrency.FrozenHashMap
+import pw.binom.collection.FrozenHashMap
 
 /**
  * Logger class

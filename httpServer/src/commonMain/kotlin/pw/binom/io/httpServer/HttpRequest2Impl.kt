@@ -188,7 +188,8 @@ internal class HttpRequest2Impl(
         return ServerWebSocketConnection(
             input = channel.reader,
             output = channel.writer,
-            rawConnection = channel.channel
+            rawConnection = channel.channel,
+            networkDispatcher = server.manager,
         )
     }
 
