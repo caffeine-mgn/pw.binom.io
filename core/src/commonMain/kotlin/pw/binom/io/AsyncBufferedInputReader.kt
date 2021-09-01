@@ -67,9 +67,7 @@ class AsyncBufferedInputReader private constructor(
     private val output = CharBuffer.alloc(charBufferSize).empty()
     private var eof = false
 
-//    private val buffer = pool.borrow().empty()
-
-    private suspend fun full() {
+    private suspend fun full(): Boolean {
         if (eof) {
             return
         }

@@ -35,14 +35,6 @@ class StrongTest {
     class VV
 
     @Test
-    fun ss(){
-        OO::class.isInstance()
-        val oo = OO::class::class.safeCast(Client::class)
-        val oo2 = VV::class::class.safeCast(Client::class)
-        println("oo=$oo   oo2=$oo2   ${Client::class==OO::class}")
-    }
-
-    @Test
     fun aa() {
         val cc = async2 {
             class A : Strong.InitializingBean {

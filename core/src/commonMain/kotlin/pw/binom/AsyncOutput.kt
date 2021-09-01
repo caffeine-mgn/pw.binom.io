@@ -36,22 +36,6 @@ fun Output.asyncOutput() = object : AsyncOutput {
     }
 }
 
-//suspend fun Input.copyTo(output: AsyncOutput, pool: ObjectPool<ByteDataBuffer>) {
-//    val buf = pool.borrow()
-//    try {
-//        while (true) {
-//            val len = read(buf, 0, buf.size)
-//            if (len <= 0) {
-//                break
-//            }
-//            output.write(buf, 0, len)
-//        }
-//        output.flush()
-//    } finally {
-//        pool.recycle(buf)
-//    }
-//}
-
 suspend fun AsyncOutput.writeUtf8Char(buffer: ByteBuffer, value: Char) {
     buffer.clear()
     UTF8.unicodeToUtf8(value, buffer)
@@ -118,9 +102,11 @@ object NullAsyncOutput : AsyncOutput {
     }
 
     override suspend fun asyncClose() {
+        //Do nothing
     }
 
     override suspend fun flush() {
+        //Do nothing
     }
 
 }
