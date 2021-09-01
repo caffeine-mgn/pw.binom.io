@@ -18,34 +18,6 @@ value class Query internal constructor(val raw: String) {
         /**
          * Creates new query from [map]
          */
-        @JvmName("new2")
-        fun new(map: Map<String, List<String?>>): Query {
-            val sb = StringBuilder()
-            var first = true
-            map.forEach {
-                if (it.value.isEmpty()) {
-                    return@forEach
-                }
-                if (!first) {
-                    sb.append("&")
-                }
-                first = false
-                it.value.forEach { value ->
-                    sb.append(
-                        if (value == null) {
-                            UTF8.encode(it.key)
-                        } else {
-                            "${UTF8.encode(it.key)}=${UTF8.encode(value)}"
-                        }
-                    )
-                }
-            }
-            return sb.toString().toQuery
-        }
-
-        /**
-         * Creates new query from [map]
-         */
         fun new(map: Map<String, String?>): Query {
             val sb = StringBuilder()
             var first = true
@@ -81,6 +53,10 @@ value class Query internal constructor(val raw: String) {
         }
     }
 
+    /**
+     * Calls [func] for each variables. Keep in mind [func] can call for same variable several times. In this case
+     * you should take last value of this variable
+     */
     fun search(func: (key: String, value: String?) -> Boolean) {
         if (raw.isEmpty()) {
             return
@@ -94,23 +70,6 @@ value class Query internal constructor(val raw: String) {
                 if (func(UTF8.decode(items[0]), items.getOrNull(1)?.let { UTF8.decode(it) }))
                     return
             }
-    }
-
-    /**
-     * Search first query param named as [key]. If [key] not found returns null
-     *
-     * Also perhaps key found, but value is null. In this case result will be null
-     */
-    fun firstOrNull(key: String): String? {
-        var result: String? = null
-        search { qkey, value ->
-            if (qkey == key) {
-                result = value
-                return@search false
-            }
-            return@search true
-        }
-        return result
     }
 
     /**
@@ -130,37 +89,11 @@ value class Query internal constructor(val raw: String) {
     }
 
     /**
-     * Returns all values of [key]
+     * Search all values and keys and store them in to [dst]. Default value of [dst] is new [HashMap]
      */
-    fun findAll(key: String): List<String?> {
-        val result = ArrayList<String?>()
-        search { qkey, value ->
-            if (key == qkey) {
-                result += value
-            }
-            true
-        }
-        return result
-    }
-
-    /**
-     * Search all values and keys and store them in to [dst]. Default value of [dst] is [HashMap]
-     */
-    fun toMap(dst: MutableMap<String, ArrayList<String?>> = HashMap()): Map<String, List<String?>> {
+    fun toMap(dst: MutableMap<String, String?> = HashMap()): Map<String, String?> {
         search { key, value ->
-            dst.getOrPut(key) { ArrayList() }.add(value)
-            false
-        }
-        return dst
-    }
-
-    /**
-     * Search all values and keys and store them in to [dst]. Default value of [dst] is [HashMap]
-     * If some key has several values will store in to [dst] last value
-     */
-    fun toDistinctMap(dst: MutableMap<String, String?> = HashMap()): Map<String, String?> {
-        search { key, value ->
-            dst[key] = value
+            dst[key]=value
             false
         }
         return dst

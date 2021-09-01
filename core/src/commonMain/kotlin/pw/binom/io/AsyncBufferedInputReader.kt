@@ -67,23 +67,32 @@ class AsyncBufferedInputReader private constructor(
     private val output = CharBuffer.alloc(charBufferSize).empty()
     private var eof = false
 
+    init {
+        buffer.empty()
+    }
+
     private suspend fun full(): Boolean {
         if (eof) {
-            return
+            return false
         }
-        if (buffer.remaining == 0) {
+        if (buffer.remaining > 0) {
+            buffer.compact()
+        } else {
             buffer.clear()
-            val r = input.read(buffer)
-            if (r == 0) {
-                eof = true
-            }
-            buffer.flip()
         }
+        val r = input.read(buffer)
+        if (r == 0) {
+            eof = true
+        }
+        buffer.flip()
+        return !eof
     }
 
     private suspend fun prepareBuffer() {
         if (output.remaining == 0) {
-            full()
+            if (!full()) {
+                return
+            }
             output.clear()
             if (decoder.decode(buffer, output) == CharsetTransformResult.MALFORMED) {
                 throw IOException("Input string is malformed")
