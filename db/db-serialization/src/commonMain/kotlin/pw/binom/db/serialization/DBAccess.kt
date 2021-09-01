@@ -56,6 +56,7 @@ interface DBAccess {
         serializer: KSerializer<T>,
         value: T,
         tableName: String? = null,
+        includeColumns: Array<String> = emptyArray(),
         excludeColumns: Array<String> = emptyArray(),
         byColumns: Array<String> = emptyArray()
     ): Boolean
@@ -73,12 +74,14 @@ suspend inline fun <reified T : Any> DBAccess.updateEntity(
     tableName: String? = null,
     byColumns: Array<String> = emptyArray(),
     excludeColumns: Array<String> = emptyArray(),
+    includeColumns: Array<String> = emptyArray(),
 ) =
     updateEntity(
         serializer = T::class.serializer(),
         value = value,
         tableName = tableName,
         excludeColumns = excludeColumns,
+        includeColumns = includeColumns,
         byColumns = byColumns
     )
 

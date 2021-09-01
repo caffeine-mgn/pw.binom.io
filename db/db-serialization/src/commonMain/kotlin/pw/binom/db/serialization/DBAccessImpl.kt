@@ -202,6 +202,7 @@ internal class DBAccessImpl(
         serializer: KSerializer<T>,
         value: T,
         tableName: String?,
+        includeColumns: Array<String>,
         excludeColumns: Array<String>,
         byColumns: Array<String>,
     ): Boolean {
@@ -212,6 +213,7 @@ internal class DBAccessImpl(
             SQLSerialization.updateQuery(
                 serializer = serializer,
                 excludes = (if (byColumns.isEmpty()) setOf(id) else setOf(*byColumns)) + excludeColumns,
+                includes = includeColumns.toSet(),
                 tableName = tableName
             )
         )
@@ -223,9 +225,23 @@ internal class DBAccessImpl(
                 if (index != 0) {
                     sb.append(" and ")
                 }
-                sb.append("$s=:$s")
+                val el = serializer.descriptor.getElementIndex(s)
+                if (el == CompositeDecoder.UNKNOWN_NAME) {
+                    throw IllegalArgumentException("Column \"$s\" not found in ${serializer.descriptor.serialName}")
+                }
+                serializer.descriptor.getElementAnnotations(el)
+                val useQuotes = serializer.descriptor.getElementAnnotations(el).any { it is UseQuotes }
+                if (useQuotes) {
+                    sb.append("\"")
+                }
+                sb.append("$s")
+                if (useQuotes) {
+                    sb.append("\"")
+                }
+                sb.append("=:$s")
             }
         }
+        println("Update ${serializer.descriptor.serialName} to $value. Query $sb, args: ${values.toMap()}")
         return update(query = sb.toString(), args = values) >= 1L
     }
 

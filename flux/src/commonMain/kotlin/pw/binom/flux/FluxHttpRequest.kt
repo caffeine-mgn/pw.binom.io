@@ -7,7 +7,7 @@ import pw.binom.io.httpServer.HttpRequest
 
 interface FluxHttpRequest : HttpRequest {
     val pathVariables: Map<String, String>
-    val queryVariables: Map<String, List<String?>>
+    val queryVariables: Map<String, String?>
     suspend fun <T : Any> readRequest(serializer: KSerializer<T>): T
     suspend fun <T : Any> finishResponse(
         serializer: KSerializer<T>,

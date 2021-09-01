@@ -223,14 +223,19 @@ class SQLSerialization(val serializersModule: SerializersModule = SqlSerializers
         value: T,
         columnPrefix: String? = null,
     ): HashMap<String, Any?> {
-        val map = HashMap<String, Any?>()
-        buildSqlNamedParamsTo(
-            serializer = serializer,
-            value = value,
-            map = map,
-            columnPrefix = columnPrefix,
-        )
-        return map
+        try {
+            val map = HashMap<String, Any?>()
+            buildSqlNamedParamsTo(
+                serializer = serializer,
+                value = value,
+                map = map,
+                columnPrefix = columnPrefix,
+            )
+            return map
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
+        }
     }
 
     fun <T : Any> nameParams(

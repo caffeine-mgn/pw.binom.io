@@ -35,7 +35,7 @@ class SQLValueEncoder(
     }
 
     override fun encodeBoolean(value: Boolean) {
-        TODO("Not yet implemented")
+        map[columnName] = value
     }
 
     override fun encodeByte(value: Byte) {

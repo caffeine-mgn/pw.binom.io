@@ -51,8 +51,9 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
         val v = visitors.peek()
         val data = StringBuilder()
         while (true) {
-            if (!lexer.next())
-                TODO()
+            if (!lexer.next()) {
+                throw EOFException("on line ${lexer.line}:${lexer.column}")
+            }
             if (lexer.tokenType == TokenType.RIGHT_BRACKET) {
                 if (!lexer.next())
                     TODO()
