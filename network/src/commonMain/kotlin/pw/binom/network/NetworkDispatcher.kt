@@ -39,15 +39,22 @@ class NetworkDispatcher : Dispatcher, Closeable {
     }
 
     override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
-        val feature = FreezableFuture<T>()
+        val future = FreezableFuture<T>()
         startCoroutine(
             context = context,
             func = func,
             onDone = {
-                feature.resume(it)
+                try {
+                    future.resume(it)
+                } catch (e: Throwable) {
+                    if (it.isFailure) {
+                        e.addSuppressed(it.exceptionOrNull()!!)
+                    }
+                    throw e
+                }
             }
         )
-        return feature
+        return future
     }
 
     override fun <T> startCoroutine(
@@ -59,7 +66,7 @@ class NetworkDispatcher : Dispatcher, Closeable {
             context = context,
             func = func,
             onDone = {
-                continuation.coroutine(it)
+                continuation.resumeWith(it)
             }
         )
     }

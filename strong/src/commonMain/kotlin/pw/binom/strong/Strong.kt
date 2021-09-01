@@ -43,7 +43,12 @@ interface Strong {
             STRONG_LOCAL ?: throw IllegalStateException("Bean should be created during strong starts")
         private var inits: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null
         private var links: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null
+        private var inited = false
+        private var linked = false
         protected fun <T> onInit(func: suspend () -> T): PropertyDelegateProvider<Strong.Bean, ReadOnlyProperty<Strong.Bean, T>> {
+            if (inited) {
+                throw IllegalStateException("Can't create onInit property. Init phase already finished")
+            }
             val delegateProvider = LazyInitPropertyDelegateProvider(func)
             if (inits == null) {
                 inits = ArrayList()
@@ -53,6 +58,9 @@ interface Strong {
         }
 
         protected fun <T> onLink(func: suspend () -> T): PropertyDelegateProvider<Strong.Bean, ReadOnlyProperty<Strong.Bean, T>> {
+            if (linked) {
+                throw IllegalStateException("Can't create onLink property. Link phase already finished")
+            }
             val delegateProvider = LazyInitPropertyDelegateProvider(func)
             if (links == null) {
                 links = ArrayList()
@@ -62,6 +70,7 @@ interface Strong {
         }
 
         override suspend fun init(strong: Strong) {
+            inited = true
             inits?.forEach {
                 try {
                     it.delegator.initValue()
@@ -74,6 +83,7 @@ interface Strong {
         }
 
         override suspend fun link(strong: Strong) {
+            linked = true
             links?.forEach {
                 try {
                     it.delegator.initValue()

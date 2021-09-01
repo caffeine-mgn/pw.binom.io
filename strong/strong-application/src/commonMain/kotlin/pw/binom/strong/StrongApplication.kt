@@ -1,5 +1,6 @@
 package pw.binom.strong
 
+import pw.binom.concurrency.asReference
 import pw.binom.getOrException
 import pw.binom.io.use
 import pw.binom.network.NetworkDispatcher
@@ -13,7 +14,7 @@ object StrongApplication {
             val initProcess = networkDispatcher.startCoroutine {
                 Strong.create(
                     *(arrayOf(Strong.config { it.bean { networkDispatcher } }) + config)
-                )
+                ).asReference()
             }
 
             while (!initProcess.isDone) {
@@ -27,8 +28,9 @@ object StrongApplication {
                 networkDispatcher.select(1000)
             }
             val destroyFuture = networkDispatcher.startCoroutine {
-                strong.destroy()
+                strong.value.destroy()
             }
+            strong.close()
 
             while (!destroyFuture.isDone) {
                 networkDispatcher.select(100)

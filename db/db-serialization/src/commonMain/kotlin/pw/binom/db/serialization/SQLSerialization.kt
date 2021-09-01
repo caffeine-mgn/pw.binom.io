@@ -30,6 +30,23 @@ fun <T : Any> KSerializer<T>.selectQuery(queryPart: String? = null): SelectQuery
     ).mapper(SQLSerialization.DEFAULT.mapper(this))
 }
 
+/**
+ * Calls [func] for each column. [func] will called with final column name.
+ * [mapper] can be use for filter columns or change column name.
+ */
+fun <T : Any> KSerializer<T>.eachColumn(mapper: (String) -> String? = { it }, func: (String) -> Unit) {
+    val descriptor = descriptor
+    repeat(descriptor.elementsCount) {
+        val columnName = mapper(descriptor.getElementName(it)) ?: return@repeat
+        val useQuotes = descriptor.getElementAnnotations(it).any { it is UseQuotes }
+        if (useQuotes) {
+            func("\"$columnName\"")
+        } else {
+            func(columnName)
+        }
+    }
+}
+
 class SQLSerialization(val serializersModule: SerializersModule = SqlSerializersModule) {
     companion object {
         val DEFAULT = SQLSerialization()
