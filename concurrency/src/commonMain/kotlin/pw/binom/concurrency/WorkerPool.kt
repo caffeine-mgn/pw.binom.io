@@ -61,7 +61,7 @@ suspend fun <T> ExecutorService.useInContext(f: suspend () -> T) {
 class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, Dispatcher {
     private class State(size: Int) {
         var interotped = AtomicBoolean(false)
-        val stoped = AtomicInt(size)
+        val tasks = AtomicInt(0)
         val queue = ConcurrentQueue<() -> Any?>()
 
         init {
@@ -77,7 +77,8 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
             throw IllegalStateException("WorkerPool already has Interotped")
         }
         state.interotped.value = true
-        while (state.stoped.value != 0) {
+
+        while (list.any { it.taskCount == 1 }) {
             sleep(50)
         }
     }
@@ -88,6 +89,7 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
         }
         state.interotped.value = true
         val out = ArrayList<() -> Any?>(state.queue.size)
+
         while (!state.queue.isEmpty) {
             out += state.queue.pop()
         }
@@ -95,8 +97,13 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
     }
 
     override fun <T> submit(f: () -> T): Future<T> {
+        if (state.interotped.value) {
+            throw IllegalStateException("WorkerPool already has Interrupted")
+        }
         val future = FreezableFuture<T>()
         val freeWorker = list.find { it.taskCount == 0 }
+        val status = state
+        state.tasks.increment()
         if (freeWorker != null) {
             freeWorker.execute(
                 ExecuteParams(
@@ -106,7 +113,11 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
                     worker = freeWorker,
                 ).doFreeze()
             ) {
-                it.future.resume(runCatching(it.f))
+                try {
+                    it.future.resume(runCatching(it.f))
+                } finally {
+                    it.state.tasks.decrement()
+                }
                 if (freeWorker.taskCount == 1) {
                     while (true) {
                         val func = it.state.queue.popOrNull() ?: break
@@ -117,6 +128,7 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
         } else {
             state.queue.push({
                 future.resume(runCatching(f))
+                status.tasks.decrement()
             }.doFreeze())
         }
         return future
@@ -136,7 +148,16 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
     override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
         val future = FreezableFuture<T>()
         submit {
-            WorkerImpl.current!!.startCoroutine(onDone = { future.resume(it) }, context = context, func = func)
+            WorkerImpl.current!!.startCoroutine(onDone = {
+                try {
+                    future.resume(it)
+                } catch (e: Throwable) {
+                    if (it.isFailure) {
+                        e.addSuppressed(it.exceptionOrNull()!!)
+                    }
+                    throw e
+                }
+            }, context = context, func = func)
         }
         return future
     }
