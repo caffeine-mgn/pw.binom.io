@@ -2,37 +2,37 @@ package pw.binom.xml.sax
 
 import pw.binom.io.AsyncAppendable
 
-const val START = 1
-const val BODY = 2
-const val END = 3
+internal const val START = 1
+internal const val BODY = 2
+internal const val END = 3
 
-fun String.syncEncode(appendable: Appendable){
+internal fun String.syncEncode(appendable: Appendable) {
     forEach {
-        when (it){
-            '<'->appendable.append("&lt;")
-            '>'->appendable.append("&gt;")
-            '&'->appendable.append("&#38;")
-            '\''->appendable.append("&#39;")
-            '"'->appendable.append("&#34;")
-            else->appendable.append(it)
+        when (it) {
+            '<' -> appendable.append("&lt;")
+            '>' -> appendable.append("&gt;")
+            '&' -> appendable.append("&#38;")
+            '\'' -> appendable.append("&#39;")
+            '"' -> appendable.append("&#34;")
+            else -> appendable.append(it)
         }
     }
 }
 
-suspend fun String.asyncEncode(appendable: AsyncAppendable){
+internal suspend fun String.asyncEncode(appendable: AsyncAppendable) {
     forEach {
-        when (it){
-            '<'->appendable.append("&lt;")
-            '>'->appendable.append("&gt;")
-            '&'->appendable.append("&#38;")
-            '\''->appendable.append("&#39;")
-            '"'->appendable.append("&#34;")
-            else->appendable.append(it)
+        when (it) {
+            '<' -> appendable.append("&lt;")
+            '>' -> appendable.append("&gt;")
+            '&' -> appendable.append("&#38;")
+            '\'' -> appendable.append("&#39;")
+            '"' -> appendable.append("&#34;")
+            else -> appendable.append(it)
         }
     }
 }
 
-class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendable) : AsyncXmlVisiter {
+class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendable) : AsyncXmlVisitor {
 
     init {
         if ('<' in nodeName || '>' in nodeName)
@@ -46,8 +46,9 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
     private var endded = false
 
     override suspend fun start() {
-        if (progress >= START)
+        if (progress >= START) {
             throw IllegalStateException("Node already started")
+        }
         appendable.append("<").append(nodeName)
         started = true
         progress = START
@@ -62,16 +63,19 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
         when (progress) {
             START -> appendable.append("/>")
             BODY -> appendable.append("</").append(nodeName).append(">")
+            else -> throw IllegalStateException()
         }
         progress = END
     }
 
     override suspend fun attributeName(name: String) {
-        if (progress < START)
-            throw IllegalStateException("Node not started")
+        if (progress < START) {
+            throwNodeNotStarted()
+        }
 
-        if (progress > START)
+        if (progress > START) {
             throw IllegalStateException("Can't write attribute after body")
+        }
         appendable.append(" ").append(name)
         super.attributeName(name)
     }
@@ -83,10 +87,12 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
     }
 
     override suspend fun value(body: String) {
-        if (progress < START)
-            throw IllegalStateException("Node not started")
-        if (progress >= END)
-            throw IllegalStateException("Node \"$nodeName\" already closed")
+        if (progress < START) {
+            throwNodeNotStarted()
+        }
+        if (progress >= END) {
+            throwNodeAlreadyClosed()
+        }
         if (progress == START) {
             progress = BODY
             appendable.append(">")
@@ -94,11 +100,13 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
         body.asyncEncode(appendable)
     }
 
-    override suspend fun subNode(name: String): AsyncXmlVisiter {
-        if (progress < START)
-            throw IllegalStateException("Node not started")
-        if (progress >= END)
-            throw IllegalStateException("Node already closed")
+    override suspend fun subNode(name: String): AsyncXmlVisitor {
+        if (progress < START) {
+            throwNodeNotStarted()
+        }
+        if (progress >= END) {
+            throwNodeAlreadyClosed()
+        }
         if (progress == START) {
             progress = BODY
             appendable.append(">")
@@ -107,14 +115,19 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
     }
 
     override suspend fun cdata(body: String) {
-        if (progress < START)
-            throw IllegalStateException("Node not started")
-        if (progress >= END)
-            throw IllegalStateException("Node already closed")
+        if (progress < START) {
+            throwNodeNotStarted()
+        }
+        if (progress >= END) {
+            throwNodeAlreadyClosed()
+        }
         if (progress == START) {
             progress = BODY
             appendable.append(">")
         }
         appendable.append("<![CDATA[").append(body).append("]]>")
     }
+
+    private fun throwNodeAlreadyClosed(): Nothing = throw IllegalStateException("Node \"$nodeName\" already closed")
+    private fun throwNodeNotStarted(): Nothing = throw IllegalStateException("Node \"$nodeName\" not started")
 }

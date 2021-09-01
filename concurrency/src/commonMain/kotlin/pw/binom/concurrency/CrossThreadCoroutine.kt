@@ -85,7 +85,7 @@ suspend fun <T> suspendManagedCoroutine(func: (CrossThreadContinuation<T>) -> Un
         dispatcher.doFreeze()
         val conRef = con.asReference()
         val callback = object : CrossThreadContinuation<T> {
-            override fun coroutine(result: Result<T>) {
+            override fun resumeWith(result: Result<T>) {
                 dispatcher.resume(result = result, continuation = conRef as Reference<Continuation<Any?>>)
             }
         }

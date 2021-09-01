@@ -2,7 +2,7 @@ package pw.binom.xml.sax
 
 import pw.binom.io.AsyncAppendable
 
-class AsyncXmlRootWriterVisitor(val appendable: AsyncAppendable) : AsyncXmlVisiter {
+class AsyncXmlRootWriterVisitor(val appendable: AsyncAppendable) : AsyncXmlVisitor {
     private var started = false
     private var endded = false
     override suspend fun start() {
@@ -34,7 +34,7 @@ class AsyncXmlRootWriterVisitor(val appendable: AsyncAppendable) : AsyncXmlVisit
         throw IllegalStateException("Root node not supports attributes")
     }
 
-    override suspend fun subNode(name: String): AsyncXmlVisiter {
+    override suspend fun subNode(name: String): AsyncXmlVisitor {
         if (!started)
             throw IllegalStateException("Root Node not started")
         if (endded)

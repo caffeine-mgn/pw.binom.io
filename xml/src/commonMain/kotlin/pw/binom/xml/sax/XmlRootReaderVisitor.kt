@@ -12,19 +12,19 @@ class XmlRootReaderVisitor(val lexer: AsyncXmlLexer) {
         if (!lexer.nextSkipEmpty())
             TODO()
         if (lexer.tokenType != TokenType.TAG_START) {
-            TODO()
+            throw ExpectedException("TAG_START")
         }
 
         if (!lexer.nextSkipEmpty())
             TODO()
         if (lexer.tokenType != TokenType.QUESTION) {
-            TODO()
+            throw ExpectedException("QUESTION")
         }
 
         if (!lexer.nextSkipEmpty())
             TODO()
         if (lexer.tokenType != TokenType.SYMBOL) {
-            TODO()
+            throw ExpectedException("SYMBOL")
         }
         if (lexer.text != "xml")
             TODO()
@@ -38,10 +38,10 @@ class XmlRootReaderVisitor(val lexer: AsyncXmlLexer) {
         if (!lexer.nextSkipEmpty())
             TODO()
         if (lexer.tokenType != TokenType.TAG_END) {
-            TODO()
+            throw ExpectedException("TAG_END")
         }
 
-        val root = AsyncXmlReaderVisiter(lexer)
+        val root = AsyncXmlReaderVisitor(lexer)
         root.accept(visiter)
     }
 }

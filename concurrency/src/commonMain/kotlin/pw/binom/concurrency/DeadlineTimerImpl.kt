@@ -127,7 +127,7 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
     override suspend fun delay(delay: Duration) {
         suspendManagedCoroutine<Unit> {
             delay(delay) {
-                it.coroutine(Result.success(Unit))
+                it.resumeWith(Result.success(Unit))
             }
         }
     }

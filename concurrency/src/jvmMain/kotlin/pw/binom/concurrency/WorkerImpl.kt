@@ -129,7 +129,14 @@ actual class WorkerImpl (name: String?) : Executor, Worker, Dispatcher {
         val future = FreezableFuture<T>()
         startCoroutine(
             onDone = {
-                future.resume(it)
+                try {
+                    future.resume(it)
+                } catch (e: Throwable) {
+                    if (it.isFailure) {
+                        e.addSuppressed(it.exceptionOrNull()!!)
+                    }
+                    throw e
+                }
             },
             context = context,
             func = func,
@@ -145,7 +152,7 @@ actual class WorkerImpl (name: String?) : Executor, Worker, Dispatcher {
         val future = FreezableFuture<T>()
         startCoroutine(
             onDone = {
-                continuation.coroutine(it)
+                continuation.resumeWith(it)
             },
             context = context,
             func = func,

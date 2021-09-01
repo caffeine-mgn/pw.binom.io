@@ -106,7 +106,16 @@ actual class WorkerImpl(name: String?) : Executor, Worker, Dispatcher {
     override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
         val future = FreezableFuture<T>()
         startCoroutine(
-            onDone = { future.resume(it) },
+            onDone = {
+                try {
+                    future.resume(it)
+                } catch (e: Throwable) {
+                    if (it.isFailure) {
+                        e.addSuppressed(it.exceptionOrNull()!!)
+                    }
+                    throw e
+                }
+            },
             context = context,
             func = func
         )
@@ -119,7 +128,7 @@ actual class WorkerImpl(name: String?) : Executor, Worker, Dispatcher {
         func: suspend () -> T
     ) {
         startCoroutine(
-            onDone = { continuation.coroutine(it) },
+            onDone = { continuation.resumeWith(it) },
             context = context,
             func = func
         )

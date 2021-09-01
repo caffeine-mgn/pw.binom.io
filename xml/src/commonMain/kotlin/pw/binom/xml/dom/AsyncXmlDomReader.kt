@@ -1,11 +1,10 @@
 package pw.binom.xml.dom
 
 import pw.binom.io.AsyncReader
-import pw.binom.xml.sax.AsyncXmlReaderVisiter
-//import pw.binom.xml.sax.XmlRootReaderVisiter
-import pw.binom.xml.sax.AsyncXmlVisiter
+import pw.binom.xml.sax.AsyncXmlReaderVisitor
+import pw.binom.xml.sax.AsyncXmlVisitor
 
-class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : AsyncXmlVisiter {
+class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : AsyncXmlVisitor {
     class NameSpaceContext(var pool: HashMap<String, String> = HashMap()) {
         var default: String? = null
         private var autoIterator = 0
@@ -87,7 +86,7 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
     override suspend fun start() {
     }
 
-    override suspend fun subNode(name: String): AsyncXmlVisiter {
+    override suspend fun subNode(name: String): AsyncXmlVisitor {
         fixCurrentNS()
         val r = AsyncXmlDomReader(ctx.copy(), name)
         r.rootNode.parent = rootNode
@@ -101,6 +100,6 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
 
 suspend fun AsyncReader.xmlTree(): XmlElement? {
     val r = AsyncXmlDomReader("")
-    AsyncXmlReaderVisiter(this).accept(r)
+    AsyncXmlReaderVisitor(this).accept(r)
     return r.rootNode.childs.getOrNull(0)
 }

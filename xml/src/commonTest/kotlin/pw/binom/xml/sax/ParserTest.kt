@@ -36,7 +36,7 @@ class ParserTest {
         async {
             val txt = "<r><bbb a=\"b\"></bbb><c>123456</c><t/></r>"
 
-            val r = AsyncXmlReaderVisiter(txt.asReader().asAsync())
+            val r = AsyncXmlReaderVisitor(txt.asReader().asAsync())
 
             val sb = StringBuilder()
             val w = AsyncXmlRootWriterVisitor(sb.asAsync())

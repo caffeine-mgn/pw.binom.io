@@ -5,7 +5,6 @@ import pw.binom.PopResult
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
 import pw.binom.doFreeze
-import pw.binom.io.Closeable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -15,7 +14,7 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
         get() = _size
     private var top by AtomicReference<Item<T>?>(null)
     private var bottom by AtomicReference<Item<T>?>(null)
-    private val lock = Lock()
+    private val lock = ReentrantLock()
     private val condition = lock.newCondition()
 
     fun clear() {

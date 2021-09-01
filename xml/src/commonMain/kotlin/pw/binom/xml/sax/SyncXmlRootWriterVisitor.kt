@@ -1,8 +1,6 @@
 package pw.binom.xml.sax
 
-import pw.binom.io.AsyncAppendable
-
-class SyncXmlRootWriterVisitor(val appendable: Appendable) : SyncXmlVisiter {
+class SyncXmlRootWriterVisitor(val appendable: Appendable) : SyncXmlVisitor {
     private var started = false
     private var endded = false
     override fun start() {
@@ -34,7 +32,7 @@ class SyncXmlRootWriterVisitor(val appendable: Appendable) : SyncXmlVisiter {
         throw IllegalStateException("Root node not supports attributes")
     }
 
-    override fun subNode(name: String): SyncXmlVisiter {
+    override fun subNode(name: String): SyncXmlVisitor {
         if (!started)
             throw IllegalStateException("Root Node not started")
         if (endded)

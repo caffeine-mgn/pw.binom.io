@@ -1,6 +1,6 @@
 package pw.binom.xml.sax
 
-interface SyncXmlVisiter {
+interface SyncXmlVisitor {
     fun start(){}
     fun end(){}
     fun attribute(name: String, value: String?){
@@ -11,5 +11,5 @@ interface SyncXmlVisiter {
     fun attributeValue(value: String?){}
     fun value(body: String){}
     fun cdata(body: String){}
-    fun subNode(name: String): SyncXmlVisiter
+    fun subNode(name: String): SyncXmlVisitor
 }

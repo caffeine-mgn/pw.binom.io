@@ -1,14 +1,10 @@
 package pw.binom.xml.dom
 
-import pw.binom.io.AsyncReader
 import pw.binom.io.Reader
-import pw.binom.xml.sax.AsyncXmlReaderVisiter
-//import pw.binom.xml.sax.XmlRootReaderVisiter
-import pw.binom.xml.sax.AsyncXmlVisiter
-import pw.binom.xml.sax.SyncXmlReaderVisiter
-import pw.binom.xml.sax.SyncXmlVisiter
+import pw.binom.xml.sax.SyncXmlReaderVisitor
+import pw.binom.xml.sax.SyncXmlVisitor
 
-class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : SyncXmlVisiter {
+class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : SyncXmlVisitor {
     class NameSpaceContext(var pool: HashMap<String, String> = HashMap()) {
         var default: String? = null
         private var autoIterator = 0
@@ -90,7 +86,7 @@ class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, ta
     override fun start() {
     }
 
-    override fun subNode(name: String): SyncXmlVisiter {
+    override fun subNode(name: String): SyncXmlVisitor {
         fixCurrentNS()
         val r = SyncXmlDomReader(ctx.copy(), name)
         r.rootNode.parent = rootNode
@@ -104,6 +100,6 @@ class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, ta
 
 fun Reader.xmlTree(): XmlElement? {
     val r = SyncXmlDomReader("")
-    SyncXmlReaderVisiter(this).accept(r)
+    SyncXmlReaderVisitor(this).accept(r)
     return r.rootNode.childs.getOrNull(0)
 }
