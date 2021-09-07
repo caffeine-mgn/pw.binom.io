@@ -117,7 +117,7 @@ class JvmSelector : Selector {
                         if (connected) {
                             count++
                             func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
-                            if (it.interestOps() and SelectionKey.OP_CONNECT != 0) {
+                            if (it.isValid && it.interestOps() and SelectionKey.OP_CONNECT != 0) {
                                 it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
                             }
                             continue

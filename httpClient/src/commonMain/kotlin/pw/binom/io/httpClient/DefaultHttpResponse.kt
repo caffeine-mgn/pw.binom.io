@@ -2,6 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
 import pw.binom.CancelledException
+import pw.binom.EmptyAsyncInput
 import pw.binom.TimeoutException
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
@@ -87,6 +88,9 @@ class DefaultHttpResponse(
     override suspend fun readData(): AsyncInput {
         val keepAlive = keepAlive && headers.keepAlive
         checkClosed()
+        if (responseCode == 204) {
+            return EmptyAsyncInput
+        }
         val transferEncoding = headers.getTransferEncodingList()
         val contentEncoding = headers.getContentEncodingList()
         val contentLength = headers.contentLength
