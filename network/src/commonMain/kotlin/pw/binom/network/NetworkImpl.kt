@@ -1,11 +1,10 @@
 package pw.binom.network
 
 import pw.binom.PopResult
-import pw.binom.concurrency.*
-import pw.binom.coroutine.Executor
-import pw.binom.doFreeze
+import pw.binom.concurrency.asReference
 import pw.binom.io.Closeable
-import kotlin.coroutines.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 //private class NetworkExecutor(val con: CrossThreadKeyHolder, val ref: Reference<NetworkImpl>) : Executor {
 //    override fun execute(func: suspend () -> Unit) {

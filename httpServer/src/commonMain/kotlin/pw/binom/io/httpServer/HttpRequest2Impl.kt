@@ -137,20 +137,6 @@ internal class HttpRequest2Impl(
         }
         readInput = stream
         return stream
-//
-//        if (transferEncoding != null) {
-//            if (transferEncoding.equals(Encoding.CHUNKED, ignoreCase = true)) {
-//                val input = AsyncChunkedInput(
-//                    stream = stream,
-//                    closeStream = false
-//                )
-//                stream=input
-//                readInput = input
-//                return input
-//            }
-//            throw IOException("Invalid ${Headers.TRANSFER_ENCODING}")
-//        }
-//        throw IOException("Invalid Client Headers")
     }
 
     override fun readText(): AsyncReader {
