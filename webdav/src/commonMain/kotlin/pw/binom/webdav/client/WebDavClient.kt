@@ -1,27 +1,26 @@
 package pw.binom.webdav.client
 
-import pw.binom.*
+import pw.binom.AsyncOutput
+import pw.binom.ByteBuffer
 import pw.binom.date.Date
 import pw.binom.io.*
-import pw.binom.io.httpClient.*
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.httpClient.BaseHttpClient
+import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.addHeader
 import pw.binom.net.URI
-import pw.binom.webdav.*
-import pw.binom.webdav.server.parseDate
-import pw.binom.xml.dom.XmlElement
-import pw.binom.xml.dom.findElements
+import pw.binom.skipAll
+import pw.binom.webdav.DAV_NS
+import pw.binom.webdav.DEPTH_HEADER
+import pw.binom.webdav.MULTISTATUS_TAG
+import pw.binom.webdav.WebAuthAccess
 import pw.binom.xml.dom.xmlTree
 import kotlin.coroutines.*
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-open class WebDavClient constructor(val client: BaseHttpClient, val URI: URI, val timeout: Duration?) : FileSystem {
-
-    private fun XmlElement.findTag(name: String) =
-        findElements { it.nameSpace == "DAV:" && it.tag == name }
+open class WebDavClient constructor(val client: HttpClient, val url: URI, val timeout: Duration? = null) :
+    FileSystem {
 
     override val isSupportUserSystem: Boolean
         get() = true
@@ -55,8 +54,8 @@ open class WebDavClient constructor(val client: BaseHttpClient, val URI: URI, va
 
     override suspend fun mkdir(path: String): FileSystem.Entity? {
 
-        val allPathUrl = URI.appendDirectionURI(path)
-        val r = client.connect(HTTPMethod.MKCOL, allPathUrl, timeout = timeout)
+        val allPathUrl = url.appendPath(path, encode = true)
+        val r = client.connect(HTTPMethod.MKCOL.code, allPathUrl, timeout = timeout)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val responseCode = r.getResponse().use { it.responseCode }
         if (responseCode == 405) {
@@ -66,249 +65,82 @@ open class WebDavClient constructor(val client: BaseHttpClient, val URI: URI, va
             TODO("Invalid response code $responseCode")
         }
         val ss = path.split('/')
-        return RemoteEntity(
+        return WebdavEntity(
             user = WebAuthAccess.getCurrentUser(),
             lastModified = Date.nowTime,
             path = ss.subList(0, ss.lastIndex - 1).joinToString("/"),
             isFile = false,
-            length = 0
+            length = 0,
+            fileSystem = this
         )
     }
 
-    /*
-        private inner class RemoteFolder(override val name: String, override val lastModified: Long, override val path: String, override val user: T) : FileSystem.Entity<T> {
-            override val length: Long
-                get() = 0
-            override val isFile: Boolean
-                get() = false
-            override val fileSystem: FileSystem<T>
-                get() = this@Client
-
-            override suspend fun read(): AsyncInputStream? = null
-
-            override suspend fun move(path: String): FileSystem.Entity<T> {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun delete() {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun rewrite(): AsyncOutputStream {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity<T> {
-                TODO("Not yet implemented")
-            }
-
-        }
-    */
-    private inner class RemoteEntity(
-        override val length: Long,
-        override val lastModified: Long,
-        override val path: String,
-        val user: WebAuthAccess?,
-        override val isFile: Boolean
-    ) : FileSystem.Entity {
-        override val fileSystem: WebDavClient
-            get() = this@WebDavClient
-
-        override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
-            val allPathUrl = URI.appendDirectionURI(name)
-            val r = client.connect(HTTPMethod.GET, allPathUrl, timeout = timeout)
-            if (offset != 0uL) {
-                if (length == null) {
-                    r.addHeader("Range", "bytes=$offset-")
-                } else {
-                    r.addHeader("Range", "bytes=$offset-${offset + length}")
-                }
-            }
-            user?.apply(r)
-            val resp = r.getResponse()
-            if (resp.responseCode == 404)
-                return null
-            val body = resp.readData()
-
-            return object : AsyncInput {
-                override val available: Int
-                    get() = -1
-
-                override suspend fun read(dest: ByteBuffer): Int = body.read(dest)
-
-                override suspend fun asyncClose() {
-                    resp.asyncClose()
-                }
-            }
-        }
-
-        override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity {
-            val destinationUrl = URI.appendDirectionURI(path)
-            val r = client.connect(
-                HTTPMethod.COPY,
-                URI.appendDirectionURI(this.path).appendDirectionURI(name),
-                timeout = timeout
-            )
-            user?.apply(r)
-            r.addHeader("Destination", destinationUrl.toString())
-            if (overwrite) {
-                r.addHeader("Overwrite", "T")
-            }
-            val responseCode = r.getResponse().use { it.responseCode }
-            if (responseCode == 404) {
-                throw FileSystem.FileNotFoundException(this.path)
-            }
-            if (responseCode != 201 && responseCode != 204) {
-                throw TODO("Invalid response code $responseCode")
-            }
-
-            val items = path.split('/');
-            return RemoteEntity(
-                path = items.subList(0, items.lastIndex - 1).joinToString("/"),
-                lastModified = lastModified,
-                user = user,
-                length = length,
-                isFile = true
-            )
-        }
-
-        override suspend fun move(path: String, overwrite: Boolean): FileSystem.Entity {
-            val destinationUrl = URI.appendDirectionURI(path)
-            val r = client.connect(
-                HTTPMethod.MOVE,
-                URI.appendDirectionURI(this.path).appendDirectionURI(name),
-                timeout = timeout
-            )
-            user?.apply(r)
-            r.addHeader("Destination", destinationUrl.toString())
-            if (overwrite) {
-                r.addHeader("Overwrite", "T")
-            }
-            val responseCode = r.getResponse().use { it.responseCode }
-            if (responseCode != 201 && responseCode != 204)
-                throw TODO("Invalid response code $responseCode")
-
-            return RemoteEntity(
-                path = path,
-                lastModified = lastModified,
-                user = user,
-                length = length,
-                isFile = true
-            )
-        }
-
-        override suspend fun delete() {
-            val r = client.connect(
-                HTTPMethod.DELETE,
-                URI.appendDirectionURI(this.path).appendDirectionURI(name),
-                timeout = timeout
-            )
-            user?.apply(r)
-            val responseCode = r.getResponse().use { it.responseCode }
-            if (responseCode != 201 && responseCode != 204) {
-                throw TODO("Invalid response code $responseCode")
-            }
-        }
-
-        override suspend fun rewrite(): AsyncOutput {
-            val allPathUrl = URI.appendDirectionURI(path)
-            val r = client.connect(HTTPMethod.PUT, allPathUrl, timeout = timeout)
-//            r.addHeader("Overwrite", "T")
-            user?.apply(r)
-            val upload = r.writeData()
-            return object : AsyncOutput {
-                override suspend fun write(data: ByteBuffer): Int = upload.write(data)
-
-                override suspend fun flush() {
-                    upload.flush()
-                }
-
-                override suspend fun asyncClose() {
-                    upload.asyncClose()
-                }
-            }
-        }
-    }
-
     override suspend fun getDir(path: String): Sequence<FileSystem.Entity>? =
-        getDir(WebAuthAccess.getCurrentUser(), path, 1)
+        getDir(user = WebAuthAccess.getCurrentUser(), path = path, depth = 1, excludeCurrent = true)
 
-    suspend fun getDir(user: WebAuthAccess?, path: String, depth: Int): Sequence<FileSystem.Entity>? {
-        val allPathUrl = URI.appendDirectionURI(path)
-        val r = client.connect(HTTPMethod.PROPFIND, allPathUrl, timeout = timeout)
+    suspend fun getDir(
+        user: WebAuthAccess?,
+        path: String,
+        depth: Int,
+        excludeCurrent: Boolean
+    ): Sequence<WebdavEntity>? {
+        val allPathUrl = url.appendPath(path, encode = true)
+        val r = client.connect(HTTPMethod.PROPFIND.code, allPathUrl, timeout = timeout)
         user?.apply(r)
-        r.addHeader("Depth", depth.toString())
+        r.addHeader(DEPTH_HEADER, depth.toString())
         val resp = r.getResponse()
-//        val auth = r.getResponseHeaders()["WWW-Authenticate"]
         if (resp.responseCode == 404) {
             resp.asyncClose()
             return null
         }
-        val txt = resp.readText().use { it.readText() }
-        val reader = StringReader(txt).asAsync().xmlTree()!!
+        if (resp.responseCode == 401) {
+            throw FileSystemAccess.AccessException.UnauthorizedException()
+        }
+        if (resp.responseCode == 403) {
+            throw FileSystemAccess.AccessException.ForbiddenException()
+        }
+        if (resp.responseCode != 207 && resp.responseCode != 200) {
+            throw IllegalStateException("Invalid response code ${resp.responseCode}")
+        }
+        val reader=resp.readText().use { it.xmlTree() }
         resp.asyncClose()
-        return reader
-            .findTag("response")
-            .mapNotNull {
-                val href = it.findTag("href").firstOrNull()?.body ?: return@mapNotNull null
-                val length = it.findTag("propstat")
-                    .flatMap {
-                        it.findTag("prop")
-                    }
-                    .mapNotNull {
-                        it.findTag("getcontentlength")
-                            .singleOrNull()?.body
-                            ?.toLongOrNull()
-                    }.firstOrNull() ?: 0
-                val isDirectory = it.findTag("propstat")
-                    .flatMap {
-                        it.findTag("prop")
-                    }
-                    .mapNotNull {
-                        it.findTag("resourcetype")
-                            .singleOrNull()
-                            ?.findTag("collection")
-                            ?.singleOrNull()
-                    }.any()
-                val lastModified = it.findTag("propstat")
-                    .flatMap {
-                        it.findTag("prop")
-                    }
-                    .mapNotNull {
-                        it.findTag("getlastmodified").singleOrNull()?.body
-                    }.singleOrNull()
-                    ?.parseDate()
-                    ?.time
-                    ?: 0L
-                if (isDirectory)
-                    RemoteEntity(
-                        path = path,
-                        lastModified = lastModified,
-                        user = user,
-                        isFile = false,
-                        length = 0
-                    )
-                else
-                    RemoteEntity(
-                        length = length,
-                        user = user,
-                        lastModified = lastModified,
-                        path = path,
-                        isFile = true
-                    )
+        if (reader.tag != MULTISTATUS_TAG || reader.nameSpace != DAV_NS) {
+            throw IllegalStateException("Invalid response. Except $MULTISTATUS_TAG response. Got $reader")
+        }
+
+        val currentDir = PropResponse(reader.childs.minByOrNull { PropResponse(it).href.length }!!)
+        val currentDirHref = currentDir.href
+        val realCurrentUrl = path.removePrefix(currentDirHref) + "/"
+        return reader.childs.mapNotNull {
+            if (excludeCurrent && it === currentDir.element) {
+                return@mapNotNull null
             }
+            val prop = PropResponse(it)
+            val realPath =
+                if (it === currentDir.element) path else realCurrentUrl + prop.href.removePrefix(currentDirHref)
+            WebdavEntity(
+                length = prop.props.length ?: 0L,
+                lastModified = prop.props.getLastModified?.time ?: 0L,
+                path = realPath,
+                user = user,
+                isFile = !prop.props.isDirection,
+                fileSystem = this,
+            )
+        }.asSequence()
     }
 
-    override suspend fun get(path: String): FileSystem.Entity? {
-        val allPathUrl = URI.appendDirectionURI(path)
-        val r = client.connect(HTTPMethod.HEAD, allPathUrl, timeout = timeout)
-        WebAuthAccess.getCurrentUser()?.apply(r)
-        return getDir(WebAuthAccess.getCurrentUser(), path, 0)?.firstOrNull()
+    override suspend fun get(path: String): WebdavEntity? {
+        return getDir(
+            user = WebAuthAccess.getCurrentUser(),
+            path = path,
+            depth = 0,
+            excludeCurrent = false
+        )?.firstOrNull()
     }
 
     override suspend fun new(path: String): AsyncOutput {
-        val allPathUrl = URI.appendDirectionURI(path)
-        val r = client.connect(HTTPMethod.PUT, allPathUrl, timeout = timeout)
+        val allPathUrl = url.appendPath(path, encode = true)
+        val r = client.connect(HTTPMethod.PUT.code, allPathUrl, timeout = timeout)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val upload = r.writeData()
         return object : AsyncOutput {
@@ -319,11 +151,13 @@ open class WebDavClient constructor(val client: BaseHttpClient, val URI: URI, va
             }
 
             override suspend fun asyncClose() {
-                upload.asyncClose()
+                upload.flush()
+                val response = upload.getResponse()
+                response.readData().use {
+                    it.skipAll()
+                }
+                response.asyncClose()
             }
         }
     }
 }
-
-private fun URI.appendDirectionURI(dir: String) =
-    copy(path = path.append(dir))

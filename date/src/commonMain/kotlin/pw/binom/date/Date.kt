@@ -1,6 +1,8 @@
 package pw.binom.date
 
 import kotlin.jvm.JvmInline
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 @JvmInline
 expect value class Date(val time: Long = nowTime) {
@@ -61,6 +63,14 @@ operator fun Date.compareTo(expDate: Date): Int = when {
     time < expDate.time -> -1
     else -> 0
 }
+
+@OptIn(ExperimentalTime::class)
+operator fun Date.plus(duration: Duration) =
+    Date(time + duration.inWholeMilliseconds)
+
+@OptIn(ExperimentalTime::class)
+operator fun Date.minus(duration: Duration) =
+    Date(time - duration.inWholeMilliseconds)
 
 //internal fun getJulianDay(day: Int, month: Int, year: Int): Int {
 //    val a = (14 - month) / 12

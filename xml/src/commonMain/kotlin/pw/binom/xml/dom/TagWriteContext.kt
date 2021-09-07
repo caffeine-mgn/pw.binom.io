@@ -1,6 +1,7 @@
 package pw.binom.xml.dom
 
 import pw.binom.io.AsyncAppendable
+import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.sax.AsyncXmlRootWriterVisitor
 import pw.binom.xml.sax.AsyncXmlVisitor
 
@@ -30,7 +31,7 @@ private class TagWriteContext constructor(
 
                 val ctx = TagWriteContext(this, context, w)
                 ctx.prefixMap[ns] = prefix
-                w.attribute("xmlns:$prefix", ns)
+                w.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$prefix", ns)
                 if (func != null)
                     ctx.func()
                 w.end()
@@ -52,7 +53,7 @@ private class TagWriteContext constructor(
             if (prefix == null) {
                 prefix = "ns${context.prefixCount++}"
                 prefixMap[ns] = prefix
-                writerVisitor.attribute("xmlns:$prefix", ns)
+                writerVisitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$prefix", ns)
             }
             writerVisitor.attribute("$prefix:$name", value)
         } else {

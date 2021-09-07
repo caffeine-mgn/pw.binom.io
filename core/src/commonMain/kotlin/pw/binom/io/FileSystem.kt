@@ -23,6 +23,9 @@ interface FileSystem {
         suspend fun move(path: String, overwrite: Boolean = false): Entity
         suspend fun delete()
         suspend fun rewrite(): AsyncOutput
+        suspend fun isLocked(): Boolean? = null
+        suspend fun lock(): Boolean = false
+        suspend fun unlock(): Boolean = false
     }
 
     val isSupportUserSystem: Boolean
@@ -36,20 +39,14 @@ interface FileSystem {
      * @return Returns result of [func]
      */
     suspend fun <T> useUser(user: Any?, func: suspend () -> T): T
-
-    //    suspend fun rewriteFile(user: U, path: String): AsyncOutputStream
     suspend fun mkdir(path: String): Entity?
-
-    //    suspend fun delete(user: U, path: String)
     suspend fun getDir(path: String): Sequence<Entity>?
 
     suspend fun get(path: String): Entity?
     suspend fun new(path: String): AsyncOutput
-//    suspend fun read(user: U, path: String): AsyncInputStream?
-//    suspend fun copy(user: U, from: String, to: String)
-//    suspend fun move(user: U, from: String, to: String)
 
     class FileNotFoundException(val path: String) : IOException("File \"$path\" not found")
+    class FileLockedException(val path: String) : IOException("File \"$path\" is locked")
     class EntityExistException(val path: String) : IOException("Entity \"$path\" already exist")
 }
 

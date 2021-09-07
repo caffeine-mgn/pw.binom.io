@@ -1,5 +1,8 @@
+import pw.binom.eachKotlinTest
+import java.util.UUID
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("com.bmuschko.docker-remote-api")
 }
 
 apply {
@@ -100,4 +103,61 @@ kotlin {
         }
     }
 }
+
+tasks{
+    val webdavServerContainerId = UUID.randomUUID().toString()
+    val pullWebdavServer = create(
+        name = "pullWebdavServer",
+        type = com.bmuschko.gradle.docker.tasks.image.DockerPullImage::class
+    ) {
+        image.set("ugeek/webdav:amd64")
+    }
+
+    val createWebdavServer = create(
+        name = "createWebdavServer",
+        type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
+    ) {
+        dependsOn(pullWebdavServer)
+        image.set("ugeek/webdav:amd64")
+        imageId.set("ugeek/webdav:amd64")
+        envVars.put("USERNAME", "root")
+        envVars.put("PASSWORD", "root")
+        envVars.put("TZ", "GMT")
+        hostConfig.portBindings.set(listOf("127.0.0.1:25371:80"))
+        containerId.set(webdavServerContainerId)
+        containerName.set(webdavServerContainerId)
+    }
+
+    val startWebdavServer = create(
+        name = "startWebdavServer",
+        type = com.bmuschko.gradle.docker.tasks.container.DockerStartContainer::class
+    ) {
+        dependsOn(createWebdavServer)
+        targetContainerId(webdavServerContainerId)
+        doLast {
+            Thread.sleep(1000)
+        }
+    }
+
+    val stopWebdavServer = create(
+        name = "stopWebdavServer",
+        type = com.bmuschko.gradle.docker.tasks.container.DockerStopContainer::class
+    ) {
+        targetContainerId(webdavServerContainerId)
+    }
+
+    val destroyWebdavServer = create(
+        name = "destroyWebdavServer",
+        type = com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer::class
+    ) {
+        dependsOn(stopWebdavServer)
+        targetContainerId(webdavServerContainerId)
+    }
+
+//    eachKotlinTest {
+//        it.dependsOn(startWebdavServer)
+//        it.finalizedBy(destroyWebdavServer)
+//    }
+}
+
 apply<pw.binom.plugins.DocsPlugin>()

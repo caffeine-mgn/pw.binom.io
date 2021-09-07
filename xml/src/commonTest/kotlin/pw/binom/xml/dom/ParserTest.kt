@@ -21,5 +21,7 @@ class ParserTest {
         assertEquals("", node.tag)
         assertEquals(1, node.childs.size)
         assertEquals("Response", node.childs[0].tag)
+        assertEquals("http://binom.pw", node.childs[0].attributes.entries.first().key.nameSpace)
+        assertEquals("http://binom.pw",node.childs[0].nameSpace)
     }
 }

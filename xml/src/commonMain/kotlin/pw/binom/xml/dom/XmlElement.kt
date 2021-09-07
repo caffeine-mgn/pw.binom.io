@@ -1,5 +1,6 @@
 package pw.binom.xml.dom
 
+import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.sax.AsyncXmlVisitor
 import pw.binom.xml.sax.SyncXmlVisitor
 import pw.binom.xml.sax.SyncXmlWriterVisitor
@@ -32,6 +33,16 @@ class XmlElement(var tag: String, var nameSpace: String?) {
         accept(HashMap(), visitor)
     }
 
+    override fun toString(): String {
+        val sb = StringBuilder()
+        sb.append("XmlElement(tag=$tag")
+        if (nameSpace != null) {
+            sb.append(", NameSpace=$nameSpace")
+        }
+        sb.append(")")
+        return sb.toString()
+    }
+
     operator fun get(index: Int) = childs[index]
 
     private fun accept(prefix: HashMap<String, String>, visitor: SyncXmlVisitor) {
@@ -41,7 +52,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
-                    visitor.attribute("xmlns:$p", ns)
+                    visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     prefix[ns] = p
                 }
                 "$p:${it.key.name}"
@@ -53,7 +64,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
 
         if (nameSpace != null && parent?.tag?.isEmpty() == true) {
             val p = prefix[nameSpace!!]
-            visitor.attribute("xmlns:$p", nameSpace!!)
+            visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace!!)
         }
 
         privateChilds.forEach {
@@ -62,7 +73,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
                     if (tag.isNotEmpty()) {
-                        visitor.attribute("xmlns:$p", ns)
+                        visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     }
                     prefix[ns] = p!!
                 }
@@ -83,7 +94,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
-                    visitor.attribute("xmlns:$p", ns)
+                    visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     prefix[ns] = p!!
                 }
                 "$p:${it.tag}"
@@ -102,7 +113,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
-                    visitor.attribute("xmlns:$p", ns)
+                    visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     prefix[ns] = p
                 }
                 "$p:${it.key.name}"
@@ -114,7 +125,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
 
         if (nameSpace != null && parent?.tag?.isEmpty() == true) {
             val p = prefix[nameSpace!!]
-            visitor.attribute("xmlns:$p", nameSpace!!)
+            visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace!!)
         }
 
         privateChilds.forEach {
@@ -123,7 +134,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
                     if (tag.isNotEmpty()) {
-                        visitor.attribute("xmlns:$p", ns)
+                        visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     }
                     prefix[ns] = p!!
                 }
@@ -144,7 +155,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
-                    visitor.attribute("xmlns:$p", ns)
+                    visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     prefix[ns] = p!!
                 }
                 "$p:${it.tag}"

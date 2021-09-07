@@ -13,6 +13,7 @@ interface Headers : Map<String, List<String>> {
         const val CONTENT_LENGTH = "Content-Length"
         const val TRANSFER_ENCODING = "Transfer-Encoding"
         const val WWW_AUTHENTICATE = "WWW-Authenticate"
+        const val CONTENT_DISPOSITION = "Content-Disposition"
         const val RANGE = "Range"
         const val ACCEPT_CHARSET = "Accept-Charset"
         const val ORIGIN = "Origin"

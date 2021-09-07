@@ -147,8 +147,8 @@ tasks {
         targetContainerId(postgresContainerId)
     }
 
-    val destoryPostgres = create(
-        name = "destoryPostgres",
+    val destroyPostgres = create(
+        name = "destroyPostgres",
         type = com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer::class
     ) {
         dependsOn(stopPostgres)
@@ -156,15 +156,15 @@ tasks {
     }
 
     this["jvmTest"].dependsOn(startPostgres)
-    this["jvmTest"].finalizedBy(destoryPostgres)
+    this["jvmTest"].finalizedBy(destroyPostgres)
 
     this["linuxX64Test"].dependsOn(startPostgres)
-    this["linuxX64Test"].finalizedBy(destoryPostgres)
+    this["linuxX64Test"].finalizedBy(destroyPostgres)
 
     this["mingwX64Test"].dependsOn(startPostgres)
-    this["mingwX64Test"].finalizedBy(destoryPostgres)
+    this["mingwX64Test"].finalizedBy(destroyPostgres)
 
     this["macosX64Test"].dependsOn(startPostgres)
-    this["macosX64Test"].finalizedBy(destoryPostgres)
+    this["macosX64Test"].finalizedBy(destroyPostgres)
 }
 apply<pw.binom.plugins.DocsPlugin>()

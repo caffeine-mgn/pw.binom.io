@@ -8,6 +8,8 @@ import pw.binom.io.httpServer.*
 import pw.binom.net.Path
 import pw.binom.net.toURI
 import pw.binom.pool.ObjectPool
+import pw.binom.webdav.DAV_NS
+import pw.binom.webdav.MULTISTATUS_TAG
 import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
@@ -67,12 +69,11 @@ abstract class AbstractWebDavHandler<U> : Handler {
             UTF8.urlDecode(req.path.raw),
             depth
         )!!//if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
-        val DAV_NS = "DAV:"
         resp.status = 207
         resp.headers.contentType = "application/xml; charset=UTF-8"
         resp.startWriteText().use {
             it.writeXml {
-                node("multistatus", DAV_NS) {
+                node(MULTISTATUS_TAG, DAV_NS) {
                     entities.forEach { e ->
                         node("response", DAV_NS) {
                             node("href", DAV_NS) {

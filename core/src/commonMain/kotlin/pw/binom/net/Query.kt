@@ -2,7 +2,6 @@ package pw.binom.net
 
 import pw.binom.io.UTF8
 import kotlin.jvm.JvmInline
-import kotlin.jvm.JvmName
 
 @JvmInline
 value class Query internal constructor(val raw: String) {
@@ -93,11 +92,13 @@ value class Query internal constructor(val raw: String) {
      */
     fun toMap(dst: MutableMap<String, String?> = HashMap()): Map<String, String?> {
         search { key, value ->
-            dst[key]=value
+            dst[key] = value
             false
         }
         return dst
     }
+
+    fun find(key: String) = toMap()[key]
 
     override fun toString(): String = raw
 }

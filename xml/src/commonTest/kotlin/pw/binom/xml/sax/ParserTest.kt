@@ -1,8 +1,12 @@
 package pw.binom.xml.sax
 
 import pw.binom.async
+import pw.binom.async2
+import pw.binom.getOrException
+import pw.binom.io.StringReader
 import pw.binom.io.asAsync
 import pw.binom.io.asReader
+import pw.binom.xml.dom.xmlTree
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -50,6 +54,49 @@ class ParserTest {
             }
             println("==>$sb")
         }
+    }
+
+    @Test
+    fun tagBodyTest() {
+//        val txt = """<?xml version="1.0" encoding="UTF-8"?><root><![CDATA[AA BB CC]]></root>"""
+        val txt = """<?xml version="1.0" encoding="UTF-8"?><root>AA BB CC</root>"""
+        async {
+            val sb = StringBuilder()
+            val root = AsyncXmlRootWriterVisitor(sb.asAsync())
+            root.start()
+            XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
+            root.end()
+            assertEquals("""<?xml version="1.0" encoding="UTF-8"?><root>AA BB CC</root>""", sb.toString())
+        }
+    }
+
+    @Test
+    fun test4(){
+        val txt="""
+<?xml version="1.0" encoding="utf-8" ?>
+<D:multistatus xmlns:D="DAV:">
+<D:response>
+<D:href>/24e1519c-6846-4f0a-99c6-55c296168fc0</D:href>
+<D:propstat>
+<D:prop>
+<D:displayname>24e1519c-6846-4f0a-99c6-55c296168fc0</D:displayname>
+<D:getcontentlength>1725852</D:getcontentlength>
+<D:getlastmodified>Sun, 05 Sep 2021 01:48:50 GMT</D:getlastmodified>
+<D:resourcetype></D:resourcetype>
+<D:lockdiscovery/>
+<D:supportedlock>
+</D:supportedlock>
+</D:prop>
+<D:status>HTTP/1.1 200 OK</D:status>
+</D:propstat>
+</D:response>
+</D:multistatus>
+        """
+
+        async2 {
+            StringReader(txt).asAsync().xmlTree()
+            println("All is ok")
+        }.getOrException()
     }
 
     @Test

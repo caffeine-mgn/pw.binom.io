@@ -1,6 +1,8 @@
 package pw.binom.xml.dom
 
 import pw.binom.io.Reader
+import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
+import pw.binom.xml.XML_NAMESPACE_PREFIX
 import pw.binom.xml.sax.SyncXmlReaderVisitor
 import pw.binom.xml.sax.SyncXmlVisitor
 
@@ -35,12 +37,12 @@ class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, ta
     )
 
     override fun attribute(name: String, value: String?) {
-        if (name == "xmlns" && value != null) {
+        if (name == XML_NAMESPACE_PREFIX && value != null) {
             ctx.default = ctx.pool(value)
             return
         }
-        if (name.startsWith("xmlns:") && value != null) {
-            ctx.prefix[name.removePrefix("xmlns:")] = ctx.pool(value)
+        if (name.startsWith(XML_NAMESPACE_PREFIX_WITH_DOTS) && value != null) {
+            ctx.prefix[name.removePrefix(XML_NAMESPACE_PREFIX_WITH_DOTS)] = ctx.pool(value)
             return
         }
         rootNode.attributes[Attribute(null, name)] = value
