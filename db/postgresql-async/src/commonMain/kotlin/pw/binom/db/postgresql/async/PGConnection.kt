@@ -33,13 +33,13 @@ class PGConnection private constructor(
         suspend fun connect(
             address: NetworkAddress,
             applicationName: String? = "Binom Async Client",
-            manager: NetworkDispatcher,
+            networkDispatcher: NetworkDispatcher,
             userName: String,
             password: String,
             dataBase: String,
             charset: Charset = Charsets.UTF8,
         ): PGConnection {
-            val connection = manager.tcpConnect(address)
+            val connection = networkDispatcher.tcpConnect(address)
             val pgConnection = PGConnection(
                 connection = connection,
                 charset = charset,
@@ -108,7 +108,7 @@ class PGConnection private constructor(
         get() = TYPE
 
 
-    suspend fun sendQuery(query: String): KindedMessage {
+    internal suspend fun sendQuery(query: String): KindedMessage {
         if (busy)
             throw IllegalStateException("Connection is busy")
         val msg = this.reader.queryMessage
@@ -116,7 +116,7 @@ class PGConnection private constructor(
         return sendRecive(msg)
     }
 
-    suspend fun query(query: String): QueryResponse {
+    internal suspend fun query(query: String): QueryResponse {
         if (busy)
             throw IllegalStateException("Connection is busy")
         val msg = this.reader.queryMessage
@@ -176,7 +176,7 @@ class PGConnection private constructor(
     }
 
 
-    suspend fun readDesponse(): KindedMessage {
+    internal suspend fun readDesponse(): KindedMessage {
         val msg = KindedMessage.read(reader)
         return msg
     }
@@ -254,13 +254,13 @@ class PGConnection private constructor(
     override fun isReadyForQuery(): Boolean =
         isConnected && !busy
 
-    val TransactionMode.pg
-    get()=when (this) {
-        TransactionMode.SERIALIZABLE -> "SERIALIZABLE"
-        TransactionMode.READ_COMMITTED -> "READ COMMITTED"
-        TransactionMode.REPEATABLE_READ -> "REPEATABLE READ"
-        TransactionMode.READ_UNCOMMITTED -> "READ UNCOMMITTED"
-    }
+    internal val TransactionMode.pg
+        get() = when (this) {
+            TransactionMode.SERIALIZABLE -> "SERIALIZABLE"
+            TransactionMode.READ_COMMITTED -> "READ COMMITTED"
+            TransactionMode.REPEATABLE_READ -> "REPEATABLE READ"
+            TransactionMode.READ_UNCOMMITTED -> "READ UNCOMMITTED"
+        }
 
     override suspend fun beginTransaction() {
         if (transactionStarted) {

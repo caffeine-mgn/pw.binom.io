@@ -17,7 +17,7 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class BaseHttpClient(
-    val networkDispatcher: NetworkDispatcher,
+    override val networkDispatcher: NetworkDispatcher,
     val useKeepAlive: Boolean = true,
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,

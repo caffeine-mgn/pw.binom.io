@@ -26,7 +26,7 @@ class TestConnect {
                         host = "localhost",
                         port = 25432,
                     ),
-                    manager = manager,
+                    networkDispatcher = manager,
                     charset = Charsets.UTF8,
                     userName = "postgres",
                     password = "postgres",

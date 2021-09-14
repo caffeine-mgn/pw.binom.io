@@ -18,7 +18,7 @@ fun pg(func: suspend (PGConnection) -> Unit) {
         )
         PGConnection.connect(
             address = address,
-            manager = manager,
+            networkDispatcher = manager,
             charset = Charsets.UTF8,
             userName = "postgres",
             password = "postgres",
