@@ -2,6 +2,7 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.SOCKET
+import platform.linux.ws_global_init
 import platform.posix.*
 import platform.posix.AF_INET
 import platform.posix.SOCK_STREAM
@@ -18,6 +19,7 @@ import pw.binom.io.IOException
 actual class NSocket(val native: SOCKET) : Closeable {
     actual companion object {
         actual fun tcp(): NSocket {
+            init_sockets()
             val native = socket(AF_INET, SOCK_STREAM, 0)
             if (native < 0uL) {
                 throw RuntimeException("Tcp Socket Creation")
@@ -26,6 +28,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
         }
 
         actual fun udp(): NSocket {
+            init_sockets()
             val native = socket(AF_INET, platform.windows.SOCK_DGRAM.convert(), 0)
             if (native < 0uL) {
                 throw RuntimeException("Datagram Socket Creation")
@@ -121,7 +124,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
             val nonBlocking = alloc<UIntVar>()
             nonBlocking.value = if (value) 0u else 1u
             if (ioctlsocket(native, FIONBIO.convert(), nonBlocking.ptr) == -1)
-                throw IOException("ioctlsocket() error")
+                throw IOException("ioctlsocket() error. ErrNo: ${GetLastError()}")
         }
     }
 

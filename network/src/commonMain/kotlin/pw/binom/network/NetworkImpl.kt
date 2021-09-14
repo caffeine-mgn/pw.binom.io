@@ -85,6 +85,7 @@ internal class NetworkImpl : Closeable {
             } else {
                 throw SocketConnectException(address.toString(), e.cause)
             }
+            connection.asyncClose()
         }
         return connection
     }
