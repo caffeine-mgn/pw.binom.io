@@ -20,11 +20,12 @@ actual class TcpServerSocketChannel : Closeable {
         return s?.let { TcpClientSocketChannel(it) }
     }
 
+    private var bindPort: Int? = null
     actual fun bind(address: NetworkAddress) {
         try {
             val _native = address._native
             require(_native != null)
-            native.bind(_native)
+            bindPort = native.bind(_native).socket().localPort
         } catch (e: JBindException) {
             throw BindException("Address already in use: ${address.host}:${address.port}")
         }
@@ -34,6 +35,6 @@ actual class TcpServerSocketChannel : Closeable {
         native.close()
     }
 
-    actual val port: Int
-        get() = native.socket().localPort
+    actual val port: Int?
+        get() = bindPort
 }

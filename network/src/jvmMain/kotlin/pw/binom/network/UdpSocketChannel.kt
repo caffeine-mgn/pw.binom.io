@@ -30,13 +30,19 @@ actual class UdpSocketChannel : Closeable {
         return data.position - before
     }
 
+    private var bindPort: Int? = null
+
     actual fun bind(address: NetworkAddress) {
+        check(bindPort == null) { "Already bindded" }
         val _native = address._native
         require(_native != null)
-        native.bind(_native)
+        bindPort = native.bind(_native).socket().port
     }
 
     override fun close() {
         native.close()
     }
+
+    actual val port: Int?
+        get() = bindPort
 }

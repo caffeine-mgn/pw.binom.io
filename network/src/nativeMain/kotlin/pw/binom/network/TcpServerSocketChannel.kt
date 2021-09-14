@@ -22,6 +22,6 @@ actual class TcpServerSocketChannel : Closeable {
         native.close()
     }
 
-    actual val port: Int
-        get() = native.port ?: -1
+    actual val port: Int?
+        get() = native.port
 }

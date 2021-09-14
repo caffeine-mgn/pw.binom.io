@@ -21,6 +21,10 @@ actual class UdpSocketChannel : Closeable {
     }
 
     actual fun bind(address: NetworkAddress) {
+        check(native.port == null) { "Already bindded" }
         native.bind(address)
     }
+
+    actual val port: Int?
+        get() = native.port
 }

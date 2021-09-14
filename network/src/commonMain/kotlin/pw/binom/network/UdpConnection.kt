@@ -2,12 +2,20 @@ package pw.binom.network
 
 import pw.binom.ByteBuffer
 import pw.binom.CancelledException
+import pw.binom.io.use
 import pw.binom.popOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
+
+    companion object {
+        fun randomPort() = UdpSocketChannel().use {
+            it.bind(NetworkAddress.Immutable(host = "127.0.0.1", port = 0))
+            it.port!!
+        }
+    }
 
     lateinit var key: Selector.Key
 
