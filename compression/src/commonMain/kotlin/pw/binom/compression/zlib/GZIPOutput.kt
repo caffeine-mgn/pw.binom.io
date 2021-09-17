@@ -32,7 +32,7 @@ class GZIPOutput(
     override fun write(data: ByteBuffer): Int {
         writeHeader()
         data.holdState {
-            crcCalc.update(data = data)
+            crcCalc.update(buffer = data)
         }
         return super.write(data)
     }

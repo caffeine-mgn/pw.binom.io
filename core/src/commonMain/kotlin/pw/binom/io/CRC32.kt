@@ -1,8 +1,7 @@
 package pw.binom.io
 
-@ExperimentalUnsignedTypes
-class CRC32 : CRC32Basic(0xEDB88320U, 0u, table) {
+class CRC32 : CRC32Basic(init = 0u, crcTable = table) {
     companion object {
-        internal val table = make_crc_table(0xEDB88320U)
+        internal val table = makeCrcTable(0xEDB88320U)
     }
 }
