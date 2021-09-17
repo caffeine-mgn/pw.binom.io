@@ -18,6 +18,9 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
         return true
     }
 
+    val isLocked
+        get() = lock.value
+
     /**
      * Trying lock. If [duration] is not null will wait only [duration] time. And if [duration]==null will
      * wait until lock is free infinity time
