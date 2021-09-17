@@ -1,8 +1,10 @@
 package pw.binom.network
 
 import kotlinx.cinterop.*
+import platform.linux.internal_ntohs
 import platform.posix.*
 import pw.binom.ByteBuffer
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -41,7 +43,7 @@ actual class NSocket(val native: Int) : Closeable {
                 addrlen.value = sizeOf<sockaddr_in>().convert()
                 val r = getsockname(native, sin.ptr.reinterpret(), addrlen.ptr)
                 if (r==0) {
-                    ntohs(sin.sin_port).toInt()
+                    internal_ntohs(sin.sin_port).toInt()
                 } else {
                     //println("getsockname=$c, errno=${errno},GetLastError()=${GetLastError()}")
                     null
@@ -72,7 +74,10 @@ actual class NSocket(val native: Int) : Closeable {
 
     actual fun send(data: ByteBuffer): Int {
         memScoped {
-            val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
+            val r: Int = data.ref { dataPtr, remaining ->
+                send(native, dataPtr, remaining.convert(), MSG_NOSIGNAL).convert()
+            }
+//            val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
             if (r < 0) {
                 if (errno == EPIPE) {
                     throw SocketClosedException()
@@ -89,7 +94,10 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun recv(data: ByteBuffer): Int {
-        val r: Int = recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
+        val r: Int = data.ref { dataPtr, remaining ->
+            recv(native, dataPtr, remaining.convert(), 0).convert()
+        }
+//        val r: Int = recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
         if (r < 0) {
             if (errno == EAGAIN) {
                 return 0
@@ -117,7 +125,12 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     override fun close() {
-        nativeClose()
+        checkClosed()
+        try {
+            nativeClose()
+        } finally {
+            closed.value = true
+        }
     }
 
     actual fun setBlocking(value: Boolean) {
@@ -169,13 +182,27 @@ actual class NSocket(val native: Int) : Closeable {
             }
         }
     }
+    private val closed = AtomicBoolean(false)
+    private fun checkClosed() {
+        if (closed.value) {
+            throw RuntimeException("Socket already closed")
+        }
+    }
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
         memScoped {
-            val rr = sendto(
-                native, data.refTo(data.position).getPointer(this), data.remaining.convert(),
-                0, address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
-            )
+            checkClosed()
+            val rr = data.ref { dataPtr, remaining ->
+                sendto(
+                    native, dataPtr.getPointer(this), remaining.convert(),
+                    MSG_NOSIGNAL,
+                    address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
+                )
+            }
+//            val rr = sendto(
+//                native, data.refTo(data.position).getPointer(this), data.remaining.convert(),
+//                0, address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
+//            )
             if (rr.toInt() == -1) {
                 throw IOException("Can't send data. Error: $errno  ${errno}")
             }
@@ -190,7 +217,10 @@ actual class NSocket(val native: Int) : Closeable {
         address: NetworkAddress.Mutable?
     ): Int {
         val gotBytes = if (address == null) {
-            val rr = recvfrom(native, data.refTo(data.position), data.remaining.convert(), 0, null, null)
+            val rr = data.ref { dataPtr, remaining ->
+                recvfrom(native, dataPtr, remaining.convert(), 0, null, null)
+            }
+//            val rr = recvfrom(native, data.refTo(data.position), data.remaining.convert(), 0, null, null)
             if (rr.toInt() == -1 && errno!= EAGAIN) {
                 throw IOException("Can't read data. Error: $errno  ${errno}")
             }
@@ -199,11 +229,18 @@ actual class NSocket(val native: Int) : Closeable {
             memScoped {
                 val len = allocArray<socklen_tVar>(1)
                 len[0] = 28.convert()
-                val rr = recvfrom(
-                    native, data.refTo(data.position).getPointer(this), data.remaining.convert(), 0,
-                    address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
-                    len
-                )
+                val rr = data.ref { dataPtr, remaining ->
+                    recvfrom(
+                        native, dataPtr.getPointer(this), remaining.convert(), 0,
+                        address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
+                        len
+                    )
+                }
+//                val rr = recvfrom(
+//                    native, data.refTo(data.position).getPointer(this), data.remaining.convert(), 0,
+//                    address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
+//                    len
+//                )
                 if (rr.toInt() == -1 && errno!= EAGAIN) {
                     throw IOException("Can't read data. Error: $errno")
                 }

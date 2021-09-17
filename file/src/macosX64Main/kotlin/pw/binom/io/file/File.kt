@@ -87,11 +87,9 @@ actual class File actual constructor(path: String) {
 
     actual fun list(): List<File> {
         val out = ArrayList<File>()
-        iterator().use {
-            it.forEach { file ->
+        iterator().forEach { file ->
                 out += file
             }
-        }
         return out
     }
 
