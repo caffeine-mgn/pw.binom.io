@@ -6,7 +6,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @OptIn(ExperimentalTime::class)
-class WorkerTest {
+class SleepTest {
 
     @Test
     fun sleepTest() {
