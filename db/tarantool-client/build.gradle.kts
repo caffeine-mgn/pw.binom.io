@@ -90,6 +90,7 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
+                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
             }
         }
         val jvmTest by getting {
@@ -104,68 +105,4 @@ kotlin {
     }
 }
 
-val postgresContainerId = UUID.randomUUID().toString()
-
-
-tasks {
-
-    val pullTarantool = create(
-        name = "pullTarantool",
-        type = com.bmuschko.gradle.docker.tasks.image.DockerPullImage::class
-    ) {
-        image.set("tarantool/tarantool:2.6.2")
-    }
-
-    val createTarantool = create(
-        name = "createTarantool",
-        type = com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class
-    ) {
-        dependsOn(pullTarantool)
-        image.set("tarantool/tarantool:2.6.2")
-        imageId.set("tarantool/tarantool:2.6.2")
-        envVars.put("TARANTOOL_USER_NAME", "server")
-        envVars.put("TARANTOOL_USER_PASSWORD", "server")
-        hostConfig.portBindings.set(listOf("127.0.0.1:25321:3301"))
-        containerId.set(postgresContainerId)
-        containerName.set(postgresContainerId)
-    }
-
-    val startTarantool = create(
-        name = "startTarantool",
-        type = com.bmuschko.gradle.docker.tasks.container.DockerStartContainer::class
-    ) {
-        dependsOn(createTarantool)
-        targetContainerId(postgresContainerId)
-        doLast {
-            Thread.sleep(1000)
-        }
-    }
-
-    val stopTarantool = create(
-        name = "stopTarantool",
-        type = com.bmuschko.gradle.docker.tasks.container.DockerStopContainer::class
-    ) {
-        targetContainerId(postgresContainerId)
-    }
-
-    val destoryTarantool = create(
-        name = "destoryTarantool",
-        type = com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer::class
-    ) {
-        dependsOn(stopTarantool)
-        targetContainerId(postgresContainerId)
-    }
-
-    this["jvmTest"].dependsOn(startTarantool)
-    this["jvmTest"].finalizedBy(destoryTarantool)
-
-    this["linuxX64Test"].dependsOn(startTarantool)
-    this["linuxX64Test"].finalizedBy(destoryTarantool)
-
-    this["mingwX64Test"].dependsOn(startTarantool)
-    this["mingwX64Test"].finalizedBy(destoryTarantool)
-
-    this["macosX64Test"].dependsOn(startTarantool)
-    this["macosX64Test"].finalizedBy(destoryTarantool)
-}
 apply<pw.binom.plugins.DocsPlugin>()

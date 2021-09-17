@@ -7,7 +7,7 @@ import pw.binom.network.NetworkDispatcher
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import kotlin.time.seconds
-
+/*
 @OptIn(ExperimentalTime::class)
 fun pg(func: suspend (PGConnection) -> Unit) {
     val manager = NetworkDispatcher()
@@ -44,3 +44,4 @@ fun pg(func: suspend (PGConnection) -> Unit) {
         manager.select(1000)
     }
 }
+*/

@@ -4,7 +4,7 @@ import pw.binom.io.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class TransactionTest {
+class TransactionTest:BaseTest() {
 
     @Test
     fun rollbackTest() {

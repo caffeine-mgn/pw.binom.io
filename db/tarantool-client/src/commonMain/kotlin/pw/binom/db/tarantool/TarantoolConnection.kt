@@ -2,6 +2,7 @@ package pw.binom.db.tarantool
 
 import pw.binom.*
 import pw.binom.concurrency.ThreadRef
+import pw.binom.coroutine.fork
 import pw.binom.db.tarantool.protocol.*
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteArrayOutput
@@ -24,8 +25,9 @@ private const val VINDEX_ID_INDEX_ID = 0
 @Suppress("UNCHECKED_CAST")
 class TarantoolConnection private constructor(
     private val networkThread: ThreadRef,
-    val manager: NetworkDispatcher,
-    con: TcpConnection
+    val networkDispatcher: NetworkDispatcher,
+    con: TcpConnection,
+    val serverVersion: String,
 ) :
     AsyncCloseable {
     companion object {
@@ -45,13 +47,18 @@ class TarantoolConnection private constructor(
                     con.readFully(buf)
                     buf.flip()
                     val salt = buf.asUTF8String().trim()
-                    val connection = TarantoolConnection(networkThread = ThreadRef(), manager = manager, con = con)
-                    connection.connect()
+                    val connection = TarantoolConnection(
+                        networkThread = ThreadRef(),
+                        networkDispatcher = manager,
+                        con = con,
+                        serverVersion = version
+                    )
+                    fork { connection.startMainLoop() }
                     if (userName != null && password != null) {
                         connection.sendReceive(
-                            Code.AUTH,
-                            null,
-                            InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
+                            code = Code.AUTH,
+                            schemaId = null,
+                            body = InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
                         ).assertException()
                     }
                     return connection
@@ -175,7 +182,7 @@ class TarantoolConnection private constructor(
         connectionReference.close()
     }
 
-    private suspend fun connect() {
+    private suspend fun startMainLoop() {
         ByteBuffer.alloc(8) { buf ->
             try {
                 val packageReader = AsyncInputWithCounter(connectionReference)

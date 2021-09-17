@@ -14,7 +14,7 @@ import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.*
 
-class TestConnect {
+class TestConnect:BaseTest() {
 
     //    @Test
     fun test() {

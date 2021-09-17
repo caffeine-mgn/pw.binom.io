@@ -7,12 +7,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-class Testing {
+class Testing:BaseTest() {
 
     @Test
     fun updateTest() {
         val schemaName = Random.nextUuid().toShortString()
-        tarantool {
+        pg {
             it.eval(
                 """
 s=box.schema.space.create('$schemaName',{engine = 'memtx', if_not_exists = true})
