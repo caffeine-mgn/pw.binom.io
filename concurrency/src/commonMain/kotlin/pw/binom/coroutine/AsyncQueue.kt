@@ -32,22 +32,20 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
     }
 
     override suspend fun pop(): T {
-        var found = false
-        var result: T? = null
-        lock.synchronize {
-            if (closed.value) {
-                throw ClosedException()
-            }
-            if (!values.isEmpty) {
-                found = true
-                result = values.pop()
-            }
+        lock.lock()
+        if (closed.value) {
+            lock.unlock()
+            throw ClosedException()
         }
-        if (found) {
-            return result as T
-        }
-        return suspendManagedCoroutine {
-            listeners.push(it)
+        if (!values.isEmpty) {
+            val result = values.pop()
+            lock.unlock()
+            return result
+        } else {
+            return suspendManagedCoroutine {
+                listeners.push(it)
+                lock.unlock()
+            }
         }
     }
 

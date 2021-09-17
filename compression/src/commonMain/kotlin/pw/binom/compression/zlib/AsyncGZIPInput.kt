@@ -35,7 +35,7 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
         if (headerRead)
             return 0
         headerRead = true
-        crc.reset()
+            crc.init()
         val stream = AsyncCheckedInput(stream, crc)
         tt.clear()
         stream.readFully(tt)
@@ -80,7 +80,7 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
             }
             n += 2
         }
-        crc.reset()
+        crc.init()
         return n
     }
 

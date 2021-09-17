@@ -49,7 +49,7 @@ class GZIPInput(
         if (headerRead)
             return 0
         headerRead = true
-        crc.reset()
+        crc.init()
         val stream = CheckedInput(stream, crc)
         tt.clear()
         stream.read(tt)
@@ -94,7 +94,7 @@ class GZIPInput(
             }
             n += 2
         }
-        crc.reset()
+        crc.init()
         return n
     }
 

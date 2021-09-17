@@ -2,8 +2,9 @@ package pw.binom.compression.zlib
 
 import pw.binom.ByteBuffer
 import pw.binom.Output
+import pw.binom.alloc
+import pw.binom.holdState
 import pw.binom.io.CRC32
-import pw.binom.io.use
 
 class GZIPOutput(
     stream: Output,
@@ -18,19 +19,22 @@ class GZIPOutput(
     syncFlush = false,
     closeStream = closeStream
 ) {
-    private val crc = CRC32()
+    private val crcCalc = CRC32()
+
+    private val crc
+        get() = crcCalc.value.toInt()
 
     init {
-        crc.reset()
+        crcCalc.init()
         usesDefaultDeflater = false
     }
 
     override fun write(data: ByteBuffer): Int {
         writeHeader()
-        val pos = data.position
-        val r = super.write(data)
-        crc.update(data, pos, r)
-        return r
+        data.holdState {
+            crcCalc.update(data = data)
+        }
+        return super.write(data)
     }
 
 //    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
@@ -52,17 +56,17 @@ class GZIPOutput(
             stream.flush()
         }
 
-        if (buf.capacity > TRAILER_SIZE) {
+        if (buf.capacity >= TRAILER_SIZE) {
             writeFinal(buf)
         } else {
-            ByteBuffer.alloc(TRAILER_SIZE).use { trailer ->
+            ByteBuffer.alloc(TRAILER_SIZE) { trailer ->
                 writeFinal(trailer)
             }
         }
     }
 
     private fun writeTrailer(buf: ByteBuffer) {
-        writeInt(crc.value.toInt(), buf) // CRC-32 of uncompr. data
+        writeInt(crcCalc.value.toInt(), buf) // CRC-32 of uncompr. data
         writeInt(def.totalIn.toInt(), buf) // Number of uncompr. bytes
     }
 

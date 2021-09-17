@@ -20,7 +20,8 @@ class AsyncCheckedInput(val stream: AsyncInput, val cksum: CRC32Basic) : AsyncIn
         val pos = dest.position
         val ll = stream.read(dest)
         if (ll != -1) {
-            cksum.update(dest, pos, ll)
+            dest.flip()
+            cksum.update(dest)
         }
         return ll
     }
