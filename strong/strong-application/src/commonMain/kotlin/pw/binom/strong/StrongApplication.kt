@@ -9,7 +9,7 @@ import pw.binom.strong.exceptions.StartupException
 import pw.binom.strong.exceptions.StrongException
 
 object StrongApplication {
-    fun start(vararg config: Strong.Config) {
+    fun start(vararg config: Strong.Config, afterInit: ((Strong) -> Unit)? = null) {
         NetworkDispatcher().use { networkDispatcher ->
             val initProcess = networkDispatcher.startCoroutine {
                 Strong.create(
@@ -24,19 +24,36 @@ object StrongApplication {
                 }
             }
             val strong = initProcess.getOrException()
-            while (!Signal.isInterrupted) {
-                networkDispatcher.select(1000)
+            val initFunc = if (afterInit != null) {
+                runCatching { afterInit(strong.value) }
+            } else {
+                Result.success(Unit)
             }
-            val destroyFuture = networkDispatcher.startCoroutine {
-                strong.value.destroy()
+            if (initFunc.isSuccess) {
+                while (!Signal.isInterrupted && !strong.value.isInterrupted) {
+                    networkDispatcher.select(1000)
+                }
             }
-            strong.close()
+            try {
+                val destroyFuture = networkDispatcher.startCoroutine {
+                    strong.value.destroy()
+                }
+                strong.close()
 
-            while (!destroyFuture.isDone) {
-                networkDispatcher.select(100)
+                while (!destroyFuture.isDone) {
+                    networkDispatcher.select(100)
+                }
+                if (destroyFuture.isFailure) {
+                    throw StrongException("Can't destroy Strong", destroyFuture.exceptionOrNull!!)
+                }
+            } catch (e: Throwable) {
+                if (initFunc.isFailure) {
+                    e.addSuppressed(initFunc.exceptionOrNull()!!)
+                }
+                throw e
             }
-            if (destroyFuture.isFailure) {
-                throw StrongException("Can't destroy Strong", destroyFuture.exceptionOrNull!!)
+            if (initFunc.isFailure) {
+                throw initFunc.exceptionOrNull()!!
             }
         }
     }

@@ -44,12 +44,27 @@ internal class StrongImpl : Strong {
     }
 
     override suspend fun destroy() {
-        for (i in beanOrder.size - 1 downTo 0) {
-            val bean = beanOrder[i].second
-            if (bean is Strong.DestroyableBean) {
-                bean.destroy(this)
+        isDestroying = true
+        try {
+            for (i in beanOrder.size - 1 downTo 0) {
+                val bean = beanOrder[i].second
+                if (bean is Strong.DestroyableBean) {
+                    bean.destroy(this)
+                }
             }
+        } finally {
+            isDestroying = false
         }
+    }
+
+    override var isDestroying: Boolean = false
+        private set
+    override var isInterrupted: Boolean = false
+        private set
+
+    override fun interrupt() {
+        check(!isInterrupted) { "Strong already Interrupted" }
+        isInterrupted = true
     }
 
     override fun contains(beanName: String): Boolean {

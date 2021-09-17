@@ -128,6 +128,9 @@ interface Strong {
     fun <T : Any> serviceList(beanClass: KClass<T>): pw.binom.strong.ServiceProvider<List<T>>
     fun <T : Any> serviceOrNull(beanClass: KClass<T>, name: String? = null): pw.binom.strong.ServiceProvider<T?>
     suspend fun destroy()
+    val isDestroying:Boolean
+    val isInterrupted:Boolean
+    fun interrupt()
 
     /**
      * Returns true if bean with [name] already defined
