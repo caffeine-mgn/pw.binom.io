@@ -3,11 +3,15 @@ package pw.binom.webdav.client
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.date.Date
-import pw.binom.io.*
+import pw.binom.io.FileSystem
+import pw.binom.io.FileSystemAccess
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.addHeader
+import pw.binom.io.use
+import pw.binom.net.Path
 import pw.binom.net.URI
+import pw.binom.net.toPath
 import pw.binom.skipAll
 import pw.binom.webdav.DAV_NS
 import pw.binom.webdav.DEPTH_HEADER
@@ -52,39 +56,42 @@ open class WebDavClient constructor(val client: HttpClient, val url: URI, val ti
         }
     }
 
-    override suspend fun mkdir(path: String): FileSystem.Entity? {
+    override suspend fun mkdir(path: Path): FileSystem.Entity? {
 
-        val allPathUrl = url.appendPath(path, encode = true)
+        val allPathUrl = url.appendPath(path)
         val r = client.connect(HTTPMethod.MKCOL.code, allPathUrl, timeout = timeout)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val responseCode = r.getResponse().use { it.responseCode }
         if (responseCode == 405) {
             return null
         }
+        if (responseCode == 401) {
+            throw FileSystemAccess.AccessException.UnauthorizedException()
+        }
         if (responseCode != 201) {
             TODO("Invalid response code $responseCode")
         }
-        val ss = path.split('/')
+        val ss = path.toString().split('/')
         return WebdavEntity(
             user = WebAuthAccess.getCurrentUser(),
             lastModified = Date.nowTime,
-            path = ss.subList(0, ss.lastIndex - 1).joinToString("/"),
+            path = (ss.subList(0, ss.lastIndex - 1).joinToString("/")).toPath,
             isFile = false,
             length = 0,
             fileSystem = this
         )
     }
 
-    override suspend fun getDir(path: String): Sequence<FileSystem.Entity>? =
+    override suspend fun getDir(path: Path): List<FileSystem.Entity>? =
         getDir(user = WebAuthAccess.getCurrentUser(), path = path, depth = 1, excludeCurrent = true)
 
     suspend fun getDir(
         user: WebAuthAccess?,
-        path: String,
+        path: Path,
         depth: Int,
         excludeCurrent: Boolean
-    ): Sequence<WebdavEntity>? {
-        val allPathUrl = url.appendPath(path, encode = true)
+    ): List<WebdavEntity>? {
+        val allPathUrl = url.appendPath(path)
         val r = client.connect(HTTPMethod.PROPFIND.code, allPathUrl, timeout = timeout)
         user?.apply(r)
         r.addHeader(DEPTH_HEADER, depth.toString())
@@ -110,14 +117,18 @@ open class WebDavClient constructor(val client: HttpClient, val url: URI, val ti
 
         val currentDir = PropResponse(reader.childs.minByOrNull { PropResponse(it).href.length }!!)
         val currentDirHref = currentDir.href
-        val realCurrentUrl = path.removePrefix(currentDirHref) + "/"
+        val realCurrentUrl = (path.toString().removePrefix(currentDirHref) + "/").toPath
         return reader.childs.mapNotNull {
             if (excludeCurrent && it === currentDir.element) {
                 return@mapNotNull null
             }
             val prop = PropResponse(it)
             val realPath =
-                if (it === currentDir.element) path else realCurrentUrl + prop.href.removePrefix(currentDirHref)
+                if (it === currentDir.element) {
+                    path
+                } else {
+                    (realCurrentUrl.toString() + prop.href.removePrefix(currentDirHref)).toPath
+                }
             WebdavEntity(
                 length = prop.props.length ?: 0L,
                 lastModified = prop.props.getLastModified?.time ?: 0L,
@@ -126,10 +137,10 @@ open class WebDavClient constructor(val client: HttpClient, val url: URI, val ti
                 isFile = !prop.props.isDirection,
                 fileSystem = this,
             )
-        }.asSequence()
+        }
     }
 
-    override suspend fun get(path: String): WebdavEntity? {
+    override suspend fun get(path: Path): WebdavEntity? {
         return getDir(
             user = WebAuthAccess.getCurrentUser(),
             path = path,
@@ -138,8 +149,8 @@ open class WebDavClient constructor(val client: HttpClient, val url: URI, val ti
         )?.firstOrNull()
     }
 
-    override suspend fun new(path: String): AsyncOutput {
-        val allPathUrl = url.appendPath(path, encode = true)
+    override suspend fun new(path: Path): AsyncOutput {
+        val allPathUrl = url.appendPath(path)
         val r = client.connect(HTTPMethod.PUT.code, allPathUrl, timeout = timeout)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val upload = r.writeData()

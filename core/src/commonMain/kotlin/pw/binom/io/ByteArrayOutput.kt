@@ -5,7 +5,7 @@ import pw.binom.Output
 import pw.binom.atomic.AtomicReference
 import kotlin.math.ceil
 
-class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
+open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
     var data by AtomicReference(ByteBuffer.alloc(capacity))
         private set
     private var _wrote = 0

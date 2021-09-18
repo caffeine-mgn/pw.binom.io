@@ -221,12 +221,15 @@ value class URI internal constructor(val fullPath: String) {
      * @param encode flag for automatic encode appending [path]
      * @return URI with appended [path]
      */
-    fun appendPath(path: String, direction: Boolean = true, encode: Boolean = false) =run{
+    fun appendPath(path: String, direction: Boolean = true, encode: Boolean = false) = run {
         val result = this.path.append(path = if (encode) UTF8.urlEncode(path) else path, direction = direction)
         copy(
             path = result
         )
     }
+
+    fun appendPath(path: Path) =
+        appendPath(path = path.toString(), direction = true, encode = true)
 
     fun appendQuery(key: String, value: String? = null): URI =
         copy(query = query?.append(key = key, value = value) ?: Query.new(key = key, value = value))

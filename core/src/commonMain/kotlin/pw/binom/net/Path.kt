@@ -71,6 +71,29 @@ value class Path internal constructor(val raw: String) {
             "$raw$path".toPath
         }
 
+    fun append(path: Path): Path = append(path.raw, true)
+
+    val elements
+        get() = raw.split('/')
+
+    val name: String
+        get() {
+            val p = raw.lastIndexOf('/')
+            return if (p == -1)
+                raw
+            else
+                raw.substring(p + 1)
+        }
+
+    val parent: Path?
+        get() {
+            val p = raw.lastIndexOf('/')
+            return if (p == -1)
+                null
+            else
+                raw.substring(0, p).toPath
+        }
+
     override fun toString(): String = raw
 }
 

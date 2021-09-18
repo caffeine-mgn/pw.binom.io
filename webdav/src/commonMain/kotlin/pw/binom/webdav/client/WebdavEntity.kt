@@ -10,20 +10,21 @@ import pw.binom.io.httpClient.addHeader
 import pw.binom.io.httpClient.connect
 import pw.binom.io.readText
 import pw.binom.io.use
+import pw.binom.net.Path
 import pw.binom.skipAll
 import pw.binom.webdav.WebAuthAccess
 
 class WebdavEntity(
     override val length: Long,
     override val lastModified: Long,
-    override val path: String,
+    override val path: Path,
     val user: WebAuthAccess?,
     override val isFile: Boolean,
     override val fileSystem: WebDavClient,
 ) : FileSystem.Entity {
 
     override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
-        val allPathUrl = fileSystem.url.appendPath(path, encode = true)
+        val allPathUrl = fileSystem.url.appendPath(path)
         val r = fileSystem.client.connect(HTTPMethod.GET.code, allPathUrl, timeout = fileSystem.timeout)
         if (offset != 0uL) {
             if (length == null) {
@@ -50,11 +51,11 @@ class WebdavEntity(
         }
     }
 
-    override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity {
-        val destinationUrl = fileSystem.url.appendPath(path, encode = true)
+    override suspend fun copy(path: Path, overwrite: Boolean): FileSystem.Entity {
+        val destinationUrl = fileSystem.url.appendPath(path)
         val r = fileSystem.client.connect(
             method = HTTPMethod.COPY.code,
-            uri = fileSystem.url.appendPath(this.path, encode = true),
+            uri = fileSystem.url.appendPath(this.path),
             timeout = fileSystem.timeout
         )
         user?.apply(r)
@@ -84,11 +85,11 @@ class WebdavEntity(
         )
     }
 
-    override suspend fun move(path: String, overwrite: Boolean): FileSystem.Entity {
-        val destinationUrl = fileSystem.url.appendPath(path, encode = true)
+    override suspend fun move(path: Path, overwrite: Boolean): FileSystem.Entity {
+        val destinationUrl = fileSystem.url.appendPath(path)
         val r = fileSystem.client.connect(
             HTTPMethod.MOVE.code,
-            fileSystem.url.appendPath(this.path, encode = true),
+            fileSystem.url.appendPath(this.path),
             timeout = fileSystem.timeout
         )
         user?.apply(r)
@@ -126,7 +127,7 @@ class WebdavEntity(
     override suspend fun delete() {
         val r = fileSystem.client.connect(
             HTTPMethod.DELETE.code,
-            fileSystem.url.appendPath(this.path, encode = true),
+            fileSystem.url.appendPath(this.path),
             timeout = fileSystem.timeout
         )
         user?.apply(r)
@@ -149,7 +150,7 @@ class WebdavEntity(
     }
 
     override suspend fun rewrite(): AsyncOutput {
-        val allPathUrl = fileSystem.url.appendPath(path, encode = true)
+        val allPathUrl = fileSystem.url.appendPath(path)
         val r = fileSystem.client.connect(HTTPMethod.PUT.code, allPathUrl, timeout = fileSystem.timeout)
 //            r.addHeader("Overwrite", "T")
         user?.apply(r)
