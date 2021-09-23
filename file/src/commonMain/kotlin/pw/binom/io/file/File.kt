@@ -69,12 +69,12 @@ val File.nameWithoutExtension: String
         }
     }
 
-val File.extension: String
+val File.extension: String?
     get() {
         val name = name
         return name.lastIndexOf('.').let {
             if (it == -1)
-                return ""
+                return null
             else
                 name.substring(it + 1)
         }
