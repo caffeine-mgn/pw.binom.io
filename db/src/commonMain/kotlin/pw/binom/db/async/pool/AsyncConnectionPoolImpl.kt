@@ -130,7 +130,7 @@ class AsyncConnectionPoolImpl constructor(
             runCatching { it.resumeWithException(StreamClosedException()) }
         }
         waiters.clear()
-        connections.forEach {
+        ArrayList(connections).forEach {
             runCatching { it.asyncClose() }
         }
         connections.clear()

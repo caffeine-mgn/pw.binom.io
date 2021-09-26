@@ -44,7 +44,11 @@ object StrongApplication {
                     networkDispatcher.select(100)
                 }
                 if (destroyFuture.isFailure) {
-                    throw StrongException("Can't destroy Strong", destroyFuture.exceptionOrNull!!)
+                    val e = StrongException("Can't destroy Strong", destroyFuture.exceptionOrNull!!)
+                    if (initFunc.isFailure) {
+                        e.addSuppressed(initFunc.exceptionOrNull()!!)
+                    }
+                    throw e
                 }
             } catch (e: Throwable) {
                 if (initFunc.isFailure) {

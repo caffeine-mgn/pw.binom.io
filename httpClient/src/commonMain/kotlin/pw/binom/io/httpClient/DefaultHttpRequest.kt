@@ -137,6 +137,7 @@ class DefaultHttpRequest constructor(
         }
         sendHeaders()
         channel.writer.flush()
+        closed = true
         return DefaultHttpResponse.read(
             uri = uri,
             client = client,
