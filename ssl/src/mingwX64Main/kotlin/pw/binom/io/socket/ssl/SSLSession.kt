@@ -81,13 +81,6 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         return n
     }
 
-    actual fun readNet(dst: ByteDataBuffer, offset: Int, length: Int): Int {
-        val n = BIO_read(wbio, dst.refTo(0), dst.size)
-        if (n < 0)
-            return 0
-        return n
-    }
-
     actual fun writeNet(dst: ByteArray, offset: Int, length: Int): Int {
         var len = length
         var off = offset
@@ -96,23 +89,6 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
 
         while (len > 0) {
             val n = BIO_write(rbio, dst.refTo(off), len);
-            if (n <= 0)
-                TODO()
-            readed += n
-
-            off += n
-            len -= n
-        }
-        return readed
-    }
-
-    actual fun writeNet(dst: ByteDataBuffer, offset: Int, length: Int): Int {
-        var len = length
-        var off = offset
-        var readed = 0
-
-        while (len > 0) {
-            val n = BIO_write(rbio, dst.refTo(off), len)
             if (n <= 0)
                 TODO()
             readed += n
@@ -147,82 +123,6 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
                 state, 0
         )
     }
-
-//    actual fun readApp(dst: ByteArray, offset: Int, length: Int): Status {
-//        val r = init()
-//        if (r != null)
-//            return Status(
-//                    r,
-//                    0
-//            )
-//        val n = SSL_read(ssl, dst.refTo(offset), length)
-//        if (n > 0) {
-//            return Status(
-//                    State.OK,
-//                    n
-//            )
-//        }
-//        val state = when (val e = SSL_get_error(ssl, n)) {
-//            SSL_ERROR_WANT_READ -> State.WANT_READ
-//            SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
-//            SSL_ERROR_SSL -> State.ERROR
-//            else -> TODO("Unknown status $e")
-//        }
-//        return Status(
-//                state, 0
-//        )
-//    }
-
-    actual fun writeApp(src: ByteDataBuffer, offset: Int, length: Int): Status {
-        val r = init()
-        if (r != null)
-            return Status(
-                    r,
-                    0
-            )
-        val n = SSL_write(ssl, src.refTo(offset), length)
-        if (n > 0) {
-            return Status(
-                    State.OK,
-                    n
-            )
-        }
-        val state = when (val e = SSL_get_error(ssl, n)) {
-            SSL_ERROR_WANT_READ -> State.WANT_READ
-            SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
-            SSL_ERROR_SSL -> State.ERROR
-            SSL_ERROR_ZERO_RETURN -> State.CLOSED
-            else -> TODO("Unknown status $e on write")
-        }
-        return Status(
-                state, 0
-        )
-    }
-
-//    actual fun readApp(dst: ByteDataBuffer, offset: Int, length: Int): Status {
-//        val r = init()
-//        if (r != null)
-//            return Status(
-//                    r,
-//                    0
-//            )
-//        val n = SSL_read(ssl, dst.refTo(offset), length)
-//        if (n > 0) {
-//            return Status(
-//                    State.OK,
-//                    n
-//            )
-//        }
-//        val state = when (val e = SSL_get_error(ssl, n)) {
-//            SSL_ERROR_WANT_READ -> State.WANT_READ
-//            SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
-//            SSL_ERROR_SSL -> State.ERROR
-//            else -> TODO("Unknown status $e")
-//        }
-//        return Status(
-//                state, 0
-//        )
-//    }
 
     actual fun readNet(dst: ByteBuffer): Int {
         val n = dst.ref{ dstPtr,remaining ->
