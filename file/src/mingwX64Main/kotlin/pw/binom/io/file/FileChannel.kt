@@ -67,9 +67,13 @@ actual class FileChannel actual constructor(
     override fun write(data: ByteBuffer): Int {
         if (feof(handler) != 0)
             return 0
-        return data.refTo(data.position) { dataPtr ->
+        val wroted:Int = data.refTo(data.position) { dataPtr ->
             fwrite(dataPtr, 1.convert(), data.remaining.convert(), handler).convert()
         }
+        if (wroted>0) {
+            data.position += wroted
+        }
+        return wroted
     }
 
     override fun flush() {
