@@ -6,11 +6,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class TestConnection {
+class TestConnection:BaseTest() {
 
     @Test
     fun stringPass() {
-        tarantool { con ->
+        pg { con ->
             val text = "Response From Tarantool: ${Random.nextUuid()}"
             val response = con.eval("return '$text'")
             assertTrue(response is List<*>)
@@ -18,7 +18,7 @@ class TestConnection {
             assertEquals(text, response[0])
         }
 
-        tarantool { con ->
+        pg { con ->
             val text = "Response From Tarantool: ${Random.nextUuid()}"
             val response = con.eval("return ...", text, text)
             assertTrue(response is List<*>)
@@ -30,7 +30,7 @@ class TestConnection {
 
     @Test
     fun uuidPass() {
-        tarantool { con ->
+        pg { con ->
             val uuid = Random.nextUuid()
             val response = con.eval("return ...", uuid)
             assertTrue(response is List<*>)
@@ -41,7 +41,7 @@ class TestConnection {
 
     @Test
     fun intPass() {
-        tarantool { con ->
+        pg { con ->
             val value = Random.nextInt()
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)
@@ -52,7 +52,7 @@ class TestConnection {
 
     @Test
     fun bytesPass() {
-        tarantool { con ->
+        pg { con ->
             val response = con.eval("return type(...)", Random.nextBytes(10))
             assertTrue(response is List<*>)
             assertEquals(1, response.size)
@@ -62,7 +62,7 @@ class TestConnection {
 
     @Test
     fun listPass() {
-        tarantool { con ->
+        pg { con ->
             val value = listOf(Random.nextInt(), Random.nextInt())
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)
@@ -74,7 +74,7 @@ class TestConnection {
 
     @Test
     fun listOfListPass() {
-        tarantool { con ->
+        pg { con ->
             val value = listOf(listOf(Random.nextInt()), listOf(Random.nextInt()))
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)

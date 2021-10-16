@@ -5,8 +5,6 @@ import platform.windows.*
 import pw.binom.ByteBuffer
 import pw.binom.Input
 import pw.binom.concurrency.sleep
-import pw.binom.concurrency.Worker as BWorker
-import kotlin.native.concurrent.Worker
 
 class PipeInput(val process: WinProcess) : Pipe(), Input {
     override val handler: HANDLE
@@ -52,7 +50,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
 
     override fun read(dest: ByteBuffer): Int {
         while (true) {
-            BWorker.sleep(1)
+            sleep(1)
             if (available == 0) {
                 return 0
             }
@@ -65,9 +63,10 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
 
             val dwWritten = alloc<UIntVar>()
 
-
-            val r = ReadFile(otherHandler, (dest.refTo(dest.position)).getPointer(this).reinterpret(),
+            val r = dest.refTo(dest.position){destPtr->
+                ReadFile(otherHandler, (destPtr).getPointer(this).reinterpret(),
                     dest.remaining.convert(), dwWritten.ptr, null)
+            }
             if (r <= 0)
                 TODO()
             val read = dwWritten.value.toInt()

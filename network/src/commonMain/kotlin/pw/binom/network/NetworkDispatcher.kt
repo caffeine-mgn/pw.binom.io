@@ -1,153 +1,143 @@
 package pw.binom.network
 
-import pw.binom.NonFreezableFuture
-import pw.binom.PopResult
-import pw.binom.concurrency.*
+import pw.binom.FreezableFuture
+import pw.binom.concurrency.Reference
+import pw.binom.concurrency.ThreadRef
+import pw.binom.concurrency.joinAndGetOrThrow
+import pw.binom.coroutine.CrossThreadContinuation
+import pw.binom.coroutine.Dispatcher
+import pw.binom.coroutine.DispatcherCoroutineElement
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
-import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.startCoroutine
 
-private class NetworkExecutor(val con: CrossThreadKeyHolder, val ref: Reference<NetworkDispatcher>) : Executor {
-    override fun execute(func: suspend () -> Unit) {
-        con.waitReadyForWrite {
-            ref.value.async {
-                func()
-            }
-        }
+class NetworkDispatcher : Dispatcher, Closeable {
+    private val networkThread = ThreadRef()
+    private val network = Reference(NetworkImpl())
+    private val c = network.value.crossThreadWakeUpHolder
+
+    init {
+        doFreeze()
     }
 
-}
+    fun <T> startCoroutine(onDone: (Result<T>) -> Unit, context: CoroutineContext, func: suspend () -> T) {
+        val dispatchContextElement = DispatcherCoroutineElement(this)
+            .doFreeze()
+        c.waitReadyForWrite {
+            func.startCoroutine(object : Continuation<T> {
+                val dispatcherElement = dispatchContextElement
+                override val context: CoroutineContext
+                    get() = context + dispatcherElement
 
-class NetworkDispatcher : Closeable {
-    private val selector = Selector.open()
-    private val internalUdpContinuation = UdpSocketChannel()
-    private val internalContinuation =
-        CrossThreadKeyHolder(selector.attach(internalUdpContinuation, 0, internalUdpContinuation))
-    internal val crossThreadWakeUpHolder = internalContinuation
-    private val crossThreadWaiterResultHolder = PopResult<() -> Unit>()
-    private val selfReference = this.asReference()
-
-    /**
-     * Network executor. Can be use for execute some code on network thread
-     */
-    val executor: Executor = NetworkExecutor(internalContinuation, selfReference).doFreeze()
-
-    suspend fun yield() {
-        suspendCoroutine<Unit> {
-            internalContinuation.waitReadyForWrite { it.resume(Unit) }
-        }
-    }
-
-    fun <R> async(executor: ExecutorService? = null, func: suspend () -> R): NonFreezableFuture<R> {
-        val future = NonFreezableFuture<R>()
-        func.startCoroutine(object : Continuation<R> {
-            override val context: CoroutineContext = run {
-                var ctx =
-                    CrossThreadCoroutineElement(this@NetworkDispatcher.crossThreadWakeUpHolder) +
-                            NetworkHolderElement(this@NetworkDispatcher.crossThreadWakeUpHolder)
-                if (executor != null) {
-                    ctx += ExecutorServiceHolderElement(executor)
+                override fun resumeWith(result: Result<T>) {
+                    onDone(result)
                 }
-                ctx
-            }
+            })
+        }
+    }
 
-            override fun resumeWith(result: Result<R>) {
-                future.resume(result)
+    override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
+        val future = FreezableFuture<T>()
+        startCoroutine(
+            context = context,
+            func = func,
+            onDone = {
+                try {
+                    future.resume(it)
+                } catch (e: Throwable) {
+                    if (it.isFailure) {
+                        e.addSuppressed(it.exceptionOrNull()!!)
+                    }
+                    throw e
+                }
             }
-        })
+        )
         return future
     }
 
-    fun select(timeout: Long = -1L) =
-        selector.select(timeout) { key, mode ->
-            val attachment = key.attachment
-            if (attachment === internalUdpContinuation) {
-                while (true) {
-                    internalContinuation.readyForWriteListener.pop(crossThreadWaiterResultHolder)
-                    if (crossThreadWaiterResultHolder.isEmpty) {
-                        break
-                    } else {
-                        crossThreadWaiterResultHolder.value()
-                    }
-                }
-                internalContinuation.key.listensFlag = 0
-                return@select
+    override fun <T> startCoroutine(
+        context: CoroutineContext,
+        continuation: CrossThreadContinuation<T>,
+        func: suspend () -> T
+    ) {
+        startCoroutine(
+            context = context,
+            func = func,
+            onDone = {
+                continuation.resumeWith(it)
             }
-            val connection = attachment as AbstractConnection
+        )
+    }
 
-            if (mode and Selector.EVENT_CONNECTED != 0) {
-                connection.connected()
-            }
-            if (mode and Selector.EVENT_ERROR != 0) {
-                connection.error()
-            }
-            if (mode and Selector.OUTPUT_READY != 0) {
-                connection.readyForWrite()
-            }
-            if (mode and Selector.INPUT_READY != 0) {
-                connection.readyForRead()
-            }
+    private fun checkNetworkThread() {
+        if (!networkThread.same) {
+            throw IllegalStateException("You should call NetworkDispatcher from network thread")
         }
+    }
 
-    suspend fun tcpConnect(address: NetworkAddress): TcpConnection {
-        val channel = TcpClientSocketChannel()
-        channel.connect(address)
-        val connection = attach(channel)
-        connection.connecting()
-        try {
-            suspendCoroutine<Unit> {
-                connection.connect = it
-            }
-        } catch (e: SocketConnectException) {
-            if (e.message != null) {
-                throw e
-            } else {
-                throw SocketConnectException(address.toString(), e.cause)
-            }
-        }
-        return connection
+    override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>) {
+        c.coroutine(
+            result = result,
+            continuation = continuation as Reference<Continuation<Any?>>
+        )
     }
 
     fun bindTcp(address: NetworkAddress): TcpServerConnection {
-        val channel = TcpServerSocketChannel()
-        channel.bind(address)
-        return attach(channel)
+        checkNetworkThread()
+        return network.value.bindTcp(address)
     }
 
     fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
-        val con = TcpServerConnection(this, channel)
-        con.key = selector.attach(channel, 0, con)
-        return con
+        checkNetworkThread()
+        return network.value.attach(channel)
     }
 
     fun bindUDP(address: NetworkAddress): UdpConnection {
-        val channel = UdpSocketChannel()
-        channel.bind(address)
-        return attach(channel)
+        checkNetworkThread()
+        return network.value.bindUDP(address)
     }
 
     fun openUdp(): UdpConnection {
-        val channel = UdpSocketChannel()
-        return attach(channel)
+        checkNetworkThread()
+        return network.value.openUdp()
     }
 
     fun attach(channel: UdpSocketChannel): UdpConnection {
-        val con = UdpConnection(channel)
-        val key = selector.attach(channel, 0, con)
-        con.key = key
-        return con
+        checkNetworkThread()
+        return network.value.attach(channel)
+    }
+
+    suspend fun tcpConnect(address: NetworkAddress): TcpConnection {
+        checkNetworkThread()
+        return network.value.tcpConnect(address)
+    }
+
+    suspend fun yield() {
+        checkNetworkThread()
+        network.value.yield()
     }
 
     fun attach(channel: TcpClientSocketChannel): TcpConnection {
-        val con = TcpConnection(channel)
-        val key = selector.attach(channel, 0, con)
-        con.key = key
-        return con
+        checkNetworkThread()
+        return network.value.attach(channel)
     }
 
     override fun close() {
-        internalUdpContinuation.close()
-        selector.close()
-        selfReference.close()
+        checkNetworkThread()
+        network.value.close()
+        network.close()
+    }
+
+    fun select(timeout: Long = -1L) = network.value.select(timeout)
+    fun <T> runSingle(func: suspend () -> T): T {
+        checkNetworkThread()
+        val network=network.value
+        val r = startCoroutine(func = func)
+        while (!r.isDone) {
+            network.select()
+        }
+        return r.joinAndGetOrThrow()
     }
 }

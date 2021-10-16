@@ -7,12 +7,12 @@ import kotlin.test.assertEquals
 class LockTest {
     @Test
     fun lockTest() {
-        val l = Lock()
+        val l = ReentrantLock()
         val atom = AtomicInt(0)
         val errorCount = AtomicInt(0)
 
-        val w1 = Worker()
-        val w2 = Worker()
+        val w1 = Worker.create()
+        val w2 = Worker.create()
 
         val b1 = w1.execute(Unit) {
             repeat(10) {
@@ -20,7 +20,7 @@ class LockTest {
                     if (atom.value == 0) {
                         atom.value = 1
                         println("OK-1")
-                        Worker.sleep(50)
+                        sleep(50)
                         atom.value = 0
                     } else {
                         println("ERROR-1")
@@ -37,7 +37,7 @@ class LockTest {
                     if (atom.value == 0) {
                         atom.value = 1
                         println("OK-2")
-                        Worker.sleep(100)
+                        sleep(100)
                         atom.value = 0
                     } else {
                         println("ERROR-2")
@@ -47,9 +47,9 @@ class LockTest {
             }
         }
 
-        Worker.sleep(500)
+        sleep(500)
         while (!b1.isDone || !b2.isDone) {
-            Worker.sleep(100)
+            sleep(100)
         }
         assertEquals(0, errorCount.value)
     }

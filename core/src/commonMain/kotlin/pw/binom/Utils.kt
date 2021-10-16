@@ -1,34 +1,26 @@
 package pw.binom
 
-import pw.binom.atomic.AtomicLong
 import pw.binom.base64.shl
 import kotlin.jvm.JvmName
-import kotlin.native.concurrent.SharedImmutable
-
-@SharedImmutable
-val SELECTOR_COUNTER = AtomicLong(0)
-
-@SharedImmutable
-val BYTE_BUFFER_COUNTER = AtomicLong(0)
-
-@SharedImmutable
-val BYTE_BUFFER_COUNTER2 = AtomicLong(0)
 
 operator fun Long.get(index: Int): Byte {
-    if (index !in 0..7)
+    if (index !in 0..7) {
         throw IndexOutOfBoundsException()
+    }
     return ((this ushr (56 - 8 * index)) and 0xFF).toByte()
 }
 
 operator fun Int.get(index: Int): Byte {
-    if (index !in 0..3)
+    if (index !in 0..3) {
         throw IndexOutOfBoundsException()
+    }
     return ((this ushr (8 * (3 - index)))).toByte()
 }
 
 operator fun Short.get(index: Int): Byte {
-    if (index !in 0..1)
+    if (index !in 0..1) {
         throw IndexOutOfBoundsException()
+    }
     return ((this.toInt() ushr (8 - 8 * index)) and 0xFF).toByte()
 }
 
@@ -43,16 +35,59 @@ fun Long.dump(data: ByteBuffer) {
     data.put(((this ushr (56 - 8 * 7)) and 0xFF).toByte())
 }
 
+fun Long.dump(): ByteArray {
+    val output = ByteArray(Long.SIZE_BYTES)
+    output[0] = ((this ushr (56 - 8 * 0)) and 0xFF).toByte()
+    output[1] = ((this ushr (56 - 8 * 1)) and 0xFF).toByte()
+    output[2] = ((this ushr (56 - 8 * 2)) and 0xFF).toByte()
+    output[3] = ((this ushr (56 - 8 * 3)) and 0xFF).toByte()
+    output[4] = ((this ushr (56 - 8 * 4)) and 0xFF).toByte()
+    output[5] = ((this ushr (56 - 8 * 5)) and 0xFF).toByte()
+    output[6] = ((this ushr (56 - 8 * 6)) and 0xFF).toByte()
+    output[7] = ((this ushr (56 - 8 * 7)) and 0xFF).toByte()
+    return output
+}
+
+fun Float.dump(dest: ByteBuffer) {
+    toRawBits().dump(dest)
+}
+
+fun Float.dump() =
+    toRawBits().dump()
+
+fun Double.dump(dest: ByteBuffer) {
+    toRawBits().dump(dest)
+}
+
+fun Double.dump() =
+    toRawBits().dump()
+
 fun Int.dump(data: ByteBuffer) {
-    data.put(((this ushr (8 * (3 - 0)))).toByte())
-    data.put(((this ushr (8 * (3 - 1)))).toByte())
-    data.put(((this ushr (8 * (3 - 2)))).toByte())
-    data.put(((this ushr (8 * (3 - 3)))).toByte())
+    data.put((this ushr (8 * (3 - 0))).toByte())
+    data.put((this ushr (8 * (3 - 1))).toByte())
+    data.put((this ushr (8 * (3 - 2))).toByte())
+    data.put((this ushr (8 * (3 - 3))).toByte())
+}
+
+fun Int.dump(): ByteArray {
+    val output = ByteArray(Int.SIZE_BYTES)
+    output[0] = (this ushr (8 * (3 - 0))).toByte()
+    output[1] = (this ushr (8 * (3 - 1))).toByte()
+    output[2] = (this ushr (8 * (3 - 2))).toByte()
+    output[3] = (this ushr (8 * (3 - 3))).toByte()
+    return output
 }
 
 fun Short.dump(data: ByteBuffer) {
     data.put(((this.toInt() ushr (8 - 8 * 0)) and 0xFF).toByte())
     data.put(((this.toInt() ushr (8 - 8 * 1)) and 0xFF).toByte())
+}
+
+fun Short.dump(): ByteArray {
+    val output = ByteArray(Short.SIZE_BYTES)
+    output[0] = ((this.toInt() ushr (8 - 8 * 0)) and 0xFF).toByte()
+    output[1] = ((this.toInt() ushr (8 - 8 * 1)) and 0xFF).toByte()
+    return output
 }
 
 fun Long.reverse(): Long {
@@ -92,7 +127,6 @@ fun Short.reverse(): Short {
 fun Float.reverse(): Float = Float.fromBits(toRawBits().reverse())
 fun Double.reverse(): Double = Double.fromBits(toRawBits().reverse())
 
-
 fun Short.Companion.fromBytes(byte0: Byte, byte1: Byte) =
     ((byte0.toInt() and 0xFF shl 8) + (byte1.toInt() and 0xFF)).toShort()
 
@@ -101,6 +135,12 @@ fun Short.Companion.fromBytes(source: ByteBuffer): Short {
     val b1 = source.get()
     return fromBytes(b0, b1)
 }
+
+fun Short.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) =
+    fromBytes(
+        readBuffer[0 + offset],
+        readBuffer[1 + offset]
+    )
 
 @JvmName("Int_fromBytes3")
 fun Int.Companion.fromBytes(source: ByteBuffer): Int {
@@ -132,11 +172,11 @@ fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte):
             ((byte3.toInt() and 0xFF) shl 0)
 
 @JvmName("Int_fromBytes2")
-fun Int.Companion.fromBytes(readBuffer: ByteArray) =
-    ((readBuffer[0].toInt() and 0xFF) shl 24) +
-            ((readBuffer[1].toInt() and 0xFF) shl 16) +
-            ((readBuffer[2].toInt() and 0xFF) shl 8) +
-            ((readBuffer[3].toInt() and 0xFF) shl 0)
+fun Int.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) =
+    ((readBuffer[0 + offset].toInt() and 0xFF) shl 24) +
+            ((readBuffer[1 + offset].toInt() and 0xFF) shl 16) +
+            ((readBuffer[2 + offset].toInt() and 0xFF) shl 8) +
+            ((readBuffer[3 + offset].toInt() and 0xFF) shl 0)
 
 fun Long.Companion.fromBytes(
     byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte,
@@ -164,11 +204,11 @@ fun Long.toBytes(array: ByteArray, offset: Int = 0) {
     array[7 + offset] = ushr(0).toByte()
 }
 
-fun Long.Companion.fromBytes(readBuffer: ByteArray) = (readBuffer[0] shl 56) +
-        ((readBuffer[1].toLong() and 0xFFL) shl 48) +
-        ((readBuffer[2].toLong() and 0xFFL) shl 40) +
-        ((readBuffer[3].toLong() and 0xFFL) shl 32) +
-        ((readBuffer[4].toLong() and 0xFFL) shl 24) +
-        (readBuffer[5].toLong() and 0xFFL shl 16) +
-        (readBuffer[6].toLong() and 0xFFL shl 8) +
-        (readBuffer[7].toLong() and 0xFFL shl 0)
+fun Long.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) = (readBuffer[0 + offset] shl 56) +
+        ((readBuffer[1 + offset].toLong() and 0xFFL) shl 48) +
+        ((readBuffer[2 + offset].toLong() and 0xFFL) shl 40) +
+        ((readBuffer[3 + offset].toLong() and 0xFFL) shl 32) +
+        ((readBuffer[4 + offset].toLong() and 0xFFL) shl 24) +
+        (readBuffer[5 + offset].toLong() and 0xFFL shl 16) +
+        (readBuffer[6 + offset].toLong() and 0xFFL shl 8) +
+        (readBuffer[7 + offset].toLong() and 0xFFL shl 0)

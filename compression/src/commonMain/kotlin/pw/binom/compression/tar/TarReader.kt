@@ -17,7 +17,7 @@ internal fun ByteBuffer.oct2ToUInt(startIndex: Int = 0, length: Int = capacity -
     return out
 }
 
-class TarReader(private val stream: Input) : Closeable {
+class TarReader(private val stream: Input, val closeStream: Boolean = true) : Closeable {
 
     inner class TarEntity(
         val name: String,
@@ -35,7 +35,8 @@ class TarReader(private val stream: Input) : Closeable {
             val maxLength = minOf(dest.remaining, entity.size.toInt() - cursor)
             if (maxLength == 0)
                 return 0
-            val read = dest.set(dest.position, maxLength) { stream.read(it) }
+            dest.limit = dest.position + maxLength
+            val read = stream.read(dest)
             cursor += read
             return read
         }
@@ -87,7 +88,7 @@ class TarReader(private val stream: Input) : Closeable {
             }
         }
         header.clear()
-        stream.read(header)
+        stream.readFully(header)
         header.flip()
         if (header.isZeroOnly()) {
             stream.skip(BLOCK_SIZE)
@@ -138,5 +139,8 @@ class TarReader(private val stream: Input) : Closeable {
     override fun close() {
         tmp.close()
         header.close()
+        if (closeStream) {
+            stream.close()
+        }
     }
 }

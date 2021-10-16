@@ -17,6 +17,9 @@ return
 }
  */
 
+actual val Environment.os: OS
+    get() = OS.MACOS
+
 actual val Environment.isBigEndian: Boolean
     get() = isBigEndianPrivate
 

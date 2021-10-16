@@ -4,18 +4,16 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.io.UTF8
-import pw.binom.io.use
 import pw.binom.pool.DefaultPool
 import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
 
-private val _ZERO = ByteBuffer.alloc(0)
-
-val ByteBuffer.Companion.ZERO
-    get() = _ZERO
+//private val _ZERO = ByteBuffer.alloc(0)
+//
+//val ByteBuffer.Companion.ZERO
+//    get() = _ZERO
 
 /**
  * A part of memory. Also contents current read/write state
@@ -24,6 +22,15 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
     companion object {
         fun alloc(size: Int): ByteBuffer
     }
+
+    override val remaining: Int
+    override var position: Int
+    override var limit: Int
+    override val capacity: Int
+    override val elementSizeInBytes: Int
+    override fun flip()
+    override fun compact()
+    override fun clear()
 
     fun realloc(newSize: Int): ByteBuffer
     fun skip(length: Long): Long
@@ -42,6 +49,16 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
     fun toByteArray(): ByteArray
     fun subBuffer(index: Int, length: Int): ByteBuffer
 }
+
+fun ByteBuffer.getOrNull(index: Int) =
+    if (index < position || index >= limit) {
+        null
+    } else {
+        get(index)
+    }
+
+val ByteBuffer.indices: IntRange
+    get() = IntRange(position, limit - 1)
 
 inline fun ByteBuffer.clone() = realloc(capacity)
 
@@ -80,6 +97,8 @@ fun ByteBuffer.writeLong(value: Long): ByteBuffer {
 fun ByteBuffer.readShort() = Short.fromBytes(this)
 fun ByteBuffer.readInt() = Int.fromBytes(this)
 fun ByteBuffer.readLong() = Long.fromBytes(this)
+fun ByteBuffer.readFloat() = Float.fromBits(readInt())
+fun ByteBuffer.readDouble() = Double.fromBits(readLong())
 
 /**
  * The Function make copy of [data] to new [ByteBuffer] and then return it.
@@ -154,19 +173,34 @@ inline fun <T> pw.binom.ByteBuffer.length(length: Int, func: (pw.binom.ByteBuffe
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T> pw.binom.ByteBuffer.set(position: Int, length: Int, func: (pw.binom.ByteBuffer) -> T): T {
+inline fun <T> ByteBuffer.holdState(func: (ByteBuffer) -> T): T {
     contract {
         callsInPlace(func)
     }
-    val l = limit
-    val o = position
+    val oldLimit = this.limit
+    val oldPosition = this.position
+    try {
+        return func(this)
+    } finally {
+        this.limit = oldLimit
+        this.position = oldPosition
+    }
+}
+
+@OptIn(ExperimentalContracts::class)
+inline fun <T> ByteBuffer.set(position: Int, length: Int, func: (pw.binom.ByteBuffer) -> T): T {
+    contract {
+        callsInPlace(func)
+    }
+    val oldLimit = this.limit
+    val oldPosition = this.position
     try {
         this.position = position
         limit = position + length
         return func(this)
     } finally {
-        this.limit = l
-        this.position = o
+        this.limit = oldLimit
+        this.position = oldPosition
     }
 }
 

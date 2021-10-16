@@ -17,7 +17,7 @@ class NatsConnectorTest {
     @Test
     fun test3() {
         val nd = NetworkDispatcher()
-        val connector1 = NatsConnector(
+        val connector1 = NatsConnector.create(
             clientName = "Binom Client",
             user = null,
             pass = null,

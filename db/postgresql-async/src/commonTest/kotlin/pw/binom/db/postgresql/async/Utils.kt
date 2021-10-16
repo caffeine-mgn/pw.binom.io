@@ -1,30 +1,24 @@
 package pw.binom.db.postgresql.async
 
-import pw.binom.async
-import pw.binom.async2
 import pw.binom.charset.Charsets
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.sleep
-import pw.binom.getOrException
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
-import kotlin.time.measureTime
 import kotlin.time.seconds
-
+/*
 @OptIn(ExperimentalTime::class)
 fun pg(func: suspend (PGConnection) -> Unit) {
     val manager = NetworkDispatcher()
-    val done = manager.async {
+    val done = manager.startCoroutine {
         val address = NetworkAddress.Immutable(
             host = "127.0.0.1",
             port = 25331,
         )
         PGConnection.connect(
             address = address,
-            manager = manager,
+            networkDispatcher = manager,
             charset = Charsets.UTF8,
             userName = "postgres",
             password = "postgres",
@@ -50,3 +44,4 @@ fun pg(func: suspend (PGConnection) -> Unit) {
         manager.select(1000)
     }
 }
+*/

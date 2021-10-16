@@ -2,6 +2,7 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.SOCKET
+import platform.linux.ws_global_init
 import platform.posix.*
 import platform.posix.AF_INET
 import platform.posix.SOCK_STREAM
@@ -18,6 +19,7 @@ import pw.binom.io.IOException
 actual class NSocket(val native: SOCKET) : Closeable {
     actual companion object {
         actual fun tcp(): NSocket {
+            init_sockets()
             val native = socket(AF_INET, SOCK_STREAM, 0)
             if (native < 0uL) {
                 throw RuntimeException("Tcp Socket Creation")
@@ -26,6 +28,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
         }
 
         actual fun udp(): NSocket {
+            init_sockets()
             val native = socket(AF_INET, platform.windows.SOCK_DGRAM.convert(), 0)
             if (native < 0uL) {
                 throw RuntimeException("Datagram Socket Creation")
@@ -33,6 +36,23 @@ actual class NSocket(val native: SOCKET) : Closeable {
             return NSocket(native)
         }
     }
+
+    actual val port: Int?
+        get() {
+            return memScoped {
+                val sin = alloc<sockaddr_in>()
+                memset(sin.ptr, 0, sizeOf<sockaddr_in>().convert())
+                val addrlen = alloc<socklen_tVar>()
+                addrlen.value = sizeOf<sockaddr_in>().convert()
+                val r = platform.windows.getsockname(native, sin.ptr.reinterpret(), addrlen.ptr)
+                if (r == 0) {
+                    ntohs(sin.sin_port).toInt()
+                } else {
+                    //println("getsockname=$c, errno=${errno},GetLastError()=${GetLastError()}")
+                    null
+                }
+            }
+        }
 
     actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
         val native = if (address == null) {
@@ -58,7 +78,10 @@ actual class NSocket(val native: SOCKET) : Closeable {
 
     actual fun send(data: ByteBuffer): Int {
         memScoped {
-            val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
+
+            val r: Int = data.ref { dataPtr, remaining ->
+                send(native, dataPtr, remaining.convert(), 0).convert()
+            }
             if (r < 0) {
                 val error = GetLastError()
                 if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
@@ -75,7 +98,10 @@ actual class NSocket(val native: SOCKET) : Closeable {
     }
 
     actual fun recv(data: ByteBuffer): Int {
-        val r: Int = platform.windows.recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
+
+        val r: Int = data.ref { dataPtr, remaining ->
+            platform.windows.recv(native, dataPtr, remaining.convert(), 0).convert()
+        }
         if (r < 0) {
             val error = GetLastError()
             if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
@@ -98,7 +124,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
             val nonBlocking = alloc<UIntVar>()
             nonBlocking.value = if (value) 0u else 1u
             if (ioctlsocket(native, FIONBIO.convert(), nonBlocking.ptr) == -1)
-                throw IOException("ioctlsocket() error")
+                throw IOException("ioctlsocket() error. ErrNo: ${GetLastError()}")
         }
     }
 
@@ -137,10 +163,15 @@ actual class NSocket(val native: SOCKET) : Closeable {
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
         memScoped {
-            val rr = sendto(
-                native, data.refTo(data.position).getPointer(this), data.remaining.convert(),
-                0, address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
-            )
+
+            val rr = data.ref { dataPtr, remaining ->
+                address.data.usePinned { addressPtr ->
+                    sendto(
+                        native, dataPtr.getPointer(this), remaining.convert(),
+                        0, addressPtr.addressOf(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
+                    )
+                }
+            }
             if (rr == SOCKET_ERROR) {
                 throw IOException("Can't send data. Error: $errno  ${GetLastError()}")
             }
@@ -154,14 +185,17 @@ actual class NSocket(val native: SOCKET) : Closeable {
         address: NetworkAddress.Mutable?
     ): Int {
         val gotBytes = if (address == null) {
-            val rr = platform.windows.recvfrom(
-                native,
-                data.refTo(data.position),
-                data.remaining.convert(),
-                0,
-                null,
-                null
-            )
+
+            val rr = data.ref { dataPtr, remaining ->
+                platform.windows.recvfrom(
+                    native,
+                    dataPtr,
+                    remaining.convert(),
+                    0,
+                    null,
+                    null
+                )
+            }
             if (rr == SOCKET_ERROR) {
 //                if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
 //                    return 0
@@ -174,11 +208,16 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 SetLastError(0)
                 val len = allocArray<IntVar>(1)
                 len[0] = 28
-                val rr = platform.windows.recvfrom(
-                    native, data.refTo(data.position).getPointer(this), data.remaining.convert(), 0,
-                    address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
-                    len
-                )
+
+                val rr = data.ref { dataPtr, remaining ->
+                    address.data.usePinned { addressPtr ->
+                        platform.windows.recvfrom(
+                            native, dataPtr.getPointer(this), remaining.convert(), 0,
+                            addressPtr.addressOf(0).getPointer(this).reinterpret<sockaddr>(),
+                            len
+                        )
+                    }
+                }
 
                 if (rr == SOCKET_ERROR) {
 //                    if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){

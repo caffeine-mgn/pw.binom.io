@@ -1,14 +1,17 @@
 package pw.binom.io.httpClient
 
-import pw.binom.net.URI
+import pw.binom.Environment
 import pw.binom.charset.Charsets
-import pw.binom.io.IOException
 import pw.binom.crypto.Sha1MessageDigest
+import pw.binom.io.IOException
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
+import pw.binom.net.URI
+import pw.binom.os
+import pw.binom.platform
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -16,7 +19,7 @@ import kotlin.time.ExperimentalTime
 class DefaultHttpRequest constructor(
     override var method: String,
     override val uri: URI,
-    val client: HttpClient,
+    val client: BaseHttpClient,
     val channel: AsyncAsciiChannel,
     val timeout: Duration?,
 ) : HttpRequest {
@@ -42,6 +45,7 @@ class DefaultHttpRequest constructor(
         headers[Headers.HOST] = host
         headers[Headers.ACCEPT_ENCODING] = "gzip, deflate, identity"
         headers[Headers.ACCEPT] = "*/*"
+        headers[Headers.USER_AGENT] = "binom/kotlin${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
     }
 
     private suspend fun sendHeaders() {
@@ -58,13 +62,13 @@ class DefaultHttpRequest constructor(
     override suspend fun writeData(): AsyncHttpRequestOutput {
         checkClosed()
         if (headers.contentLength == null) {
-            headers.transferEncoding = Headers.CHUNKED
+            headers.transferEncoding = Encoding.CHUNKED
         }
         sendHeaders()
         val encode = headers.transferEncoding
         if (encode != null) {
             when (encode.lowercase()) {
-                Headers.CHUNKED.lowercase() -> {
+                Encoding.CHUNKED.lowercase() -> {
                     closed = true
                     return RequestAsyncChunkedOutput(
                         URI = uri,
@@ -137,6 +141,7 @@ class DefaultHttpRequest constructor(
         }
         sendHeaders()
         channel.writer.flush()
+        closed = true
         return DefaultHttpResponse.read(
             uri = uri,
             client = client,
@@ -169,7 +174,8 @@ class DefaultHttpRequest constructor(
         return ClientWebSocketConnection(
             input = channel.reader,
             output = channel.writer,
-            rawConnection = channel.channel
+            rawConnection = channel.channel,
+            networkDispatcher = client.networkDispatcher,
         )
     }
 

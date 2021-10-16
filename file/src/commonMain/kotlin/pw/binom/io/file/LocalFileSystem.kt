@@ -2,26 +2,36 @@ package pw.binom.io.file
 
 import pw.binom.*
 import pw.binom.io.FileSystem
-import pw.binom.io.FileSystemAccess
+import pw.binom.io.Quota
 import pw.binom.io.use
 import pw.binom.io.withLimit
+import pw.binom.net.Path
+import pw.binom.net.toPath
 import pw.binom.pool.ObjectPool
 
 class LocalFileSystem(
     val root: File,
     val byteBufferPool: ObjectPool<ByteBuffer>
 ) : FileSystem {
-    override suspend fun new(path: String): AsyncOutput {
-        val file = File(root, path.removePrefix("/"))
-        file.parent?.mkdirs()
-        return file.write().asyncOutput()
+    override suspend fun new(path: Path): AsyncOutput {
+        val file = File(root, path.toString().removePrefix("/"))
+        file.parent?.mkdirs() ?: throw FileSystem.FileNotFoundException((file.parent?.path ?: "").toPath)
+        return file.openWrite().asyncOutput()
     }
 
-    override suspend fun get(path: String): FileSystem.Entity? {
-        val f = File(root, path.removePrefix("/"))
+    override suspend fun get(path: Path): FileSystem.Entity? {
+        val f = File(root, path.toString().removePrefix("/"))
         if (!f.isExist)
             return null
         return EntityImpl(f)
+    }
+
+    override suspend fun getQuota(path: Path): Quota? {
+        val f = File(root, path.toString())
+        return Quota(
+            availableBytes = f.freeSpace,
+            usedBytes = f.freeSpace - f.availableSpace
+        )
     }
 
     override val isSupportUserSystem: Boolean
@@ -30,32 +40,29 @@ class LocalFileSystem(
     override suspend fun <T> useUser(user: Any?, func: suspend () -> T): T =
         func()
 
-    override suspend fun mkdir(path: String): FileSystem.Entity {
-        val file = File(root, path.removePrefix("/"))
-        file.mkdirs()
+    override suspend fun mkdir(path: Path): FileSystem.Entity {
+        val file = File(root, path.toString().removePrefix("/"))
+        file.mkdirs() ?: throw FileSystem.FileNotFoundException(file.path.toPath)
         return EntityImpl(file)
     }
 
 
-    override suspend fun getDir(path: String): Sequence<FileSystem.Entity>? {
-        if (path == "/")
+    override suspend fun getDir(path: Path): List<FileSystem.Entity>? {
+        if (path.toString().isEmpty())
             return root.listEntities()
 
-        val f = File(root, path.removePrefix("/"))
+        val f = File(root, path.toString().removePrefix("/"))
         if (f.isDirectory)
             return f.listEntities()
         return null
     }
 
-    private suspend fun File.listEntities(): Sequence<EntityImpl> {
+    private suspend fun File.listEntities(): List<EntityImpl> {
         val out = ArrayList<EntityImpl>()
-        this.iterator().use {
-            it.forEach {
-                out += EntityImpl(it)
-            }
+        this.iterator().forEach {
+            out += EntityImpl(it)
         }
-
-        return out.asSequence()
+        return out
     }
 
     private inner class EntityImpl(val file: File) : FileSystem.Entity {
@@ -63,10 +70,10 @@ class LocalFileSystem(
             get() = this@LocalFileSystem
 
         override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
-            val file = File(root, path.removePrefix("/"))
+            val file = File(root, path.toString().removePrefix("/"))
             if (!file.isFile)
                 return null
-            val channel = file.read()
+            val channel = file.openRead()
             if (offset > 0uL) {
                 channel.position = offset
             }
@@ -74,8 +81,8 @@ class LocalFileSystem(
             return length?.let { channel.asyncInput().withLimit(it.toLong()) } ?: channel.asyncInput()
         }
 
-        override suspend fun copy(path: String, overwrite: Boolean): FileSystem.Entity {
-            val toFile = File(root, path.removePrefix("/"))
+        override suspend fun copy(path: Path, overwrite: Boolean): FileSystem.Entity {
+            val toFile = File(root, path.toString().removePrefix("/"))
 
             if (toFile.isExist && !overwrite)
                 throw FileSystem.EntityExistException(path)
@@ -83,16 +90,16 @@ class LocalFileSystem(
             if (!file.isExist)
                 throw FileSystem.FileNotFoundException(this.path)
 
-            this.file.read().use { s ->
-                toFile.write().use { d ->
+            this.file.openRead().use { s ->
+                toFile.openWrite().use { d ->
                     s.copyTo(d, byteBufferPool)
                 }
             }
             return EntityImpl(toFile)
         }
 
-        override suspend fun move(path: String, overwrite: Boolean): FileSystem.Entity {
-            val toFile = File(root, path.removePrefix("/"))
+        override suspend fun move(path: Path, overwrite: Boolean): FileSystem.Entity {
+            val toFile = File(root, path.toString().removePrefix("/"))
 
             if (toFile.isExist && !overwrite)
                 throw FileSystem.EntityExistException(path)
@@ -105,17 +112,17 @@ class LocalFileSystem(
         }
 
         override suspend fun delete() {
-            File(root, path.removePrefix("/")).deleteRecursive()
+            File(root, path.toString().removePrefix("/")).deleteRecursive()
         }
 
         override suspend fun rewrite(): AsyncOutput {
-            val file = File(root, path)
-            file.parent?.mkdirs()
-            return file.write().asyncOutput()
+            val file = File(root, path.toString())
+            file.parent?.mkdirs() ?: throw FileSystem.FileNotFoundException((file.parent?.path ?: "").toPath)
+            return file.openWrite().asyncOutput()
         }
 
-        override val path: String
-            get() = file.path.removePrefix(root.path).replace('\\', '/')
+        override val path: Path
+            get() = file.path.removePrefix(root.path).replace('\\', '/').toPath
         override val lastModified: Long
             get() = file.lastModified
         override val name: String

@@ -3,7 +3,7 @@ package pw.binom.io.file
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
-actual class FileIterator internal actual constructor(val path: File) : Iterator<File>, Closeable {
+actual class FileIterator internal actual constructor(val path: File) : Iterator<File> {
 
     init {
         if (!path.isDirectory)
@@ -19,9 +19,4 @@ actual class FileIterator internal actual constructor(val path: File) : Iterator
             throw NoSuchElementException()
         return File(path, files[cursor++].name)
     }
-
-    override fun close() {
-        //NOP
-    }
-
 }

@@ -4,16 +4,18 @@ import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.ThreadRef
 import pw.binom.concurrency.asReference
+import pw.binom.coroutine.start
 import pw.binom.io.AsyncChannel
 import pw.binom.io.StreamClosedException
 import pw.binom.io.use
+import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
-import pw.binom.network.network
 
 abstract class AbstractWebSocketConnection(
     rawConnection: AsyncChannel,
     input: AsyncInput,
-    output: AsyncOutput
+    output: AsyncOutput,
+    val networkDispatcher: NetworkDispatcher,
 ) : WebSocketConnection {
 
     private val _output = output.asReference()
@@ -22,10 +24,10 @@ abstract class AbstractWebSocketConnection(
     private val _input = input.asReference()
     protected val input
         get() = _input.value
-    private val selfRef = this.asReference()
+//    private val selfRef = this.asReference()
 
     private var closed by AtomicBoolean(false)
-    private val channel = rawConnection.asReference()
+//    private val channel = rawConnection.asReference()
     private val networkThread = ThreadRef()
 
     var receivedCloseMessage by AtomicBoolean(false)
@@ -46,7 +48,7 @@ abstract class AbstractWebSocketConnection(
                 func(it)
             }
         } else {
-            network {
+            networkDispatcher.start {
                 write(type).use {
                     func(it)
                 }
@@ -126,13 +128,16 @@ abstract class AbstractWebSocketConnection(
     protected abstract val masking: Boolean
 
     private suspend fun closeTcp() {
+        if (closed){
+            return
+        }
         closed = true
-        channel.close()
+//        channel.close()
         _input.close()
         _output.close()
-        selfRef.close()
+//        selfRef.close()
 
-        channel.value.asyncClose()
+//        channel.value.asyncClose()
         runCatching { input.asyncClose() }
         runCatching { output.asyncClose() }
     }

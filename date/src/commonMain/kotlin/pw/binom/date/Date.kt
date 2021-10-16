@@ -1,6 +1,8 @@
 package pw.binom.date
 
 import kotlin.jvm.JvmInline
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 @JvmInline
 expect value class Date(val time: Long = nowTime) {
@@ -29,7 +31,7 @@ expect value class Date(val time: Long = nowTime) {
     fun calendar(timeZoneOffset: Int = Date.systemZoneOffset): Calendar
 }
 
-fun Date.Companion.of(calendar: Calendar) =
+internal fun Date.Companion.new(calendar: Calendar) =
     of(
         year = calendar.year,
         month = calendar.month,
@@ -42,14 +44,14 @@ fun Date.Companion.of(calendar: Calendar) =
     )
 
 fun Date.Companion.of(
-    year: Int,
-    month: Int,
-    dayOfMonth: Int,
-    hours: Int,
-    minutes: Int,
-    seconds: Int,
-    millis: Int,
-    timeZoneOffset: Int = 0
+    year: Int = 1970,
+    month: Int = 1,
+    dayOfMonth: Int = 1,
+    hours: Int = 0,
+    minutes: Int = 0,
+    seconds: Int = 0,
+    millis: Int = 0,
+    timeZoneOffset: Int = systemZoneOffset
 ): Date {
     require(month >= 1 && month <= 12) { "Invalid value of month. Valid values 1-12" }
     require(millis >= 0 && millis <= 999) { "Invalid value of millis. Valid values 0-999" }
@@ -61,3 +63,25 @@ operator fun Date.compareTo(expDate: Date): Int = when {
     time < expDate.time -> -1
     else -> 0
 }
+
+@OptIn(ExperimentalTime::class)
+operator fun Date.plus(duration: Duration) =
+    Date(time + duration.inWholeMilliseconds)
+
+@OptIn(ExperimentalTime::class)
+operator fun Date.minus(duration: Duration) =
+    Date(time - duration.inWholeMilliseconds)
+
+//internal fun getJulianDay(day: Int, month: Int, year: Int): Int {
+//    val a = (14 - month) / 12
+//    val y = year + 4800 - a
+//    val m = month + 12 * a - 3
+//
+//    return if ((year > 1582) || (year == 1582 && month > 10) ||
+//        (year == 1582 && month == 10 && day < 15)
+//    ) {
+//        day + (153 * m + 2) / 5 + 365 * y + y / 4 - y / 100 + y / 400 - 32045
+//    } else {
+//        day + (153 * m + 2) / 5 + 365 * y + y / 4 - 32045
+//    }
+//}

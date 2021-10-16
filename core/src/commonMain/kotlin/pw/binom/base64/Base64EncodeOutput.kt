@@ -32,27 +32,6 @@ class Base64EncodeOutput(private val appendable: Appendable) : Output {
         counter++
         if (counter == 3)
             counter = 0
-//        when (counter) {
-//            0 -> {
-//                val ff = data shr 2
-//                old = ((data and 3) shl 4)
-//                appendable.append(byteToBase64(ff))
-//            }
-//            1 -> {
-//                val ff = old or (data shr 4)
-//                old = ((data and 15) shl 2)
-//                appendable.append(byteToBase64(ff))
-//            }
-//            2 -> {
-//                val ff = old or (data shr 6)
-//                old = 0
-//                appendable.append(byteToBase64(ff))
-//                appendable.append(byteToBase64((data and 63)))
-//            }
-//        }
-//        counter++
-//        if (counter == 3)
-//            counter = 0
     }
 
     private var closed = false

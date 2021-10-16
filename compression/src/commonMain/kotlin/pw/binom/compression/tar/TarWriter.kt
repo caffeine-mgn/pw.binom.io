@@ -5,7 +5,7 @@ import pw.binom.Output
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
 import pw.binom.set
-import pw.binom.toByteBufferUTF8
+import pw.binom.wrap
 
 private val ZERO_BYTE = ByteBuffer.alloc(100).also {
     while (it.remaining > 0)
@@ -33,6 +33,10 @@ internal fun Int.forPart(partSize: Int): Int {
 }
 
 private fun Output.writeZero(size: Int) {
+    if (size == 0) {
+        return
+    }
+    require(size > 0)
     var s = size
     while (s > 0) {
         ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
@@ -60,12 +64,14 @@ internal fun Long.toOct(dst: ByteBuffer, dstOffset: Int, size: Int) {
     n = this
 
     (dstOffset until (dstOffset + size - len)).forEach {
-        dst[it] = '0'.toByte()
+        dst[it] = '0'.code.toByte()
     }
     var i = 0
     while (n != 0L) {
         val v = (n and 0x7).toByte()
-        dst[dstOffset + (size - 2) - i] = (v + '0'.toByte()).toByte()
+        val value = (v + '0'.code.toByte()).toByte()
+        val index = dstOffset + (size - 2) - i
+        dst[index] = value
         n = n shr 3
         i++
     }
@@ -73,63 +79,61 @@ internal fun Long.toOct(dst: ByteBuffer, dstOffset: Int, size: Int) {
 }
 
 private val magic = byteArrayOf(
-    'u'.toByte(),
-    's'.toByte(),
-    't'.toByte(),
-    'a'.toByte(),
-    'r'.toByte(),
+    'u'.code.toByte(),
+    's'.code.toByte(),
+    't'.code.toByte(),
+    'a'.code.toByte(),
+    'r'.code.toByte(),
     0
 )
 private val version = byteArrayOf(
-    '0'.toByte(),
-    '0'.toByte()
+    '0'.code.toByte(),
+    '0'.code.toByte()
 )
 
-@OptIn(ExperimentalStdlibApi::class)
 private val longLink = "././@LongLink".encodeToByteArray()
 
-class TarWriter(val stream: Output) : Closeable {
+class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable {
 
     private var entityWriting = false
 
-    @OptIn(ExperimentalStdlibApi::class)
     fun newEntity(name: String, mode: UShort, uid: UShort, gid: UShort, time: Long, type: TarEntityType): Output {
         checkFinished()
         if (entityWriting)
             throw IllegalStateException("You mast close previous Entity")
         entityWriting = true
-        val block = ByteBuffer.alloc(BLOCK_SIZE.toInt())
+        val block = ByteBuffer.alloc(BLOCK_SIZE)
 
-        val nameBytes = name.toByteBufferUTF8()
-        if (nameBytes.capacity > 100) {
-            longLink.copyInto(block)
-            mode.toOct(block, 100, 8)
-            uid.toOct(block, 108, 8)
-            gid.toOct(block, 116, 8)
-            time.toOct(block, 136, 12)
+        name.encodeToByteArray().wrap { nameBytes ->
+            if (nameBytes.capacity > 100) {
+                longLink.copyInto(block)
+                mode.toOct(block, 100, 8)
+                uid.toOct(block, 108, 8)
+                gid.toOct(block, 116, 8)
+                time.toOct(block, 136, 12)
 
-            block[156] = 76
-            magic.copyInto(block, 257)
-            version.copyInto(block, 263)
-            (nameBytes.capacity + 1).toUInt().toOct(block, 124, 12)
+                block[156] = 76
+                magic.copyInto(block, 257)
+                version.copyInto(block, 263)
+                (nameBytes.capacity + 1).toUInt().toOct(block, 124, 12)
 
-            block.calcCheckSum().toOct(block, 148, 7)
-            block[155] = ' '.toByte()
-            stream.write(block)
-            stream.write(nameBytes)
-            var fullSize = (nameBytes.capacity + 1).forPart(BLOCK_SIZE.toInt())
-            val needAddZero = fullSize - nameBytes.capacity
-            stream.writeZero(needAddZero)
-            block.clear()
-            block.writeZero()
-            nameBytes.reset(0, 100)
-            block.clear()
-            block.write(nameBytes)
-        } else {
-            block.write(nameBytes)
+                block.calcCheckSum().toOct(block, 148, 7)
+                block[155] = ' '.code.toByte()
+                stream.write(block)
+                stream.write(nameBytes)
+                var fullSize = (nameBytes.capacity + 1).forPart(BLOCK_SIZE.toInt())
+                val needAddZero = fullSize - nameBytes.capacity
+                stream.writeZero(needAddZero)
+                block.clear()
+                block.writeZero()
+                nameBytes.reset(0, 100)
+                block.clear()
+                block.write(nameBytes)
+            } else {
+                block.write(nameBytes)
+            }
         }
         block.clear()
-        nameBytes.close()
 
         mode.toOct(block, 100, 8)
         uid.toOct(block, 108, 8)
@@ -154,14 +158,17 @@ class TarWriter(val stream: Output) : Closeable {
                 data.size.toUInt().toOct(block, 124, 12)
 
                 block.calcCheckSum().toOct(block, 148, 7)
-                block[155] = ' '.toByte()
-
-                stream.write(block)
+                block[155] = ' '.code.toByte()
+                stream.writeFully(block)
                 block.close()
-                data.trimToSize()
-                data.data.clear()
-                stream.write(data.data)
-                stream.writeZero(BLOCK_SIZE - data.size % BLOCK_SIZE)
+                data.flush()
+                data.data.flip()
+                stream.writeFully(data.data)
+                val mod = data.size % BLOCK_SIZE
+                if (mod > 0) {
+                    val emptyBytes = BLOCK_SIZE - mod
+                    stream.writeZero(emptyBytes)
+                }
                 entityWriting = false
                 data.close()
             }
@@ -185,6 +192,9 @@ class TarWriter(val stream: Output) : Closeable {
         stream.writeZero(BLOCK_SIZE.toInt())
         isFinished = true
         stream.flush()
+        if (closeStream) {
+            stream.close()
+        }
     }
 
 }

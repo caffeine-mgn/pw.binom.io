@@ -17,6 +17,7 @@ fun <T> ByteDataBuffer.unsafe(func: (ByteDataBuffer) -> T): T {
     }
 }
 
+@Deprecated("Use ByteBuffer")
 expect class ByteDataBuffer : Closeable, Iterable<Byte> {
     companion object {
         fun alloc(size: Int): ByteDataBuffer

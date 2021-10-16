@@ -6,8 +6,10 @@ import pw.binom.io.use
 import kotlin.test.Test
 
 class SQLiteConnectorTest {
-
-    val sql = "CREATE TABLE IF NOT EXISTS COMPANY(ID INT PRIMARY KEY NOT NULL, NAME TEXT NOT NULL, uid blob not null)"
+companion object {
+    const val SIMPLE_COMPANY_TABLE =
+        "CREATE TABLE IF NOT EXISTS COMPANY(ID INT PRIMARY KEY NOT NULL, NAME TEXT NOT NULL, uid blob not null)"
+}
 
     @Test
     fun test2() {
@@ -15,7 +17,7 @@ class SQLiteConnectorTest {
         try {
             SQLiteConnector.openFile(f).use {
                 it.createStatement().use {
-                    it.executeUpdate(sql)
+                    it.executeUpdate(SIMPLE_COMPANY_TABLE)
                 }
 
                 repeat(5000) { num ->
@@ -42,7 +44,7 @@ class SQLiteConnectorTest {
         try {
             SQLiteConnector.openFile(f).use {
                 it.createStatement().use {
-                    it.executeUpdate(sql)
+                    it.executeUpdate(SIMPLE_COMPANY_TABLE)
 
                     it.executeQuery("select * from company").use {
                         while (it.next()) {

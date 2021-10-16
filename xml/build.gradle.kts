@@ -44,7 +44,7 @@ kotlin {
             staticLib()
         }
     }
-    js {
+    js("js", BOTH) {
         browser()
         nodejs()
     }

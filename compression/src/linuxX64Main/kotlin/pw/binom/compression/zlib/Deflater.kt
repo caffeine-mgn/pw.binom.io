@@ -70,40 +70,44 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 
     actual fun deflate(input: ByteBuffer, output: ByteBuffer): Int {
-        memScoped {
-            checkClosed()
-            if (output.remaining == 0)
-                throw IllegalArgumentException("Output Buffer has no Free Space")
-            if (!_finishing && input.remaining == 0)
-                return 0
-            native.next_out = (output.refTo(output.position).getPointer(this)).reinterpret()
-            native.avail_out = output.remaining.convert()
+        return output.refTo(output.position){outputPtr->
+            input.refTo(input.position){inputPtr->
+                memScoped {
+                    checkClosed()
+                    if (output.remaining == 0)
+                        throw IllegalArgumentException("Output Buffer has no Free Space")
+                    if (!_finishing && input.remaining == 0)
+                        return@memScoped 0
+                    native.next_out = (outputPtr.getPointer(this)).reinterpret()
+                    native.avail_out = output.remaining.convert()
 
-            native.next_in = (input.refTo(input.position)).getPointer(this).reinterpret()
-            native.avail_in = input.remaining.convert()
-            val freeOutput = output.remaining
-            val freeInput = input.remaining
+                    native.next_in = (inputPtr).getPointer(this).reinterpret()
+                    native.avail_in = input.remaining.convert()
+                    val freeOutput = output.remaining
+                    val freeInput = input.remaining
 
-            val mode = if (_finishing)
-                Z_FINISH
+                    val mode = if (_finishing)
+                        Z_FINISH
 //            Z_SYNC_FLUSH
 //            Z_FULL_FLUSH
-            else
-                Z_NO_FLUSH
-            val deflateResult = deflate(native.ptr, mode)
-            if (deflateResult != Z_OK)
-                throw IOException("deflate() returns [${zlibConsts(deflateResult)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")
-            val wrote = freeOutput - native.avail_out.convert<Int>()
-            input.position += freeInput - native.avail_in.convert<Int>()
-            output.position += wrote
+                    else
+                        Z_NO_FLUSH
+                    val deflateResult = deflate(native.ptr, mode)
+                    if (deflateResult != Z_OK)
+                        throw IOException("deflate() returns [${zlibConsts(deflateResult)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")
+                    val wrote = freeOutput - native.avail_out.convert<Int>()
+                    input.position += freeInput - native.avail_in.convert<Int>()
+                    output.position += wrote
 
-            val outLength = freeOutput - output.remaining
-            val inLength = freeInput - input.remaining
-            _totalOut += outLength
-            _totalIn += inLength
-            if (_finishing)
-                _finished = true
-            return outLength
+                    val outLength = freeOutput - output.remaining
+                    val inLength = freeInput - input.remaining
+                    _totalOut += outLength
+                    _totalIn += inLength
+                    if (_finishing)
+                        _finished = true
+                    return@memScoped outLength
+                }
+            }
         }
     }
 
@@ -119,15 +123,17 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                     Z_SYNC_FLUSH
                 else
                     Z_NO_FLUSH
+            val r = output.refTo(output.position){outputPtr->
+                memScoped {
+                    native.next_out = outputPtr.getPointer(this).reinterpret()
+                    native.avail_out = output.remaining.convert()
 
-            val r = memScoped {
-                native.next_out = (output.refTo(output.position)).getPointer(this).reinterpret()
-                native.avail_out = output.remaining.convert()
-
-                native.next_in = null
-                native.avail_in = 0.convert()
-                deflate(native.ptr, mode)
+                    native.next_in = null
+                    native.avail_in = 0.convert()
+                    deflate(native.ptr, mode)
+                }
             }
+
 //            if (r != Z_OK)
 //                throw IOException("Can't flush data. Code: $r (${zlibConsts(r)})")
 

@@ -31,3 +31,9 @@ class BasicAuthorization(login: String, password: String) : WebAuthAccess {
         connection.headers[Headers.AUTHORIZATION] = auth
     }
 }
+
+class OAuthAuthorization(val token: String) : WebAuthAccess {
+    override suspend fun apply(connection: HttpRequest) {
+        connection.headers[Headers.AUTHORIZATION] = "OAuth $token"
+    }
+}

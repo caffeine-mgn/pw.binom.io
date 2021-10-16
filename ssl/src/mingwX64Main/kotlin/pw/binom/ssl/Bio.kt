@@ -20,7 +20,9 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
 
     fun read(data: ByteBuffer): Int =
         memScoped {
-            val r = BIO_read(self, (data.refTo(data.position)), data.remaining.convert())
+            val r = data.refTo(data.position){dataPtr->
+                BIO_read(self, dataPtr, data.remaining.convert())
+            }
             if (r < 0)
                 TODO()
             data.position += r

@@ -1,16 +1,32 @@
 package pw.binom.network
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.ThreadRef
-import pw.binom.concurrency.WorkerPool
-import pw.binom.concurrency.execute
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-import kotlin.test.fail
-import kotlin.time.*
+import pw.binom.atomic.AtomicInt
+import pw.binom.concurrency.*
+import pw.binom.coroutine.start
+import kotlin.test.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.seconds
 
 class MultithreadingTest {
+
+    @Test
+    fun test2() {
+        val nd = NetworkDispatcher()
+        val w = Worker.create()
+        var counter by AtomicInt(0)
+        nd.runSingle {
+            w.start {
+                sleep(1000)
+                counter++
+            }
+            assertEquals(1, counter)
+            counter++
+        }
+        assertEquals(2, counter)
+    }
+
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() {
@@ -19,18 +35,17 @@ class MultithreadingTest {
         val nd = NetworkDispatcher()
         val executor = WorkerPool(10)
         val addr = NetworkAddress.Immutable("127.0.0.1", 8765)
-        val server = nd.async(executor) {
+        val server = nd.startCoroutine {
             val server = nd.bindTcp(addr)
             try {
                 val client = server.accept()
                 val networkThread = ThreadRef()
-                execute {
+                executor.start {
                     assertFalse(networkThread.same)
                     flag1 = true
-                    network {
+                    nd.start {
                         assertTrue(networkThread.same)
                         flag2 = true
-                        Unit
                     }
                     Unit
                 }
@@ -41,8 +56,9 @@ class MultithreadingTest {
             }
         }
 
-        val client = nd.async(executor) {
+        val client = nd.startCoroutine {
             nd.tcpConnect(addr)
+            Unit
         }
 
         val now = TimeSource.Monotonic.markNow()

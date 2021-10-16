@@ -25,6 +25,7 @@ expect class NSocket : Closeable {
     fun setBlocking(value: Boolean)
     fun connect(address: NetworkAddress)
     fun bind(address: NetworkAddress)
+    val port:Int?
 
     /**
      * Used for tcp server socket. Method will accept new connection. Connection of remote socket will put in to [address]

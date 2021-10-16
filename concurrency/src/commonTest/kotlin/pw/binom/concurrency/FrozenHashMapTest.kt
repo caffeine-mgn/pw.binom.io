@@ -1,5 +1,6 @@
 package pw.binom.concurrency
 
+import pw.binom.collection.FrozenHashMap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

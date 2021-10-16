@@ -11,17 +11,17 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
             CharBuffer(chars.copyOf())
     }
 
-    override val capacity: Int
+    actual override val capacity: Int
         get() = chars.size
-    override val remaining: Int
+    actual override val remaining: Int
         get() = limit - position
-    override var position: Int = 0
+    actual override var position: Int = 0
         set(value) {
             require(position >= 0)
             require(position <= limit)
             field = value
         }
-    override var limit: Int = 0
+    actual override var limit: Int = 0
         set(value) {
             if (value > capacity || value < 0) throw createLimitException(value)
             field = value
@@ -65,12 +65,12 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         return this
     }
 
-    override fun clear() {
+    actual override fun clear() {
         limit = capacity
         position = 0
     }
 
-    override val elementSizeInBytes: Int
+    actual override val elementSizeInBytes: Int
         get() = Char.SIZE_BYTES
 
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
@@ -79,12 +79,12 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         return len
     }
 
-    override fun flip() {
+    actual override fun flip() {
         limit = position
         position = 0
     }
 
-    override fun compact() {
+    actual override fun compact() {
         if (remaining > 0) {
             val size = remaining
             chars.copyInto(chars, 0, position, position + size)

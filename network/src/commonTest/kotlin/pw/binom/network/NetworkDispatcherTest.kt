@@ -2,6 +2,7 @@ package pw.binom.network
 
 import pw.binom.*
 import pw.binom.concurrency.*
+import pw.binom.coroutine.start
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.test.Test
@@ -37,19 +38,7 @@ fun asyncRun(func: suspend () -> Unit): AsyncResult {
 }
 
 fun NetworkDispatcher.single(func: suspend () -> Unit) {
-    run(asyncRun(func))
-}
-
-@OptIn(ExperimentalTime::class)
-fun NetworkDispatcher.run(result: AsyncResult) {
-    val now = TimeSource.Monotonic.markNow()
-    while (!result.done) {
-        if (now.elapsedNow() > 5.0.seconds) {
-            throw RuntimeException("Timeout")
-        }
-        select(1000)
-    }
-    result.finish()
+    this.runSingle(func)
 }
 
 class NetworkDispatcherTest {
@@ -58,7 +47,7 @@ class NetworkDispatcherTest {
     fun connectTest() {
         val nd = NetworkDispatcher()
         var connected = false
-        nd.single {
+        nd.runSingle {
             nd.tcpConnect(NetworkAddress.Immutable("google.com", 443))
             connected = true
         }
@@ -66,11 +55,18 @@ class NetworkDispatcherTest {
     }
 
     @Test
+    fun serverPortGetTest() {
+        val nd = NetworkImpl()
+        val server = nd.bindTcp(NetworkAddress.Immutable(port = 0))
+        assertTrue(server.port > 0)
+    }
+
+    @Test
     fun connectionRefusedTest() {
         val nd = NetworkDispatcher()
         var connectionRefused = false
         println("OK!-1")
-        nd.single {
+        nd.runSingle {
             println("OK!-2")
             try {
                 println("OK!-3")
@@ -91,16 +87,17 @@ class NetworkDispatcherTest {
 
     @Test
     fun tcpServerTest() {
-        val addr = NetworkAddress.Immutable("0.0.0.0", 9967)
+        val addr = NetworkAddress.Immutable("0.0.0.0", 0)
         val nd = NetworkDispatcher()
         val server = nd.bindTcp(addr)
+        val port = server.port
         try {
             val buf1 = ByteBuffer.alloc(512)
             val buf2 = ByteBuffer.alloc(512)
             Random.nextBytes(buf1)
             buf1.flip()
-            nd.single {
-                val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", 9967))
+            nd.runSingle {
+                val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", port))
                 val serverClient = server.accept()!!
                 client.write(buf1)
                 serverClient.readFully(buf2)
@@ -124,12 +121,14 @@ class NetworkDispatcherTest {
 
     @Test
     fun rebindTest() {
-        val addr = NetworkAddress.Immutable("0.0.0.0", Random.nextInt(1000, 5999))
-        val nd = NetworkDispatcher()
+        val addr = NetworkAddress.Immutable("127.0.0.1", port = 50905)
+        val nd = NetworkImpl()
         val a = nd.bindTcp(addr)
+        val port = a.port
+        assertTrue(port > 0)
         try {
-            nd.bindTcp(addr)
-            fail()
+            nd.bindTcp(NetworkAddress.Immutable("127.0.0.1", port = port))
+            fail("Port rebind success on 127.0.0.1:$port")
         } catch (e: BindException) {
             //
         } finally {
@@ -141,7 +140,7 @@ class NetworkDispatcherTest {
     fun udpTest() {
         val address =
             NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
-        val manager = NetworkDispatcher()
+        val manager = NetworkImpl()
         println("try bind udp $address")
         val server = manager.bindUDP(address)
         println("binded!")
@@ -187,20 +186,21 @@ class NetworkDispatcherTest {
     @Test
     fun multiThreadingTest() {
         val address =
-            NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
+            NetworkAddress.Immutable(host = "127.0.0.1", port = 0)
         val nd = NetworkDispatcher()
         val server = nd.bindTcp(address)
+        val port = server.port
         val executeWorker = WorkerPool(10)
         val serverFuture = async2<Unit> {
             val client = server.accept()!!
-            nd.async(executeWorker) {
+            nd.startCoroutine {
                 client.readFully(ByteBuffer.alloc(32).clean())
                 val clientRef = client.asReference()
                 try {
-                    execute {
+                    executeWorker.start {
                         println("Execute in execute")
-                        Worker.sleep(1000)
-                        network {
+                        sleep(1000)
+                        nd.start {
                             println("Server write: ${clientRef.value.write(ByteBuffer.wrap(ByteArray(64)).clean())}")
                         }
                     }
@@ -213,7 +213,7 @@ class NetworkDispatcherTest {
         }
         val clientFuture = async2 {
             println("Connection...")
-            val client2 = nd.tcpConnect(address)
+            val client2 = nd.tcpConnect(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
             println("Connected! Write...")
             client2.write(ByteBuffer.wrap(ByteArray(32)).clean())
             println("Wrote! Try read...")

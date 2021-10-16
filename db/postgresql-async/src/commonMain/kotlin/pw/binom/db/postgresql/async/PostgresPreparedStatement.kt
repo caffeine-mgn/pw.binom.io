@@ -1,13 +1,15 @@
 package pw.binom.db.postgresql.async
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Date
-import pw.binom.db.async.AsyncPreparedStatement
-import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
+import pw.binom.db.async.AsyncPreparedStatement
+import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.postgresql.async.messages.backend.*
-import pw.binom.db.postgresql.async.messages.frontend.*
+import pw.binom.db.postgresql.async.messages.frontend.SyncMessage
 import pw.binom.nextUuid
 import kotlin.random.Random
 
@@ -18,7 +20,7 @@ class PostgresPreparedStatement(
     val resultColumnTypes: List<ResultSet.ColumnType>,
 ) : AsyncPreparedStatement {
     internal var parsed = false
-    private val id = Random.nextUuid()
+    private val id = Random.nextUuid().toString()
     private val realQuery: String
     private val paramCount: Int
     internal var lastOpenResultSet: PostgresAsyncResultSet? = null
@@ -68,6 +70,17 @@ class PostgresPreparedStatement(
     }
 
     private val params = arrayOfNulls<Any>(paramCount)
+    override suspend fun set(index: Int, value: BigInteger) {
+        params[index] = value
+    }
+
+    override suspend fun set(index: Int, value: BigDecimal) {
+        params[index] = value
+    }
+
+    override suspend fun set(index: Int, value: Double) {
+        params[index] = value
+    }
 
     override suspend fun set(index: Int, value: Float) {
         params[index] = value
@@ -128,10 +141,10 @@ class PostgresPreparedStatement(
         params[index] = value
     }
 
-    private suspend fun deleteSelf() {
+    private suspend fun deleteSelf(isPortal: Boolean) {
         connection.sendOnly(connection.reader.closeMessage.also {
-            it.portal = false
-            it.statement = id.toString()
+            it.portal = isPortal
+            it.statement = id
         })
         connection.sendOnly(SyncMessage)
         val closeMsg = connection.readDesponse()
@@ -143,7 +156,7 @@ class PostgresPreparedStatement(
     override suspend fun asyncClose() {
         checkClosePreviousResultSet()
         connection.prepareStatements.remove(this)
-        deleteSelf()
+        deleteSelf(isPortal = false)
     }
 
     suspend fun execute(): QueryResponse {
@@ -156,7 +169,7 @@ class PostgresPreparedStatement(
         if (!parsed) {
             connection.sendOnly(
                 connection.reader.preparedStatementOpeningMessage.also {
-                    it.statementId = id.toString()
+                    it.statementId = id
                     it.query = realQuery
                     it.valuesTypes = types
                 }
@@ -164,20 +177,19 @@ class PostgresPreparedStatement(
             justParsed = true
         }
         val binaryResult = false
-        val portalName = id.toString()
         connection.sendOnly(connection.reader.bindMessage.also {
-            it.statement = id.toString()
-            it.portal = portalName
+            it.statement = id
+            it.portal = id
             it.values = params
             it.valuesTypes = types
             it.binaryResult = binaryResult
         })
         connection.sendOnly(connection.reader.describeMessage.also {
-            it.statement = id.toString()
+            it.statement = id
             it.portal = true
         })
         connection.sendOnly(connection.reader.executeMessage.also {
-            it.statementId = portalName
+            it.statementId = id
             it.limit = 0
         })
         connection.sendOnly(SyncMessage)
@@ -192,9 +204,13 @@ class PostgresPreparedStatement(
         val msg = connection.readDesponse()
         when (msg) {
             is ErrorMessage -> {
-                check(connection.readDesponse() is ReadyForQueryMessage)
-                if (justParsed) {
-                    deleteSelf()
+                try {
+                    check(connection.readDesponse() is ReadyForQueryMessage)
+                } finally {
+                    deleteSelf(isPortal = true)
+                    if (justParsed) {
+                        deleteSelf(isPortal = false)
+                    }
                 }
                 throw PostgresqlException("$msg. Query: $realQuery")
             }
@@ -207,14 +223,17 @@ class PostgresPreparedStatement(
         var rowsAffected = 0L
         LOOP@ while (true) {
             val msg = connection.readDesponse()
+            var status = ""
             when (msg) {
                 is ReadyForQueryMessage -> {
+                    deleteSelf(isPortal = true)
                     return QueryResponse.Status(
-                        status = "",
+                        status = status,
                         rowsAffected = rowsAffected
                     )
                 }
                 is CommandCompleteMessage -> {
+                    status = msg.statusMessage
                     rowsAffected += msg.rowsAffected
                     continue@LOOP
                 }
@@ -225,6 +244,8 @@ class PostgresPreparedStatement(
                     return msg2
                 }
                 is ErrorMessage -> {
+                    check(connection.readDesponse() is ReadyForQueryMessage)
+                    deleteSelf(isPortal = true)
                     throw PostgresqlException("${msg.fields['M']}. Query: $realQuery")
                 }
                 is NoticeMessage -> {

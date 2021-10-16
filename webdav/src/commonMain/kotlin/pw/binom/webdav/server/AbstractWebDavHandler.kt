@@ -6,13 +6,16 @@ import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.httpServer.*
 import pw.binom.net.Path
+import pw.binom.net.toPath
 import pw.binom.net.toURI
 import pw.binom.pool.ObjectPool
+import pw.binom.webdav.DAV_NS
+import pw.binom.webdav.MULTISTATUS_TAG
 import pw.binom.xml.dom.findElements
 import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
 
-suspend fun FileSystem.getD(path: String, d: Int, out: ArrayList<FileSystem.Entity>) {
+private suspend fun FileSystem.getD(path: Path, d: Int, out: ArrayList<FileSystem.Entity>) {
     if (d <= 0)
         return
     getDir(path)?.forEach {
@@ -22,9 +25,9 @@ suspend fun FileSystem.getD(path: String, d: Int, out: ArrayList<FileSystem.Enti
     }
 }
 
-suspend fun FileSystem.getEntitiesWithDepth(path: String, depth: Int): List<FileSystem.Entity>? {
+suspend fun FileSystem.getEntitiesWithDepth(path: Path, depth: Int): List<FileSystem.Entity>? {
     val out = ArrayList<FileSystem.Entity>()
-    val e = get(path.removeSuffix("/")) ?: return null
+    val e = get(path.toString().removeSuffix("/").toPath) ?: return null
     out += e
 
 
@@ -47,7 +50,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
     private suspend fun buildRropFind(req: HttpRequest) {
         val fs = getFS(req)
         val user = getUser(req)
-        val currentEntry = fs.get(UTF8.urlDecode(req.path.raw))
+        val currentEntry = fs.get(UTF8.urlDecode(req.path.raw).toPath)
 
         if (currentEntry == null) {
             req.response().use { it.status = 404 }
@@ -64,23 +67,22 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 }.toMutableSet()
         val depth = req.headers["Depth"]?.firstOrNull()?.toInt() ?: 0
         val entities = fs.getEntitiesWithDepth(
-            UTF8.urlDecode(req.path.raw),
+            UTF8.urlDecode(req.path.raw).toPath,
             depth
         )!!//if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
-        val DAV_NS = "DAV:"
         resp.status = 207
         resp.headers.contentType = "application/xml; charset=UTF-8"
         resp.startWriteText().use {
             it.writeXml {
-                node("multistatus", DAV_NS) {
+                node(MULTISTATUS_TAG, DAV_NS) {
                     entities.forEach { e ->
                         node("response", DAV_NS) {
                             node("href", DAV_NS) {
 
                                 if (e.isFile)
-                                    value(getGlobalURI(req).append(UTF8.urlEncode(e.path)).raw)
+                                    value(getGlobalURI(req).append(e.path).raw)
                                 else
-                                    value(getGlobalURI(req).append(UTF8.urlEncode(e.path + "/")).raw)
+                                    value(getGlobalURI(req).append(UTF8.urlEncode(e.path.toString() + "/")).raw)
                             }
                             node("propstat", DAV_NS) {
                                 node("prop", DAV_NS) {
@@ -140,7 +142,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             //resp.resetHeader("Connection", "close")
             if (req.method == "OPTIONS") {
                 fs.useUser2(user) {
-                    fs.get(UTF8.urlDecode(req.path.raw))
+                    fs.get(UTF8.urlDecode(req.path.raw).toPath)
                     req.response().use {
                         it.headers["Allow"] =
                             "GET, POST, OPTIONS, HEAD, MKCOL, PUT, PROPFIND, PROPPATCH, ORDERPATCH, DELETE, MOVE, COPY, GETLIB, LOCK, UNLOCK"
@@ -152,7 +154,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "MKCOL") {
                 fs.useUser2(user) {
-                    fs.mkdir(UTF8.urlDecode(req.path.raw))
+                    fs.mkdir(UTF8.urlDecode(req.path.raw).toPath)
                     req.response().use {
                         it.status = 201
                     }
@@ -171,7 +173,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                     }
                     val destinationPath = getLocalURI(req, destination.path).let { UTF8.urlDecode(it) }
                     val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
-                    val source = fs.get(UTF8.urlDecode(req.path.raw))
+                    val source = fs.get(UTF8.urlDecode(req.path.raw).toPath)
                     if (source == null) {
                         req.response().use {
                             it.status = 404
@@ -179,7 +181,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                         return@useUser2
                     }
 
-                    source.move(destinationPath, overwrite)
+                    source.move(destinationPath.toPath, overwrite)
                     req.response().use {
                         it.status = 201
                     }
@@ -198,7 +200,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                     }
                     val destinationPath = getLocalURI(req, destination.path).let { UTF8.urlDecode(it) }
                     val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
-                    val source = fs.get(UTF8.urlDecode(req.path.raw))
+                    val source = fs.get(UTF8.urlDecode(req.path.raw).toPath)
                     if (source == null) {
                         req.response().use {
                             it.status = 404
@@ -206,7 +208,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                         return@useUser2
                     }
 
-                    source.copy(destinationPath, overwrite)
+                    source.copy(destinationPath.toPath, overwrite)
                     req.response().use {
                         it.status = 201
                     }
@@ -215,7 +217,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "DELETE") {
                 fs.useUser2(user) {
-                    val e = fs.get(UTF8.urlDecode(req.path.raw))
+                    val e = fs.get(UTF8.urlDecode(req.path.raw).toPath)
                     if (e == null) {
                         req.response().use {
                             it.status = 404
@@ -231,7 +233,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "PUT") {
                 fs.useUser2(user) {
-                    val path = UTF8.urlDecode(req.path.raw)
+                    val path = UTF8.urlDecode(req.path.raw).toPath
                     val e = fs.get(path)?.rewrite() ?: fs.new(path)
 
                     e.use {
@@ -247,7 +249,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "GET") {
                 fs.useUser2(user) {
-                    val e = fs.get(UTF8.urlDecode(req.path.raw).removeSuffix("/"))
+                    val e = fs.get(UTF8.urlDecode(req.path.raw).removeSuffix("/").toPath)
 
                     if (e == null) {
                         req.response().use {

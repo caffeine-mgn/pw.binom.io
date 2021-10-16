@@ -2,7 +2,6 @@
 
 package pw.binom.io.file
 
-import pw.binom.io.use
 import java.io.File as JFile
 
 actual class File actual constructor(path: String) {
@@ -21,6 +20,8 @@ actual class File actual constructor(path: String) {
     actual companion object {
         actual val SEPARATOR: Char
             get() = JFile.separatorChar
+        actual val temporalDirectory: File?
+            get() = File(System.getProperty("java.io.tmpdir")).takeIfDirection()
     }
 
     actual fun delete() = native.delete()
@@ -45,11 +46,10 @@ actual class File actual constructor(path: String) {
 
     actual fun list(): List<File> {
         val out = ArrayList<File>()
-        iterator().use {
-            it.forEach { file ->
-                out += file
-            }
+        iterator().forEach { file ->
+            out += file
         }
+
         return out
     }
 

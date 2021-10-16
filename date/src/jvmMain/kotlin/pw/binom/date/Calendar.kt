@@ -53,6 +53,8 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
 
     actual val timeZoneOffset: Int
         get() = tm.offset.totalSeconds / 60
+
+    actual fun toDate(): Date = Date.new(this)
 }
 
 internal fun javaDayOfWeekToCommon(day: Int) =
@@ -64,7 +66,7 @@ internal fun javaDayOfWeekToCommon(day: Int) =
         4 -> 4
         5 -> 5
         6 -> 6
-        else -> throw IllegalArgumentException("Invalid day of week")
+        else -> throw IllegalArgumentException("Invalid day of week $day")
     }
 
 internal fun commonDayOfWeekToJava(day: Int) =
@@ -76,5 +78,5 @@ internal fun commonDayOfWeekToJava(day: Int) =
         4 -> 4
         5 -> 5
         6 -> 6
-        else -> throw IllegalArgumentException("Invalid day of week")
+        else -> throw IllegalArgumentException("Invalid day of week $day")
     }

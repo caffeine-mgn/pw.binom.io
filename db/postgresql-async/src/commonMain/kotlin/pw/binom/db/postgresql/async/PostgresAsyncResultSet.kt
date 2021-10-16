@@ -92,6 +92,8 @@ class PostgresAsyncResultSet(
     override fun getDate(column: String): Date? =
         getDate(getIndex(column))
 
+    override fun columnIndex(column: String): Int = getIndex(column)
+
     override fun getString(column: String): String? =
         getString(getIndex(column))
 

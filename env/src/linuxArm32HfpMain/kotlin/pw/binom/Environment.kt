@@ -3,6 +3,9 @@ package pw.binom
 import kotlinx.cinterop.*
 import platform.posix.*
 
+actual val Environment.os: OS
+    get() = OS.LINUX
+
 actual val Environment.isBigEndian: Boolean
     get() = isBigEndianPrivate
 

@@ -2,6 +2,7 @@ package pw.binom.network
 
 import pw.binom.concurrency.ThreadRef
 import java.net.ConnectException
+import java.net.SocketException
 import java.nio.channels.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -99,7 +100,7 @@ class JvmSelector : Selector {
                     timeout > 0L -> native.select(timeout)
                     timeout == 0L -> native.selectNow()
                     timeout < 0L -> native.select()
-                    else -> throw IllegalArgumentException()
+                    else -> throw IllegalArgumentException("Invalid timeout $timeout")
                 }
             }
             val keys = native.selectedKeys()
@@ -116,7 +117,7 @@ class JvmSelector : Selector {
                         if (connected) {
                             count++
                             func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
-                            if (it.interestOps() and SelectionKey.OP_CONNECT != 0) {
+                            if (it.isValid && it.interestOps() and SelectionKey.OP_CONNECT != 0) {
                                 it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
                             }
                             continue
@@ -124,6 +125,10 @@ class JvmSelector : Selector {
                             continue
                         }
                     } catch (e: ConnectException) {
+                        count++
+                        func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
+                        continue
+                    } catch (e: SocketException){
                         count++
                         func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
                         continue

@@ -1,6 +1,8 @@
 package pw.binom.io.file
 
+import pw.binom.Environment
 import pw.binom.io.use
+import pw.binom.workDirectory
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -17,7 +19,7 @@ class TestRename {
         if (dest.isExist)
             dest.delete()
 
-        source.write().use { }
+        source.openWrite().use { }
 
         assertFalse(dest.isFile)
         assertTrue(source.isFile)
@@ -31,19 +33,19 @@ class TestRename {
 
     @Test
     fun subDirs() {
-        val d1 = File("1")
-        val d2 = File("2")
+        val d1 = Environment.workDirectoryFile.relative("1")
+        val d2 = Environment.workDirectoryFile.relative("2")
         d1.mkdirs()
         d2.mkdirs()
-        val source = File(d1, "1")
-        val dest = File(d2, "2")
+        val source = d1.relative("1")
+        val dest = d2.relative("2")
         if (source.isExist)
             source.delete()
 
         if (dest.isExist)
             dest.delete()
 
-        source.write().use { }
+        source.openWrite().use { }
 
         assertFalse(dest.isFile)
         assertTrue(source.isFile)

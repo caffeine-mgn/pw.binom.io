@@ -4,8 +4,8 @@ Kotlin Library for Threads
 ## Using
 ### Gradle
 You must add repository. See [README](../README.md)
-```groovy
+```kotlin
 dependencies {
-    api "pw.binom.io:thread:<version>"
+    api("pw.binom.io:concurrency:<version>")
 }
 ```

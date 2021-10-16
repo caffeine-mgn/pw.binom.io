@@ -1,6 +1,8 @@
 package pw.binom.db.sqlite
 
 import cnames.structs.sqlite3_stmt
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.free
@@ -25,6 +27,21 @@ class SQLitePrepareStatement(
     private inline fun checkRange(index: Int) {
         if (index < 0 || index >= maxParams)
             throw ArrayIndexOutOfBoundsException()
+    }
+
+    override fun set(index: Int, value: BigInteger) {
+        checkRange(index)
+        connection.checkSqlCode(sqlite3_bind_text(stmt, index + 1, value.toString(), -1, null))
+    }
+
+    override fun set(index: Int, value: BigDecimal) {
+        checkRange(index)
+        connection.checkSqlCode(sqlite3_bind_text(stmt, index + 1, value.toString(), -1, null))
+    }
+
+    override fun set(index: Int, value: Double) {
+        checkRange(index)
+        connection.checkSqlCode(sqlite3_bind_double(stmt, index + 1, value))
     }
 
     override fun set(index: Int, value: Float) {

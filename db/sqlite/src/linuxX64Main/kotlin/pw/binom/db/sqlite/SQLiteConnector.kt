@@ -6,6 +6,7 @@ import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.db.*
+import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.doFreeze
@@ -30,10 +31,10 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
             val ctx = nativeHeap.allocArray<CPointerVar<sqlite3>>(1)
             val errorNum = sqlite3_open_v2(path, ctx, SQLITE_OPEN_READWRITE or SQLITE_OPEN_CREATE, null)
             if (errorNum > 0) {
-                sqlite3_errmsg(ctx.pointed.value)?.toKString()
+                val msg = sqlite3_errmsg(ctx.pointed.value)?.toKString()
                 sqlite3_close(ctx.pointed.value)
                 nativeHeap.free(ctx)
-                throw IOException("Can't open Data Base $path")
+                throw IOException("Can't open Data Base \"$path\": $msg")
             }
             return SQLiteConnector(ctx)
         }
@@ -53,7 +54,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     private val rollbackSt = prepareStatement("ROLLBACK")
 
     init {
-        beginSt.executeUpdate()
+//        beginSt.executeUpdate()
         doFreeze()
     }
 
@@ -78,13 +79,13 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     override fun commit() {
         checkClosed()
         commitSt.executeUpdate()
-        beginSt.executeUpdate()
+//        beginSt.executeUpdate()
     }
 
     override fun rollback() {
         checkClosed()
         rollbackSt.executeUpdate()
-        beginSt.executeUpdate()
+//        beginSt.executeUpdate()
     }
 
     override val type: String
@@ -92,6 +93,9 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
 
     override val isConnected: Boolean
         get() = !closed.value
+
+    override val dbInfo: DatabaseInfo
+        get() = SQLiteSQLDatabaseInfo
 
     override fun close() {
         checkClosed()

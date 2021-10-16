@@ -13,17 +13,30 @@ class PathTest {
 
     @Test
     fun testPath() {
-//        assertTrue("/123/hello".toURN.isMatch("/{id}/hello"))
-//        assertTrue("/123/hello".toURN.isMatch("/123/{id}"))
-//        assertTrue("/123/hello".toURN.isMatch("/*/{id}"))
-//        "/123/hello".toURN.also {
-//            assertEquals("123", it.getVariable("id", "/{id}/hello"))
-//            assertEquals("hello", it.getVariable("id", "/*/{id}"))
-//        }
-
-        "/my_address/my_name".toPath.getVariables("/{id}/{name}").also {
+        "/my_address/my_name".toPath.getVariables("/{id}/{name}")!!.also {
             assertEquals("my_address", it["id"])
             assertEquals("my_name", it["name"])
+        }
+    }
+
+    @Test
+    fun severalDirectionInStar(){
+        "/a/b/v2/my_name".toPath.getVariables("*/v2/{name}")!!.also {
+            assertEquals("my_name", it["name"])
+        }
+    }
+
+    @Test
+    fun namedParts(){
+
+        "/a/b/v2/ooo/my_name".toPath.getVariables("{path}/v2/*/{name}")!!.also {
+            assertEquals("my_name", it["name"])
+            assertEquals("/a/b", it["path"])
+        }
+
+        "/a/b/v2/my_name".toPath.getVariables("{path}/v2/{name}")!!.also {
+            assertEquals("my_name", it["name"])
+            assertEquals("/a/b", it["path"])
         }
     }
 }

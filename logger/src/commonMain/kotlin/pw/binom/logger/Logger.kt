@@ -1,7 +1,8 @@
 package pw.binom.logger
 
 import pw.binom.atomic.AtomicReference
-import pw.binom.concurrency.FrozenHashMap
+
+internal expect fun createGlobalMap():MutableMap<String, Logger>
 
 /**
  * Logger class
@@ -13,7 +14,7 @@ class Logger(
     val pkg: String
     ) {
     companion object {
-        private val allLoggers = FrozenHashMap<String, Logger>()
+        private val allLoggers = createGlobalMap()
         val global: Logger = Logger("")
 
         init {

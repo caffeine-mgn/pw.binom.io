@@ -3,10 +3,18 @@ package pw.binom.date.format
 import pw.binom.date.Calendar
 import kotlin.math.absoluteValue
 
-sealed class Pattern {
+internal sealed interface Pattern {
     companion object {
-        fun find(format: String, position: Int): Pattern? =
-            when {
+        fun find(format: String, position: Int): Pattern? {
+            val or = Or.parse(text = format, position)
+            if (or != null) {
+                return or
+            }
+            val optional = Optional.parse(text = format, position)
+            if (optional != null) {
+                return optional
+            }
+            return when {
                 CustomText.find(format, position) -> CustomText(format, position)
                 yyyy.find(format, position) -> yyyy
                 MMM.find(format, position) -> MMM
@@ -20,8 +28,10 @@ sealed class Pattern {
                 ss.find(format, position) -> ss
                 SSS.find(format, position) -> SSS
                 SSm.find(format, position) -> SSm
+                Sm.find(format, position) -> Sm
                 XXX.find(format, position) -> XXX
                 XX.find(format, position) -> XX
+                X.find(format, position) -> X
                 Z.find(format, position) -> Z
                 MINUS.find(format, position) -> MINUS
                 SLASH.find(format, position) -> SLASH
@@ -30,199 +40,406 @@ sealed class Pattern {
                 SPACE.find(format, position) -> SPACE
                 else -> null
             }
+        }
     }
 
-    abstract fun find(text: String, position: Int): Boolean
-    abstract val len: Int
-    open fun len(text: String, position: Int): Int = if (find(text, position)) len else -1
-    abstract fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int
-    abstract fun toString(calendar: Calendar): String
+    /**
+     * Returns string length of pattern data. For example:
+     *
+     * ```kotlin
+     * val txt = "yyyy HH:mm"
+     * val pattern = txt.toDatePattern()
+     * val year = pattern.format[0]
+     * val space = pattern.format[1]
+     * val hh = pattern.format[2]
+     * val dots = pattern.format[3]
+     * val mm = pattern.format[4]
+     * println(year.patternLength) // will print 4
+     * println(space.patternLength) // will print 1
+     * println(hh.patternLength) // will print 2
+     * println(dots.patternLength) // will print 1
+     * println(mm.patternLength) // will print 2
+     * ```
+     */
+    val patternLength: Int
+
+    /**
+     * Parse [text] on [position]. If text have valid value will call [set] for change date part of result
+     * @return size of parsed input [text]
+     */
+    fun parse(text: String, position: Int, defaultTimezoneOffset: Int, set: ((FieldType, Int) -> Unit)?): Int
+    fun toString(calendar: Calendar): String
 
     enum class FieldType {
         YEAR, MONTH, DAY_OF_MONTH, DAY_OF_WEAK, HOURS, MINUTES, SECONDS, MILLISECOND, TIME_ZONE
     }
 
+    class Or(val formats: Array<DateFormat>) : Pattern {
+
+        companion object {
+            fun parse(text: String, position: Int): Or? {
+                if (text[position] != '(') {
+                    return null
+                }
+                var i = position
+                var c = 1
+                while (true) {
+                    i++
+                    if (i >= text.length) {
+                        return null
+                    }
+                    if (text[i] == '(') {
+                        c++
+                    }
+                    if (text[i] == ')') {
+                        c--
+                        if (c == 0) {
+                            break
+                        }
+                    }
+                }
+                val subexpression = text.substring(position + 1, i)
+                val patterns = subexpression.split('|').map {
+                    DateFormat.parsePatternList(it).format
+                }
+                return Or(patterns.toTypedArray())
+            }
+        }
+
+        override val patternLength: Int =
+            formats.sumOf { it.length } + (if (formats.isEmpty()) 0 else (formats.size - 1)) + 2
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            for (f in formats) {
+                val searchResult = f.parse2(
+                    text = text,
+                    position = position,
+                    defaultTimezoneOffset = defaultTimezoneOffset,
+                    returnNullOnEof = false,
+                    set = null,
+                )
+                if (searchResult == -1) {
+                    continue
+                }
+                return f.parse2(
+                    text = text,
+                    position = position,
+                    defaultTimezoneOffset = defaultTimezoneOffset,
+                    returnNullOnEof = false,
+                    set = set,
+                )
+            }
+            return 0
+        }
+
+        override fun toString(calendar: Calendar): String {
+            if (formats.isEmpty()) {
+                return ""
+            }
+            return formats[0].toString(calendar)
+        }
+        override fun toString(): String = "("+formats.joinToString("|")+")"
+    }
+
+    class Optional(val format: DateFormat) : Pattern {
+        override val patternLength: Int = format.format.sumOf { it.patternLength } + 2
+
+
+        companion object {
+            fun parse(text: String, position: Int): Optional? {
+                if (text[position] != '[') {
+                    return null
+                }
+                var i = position
+                var c = 1
+                while (true) {
+                    i++
+                    if (i >= text.length) {
+                        return null
+                    }
+                    if (text[i] == '[') {
+                        c++
+                    }
+                    if (text[i] == ']') {
+                        c--
+                        if (c == 0) {
+                            break
+                        }
+                    }
+                }
+                val bb = text.substring(position + 1, i)
+                val cc = DateFormat.parsePatternList(bb).format
+                return Optional(cc)
+            }
+        }
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            val d = format.parse2(
+                text = text,
+                position = position,
+                defaultTimezoneOffset = defaultTimezoneOffset,
+                returnNullOnEof = false,
+                set = null
+            )
+            if (d == -1) {
+                return 0
+            }
+            val r = format.parse2(
+                text = text,
+                position = position,
+                defaultTimezoneOffset = defaultTimezoneOffset,
+                returnNullOnEof = false,
+                set = set
+            )
+            if (r != d) {
+                throw IllegalStateException()
+            }
+            return r
+        }
+
+        override fun toString(calendar: Calendar): String =
+            format.toString(calendar)
+
+        override fun toString(): String = "[$format]"
+
+    }
+
     /**
      * Year. Example: "2021"
      */
-    object yyyy : Pattern() {
-        override fun find(text: String, position: Int) =
-            text.regionMatches(position, "yyyy", 0, len)
+    object yyyy : Pattern {
+        fun find(text: String, position: Int) =
+            text.regionMatches(position, "yyyy", 0, patternLength)
 
-        override val len: Int
+        override val patternLength: Int
             get() = 4
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 4 > text.length) {
                 return -1
             }
-            val year = text.substring(position, position + len).toIntOrNull() ?: return -1
-            set(FieldType.YEAR, year)
+            val year = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.YEAR, year)
             return 4
         }
 
         override fun toString(calendar: Calendar): String = calendar.year.as4()
+
+        override fun toString(): String = "yyyy"
     }
 
     /**
      * Month. Example: "04"
      */
-    object MM : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "MM", 0, len)
+    object MM : Pattern {
 
-        override val len: Int
+        override val patternLength: Int
             get() = 2
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "MM", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 2 > text.length) {
                 return -1
             }
-            val year = text.substring(position, position + len).toIntOrNull() ?: return -1
-            set(FieldType.MONTH, year)
+            val year = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.MONTH, year)
             return 2
         }
 
         override fun toString(calendar: Calendar): String = calendar.month.as2()
+        override fun toString(): String = "MM"
     }
 
     /**
      * Day of month. Example: "15"
      */
-    object dd : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "dd", 0, len)
+    object dd : Pattern {
 
-        override val len: Int
+        override val patternLength: Int
             get() = 2
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "dd", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 2 > text.length) {
                 return -1
             }
-            val year = text.substring(position, position + len).toIntOrNull() ?: return -1
-            set(FieldType.DAY_OF_MONTH, year)
+            val year = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.DAY_OF_MONTH, year)
             return 2
         }
 
         override fun toString(calendar: Calendar): String = calendar.dayOfMonth.as2()
+
+        override fun toString(): String = "dd"
     }
 
-    class CustomText(pattern: String, val start: Int) : Pattern() {
+    class CustomText(pattern: String, val start: Int) : Pattern {
+
+        override val patternLength: Int = pattern.indexOf("'", start + 1) - start + 1
+
         companion object {
             fun find(text: String, position: Int): Boolean =
                 text[position] == '\'' && (text.indexOf("'", position + 1) != -1)
         }
 
-        override fun find(text: String, position: Int): Boolean =
-            text[position] == '\'' && (text.indexOf("'", position + 1) != -1)
+        val text = pattern.substring(start + 1, start + patternLength - 1)
 
-        override val len: Int = pattern.indexOf("'", start + 1) - start + 1
-        val text = pattern.substring(start + 1, start + len - 1)
-
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
-            return text.length
-//            text.regionMatches(position, text, 0, text.length)
-//            TODO("Not yet implemented")
-        }
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int =
+            this.text.length
 
         override fun toString(calendar: Calendar): String =
             text
 
-//        override fun len(text: String, position: Int): Int {
-//            val end = text.indexOf("'", position + 1)
-//            return end - position + 1
-//        }
+        override fun toString(): String = "'$text'"
     }
 
     /**
      * Hours. Example: "31"
      */
-    object HH : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "HH", 0, len)
-
-        override fun len(text: String, position: Int): Int = 2
-        override val len: Int
+    object HH : Pattern {
+        override val patternLength: Int
             get() = 2
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "HH", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 2 > text.length) {
                 return -1
             }
-            val hours = text.substring(position, position + len).toIntOrNull() ?: return -1
-            set(FieldType.HOURS, hours)
+            val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.HOURS, hours)
             return 2
         }
 
         override fun toString(calendar: Calendar): String = calendar.hours.as2()
+
+        override fun toString(): String = "HH"
     }
 
     /**
      * Minutes. Example: "31"
      */
-    object mm_ : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "mm", 0, len)
-
-        override val len: Int
+    object mm_ : Pattern {
+        override val patternLength: Int
             get() = 2
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "mm", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 2 > text.length) {
                 return -1
             }
-            val hours = text.substring(position, position + len).toIntOrNull() ?: return -1
-            set(FieldType.MINUTES, hours)
+            val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.MINUTES, hours)
             return 2
         }
 
         override fun toString(calendar: Calendar): String = calendar.minutes.as2()
+
+        override fun toString(): String = "mm"
     }
 
     //Seconds. Example: "31"
-    object ss : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "ss", 0, len)
-
-        override val len: Int
+    object ss : Pattern {
+        override val patternLength: Int
             get() = 2
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "ss", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 2 > text.length) {
                 return -1
             }
-            val hours = text.substring(position, position + len).toIntOrNull() ?: return -1
-            set(FieldType.SECONDS, hours)
+            val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.SECONDS, hours)
             return 2
         }
 
         override fun toString(calendar: Calendar): String = calendar.seconds.as2()
+
+        override fun toString(): String = "ss"
     }
 
     //Day of week. Example: "Mon"
-    object EEE : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "EEE", 0, len)
-
-        override val len: Int
+    object EEE : Pattern {
+        override val patternLength: Int
             get() = 3
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "EEE", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 3 > text.length) {
                 return -1
             }
             val num = when {
-                text.regionMatches(position, "Sun", 0, len) -> 0
-                text.regionMatches(position, "Mon", 0, len) -> 1
-                text.regionMatches(position, "Tue", 0, len) -> 2
-                text.regionMatches(position, "Wed", 0, len) -> 3
-                text.regionMatches(position, "Thu", 0, len) -> 4
-                text.regionMatches(position, "Fri", 0, len) -> 5
-                text.regionMatches(position, "Sat", 0, len) -> 6
+                text.regionMatches(position, "Sun", 0, patternLength) -> 0
+                text.regionMatches(position, "Mon", 0, patternLength) -> 1
+                text.regionMatches(position, "Tue", 0, patternLength) -> 2
+                text.regionMatches(position, "Wed", 0, patternLength) -> 3
+                text.regionMatches(position, "Thu", 0, patternLength) -> 4
+                text.regionMatches(position, "Fri", 0, patternLength) -> 5
+                text.regionMatches(position, "Sat", 0, patternLength) -> 6
                 else -> return -1
             }
-            set(FieldType.DAY_OF_WEAK, num)
+            set?.invoke(FieldType.DAY_OF_WEAK, num)
             return 3
         }
 
@@ -235,7 +452,7 @@ sealed class Pattern {
                 4 -> "Thu"
                 5 -> "Fri"
                 6 -> "Sat"
-                else -> throw IllegalArgumentException()
+                else -> throw IllegalArgumentException("Unknown day of week ${calendar.dayOfWeek}")
             }
     }
 
@@ -247,54 +464,66 @@ sealed class Pattern {
      *
      * Example: "3"
      */
-    object u : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text[position] == 'u'
-
-        override val len: Int
+    object u : Pattern {
+        override val patternLength: Int
             get() = 1
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text[position] == 'u'
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (text[position] !in '1'..'7') {
                 return -1
             }
-            set(FieldType.DAY_OF_MONTH, text[position].toString().toInt())
+            set?.invoke(FieldType.DAY_OF_WEAK, text[position].toString().toInt())
             return 1
         }
 
         override fun toString(calendar: Calendar): String = "-"
+
+        override fun toString(): String = "u"
     }
 
     /**
      * Month. Example: "Feb"
      */
-    object MMM : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "MMM", 0, len)
-
-        override val len: Int
+    object MMM : Pattern {
+        override val patternLength: Int
             get() = 3
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "MMM", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 3 > text.length) {
                 return -1
             }
             val num = when {
-                text.regionMatches(position, "Jan", 0, len) -> 1
-                text.regionMatches(position, "Feb", 0, len) -> 2
-                text.regionMatches(position, "Mar", 0, len) -> 3
-                text.regionMatches(position, "Apr", 0, len) -> 4
-                text.regionMatches(position, "May", 0, len) -> 5
-                text.regionMatches(position, "Jun", 0, len) -> 6
-                text.regionMatches(position, "Jul", 0, len) -> 7
-                text.regionMatches(position, "Aug", 0, len) -> 8
-                text.regionMatches(position, "Sep", 0, len) -> 9
-                text.regionMatches(position, "Oct", 0, len) -> 10
-                text.regionMatches(position, "Nov", 0, len) -> 11
-                text.regionMatches(position, "Dec", 0, len) -> 12
+                text.regionMatches(position, "Jan", 0, patternLength) -> 1
+                text.regionMatches(position, "Feb", 0, patternLength) -> 2
+                text.regionMatches(position, "Mar", 0, patternLength) -> 3
+                text.regionMatches(position, "Apr", 0, patternLength) -> 4
+                text.regionMatches(position, "May", 0, patternLength) -> 5
+                text.regionMatches(position, "Jun", 0, patternLength) -> 6
+                text.regionMatches(position, "Jul", 0, patternLength) -> 7
+                text.regionMatches(position, "Aug", 0, patternLength) -> 8
+                text.regionMatches(position, "Sep", 0, patternLength) -> 9
+                text.regionMatches(position, "Oct", 0, patternLength) -> 10
+                text.regionMatches(position, "Nov", 0, patternLength) -> 11
+                text.regionMatches(position, "Dec", 0, patternLength) -> 12
                 else -> return -1
             }
-            set(FieldType.MONTH, num)
+            set?.invoke(FieldType.MONTH, num)
             return 3
         }
 
@@ -312,61 +541,115 @@ sealed class Pattern {
                 10 -> "Oct"
                 11 -> "Nov"
                 12 -> "Dec"
-                else -> throw IllegalArgumentException()
+                else -> throw IllegalArgumentException("Unknown month ${calendar.month}")
             }
+
+        override fun toString(): String = "MMM"
     }
 
-    object SSS : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "SSS", 0, len)
-
-        override val len: Int
+    object SSS : Pattern {
+        override val patternLength: Int
             get() = 3
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "SSS", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 3 > text.length) {
                 return -1
             }
-            val hours = text.substring(position, position + len).toIntOrNull() ?: return -1
-            set(FieldType.MILLISECOND, hours)
+            val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.MILLISECOND, hours)
             return 3
         }
 
         override fun toString(calendar: Calendar): String =
             calendar.millisecond.as3()
+
+        override fun toString(): String = "SSS"
     }
 
-    object SSm : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "SS", 0, len)
-
-        override val len: Int
+    object SSm : Pattern {
+        override val patternLength: Int
             get() = 2
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "SS", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 2 > text.length) {
                 return -1
             }
-            val hours = text.substring(position, position + len).toIntOrNull()?.let { it * 10 } ?: return -1
-            set(FieldType.MILLISECOND, hours)
+            val hours = text.substring(position, position + patternLength).toIntOrNull()?.let { it * 10 } ?: return -1
+            set?.invoke(FieldType.MILLISECOND, hours)
             return 2
         }
 
-        override fun toString(calendar: Calendar): String =
-            calendar.millisecond.as2()
+        override fun toString(calendar: Calendar): String {
+            var r = calendar.millisecond
+            while (r > 100) {
+                r = r / 10
+            }
+            return r.as2()
+        }
+
+        override fun toString(): String = "SS"
+    }
+
+    object Sm : Pattern {
+        override val patternLength: Int
+            get() = 1
+
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "S", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            if (position + 1 > text.length) {
+                return -1
+            }
+            val hours = text.substring(position, position + patternLength).toIntOrNull()?.let { it * 100 } ?: return -1
+            set?.invoke(FieldType.MILLISECOND, hours)
+            return 1
+        }
+
+        override fun toString(calendar: Calendar): String {
+            return (calendar.millisecond/100).toString()
+        }
+
+        override fun toString(): String = "SS"
     }
 
     /**
-     * Timezone. Example: "-07:00"
+     * Timezone. Example: "-07"
      */
-    object XX : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "XX", 0, len)
+    object X : Pattern {
+        override val patternLength: Int
+            get() = 1
 
-        override val len: Int
-            get() = 2
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "X", 0, patternLength)
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 3 > text.length) {
                 return -1
             }
@@ -383,29 +666,86 @@ sealed class Pattern {
                 return -1
             }
             val h = text.substring(position + 1, position + 3).toInt()
-            set(FieldType.TIME_ZONE, h * 60 * if (add) 1 else -1)
-            return 6
+            set?.invoke(FieldType.TIME_ZONE, h * 60 * if (add) 1 else -1)
+            return 3
+        }
+
+        override fun toString(calendar: Calendar): String {
+            val t = calendar.timeZoneOffset.absoluteValue
+            val h = t / 60
+            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}"
+        }
+        override fun toString(): String = "X"
+    }
+
+    /**
+     * Timezone. Example: "-0700"
+     */
+    object XX : Pattern {
+        override val patternLength: Int
+            get() = 2
+
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "XX", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            if (position + 5 > text.length) {
+                return -1
+            }
+            val sign = text[position]
+            val add = when (sign) {
+                '+' -> true
+                '-' -> false
+                else -> return -1
+            }
+            if (text[position + 1] !in '0'..'9') {
+                return -1
+            }
+            if (text[position + 2] !in '0'..'9') {
+                return -1
+            }
+            if (text[position + 3] !in '0'..'9') {
+                return -1
+            }
+            if (text[position + 4] !in '0'..'9') {
+                return -1
+            }
+            val h = text.substring(position + 1, position + 3).toInt()
+            val m = text.substring(position + 3, position + 5).toInt()
+            set?.invoke(FieldType.TIME_ZONE, h * 60 + m * if (add) 1 else -1)
+            return 5
         }
 
         override fun toString(calendar: Calendar): String {
             val t = calendar.timeZoneOffset.absoluteValue
             val h = t / 60
             val m = t - h * 60
-            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}:${m.as2()}"
+            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
         }
+        override fun toString(): String = "XXX"
     }
 
     /**
      * Timezone. Example: "-07:00"
      */
-    object XXX : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "XXX", 0, len)
-
-        override val len: Int
+    object XXX : Pattern {
+        override val patternLength: Int
             get() = 3
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "XXX", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 6 > text.length) {
                 return -1
             }
@@ -432,7 +772,7 @@ sealed class Pattern {
             }
             val h = text.substring(position + 1, position + 3).toInt()
             val m = text.substring(position + 4, position + 6).toInt()
-            set(FieldType.TIME_ZONE, h * 60 + m * if (add) 1 else -1)
+            set?.invoke(FieldType.TIME_ZONE, h * 60 + m * if (add) 1 else -1)
             return 6
         }
 
@@ -442,19 +782,25 @@ sealed class Pattern {
             val m = t - h * 60
             return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}:${m.as2()}"
         }
+        override fun toString(): String = "XXX"
     }
 
     /**
      * Timezone. Example: "-0700"
      */
-    object Z : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "XXX", 0, len)
-
-        override val len: Int
+    object Z : Pattern {
+        override val patternLength: Int
             get() = 3
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int {
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "Z", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
             if (position + 5 > text.length) {
                 return -1
             }
@@ -478,7 +824,7 @@ sealed class Pattern {
             }
             val h = text.substring(position + 1, position + 3).toInt()
             val m = text.substring(position + 3, position + 4).toInt()
-            set(FieldType.TIME_ZONE, h * 60 + m * if (add) 1 else -1)
+            set?.invoke(FieldType.TIME_ZONE, h * 60 + m * if (add) 1 else -1)
             return 6
         }
 
@@ -488,19 +834,25 @@ sealed class Pattern {
             val m = t - h * 60
             return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
         }
+        override fun toString(): String = "Z"
     }
 
     /**
      * "-"
      */
-    object MINUS : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "-", 0, len)
-
-        override val len: Int
+    object MINUS : Pattern {
+        override val patternLength: Int
             get() = 1
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int =
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "-", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int =
             if (text[position] == '-') {
                 1
             } else {
@@ -508,19 +860,25 @@ sealed class Pattern {
             }
 
         override fun toString(calendar: Calendar): String = "-"
+        override fun toString(): String = "-"
     }
 
     /**
      * ":"
      */
-    object DOUBLE_POINT : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, ":", 0, len)
-
-        override val len: Int
+    object DOUBLE_POINT : Pattern {
+        override val patternLength: Int
             get() = 1
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int =
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, ":", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int =
             if (text[position] == ':') {
                 1
             } else {
@@ -528,19 +886,25 @@ sealed class Pattern {
             }
 
         override fun toString(calendar: Calendar): String = ":"
+        override fun toString(): String = ":"
     }
 
     /**
      * "."
      */
-    object POINT : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, ".", 0, len)
-
-        override val len: Int
+    object POINT : Pattern {
+        override val patternLength: Int
             get() = 1
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int =
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, ".", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int =
             if (text[position] == '.') {
                 1
             } else {
@@ -548,19 +912,25 @@ sealed class Pattern {
             }
 
         override fun toString(calendar: Calendar): String = "."
+        override fun toString(): String = "."
     }
 
     /**
      * "/"
      */
-    object SLASH : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, "/", 0, len)
-
-        override val len: Int
+    object SLASH : Pattern {
+        override val patternLength: Int
             get() = 1
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int =
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "/", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int =
             if (text[position] == '/') {
                 1
             } else {
@@ -568,19 +938,25 @@ sealed class Pattern {
             }
 
         override fun toString(calendar: Calendar): String = "/"
+        override fun toString(): String = "/"
     }
 
     /**
      * ","
      */
-    object COMMA : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text.regionMatches(position, ",", 0, len)
-
-        override val len: Int
+    object COMMA : Pattern {
+        override val patternLength: Int
             get() = 1
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int =
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, ",", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int =
             if (text[position] == ',') {
                 1
             } else {
@@ -588,19 +964,27 @@ sealed class Pattern {
             }
 
         override fun toString(calendar: Calendar): String = ","
+        override fun toString(): String = ","
     }
 
     /**
      * " "
      */
-    object SPACE : Pattern() {
-        override fun find(text: String, position: Int): Boolean =
-            text[position] == ' '
-
-        override val len: Int
+    object SPACE : Pattern {
+        override val patternLength: Int
             get() = 1
 
-        override fun parse(text: String, position: Int, set: (FieldType, Int) -> Unit): Int =
+        fun find(text: String, position: Int): Boolean =
+            text[position] == ' '
+
+        override fun toString(): String = " "
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int =
             if (text[position] == ' ') {
                 1
             } else {
@@ -611,26 +995,26 @@ sealed class Pattern {
     }
 }
 
-private fun Int.as2() =
+internal fun Int.as2() =
     when {
         this < 10 -> "0$this"
         this >= 10 && this <= 99 -> toString()
-        else -> throw IllegalArgumentException()
+        else -> throw IllegalArgumentException("Input integer $this should be in interval 0..99")
     }
 
-private fun Int.as3() =
+internal fun Int.as3() =
     when {
         this < 10 -> "00$this"
         this < 100 -> "0$this"
         this < 1000 -> "$this"
-        else -> throw IllegalArgumentException()
+        else -> throw IllegalArgumentException("Input integer $this should be in interval 0..999")
     }
 
-private fun Int.as4() =
+internal fun Int.as4() =
     when {
         this < 10 -> "000$this"
         this < 100 -> "00$this"
         this < 1000 -> "0$this"
         this >= 1000 && this <= 9999 -> toString()
-        else -> throw IllegalArgumentException()
+        else -> throw IllegalArgumentException("Input integer $this should be in interval 0..9999")
     }

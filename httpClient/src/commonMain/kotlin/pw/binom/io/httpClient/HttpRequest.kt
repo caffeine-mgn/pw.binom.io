@@ -4,7 +4,6 @@ import pw.binom.AsyncOutput
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncWriter
 import pw.binom.io.http.BasicAuth
-import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.use
 import pw.binom.io.http.websocket.WebSocketConnection

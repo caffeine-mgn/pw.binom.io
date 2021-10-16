@@ -1,4 +1,3 @@
-enableFeaturePreview("GRADLE_METADATA")
 rootProject.name = "Binom"
 
 include(":env")
@@ -11,6 +10,8 @@ include(":strong:strong-application")
 include(":file")
 include(":db")
 include(":db:kmigrator")
+include(":db:db-serialization-annotations")
+include(":db:db-serialization")
 include(":rpc")
 include(":network")
 include(":db:sqlite")

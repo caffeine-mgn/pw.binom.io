@@ -2,14 +2,15 @@ package pw.binom.compression.zlib
 
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
+import pw.binom.holdState
 import pw.binom.io.CRC32
 import pw.binom.io.use
 
 class AsyncGZIPOutput(
     stream: AsyncOutput,
-    level: Int,
+    level: Int = 6,
     bufferSize: Int = 512,
-    closeStream: Boolean = false
+    closeStream: Boolean = true
 ) : AsyncDeflaterOutput(
     stream = stream,
     bufferSize = bufferSize,
@@ -18,26 +19,22 @@ class AsyncGZIPOutput(
     syncFlush = false,
     closeStream = closeStream
 ) {
-    private val crc = CRC32()
+    private val crcCalc = CRC32()
+
+    private val crc
+        get() = crcCalc.value.toInt()
 
     init {
-        crc.reset()
+        crcCalc.init()
         usesDefaultDeflater = false
     }
 
-//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        writeHeader()
-//        val r = super.write(data, offset, length)
-//        crc.update(data, offset, length)
-//        return r
-//    }
-
     override suspend fun write(data: ByteBuffer): Int {
         writeHeader()
-        val pos = data.position
-        val r = super.write(data)
-        crc.update(data, pos, r)
-        return r
+        data.holdState {
+            crcCalc.update(buffer = data)
+        }
+        return super.write(data)
     }
 
     override suspend fun finish() {
@@ -61,7 +58,7 @@ class AsyncGZIPOutput(
     }
 
     private fun writeTrailer(buf: ByteBuffer) {
-        writeInt(crc.value.toInt(), buf) // CRC-32 of uncompr. data
+        writeInt(crcCalc.value.toInt(), buf) // CRC-32 of uncompr. data
         writeInt(def.totalIn.toInt(), buf) // Number of uncompr. bytes
     }
 
@@ -88,6 +85,14 @@ class AsyncGZIPOutput(
         headerWrited = true
     }
 }
+
+fun AsyncOutput.gzip(level: Int = 6, bufferSize: Int = 1024, closeStream: Boolean = true) =
+    AsyncGZIPOutput(
+        stream = this,
+        level = level,
+        bufferSize = bufferSize,
+        closeStream = closeStream,
+    )
 
 private val header = ByteBuffer.alloc(10).also {
     it.put(GZIP_MAGIC1)// Magic number (short)

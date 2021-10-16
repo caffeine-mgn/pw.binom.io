@@ -19,7 +19,7 @@ class ReferenceTest {
             aRef.close()
         }
         while (!f.isDone) {
-            Worker.sleep(50)
+            sleep(50)
         }
         a.doSomething()
         if (f.isFailure) {

@@ -40,4 +40,13 @@ actual class AtomicInt actual constructor(actual var value: Int): ReadWritePrope
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
 
+    actual operator fun inc(): AtomicInt {
+        increment()
+        return this
+    }
+
+    actual operator fun dec(): AtomicInt {
+        decrement()
+        return this
+    }
 }

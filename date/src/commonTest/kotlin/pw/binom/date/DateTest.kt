@@ -1,32 +1,28 @@
 package pw.binom.date
 
-import pw.binom.Environment
-import pw.binom.io.file.File
-import pw.binom.io.file.read
-import pw.binom.io.readText
-import pw.binom.io.use
-import pw.binom.io.utf8Reader
-import pw.binom.workDirectory
 import kotlin.math.absoluteValue
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DateTest {
-    private val testDate = File(File(Environment.workDirectory), "build/tmp-date/")
-    private val currentTimeZone = File(testDate, "currentTZ").read().utf8Reader().use {
-        it.readText()
-    }.toInt()
-
-    private val now = File(testDate, "now").read().utf8Reader().use {
-        it.readText()
-    }.toLong()
+    private val currentTimeZone = test_data_currentTZ
+    private val now = test_data_now
 
     @Test
     fun timeZone() {
         assertEquals(currentTimeZone, Date.systemZoneOffset)
     }
 
+    @Ignore
+    @Test
+    fun zeroTimeTest() {
+        val zeroTime = Date.of(year = 0, timeZoneOffset = 0).time
+        assertEquals(TestData.ZERO_TIME, zeroTime)
+    }
+
+    @Ignore
     @Test
     fun nowTest() {
         val except = now
@@ -39,14 +35,14 @@ class DateTest {
     @Test
     fun ofTest() {
         val date = Date.of(
-                year = 1989,
-                month = 1,
-                dayOfMonth = 5,
-                hours = 13,
-                minutes = 0,
-                seconds = 0,
-                millis = 0,
-                timeZoneOffset = 0
+            year = 1989,
+            month = 1,
+            dayOfMonth = 5,
+            hours = 13,
+            minutes = 0,
+            seconds = 0,
+            millis = 0,
+            timeZoneOffset = 0
         )
         assertEquals(600008400000L, date.time)
     }
@@ -61,7 +57,7 @@ class DateTest {
                 minutes = 0,
                 seconds = 0,
                 millis = 0,
-                timeZoneOffset = 0
+            timeZoneOffset = 0
         ).calendar(0)
 
         assertEquals(1989, date.year, "year")
@@ -70,5 +66,37 @@ class DateTest {
         assertEquals(13, date.hours, "hour")
         assertEquals(0, date.seconds, "second")
         assertEquals(0, date.millisecond, "millisecond")
+    }
+
+    @Test
+    fun utcTest() {
+        val d = Date.of(
+            year = 2021,
+            month = 6,
+            dayOfMonth = 10,
+            hours = 14,
+            minutes = 0,
+            timeZoneOffset = 0,
+            seconds = 0,
+            millis = 0,
+        )
+        assertEquals(1623333600000L, d.time)
+        assertEquals("Thu, 10 Jun 2021 14:00:00 GMT", d.calendar().rfc822())
+    }
+
+    @Test
+    fun mskTest() {
+        val d = Date.of(
+            year = 2021,
+            month = 6,
+            dayOfMonth = 10,
+            hours = 14,
+            minutes = 0,
+            timeZoneOffset = 180,
+            seconds = 0,
+            millis = 0,
+        )
+        assertEquals(1623322800000L, d.time)
+        assertEquals("Thu, 10 Jun 2021 11:00:00 GMT", d.calendar().rfc822())
     }
 }

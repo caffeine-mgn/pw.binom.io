@@ -11,7 +11,7 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
         val count = native.metaData.columnCount
         val out = ArrayList<String>(count)
         (0 until count).forEach {
-            native.metaData.getColumnName(it + 1)
+            out += native.metaData.getColumnName(it + 1)
         }
         out
     }
@@ -107,6 +107,9 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
         native.getObject(column) ?: return null
         return Date(native.getLong(column))
     }
+
+    override fun columnIndex(column: String): Int =
+        native.findColumn(column)
 
     override fun close() {
         native.close()

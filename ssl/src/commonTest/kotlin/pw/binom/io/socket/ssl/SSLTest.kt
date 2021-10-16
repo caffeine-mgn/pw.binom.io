@@ -64,7 +64,7 @@ class SSLTest {
         val nd = NetworkDispatcher()
         val addr = NetworkAddress.Immutable("127.0.0.1", 4445)
         val server = nd.bindTcp(addr)
-        val r1 = nd.async {
+        val r1 = nd.startCoroutine {
             val client = server.accept()!!
             val clientSsl = AsyncSSLChannel(
                 context2.serverSession(),
@@ -74,7 +74,7 @@ class SSLTest {
             clientSsl.flush()
         }
 
-        val r2 = nd.async {
+        val r2 = nd.startCoroutine {
             val client = nd.tcpConnect(addr)
             val clientSsl = AsyncSSLChannel(
                 context.clientSession(addr.host, addr.port),

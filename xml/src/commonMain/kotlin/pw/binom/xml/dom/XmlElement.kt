@@ -1,9 +1,8 @@
 package pw.binom.xml.dom
 
-import pw.binom.io.asAsync
-import pw.binom.xml.sax.AsyncXmlVisiter
-import pw.binom.xml.sax.AsyncXmlWriterVisitor
-import pw.binom.xml.sax.SyncXmlVisiter
+import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
+import pw.binom.xml.sax.AsyncXmlVisitor
+import pw.binom.xml.sax.SyncXmlVisitor
 import pw.binom.xml.sax.SyncXmlWriterVisitor
 
 class XmlElement(var tag: String, var nameSpace: String?) {
@@ -26,36 +25,46 @@ class XmlElement(var tag: String, var nameSpace: String?) {
             field?.privateChilds?.add(this)
         }
 
-    suspend fun accept(visiter: AsyncXmlVisiter) {
-        accept(HashMap(), visiter)
+    suspend fun accept(visitor: AsyncXmlVisitor) {
+        accept(HashMap(), visitor)
     }
 
-    fun accept(visiter: SyncXmlVisiter) {
-        accept(HashMap(), visiter)
+    fun accept(visitor: SyncXmlVisitor) {
+        accept(HashMap(), visitor)
+    }
+
+    override fun toString(): String {
+        val sb = StringBuilder()
+        sb.append("XmlElement(tag=$tag")
+        if (nameSpace != null) {
+            sb.append(", NameSpace=$nameSpace")
+        }
+        sb.append(")")
+        return sb.toString()
     }
 
     operator fun get(index: Int) = childs[index]
 
-    private fun accept(prefix: HashMap<String, String>, visiter: SyncXmlVisiter) {
-        visiter.start()
+    private fun accept(prefix: HashMap<String, String>, visitor: SyncXmlVisitor) {
+        visitor.start()
         attributes.forEach {
             val key = it.key.nameSpace?.let { ns ->
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
-                    visiter.attribute("xmlns:$p", ns)
+                    visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     prefix[ns] = p
                 }
                 "$p:${it.key.name}"
 
             } ?: it.key.name
 
-            visiter.attribute(key, it.value)
+            visitor.attribute(key, it.value)
         }
 
         if (nameSpace != null && parent?.tag?.isEmpty() == true) {
             val p = prefix[nameSpace!!]
-            visiter.attribute("xmlns:$p", nameSpace!!)
+            visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace!!)
         }
 
         privateChilds.forEach {
@@ -64,7 +73,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
                     if (tag.isNotEmpty()) {
-                        visiter.attribute("xmlns:$p", ns)
+                        visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     }
                     prefix[ns] = p!!
                 }
@@ -73,9 +82,9 @@ class XmlElement(var tag: String, var nameSpace: String?) {
 
         if (body != null) {
             if (cdata) {
-                visiter.cdata(body!!)
+                visitor.cdata(body!!)
             } else {
-                visiter.value(body!!)
+                visitor.value(body!!)
             }
         }
 
@@ -85,38 +94,38 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
-                    visiter.attribute("xmlns:$p", ns)
+                    visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     prefix[ns] = p!!
                 }
                 "$p:${it.tag}"
 
             } ?: it.tag
 
-            it.accept(HashMap(prefix), visiter.subNode(key))
+            it.accept(HashMap(prefix), visitor.subNode(key))
         }
-        visiter.end()
+        visitor.end()
     }
 
-    private suspend fun accept(prefix: HashMap<String, String>, visiter: AsyncXmlVisiter) {
-        visiter.start()
+    private suspend fun accept(prefix: HashMap<String, String>, visitor: AsyncXmlVisitor) {
+        visitor.start()
         attributes.forEach {
             val key = it.key.nameSpace?.let { ns ->
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
-                    visiter.attribute("xmlns:$p", ns)
+                    visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     prefix[ns] = p
                 }
                 "$p:${it.key.name}"
 
             } ?: it.key.name
 
-            visiter.attribute(key, it.value)
+            visitor.attribute(key, it.value)
         }
 
         if (nameSpace != null && parent?.tag?.isEmpty() == true) {
             val p = prefix[nameSpace!!]
-            visiter.attribute("xmlns:$p", nameSpace!!)
+            visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace!!)
         }
 
         privateChilds.forEach {
@@ -125,7 +134,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
                     if (tag.isNotEmpty()) {
-                        visiter.attribute("xmlns:$p", ns)
+                        visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     }
                     prefix[ns] = p!!
                 }
@@ -134,9 +143,9 @@ class XmlElement(var tag: String, var nameSpace: String?) {
 
         if (body != null) {
             if (cdata) {
-                visiter.cdata(body!!)
+                visitor.cdata(body!!)
             } else {
-                visiter.value(body!!)
+                visitor.value(body!!)
             }
         }
 
@@ -146,16 +155,16 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
-                    visiter.attribute("xmlns:$p", ns)
+                    visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
                     prefix[ns] = p!!
                 }
                 "$p:${it.tag}"
 
             } ?: it.tag
 
-            it.accept(HashMap(prefix), visiter.subNode(key))
+            it.accept(HashMap(prefix), visitor.subNode(key))
         }
-        visiter.end()
+        visitor.end()
     }
 
     fun asString(): String {

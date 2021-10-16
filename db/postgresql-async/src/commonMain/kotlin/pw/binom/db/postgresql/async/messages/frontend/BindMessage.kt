@@ -1,6 +1,9 @@
 package pw.binom.db.postgresql.async.messages.frontend
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
+import pw.binom.date.Calendar
 import pw.binom.date.Date
 import pw.binom.db.SQLException
 import pw.binom.db.postgresql.async.ColumnTypes
@@ -151,26 +154,31 @@ object TypeWriter {
             writer.writeInt(-1)
             return
         }
-        val txt = when (value) {
-            is String -> value
-            is ByteArray -> {
-                val sb = StringBuilder("\\x")
-                value.forEach {
-                    sb.append(it.toString(16))
+        fun toText(value:Any):String=
+            when (value) {
+                is String -> value
+                is ByteArray -> {
+                    val sb = StringBuilder("\\x")
+                    value.forEach {
+                        sb.append(it.toString(16))
+                    }
+                    sb.toString()
                 }
-                sb.toString()
+                is BigInteger, is BigDecimal, is Float, is Double, is Long, is Int, is UUID -> value.toString()
+                is Boolean -> if (value) "t" else "f"
+                is UUID -> value.toString()
+                is Calendar->{
+                    "${value.year}-${(value.month).asTwo()}-${value.dayOfMonth.asTwo()} " +
+                            "${value.hours.asTwo()}:${value.minutes.asTwo()}:${value.seconds.asTwo()}" +
+                            ".${value.millisecond.asThree()}000"
+                }
+                is Date -> {
+                    val calendar = value.calendar(0)
+                    toText(calendar)
+                }
+                else -> throw SQLException("Unsupported type ${value::class}")
             }
-            is Float, is Double, is Long, is Int, is UUID -> value.toString()
-            is Boolean -> if (value) "t" else "f"
-            is UUID -> value.toString()
-            is Date -> {
-                val calendar = value.calendar(0)
-                "${calendar.year}-${(calendar.month).asTwo()}-${calendar.dayOfMonth.asTwo()} " +
-                        "${calendar.hours.asTwo()}:${calendar.minutes.asTwo()}:${calendar.seconds.asTwo()}" +
-                        ".${calendar.millisecond.asThree()}000"
-            }
-            else -> throw SQLException("Unsupported type ${value::class}")
-        }
+        val txt = toText(value)
         writer.writeLengthString(txt)
     }
 }

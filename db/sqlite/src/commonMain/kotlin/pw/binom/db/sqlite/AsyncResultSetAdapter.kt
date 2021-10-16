@@ -1,20 +1,20 @@
 package pw.binom.db.sqlite
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import pw.binom.concurrency.Reference
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.execute
-import pw.binom.concurrency.joinAndGetOrThrow
+import pw.binom.concurrency.*
+import pw.binom.coroutine.start
 import pw.binom.date.Date
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.sync.SyncResultSet
 
 class AsyncResultSetAdapter(val ref: Reference<SyncResultSet>, val worker: Worker, override val columns: List<String>) :
     AsyncResultSet {
-    override suspend fun next(): Boolean =
-        execute(worker) {
+    override suspend fun next(): Boolean {
+        val ref = ref
+        return worker.start {
             ref.value.next()
         }
+    }
 
     override fun getString(index: Int): String? =
         worker.execute(ref) {
@@ -106,8 +106,14 @@ class AsyncResultSetAdapter(val ref: Reference<SyncResultSet>, val worker: Worke
             it.value.getDate(column)
         }.joinAndGetOrThrow()
 
+    override fun columnIndex(column: String): Int =
+        worker.execute(ref) {
+            it.value.columnIndex(column)
+        }.joinAndGetOrThrow()
+
     override suspend fun asyncClose() {
-        execute(worker) {
+        val ref = ref
+        worker.start {
             ref.value.close()
         }
         ref.close()

@@ -88,6 +88,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
+                api(project(":file"))
                 api(kotlin("test-annotations-common"))
             }
         }

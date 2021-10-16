@@ -20,7 +20,7 @@ class NatsRawConnection(
         override val connection: NatsRawConnection
             get() = this@NatsRawConnection
         override var subject: String = ""
-        override var sid: UUID = UUID.random()
+        override var sid: String = ""
         override var replyTo: String? = null
         override var data: ByteArray = ByteArray(0)
     }
@@ -104,7 +104,7 @@ class NatsRawConnection(
                         items[3].toInt()
                     }
                     msg.subject = items[1]
-                    msg.sid = UUID.fromString(items[2])
+                    msg.sid = items[2]
                     msg.replyTo = if (items.size == 5) {
                         items[3]
                     } else {
@@ -121,35 +121,20 @@ class NatsRawConnection(
         }
     }
 
-//    fun processing() {
-//        check(isConnected && !isConnecting)
-//        async2 {
-//            try {
-//                while (true) {
-//                    processMessage()
-//                }
-//            } catch (e: Throwable) {
-//                if (!disconnecting) {
-//                    onDisconnectWithError()
-//                }
-//            }
-//        }
-//    }
-
-    suspend fun subscribe(subscribeId: UUID, subject: String, group: String?) {
+    suspend fun subscribe(subscribeId: String, subject: String, group: String?) {
         check(isConnected && !isConnecting)
         val app = writer
         app.append("SUB ").append(subject)
         if (group != null) {
             app.append(" ").append(group)
         }
-        app.append(" ").append(subscribeId.toString()).append("\r\n")
+        app.append(" ").append(subscribeId).append("\r\n")
         app.flush()
     }
 
-    suspend fun unsubscribe(id: UUID, afterMessages: Int? = null) {
+    suspend fun unsubscribe(id: String, afterMessages: Int? = null) {
         require(afterMessages == null || afterMessages >= 0)
-        writer.append("UNSUB ").append(id.toString())
+        writer.append("UNSUB ").append(id)
         if (afterMessages != null) {
             writer.append(" ").append(afterMessages.toString())
         }

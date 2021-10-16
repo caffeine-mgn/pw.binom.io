@@ -18,6 +18,11 @@ open class AsyncDeflaterOutput(
     protected val buf
         get() = buffer
 
+    val totalIn: Long
+        get() = deflater.totalIn
+    val totalOut: Long
+        get() = deflater.totalOut
+
     protected val def
         get() = deflater
     private var closed = false

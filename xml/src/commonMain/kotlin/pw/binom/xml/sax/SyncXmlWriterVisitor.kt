@@ -1,6 +1,6 @@
 package pw.binom.xml.sax
 
-class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : SyncXmlVisiter {
+class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : SyncXmlVisitor {
 
     init {
         if ('<' in nodeName || '>' in nodeName)
@@ -62,7 +62,7 @@ class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : S
         body.syncEncode(appendable)
     }
 
-    override fun subNode(name: String): SyncXmlVisiter {
+    override fun subNode(name: String): SyncXmlVisitor {
         if (progress < START)
             throw IllegalStateException("Node not started")
         if (progress >= END)

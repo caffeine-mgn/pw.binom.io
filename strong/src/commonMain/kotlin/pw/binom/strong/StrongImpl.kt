@@ -4,7 +4,8 @@ import kotlin.reflect.KClass
 
 internal class StrongImpl : Strong {
 
-    private var beans = HashMap<String, Any>()
+    internal var beans = HashMap<String, BeanEntity>()
+    internal lateinit var destroyOrder:List<Strong.DestroyableBean>
 
     sealed class Dependency {
         class ClassDependency(val clazz: KClass<Any>, val name: String?, val require: Boolean) : Dependency()
@@ -18,10 +19,9 @@ internal class StrongImpl : Strong {
     fun defining() {
         internalDependencies.clear()
     }
-
     fun findBean(clazz: KClass<Any>, name: String?) =
         beans.asSequence().filter {
-            clazz.isInstance(it.value) && (name == null || it.key == name)
+            clazz.isInstance(it.value.bean) && (name == null || it.key == name)
         }
 
     override fun <T : Any> service(beanClass: KClass<T>, name: String?): ServiceProvider<T> {
@@ -45,12 +45,24 @@ internal class StrongImpl : Strong {
     }
 
     override suspend fun destroy() {
-        for (i in beanOrder.size - 1 downTo 0) {
-            val bean = beanOrder[i].second
-            if (bean is Strong.DestroyableBean) {
-                bean.destroy(this)
+        isDestroying = true
+        try {
+            destroyOrder.forEach {
+                it.destroy(this)
             }
+        } finally {
+            isDestroying = false
         }
+    }
+
+    override var isDestroying: Boolean = false
+        private set
+    override var isInterrupted: Boolean = false
+        private set
+
+    override fun interrupt() {
+        check(!isInterrupted) { "Strong already Interrupted" }
+        isInterrupted = true
     }
 
     override fun contains(beanName: String): Boolean {
@@ -59,27 +71,5 @@ internal class StrongImpl : Strong {
 
     override fun <T : Any> contains(clazz: KClass<T>): Boolean {
         TODO("Not yet implemented")
-    }
-
-    private lateinit var beanOrder: List<Pair<String, Any>>
-    suspend fun start(beans: List<Pair<String, Any>>) {
-        beanOrder = beans
-        beans.forEach {
-            this.beans[it.first] = it.second
-        }
-
-        beans.forEach {
-            val bean = it.second
-            if (bean is Strong.InitializingBean) {
-                bean.init(this)
-            }
-        }
-
-        beans.forEach {
-            val bean = it.second
-            if (bean is Strong.LinkingBean) {
-                bean.link(this)
-            }
-        }
     }
 }

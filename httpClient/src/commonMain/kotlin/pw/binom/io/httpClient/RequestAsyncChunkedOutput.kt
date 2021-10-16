@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 class RequestAsyncChunkedOutput constructor(
     val URI: URI,
-    val client: HttpClient,
+    val client: BaseHttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     val timeout: Duration?,

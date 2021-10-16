@@ -1,7 +1,8 @@
 package pw.binom.smtp
 
 import pw.binom.ByteBuffer
-import pw.binom.async
+import pw.binom.async2
+import pw.binom.concurrency.joinAndGetOrThrow
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -27,22 +28,19 @@ class ClientTest {
     @Ignore
     @Test
     fun test() {
-        val nd = NetworkDispatcher()
+        val networkDispatcher = NetworkDispatcher()
 
-        var done = false
-
-        async {
-            try {
-                val client = SMTPClient.tls(
-                    dispatcher = nd,
-                    address = NetworkAddress.Immutable("smtp.yandex.ru", 465),
-                    keyManager = EmptyKeyManager,
-                    trustManager = TrustManager.TRUST_ALL,
-                    fromEmail = "test@test.org",
-                    login = "test@test.org",
-                    password = "test_password"
-                )
-                client.multipart(
+        val feature = networkDispatcher.startCoroutine {
+            val client = SMTPClient.tls(
+                dispatcher = networkDispatcher,
+                address = NetworkAddress.Immutable("smtp.yandex.ru", 465),
+                keyManager = EmptyKeyManager,
+                trustManager = TrustManager.TRUST_ALL,
+                fromEmail = "test@test.org",
+                login = "test@test.org",
+                password = "test_password"
+            )
+            client.multipart(
                     from = "test@test.org",
                     fromAlias = "Test Binom Client",
                     to = "test2@test.org",
@@ -71,15 +69,11 @@ class ClientTest {
                 }
 
                 client.asyncClose()
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            } finally {
-                done = true
-            }
         }
 
-        while (!done) {
-            nd.select()
+        while (!feature.isDone) {
+            networkDispatcher.select()
         }
+        feature.joinAndGetOrThrow()
     }
 }

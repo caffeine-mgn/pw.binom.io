@@ -12,7 +12,14 @@ class ServiceInjector<T : Any> internal constructor(strong: StrongImpl, beanClas
     ) {
     override operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
         init()
-        return bean ?: throw NoSuchBeanException(beanClass, name)
+        if(bean==null){
+            println("All beans:")
+            strong.beans.forEach {
+                println("${it.key} -> ${it.value.bean::class.getClassName()}")
+            }
+            throw NoSuchBeanException(beanClass, name)
+        }
+        return bean!!
     }
 
 }

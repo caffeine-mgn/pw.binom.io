@@ -2,7 +2,6 @@ package pw.binom.network
 
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.asStableRef
-import pw.binom.SELECTOR_COUNTER
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import pw.binom.concurrency.asReference
@@ -16,10 +15,6 @@ abstract class AbstractSelector : Selector {
         var ptr = StableRef.create(this).asCPointer()
         private var _listensFlag by AtomicInt(0)
         private var _closed by AtomicBoolean(false)
-
-        init {
-            SELECTOR_COUNTER.increment()
-        }
 
         override val closed: Boolean
             get() = _closed
@@ -50,7 +45,6 @@ abstract class AbstractSelector : Selector {
             _closed = true
             runCatching { attachmentReference?.close() }
             runCatching { ptr.asStableRef<AbstractKey>().dispose() }
-            SELECTOR_COUNTER.decrement()
         }
     }
 

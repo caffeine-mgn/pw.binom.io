@@ -45,7 +45,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
         get() = closed || eof
 
     override val available: Int
-        get() = if (isEof) 0 else -1
+        get() = if (eof) 0 else -1
 
     private var chunkedSize: ULong? = null
     private var readed = 0uL
@@ -121,7 +121,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
 
     override suspend fun asyncClose() {
         checkClosed()
-        if (!isEof) {
+        if (!eof) {
             skipAll()
         }
         closed = true

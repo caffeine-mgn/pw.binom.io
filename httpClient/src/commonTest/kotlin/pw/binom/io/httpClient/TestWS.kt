@@ -77,9 +77,9 @@ class TestWS {
     fun serverTest() {
         var done = false
         val manager = NetworkDispatcher()
-        async {
+        manager.startCoroutine {
             try {
-                val client = HttpClient(manager)
+                val client = BaseHttpClient(manager)
                 val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURI())
                     .startWebSocket("http://127.0.0.1:8080")
 

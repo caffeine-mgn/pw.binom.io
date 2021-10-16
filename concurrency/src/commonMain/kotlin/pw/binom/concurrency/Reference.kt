@@ -1,6 +1,8 @@
 package pw.binom.concurrency
 
 import pw.binom.io.Closeable
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
 
 /**
  * Wrapper for [value]. Wrapped object can be pass from creator thread to other thread.
@@ -9,12 +11,13 @@ import pw.binom.io.Closeable
  *
  * Remember: you must call [close] for fix memory leaks. Or use [useReference]
  */
-expect class Reference<T : Any?>(value: T) : Closeable {
+expect class Reference<T : Any?>(value: T) : Closeable, ReadOnlyProperty<Any?, T> {
     /**
      * Thread creator
      */
     val owner: ThreadRef
     val value: T
+//    operator fun getValue(thisRef: T, property: KProperty<*>): T
 }
 
 fun <T : Any> T.asReference() = Reference(this)

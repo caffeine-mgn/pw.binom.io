@@ -37,6 +37,13 @@ interface ResultSet {
     fun isNull(column: String): Boolean
     fun getUUID(column: String) = getBlob(column)?.let { UUID.create(it) }
     fun getDate(column: String): Date?
+    fun columnIndex(column:String):Int{
+        val p = columns.indexOfFirst { it.lowercase() == column.lowercase() }
+        if (p == -1) {
+            throw IllegalStateException("Column \"$column\" not found")
+        }
+        return p
+    }
 
     class InvalidColumnTypeException : IOException()
 

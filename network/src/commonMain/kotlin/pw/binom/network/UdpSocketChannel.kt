@@ -7,4 +7,5 @@ expect class UdpSocketChannel() : Closeable {
     fun send(data: ByteBuffer, address: NetworkAddress): Int
     fun recv(data: ByteBuffer, address: NetworkAddress.Mutable?): Int
     fun bind(address: NetworkAddress)
+    val port:Int?
 }

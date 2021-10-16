@@ -4,9 +4,12 @@ import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
-import pw.binom.db.*
+import pw.binom.db.ResultSet
+import pw.binom.db.SQLException
+import pw.binom.db.TransactionMode
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
+import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
@@ -30,13 +33,13 @@ class PGConnection private constructor(
         suspend fun connect(
             address: NetworkAddress,
             applicationName: String? = "Binom Async Client",
-            manager: NetworkDispatcher,
+            networkDispatcher: NetworkDispatcher,
             userName: String,
             password: String,
             dataBase: String,
             charset: Charset = Charsets.UTF8,
         ): PGConnection {
-            val connection = manager.tcpConnect(address)
+            val connection = networkDispatcher.tcpConnect(address)
             val pgConnection = PGConnection(
                 connection = connection,
                 charset = charset,
@@ -82,6 +85,22 @@ class PGConnection private constructor(
     private var connected = true
     override val isConnected
         get() = connected
+    override val dbInfo: DatabaseInfo
+        get() = PostgreSQLDatabaseInfo
+
+    override suspend fun setTransactionMode(mode: TransactionMode) {
+        if (transactionStarted) {
+            query("SET TRANSACTION ${mode.pg}")
+        }
+        _transactionMode = mode
+    }
+
+    private var transactionStarted = false
+    private var _transactionMode: TransactionMode = TransactionMode.READ_COMMITTED
+
+    override val transactionMode: TransactionMode
+        get() = _transactionMode
+
     private val packageReader = connection.bufferedAsciiReader(closeParent = false)
     internal val reader = PackageReader(this, charset, packageReader)
     private var credentialMessage = CredentialMessage()
@@ -89,7 +108,7 @@ class PGConnection private constructor(
         get() = TYPE
 
 
-    suspend fun sendQuery(query: String): KindedMessage {
+    internal suspend fun sendQuery(query: String): KindedMessage {
         if (busy)
             throw IllegalStateException("Connection is busy")
         val msg = this.reader.queryMessage
@@ -97,22 +116,25 @@ class PGConnection private constructor(
         return sendRecive(msg)
     }
 
-    suspend fun query(query: String): QueryResponse {
+    internal suspend fun query(query: String): QueryResponse {
         if (busy)
             throw IllegalStateException("Connection is busy")
         val msg = this.reader.queryMessage
         msg.query = query
         sendOnly(msg)
+        var statusMsg: String? = null
         var rowsAffected = 0L
         LOOP@ while (true) {
-            when (val msg = readDesponse()) {
+            val msg = readDesponse()
+            when (msg) {
                 is ReadyForQueryMessage -> {
                     return QueryResponse.Status(
-                        status = "",
+                        status = statusMsg ?: "",
                         rowsAffected = rowsAffected
                     )
                 }
                 is CommandCompleteMessage -> {
+                    statusMsg = msg.statusMessage
                     rowsAffected += msg.rowsAffected
                     continue@LOOP
                 }
@@ -123,6 +145,7 @@ class PGConnection private constructor(
                     return msg2
                 }
                 is ErrorMessage -> {
+                    check(readDesponse() is ReadyForQueryMessage)
                     throw PostgresqlException("${msg.fields['M']}. Query: $query")
                 }
                 is NoticeMessage -> {
@@ -153,7 +176,7 @@ class PGConnection private constructor(
     }
 
 
-    suspend fun readDesponse(): KindedMessage {
+    internal suspend fun readDesponse(): KindedMessage {
         val msg = KindedMessage.read(reader)
         return msg
     }
@@ -231,6 +254,28 @@ class PGConnection private constructor(
     override fun isReadyForQuery(): Boolean =
         isConnected && !busy
 
+    internal val TransactionMode.pg
+        get() = when (this) {
+            TransactionMode.SERIALIZABLE -> "SERIALIZABLE"
+            TransactionMode.READ_COMMITTED -> "READ COMMITTED"
+            TransactionMode.REPEATABLE_READ -> "REPEATABLE READ"
+            TransactionMode.READ_UNCOMMITTED -> "READ UNCOMMITTED"
+        }
+
+    override suspend fun beginTransaction() {
+        if (transactionStarted) {
+            throw IllegalStateException("Transaction already started")
+        }
+        val q = query("begin TRANSACTION ISOLATION LEVEL ${transactionMode.pg}")
+        transactionStarted = true
+        if (q !is QueryResponse.Status) {
+            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+        }
+        if (q.status != "BEGIN") {
+            throw SQLException("Invalid response. Excepted Status \"BEGIN\", but got ${q.status}")
+        }
+    }
+
     internal var prepareStatements = HashSet<PostgresPreparedStatement>()
 
     fun prepareStatement(
@@ -248,12 +293,33 @@ class PGConnection private constructor(
         return pst
     }
 
+
     override suspend fun commit() {
-        query("commit")
+        if (!transactionStarted) {
+            throw IllegalStateException("Transaction not started")
+        }
+        val q = query("commit")
+        transactionStarted = false
+        if (q !is QueryResponse.Status) {
+            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+        }
+        if (q.status != "COMMIT") {
+            throw SQLException("Invalid response. Excepted Status \"COMMIT\", but got ${q.status}")
+        }
     }
 
     override suspend fun rollback() {
-        query("rollback")
+        if (!transactionStarted) {
+            throw IllegalStateException("Transaction not started")
+        }
+        val q = query("rollback")
+        transactionStarted = false
+        if (q !is QueryResponse.Status) {
+            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+        }
+        if (q.status != "ROLLBACK") {
+            throw SQLException("Invalid response. Excepted Status \"ROLLBACK\", but got ${q.status}")
+        }
     }
 
     override suspend fun asyncClose() {

@@ -1,5 +1,5 @@
-import java.util.TimeZone
-import java.util.Date
+import pw.binom.eachKotlinCompile
+import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -65,8 +65,14 @@ kotlin {
             framework()
         }
     }
-    js {
-        browser()
+    js("js", BOTH) {
+        browser {
+            testTask {
+                useKarma {
+                    useFirefoxHeadless()
+                }
+            }
+        }
         nodejs()
     }
 
@@ -121,10 +127,9 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
-                api(project(":concurrency"))
-                api(project(":file"))
                 api(project(":env"))
             }
+            kotlin.srcDir("build/gen")
         }
         val jvmTest by getting {
             dependsOn(commonTest)
@@ -135,42 +140,33 @@ kotlin {
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
+
+        val jsTest by getting {
+            dependencies {
+                api(kotlin("test-js"))
+            }
+        }
     }
 }
 
 tasks {
-    fun prepareTime() {
-        project.buildDir.resolve("tmp-date").resolve("currentTZ")
-            .also {
-                it.parentFile.mkdirs()
-                it.writeText(TimeZone.getDefault().rawOffset.let { it / 1000 / 60 }.toString())
-            }
-        project.buildDir.resolve("tmp-date").resolve("now")
-            .also {
-                it.parentFile.mkdirs()
-                it.writeText(Date().time.toString())
-            }
+    fun generateDate() {
+        val sourceDir = project.buildDir.resolve("gen/pw/binom/date")
+        sourceDir.mkdirs()
+        val versionSource = sourceDir.resolve("test_data.kt")
+        versionSource.writeText(
+            """package pw.binom.date
+            
+val test_data_currentTZ get() = ${TimeZone.getDefault().rawOffset.let { it / 1000 / 60 }}
+val test_data_now get() = ${Date().time}
+"""
+        )
     }
 
-    val mingwX64Test by getting {
-        doFirst {
-            prepareTime()
-        }
-    }
-    val linuxX64Test by getting {
-        doFirst {
-            prepareTime()
-        }
-    }
-    val jvmTest by getting {
-        doFirst {
-            prepareTime()
-        }
-    }
 
-    val macosX64Test by getting {
-        doFirst {
-            prepareTime()
+    eachKotlinCompile {
+        it.doFirst {
+            generateDate()
         }
     }
 }

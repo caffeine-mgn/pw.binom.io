@@ -16,7 +16,6 @@ const val BINOM_REPO_PASSWORD = "binom.repo.password"
 class BinomPublishPlugin : Plugin<Project> {
     private val logger = Logger.getLogger(this::class.java.name)
     override fun apply(target: Project) {
-        val kotlin = target.extensions.findByName("kotlin")!! as KotlinMultiplatformExtension
         if (!target.hasProperty(BINOM_REPO_URL)) {
             logger.warning("Property [$BINOM_REPO_URL] not found publication plugin will not apply")
             return
@@ -33,15 +32,6 @@ class BinomPublishPlugin : Plugin<Project> {
         target.apply {
             it.plugin("maven-publish")
         }
-//        val commonMainSourceSet = kotlin.sourceSets.findByName("commonMain")
-//        println("Source Sets: ${kotlin.sourceSets.asMap}")ByteBuffer
-        val sourceData = target.tasks.findByName("metadataSourcesJar") as Jar
-        val sourceJarTask = target.tasks.create("commonSourcesJar", Jar::class.java) {
-            it.dependsOn(sourceData)
-            val dir = target.zipTree(sourceData.outputs.files.files.first())
-            it.from(dir)
-            it.archiveClassifier.set("sources")
-        }
 
         val publishing = target.extensions.findByName("publishing") as PublishingExtension
         publishing.repositories {
@@ -52,11 +42,6 @@ class BinomPublishPlugin : Plugin<Project> {
                     it.username = target.property(BINOM_REPO_USER) as String
                     it.password = target.property(BINOM_REPO_PASSWORD) as String
                 }
-            }
-        }
-        if (sourceJarTask != null) {
-            publishing.publications.create("commonSources", MavenPublication::class.java) {
-                it.artifact(sourceJarTask)
             }
         }
         publishing.publications.withType(MavenPublication::class.java) {
@@ -81,5 +66,4 @@ class BinomPublishPlugin : Plugin<Project> {
             }
         }
     }
-
 }

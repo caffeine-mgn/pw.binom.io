@@ -13,7 +13,7 @@ interface Headers : Map<String, List<String>> {
         const val CONTENT_LENGTH = "Content-Length"
         const val TRANSFER_ENCODING = "Transfer-Encoding"
         const val WWW_AUTHENTICATE = "WWW-Authenticate"
-        const val CHUNKED = "chunked"
+        const val CONTENT_DISPOSITION = "Content-Disposition"
         const val RANGE = "Range"
         const val ACCEPT_CHARSET = "Accept-Charset"
         const val ORIGIN = "Origin"
@@ -40,31 +40,34 @@ interface Headers : Map<String, List<String>> {
 
     val contentLength: ULong?
         get() {
-            val txt = getSingle(CONTENT_LENGTH) ?: return null
+            val txt = getLast(CONTENT_LENGTH) ?: return null
             return txt.toULongOrNull()
                 ?: throw IllegalStateException("Invalid header \"${CONTENT_LENGTH}:${txt}\"")
         }
 
-    val transferEncoding
-        get() = getSingle(TRANSFER_ENCODING)
+    val transferEncoding: String?
+        get() = getList(TRANSFER_ENCODING)
+
+    fun getTransferEncodingList() = transferEncoding?.split(',')?.map { it.trim().lowercase() } ?: emptyList()
+    fun getContentEncodingList() = contentEncoding?.split(',')?.map { it.trim().lowercase() } ?: emptyList()
 
     val bodyExist: Boolean
-        get() = transferEncoding.equals(CHUNKED, ignoreCase = true) || contentLength ?: 0uL > 0uL
+        get() = transferEncoding.equals(Encoding.CHUNKED, ignoreCase = true) || contentLength ?: 0uL > 0uL
 
     val contentType
-        get() = getSingle(CONTENT_TYPE)
+        get() = getLast(CONTENT_TYPE)
 
     val acceptEncoding
-        get() = getSingle(ACCEPT_ENCODING)?.split(',')?.map { it.trim() }
+        get() = getList(ACCEPT_ENCODING)?.split(',')?.map { it.trim() } ?: emptyList()
 
     /**
      * Returns method of pack data of body
      */
     val contentEncoding
-        get() = getSingle(CONTENT_ENCODING)
+        get() = getList(CONTENT_ENCODING)
 
     val keepAlive
-        get() = getSingle(CONNECTION).equals(KEEP_ALIVE, ignoreCase = true)
+        get() = getList(CONNECTION).equals(KEEP_ALIVE, ignoreCase = true)
 
     val mimeType: String?
         get() {
@@ -99,6 +102,32 @@ interface Headers : Map<String, List<String>> {
                 null
             }
         }
+
+    fun getList(key: String): String? {
+        val len = this[key] ?: return null
+        if (len.isEmpty()) {
+            return null
+        }
+        if (len.size == 1) {
+            return len[0]
+        }
+        val result = StringBuilder()
+        len.forEach {
+            if (it.isEmpty()) {
+                return@forEach
+            }
+            if (result.isNotEmpty()) {
+                result.append(",")
+            }
+            result.append(it)
+        }
+        return result.toString()
+    }
+
+    fun getLast(key: String): String? {
+        val len = this[key] ?: return null
+        return len[len.lastIndex]
+    }
 
     fun getSingle(key: String): String? {
         val len = this[key] ?: return null
@@ -141,3 +170,13 @@ fun headersOf(vararg headers: Pair<String, String>): Headers {
 }
 
 fun emptyHeaders() = EmptyHeaders
+
+fun Headers.getCookies() =
+    this[Headers.COOKIE]
+        ?.asSequence()
+        ?.flatMap { it.splitToSequence("; ") }
+        ?.map {
+            val items = it.split("=", limit = 2)
+            items[0] to items[1]
+        }
+        ?.toMap() ?: emptyMap()

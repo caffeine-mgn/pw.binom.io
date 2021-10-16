@@ -1,12 +1,41 @@
 package pw.binom.io.httpServer
 
-import pw.binom.date.Date
-import pw.binom.io.*
-import pw.binom.io.file.File
-import pw.binom.neverFreeze
-import pw.binom.ssl.*
+import pw.binom.io.use
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkDispatcher
 import kotlin.test.Ignore
 import kotlin.test.Test
+
+class tt {
+    @Ignore
+    @Test
+    fun runTest() {
+        val manager = NetworkDispatcher()
+        val server = HttpServer(
+            manager = manager,
+            handler = Handler {
+                println("Headers: ${it.headers}")
+                it.response().use {
+                    println("Request income")
+                    val myText = "0000000000000000000000".encodeToByteArray()
+                    it.status = 200
+//                    it.headers.contentEncoding = "gzip"
+                    it.headers.contentType = "text/html;charset=utf-8"
+//                    it.headers.transferEncoding = "chunked"
+//                        it.headers.contentLength = myText.size.toULong()
+                    it.sendBinary(myText)
+                    println("Request done!")
+                }
+            }
+        )
+        server.bindHttp(NetworkAddress.Immutable("0.0.0.0", 7003))
+
+        while (true) {
+            manager.select(1000)
+        }
+    }
+}
+
 /*
 
 @Ignore

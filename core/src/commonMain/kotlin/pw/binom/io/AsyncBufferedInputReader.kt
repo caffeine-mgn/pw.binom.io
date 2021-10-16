@@ -64,33 +64,41 @@ class AsyncBufferedInputReader private constructor(
     )
 
     private val decoder = charset.newDecoder()
-    private val output = CharBuffer.alloc(charBufferSize).empty()
+    private val charBuffer = CharBuffer.alloc(charBufferSize).empty()
     private var eof = false
 
-//    private val buffer = pool.borrow().empty()
+    init {
+        buffer.empty()
+    }
 
-    private suspend fun full() {
+    private suspend fun full(): Boolean {
         if (eof) {
-            return
+            return false
         }
-        if (buffer.remaining == 0) {
+        if (buffer.remaining > 0) {
+            buffer.compact()
+        } else {
             buffer.clear()
-            val r = input.read(buffer)
-            if (r == 0) {
-                eof = true
-            }
-            buffer.flip()
         }
+        val r = input.read(buffer)
+        if (r == 0) {
+            eof = true
+        }
+        buffer.flip()
+        return !eof
     }
 
     private suspend fun prepareBuffer() {
-        if (output.remaining == 0) {
+        if (charBuffer.remaining == 0) {
             full()
-            output.clear()
-            if (decoder.decode(buffer, output) == CharsetTransformResult.MALFORMED) {
+            if (buffer.remaining == 0) {
+                return
+            }
+            charBuffer.clear()
+            if (decoder.decode(buffer, charBuffer) == CharsetTransformResult.MALFORMED) {
                 throw IOException("Input string is malformed")
             }
-            output.flip()
+            charBuffer.flip()
         }
     }
 
@@ -101,8 +109,8 @@ class AsyncBufferedInputReader private constructor(
         var counter = 0
         while (counter < length) {
             prepareBuffer()
-            if (output.remaining > 0) {
-                counter += output.read(
+            if (charBuffer.remaining > 0) {
+                counter += charBuffer.read(
                     array = dest,
                     offset = offset,
                     length = length
@@ -119,19 +127,21 @@ class AsyncBufferedInputReader private constructor(
         var exist = false
         LOOP@ while (true) {
             prepareBuffer()
-            if (output.remaining <= 0) {
+            if (charBuffer.remaining <= 0) {
                 break
             }
-            for (i in output.position until output.limit) {
-                if (output[i] == char) {
-                    out.append(output.subString(output.position, i))
-                    output.position = i + 1
+            for (i in charBuffer.position until charBuffer.limit) {
+                if (charBuffer[i] == char) {
+                    val str = charBuffer.subString(charBuffer.position, i)
+                    out.append(str)
+                    charBuffer.position = i + 1
                     exist = true
                     break@LOOP
                 }
             }
-            out.append(output.subString(output.position, output.limit))
-            output.position = output.limit
+            val str = charBuffer.subString(charBuffer.position, charBuffer.limit)
+            out.append(str)
+            charBuffer.position = charBuffer.limit
             exist = true
         }
         if (!exist) {
@@ -144,10 +154,10 @@ class AsyncBufferedInputReader private constructor(
 
     override suspend fun readChar(): Char? {
         prepareBuffer()
-        if (output.remaining == 0) {
+        if (charBuffer.remaining == 0) {
             return null
         }
-        return output.get()
+        return charBuffer.get()
     }
 
     override suspend fun asyncClose() {
@@ -156,7 +166,7 @@ class AsyncBufferedInputReader private constructor(
                 input.asyncClose()
             }
         } finally {
-            output.close()
+            charBuffer.close()
             if (closeBuffer) {
                 buffer.close()
             } else {

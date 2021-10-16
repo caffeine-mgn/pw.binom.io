@@ -1,5 +1,6 @@
 package pw.binom.compression.zlib
 
+import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.Input
 import pw.binom.io.CRC32
@@ -48,7 +49,7 @@ class GZIPInput(
         if (headerRead)
             return 0
         headerRead = true
-        crc.reset()
+        crc.init()
         val stream = CheckedInput(stream, crc)
         tt.clear()
         stream.read(tt)
@@ -93,7 +94,7 @@ class GZIPInput(
             }
             n += 2
         }
-        crc.reset()
+        crc.init()
         return n
     }
 
@@ -128,3 +129,10 @@ class GZIPInput(
         return b
     }
 }
+
+fun Input.gzip(bufferSize: Int = 1024, closeStream: Boolean = true) =
+    GZIPInput(
+        stream = this,
+        bufferSize = bufferSize,
+        closeStream = closeStream,
+    )

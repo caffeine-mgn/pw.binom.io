@@ -14,20 +14,29 @@ interface Definer {
      * @param name name of [bean] for define. See description of method for get default value
      * @param ifNotExist if false on duplicate will throw [BeanAlreadyDefinedException]. If true will ignore redefine
      */
-    suspend fun define(bean: Any, name: String? = null, ifNotExist: Boolean = false)
-    fun <T : Any> findDefine(clazz: KClass<T>, name: String? = null): T
+//    suspend fun define(bean: Any, name: String? = null, ifNotExist: Boolean = false)
+//    fun <T : Any> findDefine(clazz: KClass<T>, name: String? = null): T
     fun <T : Any> bean(
         clazz: KClass<T>,
+        primary: Boolean = false,
         name: String? = null,
         ifNotExist: Boolean = false,
         bean: (Strong) -> T
     )
 }
 
-fun <T : Any> KClass<T>.genDefaultName() = "${this.toString().removePrefix("class ")}_${this.hashCode()}"
+fun <T : Any> KClass<T>.getClassName(): String {
+    return this.toString()
+        .removePrefix("class ")
+        .removeSuffix(" (Kotlin reflection is not available)")
+}
+
+fun <T : Any> KClass<T>.genDefaultName(): String =
+    "${this.getClassName()}_${this.hashCode().toString(16)}"
 
 inline fun <reified T : Any> Definer.bean(
     name: String? = null,
+    primary: Boolean = false,
     ifNotExist: Boolean = false,
     noinline bean: (Strong) -> T
 ) {
@@ -36,12 +45,14 @@ inline fun <reified T : Any> Definer.bean(
         name = name,
         ifNotExist = ifNotExist,
         bean = bean,
+        primary = primary,
     )
 }
 
 inline fun <reified T : Closeable> Definer.beanClosable(
     name: String? = null,
     ifNotExist: Boolean = false,
+    primary: Boolean = false,
     noinline bean: (Strong) -> T
 ) {
     bean(
@@ -49,6 +60,7 @@ inline fun <reified T : Closeable> Definer.beanClosable(
         name = name,
         ifNotExist = ifNotExist,
         bean = bean,
+        primary = primary,
     )
     bean(name = "${T::class.genDefaultName()}_closable") {
         object : Strong.DestroyableBean {
@@ -59,6 +71,10 @@ inline fun <reified T : Closeable> Definer.beanClosable(
         }
     }
 }
+/*
+inline fun <reified T : Any> Definer.findDefine(name: String? = null) =
+    findDefine(T::class, name)
+*/
 
 @JvmName("beanAsyncCloseable")
 inline fun <reified T : AsyncCloseable> Definer.beanAsyncCloseable(
@@ -66,21 +82,19 @@ inline fun <reified T : AsyncCloseable> Definer.beanAsyncCloseable(
     ifNotExist: Boolean = false,
     noinline bean: (Strong) -> T
 ) {
+    val defName = T::class.genDefaultName()
     bean(
         clazz = T::class,
-        name = name,
+        name = defName,
         ifNotExist = ifNotExist,
         bean = bean,
     )
     bean(name = "${T::class.genDefaultName()}_closable") {
         object : Strong.DestroyableBean {
             override suspend fun destroy(strong: Strong) {
-                val bean = strong.injectOrNull<T>(name = name).service as AsyncCloseable?
+                val bean = strong.injectOrNull<T>(name = defName).service as AsyncCloseable?
                 bean?.asyncClose()
             }
         }
     }
 }
-
-inline fun <reified T : Any> Definer.findDefine(name: String? = null) =
-    findDefine(T::class, name)

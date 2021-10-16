@@ -1,12 +1,14 @@
 package pw.binom.io.file
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.Environment
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.io.bufferedReader
 import pw.binom.io.bufferedWriter
 import pw.binom.io.readText
 import pw.binom.io.use
+import pw.binom.workDirectory
 
 expect class File(path: String) {
     constructor(parent: File, name: String)
@@ -28,6 +30,7 @@ expect class File(path: String) {
 
     companion object {
         val SEPARATOR: Char
+        val temporalDirectory:File?
     }
 
     override fun equals(other: Any?): Boolean
@@ -67,16 +70,37 @@ val File.nameWithoutExtension: String
         }
     }
 
-val File.extension: String
+val File.extension: String?
     get() {
         val name = name
         return name.lastIndexOf('.').let {
             if (it == -1)
-                return ""
+                return null
             else
                 name.substring(it + 1)
         }
     }
+
+fun File.takeIfExist(): File? {
+    if (!isExist) {
+        return null
+    }
+    return this
+}
+
+fun File.takeIfDirection(): File? {
+    if (!isDirectory) {
+        return null
+    }
+    return this
+}
+
+fun File.takeIfFile(): File? {
+    if (!isFile) {
+        return null
+    }
+    return this
+}
 
 internal fun replacePath(path: String): String {
     val invalidSeparator = when (File.SEPARATOR) {
@@ -87,26 +111,28 @@ internal fun replacePath(path: String): String {
     return path.replace(invalidSeparator, File.SEPARATOR)
 }
 
-fun File.mkdirs(): Boolean {
+fun File.mkdirs(): File? {
     if (isFile)
-        return false
+        return null
     if (isDirectory)
-        return true
-    if (parent?.mkdirs() == false)
-        return false
-    return mkdir()
+        return this
+    if (parent?.mkdirs() == null)
+        return null
+    if (!mkdir()) {
+        return null
+    }
+    return this
 }
 
 fun File.deleteRecursive(): Boolean {
     if (isFile)
         return delete()
     if (isDirectory) {
-        iterator().use {
-            it.forEach {
-                if (!it.deleteRecursive())
-                    return false
-            }
+        iterator().forEach {
+            if (!it.deleteRecursive())
+                return false
         }
+
     }
     return delete()
 }
@@ -134,7 +160,7 @@ fun File.relative(path: String): File {
 }
 
 fun File.append(text: String, charset: Charset = Charsets.UTF8) {
-    write(true).bufferedWriter(charset = charset).use {
+    openWrite(true).bufferedWriter(charset = charset).use {
         it.append(text)
     }
 }
@@ -147,7 +173,7 @@ fun File.rewrite(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charBufferSize: Int = bufferSize / 2,
 ) {
-    write(false).bufferedWriter(charset = charset, bufferSize = bufferSize, charBufferSize = charBufferSize).use {
+    openWrite(false).bufferedWriter(charset = charset, bufferSize = bufferSize, charBufferSize = charBufferSize).use {
         it.append(text)
     }
 }
@@ -160,9 +186,12 @@ fun File.readText(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charBufferSize: Int = bufferSize,
 ) =
-    read().bufferedReader(
+    openRead().bufferedReader(
         charset = charset,
         bufferSize = bufferSize,
         charBufferSize = charBufferSize
     )
         .use { it.readText() }
+
+val Environment.workDirectoryFile
+    get() = File(Environment.workDirectory)

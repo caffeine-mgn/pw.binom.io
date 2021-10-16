@@ -23,9 +23,6 @@ class Base64DecodeInput(val reader: Reader) : Input {
         return buffer[cursor++]
     }
 
-    //    override fun read(data: ByteArray, offset: Int, length: Int): Int {
-//
-//    }
     override fun read(dest: ByteBuffer): Int {
         val length = dest.remaining
 
@@ -65,7 +62,7 @@ class Base64DecodeInput(val reader: Reader) : Input {
     }
 
     override fun close() {
-
+        //Do nothing
     }
 
 }

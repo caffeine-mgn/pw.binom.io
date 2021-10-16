@@ -140,7 +140,7 @@ class SQLiteResultSet(
     override fun getDouble(column: String): Double? =
         getDouble(columnIndex(column))
 
-    private fun columnIndex(name: String) =
+    override fun columnIndex(name: String) =
         columnsMap[name] ?: throw SQLException("Column \"$name\" not found")
 
     private inline val stmt

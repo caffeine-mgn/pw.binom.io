@@ -3,10 +3,9 @@ package pw.binom.io.file
 import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.GetDiskFreeSpaceEx
-import platform.windows.PULARGE_INTEGER
-import platform.windows._ULARGE_INTEGER
+import pw.binom.Environment
+import pw.binom.getEnv
 import kotlin.native.concurrent.freeze
-import pw.binom.io.use
 
 actual class File actual constructor(path: String) {
     actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR${name.removePrefix("/").removePrefix("\\")}")
@@ -34,6 +33,14 @@ actual class File actual constructor(path: String) {
     actual companion object {
         actual val SEPARATOR: Char
             get() = '\\'
+        actual val temporalDirectory: File?
+            get() {
+                val tmpDir = Environment.getEnv("TEMP") ?: Environment.getEnv("TMP")
+                if (tmpDir != null) {
+                    return File(tmpDir).takeIfDirection()
+                }
+                return null
+            }
     }
 
     actual fun delete(): Boolean {
@@ -79,10 +86,8 @@ actual class File actual constructor(path: String) {
 
     actual fun list(): List<File> {
         val out = ArrayList<File>()
-        iterator().use {
-            it.forEach { file ->
-                out += file
-            }
+        iterator().forEach { file ->
+            out += file
         }
         return out
     }

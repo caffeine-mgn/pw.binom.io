@@ -19,7 +19,7 @@ class TestURI {
     fun encodeTest() {
         "http://example.com/123%20456?gender=m%20w".toURI().also {
             assertEquals("/123 456", it.path.raw)
-            assertEquals("m w", it.query!!.findAll("gender").single())
+            assertEquals("m w", it.query!!.find("gender"))
         }
     }
 

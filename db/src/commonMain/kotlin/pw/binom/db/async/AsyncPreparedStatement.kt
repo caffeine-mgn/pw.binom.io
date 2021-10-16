@@ -1,5 +1,7 @@
 package pw.binom.db.async
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Calendar
 import pw.binom.date.Date
@@ -8,6 +10,9 @@ import pw.binom.io.AsyncCloseable
 
 interface AsyncPreparedStatement : AsyncCloseable {
     val connection: AsyncConnection
+    suspend fun set(index: Int, value: BigInteger)
+    suspend fun set(index: Int, value: BigDecimal)
+    suspend fun set(index: Int, value: Double)
     suspend fun set(index: Int, value: Float)
     suspend fun set(index: Int, value: Int)
     suspend fun set(index: Int, value: Long)
@@ -19,6 +24,9 @@ interface AsyncPreparedStatement : AsyncCloseable {
     suspend fun setValue(index: Int, value: Any?) {
         when (value) {
             null -> setNull(index)
+            is BigInteger -> set(index, value)
+            is BigDecimal -> set(index, value)
+            is Double -> set(index, value)
             is Float -> set(index, value)
             is Int -> set(index, value)
             is Long -> set(index, value)

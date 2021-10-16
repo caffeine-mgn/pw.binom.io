@@ -2,8 +2,6 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.memcpy
-import platform.posix.wchar_t
-import platform.posix.wchar_tVar
 import pw.binom.io.Closeable
 
 actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Closeable, Buffer {
@@ -11,7 +9,11 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         actual fun alloc(size: Int): CharBuffer = CharBuffer(ByteBuffer.alloc(size * Char.SIZE_BYTES))
         actual fun wrap(chars: CharArray): CharBuffer {
             val buf = ByteBuffer.alloc(chars.size * Char.SIZE_BYTES)
-            memcpy(buf.refTo(0), chars.refTo(0), (chars.size * Char.SIZE_BYTES).convert())
+            chars.usePinned { pinnedChars ->
+                buf.ref { buf, _ ->
+                    memcpy(buf, pinnedChars.addressOf(0), (pinnedChars.get().size * Char.SIZE_BYTES).convert())
+                }
+            }
             return CharBuffer(buf)
         }
     }
@@ -22,19 +24,19 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return value / 2
     }
 
-    override val capacity: Int
+    actual override val capacity: Int
         get() = div2(bytes.capacity)
 
-    override val remaining: Int
+    actual override val remaining: Int
         get() = div2(bytes.remaining)
 
-    override var position: Int
+    actual override var position: Int
         get() = div2(bytes.position)
         set(value) {
             bytes.position = value * 2
         }
 
-    override var limit: Int
+    actual override var limit: Int
         get() = div2(bytes.limit)
         set(value) {
             bytes.limit = value * 2
@@ -45,7 +47,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     actual override operator fun get(index: Int): Char {
         val b1 = bytes[index * 2]
         val b2 = bytes[index * 2 + 1]
-        return Short.fromBytes(b2, b1).toChar()
+        return Short.fromBytes(b2, b1).toInt().toChar()
     }
 
     actual override fun subSequence(startIndex: Int, endIndex: Int): CharBuffer {
@@ -57,19 +59,11 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         bytes.close()
     }
 
-    override fun refTo(position: Int) =
-        bytes.refTo(position * Char.SIZE_BYTES)
-
-    actual override fun equals(other: Any?): Boolean =
-        when (other) {
-            null -> false
-            is String -> other == toString()
-            is CharBuffer -> other.bytes == bytes
-            else -> false
-        }
+    override fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T =
+        bytes.refTo(position * Char.SIZE_BYTES, func)
 
     actual operator fun set(index: Int, value: Char) {
-        val s = value.toShort()
+        val s = value.code.toShort()
         bytes[index * 2] = s[1]
         bytes[index * 2 + 1] = s[0]
     }
@@ -81,17 +75,17 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
 
         val b1 = bytes[position * 2]
         val b2 = bytes[position * 2 + 1]
-        return Short.fromBytes(b2, b1).toChar()
+        return Short.fromBytes(b2, b1).toInt().toChar()
     }
 
     actual fun get(): Char {
         val b1 = bytes.get()
         val b2 = bytes.get()
-        return Short.fromBytes(b2, b1).toChar()
+        return Short.fromBytes(b2, b1).toInt().toChar()
     }
 
     actual fun put(value: Char) {
-        val s = value.toShort()
+        val s = value.code.toShort()
         bytes.put(s[1])
         bytes.put(s[0])
     }
@@ -102,21 +96,18 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return this
     }
 
-    override fun clear() {
+    actual override fun clear() {
         position = 0
         limit = capacity
     }
 
-    override val elementSizeInBytes: Int
+    actual override val elementSizeInBytes: Int
         get() = Char.SIZE_BYTES
 
     actual override fun toString(): String {
         when (remaining) {
             0 -> return ""
             1 -> return get().toString()
-        }
-        val bb = memScoped {
-            refTo(0).getPointer(this).toKString()
         }
         val sb = StringBuilder()
         forEach {
@@ -125,20 +116,24 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return sb.toString()
     }
 
-    override fun flip() {
+    actual override fun flip() {
         bytes.flip()
     }
 
-    override fun compact() {
+    actual override fun compact() {
         bytes.compact()
     }
 
-    actual fun read(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining, length)
-        memcpy(array.refTo(offset), bytes.refTo(position * 2), (len * 2).convert())
-        position += len
-        return len
-    }
+    actual fun read(array: CharArray, offset: Int, length: Int): Int =
+        array.usePinned { pinnedArray ->
+            bytes.refTo(position * 2) { bytes ->
+                val len = minOf(remaining, length)
+                memcpy(pinnedArray.addressOf(offset), bytes, (len * 2).convert())
+                position += len
+                len
+            }
+        }
+
 
     actual fun realloc(newSize: Int): CharBuffer =
         CharBuffer(bytes.realloc(newSize * Char.SIZE_BYTES))
@@ -152,15 +147,21 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
             return ""
         }
         val array = CharArray(len)
-        memcpy(array.refTo(0), bytes.refTo(startIndex * Char.SIZE_BYTES), (len * Char.SIZE_BYTES).convert())
+        array.usePinned { pinnedArray ->
+            bytes.refTo(startIndex * Char.SIZE_BYTES) { bytes ->
+                memcpy(pinnedArray.addressOf(0), bytes, (len * Char.SIZE_BYTES).convert())
+            }
+        }
         return array.concatToString()
     }
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, minOf(array.size - offset, length))
-        memScoped {
-            memcpy(bytes.refTo(position * Char.SIZE_BYTES), array.refTo(offset), (len * Char.SIZE_BYTES).convert())
-            position += len
+        array.usePinned { pinnedArray ->
+            bytes.refTo(position * Char.SIZE_BYTES) { bytes ->
+                memcpy(bytes, pinnedArray.addressOf(offset), (len * Char.SIZE_BYTES).convert())
+                position += len
+            }
         }
         return len
     }

@@ -12,10 +12,10 @@ interface MutableHeaders : Headers {
     fun remove(key: String, value: String): Boolean
     override operator fun get(key: String): List<String>?
     fun clear()
-    override var acceptEncoding: List<String>?
+    override var acceptEncoding: List<String>
         get() = super.acceptEncoding
         set(value) {
-            this[Headers.ACCEPT_ENCODING] = value?.joinToString(", ")
+            this[Headers.ACCEPT_ENCODING] = value.joinToString(", ")
         }
     override var contentEncoding: String?
         get() = super.contentEncoding

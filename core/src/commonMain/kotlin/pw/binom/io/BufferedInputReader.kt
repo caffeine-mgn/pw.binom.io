@@ -71,8 +71,6 @@ class BufferedInputReader(
     private val decoder = charset.newDecoder()
     private val output = CharBuffer.alloc(charBufferSize).empty()
 
-//    private val buffer = pool.borrow().empty()
-
     private fun checkAvailable() {
         buffer.compact()
         input.read(buffer)

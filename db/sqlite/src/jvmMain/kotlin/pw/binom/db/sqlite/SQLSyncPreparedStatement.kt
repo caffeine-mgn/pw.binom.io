@@ -1,5 +1,7 @@
 package pw.binom.db.sqlite
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.date.Date
 import pw.binom.db.sync.SyncPreparedStatement
 import java.sql.Timestamp
@@ -7,6 +9,18 @@ import java.sql.PreparedStatement as JPreparedStatement
 
 class SQLSyncPreparedStatement(override val connection: SQLiteConnector, internal val native: JPreparedStatement) :
     SyncPreparedStatement {
+    override fun set(index: Int, value: BigInteger) {
+        native.setString(index + 1, value.toString())
+    }
+
+    override fun set(index: Int, value: BigDecimal) {
+        native.setBigDecimal(index + 1, java.math.BigDecimal(value.toString()))
+    }
+
+    override fun set(index: Int, value: Double) {
+        native.setDouble(index + 1, value)
+    }
+
     override fun set(index: Int, value: Float) {
         native.setFloat(index + 1, value)
     }

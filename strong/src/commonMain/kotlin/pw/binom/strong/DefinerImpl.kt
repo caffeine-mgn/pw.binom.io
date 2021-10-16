@@ -4,7 +4,7 @@ import pw.binom.strong.exceptions.BeanAlreadyDefinedException
 import pw.binom.strong.exceptions.BeanCreateException
 import pw.binom.strong.exceptions.NoSuchBeanException
 import kotlin.reflect.KClass
-
+/*
 internal class DefinerImpl : Definer {
 
     private val internalDefinitions = HashMap<String, Any>()
@@ -135,3 +135,4 @@ internal class DefinerImpl : Definer {
 internal class BeanEntity(val obj: Any, val name: String, val deps: List<StrongImpl.Dependency>) {
     val depsEntity = ArrayList<BeanEntity>()
 }
+ */

@@ -7,14 +7,12 @@ import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
 @OptIn(ExperimentalTime::class)
 fun main(args: Array<String>) {
     val nioManager = NetworkDispatcher()
     val server = nioManager.bindTcp(NetworkAddress.Immutable(port = 7328))
     val pool = ByteBufferPool(10)
-    var time = 0.seconds
     var count = 0L
     async {
         val c = Charsets.UTF8

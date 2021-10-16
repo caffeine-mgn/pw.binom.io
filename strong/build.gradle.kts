@@ -48,30 +48,44 @@ kotlin {
             framework()
         }
     }
+    js("js", BOTH) {
+        browser {
+            testTask {
+                useKarma {
+                    useFirefoxHeadless()
+                }
+            }
+        }
+        nodejs()
+    }
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(project(":core"))
+                api(project(":logger"))
             }
         }
 
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
+        val linuxArm64Main by getting {
+            dependsOn(linuxX64Main)
+        }
         val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
         }
 
         val mingwX64Main by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
         }
         val mingwX86Main by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
         }
 
         val macosX64Main by getting {
-            dependsOn(commonMain)
+            dependsOn(linuxX64Main)
         }
 
         val commonTest by getting {
@@ -89,6 +103,12 @@ kotlin {
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
+        val jsTest by getting {
+            dependencies {
+                api(kotlin("test-js"))
+            }
+        }
+
     }
 }
 apply<pw.binom.plugins.DocsPlugin>()

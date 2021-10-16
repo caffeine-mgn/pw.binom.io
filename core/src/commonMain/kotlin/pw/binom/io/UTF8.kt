@@ -226,64 +226,6 @@ object UTF8 {
         }.toChar()
     }
 
-//    private inline fun _write(char: Char, ff: (Byte) -> Unit) {
-//        val data = ByteArray(40)
-//        when (unicodeToUtf8(char, data)) {
-//            1 -> {
-//                ff(data[0])
-//            }
-//            2 -> {
-//                ff(data[0])
-//                ff(data[1])
-//            }
-//            3 -> {
-//                ff(data[0])
-//                ff(data[1])
-//                ff(data[3])
-//            }
-//            4 -> {
-//                ff(data[0])
-//                ff(data[1])
-//                ff(data[2])
-//                ff(data[3])
-//            }
-//            else -> {
-//            }
-//        }
-//    }
-
-//    fun write(char: Char, stream: OutputStream) {
-//        _write(char) {
-//            while (!stream.write(it)) {
-//            }
-//        }
-//    }
-
-//    suspend fun write(char: Char, stream: AsyncOutputStream) {
-//        _write(char) {
-//
-//            while (!stream.write(it)) {
-//            }
-//        }
-//    }
-
-//    fun read(stream: InputStream): Char {
-//        val firstByte = stream.read()
-//        val size = utf8CharSize(firstByte)
-//        val data = ByteArray(size)
-//        if (size > 0)
-//            stream.read(data)
-//        return utf8toUnicode(firstByte, data)
-//    }
-
-//    suspend fun read(stream: AsyncInputStream): Char? {
-//        val firstByte = stream.read()
-//        val size = utf8CharSize(firstByte)
-//        val data = ByteArray(size)
-//        stream.read(data)
-//        return utf8toUnicode(firstByte, data)
-//    }
-
     fun encode(input: String): String {
         val sb = StringBuilder()
         input.encodeToByteArray().forEach {
@@ -295,7 +237,7 @@ object UTF8 {
                 in 'a'.code.toByte()..'z'.code.toByte(),
                 in 'A'.code.toByte()..'Z'.code.toByte(),
                 in '0'.code.toByte()..'9'.code.toByte()
-                -> sb.append(it.toChar())
+                -> sb.append(it.toInt().toChar())
                 else -> {
                     val bb1 = ((it.toInt() and 0xf0) shr 4)
                     val bb2 = it.toInt() and 0x0f
@@ -305,6 +247,30 @@ object UTF8 {
         }
         return sb.toString()
     }
+
+//    fun decode(input: String): String {
+//        if (input.isEmpty()) {
+//            return input
+//        }
+//        val out = ByteArray(input.length)
+//        var cursor = 0
+//        var i = 0
+//        while (i < input.length) {
+//            if (input[i] == '%') {
+//                i++
+//                val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
+//                val b2 = input[i + 1].toString().toInt(16) and 0xf
+//                i += 1
+//                out[cursor++] = (b1 + b2).toByte()
+////                sb.writeByte((b1 + b2).toByte())
+//            } else {
+//                out[cursor++] = input[i].code.toByte()
+////                sb.writeByte(input[i].code.toByte())
+//            }
+//            i++
+//        }
+//        return out.decodeToString(endIndex = cursor,throwOnInvalidSequence = true)
+//    }
 
     fun decode(input: String): String =
         ByteArrayOutput().use { sb ->

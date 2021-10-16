@@ -3,7 +3,7 @@ package pw.binom.io.file
 import pw.binom.ByteBuffer
 import pw.binom.io.use
 import pw.binom.nextUuid
-import pw.binom.writeByte
+import pw.binom.wrap
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +15,7 @@ class TestWriteRead {
     @Test
     fun openUnknown() {
         assertTrue(assertFails {
-            File(Random.nextUuid().toString()).read()
+            File(Random.nextUuid().toString()).openRead()
         } is FileNotFoundException)
     }
 
@@ -30,13 +30,17 @@ class TestWriteRead {
             0x49, -0x53, 0x28, 0x01, 0x00, 0x00, 0x00, -0x1, -0x1
         )
 
-        f.write().use {
-            data.forEach { value ->
-                it.writeByte(buf, value)
+        f.openWrite().use {
+            data.wrap { dataBuf ->
+                assertEquals(dataBuf.capacity, it.write(dataBuf))
+                assertEquals(0, dataBuf.remaining)
             }
+//            data.forEach { value ->
+//                it.writeByte(buf, value)
+//            }
         }
 
-        f.read().use {
+        f.openRead().use {
             val input = ByteBuffer.alloc(data.size * 2)
             assertEquals(data.size, it.read(input))
             input.flip()

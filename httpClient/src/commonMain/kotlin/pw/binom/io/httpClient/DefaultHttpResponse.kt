@@ -2,8 +2,8 @@ package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
 import pw.binom.CancelledException
+import pw.binom.EmptyAsyncInput
 import pw.binom.TimeoutException
-import pw.binom.net.URI
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
@@ -12,14 +12,16 @@ import pw.binom.io.EOFException
 import pw.binom.io.IOException
 import pw.binom.io.bufferedReader
 import pw.binom.io.http.AsyncAsciiChannel
+import pw.binom.io.http.Encoding
 import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
+import pw.binom.net.URI
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 class DefaultHttpResponse(
     val URI: URI,
-    val client: HttpClient,
+    val client: BaseHttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     override val responseCode: Int,
@@ -29,14 +31,14 @@ class DefaultHttpResponse(
         @OptIn(ExperimentalTime::class)
         suspend fun read(
             uri: URI,
-            client: HttpClient,
+            client: BaseHttpClient,
             keepAlive: Boolean,
             channel: AsyncAsciiChannel,
             timeout: Duration?,
         ): HttpResponse {
             var headerReadFlag = false
             if (timeout != null) {
-                client.networkDispatcher.async {
+                client.networkDispatcher.startCoroutine {
                     client.deadlineTimer.delay(timeout)
                     if (!headerReadFlag) {
                         client.interruptAndClose(channel)
@@ -86,39 +88,46 @@ class DefaultHttpResponse(
     override suspend fun readData(): AsyncInput {
         val keepAlive = keepAlive && headers.keepAlive
         checkClosed()
-        val encode = headers.transferEncoding
+        if (responseCode == 204) {
+            return EmptyAsyncInput
+        }
+        val transferEncoding = headers.getTransferEncodingList()
+        val contentEncoding = headers.getContentEncodingList()
+        val contentLength = headers.contentLength
         var stream: AsyncInput = channel.reader
-        if (encode != null) {
-            if (encode.lowercase() != Headers.CHUNKED.lowercase()) {
-                throw IOException("Unknown Transfer Encoding \"$encode\"")
-            }
-            stream = ResponseAsyncChunkedInput(
-                URI = URI,
-                client = client,
-                keepAlive = keepAlive,
-                stream = stream,
-                channel = channel,
-            )
-        } else {
-            val len = headers.contentLength ?: 0uL
-//                ?: throw IOException("Invalid Http Response Headers: Unknown size of Response")
+        if (contentLength != null) {
             stream = ResponseAsyncContentLengthInput(
                 URI = URI,
                 client = client,
                 keepAlive = keepAlive,
                 channel = channel,
                 stream = stream,
-                contentLength = len,
+                contentLength = contentLength,
             )
         }
 
-        closed = true
-        return when (val encoding = headers.contentEncoding?.lowercase()) {
-            "gzip" -> AsyncGZIPInput(stream, closeStream = true)
-            "deflate" -> AsyncInflateInput(stream = stream, closeStream = true, wrap = true)
-            null, "identity" -> stream
-            else -> throw IOException("Unknown Content Encoding: \"$encoding\"")
+        fun wrap(encode: String, stream: AsyncInput) =
+            when (encode) {
+                Encoding.CHUNKED -> ResponseAsyncChunkedInput(
+                    URI = URI,
+                    client = client,
+                    keepAlive = keepAlive,
+                    stream = stream,
+                    channel = channel,
+                )
+                Encoding.GZIP -> AsyncGZIPInput(stream, closeStream = true)
+                Encoding.DEFLATE -> AsyncInflateInput(stream = stream, closeStream = true, wrap = true)
+                Encoding.IDENTITY -> stream
+                else -> null
+            }
+        for (i in transferEncoding.lastIndex downTo 0) {
+            stream = wrap(encode = transferEncoding[i], stream = stream) ?: throw IOException("Unknown Content Encoding: \"${transferEncoding[i]}\"")
         }
+        for (i in contentEncoding.lastIndex downTo 0) {
+            stream = wrap(encode = contentEncoding[i], stream = stream) ?: throw IOException("Unknown Content Encoding: \"${contentEncoding[i]}\"")
+        }
+        closed = true
+        return stream
     }
 
     override suspend fun readText(): AsyncReader =

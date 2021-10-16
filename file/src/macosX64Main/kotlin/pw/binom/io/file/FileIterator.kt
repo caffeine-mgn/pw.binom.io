@@ -9,8 +9,9 @@ import platform.posix.readdir
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import kotlin.native.concurrent.ensureNeverFrozen
+import kotlin.native.internal.createCleaner
 
-actual class FileIterator internal actual constructor(private val path: File) : Iterator<File>, Closeable {
+actual class FileIterator internal actual constructor(private val path: File) : Iterator<File> {
 
     init {
         if (!path.isDirectory)
@@ -51,8 +52,9 @@ actual class FileIterator internal actual constructor(private val path: File) : 
         return result
     }
 
-    override fun close() {
-        closedir(handler)
+    @OptIn(ExperimentalStdlibApi::class)
+    private val cleaner = createCleaner(handler) {
+        closedir(it)
     }
 
     init {

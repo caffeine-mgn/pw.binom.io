@@ -1,21 +1,20 @@
 package pw.binom.strong
 
+import pw.binom.concurrency.asReference
 import pw.binom.getOrException
 import pw.binom.io.use
 import pw.binom.network.NetworkDispatcher
 import pw.binom.process.Signal
 import pw.binom.strong.exceptions.StartupException
 import pw.binom.strong.exceptions.StrongException
-import kotlin.time.TimeSource
-import kotlin.time.measureTime
 
 object StrongApplication {
-    fun start(vararg config: Strong.Config) {
+    fun start(vararg config: Strong.Config, afterInit: ((Strong) -> Unit)? = null) {
         NetworkDispatcher().use { networkDispatcher ->
-            val initProcess = networkDispatcher.async {
+            val initProcess = networkDispatcher.startCoroutine {
                 Strong.create(
-                    *(arrayOf(Strong.config { it.define(networkDispatcher) }) + config)
-                )
+                    *(arrayOf(Strong.config { it.bean { networkDispatcher } }) + config)
+                ).asReference()
             }
 
             while (!initProcess.isDone) {
@@ -25,18 +24,40 @@ object StrongApplication {
                 }
             }
             val strong = initProcess.getOrException()
-            while (!Signal.isInterrupted) {
-                networkDispatcher.select(1000)
+            val initFunc = if (afterInit != null) {
+                runCatching { afterInit(strong.value) }
+            } else {
+                Result.success(Unit)
             }
-            val destroyFuture = networkDispatcher.async {
-                strong.destroy()
+            if (initFunc.isSuccess) {
+                while (!Signal.isInterrupted && !strong.value.isInterrupted) {
+                    networkDispatcher.select(1000)
+                }
             }
+            try {
+                val destroyFuture = networkDispatcher.startCoroutine {
+                    strong.value.destroy()
+                }
+                strong.close()
 
-            while (!destroyFuture.isDone) {
-                networkDispatcher.select(100)
+                while (!destroyFuture.isDone) {
+                    networkDispatcher.select(100)
+                }
+                if (destroyFuture.isFailure) {
+                    val e = StrongException("Can't destroy Strong", destroyFuture.exceptionOrNull!!)
+                    if (initFunc.isFailure) {
+                        e.addSuppressed(initFunc.exceptionOrNull()!!)
+                    }
+                    throw e
+                }
+            } catch (e: Throwable) {
+                if (initFunc.isFailure) {
+                    e.addSuppressed(initFunc.exceptionOrNull()!!)
+                }
+                throw e
             }
-            if (destroyFuture.isFailure) {
-                throw StrongException("Can't destroy Strong", destroyFuture.exceptionOrNull!!)
+            if (initFunc.isFailure) {
+                throw initFunc.exceptionOrNull()!!
             }
         }
     }

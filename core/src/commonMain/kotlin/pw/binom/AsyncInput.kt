@@ -208,6 +208,7 @@ object EmptyAsyncInput : AsyncInput {
     override suspend fun read(dest: ByteBuffer): Int = 0
 
     override suspend fun asyncClose() {
+        //Do nothing
     }
 
 }

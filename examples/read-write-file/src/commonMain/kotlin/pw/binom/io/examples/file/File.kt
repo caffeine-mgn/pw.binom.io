@@ -4,8 +4,8 @@ import pw.binom.*
 import pw.binom.crypto.MD5MessageDigest
 import pw.binom.io.*
 import pw.binom.io.file.File
-import pw.binom.io.file.read
-import pw.binom.io.file.write
+import pw.binom.io.file.openRead
+import pw.binom.io.file.openWrite
 
 /**
  * Example: using ByteArray
@@ -15,14 +15,14 @@ fun usingByteArray() {
     val file = File("Simple File")
     try {
         val data = "Simple Text".encodeToByteArray()
-        file.write().use {
+        file.openWrite().use {
             it.writeBytes(bufferPool, data)
             it.flush()
         }
         println("Write data: \"${data.decodeToString()}\"")
 
         val out = ByteArrayOutput()
-        file.read().use {
+        file.openRead().use {
             it.copyTo(out, bufferPool)
         }
         out.trimToSize()
@@ -44,13 +44,13 @@ fun usingAppenderAndReader() {
     val file = File("Simple File")
     try {
         val text = "Simple Text"
-        file.write().bufferedWriter(bufferPool).use {
+        file.openWrite().bufferedWriter(bufferPool).use {
             it.append(text)
             it.flush()
         }
         println("Write data: \"$text\"")
 
-        val read = file.read().bufferedReader(bufferPool).use {
+        val read = file.openRead().bufferedReader(bufferPool).use {
             it.readText()
         }
 
@@ -70,14 +70,14 @@ fun usingByteBuffer() {
     val text = "Simple Text"
     try {
         text.toByteBufferUTF8().use { data ->
-            file.write().use {
+            file.openWrite().use {
                 it.write(data)
             }
         }
         println("Write data: \"$text\"")
         ByteBuffer.alloc(512).use { readBuf ->
 
-            val read = file.read().use {
+            val read = file.openRead().use {
                 it.read(readBuf)
             }
             readBuf.flip()
@@ -99,13 +99,13 @@ fun calcMd5() {
     val md5 = MD5MessageDigest()
     try {
         text.toByteBufferUTF8().use { data ->
-            file.write().use {
+            file.openWrite().use {
                 it.write(data)
             }
         }
 
         ByteBuffer.alloc(512).use { readBuf ->
-            file.read().use {
+            file.openRead().use {
                 while (true) {
                     readBuf.clear()
                     if (it.read(readBuf) <= 0) {

@@ -1,7 +1,6 @@
 package pw.binom.db.tarantool
 
 import pw.binom.async2
-import pw.binom.concurrency.Worker
 import pw.binom.concurrency.sleep
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
@@ -32,7 +31,7 @@ fun tarantool(func: suspend (TarantoolConnection) -> Unit) {
                 if (now.elapsedNow() > 10.seconds) {
                     throw RuntimeException("Connection Timeout")
                 }
-                Worker.sleep(100)
+                sleep(100)
             }
         }
         try {

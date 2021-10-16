@@ -1,5 +1,6 @@
 package pw.binom.db.sync
 
+import pw.binom.db.async.DatabaseInfo
 import pw.binom.io.Closeable
 
 interface SyncConnection:Closeable{
@@ -9,4 +10,5 @@ interface SyncConnection:Closeable{
     fun rollback()
     val type: String
     val isConnected:Boolean
+    val dbInfo: DatabaseInfo
 }

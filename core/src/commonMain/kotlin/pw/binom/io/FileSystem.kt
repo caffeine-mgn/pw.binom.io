@@ -2,29 +2,32 @@ package pw.binom.io
 
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
+import pw.binom.net.Path
+import pw.binom.net.toPath
+data class Quota(
+    val availableBytes: Long,
+    val usedBytes: Long,
+)
 
 interface FileSystem {
     interface Entity {
         val name: String
-            get() {
-                val p = path.lastIndexOf('/')
-                return if (p == -1)
-                    path
-                else
-                    path.substring(p + 1)
-            }
+            get() = path.name
         val length: Long
         val isFile: Boolean
         val lastModified: Long
-        val path: String
+        val path: Path
         val fileSystem: FileSystem
         suspend fun read(offset: ULong = 0uL, length: ULong? = null): AsyncInput?
-        suspend fun copy(path: String, overwrite: Boolean = false): Entity
-        suspend fun move(path: String, overwrite: Boolean = false): Entity
+        suspend fun copy(path: Path, overwrite: Boolean = false): Entity
+        suspend fun move(path: Path, overwrite: Boolean = false): Entity
         suspend fun delete()
         suspend fun rewrite(): AsyncOutput
+        suspend fun isLocked(): Boolean? = null
+        suspend fun lock(): Boolean = false
+        suspend fun unlock(): Boolean = false
     }
-
+    suspend fun getQuota(path: Path): Quota?
     val isSupportUserSystem: Boolean
 
     /**
@@ -36,21 +39,34 @@ interface FileSystem {
      * @return Returns result of [func]
      */
     suspend fun <T> useUser(user: Any?, func: suspend () -> T): T
+    suspend fun mkdir(path: Path): Entity?
+    suspend fun getDir(path: Path): List<Entity>?
 
-    //    suspend fun rewriteFile(user: U, path: String): AsyncOutputStream
-    suspend fun mkdir(path: String): Entity?
+    suspend fun get(path: Path): Entity?
+    suspend fun new(path: Path): AsyncOutput
 
-    //    suspend fun delete(user: U, path: String)
-    suspend fun getDir(path: String): Sequence<Entity>?
+    class FileNotFoundException(val path: Path) : IOException("File \"$path\" not found")
+    class FileLockedException(val path: Path) : IOException("File \"$path\" is locked")
+    class EntityExistException(val path: Path) : IOException("Entity \"$path\" already exist")
 
-    suspend fun get(path: String): Entity?
-    suspend fun new(path: String): AsyncOutput
-//    suspend fun read(user: U, path: String): AsyncInputStream?
-//    suspend fun copy(user: U, from: String, to: String)
-//    suspend fun move(user: U, from: String, to: String)
+    suspend fun mkdirs(path: Path): FileSystem.Entity? {
+        var first = true
+        val sb = StringBuilder()
+        var last: FileSystem.Entity? = null
+        path.elements.forEach {
+            if (!first) {
+                sb.append("/")
+            }
+            first = false
 
-    class FileNotFoundException(val path: String) : IOException("File \"$path\" not found")
-    class EntityExistException(val path: String) : IOException("Entity \"$path\" already exist")
+            sb.append(it)
+            last = get(sb.toString().toPath)
+            if (last == null) {
+                last = mkdir(sb.toString().toPath)
+            }
+        }
+        return last
+    }
 }
 
 val FileSystem.Entity.extension: String
