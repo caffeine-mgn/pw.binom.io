@@ -26,6 +26,9 @@ class FrozenQueue<T> {
     val isEmpty
         get() = lock.synchronize { first == null }
 
+    val isNotEmpty
+        get() = !isEmpty
+
     fun push(value: T) {
         lock.synchronize {
             val item = Item(value)

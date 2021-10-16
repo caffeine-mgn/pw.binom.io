@@ -89,6 +89,8 @@ kotlin {
                 api(kotlin("test-annotations-common"))
                 api(project(":db:sqlite"))
                 api(project(":network"))
+                api(project(":db:postgresql-async"))
+                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
             }
         }
         val jvmTest by getting {

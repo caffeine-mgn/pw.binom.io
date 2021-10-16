@@ -1,5 +1,17 @@
 package pw.binom
 
+actual val Environment.os: OS
+    get() {
+        val os = System.getProperty("os.name").lowercase()
+        return when {
+            "windows" in os -> OS.WINDOWS
+            "nux" in os -> OS.LINUX
+            "mac" in os || "darwin" in os -> OS.MACOS
+            "android" in os -> OS.ANDROID
+            else -> OS.UNKNOWN
+        }
+    }
+
 actual val Environment.platform: Platform
     get() = Platform.JVM
 

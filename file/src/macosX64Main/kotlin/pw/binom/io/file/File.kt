@@ -3,6 +3,8 @@ package pw.binom.io.file
 import kotlinx.cinterop.*
 import platform.osx.statfs
 import platform.posix.*
+import pw.binom.Environment
+import pw.binom.getEnv
 import kotlin.native.concurrent.freeze
 import pw.binom.io.*
 
@@ -43,6 +45,14 @@ actual class File actual constructor(path: String) {
     actual companion object {
         actual val SEPARATOR: Char
             get() = '/'
+        actual val temporalDirectory: File?
+            get() {
+                val tmpDir = Environment.getEnv("TMPDIR")
+                if (tmpDir != null) {
+                    return File(tmpDir).takeIfDirection()
+                }
+                return null
+            }
     }
 
     actual fun delete(): Boolean {

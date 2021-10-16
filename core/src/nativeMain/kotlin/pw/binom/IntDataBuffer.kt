@@ -1,6 +1,7 @@
 package pw.binom
 
 import kotlinx.cinterop.*
+import platform.posix.free
 import platform.posix.malloc
 import pw.binom.io.Closeable
 
@@ -23,6 +24,7 @@ actual class IntDataBuffer private constructor(actual val size: Int) : Closeable
 
     override fun close() {
         check(_buffer != null) { "DataBuffer already closed" }
+        free(_buffer)
         _buffer = null
     }
 

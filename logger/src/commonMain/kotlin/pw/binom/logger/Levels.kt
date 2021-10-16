@@ -1,5 +1,31 @@
 package pw.binom.logger
 
+private object DEBUG_LEVEL : Logger.Level {
+    override val name: String
+        get() = "D"
+    override val priority: UInt
+        get() = 700u
+}
+
+val Logger.Companion.DEBUG: Logger.Level
+    get() = DEBUG_LEVEL
+
+suspend fun Logger.debug(text: String, trace: String? = null, exception: Throwable? = null) {
+    log(Logger.DEBUG, text = text, trace = trace, exception = exception)
+}
+
+fun Logger.debugSync(text: String, trace: String? = null, exception: Throwable? = null) {
+    logSync(Logger.DEBUG, text = text, trace = trace, exception = exception)
+}
+
+suspend fun Logger.debug(trace: String? = null, exception: Throwable) {
+    log(Logger.DEBUG, null, trace = trace, exception = exception)
+}
+
+fun Logger.debugSync(trace: String? = null, exception: Throwable) {
+    logSync(Logger.DEBUG, null, trace = trace, exception = exception)
+}
+
 private object INFO_LEVEL : Logger.Level {
     override val name: String
         get() = "I"
@@ -9,6 +35,7 @@ private object INFO_LEVEL : Logger.Level {
 
 val Logger.Companion.INFO: Logger.Level
     get() = INFO_LEVEL
+
 
 suspend fun Logger.info(text: String, trace: String? = null, exception: Throwable? = null) {
     log(Logger.INFO, text = text, trace = trace, exception = exception)

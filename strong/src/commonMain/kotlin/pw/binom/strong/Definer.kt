@@ -25,7 +25,14 @@ interface Definer {
     )
 }
 
-fun <T : Any> KClass<T>.genDefaultName() = "${this.toString().removePrefix("class ")}_${this.hashCode()}"
+fun <T : Any> KClass<T>.getClassName(): String {
+    return this.toString()
+        .removePrefix("class ")
+        .removeSuffix(" (Kotlin reflection is not available)")
+}
+
+fun <T : Any> KClass<T>.genDefaultName(): String =
+    "${this.getClassName()}_${this.hashCode().toString(16)}"
 
 inline fun <reified T : Any> Definer.bean(
     name: String? = null,

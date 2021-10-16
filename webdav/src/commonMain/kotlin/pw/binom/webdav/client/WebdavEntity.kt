@@ -3,13 +3,9 @@ package pw.binom.webdav.client
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
-import pw.binom.io.FileSystem
-import pw.binom.io.FileSystemAccess
+import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.addHeader
-import pw.binom.io.httpClient.connect
-import pw.binom.io.readText
-import pw.binom.io.use
 import pw.binom.net.Path
 import pw.binom.skipAll
 import pw.binom.webdav.WebAuthAccess
@@ -21,6 +17,8 @@ class WebdavEntity(
     val user: WebAuthAccess?,
     override val isFile: Boolean,
     override val fileSystem: WebDavClient,
+    val quotaUsedBytes: Long?,
+    val quotaAvailableBytes: Long?,
 ) : FileSystem.Entity {
 
     override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
@@ -81,7 +79,9 @@ class WebdavEntity(
             user = user,
             length = length,
             isFile = true,
-            fileSystem = fileSystem
+            fileSystem = fileSystem,
+            quotaAvailableBytes = null,
+            quotaUsedBytes = null,
         )
     }
 
@@ -120,7 +120,9 @@ class WebdavEntity(
             user = user,
             length = length,
             isFile = true,
-            fileSystem = fileSystem
+            fileSystem = fileSystem,
+            quotaAvailableBytes = null,
+            quotaUsedBytes = null,
         )
     }
 

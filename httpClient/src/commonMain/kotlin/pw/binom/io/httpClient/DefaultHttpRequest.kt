@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient
 
+import pw.binom.Environment
 import pw.binom.charset.Charsets
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.IOException
@@ -9,6 +10,8 @@ import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
 import pw.binom.net.URI
+import pw.binom.os
+import pw.binom.platform
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -42,6 +45,7 @@ class DefaultHttpRequest constructor(
         headers[Headers.HOST] = host
         headers[Headers.ACCEPT_ENCODING] = "gzip, deflate, identity"
         headers[Headers.ACCEPT] = "*/*"
+        headers[Headers.USER_AGENT] = "binom/kotlin${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
     }
 
     private suspend fun sendHeaders() {

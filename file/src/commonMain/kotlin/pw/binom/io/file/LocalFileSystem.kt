@@ -2,6 +2,7 @@ package pw.binom.io.file
 
 import pw.binom.*
 import pw.binom.io.FileSystem
+import pw.binom.io.Quota
 import pw.binom.io.use
 import pw.binom.io.withLimit
 import pw.binom.net.Path
@@ -14,7 +15,7 @@ class LocalFileSystem(
 ) : FileSystem {
     override suspend fun new(path: Path): AsyncOutput {
         val file = File(root, path.toString().removePrefix("/"))
-        file.parent?.mkdirs()?:throw FileSystem.FileNotFoundException((file.parent?.path?:"").toPath)
+        file.parent?.mkdirs() ?: throw FileSystem.FileNotFoundException((file.parent?.path ?: "").toPath)
         return file.openWrite().asyncOutput()
     }
 
@@ -25,6 +26,14 @@ class LocalFileSystem(
         return EntityImpl(f)
     }
 
+    override suspend fun getQuota(path: Path): Quota? {
+        val f = File(root, path.toString())
+        return Quota(
+            availableBytes = f.freeSpace,
+            usedBytes = f.freeSpace - f.availableSpace
+        )
+    }
+
     override val isSupportUserSystem: Boolean
         get() = false
 
@@ -33,7 +42,7 @@ class LocalFileSystem(
 
     override suspend fun mkdir(path: Path): FileSystem.Entity {
         val file = File(root, path.toString().removePrefix("/"))
-        file.mkdirs()?:throw FileSystem.FileNotFoundException(file.path.toPath)
+        file.mkdirs() ?: throw FileSystem.FileNotFoundException(file.path.toPath)
         return EntityImpl(file)
     }
 
@@ -108,7 +117,7 @@ class LocalFileSystem(
 
         override suspend fun rewrite(): AsyncOutput {
             val file = File(root, path.toString())
-            file.parent?.mkdirs()?:throw FileSystem.FileNotFoundException((file.parent?.path?:"").toPath)
+            file.parent?.mkdirs() ?: throw FileSystem.FileNotFoundException((file.parent?.path ?: "").toPath)
             return file.openWrite().asyncOutput()
         }
 

@@ -45,6 +45,8 @@ actual class File actual constructor(path: String) {
     actual companion object {
         actual val SEPARATOR: Char
             get() = '/'
+        actual val temporalDirectory: File?
+            get() = File("/tmp").takeIfDirection()
     }
 
     actual fun delete(): Boolean {

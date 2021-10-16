@@ -154,6 +154,7 @@ class FreezableFuture<T> : Future<T> {
             throw Future.FutureAlreadyResumedException()
         }
         _isSuccess.value = result.isSuccess
+        result.doFreeze()
         this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
     }
 

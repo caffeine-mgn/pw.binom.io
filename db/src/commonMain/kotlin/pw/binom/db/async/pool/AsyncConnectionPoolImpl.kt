@@ -4,6 +4,7 @@ import pw.binom.date.Date
 import pw.binom.db.async.AsyncConnection
 import pw.binom.io.StreamClosedException
 import pw.binom.io.use
+import pw.binom.neverFreeze
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -25,6 +26,9 @@ class AsyncConnectionPoolImpl constructor(
 
     private val waiters = ArrayList<Continuation<PooledAsyncConnectionImpl>>()
 
+    init {
+        neverFreeze()
+    }
     override val idleConnectionCount
         get() = idleConnection.size
 

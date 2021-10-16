@@ -51,19 +51,19 @@ class DeadlineTimerTest {
         var f1 by AtomicReference<Duration?>(null)
         var f2 by AtomicReference<Duration?>(null)
         val now = TimeSource.Monotonic.markNow()
-        deadlineTimer.delay(Duration.Companion.seconds(2)) {
+        deadlineTimer.delay(Duration.seconds(2)) {
             f1 = now.elapsedNow()
         }
 
         sleep(1000)
-        deadlineTimer.delay(Duration.Companion.seconds(1)) {
+        deadlineTimer.delay(Duration.seconds(1)) {
             f2 = now.elapsedNow()
         }
         sleep(2000)
         assertNotNull(f1)
         assertNotNull(f2)
-        assertTrue(f1!! >= Duration.seconds(2) && f1!! < Duration.seconds(2.1))
-        assertTrue(f2!! >= Duration.seconds(2) && f2!! < Duration.seconds(2.1))
+        assertTrue(f1!! >= Duration.seconds(2) && f1!! < Duration.seconds(2.2),"f1=$f1")
+        assertTrue(f2!! >= Duration.seconds(2) && f2!! < Duration.seconds(2.2),"f2=$f2")
     }
 
     @Test

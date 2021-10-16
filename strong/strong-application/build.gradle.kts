@@ -53,6 +53,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":strong"))
+                api(project(":logger"))
                 api(project(":process"))
                 api(project(":network"))
             }

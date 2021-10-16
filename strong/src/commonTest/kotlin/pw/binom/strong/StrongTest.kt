@@ -2,10 +2,8 @@ package pw.binom.strong
 
 import pw.binom.async2
 import kotlin.reflect.KClass
-import kotlin.reflect.safeCast
+import kotlin.test.Ignore
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class StrongTest {
 
@@ -31,8 +29,37 @@ class StrongTest {
 //    }
 
     interface Client
-    class OO:Client
+    class OO : Client
     class VV
+
+    @Ignore
+    @Test
+    fun aaa() {
+        class A
+        val s = async2 {
+            val factory = object : Strong.BeanFactory<A> {
+                override val type: KClass<A>
+                    get() = A::class
+
+                override suspend fun provide(strong: Strong): A = A()
+            }
+
+            class TestClass:Strong.Bean(){
+                val a by strong.inject<A>()
+            }
+
+            val s = Strong.create(
+                Strong.config {
+                    it.bean { factory }
+                    it.bean { TestClass() }
+                }
+            )
+            println("->${s.service(TestClass::class).service.a}")
+        }
+        if (s.isFailure){
+            throw s.exceptionOrNull!!
+        }
+    }
 
     @Test
     fun aa() {

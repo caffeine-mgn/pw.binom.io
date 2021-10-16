@@ -2,6 +2,7 @@ package pw.binom.db.postgresql.async
 
 import pw.binom.charset.Charsets
 import pw.binom.concurrency.DeadlineTimer
+import pw.binom.concurrency.sleep
 import pw.binom.io.IOException
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
@@ -33,6 +34,7 @@ abstract class BaseTest {
         val manager = NetworkDispatcher()
         val dt = DeadlineTimer.create()
         pgContainer {
+            sleep(1000)
             manager.runSingle {
                 do {
                     val address = NetworkAddress.Immutable(

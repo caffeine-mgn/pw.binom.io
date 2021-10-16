@@ -9,10 +9,12 @@ import pw.binom.db.sync.SyncResultSet
 
 class AsyncResultSetAdapter(val ref: Reference<SyncResultSet>, val worker: Worker, override val columns: List<String>) :
     AsyncResultSet {
-    override suspend fun next(): Boolean =
-        worker.start {
+    override suspend fun next(): Boolean {
+        val ref = ref
+        return worker.start {
             ref.value.next()
         }
+    }
 
     override fun getString(index: Int): String? =
         worker.execute(ref) {
@@ -110,6 +112,7 @@ class AsyncResultSetAdapter(val ref: Reference<SyncResultSet>, val worker: Worke
         }.joinAndGetOrThrow()
 
     override suspend fun asyncClose() {
+        val ref = ref
         worker.start {
             ref.value.close()
         }

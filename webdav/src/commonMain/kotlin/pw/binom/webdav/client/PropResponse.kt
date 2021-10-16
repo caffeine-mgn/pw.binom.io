@@ -41,6 +41,13 @@ value class Props(val element: XmlElement) {
     val isDirection: Boolean
         get() =
             element.findOneDav("resourcetype")?.findOneDav("collection") != null
+
+    val quotaUsedBytes: Long?
+        get() = element.findOneDav("quota-used-bytes")?.body?.toLongOrNull()
+
+    val quotaAvailableBytes: Long?
+        get() = element.findOneDav("quota-available-bytes")?.body?.toLongOrNull()
+
     val elements: List<XmlElement>
         get() = element.childs.filter { it.nameSpace == DAV_NS }
 }

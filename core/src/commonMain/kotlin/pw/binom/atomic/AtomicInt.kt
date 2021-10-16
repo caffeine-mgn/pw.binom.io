@@ -8,6 +8,8 @@ expect class AtomicInt(value: Int): ReadWriteProperty<Any?, Int> {
     fun addAndGet(delta: Int): Int
     fun increment()
     fun decrement()
+    operator fun inc(): AtomicInt
+    operator fun dec(): AtomicInt
 
     var value:Int
 }

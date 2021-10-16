@@ -8,6 +8,8 @@ import pw.binom.net.Path
 import pw.binom.net.toPath
 
 class MemoryFileSystem : FileSystem {
+    override suspend fun getQuota(path: Path): Quota? = null
+
     override val isSupportUserSystem: Boolean
         get() = false
 
@@ -143,7 +145,6 @@ class MemoryFileSystem : FileSystem {
                 }
             }.asyncOutput()
         }
-
     }
 }
 

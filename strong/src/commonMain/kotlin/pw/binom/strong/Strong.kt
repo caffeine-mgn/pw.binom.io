@@ -158,6 +158,7 @@ interface Strong {
         suspend fun link(strong: Strong)
     }
 
+    @Deprecated("Not Use it. It will be deleted")
     interface BeanFactory<T : Any> {
         val type: KClass<T>
         val name: String

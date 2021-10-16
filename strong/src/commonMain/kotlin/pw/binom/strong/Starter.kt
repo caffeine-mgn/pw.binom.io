@@ -1,6 +1,9 @@
 package pw.binom.strong
 
+import pw.binom.logger.Logger
+import pw.binom.logger.debug
 import pw.binom.strong.exceptions.BeanCreateException
+import pw.binom.strong.exceptions.CycleDependencyException
 import pw.binom.strong.exceptions.NoSuchBeanException
 import pw.binom.strong.exceptions.StrongException
 import kotlin.reflect.KClass
@@ -20,6 +23,10 @@ internal class StrongWithDependenciesSpy(val strong: Strong) : Strong by strong 
     fun initFinish() {
         checkStatus()
         dependencies.clear()
+    }
+
+    override suspend fun destroy() {
+        TODO("Not yet implemented")
     }
 
     fun getLastDependencies(): List<ClassDependency> {
@@ -48,11 +55,15 @@ internal class Starter(
     val strongImpl: StrongImpl,
     startDefiner: InternalDefiner,
 ) {
-
     private val dd = startDefiner
     private val strongWithDeps = StrongWithDependenciesSpy(strongImpl)
 
-    private class BeanConfig(val obj: Any, val name: String, val primary: Boolean, val deps: List<ClassDependency>) {
+    internal class BeanConfig(
+        override val bean: Any,
+        override val name: String,
+        val primary: Boolean,
+        val deps: List<ClassDependency>
+    ) : BeanDescription {
         var inited = false
         var linked = false
         var initing = false
@@ -62,20 +73,20 @@ internal class Starter(
         fun isReadyForLink() = !nodes.any { !it.linked }
 
         val nodes = HashSet<BeanConfig>()
-        val resultBeanClass: KClass<out Any>
+        override val beanClass: KClass<out Any>
             get() {
-                if (obj is Strong.BeanFactory<out Any>) {
-                    return obj.type
+                if (bean is Strong.BeanFactory<out Any>) {
+                    return bean.type
                 }
-                return obj::class
+                return bean::class
             }
 
         fun isMatch(clazz: KClass<out Any>): Boolean {
-            if (clazz.isInstance(obj)) {
+            if (clazz.isInstance(bean)) {
                 return true
             }
-            if (obj is Strong.BeanFactory<out Any>) {
-                if (obj.type === clazz) {
+            if (bean is Strong.BeanFactory<out Any>) {
+                if (bean.type == clazz) {
                     return true
                 }
             }
@@ -90,7 +101,7 @@ internal class Starter(
             val bean = it.init(strongWithDeps)
             val deps = strongWithDeps.getLastDependencies()
             BeanConfig(
-                obj = bean,
+                bean = bean,
                 name = it.name,
                 deps = deps,
                 primary = it.primary,
@@ -105,9 +116,9 @@ internal class Starter(
             if (b in dd) {
                 return
             }
-            if (b.obj !is Strong.DestroyableBean) {
-                return
-            }
+//            if (b.obj !is Strong.DestroyableBean) {
+//                return
+//            }
             b.nodes.forEach {
                 ff(it)
             }
@@ -131,7 +142,7 @@ internal class Starter(
                 if (foundBean == null) {
                     if (dep.require) {
                         throw BeanCreateException(
-                            clazz = node.obj::class,
+                            clazz = node.bean::class,
                             name = node.name,
                             cause = NoSuchBeanException(klazz = dep.clazz, name = dep.name),
                         )
@@ -143,9 +154,9 @@ internal class Starter(
 
                 if (!foundBean.isMatch(dep.clazz)) {
                     throw BeanCreateException(
-                        clazz = node.obj::class,
+                        clazz = node.bean::class,
                         name = node.name,
-                        cause = StrongException("Found invalid bean type. Except ${dep.clazz}, actual ${foundBean.resultBeanClass}"),//TODO сделать нормальное описание ошибки
+                        cause = StrongException("Found invalid bean type. Except ${dep.clazz}, actual ${foundBean.beanClass}"),//TODO сделать нормальное описание ошибки
                     )
 
                 }
@@ -161,14 +172,14 @@ internal class Starter(
             return
         }
         if (o.initing) {
-            throw StrongException("Bean ${o.obj::class} in initialization. Requested by ${from?.let { it.obj::class }}")
+            throw StrongException("Bean ${o.bean::class} in initialization. Requested by ${from?.let { it.bean::class }}")
         }
         o.initing = true
         o.nodes.forEach {
             callInit(it, o)
         }
-        if (o.obj is Strong.InitializingBean) {
-            o.obj.init(strongImpl)
+        if (o.bean is Strong.InitializingBean) {
+            o.bean.init(strongImpl)
         }
         o.initing = false
         o.inited = true
@@ -179,21 +190,21 @@ internal class Starter(
             return
         }
         if (o.linking) {
-            throw StrongException("Bean ${o::class} in linking. Requested by ${from?.let { it.obj::class }}")
+            throw StrongException("Bean ${o::class} in linking. Requested by ${from?.let { it.bean::class }}")
         }
         o.linking = true
         o.nodes.forEach {
             callLink(it, o)
         }
-        if (o.obj is Strong.LinkingBean) {
-            o.obj.link(strongImpl)
+        if (o.bean is Strong.LinkingBean) {
+            o.bean.link(strongImpl)
         }
-        if (o.obj is Strong.BeanFactory<out Any>) {
-            val newBean = o.obj.provide(strongWithDeps)
+        if (o.bean is Strong.BeanFactory<out Any>) {
+            val newBean = o.bean.provide(strongWithDeps)
             if (newBean != null) {
                 createdBeans += BeanConfig(
-                    obj = newBean,
-                    name = o.obj.name,
+                    bean = newBean,
+                    name = o.bean.name,
                     deps = strongWithDeps.getLastDependencies(),
                     primary = o.primary,
                 )
@@ -201,7 +212,7 @@ internal class Starter(
         }
         o.linking = false
         o.linked = true
-        strongImpl.beans[o.name] = BeanEntity(o.obj, o.primary)
+        strongImpl.beans[o.name] = BeanEntity(o.bean, o.primary)
     }
 
     fun checkCycle() {
@@ -229,48 +240,141 @@ internal class Starter(
         }
     }
 
+    private fun buildInitList(full: List<BeanConfig>) {
+        val listForInit = full.filter { it.bean is Strong.InitializingBean }
+
+        fun init(c: BeanConfig) {
+            if (c.inited) {
+                TODO("Бин уже инициализирован")
+            }
+        }
+
+        listForInit.forEach {
+            it.nodes.find { !it.inited }
+        }
+    }
+
+    private val logger = Logger.getLogger("Strong.Starter")
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> wrapDependenciesException(func: () -> T): T =
+        try {
+            func()
+        } catch (e: GraphUtils.CycleException) {
+            throw CycleDependencyException(e.dependenciesPath as List<BeanDescription>)
+        }
+
     internal suspend fun start() {
         STRONG_LOCAL = strongWithDeps
         try {
+            logger.debug("Init beans")
             init()
+            logger.debug("Resolve bean dependencies")
             makeTree()
-            checkCycle()
-            strongImpl.beanOrder = makeDestroysTree().map { it.name to it.obj }
-
             strongWithDeps.initFinish()
+
+            val iniList =
+                wrapDependenciesException {
+                    GraphUtils.buildDependencyGraph(createdBeans.filter { it.bean is Strong.InitializingBean }) { it.nodes.filter { it.bean is Strong.InitializingBean } }
+                }
+
+            val lList =
+                wrapDependenciesException {
+                    GraphUtils.buildDependencyGraph(createdBeans.filter { it.bean is Strong.LinkingBean }) { it.nodes.filter { it.bean is Strong.LinkingBean } }
+                }
+
+            strongImpl.destroyOrder =
+                wrapDependenciesException {
+                    GraphUtils.buildDependencyGraph(createdBeans.filter { it.bean is Strong.DestroyableBean }) { it.nodes.filter { it.bean is Strong.DestroyableBean } }
+                        .map { it.bean as Strong.DestroyableBean }
+                }
+
+            createdBeans.forEach {
+                strongImpl.beans[it.name] = BeanEntity(bean = it.bean, primary = it.primary)
+            }
+
+            iniList.forEach {
+                val bean = it.bean as Strong.InitializingBean
+                bean.init(strongImpl)
+            }
+
+            lList.forEach {
+                val bean = it.bean as Strong.LinkingBean
+                bean.link(strongImpl)
+            }
+
+
+/*
+            logger.debug("Check cycle bean init")
+            checkCycle()
+            val deps = makeDestroysTree()
+            strongImpl.beanOrder = deps.map { it.name to it.bean }
+
+
+            logger.debug("Init beans. Beans for init [${createdBeans.size}]:")
+            deps.forEach {
+                logger.debug("  * ${it.name} (${it.beanClass})")
+            }
+
+            deps.forEach { bean ->
+                bean.nodes.forEach {
+                    if (!it.inited) {
+                        throw RuntimeException("Can't init ${bean.name} (${bean.beanClass}). Bean ${it.name} (${it.beanClass}) not inited!")
+                    }
+                }
+                bean.inited = true
+            }
+
+            deps.forEach { bean ->
+                bean.nodes.forEach {
+                    if (!it.linked) {
+                        throw RuntimeException("Can't init ${bean.name} (${bean.beanClass}). Bean ${it.name} (${it.beanClass}) not linked!")
+                    }
+                }
+                bean.linked = true
+            }
+            deps.forEach { bean ->
+                bean.inited = false
+                bean.linked = false
+            }
+
             var listForStart = ArrayList(createdBeans)
             LOOP@ do {
                 for (it in listForStart) {
+                    logger.debug("#1 ${listForStart.map { "${it.name} ${it.inited} ${it.linked}" }}")
                     if (!it.inited) {
-                        if (it.obj is Strong.InitializingBean) {
+                        if (it.bean is Strong.InitializingBean) {
                             val notInitedBeans = it.nodes.filter { !it.inited }
                             if (notInitedBeans.isNotEmpty()) {
                                 listForStart.removeAll(notInitedBeans)
                                 listForStart.addAll(0, notInitedBeans)
                                 continue@LOOP
                             }
-                            it.obj.init(strongImpl)
+                            logger.debug("Bean ${it.name} (${it.beanClass}) initing")
+                            it.bean.init(strongImpl)
                             it.inited = true
                         } else {
                             it.inited = true
                         }
-                        it.obj
-                        strongImpl.beans[it.name] = BeanEntity(bean = it.obj, primary = it.primary)
+                        logger.debug("Bean ${it.name} (${it.beanClass}) inited")
+                        strongImpl.beans[it.name] = BeanEntity(bean = it.bean, primary = it.primary)
                         continue@LOOP
                     }
                     if (!it.linked) {
-                        if (it.obj is Strong.LinkingBean) {
+                        if (it.bean is Strong.LinkingBean) {
                             val notInitedBeans = it.nodes.filter { !it.linked || !it.inited }
                             if (notInitedBeans.isNotEmpty()) {
                                 listForStart.removeAll(notInitedBeans)
                                 listForStart.addAll(0, notInitedBeans)
                                 continue@LOOP
                             }
-                            it.obj.link(strongImpl)
+                            logger.debug("Linking ${it.name} (${it.beanClass})")
+                            it.bean.link(strongImpl)
                             it.linked = true
                         } else {
                             it.linked = true
                         }
+                        logger.debug("Bean ${it.name} (${it.beanClass}) linked")
                         listForStart.remove(it)
                         continue@LOOP
                     }
@@ -278,8 +382,13 @@ internal class Starter(
                 if (listForStart.isEmpty()) {
                     break
                 }
-            } while (true)
-
+                logger.debug("Init list size: ${listForStart.size}")
+            } while (listForStart.isNotEmpty())
+            */
+            logger.debug("Strong bean initialized successful")
+        } catch (e: Throwable) {
+            logger.debug("Strong bean initialized fail", e)
+            throw e
         } finally {
             strongWithDeps.initFinish()
             STRONG_LOCAL = null

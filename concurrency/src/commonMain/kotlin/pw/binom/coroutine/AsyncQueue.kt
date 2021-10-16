@@ -16,6 +16,15 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
 
     private val lock = SpinLock()
 
+    val isEmpty
+        get() = values.isEmpty
+
+    val isNotEmpty
+        get() = values.isNotEmpty
+
+    val size
+        get() = values.size
+
     override fun push(value: T) {
         val listener = lock.synchronize {
             if (closed.value) {
@@ -37,7 +46,7 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
             lock.unlock()
             throw ClosedException()
         }
-        if (!values.isEmpty) {
+        if (values.isNotEmpty) {
             val result = values.pop()
             lock.unlock()
             return result
@@ -52,6 +61,9 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
     init {
         doFreeze()
     }
+
+    val isClosed
+        get() = closed.value
 
     override fun close() {
         lock.synchronize {

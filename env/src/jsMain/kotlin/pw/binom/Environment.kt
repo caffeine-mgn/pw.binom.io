@@ -3,6 +3,9 @@ package pw.binom
 import kotlinx.browser.window
 import kotlin.js.Date
 
+actual val Environment.os: OS
+    get() = OS.UNKNOWN
+
 actual val Environment.platform: Platform
     get() = Platform.JS
 

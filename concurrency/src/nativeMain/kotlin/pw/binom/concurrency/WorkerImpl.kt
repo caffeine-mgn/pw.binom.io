@@ -17,17 +17,23 @@ import kotlin.native.concurrent.Worker as NativeWorker
 @ThreadLocal
 private var privateCurrentWorker: WorkerImpl? = null
 
-private class InputData<DATA, RESULT>(val worker: WorkerImpl, val input: DATA, func: (DATA) -> RESULT) {
+private class InputData<DATA, RESULT>(
+    val worker: WorkerImpl,
+    val input: DATA,
+    func: (DATA) -> RESULT,
+    val future: FreezableFuture<RESULT>,
+) {
     val func = ObjectTree { func }
 }
 
 private fun <DATA, RESULT> getFunc(
     worker: WorkerImpl,
     input: DATA,
-    func: (DATA) -> RESULT
+    func: (DATA) -> RESULT,
+    future: FreezableFuture<RESULT>,
 ): () -> InputData<DATA, RESULT> =
     {
-        InputData(worker, input, func)
+        InputData(worker = worker, input = input, func = func, future = future)
     }.doFreeze()
 
 actual class WorkerImpl(name: String?) : Executor, Worker, Dispatcher {
@@ -38,7 +44,8 @@ actual class WorkerImpl(name: String?) : Executor, Worker, Dispatcher {
         get() = _taskCount
 
     actual override fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
-        val nativeFeature = nativeWorker.execute(TransferMode.SAFE, getFunc(this, input, func)) {
+        val r = FreezableFuture<RESULT>()
+        val nativeFeature = nativeWorker.execute(TransferMode.SAFE, getFunc(this, input, func, r)) {
             initRuntimeIfNeeded()
             val ff = it.func.attach()
             privateCurrentWorker = it.worker
@@ -50,9 +57,10 @@ actual class WorkerImpl(name: String?) : Executor, Worker, Dispatcher {
             }
             it.worker._taskCount--
             privateCurrentWorker = null
+            it.future.resume(result)
             result
         }
-        return FutureWrapper(nativeFeature)
+        return r
     }
 
     actual override fun requestTermination(): Future<Unit> =
@@ -142,5 +150,3 @@ actual class WorkerImpl(name: String?) : Executor, Worker, Dispatcher {
         }
     }
 }
-
-actual fun Worker.Companion.create(name: String?): Worker = WorkerImpl(name)

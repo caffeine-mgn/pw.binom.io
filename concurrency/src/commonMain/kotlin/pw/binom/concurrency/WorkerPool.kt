@@ -77,8 +77,7 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
             throw IllegalStateException("WorkerPool already has Interotped")
         }
         state.interotped.value = true
-
-        while (list.any { it.taskCount == 1 }) {
+        while (state.tasks.value > 0 || list.any { it.taskCount > 0 }) {
             sleep(50)
         }
     }
@@ -118,7 +117,7 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
                 } finally {
                     it.state.tasks.decrement()
                 }
-                if (freeWorker.taskCount == 1) {
+                if (freeWorker.taskCount > 0) {
                     while (true) {
                         val func = it.state.queue.popOrNull() ?: break
                         func()

@@ -54,7 +54,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     private val rollbackSt = prepareStatement("ROLLBACK")
 
     init {
-        beginSt.executeUpdate()
+//        beginSt.executeUpdate()
         doFreeze()
     }
 
@@ -79,13 +79,13 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     override fun commit() {
         checkClosed()
         commitSt.executeUpdate()
-        beginSt.executeUpdate()
+//        beginSt.executeUpdate()
     }
 
     override fun rollback() {
         checkClosed()
         rollbackSt.executeUpdate()
-        beginSt.executeUpdate()
+//        beginSt.executeUpdate()
     }
 
     override val type: String

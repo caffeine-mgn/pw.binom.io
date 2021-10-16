@@ -30,6 +30,7 @@ expect class File(path: String) {
 
     companion object {
         val SEPARATOR: Char
+        val temporalDirectory:File?
     }
 
     override fun equals(other: Any?): Boolean

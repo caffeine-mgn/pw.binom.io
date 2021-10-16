@@ -54,7 +54,7 @@ class WorkerTest {
         val r = Random.nextInt()
         val r2 = w.execute(r) {
             r + 1
-        }.resultOrNull!!
+        }.joinAndGetOrThrow()
 
         assertEquals(r + 1, r2)
     }
@@ -65,7 +65,7 @@ class WorkerTest {
         var r = AtomicInt(Random.nextInt())
         val r2 = w.execute(Unit) {
             r.value + 1
-        }.resultOrNull!!
+        }.joinAndGetOrThrow()
 
         assertEquals(r.value + 1, r2)
     }

@@ -20,6 +20,8 @@ actual class File actual constructor(path: String) {
     actual companion object {
         actual val SEPARATOR: Char
             get() = JFile.separatorChar
+        actual val temporalDirectory: File?
+            get() = File(System.getProperty("java.io.tmpdir")).takeIfDirection()
     }
 
     actual fun delete() = native.delete()

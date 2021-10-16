@@ -1,13 +1,10 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-import pw.binom.empty
-import pw.binom.io.AbstractAsyncBufferedInput
-import pw.binom.io.IOException
-import pw.binom.io.utf8Reader
+import pw.binom.*
+import pw.binom.charset.Charset
+import pw.binom.charset.Charsets
+import pw.binom.io.*
 import pw.binom.pool.ObjectPool
-import pw.binom.skipAll
 
 class EndState {
     enum class Type {
@@ -226,6 +223,16 @@ open class AsyncMultipartInput(
     val isBlockEof
         get() = buffer.remaining == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)
 
+    suspend fun readText(charset: Charset = Charsets.UTF8) =
+        bufferedReader(closeParent = false, charset = charset).use { it.readText() }
+
+    suspend fun readBinary(charset: Charset = Charsets.UTF8): ByteArray {
+        ByteArrayOutput().use { out ->
+            copyTo(out)
+            return out.toByteArray()
+        }
+    }
+
     override suspend fun read(dest: ByteBuffer): Int {
         if (isBlockEof) {
             return 0
@@ -234,9 +241,18 @@ open class AsyncMultipartInput(
     }
 
     override suspend fun asyncClose() {
+        if (closed) {
+            return
+        }
         try {
-            super.asyncClose()
+            if (!isBlockEof) {
+                copyTo(NullAsyncOutput)
+            }
+            while (next()) {
+                copyTo(NullAsyncOutput)
+            }
         } finally {
+            super.asyncClose()
             bufferPool.recycle(buffer)
         }
     }

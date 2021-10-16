@@ -11,6 +11,7 @@ import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.doFreeze
 import pw.binom.io.use
+import pw.binom.neverFreeze
 
 class AsyncConnectionAdapter private constructor(val worker: Worker, val connection: Reference<SyncConnection>) :
     AsyncConnection {
@@ -31,15 +32,18 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
     internal val busy = AtomicBoolean(false)
 
     override val isConnected: Boolean
-        get() =
-            worker.execute(this) {
-                it.connection.value.isConnected
+        get() {
+            val connection = connection
+            return worker.execute {
+                connection.value.isConnected
             }.joinAndGetOrThrow()
+        }
 
     override val dbInfo: DatabaseInfo
         get() = SQLiteSQLDatabaseInfo
 
     override suspend fun setTransactionMode(mode: TransactionMode) {
+        val connection = connection
         when (mode) {
             TransactionMode.SERIALIZABLE -> {
                 worker.execute {
@@ -66,12 +70,15 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
         get() = _transactionMode
 
     override val type: String
-        get() =
-            worker.execute(this) {
-                it.connection.value.type
+        get() {
+            val connection = connection
+            return worker.execute {
+                connection.value.type
             }.joinAndGetOrThrow()
+        }
 
     override suspend fun asyncClose() {
+        val connection = connection
         worker.execute {
             connection.value.close()
         }
@@ -82,6 +89,7 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
         if (!transactionStarted) {
             throw IllegalStateException("Transaction not started")
         }
+        val connection = connection
         worker.execute {
             connection.value.commit()
         }
@@ -89,6 +97,7 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
     }
 
     override suspend fun createStatement(): AsyncStatement {
+        val connection = connection
         val result = worker.start {
             connection.value.createStatement().asReference()
         }
@@ -108,6 +117,7 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
         if (transactionStarted) {
             throw IllegalStateException("Transaction already started")
         }
+        val connection = connection
         worker.start {
             connection.value.createStatement().use {
                 it.executeUpdate("begin")
@@ -117,6 +127,7 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
     }
 
     override suspend fun prepareStatement(query: String): AsyncPreparedStatement {
+        val connection = connection
         val ref = worker.start {
             connection.value.prepareStatement(query).asReference()
         }
@@ -131,9 +142,14 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
         if (!transactionStarted) {
             throw IllegalStateException("Transaction not started")
         }
+        val connection = connection
         worker.start {
             connection.value.rollback()
         }
         transactionStarted = false
+    }
+
+    init {
+        neverFreeze()
     }
 }

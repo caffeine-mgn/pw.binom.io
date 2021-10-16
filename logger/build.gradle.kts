@@ -50,65 +50,83 @@ kotlin {
             framework()
         }
     }
+    js("js", BOTH) {
+        browser {
+            testTask {
+                useKarma {
+                    useFirefoxHeadless()
+                }
+            }
+        }
+        nodejs()
+    }
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(project(":core"))
                 api(project(":date"))
+            }
+        }
+        val commonRunnableMain by creating {
+            dependsOn(commonMain)
+            dependencies {
                 api(project(":concurrency"))
             }
         }
 
         val linuxX64Main by getting {
-            dependsOn(commonMain)
-            dependencies {
-                api(project(":concurrency"))
-            }
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(commonRunnableMain)
+//            dependencies {
+//                api(project(":concurrency"))
+//            }
+//            kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxArm64Main by getting {
-            dependsOn(commonMain)
-            dependencies {
-                api(project(":concurrency"))
-            }
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(commonRunnableMain)
+//            dependencies {
+//                api(project(":concurrency"))
+//            }
+//            kotlin.srcDir("src/nativeMain/kotlin")
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
-            dependencies {
-                api(project(":concurrency"))
-            }
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(commonRunnableMain)
+//            dependencies {
+//                api(project(":concurrency"))
+//            }
+//            kotlin.srcDir("src/nativeMain/kotlin")
         }
 
         val mingwX64Main by getting {
-            dependsOn(commonMain)
-            dependencies {
-                api(project(":concurrency"))
-            }
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(commonRunnableMain)
+//            dependencies {
+//                api(project(":concurrency"))
+//            }
+//            kotlin.srcDir("src/nativeMain/kotlin")
         }
         val mingwX86Main by getting {
-            dependsOn(commonMain)
-            dependencies {
-                api(project(":concurrency"))
-            }
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(commonRunnableMain)
+//            dependencies {
+//                api(project(":concurrency"))
+//            }
+//            kotlin.srcDir("src/nativeMain/kotlin")
         }
 
         val macosX64Main by getting {
-            dependsOn(commonMain)
-            dependencies {
-                api(project(":concurrency"))
-            }
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(commonRunnableMain)
+//            dependencies {
+//                api(project(":concurrency"))
+//            }
+//            kotlin.srcDir("src/nativeMain/kotlin")
+        }
+
+        val jvmMain by getting {
+            dependsOn(commonRunnableMain)
         }
 
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
-                api(project(":concurrency"))
                 api(kotlin("test-annotations-common"))
             }
         }

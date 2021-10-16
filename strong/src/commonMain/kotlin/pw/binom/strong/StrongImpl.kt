@@ -5,6 +5,7 @@ import kotlin.reflect.KClass
 internal class StrongImpl : Strong {
 
     internal var beans = HashMap<String, BeanEntity>()
+    internal lateinit var destroyOrder:List<Strong.DestroyableBean>
 
     sealed class Dependency {
         class ClassDependency(val clazz: KClass<Any>, val name: String?, val require: Boolean) : Dependency()
@@ -46,11 +47,8 @@ internal class StrongImpl : Strong {
     override suspend fun destroy() {
         isDestroying = true
         try {
-            for (i in beanOrder.size - 1 downTo 0) {
-                val bean = beanOrder[i].second
-                if (bean is Strong.DestroyableBean) {
-                    bean.destroy(this)
-                }
+            destroyOrder.forEach {
+                it.destroy(this)
             }
         } finally {
             isDestroying = false
@@ -74,6 +72,4 @@ internal class StrongImpl : Strong {
     override fun <T : Any> contains(clazz: KClass<T>): Boolean {
         TODO("Not yet implemented")
     }
-
-    internal lateinit var beanOrder: List<Pair<String, Any>>
 }

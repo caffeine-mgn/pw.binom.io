@@ -1,5 +1,4 @@
-@file:JvmName("WorkerUtilsKt")
-
+@file:JvmName("WorkerImplJvmKt")
 package pw.binom.concurrency
 
 import pw.binom.FreezableFuture
@@ -167,8 +166,6 @@ actual class WorkerImpl (name: String?) : Executor, Worker, Dispatcher {
         }
     }
 }
-
-actual fun Worker.Companion.create(name: String?): Worker = WorkerImpl(name)
 
 actual val WorkerImpl.Companion.availableProcessors: Int
     get() = Runtime.getRuntime().availableProcessors()

@@ -6,6 +6,9 @@ import platform.windows.FreeEnvironmentStrings
 import platform.windows.GetEnvironmentStringsW
 import platform.windows.lstrlen
 
+actual val Environment.os: OS
+    get() = OS.WINDOWS
+
 actual val Environment.isBigEndian: Boolean
     get() = isBigEndianPrivate
 

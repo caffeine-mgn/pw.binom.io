@@ -3,6 +3,8 @@ package pw.binom.io.file
 import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.GetDiskFreeSpaceEx
+import pw.binom.Environment
+import pw.binom.getEnv
 import kotlin.native.concurrent.freeze
 
 actual class File actual constructor(path: String) {
@@ -31,6 +33,14 @@ actual class File actual constructor(path: String) {
     actual companion object {
         actual val SEPARATOR: Char
             get() = '\\'
+        actual val temporalDirectory: File?
+            get() {
+                val tmpDir = Environment.getEnv("TEMP") ?: Environment.getEnv("TMP")
+                if (tmpDir != null) {
+                    return File(tmpDir).takeIfDirection()
+                }
+                return null
+            }
     }
 
     actual fun delete(): Boolean {

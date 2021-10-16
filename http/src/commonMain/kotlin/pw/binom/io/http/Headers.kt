@@ -170,3 +170,13 @@ fun headersOf(vararg headers: Pair<String, String>): Headers {
 }
 
 fun emptyHeaders() = EmptyHeaders
+
+fun Headers.getCookies() =
+    this[Headers.COOKIE]
+        ?.asSequence()
+        ?.flatMap { it.splitToSequence("; ") }
+        ?.map {
+            val items = it.split("=", limit = 2)
+            items[0] to items[1]
+        }
+        ?.toMap() ?: emptyMap()
