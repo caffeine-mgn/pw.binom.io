@@ -12,7 +12,6 @@ internal object GraphUtils {
         val initing = HashSet<T>()
         val treePath = ArrayList<T>()
         fun init(e: T) {
-            println("init($e)")
             if (e in inited) {
                 return
             }
