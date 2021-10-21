@@ -41,7 +41,7 @@ Before using you must add repository:
 ```groovy
 repositories {
     maven {
-        url "https://repo.binom.pw/releases"
+        url "https://repo.binom.pw"
     }
 }
 ```
@@ -52,7 +52,7 @@ For using plugins you must use it:
 buildscript {
     repositories {
         maven {
-            url "https://repo.binom.pw/releases"
+            url "https://repo.binom.pw"
         }
     }
 }
