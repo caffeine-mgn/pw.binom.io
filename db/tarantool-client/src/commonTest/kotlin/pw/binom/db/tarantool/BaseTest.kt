@@ -25,7 +25,7 @@ abstract class BaseTest {
     )
 
     @OptIn(ExperimentalTime::class)
-    fun pg(func: suspend (TarantoolConnection) -> Unit) {
+    fun pg(func: suspend (TarantoolConnectionImpl) -> Unit) {
         val now = TimeSource.Monotonic.markNow()
         val manager = NetworkDispatcher()
         val dt = DeadlineTimer.create()
@@ -40,7 +40,7 @@ abstract class BaseTest {
                     )
                     val connection = try {
                         println("Connection to docker...")
-                        TarantoolConnection.connect(
+                        TarantoolConnectionImpl.connect(
                             address = address,
                             manager = manager,
                             userName = "server",

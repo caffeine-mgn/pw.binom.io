@@ -9,10 +9,10 @@ import kotlin.time.TimeSource
 import kotlin.time.seconds
 
 @OptIn(ExperimentalTime::class)
-fun tarantool(func: suspend (TarantoolConnection) -> Unit) {
+fun tarantool(func: suspend (TarantoolConnectionImpl) -> Unit) {
     val manager = NetworkDispatcher()
     val done = async2 {
-        var con: TarantoolConnection
+        var con: TarantoolConnectionImpl
         val now = TimeSource.Monotonic.markNow()
         while (true) {
             try {
@@ -20,7 +20,7 @@ fun tarantool(func: suspend (TarantoolConnection) -> Unit) {
                     host = "127.0.0.1",
                     port = 25321,
                 )
-                con = TarantoolConnection.connect(
+                con = TarantoolConnectionImpl.connect(
                     address = address,
                     manager = manager,
                     userName = "server",

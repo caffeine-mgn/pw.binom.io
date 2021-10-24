@@ -1,25 +1,30 @@
 package pw.binom.db.postgresql.async
 
 import pw.binom.*
-import pw.binom.charset.Charset
-import pw.binom.io.BufferedOutputAppendable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
 
 class PackageWriter(val connection:PGConnection) : Closeable {
     val buf16 = ByteBuffer.alloc(16)
     val output = ByteArrayOutput()
-//    val appender = BufferedOutputAppendable(connection.charsetUtils, output, longPool)
     private var cmdExist = false
-    var bodyStarted = false
+    private var bodyStarted = false
+
+    private inline fun checkBodyStarted(){
+        check(bodyStarted){"Body not started"}
+    }
+
+    private inline fun checkBodyNotStarted(){
+        check(!bodyStarted){"Body already started"}
+    }
 
     fun startBody() {
-        check(!bodyStarted)
+        checkBodyNotStarted()
         output.writeInt(buf16, 0)
         bodyStarted = true
     }
     fun writeCmd(cmd: Byte) {
-        check(!bodyStarted)
+        checkBodyNotStarted()
         if (cmdExist) {
             throw IllegalStateException("Cmd already wrote")
         }
@@ -28,7 +33,7 @@ class PackageWriter(val connection:PGConnection) : Closeable {
     }
 
     fun endBody() {
-        check(bodyStarted)
+        checkBodyStarted()
         val pos = output.data.position
         output.data.position = if (cmdExist) 1 else 0
         val len = if (cmdExist) output.size - 1 else output.size
@@ -45,7 +50,7 @@ class PackageWriter(val connection:PGConnection) : Closeable {
     }
 
     fun writeCString(text: String) {
-        check(bodyStarted)
+        checkBodyStarted()
         connection.charsetUtils.encode(text){
             output.write(it)
         }
@@ -53,7 +58,7 @@ class PackageWriter(val connection:PGConnection) : Closeable {
     }
 
     fun writeLengthString(text: String) {
-        check(bodyStarted)
+        checkBodyStarted()
         val pos = output.data.position
         output.writeInt(buf16, 0)
 
@@ -73,34 +78,24 @@ class PackageWriter(val connection:PGConnection) : Closeable {
     }
 
     fun write(data: ByteArray) {
-        check(bodyStarted)
+        checkBodyStarted()
         data.forEach {
             output.writeByte(buf16, it)
         }
-
-//        var l = data.size
-//        while (l > 0) {
-//            buf16.position = 0
-//            buf16.limit = minOf(l, buf16.capacity)
-//            buf16.write(data, data.size - l, buf16.limit)
-//            buf16.flip()
-//            l -= output.write(buf16)
-//        }
     }
 
     fun writeShort(value: Short) {
-        check(bodyStarted)
+        checkBodyStarted()
         output.writeShort(buf16, value)
     }
 
     fun writeInt(value: Int) {
-        check(bodyStarted)
+        checkBodyStarted()
         output.writeInt(buf16, value)
     }
 
     fun writeByte(value: Byte) {
-        check(bodyStarted)
+        checkBodyStarted()
         output.writeByte(buf16, value)
     }
-
 }

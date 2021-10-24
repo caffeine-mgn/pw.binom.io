@@ -9,5 +9,5 @@ import kotlinx.serialization.SerialInfo
 annotation class Index(
     val name: String,
     val unique: Boolean,
-    val columns: Array<String>,
+    val columns: String,
 )
