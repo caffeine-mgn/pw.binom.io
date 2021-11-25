@@ -1,5 +1,7 @@
 package pw.binom.io.httpClient
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import pw.binom.AsyncInput
 import pw.binom.CancelledException
 import pw.binom.EmptyAsyncInput
@@ -25,7 +27,7 @@ class DefaultHttpResponse(
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     override val responseCode: Int,
-    override val headers: Headers
+    override val headers: Headers,
 ) : HttpResponse {
     companion object {
         @OptIn(ExperimentalTime::class)
@@ -38,8 +40,8 @@ class DefaultHttpResponse(
         ): HttpResponse {
             var headerReadFlag = false
             if (timeout != null) {
-                client.networkDispatcher.startCoroutine {
-                    client.deadlineTimer.delay(timeout)
+                withContext(client.networkDispatcher) {
+                    delay(timeout)
                     if (!headerReadFlag) {
                         client.interruptAndClose(channel)
                     }
@@ -134,7 +136,8 @@ class DefaultHttpResponse(
         readData().bufferedReader(
             charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8,
             closeParent = true,
-            bufferSize = client.bufferSize,
+//            bufferSize = client.bufferSize,
+            pool = client.textBufferPool,
         )
 
     override suspend fun asyncClose() {

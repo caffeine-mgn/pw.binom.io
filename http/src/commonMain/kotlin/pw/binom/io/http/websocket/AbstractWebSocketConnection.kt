@@ -12,10 +12,10 @@ import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
 
 abstract class AbstractWebSocketConnection(
-    rawConnection: AsyncChannel,
+//    rawConnection: AsyncChannel,
     input: AsyncInput,
     output: AsyncOutput,
-    val networkDispatcher: NetworkDispatcher,
+//    val networkDispatcher: NetworkDispatcher,
 ) : WebSocketConnection {
 
     private val _output = output.asReference()
@@ -40,21 +40,21 @@ abstract class AbstractWebSocketConnection(
         doFreeze()
     }
 
-    override suspend fun write(type: MessageType, func: suspend (AsyncOutput) -> Unit) {
-        checkClosed()
-        func.doFreeze()
-        if (networkThread.same) {
-            write(type).use {
-                func(it)
-            }
-        } else {
-            networkDispatcher.start {
-                write(type).use {
-                    func(it)
-                }
-            }
-        }
-    }
+//    override suspend fun write(type: MessageType, func: suspend (AsyncOutput) -> Unit) {
+//        checkClosed()
+//        func.doFreeze()
+//        if (networkThread.same) {
+//            write(type).use {
+//                func(it)
+//            }
+//        } else {
+//            networkDispatcher.start {
+//                write(type).use {
+//                    func(it)
+//                }
+//            }
+//        }
+//    }
 
     private inline fun checkClosed() {
         if (closed)

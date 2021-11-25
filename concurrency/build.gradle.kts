@@ -68,6 +68,7 @@ kotlin {
             dependencies {
                 api(project(":core"))
                 api(kotlin("stdlib-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
 

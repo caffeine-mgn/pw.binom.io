@@ -1,5 +1,7 @@
 package pw.binom.concurrency
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Runnable
 import pw.binom.FreezableFuture
 import pw.binom.Future
 import pw.binom.atomic.AtomicBoolean
@@ -58,7 +60,7 @@ suspend fun <T> ExecutorService.useInContext(f: suspend () -> T) {
 //    }
 //}
 
-class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, Dispatcher {
+class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, Dispatcher, CoroutineDispatcher() {
     private class State(size: Int) {
         var interotped = AtomicBoolean(false)
         val tasks = AtomicInt(0)
@@ -177,5 +179,9 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
 
     override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>) {
         throw IllegalStateException("Can't resume Coroutine on Pool")
+    }
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        submit { block.run() }
     }
 }

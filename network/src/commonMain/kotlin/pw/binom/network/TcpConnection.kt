@@ -72,6 +72,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override fun connecting() {
+        println("Switch to connect key")
         key.listensFlag = Selector.EVENT_CONNECTED
     }
 

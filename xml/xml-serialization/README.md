@@ -1,7 +1,7 @@
-# Binom JSON
+# Binom XML
 Kotlin XML Serialization
 
-`kotlinx-serialization` version is `1.2.1`
+`kotlinx-serialization` version is `1.3.0`
 ## Using
 ### Gradle
 You must add repository. See [README](../../README.md)

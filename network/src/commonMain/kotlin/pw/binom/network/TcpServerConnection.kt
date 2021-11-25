@@ -7,7 +7,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class TcpServerConnection internal constructor(val dispatcher: NetworkImpl, val channel: TcpServerSocketChannel) :
+class TcpServerConnection internal constructor(val dispatcher: NetworkManager, val channel: TcpServerSocketChannel) :
     AbstractConnection() {
 
     companion object {

@@ -227,7 +227,7 @@ object UTF8 {
     }
 
     fun encode(input: String): String {
-        val sb = StringBuilder()
+        val sb = StringBuilder(input.length)
         input.encodeToByteArray().forEach {
             when (it) {
                 '.'.code.toByte(),
@@ -248,50 +248,25 @@ object UTF8 {
         return sb.toString()
     }
 
-//    fun decode(input: String): String {
-//        if (input.isEmpty()) {
-//            return input
-//        }
-//        val out = ByteArray(input.length)
-//        var cursor = 0
-//        var i = 0
-//        while (i < input.length) {
-//            if (input[i] == '%') {
-//                i++
-//                val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
-//                val b2 = input[i + 1].toString().toInt(16) and 0xf
-//                i += 1
-//                out[cursor++] = (b1 + b2).toByte()
-////                sb.writeByte((b1 + b2).toByte())
-//            } else {
-//                out[cursor++] = input[i].code.toByte()
-////                sb.writeByte(input[i].code.toByte())
-//            }
-//            i++
-//        }
-//        return out.decodeToString(endIndex = cursor,throwOnInvalidSequence = true)
-//    }
-
-    fun decode(input: String): String =
-        ByteArrayOutput().use { sb ->
-            ByteBuffer.alloc(1).use { buf ->
-                var i = 0
-                while (i < input.length) {
-                    if (input[i] == '%') {
-                        i++
-                        val b1 = (input[i].toString().toInt(16) and 0xf) shl 4
-                        val b2 = input[i + 1].toString().toInt(16) and 0xf
-                        i += 1
-                        sb.writeByte((b1 + b2).toByte())
-                    } else {
-                        sb.writeByte(input[i].code.toByte())
-                    }
-                    i++
-                }
-                sb.data.flip()
-                sb.data.asUTF8String()
-            }
+    fun decode(input: String): String {
+        if (input.isEmpty()) {
+            return ""
         }
+        val outputBuffer = ByteArray(input.length)
+        var index = 0
+        var charCounter = 0
+        while (index < input.length) {
+            if (input[index] == '%') {
+                val b1 = (input[++index].toString().toInt(16) and 0xf) shl 4
+                val b2 = input[++index].toString().toInt(16) and 0xf
+                outputBuffer[charCounter++] = (b1 + b2).toByte()
+            } else {
+                outputBuffer[charCounter++] = input[index].code.toByte()
+            }
+            index++
+        }
+        return outputBuffer.decodeToString(endIndex = charCounter)
+    }
 
     fun urlEncode(url: String) =
         url.splitToSequence("/").map { encode(it) }.joinToString("/")

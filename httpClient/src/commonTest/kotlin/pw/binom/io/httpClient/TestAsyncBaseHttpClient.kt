@@ -1,9 +1,11 @@
 package pw.binom.io.httpClient
 
+import kotlinx.coroutines.Dispatchers
 import pw.binom.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.use
 import pw.binom.net.toURI
+import pw.binom.network.Network
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import kotlin.test.Test
@@ -19,7 +21,7 @@ class TestAsyncBaseHttpClient {
     @Test
     fun timeoutTest() {
         val manager = NetworkDispatcher()
-        val client = BaseHttpClient(manager)
+        val client = BaseHttpClient(Dispatchers.Network)
         manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", 34636))
         val now = TimeSource.Monotonic.markNow()
         val e = manager.startCoroutine {
@@ -45,7 +47,7 @@ class TestAsyncBaseHttpClient {
     @OptIn(ExperimentalTime::class)
     fun test() {
         val manager = NetworkDispatcher()
-        val client = BaseHttpClient(manager)
+        val client = BaseHttpClient(Dispatchers.Network)
 
         val e = async2 {
 

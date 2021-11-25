@@ -330,19 +330,9 @@ internal class DBAccessImpl(
     override fun tableName(serializer: KSerializer<out Any>): String =
         getDescription(serializer).tableName
 
-    private fun EntityDescription.getSQL() =
-        if (useQuotes) {
-            "\"$tableName\""
-        } else {
-            tableName
-        }
+    private fun EntityDescription.getSQL() = fullTableName
 
-    private fun EntityDescription.Column.getSQL() =
-        if (useQuotes) {
-            "\"$columnName\""
-        } else {
-            columnName
-        }
+    private fun EntityDescription.Column.getSQL() = fullColumnName
 
     override fun columnName(serializer: KSerializer<out Any>, fieldName: String): String =
         getDescription(serializer).columns[fieldName]

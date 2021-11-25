@@ -1,14 +1,16 @@
 package pw.binom.io.httpClient
 
+import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.concurrency.DeadlineTimer
-import pw.binom.net.URI
 import pw.binom.io.AsyncChannel
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.socket.ssl.AsyncSSLChannel
 import pw.binom.io.socket.ssl.asyncChannel
+import pw.binom.net.URI
 import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkCoroutineDispatcher
 import pw.binom.network.NetworkDispatcher
 import pw.binom.network.TcpConnection
 import pw.binom.ssl.*
@@ -17,15 +19,18 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class BaseHttpClient(
-    override val networkDispatcher: NetworkDispatcher,
+//    override val networkDispatcher: NetworkDispatcher,
+    val networkDispatcher:NetworkCoroutineDispatcher,
     val useKeepAlive: Boolean = true,
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,
-    val bufferSize: Int = DEFAULT_BUFFER_SIZE
+    val bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    bufferCapacity: Int = 16
 ) : HttpClient {
     internal val deadlineTimer = DeadlineTimer.create()
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
+    internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, size = bufferSize.toUInt())
 
     internal fun recycleConnection(URI: URI, channel: AsyncAsciiChannel) {
         connections.getOrPut(URI.asKey) { ArrayList() }.add(channel)
@@ -55,7 +60,7 @@ class BaseHttpClient(
             val sslSession = sslContext.clientSession(host = uri.host, port = port)
             channel = sslSession.asyncChannel(channel)
         }
-        return AsyncAsciiChannel(channel = channel, bufferSize = bufferSize)
+        return AsyncAsciiChannel(pool = textBufferPool, channel = channel)
     }
 
     internal suspend fun interruptAndClose(channel: AsyncAsciiChannel) {

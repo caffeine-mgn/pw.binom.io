@@ -3,6 +3,7 @@ package pw.binom.io
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.pool.ObjectPool
 
 abstract class AbstractAsyncBufferedAsciiWriter(
     val closeParent: Boolean
@@ -91,15 +92,30 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
 }
 
-class AsyncBufferedAsciiWriter(
-    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+class AsyncBufferedAsciiWriter private constructor(
     override val output: AsyncOutput,
+    private val pool: ObjectPool<ByteBuffer>?,
+    override val buffer: ByteBuffer,
+    private var closeBuffer: Boolean,
     closeParent: Boolean = true
 ) :
     AbstractAsyncBufferedAsciiWriter(closeParent = closeParent) {
-    init {
-        require(bufferSize > 4)
-    }
+
+    constructor(output: AsyncOutput, pool: ObjectPool<ByteBuffer>, closeParent: Boolean = true) : this(
+        output = output,
+        pool = pool,
+        buffer = pool.borrow(),
+        closeBuffer = false,
+        closeParent = closeParent,
+    )
+
+    constructor(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) : this(
+        output = output,
+        pool = null,
+        buffer = ByteBuffer.alloc(bufferSize),
+        closeBuffer = true,
+        closeParent = closeParent,
+    )
 
     fun reset() {
         buffer.clear()
@@ -107,11 +123,20 @@ class AsyncBufferedAsciiWriter(
 
     override suspend fun asyncClose() {
         super.asyncClose()
-        buffer.close()
+        if (closeBuffer) {
+            buffer.close()
+        } else {
+            pool?.recycle(buffer)
+        }
     }
-
-    override val buffer = ByteBuffer.alloc(bufferSize)
 }
+
+fun AsyncOutput.bufferedAsciiWriter(pool:ObjectPool<ByteBuffer>, closeParent: Boolean = true) =
+    AsyncBufferedAsciiWriter(
+        output = this,
+        pool = pool,
+        closeParent = closeParent
+    )
 
 fun AsyncOutput.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) =
     AsyncBufferedAsciiWriter(

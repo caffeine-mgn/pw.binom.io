@@ -4,6 +4,15 @@ import pw.binom.db.tarantool.TarantoolException
 
 internal data class Package(val header: Map<Int, Any?>, val body: Map<Int, Any?>) {
 
+    val code: Int
+        get() = header[Key.CODE.id]?.let { it as Int } ?: 0
+
+    val isError
+        get() = code != 0
+
+    val errorMessage
+        get() = body[Key.ERROR.id] as? String?
+
     fun assertException() {
         val code = header[Key.CODE.id] ?: return
         if (code != 0) {

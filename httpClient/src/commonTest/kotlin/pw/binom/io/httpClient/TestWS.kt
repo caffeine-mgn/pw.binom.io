@@ -1,12 +1,13 @@
 package pw.binom.io.httpClient
 
-import pw.binom.async
+import kotlinx.coroutines.Dispatchers
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.toURI
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
+import pw.binom.network.Network
 import pw.binom.network.NetworkDispatcher
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -79,7 +80,7 @@ class TestWS {
         val manager = NetworkDispatcher()
         manager.startCoroutine {
             try {
-                val client = BaseHttpClient(manager)
+                val client = BaseHttpClient(Dispatchers.Network)
                 val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURI())
                     .startWebSocket("http://127.0.0.1:8080")
 

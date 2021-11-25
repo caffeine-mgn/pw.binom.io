@@ -18,8 +18,13 @@ class DateTest {
     @Ignore
     @Test
     fun zeroTimeTest() {
+        println("--->${Date(0).calendar().iso8601()}")
         val zeroTime = Date.of(year = 0, timeZoneOffset = 0).time
         assertEquals(TestData.ZERO_TIME, zeroTime)
+        println("--------->${Date.of(year = 1960, timeZoneOffset = 0).time}")
+        val c = Date.of(year = 1970, timeZoneOffset = 0).calendar()
+        println("c=$c")
+
     }
 
     @Ignore

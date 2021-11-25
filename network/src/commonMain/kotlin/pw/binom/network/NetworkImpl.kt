@@ -19,7 +19,7 @@ import kotlin.coroutines.suspendCoroutine
 //    }
 //}
 
-internal class NetworkImpl : Closeable {
+internal class NetworkImpl : Closeable, NetworkManager {
     private val selector = Selector.open()
     private val internalUdpContinuation = UdpSocketChannel()
     private val internalContinuation =
@@ -96,7 +96,7 @@ internal class NetworkImpl : Closeable {
         return attach(channel)
     }
 
-    fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
+    override fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
         val con = TcpServerConnection(this, channel)
         con.key = selector.attach(channel, 0, con)
         return con
@@ -113,14 +113,14 @@ internal class NetworkImpl : Closeable {
         return attach(channel)
     }
 
-    fun attach(channel: UdpSocketChannel): UdpConnection {
+    override fun attach(channel: UdpSocketChannel): UdpConnection {
         val con = UdpConnection(channel)
         val key = selector.attach(channel, 0, con)
         con.key = key
         return con
     }
 
-    fun attach(channel: TcpClientSocketChannel): TcpConnection {
+    override fun attach(channel: TcpClientSocketChannel): TcpConnection {
         val con = TcpConnection(channel)
         val key = selector.attach(channel, 0, con)
         con.key = key

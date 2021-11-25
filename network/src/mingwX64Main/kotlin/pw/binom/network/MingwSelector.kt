@@ -46,6 +46,8 @@ class MingwSelector : AbstractSelector() {
 
     private val native = epoll_create(1000)!!
     private val list = nativeHeap.allocArray<epoll_event>(1000)
+    override val nativeSelectedKeys
+        get() = nativeSelectedKeys2
 
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
@@ -60,6 +62,57 @@ class MingwSelector : AbstractSelector() {
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
         }
         return key
+    }
+
+    private var eventCount = 0
+    private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
+        private val event = object : NativeKeyEvent {
+            override lateinit var key: AbstractKey
+            override var mode: Int = 0
+        }
+        private var currentNum = 0
+        fun reset() {
+            currentNum = 0
+        }
+
+        override fun hasNext(): Boolean {
+            if (currentNum == eventCount) {
+                return false
+            }
+            return true
+        }
+
+        override fun next(): NativeKeyEvent {
+            if (!hasNext()) {
+                throw NoSuchElementException()
+            }
+            val item = list[currentNum++]
+            val keyPtr = item.data.ptr!!.asStableRef<MingwKey>()
+            val key = keyPtr.get()
+            if (!key.connected) {
+                when {
+                    EPOLLERR in item.events || EPOLLRDHUP in item.events -> {
+                        key.resetMode(0)
+                        event.key = key
+                        event.mode = 0
+                        return event
+                    }
+                    EPOLLOUT in item.events -> {
+                        key.resetMode(0)
+                        event.key = key
+                        event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                        key.connected = true
+                        return event
+
+                    }
+                    else -> throw IllegalStateException("Unknown selector key status")
+                }
+            } else {
+                event.key = key
+                event.mode = epollNativeToCommon(item.events.convert())
+                return event
+            }
+        }
     }
 
     override fun nativeSelect(timeout: Long, func: (AbstractKey, mode: Int) -> Unit): Int {
@@ -91,6 +144,11 @@ class MingwSelector : AbstractSelector() {
         return eventCount
     }
 
+    override fun nativeSelect(timeout: Long) {
+        nativeSelectedKeys2.reset()
+        eventCount = epoll_wait(native, list.reinterpret(), 1000, timeout.toInt())
+    }
+
     override fun close() {
         epoll_close(native)
         nativeHeap.free(list)
@@ -110,7 +168,7 @@ fun epollNativeToCommon(mode: Int): Int {
 
 actual fun createSelector(): Selector = MingwSelector()
 
-fun modeToString(mode: UInt): String {
+internal fun modeToString(mode: UInt): String {
     val sb = StringBuilder()
     if (mode and EPOLLIN != 0u)
         sb.append("EPOLLIN ")

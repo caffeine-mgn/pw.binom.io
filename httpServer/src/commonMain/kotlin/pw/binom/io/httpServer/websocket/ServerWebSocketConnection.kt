@@ -9,13 +9,13 @@ import pw.binom.network.NetworkDispatcher
 class ServerWebSocketConnection(
     input: AsyncInput,
     output: AsyncOutput,
-    rawConnection: AsyncChannel,
-    networkDispatcher: NetworkDispatcher,
+//    rawConnection: AsyncChannel,
+//    networkDispatcher: NetworkDispatcher,
 ) : AbstractWebSocketConnection(
     input = input,
     output = output,
-    rawConnection = rawConnection,
-    networkDispatcher = networkDispatcher
+//    rawConnection = rawConnection,
+//    networkDispatcher = networkDispatcher
 ) {
     override val masking: Boolean
         get() = false

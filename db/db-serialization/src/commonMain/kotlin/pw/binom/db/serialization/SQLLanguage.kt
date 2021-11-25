@@ -6,7 +6,9 @@ interface SQLLanguage {
     val tableNameQuotesStart: String
     val tableNameQuotesEnd: String
     fun isSupport(databaseInfo: DatabaseInfo): Boolean
+
     fun select(
+        tableName:String?,
         query: String?,
         result: EntityDescription,
     ): SQLQueryNamedArguments

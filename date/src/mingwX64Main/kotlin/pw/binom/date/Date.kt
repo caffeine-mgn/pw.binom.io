@@ -38,7 +38,7 @@ actual value class Date(val time: Long = nowTime) {
         ): Date {
             val year2 = year - 1900
             val month2 = month - 1
-            if (year < 1970) {
+            if (year <= 1970) {
                 var yearDay = dayOfMonth
                 var currentMonth = 0
                 while (currentMonth < month2) {
@@ -57,7 +57,7 @@ actual value class Date(val time: Long = nowTime) {
             }
             return memScoped {
 
-                val today_t = alloc<time_tVar>();
+                val today_t = alloc<time_tVar>()
                 time(today_t.ptr)
 
                 val t = alloc<tm>()
@@ -71,7 +71,7 @@ actual value class Date(val time: Long = nowTime) {
                 val tx = timeZoneOffset - Date.systemZoneOffset
                 val time = _mktime64(t.ptr)
                 if (time == -1L) {
-                    throw IllegalStateException("Fail on _mktime64. Input: ${year.as4()}-${month.as2()}-${dayOfMonth.as2()} ${hours.as2()}:${minutes.as2()}:${seconds.as2()}.${millis.as3()}")
+                    throw IllegalStateException("Fail on _mktime64. Input: ${year.as4()}-${month.as2()}-${dayOfMonth.as2()} ${hours.as2()}:${minutes.as2()}:${seconds.as2()}.${millis.as3()} TZ=$timeZoneOffset")
                 }
                 val r = (time - tx * 60L) * 1000L + millis
                 Date(r)

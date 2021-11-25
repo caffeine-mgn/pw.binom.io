@@ -2,13 +2,10 @@ package pw.binom.db.tarantool
 
 import pw.binom.*
 import pw.binom.concurrency.ThreadRef
-import pw.binom.coroutine.fork
 import pw.binom.db.tarantool.protocol.*
-import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.ClosedException
 import pw.binom.io.IOException
-import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
@@ -236,7 +233,9 @@ class TarantoolConnectionImpl internal constructor(
             ),
             schemaId = schemaVersion
         )
-        result.assertException()
+        if (result.isError) {
+            throw TarantoolEvalException(script = lua, errorMessage = result.errorMessage)
+        }
         return result.data
     }
 
@@ -250,7 +249,9 @@ class TarantoolConnectionImpl internal constructor(
             ),
             schemaId = schemaVersion
         )
-        result.assertException()
+        if (result.isError) {
+            throw TarantoolEvalException(script = lua, errorMessage = result.errorMessage)
+        }
         return result.data
     }
 

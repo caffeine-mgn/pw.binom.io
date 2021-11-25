@@ -7,28 +7,51 @@ import pw.binom.db.serialization.SQLLanguage
 import pw.binom.db.serialization.SQLQueryNamedArguments
 
 abstract class BasicLanguage : SQLLanguage {
+
+//    fun fullTableName(entity: EntityDescription): String {
+//        val sb = StringBuilder()
+//        fun addWithQ(name: String) {
+//            if (entity.useQuotes) {
+//                sb.append(tableNameQuotesStart)
+//            }
+//            sb.append(name)
+//            if (entity.useQuotes) {
+//                sb.append(tableNameQuotesEnd)
+//            }
+//        }
+//        if (entity.databaseName != null) {
+//            addWithQ(entity.databaseName)
+//        }
+//        if (entity.schemaName != null) {
+//            if (entity.databaseName != null) {
+//                sb.append(".")
+//            }
+//            addWithQ(entity.schemaName)
+//        }
+//        if (entity.databaseName != null || entity.schemaName != null) {
+//            sb.append(".")
+//        }
+//        addWithQ(entity.tableName)
+//        return sb.toString()
+//    }
+
     override fun select(
+        tableName: String?,
         query: String?,
         result: EntityDescription,
     ): SQLQueryNamedArguments {
         val sb = StringBuilder()
         sb.append("SELECT ")
-        val table = result.tableName
         var firsrt = true
-        result.columns.values.forEach {column ->
+        result.columns.values.forEach { column ->
             if (!firsrt) {
                 sb.append(", ")
             }
             firsrt = false
-            if (column.useQuotes) {
-                sb.append("\"")
-            }
-            sb.append(column.columnName)
-            if (column.useQuotes) {
-                sb.append("\"")
-            }
+            sb.append(column.fullColumnName)
         }
-        sb.append(" FROM ").append(table)
+        sb.append(" FROM ")
+        sb.append(tableName ?: result.fullTableName)
         if (query != null) {
             sb.append(" ").append(query)
         }

@@ -1,5 +1,7 @@
 package pw.binom.io.httpServer
 
+import kotlinx.coroutines.*
+import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.System
 import pw.binom.date.Date
@@ -38,6 +40,7 @@ class HttpServer(
         ).printStackTrace()
     }
 ) : AsyncCloseable {
+    internal val textBufferPool = ByteBufferPool(capacity = 16)
     private var closed = false
     private fun checkClosed() {
         if (closed) {
@@ -107,6 +110,38 @@ class HttpServer(
         }
     }
 
+    fun listenHttp(nd:NetworkCoroutineDispatcher=Dispatchers.Network, address: NetworkAddress): Job {
+        val serverChannel = TcpServerSocketChannel()
+        serverChannel.bind(address)
+        val server = nd.attach(serverChannel)
+        binds += server
+        nd as CoroutineScope
+        return nd.async {
+            try {
+                val currentJob = this.coroutineContext[Job]!!
+                while (!currentJob.isCancelled) {
+                    var channel: ServerAsyncAsciiChannel? = null
+                    try {
+                        idleCheck()
+                        val client = server.accept(null) ?: continue
+                        channel = ServerAsyncAsciiChannel(channel = client, pool = textBufferPool)
+                        clientProcessing(channel = channel, isNewConnect = true)
+                    } catch (e: Throwable) {
+                        runCatching { channel?.asyncClose() }
+                    }
+                }
+            } finally {
+                binds -= server
+                server.close()
+            }
+        }
+//        return Closeable {
+//            checkClosed()
+//            binds -= server
+//            server.close()
+//        }
+    }
+
     fun bindHttp(address: NetworkAddress): Closeable {
         val server = manager.bindTcp(address)
         binds += server
@@ -116,7 +151,7 @@ class HttpServer(
                 try {
                     idleCheck()
                     val client = server.accept(null) ?: continue
-                    channel = ServerAsyncAsciiChannel(client)
+                    channel = ServerAsyncAsciiChannel(channel = client, pool = textBufferPool)
                     clientProcessing(channel = channel, isNewConnect = true)
                 } catch (e: Throwable) {
                     runCatching { channel?.asyncClose() }

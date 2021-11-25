@@ -174,8 +174,8 @@ class DefaultHttpRequest constructor(
         return ClientWebSocketConnection(
             input = channel.reader,
             output = channel.writer,
-            rawConnection = channel.channel,
-            networkDispatcher = client.networkDispatcher,
+//            rawConnection = channel.channel,
+//            networkDispatcher = client.networkDispatcher,
         )
     }
 

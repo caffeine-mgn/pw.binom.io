@@ -1,14 +1,16 @@
 # Binom IO
 
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.5.31](https://img.shields.io/badge/Kotlin-1.5.31-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org) <br><br>
-Kotlin IO Library.<br>
+[![Kotlin 1.6.0](https://img.shields.io/badge/Kotlin-1.6.0-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org) <br><br>
+
+## What is Binom.IO?
+Binom.IO is a libraries for IO function implement for Kotlin-Common<br>
 
 ## Actual version
 
 Actual version is `0.1.32`
 
-## Parts of library
+## Parts of Binom.IO
 
 Library contains next parts:<br>
 
@@ -58,9 +60,7 @@ buildscript {
 }
 ```
 
-## Plans
-
-### Version 0.2
+## Features
 
 #### Process API
 
@@ -106,6 +106,7 @@ buildscript {
   [XmlElement](xml/src/commonMain/kotlin/pw/binom/xml/dom/XmlElement.kt),
   [XmlDomReader](xml/src/commonMain/kotlin/pw/binom/xml/dom/XmlDomReader.kt)
   and Method [xml](xml/src/commonMain/kotlin/pw/binom/xml/dom/TagWriteContext.kt)
+- [x] [XML Serialization](xml/xml-serialization)
 - [x] SSL
 - [x] Logger<br>
   See [Logger](logger/src/commonMain/kotlin/pw/binom/logger/Logger.kt)

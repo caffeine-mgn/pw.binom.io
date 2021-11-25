@@ -1,5 +1,7 @@
 package pw.binom.network
 
+import kotlinx.coroutines.invoke
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.concurrency.*
 import pw.binom.coroutine.start
@@ -42,6 +44,19 @@ fun NetworkDispatcher.single(func: suspend () -> Unit) {
 }
 
 class NetworkDispatcherTest {
+
+    @Test
+    fun aaa() {
+        val nd = NetworkCoroutineDispatcher()
+        var connected = false
+        runBlocking {
+            nd.invoke {
+                nd.tcpConnect(NetworkAddress.Immutable("google.com", 443))
+                connected = true
+            }
+        }
+        assertTrue(connected)
+    }
 
     @Test
     fun connectTest() {

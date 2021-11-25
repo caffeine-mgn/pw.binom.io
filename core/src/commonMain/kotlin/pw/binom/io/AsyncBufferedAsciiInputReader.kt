@@ -4,15 +4,52 @@ import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.empty
+import pw.binom.pool.ObjectPool
 
-class AsyncBufferedAsciiInputReader(
+class AsyncBufferedAsciiInputReader private constructor(
     val stream: AsyncInput,
-    val bufferSize: Int = DEFAULT_BUFFER_SIZE,
+//    val bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    private val pool: ObjectPool<ByteBuffer>?,
+    private val buffer: ByteBuffer,
+    private var closeBuffer: Boolean,
     val closeParent: Boolean = true,
 ) : AsyncReader, AsyncInput {
-    init {
-        require(bufferSize > 4)
-    }
+
+    constructor(
+        stream: AsyncInput,
+        pool: ObjectPool<ByteBuffer>,
+        closeParent: Boolean = true,
+    ) : this(
+        stream = stream,
+        pool = pool,
+        buffer = pool.borrow().empty(),
+        closeBuffer = false,
+        closeParent = closeParent,
+    )
+
+    constructor(
+        stream: AsyncInput,
+        buffer: ByteBuffer,
+        closeParent: Boolean = true,
+    ) : this(
+        stream = stream,
+        pool = null,
+        buffer = buffer.empty(),
+        closeBuffer = false,
+        closeParent = closeParent,
+    )
+
+    constructor(
+        stream: AsyncInput,
+        bufferSize: Int = DEFAULT_BUFFER_SIZE,
+        closeParent: Boolean = true,
+    ) : this(
+        stream = stream,
+        pool = null,
+        buffer = ByteBuffer.alloc(bufferSize).empty(),
+        closeBuffer = true,
+        closeParent = closeParent,
+    )
 
     private var eof = false
     private var closed = false
@@ -28,7 +65,7 @@ class AsyncBufferedAsciiInputReader(
         }
     }
 
-    private val buffer = ByteBuffer.alloc(bufferSize).empty()
+//    private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
     override val available: Int
         get() = if (closed) 0 else if (buffer.remaining > 0) buffer.remaining else -1
@@ -62,7 +99,11 @@ class AsyncBufferedAsciiInputReader(
     override suspend fun asyncClose() {
         checkClosed()
         closed = true
-        buffer.close()
+        if (closeBuffer) {
+            buffer.close()
+        } else {
+            pool?.recycle(buffer)
+        }
         if (closeParent) {
             stream.asyncClose()
         }
@@ -73,7 +114,7 @@ class AsyncBufferedAsciiInputReader(
         full()
         if (buffer.remaining <= 0)
             return null
-        return buffer.get().toChar()
+        return buffer.get().toInt().toChar()
     }
 
     override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
@@ -147,5 +188,12 @@ fun AsyncInput.bufferedAsciiReader(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeP
     AsyncBufferedAsciiInputReader(
         stream = this,
         bufferSize = bufferSize,
+        closeParent = closeParent,
+    )
+
+fun AsyncInput.bufferedAsciiReader(pool: ObjectPool<ByteBuffer>, closeParent: Boolean = true) =
+    AsyncBufferedAsciiInputReader(
+        stream = this,
+        pool = pool,
         closeParent = closeParent,
     )

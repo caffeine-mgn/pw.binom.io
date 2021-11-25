@@ -82,6 +82,7 @@ kotlin {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
                 api(project(":httpServer"))
+                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
             }
         }
         val jvmTest by getting {

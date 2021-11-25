@@ -56,6 +56,7 @@ kotlin {
                 api(project(":ssl"))
                 api(project(":http"))
                 api(project(":httpClient"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
 

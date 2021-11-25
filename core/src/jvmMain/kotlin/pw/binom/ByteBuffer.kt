@@ -6,7 +6,7 @@ import pw.binom.io.use
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
-
+//private var rr = 0
 actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer =
@@ -14,6 +14,10 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
 
         fun wrap(native: JByteBuffer) = ByteBuffer(native)
     }
+//    init {
+//        val stack = Thread.currentThread().stackTrace.joinToString { "${it.className}.${it.methodName}:${it.lineNumber} ->" }
+//        println("create ${rr++}   $stack")
+//    }
 
     private var closed = false
     private inline fun checkClosed() {

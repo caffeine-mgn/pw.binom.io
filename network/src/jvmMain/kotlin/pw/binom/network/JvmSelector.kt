@@ -29,7 +29,7 @@ class JvmSelector : Selector {
 
     @Volatile
     private var selecting = false
-    private var networkThread = ThreadRef()
+//    private var networkThread = ThreadRef()
 
     inner class JvmKey(
         override val attachment: Any?
@@ -75,9 +75,9 @@ class JvmSelector : Selector {
                 checkClosed()
                 val javaOps = commonToJava(native.channel(), value)
                 native.interestOps(javaOps)
-                if (!networkThread.same) {
-                    native.selector().wakeup()
-                }
+//                if (!networkThread.same) {
+                native.selector().wakeup()
+//                }
             }
 
         override fun close() {
@@ -86,6 +86,60 @@ class JvmSelector : Selector {
             native.interestOps(0)
 //            native.cancel()
         }
+    }
+
+    private val nn = object : Iterator<Selector.KeyEvent> {
+        private lateinit var keys: Iterator<SelectionKey>
+        fun reset() {
+            keys = native.selectedKeys().iterator()
+        }
+
+        private val o = object : Selector.KeyEvent {
+            override lateinit var key: Selector.Key
+            override var mode: Int = 0
+
+            override fun toString(): String = selectorModeToString(mode)
+        }
+
+        override fun hasNext(): Boolean = keys.hasNext()
+
+        override fun next(): Selector.KeyEvent {
+            val it = keys.next()
+
+            if (it.isConnectable) {
+                val cc = it.channel() as SocketChannel
+
+                try {
+                    val connected = cc.finishConnect()
+                    if (connected) {
+                        o.key = it.attachment() as JvmKey
+                        o.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                        if (it.isValid && it.interestOps() and SelectionKey.OP_CONNECT != 0) {
+                            it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
+                        }
+                        return o
+                    } else {
+                        o.mode = 0
+                    }
+                } catch (e: ConnectException) {
+                    o.key = it.attachment() as JvmKey
+                    o.mode = Selector.EVENT_ERROR
+                    return o
+                } catch (e: SocketException) {
+                    o.key = it.attachment() as JvmKey
+                    o.mode = Selector.EVENT_ERROR
+                    return o
+                }
+//                }
+//                if (it.isConnectable) {
+//                    return@forEach
+//                }
+            }
+            o.key = it.attachment() as JvmKey
+            o.mode = javaToCommon(it.readyOps())
+            return o
+        }
+
     }
 
     @OptIn(ExperimentalTime::class)
@@ -128,7 +182,7 @@ class JvmSelector : Selector {
                         count++
                         func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
                         continue
-                    } catch (e: SocketException){
+                    } catch (e: SocketException) {
                         count++
                         func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
                         continue
@@ -146,6 +200,18 @@ class JvmSelector : Selector {
         } finally {
             selecting = false
         }
+    }
+
+    override fun select(timeout: Long): Iterator<Selector.KeyEvent> {
+        native.selectedKeys().clear()
+        when {
+            timeout > 0L -> native.select(timeout)
+            timeout == 0L -> native.selectNow()
+            timeout < 0L -> native.select()
+            else -> throw IllegalArgumentException("Invalid timeout $timeout")
+        }
+        nn.reset()
+        return nn
     }
 
     override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): Selector.Key {
@@ -176,7 +242,7 @@ class JvmSelector : Selector {
 
 actual fun createSelector(): Selector = JvmSelector()
 
-fun jvmModeToString(mode: Int): String {
+internal fun jvmModeToString(mode: Int): String {
     val sb = StringBuilder()
     if (SelectionKey.OP_CONNECT and mode != 0) {
         sb.append("OP_CONNECT ")
