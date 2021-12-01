@@ -39,9 +39,11 @@ kotlin {
         }
     }
 
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+            }
         }
     }
     js("js", BOTH) {
@@ -75,8 +77,10 @@ kotlin {
         val mingwX64Main by getting {
             dependsOn(commonMain)
         }
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(commonMain)
+            }
         }
 
         val macosX64Main by getting {

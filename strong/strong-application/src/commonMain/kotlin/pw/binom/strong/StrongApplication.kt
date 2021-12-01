@@ -3,13 +3,13 @@ package pw.binom.strong
 import pw.binom.concurrency.asReference
 import pw.binom.getOrException
 import pw.binom.io.use
-import pw.binom.network.NetworkDispatcher
 import pw.binom.process.Signal
 import pw.binom.strong.exceptions.StartupException
 import pw.binom.strong.exceptions.StrongException
-
+/*
 object StrongApplication {
     fun start(vararg config: Strong.Config, afterInit: ((Strong) -> Unit)? = null) {
+        runBlocking {  }
         NetworkDispatcher().use { networkDispatcher ->
             val initProcess = networkDispatcher.startCoroutine {
                 Strong.create(
@@ -30,7 +30,7 @@ object StrongApplication {
                 Result.success(Unit)
             }
             if (initFunc.isSuccess) {
-                while (!Signal.isInterrupted && !strong.value.isInterrupted) {
+                while (!Signal.isInterrupted && !strong.value.isDestroyed) {
                     networkDispatcher.select(1000)
                 }
             }
@@ -62,3 +62,4 @@ object StrongApplication {
         }
     }
 }
+*/

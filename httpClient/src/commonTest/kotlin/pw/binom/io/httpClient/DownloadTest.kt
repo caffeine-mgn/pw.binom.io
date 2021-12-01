@@ -13,10 +13,10 @@ class DownloadTest {
     @Test
     fun test() =
         runBlocking {
-            HttpClient.create1(networkDispatcher = Dispatchers.Network).use { client ->
+            HttpClient.create().use { client ->
                 client.connect(
                     method = "GET",
-                    uri = "https://example.com".toURI(),
+                    uri = "https://www.ntv.ru/".toURI(),
                 ).use { query->
                     val txt = query.getResponse().readText().use { it.readText() }
                     println("txt: $txt")

@@ -3,7 +3,6 @@ package pw.binom.network
 import pw.binom.ByteBuffer
 import pw.binom.CancelledException
 import pw.binom.io.use
-import pw.binom.popOrNull
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine

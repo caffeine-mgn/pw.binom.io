@@ -27,7 +27,7 @@ class Ololo {
                 this.isActive
             }
 
-            val network = NetworkCoroutineDispatcher()
+            val network = NetworkCoroutineDispatcherImpl()
 
             val ccc = TcpServerSocketChannel()
             println("Bind on 8335")

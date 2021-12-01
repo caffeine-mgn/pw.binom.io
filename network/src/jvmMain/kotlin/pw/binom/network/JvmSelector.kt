@@ -1,6 +1,5 @@
 package pw.binom.network
 
-import pw.binom.concurrency.ThreadRef
 import java.net.ConnectException
 import java.net.SocketException
 import java.nio.channels.*

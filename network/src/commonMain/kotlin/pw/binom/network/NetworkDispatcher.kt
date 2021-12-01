@@ -12,7 +12,7 @@ import pw.binom.io.Closeable
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.startCoroutine
-
+/*
 class NetworkDispatcher : Dispatcher, Closeable {
     private val networkThread = ThreadRef()
     private val network = Reference(NetworkImpl())
@@ -141,3 +141,4 @@ class NetworkDispatcher : Dispatcher, Closeable {
         return r.joinAndGetOrThrow()
     }
 }
+*/

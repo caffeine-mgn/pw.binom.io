@@ -16,6 +16,9 @@ internal sealed interface Pattern {
             }
             return when {
                 CustomText.find(format, position) -> CustomText(format, position)
+                SSSSSSSSS.find(format, position) -> SSSSSSSSS
+                SSSSSSSS.find(format, position) -> SSSSSSSS
+                SSSSSSS.find(format, position) -> SSSSSSS
                 yyyy.find(format, position) -> yyyy
                 MMM.find(format, position) -> MMM
                 MM.find(format, position) -> MM
@@ -32,6 +35,7 @@ internal sealed interface Pattern {
                 XXX.find(format, position) -> XXX
                 XX.find(format, position) -> XX
                 X.find(format, position) -> X
+                zGTZ.find(format, position) -> zGTZ
                 Z.find(format, position) -> Z
                 MINUS.find(format, position) -> MINUS
                 SLASH.find(format, position) -> SLASH
@@ -574,6 +578,94 @@ internal sealed interface Pattern {
         override fun toString(): String = "SSS"
     }
 
+    /**
+     * Miliseconds. 9 numbers
+     */
+    object SSSSSSSSS : Pattern {
+        override val patternLength: Int
+            get() = 9
+
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "SSSSSSSSS", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            if (position + 9 > text.length) {
+                return -1
+            }
+            val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.MILLISECOND, hours/1000000)
+            return 9
+        }
+
+        override fun toString(calendar: Calendar): String =
+            "${calendar.millisecond.as3()}000000"
+
+        override fun toString(): String = "SSSSSSSSS"
+    }
+    /**
+     * Miliseconds. 8 numbers
+     */
+    object SSSSSSSS : Pattern {
+        override val patternLength: Int
+            get() = 8
+
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "SSSSSSSS", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            if (position + 8 > text.length) {
+                return -1
+            }
+            val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.MILLISECOND, hours/100000)
+            return 8
+        }
+
+        override fun toString(calendar: Calendar): String =
+            "${calendar.millisecond.as3()}00000"
+
+        override fun toString(): String = "SSSSSSSS"
+    }
+    /**
+     * Miliseconds. 7 numbers
+     */
+    object SSSSSSS : Pattern {
+        override val patternLength: Int
+            get() = 8
+
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "SSSSSSS", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            if (position + 7 > text.length) {
+                return -1
+            }
+            val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.MILLISECOND, hours/10000)
+            return 7
+        }
+
+        override fun toString(calendar: Calendar): String =
+            "${calendar.millisecond.as3()}0000"
+
+        override fun toString(): String = "SSSSSSS"
+    }
+
     object SSm : Pattern {
         override val patternLength: Int
             get() = 2
@@ -838,6 +930,43 @@ internal sealed interface Pattern {
     }
 
     /**
+     * Timezone. Example: "Z"
+     */
+    object zGTZ : Pattern {
+        override val patternLength: Int
+            get() = 1
+
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "z", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            if (text[position] == 'Z') {
+                set?.invoke(FieldType.TIME_ZONE, 0)
+                return 1
+            }
+
+            return -1
+        }
+
+        override fun toString(calendar: Calendar): String {
+            if (calendar.timeZoneOffset!=0){
+                val t = calendar.timeZoneOffset.absoluteValue
+                val h = t / 60
+                val m = t - h * 60
+                val tz = "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
+                throw RuntimeException("Can't convert timezone $tz to General time zone")
+            }
+            return "Z"
+        }
+        override fun toString(): String = "Z"
+    }
+
+    /**
      * "-"
      */
     object MINUS : Pattern {
@@ -1018,3 +1147,4 @@ internal fun Int.as4() =
         this >= 1000 && this <= 9999 -> toString()
         else -> throw IllegalArgumentException("Input integer $this should be in interval 0..9999")
     }
+

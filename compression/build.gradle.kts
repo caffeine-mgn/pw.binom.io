@@ -38,10 +38,11 @@ kotlin {
             staticLib()
         }
     }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+            }
         }
     }
 
@@ -75,9 +76,11 @@ kotlin {
             dependsOn(commonMain)
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
 
         val macosX64Main by getting {

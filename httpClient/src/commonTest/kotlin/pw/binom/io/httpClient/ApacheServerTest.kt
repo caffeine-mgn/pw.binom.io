@@ -34,7 +34,7 @@ class ApacheServerTest {
             NetworkDispatcher().use { nd ->
                 val time = measureTime {
                     nd.runSingle {
-                        HttpClient.create1(Dispatchers.Network).use { http ->
+                        HttpClient.create(Dispatchers.Network).use { http ->
                             repeat(500) {
                                 http.connect(
                                     method = "GET",

@@ -1,9 +1,15 @@
 package pw.binom.strong
 
+import kotlinx.coroutines.*
 import pw.binom.async2
+import pw.binom.concurrency.sleep
 import kotlin.reflect.KClass
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class StrongTest {
 
@@ -32,10 +38,38 @@ class StrongTest {
     class OO : Client
     class VV
 
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun destroyTest() {
+        val time = measureTime {
+            GlobalScope.launch {
+                Strong.launch(Strong.config {
+                    it.bean {
+                        VV()
+                    }
+                    it.bean {
+                        object : Strong.InitializingBean {
+                            override suspend fun init(strong: Strong) {
+                                GlobalScope.launch {
+                                    delay(3000)
+                                    strong.destroy()
+                                }
+                            }
+                        }
+                    }
+                })
+            }.joinForce()
+        }
+
+        assertTrue(time>2.seconds)
+        assertTrue(time<4.seconds)
+    }
+
     @Ignore
     @Test
     fun aaa() {
         class A
+
         val s = async2 {
             val factory = object : Strong.BeanFactory<A> {
                 override val type: KClass<A>
@@ -44,7 +78,7 @@ class StrongTest {
                 override suspend fun provide(strong: Strong): A = A()
             }
 
-            class TestClass:Strong.Bean(){
+            class TestClass : Strong.Bean() {
                 val a by strong.inject<A>()
             }
 
@@ -56,7 +90,7 @@ class StrongTest {
             )
             println("->${s.service(TestClass::class).service.a}")
         }
-        if (s.isFailure){
+        if (s.isFailure) {
             throw s.exceptionOrNull!!
         }
     }
@@ -133,7 +167,7 @@ class StrongTest {
                     definer.bean { MyBean3() }
                     definer.bean { MyBean4() }
                     definer.bean { ClientWraper() }
-                    definer.wrap<MyBean3,ClientImpl> { bean3 -> ClientImpl(bean3) }
+                    definer.wrap<MyBean3, ClientImpl> { bean3 -> ClientImpl(bean3) }
                 }
             )
 
@@ -153,6 +187,7 @@ class StrongTest {
     }
 }
 
+@Deprecated("Not Use it. It will be deleted")
 private inline fun <reified P1 : Any, reified T : Any> Definer.wrap(noinline func: (P1) -> T) {
     bean {
         val o by it.inject<P1>()

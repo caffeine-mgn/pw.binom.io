@@ -1,21 +1,57 @@
 package pw.binom.io.httpClient
 
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import pw.binom.*
 import pw.binom.io.http.HTTPMethod
+import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.toURI
-import pw.binom.network.Network
-import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.*
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
+@ExperimentalTime
 class TestAsyncBaseHttpClient {
+
+    @Test
+    fun timeoutTest2() {
+        NetworkCoroutineDispatcher.create().let { nd ->
+            runBlocking {
+                withContext(nd) {
+                    nd.bindTcp(NetworkAddress.Immutable(port = TcpServerConnection.randomPort())).use { server ->
+                        launch {
+                            println("wait client")
+                            try {
+                                server.accept()
+                                println("client connected")
+                            } catch (e:Throwable){
+                                //Do nothing
+                            }
+                        }
+                        HttpClient.create(nd).use { client ->
+                            try {
+//                                withTimeout(5.seconds) {
+                                    client.connect(
+                                        method = "GET",
+                                        uri = "http://127.0.0.1:${server.port}/".toURI(),
+//                                        uri = "http://example.com/".toURI(),
+                                    timeout = 5.seconds,
+                                    ).getResponse().readText().use { it.readText() }
+//                                }
+                            } catch (e: Throwable) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     @OptIn(ExperimentalTime::class)
     @Test

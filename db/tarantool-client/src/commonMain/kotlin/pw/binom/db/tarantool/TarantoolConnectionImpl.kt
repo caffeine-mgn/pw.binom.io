@@ -6,12 +6,14 @@ import pw.binom.db.tarantool.protocol.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.ClosedException
 import pw.binom.io.IOException
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcher
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import pw.binom.network.Network
+import kotlinx.coroutines.Dispatchers
 
 private const val VSPACE_ID = 281
 private const val VSPACE_ID_INDEX_ID = 0
@@ -22,7 +24,7 @@ private const val VINDEX_ID_INDEX_ID = 0
 @Suppress("UNCHECKED_CAST")
 class TarantoolConnectionImpl internal constructor(
     private val networkThread: ThreadRef,
-    val networkDispatcher: NetworkDispatcher,
+    val networkDispatcher: NetworkCoroutineDispatcher,
     con: TcpConnection,
     val serverVersion: String,
 ) :

@@ -20,16 +20,18 @@ kotlin {
             staticLib()
         }
     }
-
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
+    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+        linuxArm32Hfp {
+            binaries {
+                staticLib()
+            }
         }
     }
-
-    linuxArm64 {
-        binaries {
-            staticLib()
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64 {
+            binaries {
+                staticLib()
+            }
         }
     }
 
@@ -38,10 +40,11 @@ kotlin {
             staticLib()
         }
     }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+            }
         }
     }
 
@@ -61,21 +64,27 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
-        val linuxArm64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxArm64Main by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
-        val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+            val linuxArm32HfpMain by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
 
         val mingwX64Main by getting {
             dependsOn(commonMain)
         }
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/mingwX64Main/kotlin")
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/mingwX64Main/kotlin")
+            }
         }
 
         val macosX64Main by getting {

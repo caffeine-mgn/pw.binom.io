@@ -29,7 +29,5 @@ fun Appendable.asAsync() = object : AsyncAppendable {
 
 }
 
-inline fun Appendable.appendln(text: String) = append(text).appendln()
-inline fun Appendable.appendln() = append("\n")
-suspend inline fun AsyncAppendable.appendln(text: String) = append(text).appendln()
-suspend inline fun AsyncAppendable.appendln() = append("\n")
+suspend inline fun AsyncAppendable.appendLine(text: String) = append(text).appendLine()
+suspend inline fun AsyncAppendable.appendLine() = append("\n")

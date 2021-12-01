@@ -11,7 +11,6 @@ import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.net.URI
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcher
-import pw.binom.network.NetworkDispatcher
 import pw.binom.network.TcpConnection
 import pw.binom.ssl.*
 import kotlin.time.Duration
@@ -20,14 +19,14 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 class BaseHttpClient(
 //    override val networkDispatcher: NetworkDispatcher,
-    val networkDispatcher:NetworkCoroutineDispatcher,
+    val networkDispatcher: NetworkCoroutineDispatcher,
     val useKeepAlive: Boolean = true,
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,
     val bufferSize: Int = DEFAULT_BUFFER_SIZE,
     bufferCapacity: Int = 16
 ) : HttpClient {
-    internal val deadlineTimer = DeadlineTimer.create()
+//    internal val deadlineTimer = DeadlineTimer.create()
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
     internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, size = bufferSize.toUInt())
@@ -92,7 +91,7 @@ class BaseHttpClient(
     }
 
     override fun close() {
-        deadlineTimer.close()
+//        deadlineTimer.close()
         sslContext.close()
     }
 }

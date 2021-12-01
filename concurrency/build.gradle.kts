@@ -20,16 +20,18 @@ kotlin {
             staticLib()
         }
     }
-
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
+    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+        linuxArm32Hfp {
+            binaries {
+                staticLib()
+            }
         }
     }
-
-    linuxArm64 {
-        binaries {
-            staticLib()
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64 {
+            binaries {
+                staticLib()
+            }
         }
     }
 
@@ -50,10 +52,11 @@ kotlin {
             staticLib()
         }
     }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+            }
         }
     }
 
@@ -68,7 +71,7 @@ kotlin {
             dependencies {
                 api(project(":core"))
                 api(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
 
@@ -77,17 +80,21 @@ kotlin {
             kotlin.srcDir("src/nativeMain/kotlin")
             kotlin.srcDir("src/posixMain/kotlin")
         }
-        val linuxArm64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
-            kotlin.srcDir("src/posixMain/kotlin")
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxArm64Main by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/nativeMain/kotlin")
+                kotlin.srcDir("src/posixMain/kotlin")
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
-        val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
-            kotlin.srcDir("src/posixMain/kotlin")
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+            val linuxArm32HfpMain by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/nativeMain/kotlin")
+                kotlin.srcDir("src/posixMain/kotlin")
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
         val linuxMips32Main by getting {
             dependsOn(commonMain)
@@ -106,10 +113,12 @@ kotlin {
             dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
         }
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
-            kotlin.srcDir("src/mingwX64Main/kotlin")
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/nativeMain/kotlin")
+                kotlin.srcDir("src/mingwX64Main/kotlin")
+            }
         }
 
         val macosX64Main by getting {

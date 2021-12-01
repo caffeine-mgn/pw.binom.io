@@ -128,9 +128,11 @@ interface Strong {
     fun <T : Any> serviceList(beanClass: KClass<T>): pw.binom.strong.ServiceProvider<List<T>>
     fun <T : Any> serviceOrNull(beanClass: KClass<T>, name: String? = null): pw.binom.strong.ServiceProvider<T?>
     suspend fun destroy()
-    val isDestroying:Boolean
-    val isInterrupted:Boolean
-    fun interrupt()
+    val isDestroying: Boolean
+    val isDestroyed: Boolean
+
+    //    fun interrupt()
+    suspend fun awaitDestroy()
 
     /**
      * Returns true if bean with [name] already defined
@@ -187,3 +189,13 @@ inline fun <reified T : Any> Strong.injectOrNull(name: String? = null) = service
  * @return true if bean of class [T] defined with default name
  */
 inline fun <reified T : Any> Strong.exist() = contains(T::class)
+
+suspend fun Strong.Companion.launch(vararg config: Strong.Config, afterInit: ((Strong) -> Unit)? = null) {
+    val strong = Strong.create(
+        *config
+    )
+    if (afterInit != null) {
+        afterInit(strong)
+    }
+    strong.awaitDestroy()
+}

@@ -3,7 +3,7 @@ package pw.binom.mq.nats.client
 import pw.binom.ByteBuffer
 import pw.binom.io.AsyncCloseable
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcher
 import pw.binom.network.SocketConnectException
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -19,7 +19,7 @@ internal class NatsConnectorImpl(
     val pass: String? = null,
     val defaultGroup: String? = null,
     val attemptCount: Int = 3,
-    var networkDispatcher: NetworkDispatcher,
+    var networkDispatcher: NetworkCoroutineDispatcher,
     serverList: List<NetworkAddress>
 ) : NatsConnector {
     init {

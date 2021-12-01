@@ -3,9 +3,11 @@ package pw.binom.mq.nats.client
 import pw.binom.ByteBuffer
 import pw.binom.io.AsyncCloseable
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcher
 import pw.binom.nextUuid
 import kotlin.random.Random
+import pw.binom.network.Network
+import kotlinx.coroutines.Dispatchers
 
 interface NatsConnector : AsyncCloseable {
     companion object {
@@ -21,7 +23,7 @@ interface NatsConnector : AsyncCloseable {
             pass: String? = null,
             defaultGroup: String? = null,
             attemptCount: Int = 3,
-            networkDispatcher: NetworkDispatcher,
+            networkDispatcher: NetworkCoroutineDispatcher = Dispatchers.Network,
             serverList: List<NetworkAddress>
         ): NatsConnector =
             NatsConnectorImpl(

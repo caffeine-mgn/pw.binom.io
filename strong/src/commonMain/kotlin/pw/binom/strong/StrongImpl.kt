@@ -1,11 +1,17 @@
 package pw.binom.strong
 
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KClass
 
 internal class StrongImpl : Strong {
 
     internal var beans = HashMap<String, BeanEntity>()
-    internal lateinit var destroyOrder:List<Strong.DestroyableBean>
+    internal lateinit var destroyOrder: List<Strong.DestroyableBean>
 
     sealed class Dependency {
         class ClassDependency(val clazz: KClass<Any>, val name: String?, val require: Boolean) : Dependency()
@@ -19,6 +25,7 @@ internal class StrongImpl : Strong {
     fun defining() {
         internalDependencies.clear()
     }
+
     fun findBean(clazz: KClass<Any>, name: String?) =
         beans.asSequence().filter {
             clazz.isInstance(it.value.bean) && (name == null || it.key == name)
@@ -45,24 +52,51 @@ internal class StrongImpl : Strong {
     }
 
     override suspend fun destroy() {
+        println("start destroy")
+        check(!isDestroyed) { "Strong already isDestroyed" }
+        check(!isDestroying) { "Strong already destroying" }
         isDestroying = true
         try {
             destroyOrder.forEach {
                 it.destroy(this)
             }
+            interruptingListenersLock.synchronize {
+                interruptingListeners.forEach {
+                    it.resume(Unit)
+                }
+            }
+        } catch (e: Throwable) {
+            interruptingListenersLock.synchronize {
+                interruptingListeners.forEach {
+                    it.resumeWithException(e)
+                }
+            }
+            throw e
         } finally {
             isDestroying = false
+            isDestroyed = true
         }
     }
 
     override var isDestroying: Boolean = false
         private set
-    override var isInterrupted: Boolean = false
+    override var isDestroyed: Boolean = false
         private set
 
-    override fun interrupt() {
-        check(!isInterrupted) { "Strong already Interrupted" }
-        isInterrupted = true
+    private val interruptingListenersLock = SpinLock()
+    private val interruptingListeners = ArrayList<Continuation<Unit>>()
+
+    override suspend fun awaitDestroy() {
+        if (isDestroyed) {
+            println("strong already Destroyed")
+            return
+        }
+        suspendCoroutine<Unit> {
+            interruptingListenersLock.synchronize {
+                println("Add Destroyed listener")
+                interruptingListeners += it
+            }
+        }
     }
 
     override fun contains(beanName: String): Boolean {

@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import pw.binom.plugins.BuildStaticTask
+import pw.binom.kotlin.clang.BuildStaticTask
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -36,18 +37,20 @@ kotlin {
             }
         }
     }
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
-            compilations["main"].cinterops {
-                create("sqlite") {
-                    defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-                    packageName = sqlitePackageName
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
+    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+        linuxArm32Hfp {
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("sqlite") {
+                        defFile = project.file("src/nativeInterop/nativeSqlite3.def")
+                        packageName = sqlitePackageName
+                        includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
+                    }
                 }
+                compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
+                compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
             }
-            compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-            compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
         }
     }
 
@@ -65,28 +68,38 @@ kotlin {
             compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
         }
     }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
-            compilations["main"].cinterops {
-                create("sqlite") {
-                    defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-                    packageName = sqlitePackageName
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("sqlite") {
+                        defFile = project.file("src/nativeInterop/nativeSqlite3.def")
+                        packageName = sqlitePackageName
+                        includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
+                    }
                 }
+                compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
+                compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
             }
-            compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-            compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
         }
     }
-
-//    linuxArm64 {
-//        binaries {
-//            staticLib {
-//            }
-//        }
-//    }
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64 {
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("sqlite") {
+                        defFile = project.file("src/nativeInterop/nativeSqlite3.def")
+                        packageName = sqlitePackageName
+                        includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
+                    }
+                }
+                compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
+                compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
+            }
+        }
+    }
     macosX64 {
         binaries {
             framework {
@@ -117,18 +130,27 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
-        val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxArm64Main by getting {
+                dependsOn(commonMain)
+            }
+        }
+        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+            val linuxArm32HfpMain by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
 
         val mingwX64Main by getting {
             dependsOn(commonMain)
             kotlin.srcDir("src/linuxX64Main/kotlin")
         }
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
 
         val macosX64Main by getting {
@@ -183,16 +205,24 @@ fun defineBuild(selectTarget: KonanTarget):BuildStaticTask {
     return task
 }
 
-val mingwX86Compile = defineBuild(KonanTarget.MINGW_X86)
 val mingwX64Compile = defineBuild(KonanTarget.MINGW_X64)
 val linuxX64Compile = defineBuild(KonanTarget.LINUX_X64)
-val linuxArm64Compile = defineBuild(KonanTarget.LINUX_ARM64)
-val linuxArm32HfpCompile = defineBuild(KonanTarget.LINUX_ARM32_HFP)
+
 val macosX64Compile = defineBuild(KonanTarget.MACOS_X64)
 
 tasks["compileKotlinLinuxX64"].dependsOn(linuxX64Compile)
 tasks["compileKotlinMingwX64"].dependsOn(mingwX64Compile)
-tasks["compileKotlinMingwX86"].dependsOn(mingwX86Compile)
-tasks["compileKotlinLinuxArm32Hfp"].dependsOn(linuxArm32HfpCompile)
+if (pw.binom.Target.MINGW_X86_SUPPORT) {
+    val mingwX86Compile = defineBuild(KonanTarget.MINGW_X86)
+    tasks["compileKotlinMingwX86"].dependsOn(mingwX86Compile)
+}
+if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+    val linuxArm64Compile = defineBuild(KonanTarget.LINUX_ARM64)
+    tasks["compileKotlinLinuxArm64"].dependsOn(linuxArm64Compile)
+}
+if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+    val linuxArm32HfpCompile = defineBuild(KonanTarget.LINUX_ARM32_HFP)
+    tasks["compileKotlinLinuxArm32Hfp"].dependsOn(linuxArm32HfpCompile)
+}
 tasks["compileKotlinMacosX64"].dependsOn(macosX64Compile)
 apply<pw.binom.plugins.DocsPlugin>()

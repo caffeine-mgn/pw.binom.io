@@ -4,7 +4,6 @@ import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.asStableRef
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
-import pw.binom.concurrency.asReference
 
 abstract class AbstractSelector : Selector {
     abstract class AbstractKey(attachment: Any?, val socket: NSocket) : Selector.Key {

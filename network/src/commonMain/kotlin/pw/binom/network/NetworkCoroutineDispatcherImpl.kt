@@ -3,59 +3,61 @@ package pw.binom.network
 import kotlinx.coroutines.*
 import pw.binom.PopResult
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.collection.LinkedList
 import pw.binom.concurrency.*
-import pw.binom.doFreeze
 import pw.binom.io.Closeable
-import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager, Closeable {
-
+abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager {
     companion object {
-        var DEFAULT = NetworkCoroutineDispatcher()
+        fun create() = NetworkCoroutineDispatcherImpl()
+        var default: NetworkCoroutineDispatcher = create()
     }
+
+    abstract suspend fun tcpConnect(address: NetworkAddress): TcpConnection
+}
+
+class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     private var closed by AtomicBoolean(false)
     private var worker = Worker.create()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
-    private val readyForWriteListener = ConcurrentQueue<() -> Unit>()
+    private val readyForWriteListener = LinkedList<Runnable>()
+    private val readyForWriteListenerLock = SpinLock()
     private val internalUdpContinuationConnection = attach(internalUdpChannel)
-//    private lateinit var aaKey:UdpConnection// = attach(internalUdpContinuation)
-
-    //    private val internalContinuation =
-//        CrossThreadKeyHolder(selector.attach(internalUdpContinuation, 0, internalUdpContinuation))
-    private var networkThread: ThreadRef = ThreadRef()
 
     init {
-        doFreeze()
         worker.execute(this) { self ->
-            self.networkThread = ThreadRef()
             try {
                 while (!self.closed) {
-//                    println("Select....")
-//                    println("selecting keys...")
                     val iterator = self.selector.select()
-//                    println("selector done!")
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
                         val attachment = event.key.attachment
                         if (attachment === internalUdpContinuationConnection) {
-                            println("Internal $event")
-                            val crossThreadWaiterResultHolder = PopResult<() -> Unit>()
-                            while (true) {
-                                readyForWriteListener.pop(crossThreadWaiterResultHolder)
-                                if (crossThreadWaiterResultHolder.isEmpty) {
-                                    break
-                                } else {
-                                    crossThreadWaiterResultHolder.value()
+                                readyForWriteListenerLock.synchronize {
+                                    while (readyForWriteListener.isNotEmpty()){
+                                        readyForWriteListener.removeLast().run()
+                                    }
                                 }
-                            }
+
+//                                while (true) {
+//                                    val breakNeed = readyForWriteListenerLock.synchronize {
+//                                        if (readyForWriteListener.isEmpty()) {
+//                                            true
+//                                        } else {
+//                                            readyForWriteListener.removeLast().run()
+//                                            false
+//                                        }
+//                                    }
+//                                    if (breakNeed){
+//                                        break
+//                                    }
+//                                }
                             internalUdpContinuationConnection.key.listensFlag = 0
                         } else {
-                            println("External $event")
                             val connection = attachment as AbstractConnection
                             if (event.mode and Selector.EVENT_CONNECTED != 0) {
                                 connection.connected()
@@ -79,16 +81,16 @@ class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager, Closea
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        readyForWriteListener.push {
-            block.run()
-        }
+//        readyForWriteListenerLock.synchronize {
+        readyForWriteListener.addFirst(block)
+//        }
         internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
     }
 
     override fun close() {
         closed = true
-        internalUdpChannel.close()
         internalUdpContinuationConnection.key.close()
+        internalUdpChannel.close()
         selector.close()
     }
 
@@ -112,7 +114,7 @@ class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager, Closea
         return con
     }
 
-    suspend fun tcpConnect(address: NetworkAddress): TcpConnection =
+    override suspend fun tcpConnect(address: NetworkAddress): TcpConnection =
         withContext(this) {
             val channel = TcpClientSocketChannel()
             val connection = attach(channel)
@@ -134,10 +136,5 @@ class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager, Closea
         }
 }
 
-suspend fun getDispatcher(): CoroutineDispatcher? =
-    suspendCoroutine {
-        it.resume(it.context[ContinuationInterceptor] as CoroutineDispatcher?)
-    }
-
 val Dispatchers.Network
-    get() = NetworkCoroutineDispatcher.DEFAULT
+    get() = NetworkCoroutineDispatcher.default

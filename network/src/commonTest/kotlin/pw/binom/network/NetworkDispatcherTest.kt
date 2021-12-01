@@ -47,7 +47,7 @@ class NetworkDispatcherTest {
 
     @Test
     fun aaa() {
-        val nd = NetworkCoroutineDispatcher()
+        val nd = NetworkCoroutineDispatcherImpl()
         var connected = false
         runBlocking {
             nd.invoke {

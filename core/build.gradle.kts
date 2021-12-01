@@ -94,15 +94,16 @@ kotlin {
             }
         }
     }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/nativeMain/cinterop/core.def")
-                    packageName = "pw.binom.internal.core_native"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("native") {
+                        defFile = project.file("src/nativeMain/cinterop/core.def")
+                        packageName = "pw.binom.internal.core_native"
+                        includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                    }
                 }
             }
         }
@@ -158,9 +159,11 @@ kotlin {
             dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
         }
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/nativeMain/kotlin")
+            }
         }
 
         val macosX64Main by getting {

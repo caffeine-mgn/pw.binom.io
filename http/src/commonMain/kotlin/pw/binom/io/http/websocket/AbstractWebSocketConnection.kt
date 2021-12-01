@@ -4,31 +4,25 @@ import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.ThreadRef
 import pw.binom.concurrency.asReference
-import pw.binom.coroutine.start
-import pw.binom.io.AsyncChannel
 import pw.binom.io.StreamClosedException
-import pw.binom.io.use
-import pw.binom.network.NetworkDispatcher
 import pw.binom.network.SocketClosedException
 
 abstract class AbstractWebSocketConnection(
-//    rawConnection: AsyncChannel,
     input: AsyncInput,
     output: AsyncOutput,
-//    val networkDispatcher: NetworkDispatcher,
 ) : WebSocketConnection {
 
-    private val _output = output.asReference()
+    private val _output = output
     protected val output: AsyncOutput
-        get() = _output.value
-    private val _input = input.asReference()
+        get() = _output
+    private val _input = input
     protected val input
-        get() = _input.value
+        get() = _input
 //    private val selfRef = this.asReference()
 
     private var closed by AtomicBoolean(false)
 //    private val channel = rawConnection.asReference()
-    private val networkThread = ThreadRef()
+//    private val networkThread = ThreadRef()
 
     var receivedCloseMessage by AtomicBoolean(false)
         private set
@@ -62,7 +56,7 @@ abstract class AbstractWebSocketConnection(
     }
 
     override suspend fun read(): Message {
-        requiredNetworkThread()
+//        requiredNetworkThread()
         checkClosed()
         if (receivedCloseMessage) {
             throw IllegalStateException("Can't read message. Already received close message")
@@ -107,7 +101,7 @@ abstract class AbstractWebSocketConnection(
 
     override suspend fun write(type: MessageType): AsyncOutput {
         checkClosed()
-        requiredNetworkThread()
+//        requiredNetworkThread()
         if (receivedCloseMessage) {
             throw IllegalStateException("Can't write message. Already received close message")
         }
@@ -133,8 +127,6 @@ abstract class AbstractWebSocketConnection(
         }
         closed = true
 //        channel.close()
-        _input.close()
-        _output.close()
 //        selfRef.close()
 
 //        channel.value.asyncClose()
@@ -142,11 +134,11 @@ abstract class AbstractWebSocketConnection(
         runCatching { output.asyncClose() }
     }
 
-    private fun requiredNetworkThread() {
-        if (!networkThread.same) {
-            throw IllegalStateException("This method must be call from network thread")
-        }
-    }
+//    private fun requiredNetworkThread() {
+//        if (!networkThread.same) {
+//            throw IllegalStateException("This method must be call from network thread")
+//        }
+//    }
 
     private suspend fun sendFinish(code: Short = 1006, body: ByteBuffer? = null) {
         val v = WebSocketHeader()
@@ -171,7 +163,7 @@ abstract class AbstractWebSocketConnection(
 
     suspend fun asyncClose(code: Short, body: ByteBuffer? = null) {
         checkClosed()
-        requiredNetworkThread()
+//        requiredNetworkThread()
         if (this.receivedCloseMessage) {
             throw IllegalStateException("Can't send close message because already got close message")
         }
@@ -184,7 +176,7 @@ abstract class AbstractWebSocketConnection(
 
     override suspend fun asyncClose() {
         checkClosed()
-        requiredNetworkThread()
+//        requiredNetworkThread()
         try {
             if (!this.receivedCloseMessage) {
                 sendFinish(code = WebSocketClosedException.CLOSE_NORMAL)

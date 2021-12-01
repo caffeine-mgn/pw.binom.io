@@ -7,4 +7,5 @@ object Versions {
     val KOTLINX_SERIALIZATION_VERSION = "1.3.0"
 //    val KOTLINX_COROUTINES_VERSION = "1.5.1-new-mm-dev2"
     val KOTLINX_COROUTINES_VERSION = "1.6.0-RC"
+//    val KOTLINX_COROUTINES_VERSION = "1.5.2"
 }

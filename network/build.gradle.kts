@@ -25,24 +25,28 @@ kotlin {
             }
         }
     }
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/cinterop/native.def")
-                    packageName = "platform.linux"
+    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+        linuxArm32Hfp {
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("native") {
+                        defFile = project.file("src/cinterop/native.def")
+                        packageName = "platform.linux"
+                    }
                 }
             }
         }
     }
-    linuxArm64 {
-        binaries {
-            staticLib()
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/cinterop/native.def")
-                    packageName = "platform.linux"
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64 {
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("native") {
+                        defFile = project.file("src/cinterop/native.def")
+                        packageName = "platform.linux"
+                    }
                 }
             }
         }
@@ -68,18 +72,19 @@ kotlin {
             }
         }
     }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
-            compilations["main"].cinterops {
-                create("wepoll") {
-                    defFile = project.file("src/cinterop/wepoll.def")
-                    packageName = "platform.linux"
-                }
-                create("native") {
-                    defFile = project.file("src/cinterop/native.def")
-                    packageName = "platform.linux"
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("wepoll") {
+                        defFile = project.file("src/cinterop/wepoll.def")
+                        packageName = "platform.linux"
+                    }
+                    create("native") {
+                        defFile = project.file("src/cinterop/native.def")
+                        packageName = "platform.linux"
+                    }
                 }
             }
         }
@@ -120,21 +125,27 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(nativeMain)
         }
-        val linuxArm32HfpMain by getting {
-            dependsOn(nativeMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+            val linuxArm32HfpMain by getting {
+                dependsOn(nativeMain)
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
-        val linuxArm64Main by getting {
-            dependsOn(nativeMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxArm64Main by getting {
+                dependsOn(nativeMain)
+                kotlin.srcDir("src/linuxX64Main/kotlin")
+            }
         }
 
         val mingwX64Main by getting {
             dependsOn(nativeMain)
         }
-        val mingwX86Main by getting {
-            dependsOn(nativeMain)
-            kotlin.srcDir("src/mingwX64Main/kotlin")
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(nativeMain)
+                kotlin.srcDir("src/mingwX64Main/kotlin")
+            }
         }
 
         val macosX64Main by getting {

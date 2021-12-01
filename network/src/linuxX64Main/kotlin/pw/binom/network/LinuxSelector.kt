@@ -39,8 +39,67 @@ class LinuxSelector : AbstractSelector() {
         }
     }
 
+    private var eventCount = 0
     private val native = epoll_create(1000)!!
     private val list = nativeHeap.allocArray<epoll_event>(1000)
+    override val nativeSelectedKeys: Iterator<NativeKeyEvent>
+        get() = nativeSelectedKeys2
+    private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
+        private val event = object : NativeKeyEvent {
+            override lateinit var key: AbstractKey
+            override var mode: Int = 0
+        }
+        private var currentNum = 0
+        fun reset() {
+            currentNum = 0
+        }
+
+        override fun hasNext(): Boolean {
+            if (currentNum == eventCount) {
+                return false
+            }
+            return true
+        }
+
+        override fun next(): NativeKeyEvent {
+            if (!hasNext()) {
+                throw NoSuchElementException()
+            }
+            val item = list[currentNum++]
+            val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
+            val key = keyPtr.get()
+            if (!key.connected) {
+                if (EPOLLERR in item.events) {
+                    key.resetMode(0)
+                    event.key = key
+                    event.mode = Selector.EVENT_ERROR
+                    return event
+                }
+                if (EPOLLOUT in item.events) {
+                    key.resetMode(0)
+                    key.connected = true
+                    event.key = key
+                    event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                    return event
+                }
+                throw IllegalStateException("Unknown connection state")
+            }
+            if (EPOLLHUP in item.events) {
+                NSocket(item.data.fd).close()
+                key.close()
+                event.key = key
+                event.mode = 0
+                return event
+            }
+            val common = epollNativeToCommon(item.events.convert())
+            if (common == 0) {
+                throw IllegalStateException("Invalid epoll mode. Native: [${modeToString(item.events.convert())}]")
+            }
+            event.key = key
+            event.mode = epollNativeToCommon(item.events.convert())
+            return event
+        }
+    }
 
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
@@ -88,13 +147,18 @@ class LinuxSelector : AbstractSelector() {
             } else {
                 val common = epollNativeToCommon(item.events.convert())
                 if (common == 0) {
-                    println("Invalid epoll mode. Native: [${modeToString(item.events.convert())}]")
                     throw IllegalStateException("Invalid epoll mode. Native: [${modeToString(item.events.convert())}]")
                 }
                 func(key, common)
             }
         }
         return eventCount
+    }
+
+
+    override fun nativeSelect(timeout: Long) {
+        nativeSelectedKeys2.reset()
+        eventCount = epoll_wait(native, list.reinterpret(), 1000, timeout.toInt())
     }
 
     override fun close() {

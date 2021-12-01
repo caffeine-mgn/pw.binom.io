@@ -1,9 +1,6 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-import pw.binom.forEach
-import pw.binom.get
+import pw.binom.*
 import pw.binom.io.StreamClosedException
 import kotlin.experimental.xor
 
@@ -25,8 +22,10 @@ class MessageImpl(
 
     override suspend fun asyncClose() {
         checkClosed()
-        if (inputReady > 0uL)
-            throw IllegalStateException("Current block isn't finished. Remaining: [$inputReady]")
+
+        if (inputReady > 0uL){
+            copyTo(NullAsyncOutput)
+        }
         closed = true
     }
 

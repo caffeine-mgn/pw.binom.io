@@ -1,3 +1,5 @@
+import pw.binom.eachKotlinCompile
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -51,9 +53,11 @@ kotlin {
         }
     }
 
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+            }
         }
     }
 
@@ -100,9 +104,11 @@ kotlin {
             dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")
         }
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(commonMain)
+                kotlin.srcDir("src/nativeMain/kotlin")
+            }
         }
 
         val macosX64Main by getting {
@@ -142,17 +148,8 @@ tasks {
 const val BINOM_VERSION = "${project.version}""""
         )
     }
-
-    this["compileKotlinLinuxArm32Hfp"].dependsOn(generateVersion)
-    this["compileKotlinLinuxArm64"].dependsOn(generateVersion)
-    this["compileKotlinLinuxMips32"].dependsOn(generateVersion)
-    this["compileKotlinLinuxMipsel32"].dependsOn(generateVersion)
-    this["compileKotlinLinuxX64"].dependsOn(generateVersion)
-    this["compileKotlinMacosX64"].dependsOn(generateVersion)
-    this["compileKotlinMingwX64"].dependsOn(generateVersion)
-    this["compileKotlinMingwX86"].dependsOn(generateVersion)
-    this["compileKotlinJsIr"].dependsOn(generateVersion)
-    this["compileKotlinJsLegacy"].dependsOn(generateVersion)
-    this["compileKotlinJvm"].dependsOn(generateVersion)
+    eachKotlinCompile {
+        it.dependsOn(generateVersion)
+    }
 }
 apply<pw.binom.plugins.DocsPlugin>()

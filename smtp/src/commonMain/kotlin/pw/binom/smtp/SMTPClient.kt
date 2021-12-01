@@ -1,9 +1,11 @@
 package pw.binom.smtp
 
+import kotlinx.coroutines.Dispatchers
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.socket.ssl.asyncChannel
+import pw.binom.network.Network
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcher
 import pw.binom.ssl.KeyManager
 import pw.binom.ssl.SSLContext
 import pw.binom.ssl.SSLMethod
@@ -15,7 +17,7 @@ interface SMTPClient : AsyncCloseable {
          * Creates SMTP client without TLS
          */
         suspend fun tcp(
-            dispatcher: NetworkDispatcher,
+            dispatcher: NetworkCoroutineDispatcher = Dispatchers.Network,
             login: String,
             password: String,
             fromEmail: String,
@@ -36,7 +38,7 @@ interface SMTPClient : AsyncCloseable {
          * Creates TLS SMTP Client
          */
         suspend fun tls(
-            dispatcher: NetworkDispatcher,
+            dispatcher: NetworkCoroutineDispatcher = Dispatchers.Network,
             login: String,
             password: String,
             fromEmail: String,

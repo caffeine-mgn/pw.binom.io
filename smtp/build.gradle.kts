@@ -20,31 +20,33 @@ kotlin {
             staticLib()
         }
     }
-
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
+    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+        linuxArm32Hfp {
+            binaries {
+                staticLib()
+            }
         }
     }
-
-//    linuxArm64 {
-//        binaries {
-//            staticLib()
-//        }
-//    }
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64 {
+            binaries {
+                staticLib()
+            }
+        }
+    }
 
     mingwX64 { // Use your target instead.
         binaries {
             staticLib()
         }
     }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+            }
         }
     }
-
     macosX64 {
         binaries {
             framework()
@@ -64,18 +66,24 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
-//        val linuxArm64Main by getting {
-//            dependsOn(commonMain)
-//        }
-        val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxArm64Main by getting {
+                dependsOn(commonMain)
+            }
+        }
+        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+            val linuxArm32HfpMain by getting {
+                dependsOn(commonMain)
+            }
         }
 
         val mingwX64Main by getting {
             dependsOn(commonMain)
         }
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
+                dependsOn(commonMain)
+            }
         }
 
         val macosX64Main by getting {

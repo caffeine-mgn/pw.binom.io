@@ -6,13 +6,14 @@ import pw.binom.io.Closeable
 import pw.binom.net.URI
 import pw.binom.network.Network
 import pw.binom.network.NetworkCoroutineDispatcher
+import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.KeyManager
 import pw.binom.ssl.TrustManager
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-interface HttpClient: Closeable {
+interface HttpClient : Closeable {
 //    val networkDispatcher: NetworkDispatcher
 
     @OptIn(ExperimentalTime::class)
@@ -38,8 +39,8 @@ interface HttpClient: Closeable {
     }
 }
 
-fun HttpClient.Companion.create1(
-    networkDispatcher: NetworkCoroutineDispatcher,
+fun HttpClient.Companion.create(
+    networkDispatcher: NetworkCoroutineDispatcher = Dispatchers.Network,
     useKeepAlive: Boolean = true,
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,

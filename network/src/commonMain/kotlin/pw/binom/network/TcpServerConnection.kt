@@ -64,6 +64,7 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkManager, v
     }
 
     override fun close() {
+        println("closing tcp server  acceptListener=$acceptListener")
         acceptListener?.resumeWithException(SocketClosedException())
         acceptListener = null
         channel.close()

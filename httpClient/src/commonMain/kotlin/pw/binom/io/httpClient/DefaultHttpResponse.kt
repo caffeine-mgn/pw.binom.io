@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient
 
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import pw.binom.AsyncInput
@@ -9,15 +10,13 @@ import pw.binom.TimeoutException
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
-import pw.binom.io.AsyncReader
-import pw.binom.io.EOFException
-import pw.binom.io.IOException
-import pw.binom.io.bufferedReader
+import pw.binom.io.*
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.Encoding
 import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
 import pw.binom.net.URI
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -41,14 +40,25 @@ class DefaultHttpResponse(
             var headerReadFlag = false
             if (timeout != null) {
                 withContext(client.networkDispatcher) {
-                    delay(timeout)
-                    if (!headerReadFlag) {
-                        client.interruptAndClose(channel)
+                    try {
+                        delay(timeout)
+                    } finally {
+                        if (!headerReadFlag) {
+                            client.interruptAndClose(channel)
+                        }
                     }
                 }
             }
             try {
-                val title = channel.reader.readln() ?: throw EOFException()
+                val title = try {
+                    channel.reader.readln() ?: throw EOFException()
+                } catch (e: ClosedException) {
+                    if (!headerReadFlag) {
+                        throw CancellationException("Header read timeout $timeout")
+                    } else {
+                        throw e
+                    }
+                }
                 if (!title.startsWith("HTTP/1.1 ") && !title.startsWith("HTTP/1.0 ")) {
                     throw IOException("Unsupported HTTP version. Response: \"$title\"")
                 }
@@ -123,10 +133,12 @@ class DefaultHttpResponse(
                 else -> null
             }
         for (i in transferEncoding.lastIndex downTo 0) {
-            stream = wrap(encode = transferEncoding[i], stream = stream) ?: throw IOException("Unknown Content Encoding: \"${transferEncoding[i]}\"")
+            stream = wrap(encode = transferEncoding[i], stream = stream)
+                ?: throw IOException("Unknown Content Encoding: \"${transferEncoding[i]}\"")
         }
         for (i in contentEncoding.lastIndex downTo 0) {
-            stream = wrap(encode = contentEncoding[i], stream = stream) ?: throw IOException("Unknown Content Encoding: \"${contentEncoding[i]}\"")
+            stream = wrap(encode = contentEncoding[i], stream = stream)
+                ?: throw IOException("Unknown Content Encoding: \"${contentEncoding[i]}\"")
         }
         closed = true
         return stream

@@ -33,21 +33,23 @@ kotlin {
             }
         }
     }
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
-            compilations["main"].cinterops {
-                create("openssl") {
-                    defFile = project.file("src/cinterop/openssl.def")
-                    packageName = "platform.openssl"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
+    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+        linuxArm32Hfp {
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("openssl") {
+                        defFile = project.file("src/cinterop/openssl.def")
+                        packageName = "platform.openssl"
+                        includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
+                    }
                 }
+                val args = listOf(
+                    "-include-binary", "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/lib/libopenssl.a"
+                )
+                compilations["main"].kotlinOptions.freeCompilerArgs = args
+                compilations["test"].kotlinOptions.freeCompilerArgs = args
             }
-            val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/lib/libopenssl.a"
-            )
-            compilations["main"].kotlinOptions.freeCompilerArgs = args
-            compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
 
@@ -68,22 +70,23 @@ kotlin {
             compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            staticLib()
-            compilations["main"].cinterops {
-                create("openssl") {
-                    defFile = project.file("src/cinterop/openssl.def")
-                    packageName = "platform.openssl"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86 { // Use your target instead.
+            binaries {
+                staticLib()
+                compilations["main"].cinterops {
+                    create("openssl") {
+                        defFile = project.file("src/cinterop/openssl.def")
+                        packageName = "platform.openssl"
+                        includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
+                    }
                 }
+                val args = listOf(
+                    "-include-binary", "${buildFile.parent}/src/mingwX86Main/cinterop/lib/libopenssl.a"
+                )
+                compilations["main"].kotlinOptions.freeCompilerArgs = args
+                compilations["test"].kotlinOptions.freeCompilerArgs = args
             }
-            val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/mingwX86Main/cinterop/lib/libopenssl.a"
-            )
-            compilations["main"].kotlinOptions.freeCompilerArgs = args
-            compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
 
@@ -116,7 +119,6 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
-
                 api(project(":core"))
                 api(project(":network"))
                 api(project(":file"))
@@ -132,19 +134,21 @@ kotlin {
             dependsOn(commonMain)
             kotlin.srcDir("src/mingwX64Main/kotlin")
         }
-        val linuxArm32HfpMain by getting {
+        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+            val linuxArm32HfpMain by getting {
 //            dependsOn(linuxX64Main)
-            dependsOn(commonMain)
-            kotlin.srcDir("src/mingwX64Main/kotlin")
+                dependsOn(commonMain)
+                kotlin.srcDir("src/mingwX64Main/kotlin")
+            }
         }
 
-
-        val mingwX86Main by getting {
+        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+            val mingwX86Main by getting {
 //            dependsOn(mingwX64Main)
-            dependsOn(commonMain)
-            kotlin.srcDir("src/mingwX64Main/kotlin")
+                dependsOn(commonMain)
+                kotlin.srcDir("src/mingwX64Main/kotlin")
+            }
         }
-
         val macosX64Main by getting {
 //            dependsOn(mingwX64Main)
             dependsOn(commonMain)

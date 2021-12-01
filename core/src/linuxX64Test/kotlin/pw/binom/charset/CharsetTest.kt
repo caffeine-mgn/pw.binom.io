@@ -17,10 +17,10 @@ class CharsetTest {
         buf.flip()
         println("data: ${buf.remaining}  $buf ${buf.toString().length}")
         buf.toString().forEachIndexed { index, c ->
-            println("$index -> $c (${c.toInt()})")
+            println("$index -> $c (${c.code})")
         }
         "Привет".forEachIndexed { index, c ->
-            println("$index -> $c (${c.toInt()})")
+            println("$index -> $c (${c.code})")
         }
     }
 }
