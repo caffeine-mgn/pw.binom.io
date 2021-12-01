@@ -14,9 +14,9 @@ dependencies {
 ## Build OpenSSL
 ### Windows
 ##MSYS
-1. Install MSYS
-2. execute `pacman -S perl`
-3. execute `pacman -S make`
+Install MSYS. You can execute `winget install msys2`.
+Default install path is `C:\msys64`.
+Also install make and perl using cmd `C:\msys64\usr\bin\pacman -S perl make`
 
 ## Building
 #Preparing
