@@ -1,3 +1,5 @@
+import pw.binom.baseStaticLibConfig
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -7,9 +9,9 @@ apply {
 }
 
 kotlin {
-    linuxX64 { // Use your target instead.
+    jvm()
+    linuxX64 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("signals") {
                     defFile = project.file("src/cinterop/linux.def")
@@ -18,17 +20,9 @@ kotlin {
             }
         }
     }
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
         linuxArm32Hfp {
             binaries {
-                staticLib()
                 compilations["main"].cinterops {
                     create("signals") {
                         defFile = project.file("src/cinterop/linux.def")
@@ -41,7 +35,6 @@ kotlin {
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
         linuxArm64 {
             binaries {
-                staticLib()
                 compilations["main"].cinterops {
                     create("signals") {
                         defFile = project.file("src/cinterop/linux.def")
@@ -51,24 +44,12 @@ kotlin {
             }
         }
     }
-
-    mingwX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
-            binaries {
-                staticLib()
-            }
-        }
+        mingwX86()
     }
-
     macosX64 {
         binaries {
-            framework {
-            }
             compilations["main"].cinterops {
                 create("signals") {
                     defFile = project.file("src/cinterop/linux.def")
@@ -77,7 +58,7 @@ kotlin {
             }
         }
     }
-
+    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {

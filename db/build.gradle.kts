@@ -7,16 +7,10 @@ apply {
 }
 
 kotlin {
-    linuxX64 { // Use your target instead.
+    jvm()
+    linuxX64 {
         binaries {
             staticLib()
-        }
-    }
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
         }
     }
     linuxArm32Hfp {
@@ -24,32 +18,31 @@ kotlin {
             staticLib()
         }
     }
-
-    mingwX64 { // Use your target instead.
+    mingwX64 {
         binaries {
             staticLib()
         }
     }
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
+        mingwX86 {
             binaries {
                 staticLib()
             }
         }
     }
-
-//    linuxArm64 {
-//        binaries {
-//            staticLib {
-//            }
-//        }
-//    }
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64 {
+            binaries {
+                staticLib {
+                }
+            }
+        }
+    }
     macosX64 {
         binaries {
             framework()
         }
     }
-
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -66,7 +59,11 @@ kotlin {
         val linuxArm32HfpMain by getting {
             dependsOn(commonMain)
         }
-
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxArm64Main by getting {
+                dependsOn(commonMain)
+            }
+        }
         val mingwX64Main by getting {
             dependsOn(commonMain)
         }

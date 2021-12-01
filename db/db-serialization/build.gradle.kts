@@ -1,3 +1,4 @@
+import pw.binom.baseStaticLibConfig
 import java.util.UUID
 
 plugins {
@@ -10,49 +11,18 @@ apply {
 }
 
 kotlin {
-    linuxX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
-        }
-    }
-
-    mingwX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
+    jvm()
+    linuxX64()
+    linuxArm32Hfp()
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
-            binaries {
-                staticLib()
-            }
-        }
+        mingwX86()
     }
-
-//    linuxArm64 {
-//        binaries {
-//            staticLib {
-//            }
-//        }
-//    }
-    macosX64 {
-        binaries {
-            framework()
-        }
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64()
     }
-
+    macosX64()
+    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -61,9 +31,10 @@ kotlin {
                 api(project(":db:db-serialization-annotations"))
             }
         }
-
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxX64Main by getting {
+                dependsOn(commonMain)
+            }
         }
         val linuxArm32HfpMain by getting {
             dependsOn(commonMain)

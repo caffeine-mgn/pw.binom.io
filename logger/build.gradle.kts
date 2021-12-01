@@ -1,3 +1,5 @@
+import pw.binom.baseStaticLibConfig
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -7,52 +9,19 @@ apply {
 }
 
 kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
-
-    linuxX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
+    jvm()
+    linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp {
-            binaries {
-                staticLib()
-            }
-        }
+        linuxArm32Hfp()
     }
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64 {
-            binaries {
-                staticLib()
-            }
-        }
+        linuxArm64()
     }
-
-    mingwX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
-            binaries {
-                staticLib()
-            }
-        }
+        mingwX86()
     }
-
-    macosX64 {
-        binaries {
-            framework()
-        }
-    }
+    macosX64()
     js("js", BOTH) {
         browser {
             testTask {
@@ -63,7 +32,7 @@ kotlin {
         }
         nodejs()
     }
-
+    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -80,53 +49,29 @@ kotlin {
 
         val linuxX64Main by getting {
             dependsOn(commonRunnableMain)
-//            dependencies {
-//                api(project(":concurrency"))
-//            }
-//            kotlin.srcDir("src/nativeMain/kotlin")
         }
         if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
             val linuxArm64Main by getting {
                 dependsOn(commonRunnableMain)
-//            dependencies {
-//                api(project(":concurrency"))
-//            }
-//            kotlin.srcDir("src/nativeMain/kotlin")
             }
         }
         if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
             val linuxArm32HfpMain by getting {
                 dependsOn(commonRunnableMain)
-//            dependencies {
-//                api(project(":concurrency"))
-//            }
-//            kotlin.srcDir("src/nativeMain/kotlin")
             }
         }
 
         val mingwX64Main by getting {
             dependsOn(commonRunnableMain)
-//            dependencies {
-//                api(project(":concurrency"))
-//            }
-//            kotlin.srcDir("src/nativeMain/kotlin")
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
                 dependsOn(commonRunnableMain)
-//            dependencies {
-//                api(project(":concurrency"))
-//            }
-//            kotlin.srcDir("src/nativeMain/kotlin")
             }
         }
 
         val macosX64Main by getting {
             dependsOn(commonRunnableMain)
-//            dependencies {
-//                api(project(":concurrency"))
-//            }
-//            kotlin.srcDir("src/nativeMain/kotlin")
         }
 
         val jvmMain by getting {

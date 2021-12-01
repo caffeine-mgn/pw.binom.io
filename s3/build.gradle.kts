@@ -9,7 +9,7 @@ apply {
 kotlin {
     jvm()
 
-    linuxX64 { // Use your target instead.
+    linuxX64 {
         binaries {
             staticLib()
         }
@@ -27,13 +27,13 @@ kotlin {
 //        }
 //    }
 
-    mingwX64 { // Use your target instead.
+    mingwX64 {
         binaries {
             staticLib()
         }
     }
 
-    mingwX86 { // Use your target instead.
+    mingwX86 {
         binaries {
             staticLib()
         }

@@ -2,8 +2,21 @@ apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
 kotlin {
     def nativeEntryPoint = 'pw.binom.io.examples.wschat.main'
-
-    linuxX64 { // Use your target instead.
+    linuxX64 {
+        binaries {
+            executable {
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+    linuxArm32Hfp {
+        binaries {
+            executable {
+                entryPoint = nativeEntryPoint
+            }
+        }
+    }
+    mingwX64 {
         binaries {
             executable {
                 entryPoint = nativeEntryPoint
@@ -11,32 +24,14 @@ kotlin {
         }
     }
 
-    linuxArm32Hfp { // Use your target instead.
+    mingwX86 {
         binaries {
             executable {
                 entryPoint = nativeEntryPoint
             }
         }
     }
-
-    mingwX64 { // Use your target instead.
-        binaries {
-            executable {
-                entryPoint = nativeEntryPoint
-            }
-        }
-    }
-
-    mingwX86 { // Use your target instead.
-        binaries {
-            executable {
-                entryPoint = nativeEntryPoint
-            }
-        }
-    }
-
     sourceSets {
-
         commonMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
@@ -45,37 +40,31 @@ kotlin {
                 api project(":httpServer")
             }
         }
-
         nativeMain {
             dependencies {
                 dependsOn commonMain
             }
         }
-
         mingwX64Main {
             dependencies {
                 dependsOn nativeMain
             }
         }
-
         mingwX86Main {
             dependencies {
                 dependsOn mingwX64Main
             }
         }
-
         linuxX64Main {
             dependencies {
                 dependsOn nativeMain
             }
         }
-
         linuxArm32HfpMain {
             dependencies {
                 dependsOn nativeMain
             }
         }
-
         jvmMain {
             dependencies {
                 api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

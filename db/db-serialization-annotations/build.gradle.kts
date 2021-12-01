@@ -1,3 +1,5 @@
+import pw.binom.baseStaticLibConfig
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("kotlinx-serialization")
@@ -8,53 +10,22 @@ apply {
 }
 
 kotlin {
-    linuxX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
-        }
-    }
-
-    mingwX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
+    jvm()
+    linuxX64()
+    linuxArm32Hfp()
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 {
-            binaries {
-                staticLib()
-            }
-        }
+        mingwX86()
     }
-
-    linuxArm64 {
-        binaries {
-            staticLib()
-        }
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64()
     }
-    macosX64 {
-        binaries {
-            framework()
-        }
-    }
+    macosX64()
     js("js", BOTH) {
         browser()
         nodejs()
     }
-
-
+    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -69,9 +40,10 @@ kotlin {
         val linuxArm32HfpMain by getting {
             dependsOn(commonMain)
         }
-
-        val linuxArm64Main by getting {
-            dependsOn(commonMain)
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxArm64Main by getting {
+                dependsOn(commonMain)
+            }
         }
 
         val mingwX64Main by getting {

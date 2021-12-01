@@ -9,15 +9,9 @@ apply {
 }
 
 kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
+    jvm()
 
-    linuxX64 { // Use your target instead.
+    linuxX64 {
         binaries {
             staticLib()
             compilations["main"].cinterops {
@@ -82,7 +76,7 @@ kotlin {
         }
     }
 
-    mingwX64 { // Use your target instead.
+    mingwX64 {
         binaries {
             staticLib()
             compilations["main"].cinterops {
@@ -95,7 +89,7 @@ kotlin {
         }
     }
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
+        mingwX86 {
             binaries {
                 staticLib()
                 compilations["main"].cinterops {

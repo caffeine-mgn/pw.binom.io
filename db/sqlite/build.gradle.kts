@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import pw.binom.baseStaticLibConfig
 import pw.binom.kotlin.clang.*
 
 plugins {
@@ -16,99 +17,54 @@ fun args(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) =
 
 val sqlitePackageName = "platform.internal_sqlite"
 kotlin {
-    linuxX64 { // Use your target instead.
-        binaries {
-            staticLib()
-//            compilations["main"].cinterops {
-//                create("sqlite") {
-//                    defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-//                    packageName = sqlitePackageName
-//                    includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
-//                }
-//            }
-//            compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-//            compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
-        }
-    }
     jvm()
+    linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp {
-            binaries {
-                staticLib()
-//                compilations["main"].cinterops {
-//                    create("sqlite") {
-//                        defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-//                        packageName = sqlitePackageName
-//                        includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
-//                    }
-//                }
-//                compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-//                compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
-            }
-        }
+        linuxArm32Hfp()
     }
-
-    mingwX64 { // Use your target instead.
-        binaries {
-            staticLib()
-//            compilations["main"].cinterops {
-//                create("sqlite") {
-//                    defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-//                    packageName = sqlitePackageName
-//                    includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
-//                }
-//            }
-//            compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-//            compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
-        }
-    }
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
-            binaries {
-                staticLib()
-//                compilations["main"].cinterops {
-//                    create("sqlite") {
-//                        defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-//                        packageName = sqlitePackageName
-//                        includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
-//                    }
-//                }
-//                compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-//                compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
-            }
-        }
+        mingwX86()
     }
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64 {
-            binaries {
-                staticLib()
-//                compilations["main"].cinterops {
-//                    create("sqlite") {
-//                        defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-//                        packageName = sqlitePackageName
-//                        includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
-//                    }
-//                }
-//                compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-//                compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
-            }
-        }
+        linuxArm64()
     }
-    macosX64 {
+    macosX64()
+    baseStaticLibConfig()
+    eachNative {
+        val headersPath = file("${buildFile.parentFile}/src/native")
+        val sqliteStaticTask = clangBuildStatic(name = "sqlite3", target = this.konanTarget) {
+            include(headersPath)
+            compileArgs(
+                "-DSQLITE_ENABLE_FTS3",
+                "-DSQLITE_ENABLE_FTS4",
+                "-DSQLITE_ENABLE_FTS5",
+                "-DSQLITE_ENABLE_RTREE",
+                "-DSQLITE_ENABLE_DBSTAT_VTAB",
+                "-DSQLITE_ENABLE_JSON1",
+                "-DSQLITE_ENABLE_RBU",
+                "-DSQLITE_THREADSAFE=1",
+                "-DSQLITE_ENABLE_EXPLAIN_COMMENTS",
+                "-DSQLITE_ENABLE_COLUMN_METADATA=1"
+            )
+            compileFile(
+                file("${buildFile.parentFile}/src/native/sqlite3.c")
+            )
+        }
+        tasks.findByName(compileTaskName)?.dependsOn(sqliteStaticTask)
         binaries {
-            framework()
-//            compilations["main"].cinterops {
-//                create("sqlite") {
-//                    defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-//                    packageName = sqlitePackageName
-//                    includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
-//                }
-//            }
-//            compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-//            compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
+            compilations["main"].cinterops {
+                create("sqlite") {
+                    defFile = project.file("src/nativeInterop/nativeSqlite3.def")
+                    packageName = sqlitePackageName
+                    includeDirs.headerFilterOnly(headersPath.absolutePath)
+                }
+            }
+            val args = listOf("-include-binary", sqliteStaticTask.staticFile.asFile.get().absolutePath)
+            compilations["main"].kotlinOptions.freeCompilerArgs = args
+            compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
-
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -175,98 +131,4 @@ kotlin {
     }
 }
 
-fun defineBuild(selectTarget: KonanTarget): BuildStaticTask {
-    val task = tasks.create("buildSqlite${selectTarget.name.capitalize()}", BuildStaticTask::class.java)
-    task.target.set(selectTarget)
-    task.include(file("${buildFile.parentFile}/src/native"))
-    task.compileArgs(
-        "-DSQLITE_ENABLE_FTS3",
-        "-DSQLITE_ENABLE_FTS4",
-        "-DSQLITE_ENABLE_FTS5",
-        "-DSQLITE_ENABLE_RTREE",
-        "-DSQLITE_ENABLE_DBSTAT_VTAB",
-        "-DSQLITE_ENABLE_JSON1",
-        "-DSQLITE_ENABLE_RBU",
-        "-DSQLITE_THREADSAFE=1",
-        "-DSQLITE_ENABLE_EXPLAIN_COMMENTS",
-        "-DSQLITE_ENABLE_COLUMN_METADATA=1"
-    )
-    task.compileFile(
-        file("${buildFile.parentFile}/src/native/sqlite3.c")
-    )
-//    println("task.staticFile==${task.staticFile}")
-    task.staticFile.set(File("${buildDir}/native/${selectTarget.name}/libsqlite3.a"))
-    return task
-}
-
-val mingwX64Compile = defineBuild(KonanTarget.MINGW_X64)
-val linuxX64Compile = defineBuild(KonanTarget.LINUX_X64)
-
-val macosX64Compile = defineBuild(KonanTarget.MACOS_X64)
-
-tasks["compileKotlinLinuxX64"].dependsOn(linuxX64Compile)
-tasks["compileKotlinMingwX64"].dependsOn(mingwX64Compile)
-if (pw.binom.Target.MINGW_X86_SUPPORT) {
-    val mingwX86Compile = defineBuild(KonanTarget.MINGW_X86)
-    tasks["compileKotlinMingwX86"].dependsOn(mingwX86Compile)
-}
-if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-    val linuxArm64Compile = defineBuild(KonanTarget.LINUX_ARM64)
-    tasks["compileKotlinLinuxArm64"].dependsOn(linuxArm64Compile)
-}
-if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-    val linuxArm32HfpCompile = defineBuild(KonanTarget.LINUX_ARM32_HFP)
-    tasks["compileKotlinLinuxArm32Hfp"].dependsOn(linuxArm32HfpCompile)
-}
-tasks["compileKotlinMacosX64"].dependsOn(macosX64Compile)
-
-
-kotlin.eachNative {
-    val sqliteStaticTask = clangBuildStatic(name = "sqlite3", target = this.konanTarget) {
-        include(file("${buildFile.parentFile}/src/native"))
-        compileArgs(
-            "-DSQLITE_ENABLE_FTS3",
-            "-DSQLITE_ENABLE_FTS4",
-            "-DSQLITE_ENABLE_FTS5",
-            "-DSQLITE_ENABLE_RTREE",
-            "-DSQLITE_ENABLE_DBSTAT_VTAB",
-            "-DSQLITE_ENABLE_JSON1",
-            "-DSQLITE_ENABLE_RBU",
-            "-DSQLITE_THREADSAFE=1",
-            "-DSQLITE_ENABLE_EXPLAIN_COMMENTS",
-            "-DSQLITE_ENABLE_COLUMN_METADATA=1"
-        )
-        compileFile(
-            file("${buildFile.parentFile}/src/native/sqlite3.c")
-        )
-    }
-    this.binaries.forEach { it.linkTask.dependsOn(sqliteStaticTask) }
-    binaries {
-        compilations["main"].cinterops {
-            create("sqlite") {
-                defFile = project.file("src/nativeInterop/nativeSqlite3.def")
-                packageName = sqlitePackageName
-                includeDirs.headerFilterOnly("${buildFile.parent}/src/native")
-            }
-        }
-        compilations["main"].kotlinOptions.freeCompilerArgs = args(target)
-        compilations["test"].kotlinOptions.freeCompilerArgs = args(target)
-    }
-}
-
-tasks {
-    eachKotlinNativeLink {
-        println("it.binary.debuggable=${it.binary.debuggable}")
-        println("it.binary.target.konanTarget=${it.binary.target.konanTarget}")
-        println("it.processTests=${it.processTests}")
-        println("k/n->${it.name}  ${it::class.java.name}")
-
-    }
-}
-
-kotlin {
-    targets.forEach {
-        println("target: ${it.name}  ${it is org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget}")
-    }
-}
 apply<pw.binom.plugins.DocsPlugin>()

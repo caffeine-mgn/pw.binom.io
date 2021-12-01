@@ -1,3 +1,5 @@
+import pw.binom.baseStaticLibConfig
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -7,51 +9,20 @@ apply {
 }
 
 kotlin {
-    linuxX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
+    jvm()
+    linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp {
-            binaries {
-                staticLib()
-            }
-        }
+        linuxArm32Hfp()
     }
-
-    mingwX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
-
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
-            binaries {
-                staticLib()
-            }
-        }
+        mingwX86()
     }
-
-//    linuxArm64 {
-//        binaries {
-//            staticLib()
-//        }
-//    }
-    macosX64 {
-        binaries {
-            framework()
-        }
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64()
     }
-
+    macosX64()
+    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -68,7 +39,11 @@ kotlin {
                 dependsOn(commonMain)
             }
         }
-
+        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+            val linuxArm64Main by getting {
+                dependsOn(commonMain)
+            }
+        }
         val mingwX64Main by getting {
             dependsOn(commonMain)
         }

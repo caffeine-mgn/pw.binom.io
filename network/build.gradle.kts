@@ -1,3 +1,5 @@
+import pw.binom.baseStaticLibConfig
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -7,9 +9,9 @@ apply {
 }
 
 kotlin {
-    linuxX64 { // Use your target instead.
+    jvm()
+    linuxX64 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("native") {
                     defFile = project.file("src/cinterop/native.def")
@@ -18,17 +20,9 @@ kotlin {
             }
         }
     }
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
         linuxArm32Hfp {
             binaries {
-                staticLib()
                 compilations["main"].cinterops {
                     create("native") {
                         defFile = project.file("src/cinterop/native.def")
@@ -41,7 +35,6 @@ kotlin {
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
         linuxArm64 {
             binaries {
-                staticLib()
                 compilations["main"].cinterops {
                     create("native") {
                         defFile = project.file("src/cinterop/native.def")
@@ -51,15 +44,9 @@ kotlin {
             }
         }
     }
-//    linuxArm64 {
-//        binaries {
-//            staticLib()
-//        }
-//    }
 
-    mingwX64 { // Use your target instead.
+    mingwX64 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("wepoll") {
                     defFile = project.file("src/cinterop/wepoll.def")
@@ -73,9 +60,8 @@ kotlin {
         }
     }
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
+        mingwX86 {
             binaries {
-                staticLib()
                 compilations["main"].cinterops {
                     create("wepoll") {
                         defFile = project.file("src/cinterop/wepoll.def")
@@ -92,8 +78,6 @@ kotlin {
 
     macosX64 {
         binaries {
-            framework {
-            }
             compilations["main"].cinterops {
                 create("utils") {
                     defFile = project.file("src/cinterop/mac.def")
@@ -106,7 +90,7 @@ kotlin {
             }
         }
     }
-
+    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -117,7 +101,6 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-
         val nativeMain by creating {
             dependsOn(commonMain)
         }

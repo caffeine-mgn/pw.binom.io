@@ -1,3 +1,4 @@
+import pw.binom.baseStaticLibConfig
 import pw.binom.eachKotlinCompile
 
 plugins {
@@ -9,68 +10,22 @@ apply {
 }
 
 kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
-
-    linuxX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
-
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
-        }
-    }
-
-    linuxArm64 {
-        binaries {
-            staticLib()
-        }
-    }
-
-    linuxMips32 {
-        binaries {
-            staticLib()
-        }
-    }
-
-    linuxMipsel32 {
-        binaries {
-            staticLib()
-        }
-    }
-
-    mingwX64 { // Use your target instead.
-        binaries {
-            staticLib()
-        }
-    }
-
+    jvm()
+    linuxX64()
+    linuxArm32Hfp()
+    linuxArm64()
+    linuxMips32()
+    linuxMipsel32()
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
-            binaries {
-                staticLib()
-            }
-        }
+        mingwX86()
     }
-
-    macosX64 {
-        binaries {
-            framework()
-        }
-    }
+    macosX64()
     js("js", BOTH) {
         browser()
         nodejs()
     }
-
+    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {

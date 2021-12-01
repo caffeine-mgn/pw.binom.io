@@ -1,3 +1,5 @@
+import pw.binom.baseStaticLibConfig
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -7,11 +9,9 @@ apply {
 }
 
 kotlin {
-    this.metadata {
-    }
-    linuxX64 { // Use your target instead.
+    jvm()
+    linuxX64 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("openssl") {
                     defFile = project.file("src/cinterop/openssl.def")
@@ -26,17 +26,9 @@ kotlin {
             compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
-    jvm {
-        compilations.all {
-            kotlinOptions {
-//                jvmTarget = "11"
-            }
-        }
-    }
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
         linuxArm32Hfp {
             binaries {
-                staticLib()
                 compilations["main"].cinterops {
                     create("openssl") {
                         defFile = project.file("src/cinterop/openssl.def")
@@ -53,9 +45,8 @@ kotlin {
         }
     }
 
-    mingwX64 { // Use your target instead.
+    mingwX64 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("openssl") {
                     defFile = project.file("src/cinterop/openssl.def")
@@ -71,9 +62,8 @@ kotlin {
         }
     }
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 { // Use your target instead.
+        mingwX86 {
             binaries {
-                staticLib()
                 compilations["main"].cinterops {
                     create("openssl") {
                         defFile = project.file("src/cinterop/openssl.def")
@@ -98,8 +88,6 @@ kotlin {
 //    }
     macosX64 {
         binaries {
-            framework()
-            staticLib()
             compilations["main"].cinterops {
                 create("openssl") {
                     defFile = project.file("src/cinterop/openssl.def")
@@ -114,7 +102,7 @@ kotlin {
             compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
-
+    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
