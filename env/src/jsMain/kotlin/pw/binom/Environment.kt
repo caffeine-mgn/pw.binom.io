@@ -23,3 +23,6 @@ actual val Environment.currentTimeNanoseconds: Long
     get() = (window.performance.now() * 1000000.0).toLong()
 actual val Environment.userDirectory: String
     get() = throw RuntimeException("Not supported")
+
+actual val Environment.currentExecutionPath: String
+    get() = "${window.location.origin}${window.location.pathname}"

@@ -2,9 +2,7 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import pw.binom.io.AppendableUTF8
-import pw.binom.io.Reader
-import pw.binom.io.ReaderUTF82
+import pw.binom.io.*
 
 //private val tmp1 = ByteBuffer.alloc(32)
 
@@ -19,7 +17,7 @@ actual object Console {
 //                platform.posix.write(fd, data.refTo(offset), length.convert()).convert()
 
         override fun write(data: ByteBuffer): Int =
-            data.refTo(data.position){data2->
+            data.refTo(data.position) { data2 ->
                 platform.posix.write(fd, data2, data.remaining.convert()).convert()
             }
 
@@ -41,7 +39,7 @@ actual object Console {
 //        }
 
         override fun read(dest: ByteBuffer): Int =
-            dest.refTo(dest.position){dest2->
+            dest.refTo(dest.position) { dest2 ->
                 platform.posix.write(STDIN_FILENO, dest2, dest.remaining.convert()).convert()
             }
 
@@ -79,5 +77,118 @@ actual object Console {
             return this
         }
     }
-    actual val input: Reader = ReaderUTF82(inChannel)
+
+    //    actual val input: Reader = ReaderUTF82(inChannel)
+    actual val input: Reader = object : Reader {
+        private fun readCharCode(): Int {
+            val char = getc(stdin)
+            when (char) {
+                EOF -> -1
+                EBADF -> throw IOException("The file pointer or descriptor is not valid.")
+//            ECONVERT->throw IOException("A conversion error occurred.")
+//            EGETANDPUT->throw IOException("An illegal read operation occurred after a write operation.")
+//            EIOERROR->throw IOException("A non-recoverable I/O error occurred.")
+//            EIORECERR->throw IOException("A recoverable I/O error occurred.")
+            }
+            return char
+        }
+
+        override fun readln(): String? = kotlin.io.readLine()
+
+        override fun read(): Char? {
+            val b1 = readCharCode()
+            if (b1 == -1) {
+                return null
+            }
+            return if (b1 and 0x80 != 0 && (b1 and 0x40).inv() != 0) {
+                val size = UTF8.utf8CharSize(b1.toByte())
+                when (size) {
+                    1 -> return b1.toChar()
+                    2 -> {
+                        val b2 = readCharCode()
+                        if (b2 == -1) {
+                            return null
+                        }
+                        UTF8.utf8toUnicode(b1, b2)
+                    }
+                    3 -> {
+                        val b2 = readCharCode()
+                        if (b2 == -1) {
+                            return null
+                        }
+                        val b3 = readCharCode()
+                        if (b3 == -1) {
+                            return null
+                        }
+                        UTF8.utf8toUnicode(b1, b2, b3)
+                    }
+                    4 -> {
+                        val b2 = readCharCode()
+                        if (b2 == -1) {
+                            return null
+                        }
+                        val b3 = readCharCode()
+                        if (b3 == -1) {
+                            return null
+                        }
+                        val b4 = readCharCode()
+                        if (b4 == -1) {
+                            return null
+                        }
+                        UTF8.utf8toUnicode(b1, b2, b3, b4)
+                    }
+                    5 -> {
+                        val b2 = readCharCode()
+                        if (b2 == -1) {
+                            return null
+                        }
+                        val b3 = readCharCode()
+                        if (b3 == -1) {
+                            return null
+                        }
+                        val b4 = readCharCode()
+                        if (b4 == -1) {
+                            return null
+                        }
+                        val b5 = readCharCode()
+                        if (b5 == -1) {
+                            return null
+                        }
+                        UTF8.utf8toUnicode(b1, b2, b3, b4, b5)
+                    }
+                    6 -> {
+                        val b2 = readCharCode()
+                        if (b2 == -1) {
+                            return null
+                        }
+                        val b3 = readCharCode()
+                        if (b3 == -1) {
+                            return null
+                        }
+                        val b4 = readCharCode()
+                        if (b4 == -1) {
+                            return null
+                        }
+                        val b5 = readCharCode()
+                        if (b5 == -1) {
+                            return null
+                        }
+                        val b6 = readCharCode()
+                        if (b6 == -1) {
+                            return null
+                        }
+                        UTF8.utf8toUnicode(b1, b2, b3, b4, b5, b6)
+                    }
+                    else -> throw IllegalArgumentException("Unknown char")
+                }
+            } else {
+                b1.toChar()
+            }
+        }
+
+        override fun close() {
+            TODO("Not yet implemented")
+        }
+
+    }
 }

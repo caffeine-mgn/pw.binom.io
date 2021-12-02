@@ -53,3 +53,15 @@ actual fun Environment.getEnv(name: String): String? = getenv(name)?.toKString()
 
 actual val Environment.userDirectory: String
     get() = getEnv("HOME") ?: ""
+
+actual val Environment.currentExecutionPath: String
+    get() =
+        memScoped {
+            val result = allocArray<ByteVar>(PATH_MAX)
+            val count = readlink("/proc/self/exe", result, PATH_MAX).convert<Int>()
+            if (count != -1) {
+                result.toKString()
+            } else {
+                throw RuntimeException("Can't get current execution path. Error #$errno")
+            }
+        }

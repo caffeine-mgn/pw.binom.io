@@ -188,6 +188,69 @@ object UTF8 {
         }.toChar()
     }
 
+    fun utf8toUnicode(b1: Int): Char {
+        return when {
+            (b1 and 0x80) == 0 -> b1
+            else -> throw IllegalArgumentException("Unknown Character #$b1")
+        }.toChar()
+    }
+
+    fun utf8toUnicode(b1: Int, b2:Int): Char {
+        return when {
+            (b1 and 0xE0) == 0xC0 -> {
+                ((b1 and 0x1F) shl 6) or (b2 and 0x3F)
+            }
+            else -> throw IllegalArgumentException("Unknown Character #$b1")
+        }.toChar()
+    }
+
+    fun utf8toUnicode(b1: Int, b2:Int,b3:Int): Char {
+        return when {
+            (b1 and 0xF0) == 0xE0 -> {
+                ((b1 and 0xF) shl 12) or
+                        ((b2 and 0x3F) shl 6) or
+                        ((b3 and 0x3F))
+            }
+            else -> throw IllegalArgumentException("Unknown Character #$b1")
+        }.toChar()
+    }
+    fun utf8toUnicode(b1: Int, b2:Int,b3:Int,b4:Int): Char {
+        return when {
+            (b1 and 0xF8) == 0xF0 -> {
+                ((b1 and 0x7) shl 18) or
+                        ((b2 and 0x3F) shl 12) or
+                        ((b3 and 0x3F) shl 6) or
+                        ((b4 and 0x3F))
+            }
+            else -> throw IllegalArgumentException("Unknown Character #$b1")
+        }.toChar()
+    }
+    fun utf8toUnicode(b1:Int,b2:Int,b3:Int,b4:Int,b5:Int): Char {
+        return when {
+            (b1 and 0xFC) == 0xF8 -> {
+                ((b1 and 0x3) shl 24) or
+                        ((b2 and 0x3F) shl 18) or
+                        ((b3 and 0x3F) shl 12) or
+                        ((b4 and 0x3F) shl 6) or
+                        ((b5 and 0x3F))
+            }
+            else -> throw IllegalArgumentException("Unknown Character #$b1")
+        }.toChar()
+    }
+    fun utf8toUnicode(b1: Int,b2:Int,b3:Int,b4:Int,b5:Int,b6:Int): Char {
+        return when {
+            (b1 and 0xFE) == 0xFC -> {
+                ((b1 and 0x1) shl 30) or
+                        ((b2 and 0x3F) shl 24) or
+                        ((b3 and 0x3F) shl 18) or
+                        ((b4 and 0x3F) shl 12) or
+                        ((b5 and 0x3F) shl 6) or
+                        ((b6 and 0x3F))
+            }
+            else -> throw IllegalArgumentException("Unknown Character #$b1")
+        }.toChar()
+    }
+
     fun utf8toUnicode(firstByte: Byte, otherBytes: ByteBuffer): Char {
         val c = firstByte.toInt()
         fun func() = otherBytes.get()

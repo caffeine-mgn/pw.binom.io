@@ -64,19 +64,20 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 
     override fun flush() {
         checkClosed()
+        native.force(true)
     }
 
-    override var position: ULong
-        get() = native.position().toULong()
+    override var position: Long
+        get() = native.position()
         set(value) {
             checkClosed()
-            native.position(value.toLong())
+            native.position(value)
         }
 
-    override val size: ULong
+    override val size: Long
         get() {
             checkClosed()
-            return native.size().toULong()
+            return native.size()
         }
 
 }

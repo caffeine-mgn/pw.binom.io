@@ -4,7 +4,9 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import platform.posix.*
 import pw.binom.ByteBuffer
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Channel
+import pw.binom.io.ClosedException
 
 actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel,
     RandomAccess {
@@ -33,18 +35,19 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     }) ?: throw FileNotFoundException(file.path)
 
     actual fun skip(length: Long): Long {
-        memScoped { }
+        checkClosed()
         if (length == 0L)
             return 0L
         if (feof(handler) != 0)
             return 0L
         val endOfFile = size
-        val position = minOf(endOfFile, this.position + length.toULong())
+        val position = minOf(endOfFile, this.position + length)
         this.position = position
         return (endOfFile - position).toLong()
     }
 
     override fun read(dest: ByteBuffer): Int {
+        checkClosed()
         if (feof(handler) != 0)
             return 0
         val r = dest.ref { destPtr, destRemaining ->
@@ -62,10 +65,16 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 //    }
 
     override fun close() {
-        fclose(handler)
+        try {
+            checkClosed()
+            fclose(handler)
+        } finally {
+            closed.value = true
+        }
     }
 
     override fun write(data: ByteBuffer): Int {
+        checkClosed()
         if (feof(handler) != 0)
             return 0
         val r = data.ref { dataPtr, dataRemaining ->
@@ -83,18 +92,25 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 //    }
 
     override fun flush() {
+        checkClosed()
+        fflush(handler)
     }
 
     private fun gotoEnd() {
+        checkClosed()
         fseek(handler, 0, SEEK_END)
     }
 
-    override var position: ULong
-        get() = ftell(handler).convert()
+    override var position: Long
+        get() = {
+            checkClosed()
+            return ftell(handler).convert()
+        }
         set(value) {
+            checkClosed()
             fseek(handler, value.convert(), SEEK_SET)
         }
-    override val size: ULong
+    override val size: Long
         get() {
             val pos = position
             gotoEnd()
@@ -102,4 +118,11 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
             position = pos
             return result
         }
+
+    private val closed = AtomicBoolean(false)
+    private fun checkClosed() {
+        if (closed.value) {
+            throw ClosedException()
+        }
+    }
 }

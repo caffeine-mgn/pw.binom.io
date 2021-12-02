@@ -11,3 +11,4 @@ expect val Environment.workDirectory: String
 expect val Environment.userDirectory: String
 expect val Environment.currentTimeMillis: Long
 expect val Environment.currentTimeNanoseconds: Long
+expect val Environment.currentExecutionPath: String

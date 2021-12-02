@@ -68,3 +68,15 @@ actual fun Environment.getEnv(name: String): String? = getenv(name)?.toKString()
 
 actual val Environment.userDirectory: String
     get() = getEnv("HOME") ?: ""
+
+
+actual val Environment.currentExecutionPath: String
+    get() =
+        memScoped {
+            val result = allocArray<WCHARVar>(PATH_MAX)!!
+            val len = _NSGetExecutablePath(null, result, PATH_MAX.convert()).convert<Int>()
+            if (len == 0) {
+                throw RuntimeException("Can't get current execution path. Error #$errno")
+            }
+            result.toKString()
+        }

@@ -14,11 +14,6 @@ actual object Console {
         override fun close() {
         }
 
-//        override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
-//                data.update(offset, length) {
-//                    vv.write(it)
-//                }
-
         override fun write(data: ByteBuffer): Int =
             vv.write(data.native)
 

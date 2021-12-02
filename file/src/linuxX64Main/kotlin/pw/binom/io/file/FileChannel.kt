@@ -42,7 +42,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         if (feof(handler) != 0)
             return 0L
         val endOfFile = size
-        val position = minOf(endOfFile, this.position + length.toULong())
+        val position = minOf(endOfFile, this.position + length)
         this.position = position
         return (endOfFile - position).toLong()
     }
@@ -99,18 +99,19 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 
     override fun flush() {
         checkClosed()
+        fflush(handler)
     }
 
     private fun gotoEnd() {
         fseek(handler, 0, SEEK_END)
     }
 
-    override var position: ULong
+    override var position: Long
         get() = ftell(handler).convert()
         set(value) {
             fseek(handler, value.convert(), SEEK_SET)
         }
-    override val size: ULong
+    override val size: Long
         get() {
             val pos = position
             gotoEnd()

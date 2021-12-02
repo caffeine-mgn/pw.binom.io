@@ -1,6 +1,6 @@
 package pw.binom.io.file
 
 interface RandomAccess {
-    var position: ULong
-    val size: ULong
+    var position: Long
+    val size: Long
 }

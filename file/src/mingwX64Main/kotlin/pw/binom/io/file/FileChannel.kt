@@ -2,8 +2,12 @@ package pw.binom.io.file
 
 import kotlinx.cinterop.convert
 import platform.posix.*
+import platform.windows.GetLastError
 import pw.binom.ByteBuffer
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Channel
+import pw.binom.io.ClosedException
+import pw.binom.io.IOException
 
 actual class FileChannel actual constructor(
     file: File, vararg mode: AccessType
@@ -30,20 +34,22 @@ actual class FileChannel actual constructor(
             read -> "rb"
             else -> throw IllegalArgumentException("Invalid mode")
         }
-    }) ?: throw FileNotFoundException(file.path)
+    }) ?: throw IOException("Can't open file ${file.path}. Error: #${GetLastError()}")
 
     actual fun skip(length: Long): Long {
+        checkClosed()
         if (length == 0L)
             return 0L
         if (feof(handler) != 0)
             return 0L
         val endOfFile = size
-        val position = minOf(endOfFile, this.position + length.toULong())
+        val position = minOf(endOfFile, this.position + length)
         this.position = position
         return (endOfFile - position).toLong()
     }
 
     override fun read(dest: ByteBuffer): Int {
+        checkClosed()
         if (feof(handler) != 0)
             return 0
 
@@ -54,41 +60,54 @@ actual class FileChannel actual constructor(
         return l
     }
 
-//    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        if (feof(handler) != 0)
-//            return 0
-//        return fread(data.refTo(offset.convert()), 1.convert(), length.convert(), handler).convert()
-//    }
+    private val closed = AtomicBoolean(false)
+    private fun checkClosed() {
+        if (closed.value) {
+            throw ClosedException()
+        }
+    }
 
     override fun close() {
-        fclose(handler)
+        try {
+            checkClosed()
+            fclose(handler)
+        } finally {
+            closed.value = true
+        }
     }
 
     override fun write(data: ByteBuffer): Int {
+        checkClosed()
         if (feof(handler) != 0)
             return 0
-        val wroted:Int = data.refTo(data.position) { dataPtr ->
+        val wroted: Int = data.refTo(data.position) { dataPtr ->
             fwrite(dataPtr, 1.convert(), data.remaining.convert(), handler).convert()
         }
-        if (wroted>0) {
+        if (wroted > 0) {
             data.position += wroted
         }
         return wroted
     }
 
     override fun flush() {
+        checkClosed()
+        fflush(handler)
     }
 
     private fun gotoEnd() {
+        checkClosed()
         fseek(handler, 0, SEEK_END)
     }
 
-    override var position: ULong
-        get() = ftell(handler).convert()
+    override var position: Long
+        get() {
+            checkClosed()
+            return ftell(handler).convert()
+        }
         set(value) {
             fseek(handler, value.convert(), SEEK_SET)
         }
-    override val size: ULong
+    override val size: Long
         get() {
             val pos = position
             gotoEnd()

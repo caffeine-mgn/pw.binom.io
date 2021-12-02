@@ -60,7 +60,7 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?, env: Map<S
                     if (workDir != null)
                         chdir(workDir)
                     val rr = execv(exe, r)
-                    TODO()
+                    throw IllegalStateException("This line should be no execute never")
                 }
 
             }

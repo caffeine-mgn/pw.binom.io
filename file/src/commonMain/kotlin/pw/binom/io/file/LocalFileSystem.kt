@@ -75,7 +75,7 @@ class LocalFileSystem(
                 return null
             val channel = file.openRead()
             if (offset > 0uL) {
-                channel.position = offset
+                channel.position = offset.toLong()
             }
 
             return length?.let { channel.asyncInput().withLimit(it.toLong()) } ?: channel.asyncInput()

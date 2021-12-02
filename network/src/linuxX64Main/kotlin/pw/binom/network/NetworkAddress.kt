@@ -40,22 +40,23 @@ actual sealed class NetworkAddress {
                 val addr6 = it.reinterpret<sockaddr_in6>()
                 val family = addr.pointed.sin_family.toInt()
                 val isV4 = family == AF_INET
-                val buf = ByteArray(50)
                 val ptr = if (isV4)
                     addr.pointed.sin_addr
                 else
                     addr6.pointed.sin6_addr
 
-                if (inet_ntop(
-                        family.convert(),
-                        ptr.ptr,
-                        buf.refTo(0).getPointer(this),
-                        50.convert()
-                    ) == null
-                ) {
-                    throw RuntimeException("Can't get address. $errno, family: $family")
+                ByteArray(50).usePinned { buf ->
+                    if (inet_ntop(
+                            family.convert(),
+                            ptr.ptr,
+                            buf.get().refTo(0).getPointer(this),
+                            50.convert()
+                        ) == null
+                    ) {
+                        throw RuntimeException("Can't get address. $errno, family: $family")
+                    }
+                    buf.get().toKString()
                 }
-                buf.toKString()
             }
         }
 

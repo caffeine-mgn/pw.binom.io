@@ -1,5 +1,7 @@
 package pw.binom
 
+import java.io.File
+
 actual val Environment.os: OS
     get() {
         val os = System.getProperty("os.name").lowercase()
@@ -30,3 +32,6 @@ actual val Environment.currentTimeNanoseconds: Long
 
 actual val Environment.userDirectory: String
     get() = System.getProperty("user.home")
+
+actual val Environment.currentExecutionPath: String
+    get() = File(Environment::class.java.protectionDomain.codeSource.location.toURI()).path
