@@ -10,5 +10,6 @@ enum class Platform {
     LINUX_64,
     MACOS,
     JVM,
-    JS
+    JS,
+    WASM32,
 }

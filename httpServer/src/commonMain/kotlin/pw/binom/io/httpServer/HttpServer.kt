@@ -7,7 +7,6 @@ import pw.binom.System
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.date.Date
 import pw.binom.io.AsyncCloseable
-import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.network.*
 
@@ -113,14 +112,14 @@ class HttpServer(
         }
     }
 
-    fun listenHttp(nd: NetworkCoroutineDispatcher = Dispatchers.Network, address: NetworkAddress): Job {
+    fun listenHttp(address: NetworkAddress, dispatcher: NetworkCoroutineDispatcher = Dispatchers.Network): Job {
         val serverChannel = TcpServerSocketChannel()
         serverChannel.bind(address)
-        val server = nd.attach(serverChannel)
+        val server = dispatcher.attach(serverChannel)
         binds += server
 
         val closed = AtomicBoolean(false)
-        val listenJob = GlobalScope.launch(nd) {
+        val listenJob = GlobalScope.launch(dispatcher) {
             try {
                 while (!closed.value) {
 
@@ -150,9 +149,9 @@ class HttpServer(
                 server.close()
             }
         }
-        return JobWithCancelWaiter(listenJob){
+        return JobWithCancelWaiter(listenJob) {
             closed.value = true
-            GlobalScope.launch(nd) {
+            GlobalScope.launch(dispatcher) {
                 server.close()
             }
         }

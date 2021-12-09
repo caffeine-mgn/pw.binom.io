@@ -7,4 +7,5 @@ enum class OS {
     ANDROID,
     IOS,
     UNKNOWN,
+    WEB,
 }

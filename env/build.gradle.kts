@@ -25,6 +25,7 @@ kotlin {
         browser()
         nodejs()
     }
+    wasm32()
     baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
