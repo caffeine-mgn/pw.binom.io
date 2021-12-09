@@ -8,6 +8,7 @@ import pw.binom.concurrency.suspendManagedCoroutine
 import pw.binom.doFreeze
 import kotlin.coroutines.*
 
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use kotlinx coroutines tools")
 interface Dispatcher {
     companion object
 
@@ -30,6 +31,7 @@ interface Dispatcher {
     fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>)
 }
 
+@Deprecated(level = DeprecationLevel.ERROR, message = "Use kotlinx coroutines tools")
 suspend fun <T> fork(func: suspend () -> T): Future<T> =
     suspendCoroutine {
         val dispatcher: Dispatcher? = it.context[DispatcherCoroutineKey]?.dispatcher

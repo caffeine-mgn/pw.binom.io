@@ -33,7 +33,12 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-
+        val jvmMain by getting {
+            dependencies {
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+            }
+            dependsOn(commonMain)
+        }
         val linuxX64Main by getting {
             dependsOn(commonMain)
             kotlin.srcDir("src/nativeMain/kotlin")

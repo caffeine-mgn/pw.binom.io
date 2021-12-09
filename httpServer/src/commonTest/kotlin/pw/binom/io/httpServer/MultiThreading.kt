@@ -2,7 +2,6 @@ package pw.binom.io.httpServer
 
 import pw.binom.*
 import pw.binom.concurrency.*
-import pw.binom.coroutine.fork
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.BaseHttpClient

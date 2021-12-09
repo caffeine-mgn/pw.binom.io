@@ -1,6 +1,8 @@
 package pw.binom.network
 
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.invoke
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.concurrency.*
@@ -39,9 +41,9 @@ fun asyncRun(func: suspend () -> Unit): AsyncResult {
     return out
 }
 
-fun NetworkDispatcher.single(func: suspend () -> Unit) {
-    this.runSingle(func)
-}
+//fun NetworkDispatcher.single(func: suspend () -> Unit) {
+//    this.runSingle(func)
+//}
 
 class NetworkDispatcherTest {
 
@@ -60,9 +62,9 @@ class NetworkDispatcherTest {
 
     @Test
     fun connectTest() {
-        val nd = NetworkDispatcher()
+        val nd = NetworkCoroutineDispatcherImpl()
         var connected = false
-        nd.runSingle {
+        runBlocking {
             nd.tcpConnect(NetworkAddress.Immutable("google.com", 443))
             connected = true
         }
@@ -71,17 +73,17 @@ class NetworkDispatcherTest {
 
     @Test
     fun serverPortGetTest() {
-        val nd = NetworkImpl()
+        val nd = NetworkCoroutineDispatcherImpl()
         val server = nd.bindTcp(NetworkAddress.Immutable(port = 0))
         assertTrue(server.port > 0)
     }
 
     @Test
     fun connectionRefusedTest() {
-        val nd = NetworkDispatcher()
+        val nd = NetworkCoroutineDispatcherImpl()
         var connectionRefused = false
         println("OK!-1")
-        nd.runSingle {
+        runBlocking {
             println("OK!-2")
             try {
                 println("OK!-3")
@@ -103,7 +105,7 @@ class NetworkDispatcherTest {
     @Test
     fun tcpServerTest() {
         val addr = NetworkAddress.Immutable("0.0.0.0", 0)
-        val nd = NetworkDispatcher()
+        val nd = NetworkCoroutineDispatcherImpl()
         val server = nd.bindTcp(addr)
         val port = server.port
         try {
@@ -111,7 +113,7 @@ class NetworkDispatcherTest {
             val buf2 = ByteBuffer.alloc(512)
             Random.nextBytes(buf1)
             buf1.flip()
-            nd.runSingle {
+            runBlocking {
                 val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", port))
                 val serverClient = server.accept()!!
                 client.write(buf1)
@@ -137,7 +139,7 @@ class NetworkDispatcherTest {
     @Test
     fun rebindTest() {
         val addr = NetworkAddress.Immutable("127.0.0.1", port = 50905)
-        val nd = NetworkImpl()
+        val nd = NetworkCoroutineDispatcherImpl()
         val a = nd.bindTcp(addr)
         val port = a.port
         assertTrue(port > 0)
@@ -155,16 +157,16 @@ class NetworkDispatcherTest {
     fun udpTest() {
         val address =
             NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
-        val manager = NetworkImpl()
+        val manager = NetworkCoroutineDispatcherImpl()
         println("try bind udp $address")
-        val server = manager.bindUDP(address)
+        val server = manager.bindUdp(address)
         println("binded!")
-        val client = manager.openUdp()
+        val client = manager.attach(UdpSocketChannel())
         var done = false
         var exception: Throwable? = null
         val request = Random.nextUuid().toString()
         val response = Random.nextUuid().toString()
-        async {
+        runBlocking {
             try {
                 val buf = ByteBuffer.alloc(512)
                 val addr = NetworkAddress.Mutable()
@@ -186,14 +188,9 @@ class NetworkDispatcherTest {
                 exception = e
             } finally {
                 done = true
+                server.close()
             }
         }
-        while (!done) {
-            println("Event!")
-            manager.select()
-        }
-        server.close()
-        exception?.let { throw it }
     }
 
 
@@ -202,20 +199,20 @@ class NetworkDispatcherTest {
     fun multiThreadingTest() {
         val address =
             NetworkAddress.Immutable(host = "127.0.0.1", port = 0)
-        val nd = NetworkDispatcher()
+        val nd = NetworkCoroutineDispatcherImpl()
         val server = nd.bindTcp(address)
         val port = server.port
         val executeWorker = WorkerPool(10)
-        val serverFuture = async2<Unit> {
+        val serverFuture = GlobalScope.launch(nd) {
             val client = server.accept()!!
-            nd.startCoroutine {
+            launch {
                 client.readFully(ByteBuffer.alloc(32).clean())
                 val clientRef = client.asReference()
                 try {
                     executeWorker.start {
                         println("Execute in execute")
                         sleep(1000)
-                        nd.start {
+                        launch {
                             println("Server write: ${clientRef.value.write(ByteBuffer.wrap(ByteArray(64)).clean())}")
                         }
                     }
@@ -226,7 +223,7 @@ class NetworkDispatcherTest {
                 }
             }
         }
-        val clientFuture = async2 {
+        val clientFuture = GlobalScope.launch {
             println("Connection...")
             val client2 = nd.tcpConnect(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
             println("Connected! Write...")
@@ -240,18 +237,10 @@ class NetworkDispatcherTest {
             client2.asyncClose()
             println("Closed!")
         }
-        val now = TimeSource.Monotonic.markNow()
-        while (!serverFuture.isDone || !clientFuture.isDone) {
-            if (now.elapsedNow() > 10.0.seconds) {
-                throw RuntimeException("Timeout")
-            }
-            nd.select(100)
-        }
-        if (serverFuture.isFailure) {
-            throw serverFuture.exceptionOrNull!!
-        }
-        if (clientFuture.isFailure) {
-            throw clientFuture.exceptionOrNull!!
+
+        runBlocking {
+            serverFuture.join()
+            clientFuture.join()
         }
     }
 
@@ -260,17 +249,17 @@ class NetworkDispatcherTest {
     fun parallelAsync() {
         val address =
             NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
-        val nd = NetworkDispatcher()
+        val nd = NetworkCoroutineDispatcherImpl()
         val server = nd.bindTcp(address)
 
-        async2 {
+        GlobalScope.launch(nd) {
             try {
                 var clientCount = 0
                 while (true) {
                     println("Server: try accept")
                     val client = server.accept()!!
                     println("Server: Accepted!")
-                    async2 {
+                    launch {
                         clientCount++
                         println("Server: Client connected! Count: $clientCount")
                         try {
@@ -292,7 +281,7 @@ class NetworkDispatcherTest {
             }
         }
 
-        fun clientCheck(name: String) = async2 {
+        fun clientCheck(name: String) = GlobalScope.launch(nd) {
             try {
                 val client2 = nd.tcpConnect(address)
                 println("Client[$name-${client2.hashCode()}]:Connected! Write...")
@@ -326,18 +315,23 @@ class NetworkDispatcherTest {
         val clientFuture1 = clientCheck("1")
         val clientFuture2 = clientCheck("2")
         val now = TimeSource.Monotonic.markNow()
-        while (!clientFuture1.isDone || !clientFuture2.isDone) {
+
+        while (!clientFuture1.isCompleted || !clientFuture2.isCompleted) {
             if (now.elapsedNow() > 10.0.seconds) {
                 throw RuntimeException("Timeout")
             }
-            nd.select(100)
+            sleep(100)
         }
-        if (clientFuture1.isFailure) {
-            throw clientFuture1.exceptionOrNull!!
+        runBlocking {
+            clientFuture1.join()
+            clientFuture2.join()
         }
-        if (clientFuture2.isFailure) {
-            throw clientFuture2.exceptionOrNull!!
-        }
+//        if (clientFuture1.isFailure) {
+//            throw clientFuture1.exceptionOrNull!!
+//        }
+//        if (clientFuture2.isFailure) {
+//            throw clientFuture2.exceptionOrNull!!
+//        }
     }
 }
 

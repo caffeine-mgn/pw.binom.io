@@ -13,6 +13,8 @@ import kotlin.coroutines.startCoroutine
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.freeze
 import kotlin.native.concurrent.Worker as NativeWorker
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Runnable
 
 @ThreadLocal
 private var privateCurrentWorker: WorkerImpl? = null
@@ -36,7 +38,7 @@ private fun <DATA, RESULT> getFunc(
         InputData(worker = worker, input = input, func = func, future = future)
     }.doFreeze()
 
-actual class WorkerImpl(name: String?) : Executor, Worker, Dispatcher {
+actual class WorkerImpl(name: String?) : Executor, Worker, CoroutineDispatcher() {
     private val nativeWorker = NativeWorker.start(errorReporting = true, name = name)
     private val _isInterrupted = AtomicBoolean(false)
     private var _taskCount by AtomicInt(0)
@@ -148,5 +150,10 @@ actual class WorkerImpl(name: String?) : Executor, Worker, Dispatcher {
             it.second.close()
             f.resumeWith(it.first)
         }
+    }
+
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        this.execute { block.run() }
     }
 }

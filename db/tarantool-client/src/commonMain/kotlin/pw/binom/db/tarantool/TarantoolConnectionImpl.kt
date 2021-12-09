@@ -1,5 +1,6 @@
 package pw.binom.db.tarantool
 
+import kotlinx.coroutines.CoroutineScope
 import pw.binom.*
 import pw.binom.concurrency.ThreadRef
 import pw.binom.db.tarantool.protocol.*
@@ -14,6 +15,8 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import pw.binom.network.Network
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 
 private const val VSPACE_ID = 281
 private const val VSPACE_ID_INDEX_ID = 0
@@ -23,14 +26,14 @@ private const val VINDEX_ID_INDEX_ID = 0
 
 @Suppress("UNCHECKED_CAST")
 class TarantoolConnectionImpl internal constructor(
-    private val networkThread: ThreadRef,
+//    private val networkThread: ThreadRef,
     val networkDispatcher: NetworkCoroutineDispatcher,
     con: TcpConnection,
     val serverVersion: String,
 ) :
     TarantoolConnection {
 
-
+    internal var mainLoopJob: Job? = null
     private var syncCursor = 0L
     private val requests = HashMap<Long, Continuation<Package>>()
     private val connectionReference = con
@@ -43,11 +46,11 @@ class TarantoolConnectionImpl internal constructor(
     val isConnected
         get() = connected
 
-    private fun checkThread() {
-        if (!networkThread.same) {
-            throw IllegalStateException("You must call Connector method from network thread")
-        }
-    }
+//    private fun checkThread() {
+//        if (!networkThread.same) {
+//            throw IllegalStateException("You must call Connector method from network thread")
+//        }
+//    }
 
     private suspend fun loadMeta(): List<TarantoolSpaceMeta> {
         metaUpdating = true
@@ -92,9 +95,9 @@ class TarantoolConnectionImpl internal constructor(
     }
 
     internal suspend fun sendReceive(code: Code, schemaId: Int? = null, body: Map<Any, Any?>): Package {
-        checkThread()
+//        checkThread()
         val sync = syncCursor++
-        return run {
+        return withContext(networkDispatcher) {
             try {
                 val headers = HashMap<Int, Any?>()
                 headers[Key.CODE.id] = code.id
@@ -134,51 +137,54 @@ class TarantoolConnectionImpl internal constructor(
     }
 
     override suspend fun asyncClose() {
-        checkThread()
+//        checkThread()
         if (closed) {
             throw ClosedException()
         }
+        mainLoopJob?.cancel()
         closed = true
         out.close()
         connectionReference.close()
     }
 
-    internal suspend fun startMainLoop() {
-        ByteBuffer.alloc(8) { buf ->
-            try {
-                val packageReader = AsyncInputWithCounter(connectionReference)
-                while (!closed) {
-                    val vv = connectionReference.readByte(buf).toUByte()
-                    if (vv != 0xce.toUByte()) {
-                        throw IOException("Invalid Protocol Header Response")
+    internal suspend fun startMainLoop(cs: CoroutineScope) {
+        withContext(networkDispatcher) {
+            ByteBuffer.alloc(8) { buf ->
+                try {
+                    val packageReader = AsyncInputWithCounter(connectionReference)
+                    while (mainLoopJob?.isActive != false && !closed) {
+                        val vv = connectionReference.readByte(buf).toUByte()
+                        if (vv != 0xce.toUByte()) {
+                            throw IOException("Invalid Protocol Header Response")
+                        }
+                        val size = connectionReference.readInt(buf)
+                        buf.clear()
+                        packageReader.limit = size
+                        val msg = InternalProtocolUtils.unpack(buf, packageReader)
+                        val headers = msg as Map<Int, Any?>
+                        val body = if (packageReader.limit > 0) {
+                            InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
+                        } else
+                            emptyMap()
+                        val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
+                        val pkg = Package(
+                            header = headers,
+                            body = body
+                        )
+                        requests.remove(serial)?.resumeWith(Result.success(pkg))
                     }
-                    val size = connectionReference.readInt(buf)
-                    buf.clear()
-                    packageReader.limit = size
-                    val msg = InternalProtocolUtils.unpack(buf, packageReader)
-                    val headers = msg as Map<Int, Any?>
-                    val body = if (packageReader.limit > 0) {
-                        InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
-                    } else
-                        emptyMap()
-                    val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
-                    val pkg = Package(
-                        header = headers,
-                        body = body
-                    )
-                    requests.remove(serial)?.resumeWith(Result.success(pkg))
+                } catch (e: SocketClosedException) {
+                    requests.forEach {
+                        it.value.resumeWithException(e)
+                    }
+                    requests.clear()
+                    connected = false
+                    //NOP
+                } catch (e: ClosedException) {
+                    //NOP
+                } catch (e: Throwable) {
+                    asyncClose()
                 }
-            } catch (e: SocketClosedException) {
-                requests.forEach {
-                    it.value.resumeWithException(e)
-                }
-                requests.clear()
-                connected = false
-                //NOP
-            } catch (e: ClosedException) {
-                //NOP
-            } catch (e: Throwable) {
-                asyncClose()
             }
         }
     }

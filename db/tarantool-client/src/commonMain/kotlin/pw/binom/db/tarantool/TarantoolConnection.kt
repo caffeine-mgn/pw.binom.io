@@ -3,14 +3,14 @@ package pw.binom.db.tarantool
 import pw.binom.ByteBuffer
 import pw.binom.alloc
 import pw.binom.asUTF8String
-import pw.binom.concurrency.ThreadRef
-import pw.binom.coroutine.fork
 import pw.binom.db.tarantool.protocol.Code
 import pw.binom.db.tarantool.protocol.InternalProtocolUtils
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.AsyncCloseable
 import pw.binom.network.Network
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcher
 
@@ -24,6 +24,7 @@ interface TarantoolConnection: AsyncCloseable {
         ): TarantoolConnectionImpl {
             val con = manager.tcpConnect(address)
             ByteBuffer.alloc(64) { buf ->
+                var connection : TarantoolConnectionImpl?=null
                 try {
                     con.readFully(buf)
                     buf.flip()
@@ -32,13 +33,13 @@ interface TarantoolConnection: AsyncCloseable {
                     con.readFully(buf)
                     buf.flip()
                     val salt = buf.asUTF8String().trim()
-                    val connection = TarantoolConnectionImpl(
-                        networkThread = ThreadRef(),
+                    connection = TarantoolConnectionImpl(
+//                        networkThread = ThreadRef(),
                         networkDispatcher = manager,
                         con = con,
                         serverVersion = version
                     )
-                    fork { connection.startMainLoop() }
+                    connection.mainLoopJob = GlobalScope.launch { connection.startMainLoop(this) }
                     if (userName != null && password != null) {
                         connection.sendReceive(
                             code = Code.AUTH,
@@ -48,7 +49,7 @@ interface TarantoolConnection: AsyncCloseable {
                     }
                     return connection
                 } catch (e: Throwable) {
-                    con.close()
+                    connection?.asyncClose()
                     throw e
                 }
             }

@@ -1,6 +1,8 @@
 @file:JvmName("WorkerImplJvmKt")
 package pw.binom.concurrency
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Runnable
 import pw.binom.FreezableFuture
 import pw.binom.Future
 import pw.binom.NonFreezableFuture
@@ -32,7 +34,7 @@ private object WorkerThreadFactory : ThreadFactory {
 
 }
 
-actual class WorkerImpl (name: String?) : Executor, Worker, Dispatcher {
+actual class WorkerImpl (name: String?) : Executor, Worker, CoroutineDispatcher() {
     private val _id = idSeq.incrementAndGet()
     private val worker = Executors.newSingleThreadExecutor(WorkerThreadFactory)
 
@@ -164,6 +166,10 @@ actual class WorkerImpl (name: String?) : Executor, Worker, Dispatcher {
             it.second.close()
             f.resumeWith(it.first)
         }
+    }
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        this.worker.submit(block)
     }
 }
 

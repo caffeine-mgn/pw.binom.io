@@ -125,12 +125,12 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                     connection.connect = it
                 }
             } catch (e: SocketConnectException) {
+                runCatching { connection.asyncClose() }
                 if (e.message != null) {
                     throw e
                 } else {
                     throw SocketConnectException(address.toString(), e.cause)
                 }
-                connection.asyncClose()
             }
             connection
         }

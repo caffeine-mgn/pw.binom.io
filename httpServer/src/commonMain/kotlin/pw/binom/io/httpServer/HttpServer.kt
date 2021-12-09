@@ -126,17 +126,11 @@ class HttpServer(
                     var channel: ServerAsyncAsciiChannel? = null
                     try {
                         idleCheck()
-                        println("accepting...")
                         val client = try {
                             server.accept(null)
                         } catch (e: ClosedException) {
-                            println("Close exception")
                             null
-                        }
-                        if (client == null) {
-                            println("no for accept")
-                            break
-                        }
+                        } ?: break
                         channel = ServerAsyncAsciiChannel(channel = client, pool = textBufferPool)
                         clientProcessing(channel = channel, isNewConnect = true)
                     } catch (e: Throwable) {

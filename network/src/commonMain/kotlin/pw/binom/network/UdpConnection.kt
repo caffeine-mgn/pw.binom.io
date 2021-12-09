@@ -1,5 +1,7 @@
 package pw.binom.network
 
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.ByteBuffer
 import pw.binom.CancelledException
 import pw.binom.io.use
@@ -19,7 +21,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
     lateinit var key: Selector.Key
 
     private class ReadData {
-        var continuation: Continuation<Int>? = null
+        var continuation: CancellableContinuation<Int>? = null
         var data: ByteBuffer? = null
         var address: NetworkAddress.Mutable? = null
         var full = false
@@ -126,11 +128,17 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
             return r
         }
         readData.full = false
-        val readed = suspendCoroutine<Int> {
+        val readed = suspendCancellableCoroutine<Int> {
             readData.continuation = it
             readData.data = dest
             readData.address = address
             key.addListen(Selector.INPUT_READY)
+            it.invokeOnCancellation {
+                readData.continuation = null
+                readData.data = null
+                readData.address = null
+                key.removeListen(Selector.INPUT_READY)
+            }
         }
         if (readed < 0) {
             throw SocketClosedException()

@@ -1,5 +1,6 @@
 package pw.binom.concurrency
 
+import kotlinx.coroutines.CoroutineDispatcher
 import pw.binom.Future
 import pw.binom.coroutine.Dispatcher
 import pw.binom.coroutine.Executor
@@ -8,7 +9,7 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-expect class WorkerImpl : Executor, Worker, Dispatcher {
+expect class WorkerImpl : Executor, Worker, CoroutineDispatcher {
     override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>)
     override fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT>
     override fun requestTermination(): Future<Unit>

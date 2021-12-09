@@ -1,12 +1,13 @@
 package pw.binom.network
 
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.ByteBuffer
 import pw.binom.CancelledException
 import pw.binom.io.AsyncChannel
 import pw.binom.neverFreeze
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(), AsyncChannel {
 
@@ -15,7 +16,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     lateinit var key: Selector.Key
 
     private class ReadData {
-        var continuation: Continuation<Int>? = null
+        var continuation: CancellableContinuation<Int>? = null
         var data: ByteBuffer? = null
         var full = false
 
@@ -26,7 +27,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     private class SendData {
-        var continuation: Continuation<Int>? = null
+        var continuation: CancellableContinuation<Int>? = null
         var data: ByteBuffer? = null
         fun reset() {
             continuation = null
@@ -147,7 +148,6 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         if (l == 0) {
             return 0
         }
-
         if (sendData.continuation != null) {
             throw IllegalStateException("Connection already have write listener")
         }
@@ -155,11 +155,13 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         if (wrote == l) {
             return wrote
         }
-
         sendData.data = data
-        suspendCoroutine<Int> {
+        suspendCancellableCoroutine<Int> {
             sendData.continuation = it
             key.addListen(Selector.OUTPUT_READY)
+            it.invokeOnCancellation {
+                key.removeListen(Selector.OUTPUT_READY)
+            }
         }
         return l
     }
@@ -183,7 +185,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             return r
         }
         readData.full = true
-        val readed = suspendCoroutine<Int> {
+        val readed = suspendCancellableCoroutine<Int> {
             readData.continuation = it
             readData.data = dest
             key.addListen(Selector.INPUT_READY)
@@ -207,10 +209,15 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             return r
         }
         readData.full = false
-        val readed = suspendCoroutine<Int> {
+        val readed = suspendCancellableCoroutine<Int> {
             readData.continuation = it
             readData.data = dest
             key.addListen(Selector.INPUT_READY)
+            it.invokeOnCancellation {
+                key.removeListen(Selector.INPUT_READY)
+                readData.continuation = null
+                readData.data = null
+            }
         }
         if (readed == 0) {
             runCatching { channel.close() }

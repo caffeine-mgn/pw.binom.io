@@ -1,5 +1,7 @@
 package pw.binom.db.async.pool
 
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
 import pw.binom.date.Date
 import pw.binom.db.async.AsyncConnection
 import pw.binom.io.StreamClosedException
@@ -10,6 +12,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.minutes
 
@@ -25,15 +28,18 @@ class AsyncConnectionPoolImpl constructor(
     private val idleConnection = ArrayList<PooledAsyncConnectionImpl>(maxConnections)
 
     private val waiters = ArrayList<Continuation<PooledAsyncConnectionImpl>>()
+    private val idleConnectionLock = SpinLock()
+    private val connectionsLock = SpinLock()
 
     init {
         neverFreeze()
     }
+
     override val idleConnectionCount
-        get() = idleConnection.size
+        get() = idleConnectionLock.synchronize { idleConnection.size }
 
     override val connectionCount
-        get() = connections.size
+        get() = connectionsLock.synchronize { connections.size }
 
     /**
      * Set for connection for delete
@@ -49,49 +55,58 @@ class AsyncConnectionPoolImpl constructor(
     }
 
     suspend fun cleanUp(): Int {
+        var count = 0
+
         if (cleaning) {
             return 0
         }
-        var count = 0
-        try {
-            cleaning = true
-            val it = idleConnection.iterator()
-            while (it.hasNext()) {
-                val e = it.next()
-                if (Date.nowTime - e.lastActive > idleTime.inMilliseconds.toLong()) {
-                    it.remove()
-                    connections -= e
-                    forRemove += e
-                    count++
-                    continue
+        idleConnectionLock.synchronize {
+            try {
+                cleaning = true
+                val it = idleConnection.iterator()
+                while (it.hasNext()) {
+                    val e = it.next()
+                    if (Date.nowTime - e.lastActive > idleTime.toLong(DurationUnit.MILLISECONDS)) {
+                        it.remove()
+                        connectionsLock.synchronize {
+                            connections -= e
+                        }
+                        forRemove += e
+                        count++
+                        continue
+                    }
                 }
+                forRemove.forEach {
+                    runCatching { it.asyncClose() }
+                }
+                forRemove.clear()
+            } finally {
+                cleaning = false
             }
-            forRemove.forEach {
-                runCatching { it.asyncClose() }
-            }
-            forRemove.clear()
-        } finally {
-            cleaning = false
         }
         return count
     }
 
     private suspend fun getConnectionAnyWay(): PooledAsyncConnectionImpl {
-        while (true) {
+
+        while (true) idleConnectionLock.synchronize {
             val connection = idleConnection.removeLastOrNull()
             if (connection != null) {
                 if (!connection.checkValid()) {
-                    connections -= connection
+                    connectionsLock.synchronize {
+                        connections -= connection
+                    }
                     forRemove += connection
-                    continue
+                    return@synchronize
                 }
                 return connection
             }
-
-            if (connections.size < maxConnections) {
-                val con = PooledAsyncConnectionImpl(this, factory())
-                connections.add(con)
-                return con
+            connectionsLock.synchronize {
+                if (connections.size < maxConnections) {
+                    val con = PooledAsyncConnectionImpl(this, factory())
+                    connections.add(con)
+                    return con
+                }
             }
             if (!waitFreeConnection) {
                 throw IllegalStateException("No free connections")
@@ -99,9 +114,11 @@ class AsyncConnectionPoolImpl constructor(
 
             val con = suspendCoroutine<PooledAsyncConnectionImpl> { waiters += it }
             if (!con.checkValid()) {
-                connections -= con
+                connectionsLock.synchronize {
+                    connections -= con
+                }
                 forRemove += con
-                continue
+                return@synchronize
             }
             con.updateActive()
             return con
@@ -123,7 +140,9 @@ class AsyncConnectionPoolImpl constructor(
         cleanUp()
         val w = getOneWater()
         if (w == null) {
-            idleConnection += connection
+            idleConnectionLock.synchronize {
+                idleConnection += connection
+            }
         } else {
             w.resume(connection)
         }
@@ -138,6 +157,8 @@ class AsyncConnectionPoolImpl constructor(
             runCatching { it.asyncClose() }
         }
         connections.clear()
-        idleConnection.clear()
+        idleConnectionLock.synchronize {
+            idleConnection.clear()
+        }
     }
 }

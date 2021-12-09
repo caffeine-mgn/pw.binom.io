@@ -1,5 +1,7 @@
 package pw.binom.network
 
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.CancelledException
 import pw.binom.io.use
 import kotlin.coroutines.Continuation
@@ -70,7 +72,7 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkManager, v
         channel.close()
     }
 
-    private var acceptListener: Continuation<TcpClientSocketChannel>? = null
+    private var acceptListener: CancellableContinuation<TcpClientSocketChannel>? = null
 
     fun interruptAccepting(): Boolean {
         val continuation = acceptListener ?: return false
@@ -79,7 +81,7 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkManager, v
         return true
     }
 
-    suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection? {
+    suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection {
         if (acceptListener != null) {
             throw IllegalStateException("Connection already have read listener")
         }
@@ -89,9 +91,14 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkManager, v
             return dispatcher.attach(newClient)
         }
 
-        val newChannel = suspendCoroutine<TcpClientSocketChannel> { con ->
+        val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
             acceptListener = con
             key.listensFlag = Selector.INPUT_READY
+
+            con.invokeOnCancellation {
+                acceptListener = null
+                key.listensFlag = 0
+            }
         }
         return dispatcher.attach(newChannel)
     }
