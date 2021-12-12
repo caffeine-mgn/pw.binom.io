@@ -11,7 +11,7 @@ class ReentrantSpinLock:Lock {
     private val count = AtomicInt(0)
 
     override fun lock() {
-        if (threadId.value == WorkerImpl.current?.id ?: 0)
+        if (threadId.value == (WorkerImpl.current?.id ?: 0))
             count.increment()
         else {
             while (true) {
@@ -36,18 +36,5 @@ class ReentrantSpinLock:Lock {
 
     init {
         doFreeze()
-    }
-}
-
-@OptIn(ExperimentalContracts::class)
-inline fun <T> ReentrantSpinLock.synchronize(func: () -> T): T {
-    contract {
-        callsInPlace(func)
-    }
-    try {
-        lock()
-        return func()
-    } finally {
-        unlock()
     }
 }

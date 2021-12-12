@@ -1,8 +1,6 @@
 package pw.binom.concurrency
 
 import pw.binom.atomic.AtomicBoolean
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -45,18 +43,5 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
 
     override fun unlock() {
         lock.value = false
-    }
-}
-
-@OptIn(ExperimentalContracts::class)
-inline fun <T> SpinLock.synchronize(func: () -> T): T {
-    contract {
-        callsInPlace(func)
-    }
-    try {
-        lock()
-        return func()
-    } finally {
-        unlock()
     }
 }

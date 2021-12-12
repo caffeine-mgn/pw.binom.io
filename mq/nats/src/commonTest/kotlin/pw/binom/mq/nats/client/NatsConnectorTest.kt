@@ -1,66 +1,37 @@
 package pw.binom.mq.nats.client
 
-import pw.binom.async2
+import kotlinx.coroutines.runBlocking
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
 import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
 
 class NatsConnectorTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
     fun test3() {
-        val nd = NetworkDispatcher()
         val connector1 = NatsConnector.create(
             clientName = "Binom Client",
             user = null,
             pass = null,
-            networkDispatcher = nd,
             tlsRequired = false,
             echo = true,
             serverList = listOf(
-                NetworkAddress.Immutable("127.0.0.1", 4222),
-                NetworkAddress.Immutable("127.0.0.1", 4223)
+                NetworkAddress.Immutable("127.0.0.1", TestUtils.NATS_PORT),
             )
         )
 
-        val done = async2 {
-            try {
-                val msgText = Random.nextUuid().toString()
-                println("try subscribe")
-                connector1.subscribe("S1", null)
-                println("Publish...")
-                connector1.publish("S1", null, "Hello".encodeToByteArray())
-
-                println("Try read...")
-                val msg = connector1.readMessage()
-                assertNull(msg.replyTo)
-                assertEquals("Hello", msg.data.decodeToString())
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                throw e
-            }
-        }
-
-
-        val now = TimeSource.Monotonic.markNow()
-        while (!done.isDone) {
-//            if (msg1ForCon1 == 0 && msg1ForCon2 == 1 && msg2ForCon2 == 1) {
-//                break
-//            }
-//            if (now.elapsedNow() > 5.0.seconds) {
-//                throw RuntimeException("Timeout")
-//            }
-            nd.select(500)
-        }
-        if (done.isFailure) {
-            throw done.exceptionOrNull!!
+        runBlocking {
+            val msgText = Random.nextUuid().toString()
+            connector1.subscribe("S1", null)
+            connector1.publish(subject = "S1", replyTo = null, data=msgText.encodeToByteArray())
+            val msg = connector1.readMessage()
+            assertNull(msg.replyTo)
+            assertEquals(msgText, msg.data.decodeToString())
         }
     }
 //

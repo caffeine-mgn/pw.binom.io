@@ -3,6 +3,7 @@ package pw.binom.io.httpClient
 import pw.binom.Environment
 import pw.binom.charset.Charsets
 import pw.binom.crypto.Sha1MessageDigest
+import pw.binom.io.AsyncChannel
 import pw.binom.io.IOException
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
@@ -177,6 +178,16 @@ class DefaultHttpRequest constructor(
 //            rawConnection = channel.channel,
 //            networkDispatcher = client.networkDispatcher,
         )
+    }
+
+    override suspend fun startTcp(): AsyncChannel {
+        headers[Headers.CONNECTION] = Headers.UPGRADE
+        headers[Headers.UPGRADE] = Headers.TCP
+        val resp = getResponse()
+        if (resp.responseCode != 101) {
+            throw IOException("Invalid Response code: ${resp.responseCode}")
+        }
+        return channel.channel
     }
 
     override suspend fun asyncClose() {

@@ -152,6 +152,11 @@ class DefaultHttpResponse(
             pool = client.textBufferPool,
         )
 
+    override suspend fun startTcp(): AsyncChannel {
+        closed = true
+        return channel.channel
+    }
+
     override suspend fun asyncClose() {
         if (closed) {
             return

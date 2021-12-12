@@ -21,6 +21,7 @@ interface Headers : Map<String, List<String>> {
         const val UPGRADE = "Upgrade"
         const val CONTENT_RANGE = "Content-Range"
         const val WEBSOCKET = "websocket"
+        const val TCP = "tcp"
         const val KEEP_ALIVE = "keep-alive"
         const val SET_COOKIE = "Set-Cookie"
         const val COOKIE = "Cookie"

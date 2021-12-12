@@ -87,12 +87,21 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
         return pooledPst
     }
 
-    override suspend fun asyncClose() {
+    private suspend fun cleanUp(){
         clean()
         prepareStatements.toTypedArray().forEach {
             it.asyncClose()
         }
         prepareStatements.clear()
+    }
+
+    internal suspend fun fullClose(){
+        cleanUp()
+        connection.asyncClose()
+    }
+
+    override suspend fun asyncClose() {
+        cleanUp()
         pool.free(this)
     }
 }

@@ -1,5 +1,7 @@
 package pw.binom.mq.nats.client
 
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.ByteBuffer
 import pw.binom.io.AsyncCloseable
 import pw.binom.network.NetworkAddress
@@ -77,14 +79,14 @@ internal class NatsConnectorImpl(
     }
 
     private var connecting = false
-    private var connectionWaters = ArrayList<Continuation<NatsRawConnection>>()
+    private var connectionWaters = ArrayList<CancellableContinuation<NatsRawConnection>>()
 
     private suspend fun checkConnection(): NatsRawConnection {
         if (connection != null) {
             return connection!!
         }
         if (connecting) {
-            return suspendCoroutine { connectionWaters.add(it) }
+            return suspendCancellableCoroutine { connectionWaters.add(it) }
         }
         connecting = true
         try {
@@ -108,8 +110,12 @@ internal class NatsConnectorImpl(
                 }
                 val addr = serverList[serverIndex]
                 val tcpConnection = try {
-                    networkDispatcher.tcpConnect(addr)
+                    println("Connecting to $addr")
+                    val connection = networkDispatcher.tcpConnect(addr)
+                    println("Connected to $addr")
+                    connection
                 } catch (e: SocketConnectException) {
+                    println("Can't connect to $addr")
                     serverIndex++
                     continue@CONNECT_LOOP
                 }

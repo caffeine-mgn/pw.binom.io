@@ -1,5 +1,8 @@
 package pw.binom.mq.nats.client
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import pw.binom.network.Network
 import pw.binom.network.NetworkAddress
 import pw.binom.nextUuid
 import kotlin.coroutines.Continuation
@@ -13,14 +16,14 @@ class NatsRawConnectionTest {
 
     @Test
     fun connectTest() {
-        net { nd ->
-            val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", 4222))
+        runBlocking {
+            val client = Dispatchers.Network.tcpConnect(NetworkAddress.Immutable("127.0.0.1", TestUtils.NATS_PORT))
             val con = NatsRawConnection(
                 channel = client
             )
             val serverInfo = con.prepareConnect(echo = true)
 //            assertEquals(2, serverInfo.clusterAddresses.size)
-            con.subscribe(Random.nextUuid(), "S1", null)
+            con.subscribe(Random.nextUuid().toString(), "S1", null)
             con.publish("S1", null, "Hello".encodeToByteArray())
             assertEquals("Hello", con.readMessage().data.decodeToString())
         }

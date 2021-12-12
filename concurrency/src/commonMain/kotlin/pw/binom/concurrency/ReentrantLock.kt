@@ -1,13 +1,12 @@
 @file:JvmName("LockUtilsKt")
+
 package pw.binom.concurrency
 
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-expect class ReentrantLock:Lock {
+expect class ReentrantLock : Lock {
     constructor()
 
     override fun lock()
@@ -27,18 +26,5 @@ expect class ReentrantLock:Lock {
         fun await(duration: Duration): Boolean
         fun signal()
         fun signalAll()
-    }
-}
-
-@OptIn(ExperimentalContracts::class)
-inline fun <T> ReentrantLock.synchronize(func: () -> T): T {
-    contract {
-        callsInPlace(func)
-    }
-    try {
-        lock()
-        return func()
-    } finally {
-        unlock()
     }
 }
