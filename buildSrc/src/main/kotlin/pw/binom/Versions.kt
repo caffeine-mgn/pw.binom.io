@@ -1,7 +1,7 @@
 package pw.binom
 
 object Versions {
-    val LIB_VERSION = "0.1.32"
+    val LIB_VERSION = "0.1.32-RC"
     val TEST_CONTAINERS_VERSION = "0.1.1"
     val KOTLIN_VERSION = "1.6.0"
     val KOTLINX_SERIALIZATION_VERSION = "1.3.1"
