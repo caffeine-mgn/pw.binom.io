@@ -36,8 +36,8 @@ class ExchangeTest {
     fun passTest() {
         exchange1.doFreeze()
         exchange2.doFreeze()
-        val w1 = Worker.create()
-        val w2 = Worker.create()
+        val w1 = Worker()
+        val w2 = Worker()
 
         w1.execute(null) {
             println("w1->1")
@@ -98,7 +98,7 @@ class ExchangeTest {
     @Test
     fun getDelayTest2() {
         val e = BlockingExchange<Int>()
-        val w = Worker.create()
+        val w = Worker()
         w.execute(e) {e->
             sleep(500)
             e.put(100)

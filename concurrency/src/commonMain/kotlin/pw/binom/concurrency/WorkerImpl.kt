@@ -9,27 +9,23 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-expect class WorkerImpl : Executor, Worker, CoroutineDispatcher {
-    override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>)
-    override fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT>
-    override fun requestTermination(): Future<Unit>
-    override val isInterrupted: Boolean
-    override val id: Long
-    override val taskCount: Int
-    fun <T> startCoroutine(
-        onDone: (Result<T>) -> Unit,
-        context: CoroutineContext = EmptyCoroutineContext,
-        func: suspend () -> T
-    )
-
-    companion object {
-        val current: WorkerImpl?
-    }
-}
-
-expect fun Worker.Companion.create(name: String? = null): Worker
-
-expect val WorkerImpl.Companion.availableProcessors: Int
+//expect class WorkerImpl : Executor, Worker, CoroutineDispatcher {
+//    override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>)
+//    override fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT>
+//    override fun requestTermination(): Future<Unit>
+//    override val isInterrupted: Boolean
+//    override val id: Long
+//    override val taskCount: Int
+//    fun <T> startCoroutine(
+//        onDone: (Result<T>) -> Unit,
+//        context: CoroutineContext = EmptyCoroutineContext,
+//        func: suspend () -> T
+//    )
+//
+//    companion object {
+//        val current: WorkerImpl?
+//    }
+//}
 
 internal data class CoroutineStartData<T>(
     val context: CoroutineContext,

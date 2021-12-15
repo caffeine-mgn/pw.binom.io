@@ -3,6 +3,7 @@ package pw.binom.concurrency
 import kotlinx.cinterop.*
 import platform.windows.*
 import kotlin.native.concurrent.freeze
+import kotlin.native.internal.Cleaner
 import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -11,16 +12,16 @@ import kotlin.time.TimeSource
 private const val checkTime = 50
 
 @OptIn(ExperimentalStdlibApi::class)
-actual class ReentrantLock:Lock {
+actual class ReentrantLock : Lock {
 
     private val native = nativeHeap.alloc<CRITICAL_SECTION>()
 
     init {
         InitializeCriticalSection(native.ptr)
-
     }
 
     private val cleaner = createCleaner(native) { native ->
+        LeaveCriticalSection(native.ptr)
         DeleteCriticalSection(native.ptr)
         nativeHeap.free(native)
     }
@@ -38,9 +39,9 @@ actual class ReentrantLock:Lock {
     }
 
     actual fun newCondition(): Condition =
-        Condition(native)
+        Condition(cleaner, native)
 
-    actual class Condition(val lock: CRITICAL_SECTION) {
+    actual class Condition(val lockCleaner: Cleaner, val lock: CRITICAL_SECTION) {
         val native =
             nativeHeap.alloc<CONDITION_VARIABLE>()
 
@@ -48,7 +49,7 @@ actual class ReentrantLock:Lock {
             InitializeConditionVariable(native.ptr)
         }
 
-        private val cleaner = createCleaner(native) { native ->
+        internal val cleaner = createCleaner(native) { native ->
             nativeHeap.free(native)
         }
 
@@ -59,12 +60,12 @@ actual class ReentrantLock:Lock {
         actual fun await() {
             while (true) {
                 val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
-                if (WorkerImpl.current?.isInterrupted == true) {
+                if (Worker.current?.isInterrupted == true) {
                     throw InterruptedException()
                 }
                 if (r == 0) {
                     val e = GetLastError()
-                    if (e != ERROR_TIMEOUT.convert<DWORD>()) {
+                    if (e != ERROR_TIMEOUT.convert<DWORD>() && e != 0.convert<DWORD>()) {
                         throw RuntimeException("Error in wait lock. Error: #$e")
                     }
                 } else break
@@ -90,7 +91,7 @@ actual class ReentrantLock:Lock {
                 val r = SleepConditionVariableCS(native.ptr, lock.ptr, duration.inWholeMilliseconds.convert())
                 if (r == 0) {
                     val e = GetLastError()
-                    if (e != ERROR_TIMEOUT.convert<DWORD>()) {
+                    if (e != ERROR_TIMEOUT.convert<DWORD>() && e != 0.convert<DWORD>()) {
                         throw RuntimeException("Error in wait lock. Error: #$e")
                     }
 

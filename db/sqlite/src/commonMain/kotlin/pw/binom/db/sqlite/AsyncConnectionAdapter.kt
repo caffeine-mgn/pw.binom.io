@@ -1,8 +1,8 @@
 package pw.binom.db.sqlite
 
+import kotlinx.coroutines.withContext
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.*
-import pw.binom.coroutine.start
 import pw.binom.db.TransactionMode
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
@@ -13,18 +13,14 @@ import pw.binom.doFreeze
 import pw.binom.io.use
 import pw.binom.neverFreeze
 
-class AsyncConnectionAdapter private constructor(val worker: Worker, val connection: Reference<SyncConnection>) :
+class AsyncConnectionAdapter private constructor(val worker: Worker, val connection: SyncConnection) :
     AsyncConnection {
     companion object {
         suspend fun create(creator: () -> SyncConnection): AsyncConnectionAdapter {
-            val w = Worker.create()
-            creator.doFreeze()
-            val ref = w.start {
-                creator().asReference()
-            }
+            val w = Worker()
             return AsyncConnectionAdapter(
                 worker = w,
-                connection = ref
+                connection = creator()
             )
         }
     }
@@ -35,7 +31,7 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
         get() {
             val connection = connection
             return worker.execute {
-                connection.value.isConnected
+                connection.isConnected
             }.joinAndGetOrThrow()
         }
 
@@ -47,14 +43,14 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
         when (mode) {
             TransactionMode.SERIALIZABLE -> {
                 worker.execute {
-                    connection.value.createStatement().use {
+                    connection.createStatement().use {
                         it.executeQuery("PRAGMA read_uncommitted = false;")
                     }
                 }
             }
             TransactionMode.READ_UNCOMMITTED -> {
                 worker.execute {
-                    connection.value.createStatement().use {
+                    connection.createStatement().use {
                         it.executeQuery("PRAGMA read_uncommitted = true;")
                     }
                 }
@@ -73,14 +69,14 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
         get() {
             val connection = connection
             return worker.execute {
-                connection.value.type
+                connection.type
             }.joinAndGetOrThrow()
         }
 
     override suspend fun asyncClose() {
         val connection = connection
         worker.execute {
-            connection.value.close()
+            connection.close()
         }
         connection.close()
     }
@@ -91,15 +87,15 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
         }
         val connection = connection
         worker.execute {
-            connection.value.commit()
+            connection.commit()
         }
         transactionStarted = false
     }
 
     override suspend fun createStatement(): AsyncStatement {
         val connection = connection
-        val result = worker.start {
-            connection.value.createStatement().asReference()
+        val result = withContext(worker) {
+            connection.createStatement()
         }
         return AsyncStatementAdapter(
             ref = result,
@@ -118,9 +114,10 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
             throw IllegalStateException("Transaction already started")
         }
         val connection = connection
-        worker.start {
-            connection.value.createStatement().use {
-                it.executeUpdate("begin")
+        withContext(worker) {
+            connection.createStatement().use {
+                it.connection.beginTransaction()
+//                it.executeUpdate("begin")
             }
         }
         transactionStarted = true
@@ -128,8 +125,8 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
 
     override suspend fun prepareStatement(query: String): AsyncPreparedStatement {
         val connection = connection
-        val ref = worker.start {
-            connection.value.prepareStatement(query).asReference()
+        val ref = withContext(worker) {
+            connection.prepareStatement(query)
         }
         return AsyncPreparedStatementAdapter(
             ref = ref,
@@ -143,8 +140,8 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
             throw IllegalStateException("Transaction not started")
         }
         val connection = connection
-        worker.start {
-            connection.value.rollback()
+        withContext(worker) {
+            connection.rollback()
         }
         transactionStarted = false
     }

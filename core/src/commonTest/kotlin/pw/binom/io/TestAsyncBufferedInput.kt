@@ -4,6 +4,7 @@ import pw.binom.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.runBlocking
 
 class TestAsyncBufferedInput {
 
@@ -14,7 +15,7 @@ class TestAsyncBufferedInput {
         data.clear()
         val b = data.asyncInput().bufferedInput(10)
 
-        async {
+        runBlocking {
             val buf = ByteBuffer.alloc(50)
             assertEquals(-1, b.available)
             buf.reset(0,5)

@@ -29,19 +29,19 @@ class TestAsyncBaseHttpClient {
                             try {
                                 server.accept()
                                 println("client connected")
-                            } catch (e:Throwable){
+                            } catch (e: Throwable) {
                                 //Do nothing
                             }
                         }
                         HttpClient.create(nd).use { client ->
                             try {
 //                                withTimeout(5.seconds) {
-                                    client.connect(
-                                        method = "GET",
-                                        uri = "http://127.0.0.1:${server.port}/".toURI(),
+                                client.connect(
+                                    method = "GET",
+                                    uri = "http://127.0.0.1:${server.port}/".toURI(),
 //                                        uri = "http://example.com/".toURI(),
                                     timeout = 5.seconds,
-                                    ).getResponse().readText().use { it.readText() }
+                                ).getResponse().readText().use { it.readText() }
 //                                }
                             } catch (e: Throwable) {
                                 e.printStackTrace()
@@ -55,37 +55,30 @@ class TestAsyncBaseHttpClient {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun timeoutTest() {
-        val manager = NetworkDispatcher()
+    fun timeoutTest() = runBlocking {
+        val manager = NetworkCoroutineDispatcherImpl()
         val client = BaseHttpClient(Dispatchers.Network)
         manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", 34636))
         val now = TimeSource.Monotonic.markNow()
-        val e = manager.startCoroutine {
-            try {
-                client.connect(HTTPMethod.GET, "http://127.0.0.1:34636".toURI(), Duration.seconds(3))
-                    .getResponse()
-                    .responseCode
-                fail()
-            } catch (e: TimeoutException) {
-                val time = now.elapsedNow()
-                println("Real timeout: $time")
-                assertTrue(time >= Duration.Companion.seconds(3) && time < Duration.Companion.seconds(4))
-            }
+        try {
+            client.connect(HTTPMethod.GET, "http://127.0.0.1:34636".toURI(), 3.seconds)
+                .getResponse()
+                .responseCode
+            fail()
+        } catch (e: CancellationException) {
+            val time = now.elapsedNow()
+            println("Real timeout: $time")
+            assertTrue(time >= 3.seconds && time < 4.seconds)
         }
-        while (!e.isDone) {
-            manager.select(1000)
-        }
-        e.getOrException()
-        client.close()
     }
 
     @Test
     @OptIn(ExperimentalTime::class)
     fun test() {
-        val manager = NetworkDispatcher()
+        val manager = NetworkCoroutineDispatcherImpl()
         val client = BaseHttpClient(Dispatchers.Network)
 
-        val e = async2 {
+        val e = runBlocking {
 
             repeat(3) {
                 val responseData = client
@@ -98,12 +91,6 @@ class TestAsyncBaseHttpClient {
                     }
             }
         }
-        while (!e.isDone) {
-            manager.select(1000)
-        }
-        e.getOrException()
-
-        client.close()
     }
 }
 

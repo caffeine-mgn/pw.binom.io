@@ -2,7 +2,6 @@ package pw.binom.io.httpClient
 
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.concurrency.DeadlineTimer
 import pw.binom.io.AsyncChannel
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod

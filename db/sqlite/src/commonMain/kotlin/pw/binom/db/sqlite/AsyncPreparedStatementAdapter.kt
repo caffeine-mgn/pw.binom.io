@@ -2,9 +2,9 @@ package pw.binom.db.sqlite
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
+import kotlinx.coroutines.withContext
 import pw.binom.UUID
 import pw.binom.concurrency.*
-import pw.binom.coroutine.start
 import pw.binom.date.Date
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
@@ -14,7 +14,7 @@ import pw.binom.doFreeze
 import pw.binom.neverFreeze
 
 class AsyncPreparedStatementAdapter(
-    val ref: Reference<SyncPreparedStatement>,
+    val ref: SyncPreparedStatement,
     val worker: Worker,
     override val connection: AsyncConnection,
 ) : AsyncPreparedStatement {
@@ -25,86 +25,86 @@ class AsyncPreparedStatementAdapter(
 
     override suspend fun set(index: Int, value: BigInteger) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: BigDecimal) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Double) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Float) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Int) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Long) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: String) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Boolean) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: ByteArray) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun set(index: Int, value: Date) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun setNull(index: Int) {
         val ref = ref
-        worker.start {
-            ref.value.setNull(index)
+        withContext(worker) {
+            ref.setNull(index)
         }
     }
 
     override suspend fun executeQuery(): AsyncResultSet {
         val ref = ref
-        val out = worker.start {
-            val r = ref.value.executeQuery()
-            r.asReference() to r.columns
+        val out = withContext(worker) {
+            val r = ref.executeQuery()
+            r to r.columns
         }
         return AsyncResultSetAdapter(
             ref = out.first,
@@ -115,17 +115,17 @@ class AsyncPreparedStatementAdapter(
 
     override suspend fun setValue(index: Int, value: Any?) {
         val ref = ref
-        worker.start {
-            ref.value.setValue(index, value)
+        withContext(worker) {
+            ref.setValue(index, value)
         }
     }
 
     override suspend fun executeQuery(vararg arguments: Any?): AsyncResultSet {
         arguments.doFreeze()
         val ref = ref
-        val out = worker.start {
-            val r = ref.value.executeQuery(*arguments)
-            r.asReference() to r.columns
+        val out = withContext(worker) {
+            val r = ref.executeQuery(*arguments)
+            r to r.columns
         }
         return AsyncResultSetAdapter(
             ref = out.first,
@@ -137,30 +137,29 @@ class AsyncPreparedStatementAdapter(
     override suspend fun executeUpdate(vararg arguments: Any?): Long {
         arguments.doFreeze()
         val ref = ref
-        return worker.start {
-            ref.value.executeUpdate(*arguments)
+        return withContext(worker) {
+            ref.executeUpdate(*arguments)
         }
     }
 
     override suspend fun set(index: Int, value: UUID) {
         val ref = ref
-        worker.start {
-            ref.value.set(index, value)
+        withContext(worker) {
+            ref.set(index, value)
         }
     }
 
     override suspend fun executeUpdate(): Long {
         val ref = ref
-        return worker.start {
-            ref.value.executeUpdate()
+        return withContext(worker) {
+            ref.executeUpdate()
         }
     }
 
     override suspend fun asyncClose() {
         val ref = ref
-        worker.start {
-            ref.value.close()
+        withContext(worker) {
+            ref.close()
         }
-        ref.close()
     }
 }

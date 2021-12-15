@@ -28,39 +28,39 @@ suspend fun <T> FeaturePromise<T>.await(): T =
         }
     }
 
-fun <P, T> (suspend (P) -> T).start(value: P): FeaturePromise<T> {
-    val promise = FeaturePromise<T>()
-    this.startCoroutine(value, object : Continuation<T> {
-        override val context: CoroutineContext = EmptyCoroutineContext
+//fun <P, T> (suspend (P) -> T).start(value: P): FeaturePromise<T> {
+//    val promise = FeaturePromise<T>()
+//    this.startCoroutine(value, object : Continuation<T> {
+//        override val context: CoroutineContext = EmptyCoroutineContext
+//
+//        override fun resumeWith(result: Result<T>) {
+//            promise.resume(result)
+//        }
+//    })
+//    return promise
+//}
 
-        override fun resumeWith(result: Result<T>) {
-            promise.resume(result)
-        }
-    })
-    return promise
-}
+//fun <T> (suspend () -> T).start() {
+//    this.startCoroutine(object : Continuation<T> {
+//        override val context: CoroutineContext = EmptyCoroutineContext
+//
+//        override fun resumeWith(result: Result<T>) {
+//        }
+//    })
+//}
 
-fun <T> (suspend () -> T).start() {
-    this.startCoroutine(object : Continuation<T> {
-        override val context: CoroutineContext = EmptyCoroutineContext
+//fun <P> async(f: suspend () -> P) = f.start()
 
-        override fun resumeWith(result: Result<T>) {
-        }
-    })
-}
+//fun <T> (suspend () -> T).start2(): NonFreezableFuture<T> {
+//    val promise = NonFreezableFuture<T>()
+//    this.startCoroutine(object : Continuation<T> {
+//        override val context: CoroutineContext = EmptyCoroutineContext
+//
+//        override fun resumeWith(result: Result<T>) {
+//            promise.resume(result)
+//        }
+//    })
+//    return promise
+//}
 
-fun <P> async(f: suspend () -> P) = f.start()
-
-fun <T> (suspend () -> T).start2(): NonFreezableFuture<T> {
-    val promise = NonFreezableFuture<T>()
-    this.startCoroutine(object : Continuation<T> {
-        override val context: CoroutineContext = EmptyCoroutineContext
-
-        override fun resumeWith(result: Result<T>) {
-            promise.resume(result)
-        }
-    })
-    return promise
-}
-
-fun <P> async2(f: suspend () -> P) = f.start2()
+//fun <P> async2(f: suspend () -> P) = f.start2()

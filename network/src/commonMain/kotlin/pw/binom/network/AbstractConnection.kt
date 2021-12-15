@@ -13,6 +13,7 @@ abstract class AbstractConnection : Closeable {
     abstract fun connecting()
     abstract fun connected()
     abstract fun error()
+    abstract fun cancelSelector()
 
     /**
      * Call by SocketNIOManager. Called in network thread when connection ready for read

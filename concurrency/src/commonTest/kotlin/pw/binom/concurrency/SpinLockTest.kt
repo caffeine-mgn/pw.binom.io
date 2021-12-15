@@ -11,8 +11,8 @@ class SpinLockTest {
         val atom = AtomicInt(0)
         val errorCount = AtomicInt(0)
 
-        val w1 = Worker.create()
-        val w2 = Worker.create()
+        val w1 = Worker()
+        val w2 = Worker()
 
         val b1 = w1.execute(Unit) {
             repeat(10) {

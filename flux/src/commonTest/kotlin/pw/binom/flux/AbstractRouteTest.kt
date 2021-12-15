@@ -1,5 +1,6 @@
 package pw.binom.flux
 
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.io.AsyncReader
 import pw.binom.io.AsyncWriter
@@ -70,15 +71,12 @@ class AbstractRouteTest {
             state = 2
             true
         }
-        val done = async2 {
+        val done = runBlocking {
             router.execute(MockAction("GET", "/events/ssdf".toPath))
             assertEquals(1, state)
 
             router.execute(MockAction("GET", "/eventss/ssdf".toPath))
             assertEquals(2, state)
-        }
-        if (done.isFailure) {
-            throw done.exceptionOrNull!!
         }
     }
 }

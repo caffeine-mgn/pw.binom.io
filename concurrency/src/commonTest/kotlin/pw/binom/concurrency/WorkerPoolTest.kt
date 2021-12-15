@@ -1,5 +1,9 @@
 package pw.binom.concurrency
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration
@@ -11,9 +15,9 @@ import kotlin.time.measureTime
 class WorkerPoolTest {
 
     @Test
-    fun shutdownTestEmpty() {
+    fun shutdownTestEmpty() = runBlocking {
         val w = WorkerPool()
-        w.startCoroutine {
+        w.submit {
             sleep(1000)
         }.joinAndGetOrThrow()
         val shutdownTime = measureTime {
@@ -25,12 +29,17 @@ class WorkerPoolTest {
     @Test
     fun shutdownTestNotEmpty() {
         val w = WorkerPool()
-        w.startCoroutine {
-            val r = TimeSource.Monotonic.markNow()
-            sleep(1000)
-            println("Sleep time ${r.elapsedNow()}")
+        val lock = SpinLock()
+        lock.lock()
+        w.submit {
+            lock.synchronize {
+                val r = TimeSource.Monotonic.markNow()
+                sleep(1000)
+                println("Sleep time ${r.elapsedNow()}")
+            }
         }
         val shutdownTime = measureTime {
+            lock.unlock()
             w.shutdown()
         }
         val msg = "shutdownTime=$shutdownTime"

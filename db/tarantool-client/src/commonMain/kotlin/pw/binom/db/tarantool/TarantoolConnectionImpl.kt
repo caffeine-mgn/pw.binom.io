@@ -1,6 +1,6 @@
 package pw.binom.db.tarantool
 
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import pw.binom.*
 import pw.binom.concurrency.ThreadRef
 import pw.binom.db.tarantool.protocol.*
@@ -14,9 +14,6 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import pw.binom.network.Network
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.withContext
 
 private const val VSPACE_ID = 281
 private const val VSPACE_ID_INDEX_ID = 0
@@ -35,7 +32,7 @@ class TarantoolConnectionImpl internal constructor(
 
     internal var mainLoopJob: Job? = null
     private var syncCursor = 0L
-    private val requests = HashMap<Long, Continuation<Package>>()
+    private val requests = HashMap<Long, CancellableContinuation<Package>>()
     private val connectionReference = con
     private var meta: List<TarantoolSpaceMeta> = emptyList()
     private var schemaVersion = 0
@@ -53,14 +50,21 @@ class TarantoolConnectionImpl internal constructor(
 //    }
 
     private suspend fun loadMeta(): List<TarantoolSpaceMeta> {
+        println("loadMeta #1")
         metaUpdating = true
         try {
             while (true) {
+                println("loadMeta #2")
                 val index =
                     select1<Any?>(VINDEX_ID, VINDEX_ID_INDEX_ID, emptyList<Int>(), 0, Int.MAX_VALUE, QueryIterator.ALL)
+                println("loadMeta #3")
                 val spaces =
                     select1<Any?>(VSPACE_ID, VSPACE_ID_INDEX_ID, emptyList<Int>(), 0, Int.MAX_VALUE, QueryIterator.ALL)
+                println("loadMeta #4")
                 if (index.second != spaces.second) {
+                    println("Что-то не так index.second=${index.second}  spaces.second=${spaces.second}")
+                    println("index.first=${index.first}")
+                    println("spaces.first=${spaces.first}")
                     continue
                 }
                 schemaVersion = index.second
@@ -85,9 +89,13 @@ class TarantoolConnectionImpl internal constructor(
     }
 
     internal suspend fun invalidateSchema() {
+        println("invalidateSchema #1")
         if (schemaVersion == 0) {
+            println("invalidateSchema #2")
             meta = loadMeta()
+            println("invalidateSchema #3")
         }
+        println("invalidateSchema #4")
     }
 
     init {
@@ -112,10 +120,17 @@ class TarantoolConnectionImpl internal constructor(
                 )
                 out.data.position = 0
                 out.data.limit = out.size
-                connectionReference.write(out.data)
-                val v = suspendCoroutine<Package> {
+                println("sendReceive #1 sync=$sync")
+                val v = suspendCancellableCoroutine<Package> {
+                    println("sendReceive #2 sync=$sync")
                     requests[sync] = it
+                    it.invokeOnCancellation {
+                        println("sendReceive #3 sync=$sync")
+                        requests.remove(sync)
+                    }
                 }
+                println("sendReceive #4 sync=$sync")
+                connectionReference.write(out.data)
                 if (!metaUpdating) {
                     v.header[Key.SCHEMA_ID.id]?.let {
                         if (it != schemaVersion) {
@@ -147,43 +162,69 @@ class TarantoolConnectionImpl internal constructor(
         connectionReference.close()
     }
 
-    internal suspend fun startMainLoop(cs: CoroutineScope) {
+    internal suspend fun startMainLoop() {
         withContext(networkDispatcher) {
             ByteBuffer.alloc(8) { buf ->
                 try {
+                    println("startMainLoop #1")
                     val packageReader = AsyncInputWithCounter(connectionReference)
                     while (mainLoopJob?.isActive != false && !closed) {
-                        val vv = connectionReference.readByte(buf).toUByte()
+                        println("startMainLoop #1.1 ->1")
+                        println("startMainLoop #1.1.1 connectionReference=$connectionReference")
+                        val f = connectionReference.readByte(buf)
+                        println("first byte is $f")
+                        val vv = f.toUByte()
+                        println("startMainLoop #1.2  vv=0x${vv.toString(16)}")
                         if (vv != 0xce.toUByte()) {
+                            println("startMainLoop #1.3")
                             throw IOException("Invalid Protocol Header Response")
                         }
+                        println("startMainLoop #2")
                         val size = connectionReference.readInt(buf)
                         buf.clear()
                         packageReader.limit = size
                         val msg = InternalProtocolUtils.unpack(buf, packageReader)
+                        println("startMainLoop #3")
                         val headers = msg as Map<Int, Any?>
+                        println("startMainLoop #4")
                         val body = if (packageReader.limit > 0) {
                             InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
                         } else
                             emptyMap()
+                        println("startMainLoop #5")
                         val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
                         val pkg = Package(
                             header = headers,
                             body = body
                         )
+                        println("startMainLoop #6 serial=$serial")
                         requests.remove(serial)?.resumeWith(Result.success(pkg))
                     }
                 } catch (e: SocketClosedException) {
+                    e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)
                     }
+                } catch (e: CancellationException) {
+                    e.printStackTrace()
+                    requests.forEach {
+                        it.value.resumeWithException(e)
+                    }
+                } catch (e: ClosedException) {
+                    e.printStackTrace()
+                    requests.forEach {
+                        it.value.resumeWithException(e)
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    requests.forEach {
+                        it.value.resumeWithException(e)
+                    }
+                    asyncClose()
+                } finally {
+                    println("Цикл кончился")
                     requests.clear()
                     connected = false
-                    //NOP
-                } catch (e: ClosedException) {
-                    //NOP
-                } catch (e: Throwable) {
-                    asyncClose()
                 }
             }
         }
@@ -248,7 +289,9 @@ class TarantoolConnectionImpl internal constructor(
     }
 
     override suspend fun eval(lua: String, vararg args: Any?): Any? {
+        println("eval #1")
         invalidateSchema()
+        println("eval #2")
         val result = sendReceive(
             code = Code.EVAL,
             body = mapOf(
@@ -257,9 +300,12 @@ class TarantoolConnectionImpl internal constructor(
             ),
             schemaId = schemaVersion
         )
+        println("eval #3")
         if (result.isError) {
+            println("eval #4")
             throw TarantoolEvalException(script = lua, errorMessage = result.errorMessage)
         }
+        println("eval #5")
         return result.data
     }
 

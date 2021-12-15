@@ -17,6 +17,7 @@ kotlin {
     linuxMips32()
     linuxMipsel32()
     mingwX64()
+//    kotlin.android()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86()
     }
@@ -34,42 +35,37 @@ kotlin {
             }
             kotlin.srcDir("build/gen")
         }
-        val linuxX64Main by getting {
+        val nativeMain by creating{
             dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+        }
+        val linuxX64Main by getting {
+            dependsOn(nativeMain)
         }
         val linuxArm64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(nativeMain)
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(nativeMain)
         }
         val linuxMips32Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(nativeMain)
         }
 
         val linuxMipsel32Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(nativeMain)
         }
 
         val mingwX64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(nativeMain)
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
-                dependsOn(commonMain)
-                kotlin.srcDir("src/nativeMain/kotlin")
+                dependsOn(nativeMain)
             }
         }
 
         val macosX64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeMain/kotlin")
+            dependsOn(nativeMain)
         }
 
         val commonTest by getting {
@@ -81,7 +77,7 @@ kotlin {
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
-                api(kotlin("test-junit"))
+                api(kotlin("test"))
             }
         }
         val linuxX64Test by getting {

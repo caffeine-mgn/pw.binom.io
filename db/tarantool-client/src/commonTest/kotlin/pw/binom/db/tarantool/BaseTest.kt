@@ -1,13 +1,15 @@
 package pw.binom.db.tarantool
 
-import pw.binom.concurrency.DeadlineTimer
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import pw.binom.io.IOException
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.testContainer.TestContainer
 import pw.binom.testContainer.invoke
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -25,47 +27,46 @@ abstract class BaseTest {
     )
 
     @OptIn(ExperimentalTime::class)
-    fun pg(func: suspend (TarantoolConnectionImpl) -> Unit) {
+    fun pg(func: suspend (TarantoolConnectionImpl) -> Unit) = runBlocking {
         val now = TimeSource.Monotonic.markNow()
-        val manager = NetworkDispatcher()
-        val dt = DeadlineTimer.create()
-        println("Start taratool")
+        val manager = NetworkCoroutineDispatcherImpl()
+        println("Start Taratool Container")
         TarantoolContainer {
-            manager.runSingle {
-                dt.delay(Duration.seconds(1))
-                do {
-                    val address = NetworkAddress.Immutable(
-                        host = "127.0.0.1",
-                        port = TarantoolContainer.ports[0].externalPort,
+            delay(1.seconds)
+            println("Tarantool started")
+            do {
+                val address = NetworkAddress.Immutable(
+                    host = "127.0.0.1",
+                    port = TarantoolContainer.ports[0].externalPort,
+                )
+                println("Try connect to tarantool")
+                val connection = try {
+                    println("Connection to docker...")
+                    TarantoolConnection.connect(
+                        address = address,
+                        manager = manager,
+                        userName = "server",
+                        password = "server",
                     )
-                    val connection = try {
-                        println("Connection to docker...")
-                        TarantoolConnectionImpl.connect(
-                            address = address,
-                            manager = manager,
-                            userName = "server",
-                            password = "server",
-                        )
-                    } catch (e: IOException) {
-                        if (now.elapsedNow() > Duration.seconds(10)) {
-                            throw RuntimeException("Startup Timeout", e)
-                        }
-                        println("Postgres not available yet")
-                        dt.delay(Duration.seconds(1))
-                        continue
+                } catch (e: IOException) {
+                    if (now.elapsedNow() > 10.seconds) {
+                        throw RuntimeException("Startup Timeout", e)
                     }
-                    println("Connected!")
-                    try {
-                        connection.use { con ->
-                            println("Connected to db")
-                            println("Start test function")
-                            func(con)
-                        }
-                    } finally {
-                        break
+                    println("Postgres not available yet")
+                    delay(1.seconds)
+                    continue
+                }
+                println("Connected!")
+                try {
+                    connection.use { con ->
+                        println("Connected to db")
+                        println("Start test function")
+                        func(con)
                     }
-                } while (true)
-            }
+                } finally {
+                    break
+                }
+            } while (true)
         }
     }
 }

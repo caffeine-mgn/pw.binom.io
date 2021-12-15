@@ -1,21 +1,21 @@
 package pw.binom.db.sqlite
 
+import kotlinx.coroutines.withContext
 import pw.binom.concurrency.*
-import pw.binom.coroutine.start
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.AsyncStatement
 import pw.binom.db.sync.SyncStatement
 
 class AsyncStatementAdapter(
-    val ref: Reference<SyncStatement>,
+    val ref: SyncStatement,
     val worker: Worker,
     override val connection: AsyncConnection,
 ) : AsyncStatement {
     override suspend fun executeQuery(query: String): AsyncResultSet {
-        val v = worker.start {
-            val r = ref.value.executeQuery(query)
-            r.asReference() to r.columns
+        val v = withContext(worker) {
+            val r = ref.executeQuery(query)
+            r to r.columns
         }
 
         return AsyncResultSetAdapter(
@@ -26,13 +26,13 @@ class AsyncStatementAdapter(
     }
 
     override suspend fun executeUpdate(query: String): Long =
-        worker.start {
-            ref.value.executeUpdate(query)
+        withContext(worker) {
+            ref.executeUpdate(query)
         }
 
     override suspend fun asyncClose() {
-        worker.start {
-            ref.value.close()
+        withContext(worker) {
+            ref.close()
         }
         ref.close()
     }

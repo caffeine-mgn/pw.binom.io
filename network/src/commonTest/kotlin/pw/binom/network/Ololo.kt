@@ -7,6 +7,7 @@ import pw.binom.io.use
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 
@@ -15,6 +16,7 @@ suspend fun getDispatcher(): CoroutineDispatcher? =
         it.resume(it.context[ContinuationInterceptor] as CoroutineDispatcher?)
     }
 
+@Ignore
 class Ololo {
 
     @Test

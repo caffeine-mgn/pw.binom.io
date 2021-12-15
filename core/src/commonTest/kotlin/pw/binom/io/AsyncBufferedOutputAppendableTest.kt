@@ -3,6 +3,7 @@ package pw.binom.io
 import pw.binom.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.runBlocking
 
 class AsyncBufferedOutputAppendableTest {
 
@@ -14,7 +15,7 @@ class AsyncBufferedOutputAppendableTest {
         val writer = output.bufferedWriter(pool)
         val txt = "1234567890"
         var ex: Throwable? = null
-        async {
+        runBlocking {
             try {
                 writer.append(txt)
                 writer.append(txt)

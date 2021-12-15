@@ -76,20 +76,26 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
      * Закрытие. "</" уже прочитано
      */
     private suspend fun closeTag() {
-        if (!lexer.next())
+        if (!lexer.next()) {
             TODO()
-        if (lexer.tokenType != TokenType.SYMBOL)
+        }
+        if (lexer.tokenType != TokenType.SYMBOL) {
             TODO()
+        }
         val visitor = visitors.peek()
         val tagName = lexer.text
         if (visitor.name != tagName) {
             throw ExpectedException("Expected closing of tag [${visitor.name}] but got [$tagName]")
         }
-        if (!lexer.next())
+        if (!lexer.next()) {
             TODO()
-        if (lexer.tokenType != TokenType.TAG_END)
+        }
+        if (lexer.tokenType != TokenType.TAG_END) {
             TODO()
-        visitors.peek().visitor.value(tagBodyBuilder!!.toString())
+        }
+        if (tagBodyBuilder!=null) {
+            visitors.peek().visitor.value(tagBodyBuilder!!.toString())
+        }
         visitor.visitor.end()
         visitors.pop()
     }

@@ -1,7 +1,6 @@
 package pw.binom.compression.zlib
 
 import pw.binom.ByteBuffer
-import pw.binom.async
 import pw.binom.asyncOutput
 import pw.binom.clone
 import kotlin.test.Test

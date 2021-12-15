@@ -12,36 +12,36 @@ kotlin {
     jvm()
     linuxX64 {
         binaries {
-            compilations["main"].cinterops {
-                create("signals") {
-                    defFile = project.file("src/cinterop/linux.def")
-                    packageName = "platform.linux"
-                }
-            }
+//            compilations["main"].cinterops {
+//                create("signals") {
+//                    defFile = project.file("src/cinterop/linux.def")
+//                    packageName = "platform.linux"
+//                }
+//            }
         }
     }
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
         linuxArm32Hfp {
-            binaries {
-                compilations["main"].cinterops {
-                    create("signals") {
-                        defFile = project.file("src/cinterop/linux.def")
-                        packageName = "platform.linux"
-                    }
-                }
-            }
+//            binaries {
+//                compilations["main"].cinterops {
+//                    create("signals") {
+//                        defFile = project.file("src/cinterop/linux.def")
+//                        packageName = "platform.linux"
+//                    }
+//                }
+//            }
         }
     }
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
         linuxArm64 {
-            binaries {
-                compilations["main"].cinterops {
-                    create("signals") {
-                        defFile = project.file("src/cinterop/linux.def")
-                        packageName = "platform.linux"
-                    }
-                }
-            }
+//            binaries {
+//                compilations["main"].cinterops {
+//                    create("signals") {
+//                        defFile = project.file("src/cinterop/linux.def")
+//                        packageName = "platform.linux"
+//                    }
+//                }
+//            }
         }
     }
     mingwX64()
@@ -50,12 +50,12 @@ kotlin {
     }
     macosX64 {
         binaries {
-            compilations["main"].cinterops {
-                create("signals") {
-                    defFile = project.file("src/cinterop/linux.def")
-                    packageName = "platform.linux"
-                }
-            }
+//            compilations["main"].cinterops {
+//                create("signals") {
+//                    defFile = project.file("src/cinterop/linux.def")
+//                    packageName = "platform.linux"
+//                }
+//            }
         }
     }
     baseStaticLibConfig()
@@ -73,14 +73,12 @@ kotlin {
         }
         if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
             val linuxArm32HfpMain by getting {
-                dependsOn(commonMain)
-                kotlin.srcDir("src/linuxX64Main/kotlin")
+                dependsOn(linuxX64Main)
             }
         }
         if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
             val linuxArm64Main by getting {
-                dependsOn(commonMain)
-                kotlin.srcDir("src/linuxX64Main/kotlin")
+                dependsOn(linuxX64Main)
             }
         }
         val mingwX64Main by getting {
@@ -88,14 +86,12 @@ kotlin {
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
-                dependsOn(commonMain)
-                kotlin.srcDir("src/mingwX64Main/kotlin")
+                dependsOn(mingwX64Main)
             }
         }
 
         val macosX64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
 
         val commonTest by getting {
@@ -107,7 +103,7 @@ kotlin {
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
-                api(kotlin("test-junit"))
+                api(kotlin("test"))
             }
         }
         val linuxX64Test by getting {

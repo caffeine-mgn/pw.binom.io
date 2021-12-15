@@ -32,28 +32,23 @@ kotlin {
             dependsOn(commonMain)
         }
         val linuxArm64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
 
         val mingwX64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
-                dependsOn(commonMain)
-                kotlin.srcDir("src/linuxX64Main/kotlin")
+                dependsOn(linuxX64Main)
             }
         }
 
         val macosX64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
 
         val commonTest by getting {
@@ -61,12 +56,13 @@ kotlin {
                 api(kotlin("test-common"))
                 api(project(":file"))
                 api(kotlin("test-annotations-common"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
-                api(kotlin("test-junit"))
+                api(kotlin("test"))
             }
         }
         val linuxX64Test by getting {

@@ -1,16 +1,17 @@
 package pw.binom.compression.zlib
 
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ZlibInputOutputTest{
+class ZlibInputOutputTest {
     @Test
     fun testSync() {
-        val source =TestData.SOURCE_DATA.clone()
+        val source = TestData.SOURCE_DATA.clone()
         source.clear()
         val compressed = ByteBuffer.alloc(TestData.SOURCE_DATA.capacity * 2)
-        repeat(compressed.capacity){
+        repeat(compressed.capacity) {
             compressed.put(10)
         }
         compressed.clear()
@@ -35,35 +36,34 @@ class ZlibInputOutputTest{
     }
 
     @Test
-    fun testAsync() {
-        async2 {
-            val source =TestData.SOURCE_DATA.clone()
-            source.clear()
-            val compressed = ByteBuffer.alloc(TestData.SOURCE_DATA.capacity * 2)
-            repeat(compressed.capacity){
-                compressed.put(10)
-            }
-            compressed.clear()
-            val def = AsyncDeflaterOutput(stream = compressed.asyncOutput(), level = 6, wrap = true, closeStream = false)
-            def.write(source)
-            def.asyncClose()
+    fun testAsync() = runBlocking {
+        val source = TestData.SOURCE_DATA.clone()
+        source.clear()
+        val compressed = ByteBuffer.alloc(TestData.SOURCE_DATA.capacity * 2)
+        repeat(compressed.capacity) {
+            compressed.put(10)
+        }
+        compressed.clear()
+        val def = AsyncDeflaterOutput(stream = compressed.asyncOutput(), level = 6, wrap = true, closeStream = false)
+        def.write(source)
+        def.asyncClose()
 
-            compressed.flip()
-            assertEquals(11, compressed.remaining)
-            (compressed.position until compressed.limit).forEach {
-                assertEquals(TestData.COMPRESSED[it], compressed[it])
-            }
+        compressed.flip()
+        assertEquals(11, compressed.remaining)
+        (compressed.position until compressed.limit).forEach {
+            assertEquals(TestData.COMPRESSED[it], compressed[it])
+        }
 
-            val uncompressed = ByteBuffer.alloc(source.capacity * 2)
-            val inf = InflateInput(compressed, 512, true)
-            inf.read(uncompressed)
-            inf.close()
-            uncompressed.flip()
-            assertEquals(source.capacity, uncompressed.remaining)
-            source.clear()
-            assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
-        }.getOrException()
+        val uncompressed = ByteBuffer.alloc(source.capacity * 2)
+        val inf = InflateInput(compressed, 512, true)
+        inf.read(uncompressed)
+        inf.close()
+        uncompressed.flip()
+        assertEquals(source.capacity, uncompressed.remaining)
+        source.clear()
+        assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
     }
+
 }
 /*
 

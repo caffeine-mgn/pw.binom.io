@@ -292,14 +292,16 @@ internal class Starter(
             createdBeans.forEach {
                 strongImpl.beans[it.name] = BeanEntity(bean = it.bean, primary = it.primary)
             }
-
+            logger.debug("Bean Graph made")
             iniList.forEach {
                 val bean = it.bean as Strong.InitializingBean
+                logger.debug("Initializing ${it.name} (${it.bean::class.getClassName()})")
                 bean.init(strongImpl)
             }
 
             lList.forEach {
                 val bean = it.bean as Strong.LinkingBean
+                logger.debug("Linking ${it.name} (${it.bean::class.getClassName()})")
                 bean.link(strongImpl)
             }
 

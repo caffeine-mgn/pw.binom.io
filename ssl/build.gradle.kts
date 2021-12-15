@@ -102,7 +102,7 @@ kotlin {
             compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
-    baseStaticLibConfig()
+//    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -119,28 +119,24 @@ kotlin {
         }
         val linuxX64Main by getting {
 //            dependsOn(mingwX64Main)
-            dependsOn(commonMain)
-            kotlin.srcDir("src/mingwX64Main/kotlin")
+            dependsOn(mingwX64Main)
         }
         if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
             val linuxArm32HfpMain by getting {
 //            dependsOn(linuxX64Main)
-                dependsOn(commonMain)
-                kotlin.srcDir("src/mingwX64Main/kotlin")
+                dependsOn(mingwX64Main)
             }
         }
 
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
 //            dependsOn(mingwX64Main)
-                dependsOn(commonMain)
-                kotlin.srcDir("src/mingwX64Main/kotlin")
+                dependsOn(mingwX64Main)
             }
         }
         val macosX64Main by getting {
 //            dependsOn(mingwX64Main)
-            dependsOn(commonMain)
-            kotlin.srcDir("src/mingwX64Main/kotlin")
+            dependsOn(mingwX64Main)
         }
 
         val commonTest by getting {

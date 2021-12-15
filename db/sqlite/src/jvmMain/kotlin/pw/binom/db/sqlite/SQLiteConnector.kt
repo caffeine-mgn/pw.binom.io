@@ -54,6 +54,10 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnect
             throw SQLException("Can't execute query \"$query\"", e)
         }
 
+    override fun beginTransaction() {
+        beginPt.executeUpdate()
+    }
+
     override fun commit() {
         commitPt.executeUpdate()
 //        native.transactionIsolation

@@ -1,5 +1,6 @@
 package pw.binom.io.http.websocket
 
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,7 +11,7 @@ class WebSocketHeaderTest {
     @Test
     fun readTest() {
         val data = ByteBuffer.wrap(ubyteArrayOf(0x82u, 0xfeu, 0x0u, 0x82u, 0x88u, 0x4du, 0x1du, 0x84u).toByteArray())
-        async {
+        runBlocking {
             val header = WebSocketHeader()
             WebSocketHeader.read(data.asyncInput(), header)
             header.apply {
@@ -35,7 +36,7 @@ class WebSocketHeaderTest {
             finishFlag = true
         }
         val output = ByteBuffer.alloc(10)
-        async {
+        runBlocking {
             WebSocketHeader.write(output.asyncOutput(), header)
             output.flip()
             assertEquals(8, output.remaining)

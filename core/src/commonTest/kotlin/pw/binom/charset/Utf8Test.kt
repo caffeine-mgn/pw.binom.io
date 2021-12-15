@@ -1,10 +1,13 @@
 package pw.binom.charset
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import pw.binom.*
 import pw.binom.io.*
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import pw.binom.concurrency.sleep
 
 class Utf8Test {
 
@@ -55,15 +58,18 @@ class Utf8Test {
     fun test() {
         val out = ByteArrayOutput()
 
-        val d = async2 {
+        val d = GlobalScope.async {
             out.asyncOutput().bufferedWriter(charset = Charsets.UTF8, closeParent = false).use {
 //                it.append("\uD83E\uDC08")
                 it.append("🠈")
                 it.flush()
             }
         }
-        if (d.isFailure) {
-            throw d.exceptionOrNull!!
+        while (!d.isCompleted) {
+            sleep(100)
+        }
+        if (d.getCompletionExceptionOrNull() != null) {
+            throw d.getCompletionExceptionOrNull()!!
         }
         out.trimToSize()
         out.data.flip()
@@ -79,7 +85,7 @@ class Utf8Test {
         val vv = ByteBuffer.wrap(emojiBytes).use {
             it.bufferedReader().readText()
         }
-        println("iconv---->${vv==emoji}")
+        println("iconv---->${vv == emoji}")
         val readed = ByteBuffer.wrap(emojiBytes).use {
             it.utf8Reader().readText()
         }

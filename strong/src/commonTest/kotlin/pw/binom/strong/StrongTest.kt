@@ -1,8 +1,7 @@
 package pw.binom.strong
 
 import kotlinx.coroutines.*
-import pw.binom.async2
-import pw.binom.concurrency.sleep
+import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -40,7 +39,7 @@ class StrongTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun destroyTest() {
+    fun destroyTest() = runTest{
         val time = measureTime {
             GlobalScope.launch {
                 Strong.launch(Strong.config {
@@ -58,118 +57,112 @@ class StrongTest {
                         }
                     }
                 })
-            }.joinForce()
+            }.join()
         }
 
-        assertTrue(time>2.seconds)
-        assertTrue(time<4.seconds)
+        assertTrue(time > 2.seconds)
+        assertTrue(time < 4.seconds)
     }
 
     @Ignore
     @Test
-    fun aaa() {
+    fun aaa() = runTest {
         class A
 
-        val s = async2 {
-            val factory = object : Strong.BeanFactory<A> {
-                override val type: KClass<A>
-                    get() = A::class
+        val factory = object : Strong.BeanFactory<A> {
+            override val type: KClass<A>
+                get() = A::class
 
-                override suspend fun provide(strong: Strong): A = A()
-            }
-
-            class TestClass : Strong.Bean() {
-                val a by strong.inject<A>()
-            }
-
-            val s = Strong.create(
-                Strong.config {
-                    it.bean { factory }
-                    it.bean { TestClass() }
-                }
-            )
-            println("->${s.service(TestClass::class).service.a}")
+            override suspend fun provide(strong: Strong): A = A()
         }
-        if (s.isFailure) {
-            throw s.exceptionOrNull!!
+
+        class TestClass : Strong.Bean() {
+            val a by strong.inject<A>()
         }
+
+        val s = Strong.create(
+            Strong.config {
+                it.bean { factory }
+                it.bean { TestClass() }
+            }
+        )
+        println("->${s.service(TestClass::class).service.a}")
     }
 
     @Test
-    fun aa() {
-        val cc = async2 {
-            class A : Strong.InitializingBean {
-                override suspend fun init(strong: Strong) {
-                    println("init A")
-                }
-
+    fun aa() = runTest {
+        class A : Strong.InitializingBean {
+            override suspend fun init(strong: Strong) {
+                println("init A")
             }
 
-            class B : Strong.InitializingBean {
-                override suspend fun init(strong: Strong) {
-                    println("init B")
-                }
+        }
 
+        class B : Strong.InitializingBean {
+            override suspend fun init(strong: Strong) {
+                println("init B")
             }
 
-            class Prov : Strong.Bean(), Strong.InitializingBean {
-                val a by strong.inject<A>()
+        }
 
-                override suspend fun init(strong: Strong) {
-                    println("init Prov")
-                }
+        class Prov : Strong.Bean(), Strong.InitializingBean {
+            val a by strong.inject<A>()
 
+            override suspend fun init(strong: Strong) {
+                println("init Prov")
             }
 
-            class MyBean4 : Strong.Bean()
-            class MyBean2
-            class MyBean3 : Strong.InitializingBean, Strong.LinkingBean, Strong.Bean() {
-                private val bean4 by strong.inject<MyBean4>()
-                override suspend fun init(strong: Strong) {
-                    println("init MyBean3")
-                }
+        }
 
-                override suspend fun link(strong: Strong) {
-                    println("link MyBean3")
-                }
-
+        class MyBean4 : Strong.Bean()
+        class MyBean2
+        class MyBean3 : Strong.InitializingBean, Strong.LinkingBean, Strong.Bean() {
+            private val bean4 by strong.inject<MyBean4>()
+            override suspend fun init(strong: Strong) {
+                println("init MyBean3")
             }
 
-            class Server(val client: Client)
-            class ClientImpl(val m: MyBean3) : Client
-
-            class ClientWraper : Client, Strong.Bean(), Strong.InitializingBean {
-                private val lll by strong.inject<MyBean3>()
-                override suspend fun init(strong: Strong) {
-                    ClientImpl(lll)
-                }
-
+            override suspend fun link(strong: Strong) {
+                println("link MyBean3")
             }
 
-            class MyBean : Strong.InitializingBean, Strong.LinkingBean, Strong.Bean() {
-                private val bean3 by strong.inject<MyBean3>()
+        }
 
-                override suspend fun init(strong: Strong) {
-                    println("init MyBean")
-                }
+        class Server(val client: Client)
+        class ClientImpl(val m: MyBean3) : Client
 
-                override suspend fun link(strong: Strong) {
-                    println("link MyBean")
-                }
+        class ClientWraper : Client, Strong.Bean(), Strong.InitializingBean {
+            private val lll by strong.inject<MyBean3>()
+            override suspend fun init(strong: Strong) {
+                ClientImpl(lll)
             }
 
-            val strong = StrongImpl()
+        }
+
+        class MyBean : Strong.InitializingBean, Strong.LinkingBean, Strong.Bean() {
+            private val bean3 by strong.inject<MyBean3>()
+
+            override suspend fun init(strong: Strong) {
+                println("init MyBean")
+            }
+
+            override suspend fun link(strong: Strong) {
+                println("link MyBean")
+            }
+        }
+
+        val strong = StrongImpl()
 
 
-            val ss = Strong.create(
-                Strong.config { definer ->
-                    definer.bean { MyBean() }
-                    definer.bean { MyBean3() }
-                    definer.bean { MyBean4() }
-                    definer.bean { ClientWraper() }
-                    definer.wrap<MyBean3, ClientImpl> { bean3 -> ClientImpl(bean3) }
-                }
-            )
+        val ss = Strong.create(
+            Strong.config { definer ->
+                definer.bean { MyBean() }
+                definer.bean { MyBean3() }
+                definer.bean { MyBean4() }
+                definer.bean { ClientWraper() }
+                definer.wrap<MyBean3, ClientImpl> { bean3 -> ClientImpl(bean3) }
+            }
+        )
 
 //            val starter = Starter(
 //                strong,
@@ -180,10 +173,6 @@ class StrongTest {
 //                )
 //            )
 //            starter.start()
-        }
-        if (cc.isFailure) {
-            throw cc.exceptionOrNull!!
-        }
     }
 }
 

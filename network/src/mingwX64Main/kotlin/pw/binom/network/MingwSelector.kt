@@ -6,7 +6,7 @@ import platform.windows.HANDLE
 
 class MingwSelector : AbstractSelector() {
 
-    class MingwKey(val list: HANDLE, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
+    inner class MingwKey(val list: HANDLE, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
@@ -37,10 +37,7 @@ class MingwSelector : AbstractSelector() {
         override fun close() {
             super.close()
             epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
-        }
-
-        init {
-//            freeze()
+            keys-=this
         }
     }
 
@@ -48,6 +45,8 @@ class MingwSelector : AbstractSelector() {
     private val list = nativeHeap.allocArray<epoll_event>(1000)
     override val nativeSelectedKeys
         get() = nativeSelectedKeys2
+
+    private val keys = HashSet<MingwKey>()
 
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
@@ -60,6 +59,7 @@ class MingwSelector : AbstractSelector() {
             event.events = key.epollCommonToNative(mode).convert()
             event.data.ptr = key.ptr
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
+            keys+=key
         }
         return key
     }
@@ -148,6 +148,8 @@ class MingwSelector : AbstractSelector() {
         nativeSelectedKeys2.reset()
         eventCount = epoll_wait(native, list.reinterpret(), 1000, timeout.toInt())
     }
+
+    override fun getAttachedKeys(): Collection<Selector.Key> = HashSet(keys)
 
     override fun close() {
         epoll_close(native)

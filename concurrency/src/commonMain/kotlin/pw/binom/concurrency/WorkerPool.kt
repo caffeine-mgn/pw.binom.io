@@ -60,7 +60,7 @@ suspend fun <T> ExecutorService.useInContext(f: suspend () -> T) {
 //    }
 //}
 
-class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, Dispatcher, CoroutineDispatcher() {
+class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher() {
     private class State(size: Int) {
         var interotped = AtomicBoolean(false)
         val tasks = AtomicInt(0)
@@ -72,7 +72,7 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
     }
 
     private val state = State(size)
-    private val list = Array(size) { Worker.create() }
+    private val list = Array(size) { Worker() }
 
     fun shutdown() {
         if (state.interotped.value) {
@@ -97,7 +97,7 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
         return out
     }
 
-    override fun <T> submit(f: () -> T): Future<T> {
+    fun <T> submit(f: () -> T): Future<T> {
         if (state.interotped.value) {
             throw IllegalStateException("WorkerPool already has Interrupted")
         }
@@ -146,40 +146,40 @@ class WorkerPool(size: Int = WorkerImpl.availableProcessors) : ExecutorService, 
         doFreeze()
     }
 
-    override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
-        val future = FreezableFuture<T>()
-        submit {
-            WorkerImpl.current!!.startCoroutine(onDone = {
-                try {
-                    future.resume(it)
-                } catch (e: Throwable) {
-                    if (it.isFailure) {
-                        e.addSuppressed(it.exceptionOrNull()!!)
-                    }
-                    throw e
-                }
-            }, context = context, func = func)
-        }
-        return future
-    }
+//    override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
+//        val future = FreezableFuture<T>()
+//        submit {
+//            WorkerImpl.current!!.startCoroutine(onDone = {
+//                try {
+//                    future.resume(it)
+//                } catch (e: Throwable) {
+//                    if (it.isFailure) {
+//                        e.addSuppressed(it.exceptionOrNull()!!)
+//                    }
+//                    throw e
+//                }
+//            }, context = context, func = func)
+//        }
+//        return future
+//    }
 
-    override fun <T> startCoroutine(
-        context: CoroutineContext,
-        continuation: CrossThreadContinuation<T>,
-        func: suspend () -> T
-    ) {
-        submit {
-            WorkerImpl.current!!.startCoroutine(
-                continuation = continuation,
-                context = context,
-                func = func
-            )
-        }
-    }
+//    override fun <T> startCoroutine(
+//        context: CoroutineContext,
+//        continuation: CrossThreadContinuation<T>,
+//        func: suspend () -> T
+//    ) {
+//        submit {
+//            WorkerImpl.current!!.startCoroutine(
+//                continuation = continuation,
+//                context = context,
+//                func = func
+//            )
+//        }
+//    }
 
-    override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>) {
-        throw IllegalStateException("Can't resume Coroutine on Pool")
-    }
+//    override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>) {
+//        throw IllegalStateException("Can't resume Coroutine on Pool")
+//    }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         submit { block.run() }

@@ -46,25 +46,20 @@ kotlin {
 
         val linuxX64Main by getting {
             dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
         }
         val linuxArm64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
 
         val linuxMips32Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
 
         val linuxMipsel32Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
 
         val mingwX64Main by getting {
@@ -72,14 +67,12 @@ kotlin {
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
-                dependsOn(commonMain)
-                kotlin.srcDir("src/mingwX64Main/kotlin")
+                dependsOn(mingwX64Main)
             }
         }
 
         val macosX64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
 
         val commonTest by getting {
@@ -93,7 +86,7 @@ kotlin {
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
-                api(kotlin("test-junit"))
+                api(kotlin("test"))
             }
         }
         val linuxX64Test by getting {
@@ -127,6 +120,15 @@ val test_data_now get() = ${Date().time}
         it.doFirst {
             generateDate()
         }
+    }
+
+    withType(Test::class) {
+        useJUnitPlatform()
+        testLogging.showStandardStreams = true
+        testLogging.showCauses = true
+        testLogging.showExceptions = true
+        testLogging.showStackTraces = true
+        testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
 apply<pw.binom.plugins.DocsPlugin>()

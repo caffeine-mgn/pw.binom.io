@@ -1,7 +1,8 @@
 package pw.binom.db.serialization
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import pw.binom.async2
 import pw.binom.getOrException
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -21,7 +22,7 @@ class SQLSerializationTest {
     }
 
     @Test
-    fun testDecodeByteArray() {
+    fun testDecodeByteArray() = runBlocking{
         val data = byteArrayOf(10, 15, 20)
         val mapper = SQLSerialization.DEFAULT.mapper<EntityWithArray>()
         val resultSet = ListStaticSyncResultSet(
@@ -31,10 +32,10 @@ class SQLSerializationTest {
             columns = listOf("array")
         )
 
-        val decoded = async2 {
+        val decoded = async {
             resultSet.next()
             mapper(resultSet)
-        }.getOrException()
+        }.await()
 
         assertContentEquals(data, decoded.array)
     }

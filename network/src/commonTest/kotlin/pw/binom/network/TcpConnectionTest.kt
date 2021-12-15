@@ -3,9 +3,9 @@ package pw.binom.network
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import pw.binom.*
 import pw.binom.concurrency.*
-import pw.binom.coroutine.start
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,7 +19,7 @@ class TcpConnectionTest {
         val nd = NetworkCoroutineDispatcherImpl()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 100)
         val address = NetworkAddress.Immutable("127.0.0.1", port)
-        val worker = Worker.create()
+        val worker = Worker()
         val spinLock = SpinLock()
         runBlocking {
             val server = nd.bindTcp(address)
@@ -47,7 +47,7 @@ class TcpConnectionTest {
             server.close()
             ByteBuffer.alloc(10) { buf ->
                 remoteClient.write(buf)
-                worker.start {
+                withContext(worker) {
                     spinLock.lock()
                     spinLock.unlock()
                 }
@@ -72,29 +72,24 @@ class TcpConnectionTest {
         val nd = NetworkCoroutineDispatcherImpl()
         val port = Random.nextInt(1000, Short.MAX_VALUE - 100)
 
-        val worker = Worker.create()
+        val worker = Worker()
 
         runBlocking {
             val r = launch {
                 val server = nd.bindTcp(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
 
-                val newClient = server.accept()!!
-                newClient.useReference { ref ->
-                    worker.start {
-                        println("net thread...   ${ref.owner.same}")
-                        assertFalse(ref.owner.same)
+                val newClient = server.accept()
+                    withContext(worker) {
                         println("Wait send...")
                         launch {
                             println("Wait net thread...")
                             val buf = ByteBuffer.alloc(10)
-                            val connection = ref.value
-                            connection.writeByte(buf, 42)
-                            connection.flush()
+                            newClient.writeByte(buf, 42)
+                            newClient.flush()
                             println("wroted!")
                         }
                     }
                 }
-            }
 
             val r2 = launch {
                 val client = nd.tcpConnect(NetworkAddress.Immutable(host = "127.0.0.1", port = port))

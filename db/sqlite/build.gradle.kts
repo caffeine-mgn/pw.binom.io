@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.konan.target.KonanTarget
 import pw.binom.baseStaticLibConfig
 import pw.binom.kotlin.clang.*
 
@@ -86,25 +85,21 @@ kotlin {
         }
         if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
             val linuxArm32HfpMain by getting {
-                dependsOn(commonMain)
-                kotlin.srcDir("src/linuxX64Main/kotlin")
+                dependsOn(linuxX64Main)
             }
         }
 
         val mingwX64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
-                dependsOn(commonMain)
-                kotlin.srcDir("src/linuxX64Main/kotlin")
+                dependsOn(linuxX64Main)
             }
         }
 
         val macosX64Main by getting {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/linuxX64Main/kotlin")
+            dependsOn(linuxX64Main)
         }
 
         val commonTest by getting {
@@ -122,7 +117,7 @@ kotlin {
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
-                api(kotlin("test-junit"))
+                api(kotlin("test"))
             }
         }
         val linuxX64Test by getting {

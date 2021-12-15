@@ -12,8 +12,8 @@ class SpinLockTest {
     @Test
     fun test() {
         val l = SpinLock()
-        val w1 = Worker.create()
-        val w2 = Worker.create()
+        val w1 = Worker()
+        val w2 = Worker()
         val startFlag = AtomicBoolean(false)
 
         w1.execute {

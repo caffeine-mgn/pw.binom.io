@@ -1,16 +1,17 @@
 package pw.binom.coroutine
 
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.FrozenQueue
 import pw.binom.concurrency.SpinLock
-import pw.binom.concurrency.suspendManagedCoroutine
 import pw.binom.concurrency.synchronize
 import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 
 class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
-    private val listeners = FrozenQueue<CrossThreadContinuation<T>>()
+    private val listeners = FrozenQueue<CancellableContinuation<T>>()
     private val values = FrozenQueue<T>()
     private val closed = AtomicBoolean(false)
 
@@ -51,7 +52,7 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
             lock.unlock()
             return result
         } else {
-            return suspendManagedCoroutine {
+            return suspendCancellableCoroutine {
                 listeners.push(it)
                 lock.unlock()
             }

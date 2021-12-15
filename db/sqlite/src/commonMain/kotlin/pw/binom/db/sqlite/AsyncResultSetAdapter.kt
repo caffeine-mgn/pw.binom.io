@@ -1,120 +1,120 @@
 package pw.binom.db.sqlite
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import kotlinx.coroutines.withContext
 import pw.binom.concurrency.*
-import pw.binom.coroutine.start
 import pw.binom.date.Date
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.sync.SyncResultSet
 
-class AsyncResultSetAdapter(val ref: Reference<SyncResultSet>, val worker: Worker, override val columns: List<String>) :
+class AsyncResultSetAdapter(val ref: SyncResultSet, val worker: Worker, override val columns: List<String>) :
     AsyncResultSet {
     override suspend fun next(): Boolean {
         val ref = ref
-        return worker.start {
-            ref.value.next()
+        return withContext(worker) {
+            ref.next()
         }
     }
 
     override fun getString(index: Int): String? =
         worker.execute(ref) {
-            it.value.getString(index)
+            it.getString(index)
         }.joinAndGetOrThrow()
 
     override fun getString(column: String): String? =
         worker.execute(ref) {
-            it.value.getString(column)
+            it.getString(column)
         }.joinAndGetOrThrow()
 
     override fun getBoolean(index: Int): Boolean? =
         worker.execute(ref) {
-            it.value.getBoolean(index)
+            it.getBoolean(index)
         }.joinAndGetOrThrow()
 
     override fun getBoolean(column: String): Boolean? =
         worker.execute(ref) {
-            it.value.getBoolean(column)
+            it.getBoolean(column)
         }.joinAndGetOrThrow()
 
     override fun getInt(index: Int): Int? =
         worker.execute(ref) {
-            it.value.getInt(index)
+            it.getInt(index)
         }.joinAndGetOrThrow()
 
     override fun getInt(column: String): Int? =
         worker.execute(ref) {
-            it.value.getInt(column)
+            it.getInt(column)
         }.joinAndGetOrThrow()
 
     override fun getLong(index: Int): Long? =
         worker.execute(ref) {
-            it.value.getLong(index)
+            it.getLong(index)
         }.joinAndGetOrThrow()
 
     override fun getLong(column: String): Long? =
         worker.execute(ref) {
-            it.value.getLong(column)
+            it.getLong(column)
         }.joinAndGetOrThrow()
 
     override fun getBigDecimal(index: Int): BigDecimal? =
         worker.execute(ref) {
-            it.value.getBigDecimal(index)
+            it.getBigDecimal(index)
         }.joinAndGetOrThrow()
 
     override fun getBigDecimal(column: String): BigDecimal? =
         worker.execute(ref) {
-            it.value.getBigDecimal(column)
+            it.getBigDecimal(column)
         }.joinAndGetOrThrow()
 
     override fun getDouble(index: Int): Double? =
         worker.execute(ref) {
-            it.value.getDouble(index)
+            it.getDouble(index)
         }.joinAndGetOrThrow()
 
     override fun getDouble(column: String): Double? =
         worker.execute(ref) {
-            it.value.getDouble(column)
+            it.getDouble(column)
         }.joinAndGetOrThrow()
 
     override fun getBlob(index: Int): ByteArray? =
         worker.execute(ref) {
-            it.value.getBlob(index)
+            it.getBlob(index)
         }.joinAndGetOrThrow()
 
     override fun getBlob(column: String): ByteArray? =
         worker.execute(ref) {
-            it.value.getBlob(column)
+            it.getBlob(column)
         }.joinAndGetOrThrow()
 
     override fun isNull(index: Int): Boolean =
         worker.execute(ref) {
-            it.value.isNull(index)
+            it.isNull(index)
         }.joinAndGetOrThrow()
 
     override fun isNull(column: String): Boolean =
         worker.execute(ref) {
-            it.value.isNull(column)
+            it.isNull(column)
         }.joinAndGetOrThrow()
 
     override fun getDate(index: Int): Date? =
         worker.execute(ref) {
-            it.value.getDate(index)
+            it.getDate(index)
         }.joinAndGetOrThrow()
 
     override fun getDate(column: String): Date? =
         worker.execute(ref) {
-            it.value.getDate(column)
+            it.getDate(column)
         }.joinAndGetOrThrow()
 
     override fun columnIndex(column: String): Int =
         worker.execute(ref) {
-            it.value.columnIndex(column)
+            it.columnIndex(column)
         }.joinAndGetOrThrow()
 
     override suspend fun asyncClose() {
         val ref = ref
-        worker.start {
-            ref.value.close()
+        worker.execute {
+            ref.close()
         }
         ref.close()
     }

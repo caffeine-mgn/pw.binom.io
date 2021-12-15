@@ -1,5 +1,6 @@
 package pw.binom.io.http
 
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.readText
@@ -15,7 +16,7 @@ class AsyncChunkedInputTest {
         val output = ByteArrayOutput()
         val chunked = AsyncChunkedOutput(output.asyncOutput())
 
-        async {
+        runBlocking {
             val sb = chunked.utf8Appendable()
             sb.append("Wiki")
             chunked.flush()
@@ -35,7 +36,7 @@ class AsyncChunkedInputTest {
         val output = ByteArrayOutput()
         val chunked = AsyncChunkedOutput(output.asyncOutput())
 
-        async {
+        runBlocking {
             val sb = chunked.utf8Appendable()
             sb.append("Wiki")
             chunked.flush()
@@ -47,20 +48,22 @@ class AsyncChunkedInputTest {
 
         val input = AsyncChunkedInput(out.asyncInput())
         val buf = ByteBuffer.alloc(50)
-        val buf1 = ByteBuffer.alloc(4)
-        async {
+        val tmpBuffer = ByteBuffer.alloc(6)
+        runBlocking {
             assertEquals(4, input.read(buf))
-            assertEquals('W', buf.readUtf8Char(buf1))
-            assertEquals('i', buf.readUtf8Char(buf1))
-            assertEquals('k', buf.readUtf8Char(buf1))
-            assertEquals('i', buf.readUtf8Char(buf1))
+            buf.flip()
+            assertEquals('W', buf.readUtf8Char(tmpBuffer))
+            assertEquals('i', buf.readUtf8Char(tmpBuffer))
+            assertEquals('k', buf.readUtf8Char(tmpBuffer))
+            assertEquals('i', buf.readUtf8Char(tmpBuffer))
             buf.clear()
             assertEquals(5, input.read(buf))
-            assertEquals('p', buf.readUtf8Char(buf1))
-            assertEquals('e', buf.readUtf8Char(buf1))
-            assertEquals('d', buf.readUtf8Char(buf1))
-            assertEquals('i', buf.readUtf8Char(buf1))
-            assertEquals('a', buf.readUtf8Char(buf1))
+            buf.flip()
+            assertEquals('p', buf.readUtf8Char(tmpBuffer))
+            assertEquals('e', buf.readUtf8Char(tmpBuffer))
+            assertEquals('d', buf.readUtf8Char(tmpBuffer))
+            assertEquals('i', buf.readUtf8Char(tmpBuffer))
+            assertEquals('a', buf.readUtf8Char(tmpBuffer))
             buf.clear()
             assertEquals(0, input.read(buf))
         }

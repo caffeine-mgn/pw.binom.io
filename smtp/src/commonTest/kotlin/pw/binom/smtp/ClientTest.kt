@@ -1,11 +1,11 @@
 package pw.binom.smtp
 
+import kotlinx.coroutines.runBlocking
 import pw.binom.ByteBuffer
-import pw.binom.async2
 import pw.binom.concurrency.joinAndGetOrThrow
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.ssl.KeyManager
 import pw.binom.ssl.PrivateKey
 import pw.binom.ssl.TrustManager
@@ -27,12 +27,10 @@ class ClientTest {
 
     @Ignore
     @Test
-    fun test() {
-        val networkDispatcher = NetworkDispatcher()
+    fun test() = runBlocking{
 
-        val feature = networkDispatcher.startCoroutine {
             val client = SMTPClient.tls(
-                dispatcher = networkDispatcher,
+                dispatcher = NetworkCoroutineDispatcherImpl(),
                 address = NetworkAddress.Immutable("smtp.yandex.ru", 465),
                 keyManager = EmptyKeyManager,
                 trustManager = TrustManager.TRUST_ALL,
@@ -67,13 +65,6 @@ class ClientTest {
                         it.append("<html><s>Second email! Without attachment!</s>")
                     }
                 }
-
                 client.asyncClose()
-        }
-
-        while (!feature.isDone) {
-            networkDispatcher.select()
-        }
-        feature.joinAndGetOrThrow()
     }
 }

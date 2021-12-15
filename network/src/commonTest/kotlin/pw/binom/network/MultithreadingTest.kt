@@ -6,7 +6,7 @@ import kotlinx.coroutines.withContext
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import pw.binom.concurrency.*
-import pw.binom.coroutine.start
+import pw.binom.io.use
 import kotlin.test.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -34,38 +34,22 @@ class MultithreadingTest {
     @Test
     fun test() {
         var flag1 by AtomicBoolean(false)
-        var flag2 by AtomicBoolean(false)
         val nd = NetworkCoroutineDispatcherImpl()
         val executor = WorkerPool(10)
         val addr = NetworkAddress.Immutable("127.0.0.1", 8765)
         runBlocking {
             val server = launch {
-                val server = nd.bindTcp(addr)
-                try {
+                nd.bindTcp(addr).use { server ->
                     val client = server.accept()
-                    val networkThread = ThreadRef()
-                    executor.start {
-                        assertFalse(networkThread.same)
-                        flag1 = true
-                        launch {
-                            assertTrue(networkThread.same)
-                            flag2 = true
-                        }
-                        Unit
-                    }
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                } finally {
-                    server.close()
+                    flag1 = true
                 }
             }
-
             val client = launch {
                 nd.tcpConnect(addr)
                 Unit
             }
+            server.join()
         }
-        assertTrue(flag1)
-        assertTrue(flag2)
+        assertTrue(flag1, "flag1 invalid")
     }
 }

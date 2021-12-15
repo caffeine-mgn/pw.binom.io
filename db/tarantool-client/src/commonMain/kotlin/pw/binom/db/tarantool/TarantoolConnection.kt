@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcher
 
-interface TarantoolConnection: AsyncCloseable {
+interface TarantoolConnection : AsyncCloseable {
     companion object {
         suspend fun connect(
             manager: NetworkCoroutineDispatcher = Dispatchers.Network,
@@ -22,24 +22,32 @@ interface TarantoolConnection: AsyncCloseable {
             userName: String?,
             password: String?
         ): TarantoolConnectionImpl {
+            println("TarantoolConnection #1 address: $address")
             val con = manager.tcpConnect(address)
+            println("TarantoolConnection #2")
             ByteBuffer.alloc(64) { buf ->
-                var connection : TarantoolConnectionImpl?=null
+                var connection: TarantoolConnectionImpl? = null
+                println("TarantoolConnection #3")
                 try {
+                    println("TarantoolConnection #3")
                     con.readFully(buf)
+                    println("TarantoolConnection #4")
                     buf.flip()
                     val version = buf.asUTF8String().trim().substring(10)
                     buf.clear()
                     con.readFully(buf)
                     buf.flip()
                     val salt = buf.asUTF8String().trim()
+                    println("TarantoolConnection #5")
                     connection = TarantoolConnectionImpl(
 //                        networkThread = ThreadRef(),
                         networkDispatcher = manager,
                         con = con,
                         serverVersion = version
                     )
-                    connection.mainLoopJob = GlobalScope.launch { connection.startMainLoop(this) }
+                    println("TarantoolConnection #6")
+                    connection.mainLoopJob = GlobalScope.launch(manager) { connection.startMainLoop() }
+                    println("TarantoolConnection #7")
                     if (userName != null && password != null) {
                         connection.sendReceive(
                             code = Code.AUTH,
@@ -47,6 +55,7 @@ interface TarantoolConnection: AsyncCloseable {
                             body = InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
                         ).assertException()
                     }
+                    println("TarantoolConnection #8")
                     return connection
                 } catch (e: Throwable) {
                     connection?.asyncClose()
@@ -63,10 +72,12 @@ interface TarantoolConnection: AsyncCloseable {
         space: Int,
         values: List<Any?>
     )
+
     suspend fun insert(
         space: String,
         values: List<Any?>
     )
+
     suspend fun delete(
         space: Int,
         keys: List<Any?>
@@ -77,6 +88,7 @@ interface TarantoolConnection: AsyncCloseable {
         indexValues: List<Any?>,
         values: List<FieldUpdate>,
     )
+
     suspend fun upsert(
         space: String,
         indexValues: List<Any?>,

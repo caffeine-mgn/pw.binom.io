@@ -1,5 +1,6 @@
 package pw.binom
 
+import kotlinx.coroutines.runBlocking
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.bufferedWriter
 import kotlin.test.Test
@@ -42,7 +43,7 @@ class CharBufferTest {
             "DateStyle" to "ISO",
         )
         println("#0")
-        async {
+        runBlocking {
             d.forEach {
                 appender.append(it.key)
                 appender.flush()

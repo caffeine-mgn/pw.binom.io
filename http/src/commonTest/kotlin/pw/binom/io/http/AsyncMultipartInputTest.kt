@@ -1,5 +1,6 @@
 package pw.binom.io.http
 
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.readText
@@ -41,7 +42,7 @@ class AsyncMultipartInputTest {
         val userName = Random.nextUuid().toString()
         val userPassword = Random.nextUuid().toString()
         val bufferPool = ByteBufferPool(100)
-        async {
+        runBlocking {
             try {
                 //-------build test data-------//
                 mulipart.formData("userName")

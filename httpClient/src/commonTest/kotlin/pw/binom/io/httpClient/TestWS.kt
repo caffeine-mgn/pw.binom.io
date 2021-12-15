@@ -1,6 +1,7 @@
 package pw.binom.io.httpClient
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.readText
 import pw.binom.io.use
@@ -8,7 +9,7 @@ import pw.binom.net.toURI
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
 import pw.binom.network.Network
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcherImpl
 import kotlin.test.Ignore
 import kotlin.test.Test
 
@@ -76,11 +77,9 @@ class TestWS {
     @Ignore
     @Test
     fun serverTest() {
-        var done = false
-        val manager = NetworkDispatcher()
-        manager.startCoroutine {
+        runBlocking {
             try {
-                val client = BaseHttpClient(Dispatchers.Network)
+                val client = HttpClient.create()
                 val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURI())
                     .startWebSocket("http://127.0.0.1:8080")
 
@@ -99,13 +98,8 @@ class TestWS {
                 wsClient.asyncClose()
             } catch (e: Throwable) {
                 e.printStackTrace()
-            } finally {
-                done = true
+                throw e
             }
-        }
-
-        while (!done) {
-            manager.select(1000)
         }
     }
 }

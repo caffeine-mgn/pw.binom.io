@@ -1,5 +1,6 @@
 package pw.binom.db.serialization
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import pw.binom.concurrency.sleep
 import pw.binom.db.async.pool.AsyncConnectionPool
@@ -7,7 +8,6 @@ import pw.binom.db.postgresql.async.PGConnection
 import pw.binom.db.sqlite.AsyncSQLiteConnector
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
 import pw.binom.nextUuid
 import pw.binom.testContainer.TestContainer
 import pw.binom.testContainer.invoke
@@ -33,37 +33,31 @@ class InsertTest {
             get() = ports[0].externalPort
     }
 
-    fun db(sql: SQLSerialization = SQLSerialization.DEFAULT, func: suspend (DBContext) -> Unit) {
-        val manager = NetworkDispatcher()
+    fun db(sql: SQLSerialization = SQLSerialization.DEFAULT, func: suspend (DBContext) -> Unit) = runBlocking {
         try {
             PostgresContainer {
                 sleep(1000)
-                manager.runSingle {
-                    AsyncConnectionPool.create(maxConnections = 1) {
-                        PGConnection.connect(
-                            address = NetworkAddress.Immutable("127.0.0.1", PostgresContainer.externalPort),
-                            userName = "postgres",
-                            password = "postgres",
-                            dataBase = "test",
-                            networkDispatcher = manager
-                        )
-                    }.use { pool ->
-                        val context = DBContext.create(pool, sql)
-                        func(context)
-                    }
+                AsyncConnectionPool.create(maxConnections = 1) {
+                    PGConnection.connect(
+                        address = NetworkAddress.Immutable("127.0.0.1", PostgresContainer.externalPort),
+                        userName = "postgres",
+                        password = "postgres",
+                        dataBase = "test",
+                    )
+                }.use { pool ->
+                    val context = DBContext.create(pool, sql)
+                    func(context)
                 }
             }
         } catch (e: Throwable) {
             throw RuntimeException("Exception on PostgreSQL", e)
         }
         try {
-            manager.runSingle {
-                AsyncConnectionPool.create(maxConnections = 1) {
-                    AsyncSQLiteConnector.memory(Random.nextUuid().toString())
-                }.use { pool ->
-                    val context = DBContext.create(pool, sql)
-                    func(context)
-                }
+            AsyncConnectionPool.create(maxConnections = 1) {
+                AsyncSQLiteConnector.memory(Random.nextUuid().toString())
+            }.use { pool ->
+                val context = DBContext.create(pool, sql)
+                func(context)
             }
         } catch (e: Throwable) {
             throw RuntimeException("Exception on SQLite", e)

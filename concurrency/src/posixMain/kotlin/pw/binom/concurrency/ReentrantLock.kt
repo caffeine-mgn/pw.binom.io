@@ -91,7 +91,7 @@ actual class ReentrantLock:Lock {
                 waitUntil.set(now, duration)
                 while (true) {
                     val r = pthread_cond_timedwait(native.ptr, mutex.ptr, waitUntil.ptr)
-                    if (WorkerImpl.current?.isInterrupted == true) {
+                    if (Worker.current?.isInterrupted == true) {
                         throw InterruptedException()
                     }
                     if (r == ETIMEDOUT) {

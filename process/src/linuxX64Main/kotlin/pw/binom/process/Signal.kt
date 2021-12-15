@@ -5,11 +5,13 @@ import platform.posix.SIGINT
 import platform.posix.SIGTERM
 import kotlin.native.concurrent.AtomicInt
 
+private const val SIGBREAK=21
+
 private val signalListener = staticCFunction<Int, Unit> handler@{ signal ->
     initRuntimeIfNeeded()
     when (signal) {
         SIGINT -> Signal._isSigint.value = 1
-        platform.linux.internal_SIGBREAK -> Signal._isSigbreak.value = 1
+        SIGBREAK -> Signal._isSigbreak.value = 1
         SIGTERM -> Signal._isSigterm.value = 1
     }
     return@handler
@@ -41,7 +43,7 @@ actual object Signal {
 
     init {
         listen2(SIGINT)
-        listen2(platform.linux.internal_SIGBREAK)
+        listen2(SIGBREAK)
         listen2(SIGTERM)
     }
 

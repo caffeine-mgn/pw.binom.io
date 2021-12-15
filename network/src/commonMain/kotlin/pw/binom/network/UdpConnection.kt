@@ -34,7 +34,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
     }
 
     private class SendData {
-        var continuation: Continuation<Int>? = null
+        var continuation: CancellableContinuation<Int>? = null
         var data: ByteBuffer? = null
         var address: NetworkAddress? = null
         fun reset() {
@@ -76,6 +76,15 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
 
     override fun error() {
         throw RuntimeException("Not supported")
+    }
+
+    override fun cancelSelector() {
+        sendData.continuation?.cancel()
+        sendData.continuation = null
+        sendData.data = null
+        readData.continuation?.cancel()
+        readData.continuation = null
+        readData.data = null
     }
 
     override fun readyForRead() {
@@ -162,7 +171,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
 
         sendData.data = data
         sendData.address = address
-        suspendCoroutine<Int> {
+        suspendCancellableCoroutine<Int> {
             sendData.continuation = it
             key.addListen(Selector.OUTPUT_READY)
         }

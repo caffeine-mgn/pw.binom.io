@@ -1,5 +1,6 @@
 package pw.binom.io.http
 
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.utf8Appendable
@@ -15,10 +16,12 @@ fun ByteBuffer.print() {
             val c = readUtf8Char(buf)!!
             when (c) {
                 '\r' -> print("\\r")
-                '\n' -> println("\\n")
+                '\n' -> print("\\n")
+                '\t' -> print("\\t")
                 else -> print(c)
             }
         }
+        println(" position: $position, limit: $limit, capacity: $capacity, remaining: $remaining")
     } finally {
         position = p
         limit = l
@@ -32,7 +35,7 @@ class AsyncChunkedOutputTest {
         val output = ByteArrayOutput()
         val chunked = AsyncChunkedOutput(output.asyncOutput())
 
-        async {
+        runBlocking {
             val sb = chunked.utf8Appendable()
             sb.append("Wiki")
             chunked.flush()

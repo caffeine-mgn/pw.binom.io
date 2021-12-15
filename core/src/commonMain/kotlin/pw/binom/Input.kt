@@ -70,7 +70,7 @@ fun Input.readUtf8Char(buffer: ByteBuffer): Char? {
         null
     } else {
         val firstByte = buffer[0]
-        val size = UTF8.utf8CharSize(firstByte)
+        val size = UTF8.getUtf8CharSize(firstByte) - 1
         if (size > 0) {
             buffer.reset(0, size)
             read(buffer)

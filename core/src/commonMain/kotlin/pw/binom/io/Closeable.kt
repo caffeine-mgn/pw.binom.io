@@ -1,6 +1,6 @@
 package pw.binom.io
 
-class ClosedException : IllegalStateException {
+open class ClosedException : IllegalStateException {
     constructor()
     constructor(message: String?) : super(message)
     constructor(message: String?, cause: Throwable?) : super(message, cause)

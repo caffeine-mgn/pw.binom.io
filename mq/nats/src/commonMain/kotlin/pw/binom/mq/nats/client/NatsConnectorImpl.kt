@@ -110,12 +110,9 @@ internal class NatsConnectorImpl(
                 }
                 val addr = serverList[serverIndex]
                 val tcpConnection = try {
-                    println("Connecting to $addr")
                     val connection = networkDispatcher.tcpConnect(addr)
-                    println("Connected to $addr")
                     connection
                 } catch (e: SocketConnectException) {
-                    println("Can't connect to $addr")
                     serverIndex++
                     continue@CONNECT_LOOP
                 }

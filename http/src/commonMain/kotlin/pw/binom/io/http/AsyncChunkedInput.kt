@@ -101,18 +101,19 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
             }
 
             val r = minOf(chunkedSize!! - readed, dest.remaining.toULong())
-            val oldLimit = dest.limit
+//            val oldLimit = dest.limit
             dest.limit = dest.position + r.toInt()
             val b = stream.read(dest)
-            dest.limit = oldLimit
+//            dest.limit = oldLimit
             readed += b.toULong()
             if (chunkedSize!! - readed == 0uL) {
                 staticData.clear()
                 stream.readFully(staticData)
                 val b1 = staticData[0]
                 val b2 = staticData[1]
-                if (b1 != CR || b2 != LF)
+                if (b1 != CR || b2 != LF) {
                     throw IOException("Invalid end of chunk")
+                }
                 readChankSize()
             }
             return b

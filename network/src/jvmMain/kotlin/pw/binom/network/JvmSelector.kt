@@ -141,6 +141,16 @@ class JvmSelector : Selector {
 
     }
 
+    override fun getAttachedKeys(): Collection<Selector.Key> =
+        this.native.keys().mapNotNull {
+            val key = it.attachment() as JvmKey
+            if (key.closed) {
+                null
+            } else {
+                key
+            }
+        }
+
     @OptIn(ExperimentalTime::class)
     override fun select(timeout: Long, func: (Selector.Key, mode: Int) -> Unit): Int {
         if (selecting) {

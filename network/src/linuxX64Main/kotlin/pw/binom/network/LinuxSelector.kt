@@ -5,7 +5,7 @@ import platform.linux.*
 
 class LinuxSelector : AbstractSelector() {
 
-    class LinuxKey(val list: Int, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
+    inner class LinuxKey(val list: Int, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
@@ -21,6 +21,7 @@ class LinuxSelector : AbstractSelector() {
         override fun close() {
             super.close()
             epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
+            keys -= this
         }
 
         fun epollCommonToNative(mode: Int): Int {
@@ -42,6 +43,7 @@ class LinuxSelector : AbstractSelector() {
     private var eventCount = 0
     private val native = epoll_create(1000)!!
     private val list = nativeHeap.allocArray<epoll_event>(1000)
+    private val keys = HashSet<LinuxKey>()
     override val nativeSelectedKeys: Iterator<NativeKeyEvent>
         get() = nativeSelectedKeys2
     private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
@@ -112,6 +114,7 @@ class LinuxSelector : AbstractSelector() {
 
             key.listensFlag = key.epollCommonToNative(mode)
             event.data.ptr = key.ptr
+            keys += key
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
         }
         return key
@@ -160,6 +163,8 @@ class LinuxSelector : AbstractSelector() {
         nativeSelectedKeys2.reset()
         eventCount = epoll_wait(native, list.reinterpret(), 1000, timeout.toInt())
     }
+
+    override fun getAttachedKeys(): Collection<Selector.Key> = HashSet(keys)
 
     override fun close() {
         platform.posix.close(native)

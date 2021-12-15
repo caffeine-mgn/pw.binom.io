@@ -1,12 +1,12 @@
 package pw.binom.io.httpClient
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import pw.binom.concurrency.sleep
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.toURI
 import pw.binom.network.Network
-import pw.binom.network.NetworkDispatcher
 import pw.binom.testContainer.TestContainer
 import pw.binom.testContainer.invoke
 import kotlin.test.Test
@@ -28,28 +28,24 @@ class ApacheServerTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun test() {
+    fun test() = runBlocking<Unit> {
         ApacheContainer {
             sleep(1000)
-            NetworkDispatcher().use { nd ->
-                val time = measureTime {
-                    nd.runSingle {
-                        HttpClient.create(Dispatchers.Network).use { http ->
-                            repeat(500) {
-                                http.connect(
-                                    method = "GET",
-                                    uri = "http://127.0.0.1:${ApacheContainer.port}/".toURI()
-                                ).use {
-                                    it.getResponse().use {
-                                        it.readText().use { it.readText() }
-                                    }
-                                }
+            val time = measureTime {
+                HttpClient.create(Dispatchers.Network).use { http ->
+                    repeat(500) {
+                        http.connect(
+                            method = "GET",
+                            uri = "http://127.0.0.1:${ApacheContainer.port}/".toURI()
+                        ).use {
+                            it.getResponse().use {
+                                it.readText().use { it.readText() }
                             }
                         }
                     }
                 }
-                println("time: $time")
             }
+            println("time: $time")
         }
     }
 }

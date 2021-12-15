@@ -21,7 +21,7 @@ abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManage
 class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     private var closed by AtomicBoolean(false)
-    private var worker = Worker.create()
+    private var worker = Worker()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
     private val readyForWriteListener = LinkedList<Runnable>()
@@ -36,12 +36,12 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
                         val attachment = event.key.attachment
-                        if (attachment === internalUdpContinuationConnection) {
-                                readyForWriteListenerLock.synchronize {
-                                    while (readyForWriteListener.isNotEmpty()){
-                                        readyForWriteListener.removeLast().run()
-                                    }
+                        if (attachment === self.internalUdpContinuationConnection) {
+                            self.readyForWriteListenerLock.synchronize {
+                                while (self.readyForWriteListener.isNotEmpty()) {
+                                    self.readyForWriteListener.removeLast().run()
                                 }
+                            }
 
 //                                while (true) {
 //                                    val breakNeed = readyForWriteListenerLock.synchronize {
@@ -56,7 +56,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 //                                        break
 //                                    }
 //                                }
-                            internalUdpContinuationConnection.key.listensFlag = 0
+                            self.internalUdpContinuationConnection.key.listensFlag = 0
                         } else {
                             val connection = attachment as AbstractConnection
                             if (event.mode and Selector.EVENT_CONNECTED != 0) {
@@ -82,7 +82,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
 //        readyForWriteListenerLock.synchronize {
-        readyForWriteListener.addFirst(block)
+            readyForWriteListener.addFirst(block)
 //        }
         internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
     }
@@ -91,6 +91,12 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         closed = true
         internalUdpContinuationConnection.key.close()
         internalUdpChannel.close()
+
+        selector.getAttachedKeys().forEach {
+            val attachment = it.attachment as AbstractConnection
+            attachment.cancelSelector()
+        }
+
         selector.close()
     }
 

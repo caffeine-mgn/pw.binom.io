@@ -1,17 +1,17 @@
 package pw.binom.io
 
-import pw.binom.async2
 import pw.binom.asyncOutput
 import kotlin.test.Test
 import pw.binom.io.*
 import kotlin.test.assertEquals
+import kotlinx.coroutines.runBlocking
 
 class BufferedAsciiWriterTest {
     @Test
     fun test() {
         val out = ByteArrayOutput()
 
-        async2 {
+        runBlocking {
             out.asyncOutput().bufferedAsciiWriter(closeParent = false).use {
                 it.append("Anton")
             }
@@ -23,7 +23,7 @@ class BufferedAsciiWriterTest {
     fun test2() {
         val out = ByteArrayOutput()
 
-        async2 {
+        runBlocking {
             out.asyncOutput().bufferedAsciiWriter(closeParent = false).use {
                 it.append("A")
             }

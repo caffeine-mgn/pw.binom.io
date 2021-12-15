@@ -100,6 +100,15 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         }
     }
 
+    override fun cancelSelector() {
+        sendData.continuation?.cancel()
+        sendData.continuation = null
+        sendData.data = null
+        readData.continuation?.cancel()
+        readData.continuation = null
+        readData.data = null
+    }
+
     override fun readyForRead() {
         if (readData.continuation == null) {
             key.removeListen(Selector.INPUT_READY)
@@ -198,6 +207,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
+        println("read(buffer remaining=${dest.remaining})")
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
         }
@@ -205,11 +215,13 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             return 0
         }
         val r = channel.read(dest)
+        println("readed $r.")
         if (r > 0) {
             return r
         }
         readData.full = false
         val readed = suspendCancellableCoroutine<Int> {
+            println("Чтение отложено")
             readData.continuation = it
             readData.data = dest
             key.addListen(Selector.INPUT_READY)
@@ -220,6 +232,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             }
         }
         if (readed == 0) {
+            println("прочитанно 0. это плохо (")
             runCatching { channel.close() }
             throw SocketClosedException()
         }

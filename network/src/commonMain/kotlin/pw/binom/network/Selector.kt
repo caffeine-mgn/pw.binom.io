@@ -40,6 +40,8 @@ interface Selector : Closeable {
         const val EVENT_ERROR: Int = 0b1000
     }
 
+    fun getAttachedKeys(): Collection<Key>
+
     /**
      * @param timeout Timeout for wait events. -1 infinity
      */
@@ -52,31 +54,31 @@ interface Selector : Closeable {
 }
 
 internal expect fun createSelector(): Selector
-internal fun selectorModeToString(mode:Int):String{
-        val sb = StringBuilder()
-        if (mode and Selector.INPUT_READY!=0){
-            if (sb.isNotEmpty()){
-                sb.append(", ")
-            }
-            sb.append("INPUT_READY")
+internal fun selectorModeToString(mode: Int): String {
+    val sb = StringBuilder()
+    if (mode and Selector.INPUT_READY != 0) {
+        if (sb.isNotEmpty()) {
+            sb.append(", ")
         }
-        if (mode and Selector.OUTPUT_READY!=0){
-            if (sb.isNotEmpty()){
-                sb.append(", ")
-            }
-            sb.append("OUTPUT_READY")
+        sb.append("INPUT_READY")
+    }
+    if (mode and Selector.OUTPUT_READY != 0) {
+        if (sb.isNotEmpty()) {
+            sb.append(", ")
         }
-        if (mode and Selector.EVENT_CONNECTED!=0){
-            if (sb.isNotEmpty()){
-                sb.append(", ")
-            }
-            sb.append("EVENT_CONNECTED")
+        sb.append("OUTPUT_READY")
+    }
+    if (mode and Selector.EVENT_CONNECTED != 0) {
+        if (sb.isNotEmpty()) {
+            sb.append(", ")
         }
-        if (mode and Selector.EVENT_ERROR!=0){
-            if (sb.isNotEmpty()){
-                sb.append(", ")
-            }
-            sb.append("EVENT_ERROR")
+        sb.append("EVENT_CONNECTED")
+    }
+    if (mode and Selector.EVENT_ERROR != 0) {
+        if (sb.isNotEmpty()) {
+            sb.append(", ")
         }
-        return sb.toString()
+        sb.append("EVENT_ERROR")
+    }
+    return sb.toString()
 }

@@ -1,5 +1,8 @@
 package pw.binom.dns
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.dns.protocol.DnsHeader
 import pw.binom.dns.protocol.QueryPackage
@@ -7,13 +10,12 @@ import pw.binom.dns.protocol.ResourcePackage
 import pw.binom.io.bufferedInput
 import pw.binom.io.bufferedOutput
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcherImpl
+import pw.binom.network.bindTcp
 import kotlin.random.Random
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.seconds
 
 class ClientTest {
 
@@ -21,7 +23,7 @@ class ClientTest {
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() {
-        val n = NetworkDispatcher()
+        val n = NetworkCoroutineDispatcherImpl()
 
         val header = DnsHeader().apply {
             id = Random.nextInt().toShort()
@@ -110,7 +112,7 @@ class ClientTest {
             auth = emptyList()
         )
         val buf = ByteBuffer.alloc(512)
-        val done = async2 {
+        val done = runBlocking {
             try {
                 val con = n.tcpConnect(NetworkAddress.Immutable("8.8.8.8", 53))
                 val output = con.bufferedOutput()
@@ -149,74 +151,53 @@ class ClientTest {
                 throw e
             }
         }
-        val now = TimeSource.Monotonic.markNow()
-        while (!done.isDone) {
-            if (now.elapsedNow() > 5.0.seconds) {
-                throw RuntimeException("Timeout")
-            }
-            n.select(1000)
-        }
-        if (done.isFailure) {
-            throw done.exceptionOrNull!!
-        }
     }
 
     @OptIn(ExperimentalTime::class)
     @Ignore
     @Test
     fun serverTest() {
-        val n = NetworkDispatcher()
+        val n = NetworkCoroutineDispatcherImpl()
         val buf = ByteBuffer.alloc(512)
         val header = DnsHeader()
         val q = QueryPackage()
         val r = ResourcePackage()
-        val done = async2 {
+        val done = runBlocking {
             try {
                 val server = n.bindTcp(NetworkAddress.Immutable("0.0.0.0", 53))
                 while (true) {
                     val client = server.accept()
 
-                    if (client != null)
-                        async {
-                            println("Client connected!")
-                            try {
-                                println("Reading header...")
-                                header.read(client, buf)
-                                println("Header: $header")
+                    GlobalScope.launch {
+                        println("Client connected!")
+                        try {
+                            println("Reading header...")
+                            header.read(client, buf)
+                            println("Header: $header")
 //                            header.read(client, buf)
 ////                            println("Header [${header.q_count}]: $header")
-                                repeat(header.q_count.toInt()) {
-                                    println("Reading Q...")
-                                    q.read(buf)
-                                    println("->$q")
-                                }
-                                repeat(header.add_count.toInt()) {
-                                    println("Read Add...")
-                                    r.read(buf)
-                                    println("Add $r")
-                                }
-                            } catch (e: Throwable) {
-                                println("ERROR!")
-                                e.printStackTrace()
-                            } finally {
-                                runCatching { client.close() }
+                            repeat(header.q_count.toInt()) {
+                                println("Reading Q...")
+                                q.read(buf)
+                                println("->$q")
                             }
+                            repeat(header.add_count.toInt()) {
+                                println("Read Add...")
+                                r.read(buf)
+                                println("Add $r")
+                            }
+                        } catch (e: Throwable) {
+                            println("ERROR!")
+                            e.printStackTrace()
+                        } finally {
+                            runCatching { client.close() }
                         }
+                    }
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
                 throw e
             }
-        }
-        val now = TimeSource.Monotonic.markNow()
-        while (!done.isDone) {
-            if (now.elapsedNow() > 5.0.seconds) {
-                throw RuntimeException("Timeout")
-            }
-            n.select(1000)
-        }
-        if (done.isFailure) {
-            throw done.exceptionOrNull!!
         }
     }
 }

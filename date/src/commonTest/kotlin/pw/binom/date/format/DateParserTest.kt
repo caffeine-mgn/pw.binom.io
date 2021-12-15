@@ -50,22 +50,18 @@ class DateParserTest {
 
     @Test
     fun optionalTest1() {
-        println("iso: ${"2021-01-05 10:25:33".parseIso8601Date()?.calendar()}")
         val pattern = "HH[:]mm".toDatePattern()
         fun assert(date: Calendar) {
             assertEquals(1, date.month)
             assertEquals(1, date.dayOfMonth)
-            assertEquals(1970, date.year)
+            assertEquals(1971, date.year)
             assertEquals(14, date.hours)
             assertEquals(32, date.minutes)
             assertEquals(0, date.seconds)
             assertEquals(0, date.millisecond)
             assertEquals(Date.systemZoneOffset, date.timeZoneOffset)
         }
-        println("#1")
-        println("----->${pattern.parseOrNull("1432")}")
         assert(pattern.parseOrNull("14:32")!!.calendar())
-        println("#2")
         assert(pattern.parseOrNull("1432")!!.calendar())
     }
 
@@ -75,7 +71,7 @@ class DateParserTest {
         fun assert(date: Calendar) {
             assertEquals(1, date.month)
             assertEquals(1, date.dayOfMonth)
-            assertEquals(1970, date.year)
+            assertEquals(1971, date.year)
             assertEquals(14, date.hours)
             assertEquals(32, date.minutes)
             assertEquals(0, date.seconds)
@@ -83,8 +79,8 @@ class DateParserTest {
             assertEquals(Date.systemZoneOffset, date.timeZoneOffset)
         }
         assert(pattern.parseOrNull("1432")!!.calendar())
-        assert(pattern.parseOrNull("197001 1432")!!.calendar())
-        assert(pattern.parseOrNull("1970-01 1432")!!.calendar())
+        assert(pattern.parseOrNull("197101 1432")!!.calendar())
+        assert(pattern.parseOrNull("1971-01 1432")!!.calendar())
     }
 
     @Test

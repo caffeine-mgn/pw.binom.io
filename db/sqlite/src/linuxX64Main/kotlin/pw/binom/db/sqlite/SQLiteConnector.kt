@@ -76,6 +76,11 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         return SQLitePrepareStatement(this, stmt)
     }
 
+    override fun beginTransaction() {
+        checkClosed()
+        beginSt.executeUpdate()
+    }
+
     override fun commit() {
         checkClosed()
         commitSt.executeUpdate()

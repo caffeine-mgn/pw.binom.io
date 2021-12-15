@@ -102,4 +102,9 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkManager, v
         }
         return dispatcher.attach(newChannel)
     }
+
+    override fun cancelSelector() {
+        acceptListener?.cancel()
+        acceptListener = null
+    }
 }

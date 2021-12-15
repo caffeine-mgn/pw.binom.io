@@ -75,20 +75,20 @@ import kotlin.coroutines.suspendCoroutine
  * Suspends current coroutine, and then resume using [func] from other thread.
  * This function should be call from Managed Continuation. Inside [func] you can pass control to other thread.
  */
-suspend fun <T> suspendManagedCoroutine(func: (CrossThreadContinuation<T>) -> Unit): T =
-    suspendCoroutine { con ->
-        val dispatcher = con.context.getDispatcherOrNull()
-        if (dispatcher == null) {
-            con.resumeWithException(IllegalStateException("ThreadDispatcher not found in coroutine context"))
-            return@suspendCoroutine
-        }
-        dispatcher.doFreeze()
-        val conRef = con.asReference()
-        val callback = object : CrossThreadContinuation<T> {
-            override fun resumeWith(result: Result<T>) {
-                dispatcher.resume(result = result, continuation = conRef as Reference<Continuation<Any?>>)
-            }
-        }
-        callback.doFreeze()
-        func(callback)
-    }
+//suspend fun <T> suspendManagedCoroutine(func: (CrossThreadContinuation<T>) -> Unit): T =
+//    suspendCoroutine { con ->
+//        val dispatcher = con.context.getDispatcherOrNull()
+//        if (dispatcher == null) {
+//            con.resumeWithException(IllegalStateException("ThreadDispatcher not found in coroutine context"))
+//            return@suspendCoroutine
+//        }
+//        dispatcher.doFreeze()
+//        val conRef = con.asReference()
+//        val callback = object : CrossThreadContinuation<T> {
+//            override fun resumeWith(result: Result<T>) {
+//                dispatcher.resume(result = result, continuation = conRef as Reference<Continuation<Any?>>)
+//            }
+//        }
+//        callback.doFreeze()
+//        func(callback)
+//    }

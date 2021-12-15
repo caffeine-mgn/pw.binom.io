@@ -1,7 +1,6 @@
 package pw.binom.xml.sax
 
-import pw.binom.async
-import pw.binom.async2
+import kotlinx.coroutines.test.runTest
 import pw.binom.getOrException
 import pw.binom.io.StringReader
 import pw.binom.io.asAsync
@@ -13,66 +12,47 @@ import kotlin.test.assertEquals
 class ParserTest {
 
     @Test
-    fun test31() {
-        async {
-            val txt = """<?xml version="1.0" encoding="UTF-8"?>
+    fun test31() = runTest {
+        val txt = """<?xml version="1.0" encoding="UTF-8"?>
 <r:dd name="KDE" title="DE"><name>df</name><b><![CDATA[TEST Hi!]]></b><test fff="sdf"/></r:dd>"""
 
-            val r = XmlRootReaderVisitor(txt.asReader().asAsync())
+        val r = XmlRootReaderVisitor(txt.asReader().asAsync())
 
-            val sb = StringBuilder()
-            val w = AsyncXmlRootWriterVisitor(sb.asAsync())
-            try {
-                w.start()
-                r.accept(w)
-                w.end()
-            } catch (e: Throwable) {
-                println("ERROR: $e\nXML=$sb")
-                e.printStackTrace()
-                throw e
-            }
-            println("==>$sb")
-        }
+        val sb = StringBuilder()
+        val w = AsyncXmlRootWriterVisitor(sb.asAsync())
+        w.start()
+        r.accept(w)
+        w.end()
     }
 
     @Test
-    fun test() {
-        async {
-            val txt = "<r><bbb a=\"b\"></bbb><c>123456</c><t/></r>"
+    fun test() = runTest {
+        val txt = "<r><bbb a=\"b\"></bbb><c>123456</c><t/></r>"
 
-            val r = AsyncXmlReaderVisitor(txt.asReader().asAsync())
+        val r = AsyncXmlReaderVisitor(txt.asReader().asAsync())
 
-            val sb = StringBuilder()
-            val w = AsyncXmlRootWriterVisitor(sb.asAsync())
-            try {
-                w.start()
-                r.accept(w)
-                w.end()
-            } catch (e: Throwable) {
-                println("ERROR: $e\nXML=$sb")
-                throw e
-            }
-            println("==>$sb")
-        }
+        val sb = StringBuilder()
+        val w = AsyncXmlRootWriterVisitor(sb.asAsync())
+        w.start()
+        r.accept(w)
+        w.end()
     }
 
     @Test
-    fun tagBodyTest() {
+    fun tagBodyTest() = runTest {
 //        val txt = """<?xml version="1.0" encoding="UTF-8"?><root><![CDATA[AA BB CC]]></root>"""
         val txt = """<?xml version="1.0" encoding="UTF-8"?><root>AA BB CC</root>"""
-        async {
-            val sb = StringBuilder()
-            val root = AsyncXmlRootWriterVisitor(sb.asAsync())
-            root.start()
-            XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
-            root.end()
-            assertEquals("""<?xml version="1.0" encoding="UTF-8"?><root>AA BB CC</root>""", sb.toString())
-        }
+        val sb = StringBuilder()
+        val root = AsyncXmlRootWriterVisitor(sb.asAsync())
+        root.start()
+        XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
+        root.end()
+        assertEquals("""<?xml version="1.0" encoding="UTF-8"?><root>AA BB CC</root>""", sb.toString())
     }
 
     @Test
-    fun test4(){
-        val txt="""
+    fun test4() = runTest {
+        val txt = """
 <?xml version="1.0" encoding="utf-8" ?>
 <D:multistatus xmlns:D="DAV:">
 <D:response>
@@ -93,30 +73,24 @@ class ParserTest {
 </D:multistatus>
         """
 
-        async2 {
-            StringReader(txt).asAsync().xmlTree()
-            println("All is ok")
-        }.getOrException()
+        StringReader(txt).asAsync().xmlTree()
+        println("All is ok")
     }
 
     @Test
-    fun test2() {
+    fun test2() = runTest {
         val txt = """<?xml version="1.0" encoding="UTF-8"?><root title="Binom"></root>"""
-        async {
-            val sb = StringBuilder()
-            val root = AsyncXmlRootWriterVisitor(sb.asAsync())
-            root.start()
-            XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
-            root.end()
-            assertEquals("""<?xml version="1.0" encoding="UTF-8"?><root title="Binom"/>""", sb.toString())
-        }
+        val sb = StringBuilder()
+        val root = AsyncXmlRootWriterVisitor(sb.asAsync())
+        root.start()
+        XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
+        root.end()
+        assertEquals("""<?xml version="1.0" encoding="UTF-8"?><root title="Binom"/>""", sb.toString())
     }
 
     @Test
-    fun test3() {
-        async {
-            try {
-                val txt = """<?xml version="1.0" encoding="utf-8" ?>
+    fun test3() = runTest {
+        val txt = """<?xml version="1.0" encoding="utf-8" ?>
                 |<D:propfind xmlns:D="DAV:" xmlns:L="LCGDM:">
                 |   <D:prop>
                 |       <D:displayname/>
@@ -132,15 +106,11 @@ class ParserTest {
                 |       <D:group></D:group>
                 |   </D:prop>
                 |</D:propfind>""".trimMargin()
-                val sb = StringBuilder()
-                val root = AsyncXmlRootWriterVisitor(sb.asAsync())
-                root.start()
-                XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
-                root.end()
-                println(sb)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
-        }
+        val sb = StringBuilder()
+        val root = AsyncXmlRootWriterVisitor(sb.asAsync())
+        root.start()
+        XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
+        root.end()
+        println(sb)
     }
 }

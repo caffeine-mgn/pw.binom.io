@@ -5,7 +5,7 @@ import kotlin.native.concurrent.SharedImmutable
 
 //val iso = "yyyy-MM-dd[( |'T')HH:mm:ss[.(SS|SSS)][(X|XX|XXX)]]".toDatePattern()
 @SharedImmutable
-private val iso = "yyyy-MM-dd[('T'| )HH:mm[:ss[.(SSSSSSSSS|SSSSSSSS|SSSSSSS|SSS|SS|S)]]][(XXX|XX|X|z)]".toDatePattern()
+val iso = "yyyy-MM-dd[('T'| )HH:mm[:ss[.(SSSSSSSSS|SSSSSSSS|SSSSSSS|@SSS|SS|S)]]][(XXX|XX|X|z)]".toDatePattern()
 //private val dp1 = "yyyy-MM-dd".toDatePattern()
 //private val dp2 = "yyyy-MM-dd HH:mm:ss".toDatePattern()
 //private val dp3 = "yyyy-MM-dd HH:mm:ssXXX".toDatePattern()
@@ -33,6 +33,7 @@ private val iso = "yyyy-MM-dd[('T'| )HH:mm[:ss[.(SSSSSSSSS|SSSSSSSS|SSSSSSS|SSS|
  * Converts current Calendar to ISO-8601 using format `yyyy-MM-dd HH:mm:ss.SSSXXX`
  */
 fun Calendar.iso8601() = iso.toString(this)
+
 /**
  * Converts current Date to ISO-8601 using format `yyyy-MM-dd HH:mm:ss.SSSXXX`
  * @param timeZoneOffset default timezone
@@ -66,7 +67,7 @@ fun Date.iso8601(timeZoneOffset: Int = Date.systemZoneOffset) = calendar(timeZon
  * * yyyy-MM-dd'T'HH:mm:ssX
  */
 fun String.parseIso8601Date(defaultTimezoneOffset: Int = Date.systemZoneOffset): Date? =
-    iso.parseOrNull(this,defaultTimezoneOffset)
+    iso.parseOrNull(this, defaultTimezoneOffset)
 //    dp1.parseOrNull(this, defaultTimezoneOffset)
 //        ?: dp2.parseOrNull(this, defaultTimezoneOffset)
 //        ?: dp3.parseOrNull(this, defaultTimezoneOffset)

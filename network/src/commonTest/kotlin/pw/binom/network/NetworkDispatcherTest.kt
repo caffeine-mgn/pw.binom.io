@@ -1,12 +1,8 @@
 package pw.binom.network
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.invoke
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import pw.binom.*
 import pw.binom.concurrency.*
-import pw.binom.coroutine.start
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.test.Test
@@ -27,19 +23,19 @@ class AsyncResult {
     }
 }
 
-fun asyncRun(func: suspend () -> Unit): AsyncResult {
-    val out = AsyncResult()
-    async {
-        try {
-            func()
-        } catch (e: Throwable) {
-            out.exception = e
-        } finally {
-            out.done = true
-        }
-    }
-    return out
-}
+//fun asyncRun(func: suspend () -> Unit): AsyncResult {
+//    val out = AsyncResult()
+//    async {
+//        try {
+//            func()
+//        } catch (e: Throwable) {
+//            out.exception = e
+//        } finally {
+//            out.done = true
+//        }
+//    }
+//    return out
+//}
 
 //fun NetworkDispatcher.single(func: suspend () -> Unit) {
 //    this.runSingle(func)
@@ -207,17 +203,15 @@ class NetworkDispatcherTest {
             val client = server.accept()!!
             launch {
                 client.readFully(ByteBuffer.alloc(32).clean())
-                val clientRef = client.asReference()
                 try {
-                    executeWorker.start {
+                    withContext(executeWorker) {
                         println("Execute in execute")
-                        sleep(1000)
+                        delay(1000)
                         launch {
-                            println("Server write: ${clientRef.value.write(ByteBuffer.wrap(ByteArray(64)).clean())}")
+                            println("Server write: ${client.write(ByteBuffer.wrap(ByteArray(64)).clean())}")
                         }
                     }
                 } finally {
-                    clientRef.close()
                     client.asyncClose()
                     println("Client done!")
                 }

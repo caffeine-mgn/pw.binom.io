@@ -29,7 +29,7 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
             tm_mday = dateTime.tm_mday
             tm_mon = dateTime.tm_mon
             tm_min = dateTime.tm_min
-            tm_sec = dateTime.tm_min
+            tm_sec = dateTime.tm_sec
             tm_wday = dateTime.tm_wday
         }
 

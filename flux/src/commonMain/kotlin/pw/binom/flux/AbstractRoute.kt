@@ -3,7 +3,6 @@ package pw.binom.flux
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.use
 
 abstract class AbstractRoute : Route, Handler {
     private val routers = HashMap<String, ArrayList<Route>>()
@@ -30,8 +29,9 @@ abstract class AbstractRoute : Route, Handler {
     }
 
     override fun endpoint(method: String, path: String, func: suspend (FluxHttpRequest) -> Unit): Closeable {
-        if (forwardHandler != null)
+        if (forwardHandler != null) {
             throw IllegalStateException("Router has already defined forward")
+        }
         methods.getOrPut(method) { HashMap() }.getOrPut(path) { ArrayList() }.add(func)
         return Closeable {
             methods[method]?.get(path)?.remove(func)
@@ -45,45 +45,50 @@ abstract class AbstractRoute : Route, Handler {
     }
 
     override fun forward(handler: Handler?) {
-        if (methods.isNotEmpty())
+        if (methods.isNotEmpty()) {
             throw IllegalStateException("Router has endpoint")
-        if (handler != null && forwardHandler != null)
+        }
+        if (handler != null && forwardHandler != null) {
             throw IllegalStateException("Router has already defined forward")
+        }
         forwardHandler = handler
     }
 
-    override suspend fun execute(action: HttpRequest) {
+    override suspend fun execute(request: HttpRequest) {
+        println("${this::class} -> execute #1 forward=$forwardHandler")
         val forward = forwardHandler
         if (forward != null) {
-            forward.request(action)
+            forward.request(request)
             return
         }
+        println("${this::class} -> execute #2 routers.size=${routers.size}, routers.keys=${routers.keys}")
         if (routers.entries.isNotEmpty()) {
             routers.entries
                 .asSequence()
                 .filter {
-                    action.path.isMatch(it.key)
+                    request.path.isMatch(it.key)
                 }
 //                .sortedBy { -it.key.length }
                 .flatMap { it.value.asSequence() }
                 .forEach {
-                    it.execute(action)
-                    if (action.response != null) {
+                    it.execute(request)
+                    if (request.response != null) {
                         return
                     }
                 }
         }
+        println("${this::class} -> execute #3 methods.size=${methods.size}, methods.keys=${methods.keys}, methods[${request.method}]?.keys=${methods[request.method]?.keys}")
         if (methods.isNotEmpty()) {
-            methods[action.method]
+            methods[request.method]
                 ?.entries
                 ?.asSequence()
                 ?.filter {
-                    action.path.isMatch(it.key)
+                    request.path.isMatch(it.key)
                 }
                 ?.forEach { route ->
                     route.value.forEach {
-                        it(FluxHttpRequestImpl(mask = route.key, serialization = serialization, request = action))
-                        if (action.response != null) {
+                        it(FluxHttpRequestImpl(mask = route.key, serialization = serialization, request = request))
+                        if (request.response != null) {
                             return
                         }
                     }

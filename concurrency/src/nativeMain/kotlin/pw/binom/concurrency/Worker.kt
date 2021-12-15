@@ -1,80 +1,68 @@
 package pw.binom.concurrency
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Runnable
 import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import pw.binom.coroutine.CrossThreadContinuation
-import pw.binom.coroutine.Dispatcher
 import pw.binom.coroutine.DispatcherCoroutineElement
-import pw.binom.coroutine.Executor
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.startCoroutine
 import kotlin.native.concurrent.TransferMode
+import kotlin.native.concurrent.Worker as KWorker
 import kotlin.native.concurrent.freeze
-import kotlin.native.concurrent.Worker as NativeWorker
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Runnable
 
+@ThreadLocal
+private var privateCurrentWorker: Worker? = null
 
+actual class Worker actual constructor(name:String?) : CoroutineDispatcher() {
+    private val nativeWorker = KWorker.start(errorReporting = true, name = name)
+    private val _isInterrupted = AtomicBoolean(false)
+    private var _taskCount by AtomicInt(0)
+    actual val taskCount
+        get() = _taskCount
 
+    actual fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
+        val r = FreezableFuture<RESULT>()
+        val nativeFeature = nativeWorker.execute(TransferMode.SAFE, getFunc(this, input, func, r)) {
+            initRuntimeIfNeeded()
+            val ff = it.func.attach()
+            privateCurrentWorker = it.worker
+            it.worker._taskCount++
+            val result = try {
+                Result.success(ff(it.input))
+            } catch (e: Throwable) {
+                Result.failure(e)
+            }
+            it.worker._taskCount--
+            privateCurrentWorker = null
+            it.future.resume(result)
+            result
+        }
+        return r
+    }
 
+    actual fun requestTermination(): Future<Unit> =
+        FutureUnit(nativeWorker.requestTermination(true))
 
+    actual val isInterrupted: Boolean
+        get() = _isInterrupted.value
 
+    init {
+        freeze()
+    }
 
-//actual class WorkerImpl(name: String?) : Executor, Worker, CoroutineDispatcher() {
-//    private val nativeWorker = NativeWorker.start(errorReporting = true, name = name)
-//    private val _isInterrupted = AtomicBoolean(false)
-//    private var _taskCount by AtomicInt(0)
-//    actual override val taskCount
-//        get() = _taskCount
-//
-//    actual override fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
-//        val r = FreezableFuture<RESULT>()
-//        val nativeFeature = nativeWorker.execute(TransferMode.SAFE, getFunc(this, input, func, r)) {
-//            initRuntimeIfNeeded()
-//            val ff = it.func.attach()
-//            privateCurrentWorker = it.worker
-//            it.worker._taskCount++
-//            val result = try {
-//                Result.success(ff(it.input))
-//            } catch (e: Throwable) {
-//                Result.failure(e)
-//            }
-//            it.worker._taskCount--
-//            privateCurrentWorker = null
-//            it.future.resume(result)
-//            result
-//        }
-//        return r
-//    }
-//
-//    actual override fun requestTermination(): Future<Unit> =
-//        FutureUnit(nativeWorker.requestTermination(true))
-//
-//    actual override val isInterrupted: Boolean
-//        get() = _isInterrupted.value
-//
-//    init {
-//        freeze()
-//    }
-//
-//    actual companion object {
-//        actual val current: WorkerImpl?
-//            get() = privateCurrentWorker
-//
-//    }
-//
-//    actual override val id: Long
-//        get() = nativeWorker.id.toLong()
-//
-//    override fun execute(func: suspend () -> Unit) {
-//        TODO()
-////        execute(func.doFreeze()) {
-////            async2(it)
-////        }
-//    }
-//
+    actual companion object {
+        actual val current: Worker?
+            get() = privateCurrentWorker
+
+    }
+
+    actual val id: Long
+        get() = nativeWorker.id.toLong()
+
 //    actual fun <T> startCoroutine(
 //        onDone: (Result<T>) -> Unit,
 //        context: CoroutineContext,
@@ -97,7 +85,7 @@ import kotlinx.coroutines.Runnable
 //            })
 //        }
 //    }
-//
+
 //    override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
 //        val future = FreezableFuture<T>()
 //        startCoroutine(
@@ -116,7 +104,7 @@ import kotlinx.coroutines.Runnable
 //        )
 //        return future
 //    }
-//
+
 //    override fun <T> startCoroutine(
 //        context: CoroutineContext,
 //        continuation: CrossThreadContinuation<T>,
@@ -128,7 +116,7 @@ import kotlinx.coroutines.Runnable
 //            func = func
 //        )
 //    }
-//
+
 //    actual override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>) {
 //        execute(result to continuation) {
 //            val f = it.second.value
@@ -136,9 +124,29 @@ import kotlinx.coroutines.Runnable
 //            f.resumeWith(it.first)
 //        }
 //    }
-//
-//
-//    override fun dispatch(context: CoroutineContext, block: Runnable) {
-//        this.execute { block.run() }
-//    }
-//}
+
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        this.execute { block.run() }
+    }
+}
+
+
+private class InputData<DATA, RESULT>(
+    val worker: Worker,
+    val input: DATA,
+    func: (DATA) -> RESULT,
+    val future: FreezableFuture<RESULT>,
+) {
+    val func = ObjectTree { func }
+}
+
+private fun <DATA, RESULT> getFunc(
+    worker: Worker,
+    input: DATA,
+    func: (DATA) -> RESULT,
+    future: FreezableFuture<RESULT>,
+): () -> InputData<DATA, RESULT> =
+    {
+        InputData(worker = worker, input = input, func = func, future = future)
+    }.doFreeze()

@@ -1,16 +1,15 @@
 package pw.binom.db.serialization
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import pw.binom.UUID
-import pw.binom.concurrency.joinAndGetOrThrow
 import pw.binom.date.Calendar
 import pw.binom.date.Date
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.sqlite.AsyncSQLiteConnector
 import pw.binom.io.use
-import pw.binom.network.NetworkDispatcher
 import kotlin.test.Test
 
 class SchemaGenerationTest {
@@ -46,8 +45,7 @@ class SchemaGenerationTest {
 
     @Test
     fun test() {
-        val nd = NetworkDispatcher()
-        val tableSchema = nd.startCoroutine {
+        val tableSchema = runBlocking {
             AsyncConnectionPool.create(maxConnections = 1) {
                 AsyncSQLiteConnector.memory()
             }
@@ -64,10 +62,6 @@ class SchemaGenerationTest {
                 }
 
         }
-        while (!tableSchema.isDone) {
-            nd.select()
-        }
-        val gen = tableSchema.joinAndGetOrThrow()
-        println(gen)
+        println(tableSchema)
     }
 }

@@ -129,6 +129,7 @@ object UTF8 {
      * @param first byte of character
      * @return size of full utf8 character
      */
+    @Deprecated(message = "Deprecated", replaceWith = ReplaceWith("this.getUtf8CharSize(firstByte)-1"))
     fun utf8CharSize(firstByte: Byte): Int {
         val c = firstByte.toInt() and 0xFF
         return when {
@@ -138,6 +139,25 @@ object UTF8 {
             (c and 0xF8) == 0xF0 -> 4 - 1
             (c and 0xFC) == 0xF8 -> 5 - 1
             (c and 0xFE) == 0xFC -> 6 - 1
+            else -> throw IllegalArgumentException("Unknown Character 0x${c.toUByte().toString(16)}")
+        }
+    }
+
+    /**
+     * Returns size of character by first byte
+     *
+     * @param first byte of character
+     * @return size of full utf8 character
+     */
+    fun getUtf8CharSize(firstByte: Byte): Int {
+        val c = firstByte.toInt() and 0xFF
+        return when {
+            (c and 0x80) == 0 -> 1
+            (c and 0xE0) == 0xC0 -> 2
+            (c and 0xF0) == 0xE0 -> 3
+            (c and 0xF8) == 0xF0 -> 4
+            (c and 0xFC) == 0xF8 -> 5
+            (c and 0xFE) == 0xFC -> 6
             else -> throw IllegalArgumentException("Unknown Character 0x${c.toUByte().toString(16)}")
         }
     }

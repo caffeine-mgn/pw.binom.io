@@ -11,7 +11,7 @@ import pw.binom.io.IOException
 
 class LinuxSelector : AbstractSelector() {
 
-    class MingwKey(val native: kevent, val kqueueNative: Int, attachment: Any?, socket: NSocket) :
+    inner class MingwKey(val native: kevent, val kqueueNative: Int, attachment: Any?, socket: NSocket) :
         AbstractKey(attachment, socket) {
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EVFILT_WRITE in nativeMode || EV_EOF !in nativeMode
@@ -81,6 +81,7 @@ class LinuxSelector : AbstractSelector() {
                     throw IOException("Can't reset kevent filter. errno: $errno")
                 }
             }
+            keys -= this
             nativeHeap.free(native)
         }
     }
@@ -94,6 +95,7 @@ class LinuxSelector : AbstractSelector() {
     }
 
     private val list = nativeHeap.allocArray<kevent>(1000)//nativeHeap.allocArray<epoll_event>(1000)
+    private val keys = HashSet<LinuxKey>()
 
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
@@ -114,6 +116,7 @@ class LinuxSelector : AbstractSelector() {
             0,
             key.ptr
         )
+        keys += key
         if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
             throw IOException("Can't set filter of kevent mode to 0b${mode.toUInt().toString(2)}, errno: $errno")
         }
@@ -181,6 +184,8 @@ class LinuxSelector : AbstractSelector() {
         }
         return count
     }
+
+    override fun getAttachedKeys(): Collection<Selector.Key> = HashSet(keys)
 
     override fun close() {
         platform.posix.close(kqueueNative)

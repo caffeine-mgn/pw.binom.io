@@ -1,12 +1,9 @@
 package pw.binom.io.httpClient
 
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import pw.binom.AsyncInput
-import pw.binom.CancelledException
 import pw.binom.EmptyAsyncInput
-import pw.binom.TimeoutException
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
@@ -81,8 +78,6 @@ class DefaultHttpResponse(
                     responseCode = responseCode,
                     headers = headers,
                 )
-            } catch (e: CancelledException) {
-                throw TimeoutException("Can't get headers from request to $uri")
             } finally {
                 headerReadFlag = true
             }

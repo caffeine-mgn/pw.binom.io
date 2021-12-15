@@ -78,7 +78,7 @@ internal sealed interface Pattern {
         YEAR, MONTH, DAY_OF_MONTH, DAY_OF_WEAK, HOURS, MINUTES, SECONDS, MILLISECOND, TIME_ZONE
     }
 
-    class Or(val formats: Array<DateFormat>) : Pattern {
+    class Or(val main: Int?, val formats: Array<DateFormat>) : Pattern {
 
         companion object {
             fun parse(text: String, position: Int): Or? {
@@ -103,15 +103,22 @@ internal sealed interface Pattern {
                     }
                 }
                 val subexpression = text.substring(position + 1, i)
-                val patterns = subexpression.split('|').map {
-                    DateFormat.parsePatternList(it).format
+                var main: Int? = null
+                val patterns = subexpression.split('|').mapIndexed { index, it ->
+                    val str = if (it.startsWith("@")) {
+                        main = index
+                        it.removePrefix("@")
+                    } else {
+                        it
+                    }
+                    DateFormat.parsePatternList(str).format
                 }
-                return Or(patterns.toTypedArray())
+                return Or(main, patterns.toTypedArray())
             }
         }
 
         override val patternLength: Int =
-            formats.sumOf { it.length } + (if (formats.isEmpty()) 0 else (formats.size - 1)) + 2
+            formats.sumOf { it.length } + (if (formats.isEmpty()) 0 else (formats.size - 1)) + 2 + if (main == null) 0 else 1
 
         override fun parse(
             text: String,
@@ -145,9 +152,26 @@ internal sealed interface Pattern {
             if (formats.isEmpty()) {
                 return ""
             }
-            return formats[0].toString(calendar)
+            return formats[main ?: 0].toString(calendar)
         }
-        override fun toString(): String = "("+formats.joinToString("|")+")"
+
+        override fun toString(): String {
+            val sb = StringBuilder("(")
+            var first = true
+            formats.forEachIndexed { index, dateFormat ->
+                if (!first) {
+                    sb.append("|")
+                }
+                first = false
+                if (main == index) {
+                    sb.append("@")
+                }
+                sb.append(dateFormat.toString())
+            }
+            sb.append(")")
+            return sb.toString()
+//            "(" + formats.joinToString("|") + ")"
+        }
     }
 
     class Optional(val format: DateFormat) : Pattern {
@@ -598,7 +622,7 @@ internal sealed interface Pattern {
                 return -1
             }
             val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
-            set?.invoke(FieldType.MILLISECOND, hours/1000000)
+            set?.invoke(FieldType.MILLISECOND, hours / 1000000)
             return 9
         }
 
@@ -607,6 +631,7 @@ internal sealed interface Pattern {
 
         override fun toString(): String = "SSSSSSSSS"
     }
+
     /**
      * Miliseconds. 8 numbers
      */
@@ -627,7 +652,7 @@ internal sealed interface Pattern {
                 return -1
             }
             val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
-            set?.invoke(FieldType.MILLISECOND, hours/100000)
+            set?.invoke(FieldType.MILLISECOND, hours / 100000)
             return 8
         }
 
@@ -636,6 +661,7 @@ internal sealed interface Pattern {
 
         override fun toString(): String = "SSSSSSSS"
     }
+
     /**
      * Miliseconds. 7 numbers
      */
@@ -656,7 +682,7 @@ internal sealed interface Pattern {
                 return -1
             }
             val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
-            set?.invoke(FieldType.MILLISECOND, hours/10000)
+            set?.invoke(FieldType.MILLISECOND, hours / 10000)
             return 7
         }
 
@@ -720,7 +746,7 @@ internal sealed interface Pattern {
         }
 
         override fun toString(calendar: Calendar): String {
-            return (calendar.millisecond/100).toString()
+            return (calendar.millisecond / 100).toString()
         }
 
         override fun toString(): String = "SS"
@@ -767,6 +793,7 @@ internal sealed interface Pattern {
             val h = t / 60
             return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}"
         }
+
         override fun toString(): String = "X"
     }
 
@@ -819,6 +846,7 @@ internal sealed interface Pattern {
             val m = t - h * 60
             return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
         }
+
         override fun toString(): String = "XXX"
     }
 
@@ -874,6 +902,7 @@ internal sealed interface Pattern {
             val m = t - h * 60
             return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}:${m.as2()}"
         }
+
         override fun toString(): String = "XXX"
     }
 
@@ -926,6 +955,7 @@ internal sealed interface Pattern {
             val m = t - h * 60
             return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
         }
+
         override fun toString(): String = "Z"
     }
 
@@ -954,7 +984,7 @@ internal sealed interface Pattern {
         }
 
         override fun toString(calendar: Calendar): String {
-            if (calendar.timeZoneOffset!=0){
+            if (calendar.timeZoneOffset != 0) {
                 val t = calendar.timeZoneOffset.absoluteValue
                 val h = t / 60
                 val m = t - h * 60
@@ -963,6 +993,7 @@ internal sealed interface Pattern {
             }
             return "Z"
         }
+
         override fun toString(): String = "Z"
     }
 

@@ -1,9 +1,12 @@
 package pw.binom.io.socket.ssl
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.date.Date
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
+import pw.binom.network.NetworkCoroutineDispatcherImpl
+import pw.binom.network.bindTcp
 import pw.binom.ssl.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,7 +30,7 @@ class SimpleKeyManager(val private: PrivateKey?, val public: X509Certificate?) :
 class SSLTest {
 
     @Test
-    fun test() {
+    fun test() = runBlocking{
 
         val pairRoot = KeyGenerator.generate(
             KeyAlgorithm.RSA,
@@ -61,10 +64,10 @@ class SSLTest {
             trustManager = TrustManager.TRUST_ALL,
         )
         val buf = ByteBuffer.alloc(16)
-        val nd = NetworkDispatcher()
+        val nd = NetworkCoroutineDispatcherImpl()
         val addr = NetworkAddress.Immutable("127.0.0.1", 4445)
         val server = nd.bindTcp(addr)
-        val r1 = nd.startCoroutine {
+        val r1 = launch {
             val client = server.accept()!!
             val clientSsl = AsyncSSLChannel(
                 context2.serverSession(),
@@ -74,7 +77,7 @@ class SSLTest {
             clientSsl.flush()
         }
 
-        val r2 = nd.startCoroutine {
+        val r2 = launch {
             val client = nd.tcpConnect(addr)
             val clientSsl = AsyncSSLChannel(
                 context.clientSession(addr.host, addr.port),
@@ -82,22 +85,7 @@ class SSLTest {
             )
             assertEquals(100500L, clientSsl.readLong(buf))
         }
-
-        while (true) {
-            if ((r1.isDone && r1.isFailure) || (r2.isDone && r2.isFailure)) {
-                break
-            }
-            if (r1.isDone && r2.isDone) {
-                break
-            }
-            nd.select(100)
-        }
-
-        if (r1.isFailure) {
-            throw RuntimeException("Server Error", r1.exceptionOrNull!!)
-        }
-        if (r2.isFailure) {
-            throw RuntimeException("Client Error", r2.exceptionOrNull!!)
-        }
+        r1.join()
+        r2.join()
     }
 }
