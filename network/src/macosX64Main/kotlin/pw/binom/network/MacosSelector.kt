@@ -139,7 +139,7 @@ class MacosSelector : AbstractSelector() {
                     event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
                     return event
                 }
-                throw IllegalStateException("Unknown connection state")
+                throw IllegalStateException("Unknown connection state: ${flagsToString(item.filter.toInt())}")
             }
             try {
                 val code = when (item.filter.toInt()) {
