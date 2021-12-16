@@ -87,15 +87,85 @@ class LinuxSelector : AbstractSelector() {
     }
 
     private val kqueueNative = kqueue()//epoll_create(1000)!!
-
+    private var eventCount = 0
     init {
         if (kqueueNative == -1) {
             throw IOException("Can't init kqueue. errno: $errno")
         }
     }
-
+    private var c = 0
     private val list = nativeHeap.allocArray<kevent>(1000)//nativeHeap.allocArray<epoll_event>(1000)
     private val keys = HashSet<LinuxKey>()
+    private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
+        private val event = object : NativeKeyEvent {
+            override lateinit var key: AbstractKey
+            override var mode: Int = 0
+        }
+        private var currentNum = 0
+        fun reset() {
+            currentNum = 0
+        }
+
+        override fun hasNext(): Boolean {
+            if (currentNum == eventCount) {
+                return false
+            }
+            return true
+        }
+
+        override fun next(): NativeKeyEvent {
+            if (!hasNext()) {
+                throw NoSuchElementException()
+            }
+            val item = list[currentNum++]
+            val keyPtr = item.udata!!.asStableRef<MingwKey>()
+            val key = keyPtr.get()
+            if (key.closed) {
+                event.key = key
+                event.mode = 0
+                return event
+            }
+            if (!key.connected) {
+                if (EV_EOF in item.flags && !key.closed) {
+                    key.resetMode(0)
+                    event.key = key
+                    event.mode = Selector.EVENT_ERROR
+                    return event
+                }
+                if (EVFILT_WRITE == item.filter.toInt()) {
+                    key.resetMode(0)
+                    key.connected = true
+                    event.key = key
+                    event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                    return event
+                }
+                throw IllegalStateException("Unknown connection state")
+            }
+            try {
+                val code = when (item.filter.toInt()) {
+                    EVFILT_READ -> Selector.INPUT_READY
+                    EVFILT_WRITE -> Selector.OUTPUT_READY
+                    else -> {
+                        0
+                    }
+                }
+                event.key = key
+                event.mode = code
+                return event
+//                func(key, code)
+            } finally {
+                if (EV_EOF in item.flags && !key.closed) {
+                    key.resetMode(0)
+                    event.key = key
+                    event.mode = Selector.EVENT_ERROR
+                    return event
+//                    func(key, Selector.EVENT_ERROR)
+                }
+            }
+        }
+    }
+    override val nativeSelectedKeys: Iterator<NativeKeyEvent>
+        get() = nativeSelectedKeys2
 
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
@@ -183,6 +253,20 @@ class LinuxSelector : AbstractSelector() {
 
         }
         return count
+    }
+
+    override fun nativeSelect(timeout: Long) {
+        eventCount = memScoped {
+            val time = if (timeout < 0) {
+                null
+            } else {
+                val c = alloc<timespec>()
+                c.tv_sec = timeout / 1000L
+                c.tv_nsec = (timeout - c.tv_sec * 1000) * 1000L
+                c.ptr
+            }
+            kevent(kqueueNative, null, 0, list, 1000, time)
+        }
     }
 
     override fun getAttachedKeys(): Collection<Selector.Key> = HashSet(keys)
