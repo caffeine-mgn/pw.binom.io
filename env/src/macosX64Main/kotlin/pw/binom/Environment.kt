@@ -1,7 +1,7 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.osx._NSGetEnviron
+import platform.osx.*
 import platform.posix.*
 
 /**
@@ -71,12 +71,14 @@ actual val Environment.userDirectory: String
 
 
 actual val Environment.currentExecutionPath: String
-    get() =
-        memScoped {
-            val result = allocArray<WCHARVar>(PATH_MAX)!!
-            val len = _NSGetExecutablePath(null, result, PATH_MAX.convert()).convert<Int>()
-            if (len == 0) {
-                throw RuntimeException("Can't get current execution path. Error #$errno")
-            }
-            result.toKString()
-        }
+    get() =TODO()
+//        memScoped {
+//            _NSGetProgname()?.toK?:throw RuntimeException("Can't get current execution path. Error #$errno")
+//            val result = allocArray<ByteVar>(PATH_MAX)!!
+//            _NSGetProgname()
+//            val len = _NSGetExecutablePath(null, result, PATH_MAX.convert()).convert<Int>()
+//            if (len == 0) {
+//                throw RuntimeException("Can't get current execution path. Error #$errno")
+//            }
+//            result.toKString()
+//        }
