@@ -127,8 +127,8 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             val channel = TcpClientSocketChannel()
             val connection = attach(channel)
             channel.connect(address)
-            connection.connecting()
             try {
+                connection.connecting()
                 suspendCoroutine<Unit> {
                     connection.connect = it
                 }

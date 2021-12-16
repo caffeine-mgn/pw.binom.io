@@ -4,6 +4,7 @@ import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.asStableRef
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
+import pw.binom.io.ClosedException
 
 abstract class AbstractSelector : Selector {
     abstract class AbstractKey(attachment: Any?, val socket: NSocket) : Selector.Key {
@@ -21,7 +22,9 @@ abstract class AbstractSelector : Selector {
             get() = _closed
 
         protected fun checkClosed() {
-            require(!_closed) { "SelectorKey already closed" }
+            if (_closed) {
+                throw ClosedException()
+            }
         }
 
         abstract fun isSuccessConnected(nativeMode: Int): Boolean

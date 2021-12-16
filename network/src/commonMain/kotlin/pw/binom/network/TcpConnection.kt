@@ -73,6 +73,9 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override fun connecting() {
+        if (error) {
+            throw SocketConnectException()
+        }
         key.listensFlag = Selector.EVENT_CONNECTED
     }
 
@@ -83,7 +86,9 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
         connect?.resumeWith(Result.success(Unit))
     }
 
+    private var error = false
     override fun error() {
+        error = true
         if (connect != null) {
             val e = SocketConnectException()
             connect?.resumeWith(Result.failure(e))

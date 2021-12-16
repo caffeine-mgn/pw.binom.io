@@ -2,4 +2,9 @@ package pw.binom.network
 
 import pw.binom.io.IOException
 
-open class SocketConnectException(message: String? = null, cause: Throwable? = null) : IOException(message = message, cause = cause)
+open class SocketConnectException : IOException {
+    constructor() : super()
+    constructor(message: String?) : super(message)
+    constructor(message: String?, cause: Throwable?) : super(message, cause)
+    constructor(cause: Throwable?) : super(cause)
+}

@@ -71,7 +71,7 @@ class LinuxSelector : AbstractSelector() {
             val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
             val key = keyPtr.get()
             if (!key.connected) {
-                if (EPOLLERR in item.events) {
+                if (EPOLLHUP in item.events || EPOLLERR in item.events) {
                     key.resetMode(0)
                     event.key = key
                     event.mode = Selector.EVENT_ERROR
@@ -95,7 +95,7 @@ class LinuxSelector : AbstractSelector() {
             }
             val common = epollNativeToCommon(item.events.convert())
             if (common == 0) {
-                throw IllegalStateException("Invalid epoll mode. Native: [${modeToString(item.events.convert())}]")
+                throw IllegalStateException("Invalid epoll mode: [${modeToString(item.events.convert())}]")
             }
             event.key = key
             event.mode = epollNativeToCommon(item.events.convert())
