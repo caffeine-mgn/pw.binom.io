@@ -84,7 +84,7 @@ class LinuxSelector : AbstractSelector() {
                     event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
                     return event
                 }
-                throw IllegalStateException("Unknown connection state")
+                throw IllegalStateException("Unknown connection state: ${modeToString(item.events.toInt())}")
             }
             if (EPOLLHUP in item.events) {
                 NSocket(item.data.fd).close()
@@ -190,7 +190,6 @@ actual fun createSelector(): Selector = LinuxSelector()
 
 fun modeToString(mode: Int): String {
     val sb = StringBuilder()
-    mode in mode
     if (mode and EPOLLIN != 0)
         sb.append("EPOLLIN ")
     if (mode and EPOLLPRI != 0)
