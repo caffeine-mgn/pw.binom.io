@@ -102,7 +102,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     }
 
     override var position: Long
-        get() = {
+        get() {
             checkClosed()
             return ftell(handler).convert()
         }
