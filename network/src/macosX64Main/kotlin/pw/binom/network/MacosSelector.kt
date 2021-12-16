@@ -9,9 +9,9 @@ import platform.posix.errno
 import platform.posix.timespec
 import pw.binom.io.IOException
 
-class LinuxSelector : AbstractSelector() {
+class MacosSelector : AbstractSelector() {
 
-    inner class MingwKey(val native: kevent, val kqueueNative: Int, attachment: Any?, socket: NSocket) :
+    inner class MacosKey(val native: kevent, val kqueueNative: Int, attachment: Any?, socket: NSocket) :
         AbstractKey(attachment, socket) {
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EVFILT_WRITE in nativeMode || EV_EOF !in nativeMode
@@ -95,7 +95,7 @@ class LinuxSelector : AbstractSelector() {
     }
     private var c = 0
     private val list = nativeHeap.allocArray<kevent>(1000)//nativeHeap.allocArray<epoll_event>(1000)
-    private val keys = HashSet<LinuxKey>()
+    private val keys = HashSet<MacosKey>()
     private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
         private val event = object : NativeKeyEvent {
             override lateinit var key: AbstractKey
@@ -118,7 +118,7 @@ class LinuxSelector : AbstractSelector() {
                 throw NoSuchElementException()
             }
             val item = list[currentNum++]
-            val keyPtr = item.udata!!.asStableRef<MingwKey>()
+            val keyPtr = item.udata!!.asStableRef<MacosKey>()
             val key = keyPtr.get()
             if (key.closed) {
                 event.key = key
@@ -170,7 +170,7 @@ class LinuxSelector : AbstractSelector() {
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
         val event = nativeHeap.alloc<kevent>()
-        val key = MingwKey(event, kqueueNative, attachment, socket)
+        val key = MacosKey(event, kqueueNative, attachment, socket)
         if (!connectable) {
             key.connected = true
         }
@@ -213,7 +213,7 @@ class LinuxSelector : AbstractSelector() {
         var count = 0
         for (i in 0 until eventCount) {
             val item = list[i]
-            val keyPtr = item.udata?.asStableRef<MingwKey>() ?: continue
+            val keyPtr = item.udata?.asStableRef<MacosKey>() ?: continue
             val key = keyPtr.get()
             if (key.closed) {
                 continue
@@ -289,7 +289,7 @@ private fun epollNativeToCommon(mode: Int): Int {
     return events
 }
 
-actual fun createSelector(): Selector = LinuxSelector()
+actual fun createSelector(): Selector = MacosSelector()
 
 fun modeToString1(mode: Int): String {
     val sb = StringBuilder()
