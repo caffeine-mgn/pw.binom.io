@@ -294,15 +294,24 @@ internal class Starter(
             }
             logger.debug("Bean Graph made")
             iniList.forEach {
-                val bean = it.bean as Strong.InitializingBean
-                logger.debug("Initializing ${it.name} (${it.bean::class.getClassName()})")
-                bean.init(strongImpl)
+                try {
+                    val bean = it.bean as Strong.InitializingBean
+                    logger.debug("Initializing ${it.name} (${it.bean::class.getClassName()})")
+                    bean.init(strongImpl)
+                } catch (e: Throwable) {
+                    throw StrongException("Can't init bean ${it.name} (${it.bean::class.getClassName()})", e)
+                }
             }
 
             lList.forEach {
-                val bean = it.bean as Strong.LinkingBean
-                logger.debug("Linking ${it.name} (${it.bean::class.getClassName()})")
-                bean.link(strongImpl)
+                try {
+                    val bean = it.bean as Strong.LinkingBean
+                    logger.debug("Linking ${it.name} (${it.bean::class.getClassName()})")
+                    bean.link(strongImpl)
+                    logger.debug("Bean ${it.name} (${it.bean::class.getClassName()}) linked success")
+                } catch (e: Throwable) {
+                    throw StrongException("Can't link bean ${it.name} (${it.bean::class.getClassName()})", e)
+                }
             }
 
 

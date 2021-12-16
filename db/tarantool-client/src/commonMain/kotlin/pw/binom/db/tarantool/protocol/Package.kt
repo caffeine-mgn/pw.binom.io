@@ -14,8 +14,7 @@ internal data class Package(val header: Map<Int, Any?>, val body: Map<Int, Any?>
         get() = body[Key.ERROR.id] as? String?
 
     fun assertException() {
-        val code = header[Key.CODE.id] ?: return
-        if (code != 0) {
+        if (isError) {
             val message = body[Key.ERROR.id] as String?
             throw if (message == null)
                 TarantoolException()

@@ -33,9 +33,9 @@ abstract class AbstractSelector : Selector {
             }
             set(value) {
                 checkClosed()
-//                if (_listensFlag == value) {
-//                    return
-//                }
+                if (_listensFlag == value) {
+                    return
+                }
                 _listensFlag = value
                 resetMode(value)
             }

@@ -101,12 +101,14 @@ class AsyncConnectionPoolImpl constructor(
                 }
                 return connection
             }
-            connectionsLock.synchronize {
-                if (connections.size < maxConnections) {
-                    val con = PooledAsyncConnectionImpl(this, factory())
-                    connections.add(con)
-                    return con
-                }
+            connectionsLock.lock()
+            if (connections.size < maxConnections) {
+                connectionsLock.unlock()
+                val con = PooledAsyncConnectionImpl(this, factory())
+                connectionsLock.lock()
+                connections.add(con)
+                connectionsLock.unlock()
+                return con
             }
             if (!waitFreeConnection) {
                 throw IllegalStateException("No free connections")

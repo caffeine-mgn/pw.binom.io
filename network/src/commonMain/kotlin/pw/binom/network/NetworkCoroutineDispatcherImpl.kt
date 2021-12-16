@@ -5,7 +5,9 @@ import pw.binom.PopResult
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collection.LinkedList
 import pw.binom.concurrency.*
+import pw.binom.coroutine.getDispatcher
 import pw.binom.io.Closeable
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.suspendCoroutine
 
@@ -25,7 +27,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
     private val readyForWriteListener = LinkedList<Runnable>()
-    private val readyForWriteListenerLock = SpinLock()
+    private val readyForWriteListenerLock = ReentrantSpinLock()
     private val internalUdpContinuationConnection = attach(internalUdpChannel)
 
     init {
@@ -39,24 +41,17 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                         if (attachment === self.internalUdpContinuationConnection) {
                             self.readyForWriteListenerLock.synchronize {
                                 while (self.readyForWriteListener.isNotEmpty()) {
-                                    self.readyForWriteListener.removeLast().run()
+                                    try {
+                                        println("execute on network #1")
+                                        self.readyForWriteListener.removeLast().run()
+                                        println("execute on network #2")
+                                    } catch (e: Throwable) {
+                                        e.printStackTrace()
+                                        throw e
+                                    }
                                 }
+                                self.internalUdpContinuationConnection.key.listensFlag = 0
                             }
-
-//                                while (true) {
-//                                    val breakNeed = readyForWriteListenerLock.synchronize {
-//                                        if (readyForWriteListener.isEmpty()) {
-//                                            true
-//                                        } else {
-//                                            readyForWriteListener.removeLast().run()
-//                                            false
-//                                        }
-//                                    }
-//                                    if (breakNeed){
-//                                        break
-//                                    }
-//                                }
-                            self.internalUdpContinuationConnection.key.listensFlag = 0
                         } else {
                             val connection = attachment as AbstractConnection
                             if (event.mode and Selector.EVENT_CONNECTED != 0) {
@@ -76,15 +71,22 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
+            } finally {
+                println("Network manager closed")
+                self.close()
             }
         }
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-//        readyForWriteListenerLock.synchronize {
-            readyForWriteListener.addFirst(block)
-//        }
-        internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
+        if (context[ContinuationInterceptor] === this) {
+            block.run()
+        } else {
+            readyForWriteListenerLock.synchronize {
+                readyForWriteListener.addFirst(block)
+                internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
+            }
+        }
     }
 
     override fun close() {

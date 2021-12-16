@@ -165,9 +165,10 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
-                api(project(":concurrency"))
-                api(project(":file"))
+//                api(project(":concurrency"))
+//                api(project(":file"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
         val jvmTest by getting {

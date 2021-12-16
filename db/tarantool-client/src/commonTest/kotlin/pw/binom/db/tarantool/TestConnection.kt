@@ -108,7 +108,6 @@ class TestConnection : BaseTest() {
 
     @Test
     fun stringPass() {
-        println("#1")
         pg { con ->
             val text = "Response From Tarantool: ${Random.nextUuid()}"
             val response = con.eval("return '$text'")
@@ -116,7 +115,6 @@ class TestConnection : BaseTest() {
             assertEquals(1, response.size)
             assertEquals(text, response[0])
         }
-        println("#2")
         pg { con ->
             val text = "Response From Tarantool: ${Random.nextUuid()}"
             val response = con.eval("return ...", text, text)
@@ -187,10 +185,8 @@ class TestConnection : BaseTest() {
     fun cacheTest() {
         pg { con ->
             withTimeout(10_000) {
-                println("??")
                 con.eval("return cacheDefined~=nil")
                 con.eval(TARANTOOL_CACHE_TOOL)
-                println("OK")
             }
         }
     }

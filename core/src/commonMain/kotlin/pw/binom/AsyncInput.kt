@@ -64,9 +64,7 @@ suspend fun AsyncInput.readUTF8String(buffer: ByteBuffer): String {
 }
 
 suspend fun AsyncInput.readByte(buffer: ByteBuffer): Byte {
-    println("Try read one byte")
     buffer.reset(0, 1)
-    println("Try read byte. buffer.remaining=${buffer.remaining}")
     readFully(buffer)
     buffer.flip()
     return buffer[0]

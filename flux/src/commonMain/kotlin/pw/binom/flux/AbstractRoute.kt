@@ -55,13 +55,11 @@ abstract class AbstractRoute : Route, Handler {
     }
 
     override suspend fun execute(request: HttpRequest) {
-        println("${this::class} -> execute #1 forward=$forwardHandler")
         val forward = forwardHandler
         if (forward != null) {
             forward.request(request)
             return
         }
-        println("${this::class} -> execute #2 routers.size=${routers.size}, routers.keys=${routers.keys}")
         if (routers.entries.isNotEmpty()) {
             routers.entries
                 .asSequence()
@@ -77,7 +75,6 @@ abstract class AbstractRoute : Route, Handler {
                     }
                 }
         }
-        println("${this::class} -> execute #3 methods.size=${methods.size}, methods.keys=${methods.keys}, methods[${request.method}]?.keys=${methods[request.method]?.keys}")
         if (methods.isNotEmpty()) {
             methods[request.method]
                 ?.entries

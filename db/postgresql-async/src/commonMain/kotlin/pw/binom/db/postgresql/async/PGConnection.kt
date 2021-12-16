@@ -5,6 +5,8 @@ import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
 import kotlinx.coroutines.Dispatchers
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
 import pw.binom.network.Network
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
@@ -23,7 +25,8 @@ class PGConnection private constructor(
     val connection: TcpConnection,
     charset: Charset,
     val userName: String,
-    val password: String?
+    val password: String?,
+    val networkDispatcher: NetworkCoroutineDispatcher
 ) : AsyncConnection {
     internal var busy = false
 
@@ -43,7 +46,8 @@ class PGConnection private constructor(
                 connection = connection,
                 charset = charset,
                 userName = userName,
-                password = password
+                password = password,
+                networkDispatcher = networkDispatcher,
             )
             pgConnection.sendFirstMessage(
                 mapOf(
@@ -80,6 +84,7 @@ class PGConnection private constructor(
     }
 
     private val packageWriter = PackageWriter(this)
+    private val packageWriterLock = SpinLock()
     internal val charsetUtils = CharsetCoder(charset)
     private var connected = true
     override val isConnected
@@ -159,8 +164,10 @@ class PGConnection private constructor(
     }
 
     internal suspend fun sendOnly(msg: KindedMessage) {
-        msg.write(packageWriter)
-        packageWriter.finishAsync(connection)
+        packageWriterLock.synchronize {
+            msg.write(packageWriter)
+            packageWriter.finishAsync(connection)
+        }
         connection.flush()
     }
 
@@ -175,14 +182,14 @@ class PGConnection private constructor(
     }
 
 
-    internal suspend fun readDesponse(): KindedMessage {
-        val msg = KindedMessage.read(reader)
-        return msg
-    }
+    internal suspend fun readDesponse(): KindedMessage =
+        KindedMessage.read(reader)
 
     private suspend fun request(msg: KindedMessage): KindedMessage {
-        msg.write(packageWriter)
-        packageWriter.finishAsync(connection)
+        packageWriterLock.synchronize {
+            msg.write(packageWriter)
+            packageWriter.finishAsync(connection)
+        }
         return readDesponse()
     }
 
@@ -207,7 +214,7 @@ class PGConnection private constructor(
                     buf2.data.position = pos
                     buf2.data.flip()
                 }
-                val wrote = connection.write(buf2.data)
+                connection.write(buf2.data)
                 connection.flush()
             }
         }

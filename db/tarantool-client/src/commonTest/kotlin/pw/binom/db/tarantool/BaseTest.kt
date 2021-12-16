@@ -30,18 +30,14 @@ abstract class BaseTest {
     fun pg(func: suspend (TarantoolConnectionImpl) -> Unit) = runBlocking {
         val now = TimeSource.Monotonic.markNow()
         val manager = NetworkCoroutineDispatcherImpl()
-        println("Start Taratool Container")
         TarantoolContainer {
             delay(1.seconds)
-            println("Tarantool started")
             do {
                 val address = NetworkAddress.Immutable(
                     host = "127.0.0.1",
                     port = TarantoolContainer.ports[0].externalPort,
                 )
-                println("Try connect to tarantool")
                 val connection = try {
-                    println("Connection to docker...")
                     TarantoolConnection.connect(
                         address = address,
                         manager = manager,
@@ -52,15 +48,11 @@ abstract class BaseTest {
                     if (now.elapsedNow() > 10.seconds) {
                         throw RuntimeException("Startup Timeout", e)
                     }
-                    println("Postgres not available yet")
                     delay(1.seconds)
                     continue
                 }
-                println("Connected!")
                 try {
                     connection.use { con ->
-                        println("Connected to db")
-                        println("Start test function")
                         func(con)
                     }
                 } finally {
