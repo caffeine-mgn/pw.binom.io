@@ -73,7 +73,7 @@ class TcpConnectionTest {
     @Test
     fun waitWriteTest() = runTest {
         val nd = NetworkCoroutineDispatcherImpl()
-        val port = Random.nextInt(1000, Short.MAX_VALUE - 100)
+        val port = TcpServerConnection.randomPort()
 
         val worker = Worker()
 

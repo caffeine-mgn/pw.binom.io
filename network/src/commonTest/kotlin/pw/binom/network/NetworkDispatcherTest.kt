@@ -113,8 +113,9 @@ class NetworkDispatcherTest {
 
     @Test
     fun udpTest() = runTest {
+        println("Try find free port")
         val address =
-            NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
+            NetworkAddress.Immutable(host = "127.0.0.1", port = UdpConnection.randomPort())
         val manager = NetworkCoroutineDispatcherImpl()
         println("try bind udp $address")
         val server = manager.bindUdp(address)

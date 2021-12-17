@@ -21,7 +21,7 @@ actual class UdpSocketChannel : Closeable {
     }
 
     actual fun bind(address: NetworkAddress) {
-        check(native.port == null) { "Already bindded" }
+//        check(native.port == null) { "Already bindded. port: $port" }
         native.bind(address)
     }
 

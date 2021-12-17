@@ -27,34 +27,30 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private var worker = Worker()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
-    private val readyForWriteListener = LinkedList<Runnable>()
+    private val readyForWriteListener = ArrayList<Runnable>()
     private val readyForWriteListenerLock = ReentrantSpinLock()
     private val internalUdpContinuationConnection = attach(internalUdpChannel)
+    private var networkThread=ThreadRef()
 
     init {
         worker.execute(this) { self ->
             try {
                 while (!self.closed) {
+                    self.networkThread=ThreadRef()
+                    println("Sуlecting...")
+                    println("State:")
+                    self.selector.getAttachedKeys().forEach {
+                        println("$it")
+                    }
                     val iterator = self.selector.select()
+                    println("Selected!")
+                    var executeOnNetwork = false
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
                         println("select #1 $event  ${event.key.attachment}")
-                        println("select #1")
                         val attachment = event.key.attachment
                         if (attachment === self.internalUdpContinuationConnection) {
-                            self.readyForWriteListenerLock.synchronize {
-                                while (self.readyForWriteListener.isNotEmpty()) {
-                                    try {
-                                        println("execute on network #1")
-                                        self.readyForWriteListener.removeLast().run()
-                                        println("execute on network #2")
-                                    } catch (e: Throwable) {
-                                        e.printStackTrace()
-                                        throw e
-                                    }
-                                }
-                                self.internalUdpContinuationConnection.key.listensFlag = 0
-                            }
+                            executeOnNetwork=true
                         } else {
                             val connection = attachment as AbstractConnection
                             if (event.mode and Selector.EVENT_CONNECTED != 0) {
@@ -72,6 +68,24 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                             }
                         }
                     }
+                    if (executeOnNetwork){
+                        self.readyForWriteListenerLock.synchronize {
+                            if (readyForWriteListener.isEmpty()) {
+                                self.internalUdpContinuationConnection.key.listensFlag = 0
+                            } else {
+                                readyForWriteListener.forEach {
+                                    try {
+                                        println("execute on network #1")
+                                        it.run()
+                                        println("execute on network #2")
+                                    } catch (e: Throwable) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                                readyForWriteListener.clear()
+                            }
+                        }
+                    }
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
@@ -83,15 +97,14 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        if (context[ContinuationInterceptor] === this) {
-            block.run()
-        } else {
             readyForWriteListenerLock.synchronize {
-                readyForWriteListener.addFirst(block)
+                readyForWriteListener.add(block)
                 internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
             }
-        }
     }
+
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
+        !networkThread.same
 
     override fun close() {
         closed = true
@@ -113,9 +126,9 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         return con
     }
 
-    override fun attach(channel: TcpClientSocketChannel): TcpConnection {
+    override fun attach(channel: TcpClientSocketChannel, mode:Int): TcpConnection {
         val con = TcpConnection(channel)
-        val key = selector.attach(channel, 0, con)
+        val key = selector.attach(channel, mode, con)
         con.key = key
         return con
     }
@@ -129,10 +142,9 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override suspend fun tcpConnect(address: NetworkAddress): TcpConnection =
         withContext(this) {
             val channel = TcpClientSocketChannel()
-            val connection = attach(channel)
-
+            val connection = attach(channel,mode=Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
             try {
-                println("Connecting...")
+                println("Connecting... networkthread: ${networkThread.same}")
 
                 suspendCancellableCoroutine<Unit> {
                     connection.connect = it
@@ -141,10 +153,16 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                         connection.cancelSelector()
                     }
                     try {
+                        println("#0.1")
                         channel.connect(address)
-                        connection.connecting()
+                        println("#0.2")
+
+                        println("#0.3")
                     } catch (e: Throwable) {
+                        e.printStackTrace()
+                        println("#1")
                         it.resumeWithException(e)
+                        println("#2")
                     }
                 }
             } catch (e: SocketConnectException) {

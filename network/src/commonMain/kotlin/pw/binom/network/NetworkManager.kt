@@ -2,7 +2,7 @@ package pw.binom.network
 
 interface NetworkManager {
     fun attach(channel: UdpSocketChannel): UdpConnection
-    fun attach(channel: TcpClientSocketChannel): TcpConnection
+    fun attach(channel: TcpClientSocketChannel, mode:Int=0): TcpConnection
     fun attach(channel: TcpServerSocketChannel): TcpServerConnection
 }
 

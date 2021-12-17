@@ -38,7 +38,7 @@ actual class NSocket(val native: Int) : Closeable {
                 if (r==0) {
                     ntohs(sin.sin_port).toInt()
                 } else {
-                    //println("getsockname=$c, errno=${errno},GetLastError()=${GetLastError()}")
+                    println("getsockname=$r, errno=${errno}")
                     null
                 }
             }
@@ -185,6 +185,7 @@ actual class NSocket(val native: Int) : Closeable {
                 address.size.convert()
             )
             if (bindResult < 0) {
+                println("bind on ${address}. errno: $errno")
                 if (errno == 98) {
                     throw BindException("Address already in use: ${address.host}:${address.port}")
                 }

@@ -23,7 +23,7 @@ class LinuxSelector : AbstractSelector() {
             epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
             keys -= this
         }
-
+        override fun toString(): String = "LinuxKey(mode: ${modeToString(listensFlag)}, attachment: $attachment)"
         fun epollCommonToNative(mode: Int): Int {
             var events = 0
             if (Selector.INPUT_READY in mode) {
@@ -34,6 +34,10 @@ class LinuxSelector : AbstractSelector() {
             }
             if (connected && Selector.OUTPUT_READY in mode) {
                 events = events or EPOLLOUT
+            }
+
+            if (Selector.EVENT_ERROR in mode) {
+                events = events or EPOLLERR
             }
 
             return events
@@ -56,6 +60,7 @@ class LinuxSelector : AbstractSelector() {
             currentNum = 0
         }
 
+
         override fun hasNext(): Boolean {
             if (currentNum == eventCount) {
                 return false
@@ -67,11 +72,15 @@ class LinuxSelector : AbstractSelector() {
             if (!hasNext()) {
                 throw NoSuchElementException()
             }
+
+
             val item = list[currentNum++]
+
             val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
             val key = keyPtr.get()
+            println("Event: ${modeToString(item.events.toInt())}  key.connected=${key.connected}")
             if (!key.connected) {
-                if (EPOLLHUP in item.events || EPOLLERR in item.events) {
+                if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)
                     event.key = key
                     event.mode = Selector.EVENT_ERROR
@@ -82,6 +91,12 @@ class LinuxSelector : AbstractSelector() {
                     key.connected = true
                     event.key = key
                     event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                    return event
+                }
+                if (EPOLLHUP in item.events){
+//                    key.connected = true
+                    event.key = key
+                    event.mode = 0
                     return event
                 }
                 throw IllegalStateException("Unknown connection state: ${modeToString(item.events.toInt())}")
@@ -114,8 +129,10 @@ class LinuxSelector : AbstractSelector() {
 
             key.listensFlag = key.epollCommonToNative(mode)
             event.data.ptr = key.ptr
+            event.events=key.listensFlag.convert()
             keys += key
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
+            println("Socket attached with mode: ${modeToString(key.epollCommonToNative(mode))}")
         }
         return key
     }

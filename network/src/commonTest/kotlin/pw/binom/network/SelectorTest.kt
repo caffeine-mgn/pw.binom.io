@@ -18,6 +18,9 @@ class SelectorTest {
         val client = TcpClientSocketChannel()
         selector.attach(client)
         val it = selector.select(1000)
+        it.forEach {
+            println("->$it")
+        }
         assertFalse(it.hasNext())
     }
 
