@@ -9,6 +9,7 @@ import pw.binom.coroutine.getDispatcher
 import pw.binom.io.Closeable
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager {
@@ -37,6 +38,8 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                     val iterator = self.selector.select()
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
+                        println("select #1 $event  ${event.key.attachment}")
+                        println("select #1")
                         val attachment = event.key.attachment
                         if (attachment === self.internalUdpContinuationConnection) {
                             self.readyForWriteListenerLock.synchronize {
@@ -55,6 +58,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                         } else {
                             val connection = attachment as AbstractConnection
                             if (event.mode and Selector.EVENT_CONNECTED != 0) {
+                                println("Call connected")
                                 connection.connected()
                             }
                             if (event.mode and Selector.EVENT_ERROR != 0) {
@@ -126,11 +130,22 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         withContext(this) {
             val channel = TcpClientSocketChannel()
             val connection = attach(channel)
-            channel.connect(address)
+
             try {
-                connection.connecting()
-                suspendCoroutine<Unit> {
+                println("Connecting...")
+
+                suspendCancellableCoroutine<Unit> {
                     connection.connect = it
+                    it.invokeOnCancellation {
+                        println("Connect canceled!")
+                        connection.cancelSelector()
+                    }
+                    try {
+                        channel.connect(address)
+                        connection.connecting()
+                    } catch (e: Throwable) {
+                        it.resumeWithException(e)
+                    }
                 }
             } catch (e: SocketConnectException) {
                 runCatching { connection.asyncClose() }

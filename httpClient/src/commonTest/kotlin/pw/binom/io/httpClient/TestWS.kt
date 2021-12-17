@@ -1,7 +1,7 @@
 package pw.binom.io.httpClient
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.readText
 import pw.binom.io.use
@@ -76,30 +76,29 @@ class TestWS {
     */
     @Ignore
     @Test
-    fun serverTest() {
-        runBlocking {
-            try {
-                val client = HttpClient.create()
-                val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURI())
-                    .startWebSocket("http://127.0.0.1:8080")
+    fun serverTest() = runTest {
+        try {
+            val client = HttpClient.create()
+            val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURI())
+                .startWebSocket("http://127.0.0.1:8080")
 
-                while (true) {
-                    val msg = wsClient.read().use {
-                        it.utf8Reader().readText()
-                    }
-                    if (msg.trim() == "exit")
-                        break
-                    println("Read [$msg]. Send response")
-                    wsClient.write(MessageType.BINARY).use {
-                        it.utf8Appendable().append("Echo $msg")
-                    }
+            while (true) {
+                val msg = wsClient.read().use {
+                    it.utf8Reader().readText()
                 }
-
-                wsClient.asyncClose()
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                throw e
+                if (msg.trim() == "exit")
+                    break
+                println("Read [$msg]. Send response")
+                wsClient.write(MessageType.BINARY).use {
+                    it.utf8Appendable().append("Echo $msg")
+                }
             }
+
+            wsClient.asyncClose()
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
         }
     }
+
 }

@@ -13,7 +13,6 @@ class RequestAsyncChunkedOutput constructor(
     val client: BaseHttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
-    val timeout: Duration?,
     autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncHttpRequestOutput, AsyncChunkedOutput(
     stream = channel.writer,
@@ -29,7 +28,6 @@ class RequestAsyncChunkedOutput constructor(
             client = client,
             keepAlive = keepAlive,
             channel = channel,
-            timeout = timeout,
         )
     }
 

@@ -1,6 +1,7 @@
 package pw.binom.io.httpClient
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.runTest
 import pw.binom.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.readText
@@ -19,51 +20,50 @@ import kotlin.time.TimeSource
 class TestAsyncBaseHttpClient {
 
     @Test
-    fun timeoutTest2() {
-        NetworkCoroutineDispatcher.create().let { nd ->
-            runBlocking {
-                withContext(nd) {
-                    nd.bindTcp(NetworkAddress.Immutable(port = TcpServerConnection.randomPort())).use { server ->
-                        launch {
-                            println("wait client")
-                            try {
-                                server.accept()
-                                println("client connected")
-                            } catch (e: Throwable) {
-                                //Do nothing
-                            }
-                        }
-                        HttpClient.create(nd).use { client ->
-                            try {
-//                                withTimeout(5.seconds) {
-                                client.connect(
-                                    method = "GET",
-                                    uri = "http://127.0.0.1:${server.port}/".toURI(),
+    fun timeoutTest2() = runTest {
+        Dispatchers.Network
+            .bindTcp(NetworkAddress.Immutable(port = 0))
+            .use { server ->
+                launch {
+                    println("wait client")
+                    try {
+                        server.accept()
+                        println("client connected")
+                    } catch (e: Throwable) {
+                        //Do nothing
+                    }
+                }
+                HttpClient.create().use { client ->
+                    try {
+                        realWithTimeout(5.seconds) {
+                            client.connect(
+                                method = "GET",
+                                uri = "http://127.0.0.1:${server.port}/".toURI(),
 //                                        uri = "http://example.com/".toURI(),
-                                    timeout = 5.seconds,
-                                ).getResponse().readText().use { it.readText() }
-//                                }
-                            } catch (e: Throwable) {
-                                e.printStackTrace()
-                            }
+                            ).getResponse().readText().use { it.readText() }
                         }
+//                                }
+                    } catch (e: CancellationException) {
+                        //Do nothing
                     }
                 }
             }
-        }
     }
+
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun timeoutTest() = runBlocking {
+    fun timeoutTest() = runTest {
         val manager = NetworkCoroutineDispatcherImpl()
         val client = BaseHttpClient(Dispatchers.Network)
-        manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", 34636))
+        val server = manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", TcpServerConnection.randomPort()))
         val now = TimeSource.Monotonic.markNow()
         try {
-            client.connect(HTTPMethod.GET, "http://127.0.0.1:34636".toURI(), 3.seconds)
-                .getResponse()
-                .responseCode
+            realWithTimeout(3.seconds) {
+                client.connect(HTTPMethod.GET, "http://127.0.0.1:${server.port}".toURI())
+                    .getResponse()
+                    .responseCode
+            }
             fail()
         } catch (e: CancellationException) {
             val time = now.elapsedNow()
@@ -74,25 +74,21 @@ class TestAsyncBaseHttpClient {
 
     @Test
     @OptIn(ExperimentalTime::class)
-    fun test() {
-        val manager = NetworkCoroutineDispatcherImpl()
+    fun test() = runTest {
         val client = BaseHttpClient(Dispatchers.Network)
-
-        val e = runBlocking {
-
-            repeat(3) {
-                val responseData = client
-                    .connect(HTTPMethod.GET, "https://google.com/".toURI())
-                    .getResponse().also {
-                        println("headers:${it.headers}")
-                    }
-                    .readData().use {
-                        it.skipAll()
-                    }
-            }
+        repeat(3) {
+            val responseData = client
+                .connect(HTTPMethod.GET, "https://google.com/".toURI())
+                .getResponse().also {
+                    println("headers:${it.headers}")
+                }
+                .readData().use {
+                    it.skipAll()
+                }
         }
     }
 }
+
 
 /*
 class HandlerImpl(val txt: String, val chunked: Boolean) : Handler {

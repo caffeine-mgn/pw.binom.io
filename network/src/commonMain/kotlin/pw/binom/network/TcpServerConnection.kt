@@ -2,14 +2,12 @@ package pw.binom.network
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import pw.binom.CancelledException
 import pw.binom.io.use
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.*
 
-class TcpServerConnection internal constructor(val dispatcher: NetworkManager, val channel: TcpServerSocketChannel) :
+class TcpServerConnection internal constructor(val dispatcher: NetworkCoroutineDispatcher, val channel: TcpServerSocketChannel) :
     AbstractConnection() {
 
     companion object {
@@ -81,27 +79,30 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkManager, v
         return true
     }
 
-    suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection {
-        if (acceptListener != null) {
-            throw IllegalStateException("Connection already have read listener")
-        }
-
-        val newClient = channel.accept(address)
-        if (newClient != null) {
-            return dispatcher.attach(newClient)
-        }
-
-        val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
-            acceptListener = con
-            key.listensFlag = Selector.INPUT_READY
-
-            con.invokeOnCancellation {
-                acceptListener = null
-                key.listensFlag = 0
+    suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection =
+        withContext(dispatcher) TT@{
+            println("TcpServerConnection - Accepting new client on ${coroutineContext[ContinuationInterceptor]}")
+            if (acceptListener != null) {
+                throw IllegalStateException("Connection already have read listener")
             }
+
+            val newClient = channel.accept(address)
+            if (newClient != null) {
+                return@TT dispatcher.attach(newClient)
+            }
+            println("TcpServerConnection - Wait until somebody connect...")
+            val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
+                acceptListener = con
+                key.listensFlag = Selector.INPUT_READY
+                con.invokeOnCancellation {
+                    println("TcpServerConnection - Client waing cancelled!")
+                    acceptListener = null
+                    key.listensFlag = 0
+                }
+            }
+            println("TcpServerConnection - Somebody connected")
+            return@TT dispatcher.attach(newChannel)
         }
-        return dispatcher.attach(newChannel)
-    }
 
     override fun cancelSelector() {
         acceptListener?.cancel()

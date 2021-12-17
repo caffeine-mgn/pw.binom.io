@@ -6,7 +6,6 @@ import pw.binom.doFreeze
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 ///**
 // * Object must be frozen, because it will be pass to other thread

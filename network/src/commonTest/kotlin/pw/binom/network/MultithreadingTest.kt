@@ -1,7 +1,7 @@
 package pw.binom.network
 
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
@@ -32,24 +32,22 @@ class MultithreadingTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun test() {
+    fun test() = runTest {
         var flag1 by AtomicBoolean(false)
         val nd = NetworkCoroutineDispatcherImpl()
         val executor = WorkerPool(10)
         val addr = NetworkAddress.Immutable("127.0.0.1", 8765)
-        runBlocking {
-            val server = launch {
-                nd.bindTcp(addr).use { server ->
-                    val client = server.accept()
-                    flag1 = true
-                }
+        val server = launch {
+            nd.bindTcp(addr).use { server ->
+                val client = server.accept()
+                flag1 = true
             }
-            val client = launch {
-                nd.tcpConnect(addr)
-                Unit
-            }
-            server.join()
         }
+        val client = launch {
+            nd.tcpConnect(addr)
+            Unit
+        }
+        server.join()
         assertTrue(flag1, "flag1 invalid")
     }
 }

@@ -1,26 +1,24 @@
 package pw.binom.network
 
 import kotlin.random.Random
-import kotlin.test.Ignore
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class SelectorTest {
 
     @Test
     fun selectTimeoutTest1() {
         val selector = Selector.open()
-        assertEquals(0, selector.select(1000) { _, _ -> })
+        val it = selector.select(1000)
+        assertFalse(it.hasNext())
     }
 
-    @Ignore
     @Test
     fun selectTimeoutTest2() {
         val selector = Selector.open()
         val client = TcpClientSocketChannel()
         selector.attach(client)
-        assertEquals(0, selector.select(1000) { _, _ -> })
+        val it = selector.select(1000)
+        assertFalse(it.hasNext())
     }
 
     @Test
@@ -31,10 +29,7 @@ class SelectorTest {
         try {
             key.listensFlag = 0
             client.connect(NetworkAddress.Immutable("google.com", 443))
-
-            assertEquals(0, selector.select(2000) { key, mode ->
-
-            })
+            assertFalse(selector.select(2000).hasNext())
         } finally {
             key.close()
             client.close()
@@ -51,16 +46,20 @@ class SelectorTest {
         key.listensFlag = Selector.EVENT_CONNECTED
         println("Flag setted")
         client.connect(NetworkAddress.Immutable("google.com", 443))
-
-        assertEquals(1, selector.select(5000) { key, mode ->
-            println("--1")
-            assertTrue(mode and Selector.EVENT_CONNECTED != 0)
-            println("--2")
-            assertTrue(mode and Selector.OUTPUT_READY != 0)
-            println("--3")
-        })
-
-        assertEquals(0, selector.select(1000) { _, _ -> })
+        var it = selector.select(5000)
+        assertTrue(it.hasNext())
+        val mode = it.next().mode
+        assertTrue(mode and Selector.EVENT_CONNECTED != 0)
+        assertTrue(mode and Selector.OUTPUT_READY != 0)
+//        assertEquals(1, selector.select(5000) { key, mode ->
+//            println("--1")
+//            assertTrue(mode and Selector.EVENT_CONNECTED != 0)
+//            println("--2")
+//            assertTrue(mode and Selector.OUTPUT_READY != 0)
+//            println("--3")
+//        })
+        it = selector.select(1000)
+        assertFalse(it.hasNext())
     }
 
     @Test

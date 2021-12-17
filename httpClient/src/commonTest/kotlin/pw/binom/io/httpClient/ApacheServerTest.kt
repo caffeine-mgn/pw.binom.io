@@ -1,7 +1,8 @@
 package pw.binom.io.httpClient
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import pw.binom.concurrency.sleep
 import pw.binom.io.readText
 import pw.binom.io.use
@@ -28,9 +29,9 @@ class ApacheServerTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun test() = runBlocking<Unit> {
+    fun test() = runTest {
         ApacheContainer {
-            sleep(1000)
+            realDelay(1000)
             val time = measureTime {
                 HttpClient.create(Dispatchers.Network).use { http ->
                     repeat(500) {

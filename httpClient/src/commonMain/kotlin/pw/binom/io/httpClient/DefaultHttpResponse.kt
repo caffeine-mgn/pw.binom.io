@@ -32,30 +32,10 @@ class DefaultHttpResponse(
             client: BaseHttpClient,
             keepAlive: Boolean,
             channel: AsyncAsciiChannel,
-            timeout: Duration?,
         ): HttpResponse {
             var headerReadFlag = false
-            if (timeout != null) {
-                withContext(client.networkDispatcher) {
-                    try {
-                        delay(timeout)
-                    } finally {
-                        if (!headerReadFlag) {
-                            client.interruptAndClose(channel)
-                        }
-                    }
-                }
-            }
             try {
-                val title = try {
-                    channel.reader.readln() ?: throw EOFException()
-                } catch (e: ClosedException) {
-                    if (!headerReadFlag) {
-                        throw CancellationException("Header read timeout $timeout")
-                    } else {
-                        throw e
-                    }
-                }
+                val title = channel.reader.readln() ?: throw EOFException()
                 if (!title.startsWith("HTTP/1.1 ") && !title.startsWith("HTTP/1.0 ")) {
                     throw IOException("Unsupported HTTP version. Response: \"$title\"")
                 }

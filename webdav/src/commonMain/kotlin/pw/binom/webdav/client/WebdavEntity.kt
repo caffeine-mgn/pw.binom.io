@@ -23,7 +23,7 @@ class WebdavEntity(
 
     override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
         val allPathUrl = fileSystem.url.appendPath(path)
-        val r = fileSystem.client.connect(HTTPMethod.GET.code, allPathUrl, timeout = fileSystem.timeout)
+        val r = fileSystem.client.connect(HTTPMethod.GET.code, allPathUrl)
         if (offset != 0uL) {
             if (length == null) {
                 r.addHeader("Range", "bytes=$offset-")
@@ -54,7 +54,6 @@ class WebdavEntity(
         val r = fileSystem.client.connect(
             method = HTTPMethod.COPY.code,
             uri = fileSystem.url.appendPath(this.path),
-            timeout = fileSystem.timeout
         )
         user?.apply(r)
         r.addHeader("Destination", destinationUrl.toString())
@@ -90,7 +89,6 @@ class WebdavEntity(
         val r = fileSystem.client.connect(
             HTTPMethod.MOVE.code,
             fileSystem.url.appendPath(this.path),
-            timeout = fileSystem.timeout
         )
         user?.apply(r)
         r.addHeader("Destination", destinationUrl.toString())
@@ -130,7 +128,6 @@ class WebdavEntity(
         val r = fileSystem.client.connect(
             HTTPMethod.DELETE.code,
             fileSystem.url.appendPath(this.path),
-            timeout = fileSystem.timeout
         )
         user?.apply(r)
         val responseCode = r.getResponse().use {
@@ -153,7 +150,7 @@ class WebdavEntity(
 
     override suspend fun rewrite(): AsyncOutput {
         val allPathUrl = fileSystem.url.appendPath(path)
-        val r = fileSystem.client.connect(HTTPMethod.PUT.code, allPathUrl, timeout = fileSystem.timeout)
+        val r = fileSystem.client.connect(HTTPMethod.PUT.code, allPathUrl)
 //            r.addHeader("Overwrite", "T")
         user?.apply(r)
         val upload = r.writeData()

@@ -22,7 +22,6 @@ class DefaultHttpRequest constructor(
     override val uri: URI,
     val client: BaseHttpClient,
     val channel: AsyncAsciiChannel,
-    val timeout: Duration?,
 ) : HttpRequest {
     private var closed = false
     override val headers = HashHeaders()
@@ -76,7 +75,6 @@ class DefaultHttpRequest constructor(
                         client = client,
                         keepAlive = keepAlive,
                         channel = channel,
-                        timeout = timeout,
                     )
                 }
                 else -> throw IOException("Unknown Transfer Encoding \"$encode\"")
@@ -91,7 +89,6 @@ class DefaultHttpRequest constructor(
                 keepAlive = keepAlive,
                 channel = channel,
                 contentLength = len,
-                timeout = timeout,
             )
         }
         throw IllegalStateException("Unknown type of Transfer Encoding")
@@ -131,6 +128,7 @@ class DefaultHttpRequest constructor(
     }
 
     override suspend fun getResponse(): HttpResponse {
+        println("getResponse #0")
         checkClosed()
         val len = headers.contentLength
         if (len != null && len > 0uL) {
@@ -140,16 +138,21 @@ class DefaultHttpRequest constructor(
         if (encode != null) {
             throw IllegalStateException("Can't get Response. Header contains \"${Headers.TRANSFER_ENCODING}: $encode\". Expected request data")
         }
+        println("getResponse #1")
         sendHeaders()
+        println("getResponse #2")
         channel.writer.flush()
+        println("getResponse #3")
         closed = true
-        return DefaultHttpResponse.read(
+        println("getResponse #4")
+        val v =  DefaultHttpResponse.read(
             uri = uri,
             client = client,
             keepAlive = keepAlive,
             channel = channel,
-            timeout = timeout,
         )
+        println("getResponse #5")
+        return v
     }
 
 

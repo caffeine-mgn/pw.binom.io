@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient
 
+import kotlinx.coroutines.CancellationException
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel
@@ -25,7 +26,7 @@ class BaseHttpClient(
     val bufferSize: Int = DEFAULT_BUFFER_SIZE,
     bufferCapacity: Int = 16
 ) : HttpClient {
-//    internal val deadlineTimer = DeadlineTimer.create()
+    //    internal val deadlineTimer = DeadlineTimer.create()
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
     internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, size = bufferSize.toUInt())
@@ -47,12 +48,14 @@ class BaseHttpClient(
             }
         }
         val port = uri.getPort()
+        println("borrowConnection #1")
         var channel: AsyncChannel = networkDispatcher.tcpConnect(
             NetworkAddress.Immutable(
                 host = uri.host,
                 port = port
             )
         )
+        println("borrowConnection #2")
 
         if (uri.schema == "https" || uri.schema == "wss") {
             val sslSession = sslContext.clientSession(host = uri.host, port = port)
@@ -74,19 +77,27 @@ class BaseHttpClient(
         channel.asyncClose()
     }
 
-    override suspend fun connect(method: String, uri: URI, timeout: Duration?): HttpRequest {
-        val schema = uri.schema ?: throw IllegalArgumentException("URL \"$uri\" must contains protocol")
-        if (schema != "http" && schema != "https" && schema != "ws" && schema != "wss") {
-            throw IllegalArgumentException("Schema ${uri.schema} is not supported")
+    override suspend fun connect(method: String, uri: URI): HttpRequest {
+        var connect: AsyncAsciiChannel? = null
+        try {
+            println("connect #1")
+            val schema = uri.schema ?: throw IllegalArgumentException("URL \"$uri\" must contains protocol")
+            if (schema != "http" && schema != "https" && schema != "ws" && schema != "wss") {
+                throw IllegalArgumentException("Schema ${uri.schema} is not supported")
+            }
+            println("connect #2")
+            connect = borrowConnection(uri)
+            println("connect #3")
+            return DefaultHttpRequest(
+                uri = uri,
+                client = this,
+                channel = connect,
+                method = method,
+            )
+        } catch (e: Throwable) {
+            runCatching { connect?.asyncClose() }
+            throw e
         }
-        val connect = borrowConnection(uri)
-        return DefaultHttpRequest(
-            uri = uri,
-            client = this,
-            channel = connect,
-            method = method,
-            timeout = timeout,
-        )
     }
 
     override fun close() {
@@ -106,5 +117,5 @@ private fun URI.getPort() =
     }
 
 @OptIn(ExperimentalTime::class)
-suspend fun BaseHttpClient.connect(method: HTTPMethod, uri: URI, timeout: Duration? = null) =
-    connect(method.code, uri, timeout)
+suspend fun BaseHttpClient.connect(method: HTTPMethod, uri: URI) =
+    connect(method.code, uri)

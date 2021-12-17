@@ -22,7 +22,7 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-open class WebDavClient constructor(val client: HttpClient, val url: URI, val timeout: Duration? = null) :
+open class WebDavClient constructor(val client: HttpClient, val url: URI) :
     FileSystem {
     override suspend fun getQuota(path: Path): Quota? {
         val dir = getDir(user = WebAuthAccess.getCurrentUser(), path = path, depth = 0, excludeCurrent = false)
@@ -66,7 +66,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URI, val ti
     override suspend fun mkdir(path: Path): FileSystem.Entity? {
         val allPathUrl = url.appendPath(path)
         val r = try {
-            client.connect(HTTPMethod.MKCOL.code, allPathUrl, timeout = timeout)
+            client.connect(HTTPMethod.MKCOL.code, allPathUrl)
         } catch (e: SocketClosedException) {
             throw IOException("Can't connect to $allPathUrl", e)
         }
@@ -105,7 +105,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URI, val ti
     ): List<WebdavEntity>? {
         val allPathUrl = url.appendPath(path)
         val r = try {
-            client.connect(HTTPMethod.PROPFIND.code, allPathUrl, timeout = timeout)
+            client.connect(HTTPMethod.PROPFIND.code, allPathUrl)
         } catch (e: SocketClosedException) {
             throw IOException("Can't connect to $allPathUrl")
         }
@@ -170,7 +170,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URI, val ti
 
     override suspend fun new(path: Path): AsyncOutput {
         val allPathUrl = url.appendPath(path)
-        val r = client.connect(HTTPMethod.PUT.code, allPathUrl, timeout = timeout)
+        val r = client.connect(HTTPMethod.PUT.code, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val upload = r.writeData()
         return object : AsyncOutput {

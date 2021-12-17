@@ -6,13 +6,13 @@ interface NetworkManager {
     fun attach(channel: TcpServerSocketChannel): TcpServerConnection
 }
 
-fun NetworkManager.bindTcp(address: NetworkAddress): TcpServerConnection {
+fun NetworkCoroutineDispatcher.bindTcp(address: NetworkAddress): TcpServerConnection {
     val channel = TcpServerSocketChannel()
     channel.bind(address)
     return attach(channel)
 }
 
-fun NetworkManager.bindUdp(address: NetworkAddress): UdpConnection {
+fun NetworkCoroutineDispatcher.bindUdp(address: NetworkAddress): UdpConnection {
     val channel = UdpSocketChannel()
     channel.bind(address)
     return attach(channel)

@@ -13,7 +13,6 @@ class RequestAsyncContentLengthOutput constructor(
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     contentLength: ULong,
-    val timeout: Duration?,
 ) : AsyncHttpRequestOutput, AsyncContentLengthOutput(
     stream = channel.writer,
     contentLength = contentLength,
@@ -30,7 +29,6 @@ class RequestAsyncContentLengthOutput constructor(
             client = client,
             keepAlive = keepAlive,
             channel = channel,
-            timeout = timeout,
         )
     }
 

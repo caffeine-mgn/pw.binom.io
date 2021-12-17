@@ -60,7 +60,7 @@ class JvmSelector : Selector {
             }
             if (Selector.EVENT_CONNECTED and mode != 0) {
                 require(channel is SocketChannel)
-                opts = opts or SelectionKey.OP_CONNECT
+                opts = opts or SelectionKey.OP_CONNECT or SelectionKey.OP_READ
             }
             return opts
         }
@@ -107,7 +107,6 @@ class JvmSelector : Selector {
 
             if (it.isConnectable) {
                 val cc = it.channel() as SocketChannel
-
                 try {
                     val connected = cc.finishConnect()
                     if (connected) {
@@ -211,13 +210,21 @@ class JvmSelector : Selector {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     override fun select(timeout: Long): Iterator<Selector.KeyEvent> {
         native.selectedKeys().clear()
         when {
-            timeout > 0L -> native.select(timeout)
+            timeout > 0L -> {
+                var selectedCount = 0
+                val selectTime = measureTime {
+                    selectedCount = native.select(timeout)
+                }
+                if (selectedCount == 0 && selectTime.inWholeMilliseconds < timeout) {
+                    native.select(timeout - selectTime.inWholeMilliseconds)
+                }
+            }
             timeout == 0L -> native.selectNow()
             timeout < 0L -> native.select()
-            else -> throw IllegalArgumentException("Invalid timeout $timeout")
         }
         nn.reset()
         return nn

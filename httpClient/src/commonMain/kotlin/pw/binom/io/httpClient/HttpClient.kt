@@ -17,7 +17,7 @@ interface HttpClient : Closeable {
 //    val networkDispatcher: NetworkDispatcher
 
     @OptIn(ExperimentalTime::class)
-    suspend fun connect(method: String, uri: URI, timeout: Duration? = null): HttpRequest
+    suspend fun connect(method: String, uri: URI): HttpRequest
 
     companion object {
 //        fun create(
