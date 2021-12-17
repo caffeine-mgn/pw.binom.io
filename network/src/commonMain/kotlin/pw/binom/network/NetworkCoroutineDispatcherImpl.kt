@@ -28,7 +28,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
     private val readyForWriteListener = ArrayList<Runnable>()
-    private val readyForWriteListenerLock = ReentrantSpinLock()
+    private val readyForWriteListenerLock = SpinLock()
     private val internalUdpContinuationConnection = attach(internalUdpChannel)
     private var networkThread=ThreadRef()
 

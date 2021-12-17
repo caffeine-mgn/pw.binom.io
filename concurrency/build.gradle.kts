@@ -17,8 +17,8 @@ kotlin {
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
         linuxArm64()
     }
-    linuxMips32()
-    linuxMipsel32()
+//    linuxMips32()
+//    linuxMipsel32()
     mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86()
@@ -58,13 +58,13 @@ kotlin {
                 dependsOn(linuxX64Main)
             }
         }
-        val linuxMips32Main by getting {
-            dependsOn(linuxX64Main)
-        }
-
-        val linuxMipsel32Main by getting {
-            dependsOn(linuxX64Main)
-        }
+//        val linuxMips32Main by getting {
+//            dependsOn(linuxX64Main)
+//        }
+//
+//        val linuxMipsel32Main by getting {
+//            dependsOn(linuxX64Main)
+//        }
         val mingwX64Main by getting {
             dependsOn(nativeMain)
         }

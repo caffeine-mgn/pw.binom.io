@@ -6,7 +6,7 @@ import pw.binom.doFreeze
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-class ReentrantSpinLock:Lock {
+class ReentrantSpinLock : Lock {
     private val threadId = AtomicLong(0)
     private val count = AtomicInt(0)
 
@@ -25,13 +25,18 @@ class ReentrantSpinLock:Lock {
     }
 
     override fun unlock() {
-        if (threadId.value != Worker.current?.id ?: 0) {
+        if (count.value <= 0) {
+            throw IllegalStateException("ReentrantSpinLock is not locked")
+        }
+        if (threadId.value != (Worker.current?.id ?: 0)) {
             throw IllegalStateException("Only locking thread can call unlock")
         }
         count.decrement()
-        if (count.value == 0)
-            if (!threadId.compareAndSet(Worker.current?.id ?: 0, 0))
+        if (count.value == 0) {
+            if (!threadId.compareAndSet(Worker.current?.id ?: 0, 0)) {
                 throw IllegalStateException("Lock already free")
+            }
+        }
     }
 
     init {
