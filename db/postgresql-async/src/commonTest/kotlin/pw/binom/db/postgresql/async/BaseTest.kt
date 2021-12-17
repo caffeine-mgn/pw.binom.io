@@ -1,14 +1,15 @@
 package pw.binom.db.postgresql.async
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import pw.binom.charset.Charsets
-import pw.binom.concurrency.DeadlineTimer
 import pw.binom.concurrency.sleep
 import pw.binom.io.IOException
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
 import pw.binom.testContainer.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -29,48 +30,43 @@ abstract class BaseTest {
     val pgContainer = PostgresContainer(reuse = false)
 
     @OptIn(ExperimentalTime::class)
-    fun pg(func: suspend (PGConnection) -> Unit) {
+    fun pg(func: suspend (PGConnection) -> Unit) = runTest {
         val now = TimeSource.Monotonic.markNow()
-        val manager = NetworkDispatcher()
-        val dt = DeadlineTimer.create()
         pgContainer {
             sleep(1000)
-            manager.runSingle {
-                do {
-                    val address = NetworkAddress.Immutable(
-                        host = "127.0.0.1",
-                        port = pgContainer.ports[0].externalPort,
+            do {
+                val address = NetworkAddress.Immutable(
+                    host = "127.0.0.1",
+                    port = pgContainer.ports[0].externalPort,
+                )
+                val connection = try {
+                    println("Connection to docker...")
+                    PGConnection.connect(
+                        address = address,
+                        charset = Charsets.UTF8,
+                        userName = "postgres",
+                        password = "postgres",
+                        dataBase = "test"
                     )
-                    val connection = try {
-                        println("Connection to docker...")
-                        PGConnection.connect(
-                            address = address,
-                            networkDispatcher = manager,
-                            charset = Charsets.UTF8,
-                            userName = "postgres",
-                            password = "postgres",
-                            dataBase = "test"
-                        )
-                    } catch (e: IOException) {
-                        if (now.elapsedNow() > Duration.seconds(10)) {
-                            throw RuntimeException("Startup Timeout", e)
-                        }
-                        println("Postgres not available yet")
-                        dt.delay(Duration.seconds(1))
-                        continue
+                } catch (e: IOException) {
+                    if (now.elapsedNow() > Duration.seconds(10)) {
+                        throw RuntimeException("Startup Timeout", e)
                     }
-                    println("Connected!")
-                    try {
-                        connection.use { con ->
-                            println("Connected to db")
-                            println("Start test function")
-                            func(con)
-                        }
-                    } finally {
-                        break
+                    println("Postgres not available yet")
+                    delay(1.seconds)
+                    continue
+                }
+                println("Connected!")
+                try {
+                    connection.use { con ->
+                        println("Connected to db")
+                        println("Start test function")
+                        func(con)
                     }
-                } while (true)
-            }
+                } finally {
+                    break
+                }
+            } while (true)
         }
     }
 }

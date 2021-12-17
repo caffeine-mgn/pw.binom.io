@@ -1,6 +1,7 @@
 package pw.binom.db.postgresql.async
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import kotlinx.coroutines.test.runTest
 import pw.binom.UUID
 import pw.binom.charset.Charsets
 import pw.binom.date.parseIso8601Date
@@ -9,43 +10,38 @@ import pw.binom.db.async.firstOrNull
 import pw.binom.db.async.map
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
 import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.*
 
-class TestConnect:BaseTest() {
+class TestConnect : BaseTest() {
 
     //    @Test
-    fun test() {
-        val manager = NetworkDispatcher()
-        manager.startCoroutine {
-            try {
-                val con = PGConnection.connect(
-                    address = NetworkAddress.Immutable(
-                        host = "localhost",
-                        port = 25432,
-                    ),
-                    networkDispatcher = manager,
-                    charset = Charsets.UTF8,
-                    userName = "postgres",
-                    password = "postgres",
-                    dataBase = "sellsystem"
-                )
+    fun test() = runTest {
+        val con = PGConnection.connect(
+            address = NetworkAddress.Immutable(
+                host = "localhost",
+                port = 25432,
+            ),
+            charset = Charsets.UTF8,
+            userName = "postgres",
+            password = "postgres",
+            dataBase = "sellsystem"
+        )
 
 //                val msg = con.sendQuery("select now()")
-                val msg = con.query("update \"user\" set login='' where login=''") as QueryResponse.Status
-                println("Updated ${msg.status}")
+        val msg = con.query("update \"user\" set login='' where login=''") as QueryResponse.Status
+        println("Updated ${msg.status}")
 
-                val msg2 = con.query("select * from \"user\" where login='demo'")
-                msg2 as QueryResponse.Data
-                while (msg2.next()) {
-                    val row = (0 until msg2.meta.size).map {
-                        msg2[it]
-                    }.joinToString(" | ")
-                    println("->$row")
-                }
-                println("DONE!")
+        val msg2 = con.query("select * from \"user\" where login='demo'")
+        msg2 as QueryResponse.Data
+        while (msg2.next()) {
+            val row = (0 until msg2.meta.size).map {
+                msg2[it]
+            }.joinToString(" | ")
+            println("->$row")
+        }
+        println("DONE!")
 
 //                con.prepareStatement(
 //                    query = "select * from \"user\" where login=? and company_id=?",
@@ -84,76 +80,68 @@ class TestConnect:BaseTest() {
 //                }
 
 
-                con.prepareStatement(
-                    "select * from osmi_cards_config where id=?",
-                    listOf(ResultSet.ColumnType.UUID)
-                ).use {
-                    try {
-                        it.set(0, UUID.fromString("db5d3f68-ed81-4c01-8ac8-6eb783d67eeb"))
-                        it.executeQuery().use {
-                            println(it.columns.joinToString(" | "))
-                            while (it.next()) {
-                                val line = it.columns.map { name ->
-                                    it.getString(name)
-                                }
-                                    .joinToString(" | ")
-                                println(line)
-                            }
+        con.prepareStatement(
+            "select * from osmi_cards_config where id=?",
+            listOf(ResultSet.ColumnType.UUID)
+        ).use {
+            try {
+                it.set(0, UUID.fromString("db5d3f68-ed81-4c01-8ac8-6eb783d67eeb"))
+                it.executeQuery().use {
+                    println(it.columns.joinToString(" | "))
+                    while (it.next()) {
+                        val line = it.columns.map { name ->
+                            it.getString(name)
                         }
-                    } catch (e: Throwable) {
-                        e.printStackTrace()
-                        throw e
-                    }
-                }
-
-                con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
-                    try {
-                        it.executeQuery().use {
-                            println(it.columns.joinToString(" | "))
-                            while (it.next()) {
-                                val line = it.columns.map { name ->
-                                    it.getString(name)
-                                }
-                                    .joinToString(" | ")
-                                println(line)
-                            }
-                        }
-                    } catch (e: Throwable) {
-                        e.printStackTrace()
-                        throw e
-                    }
-                }
-
-                con.prepareStatement("select * from buyers limit 3").use {
-                    try {
-                        it.executeQuery().use {
-                            println(it.columns.joinToString(" | "))
-                            while (it.next()) {
-                                val line = it.columns.map { name ->
-                                    it.getString(name)
-                                }
-                                    .joinToString(" | ")
-                                println(line)
-                            }
-                        }
-                    } catch (e: Throwable) {
-                        e.printStackTrace()
-                        throw e
+                            .joinToString(" | ")
+                        println(line)
                     }
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
+                throw e
             }
         }
 
-        while (true) {
-            manager.select()
+        con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
+            try {
+                it.executeQuery().use {
+                    println(it.columns.joinToString(" | "))
+                    while (it.next()) {
+                        val line = it.columns.map { name ->
+                            it.getString(name)
+                        }
+                            .joinToString(" | ")
+                        println(line)
+                    }
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                throw e
+            }
+        }
+
+        con.prepareStatement("select * from buyers limit 3").use {
+            try {
+                it.executeQuery().use {
+                    println(it.columns.joinToString(" | "))
+                    while (it.next()) {
+                        val line = it.columns.map { name ->
+                            it.getString(name)
+                        }
+                            .joinToString(" | ")
+                        println(line)
+                    }
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                throw e
+            }
         }
     }
 
     @Test
-    fun numArgTest(){
-        pg{
+    fun numArgTest() {
+        pg {
             it.prepareStatement("select $1").use {
                 it.executeQuery("1").firstOrNull { it.getString(0) }
             }
