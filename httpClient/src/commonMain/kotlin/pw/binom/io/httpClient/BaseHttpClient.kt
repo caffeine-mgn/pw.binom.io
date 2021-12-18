@@ -48,14 +48,12 @@ class BaseHttpClient(
             }
         }
         val port = uri.getPort()
-        println("borrowConnection #1")
         var channel: AsyncChannel = networkDispatcher.tcpConnect(
             NetworkAddress.Immutable(
                 host = uri.host,
                 port = port
             )
         )
-        println("borrowConnection #2")
 
         if (uri.schema == "https" || uri.schema == "wss") {
             val sslSession = sslContext.clientSession(host = uri.host, port = port)
@@ -80,14 +78,11 @@ class BaseHttpClient(
     override suspend fun connect(method: String, uri: URI): HttpRequest {
         var connect: AsyncAsciiChannel? = null
         try {
-            println("connect #1")
             val schema = uri.schema ?: throw IllegalArgumentException("URL \"$uri\" must contains protocol")
             if (schema != "http" && schema != "https" && schema != "ws" && schema != "wss") {
                 throw IllegalArgumentException("Schema ${uri.schema} is not supported")
             }
-            println("connect #2")
             connect = borrowConnection(uri)
-            println("connect #3")
             return DefaultHttpRequest(
                 uri = uri,
                 client = this,

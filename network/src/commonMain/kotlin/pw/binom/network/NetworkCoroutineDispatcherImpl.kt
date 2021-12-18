@@ -30,31 +30,31 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private val readyForWriteListener = ArrayList<Runnable>()
     private val readyForWriteListenerLock = SpinLock()
     private val internalUdpContinuationConnection = attach(internalUdpChannel)
-    private var networkThread=ThreadRef()
+    private var networkThread = ThreadRef()
 
     init {
         worker.execute(this) { self ->
             try {
                 while (!self.closed) {
-                    self.networkThread=ThreadRef()
-                    println("Sуlecting...")
-                    println("State:")
-                    self.selector.getAttachedKeys().forEach {
-                        println("$it")
-                    }
+                    self.networkThread = ThreadRef()
+//                    println("Sуlecting...")
+//                    println("State:")
+//                    self.selector.getAttachedKeys().forEach {
+//                        println("$it")
+//                    }
                     val iterator = self.selector.select()
-                    println("Selected!")
+//                    println("Selected!")
                     var executeOnNetwork = false
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
-                        println("select #1 $event  ${event.key.attachment}")
+//                        println("select #1 $event  ${event.key.attachment}")
                         val attachment = event.key.attachment
                         if (attachment === self.internalUdpContinuationConnection) {
-                            executeOnNetwork=true
+                            executeOnNetwork = true
                         } else {
                             val connection = attachment as AbstractConnection
                             if (event.mode and Selector.EVENT_CONNECTED != 0) {
-                                println("Call connected")
+//                                println("Call connected")
                                 connection.connected()
                             }
                             if (event.mode and Selector.EVENT_ERROR != 0) {
@@ -68,16 +68,16 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                             }
                         }
                     }
-                    if (executeOnNetwork){
+                    if (executeOnNetwork) {
                         self.readyForWriteListenerLock.synchronize {
                             if (readyForWriteListener.isEmpty()) {
                                 self.internalUdpContinuationConnection.key.listensFlag = 0
                             } else {
                                 readyForWriteListener.forEach {
                                     try {
-                                        println("execute on network #1")
+//                                        println("execute on network #1")
                                         it.run()
-                                        println("execute on network #2")
+//                                        println("execute on network #2")
                                     } catch (e: Throwable) {
                                         e.printStackTrace()
                                     }
@@ -97,10 +97,10 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-            readyForWriteListenerLock.synchronize {
-                readyForWriteListener.add(block)
-                internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
-            }
+        readyForWriteListenerLock.synchronize {
+            readyForWriteListener.add(block)
+            internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
+        }
     }
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
@@ -126,7 +126,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         return con
     }
 
-    override fun attach(channel: TcpClientSocketChannel, mode:Int): TcpConnection {
+    override fun attach(channel: TcpClientSocketChannel, mode: Int): TcpConnection {
         val con = TcpConnection(channel)
         val key = selector.attach(channel, mode, con)
         con.key = key
@@ -142,27 +142,23 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override suspend fun tcpConnect(address: NetworkAddress): TcpConnection =
         withContext(this) {
             val channel = TcpClientSocketChannel()
-            val connection = attach(channel,mode=Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
+            val connection = attach(channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
             try {
-                println("Connecting... networkthread: ${networkThread.same}")
+                connection.description = address.toString()
+                println("Connecting to $address... networkthread: ${networkThread.same}")
 
                 suspendCancellableCoroutine<Unit> {
                     connection.connect = it
                     it.invokeOnCancellation {
-                        println("Connect canceled!")
+                        println("Connect to $address canceled!")
                         connection.cancelSelector()
                     }
                     try {
-                        println("#0.1")
                         channel.connect(address)
-                        println("#0.2")
-
-                        println("#0.3")
                     } catch (e: Throwable) {
+                        println("Can't connect to $address")
                         e.printStackTrace()
-                        println("#1")
                         it.resumeWithException(e)
-                        println("#2")
                     }
                 }
             } catch (e: SocketConnectException) {

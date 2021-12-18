@@ -64,7 +64,6 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkCoroutineD
     }
 
     override fun close() {
-        println("closing tcp server  acceptListener=$acceptListener")
         acceptListener?.resumeWithException(SocketClosedException())
         acceptListener = null
         channel.close()
@@ -81,7 +80,6 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkCoroutineD
 
     suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection =
         withContext(dispatcher) TT@{
-            println("TcpServerConnection - Accepting new client on ${coroutineContext[ContinuationInterceptor]}")
             if (acceptListener != null) {
                 throw IllegalStateException("Connection already have read listener")
             }
@@ -90,17 +88,14 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkCoroutineD
             if (newClient != null) {
                 return@TT dispatcher.attach(newClient)
             }
-            println("TcpServerConnection - Wait until somebody connect...")
             val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
                 acceptListener = con
                 key.listensFlag = Selector.INPUT_READY
                 con.invokeOnCancellation {
-                    println("TcpServerConnection - Client waing cancelled!")
                     acceptListener = null
                     key.listensFlag = 0
                 }
             }
-            println("TcpServerConnection - Somebody connected")
             return@TT dispatcher.attach(newChannel)
         }
 

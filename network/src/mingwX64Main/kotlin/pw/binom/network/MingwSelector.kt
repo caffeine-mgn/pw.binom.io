@@ -25,6 +25,7 @@ class MingwSelector : AbstractSelector() {
             return events.toInt()
         }
 
+        override fun toString(): String = "MinGW(mode: ${modeToString(listensFlag.toUInt())}, attachment: $attachment)"
         override fun resetMode(mode: Int) {
             memScoped {
                 val event = alloc<epoll_event>()
@@ -37,7 +38,7 @@ class MingwSelector : AbstractSelector() {
         override fun close() {
             super.close()
             epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
-            keys-=this
+            keys -= this
         }
     }
 
@@ -59,7 +60,7 @@ class MingwSelector : AbstractSelector() {
             event.events = key.epollCommonToNative(mode).convert()
             event.data.ptr = key.ptr
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
-            keys+=key
+            keys += key
         }
         return key
     }

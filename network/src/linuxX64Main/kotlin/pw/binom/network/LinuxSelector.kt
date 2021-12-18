@@ -23,7 +23,7 @@ class LinuxSelector : AbstractSelector() {
             epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
             keys -= this
         }
-        override fun toString(): String = "LinuxKey(mode: ${modeToString(listensFlag)}, attachment: $attachment)"
+        override fun toString(): String = "LinuxKey(mode: ${modeToString(listensFlag)}, attachment: $attachment, connected: $connected)"
         fun epollCommonToNative(mode: Int): Int {
             var events = 0
             if (Selector.INPUT_READY in mode) {
@@ -78,7 +78,7 @@ class LinuxSelector : AbstractSelector() {
 
             val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
             val key = keyPtr.get()
-            println("Event: ${modeToString(item.events.toInt())}  key.connected=${key.connected}")
+            println("Event: ${modeToString(item.events.toInt())}  $this")
             if (!key.connected) {
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)

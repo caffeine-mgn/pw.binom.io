@@ -12,8 +12,15 @@ import kotlin.coroutines.resumeWithException
 class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(), AsyncChannel {
 
     var connect: CancellableContinuation<Unit>? = null
-
+    var description: String? = null
     lateinit var key: Selector.Key
+
+    override fun toString(): String =
+        if (description == null) {
+            "TcpConnection"
+        } else {
+            "TcpConnection($description)"
+        }
 
     private class ReadData {
         var continuation: CancellableContinuation<Int>? = null

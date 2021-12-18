@@ -132,6 +132,7 @@ actual class NSocket(val native: Int) : Closeable {
             val flag = alloc<IntVar>()
             flag.value = 1
             setsockopt(native, SOL_SOCKET, SO_REUSEADDR, flag.ptr, sizeOf<IntVar>().convert())
+            setsockopt(native, SOL_SOCKET, SO_REUSEPORT, flag.ptr, sizeOf<IntVar>().convert())
         }
         shutdown(native, SHUT_RDWR)
         close(native)
