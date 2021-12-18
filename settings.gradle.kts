@@ -35,6 +35,7 @@ include(":ssl")
 include(":process")
 include(":flux")
 include(":smtp")
+include(":signal")
 
 include(":examples:echoServer")
 include(":examples:simpleHttpServer")

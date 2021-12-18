@@ -37,24 +37,16 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             try {
                 while (!self.closed) {
                     self.networkThread = ThreadRef()
-//                    println("Sуlecting...")
-//                    println("State:")
-//                    self.selector.getAttachedKeys().forEach {
-//                        println("$it")
-//                    }
                     val iterator = self.selector.select()
-//                    println("Selected!")
                     var executeOnNetwork = false
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
-//                        println("select #1 $event  ${event.key.attachment}")
                         val attachment = event.key.attachment
                         if (attachment === self.internalUdpContinuationConnection) {
                             executeOnNetwork = true
                         } else {
                             val connection = attachment as AbstractConnection
                             if (event.mode and Selector.EVENT_CONNECTED != 0) {
-//                                println("Call connected")
                                 connection.connected()
                             }
                             if (event.mode and Selector.EVENT_ERROR != 0) {
@@ -75,9 +67,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                             } else {
                                 readyForWriteListener.forEach {
                                     try {
-//                                        println("execute on network #1")
                                         it.run()
-//                                        println("execute on network #2")
                                     } catch (e: Throwable) {
                                         e.printStackTrace()
                                     }
@@ -90,7 +80,6 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             } catch (e: Throwable) {
                 e.printStackTrace()
             } finally {
-                println("Network manager closed")
                 self.close()
             }
         }
@@ -145,19 +134,14 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             val connection = attach(channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
             try {
                 connection.description = address.toString()
-                println("Connecting to $address... networkthread: ${networkThread.same}")
-
                 suspendCancellableCoroutine<Unit> {
                     connection.connect = it
                     it.invokeOnCancellation {
-                        println("Connect to $address canceled!")
                         connection.cancelSelector()
                     }
                     try {
                         channel.connect(address)
                     } catch (e: Throwable) {
-                        println("Can't connect to $address")
-                        e.printStackTrace()
                         it.resumeWithException(e)
                     }
                 }

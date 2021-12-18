@@ -78,7 +78,6 @@ class LinuxSelector : AbstractSelector() {
 
             val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
             val key = keyPtr.get()
-            println("Event: ${modeToString(item.events.toInt())}  $this")
             if (!key.connected) {
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)
@@ -132,7 +131,6 @@ class LinuxSelector : AbstractSelector() {
             event.events=key.listensFlag.convert()
             keys += key
             epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
-            println("Socket attached with mode: ${modeToString(key.epollCommonToNative(mode))}")
         }
         return key
     }
