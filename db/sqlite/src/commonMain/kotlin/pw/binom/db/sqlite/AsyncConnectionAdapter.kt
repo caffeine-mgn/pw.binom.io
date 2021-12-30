@@ -55,7 +55,7 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
                     }
                 }
             }
-            else -> throw IllegalArgumentException("SQL not support transaction isolation mode $mode")
+            else -> throw IllegalArgumentException("SQLite not support transaction isolation mode $mode")
         }
         _transactionMode = mode
     }

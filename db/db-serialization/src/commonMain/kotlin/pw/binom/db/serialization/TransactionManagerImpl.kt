@@ -14,10 +14,11 @@ class TransactionContextElement(val connection: PooledAsyncConnection) :
 
 object TransactionContextElementKey : CoroutineContext.Key<TransactionContextElement>
 
-private suspend fun getCurrentTransactionContext() =
-    suspendCoroutine<TransactionContextElement?> {
-        it.resume(it.context[TransactionContextElementKey])
-    }
+private suspend fun getCurrentTransactionContext():TransactionContextElement? =
+    coroutineContext[TransactionContextElementKey]
+//    suspendCoroutine<TransactionContextElement?> {
+//        it.resume(it.context[TransactionContextElementKey])
+//    }
 
 class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : TransactionManager {
     override suspend fun <T> re(function: suspend (PooledAsyncConnection) -> T): T {

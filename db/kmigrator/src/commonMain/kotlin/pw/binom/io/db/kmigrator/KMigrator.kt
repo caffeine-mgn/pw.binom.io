@@ -7,6 +7,8 @@ import pw.binom.db.async.pool.PooledAsyncConnection
 import pw.binom.db.async.pool.SelectQuery
 import pw.binom.db.async.pool.execute
 import pw.binom.io.use
+import pw.binom.logger.Logger
+import pw.binom.logger.debug
 
 fun kmigrator(
     table: String = "kmigrator",
@@ -30,6 +32,7 @@ class KMigrator(
     val maxIdLength: Int = 100,
     val steps: List<Step>
 ) {
+    private val logger = Logger.getLogger("KMigrator")
     private val table = "${schema.let { if (it != null) "$it." else "" }}$table"
     private val getExecutedMigrations = SelectQuery("select id from $table")
 
@@ -78,7 +81,9 @@ create table if not exists $table (
                         it.execute(this)
                         insertRecord.executeUpdate(it.id, Date())
                         executeUpdate("commit")
+                        logger.debug("Step \"${it.id}\" successful applied")
                     } catch (e: Throwable) {
+                        logger.debug("Failed apply step \"${it.id}\"", e)
                         executeUpdate("rollback")
                         throw KMigrationException(it.id, e)
                     }

@@ -1,5 +1,6 @@
 package pw.binom.network
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
@@ -17,6 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TcpConnectionTest {
 
     @Test

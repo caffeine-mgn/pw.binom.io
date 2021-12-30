@@ -128,8 +128,12 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun delay(delay: Duration) {
-        suspendCancellableCoroutine<Unit> {con->
-            val dispatcher = con.context[ContinuationInterceptor] as CoroutineDispatcher? ?: TODO("Cann't find current ContinuationInterceptor")
+        suspendCancellableCoroutine<Unit> { con ->
+            val dispatcher = con.context[ContinuationInterceptor] as CoroutineDispatcher?
+            if (dispatcher == null) {
+                con.resumeWithException(IllegalStateException("Can't find current ContinuationInterceptor"))
+                return@suspendCancellableCoroutine
+            }
             delay(delay) {
                 dispatcher.dispatch(con.context, Runnable {
                     con.resumeWith(Result.success(Unit))

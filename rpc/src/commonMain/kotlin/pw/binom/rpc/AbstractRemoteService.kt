@@ -8,7 +8,7 @@ abstract class AbstractRemoteService(val invoker: Invoker) : CrossService {
         suspend fun invoke(service: String, method: String, params: Map<String, Any?>): Any?
     }
 
-    inner class RemoteMethod<T>(val name: String) : CrossService.CrossMethod<T> {
+    inner class RemoteMethod<T> internal constructor(val name: String) : CrossService.CrossMethod<T> {
         override suspend operator fun invoke(params: Map<String, Any?>): T =
             invoker.invoke(this@AbstractRemoteService.name, name, params) as T
 

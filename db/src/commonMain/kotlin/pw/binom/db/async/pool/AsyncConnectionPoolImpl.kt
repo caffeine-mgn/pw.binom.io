@@ -1,5 +1,6 @@
 package pw.binom.db.async.pool
 
+import com.ionspin.kotlin.bignum.integer.concurrent.concurrentMultiply
 import pw.binom.concurrency.Lock
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
@@ -7,11 +8,10 @@ import pw.binom.date.Date
 import pw.binom.db.async.AsyncConnection
 import pw.binom.io.StreamClosedException
 import pw.binom.io.use
+import pw.binom.logger.Logger
+import pw.binom.logger.debug
 import pw.binom.neverFreeze
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
@@ -25,6 +25,7 @@ class AsyncConnectionPoolImpl constructor(
     val waitFreeConnection: Boolean = true,
     val factory: suspend () -> AsyncConnection,
 ) : AsyncConnectionPool {
+    private val logger = Logger.getLogger("AsyncConnectionPoolImpl")
     init {
         require(maxConnections >= 1) { "maxConnections should be grate than 0" }
     }
@@ -81,6 +82,8 @@ class AsyncConnectionPoolImpl constructor(
                     }
                 }
             }
+
+            logger.debug("Total closed connection ${forRemove.size}")
             forRemove.forEach {
                 runCatching { it.fullClose() }
             }
@@ -88,46 +91,59 @@ class AsyncConnectionPoolImpl constructor(
         } finally {
             cleaning = false
         }
-
+        logger.debug("Not used closed connection $count")
         return count
     }
 
     private suspend fun getConnectionAnyWay(): PooledAsyncConnectionImpl {
+        logger.debug("Getting new connection")
         while (true) {
             val connection = idleConnectionLock.synchronize { idleConnection.removeLastOrNull() }
             if (connection != null) {
-                println("Free connection found")
                 if (!connection.checkValid()) {
+                    logger.debug("New connection is invalid")
                     connectionsLock.synchronize {
                         connections -= connection
                     }
                     forRemove += connection
                     continue
+                } else {
+                    logger.debug("Free connection found")
                 }
                 return connection
             } else {
-                println("No free connection")
+                logger.debug("No free connection")
             }
+            logger.debug("Try spawn new connection")
             connectionsLock.lock()
             if (connections.size < maxConnections) {
+                logger.debug("Allocation new connection...")
                 connectionsLock.unlock()
                 val con = PooledAsyncConnectionImpl(this, factory())
                 connectionsLock.lock()
                 connections.add(con)
                 connectionsLock.unlock()
+                logger.debug("New connection Allocated!")
                 return con
+            } else {
+                logger.debug("No free connections")
             }
             if (!waitFreeConnection) {
                 throw IllegalStateException("No free connections")
             }
+            logger.debug("Wait until any connect free")
+
             val con = suspendCoroutine<PooledAsyncConnectionImpl> { waiters += it }
+            logger.debug("Found idle connection")
             if (!con.checkValid()) {
+                logger.debug("Founded connection is invalid")
                 connectionsLock.synchronize {
                     connections -= con
                 }
                 forRemove += con
                 continue
             }
+            logger.debug("Founded connection is valid. Returning it")
             con.updateActive()
             return con
         }
@@ -139,10 +155,11 @@ class AsyncConnectionPoolImpl constructor(
         }
 
     internal suspend fun free(sql: String) {
-        connectionsLock.synchronize {
-            connections.forEach {
-                it.closePreparedStatement(sql)
-            }
+        val connections = connectionsLock.synchronize {
+            connections.toTypedArray()
+        }
+        connections.forEach {
+            it.closePreparedStatement(sql)
         }
     }
 
