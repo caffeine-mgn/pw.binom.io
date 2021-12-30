@@ -13,9 +13,11 @@ kotlin {
             staticLib()
         }
     }
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
+    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+        linuxArm32Hfp {
+            binaries {
+                staticLib()
+            }
         }
     }
     mingwX64 {
@@ -57,8 +59,10 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
-        val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
+        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+            val linuxArm32HfpMain by getting {
+                dependsOn(commonMain)
+            }
         }
         if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
             val linuxArm64Main by getting {
