@@ -4,7 +4,6 @@ import pw.binom.concurrency.Worker
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.concurrency.create
 import pw.binom.concurrency.sleep
-import pw.binom.coroutine.Dispatcher
 import pw.binom.coroutine.getCurrentDispatcher
 import pw.binom.coroutine.start
 import pw.binom.io.*

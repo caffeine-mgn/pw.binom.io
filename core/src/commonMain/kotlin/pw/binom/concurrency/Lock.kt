@@ -1,5 +1,6 @@
 package pw.binom.concurrency
 
+import pw.binom.io.IOException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -22,4 +23,11 @@ inline fun <T> Lock.synchronize(func: () -> T): T {
     } finally {
         unlock()
     }
+}
+
+class LockTimeout : RuntimeException {
+    constructor() : super()
+    constructor(message: String?) : super(message)
+    constructor(message: String?, cause: Throwable?) : super(message, cause)
+    constructor(cause: Throwable?) : super(cause)
 }

@@ -3,7 +3,7 @@ package pw.binom.concurrency
 import pw.binom.io.Closeable
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-
+@Deprecated(message = "Not use it. Will be deleted")
 @OptIn(ExperimentalTime::class)
 interface DeadlineTimer : Closeable {
     /**

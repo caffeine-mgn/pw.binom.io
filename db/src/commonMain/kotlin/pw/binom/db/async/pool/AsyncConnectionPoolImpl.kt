@@ -25,6 +25,10 @@ class AsyncConnectionPoolImpl constructor(
     val waitFreeConnection: Boolean = true,
     val factory: suspend () -> AsyncConnection,
 ) : AsyncConnectionPool {
+    init {
+        require(maxConnections >= 1) { "maxConnections should be grate than 0" }
+    }
+
     private val connections = HashSet<PooledAsyncConnectionImpl>(maxConnections)
     private val idleConnection = ArrayList<PooledAsyncConnectionImpl>(maxConnections)
 
@@ -92,6 +96,7 @@ class AsyncConnectionPoolImpl constructor(
         while (true) {
             val connection = idleConnectionLock.synchronize { idleConnection.removeLastOrNull() }
             if (connection != null) {
+                println("Free connection found")
                 if (!connection.checkValid()) {
                     connectionsLock.synchronize {
                         connections -= connection
@@ -100,6 +105,8 @@ class AsyncConnectionPoolImpl constructor(
                     continue
                 }
                 return connection
+            } else {
+                println("No free connection")
             }
             connectionsLock.lock()
             if (connections.size < maxConnections) {

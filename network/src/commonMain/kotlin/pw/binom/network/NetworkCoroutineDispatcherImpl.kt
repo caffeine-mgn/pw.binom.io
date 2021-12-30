@@ -1,16 +1,14 @@
 package pw.binom.network
 
 import kotlinx.coroutines.*
-import pw.binom.PopResult
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.collection.LinkedList
-import pw.binom.concurrency.*
-import pw.binom.coroutine.getDispatcher
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.ThreadRef
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
-import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager {
     companion object {

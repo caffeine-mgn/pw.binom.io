@@ -1,13 +1,10 @@
-package pw.binom.process
+package pw.binom.signal
 
 import kotlinx.cinterop.staticCFunction
-import platform.posix.SIGINT
-import platform.posix.SIGTERM
-import platform.posix.usleep
+import platform.windows.*
 import kotlin.native.concurrent.AtomicInt
-
-private const val SIGBREAK=21
-
+import platform.posix.usleep
+import pw.binom.signal.Signal
 
 private var signalListening = AtomicInt(0)
 private val listeners = ArrayList<(Signal.Type) -> Unit>()
@@ -24,22 +21,22 @@ private fun lockListeners() {
 
 internal actual fun addSignalListener(func: (Signal.Type) -> Unit) {
     if (signalListening.compareAndSet(0, 1)) {
-        platform.posix.signal(SIGINT, signalListener)
-        platform.posix.signal(SIGBREAK, signalListener)
-        platform.posix.signal(SIGTERM, signalListener)
+        SetConsoleCtrlHandler(signalHandler, TRUE)
     }
     lockListeners()
     listeners += func
-    listenersLock.value=0
+    listenersLock.value = 0
 }
 
-private val signalListener = staticCFunction<Int, Unit> handler@{ signal ->
+private val signalHandler = staticCFunction<DWORD, WINBOOL> handler@{ signal ->
     initRuntimeIfNeeded()
-    val type = when (signal) {
-        SIGINT -> Signal.Type.Sigint
-        SIGBREAK -> Signal.Type.Sigbreak
-        SIGTERM -> Signal.Type.Sigterm
-        else -> return@handler
+    val type = when (signal.toInt()) {
+        CTRL_C_EVENT -> Signal.Type.Sigint
+        CTRL_BREAK_EVENT -> Signal.Type.Sigbreak
+        CTRL_CLOSE_EVENT -> Signal.Type.Sigterm
+        CTRL_LOGOFF_EVENT -> Signal.Type.Logoff
+        CTRL_SHUTDOWN_EVENT -> Signal.Type.Logoff
+        else -> return@handler FALSE
     }
 
     lockListeners()
@@ -52,7 +49,7 @@ private val signalListener = staticCFunction<Int, Unit> handler@{ signal ->
             }
         }
     } finally {
-        listenersLock.value=0
+        listenersLock.value = 0
     }
-    return@handler
+    return@handler TRUE
 }

@@ -83,6 +83,7 @@ kotlin {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
                 api(project(":network"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
         val jvmTest by getting {

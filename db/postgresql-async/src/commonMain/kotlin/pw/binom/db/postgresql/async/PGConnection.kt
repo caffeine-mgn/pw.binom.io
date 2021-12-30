@@ -5,8 +5,7 @@ import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
 import kotlinx.coroutines.Dispatchers
-import pw.binom.concurrency.SpinLock
-import pw.binom.concurrency.synchronize
+import pw.binom.concurrency.AsyncReentrantLock
 import pw.binom.network.Network
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
@@ -84,7 +83,7 @@ class PGConnection private constructor(
     }
 
     private val packageWriter = PackageWriter(this)
-    private val packageWriterLock = SpinLock()
+    private val packageWriterLock = AsyncReentrantLock()
     internal val charsetUtils = CharsetCoder(charset)
     private var connected = true
     override val isConnected

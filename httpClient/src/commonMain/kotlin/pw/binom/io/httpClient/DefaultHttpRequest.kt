@@ -128,7 +128,6 @@ class DefaultHttpRequest constructor(
     }
 
     override suspend fun getResponse(): HttpResponse {
-        println("getResponse #0")
         checkClosed()
         val len = headers.contentLength
         if (len != null && len > 0uL) {
@@ -138,20 +137,15 @@ class DefaultHttpRequest constructor(
         if (encode != null) {
             throw IllegalStateException("Can't get Response. Header contains \"${Headers.TRANSFER_ENCODING}: $encode\". Expected request data")
         }
-        println("getResponse #1")
         sendHeaders()
-        println("getResponse #2")
         channel.writer.flush()
-        println("getResponse #3")
         closed = true
-        println("getResponse #4")
         val v =  DefaultHttpResponse.read(
             uri = uri,
             client = client,
             keepAlive = keepAlive,
             channel = channel,
         )
-        println("getResponse #5")
         return v
     }
 

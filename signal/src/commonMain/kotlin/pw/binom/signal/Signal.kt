@@ -1,4 +1,4 @@
-package pw.binom.process
+package pw.binom.signal
 
 /**
  * For work in java run as "java -Xrs -jar <path to you program>"

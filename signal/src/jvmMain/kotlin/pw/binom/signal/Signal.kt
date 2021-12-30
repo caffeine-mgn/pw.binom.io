@@ -1,4 +1,5 @@
-package pw.binom.process
+@file:JvmName("SignalJvmKt")
+package pw.binom.signal
 
 import sun.misc.SignalHandler
 import java.util.concurrent.atomic.AtomicBoolean

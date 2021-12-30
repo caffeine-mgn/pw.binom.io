@@ -6,8 +6,6 @@ import pw.binom.FreezableFuture
 import pw.binom.Future
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
-import pw.binom.coroutine.CrossThreadContinuation
-import pw.binom.coroutine.Dispatcher
 import pw.binom.doFreeze
 import pw.binom.popOrNull
 import kotlin.coroutines.*

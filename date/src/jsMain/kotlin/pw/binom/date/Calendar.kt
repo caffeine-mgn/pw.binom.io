@@ -8,9 +8,15 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
     actual val year
         get() = tm.getUTCFullYear()
 
+    /**
+     * Month, from 1 (January) to 12 (December)
+     */
     actual val month
         get() = tm.getUTCMonth() + 1
 
+    /**
+     * Day of month, first day of month is 1
+     */
     actual val dayOfMonth
         get() = tm.getUTCDate()
 

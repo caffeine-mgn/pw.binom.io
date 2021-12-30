@@ -1,13 +1,8 @@
 package pw.binom.concurrency
 
-import kotlinx.coroutines.CoroutineDispatcher
 import pw.binom.Future
-import pw.binom.coroutine.Dispatcher
-import pw.binom.coroutine.Executor
 import pw.binom.getOrException
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 //expect class WorkerImpl : Executor, Worker, CoroutineDispatcher {
 //    override fun <T> resume(continuation: Reference<Continuation<T>>, result: Result<T>)
