@@ -12,10 +12,8 @@ import pw.binom.logger.Logger
 import pw.binom.logger.debug
 import pw.binom.neverFreeze
 import kotlin.coroutines.*
-import kotlin.time.Duration
+import kotlin.time.*
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.DurationUnit
-import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class AsyncConnectionPoolImpl constructor(
@@ -26,6 +24,7 @@ class AsyncConnectionPoolImpl constructor(
     val factory: suspend () -> AsyncConnection,
 ) : AsyncConnectionPool {
     private val logger = Logger.getLogger("AsyncConnectionPoolImpl")
+
     init {
         require(maxConnections >= 1) { "maxConnections should be grate than 0" }
     }
@@ -60,8 +59,15 @@ class AsyncConnectionPoolImpl constructor(
         PooledAsyncPreparedStatement2(this, sql)
     }
 
+    private var lastCleanup = TimeSource.Monotonic.markNow()
+
     suspend fun cleanUp(): Int {
+        if (lastCleanup.elapsedNow() < idleTime) {
+            return 0
+        }
+        lastCleanup = TimeSource.Monotonic.markNow()
         var count = 0
+        var hasRemovedAny = false
         if (cleaning) {
             return 0
         }
@@ -82,39 +88,48 @@ class AsyncConnectionPoolImpl constructor(
                     }
                 }
             }
-
-            logger.debug("Total closed connection ${forRemove.size}")
-            forRemove.forEach {
-                runCatching { it.fullClose() }
+            if (forRemove.isNotEmpty()) {
+                hasRemovedAny=true
+                logger.debug("Total closed connection ${forRemove.size}")
+                forRemove.forEach {
+                    runCatching { it.fullClose() }
+                }
+                forRemove.clear()
             }
-            forRemove.clear()
         } finally {
             cleaning = false
         }
-        logger.debug("Not used closed connection $count")
+        if (count > 0) {
+            logger.debug("Not used closed connection $count")
+        }
+        val idleSize = idleConnectionLock.synchronize { idleConnection.size }
+        val activeSize = connectionsLock.synchronize { connections.size }
+        if (idleSize>0 || activeSize>0 || hasRemovedAny) {
+            logger.debug("Status after cleanup: Active connection size: $activeSize, Idle connection size: $idleSize")
+        }
         return count
     }
 
     private suspend fun getConnectionAnyWay(): PooledAsyncConnectionImpl {
-        logger.debug("Getting new connection")
         while (true) {
             val connection = idleConnectionLock.synchronize { idleConnection.removeLastOrNull() }
             if (connection != null) {
                 if (!connection.checkValid()) {
-                    logger.debug("New connection is invalid")
+                    logger.debug("New connection is invalid. Try again")
                     connectionsLock.synchronize {
                         connections -= connection
                     }
                     forRemove += connection
                     continue
                 } else {
-                    logger.debug("Free connection found")
+                    val idleSize = idleConnectionLock.synchronize { idleConnection.size }
+                    logger.debug("Getting idle connection. Idle connections count: $idleSize")
                 }
                 return connection
             } else {
-                logger.debug("No free connection")
+                logger.debug("No idle connection")
             }
-            logger.debug("Try spawn new connection")
+            logger.debug("Try to spawn new connection")
             connectionsLock.lock()
             if (connections.size < maxConnections) {
                 logger.debug("Allocation new connection...")
@@ -123,7 +138,7 @@ class AsyncConnectionPoolImpl constructor(
                 connectionsLock.lock()
                 connections.add(con)
                 connectionsLock.unlock()
-                logger.debug("New connection Allocated!")
+                logger.debug("New connection Allocated! Connection count: $connections")
                 return con
             } else {
                 logger.debug("No free connections")
@@ -169,6 +184,7 @@ class AsyncConnectionPoolImpl constructor(
         if (w == null) {
             idleConnectionLock.synchronize {
                 idleConnection += connection
+                logger.debug("Connection free. Push to idle connections. Idle connection: ${idleConnection.size}")
             }
         } else {
             w.resume(connection)

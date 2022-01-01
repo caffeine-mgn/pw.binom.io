@@ -90,6 +90,12 @@ class PGConnection private constructor(
         get() = connected
     override val dbInfo: DatabaseInfo
         get() = PostgreSQLDatabaseInfo
+    private var closed = false
+    private fun checkClosed() {
+        if (closed) {
+            throw ClosedException()
+        }
+    }
 
     override suspend fun setTransactionMode(mode: TransactionMode) {
         if (transactionStarted) {
@@ -328,6 +334,7 @@ class PGConnection private constructor(
     }
 
     override suspend fun asyncClose() {
+        checkClosed()
         prepareStatements.toTypedArray().forEach {
             it.asyncClose()
         }
@@ -340,6 +347,7 @@ class PGConnection private constructor(
             charsetUtils.close()
             packageWriter.close()
             packageReader.asyncClose()
+            closed = true
         }
     }
 }

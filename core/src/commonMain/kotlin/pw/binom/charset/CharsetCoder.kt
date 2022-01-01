@@ -3,6 +3,7 @@ package pw.binom.charset
 import pw.binom.ByteBuffer
 import pw.binom.CharBuffer
 import pw.binom.io.Closeable
+import pw.binom.io.ClosedException
 import pw.binom.io.IOException
 import kotlin.math.roundToInt
 
@@ -11,8 +12,15 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
     private val decoder = charset.newDecoder()
     private var charBuffer = CharBuffer.alloc(charBufferCapacity)
     private var byteBuffer = ByteBuffer.alloc(byteBufferCapacity)
+    private var closed = false
+    private fun checkClosed() {
+        if (closed) {
+            throw ClosedException()
+        }
+    }
 
     fun <T> encode(text: String, using: (ByteBuffer) -> T): T {
+        checkClosed()
         if (charBuffer.capacity < text.length) {
             val newCharBuffer = charBuffer.realloc(text.length)
             charBuffer.close()
@@ -47,6 +55,7 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
 
 
     fun decode(bytes: ByteArray): String {
+        checkClosed()
         if (byteBuffer.capacity < bytes.size) {
             val b = byteBuffer.realloc(bytes.size)
             byteBuffer.close()
@@ -59,6 +68,7 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
     }
 
     fun decode(bytes: ByteBuffer): String {
+        checkClosed()
         charBuffer.clear()
         while (true) {
             when (decoder.decode(bytes, charBuffer)) {
@@ -81,7 +91,9 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
     }
 
     override fun close() {
+        checkClosed()
         charBuffer.close()
         byteBuffer.close()
+        closed = true
     }
 }

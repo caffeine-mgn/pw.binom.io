@@ -40,6 +40,9 @@ object ConsoleHandler : Logger.Handler {
             .append(" [").append(level.name).append("]")
         if (logger.pkg.isNotEmpty())
             sb.append(" [${logger.pkg}]")
+        if (trace != null) {
+            sb.append(" [$trace]")
+        }
         sb.append(":")
         if (text != null)
             sb.append(" ").append(text)
