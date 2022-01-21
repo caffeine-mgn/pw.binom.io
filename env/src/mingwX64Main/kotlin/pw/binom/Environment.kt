@@ -60,7 +60,7 @@ actual val Environment.userDirectory: String
 actual val Environment.currentExecutionPath: String
     get() =
         memScoped {
-            val result = allocArray<WCHARVar>(PATH_MAX)!!
+            val result = allocArray<WCHARVar>(PATH_MAX)
             val len = GetModuleFileNameW(null, result, PATH_MAX.convert()).convert<Int>()
             if (len == 0) {
                 throw RuntimeException("Can't get current execution path. Error #${GetLastError()}")

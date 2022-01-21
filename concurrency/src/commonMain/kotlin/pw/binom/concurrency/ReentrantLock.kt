@@ -4,7 +4,6 @@ package pw.binom.concurrency
 
 import kotlin.jvm.JvmName
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 expect class ReentrantLock : Lock {
     constructor()
@@ -14,7 +13,6 @@ expect class ReentrantLock : Lock {
 
     fun newCondition(): Condition
 
-    @OptIn(ExperimentalTime::class)
     class Condition {
         fun await()
 

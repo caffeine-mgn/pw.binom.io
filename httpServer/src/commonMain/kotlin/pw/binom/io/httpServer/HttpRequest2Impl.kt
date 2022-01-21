@@ -158,7 +158,7 @@ internal class HttpRequest2Impl(
     override suspend fun acceptWebsocket(): WebSocketConnection {
         checkClosed()
         checkWebSocket()
-        val key = headers.getSingle(Headers.SEC_WEBSOCKET_KEY)
+        val key = headers.getSingleOrNull(Headers.SEC_WEBSOCKET_KEY)
         if (key == null) {
             rejectWebsocket()
             throw IllegalStateException("Invalid Client Headers: Missing Header \"${Headers.SEC_WEBSOCKET_KEY}\"")

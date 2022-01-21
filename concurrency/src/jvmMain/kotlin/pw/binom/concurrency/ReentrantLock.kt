@@ -39,7 +39,6 @@ actual class ReentrantLock:Lock {
             native.signalAll()
         }
 
-        @OptIn(ExperimentalTime::class)
         actual fun await(duration: Duration): Boolean {
             try {
                 return native.await(duration.inWholeMilliseconds, TimeUnit.MILLISECONDS)

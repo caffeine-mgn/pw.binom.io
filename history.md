@@ -1,5 +1,10 @@
 # History
 
+### 0.1.32
+* Adding support of android-native
+* Fix bugs in postgres-connector
+* Update kotlin version 1.5.21 -> 1.6.10
+
 ### 0.1.31
 * Bug fix
 * Update Kotlin version 1.5.20 -> 1.5.21

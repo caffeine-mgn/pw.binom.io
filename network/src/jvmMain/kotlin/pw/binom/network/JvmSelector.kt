@@ -157,14 +157,12 @@ class JvmSelector : Selector {
         }
         selecting = true
         try {
-            val time = measureTime {
-                val count2 = when {
+                when {
                     timeout > 0L -> native.select(timeout)
                     timeout == 0L -> native.selectNow()
                     timeout < 0L -> native.select()
                     else -> throw IllegalArgumentException("Invalid timeout $timeout")
                 }
-            }
             val keys = native.selectedKeys()
             var count = 0
             val iterator = keys.iterator()

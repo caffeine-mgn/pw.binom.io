@@ -13,7 +13,7 @@ interface AsyncResultSet : ResultSet, AsyncCloseable {
  * Calls [mapper] for each rows of this [AsyncResultSet]. Makes list of result [mapper] and returns it.
  * Closes this [AsyncResultSet] after call [mapper] for each values of this [AsyncResultSet]
  */
-suspend inline fun <T> AsyncResultSet.map(mapper: suspend (AsyncResultSet) -> T): List<T> {
+suspend inline fun <T> AsyncResultSet.map(mapper: (AsyncResultSet) -> T): List<T> {
     val out = ArrayList<T>()
     use {
         while (next()) {
@@ -23,7 +23,7 @@ suspend inline fun <T> AsyncResultSet.map(mapper: suspend (AsyncResultSet) -> T)
     return out
 }
 
-suspend inline fun AsyncResultSet.forEach(func: suspend (AsyncResultSet) -> Unit) {
+suspend inline fun AsyncResultSet.forEach(func: (AsyncResultSet) -> Unit) {
     use {
         while (next()) {
             func(this)

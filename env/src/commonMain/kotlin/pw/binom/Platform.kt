@@ -12,4 +12,5 @@ enum class Platform {
     JVM,
     JS,
     WASM32,
+    ANDROID_X64
 }

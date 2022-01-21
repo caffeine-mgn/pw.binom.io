@@ -163,7 +163,7 @@ class DefaultHttpRequest constructor(
         if (resp.responseCode != 101) {
             throw IOException("Invalid Response code: ${resp.responseCode}")
         }
-        val respKey = resp.headers.getSingle(Headers.SEC_WEBSOCKET_ACCEPT)
+        val respKey = resp.headers.getSingleOrNull(Headers.SEC_WEBSOCKET_ACCEPT)
             ?: throw IOException("Invalid Server Response. Missing header \"${Headers.SEC_WEBSOCKET_ACCEPT}\"")
         if (respKey != responseKey) {
             throw InvalidSecurityKeyException()

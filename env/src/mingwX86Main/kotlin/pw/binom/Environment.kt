@@ -2,9 +2,7 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import platform.windows.FreeEnvironmentStrings
-import platform.windows.GetEnvironmentStringsW
-import platform.windows.lstrlen
+import platform.windows.*
 
 actual val Environment.os: OS
     get() = OS.WINDOWS
@@ -57,3 +55,14 @@ actual val Environment.workDirectory: String
 
 actual val Environment.userDirectory: String
     get() = getEnv("USERPROFILE") ?: ""
+
+actual val Environment.currentExecutionPath: String
+    get() =
+        memScoped {
+            val result = allocArray<WCHARVar>(PATH_MAX)
+            val len = GetModuleFileNameW(null, result, PATH_MAX.convert()).convert<Int>()
+            if (len == 0) {
+                throw RuntimeException("Can't get current execution path. Error #${GetLastError()}")
+            }
+            result.toKString()
+        }

@@ -41,5 +41,8 @@ abstract class AbstractServiceInjector<T : Any, RESULT> internal constructor(
     }
 
     override val service: RESULT
-        get() = bean as RESULT
+        get() {
+            init()
+            return bean as RESULT
+        }
 }

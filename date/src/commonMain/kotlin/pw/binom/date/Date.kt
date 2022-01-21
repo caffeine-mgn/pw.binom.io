@@ -64,11 +64,9 @@ operator fun Date.compareTo(expDate: Date): Int = when {
     else -> 0
 }
 
-@OptIn(ExperimentalTime::class)
 operator fun Date.plus(duration: Duration) =
     Date(time + duration.inWholeMilliseconds)
 
-@OptIn(ExperimentalTime::class)
 operator fun Date.minus(duration: Duration) =
     Date(time - duration.inWholeMilliseconds)
 

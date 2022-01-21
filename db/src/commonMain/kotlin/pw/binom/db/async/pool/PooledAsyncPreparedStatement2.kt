@@ -70,7 +70,9 @@ suspend fun <T : Any> PooledAsyncConnection.selectAll(
     vararg args: Pair<String, Any?>
 ): List<T> =
     usePreparedStatement(query.query.sql).executeQuery(*query.query.buildArguments(*args)).use {
-        it.map(query.mapper)
+        it.map { row ->
+            query.mapper(row)
+        }
     }
 class SelectQueryWithMapper<T : Any>(val query: SQLQueryNamedArguments, val mapper: suspend (AsyncResultSet) -> T)
 class UpdateQueryWithParam<T : Any>(

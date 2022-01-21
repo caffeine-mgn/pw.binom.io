@@ -37,7 +37,6 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
     override val isEmpty: Boolean
         get() = _size == 0
 
-    @OptIn(ExperimentalTime::class)
     fun popBlocked(): T {
         lock.synchronize {
             while (true) {
@@ -58,7 +57,6 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
         throw IllegalStateException()
     }
 
-    @OptIn(ExperimentalTime::class)
     fun popBlocked(duration: Duration): T? {
         lock.synchronize {
             while (true) {

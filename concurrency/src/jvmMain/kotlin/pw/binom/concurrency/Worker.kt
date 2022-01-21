@@ -10,8 +10,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTimedValue
 
 private val currentWorker = ThreadLocal<Worker>()
 private val idSeq = AtomicLong(0)
@@ -45,7 +43,6 @@ actual class Worker actual constructor(name: String?) : CoroutineDispatcher() {
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     actual fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
         if (worker.isShutdown or worker.isTerminated) {
             throw IllegalStateException("Worker already terminated")
@@ -53,9 +50,9 @@ actual class Worker actual constructor(name: String?) : CoroutineDispatcher() {
         val future = worker.submit(
             Callable {
                 _taskCount.increment()
-                val gg = measureTimedValue { runCatching { func(input) } }
+                val gg = runCatching { func(input) }
                 _taskCount.decrement()
-                gg.value
+                gg
             }
         )
         return FutureWrapper(future)

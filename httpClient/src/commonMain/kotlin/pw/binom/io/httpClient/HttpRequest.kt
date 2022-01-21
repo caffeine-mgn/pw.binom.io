@@ -6,7 +6,7 @@ import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncWriter
 import pw.binom.io.http.BasicAuth
 import pw.binom.io.http.MutableHeaders
-import pw.binom.io.http.use
+import pw.binom.io.http.useBasicAuth
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.net.URI
 
@@ -62,6 +62,6 @@ interface AsyncHttpRequestWriter : AsyncWriter {
 }
 
 fun <T : HttpRequest> T.use(basicAuth: BasicAuth): T {
-    headers.use(basicAuth)
+    headers.useBasicAuth(basicAuth)
     return this
 }

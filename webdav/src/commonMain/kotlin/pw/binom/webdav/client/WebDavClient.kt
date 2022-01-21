@@ -21,7 +21,6 @@ import kotlin.coroutines.*
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 open class WebDavClient constructor(val client: HttpClient, val url: URI) :
     FileSystem {
     override suspend fun getQuota(path: Path): Quota? {

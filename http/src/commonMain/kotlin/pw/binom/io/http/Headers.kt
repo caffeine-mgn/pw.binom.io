@@ -87,7 +87,7 @@ interface Headers : Map<String, List<String>> {
 
 
     val location: String?
-        get() = getSingle(LOCATION)
+        get() = getSingleOrNull(LOCATION)
 
     val charset: String?
         get() {
@@ -103,6 +103,16 @@ interface Headers : Map<String, List<String>> {
                 null
             }
         }
+
+    fun getCookies() =
+        this[COOKIE]
+            ?.asSequence()
+            ?.flatMap { it.splitToSequence("; ") }
+            ?.map {
+                val items = it.split("=", limit = 2)
+                items[0] to items[1]
+            }
+            ?.toMap() ?: emptyMap()
 
     fun getList(key: String): String? {
         val len = this[key] ?: return null
@@ -130,11 +140,25 @@ interface Headers : Map<String, List<String>> {
         return len[len.lastIndex]
     }
 
-    fun getSingle(key: String): String? {
+    fun getSingleOrNull(key: String): String? {
         val len = this[key] ?: return null
         if (len.isEmpty()) {
             return null
         }
+        if (len.size > 1) {
+            return null
+        }
+        return len[0]
+    }
+
+    /**
+     * Search header with [key] and return one value. If header not found or headers has more than one header with [key]
+     * throws [IllegalStateException]
+     * @param key name of header for search
+     */
+    fun getSingle(key: String): String {
+        val len = this[key]?.takeIf { it.isNotEmpty() }
+            ?: throw IllegalStateException("Header \"$key\" not found in headers")
         if (len.size > 1) {
             throw IllegalStateException("More than one head \"$key\"")
         }
@@ -143,12 +167,22 @@ interface Headers : Map<String, List<String>> {
 
     val basicAuth: BasicAuth?
         get() {
-            val authorization = getSingle(AUTHORIZATION) ?: return null
-            if (!authorization.startsWith("Basic "))
+            val authorization = getSingleOrNull(AUTHORIZATION) ?: return null
+            if (!authorization.startsWith("Basic ")) {
                 return null
+            }
             val sec = Base64.decode(authorization.removePrefix("Basic ")).decodeToString()
             val items = sec.split(':', limit = 2)
             return BasicAuth(login = items[0], password = items[1])
+        }
+
+    val bearerAuth: String?
+        get() {
+            val authorization = getSingleOrNull(AUTHORIZATION) ?: return null
+            if (!authorization.startsWith("Bearer ")) {
+                return null
+            }
+            return authorization.removePrefix("Bearer ")
         }
 }
 
@@ -172,12 +206,12 @@ fun headersOf(vararg headers: Pair<String, String>): Headers {
 
 fun emptyHeaders() = EmptyHeaders
 
-fun Headers.getCookies() =
-    this[Headers.COOKIE]
-        ?.asSequence()
-        ?.flatMap { it.splitToSequence("; ") }
-        ?.map {
-            val items = it.split("=", limit = 2)
-            items[0] to items[1]
-        }
-        ?.toMap() ?: emptyMap()
+//fun Headers.getCookies() =
+//    this[Headers.COOKIE]
+//        ?.asSequence()
+//        ?.flatMap { it.splitToSequence("; ") }
+//        ?.map {
+//            val items = it.split("=", limit = 2)
+//            items[0] to items[1]
+//        }
+//        ?.toMap() ?: emptyMap()

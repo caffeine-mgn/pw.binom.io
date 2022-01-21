@@ -9,11 +9,24 @@ apply {
     plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
 }
 
+fun androidCInterop(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) {
+    target.run {
+        binaries {
+            compilations["main"].cinterops {
+                create("android") {
+                    defFile = project.file("src/androidNativeMain/cinterop/android.def")
+                    packageName = "platform.android"
+                }
+            }
+        }
+    }
+}
+
 kotlin {
     jvm()
     linuxX64()
-    linuxArm32Hfp()
     linuxArm64()
+    linuxArm32Hfp()
     linuxMips32()
     linuxMipsel32()
     mingwX64()
@@ -26,6 +39,18 @@ kotlin {
         browser()
         nodejs()
     }
+    androidNativeX64 {
+        androidCInterop(this)
+    }
+    androidNativeX86 {
+        androidCInterop(this)
+    }
+    androidNativeArm32 {
+        androidCInterop(this)
+    }
+    androidNativeArm64 {
+        androidCInterop(this)
+    }
     wasm32()
     baseStaticLibConfig()
     sourceSets {
@@ -35,7 +60,7 @@ kotlin {
             }
             kotlin.srcDir("build/gen")
         }
-        val nativeMain by creating{
+        val nativeMain by creating {
             dependsOn(commonMain)
         }
         val linuxX64Main by getting {
@@ -55,6 +80,22 @@ kotlin {
             dependsOn(nativeMain)
         }
 
+        val androidNativeMain by creating {
+            dependsOn(nativeMain)
+        }
+
+        val androidNativeX64Main by getting {
+            dependsOn(androidNativeMain)
+        }
+        val androidNativeX86Main by getting {
+            dependsOn(androidNativeMain)
+        }
+        val androidNativeArm32Main by getting {
+            dependsOn(androidNativeMain)
+        }
+        val androidNativeArm64Main by getting {
+            dependsOn(androidNativeMain)
+        }
         val mingwX64Main by getting {
             dependsOn(nativeMain)
         }

@@ -51,7 +51,6 @@ kotlin {
                 api(kotlin("stdlib-common"))
                 api(project(":core"))
                 api(project(":date"))
-                api(project(":logger"))
                 api("com.ionspin.kotlin:bignum:0.2.3")
             }
         }

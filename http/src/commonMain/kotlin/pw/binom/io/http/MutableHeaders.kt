@@ -1,7 +1,5 @@
 package pw.binom.io.http
 
-import pw.binom.base64.Base64
-
 interface MutableHeaders : Headers {
     operator fun set(key: String, value: List<String>): MutableHeaders
     operator fun set(key: String, value: String?): MutableHeaders
@@ -79,7 +77,19 @@ fun mutableHeadersOf(vararg headers: Pair<String, String>): MutableHeaders {
     return out
 }
 
-fun <T : MutableHeaders> T.use(basicAuth: BasicAuth): T {
+fun <T : MutableHeaders> T.useBasicAuth(basicAuth: BasicAuth): T {
     this[Headers.AUTHORIZATION] = basicAuth.headerValue
+    return this
+}
+
+/**
+ * Applies header `Authorization: Bearer [token]`
+ *
+ * @receiver headers for apply bearer token
+ * @param token token for add to header
+ * @return this
+ */
+fun <T : MutableHeaders> T.useBearerAuth(token: String): T {
+    this[Headers.AUTHORIZATION] = "Bearer $token"
     return this
 }
