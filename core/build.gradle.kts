@@ -2,6 +2,7 @@ import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("org.jmailen.kotlinter")
 }
 
 apply {
@@ -197,6 +198,11 @@ tasks {
             makeTimeFile()
         }
     }
+}
+
+kotlinter {
+    indentSize = 4
+    disabledRules = arrayOf("no-wildcard-imports")
 }
 
 apply<pw.binom.plugins.DocsPlugin>()

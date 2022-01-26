@@ -32,4 +32,4 @@ jobs:
         distribution: 'adopt'
     - uses: eskatos/gradle-command-action@v1
       with:
-        arguments: publish -Pbinom.repo.url=${{ secrets.BINOM_REPO_URL }} -Pbinom.repo.user=${{ secrets.BINOM_REPO_USER }} -Pbinom.repo.password=${{ secrets.BINOM_REPO_PASSWORD }} -Pbinom.gpg.key_id=${{ secrets.GPG_KEY_ID }} -Pbinom.gpg.password=${{ secrets.GPG_PASSWORD }} -Pbinom.gpg.private_key=${{ secrets.GPG_PRIVATE_KEY }}
+        arguments: publish '-Pbinom.repo.url=${{ secrets.BINOM_REPO_URL }}' '-Pbinom.repo.user=${{ secrets.BINOM_REPO_USER }}' '-Pbinom.repo.password=${{ secrets.BINOM_REPO_PASSWORD }}' '-Pbinom.gpg.key_id=${{ secrets.GPG_KEY_ID }}' '-Pbinom.gpg.password=${{ secrets.GPG_PASSWORD }}' '-Pbinom.gpg.private_key=${{ secrets.GPG_PRIVATE_KEY }}'

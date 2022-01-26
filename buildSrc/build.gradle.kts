@@ -29,4 +29,5 @@ dependencies {
     api("org.jetbrains.dokka:dokka-gradle-plugin:1.6.0")
     api("pw.binom:kn-clang:0.1.1")
     api("com.bmuschko:gradle-docker-plugin:7.1.0")
+    api("org.jmailen.gradle:kotlinter-gradle:3.8.0")
 }

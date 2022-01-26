@@ -29,7 +29,7 @@ object Base64 {
                 newOld(0)
                 "${byteToBase64(ff)}${byteToBase64((data and 63))}"
             }
-            else -> throw IllegalArgumentException("Argument counter shoul be between 0 and 2. Got $counter")
+            else -> throw IllegalArgumentException("Argument counter should be between 0 and 2. Got $counter")
         }
 
     fun encode(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): String {
@@ -72,4 +72,5 @@ object Base64 {
 }
 
 internal infix fun Byte.shl(count: Int) = ((toInt() and 0xFF) shl count).toByte()
+internal infix fun Byte.ushr(count: Int) = ((toInt() and 0xFF) ushr count).toByte()
 internal infix fun Byte.shr(count: Int) = ((toInt() and 0xFF) shr count).toByte()

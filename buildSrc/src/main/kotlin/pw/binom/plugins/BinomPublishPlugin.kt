@@ -57,9 +57,6 @@ class BinomPublishPlugin : Plugin<Project> {
             }
         }
 
-
-
-
         if (signApply) {
             target.extensions.configure(SigningExtension::class.java) {
                 it.useInMemoryPgpKeys(gpgKeyId, gpgPrivateKey, gpgPassword)
