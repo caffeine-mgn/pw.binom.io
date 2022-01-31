@@ -93,7 +93,7 @@ class DnsHeader {
 
     fun readPackage(buf: ByteBuffer) {
         id = buf.readShort()
-        val flags = (buf.readShort().toInt() and 0xFFFF).toBitset32()
+        val flags = (buf.readShort().toInt() and 0xFFFF).toBitset()
         qr = flags[0 + Short.SIZE_BITS]
         opcode = flags.getByte4(1 + Short.SIZE_BITS)
         aa = flags[5 + Short.SIZE_BITS]
