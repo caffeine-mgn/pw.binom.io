@@ -3,11 +3,8 @@ package pw.binom.network
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.ByteBuffer
-import pw.binom.CancelledException
 import pw.binom.io.use
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
 
@@ -116,13 +113,6 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         key.listensFlag = 0
         key.close()
         channel.close()
-    }
-
-    fun interruptReading(): Boolean {
-        val continuation = readData.continuation ?: return false
-        continuation.resumeWithException(CancelledException())
-        readData.reset()
-        return true
     }
 
     suspend fun read(dest: ByteBuffer, address: NetworkAddress.Mutable?): Int {

@@ -63,15 +63,14 @@ class BaseHttpClient(
     }
 
     internal suspend fun interruptAndClose(channel: AsyncAsciiChannel) {
-        var c = channel.channel
-        while (c !is TcpConnection) {
-            c = when (c) {
-                is TcpConnection -> c
-                is AsyncSSLChannel -> c.channel
-                else -> TODO()
-            }
-        }
-        c.interruptReading()
+//        var c = channel.channel
+//        while (c !is TcpConnection) {
+//            c = when (c) {
+//                is TcpConnection -> c
+//                is AsyncSSLChannel -> c.channel
+//                else -> TODO()
+//            }
+//        }
         channel.asyncClose()
     }
 

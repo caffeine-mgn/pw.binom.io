@@ -26,7 +26,6 @@ expect class Calendar {
     /**
      * Timezone offset in minutes
      */
-    @JsName("tzo")
     val timeZoneOffset: Int
 
     /**

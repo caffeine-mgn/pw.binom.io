@@ -19,11 +19,13 @@ private class AsyncReentrantLocksElement : CoroutineContext.Element {
             locks += lock
         }
     }
+
     fun remove(lock: AsyncReentrantLock) {
         locksLock.synchronize {
             locks -= lock
         }
     }
+
     fun isExist(lock: AsyncReentrantLock) =
         locksLock.synchronize {
             lock in locks
@@ -42,20 +44,25 @@ class AsyncReentrantLock : AsyncLock {
             }
             waiter
         }
-        locked.value = false
-        waiter?.resume(Unit)
-
+        if (waiter == null) {
+            locked.value = false
+        } else {
+            waiter.resume(Unit)
+        }
     }
+
+    override val isLocked: Boolean
+        get() = locked.value
 
     override suspend fun <T> synchronize(func: suspend () -> T): T {
         val locks = coroutineContext[AsyncReentrantLocksKey]
-        val isCurrentLockActive = locks?.isExist(this) == true//is this lock already locked in this coroutine
+        val isCurrentLockActive = locks?.isExist(this) == true // is this lock already locked in this coroutine
         if (isCurrentLockActive) {
             return func()
         }
-        //Try lock
+        // Try lock
         if (!locked.compareAndSet(expected = false, new = true)) {
-            //if lock failed wait until is free
+            // if lock failed wait until is free
             suspendCancellableCoroutine<Unit> {
                 waiterLock.synchronize {
                     waiters += it

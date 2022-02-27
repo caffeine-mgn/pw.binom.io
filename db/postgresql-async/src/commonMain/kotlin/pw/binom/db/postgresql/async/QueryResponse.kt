@@ -22,6 +22,8 @@ sealed class QueryResponse {
         private var ended = true
         var portalName: String? = null
         var binaryResult = false
+        val isClosed
+            get() = closed
 
         private var current: DataRowMessage? = null
         fun reset(meta: RowDescriptionMessage) {
@@ -46,8 +48,8 @@ sealed class QueryResponse {
                     current = null
                     ended = true
                     connection.busy = false
-
                     check(connection.readDesponse() is ReadyForQueryMessage)
+                    closeCursor()
                     false
                 }
                 else -> throw IOException("Unknown response type: \"$msg\" (${msg::class})")
@@ -61,22 +63,30 @@ sealed class QueryResponse {
             return current.data[index]
         }
 
+        private suspend fun closeCursor() {
+            if (portalName != null) {
+                connection.sendOnly(
+                    CloseMessage().also {
+                        it.statement = portalName!!
+                        it.portal = true
+                    }
+                )
+                connection.sendOnly(SyncMessage)
+                check(connection.readDesponse() is CloseCompleteMessage)
+                check(connection.readDesponse() is ReadyForQueryMessage)
+            }
+        }
+
         override suspend fun asyncClose() {
             checkClosed()
             try {
-                while (true) {
-                    if (!next()) {
-                        break
+                if (!ended) {
+                    while (true) {
+                        if (!next()) {
+                            break
+                        }
                     }
-                }
-                if (portalName != null) {
-                    connection.sendOnly(CloseMessage().also {
-                        it.statement = portalName!!
-                        it.portal = true
-                    })
-                    connection.sendOnly(SyncMessage)
-                    check(connection.readDesponse() is CloseCompleteMessage)
-                    check(connection.readDesponse() is ReadyForQueryMessage)
+                    closeCursor()
                 }
             } finally {
                 _meta = null

@@ -1,6 +1,5 @@
 package pw.binom.concurrency
 
-import pw.binom.io.IOException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 

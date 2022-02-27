@@ -1,6 +1,5 @@
 package pw.binom
 
-
 class Stack<T> {
     val size: Int
         get() = _size

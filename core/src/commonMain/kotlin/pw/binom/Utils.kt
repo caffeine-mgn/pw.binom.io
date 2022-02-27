@@ -100,14 +100,16 @@ fun Long.reverse(): Long {
     val ch7 = (this ushr 8) and 0xFF
     val ch8 = (this ushr 0) and 0xFF
 
-    return ((ch8 shl 56) or
+    return (
+        (ch8 shl 56) or
             ((ch7 and 0xFF) shl 48) or
             ((ch6 and 0xFF) shl 40) or
             ((ch5 and 0xFF) shl 32) or
             ((ch4 and 0xFF) shl 24) or
             ((ch3 and 0xFF) shl 16) or
             ((ch2 and 0xFF) shl 8) or
-            ((ch1 and 0xFF) shl 0))
+            ((ch1 and 0xFF) shl 0)
+        )
 }
 
 fun Int.reverse(): Int {
@@ -163,33 +165,38 @@ fun Long.Companion.fromBytes(source: ByteBuffer): Long {
     return fromBytes(b0, b1, b2, b3, b4, b5, b6, b7)
 }
 
-
 @JvmName("Int_fromBytes1")
 fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte): Int =
     ((byte0.toInt() and 0xFF) shl 24) +
-            ((byte1.toInt() and 0xFF) shl 16) +
-            ((byte2.toInt() and 0xFF) shl 8) +
-            ((byte3.toInt() and 0xFF) shl 0)
+        ((byte1.toInt() and 0xFF) shl 16) +
+        ((byte2.toInt() and 0xFF) shl 8) +
+        ((byte3.toInt() and 0xFF) shl 0)
 
 @JvmName("Int_fromBytes2")
 fun Int.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) =
     ((readBuffer[0 + offset].toInt() and 0xFF) shl 24) +
-            ((readBuffer[1 + offset].toInt() and 0xFF) shl 16) +
-            ((readBuffer[2 + offset].toInt() and 0xFF) shl 8) +
-            ((readBuffer[3 + offset].toInt() and 0xFF) shl 0)
+        ((readBuffer[1 + offset].toInt() and 0xFF) shl 16) +
+        ((readBuffer[2 + offset].toInt() and 0xFF) shl 8) +
+        ((readBuffer[3 + offset].toInt() and 0xFF) shl 0)
 
 fun Long.Companion.fromBytes(
-    byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte,
-    byte4: Byte, byte5: Byte, byte6: Byte, byte7: Byte
+    byte0: Byte,
+    byte1: Byte,
+    byte2: Byte,
+    byte3: Byte,
+    byte4: Byte,
+    byte5: Byte,
+    byte6: Byte,
+    byte7: Byte
 ) =
     (byte0.toLong() and 0xFFL shl 56) +
-            ((byte1).toLong() and 0xFFL shl 48) +
-            ((byte2).toLong() and 0xFFL shl 40) +
-            ((byte3).toLong() and 0xFFL shl 32) +
-            ((byte4).toLong() and 0xFFL shl 24) +
-            (byte5.toLong() and 0xFFL shl 16) +
-            (byte6.toLong() and 0xFFL shl 8) +
-            (byte7.toLong() and 0xFFL shl 0)
+        ((byte1).toLong() and 0xFFL shl 48) +
+        ((byte2).toLong() and 0xFFL shl 40) +
+        ((byte3).toLong() and 0xFFL shl 32) +
+        ((byte4).toLong() and 0xFFL shl 24) +
+        (byte5.toLong() and 0xFFL shl 16) +
+        (byte6.toLong() and 0xFFL shl 8) +
+        (byte7.toLong() and 0xFFL shl 0)
 
 fun Long.toBytes(array: ByteArray, offset: Int = 0) {
     if (array.size - offset < Long.SIZE_BYTES)
@@ -205,10 +212,10 @@ fun Long.toBytes(array: ByteArray, offset: Int = 0) {
 }
 
 fun Long.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) = (readBuffer[0 + offset] shl 56) +
-        ((readBuffer[1 + offset].toLong() and 0xFFL) shl 48) +
-        ((readBuffer[2 + offset].toLong() and 0xFFL) shl 40) +
-        ((readBuffer[3 + offset].toLong() and 0xFFL) shl 32) +
-        ((readBuffer[4 + offset].toLong() and 0xFFL) shl 24) +
-        (readBuffer[5 + offset].toLong() and 0xFFL shl 16) +
-        (readBuffer[6 + offset].toLong() and 0xFFL shl 8) +
-        (readBuffer[7 + offset].toLong() and 0xFFL shl 0)
+    ((readBuffer[1 + offset].toLong() and 0xFFL) shl 48) +
+    ((readBuffer[2 + offset].toLong() and 0xFFL) shl 40) +
+    ((readBuffer[3 + offset].toLong() and 0xFFL) shl 32) +
+    ((readBuffer[4 + offset].toLong() and 0xFFL) shl 24) +
+    (readBuffer[5 + offset].toLong() and 0xFFL shl 16) +
+    (readBuffer[6 + offset].toLong() and 0xFFL shl 8) +
+    (readBuffer[7 + offset].toLong() and 0xFFL shl 0)

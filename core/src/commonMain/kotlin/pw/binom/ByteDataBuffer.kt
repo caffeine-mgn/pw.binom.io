@@ -3,7 +3,6 @@
 package pw.binom
 
 import pw.binom.io.Closeable
-import pw.binom.io.UTF8
 import pw.binom.pool.DefaultPool
 import kotlin.jvm.JvmName
 import kotlin.random.Random
@@ -27,7 +26,6 @@ expect class ByteDataBuffer : Closeable, Iterable<Byte> {
     internal fun unsafe()
     internal fun safe()
     fun fill(element: Byte, startIndex: Int = 0, endIndex: Int = size - 1)
-
 
     val size: Int
     operator fun set(index: Int, value: Byte)

@@ -1,4 +1,5 @@
 @file:JvmName("UUIDUtils")
+
 package pw.binom
 
 import kotlin.experimental.and
@@ -11,10 +12,10 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
 
     companion object {
         fun create(mostSigBits: Long, leastSigBits: Long) =
-                UUID(
-                        mostSigBits = mostSigBits,
-                        leastSigBits = leastSigBits
-                )
+            UUID(
+                mostSigBits = mostSigBits,
+                leastSigBits = leastSigBits
+            )
 
         fun create(data: ByteArray): UUID {
             if (data.size != 16)
@@ -26,8 +27,8 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
             val mostSigBits = msb
             val leastSigBits = lsb
             return UUID(
-                    mostSigBits = mostSigBits,
-                    leastSigBits = leastSigBits
+                mostSigBits = mostSigBits,
+                leastSigBits = leastSigBits
             )
         }
 
@@ -61,8 +62,8 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
             leastSigBits = leastSigBits shl 48
             leastSigBits = leastSigBits or (uuid.toLong(dash4 + 1, len, 16) and 0xffffffffffffL)
             return UUID(
-                    mostSigBits = mostSigBits,
-                    leastSigBits = leastSigBits
+                mostSigBits = mostSigBits,
+                leastSigBits = leastSigBits
             )
         }
     }
@@ -95,7 +96,7 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
         return output
     }
 
-    fun dump(dest:ByteBuffer){
+    fun dump(dest: ByteBuffer) {
         mostSigBits.dump(dest)
         leastSigBits.dump(dest)
     }
@@ -139,12 +140,13 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
 
 @SharedImmutable
 private val digits = charArrayOf(
-        '0', '1', '2', '3', '4', '5',
-        '6', '7', '8', '9', 'a', 'b',
-        'c', 'd', 'e', 'f', 'g', 'h',
-        'i', 'j', 'k', 'l', 'm', 'n',
-        'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z')
+    '0', '1', '2', '3', '4', '5',
+    '6', '7', '8', '9', 'a', 'b',
+    'c', 'd', 'e', 'f', 'g', 'h',
+    'i', 'j', 'k', 'l', 'm', 'n',
+    'o', 'p', 'q', 'r', 's', 't',
+    'u', 'v', 'w', 'x', 'y', 'z'
+)
 
 private fun Long.Companion.formatUnsignedLong0(value: Long, shift: Int, buf: CharArray, offset: Int, len: Int) {
     var charPos = offset + len

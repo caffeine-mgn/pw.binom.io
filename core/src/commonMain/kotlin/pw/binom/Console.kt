@@ -1,6 +1,5 @@
 package pw.binom
 
-import pw.binom.io.Channel
 import pw.binom.io.Reader
 
 expect object Console {
@@ -8,7 +7,7 @@ expect object Console {
     val errChannel: Output
     val inChannel: Input
 
-    val std:Appendable
-    val err:Appendable
-    val input:Reader
+    val std: Appendable
+    val err: Appendable
+    val input: Reader
 }

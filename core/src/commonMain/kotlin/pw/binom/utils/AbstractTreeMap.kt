@@ -116,12 +116,12 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
 
         // Find new node's parent.
         while (current != null) {
-            parent = current;
-            comparison = compare(key, current.key);
+            parent = current
+            comparison = compare(key, current.key)
             if (comparison > 0)
-                current = current.right;
+                current = current.right
             else if (comparison < 0)
-                current = current.left;
+                current = current.left
             else { // Key already in tree.
                 current.value = value
                 return value
@@ -129,7 +129,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
         }
 
         // Set up new node.
-        val n = createTreeNode(key = key, value = value, color = RED);
+        val n = createTreeNode(key = key, value = value, color = RED)
         n.parent = parent
 
         // Insert node in tree.
@@ -200,26 +200,26 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                 }
             } else {
                 // Mirror image of above code.
-                var uncle = n.parent!!.parent!!.left;
+                var uncle = n.parent!!.parent!!.left
                 // Uncle may be nil, in which case it is BLACK.
                 if (colorOf(uncle) == RED) {
                     // Case 1. Uncle is RED: Change colors of parent, uncle,
                     // and grandparent, and move n to grandparent.
-                    n.parent!!.color = BLACK;
-                    uncle!!.color = BLACK;
-                    uncle!!.parent!!.color = RED;
+                    n.parent!!.color = BLACK
+                    uncle!!.color = BLACK
+                    uncle!!.parent!!.color = RED
                     n = uncle!!.parent
                 } else {
                     if (n == n!!.parent!!.left) {
                         // Case 2. Uncle is BLACK and x is left child.
                         // Move n to parent, and rotate n right.
-                        n = n.parent;
-                        rotateRight(n!!);
+                        n = n.parent
+                        rotateRight(n!!)
                     }
                     // Case 3. Uncle is BLACK and x is right child.
                     // Recolor parent, grandparent, and rotate grandparent left.
-                    n!!.parent!!.color = BLACK;
-                    n!!.parent!!.parent!!.color = RED;
+                    n!!.parent!!.color = BLACK
+                    n!!.parent!!.parent!!.color = RED
                     rotateLeft(n!!.parent!!.parent!!)
                 }
             }
@@ -228,9 +228,9 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
     }
 
     fun getNode(key: K): Node<K, V>? {
-        var current = root;
+        var current = root
         while (current != null) {
-            val comparison = compare(key, current.key);
+            val comparison = compare(key, current.key)
             current = when {
                 comparison > 0 -> current.right
                 comparison < 0 -> current.left
@@ -348,7 +348,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                     }
                     // Case 4: Sibling has red right child. Recolor sibling,
                     // right child, and parent, and rotate parent left.
-                    sibling!!.color = parent!!.color;
+                    sibling!!.color = parent!!.color
                     parent.color = BLACK
                     sibling.right!!.color = BLACK
                     rotateLeft(parent)
@@ -356,13 +356,13 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                 }
             } else {
                 // Symmetric "mirror" of left-side case.
-                var sibling = parent.left;
+                var sibling = parent.left
                 // if (sibling == nil)
                 //   throw new InternalError()
                 if (colorOf(sibling) == RED) {
                     // Case 1: Sibling is red.
                     // Recolor sibling and parent, and rotate parent right.
-                    sibling?.color = BLACK;
+                    sibling?.color = BLACK
                     parent.color = RED
                     rotateRight(parent)
                     sibling = parent.left
@@ -386,7 +386,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                     // Case 4: Sibling has red left child. Recolor sibling,
                     // left child, and parent, and rotate parent right.
                     sibling?.color = parent.color
-                    parent.color = BLACK;
+                    parent.color = BLACK
                     sibling!!.left!!.color = BLACK
                     rotateRight(parent)
                     node = root // Finished.
@@ -407,7 +407,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
         //   throw new InternalError();
 
         // Establish node.left link.
-        node.left = child!!.right;
+        node.left = child!!.right
         if (child.right != null) {
             child.right!!.parent = node
         }
@@ -421,7 +421,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                 node.parent!!.left = child
             }
         } else
-            root = child;
+            root = child
 
         // Link n and child.
         child.right = node
@@ -435,7 +435,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
      */
     private fun rotateLeft(node: Node<K, V>) {
         val node = node
-        val child = node.right;
+        val child = node.right
         // if (node == nil || child == nil)
         //   throw new InternalError();
 
@@ -495,25 +495,25 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
     }
 
     fun getLowerEntry(key: K): Node<K, V>? {
-        var p = root;
+        var p = root
         while (p != null) {
-            var cmp = compare(key, p.key);
+            var cmp = compare(key, p.key)
             if (cmp > 0) {
                 if (p.right != null)
-                    p = p.right;
+                    p = p.right
                 else
-                    return p;
+                    return p
             } else {
                 if (p.left != null) {
-                    p = p.left;
+                    p = p.left
                 } else {
-                    var parent = p.parent;
-                    var ch = p;
+                    var parent = p.parent
+                    var ch = p
                     while (parent != null && ch == parent.left) {
-                        ch = parent;
-                        parent = parent.parent;
+                        ch = parent
+                        parent = parent.parent
                     }
-                    return parent;
+                    return parent
                 }
             }
         }
@@ -523,7 +523,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
     fun getHigherEntry(key: K): AbstractTreeMap.Node<K, V>? {
         var p = this.root
         while (p != null) {
-            val cmp = this.compare(key, p.key);
+            val cmp = this.compare(key, p.key)
             if (cmp < 0) {
                 if (p.left == null) {
                     return p
@@ -549,7 +549,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
         var p = this.root
 
         while (p != null) {
-            val cmp = this.compare(key, p.key);
+            val cmp = this.compare(key, p.key)
             if (cmp > 0) {
                 if (p.right == null) {
                     return p
@@ -575,7 +575,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
     }
 
     fun getCeilingEntry(key: K): AbstractTreeMap.Node<K, V>? {
-        var p = this.root;
+        var p = this.root
 
         while (p != null) {
             val cmp = this.compare(key, p.key)

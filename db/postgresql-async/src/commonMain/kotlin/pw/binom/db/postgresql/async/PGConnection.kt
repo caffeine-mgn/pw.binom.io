@@ -324,13 +324,13 @@ class PGConnection private constructor(
             throw IllegalStateException("Transaction not started")
         }
         val q = query("rollback")
-        transactionStarted = false
         if (q !is QueryResponse.Status) {
             throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
         }
         if (q.status != "ROLLBACK") {
             throw SQLException("Invalid response. Excepted Status \"ROLLBACK\", but got ${q.status}")
         }
+        transactionStarted = false
     }
 
     override suspend fun asyncClose() {

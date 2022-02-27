@@ -3,11 +3,13 @@ package pw.binom.network
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import pw.binom.CancelledException
 import pw.binom.io.use
 import kotlin.coroutines.*
 
-class TcpServerConnection internal constructor(val dispatcher: NetworkCoroutineDispatcher, val channel: TcpServerSocketChannel) :
+class TcpServerConnection internal constructor(
+    val dispatcher: NetworkCoroutineDispatcher,
+    val channel: TcpServerSocketChannel
+) :
     AbstractConnection() {
 
     companion object {
@@ -20,7 +22,6 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkCoroutineD
     lateinit var key: Selector.Key
 
     override fun readyForWrite() {
-
     }
 
     val port
@@ -70,13 +71,6 @@ class TcpServerConnection internal constructor(val dispatcher: NetworkCoroutineD
     }
 
     private var acceptListener: CancellableContinuation<TcpClientSocketChannel>? = null
-
-    fun interruptAccepting(): Boolean {
-        val continuation = acceptListener ?: return false
-        continuation.resumeWithException(CancelledException())
-        acceptListener = null
-        return true
-    }
 
     suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection =
         withContext(dispatcher) TT@{

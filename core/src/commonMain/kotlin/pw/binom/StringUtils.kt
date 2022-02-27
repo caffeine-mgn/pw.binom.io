@@ -4,13 +4,13 @@ package pw.binom
 
 import kotlin.jvm.JvmName
 
-//expect fun ByteArray.decodeString(
+// expect fun ByteArray.decodeString(
 //    charset: Charset = Charsets.UTF8,
 //    offset: Int = 0,
 //    length: Int = size - offset
-//): String
+// ): String
 //
-//expect fun String.encodeBytes(charset: Charset = Charsets.UTF8): ByteArray
+// expect fun String.encodeBytes(charset: Charset = Charsets.UTF8): ByteArray
 class InvalidPathException(val path: String) : RuntimeException() {
     override val message: String?
         get() = "Invalid path \"$path\""
@@ -57,7 +57,8 @@ internal fun wildcardMatch(string: String, wildcard: String): Boolean {
     // at end of text means success if nothing else is left to match
     return wildcard.length == wild
 }
-//private fun String.mark(index:Int) = substring(0,index) + "[" + this[index] + "]" + substring(index+1)
+
+// private fun String.mark(index:Int) = substring(0,index) + "[" + this[index] + "]" + substring(index+1)
 internal fun pathMatch(
     path: String,
     mask: String,
@@ -73,20 +74,20 @@ internal fun pathMatch(
     while (path.length != text) {
         when {
             mask(wild) == '*' -> {
-                //invalid path pattern
+                // invalid path pattern
                 if (textVariableStart != -1) {
                     throw InvalidPathException(mask)
                 }
                 // new star-loop: backup positions in pattern and text
                 textBackup = text
                 wildBackup = ++wild
-                textVariableStartBackup=-1
+                textVariableStartBackup = -1
             }
             mask(wild) == '{' -> {
                 val index = mask.indexOf('}', wild)
                 val p = mask.indexOf('{', wild + 1)
-                //invalid path pattern
-                if (index == -1 || (p!=-1 && p < index)) {
+                // invalid path pattern
+                if (index == -1 || (p != -1 && p < index)) {
                     throw InvalidPathException(mask)
                 }
                 wildVariableStart = wild + 1
@@ -94,9 +95,9 @@ internal fun pathMatch(
                 wild = index + 1
                 wildBackup = wild
                 textVariableStart = text
-                textVariableStartBackup=text
+                textVariableStartBackup = text
             }
-            mask(wild) == path(text) && textVariableStart != -1->{
+            mask(wild) == path(text) && textVariableStart != -1 -> {
                 val value = path.substring(textVariableStart, text)
                 val key = mask.substring(wildVariableStart, wild - 1)
                 func(key, value)
@@ -115,8 +116,8 @@ internal fun pathMatch(
                     return false
                 // star-loop: backtrack to the last * by restoring the backup positions
                 // in the pattern and text
-                if (textVariableStartBackup!=-1){
-                    textVariableStart=textVariableStartBackup
+                if (textVariableStartBackup != -1) {
+                    textVariableStart = textVariableStartBackup
                 }
                 text = ++textBackup
                 wild = wildBackup

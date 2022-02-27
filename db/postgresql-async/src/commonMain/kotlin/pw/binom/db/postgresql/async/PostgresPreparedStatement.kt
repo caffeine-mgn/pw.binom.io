@@ -142,10 +142,12 @@ class PostgresPreparedStatement(
     }
 
     private suspend fun deleteSelf(isPortal: Boolean) {
-        connection.sendOnly(connection.reader.closeMessage.also {
-            it.portal = isPortal
-            it.statement = id
-        })
+        connection.sendOnly(
+            connection.reader.closeMessage.also {
+                it.portal = isPortal
+                it.statement = id
+            }
+        )
         connection.sendOnly(SyncMessage)
         val closeMsg = connection.readDesponse()
         check(closeMsg is CloseCompleteMessage) { "Expected CloseCompleteMessage, but actual $closeMsg" }
@@ -177,21 +179,27 @@ class PostgresPreparedStatement(
             justParsed = true
         }
         val binaryResult = false
-        connection.sendOnly(connection.reader.bindMessage.also {
-            it.statement = id
-            it.portal = id
-            it.values = params
-            it.valuesTypes = types
-            it.binaryResult = binaryResult
-        })
-        connection.sendOnly(connection.reader.describeMessage.also {
-            it.statement = id
-            it.portal = true
-        })
-        connection.sendOnly(connection.reader.executeMessage.also {
-            it.statementId = id
-            it.limit = 0
-        })
+        connection.sendOnly(
+            connection.reader.bindMessage.also {
+                it.statement = id
+                it.portal = id
+                it.values = params
+                it.valuesTypes = types
+                it.binaryResult = binaryResult
+            }
+        )
+        connection.sendOnly(
+            connection.reader.describeMessage.also {
+                it.statement = id
+                it.portal = true
+            }
+        )
+        connection.sendOnly(
+            connection.reader.executeMessage.also {
+                it.statementId = id
+                it.limit = 0
+            }
+        )
         connection.sendOnly(SyncMessage)
         if (!parsed) {
             val msg = connection.readDesponse()
@@ -215,7 +223,7 @@ class PostgresPreparedStatement(
                 throw PostgresqlException("$msg. Query: $realQuery")
             }
             is BindCompleteMessage -> {
-                //ok
+                // ok
             }
         }
         parsed = true
@@ -239,8 +247,17 @@ class PostgresPreparedStatement(
                 }
                 is RowDescriptionMessage -> {
                     connection.busy = true
+                    if (!connection.reader.data.isClosed) {
+                        QueryResponse.Data(connection).also {
+                            it.reset(msg)
+                            it.portalName = id
+                            it.asyncClose()
+                        }
+                        throw IllegalStateException("Previews rest set not closed")
+                    }
                     val msg2 = connection.reader.data
                     msg2.reset(msg)
+                    msg2.portalName = id
                     return msg2
                 }
                 is ErrorMessage -> {

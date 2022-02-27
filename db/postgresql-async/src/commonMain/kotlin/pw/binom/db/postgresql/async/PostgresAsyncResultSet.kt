@@ -5,8 +5,8 @@ import pw.binom.UUID
 import pw.binom.date.Date
 import pw.binom.date.of
 import pw.binom.date.parseIso8601Date
-import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.SQLException
+import pw.binom.db.async.AsyncResultSet
 
 @OptIn(ExperimentalStdlibApi::class)
 class PostgresAsyncResultSet(
@@ -34,7 +34,7 @@ class PostgresAsyncResultSet(
         val data = value
             .map { it.toUByte().toString(16).let { if (it.length == 1) "0$it" else it } }
             .joinToString(" ")
-        throw SQLException("Unknown Column Type. id: [$dataType], size: [${value.size}], data: [${data}]")
+        throw SQLException("Unknown Column Type. id: [$dataType], size: [${value.size}], data: [$data]")
     }
 
     private fun getIndex(column: String): Int {
@@ -204,7 +204,9 @@ class PostgresAsyncResultSet(
     override suspend fun asyncClose() {
         if (!isClosed) {
             isClosed = true
-            data.asyncClose()
+            if (!data.isClosed) {
+                data.asyncClose()
+            }
         }
     }
 }

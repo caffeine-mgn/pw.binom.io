@@ -32,7 +32,7 @@ interface Input : Closeable {
 //    }
 }
 
-//fun Input.copyTo(output: Output, pool: ObjectPool<ByteDataBuffer>) {
+// fun Input.copyTo(output: Output, pool: ObjectPool<ByteDataBuffer>) {
 //    val buf = pool.borrow()
 //    try {
 //        while (true) {
@@ -48,9 +48,9 @@ interface Input : Closeable {
 //    } finally {
 //        pool.recycle(buf)
 //    }
-//}
+// }
 
-//fun Input.copyTo(outputStream: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
+// fun Input.copyTo(outputStream: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
 //    val buf = ByteDataBuffer.alloc(bufferSize)
 //    while (true) {
 //        val len = read(buf, 0, buf.size)
@@ -62,7 +62,7 @@ interface Input : Closeable {
 //        outputStream.write(buf, 0, len)
 //    }
 //    outputStream.flush()
-//}
+// }
 
 fun Input.readUtf8Char(buffer: ByteBuffer): Char? {
     buffer.reset(0, 1)
@@ -99,7 +99,6 @@ fun Input.readUTF8String(buffer: ByteBuffer): String {
     }
     return sb.toString()
 }
-
 
 fun Input.readByte(buffer: ByteBuffer): Byte {
     buffer.reset(0, 1)

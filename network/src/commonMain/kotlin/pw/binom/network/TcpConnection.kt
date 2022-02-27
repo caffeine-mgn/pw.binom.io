@@ -3,10 +3,8 @@ package pw.binom.network
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.ByteBuffer
-import pw.binom.CancelledException
 import pw.binom.io.AsyncChannel
 import pw.binom.neverFreeze
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
 
 class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(), AsyncChannel {
@@ -44,13 +42,6 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
 
     private val readData = ReadData()
     private val sendData = SendData()
-
-    fun interruptReading(): Boolean {
-        val continuation = readData.continuation ?: return false
-        continuation.resumeWithException(CancelledException())
-        readData.reset()
-        return true
-    }
 
     private fun calcListenFlags() =
         when {
@@ -190,7 +181,6 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     }
 
     override suspend fun flush() {
-
     }
 
     override val available: Int
