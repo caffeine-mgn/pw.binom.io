@@ -216,8 +216,8 @@ actual class NSocket(val native: Int) : Closeable {
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
         memScoped {
             checkClosed()
-
             val rr = data.ref { dataPtr, remaining ->
+                set_posix_errno(0)
                 address.data.usePinned {
                     sendto(
                         native, dataPtr.getPointer(this), remaining.convert(),

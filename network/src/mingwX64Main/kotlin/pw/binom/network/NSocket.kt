@@ -167,7 +167,8 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 address.data.usePinned { addressPtr ->
                     sendto(
                         native, dataPtr.getPointer(this), remaining.convert(),
-                        0, addressPtr.addressOf(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
+                        0,
+                        addressPtr.addressOf(0).getPointer(this).reinterpret(), address.size.convert()
                     )
                 }
             }
