@@ -71,10 +71,12 @@ actual sealed class NetworkAddress {
             }
         }
     private var hashCode = 0
-    protected fun _reset(host: String, port: Int) {
+    protected fun refreshHashCode() {
         var hashCode = host.hashCode()
         hashCode = 31 * hashCode + port.hashCode()
         this.hashCode = hashCode
+    }
+    protected fun _reset(host: String, port: Int) {
         memScoped {
             init_sockets()
 
@@ -105,6 +107,7 @@ actual sealed class NetworkAddress {
             size = result.value!!.pointed.ai_addrlen.convert()
             freeaddrinfo(result.value)
         }
+        refreshHashCode()
     }
 
     actual enum class Type {
@@ -120,6 +123,7 @@ actual sealed class NetworkAddress {
         override fun toImmutable(): Immutable {
             val immutable = Immutable()
             memcpy(immutable.data.refTo(0), data.refTo(0), data.size.convert())
+            immutable.refreshHashCode()
             return immutable
         }
 
@@ -127,6 +131,7 @@ actual sealed class NetworkAddress {
 
         override fun toMutable(address: Mutable) {
             memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
+            address.refreshHashCode()
         }
 
         actual fun clone(): Mutable {
@@ -149,11 +154,13 @@ actual sealed class NetworkAddress {
         override fun toMutable(): Mutable {
             val mutable = Mutable()
             memcpy(mutable.data.refTo(0), data.refTo(0), data.size.convert())
+            mutable.refreshHashCode()
             return mutable
         }
 
         override fun toMutable(address: Mutable) {
             memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
+            address.refreshHashCode()
         }
     }
 

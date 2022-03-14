@@ -40,15 +40,19 @@ actual sealed class NetworkAddress {
                     addr.pointed.sin_addr
                 else
                     addr6.pointed.sin6_addr
-
+                set_posix_errno(0)
                 ByteArray(50).usePinned { buf ->
+
                     if (inet_ntop(
                             family.convert(),
                             ptr.ptr,
-                            buf.get().refTo(0).getPointer(this),
+                            buf.addressOf(0),
                             50.convert()
                         ) == null
                     ) {
+                        if (errno == EAFNOSUPPORT) {
+                            throw IOException("Address family not supported by protocol")
+                        }
                         throw RuntimeException("Can't get address. $errno, family: $family")
                     }
                     buf.get().toKString()
@@ -71,10 +75,13 @@ actual sealed class NetworkAddress {
             }
         }
     private var hashCode = 0
-    protected fun _reset(host: String, port: Int) {
+    protected fun refreshHashCode() {
         var hashCode = host.hashCode()
         hashCode = 31 * hashCode + port.hashCode()
         this.hashCode = hashCode
+    }
+
+    protected fun _reset(host: String, port: Int) {
         memScoped {
             init_sockets()
 
@@ -105,6 +112,7 @@ actual sealed class NetworkAddress {
             size = result.value!!.pointed.ai_addrlen.convert()
             freeaddrinfo(result.value)
         }
+        refreshHashCode()
     }
 
     actual enum class Type {
@@ -120,6 +128,7 @@ actual sealed class NetworkAddress {
         override fun toImmutable(): Immutable {
             val immutable = Immutable()
             memcpy(immutable.data.refTo(0), data.refTo(0), data.size.convert())
+            immutable.refreshHashCode()
             return immutable
         }
 
@@ -127,6 +136,7 @@ actual sealed class NetworkAddress {
 
         override fun toMutable(address: Mutable) {
             memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
+            address.refreshHashCode()
         }
 
         actual fun clone(): Mutable {
@@ -149,11 +159,13 @@ actual sealed class NetworkAddress {
         override fun toMutable(): Mutable {
             val mutable = Mutable()
             memcpy(mutable.data.refTo(0), data.refTo(0), data.size.convert())
+            mutable.refreshHashCode()
             return mutable
         }
 
         override fun toMutable(address: Mutable) {
             memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
+            address.refreshHashCode()
         }
     }
 
