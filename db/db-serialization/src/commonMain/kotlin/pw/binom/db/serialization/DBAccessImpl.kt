@@ -16,10 +16,6 @@ internal class DBAccessImpl(
     val sql: SQLSerialization,
 ) : DBAccess {
 
-    private val entityDescriptions = HashMap<KSerializer<out Any>, EntityDescription>()
-    fun getDescription(serializer: KSerializer<out Any>) =
-        entityDescriptions.getOrPut(serializer) { EntityDescription.create(serializer) }
-
     private fun getSqlQuery(query: String) =
         context.statements.getOrPut(query) {
             SQLQueryNamedArguments.parse(
@@ -67,7 +63,7 @@ internal class DBAccessImpl(
         args: Array<out Pair<String, Any?>>,
         tableName: String?,
     ): List<T> {
-        val d = getDescription(fromSerializer)
+        val d = context.getDescription(fromSerializer)
         val sb = StringBuilder()
         sb.append("SELECT ")
 //        val table = tableName ?: fromSerializer.tableName
@@ -106,7 +102,7 @@ internal class DBAccessImpl(
         args: Array<out Pair<String, Any?>>,
         tableName: String?,
     ): Long {
-        val d = getDescription(from)
+        val d = context.getDescription(from)
         val sb = StringBuilder("DELETE FROM ").append(d.getSQL())
         if (queryCondition != null) {
             sb.append(" ").append(queryCondition)
@@ -266,7 +262,7 @@ internal class DBAccessImpl(
     }
 
     override suspend fun <T : Any> find(serializer: KSerializer<T>, key: Any, tableName: String?): T? {
-        val idColumn = getDescription(serializer).id
+        val idColumn = context.getDescription(serializer).id
             ?: throw IllegalArgumentException("Can't find id column in ${serializer.descriptor.serialName}")
         return selectEntityFrom(
             fromSerializer = serializer,
@@ -277,7 +273,7 @@ internal class DBAccessImpl(
     }
 
     override suspend fun deleteEntityFrom(serializer: KSerializer<out Any>, id: Any, tableName: String?): Boolean {
-        val idColumn = getDescription(serializer).id
+        val idColumn = context.getDescription(serializer).id
             ?: throw IllegalArgumentException("Can't find id column in ${serializer.descriptor.serialName}")
         return update(
             "DELETE FROM ${tableName ?: serializer.tableName} WHERE ${idColumn.getSQL()}=:id",
@@ -328,14 +324,14 @@ internal class DBAccessImpl(
     }
 
     override fun tableName(serializer: KSerializer<out Any>): String =
-        getDescription(serializer).tableName
+        context.getDescription(serializer).fullTableName
 
     private fun EntityDescription.getSQL() = fullTableName
 
     private fun EntityDescription.Column.getSQL() = fullColumnName
 
     override fun columnName(serializer: KSerializer<out Any>, fieldName: String): String =
-        getDescription(serializer).columns[fieldName]
+        context.getDescription(serializer).columns[fieldName]
             ?.getSQL()
             ?: throw IllegalArgumentException("Can't find column \"$fieldName\" inside ${serializer.descriptor.serialName}")
 }

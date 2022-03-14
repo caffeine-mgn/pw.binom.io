@@ -3,21 +3,19 @@ package pw.binom.io.httpClient
 import kotlinx.coroutines.Dispatchers
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.Closeable
-import pw.binom.net.URI
+import pw.binom.net.URL
 import pw.binom.network.Network
 import pw.binom.network.NetworkCoroutineDispatcher
-import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.KeyManager
 import pw.binom.ssl.TrustManager
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 interface HttpClient : Closeable {
 //    val networkDispatcher: NetworkDispatcher
 
     @OptIn(ExperimentalTime::class)
-    suspend fun connect(method: String, uri: URI): HttpRequest
+    suspend fun connect(method: String, uri: URL): HttpRequest
 
     companion object {
 //        fun create(

@@ -8,6 +8,10 @@ import kotlin.jvm.JvmInline
  */
 @JvmInline
 value class Path internal constructor(val raw: String) {
+    companion object {
+        val EMPTY = Path("")
+    }
+
     /**
      * Returns true if this urn match for [mask]. Path Variables is support.
      * Example: `"/users/100500/info_data".toURN.isMatch("/users/{id}/info_*")` returns true
@@ -76,6 +80,72 @@ value class Path internal constructor(val raw: String) {
     val elements
         get() = raw.split('/')
 
+    val normalize: Path
+        get() {
+            val el = elements
+            if (el.any { it == ".." || it == "." }) {
+                return this
+            }
+            val elements = ArrayList<String>(el.size)
+            el.forEach {
+                when (it) {
+                    "." -> return@forEach
+                    ".." -> if (elements.removeLastOrNull() == null) {
+                        throw IllegalArgumentException("Can't normalize path \"$raw\" is invalid. Address is invalid")
+                    }
+                    else -> elements += it
+                }
+            }
+            return Path(elements.joinToString("/"))
+        }
+
+    val root: String
+        get() {
+            val p = raw.indexOf('/')
+            if (p == -1) {
+                return raw
+            }
+            return raw.substring(0, p)
+        }
+
+    fun removeRoot(): Path? {
+        val p = raw.indexOf('/')
+        if (p == -1) {
+            return null
+        }
+        return Path(raw.substring(p + 1))
+    }
+
+    fun relative(path: Path) = relative(path.raw)
+
+    /**
+     * Append [path] to current path with relative rules. You can use `.` and `..` for [path]
+     * For example `"/home/subochev".toPath.relative(".ssh")` returns `"/home/subochev/.ssh"`.
+     * And if [path] starts with `/` [path] will override full path. For example
+     * `"/home/subochev".toPath.relative("/home/admin")` returns `"/home/admin"`
+     */
+    fun relative(path: String): Path {
+        if (path.startsWith("/")) {
+            return path.toPath
+        }
+        val currentPath = this.raw.split('/').toMutableList()
+        val newPath = path.split('/')
+        newPath.forEach {
+            when (it) {
+                "." -> {
+                }
+                ".." -> {
+                    if (currentPath.isEmpty()) {
+                        throw IllegalArgumentException("Can't find relative from \"${this.raw}\" to \"$path\"")
+                    }
+                    currentPath.removeLast()
+                }
+                else -> currentPath.add(it)
+            }
+        }
+        return Path(currentPath.joinToString("/"))
+    }
+
     val name: String
         get() {
             val p = raw.lastIndexOf('/')
@@ -95,6 +165,30 @@ value class Path internal constructor(val raw: String) {
         }
 
     override fun toString(): String = raw
+    operator fun plus(path: Path) = Path("$raw/${path.raw}")
+
+    val toURI
+        get() = URI(raw)
+
+//    fun toUri() = UTF8.urlEncode(raw).toURL()
+//    fun toUri(root: URL): URL {
+//        val v = toUri
+//        if (v != null) {
+//            return v
+//        }
+//        if (raw.startsWith("/")) {
+//            return root.copy(path = this)
+//        }
+//        val p = root.path.parent
+//        val newPath = if (p == null) {
+//            "/$raw".toPath
+//        } else {
+//            p.relative(raw)
+//        }
+//        return root.copy(
+//            path = newPath,
+//        )
+//    }
 }
 
 val String.toPath

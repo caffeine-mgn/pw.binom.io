@@ -4,11 +4,11 @@ import kotlinx.cinterop.*
 import platform.posix.localtime
 import platform.posix.time_tVar
 
-actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int) {
+actual class Calendar(private val utcTime: Long, actual val offset: Int) {
 
     private val tt = memScoped {
         val t = alloc<time_tVar>()
-        val tx = timeZoneOffset - Date.systemZoneOffset
+        val tx = offset - Date.systemZoneOffset
         t.value = (utcTime / 1000L + tx * 60L).convert()
         localtime(t.ptr)!!.pointed
     }
@@ -46,12 +46,12 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
     actual val date
         get() = Date(utcTime)
 
-    actual fun timeZone(timeZoneOffset: Int): Calendar = Calendar(utcTime, timeZoneOffset)
+    actual fun timeZone(timeZoneOffset3: Int): Calendar = Calendar(utcTime = utcTime, offset = timeZoneOffset3)
 
     actual override fun toString(): String =
-        asStringRfc822(this, timeZoneOffsetToString(timeZoneOffset))
+        asStringRfc822(this, timeZoneOffsetToString(offset))
 
-    actual fun toString(timeZoneOffset: Int): String = timeZone(timeZoneOffset).toString()
+    actual fun toString(timeZoneOffset4: Int): String = timeZone(timeZoneOffset4).toString()
 
     actual fun toDate(): Date = Date.new(this)
 }

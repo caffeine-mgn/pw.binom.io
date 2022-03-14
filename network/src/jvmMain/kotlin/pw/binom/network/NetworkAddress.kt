@@ -47,9 +47,7 @@ actual sealed class NetworkAddress {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as NetworkAddress
+        if (other !is NetworkAddress) return false
 
         if (host != other.host) return false
         if (port != other.port) return false

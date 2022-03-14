@@ -1,7 +1,6 @@
 package pw.binom.io.http.websocket
 
 import pw.binom.*
-import pw.binom.io.use
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -67,8 +66,6 @@ class WebSocketHeader {
 
     override fun toString(): String =
         "WebSocketHeader(opcode=$opcode, length=$length, maskFlag=$maskFlag, mask=${
-            mask.toUInt().toString(2)
+        mask.toUInt().toString(2)
         }, finishFlag=$finishFlag)"
-
-
 }

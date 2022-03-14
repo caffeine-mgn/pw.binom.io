@@ -28,7 +28,6 @@ class JvmSelector : Selector {
 
     @Volatile
     private var selecting = false
-//    private var networkThread = ThreadRef()
 
     inner class JvmKey(
         override val attachment: Any?
@@ -74,26 +73,23 @@ class JvmSelector : Selector {
                 checkClosed()
                 val javaOps = commonToJava(native.channel(), value)
                 native.interestOps(javaOps)
-//                if (!networkThread.same) {
                 native.selector().wakeup()
-//                }
             }
 
         override fun close() {
             checkClosed()
             _closed = true
             native.interestOps(0)
-//            native.cancel()
         }
     }
 
-    private val nn = object : Iterator<Selector.KeyEvent> {
+    private val selectorIterator = object : Iterator<Selector.KeyEvent> {
         private lateinit var keys: Iterator<SelectionKey>
         fun reset() {
             keys = native.selectedKeys().iterator()
         }
 
-        private val o = object : Selector.KeyEvent {
+        private val keyEvent = object : Selector.KeyEvent {
             override lateinit var key: Selector.Key
             override var mode: Int = 0
 
@@ -104,40 +100,34 @@ class JvmSelector : Selector {
 
         override fun next(): Selector.KeyEvent {
             val it = keys.next()
-
             if (it.isConnectable) {
-                val cc = it.channel() as SocketChannel
+                val socketChannel = it.channel() as SocketChannel
                 try {
-                    val connected = cc.finishConnect()
+                    val connected = socketChannel.finishConnect()
                     if (connected) {
-                        o.key = it.attachment() as JvmKey
-                        o.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                        keyEvent.key = it.attachment() as JvmKey
+                        keyEvent.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
                         if (it.isValid && it.interestOps() and SelectionKey.OP_CONNECT != 0) {
                             it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
                         }
-                        return o
+                        return keyEvent
                     } else {
-                        o.mode = 0
+                        keyEvent.mode = 0
                     }
                 } catch (e: ConnectException) {
-                    o.key = it.attachment() as JvmKey
-                    o.mode = Selector.EVENT_ERROR
-                    return o
+                    keyEvent.key = it.attachment() as JvmKey
+                    keyEvent.mode = Selector.EVENT_ERROR
+                    return keyEvent
                 } catch (e: SocketException) {
-                    o.key = it.attachment() as JvmKey
-                    o.mode = Selector.EVENT_ERROR
-                    return o
+                    keyEvent.key = it.attachment() as JvmKey
+                    keyEvent.mode = Selector.EVENT_ERROR
+                    return keyEvent
                 }
-//                }
-//                if (it.isConnectable) {
-//                    return@forEach
-//                }
             }
-            o.key = it.attachment() as JvmKey
-            o.mode = javaToCommon(it.readyOps())
-            return o
+            keyEvent.key = it.attachment() as JvmKey
+            keyEvent.mode = javaToCommon(it.readyOps())
+            return keyEvent
         }
-
     }
 
     override fun getAttachedKeys(): Collection<Selector.Key> =
@@ -157,12 +147,12 @@ class JvmSelector : Selector {
         }
         selecting = true
         try {
-                when {
-                    timeout > 0L -> native.select(timeout)
-                    timeout == 0L -> native.selectNow()
-                    timeout < 0L -> native.select()
-                    else -> throw IllegalArgumentException("Invalid timeout $timeout")
-                }
+            when {
+                timeout > 0L -> native.select(timeout)
+                timeout == 0L -> native.selectNow()
+                timeout < 0L -> native.select()
+                else -> throw IllegalArgumentException("Invalid timeout $timeout")
+            }
             val keys = native.selectedKeys()
             var count = 0
             val iterator = keys.iterator()
@@ -170,10 +160,9 @@ class JvmSelector : Selector {
                 val it = iterator.next()
                 iterator.remove()
                 if (it.isConnectable) {
-                    val cc = it.channel() as SocketChannel
-
+                    val socketChannel = it.channel() as SocketChannel
                     try {
-                        val connected = cc.finishConnect()
+                        val connected = socketChannel.finishConnect()
                         if (connected) {
                             count++
                             func(it.attachment() as JvmKey, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
@@ -193,10 +182,6 @@ class JvmSelector : Selector {
                         func(it.attachment() as JvmKey, Selector.EVENT_ERROR)
                         continue
                     }
-//                }
-//                if (it.isConnectable) {
-//                    return@forEach
-//                }
                 }
                 count++
                 func(it.attachment() as JvmKey, javaToCommon(it.readyOps()))
@@ -224,8 +209,8 @@ class JvmSelector : Selector {
             timeout == 0L -> native.selectNow()
             timeout < 0L -> native.select()
         }
-        nn.reset()
-        return nn
+        selectorIterator.reset()
+        return selectorIterator
     }
 
     override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): Selector.Key {

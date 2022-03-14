@@ -6,12 +6,11 @@ import pw.binom.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.readText
 import pw.binom.io.use
-import pw.binom.net.toURI
+import pw.binom.net.toURL
 import pw.binom.network.*
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.fail
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -38,7 +37,7 @@ class TestAsyncBaseHttpClient {
                         realWithTimeout(5.seconds) {
                             client.connect(
                                 method = "GET",
-                                uri = "http://127.0.0.1:${server.port}/".toURI(),
+                                uri = "http://127.0.0.1:${server.port}/".toURL(),
 //                                        uri = "http://example.com/".toURI(),
                             ).getResponse().readText().use { it.readText() }
                         }
@@ -60,7 +59,7 @@ class TestAsyncBaseHttpClient {
         val now = TimeSource.Monotonic.markNow()
         try {
             realWithTimeout(3.seconds) {
-                client.connect(HTTPMethod.GET, "http://127.0.0.1:${server.port}".toURI())
+                client.connect(HTTPMethod.GET, "http://127.0.0.1:${server.port}".toURL())
                     .getResponse()
                     .responseCode
             }
@@ -78,7 +77,7 @@ class TestAsyncBaseHttpClient {
         val client = BaseHttpClient(Dispatchers.Network)
         repeat(3) {
             val responseData = client
-                .connect(HTTPMethod.GET, "https://google.com/".toURI())
+                .connect(HTTPMethod.GET, "https://google.com/".toURL())
                 .getResponse().also {
                     println("headers:${it.headers}")
                 }

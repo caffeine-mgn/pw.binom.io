@@ -88,12 +88,10 @@ internal class StrongImpl : Strong {
 
     override suspend fun awaitDestroy() {
         if (isDestroyed) {
-            println("strong already Destroyed")
             return
         }
         suspendCoroutine<Unit> {
             interruptingListenersLock.synchronize {
-                println("Add Destroyed listener")
                 interruptingListeners += it
             }
         }

@@ -1,24 +1,56 @@
 package pw.binom.io.httpServer.websocket
 
-import pw.binom.concurrency.joinAndGetOrThrow
-import pw.binom.io.bufferedAsciiReader
-import pw.binom.io.bufferedAsciiWriter
-import pw.binom.io.http.HTTPMethod
+import kotlinx.coroutines.test.runTest
+import pw.binom.io.bufferedReader
 import pw.binom.io.http.websocket.MessageType
-import pw.binom.io.httpClient.BaseHttpClient
+import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.create
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.readText
 import pw.binom.io.use
-import pw.binom.net.toURI
+import pw.binom.net.toURL
 import pw.binom.network.NetworkAddress
+import pw.binom.network.TcpServerConnection
 import pw.binom.nextUuid
+import pw.binom.wrap
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-//class WebSocketTest {
+class WebSocketTest {
+
+    private fun handler(responseCallback: (String) -> Unit) = object : Handler {
+        override suspend fun request(req: HttpRequest) {
+            val con = req.acceptWebsocket()
+            val input = con.read().use {
+                it.bufferedReader().readText()
+            }
+            responseCallback(input)
+        }
+    }
+
+    @Test
+    fun test() = runTest {
+        val message = Random.nextUuid().toString()
+        val port = TcpServerConnection.randomPort()
+        var ok = false
+        HttpServer(handler = handler { assertEquals(message, it); ok = true }).use { httpServer ->
+            httpServer.listenHttp(address = NetworkAddress.Immutable(port = port))
+            HttpClient.create().use { client ->
+                client.connect("GET", "ws://127.0.0.1:$port/".toURL())
+                    .startWebSocket(masking = false).write(MessageType.BINARY).use {
+                        message.encodeToByteArray().wrap { b -> it.write(b) }
+                    }
+            }
+        }
+        assertTrue(ok)
+    }
+}
+
+// class WebSocketTest {
 //
 //    private class TestWebSocketHandler(val testMsg: String) : Handler {
 //        override suspend fun request(req: HttpRequest) {
@@ -63,4 +95,4 @@ import kotlin.test.assertEquals
 //        }
 //        f.joinAndGetOrThrow()
 //    }
-//}
+// }

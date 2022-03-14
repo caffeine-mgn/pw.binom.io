@@ -6,7 +6,7 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 
 interface Route {
-    val serialization: Serialization
+    val serialization: FluxServerSerialization
     fun route(path: String, route: Route)
     fun route(path: String, func: (Route.() -> Unit)? = null): Route
     fun detach(path: String, route: Route)
@@ -69,7 +69,7 @@ fun Route.delete(path: String, func: suspend (FluxHttpRequest) -> Unit) =
  * @return new router with preHandle
  */
 fun Route.preHandle(func: suspend (HttpRequest) -> Boolean) = object : AbstractRoute() {
-    override val serialization: Serialization
+    override val serialization: FluxServerSerialization
         get() = this@preHandle.serialization
 
     override suspend fun execute(request: HttpRequest) {
@@ -81,7 +81,7 @@ fun Route.preHandle(func: suspend (HttpRequest) -> Boolean) = object : AbstractR
 }
 
 fun Route.postHandle(func: suspend (action: HttpRequest) -> Unit) = object : AbstractRoute() {
-    override val serialization: Serialization
+    override val serialization: FluxServerSerialization
         get() = this@postHandle.serialization
     override suspend fun execute(request: HttpRequest) {
         super.execute(request)
@@ -113,7 +113,7 @@ fun Route.wrap(func: suspend (HttpRequest, suspend (HttpRequest) -> Unit) -> Uni
         this@wrap.forward(this)
     }
 
-    override val serialization: Serialization
+    override val serialization: FluxServerSerialization
         get() = this@wrap.serialization
 
     override suspend fun execute(request: HttpRequest) =

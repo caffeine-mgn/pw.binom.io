@@ -2,7 +2,6 @@ package pw.binom
 
 import pw.binom.io.use
 import kotlin.random.Random
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -10,6 +9,24 @@ class ByteBufferTest {
 
     fun ff() {
         val bb = ByteBuffer.alloc(100)
+    }
+
+    @Test
+    fun toByteArrayTest() {
+        val b = ByteBuffer.alloc(5)
+        repeat(b.capacity) {
+            b.put(it.toByte())
+        }
+        b.position = 0
+        b.limit = 4
+        val result = b.toByteArray()
+        assertEquals(4, result.size)
+        result.forEachIndexed { index, byte ->
+            assertEquals(b[index], byte)
+        }
+
+        assertEquals(0, b.position)
+        assertEquals(4, b.limit)
     }
 
     @Test
@@ -117,7 +134,7 @@ class ByteBufferTest {
         }
 
         (2 until 11).forEach {
-            assertEquals(source[it], dest[it],"index: $it")
+            assertEquals(source[it], dest[it], "index: $it")
         }
         println("#3------------")
         (11 until dest.limit).forEach {
@@ -161,6 +178,5 @@ class ByteBufferTest {
             self.put(it.toByte())
         }
         assertEquals(10, self.position)
-
     }
 }

@@ -2,7 +2,6 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.SOCKET
-import platform.linux.ws_global_init
 import platform.posix.*
 import platform.posix.AF_INET
 import platform.posix.SOCK_STREAM
@@ -48,7 +47,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 if (r == 0) {
                     ntohs(sin.sin_port).toInt()
                 } else {
-                    //println("getsockname=$c, errno=${errno},GetLastError()=${GetLastError()}")
+                    // println("getsockname=$c, errno=${errno},GetLastError()=${GetLastError()}")
                     null
                 }
             }
@@ -72,7 +71,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
             }
         }
         if (native == INVALID_SOCKET)
-            return null//throw IOException("Can't accept new client")
+            return null // throw IOException("Can't accept new client")
         return NSocket(native)
     }
 
@@ -149,14 +148,14 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 if (GetLastError() == 10048u) {
                     throw BindException("Address already in use: ${address.host}:${address.port}")
                 }
-                throw IOException("Bind error. errno: [${errno}], GetLastError: [${GetLastError()}]")
+                throw IOException("Bind error. errno: [$errno], GetLastError: [${GetLastError()}]")
             }
             val listenResult = platform.windows.listen(native, 1000)
             if (listenResult < 0) {
                 if (GetLastError() == 10045u) {
                     return
                 }
-                throw IOException("Listen error. errno: [${errno}], GetLastError: [${GetLastError()}]")
+                throw IOException("Listen error. errno: [$errno], GetLastError: [${GetLastError()}]")
             }
         }
     }
@@ -197,9 +196,13 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 )
             }
             if (rr == SOCKET_ERROR) {
-//                if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
-//                    return 0
-//                }
+                if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {
+                    return 0
+                }
+                if (GetLastError().convert<UInt>() == platform.windows.WSAECONNRESET.convert<UInt>()) { // 10054
+                    throw IOException("Connection reset by peer.")
+                }
+
                 throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
             }
             rr
@@ -220,9 +223,12 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 }
 
                 if (rr == SOCKET_ERROR) {
-//                    if (GetLastError().convert<UInt>()==platform.windows.WSAEWOULDBLOCK.convert<UInt>()){
-//                        return 0
-//                    }
+                    if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {
+                        return 0
+                    }
+                    if (GetLastError().convert<UInt>() == platform.windows.WSAECONNRESET.convert<UInt>()) { // 10054
+                        throw IOException("Connection reset by peer.")
+                    }
                     throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
                 }
                 address.size = len[0]
@@ -232,5 +238,4 @@ actual class NSocket(val native: SOCKET) : Closeable {
         data.position += gotBytes.toInt()
         return gotBytes
     }
-
 }

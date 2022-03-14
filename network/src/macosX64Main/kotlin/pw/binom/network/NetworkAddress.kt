@@ -23,11 +23,7 @@ actual sealed class NetworkAddress {
         return true
     }
 
-    override fun hashCode(): Int {
-        var result = host.hashCode()
-        result = 31 * result + port.hashCode()
-        return result
-    }
+    override fun hashCode(): Int = hashCode
 
     private inline fun <T> addr(f: MemScope.(CPointer<ByteVar>) -> T): T =
         memScoped {
@@ -74,8 +70,11 @@ actual sealed class NetworkAddress {
                 else -> throw IOException("Unknown network type $family")
             }
         }
-
+    private var hashCode = 0
     protected fun _reset(host: String, port: Int) {
+        var hashCode = host.hashCode()
+        hashCode = 31 * hashCode + port.hashCode()
+        this.hashCode = hashCode
         memScoped {
             init_sockets()
 

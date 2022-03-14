@@ -1,7 +1,5 @@
 package pw.binom.io.httpClient
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import pw.binom.AsyncInput
 import pw.binom.EmptyAsyncInput
 import pw.binom.charset.Charsets
@@ -12,13 +10,11 @@ import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.Encoding
 import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
-import pw.binom.net.URI
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Duration
+import pw.binom.net.URL
 import kotlin.time.ExperimentalTime
 
 class DefaultHttpResponse(
-    val URI: URI,
+    val URI: URL,
     val client: BaseHttpClient,
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
@@ -28,7 +24,7 @@ class DefaultHttpResponse(
     companion object {
         @OptIn(ExperimentalTime::class)
         suspend fun read(
-            uri: URI,
+            uri: URL,
             client: BaseHttpClient,
             keepAlive: Boolean,
             channel: AsyncAsciiChannel,

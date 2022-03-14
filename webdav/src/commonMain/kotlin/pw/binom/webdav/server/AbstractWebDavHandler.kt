@@ -7,7 +7,7 @@ import pw.binom.io.*
 import pw.binom.io.httpServer.*
 import pw.binom.net.Path
 import pw.binom.net.toPath
-import pw.binom.net.toURI
+import pw.binom.net.toURL
 import pw.binom.pool.ObjectPool
 import pw.binom.webdav.DAV_NS
 import pw.binom.webdav.MULTISTATUS_TAG
@@ -163,7 +163,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "MOVE") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURI() }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURL() }
 
                     if (destination == null) {
                         req.response().use {
@@ -190,7 +190,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
             if (req.method == "COPY") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURI() }
+                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURL() }
 
                     if (destination == null) {
                         req.response().use {

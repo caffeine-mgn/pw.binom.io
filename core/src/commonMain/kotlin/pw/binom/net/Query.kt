@@ -33,11 +33,16 @@ value class Query internal constructor(val raw: String) {
                         "${UTF8.encode(it.key)}=${UTF8.encode(value)}"
                     }
                 )
-
             }
             return sb.toString().toQuery
         }
     }
+
+    val isEmpty
+        get() = raw.isEmpty()
+
+    val isNotEmpty
+        get() = raw.isNotEmpty()
 
     fun append(key: String, value: String?): Query {
         if (key.isEmpty()) {
@@ -45,7 +50,7 @@ value class Query internal constructor(val raw: String) {
         }
         val result = if (value == null) UTF8.encode(key) else "${UTF8.encode(key)}=${UTF8.encode(value)}"
 
-        return if (raw.isEmpty()) {
+        return if (isEmpty) {
             Query(result)
         } else {
             Query("$raw&$result")

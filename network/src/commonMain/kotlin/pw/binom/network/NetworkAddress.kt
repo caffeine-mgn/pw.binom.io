@@ -1,8 +1,8 @@
 package pw.binom.network
 
-import pw.binom.net.URI
+import pw.binom.net.URL
 
-expect sealed class NetworkAddress {
+expect sealed class NetworkAddress protected constructor() {
     val host: String
     val port: Int
     val type: Type
@@ -24,7 +24,7 @@ expect sealed class NetworkAddress {
     abstract fun toMutable(address: Mutable)
 }
 
-fun URI.toNetworkAddress(defaultPort: Int) =
+fun URL.toNetworkAddress(defaultPort: Int) =
     NetworkAddress.Immutable(
         host = host,
         port = port ?: defaultPort

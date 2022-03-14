@@ -1,11 +1,15 @@
 package pw.binom.date
 
 import pw.binom.date.format.as2
-import kotlin.js.JsName
 import kotlin.math.absoluteValue
 
 expect class Calendar {
     val year: Int
+
+    /**
+     * Timezone offset in minutes
+     */
+    val offset: Int
 
     /**
      * Month, from 1 (January) to 12 (December)
@@ -24,27 +28,22 @@ expect class Calendar {
     val date: Date
 
     /**
-     * Timezone offset in minutes
-     */
-    val timeZoneOffset: Int
-
-    /**
      * Returns date as string in GMT Timezone
      */
     override fun toString(): String
 
     /**
-     * @param timeZoneOffset TimeZone offset in mintes
+     * @param timeZoneOffset4 TimeZone offset in mintes
      */
-    fun toString(timeZoneOffset: Int=this.timeZoneOffset): String
+    fun toString(timeZoneOffset4: Int): String
 
     /**
      * Changes current TimeZone.
      *
-     * @param timeZoneOffset TimeZone offset in mintes
+     * @param timeZoneOffset3 TimeZone offset in mintes
      */
-    fun timeZone(timeZoneOffset: Int): Calendar
-    fun toDate():Date
+    fun timeZone(timeZoneOffset3: Int): Calendar
+    fun toDate(): Date
 }
 
 /**
@@ -70,7 +69,7 @@ fun Calendar.copy(
     minutes: Int = this.minutes,
     seconds: Int = this.seconds,
     millis: Int = this.millisecond,
-    timeZoneOffset: Int = this.timeZoneOffset
+    timeZoneOffset: Int = this.offset
 ) = date(
     year = year,
     month = month,
@@ -90,7 +89,7 @@ fun Calendar.date(
     minutes: Int = this.minutes,
     seconds: Int = this.seconds,
     millis: Int = this.millisecond,
-    timeZoneOffset: Int = this.timeZoneOffset
+    timeZoneOffset: Int = this.offset
 ) =
     Date.of(
         year = year,

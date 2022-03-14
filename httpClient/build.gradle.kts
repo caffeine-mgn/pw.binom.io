@@ -1,7 +1,9 @@
 import pw.binom.baseStaticLibConfig
+import pw.binom.eachKotlinTest
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("com.bmuschko.docker-remote-api")
 }
 
 apply {
@@ -68,6 +70,7 @@ kotlin {
                 api(project(":httpServer"))
                 api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
             }
         }
         val jvmTest by getting {
@@ -82,3 +85,18 @@ kotlin {
     }
 }
 apply<pw.binom.plugins.DocsPlugin>()
+
+tasks {
+    val nats = pw.binom.plugins.DockerUtils.dockerContanier(
+        project = project,
+        image = "jmalloc/echo-server",
+//        image = "datacoda/websocket-echo",
+        tcpPorts = listOf(8080 to 7142),
+        args = listOf(),
+        suffix = "WS-EchoServer"
+    )
+
+    eachKotlinTest {
+        nats.dependsOn(it)
+    }
+}

@@ -2,7 +2,6 @@ package pw.binom.io.http.websocket
 
 import pw.binom.*
 import pw.binom.io.StreamClosedException
-import kotlin.experimental.xor
 
 class MessageImpl(
     override val type: MessageType,
@@ -23,7 +22,7 @@ class MessageImpl(
     override suspend fun asyncClose() {
         checkClosed()
 
-        if (inputReady > 0uL){
+        if (inputReady > 0uL) {
             copyTo(NullAsyncOutput)
         }
         closed = true
@@ -61,7 +60,7 @@ class MessageImpl(
             val lim1 = dest.limit
             dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
             val n = input.read(dest)
-            dest.limit=lim1
+            dest.limit = lim1
             n
         }
         inputReady -= read.toULong()

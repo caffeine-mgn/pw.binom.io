@@ -6,20 +6,15 @@ import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.AsyncChannel
 import pw.binom.io.IOException
 import pw.binom.io.http.*
-import pw.binom.io.http.websocket.HandshakeSecret
-import pw.binom.io.http.websocket.InvalidSecurityKeyException
-import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.httpClient.websocket.ClientWebSocketConnection
-import pw.binom.net.URI
+import pw.binom.io.http.websocket.*
+import pw.binom.net.URL
 import pw.binom.os
-import pw.binom.platform
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class DefaultHttpRequest constructor(
     override var method: String,
-    override val uri: URI,
+    override val uri: URL,
     val client: BaseHttpClient,
     val channel: AsyncAsciiChannel,
 ) : HttpRequest {
@@ -140,7 +135,7 @@ class DefaultHttpRequest constructor(
         sendHeaders()
         channel.writer.flush()
         closed = true
-        val v =  DefaultHttpResponse.read(
+        val v = DefaultHttpResponse.read(
             uri = uri,
             client = client,
             keepAlive = keepAlive,
@@ -149,8 +144,7 @@ class DefaultHttpRequest constructor(
         return v
     }
 
-
-    override suspend fun startWebSocket(origin: String?): WebSocketConnection {
+    override suspend fun startWebSocket(origin: String?, masking: Boolean): WebSocketConnection {
         headers[Headers.CONNECTION] = Headers.UPGRADE
         headers[Headers.UPGRADE] = Headers.WEBSOCKET
         headers[Headers.SEC_WEBSOCKET_VERSION] = "13"
@@ -168,13 +162,17 @@ class DefaultHttpRequest constructor(
         if (respKey != responseKey) {
             throw InvalidSecurityKeyException()
         }
-
-        return ClientWebSocketConnection(
+        return client.webSocketConnectionPool.new(
             input = channel.reader,
             output = channel.writer,
-//            rawConnection = channel.channel,
-//            networkDispatcher = client.networkDispatcher,
+            masking = masking,
         )
+//        return WebSocketConnectionImpl(
+//            input = channel.reader,
+//            output = channel.writer,
+//            masking = masking,
+//            messagePool = client.messagePool,
+//        )
     }
 
     override suspend fun startTcp(): AsyncChannel {

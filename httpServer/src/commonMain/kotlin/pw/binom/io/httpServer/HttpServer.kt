@@ -8,6 +8,8 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.date.Date
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ClosedException
+import pw.binom.io.http.websocket.MessagePool
+import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.network.*
 
 interface Handler {
@@ -18,7 +20,6 @@ fun Handler(func: suspend (HttpRequest) -> Unit) = object : Handler {
     override suspend fun request(req: HttpRequest) {
         func(req)
     }
-
 }
 
 /**
@@ -39,8 +40,11 @@ class HttpServer(
             "Exception during http processing",
             e
         ).printStackTrace()
-    }
+    },
+    websocketMessagePoolSize: Int = 16
 ) : AsyncCloseable {
+    internal val messagePool by lazy { MessagePool(websocketMessagePoolSize) }
+    internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     internal val textBufferPool = ByteBufferPool(capacity = 16)
     private var closed = false
     private fun checkClosed() {

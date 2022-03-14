@@ -2,7 +2,6 @@ package pw.binom.date
 
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 @JvmInline
 expect value class Date(val time: Long = nowTime) {
@@ -40,7 +39,7 @@ internal fun Date.Companion.new(calendar: Calendar) =
         minutes = calendar.minutes,
         seconds = calendar.seconds,
         millis = calendar.millisecond,
-        timeZoneOffset = calendar.timeZoneOffset,
+        timeZoneOffset = calendar.offset,
     )
 
 fun Date.Companion.of(

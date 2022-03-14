@@ -1,17 +1,14 @@
 package pw.binom.io.httpClient
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
+import pw.binom.io.*
 import pw.binom.io.http.websocket.MessageType
-import pw.binom.io.readText
-import pw.binom.io.use
-import pw.binom.net.toURI
-import pw.binom.io.utf8Appendable
-import pw.binom.io.utf8Reader
-import pw.binom.network.Network
-import pw.binom.network.NetworkCoroutineDispatcherImpl
+import pw.binom.net.toURL
+import pw.binom.wrap
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class TestWS {
     /*
@@ -74,12 +71,47 @@ class TestWS {
             }
         }
     */
+
+//    object WSEchoServer : TestContainer(
+//        image = "jmalloc/echo-server",
+//        ports = listOf(
+//            Port(internalPort = 8080)
+//        ),
+//        reuse = true,
+//    ) {
+//        val externalPort
+//            get() = ports[0].externalPort
+//    }
+
+    @Test
+    fun test() = runTest {
+        val message = "Hello world"
+        val client = HttpClient.create()
+        val wsClient = client.connect(
+            method = "GET",
+            uri = "ws://127.0.0.1:7142/".toURL(),
+        ).startWebSocket()
+
+        val msg = wsClient.read().use { message ->
+            message.bufferedReader().readText()
+        }
+        assertTrue(msg.startsWith("Request served by"))
+
+        wsClient.write(MessageType.BINARY).use {
+            message.encodeToByteArray().wrap { msg -> it.write(msg) }
+        }
+        val echo = wsClient.read().use { message ->
+            message.bufferedReader().readText()
+        }
+        assertEquals(message, echo)
+    }
+
     @Ignore
     @Test
     fun serverTest() = runTest {
         try {
             val client = HttpClient.create()
-            val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURI())
+            val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURL())
                 .startWebSocket("http://127.0.0.1:8080")
 
             while (true) {
@@ -100,5 +132,4 @@ class TestWS {
             throw e
         }
     }
-
 }

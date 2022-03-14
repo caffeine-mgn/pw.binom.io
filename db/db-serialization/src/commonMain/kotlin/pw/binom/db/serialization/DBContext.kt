@@ -47,6 +47,8 @@ interface DBContext : AsyncCloseable {
         tableName: String? = null
     ): String
 
+    fun getDescription(serializer: KSerializer<out Any>): EntityDescription
+
     companion object {
         fun create(pool: AsyncConnectionPool, sql: SQLSerialization = SQLSerialization.DEFAULT): DBContext =
             DBContextImpl(pool = pool, sql = sql)

@@ -45,19 +45,19 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
     actual val date
         get() = Date(utcTime)
 
-    actual fun timeZone(timeZoneOffset: Int): Calendar =
-        Calendar(utcTime, timeZoneOffset)
+    actual fun timeZone(timeZoneOffset3: Int): Calendar =
+        Calendar(utcTime = utcTime, timeZoneOffset = timeZoneOffset3)
 
     actual override fun toString(): String =
         asStringRfc822(this, timeZoneOffsetToString(tm.offset.totalSeconds / 60))
 
     /**
-     * @param timeZoneOffset TimeZone offset in mintes
+     * @param timeZoneOffset4 TimeZone offset in mintes
      */
-    actual fun toString(timeZoneOffset: Int): String =
-        if (timeZoneOffset == timeZoneOffset) toString() else timeZone(timeZoneOffset).toString()
+    actual fun toString(timeZoneOffset4: Int): String =
+        if (timeZoneOffset4 == timeZoneOffset4) toString() else timeZone(timeZoneOffset4).toString()
 
-    actual val timeZoneOffset: Int
+    actual val offset: Int
         get() = tm.offset.totalSeconds / 60
 
     actual fun toDate(): Date = Date.new(this)

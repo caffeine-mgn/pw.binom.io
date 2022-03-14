@@ -41,25 +41,33 @@ class TcpServerConnection internal constructor(
 
     override fun readyForRead() {
         if (acceptListener == null) {
-            key.removeListen(Selector.INPUT_READY)
+            if (!key.closed) {
+                key.removeListen(Selector.INPUT_READY)
+            }
             return
         }
         val newChannel = channel.accept(null)
         if (newChannel == null) {
             if (acceptListener == null) {
-                key.removeListen(Selector.INPUT_READY)
+                if (!key.closed) {
+                    key.removeListen(Selector.INPUT_READY)
+                }
             }
             return
         }
         val acceptListener = acceptListener
         if (acceptListener == null) {
-            key.removeListen(Selector.INPUT_READY)
+            if (!key.closed) {
+                key.removeListen(Selector.INPUT_READY)
+            }
             throw IllegalStateException("Socket accepted, but listener is null")
         }
         this.acceptListener = null
         acceptListener.resume(newChannel)
         if (this.acceptListener == null) {
-            key.removeListen(Selector.INPUT_READY)
+            if (!key.closed) {
+                key.removeListen(Selector.INPUT_READY)
+            }
         }
         return
     }
@@ -87,7 +95,9 @@ class TcpServerConnection internal constructor(
                 key.listensFlag = Selector.INPUT_READY
                 con.invokeOnCancellation {
                     acceptListener = null
-                    key.listensFlag = 0
+                    if (!key.closed) {
+                        key.listensFlag = 0
+                    }
                 }
             }
             return@TT dispatcher.attach(newChannel)

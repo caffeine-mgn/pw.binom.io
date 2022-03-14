@@ -1,16 +1,5 @@
 package pw.binom.io.httpClient
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-import pw.binom.net.URI
-import pw.binom.compression.zlib.AsyncGZIPInput
-import pw.binom.compression.zlib.AsyncInflateInput
-import pw.binom.io.IOException
-import pw.binom.io.http.AsyncChunkedInput
-import pw.binom.io.http.AsyncContentLengthInput
-import pw.binom.io.http.AsyncHttpInput
-import pw.binom.io.http.Headers
-
 //@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
 //internal class UrlResponseImpl(
 //    override val responseCode: Int,

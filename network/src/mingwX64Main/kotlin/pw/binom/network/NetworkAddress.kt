@@ -56,7 +56,12 @@ actual sealed class NetworkAddress {
             }
         }
 
+    private var hashCode = 0
+
     protected fun _reset(host: String, port: Int) {
+        var hashCode = host.hashCode()
+        hashCode = 31 * hashCode + port.hashCode()
+        this.hashCode = hashCode
         memScoped {
             init_sockets()
             val hints = alloc<addrinfo>()
@@ -73,7 +78,7 @@ actual sealed class NetworkAddress {
                     0 -> break@LOOP
                     EAI_AGAIN -> continue@LOOP
                     platform.windows.WSAHOST_NOT_FOUND -> throw UnknownHostException(host)
-                    else -> throw RuntimeException("Unknown error: ${err}")
+                    else -> throw RuntimeException("Unknown error: $err")
                 }
             }
             memcpy(
@@ -84,8 +89,6 @@ actual sealed class NetworkAddress {
             size = result.value!!.pointed.ai_addrlen.convert()
             freeaddrinfo(result.value)
         }
-
-
     }
 
     override fun equals(other: Any?): Boolean {
@@ -101,11 +104,7 @@ actual sealed class NetworkAddress {
         return true
     }
 
-    override fun hashCode(): Int {
-        var result = host.hashCode()
-        result = 31 * result + port.hashCode()
-        return result
-    }
+    override fun hashCode(): Int = hashCode
 
     actual enum class Type {
         IPV4,

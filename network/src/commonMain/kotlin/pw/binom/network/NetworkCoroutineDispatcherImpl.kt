@@ -67,6 +67,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                                     try {
                                         it.run()
                                     } catch (e: Throwable) {
+                                        println("Error on ROOT NetworkDispatcher #2")
                                         e.printStackTrace()
                                     }
                                 }
@@ -76,6 +77,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                     }
                 }
             } catch (e: Throwable) {
+                println("Error on ROOT NetworkDispatcher #1")
                 e.printStackTrace()
             } finally {
                 self.close()

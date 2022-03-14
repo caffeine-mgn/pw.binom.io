@@ -1,13 +1,13 @@
 package pw.binom.io.httpClient
 
 import pw.binom.AsyncInput
-import pw.binom.net.URI
+import pw.binom.net.URL
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthInput
 import pw.binom.skipAll
 
 class ResponseAsyncContentLengthInput(
-    val URI: URI,
+    val URI: URL,
     val client: BaseHttpClient,
     val keepAlive: Boolean,
     val channel: AsyncAsciiChannel,

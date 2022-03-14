@@ -50,7 +50,6 @@ interface Selector : Closeable {
     fun attach(socket: TcpClientSocketChannel, mode: Int = 0, attachment: Any? = null): Key
     fun attach(socket: TcpServerSocketChannel, mode: Int = 0, attachment: Any? = null): Key
     fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?): Key
-
 }
 
 internal expect fun createSelector(): Selector

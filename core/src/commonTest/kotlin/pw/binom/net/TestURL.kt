@@ -1,23 +1,22 @@
-package pw.binom
+package pw.binom.net
 
-import pw.binom.net.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-class TestURI {
+class TestURL {
 
     @Test
     fun appendPathTest() {
-        val uri = "http://example.com/test".toURI()
+        val uri = "http://example.com/test".toURL()
         val input = uri.appendPath("user").toString()
         assertEquals("http://example.com/test/user", input)
     }
 
     @Test
     fun encodeTest() {
-        "http://example.com/123%20456?gender=m%20w".toURI().also {
+        "http://example.com/123%20456?gender=m%20w".toURL().also {
             assertEquals("/123 456", it.path.raw)
             assertEquals("m w", it.query!!.find("gender"))
         }
@@ -25,7 +24,7 @@ class TestURI {
 
     @Test
     fun newTest() {
-        val uri = URI.new(
+        val uri = URL.new(
             schema = "https",
             user = null,
             password = null,
@@ -36,24 +35,24 @@ class TestURI {
             fragment = "ff nn"
         )
 
-        assertEquals("https://example.com:3301/123%20456?gender=m%20w#ff%20nn",uri.toString())
+        assertEquals("https://example.com:3301/123%20456?gender=m%20w#ff%20nn", uri.toString())
     }
 
     @Test
     fun credentialTest() {
-        "https://user:password@binom/".toURIOrNull!!.apply {
+        "https://user:password@binom/".toURLOrNull!!.apply {
             assertEquals("user", user)
             assertEquals("password", password)
         }
-        "https://user@binom/".toURIOrNull!!.apply {
+        "https://user@binom/".toURLOrNull!!.apply {
             assertEquals("user", user)
             assertNull(password)
         }
-        "https://@binom/".toURIOrNull!!.apply {
+        "https://@binom/".toURLOrNull!!.apply {
             assertEquals("", user)
             assertNull(password)
         }
-        "https://user:@binom/".toURIOrNull!!.apply {
+        "https://user:@binom/".toURLOrNull!!.apply {
             assertEquals("user", user)
             assertEquals("", password)
         }
@@ -61,110 +60,110 @@ class TestURI {
 
     @Test
     fun protoTest() {
-        "https://binom/".toURIOrNull!!.apply {
+        "https://binom/".toURLOrNull!!.apply {
             assertEquals("https", schema)
-        }
-        "//binom/".toURIOrNull!!.apply {
-            assertNull(schema)
-        }
-        "://binom/".toURIOrNull!!.apply {
-            assertEquals("", schema)
         }
     }
 
     @Test
     fun hostTest() {
-        "https://binom/".toURIOrNull!!.apply {
+        "https://binom/".toURLOrNull!!.apply {
             assertEquals("binom", host)
         }
-        "https://binom".toURIOrNull!!.apply {
-            assertEquals("binom", host)
-        }
-
-        "//binom/".toURIOrNull!!.apply {
+        "https://binom".toURLOrNull!!.apply {
             assertEquals("binom", host)
         }
 
-        "//a:b@binom/olo".toURIOrNull!!.apply {
+        "//binom/".toURLOrNull!!.apply {
+            assertEquals("binom", host)
+        }
+
+        "//a:b@binom/olo".toURLOrNull!!.apply {
             assertEquals("binom", host)
         }
     }
 
     @Test
+    fun emptyHostTest() {
+        assertEquals("", "ws://:80".toURL().host)
+    }
+
+    @Test
     fun portTest() {
-        "https://binom/olo".toURIOrNull!!.apply {
+        "https://binom/olo".toURLOrNull!!.apply {
             assertNull(port)
         }
-        "https://binom:80/olo".toURIOrNull!!.apply {
+        "https://binom:80/olo".toURLOrNull!!.apply {
             assertEquals(80, port)
         }
-        "https://binom?".toURIOrNull!!.apply {
+        "https://binom?".toURLOrNull!!.apply {
             assertNull(port)
         }
 
-        "https://binom:80?q".toURIOrNull!!.apply {
+        "https://binom:80?q".toURLOrNull!!.apply {
             assertEquals(80, port)
         }
 
-        "https://binom:80#q".toURIOrNull!!.apply {
+        "https://binom:80#q".toURLOrNull!!.apply {
             assertEquals(80, port)
         }
     }
 
     @Test
     fun uriTest() {
-        "https://binom/olo".toURIOrNull!!.apply {
+        "https://binom/olo".toURLOrNull!!.apply {
             assertEquals("/olo", path.toString())
         }
 
-        "https://binom/olo?q".toURIOrNull!!.apply {
+        "https://binom/olo?q".toURLOrNull!!.apply {
             assertEquals("/olo", path.toString())
         }
-        "https://binom/olo?q#v".toURIOrNull!!.apply {
+        "https://binom/olo?q#v".toURLOrNull!!.apply {
             assertEquals("/olo", path.toString())
         }
-        "https://binom/olo#v".toURIOrNull!!.apply {
+        "https://binom/olo#v".toURLOrNull!!.apply {
             assertEquals("/olo", path.toString())
         }
 
-        "https://binom".toURIOrNull!!.apply {
+        "https://binom".toURLOrNull!!.apply {
             assertEquals("", path.toString())
         }
-        "https://binom:80".toURIOrNull!!.apply {
+        "https://binom:80".toURLOrNull!!.apply {
             assertEquals("", path.toString())
         }
-        "https://binom:80?q".toURIOrNull!!.apply {
+        "https://binom:80?q".toURLOrNull!!.apply {
             assertEquals("", path.toString())
             assertEquals("q".toQuery, query)
         }
-        "https://binom:80#q".toURIOrNull!!.apply {
+        "https://binom:80#q".toURLOrNull!!.apply {
             assertEquals("", path.toString())
         }
     }
 
     @Test
     fun common() {
-        "https://user:password@binom:53/test/addr?q=1#getData".toURIOrNull!!.apply {
+        "https://user:password@binom:53/test/addr?q=1#getData".toURLOrNull!!.apply {
             assertEquals("https", schema)
             assertEquals("user", user)
-        }
-
-        "//user:password@binom:53/test/addr?q=1#getData".toURIOrNull!!.apply {
-            assertNull(schema)
         }
     }
 
     @Test
     fun `protoAddresPort`() {
-        val url = URI("http://127.0.0.1:4646")
+        val url = URL("http://127.0.0.1:4646")
         assertEquals("http", url.schema)
         assertEquals("", url.path.toString())
         assertEquals(4646, url.port)
     }
 
     @Test
+    fun schemaTest() {
+        assertEquals("jdbc:mysql", "jdbc:mysql://127.0.0.1:3301/435345/e435/6457567".toURL().schema)
+    }
+
+    @Test
     fun `protoAddresPortUri`() {
-        val url = URI("http://127.0.0.1:4646/")
+        val url = URL("http://127.0.0.1:4646/")
         assertEquals("http", url.schema)
         assertEquals("/", url.path.toString())
         assertEquals(4646, url.port)
@@ -172,7 +171,7 @@ class TestURI {
 
     @Test
     fun `protoAddres`() {
-        val url = URI("http://127.0.0.1")
+        val url = URL("http://127.0.0.1")
         assertEquals("http", url.schema)
         assertEquals("", url.path.raw)
         assertNull(url.port)
@@ -180,7 +179,7 @@ class TestURI {
 
     @Test
     fun `protoAddresUri`() {
-        val url = URI("http://127.0.0.1/")
+        val url = URL("http://127.0.0.1/")
         assertEquals("http", url.schema)
         assertEquals("/", url.path.toString())
         assertNull(url.port)
@@ -188,7 +187,7 @@ class TestURI {
 
     @Test
     fun `withUri`() {
-        var url = URI("http://127.0.0.1:4646")
+        var url = URL("http://127.0.0.1:4646")
         assertEquals("127.0.0.1", url.host)
         assertEquals(4646, url.port)
         url = url.copy(path = "${url.path}/var".toPath)
@@ -196,25 +195,32 @@ class TestURI {
         assertEquals("/var", url.path.toString())
     }
 
-    @Test
-    fun `withoutProto`() {
-        val url = URI("//127.0.0.1:4646")
-        assertNull(url.schema)
-        assertEquals("127.0.0.1", url.host)
-        assertEquals(4646, url.port)
-        assertEquals("", url.path.raw)
-    }
+//    @Test
+//    fun `withoutProto`() {
+//        val url = URL("//127.0.0.1:4646")
+//        assertNull(url.schema)
+//        assertEquals("127.0.0.1", url.host)
+//        assertEquals(4646, url.port)
+//        assertEquals("", url.path.raw)
+//    }
+
+//    @Test
+//    fun toURLOrNullTest() {
+//        assertNull("".toURLOrNull)
+//        assertNotNull("//".toURLOrNull).apply {
+//            assertEquals("", host)
+//            assertNull(port)
+//            assertNull(schema)
+//            assertNull(query)
+//            assertNull(fragment)
+//        }
+//        assertNull("ht?p://".toURLOrNull)
+//    }
 
     @Test
-    fun toURLOrNullTest() {
-        assertNull("".toURIOrNull)
-        assertNotNull("//".toURIOrNull).apply {
-            assertEquals("", host)
-            assertNull(port)
-            assertNull(schema)
-            assertNull(query)
-            assertNull(fragment)
-        }
-        assertNull("ht?p://".toURIOrNull)
+    fun gotoTest() {
+        assertEquals("http://google.com/dev/1", "http://google.com/news/1/".toURL().goto("/dev/1".toURI()).toString())
+        assertEquals("http://google.com/news/2", "http://google.com/news/1/".toURL().goto("../2".toURI()).toString())
+        assertEquals("http://google.com/test", "http://google.com/news/1".toURL().goto("../test".toURI()).toString())
     }
 }

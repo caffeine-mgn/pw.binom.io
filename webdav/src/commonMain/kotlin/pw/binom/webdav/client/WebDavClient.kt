@@ -8,7 +8,7 @@ import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.addHeader
 import pw.binom.net.Path
-import pw.binom.net.URI
+import pw.binom.net.URL
 import pw.binom.net.toPath
 import pw.binom.network.SocketClosedException
 import pw.binom.skipAll
@@ -18,10 +18,8 @@ import pw.binom.webdav.MULTISTATUS_TAG
 import pw.binom.webdav.WebAuthAccess
 import pw.binom.xml.dom.xmlTree
 import kotlin.coroutines.*
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
-open class WebDavClient constructor(val client: HttpClient, val url: URI) :
+open class WebDavClient constructor(val client: HttpClient, val url: URL) :
     FileSystem {
     override suspend fun getQuota(path: Path): Quota? {
         val dir = getDir(user = WebAuthAccess.getCurrentUser(), path = path, depth = 0, excludeCurrent = false)

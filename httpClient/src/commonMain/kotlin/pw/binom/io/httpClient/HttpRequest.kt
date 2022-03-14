@@ -8,12 +8,13 @@ import pw.binom.io.http.BasicAuth
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.useBasicAuth
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.net.URI
+import pw.binom.io.use
+import pw.binom.net.URL
 
 interface HttpRequest : AsyncCloseable {
     val headers: MutableHeaders
     val method: String
-    val uri: URI
+    val uri: URL
 
     /**
      * Starts write binary request
@@ -34,12 +35,14 @@ interface HttpRequest : AsyncCloseable {
      * Closes this [DefaultHttpRequest] and delegate control to returned [HttpResponse].
      */
     suspend fun getResponse(): HttpResponse
+    suspend fun <T> useResponse(func: suspend (HttpResponse) -> T): T =
+        getResponse().use { func(it) }
 
     /**
      * Starts WebSocket Session.
      * Closes this [DefaultHttpRequest] and delegate control to returned [WebSocketConnection].
      */
-    suspend fun startWebSocket(origin: String? = null): WebSocketConnection
+    suspend fun startWebSocket(origin: String? = null, masking: Boolean = true): WebSocketConnection
     suspend fun startTcp(): AsyncChannel
 }
 

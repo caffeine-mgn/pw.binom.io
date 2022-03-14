@@ -51,8 +51,8 @@ actual value class Date(val time: Long = nowTime) {
                 }
 
                 val time = seconds + minutes * 60L + hours * 3600L + (yearDay - 2) * 86400L +
-                        (year2 - 70L) * 31536000L + ((year2 - 69L) / 4L) * 86400L -
-                        ((year2 - 1L) / 100) * 86400L + ((year2 + 299L) / 400L) * 86400L
+                    (year2 - 70L) * 31536000L + ((year2 - 69L) / 4L) * 86400L -
+                    ((year2 - 1L) / 100) * 86400L + ((year2 + 299L) / 400L) * 86400L
                 return Date(time * 1000L)
             }
             return memScoped {
@@ -83,7 +83,7 @@ actual value class Date(val time: Long = nowTime) {
     }
 
     actual fun calendar(timeZoneOffset: Int): Calendar =
-        Calendar(time, timeZoneOffset)
+        Calendar(utcTime = time, offset = timeZoneOffset)
 }
 
 @SharedImmutable
@@ -93,5 +93,5 @@ private fun isLeapYear(year: Int): Boolean {
     if (year % 400 == 0) return true
     if (year % 100 == 0) return false
     if (year % 4 == 0) return true
-    return false;
+    return false
 }

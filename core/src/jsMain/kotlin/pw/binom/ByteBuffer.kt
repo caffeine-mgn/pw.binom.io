@@ -5,7 +5,6 @@ import org.khronos.webgl.get
 import org.khronos.webgl.set
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
-import pw.binom.io.use
 
 private fun memcpy(
     dist: Int8Array,
@@ -43,11 +42,11 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
             throw StreamClosedException()
     }
 
-    private var native = Int8Array(capacity)//: CPointer<ByteVar> = malloc(capacity.convert())!!.reinterpret()
+    private var native = Int8Array(capacity) // : CPointer<ByteVar> = malloc(capacity.convert())!!.reinterpret()
 
     actual override fun flip() {
-        limit = position;
-        position = 0;
+        limit = position
+        position = 0
     }
 
     actual override val remaining: Int

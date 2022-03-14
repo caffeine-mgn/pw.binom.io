@@ -3,7 +3,7 @@ package pw.binom.flux
 import kotlinx.serialization.KSerializer
 import pw.binom.io.http.Headers
 
-object SerializationStab : Serialization {
+object FluxServerSerializationStab : FluxServerSerialization {
     override suspend fun <T : Any> encode(
         request: FluxHttpRequest,
         value: T,
@@ -17,5 +17,4 @@ object SerializationStab : Serialization {
     override suspend fun <T : Any> decode(request: FluxHttpRequest, serializer: KSerializer<T>): T {
         throw IllegalStateException("Serialization not supported")
     }
-
 }

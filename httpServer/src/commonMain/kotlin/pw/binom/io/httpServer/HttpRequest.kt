@@ -3,13 +3,10 @@ package pw.binom.io.httpServer
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
-import pw.binom.io.AsyncCloseable
-import pw.binom.io.AsyncReader
-import pw.binom.io.AsyncWriter
+import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.use
 import pw.binom.net.Path
 import pw.binom.net.Query
 import pw.binom.wrap
@@ -23,8 +20,26 @@ interface HttpRequest : AsyncCloseable {
     val request: String
     fun readBinary(): AsyncInput
     fun readText(): AsyncReader
-    suspend fun acceptWebsocket(): WebSocketConnection
+
+    /**
+     * Allow upgrade this connection to web-socket connection
+     */
+    suspend fun acceptWebsocket(masking: Boolean = false): WebSocketConnection
+
+    /**
+     * Reject upgrade this connection to web-socket connection
+     */
     suspend fun rejectWebsocket()
+
+    /**
+     * Allow upgrade this connection to tcp connection
+     */
+    suspend fun acceptTcp(): AsyncChannel
+
+    /**
+     * Reject upgrade this connection to tcp connection
+     */
+    suspend fun rejectTcp()
     suspend fun response(): HttpResponse
     suspend fun <T> response(func: suspend (HttpResponse) -> T): T =
         response().use {

@@ -789,9 +789,9 @@ internal sealed interface Pattern {
         }
 
         override fun toString(calendar: Calendar): String {
-            val t = calendar.timeZoneOffset.absoluteValue
+            val t = calendar.offset.absoluteValue
             val h = t / 60
-            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}"
+            return "${if (calendar.offset >= 0) '+' else '-'}${h.as2()}"
         }
 
         override fun toString(): String = "X"
@@ -841,10 +841,10 @@ internal sealed interface Pattern {
         }
 
         override fun toString(calendar: Calendar): String {
-            val t = calendar.timeZoneOffset.absoluteValue
+            val t = calendar.offset.absoluteValue
             val h = t / 60
             val m = t - h * 60
-            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
+            return "${if (calendar.offset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
         }
 
         override fun toString(): String = "XXX"
@@ -897,10 +897,10 @@ internal sealed interface Pattern {
         }
 
         override fun toString(calendar: Calendar): String {
-            val t = calendar.timeZoneOffset.absoluteValue
+            val t = calendar.offset.absoluteValue
             val h = t / 60
             val m = t - h * 60
-            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}:${m.as2()}"
+            return "${if (calendar.offset >= 0) '+' else '-'}${h.as2()}:${m.as2()}"
         }
 
         override fun toString(): String = "XXX"
@@ -950,10 +950,10 @@ internal sealed interface Pattern {
         }
 
         override fun toString(calendar: Calendar): String {
-            val t = calendar.timeZoneOffset.absoluteValue
+            val t = calendar.offset.absoluteValue
             val h = t / 60
             val m = t - h * 60
-            return "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
+            return "${if (calendar.offset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
         }
 
         override fun toString(): String = "Z"
@@ -984,11 +984,11 @@ internal sealed interface Pattern {
         }
 
         override fun toString(calendar: Calendar): String {
-            if (calendar.timeZoneOffset != 0) {
-                val t = calendar.timeZoneOffset.absoluteValue
+            if (calendar.offset != 0) {
+                val t = calendar.offset.absoluteValue
                 val h = t / 60
                 val m = t - h * 60
-                val tz = "${if (calendar.timeZoneOffset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
+                val tz = "${if (calendar.offset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
                 throw RuntimeException("Can't convert timezone $tz to General time zone")
             }
             return "Z"

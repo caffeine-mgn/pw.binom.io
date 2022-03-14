@@ -5,7 +5,7 @@ import platform.posix.localtime_r
 import platform.posix.time_tVar
 import platform.posix.tm
 
-actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int) {
+actual class Calendar(private val utcTime: Long, actual val offset: Int) {
 
     private var tm_year: Int = 0
     private var tm_hour: Int = 0
@@ -19,7 +19,7 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
         memScoped {
             val dateTime = alloc<tm>()
             val timeSec = alloc<time_tVar>()
-            val tx = timeZoneOffset - Date.systemZoneOffset
+            val tx = offset - Date.systemZoneOffset
             timeSec.value = (utcTime / 1000L + tx * 60L).convert()
             if (localtime_r(timeSec.ptr, dateTime.ptr) == null) {
                 throw IllegalArgumentException("Can't convert $utcTime to Calendar")
@@ -68,11 +68,11 @@ actual class Calendar(private val utcTime: Long, actual val timeZoneOffset: Int)
     actual val dayOfWeek: Int
         get() = tm_wday
 
-    actual fun timeZone(timeZoneOffset: Int): Calendar = Calendar(utcTime, timeZoneOffset)
+    actual fun timeZone(timeZoneOffset3: Int): Calendar = Calendar(utcTime = utcTime, offset = timeZoneOffset3)
 
     actual override fun toString(): String =
-        asStringRfc822(this, timeZoneOffsetToString(timeZoneOffset))
+        asStringRfc822(this, timeZoneOffsetToString(offset))
 
-    actual fun toString(timeZoneOffset: Int): String = timeZone(timeZoneOffset).toString()
+    actual fun toString(timeZoneOffset4: Int): String = timeZone(timeZoneOffset4).toString()
     actual fun toDate(): Date = Date.new(this)
 }

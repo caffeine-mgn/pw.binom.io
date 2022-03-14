@@ -30,7 +30,8 @@ kotlin {
                 }
             }
         }
-        nodejs()
+//        nodejs()
+//        binaries.library()
     }
     baseStaticLibConfig()
     sourceSets {

@@ -35,10 +35,10 @@ actual class NSocket(val native: Int) : Closeable {
                 val addrlen = alloc<socklen_tVar>()
                 addrlen.value = sizeOf<sockaddr_in>().convert()
                 val r = getsockname(native, sin.ptr.reinterpret(), addrlen.ptr)
-                if (r==0) {
+                if (r == 0) {
                     ntohs(sin.sin_port).toInt()
                 } else {
-                    println("getsockname=$r, errno=${errno}")
+                    println("getsockname=$r, errno=$errno")
                     null
                 }
             }
@@ -93,7 +93,7 @@ actual class NSocket(val native: Int) : Closeable {
                 if (errno == EBADF) {
                     throw SocketClosedException()
                 }
-                throw IOException("Error on send data to network. send: [$r], error: [${errno}]")
+                throw IOException("Error on send data to network. send: [$r], error: [$errno]")
             }
             data.position += r
             return r
@@ -110,7 +110,7 @@ actual class NSocket(val native: Int) : Closeable {
             if (errno == EAGAIN) {
                 return 0
             }
-            if (errno == 104) {
+            if (errno == ECONNRESET) {
                 nativeClose()
                 throw SocketClosedException()
             }
@@ -119,7 +119,7 @@ actual class NSocket(val native: Int) : Closeable {
             }
             nativeClose()
 //            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}], EDEADLK=$EDEADLK")
-            throw IOException("Error on read data to network. send: [$r], error: [${errno}]")
+            throw IOException("Error on read data to network. send: [$r], error: [$errno]")
         }
         if (r > 0) {
             data.position += r
@@ -127,13 +127,16 @@ actual class NSocket(val native: Int) : Closeable {
         return r
     }
 
-    private fun nativeClose() {
+    fun unbind(native: Int) {
         memScoped {
             val flag = alloc<IntVar>()
             flag.value = 1
             setsockopt(native, SOL_SOCKET, SO_REUSEADDR, flag.ptr, sizeOf<IntVar>().convert())
-            setsockopt(native, SOL_SOCKET, SO_REUSEPORT, flag.ptr, sizeOf<IntVar>().convert())
         }
+    }
+
+    private fun nativeClose() {
+        unbind(native)
         shutdown(native, SHUT_RDWR)
         close(native)
     }
@@ -180,23 +183,31 @@ actual class NSocket(val native: Int) : Closeable {
         checkClosed()
         memScoped {
             set_posix_errno(0)
-            val bindResult = bind(
-                native,
-                address.data.refTo(0).getPointer(this).reinterpret(),
-                address.size.convert()
-            )
+            val bindResult = address.data.usePinned {
+                bind(
+                    native,
+                    it.addressOf(0).reinterpret(),
+                    address.size.convert()
+                )
+            }
             if (bindResult < 0) {
-                println("bind on ${address}. errno: $errno")
-                if (errno == 98) {
+                println("bind on $address. errno: $errno")
+                if (errno == EADDRINUSE) {
                     throw BindException("Address already in use: ${address.host}:${address.port}")
                 }
                 throw IOException("Bind error. errno: [$errno], bind: [$bindResult]")
             }
             val listenResult = listen(native, 1000)
             if (listenResult < 0) {
-                if (errno == 95) {
+                if (errno == ESOCKTNOSUPPORT) {
                     return@memScoped
                 }
+                if (errno == EOPNOTSUPP) {
+                    return@memScoped
+//                    unbind(native)
+//                    throw IOException("Can't bind socket: Operation not supported on transport endpoint")
+                }
+                unbind(native)
                 throw IOException("Listen error. errno: [$errno], listen: [$listenResult]")
             }
         }
@@ -207,17 +218,23 @@ actual class NSocket(val native: Int) : Closeable {
             checkClosed()
 
             val rr = data.ref { dataPtr, remaining ->
-                sendto(
-                    native, dataPtr.getPointer(this), remaining.convert(),
-                    MSG_NOSIGNAL,
-                    address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
-                )
+                address.data.usePinned {
+                    sendto(
+                        native, dataPtr.getPointer(this), remaining.convert(),
+                        0,
+                        it.addressOf(0).getPointer(this).reinterpret(), address.size.convert()
+                    )
+                }
             }
+
             if (rr.toInt() == -1) {
                 if (errno == EPIPE) {
                     throw SocketClosedException()
                 }
-                throw IOException("Can't send data. Error: $errno  ${errno}")
+                if (errno == EINVAL) {
+                    throw IOException("Can't send data: Invalid argument")
+                }
+                throw IOException("Can't send data. Error: $errno  $errno")
             }
 
             data.position += rr.toInt()
@@ -234,8 +251,8 @@ actual class NSocket(val native: Int) : Closeable {
             val rr = data.ref { dataPtr, remaining ->
                 recvfrom(native, dataPtr, remaining.convert(), 0, null, null)
             }
-            if (rr.toInt() == -1) {
-                throw IOException("Can't read data. Error: $errno  ${errno}")
+            if (rr.toInt() == -1 && errno != EAGAIN) {
+                throw IOException("Can't read data. Error: $errno  $errno")
             }
             rr
         } else {
@@ -251,18 +268,19 @@ actual class NSocket(val native: Int) : Closeable {
                     )
                 }
 
-                if (rr.toInt() == -1) {
-                    throw IOException("Can't read data. Error: $errno  ${errno}")
+                if (rr.toInt() == -1 && errno != EAGAIN) {
+                    throw IOException("Can't read data. Error: $errno  $errno")
                 }
                 address.size = len[0].convert()
                 rr
             }
         }.convert<Int>()
-        data.position += gotBytes.toInt()
+        if (gotBytes > 0) {
+            data.position += gotBytes.toInt()
+        }
         return gotBytes
     }
 }
-
 
 fun isConnected(native: Int): Boolean {
     memScoped {

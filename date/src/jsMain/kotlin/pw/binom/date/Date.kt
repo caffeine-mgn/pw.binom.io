@@ -9,7 +9,7 @@ actual value class Date(val time: Long = nowTime) {
 
         actual fun internalOf(year: Int, month: Int, dayOfMonth: Int, hours: Int, minutes: Int, seconds: Int, millis: Int, timeZoneOffset: Int): Date {
             val date = kotlin.js.Date.UTC(year, month - 1, dayOfMonth, hours, minutes, seconds, millis)
-            val utc = date.toLong() - timeZoneOffset * 60 *1000
+            val utc = date.toLong() - timeZoneOffset * 60 * 1000
             return Date(utc)
         }
 
@@ -18,5 +18,5 @@ actual value class Date(val time: Long = nowTime) {
     }
 
     actual fun calendar(timeZoneOffset: Int): Calendar =
-            Calendar(time, timeZoneOffset)
+        Calendar(utcTime = time, offset = timeZoneOffset)
 }

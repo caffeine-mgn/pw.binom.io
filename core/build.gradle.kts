@@ -199,7 +199,11 @@ tasks {
         }
     }
 }
-
+tasks.withType<Test> {
+    this.testLogging {
+        this.showStandardStreams = true
+    }
+}
 kotlinter {
     indentSize = 4
     disabledRules = arrayOf("no-wildcard-imports")

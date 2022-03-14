@@ -174,7 +174,9 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             sendData.continuation = it
             key.addListen(Selector.OUTPUT_READY)
             it.invokeOnCancellation {
-                key.removeListen(Selector.OUTPUT_READY)
+                if (!key.closed) {
+                    key.removeListen(Selector.OUTPUT_READY)
+                }
             }
         }
         return l
@@ -227,7 +229,9 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
             readData.data = dest
             key.addListen(Selector.INPUT_READY)
             it.invokeOnCancellation {
-                key.removeListen(Selector.INPUT_READY)
+                if (!key.closed) {
+                    key.removeListen(Selector.INPUT_READY)
+                }
                 readData.continuation = null
                 readData.data = null
             }

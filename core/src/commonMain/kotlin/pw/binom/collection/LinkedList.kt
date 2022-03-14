@@ -1,6 +1,13 @@
 package pw.binom.collection
 
-open class LinkedList<T> : MutableList<T> {
+open class LinkedList<T>() : MutableList<T> {
+    constructor(elements: Iterable<T>) : this() {
+        addAll(elements)
+    }
+
+    constructor(elements: Array<out T>) : this() {
+        addAll(elements)
+    }
 
     protected class Node<T>(var prev: Node<T>?, var item: T?, var next: Node<T>?)
 
@@ -25,8 +32,10 @@ open class LinkedList<T> : MutableList<T> {
         return true
     }
 
+    override fun toString(): String = "[${joinToString(", ")}]"
+
     override fun get(index: Int): T {
-        checkElementIndex(index);
+        checkElementIndex(index)
         return node(index)!!.item as T
     }
 
@@ -75,8 +84,8 @@ open class LinkedList<T> : MutableList<T> {
     }
 
     protected fun linkLast(e: T) {
-        val l = last;
-        val newNode = Node(l, e, null);
+        val l = last
+        val newNode = Node(l, e, null)
         last = newNode
         if (l == null) {
             first = newNode
@@ -96,7 +105,7 @@ open class LinkedList<T> : MutableList<T> {
 
     private fun checkPositionIndex(index: Int) {
         if (!isPositionIndex(index))
-            throw IndexOutOfBoundsException(outOfBoundsMsg(index));
+            throw IndexOutOfBoundsException(outOfBoundsMsg(index))
     }
 
     private fun outOfBoundsMsg(index: Int) = "Index: $index, Size: $size"
@@ -142,7 +151,7 @@ open class LinkedList<T> : MutableList<T> {
         checkPositionIndex(index)
 
         if (index == size)
-            linkLast(element);
+            linkLast(element)
         else
             linkBefore(element, node(index)!!)
     }
@@ -193,8 +202,8 @@ open class LinkedList<T> : MutableList<T> {
     override fun listIterator(): MutableListIterator<T> = listIterator(0)
 
     override fun listIterator(index: Int): MutableListIterator<T> {
-        checkPositionIndex(index);
-        return ListItr(index);
+        checkPositionIndex(index)
+        return ListItr(index)
     }
 
     override fun remove(element: T): Boolean {
@@ -239,7 +248,7 @@ open class LinkedList<T> : MutableList<T> {
 
     private fun checkElementIndex(index: Int) {
         if (!isElementIndex(index))
-            throw IndexOutOfBoundsException(outOfBoundsMsg(index));
+            throw IndexOutOfBoundsException(outOfBoundsMsg(index))
     }
 
     protected fun unlink(x: Node<T>): T {
@@ -278,7 +287,7 @@ open class LinkedList<T> : MutableList<T> {
     }
 
     override fun set(index: Int, element: T): T {
-        checkElementIndex(index);
+        checkElementIndex(index)
         val x = node(index)!!
         val oldVal = x.item
         x.item = element
@@ -303,7 +312,7 @@ open class LinkedList<T> : MutableList<T> {
      * @throws NoSuchElementException – if this list is empty
      */
     fun getLast(): T {
-        val l = last ?: throw NoSuchElementException();
+        val l = last ?: throw NoSuchElementException()
         return l.item as T
     }
 
@@ -365,7 +374,7 @@ open class LinkedList<T> : MutableList<T> {
      * Links e as first element.
      */
     private fun linkFirst(e: T) {
-        val f = first;
+        val f = first
         val newNode = Node(null, e, f)
         first = newNode
         if (f == null) {
@@ -483,25 +492,25 @@ open class LinkedList<T> : MutableList<T> {
         }
 
         override fun remove() {
-            checkForComodification();
+            checkForComodification()
             if (lastReturned == null)
                 throw IllegalStateException()
 
-            val lastNext = lastReturned!!.next;
-            unlink(lastReturned!!);
+            val lastNext = lastReturned!!.next
+            unlink(lastReturned!!)
             if (next == lastReturned)
-                next = lastNext;
+                next = lastNext
             else
-                nextIndex--;
-            lastReturned = null;
-            expectedModCount++;
+                nextIndex--
+            lastReturned = null
+            expectedModCount++
         }
 
         override fun set(element: T) {
             if (lastReturned == null)
                 throw IllegalStateException()
-            checkForComodification();
-            lastReturned!!.item = element;
+            checkForComodification()
+            lastReturned!!.item = element
         }
 
         fun checkForComodification() {
@@ -511,3 +520,6 @@ open class LinkedList<T> : MutableList<T> {
         }
     }
 }
+
+fun <T> linkedListOf(): LinkedList<T> = LinkedList()
+fun <T> linkedListOf(vararg elements: T): LinkedList<T> = if (elements.isEmpty()) LinkedList() else LinkedList(elements)

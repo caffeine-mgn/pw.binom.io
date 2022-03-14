@@ -1,19 +1,17 @@
 package pw.binom.io.httpClient
 
-import kotlinx.coroutines.CancellationException
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.socket.ssl.AsyncSSLChannel
+import pw.binom.io.http.websocket.MessagePool
+import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.io.socket.ssl.asyncChannel
-import pw.binom.net.URI
+import pw.binom.net.URL
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcher
-import pw.binom.network.TcpConnection
 import pw.binom.ssl.*
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -24,18 +22,20 @@ class BaseHttpClient(
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,
     val bufferSize: Int = DEFAULT_BUFFER_SIZE,
-    bufferCapacity: Int = 16
+    bufferCapacity: Int = 16,
+    websocketMessagePoolSize: Int = 16
 ) : HttpClient {
-    //    internal val deadlineTimer = DeadlineTimer.create()
+    internal val messagePool by lazy { MessagePool(websocketMessagePoolSize) }
+    internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
     internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, size = bufferSize.toUInt())
 
-    internal fun recycleConnection(URI: URI, channel: AsyncAsciiChannel) {
+    internal fun recycleConnection(URI: URL, channel: AsyncAsciiChannel) {
         connections.getOrPut(URI.asKey) { ArrayList() }.add(channel)
     }
 
-    private suspend fun borrowConnection(uri: URI): AsyncAsciiChannel {
+    private suspend fun borrowConnection(uri: URL): AsyncAsciiChannel {
         val id = uri.asKey
         val list = connections[id]
         if (list != null) {
@@ -74,7 +74,7 @@ class BaseHttpClient(
         channel.asyncClose()
     }
 
-    override suspend fun connect(method: String, uri: URI): HttpRequest {
+    override suspend fun connect(method: String, uri: URL): HttpRequest {
         var connect: AsyncAsciiChannel? = null
         try {
             val schema = uri.schema ?: throw IllegalArgumentException("URL \"$uri\" must contains protocol")
@@ -100,16 +100,21 @@ class BaseHttpClient(
     }
 }
 
-private val URI.asKey
-    get() = "${schema ?: ""}://${host}:${port}"
+private val URL.asKey
+    get() = "$schema://$host:$port"
 
-private fun URI.getPort() =
+private fun URL.getPort() =
     port ?: when (schema) {
         "ws", "http" -> 80
         "wss", "https" -> 443
+        "ssh" -> 22
+        "ftp" -> 21
+        "rdp" -> 3389
+        "vnc" -> 5900
+        "telnet" -> 23
         else -> throw IllegalArgumentException("Unknown default port for $this")
     }
 
 @OptIn(ExperimentalTime::class)
-suspend fun BaseHttpClient.connect(method: HTTPMethod, uri: URI) =
+suspend fun BaseHttpClient.connect(method: HTTPMethod, uri: URL) =
     connect(method.code, uri)

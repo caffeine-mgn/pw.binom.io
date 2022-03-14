@@ -42,5 +42,5 @@ actual value class Date(val time: Long = nowTime) {
     }
 
     actual fun calendar(timeZoneOffset: Int): Calendar =
-        Calendar(time, timeZoneOffset)
+        Calendar(utcTime = time, timeZoneOffset = timeZoneOffset)
 }

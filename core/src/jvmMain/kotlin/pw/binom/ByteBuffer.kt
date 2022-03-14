@@ -2,11 +2,10 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
-import pw.binom.io.use
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
-//private var rr = 0
+// private var rr = 0
 actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer =
@@ -141,7 +140,6 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
         return native.get()
     }
 
-
     actual fun reset(position: Int, length: Int): ByteBuffer {
         checkClosed()
         native.position(position)
@@ -186,7 +184,14 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
 
     actual fun toByteArray(): ByteArray {
         val r = ByteArray(remaining)
-        native.get(r)
+        val p = native.position()
+        val l = native.limit()
+        try {
+            native.get(r)
+        } finally {
+            native.position(p)
+            native.limit(l)
+        }
         return r
     }
 

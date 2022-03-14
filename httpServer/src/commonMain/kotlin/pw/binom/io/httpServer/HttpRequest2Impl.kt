@@ -11,7 +11,7 @@ import pw.binom.io.*
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.httpServer.websocket.ServerWebSocketConnection
+import pw.binom.io.http.websocket.WebSocketConnectionImpl
 import pw.binom.net.Path
 import pw.binom.net.Query
 import pw.binom.net.toPath
@@ -144,6 +144,17 @@ internal class HttpRequest2Impl(
         return readBinary().bufferedReader(charset = Charsets.get(charset))
     }
 
+    private suspend fun checkTcp() {
+        if (!headers[Headers.CONNECTION]?.singleOrNull().equals(Headers.UPGRADE, true)) {
+            rejectWebsocket()
+            throw IllegalStateException("Invalid Client Headers: Invalid Header \"${Headers.CONNECTION}\"")
+        }
+        if (!headers[Headers.UPGRADE]?.singleOrNull().equals(Headers.TCP, true)) {
+            rejectWebsocket()
+            throw IllegalStateException("Invalid Client Headers: Invalid Header \"${Headers.UPGRADE}\"")
+        }
+    }
+
     private suspend fun checkWebSocket() {
         if (!headers[Headers.CONNECTION]?.singleOrNull().equals(Headers.UPGRADE, true)) {
             rejectWebsocket()
@@ -155,7 +166,7 @@ internal class HttpRequest2Impl(
         }
     }
 
-    override suspend fun acceptWebsocket(): WebSocketConnection {
+    override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection {
         checkClosed()
         checkWebSocket()
         val key = headers.getSingleOrNull(Headers.SEC_WEBSOCKET_KEY)
@@ -170,16 +181,33 @@ internal class HttpRequest2Impl(
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.headers[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
         resp.sendHeadersAndFree()
-
-        return ServerWebSocketConnection(
+        return server.webSocketConnectionPool.new(
             input = channel.reader,
             output = channel.writer,
-//            rawConnection = channel.channel,
-//            networkDispatcher = server.manager,
+            masking = masking,
         )
     }
 
     override suspend fun rejectWebsocket() {
+        checkClosed()
+        response().use {
+            it.headers.keepAlive = false
+            it.status = 403
+        }
+    }
+
+    override suspend fun acceptTcp(): AsyncChannel {
+        checkClosed()
+        checkTcp()
+        val resp = response() as HttpResponse2Impl
+        resp.status = 101
+        resp.headers[Headers.CONNECTION] = Headers.UPGRADE
+        resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
+        resp.sendHeadersAndFree()
+        return channel.channel
+    }
+
+    override suspend fun rejectTcp() {
         checkClosed()
         response().use {
             it.headers.keepAlive = false
@@ -251,9 +279,9 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
 
     private suspend fun sendRequest() {
         if (req.server.zlibBufferSize <= 0 && (
-                    headers.contentEncoding.equals("gzip", ignoreCase = true)
-                            || headers.contentEncoding.equals("deflate", ignoreCase = true)
-                    )
+            headers.contentEncoding.equals("gzip", ignoreCase = true) ||
+                headers.contentEncoding.equals("deflate", ignoreCase = true)
+            )
         ) {
             throw IllegalStateException("Response doesn't support compress. Make sure you set HttpServer::zlibBufferSize more than 0")
         }
@@ -281,7 +309,7 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
             throw IllegalStateException("Client not support Keep-Alive mode")
         }
         if (headers.contentEncoding == null && headers.getTransferEncodingList()
-                .isEmpty() && headers.contentLength == null
+            .isEmpty() && headers.contentLength == null
         ) {
             val en = req.headers.acceptEncoding
             headers.contentEncoding = when {

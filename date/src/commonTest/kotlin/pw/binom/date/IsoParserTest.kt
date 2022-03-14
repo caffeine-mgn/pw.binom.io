@@ -1,6 +1,5 @@
 package pw.binom.date
 
-import pw.binom.date.format.toDatePattern
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -77,7 +76,7 @@ class IsoParserTest {
             assertEquals(17, minutes)
             assertEquals(33, seconds)
             assertEquals(39, millisecond)
-            assertEquals(0, timeZoneOffset)
+            assertEquals(0, offset)
         }
     }
 }

@@ -10,9 +10,9 @@ import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
 
-//private val _ZERO = ByteBuffer.alloc(0)
+// private val _ZERO = ByteBuffer.alloc(0)
 //
-//val ByteBuffer.Companion.ZERO
+// val ByteBuffer.Companion.ZERO
 //    get() = _ZERO
 
 /**
@@ -46,6 +46,11 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
+
+    /**
+     * push all available data (between [position] and [limit]) from this bytebuffer to bytearray.
+     * Don't change [position] and [limit] of current buffer. Thread unsafe.
+     */
     fun toByteArray(): ByteArray
     fun subBuffer(index: Int, length: Int): ByteBuffer
 }

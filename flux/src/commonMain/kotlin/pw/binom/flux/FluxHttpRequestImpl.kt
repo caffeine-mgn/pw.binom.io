@@ -4,7 +4,7 @@ import kotlinx.serialization.KSerializer
 import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.HttpRequest
 
-class FluxHttpRequestImpl(val mask: String, val serialization: Serialization, request: HttpRequest) : FluxHttpRequest,
+class FluxHttpRequestImpl(val mask: String, val serialization: FluxServerSerialization, request: HttpRequest) : FluxHttpRequest,
     HttpRequest by request {
     override val pathVariables: Map<String, String> by lazy { path.getVariables(mask = mask)!! }
     override val queryVariables: Map<String, String?> by lazy {
