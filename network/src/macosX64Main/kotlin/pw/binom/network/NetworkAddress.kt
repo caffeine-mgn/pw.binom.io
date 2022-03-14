@@ -13,9 +13,7 @@ actual sealed class NetworkAddress {
     override fun equals(other: Any?): Boolean {
         other ?: return false
         if (this === other) return true
-        if (this::class != other::class) return false
-
-        other as NetworkAddress
+        if (other !is NetworkAddress) return false
 
         if (host != other.host) return false
         if (port != other.port) return false
@@ -129,9 +127,9 @@ actual sealed class NetworkAddress {
 
         override fun toMutable(): Mutable = clone()
 
-        override fun toMutable(address: Mutable) {
-            memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
-            address.refreshHashCode()
+        override fun toMutable(dest: Mutable) {
+            memcpy(dest.data.refTo(0), data.refTo(0), data.size.convert())
+            dest.refreshHashCode()
         }
 
         actual fun clone(): Mutable {
@@ -158,13 +156,13 @@ actual sealed class NetworkAddress {
             return mutable
         }
 
-        override fun toMutable(address: Mutable) {
-            memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
-            address.refreshHashCode()
+        override fun toMutable(dest: Mutable) {
+            memcpy(dest.data.refTo(0), data.refTo(0), data.size.convert())
+            dest.refreshHashCode()
         }
     }
 
     actual abstract fun toImmutable(): Immutable
     actual abstract fun toMutable(): Mutable
-    actual abstract fun toMutable(address: Mutable)
+    actual abstract fun toMutable(dest: Mutable)
 }

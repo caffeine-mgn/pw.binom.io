@@ -56,13 +56,8 @@ actual sealed class NetworkAddress {
             }
         }
 
-    private var hashCode = 0
-
-    protected fun refreshHashCode() {
-        var hashCode = host.hashCode()
-        hashCode = 31 * hashCode + port.hashCode()
-        this.hashCode = hashCode
-    }
+    internal var hashCodeCache = 0
+    internal var hashCodeDone = false
 
     protected fun _reset(host: String, port: Int) {
         memScoped {
@@ -92,15 +87,18 @@ actual sealed class NetworkAddress {
             size = result.value!!.pointed.ai_addrlen.convert()
             freeaddrinfo(result.value)
         }
-        refreshHashCode()
+    }
+
+    private fun refreshHashCode() {
+        var hashCode = this.host.hashCode()
+        hashCode = 31 * hashCode + this.port.hashCode()
+        this.hashCodeCache = hashCode
     }
 
     override fun equals(other: Any?): Boolean {
         other ?: return false
         if (this === other) return true
-        if (this::class != other::class) return false
-
-        other as NetworkAddress
+        if (other !is NetworkAddress) return false
 
         if (host != other.host) return false
         if (port != other.port) return false
@@ -108,7 +106,13 @@ actual sealed class NetworkAddress {
         return true
     }
 
-    override fun hashCode(): Int = hashCode
+    override fun hashCode(): Int {
+        if (!hashCodeDone) {
+            hashCodeDone = true
+            refreshHashCode()
+        }
+        return hashCodeCache
+    }
 
     actual enum class Type {
         IPV4,
@@ -121,17 +125,19 @@ actual sealed class NetworkAddress {
         }
 
         override fun toImmutable(): Immutable {
-            val immutable = Immutable()
-            memcpy(immutable.data.refTo(0), data.refTo(0), data.size.convert())
-            immutable.refreshHashCode()
-            return immutable
+            val dest = Immutable()
+            data.copyInto(dest.data)
+            dest.hashCodeCache = hashCodeCache
+            dest.size = size
+            return dest
         }
 
         override fun toMutable(): Mutable = clone()
 
-        override fun toMutable(address: Mutable) {
-            memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
-            address.refreshHashCode()
+        override fun toMutable(dest: Mutable) {
+            data.copyInto(dest.data)
+            dest.hashCodeCache = hashCodeCache
+            dest.size = size
         }
 
         actual fun clone(): Mutable {
@@ -154,18 +160,20 @@ actual sealed class NetworkAddress {
 
         override fun toMutable(): Mutable {
             val mutable = Mutable()
-            memcpy(mutable.data.refTo(0), data.refTo(0), data.size.convert())
-            mutable.refreshHashCode()
+            data.copyInto(mutable.data)
+            mutable.hashCodeCache = hashCodeCache
+            mutable.size = size
             return mutable
         }
 
-        override fun toMutable(address: Mutable) {
-            memcpy(address.data.refTo(0), data.refTo(0), data.size.convert())
-            address.refreshHashCode()
+        override fun toMutable(dest: Mutable) {
+            data.copyInto(dest.data)
+            dest.hashCodeCache = hashCodeCache
+            dest.size = size
         }
     }
 
     actual abstract fun toImmutable(): Immutable
     actual abstract fun toMutable(): Mutable
-    actual abstract fun toMutable(address: Mutable)
+    actual abstract fun toMutable(dest: Mutable)
 }

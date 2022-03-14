@@ -3,6 +3,7 @@ package pw.binom.network
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.ByteBuffer
+import pw.binom.io.IOException
 import pw.binom.io.use
 import kotlin.coroutines.resumeWithException
 
@@ -55,6 +56,16 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         }
 
         val result = runCatching { channel.send(sendData.data!!, sendData.address!!) }
+        if (result.isFailure) {
+            val con = sendData.continuation!!
+            sendData.reset()
+            key.removeListen(Selector.OUTPUT_READY)
+            con.resumeWithException(IOException("Can't send data."))
+        } else {
+            if (result.getOrNull()!! <= 0) {
+                return
+            }
+        }
         if (sendData.data!!.remaining == 0) {
             val con = sendData.continuation!!
             sendData.reset()

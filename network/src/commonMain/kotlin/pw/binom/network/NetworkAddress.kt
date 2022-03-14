@@ -21,7 +21,7 @@ expect sealed class NetworkAddress protected constructor() {
 
     abstract fun toImmutable(): Immutable
     abstract fun toMutable(): Mutable
-    abstract fun toMutable(address: Mutable)
+    abstract fun toMutable(dest: Mutable)
 }
 
 fun URL.toNetworkAddress(defaultPort: Int) =

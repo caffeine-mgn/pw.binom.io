@@ -80,8 +80,8 @@ actual sealed class NetworkAddress {
 
         override fun toMutable(): Mutable = clone()
 
-        override fun toMutable(address: Mutable) {
-            address._native = _native
+        override fun toMutable(dest: Mutable) {
+            dest._native = _native
         }
 
         actual fun clone(): Mutable {
@@ -106,12 +106,12 @@ actual sealed class NetworkAddress {
             return res
         }
 
-        override fun toMutable(address: Mutable) {
-            address._native = _native
+        override fun toMutable(dest: Mutable) {
+            dest._native = _native
         }
     }
 
     actual abstract fun toImmutable(): Immutable
     actual abstract fun toMutable(): Mutable
-    actual abstract fun toMutable(address: Mutable)
+    actual abstract fun toMutable(dest: Mutable)
 }

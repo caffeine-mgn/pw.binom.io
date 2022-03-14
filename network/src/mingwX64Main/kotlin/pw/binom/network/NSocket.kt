@@ -166,7 +166,6 @@ actual class NSocket(val native: SOCKET) : Closeable {
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
         memScoped {
-
             val rr = data.ref { dataPtr, remaining ->
                 address.data.usePinned { addressPtr ->
                     sendto(
@@ -177,6 +176,12 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 }
             }
             if (rr == SOCKET_ERROR) {
+                if (GetLastError().toInt() == platform.windows.WSAEFAULT) { // 10014
+                    throw IOException("The system detected an invalid pointer address in attempting to use a pointer argument in a call.")
+                }
+                if (GetLastError().toInt() == platform.windows.WSAEWOULDBLOCK) { // 10035
+                    return 0
+                }
                 throw IOException("Can't send data. Error: $errno  ${GetLastError()}")
             }
 
@@ -237,6 +242,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
                     throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
                 }
                 address.size = len[0]
+                address.hashCodeDone=false
                 rr
             }
         }

@@ -43,9 +43,10 @@ actual class ByteBuffer(
         return func((native + position)!!)
     }
 
-    fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position){
-        func(it,remaining)
+    fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
+        func(it, remaining)
     }
+
     fun <T> ref0(func: (CPointer<ByteVar>, Int) -> T) = refTo(0) { ptr ->
         func(ptr, capacity)
     }
@@ -71,11 +72,10 @@ actual class ByteBuffer(
         }
         set(value) {
             checkClosed()
-            require(value >= 0){"position should be more or equal 0"}
-            require(value <= limit){"position should be less or equal limit"}
+            require(value >= 0) { "position should be more or equal 0" }
+            require(value <= limit) { "position should be less or equal limit" }
             _position.value = value
         }
-
 
     actual override var limit: Int
         get() {
@@ -102,8 +102,8 @@ actual class ByteBuffer(
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        return ref { sourceCPointer,remaining->
-            dest.ref { destCPointer,destRemaining ->
+        return ref { sourceCPointer, remaining ->
+            dest.ref { destCPointer, destRemaining ->
                 val len = minOf(destRemaining, remaining)
                 memcpy(destCPointer, sourceCPointer, len.convert())
                 position += len
@@ -200,7 +200,7 @@ actual class ByteBuffer(
         checkClosed()
         val r = ByteArray(remaining)
         if (remaining > 0) {
-            ref { ptr,remaining ->
+            ref { ptr, remaining ->
                 r.usePinned {
                     memcpy(it.addressOf(0), ptr, remaining.convert())
                 }

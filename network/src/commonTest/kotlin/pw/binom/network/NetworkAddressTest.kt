@@ -11,6 +11,7 @@ class NetworkAddressTest {
         val addr = NetworkAddress.Immutable("127.0.0.1", 123)
         assertEquals("127.0.0.1", addr.host)
         assertEquals(123, addr.port)
+        assertTrue(addr.equals(addr.toMutable()))
 
         assertEquals("127.0.0.1", addr.toMutable().host)
         assertEquals(123, addr.toMutable().port)
@@ -19,7 +20,7 @@ class NetworkAddressTest {
         assertEquals(123, addr.toMutable().toImmutable().port)
 
         val addr2 = NetworkAddress.Mutable()
-        addr2.reset("127.0.0.1",123)
+        addr2.reset("127.0.0.1", port = 123)
         assertEquals("127.0.0.1", addr2.host)
         assertEquals(123, addr2.port)
     }
@@ -39,13 +40,13 @@ class NetworkAddressTest {
             NetworkAddress.Immutable(Random.nextUuid().toString(), 9999)
             fail()
         } catch (e: UnknownHostException) {
-            //NOP
+            // NOP
         }
         try {
             NetworkAddress.Mutable().reset(Random.nextUuid().toString(), 9999)
             fail()
         } catch (e: UnknownHostException) {
-            //NOP
+            // NOP
         }
     }
 
