@@ -145,14 +145,18 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 address.size.convert()
             )
             if (bindResult < 0) {
-                if (GetLastError() == 10048u) {
+                if (GetLastError().toInt() == platform.windows.WSAEADDRINUSE) { // 10048
                     throw BindException("Address already in use: ${address.host}:${address.port}")
                 }
+                if (GetLastError().toInt() == platform.windows.WSAEACCES) { // 10013
+                    throw BindException("Can't bind ${address.host}:${address.port}: An attempt was made to access a socket in a way forbidden by its access permissions.")
+                }
+
                 throw IOException("Bind error. errno: [$errno], GetLastError: [${GetLastError()}]")
             }
             val listenResult = platform.windows.listen(native, 1000)
             if (listenResult < 0) {
-                if (GetLastError() == 10045u) {
+                if (GetLastError().toInt() == platform.windows.WSAEOPNOTSUPP) { // 10045
                     return
                 }
                 throw IOException("Listen error. errno: [$errno], GetLastError: [${GetLastError()}]")
