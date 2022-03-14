@@ -220,9 +220,9 @@ actual class NSocket(val native: Int) : Closeable {
                 set_posix_errno(0)
                 address.data.usePinned {
                     sendto(
-                        native, dataPtr.getPointer(this), remaining.convert(),
+                        native, dataPtr, remaining.convert(),
                         0,
-                        it.addressOf(0).getPointer(this).reinterpret(), address.size.convert()
+                        it.addressOf(0).reinterpret(), address.size.convert()
                     )
                 }
             }
