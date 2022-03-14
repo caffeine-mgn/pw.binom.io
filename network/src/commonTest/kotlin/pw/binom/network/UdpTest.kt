@@ -8,8 +8,15 @@ import pw.binom.io.readText
 import pw.binom.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class UdpTest {
+
+    @Test
+    fun randomPortTest() {
+        assertTrue(UdpConnection.randomPort() > 0)
+    }
+
     @Test
     fun test() = runTest {
         val port = UdpConnection.randomPort()
