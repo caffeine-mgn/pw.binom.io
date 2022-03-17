@@ -1,5 +1,4 @@
 import pw.binom.baseStaticLibConfig
-import java.util.UUID
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")

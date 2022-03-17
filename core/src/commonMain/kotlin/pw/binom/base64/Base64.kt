@@ -1,13 +1,10 @@
 package pw.binom.base64
 
 import pw.binom.ByteBuffer
-import pw.binom.alloc
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.use
-import pw.binom.writeByte
 import kotlin.experimental.and
 import kotlin.experimental.or
-import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 object Base64 {

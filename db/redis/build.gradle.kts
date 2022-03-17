@@ -28,11 +28,12 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(kotlin("stdlib-common"))
                 api(project(":core"))
+                api(project(":db"))
+                api(project(":date"))
                 api(project(":network"))
                 api(project(":ssl"))
-                api(project(":compression"))
-                api(project(":http"))
             }
         }
 
@@ -63,20 +64,22 @@ kotlin {
             dependsOn(commonMain)
         }
 
+        val jvmMain by getting {
+            dependsOn(commonMain)
+        }
+
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
-                api(project(":httpServer"))
                 api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
             }
         }
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
-                api(kotlin("test-junit"))
+                api(kotlin("test"))
             }
         }
         val linuxX64Test by getting {
@@ -84,18 +87,25 @@ kotlin {
         }
     }
 }
-apply<pw.binom.plugins.DocsPlugin>()
 
+apply<pw.binom.plugins.DocsPlugin>()
 tasks {
+    withType(Test::class) {
+        useJUnitPlatform()
+        testLogging.showStandardStreams = true
+        testLogging.showCauses = true
+        testLogging.showExceptions = true
+        testLogging.showStackTraces = true
+        testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
     val nats = pw.binom.plugins.DockerUtils.dockerContanier(
         project = project,
-        image = "jmalloc/echo-server",
-        tcpPorts = listOf(8080 to 7142),
+        image = "redis:3",
+        tcpPorts = listOf(6379 to 7132),
         args = listOf(),
-        suffix = "WS-EchoServer"
+        suffix = "Redis"
     )
-
-    eachKotlinTest {
-        nats.dependsOn(it)
-    }
+//    eachKotlinTest {
+//        nats.dependsOn(it)
+//    }
 }

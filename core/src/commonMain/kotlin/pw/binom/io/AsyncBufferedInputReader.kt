@@ -122,7 +122,7 @@ class AsyncBufferedInputReader private constructor(
         return counter
     }
 
-    suspend fun readUntil(char: Char): String? {
+    suspend fun readUntil(func: (Char, StringBuilder) -> Boolean): String? {
         val out = StringBuilder()
         var exist = false
         LOOP@ while (true) {
@@ -131,7 +131,7 @@ class AsyncBufferedInputReader private constructor(
                 break
             }
             for (i in charBuffer.position until charBuffer.limit) {
-                if (charBuffer[i] == char) {
+                if (!func(charBuffer[i], out)) {
                     val str = charBuffer.subString(charBuffer.position, i)
                     out.append(str)
                     charBuffer.position = i + 1
@@ -150,7 +150,7 @@ class AsyncBufferedInputReader private constructor(
         return out.toString()
     }
 
-    override suspend fun readln(): String? = readUntil(10.toChar())?.removeSuffix("\r")
+    override suspend fun readln(): String? = readUntil({ char, _ -> char != '\n' })?.removeSuffix("\r")
 
     override suspend fun readChar(): Char? {
         prepareBuffer()
@@ -174,7 +174,6 @@ class AsyncBufferedInputReader private constructor(
             }
         }
     }
-
 }
 
 fun AsyncInput.bufferedReader(

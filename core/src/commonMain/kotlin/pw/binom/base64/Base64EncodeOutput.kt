@@ -4,7 +4,6 @@ import pw.binom.ByteBuffer
 import pw.binom.Output
 import pw.binom.io.ClosedException
 
-
 internal fun byteToBase64(value: Byte): Char =
     when (value) {
         in (0..25) -> ('A'.code + value).toChar()
@@ -16,7 +15,6 @@ internal fun byteToBase64(value: Byte): Char =
     }
 
 class Base64EncodeOutput(private val appendable: Appendable) : Output {
-
 
     private var old = 0.toByte()
     private var counter = 0
@@ -62,5 +60,4 @@ class Base64EncodeOutput(private val appendable: Appendable) : Output {
             2 -> appendable.append(byteToBase64(old)).append("=")
         }
     }
-
 }

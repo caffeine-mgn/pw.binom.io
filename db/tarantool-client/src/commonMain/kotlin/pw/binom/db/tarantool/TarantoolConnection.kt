@@ -1,5 +1,8 @@
 package pw.binom.db.tarantool
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import pw.binom.ByteBuffer
 import pw.binom.alloc
 import pw.binom.asUTF8String
@@ -8,9 +11,6 @@ import pw.binom.db.tarantool.protocol.InternalProtocolUtils
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.AsyncCloseable
 import pw.binom.network.Network
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcher
 
