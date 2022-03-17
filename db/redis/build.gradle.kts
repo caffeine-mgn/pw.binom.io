@@ -100,7 +100,7 @@ tasks {
     }
     val nats = pw.binom.plugins.DockerUtils.dockerContanier(
         project = project,
-        image = "redis:3",
+        image = "redis:6.2.6-bullseye",
         tcpPorts = listOf(6379 to 7132),
         args = listOf(),
         suffix = "Redis"

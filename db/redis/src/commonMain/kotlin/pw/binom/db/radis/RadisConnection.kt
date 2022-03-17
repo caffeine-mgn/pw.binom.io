@@ -12,8 +12,8 @@ interface RadisConnection : AsyncCloseable {
         suspend fun connect(
             address: NetworkAddress,
             manager: NetworkCoroutineDispatcher = Dispatchers.Network,
-            login: String?,
-            password: String?,
+            login: String? = null,
+            password: String? = null,
         ) = RadisConnectionImpl(manager.tcpConnect(address))
     }
 }

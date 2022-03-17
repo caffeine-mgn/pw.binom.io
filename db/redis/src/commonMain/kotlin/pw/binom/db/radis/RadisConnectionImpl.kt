@@ -1,10 +1,7 @@
 package pw.binom.db.radis
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.AsyncChannel
-import pw.binom.io.ClosedException
-import pw.binom.io.bufferedReader
-import pw.binom.io.bufferedWriter
+import pw.binom.io.*
 
 class RadisConnectionImpl(val connection: AsyncChannel) : RadisConnection {
     private val reader = connection.bufferedReader(closeParent = false)
@@ -89,5 +86,44 @@ class RadisConnectionImpl(val connection: AsyncChannel) : RadisConnection {
             throw RadisException(line.substring(1))
         }
         throw RuntimeException("Unknown response \"$line\"")
+    }
+
+    suspend fun set(key: String, value: String) {
+        sendCommand {
+            it.append("SET ")
+                .append(key)
+                .append(" \"")
+                .append(value)
+                .append("\"")
+        }
+        checkOkResponse()
+        println("SET OK")
+    }
+
+    suspend fun get(key: String): Any? {
+        sendCommand {
+            it.append("GET ").append(key)
+        }
+        println("command sendded! wait result")
+        return readResponse()
+    }
+
+    private suspend inline fun sendCommand(func: (AsyncAppendable) -> Unit) {
+        func(writer)
+        writer.append("\r\n")
+        writer.flush()
+    }
+
+    private suspend fun sendCommand(command: String) {
+        sendCommand {
+            it.append(command)
+        }
+    }
+
+    private suspend fun checkOkResponse() {
+        val resp = readResponse()
+        if (resp != "OK") {
+            throw RadisException("Invalid response $resp")
+        }
     }
 }
