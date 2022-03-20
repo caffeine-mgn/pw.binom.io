@@ -4,7 +4,6 @@ import pw.binom.db.async.AsyncConnection
 import pw.binom.io.AsyncCloseable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.ExperimentalTime
 
 interface AsyncConnectionPool : AsyncCloseable {
     val idleConnectionCount: Int

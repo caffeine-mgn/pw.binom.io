@@ -84,7 +84,7 @@ class AsyncConnectionPoolImpl constructor(
                 }
             }
             if (forRemove.isNotEmpty()) {
-                hasRemovedAny=true
+                hasRemovedAny = true
                 forRemove.forEach {
                     runCatching { it.fullClose() }
                 }
