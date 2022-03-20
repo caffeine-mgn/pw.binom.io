@@ -20,7 +20,10 @@ interface RadisConnection : AsyncCloseable {
             login: String? = null,
             password: String? = null,
         ): RadisConnectionImpl {
-            val con = RadisConnectionImpl(manager.tcpConnect(address))
+            val con = RadisConnectionImpl(
+                connection = manager.tcpConnect(address),
+                bufferSize = 30,
+            )
             try {
                 con.start()
                 return con

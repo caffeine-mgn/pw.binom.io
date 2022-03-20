@@ -1,7 +1,10 @@
 package pw.binom.db.radis
 
 import pw.binom.ByteBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.charset.Charset
+import pw.binom.charset.Charsets
 import pw.binom.io.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -10,13 +13,19 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * https://redis.io/commands
  */
-class RadisConnectionImpl(val connection: AsyncChannel) : RadisConnection {
+class RadisConnectionImpl(
+    val connection: AsyncChannel,
+    charset: Charset = Charsets.UTF8,
+    bufferSize: Int = DEFAULT_BUFFER_SIZE
+) : RadisConnection {
     private var version: String? = null
     private var majorVersion = 0
     private val resp = RESP3Impl(
         output = connection,
         input = connection,
-        closeParent = false
+        closeParent = false,
+        charset = charset,
+        bufferSize = bufferSize,
     )
 
     internal suspend fun start() {
@@ -33,14 +42,11 @@ class RadisConnectionImpl(val connection: AsyncChannel) : RadisConnection {
 
     suspend fun ping() {
         checkClosed()
-        println("before!")
         operation {
             resp.startList(1)
             resp.writeASCIStringFast("PING")
             resp.flush()
-            println("try read string....")
             val resp = resp.readString() ?: throw RadisException("Ping response is null")
-            println("string: $resp")
             if (resp != "PONG") {
                 throw RadisException("Invalid ping response \"$resp\"")
             }
@@ -92,20 +98,16 @@ class RadisConnectionImpl(val connection: AsyncChannel) : RadisConnection {
 
     suspend fun info(): Map<String, String> {
         operation {
-            println("getting info")
             resp.startList(1)
             resp.writeASCIStringFast("INFO")
             resp.flush()
-            println("request sent. reading response")
             val text = resp.readString()
-            println("text: $text")
             val cc = text!!.lineSequence()
                 .filter { !it.startsWith("#") }
                 .map {
                     val items = it.split(':', limit = 2)
                     items[0] to items.getOrElse(1) { "" }
                 }.toMap()
-            println("->$cc")
             return cc
         }
     }
@@ -379,8 +381,9 @@ class RadisConnectionImpl(val connection: AsyncChannel) : RadisConnection {
             resp.startList(4)
             resp.writeASCIStringFast("LRANGE")
             resp.writeASCIStringFast(key)
-            resp.writeLong(start)
-            resp.writeLong(end)
+            resp.writeASCIStringFast(start.toString())
+            resp.writeASCIStringFast(end.toString())
+            resp.flush()
             return resp.readList() as List<String>?
         }
     }

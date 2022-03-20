@@ -3,6 +3,7 @@ package pw.binom.db.radis
 import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.ByteBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.io.ByteArrayOutput
@@ -14,8 +15,14 @@ class RESP3Impl(
     val input: AsyncInput,
     val closeParent: Boolean,
     charset: Charset = Charsets.UTF8,
+    bufferSize: Int = DEFAULT_BUFFER_SIZE
 ) : RESP {
-    private val reader = AsyncBufferedReaderInput(stream = input, closeParent = false, charset = charset, bufferSize = 20)
+    private val reader = AsyncBufferedReaderInput(
+        stream = input,
+        closeParent = false,
+        charset = charset,
+        bufferSize = bufferSize,
+    )
     private val writer = output.bufferedWriter(closeParent = false, charset = charset)
     private val outBuffer = ByteArrayOutput()
 //    private val tmp = ByteBuffer.alloc(2)
@@ -93,15 +100,11 @@ class RESP3Impl(
         }
     }
 
-    private suspend fun internalReadInlineString():String {
-        println("Try read inline string")
-        val l = reader.readln() ?: throw EOFException()
-        return l
-    }
+    private suspend fun internalReadInlineString(): String =
+        reader.readln() ?: throw EOFException()
+
     private suspend fun internalReadStringOrNull(): String? {
-        println("---===reading string length===---")
         val line = reader.readln() ?: throw EOFException()
-        println("length=$line")
         val len = line.toIntOrNull() ?: throw IllegalStateException("Invalid String Bulk length \"$line\"")
         if (len < 0) {
             return null
@@ -193,9 +196,7 @@ class RESP3Impl(
     }
 
     suspend fun readString(): String? {
-//        throw RuntimeException("!!!!!")
         val char = readFirstChar()
-        println("char: $char")
         return when (char) {
             '+' -> internalReadInlineString()
             '$' -> internalReadStringOrNull()
@@ -261,7 +262,11 @@ class RESP3Impl(
     private suspend fun readFirstChar(): Char {
         val char = reader.readANSIChar() ?: throw RadisException("Data EOF")
         if (char == '-') {
-            throw RadisException(reader.readln())
+            val err = reader.readln()
+            when {
+                err.startsWith("ERR ") -> throw RedisCommonException(err.removePrefix("ERR "))
+                else -> throw RadisException(reader.readln())
+            }
         }
         return char
     }
@@ -310,6 +315,7 @@ class RESP3Impl(
     }
 
     suspend fun writeString(value: String) {
+        outBuffer.clear()
         outBuffer.write(value.encodeToByteArray())
         writeDataString(outBuffer.lock())
     }
