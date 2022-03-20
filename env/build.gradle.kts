@@ -30,7 +30,9 @@ kotlin {
     linuxMips32()
     linuxMipsel32()
     mingwX64()
-    mingwX86()
+    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+        mingwX86()
+    }
     macosX64()
     js("js", BOTH) {
         browser()
