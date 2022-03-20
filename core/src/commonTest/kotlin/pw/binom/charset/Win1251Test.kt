@@ -1,7 +1,6 @@
 package pw.binom.charset
 
 import pw.binom.*
-import pw.binom.io.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -12,42 +11,45 @@ class Win1251Test {
     @Test
     fun encode() {
         val encoder = charset.newEncoder()
-            val out = ByteBuffer.alloc(30)
-            assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(test_data_hello_text.toCharBuffer(), out))
-            out.flip()
-            assertEquals(test_data_hello_bytes_windows_1251.size, out.remaining)
+        val out = ByteBuffer.alloc(30)
+        assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(test_data_hello_text.toCharBuffer(), out))
+        out.flip()
+        assertEquals(test_data_hello_bytes_windows_1251.size, out.remaining)
 
-            out.forEachIndexed { index, value ->
-                assertEquals(test_data_hello_bytes_windows_1251[index], value)
-
+        out.forEachIndexed { index, value ->
+            assertEquals(test_data_hello_bytes_windows_1251[index], value)
         }
     }
 
     @Test
     fun encodeOutputOver() {
         val encoder = charset.newEncoder()
-            val out = ByteBuffer.alloc(30)
-            out.limit = 2
-            val input = test_data_hello_text.toCharBuffer()
-            assertEquals(CharsetTransformResult.OUTPUT_OVER, encoder.encode(input, out))
-            assertEquals(2, out.position)
-            assertEquals(2, input.position)
-            out.limit = out.capacity
-            assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(input, out))
-            assertEquals(6, out.position)
-
+        val out = ByteBuffer.alloc(30)
+        out.limit = 2
+        val input = test_data_hello_text.toCharBuffer()
+        assertEquals(CharsetTransformResult.OUTPUT_OVER, encoder.encode(input, out))
+        assertEquals(2, out.position)
+        assertEquals(2, input.position)
+        out.limit = out.capacity
+        assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(input, out))
+        assertEquals(6, out.position)
     }
 
     @Test
     fun decode() {
         val decoder = charset.newDecoder()
-            val out = CharBuffer.alloc(30)
-            assertEquals(CharsetTransformResult.SUCCESS, decoder.decode(test_data_hello_bytes_windows_1251.wrap(), out))
-            out.flip()
-            assertEquals(out.remaining, test_data_hello_text.length)
-            out.forEachIndexed { index, value ->
-                assertEquals(test_data_hello_text[index], value)
-            }
-
+        val out = CharBuffer.alloc(30)
+        test_data_hello_bytes_windows_1251.wrap { buffer ->
+            assertEquals(
+                CharsetTransformResult.SUCCESS,
+                decoder.decode(buffer, out)
+            )
+            assertEquals(0, buffer.remaining)
+        }
+        out.flip()
+        assertEquals(out.remaining, test_data_hello_text.length)
+        out.forEachIndexed { index, value ->
+            assertEquals(test_data_hello_text[index], value)
+        }
     }
 }

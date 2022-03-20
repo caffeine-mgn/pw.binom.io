@@ -6,9 +6,9 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.empty
 
 class AsyncBufferedInput(
-        override val stream: AsyncInput,
-        bufferSize: Int = DEFAULT_BUFFER_SIZE,
-        private val closeStream: Boolean
+    override val stream: AsyncInput,
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    private val closeStream: Boolean
 ) : AbstractAsyncBufferedInput() {
     override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
 
@@ -16,7 +16,7 @@ class AsyncBufferedInput(
         buffer.clear()
         try {
             super.fill()
-        } catch (e:Throwable) {
+        } catch (e: Throwable) {
             buffer.empty()
             throw e
         }
@@ -38,7 +38,7 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
     protected abstract val buffer: ByteBuffer
     protected abstract val stream: AsyncInput
 
-    override val available:Int
+    override val available: Int
         get() = if (buffer.remaining == 0) -1 else buffer.remaining
 
     protected var closed = false
@@ -61,10 +61,15 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
     }
 
     protected inline fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw StreamClosedException()
+        }
     }
 }
 
-fun AsyncInput.bufferedInput(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeStream: Boolean = true) =
-        AsyncBufferedInput(stream = this, bufferSize = bufferSize, closeStream = closeStream)
+fun AsyncInput.bufferedInput(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true): AsyncBufferedInput {
+    if (this is AsyncBufferedInput) {
+        return this
+    }
+    return AsyncBufferedInput(stream = this, bufferSize = bufferSize, closeStream = closeParent)
+}

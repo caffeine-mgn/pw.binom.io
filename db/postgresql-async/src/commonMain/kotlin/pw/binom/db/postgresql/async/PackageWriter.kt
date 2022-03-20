@@ -42,8 +42,7 @@ class PackageWriter(val connection:PGConnection) : Closeable {
     }
 
     suspend fun finishAsync(output: AsyncOutput) {
-        this.output.data.flip()
-        output.write(this.output.data)
+        output.write(this.output.lock())
         this.output.clear()
         cmdExist = false
         bodyStarted = false

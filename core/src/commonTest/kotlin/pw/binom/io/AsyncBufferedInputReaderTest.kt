@@ -1,11 +1,11 @@
 package pw.binom.io
 
+import kotlinx.coroutines.test.runTest
 import pw.binom.*
 import pw.binom.charset.Charsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlinx.coroutines.runBlocking
 
 class AsyncBufferedInputReaderTest {
     @Test
@@ -15,7 +15,7 @@ class AsyncBufferedInputReaderTest {
 
         val reader = AsyncBufferedInputReader(Charsets.UTF8, data.asyncInput(), pool, charBufferSize = 10)
         var ex: Throwable? = null
-        runBlocking {
+        runTest {
             try {
                 assertEquals("hello", reader.readln(), "error on \"hello\"")
                 assertEquals("world_world_world", reader.readln(), "error on \"world_world_world\"")
@@ -34,7 +34,7 @@ class AsyncBufferedInputReaderTest {
 
         val reader = data.asyncInput().bufferedReader(charset = Charsets.UTF8)
         var ex: Throwable? = null
-        runBlocking {
+        runTest {
             try {
                 val hello = reader.readln()!!
                 assertEquals("hello", hello)

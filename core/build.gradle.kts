@@ -14,7 +14,6 @@ kotlin {
 
     linuxX64 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("native") {
                     defFile = project.file("src/nativeMain/cinterop/core.def")
@@ -27,7 +26,6 @@ kotlin {
 
     linuxArm32Hfp {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("native") {
                     defFile = project.file("src/nativeMain/cinterop/core.def")
@@ -40,7 +38,6 @@ kotlin {
 
     linuxArm64 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("native") {
                     defFile = project.file("src/nativeMain/cinterop/core.def")
@@ -53,7 +50,6 @@ kotlin {
 
     linuxMips32 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("native") {
                     defFile = project.file("src/nativeMain/cinterop/core.def")
@@ -66,7 +62,6 @@ kotlin {
 
     linuxMipsel32 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("native") {
                     defFile = project.file("src/nativeMain/cinterop/core.def")
@@ -79,7 +74,6 @@ kotlin {
 
     mingwX64 {
         binaries {
-            staticLib()
             compilations["main"].cinterops {
                 create("native") {
                     defFile = project.file("src/nativeMain/cinterop/core.def")
@@ -92,7 +86,6 @@ kotlin {
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86 {
             binaries {
-                staticLib()
                 compilations["main"].cinterops {
                     create("native") {
                         defFile = project.file("src/nativeMain/cinterop/core.def")
@@ -137,29 +130,29 @@ kotlin {
             dependsOn(nativeMain)
         }
         val linuxArm64Main by getting {
-            dependsOn(nativeMain)
+            dependsOn(linuxX64Main)
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(nativeMain)
+            dependsOn(linuxX64Main)
         }
         val linuxMips32Main by getting {
-            dependsOn(nativeMain)
+            dependsOn(linuxX64Main)
         }
 
         val linuxMipsel32Main by getting {
-            dependsOn(nativeMain)
+            dependsOn(linuxX64Main)
         }
         val mingwX64Main by getting {
-            dependsOn(nativeMain)
+            dependsOn(linuxX64Main)
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
-                dependsOn(nativeMain)
+                dependsOn(linuxX64Main)
             }
         }
 
         val macosX64Main by getting {
-            dependsOn(nativeMain)
+            dependsOn(linuxX64Main)
         }
 
         val commonTest by getting {
@@ -180,6 +173,12 @@ kotlin {
         }
         val linuxX64Test by getting {
             dependsOn(commonTest)
+        }
+
+        val jsTest by getting {
+            dependencies {
+                api(kotlin("test-js"))
+            }
         }
     }
 }

@@ -30,10 +30,7 @@ kotlin {
     linuxMips32()
     linuxMipsel32()
     mingwX64()
-//    kotlin.android()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
+    mingwX86()
     macosX64()
     js("js", BOTH) {
         browser()
@@ -138,7 +135,8 @@ tasks {
         versionSource.writeText(
             """package pw.binom
             
-const val BINOM_VERSION = "${project.version}""""
+const val BINOM_VERSION = "${project.version}"
+            """
         )
     }
     eachKotlinCompile {

@@ -228,6 +228,18 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
         memcpy(dest, 0, native, position, l)
         return l
     }
+
+    actual fun free() {
+        val size = remaining
+        if (size > 0) {
+            memcpy(native, 0, native, position, size)
+            position = 0
+            limit = size
+        } else {
+            position = 0
+            limit = 0
+        }
+    }
 }
 
 actual inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {

@@ -1,6 +1,6 @@
 package pw.binom
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.bufferedWriter
 import kotlin.test.Test
@@ -23,13 +23,12 @@ class CharBufferTest {
         assertEquals(30, n.limit)
     }
 
-
     @Test
     fun substringTest2() {
         val v = 'Я'.toInt()
         val v0 = v shr 8
         val v1 = v and 0xff
-        println("0->${v0}, 1->${v1}")
+        println("0->$v0, 1->$v1")
         println("size: ${Char.SIZE_BYTES}")
         val out = ByteArrayOutput()
         val outasync = out.asyncOutput()
@@ -43,7 +42,7 @@ class CharBufferTest {
             "DateStyle" to "ISO",
         )
         println("#0")
-        runBlocking {
+        runTest {
             d.forEach {
                 appender.append(it.key)
                 appender.flush()

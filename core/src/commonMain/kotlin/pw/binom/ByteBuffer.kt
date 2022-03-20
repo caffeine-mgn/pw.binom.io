@@ -53,6 +53,16 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
      */
     fun toByteArray(): ByteArray
     fun subBuffer(index: Int, length: Int): ByteBuffer
+    fun free()
+}
+
+fun ByteBuffer.indexOfFirst(predicate: (Byte) -> Boolean): Int {
+    forEachIndexed { index, value ->
+        if (predicate(value)) {
+            return index
+        }
+    }
+    return -1
 }
 
 fun ByteBuffer.getOrNull(index: Int) =

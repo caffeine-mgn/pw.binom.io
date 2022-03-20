@@ -162,8 +162,7 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
                 stream.writeFully(block)
                 block.close()
                 data.flush()
-                data.data.flip()
-                stream.writeFully(data.data)
+                stream.writeFully(data.lock())
                 val mod = data.size % BLOCK_SIZE
                 if (mod > 0) {
                     val emptyBytes = BLOCK_SIZE - mod
@@ -172,7 +171,6 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
                 entityWriting = false
                 data.close()
             }
-
         }
     }
 

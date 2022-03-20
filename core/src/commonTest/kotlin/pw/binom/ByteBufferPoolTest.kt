@@ -2,9 +2,9 @@ package pw.binom
 
 import kotlin.test.Test
 
-class ByteBufferPoolTest{
+class ByteBufferPoolTest {
     @Test
-    fun closeTest(){
+    fun closeTest() {
         ByteBufferPool(10).close()
     }
 }

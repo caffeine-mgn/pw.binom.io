@@ -3,11 +3,11 @@ package pw.binom.charset
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import pw.binom.*
+import pw.binom.concurrency.sleep
 import pw.binom.io.*
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import pw.binom.concurrency.sleep
 
 class Utf8Test {
 
@@ -24,7 +24,6 @@ class Utf8Test {
         out.forEachIndexed { index, value ->
             assertEquals(test_data_hello_bytes_utf_8[index], value)
         }
-
     }
 
     @Test
@@ -35,22 +34,23 @@ class Utf8Test {
         assertEquals(CharsetTransformResult.OUTPUT_OVER, encoder.encode(input, out))
         assertEquals(2, out.position)
         assertEquals(1, input.position)
-
     }
 
     @Test
     fun decode() {
         val encoder = charset.newDecoder()
         val out = CharBuffer.alloc(30)
-        assertEquals(
-            CharsetTransformResult.SUCCESS,
-            encoder.decode(test_data_hello_text.encodeToByteArray().wrap(), out)
-        )
+        test_data_hello_text.encodeToByteArray().wrap { buffer ->
+            assertEquals(
+                CharsetTransformResult.SUCCESS,
+                encoder.decode(buffer, out)
+            )
+            assertEquals(0, buffer.remaining)
+        }
         out.flip()
         assertEquals(out.remaining, test_data_hello_text.length)
         out.forEachIndexed { index, value ->
             assertEquals(test_data_hello_text[index], value)
-
         }
     }
 

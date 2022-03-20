@@ -3,7 +3,6 @@ package pw.binom
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.EOFException
 import pw.binom.io.UTF8
-import pw.binom.io.use
 import pw.binom.pool.ObjectPool
 
 interface AsyncInput : AsyncCloseable {
@@ -52,7 +51,6 @@ suspend fun AsyncInput.readUtf8Char(buffer: ByteBuffer): Char? {
         UTF8.utf8toUnicode(firstByte, buffer)
     }
 }
-
 
 suspend fun AsyncInput.readUTF8String(buffer: ByteBuffer): String {
     val size = readInt(buffer)
@@ -208,7 +206,6 @@ object EmptyAsyncInput : AsyncInput {
     override suspend fun read(dest: ByteBuffer): Int = 0
 
     override suspend fun asyncClose() {
-        //Do nothing
+        // Do nothing
     }
-
 }

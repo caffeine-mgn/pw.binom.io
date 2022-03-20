@@ -232,6 +232,13 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
             limit = l
         }
     }
+
+    actual fun free() {
+        val newLimit = remaining
+        native.compact()
+        native.position(0)
+        native.limit(newLimit)
+    }
 }
 
 @OptIn(ExperimentalContracts::class)

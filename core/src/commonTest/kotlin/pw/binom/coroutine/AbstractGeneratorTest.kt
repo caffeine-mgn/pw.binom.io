@@ -1,12 +1,8 @@
 package pw.binom.coroutine
 
-import kotlinx.coroutines.runBlocking
-import pw.binom.getOrException
-import pw.binom.nextUuid
-import kotlin.random.Random
 import kotlin.test.*
 
-//class AbstractGeneratorTest {
+// class AbstractGeneratorTest {
 //
 //    @Test
 //    fun simpleTest() {
@@ -59,4 +55,4 @@ import kotlin.test.*
 //            }
 //        }.getOrException()
 //    }
-//}
+// }

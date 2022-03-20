@@ -172,6 +172,26 @@ class ByteBufferTest {
     }
 
     @Test
+    fun freeTest() {
+        val buf = ByteBuffer.alloc(30)
+        repeat(buf.capacity) {
+            buf.put(it.toByte())
+        }
+        buf.clear()
+        buf.position = 10
+        buf.free()
+        assertEquals(0, buf.position)
+        assertEquals(20, buf.limit)
+        buf.clear()
+        repeat(20) {
+            assertEquals((10 + it).toByte(), buf[it])
+        }
+        repeat(10) {
+            assertEquals((20 + it).toByte(), buf[it + 20])
+        }
+    }
+
+    @Test
     fun frozenTest() {
         val self = ByteBuffer.alloc(10).doFreeze()
         repeat(self.remaining) {

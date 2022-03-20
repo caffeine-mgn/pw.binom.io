@@ -2,14 +2,11 @@ package pw.binom.db.postgresql.async
 
 import pw.binom.*
 import pw.binom.charset.Charset
-import pw.binom.charset.CharsetTransformResult
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
-import pw.binom.io.IOException
 import pw.binom.io.use
-import kotlin.math.roundToInt
 
 class PackageReader(val connection: PGConnection, val charset: Charset, val rawInput: AsyncInput) : Closeable {
     val buf16 = ByteBuffer.alloc(16)
@@ -88,8 +85,7 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
             if (o.size <= 0) {
                 return ""
             }
-            o.data.flip()
-            connection.charsetUtils.decode(o.data)
+            connection.charsetUtils.decode(o.lock())
         }
 
     suspend fun readByteArray(length: Int): ByteArray {

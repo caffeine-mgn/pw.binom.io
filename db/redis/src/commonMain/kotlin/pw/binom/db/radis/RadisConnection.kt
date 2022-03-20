@@ -7,13 +7,27 @@ import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcher
 
 interface RadisConnection : AsyncCloseable {
-    object NumberNull
+    enum class ValueType {
+        STRING, LIST, SET, ZSET, HASH, STREAM
+    }
+
+    val readyForRequest: Boolean
+
     companion object {
         suspend fun connect(
             address: NetworkAddress,
             manager: NetworkCoroutineDispatcher = Dispatchers.Network,
             login: String? = null,
             password: String? = null,
-        ) = RadisConnectionImpl(manager.tcpConnect(address))
+        ): RadisConnectionImpl {
+            val con = RadisConnectionImpl(manager.tcpConnect(address))
+            try {
+                con.start()
+                return con
+            } catch (e: Throwable) {
+                con.asyncClose()
+                throw e
+            }
+        }
     }
 }

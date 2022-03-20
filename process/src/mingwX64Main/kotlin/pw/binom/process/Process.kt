@@ -7,18 +7,27 @@ import platform.windows.*
 import kotlin.native.concurrent.freeze
 
 private inline fun CreateProcess(
-        lpApplicationName: platform.windows.LPCWSTR?,
-        lpCommandLine: platform.windows.LPWSTR?,
-        lpProcessAttributes: platform.windows.LPSECURITY_ATTRIBUTES?,
-        lpThreadAttributes: platform.windows.LPSECURITY_ATTRIBUTES?,
-        bInheritHandles: platform.windows.WINBOOL,
-        dwCreationFlags: platform.windows.DWORD,
-        lpEnvironment: platform.windows.LPVOID?,
-        lpCurrentDirectory: platform.windows.LPCWSTR?,
-        lpStartupInfo: platform.windows.LPSTARTUPINFOW?,
-        lpProcessInformation: platform.windows.LPPROCESS_INFORMATION?
+    lpApplicationName: platform.windows.LPCWSTR?,
+    lpCommandLine: platform.windows.LPWSTR?,
+    lpProcessAttributes: platform.windows.LPSECURITY_ATTRIBUTES?,
+    lpThreadAttributes: platform.windows.LPSECURITY_ATTRIBUTES?,
+    bInheritHandles: platform.windows.WINBOOL,
+    dwCreationFlags: platform.windows.DWORD,
+    lpEnvironment: platform.windows.LPVOID?,
+    lpCurrentDirectory: platform.windows.LPCWSTR?,
+    lpStartupInfo: platform.windows.LPSTARTUPINFOW?,
+    lpProcessInformation: platform.windows.LPPROCESS_INFORMATION?
 ) = platform.windows.CreateProcess!!(
-        lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation
+    lpApplicationName,
+    lpCommandLine,
+    lpProcessAttributes,
+    lpThreadAttributes,
+    bInheritHandles,
+    dwCreationFlags,
+    lpEnvironment,
+    lpCurrentDirectory,
+    lpStartupInfo,
+    lpProcessInformation
 )
 
 inline fun <R> processHandler(pid: Long, func: (HANDLE?) -> R): R {
@@ -50,7 +59,6 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
             vv.hStdOutput = stdout.handler
             vv.hStdInput = stdin.handler
 
-
             vv.dwFlags = STARTF_USESTDHANDLES.convert()
             val envList = env.map { "${it.key}=${it.value}" }
 
@@ -64,18 +72,17 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
 
             mem[p + 1] = 0.toUShort()
 
-
             val bSuccess = CreateProcess(
-                    null,
-                    "\"$exe\" ${args.map { "\"$it\"" }.joinToString(" ")}".wcstr.ptr,     // command line
-                    null,          // process security attributes
-                    null,          // primary thread security attributes
-                    TRUE,          // handles are inherited
-                    CREATE_UNICODE_ENVIRONMENT.convert(),             // creation flags
-                    mem,          // use parent's environment
-                    workDir?.wcstr?.ptr,          // use parent's current directory
-                    vv.ptr,  // STARTUPINFO pointer
-                    piProcInfo.ptr
+                null,
+                "\"$exe\" ${args.map { "\"$it\"" }.joinToString(" ")}".wcstr.ptr, // command line
+                null, // process security attributes
+                null, // primary thread security attributes
+                TRUE, // handles are inherited
+                CREATE_UNICODE_ENVIRONMENT.convert(), // creation flags
+                mem, // use parent's environment
+                workDir?.wcstr?.ptr, // use parent's current directory
+                vv.ptr, // STARTUPINFO pointer
+                piProcInfo.ptr
             ) > 0
 
             if (!bSuccess)
@@ -115,13 +122,12 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
             }
         }
 
-
     override fun close() {
         stdout.close()
         stderr.close()
         stdin.close()
 
-        TerminateProcess(processHandle,1.convert())
+        TerminateProcess(processHandle, 1.convert())
 
         CloseHandle(processHandle)
     }
@@ -131,5 +137,10 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
     }
 }
 
-actual fun Process.Companion.execute(path: String, args: List<String>, env: Map<String, String>, workDir: String?): Process =
-        WinProcess(exe = path, args = args, workDir = workDir, env = env)
+actual fun Process.Companion.execute(
+    path: String,
+    args: List<String>,
+    env: Map<String, String>,
+    workDir: String?
+): Process =
+    WinProcess(exe = path, args = args, workDir = workDir, env = env)

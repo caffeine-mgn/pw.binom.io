@@ -17,7 +17,7 @@ interface AsyncReader : AsyncCloseable {
                 sb.append(r)
             }
         } catch (e: EOFException) {
-            //NOP
+            // NOP
         }
         if (sb.isEmpty())
             return null
@@ -43,7 +43,6 @@ abstract class AbstractAsyncReader : AsyncReader {
         return i
     }
 }
-
 
 suspend fun AsyncReader.readText(): String {
     val sb = StringBuilder()

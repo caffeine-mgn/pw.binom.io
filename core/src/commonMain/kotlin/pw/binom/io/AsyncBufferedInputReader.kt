@@ -122,7 +122,7 @@ class AsyncBufferedInputReader private constructor(
         return counter
     }
 
-    suspend fun readUntil(func: (Char, StringBuilder) -> Boolean): String? {
+    suspend fun readUntil(func: (Char, Int) -> Boolean): String? {
         val out = StringBuilder()
         var exist = false
         LOOP@ while (true) {
@@ -131,7 +131,8 @@ class AsyncBufferedInputReader private constructor(
                 break
             }
             for (i in charBuffer.position until charBuffer.limit) {
-                if (!func(charBuffer[i], out)) {
+                val currentLen = out.length + (i - charBuffer.position)
+                if (!func(charBuffer[i], currentLen)) {
                     val str = charBuffer.subString(charBuffer.position, i)
                     out.append(str)
                     charBuffer.position = i + 1
@@ -194,13 +195,14 @@ fun AsyncInput.bufferedReader(
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = bufferSize,
     closeParent: Boolean = true,
-) = AsyncBufferedInputReader(
-    charset = charset,
-    input = this,
-    charBufferSize = charBufferSize,
-    bufferSize = bufferSize,
-    closeParent = closeParent,
-)
+): AsyncBufferedInputReader =
+    AsyncBufferedInputReader(
+        charset = charset,
+        input = this,
+        charBufferSize = charBufferSize,
+        bufferSize = bufferSize,
+        closeParent = closeParent,
+    )
 
 fun AsyncInput.bufferedReader(
     buffer: ByteBuffer,

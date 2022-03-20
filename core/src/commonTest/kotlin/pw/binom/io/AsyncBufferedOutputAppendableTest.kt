@@ -1,9 +1,9 @@
 package pw.binom.io
 
+import kotlinx.coroutines.test.runTest
 import pw.binom.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.coroutines.runBlocking
 
 class AsyncBufferedOutputAppendableTest {
 
@@ -15,7 +15,7 @@ class AsyncBufferedOutputAppendableTest {
         val writer = output.bufferedWriter(pool)
         val txt = "1234567890"
         var ex: Throwable? = null
-        runBlocking {
+        runTest {
             try {
                 writer.append(txt)
                 writer.append(txt)
@@ -24,7 +24,7 @@ class AsyncBufferedOutputAppendableTest {
                 println("Result: ${out1.toByteArray().decodeToString()}")
                 out1.data.flip()
                 val arr = txt.toCharArray()
-                assertEquals(arr.size * 2+1, out1.data.remaining)
+                assertEquals(arr.size * 2 + 1, out1.data.remaining)
                 for (i in 0 until arr.size) {
                     assertEquals(
                         arr[i].toByte(),

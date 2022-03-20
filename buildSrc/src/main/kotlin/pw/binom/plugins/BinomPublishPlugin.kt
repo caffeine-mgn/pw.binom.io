@@ -27,13 +27,10 @@ class BinomPublishPlugin : Plugin<Project> {
         val centralPassword = target.propertyOrNull("binom.central.password")
         val signApply = gpgKeyId != null && gpgPassword != null && gpgPrivateKey != null
         if (signApply) {
-            println("Sign enabled")
             target.apply {
 //                it.plugin("org.gradle.signing")
                 it.plugin("signing")
             }
-        } else {
-            println("Sign disabled")
         }
         if (!target.hasProperty(BINOM_REPO_URL)) {
             logger.warning("Property [$BINOM_REPO_URL] not found publication plugin will not apply")
