@@ -7,9 +7,9 @@ steps:
       DOCKER_HOST: "unix:///var/run/docker.sock"
     commands:
       - ./gradlew linuxX64Test
-trigger:
-  event:
-    - push
+#trigger:
+#  event:
+#    - push
 services:
   - name: docker
     image: docker:dind
