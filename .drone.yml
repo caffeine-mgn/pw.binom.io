@@ -1,0 +1,122 @@
+kind: pipeline
+name: Build All
+type: docker
+steps:
+  - name: Build TradeLine
+    image: images.binom.pw/gradle:7.3.1
+    environment:
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      DOCKER_REGISTRY_USERNAME:
+        from_secret: registry_username
+      DOCKER_REGISTRY_PASSWORD:
+        from_secret: registry_password
+    volumes:
+      - name: dockersock
+        path: /var/run
+    commands:
+      - ./gradlew services:pushAllDockerImage site:pushDockerImage -Dorg.gradle.jvmargs=-Xmx4096M --parallel --no-daemon
+    when:
+      branch:
+        - dev
+        - master
+      event:
+        - push
+  - name: Finish Notification
+    image: images.binom.pw/drone-telegram
+    when:
+      status: [ success, failure ]
+    settings:
+      token: "1664126993:AAHu_X9iq3pAD3L26DiIIgExcUOfM_ewerY"
+      to: 119706406
+      message: >
+        {{#success build.status}}
+          Build {{build.number}} succeeded. Good job.
+          url: https://drone.binom.pw/TL/TL/{{build.number}}
+          Message: {{commit.message}}
+        {{else}}
+          Build {{build.number}} failed. Fix me please.
+          url: https://drone.binom.pw/TL/TL/{{build.number}}
+          Message: {{commit.message}}
+        {{/success}}
+volumes:
+  - name: dockersock
+    temp: {}
+trigger:
+  branch:
+    - dev
+    - master
+  event:
+    - push
+services:
+  - name: docker
+    image: docker:dind
+    privileged: true
+    volumes:
+      - name: dockersock
+        path: /var/run
+image_pull_secrets:
+  - dockerconfig
+---
+kind: pipeline
+name: Deploy Stage
+type: docker
+steps:
+  - name: Prepare Nomad Template
+    image: images.binom.pw/gradle:7.3.1
+    environment:
+      NOMAD_NAMESPACE: stage
+      NOMAD_VERSION: ${DRONE_BUILD_NUMBER}
+      DATA_CENTER: '"msk"'
+      PRIORITY: 30
+    commands:
+      - "envsubst < nomad.hcl > nomad-ready.hcl"
+      - "echo 'Nomad Configuration:'"
+      - "cat nomad-ready.hcl"
+  - name: Deploy to Stage
+    image: loq9/drone-nomad
+    settings:
+      addr: http://192.168.88.43:4646/
+      template: nomad-ready.hcl
+      token:
+        from_secret: nomad_token
+depends_on:
+  - Build All
+trigger:
+  branch:
+    - dev
+image_pull_secrets:
+  - dockerconfig
+---
+kind: pipeline
+name: Deploy Production
+type: docker
+steps:
+  - name: Prepare Nomad Template
+    image: images.binom.pw/gradle:7.3.1
+    environment:
+      NOMAD_NAMESPACE: default
+      NOMAD_VERSION: ${DRONE_BUILD_PARENT}
+      DATA_CENTER: '"dc1"'
+      PRIORITY: 60
+    commands:
+      - "envsubst < nomad.hcl > nomad-ready.hcl"
+      - "echo 'Nomad Configuration:'"
+      - "cat nomad-ready.hcl"
+  - name: Deploy to Production
+    image: loq9/drone-nomad
+    settings:
+      addr: http://10.200.200.6:4646/
+      template: nomad-ready.hcl
+      token:
+        from_secret: nomad_token
+depends_on:
+  - Build All
+trigger:
+  branch:
+    - master
+  event:
+    - promote
+  target:
+    - production
+image_pull_secrets:
+  - dockerconfig
