@@ -18,6 +18,12 @@ buildscript {
     }
 }
 
+tasks {
+    create("testVer").doFirst{
+        println("DRONE_TAG: ${System.getenv("DRONE_TAG")}")
+    }
+}
+
 allprojects {
     version = pw.binom.Versions.LIB_VERSION
     group = "pw.binom.io"
