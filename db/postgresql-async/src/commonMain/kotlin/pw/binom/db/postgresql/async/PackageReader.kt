@@ -85,7 +85,9 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
             if (o.size <= 0) {
                 return ""
             }
-            connection.charsetUtils.decode(o.lock())
+            o.locked {
+                connection.charsetUtils.decode(it)
+            }
         }
 
     suspend fun readByteArray(length: Int): ByteArray {

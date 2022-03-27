@@ -31,7 +31,9 @@ object DockerUtils {
         image: String,
         tcpPorts: List<Pair<Int, Int>>,
         args: List<String>,
-        suffix: String
+        suffix: String,
+        envs: Map<String, String> = emptyMap(),
+        healthCheck: String? = null
     ): DockerTasks {
         val containerId = UUID.randomUUID().toString()
         val pullTask =
@@ -45,10 +47,17 @@ object DockerUtils {
             com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer::class.java
         )
         createTask.configure {
+            if (healthCheck != null) {
+                it.healthCheck.cmd.add(healthCheck)
+            }
             it.dependsOn(pullTask)
             it.image.set(image)
             it.imageId.set(image)
             it.cmd.addAll(args)
+            envs.map { env ->
+                it.withEnvVar(env.key, env.value)
+            }
+
             it.hostConfig.portBindings.set(
                 tcpPorts.map {
                     "127.0.0.1:${it.second}:${it.first}"

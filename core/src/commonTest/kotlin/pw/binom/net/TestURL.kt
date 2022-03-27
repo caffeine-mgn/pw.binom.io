@@ -2,7 +2,6 @@ package pw.binom.net
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class TestURL {
@@ -10,7 +9,7 @@ class TestURL {
     @Test
     fun appendPathTest() {
         val uri = "http://example.com/test".toURL()
-        val input = uri.appendPath("user").toString()
+        val input = uri.appendPathString("user").toString()
         assertEquals("http://example.com/test/user", input)
     }
 

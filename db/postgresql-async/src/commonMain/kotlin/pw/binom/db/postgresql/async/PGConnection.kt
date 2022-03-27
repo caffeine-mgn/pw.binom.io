@@ -1,12 +1,11 @@
 package pw.binom.db.postgresql.async
 
+import kotlinx.coroutines.Dispatchers
 import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
-import kotlinx.coroutines.Dispatchers
 import pw.binom.concurrency.AsyncReentrantLock
-import pw.binom.network.Network
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.TransactionMode
@@ -19,6 +18,7 @@ import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
 import pw.binom.db.postgresql.async.messages.frontend.Terminate
 import pw.binom.io.*
 import pw.binom.network.*
+import pw.binom.network.Network
 
 class PGConnection private constructor(
     val connection: TcpConnection,
@@ -116,7 +116,6 @@ class PGConnection private constructor(
     override val type: String
         get() = TYPE
 
-
     internal suspend fun sendQuery(query: String): KindedMessage {
         if (busy)
             throw IllegalStateException("Connection is busy")
@@ -186,7 +185,6 @@ class PGConnection private constructor(
         }
     }
 
-
     internal suspend fun readDesponse(): KindedMessage =
         KindedMessage.read(reader)
 
@@ -217,9 +215,10 @@ class PGConnection private constructor(
                     buf2.data.position = 0
                     buf2.data.writeInt(buf, (buf2.size))
                     buf2.data.position = pos
-                    buf2.data.flip()
                 }
-                connection.write(buf2.lock())
+                buf2.locked {
+                    connection.write(it)
+                }
                 connection.flush()
             }
         }
@@ -253,7 +252,6 @@ class PGConnection private constructor(
                 else -> throw SQLException("Unexpected Message. Message: [$msg]")
             }
         }
-
     }
 
     override suspend fun createStatement() =
@@ -303,7 +301,6 @@ class PGConnection private constructor(
         prepareStatements.add(pst)
         return pst
     }
-
 
     override suspend fun commit() {
         if (!transactionStarted) {

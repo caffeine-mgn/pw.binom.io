@@ -5,7 +5,6 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.http.websocket.MessagePool
 import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.net.URL
@@ -14,9 +13,7 @@ import pw.binom.network.NetworkCoroutineDispatcher
 import pw.binom.ssl.*
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class BaseHttpClient(
-//    override val networkDispatcher: NetworkDispatcher,
     val networkDispatcher: NetworkCoroutineDispatcher,
     val useKeepAlive: Boolean = true,
     keyManager: KeyManager = EmptyKeyManager,
@@ -25,7 +22,6 @@ class BaseHttpClient(
     bufferCapacity: Int = 16,
     websocketMessagePoolSize: Int = 16
 ) : HttpClient {
-    internal val messagePool by lazy { MessagePool(websocketMessagePoolSize) }
     internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()

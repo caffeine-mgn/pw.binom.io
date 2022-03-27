@@ -3,6 +3,7 @@ import java.util.UUID
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("org.jmailen.kotlinter")
 }
 
 apply {
@@ -83,3 +84,8 @@ kotlin {
 }
 
 apply<pw.binom.plugins.DocsPlugin>()
+
+kotlinter {
+    indentSize = 4
+    disabledRules = arrayOf("no-wildcard-imports")
+}

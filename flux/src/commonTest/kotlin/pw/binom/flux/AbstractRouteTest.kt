@@ -1,7 +1,8 @@
 package pw.binom.flux
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import pw.binom.*
+import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncReader
 import pw.binom.io.AsyncWriter
 import pw.binom.io.http.Headers
@@ -35,11 +36,19 @@ class AbstractRouteTest {
             TODO("Not yet implemented")
         }
 
-        override suspend fun acceptWebsocket(): WebSocketConnection {
+        override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection {
             TODO("Not yet implemented")
         }
 
         override suspend fun rejectWebsocket() {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun acceptTcp(): AsyncChannel {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun rejectTcp() {
             TODO("Not yet implemented")
         }
 
@@ -55,29 +64,24 @@ class AbstractRouteTest {
         override suspend fun asyncClose() {
             TODO("Not yet implemented")
         }
-
     }
 
     @Test
-    fun testOrder() {
+    fun testOrder() = runTest {
         val router = RootRouter()
         var state = 0
         router.get("/events/*") {
             state = 1
             it.response()
-            true
         }
         router.get("/*") {
             state = 2
-            true
         }
-        val done = runBlocking {
-            router.execute(MockAction("GET", "/events/ssdf".toPath))
-            assertEquals(1, state)
+        router.execute(MockAction("GET", "/events/ssdf".toPath))
+        assertEquals(1, state)
 
-            router.execute(MockAction("GET", "/eventss/ssdf".toPath))
-            assertEquals(2, state)
-        }
+        router.execute(MockAction("GET", "/eventss/ssdf".toPath))
+        assertEquals(2, state)
     }
 }
 
@@ -97,5 +101,4 @@ class HttpResponseMock : HttpResponse {
     override suspend fun asyncClose() {
         TODO("Not yet implemented")
     }
-
 }

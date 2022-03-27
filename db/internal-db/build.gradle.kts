@@ -1,7 +1,9 @@
 import pw.binom.baseStaticLibConfig
+import pw.binom.eachKotlinTest
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("kotlinx-serialization")
 }
 
 apply {
@@ -26,11 +28,19 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(kotlin("stdlib-common"))
                 api(project(":core"))
-                api(project(":httpServer"))
+                api(project(":db"))
+                api(project(":file"))
+                api(project(":date"))
+                api(project(":ssl"))
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-json:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-properties:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
             }
         }
+
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
@@ -58,17 +68,22 @@ kotlin {
             dependsOn(commonMain)
         }
 
+        val jvmMain by getting {
+            dependsOn(commonMain)
+        }
+
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
+                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
-                api(kotlin("test-junit"))
+                api(kotlin("test"))
             }
         }
         val linuxX64Test by getting {
@@ -76,4 +91,15 @@ kotlin {
         }
     }
 }
+
 apply<pw.binom.plugins.DocsPlugin>()
+tasks {
+    withType(Test::class) {
+        useJUnitPlatform()
+        testLogging.showStandardStreams = true
+        testLogging.showCauses = true
+        testLogging.showExceptions = true
+        testLogging.showStackTraces = true
+        testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}

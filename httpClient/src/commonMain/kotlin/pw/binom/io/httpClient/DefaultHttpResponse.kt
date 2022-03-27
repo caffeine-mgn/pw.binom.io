@@ -11,7 +11,6 @@ import pw.binom.io.http.Encoding
 import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
 import pw.binom.net.URL
-import kotlin.time.ExperimentalTime
 
 class DefaultHttpResponse(
     val URI: URL,
@@ -22,41 +21,35 @@ class DefaultHttpResponse(
     override val headers: Headers,
 ) : HttpResponse {
     companion object {
-        @OptIn(ExperimentalTime::class)
         suspend fun read(
             uri: URL,
             client: BaseHttpClient,
             keepAlive: Boolean,
             channel: AsyncAsciiChannel,
         ): HttpResponse {
-            var headerReadFlag = false
-            try {
-                val title = channel.reader.readln() ?: throw EOFException()
-                if (!title.startsWith("HTTP/1.1 ") && !title.startsWith("HTTP/1.0 ")) {
-                    throw IOException("Unsupported HTTP version. Response: \"$title\"")
-                }
-                val responseCode = title.substring(9, 12).toInt()
-                val headers = HashHeaders()
-                while (true) {
-                    val str = channel.reader.readln() ?: throw EOFException()
-                    if (str.isEmpty()) {
-                        break
-                    }
-                    val items = str.split(": ")
-                    headers.add(key = items[0], value = items[1])
-                }
-
-                return DefaultHttpResponse(
-                    URI = uri,
-                    client = client,
-                    keepAlive = keepAlive,
-                    channel = channel,
-                    responseCode = responseCode,
-                    headers = headers,
-                )
-            } finally {
-                headerReadFlag = true
+            val title = channel.reader.readln() ?: throw EOFException()
+            if (!title.startsWith("HTTP/1.1 ") && !title.startsWith("HTTP/1.0 ")) {
+                throw IOException("Unsupported HTTP version. Response: \"$title\"")
             }
+            val responseCode = title.substring(9, 12).toInt()
+            val headers = HashHeaders()
+            while (true) {
+                val str = channel.reader.readln() ?: throw EOFException()
+                if (str.isEmpty()) {
+                    break
+                }
+                val items = str.split(": ")
+                headers.add(key = items[0], value = items[1])
+            }
+
+            return DefaultHttpResponse(
+                URI = uri,
+                client = client,
+                keepAlive = keepAlive,
+                channel = channel,
+                responseCode = responseCode,
+                headers = headers,
+            )
         }
     }
 

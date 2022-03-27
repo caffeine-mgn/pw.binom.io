@@ -98,7 +98,7 @@ tasks {
         testLogging.showStackTraces = true
         testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
-    val nats = pw.binom.plugins.DockerUtils.dockerContanier(
+    val redisServer = pw.binom.plugins.DockerUtils.dockerContanier(
         project = project,
         image = "redis:6.2.6-bullseye",
         tcpPorts = listOf(6379 to 7132),
@@ -106,6 +106,6 @@ tasks {
         suffix = "Redis"
     )
 //    eachKotlinTest {
-//        nats.dependsOn(it)
+//        redisServer.dependsOn(it)
 //    }
 }

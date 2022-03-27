@@ -1,12 +1,10 @@
 package pw.binom.io.httpClient
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.net.URL
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncChunkedOutput
-import kotlin.time.ExperimentalTime
+import pw.binom.net.URL
 
-@OptIn(ExperimentalTime::class)
 class RequestAsyncChunkedOutput constructor(
     val URI: URL,
     val client: BaseHttpClient,

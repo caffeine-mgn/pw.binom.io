@@ -4,7 +4,7 @@ import pw.binom.io.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class TransactionTest:BaseTest() {
+class TransactionTest : BaseTest() {
 
     @Test
     fun rollbackTest() {
@@ -16,13 +16,13 @@ class TransactionTest:BaseTest() {
                     id bigserial not null primary key,
                     date_column int8
                 )
-            """
+                """
             )
             it.beginTransaction()
             it.executeUpdate(
                 """
                insert into tx_text(date_column) values(10)
-            """
+                """
             )
             it.rollback()
         }

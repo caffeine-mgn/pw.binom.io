@@ -46,7 +46,6 @@ class LocalFileSystem(
         return EntityImpl(file)
     }
 
-
     override suspend fun getDir(path: Path): List<FileSystem.Entity>? {
         if (path.toString().isEmpty())
             return root.listEntities()
@@ -131,6 +130,5 @@ class LocalFileSystem(
             get() = file.size
         override val isFile: Boolean
             get() = file.isFile
-
     }
 }

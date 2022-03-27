@@ -2,10 +2,15 @@ package pw.binom.io.file
 
 import kotlinx.cinterop.*
 import platform.linux.*
+import platform.posix.POLLIN
+import platform.posix.pollfd
 import platform.posix.read
 import pw.binom.io.*
 
-private const val MAX_EVENTS = 1024 /*Максимальное кличество событий для обработки за один раз*/
+/*
+private const val MAX_EVENTS = 1024 */
+/*Максимальное кличество событий для обработки за один раз*//*
+
 
 actual class FileWatcher : Closeable {
 
@@ -20,7 +25,6 @@ actual class FileWatcher : Closeable {
             inotify_rm_watch(inotifyId, id)
             closed = true
         }
-
     }
 
     init {
@@ -92,3 +96,4 @@ actual class FileWatcher : Closeable {
         return count.convert()
     }
 }
+*/

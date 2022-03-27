@@ -54,38 +54,38 @@ abstract class AbstractRoute : Route, Handler {
         forwardHandler = handler
     }
 
-    override suspend fun execute(request: HttpRequest) {
+    override suspend fun execute(action: HttpRequest) {
         val forward = forwardHandler
         if (forward != null) {
-            forward.request(request)
+            forward.request(action)
             return
         }
         if (routers.entries.isNotEmpty()) {
             routers.entries
                 .asSequence()
                 .filter {
-                    request.path.isMatch(it.key)
+                    action.path.isMatch(it.key)
                 }
 //                .sortedBy { -it.key.length }
                 .flatMap { it.value.asSequence() }
                 .forEach {
-                    it.execute(request)
-                    if (request.response != null) {
+                    it.execute(action)
+                    if (action.response != null) {
                         return
                     }
                 }
         }
         if (methods.isNotEmpty()) {
-            methods[request.method]
+            methods[action.method]
                 ?.entries
                 ?.asSequence()
                 ?.filter {
-                    request.path.isMatch(it.key)
+                    action.path.isMatch(it.key)
                 }
                 ?.forEach { route ->
                     route.value.forEach {
-                        it(FluxHttpRequestImpl(mask = route.key, serialization = serialization, request = request))
-                        if (request.response != null) {
+                        it(FluxHttpRequestImpl(mask = route.key, serialization = serialization, request = action))
+                        if (action.response != null) {
                             return
                         }
                     }

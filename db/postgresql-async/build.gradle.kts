@@ -1,4 +1,5 @@
 import pw.binom.baseStaticLibConfig
+import pw.binom.eachKotlinTest
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -85,4 +86,48 @@ kotlin {
         }
     }
 }
+
+tasks {
+    val postgresServer = pw.binom.plugins.DockerUtils.dockerContanier(
+        project = project,
+        image = "postgres:11",
+        tcpPorts = listOf(5432 to 6122),
+        args = listOf(),
+        suffix = "Postgres",
+        envs = mapOf(
+            "POSTGRES_USER" to "postgres",
+            "POSTGRES_PASSWORD" to "postgres",
+            "POSTGRES_DB" to "test"
+        ),
+        healthCheck = "/usr/bin/pg_isready -U postgres"
+    )
+    postgresServer.create.configure {
+//        this.cmd.add(
+//            """until /usr/bin/pg_isready || [ ${'$'}RETRIES -eq 0 ]; do
+//            sleep 1
+//            done
+//            """
+//        )
+        this.attachStdin.set(true)
+        this.attachStdout.set(true)
+        this.attachStderr.set(true)
+    }
+//    val waitUntilStart =
+//        this.register("waitPostgres", com.bmuschko.gradle.docker.tasks.container.DockerExecContainer::class.java) {
+//            dependsOn(postgresServer.start)
+//            containerId.set(postgresServer.containerId)
+//            withCommand("/bin/bash -c \"echo 1\"")
+// //        this.withCommand(
+// //            """/bin/bash -c "until /usr/bin/pg_isready || [ ${'$'}RETRIES -eq 0 ]; do
+// //            sleep 1
+// //            done"
+// //            """
+// //        )
+//        }
+    eachKotlinTest {
+        postgresServer.dependsOn(it)
+//        it.dependsOn(waitUntilStart)
+    }
+}
+
 apply<pw.binom.plugins.DocsPlugin>()

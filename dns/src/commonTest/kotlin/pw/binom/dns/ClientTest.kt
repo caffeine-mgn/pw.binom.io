@@ -2,7 +2,7 @@ package pw.binom.dns
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import pw.binom.*
 import pw.binom.dns.protocol.DnsHeader
 import pw.binom.dns.protocol.QueryPackage
@@ -22,7 +22,7 @@ class ClientTest {
     @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
-    fun test() {
+    fun test() = runTest {
         val n = NetworkCoroutineDispatcherImpl()
 
         val header = DnsHeader().apply {
@@ -112,15 +112,14 @@ class ClientTest {
             auth = emptyList()
         )
         val buf = ByteBuffer.alloc(512)
-        val done = runBlocking {
-            try {
-                val con = n.tcpConnect(NetworkAddress.Immutable("8.8.8.8", 53))
-                val output = con.bufferedOutput()
-                val input = con.bufferedInput()
+        try {
+            val con = n.tcpConnect(NetworkAddress.Immutable("8.8.8.8", 53))
+            val output = con.bufferedOutput()
+            val input = con.bufferedInput()
 
-                val w = record.write(output, buf)
-                println("ww: $w")
-                output.flush()
+            val w = record.write(output, buf)
+            println("ww: $w")
+            output.flush()
 
 //                val startPos = header.writeStart(buf)
 //                query.write(buf)
@@ -128,76 +127,73 @@ class ClientTest {
 //                header.writeEnd(startPos, buf)
 //                output.write(buf)
 //                output.flush()
-                header.read(input, buf)
+            header.read(input, buf)
 
-                repeat(header.q_count.toInt()) {
-                    query.read(buf)
-                    println("Q->$query")
-                }
-                repeat(header.ans_count.toInt()) {
-                    r.read(buf)
-                    println("ANS->$r")
-                }
-                repeat(header.auth_count.toInt()) {
-                    r.read(buf)
-                    println("AUTH->$r")
-                }
-                repeat(header.add_count.toInt()) {
-                    r.read(buf)
-                    println("ADD->$r")
-                }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                throw e
+            repeat(header.q_count.toInt()) {
+                query.read(buf)
+                println("Q->$query")
             }
+            repeat(header.ans_count.toInt()) {
+                r.read(buf)
+                println("ANS->$r")
+            }
+            repeat(header.auth_count.toInt()) {
+                r.read(buf)
+                println("AUTH->$r")
+            }
+            repeat(header.add_count.toInt()) {
+                r.read(buf)
+                println("ADD->$r")
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
         }
     }
 
     @OptIn(ExperimentalTime::class)
     @Ignore
     @Test
-    fun serverTest() {
+    fun serverTest() = runTest {
         val n = NetworkCoroutineDispatcherImpl()
         val buf = ByteBuffer.alloc(512)
         val header = DnsHeader()
         val q = QueryPackage()
         val r = ResourcePackage()
-        val done = runBlocking {
-            try {
-                val server = n.bindTcp(NetworkAddress.Immutable("0.0.0.0", 53))
-                while (true) {
-                    val client = server.accept()
+        try {
+            val server = n.bindTcp(NetworkAddress.Immutable("0.0.0.0", 53))
+            while (true) {
+                val client = server.accept()
 
-                    GlobalScope.launch {
-                        println("Client connected!")
-                        try {
-                            println("Reading header...")
-                            header.read(client, buf)
-                            println("Header: $header")
+                GlobalScope.launch {
+                    println("Client connected!")
+                    try {
+                        println("Reading header...")
+                        header.read(client, buf)
+                        println("Header: $header")
 //                            header.read(client, buf)
-////                            println("Header [${header.q_count}]: $header")
-                            repeat(header.q_count.toInt()) {
-                                println("Reading Q...")
-                                q.read(buf)
-                                println("->$q")
-                            }
-                            repeat(header.add_count.toInt()) {
-                                println("Read Add...")
-                                r.read(buf)
-                                println("Add $r")
-                            }
-                        } catch (e: Throwable) {
-                            println("ERROR!")
-                            e.printStackTrace()
-                        } finally {
-                            runCatching { client.close() }
+// //                            println("Header [${header.q_count}]: $header")
+                        repeat(header.q_count.toInt()) {
+                            println("Reading Q...")
+                            q.read(buf)
+                            println("->$q")
                         }
+                        repeat(header.add_count.toInt()) {
+                            println("Read Add...")
+                            r.read(buf)
+                            println("Add $r")
+                        }
+                    } catch (e: Throwable) {
+                        println("ERROR!")
+                        e.printStackTrace()
+                    } finally {
+                        runCatching { client.close() }
                     }
                 }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                throw e
             }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
         }
     }
 }

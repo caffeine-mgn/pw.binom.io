@@ -5,7 +5,9 @@ import platform.posix.memcpy
 import platform.windows.*
 import pw.binom.io.*
 import kotlin.math.roundToInt
+import kotlin.time.Duration
 
+/*
 class PointerList(val capacityFactor: Float = 1.7f) : Closeable {
     var data = nativeHeap.allocArray<COpaquePointerVar>(0)
         private set
@@ -80,10 +82,11 @@ actual class FileWatcher : Closeable {
         delete: Boolean
     ): Closeable {
         val handler = memScoped {
-            FindFirstChangeNotification!!(file.path.wcstr.getPointer(this), 0, FILE_NOTIFY_CHANGE_FILE_NAME.convert())
+            FindFirstChangeNotificationA(file.path, 0, FILE_NOTIFY_CHANGE_FILE_NAME.convert())
+//            FindFirstChangeNotification!!(file.path.wcstr.getPointer(this), 0, FILE_NOTIFY_CHANGE_FILE_NAME.convert())
         }
         if (handler == INVALID_HANDLE_VALUE || handler == null) {
-            throw IOException("Couldn't add watch to ${file.path}")
+            throw IOException("Couldn't add watch for ${file.path}")
         }
         headers.add(handler)
         val watcher = Watcher(
@@ -102,7 +105,18 @@ actual class FileWatcher : Closeable {
     private val change = ChangeImpl()
 
     actual fun pullChanges(func: (Change) -> Unit): Int {
-        TODO("Not yet implemented")
+        TODO()
+    }
+
+    actual fun pullChanges(timeout: Duration, func: (Change) -> Unit): Int {
+        val status =
+            WaitForMultipleObjects(headers.size.convert(), headers.data, 0, timeout.inWholeMilliseconds.convert())
+        val ptr = headers.data[status.convert()] ?: TODO()
+        val binomWatcher = watchers[ptr] ?: TODO()
+        if (FindNextChangeNotification(ptr) == 0) {
+            binomWatcher.close()
+        }
+        return 0
     }
 
     override fun close() {
@@ -113,3 +127,4 @@ actual class FileWatcher : Closeable {
         headers.close()
     }
 }
+*/

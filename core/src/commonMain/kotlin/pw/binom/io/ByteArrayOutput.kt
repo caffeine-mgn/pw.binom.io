@@ -10,7 +10,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         private set
     private var _wrote = 0
     private var closed = false
-    private var finished = false
+    private var locked = false
 
     /**
      * Returns current size of buffer. Buffer can be grown if you call [alloc] or write date more than [capacity]
@@ -21,7 +21,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     fun clear() {
         _wrote = 0
         data.clear()
-        finished = false
+        locked = false
     }
 
     fun trimToSize() {
@@ -94,7 +94,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
 
     private fun checkLocked() {
-        if (finished) {
+        if (locked) {
             throw IllegalStateException("ByteBuffer finished")
         }
     }
@@ -127,7 +127,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
      */
     fun lock(): ByteBuffer {
         checkLocked()
-        finished = true
+        locked = true
         data.flip()
         return data
     }

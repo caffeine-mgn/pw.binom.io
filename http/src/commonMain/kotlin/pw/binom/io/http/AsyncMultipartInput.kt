@@ -226,7 +226,7 @@ open class AsyncMultipartInput(
     suspend fun readText(charset: Charset = Charsets.UTF8) =
         bufferedReader(closeParent = false, charset = charset).use { it.readText() }
 
-    suspend fun readBinary(charset: Charset = Charsets.UTF8): ByteArray {
+    suspend fun readBinary(): ByteArray {
         ByteArrayOutput().use { out ->
             copyTo(out)
             return out.toByteArray()
