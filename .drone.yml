@@ -3,11 +3,5 @@ name: Test
 steps:
   - name: "Test"
     image: "gradle:7.3.1-jdk11"
-    environment:
-      DRONE_TAG: ${DRONE_TAG}
     commands:
-      - ./gradlew testVer
-#      - ./gradlew linuxX64Test
-trigger:
-  event:
-    - tag
+      - ./gradlew linuxX64Test
