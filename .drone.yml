@@ -3,5 +3,17 @@ name: Test
 steps:
   - name: "Test"
     image: "gradle:7.3.1-jdk11"
+    environment:
+      DOCKER_HOST: "unix:///var/run/docker.sock"
     commands:
       - ./gradlew linuxX64Test
+trigger:
+  event:
+    - push
+services:
+  - name: docker
+    image: docker:dind
+    privileged: true
+    volumes:
+      - name: dockersock
+        path: /var/run
