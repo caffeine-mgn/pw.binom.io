@@ -9,7 +9,7 @@ class TestURL {
     @Test
     fun appendPathTest() {
         val uri = "http://example.com/test".toURL()
-        val input = uri.appendPathString("user").toString()
+        val input = uri.addPathString("user").toString()
         assertEquals("http://example.com/test/user", input)
     }
 

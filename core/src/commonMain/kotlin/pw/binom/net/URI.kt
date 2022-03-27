@@ -102,7 +102,7 @@ value class URI(private val raw: String) {
     fun appendQuery(key: String, value: String? = null): URI =
         copy(query = query?.append(key = key, value = value) ?: Query.new(key = key, value = value))
 
-    fun appendPath1(path: Path) = copy(
+    fun addPath(path: Path) = copy(
         path = path.append(path)
     )
 

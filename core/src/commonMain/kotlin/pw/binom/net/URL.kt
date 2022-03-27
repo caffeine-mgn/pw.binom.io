@@ -219,17 +219,19 @@ value class URL internal constructor(val fullPath: String) {
      * @param encode flag for automatic encode appending [path]
      * @return URI with appended [path]
      */
-    fun appendPathString(path: String, direction: Boolean = true, encode: Boolean = false) = run {
+    fun addPathString(path: String, direction: Boolean = true, encode: Boolean = false) = run {
         val result = this.path.append(path = if (encode) UTF8.urlEncode(path) else path, direction = direction)
         copy(
             path = result
         )
     }
 
-    fun appendPath(path: Path) =
-        appendPathString(path = path.toString(), direction = true, encode = true)
+    fun addPath(path: Path) =
+        addPathString(path = path.toString(), direction = true, encode = true)
 
-    fun appendQuery(key: String, value: String? = null): URL =
+    fun appendQuery(key: String)=copy(query = query?.append(key = key, value = null) ?: Query.new(key = key, value = null))
+
+    fun appendQuery(key: String, value: String): URL =
         copy(query = query?.append(key = key, value = value) ?: Query.new(key = key, value = value))
 
     fun appendQuery(key: String, value: Int) =

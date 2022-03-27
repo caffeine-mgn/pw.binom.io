@@ -92,6 +92,7 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
         if (l == -1) {
             return null
         }
+        println("year=$year, month=$month, dayOfMonth=$dayOfMonth, hours=$hours, minutes=$minutes, seconds=$seconds, millis=$millis, timeZoneOffset=$timeZoneOffset")
         return ParseResult(
             date = Date.internalOf(
                 year = year,

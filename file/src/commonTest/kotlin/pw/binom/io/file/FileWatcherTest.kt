@@ -14,7 +14,7 @@ import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-class FileWatcherTest {
+/*class FileWatcherTest {
 
     fun afterTime(time: Duration = 1.seconds, func: () -> Unit) {
         val w = Worker()
@@ -96,4 +96,4 @@ class FileWatcherTest {
             // ok
         }
     }
-}
+}*/
