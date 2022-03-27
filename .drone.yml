@@ -4,4 +4,4 @@ steps:
   - name: "Test"
     image: "gradle:7.3.1-jdk11"
     commands:
-      - ./gradlew linkDebugTestLinuxX64
+      - ./gradlew linuxX64Test
