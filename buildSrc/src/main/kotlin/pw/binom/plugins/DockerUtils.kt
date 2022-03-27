@@ -1,5 +1,6 @@
 package pw.binom.plugins
 
+import com.bmuschko.gradle.docker.tasks.AbstractDockerRemoteApiTask
 import com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
 import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
@@ -39,6 +40,7 @@ object DockerUtils {
         val pullTask =
             project.tasks.register("pull$suffix", com.bmuschko.gradle.docker.tasks.image.DockerPullImage::class.java)
         pullTask.configure {
+            it.applyUrl()
             it.image.set(image)
         }
 
@@ -50,6 +52,7 @@ object DockerUtils {
             if (healthCheck != null) {
                 it.healthCheck.cmd.add(healthCheck)
             }
+            it.applyUrl()
             it.dependsOn(pullTask)
             it.image.set(image)
             it.imageId.set(image)
@@ -72,6 +75,7 @@ object DockerUtils {
             com.bmuschko.gradle.docker.tasks.container.DockerStartContainer::class.java
         )
         startTask.configure {
+            it.applyUrl()
             it.dependsOn(createTask)
             it.targetContainerId(containerId)
         }
@@ -81,6 +85,7 @@ object DockerUtils {
             com.bmuschko.gradle.docker.tasks.container.DockerStopContainer::class.java
         )
         stopTask.configure {
+            it.applyUrl()
             it.targetContainerId(containerId)
         }
 
@@ -89,6 +94,7 @@ object DockerUtils {
             com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer::class.java
         )
         removeTask.configure {
+            it.applyUrl()
             it.dependsOn(stopTask)
             it.targetContainerId(containerId)
         }
@@ -100,5 +106,12 @@ object DockerUtils {
             stop = stopTask,
             remove = removeTask,
         )
+    }
+}
+
+fun AbstractDockerRemoteApiTask.applyUrl() {
+    val host = System.getenv("DOCKER_HOST")
+    if (host != null) {
+        url.set(host)
     }
 }
