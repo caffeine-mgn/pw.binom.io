@@ -70,7 +70,7 @@ kotlin {
                 api(project(":httpServer"))
                 api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
+//                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
             }
         }
         val jvmTest by getting {
