@@ -68,9 +68,7 @@ kotlin {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
                 api(project(":httpServer"))
-//                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-//                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
             }
         }
         val jvmTest by getting {
@@ -87,7 +85,7 @@ kotlin {
 apply<pw.binom.plugins.DocsPlugin>()
 
 tasks {
-    val nats = pw.binom.plugins.DockerUtils.dockerContanier(
+    val httpWsEcho = pw.binom.plugins.DockerUtils.dockerContanier(
         project = project,
         image = "jmalloc/echo-server",
         tcpPorts = listOf(8080 to 7142),
@@ -96,6 +94,6 @@ tasks {
     )
 
     eachKotlinTest {
-        nats.dependsOn(it)
+        httpWsEcho.dependsOn(it)
     }
 }

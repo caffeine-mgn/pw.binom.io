@@ -1,5 +1,6 @@
 kind: pipeline
 name: Test
+type: docker
 steps:
   - name: "Test"
     image: "gradle:7.3.1-jdk11"
@@ -7,9 +8,6 @@ steps:
       DOCKER_HOST: "unix:///var/run/docker.sock"
     commands:
       - ./gradlew linuxX64Test
-#trigger:
-#  event:
-#    - push
 services:
   - name: docker
     image: docker:dind

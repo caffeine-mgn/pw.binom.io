@@ -1,4 +1,5 @@
 import pw.binom.baseStaticLibConfig
+import pw.binom.eachKotlinTest
 import java.util.UUID
 
 plugins {
@@ -68,7 +69,7 @@ kotlin {
                 api(project(":db:sqlite"))
                 api(project(":network"))
                 api(project(":db:postgresql-async"))
-                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
         val jvmTest by getting {
@@ -80,6 +81,30 @@ kotlin {
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
+    }
+}
+
+tasks {
+    val postgresServer = pw.binom.plugins.DockerUtils.dockerContanier(
+        project = project,
+        image = "postgres:11",
+        tcpPorts = listOf(5432 to 6102),
+        args = listOf(),
+        suffix = "Postgres",
+        envs = mapOf(
+            "POSTGRES_USER" to "postgres",
+            "POSTGRES_PASSWORD" to "postgres",
+            "POSTGRES_DB" to "test"
+        ),
+        healthCheck = "/usr/bin/pg_isready -U postgres"
+    )
+    postgresServer.create.configure {
+        this.attachStdin.set(true)
+        this.attachStdout.set(true)
+        this.attachStderr.set(true)
+    }
+    eachKotlinTest {
+        postgresServer.dependsOn(it)
     }
 }
 

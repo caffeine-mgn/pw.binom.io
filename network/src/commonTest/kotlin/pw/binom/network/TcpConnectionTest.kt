@@ -13,7 +13,7 @@ import pw.binom.concurrency.synchronize
 import pw.binom.io.use
 import pw.binom.readByte
 import pw.binom.writeByte
-import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -22,9 +22,10 @@ import kotlin.test.fail
 class TcpConnectionTest {
 
     @Test
+    @Ignore
     fun writeErrorTest() = runTest {
         val nd = NetworkCoroutineDispatcherImpl()
-        val port = Random.nextInt(1000, Short.MAX_VALUE - 100)
+        val port = TcpServerConnection.randomPort()
         val address = NetworkAddress.Immutable("127.0.0.1", port)
         val worker = Worker()
         val spinLock = SpinLock()
@@ -48,7 +49,7 @@ class TcpConnectionTest {
             }
         }
         println("Wait client connect")
-        val remoteClient = server.accept()!!
+        val remoteClient = server.accept()
         println("Client connected")
         server.close()
         ByteBuffer.alloc(10) { buf ->
@@ -64,7 +65,7 @@ class TcpConnectionTest {
                 remoteClient.flush()
                 fail()
             } catch (e: SocketClosedException) {
-                //ok
+                // ok
             }
 
             println("Done!")
@@ -88,7 +89,7 @@ class TcpConnectionTest {
                 ByteBuffer.alloc(10).use { buf ->
                     newClient.writeByte(buf, 42)
                     newClient.flush()
-                    println("wroted!")
+                    println("wrote!")
                 }
             }
         }

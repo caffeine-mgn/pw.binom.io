@@ -1,5 +1,6 @@
 package pw.binom.webdav.client
 
+import kotlinx.coroutines.test.TestResult
 import pw.binom.charset.Charsets
 import pw.binom.io.*
 import pw.binom.net.toPath
@@ -8,7 +9,7 @@ import kotlin.random.Random
 import kotlin.test.*
 
 abstract class AbstractWebDavClientTest {
-    protected abstract fun clientWithUser(func: suspend (WebDavClient) -> Unit)
+    protected abstract fun clientWithUser(func: suspend (WebDavClient) -> Unit): TestResult
 
     @Test
     fun putGetDeleteFileTest() {
@@ -95,7 +96,7 @@ abstract class AbstractWebDavClientTest {
             client.new("/new.txt".toPath).bufferedWriter().use { it.append(tmp) }
             val newTxt = client.get("/new.txt".toPath)
             assertNotNull(newTxt)
-            println("newTxt=${newTxt}")
+            println("newTxt=$newTxt")
             newTxt.delete()
             assertTrue(client.getDir("/".toPath)!!.toList().isEmpty())
 
@@ -103,7 +104,7 @@ abstract class AbstractWebDavClientTest {
                 newTxt.delete()
                 fail()
             } catch (e: FileSystem.FileNotFoundException) {
-                //Do nothing
+                // Do nothing
             }
             assertNull(client.get("/new.txt".toPath))
         }

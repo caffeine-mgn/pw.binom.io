@@ -10,5 +10,4 @@ class EmptyIterator<T> : MutableIterator<T> {
     override fun remove() {
         throw NoSuchElementException()
     }
-
 }

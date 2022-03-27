@@ -10,7 +10,6 @@ class DateParserTest {
         assertEquals("2021-06-02T01:20:18.698+00:00", Date(1622596818698L).iso8601(0))
 
         "yyyy-MM-dd".toDatePattern().parseOrNull("1989-01-05", defaultTimezoneOffset = 3 * 60)!!.calendar(3 * 60).apply {
-            println("hours=$hours minutes=$minutes seconds=$seconds")
             assertEquals(1989, year)
             assertEquals(1, month)
             assertEquals(5, dayOfMonth)

@@ -1,6 +1,9 @@
 package pw.binom.io.httpServer.websocket
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import pw.binom.io.bufferedReader
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpClient.HttpClient
@@ -19,6 +22,7 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class WebSocketTest {
 
@@ -37,14 +41,23 @@ class WebSocketTest {
         val message = Random.nextUuid().toString()
         val port = TcpServerConnection.randomPort()
         var ok = false
-        HttpServer(handler = handler { assertEquals(message, it); ok = true }).use { httpServer ->
+        val handler = handler {
+            assertEquals(message, it)
+            ok = true
+        }
+        HttpServer(handler = handler).use { httpServer ->
             httpServer.listenHttp(address = NetworkAddress.Immutable(port = port))
             HttpClient.create().use { client ->
                 client.connect("GET", "ws://127.0.0.1:$port/".toURL())
-                    .startWebSocket(masking = false).write(MessageType.BINARY).use {
-                        message.encodeToByteArray().wrap { b -> it.write(b) }
+                    .startWebSocket().use { wsConnect ->
+                        wsConnect.write(MessageType.BINARY).use {
+                            message.encodeToByteArray().wrap { b -> it.write(b) }
+                        }
                     }
             }
+        }
+        withContext(Dispatchers.Default) {
+            delay(1.seconds)
         }
         assertTrue(ok)
     }

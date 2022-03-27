@@ -1,6 +1,7 @@
 import pw.binom.baseStaticLibConfig
 import pw.binom.eachKotlinTest
 import java.util.UUID
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.bmuschko.docker-remote-api")
@@ -64,7 +65,6 @@ kotlin {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
                 api(project(":httpClient"))
-                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
@@ -80,7 +80,25 @@ kotlin {
     }
 }
 
-tasks{
+tasks {
+
+    val nats = pw.binom.plugins.DockerUtils.dockerContanier(
+        project = project,
+        image = "ugeek/webdav:amd64",
+        tcpPorts = listOf(80 to 7132),
+        args = listOf(),
+        suffix = "WebDav",
+        envs = mapOf(
+            "USERNAME" to "root",
+            "PASSWORD" to "root",
+            "TZ" to "GMT",
+        )
+    )
+
+    eachKotlinTest {
+        nats.dependsOn(it)
+    }
+/*
     val webdavServerContainerId = UUID.randomUUID().toString()
     val pullWebdavServer = create(
         name = "pullWebdavServer",
@@ -129,7 +147,7 @@ tasks{
         dependsOn(stopWebdavServer)
         targetContainerId(webdavServerContainerId)
     }
-
+*/
 //    eachKotlinTest {
 //        it.dependsOn(startWebdavServer)
 //        it.finalizedBy(destroyWebdavServer)

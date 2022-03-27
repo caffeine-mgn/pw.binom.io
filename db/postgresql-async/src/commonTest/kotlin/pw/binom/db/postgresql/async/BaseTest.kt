@@ -15,20 +15,18 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
 abstract class BaseTest {
-    class PostgresContainer(reuse: Boolean) : TestContainer(
-        image = "postgres:11",
-        environments = mapOf(
-            "POSTGRES_USER" to "postgres",
-            "POSTGRES_PASSWORD" to "postgres",
-            "POSTGRES_DB" to "test"
-        ),
-        ports = listOf(
-            Port(internalPort = 5432)
-        ),
-        reuse = reuse,
-    )
-
-    val pgContainer = PostgresContainer(reuse = false)
+//    class PostgresContainer(reuse: Boolean) : TestContainer(
+//        image = "postgres:11",
+//        environments = mapOf(
+//            "POSTGRES_USER" to "postgres",
+//            "POSTGRES_PASSWORD" to "postgres",
+//            "POSTGRES_DB" to "test"
+//        ),
+//        ports = listOf(
+//            Port(internalPort = 5432)
+//        ),
+//        reuse = reuse,
+//    )
 
     @OptIn(ExperimentalTime::class)
     private suspend fun connect(address: NetworkAddress): PGConnection {

@@ -1,6 +1,6 @@
 package pw.binom.db.serialization
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
 import pw.binom.concurrency.sleep
 import pw.binom.db.async.pool.AsyncConnectionPool
@@ -9,45 +9,25 @@ import pw.binom.db.sqlite.AsyncSQLiteConnector
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.nextUuid
-import pw.binom.testContainer.TestContainer
-import pw.binom.testContainer.invoke
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class InsertTest {
 
-    object PostgresContainer : TestContainer(
-        image = "postgres:11",
-        environments = mapOf(
-            "POSTGRES_USER" to "postgres",
-            "POSTGRES_PASSWORD" to "postgres",
-            "POSTGRES_DB" to "test"
-        ),
-        ports = listOf(
-            Port(internalPort = 5432)
-        ),
-        reuse = false,
-    ) {
-        val externalPort
-            get() = ports[0].externalPort
-    }
-
-    fun db(sql: SQLSerialization = SQLSerialization.DEFAULT, func: suspend (DBContext) -> Unit) = runBlocking {
+    fun db(sql: SQLSerialization = SQLSerialization.DEFAULT, func: suspend (DBContext) -> Unit) = runTest {
         try {
-            PostgresContainer {
-                sleep(1000)
-                AsyncConnectionPool.create(maxConnections = 1) {
-                    PGConnection.connect(
-                        address = NetworkAddress.Immutable("127.0.0.1", PostgresContainer.externalPort),
-                        userName = "postgres",
-                        password = "postgres",
-                        dataBase = "test",
-                    )
-                }.use { pool ->
-                    val context = DBContext.create(pool, sql)
-                    func(context)
-                }
+            sleep(1000)
+            AsyncConnectionPool.create(maxConnections = 1) {
+                PGConnection.connect(
+                    address = NetworkAddress.Immutable(host = "127.0.0.1", port = 6102),
+                    userName = "postgres",
+                    password = "postgres",
+                    dataBase = "test",
+                )
+            }.use { pool ->
+                val context = DBContext.create(pool, sql)
+                func(context)
             }
         } catch (e: Throwable) {
             throw RuntimeException("Exception on PostgreSQL", e)

@@ -1,5 +1,5 @@
 import pw.binom.baseStaticLibConfig
-import java.util.UUID
+import pw.binom.eachKotlinTest
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -72,7 +72,6 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
-                api("pw.binom.io:test-container:${pw.binom.Versions.TEST_CONTAINERS_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
@@ -88,7 +87,24 @@ kotlin {
     }
 }
 
-tasks{
+tasks {
+
+    val nats = pw.binom.plugins.DockerUtils.dockerContanier(
+        project = project,
+        image = "tarantool/tarantool:2.6.2",
+        tcpPorts = listOf(3301 to 7040),
+        args = listOf(),
+        suffix = "TarantoolServer",
+        envs = mapOf(
+            "TARANTOOL_USER_NAME" to "server",
+            "TARANTOOL_USER_PASSWORD" to "server",
+        )
+    )
+
+    eachKotlinTest {
+        nats.dependsOn(it)
+    }
+
     withType(Test::class) {
         useJUnitPlatform()
         testLogging.showStandardStreams = true
