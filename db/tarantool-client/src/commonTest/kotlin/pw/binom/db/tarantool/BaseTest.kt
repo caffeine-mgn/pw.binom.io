@@ -6,7 +6,6 @@ import pw.binom.io.IOException
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
-import pw.binom.testContainer.invoke
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource

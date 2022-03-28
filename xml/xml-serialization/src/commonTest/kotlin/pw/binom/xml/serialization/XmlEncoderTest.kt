@@ -1,10 +1,10 @@
 package pw.binom.xml.serialization
 
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
-import pw.binom.async2
 import pw.binom.io.asAsync
 import pw.binom.xml.dom.XmlElement
 import pw.binom.xml.sax.AsyncXmlRootWriterVisitor
@@ -41,7 +41,7 @@ data class PolimorfClass(val ololo: String)
 class XmlEncoderTest {
 
     @Test
-    fun test() {
+    fun test() = runTest {
         val module = SerializersModule {
             polymorphic(Any::class, PolimorfClass::class, PolimorfClass.serializer())
         }
@@ -50,9 +50,7 @@ class XmlEncoderTest {
         val sb = StringBuilder()
         val root = XmlElement()
         xx.parent = root
-        async2 {
-            root.accept(AsyncXmlRootWriterVisitor(sb.asAsync()))
-        }
+        root.accept(AsyncXmlRootWriterVisitor(sb.asAsync()))
         val vv = Xml(module).decodeFromXmlElement(TestData.serializer(), xx)
         println("Before: $oo")
         println("After: $vv")

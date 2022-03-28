@@ -1,16 +1,11 @@
 package pw.binom.mq.nats.client
 
-import pw.binom.async2
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.seconds
-
 object TestUtils {
     const val NATS_PORT = 8122
 }
 
-//@OptIn(ExperimentalTime::class)
-//fun net(func: suspend (NetworkDispatcher) -> Unit) {
+// @OptIn(ExperimentalTime::class)
+// fun net(func: suspend (NetworkDispatcher) -> Unit) {
 //    val nd = NetworkDispatcher()
 //    val r = async2 {
 //        func(nd)
@@ -27,4 +22,4 @@ object TestUtils {
 //    if (r.isFailure) {
 //        throw r.exceptionOrNull!!
 //    }
-//}
+// }
