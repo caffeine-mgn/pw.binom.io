@@ -11,7 +11,7 @@ import kotlin.test.Test
 class RedisTest : BaseRedisTest() {
     @Test
     fun ff() = runTest {
-        val address = NetworkAddress.Immutable(host = "127.0.0.1", port = 6379)
+        val address = NetworkAddress.Immutable(host = "127.0.0.1", port = 7132)
         RadisConnection.connect(address).use { con ->
             con.ping()
 //            println("->${con.info()}")

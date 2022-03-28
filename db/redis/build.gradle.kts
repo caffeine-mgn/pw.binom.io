@@ -104,7 +104,7 @@ tasks {
         args = listOf(),
         suffix = "Redis"
     )
-//    eachKotlinTest {
-//        redisServer.dependsOn(it)
-//    }
+    eachKotlinTest {
+        redisServer.dependsOn(it)
+    }
 }
