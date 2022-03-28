@@ -16,8 +16,6 @@ import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
 actual class NSocket(var native: SOCKET, var tcp: Boolean) : Closeable {
-    private var type = NetworkAddress.Type.IPV4
-
     actual companion object {
         actual fun tcp(): NSocket {
             init_sockets()
@@ -37,7 +35,7 @@ actual class NSocket(var native: SOCKET, var tcp: Boolean) : Closeable {
             return NSocket(native, false)
         }
     }
-
+    private var type = NetworkAddress.Type.IPV4
     actual val port: Int?
         get() {
             return memScoped {

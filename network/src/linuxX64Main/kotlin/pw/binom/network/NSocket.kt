@@ -7,14 +7,14 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
-actual class NSocket(val native: Int) : Closeable {
+actual class NSocket(var native: Int, var tcp: Boolean) : Closeable {
     actual companion object {
         actual fun tcp(): NSocket {
             val native = socket(AF_INET, SOCK_STREAM, 0)
             if (native < 0) {
                 throw RuntimeException("Tcp Socket Creation")
             }
-            return NSocket(native)
+            return NSocket(native = native, tcp = true)
         }
 
         actual fun udp(): NSocket {
@@ -22,10 +22,11 @@ actual class NSocket(val native: Int) : Closeable {
             if (native < 0) {
                 throw RuntimeException("Datagram Socket Creation")
             }
-            return NSocket(native)
+            return NSocket(native = native, tcp = false)
         }
     }
 
+    private var type = NetworkAddress.Type.IPV4
     private val closed = AtomicBoolean(false)
 
     actual val port: Int?
@@ -70,7 +71,7 @@ actual class NSocket(val native: Int) : Closeable {
         if (native == -1) {
             return null
         }
-        return NSocket(native)
+        return NSocket(native = native, tcp = true)
     }
 
     actual fun send(data: ByteBuffer): Int {
@@ -164,8 +165,29 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
+    private fun prepareSocket(type: NetworkAddress.Type, tcp: Boolean) {
+        if (this.type == type && this.tcp == tcp) {
+            return
+        }
+        nativeClose()
+        val nativeAddressType = when (type) {
+            NetworkAddress.Type.IPV4 -> AF_INET
+            NetworkAddress.Type.IPV6 -> AF_INET6
+        }
+        val nativeType = when (tcp) {
+            true -> SOCK_STREAM
+            false -> platform.posix.SOCK_DGRAM
+        }
+        native = socket(nativeAddressType, nativeType, 0)
+        if (native < 0) {
+            throw RuntimeException("Tcp Socket Creation ipv4")
+        }
+        this.type = type
+    }
+
     actual fun connect(address: NetworkAddress) {
         checkClosed()
+        prepareSocket(type = address.type, tcp = true)
         memScoped {
             set_posix_errno(0)
             val r = connect(
@@ -173,14 +195,20 @@ actual class NSocket(val native: Int) : Closeable {
                 address.data.refTo(0).getPointer(this).reinterpret(),
                 address.size.convert()
             )
-            if (r < 0 && errno != EINPROGRESS) {
-                throw IOException("Can't connect")
+            if (r < 0) {
+                if (errno == EAFNOSUPPORT) {
+                    throw IOException("Can't connect. Error: $errno, Address family not supported by protocol")
+                }
+                if (errno != EINPROGRESS) {
+                    throw IOException("Can't connect. Error: $errno")
+                }
             }
         }
     }
 
     actual fun bind(address: NetworkAddress) {
         checkClosed()
+        prepareSocket(type = address.type, tcp = tcp)
         memScoped {
             set_posix_errno(0)
             val bindResult = address.data.usePinned {

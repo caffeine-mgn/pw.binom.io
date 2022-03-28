@@ -101,7 +101,7 @@ class LinuxSelector : AbstractSelector() {
                 throw IllegalStateException("Unknown connection state: ${modeToString(item.events.toInt())}")
             }
             if (EPOLLHUP in item.events) {
-                NSocket(item.data.fd).close()
+                NSocket(native = item.data.fd, tcp=true).close()
                 key.close()
                 event.key = key
                 event.mode = 0
@@ -160,7 +160,7 @@ class LinuxSelector : AbstractSelector() {
                 throw IllegalStateException("Unknown connection state")
             }
             if (EPOLLHUP in item.events) {
-                NSocket(item.data.fd).close()
+                NSocket(native = item.data.fd, tcp = true).close()
                 key.close()
             } else {
                 val common = epollNativeToCommon(item.events.convert())
