@@ -85,6 +85,4 @@ class CancellationTest {
         readJob2.join()
         assertTrue(firstReadCanceled)
     }
-
-
 }

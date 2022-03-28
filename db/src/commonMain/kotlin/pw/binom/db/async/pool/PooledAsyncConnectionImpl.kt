@@ -14,7 +14,6 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
     private val createdPreparedStatement = HashMap<String, AsyncPreparedStatement>()
     private val forRemove = HashMap<String, AsyncPreparedStatement>()
 
-
     override suspend fun usePreparedStatement(sql: String): AsyncPreparedStatement {
         val p = forRemove.remove(sql)
         if (p != null) {
@@ -87,17 +86,20 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
         return pooledPst
     }
 
-    private suspend fun cleanUp(){
+    private suspend fun cleanUp() {
         clean()
-        prepareStatements.toTypedArray().forEach {
+        val statements = ArrayList(prepareStatements)
+        prepareStatements.clear()
+        statements.forEach {
             it.asyncClose()
         }
-        prepareStatements.clear()
     }
 
-    internal suspend fun fullClose(){
+    internal suspend fun fullClose() {
         cleanUp()
-        connection.asyncClose()
+        if (connection.isConnected) {
+            connection.asyncClose()
+        }
     }
 
     override suspend fun asyncClose() {

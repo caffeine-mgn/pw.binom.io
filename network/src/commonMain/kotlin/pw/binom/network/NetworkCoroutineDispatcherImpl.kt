@@ -140,6 +140,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                         connection.cancelSelector()
                     }
                     try {
+//                        connection.connecting()
                         channel.connect(address)
                     } catch (e: Throwable) {
                         it.resumeWithException(e)

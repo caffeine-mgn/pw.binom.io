@@ -17,7 +17,7 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnect
         }
 
         actual fun memory(name: String?): SQLiteConnector {
-            val connection = JDBC4Connection("jdbc:sqlite::memory:", name ?: "", Properties())
+            val connection = JDBC4Connection("jdbc:sqlite::memory:${name ?: ""}", "", Properties())
             return SQLiteConnector(connection)
         }
 

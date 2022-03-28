@@ -9,7 +9,6 @@ import pw.binom.charset.Charsets
 import pw.binom.concurrency.sleep
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
-import pw.binom.testContainer.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource

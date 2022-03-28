@@ -331,6 +331,7 @@ class PGConnection private constructor(
     }
 
     override suspend fun asyncClose() {
+        println("Close postgres: ${RuntimeException().stackTraceToString()}")
         checkClosed()
         prepareStatements.toTypedArray().forEach {
             it.asyncClose()
@@ -341,10 +342,11 @@ class PGConnection private constructor(
             runCatching { reader.close() }
             runCatching { connection.asyncClose() }
         } finally {
+            connected = false
+            closed = true
             charsetUtils.close()
             packageWriter.close()
             packageReader.asyncClose()
-            closed = true
         }
     }
 }

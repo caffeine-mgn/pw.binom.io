@@ -1,5 +1,6 @@
 package pw.binom.network
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -104,5 +105,15 @@ class TcpConnectionTest {
         }
         r.join()
         r2.join()
+    }
+
+    @Test
+    fun connectTest() = runTest(dispatchTimeoutMs = 10_000) {
+        val con = Dispatchers.Network.tcpConnect(
+            NetworkAddress.Immutable(
+                host = "ya.ru", port = 443
+            )
+        )
+        con.close()
     }
 }

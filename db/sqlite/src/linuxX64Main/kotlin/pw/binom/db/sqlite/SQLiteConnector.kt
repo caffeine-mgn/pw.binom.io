@@ -2,17 +2,18 @@ package pw.binom.db.sqlite
 
 import cnames.structs.sqlite3
 import cnames.structs.sqlite3_stmt
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
-import pw.binom.atomic.AtomicBoolean
+import pw.binom.concurrency.*
 import pw.binom.db.*
 import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.doFreeze
 import pw.binom.io.ClosedException
-import pw.binom.io.file.File
 import pw.binom.io.IOException
+import pw.binom.io.file.File
 
 actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<sqlite3>>) : SyncConnection {
     actual companion object {
@@ -24,12 +25,16 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
 //            if (!parent.isDirectory) {
 //                throw FileNotFoundException("Path ${file.path} is not direction")
 //            }
-            return open(file.path)
+            return open(file.path, memory = false)
         }
 
-        private fun open(path: String): SQLiteConnector {
+        private fun open(path: String, memory: Boolean): SQLiteConnector {
             val ctx = nativeHeap.allocArray<CPointerVar<sqlite3>>(1)
-            val errorNum = sqlite3_open_v2(path, ctx, SQLITE_OPEN_READWRITE or SQLITE_OPEN_CREATE, null)
+            var flags = SQLITE_OPEN_READWRITE or SQLITE_OPEN_CREATE
+            if (memory) {
+                flags = flags or SQLITE_OPEN_MEMORY
+            }
+            val errorNum = sqlite3_open_v2(path, ctx, flags, null)
             if (errorNum > 0) {
                 val msg = sqlite3_errmsg(ctx.pointed.value)?.toKString()
                 sqlite3_close(ctx.pointed.value)
@@ -41,17 +46,24 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
 
         actual fun memory(name: String?): SQLiteConnector {
             val path = if (name == null || name.isBlank()) "file::memory:" else "file:$name?mode=memory"
-            return open(path)
+            return open(path, memory = true)
         }
 
         actual val TYPE: String
             get() = "SQLite"
     }
 
-    private val closed = AtomicBoolean(false)
+    private val closed = atomic(false)
+    private val prepareStatements = HashSet<SQLitePrepareStatement>()
+    private val prepareStatementsLock = SpinLock()
     private val beginSt = prepareStatement("BEGIN")
     private val commitSt = prepareStatement("COMMIT")
     private val rollbackSt = prepareStatement("ROLLBACK")
+    internal fun delete(statement: SQLitePrepareStatement) {
+        prepareStatementsLock.synchronize {
+            prepareStatements -= statement
+        }
+    }
 
     init {
 //        beginSt.executeUpdate()
@@ -70,10 +82,24 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     }
 
     override fun prepareStatement(query: String): SyncPreparedStatement {
+        println("SQLITE_VERSION=$SQLITE_VERSION")
         checkClosed()
         val stmt = nativeHeap.allocArray<CPointerVar<sqlite3_stmt>>(1)
-        sqlite3_prepare_v3(ctx.pointed.value, query, -1, 0u, stmt, null)
-        return SQLitePrepareStatement(this, stmt)
+        checkSqlCode(
+            sqlite3_prepare_v3(
+                ctx.pointed.value,
+                query,
+                -1,
+                0u,
+                stmt,
+                null
+            )
+        ) { "Can't compile query \"$query\"" }
+        val statement = SQLitePrepareStatement(this, stmt)
+        prepareStatementsLock.synchronize {
+            prepareStatements += statement
+        }
+        return statement
     }
 
     override fun beginTransaction() {
@@ -103,7 +129,15 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         get() = SQLiteSQLDatabaseInfo
 
     override fun close() {
-        checkClosed()
+        println("Closing SQLite Connection")
+        if (!closed.compareAndSet(false, true)) {
+            throw ClosedException()
+        }
+        val l = ArrayList(prepareStatements)
+        prepareStatements.clear()
+        l.forEach {
+            it.close()
+        }
         try {
             if (sqlite3_get_autocommit(ctx.pointed.value) == 0) {
                 rollbackSt.executeUpdate()
@@ -118,20 +152,20 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         } catch (e: Throwable) {
             e.printStackTrace()
         } finally {
-            closed.value = true
             nativeHeap.free(ctx)
         }
     }
 }
 
-internal fun SQLiteConnector.checkSqlCode(code: Int) {
+internal fun SQLiteConnector.checkSqlCode(code: Int, func: (() -> String)? = null) {
+    fun detail() = if (func == null) "" else ": ${func()}"
     fun msg() = sqlite3_errmsg(this.ctx.pointed!!.value)?.toKStringFromUtf8() ?: "Unknown Error"
     when (code) {
         SQLITE_OK, SQLITE_DONE, SQLITE_ROW -> return
-        SQLITE_BUSY -> throw SQLException("Database is Busy")
-        SQLITE_ERROR -> throw SQLException(msg())
-        SQLITE_MISUSE -> throw SQLException("Database is Misuse")
-        SQLITE_CONSTRAINT -> throw SQLException("Constraint: ${msg()}")
-        else -> throw SQLException("SQL Code: $code")
+        SQLITE_BUSY -> throw SQLException("Database is Busy" + detail())
+        SQLITE_ERROR -> throw SQLException(msg() + detail())
+        SQLITE_MISUSE -> throw SQLException("Database is Misuse" + detail())
+        SQLITE_CONSTRAINT -> throw SQLException("Constraint: ${msg()}${detail()}")
+        else -> throw SQLException("SQL Code: $code${detail()}")
     }
 }

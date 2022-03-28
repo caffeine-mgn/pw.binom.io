@@ -1,46 +1,85 @@
 package pw.binom.db.serialization
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
+import pw.binom.charset.Charsets
 import pw.binom.concurrency.sleep
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.postgresql.async.PGConnection
 import pw.binom.db.sqlite.AsyncSQLiteConnector
 import pw.binom.io.use
+import pw.binom.network.Network
 import pw.binom.network.NetworkAddress
 import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 class InsertTest {
 
-    fun db(sql: SQLSerialization = SQLSerialization.DEFAULT, func: suspend (DBContext) -> Unit) = runTest {
-        try {
-            sleep(1000)
-            AsyncConnectionPool.create(maxConnections = 1) {
-                PGConnection.connect(
-                    address = NetworkAddress.Immutable(host = "127.0.0.1", port = 6102),
-                    userName = "postgres",
-                    password = "postgres",
-                    dataBase = "test",
-                )
-            }.use { pool ->
-                val context = DBContext.create(pool, sql)
-                func(context)
+    @OptIn(ExperimentalTime::class)
+    private suspend fun connectToPostgres(address: NetworkAddress): PGConnection {
+        return withContext(Dispatchers.Default) {
+            val start = TimeSource.Monotonic.markNow()
+            withTimeout(10.seconds) {
+                while (true) {
+                    try {
+                        println("Connection...")
+                        val con = PGConnection.connect(
+                            address = address,
+                            charset = Charsets.UTF8,
+                            userName = "postgres",
+                            password = "postgres",
+                            dataBase = "test"
+                        )
+                        println("Connected after ${start.elapsedNow()}")
+                        return@withTimeout con
+                    } catch (e: Throwable) {
+                        if (e is TimeoutCancellationException) {
+                            throw e
+                        }
+                        sleep(1000)
+                        println("Error on connect: $e")
+                        continue
+                    }
+                }
+                TODO()
             }
-        } catch (e: Throwable) {
-            throw RuntimeException("Exception on PostgreSQL", e)
         }
-        try {
-            AsyncConnectionPool.create(maxConnections = 1) {
-                AsyncSQLiteConnector.memory(Random.nextUuid().toString())
-            }.use { pool ->
-                val context = DBContext.create(pool, sql)
-                func(context)
+    }
+
+    fun db(sql: SQLSerialization = SQLSerialization.DEFAULT, func: suspend (DBContext) -> Unit) = runTest {
+        withContext(Dispatchers.Network) {
+            println("---===Test PostgreSQL===---")
+            try {
+                val pool = AsyncConnectionPool.create(maxConnections = 1) {
+                    connectToPostgres(NetworkAddress.Immutable(host = "127.0.0.1", port = 6102))
+                }
+                DBContext.create(pool, sql).use { context ->
+                    func(context)
+                }
+            } catch (e: Throwable) {
+                throw RuntimeException("Exception on PostgreSQL", e)
             }
-        } catch (e: Throwable) {
-            throw RuntimeException("Exception on SQLite", e)
+            println("---===Test SQLite===---")
+            try {
+                val pool = AsyncConnectionPool.create(maxConnections = 1) {
+                    AsyncSQLiteConnector.memory(Random.nextUuid().toString())
+                }
+                DBContext.create(pool, sql).use { context ->
+                    func(context)
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                throw RuntimeException("Exception on SQLite", e)
+            }
         }
     }
 

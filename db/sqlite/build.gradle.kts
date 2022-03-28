@@ -9,11 +9,6 @@ apply {
     plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
 }
 
-fun args(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) =
-    listOf(
-        "-include-binary", file("${buildDir}/native/${target.konanTarget.name}/libsqlite3.a").absolutePath
-    )
-
 val sqlitePackageName = "platform.internal_sqlite"
 kotlin {
     jvm()
@@ -111,7 +106,7 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                api("org.xerial:sqlite-jdbc:3.34.0")
+                api("org.xerial:sqlite-jdbc:3.36.0.3")
             }
         }
         val jvmTest by getting {

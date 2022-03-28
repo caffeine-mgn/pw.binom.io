@@ -1,10 +1,10 @@
 import pw.binom.baseStaticLibConfig
 import pw.binom.eachKotlinTest
-import java.util.UUID
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("kotlinx-serialization")
+    id("com.bmuschko.docker-remote-api")
 }
 
 apply {

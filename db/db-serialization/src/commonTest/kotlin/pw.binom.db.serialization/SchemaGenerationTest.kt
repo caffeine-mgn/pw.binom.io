@@ -1,6 +1,6 @@
 package pw.binom.db.serialization
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -45,7 +45,7 @@ class SchemaGenerationTest {
 
     @Test
     fun test() {
-        val tableSchema = runBlocking {
+        val tableSchema = runTest {
             AsyncConnectionPool.create(maxConnections = 1) {
                 AsyncSQLiteConnector.memory()
             }

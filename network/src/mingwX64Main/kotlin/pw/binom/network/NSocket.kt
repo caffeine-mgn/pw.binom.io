@@ -15,7 +15,9 @@ import pw.binom.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
-actual class NSocket(val native: SOCKET) : Closeable {
+actual class NSocket(var native: SOCKET, var tcp: Boolean) : Closeable {
+    private var type = NetworkAddress.Type.IPV4
+
     actual companion object {
         actual fun tcp(): NSocket {
             init_sockets()
@@ -23,7 +25,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
             if (native < 0uL) {
                 throw RuntimeException("Tcp Socket Creation")
             }
-            return NSocket(native)
+            return NSocket(native, true)
         }
 
         actual fun udp(): NSocket {
@@ -32,7 +34,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
             if (native < 0uL) {
                 throw RuntimeException("Datagram Socket Creation")
             }
-            return NSocket(native)
+            return NSocket(native, false)
         }
     }
 
@@ -70,14 +72,14 @@ actual class NSocket(val native: SOCKET) : Closeable {
                 rr
             }
         }
-        if (native == INVALID_SOCKET)
+        if (native == INVALID_SOCKET) {
             return null // throw IOException("Can't accept new client")
-        return NSocket(native)
+        }
+        return NSocket(native = native, tcp = tcp)
     }
 
     actual fun send(data: ByteBuffer): Int {
         memScoped {
-
             val r: Int = data.ref { dataPtr, remaining ->
                 send(native, dataPtr, remaining.convert(), 0).convert()
             }
@@ -113,9 +115,13 @@ actual class NSocket(val native: SOCKET) : Closeable {
         return r
     }
 
-    override fun close() {
+    private fun nativeClose() {
         shutdown(native, SD_SEND)
         closesocket(native)
+    }
+
+    override fun close() {
+        nativeClose()
     }
 
     actual fun setBlocking(value: Boolean) {
@@ -127,17 +133,52 @@ actual class NSocket(val native: SOCKET) : Closeable {
         }
     }
 
+    private fun prepareSocket(type: NetworkAddress.Type, tcp: Boolean) {
+        if (this.type == type && this.tcp == tcp) {
+            return
+        }
+        nativeClose()
+        val nativeAddressType = when (type) {
+            NetworkAddress.Type.IPV4 -> AF_INET
+            NetworkAddress.Type.IPV6 -> AF_INET6
+        }
+        val nativeType = when (tcp) {
+            true -> SOCK_STREAM
+            false -> platform.posix.SOCK_DGRAM
+        }
+        native = socket(nativeAddressType, nativeType, 0)
+        if (native < 0uL) {
+            throw RuntimeException("Tcp Socket Creation ipv4")
+        }
+        this.type = type
+    }
+
     actual fun connect(address: NetworkAddress) {
+        prepareSocket(type = address.type, tcp = true)
         memScoped {
-            val r = platform.windows.connect(
-                native,
-                address.data.refTo(0).getPointer(this).reinterpret(),
-                address.size.convert()
-            )
+            address.data.usePinned { data ->
+                val con = platform.windows.connect(
+                    native,
+                    data.addressOf(0).getPointer(this).reinterpret(),
+                    data.get().size.convert()
+                )
+                if (con < 0) {
+                    if (GetLastError() == platform.windows.WSAEAFNOSUPPORT.toUInt()) {
+                        throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()} An address incompatible with the requested protocol was used.")
+                    }
+                    if (GetLastError() == platform.windows.WSAETIMEDOUT.toUInt()) {
+                        throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()} A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.")
+                    }
+                    if (GetLastError() != platform.windows.WSAEWOULDBLOCK.toUInt()) {
+                        throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()}")
+                    }
+                }
+            }
         }
     }
 
     actual fun bind(address: NetworkAddress) {
+        prepareSocket(type = address.type, tcp = tcp)
         memScoped {
             val bindResult = platform.posix.bind(
                 native,
@@ -242,7 +283,7 @@ actual class NSocket(val native: SOCKET) : Closeable {
                     throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
                 }
                 address.size = len[0]
-                address.hashCodeDone=false
+                address.hashCodeDone = false
                 rr
             }
         }

@@ -73,8 +73,12 @@ class TcpServerConnection internal constructor(
     }
 
     override fun close() {
-        acceptListener?.resumeWithException(SocketClosedException())
-        acceptListener = null
+        acceptListener?.also {
+            if (it.isActive) {
+                it.resumeWithException(SocketClosedException())
+            }
+            acceptListener = null
+        }
         channel.close()
     }
 
