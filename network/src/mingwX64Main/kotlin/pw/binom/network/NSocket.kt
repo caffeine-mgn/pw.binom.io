@@ -2,6 +2,7 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.SOCKET
+import platform.linux.internal_setsockopt
 import platform.posix.*
 import platform.posix.AF_INET
 import platform.posix.SOCK_STREAM
@@ -15,37 +16,170 @@ import pw.binom.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
-actual class NSocket(var native: SOCKET, var tcp: Boolean) : Closeable {
+private fun setBlocking(native: SOCKET, value: Boolean) {
+    memScoped {
+        val nonBlocking = alloc<UIntVar>()
+        nonBlocking.value = if (value) 0u else 1u
+        if (ioctlsocket(native, FIONBIO.convert(), nonBlocking.ptr) == -1) {
+            if (GetLastError() == platform.windows.WSAENOTSOCK.toUInt()) {
+                throw IOException("Can't set non blocking mode. Socket is invalid")
+            }
+            throw IOException("Can't set non blocking mode. Error: ${GetLastError()}")
+        }
+    }
+}
+
+private fun bind(native: SOCKET, address: NetworkAddress, family: Int) {
+    memScoped {
+        val bindResult = if (family == AF_INET6) {
+            address.isAddrV6 { data ->
+                platform.posix.bind(
+                    native,
+                    data.reinterpret(),
+                    sizeOf<sockaddr_in6>().convert()
+                )
+            }
+        } else {
+            if (address.type != NetworkAddress.Type.IPV4) {
+                throw IllegalArgumentException("Can't bind ipv4 to ipv6 address")
+            }
+            address.data.usePinned { data ->
+                platform.posix.bind(
+                    native,
+                    data.addressOf(0).getPointer(this).reinterpret(),
+                    data.get().size.convert()
+                )
+            }
+        }
+
+        println("$address bindResult: $bindResult")
+        if (bindResult < 0) {
+            if (GetLastError().toInt() == platform.windows.WSAEADDRINUSE) { // 10048
+                throw BindException("Address already in use: $address")
+            }
+            if (GetLastError().toInt() == platform.windows.WSAEACCES) { // 10013
+                throw BindException("Can't bind $address: An attempt was made to access a socket in a way forbidden by its access permissions.")
+            }
+
+            if (GetLastError().toInt() == platform.windows.WSAEAFNOSUPPORT) { // 10047
+                throw BindException("Can't bind to $address: Address family not supported by protocol family")
+            }
+            if (GetLastError().toInt() == platform.windows.WSAEFAULT) { // 10014
+                throw BindException("Can't bind to $address: Bad address")
+            }
+
+            throw IOException("Bind error. errno: [$errno], GetLastError: [${GetLastError()}]")
+        }
+        val listenResult = platform.windows.listen(native, 1000)
+        if (listenResult < 0) {
+            if (GetLastError().toInt() == platform.windows.WSAEOPNOTSUPP) { // 10045
+                return
+            }
+            throw IOException("Listen error. errno: [$errno], GetLastError: [${GetLastError()}]")
+        }
+    }
+}
+actual typealias RawSocket = Int
+
+private fun allowIpv4(native: SOCKET) {
+    memScoped {
+        val flag = allocArray<IntVar>(1)
+        flag[0] = 0
+        val iResult = internal_setsockopt(
+            native, IPPROTO_IPV6,
+            IPV6_V6ONLY, flag, sizeOf<IntVar>().convert()
+        )
+        val flag2 = allocArray<IntVar>(1)
+        flag[0] = 3
+        flag2[0] = sizeOf<IntVar>().convert()
+        val vv = platform.windows.getsockopt(native, IPPROTO_IPV6, IPV6_V6ONLY, flag.reinterpret(), flag2)
+        println("--------->$vv ${flag[0]} ${flag2[0]}")
+        if (iResult == SOCKET_ERROR) {
+            closesocket(native)
+            throw IOException("Can't allow ipv6 connection for UDP socket. Error: ${GetLastError()}")
+        }
+        println("set ipv6 only result: $iResult")
+    }
+}
+
+actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
     actual companion object {
-        actual fun tcp(): NSocket {
+        actual fun serverTcp(address: NetworkAddress): NSocket {
             init_sockets()
-            val native = socket(AF_INET, SOCK_STREAM, 0)
+            val domain = when (address.type) {
+                NetworkAddress.Type.IPV4 -> AF_INET
+                NetworkAddress.Type.IPV6 -> AF_INET6
+            }
+            val native = socket(domain, SOCK_STREAM, 0)
             if (native < 0uL) {
                 throw RuntimeException("Tcp Socket Creation")
             }
-            return NSocket(native, true)
+            bind(native, address, family = domain)
+            if (address.type == NetworkAddress.Type.IPV6) {
+                allowIpv4(native)
+            }
+            return NSocket(native, family = domain)
+        }
+
+        actual fun connectTcp(address: NetworkAddress, blocking: Boolean): NSocket {
+            return memScoped {
+                init_sockets()
+                val domain = when (address.type) {
+                    NetworkAddress.Type.IPV4 -> AF_INET
+                    NetworkAddress.Type.IPV6 -> AF_INET6
+                }
+                val native = socket(domain, SOCK_STREAM, 0)
+                if (native < 0uL) {
+                    throw RuntimeException("Tcp Socket Creation")
+                }
+                setBlocking(native, blocking)
+                val con = address.data.usePinned { data ->
+                    platform.windows.connect(
+                        native,
+                        data.addressOf(0).getPointer(this).reinterpret(),
+                        data.get().size.convert()
+                    )
+                }
+                if (con < 0) {
+                    if (GetLastError() == platform.windows.WSAEAFNOSUPPORT.toUInt()) {
+                        throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()} An address incompatible with the requested protocol was used.")
+                    }
+                    if (GetLastError() == platform.windows.WSAETIMEDOUT.toUInt()) {
+                        throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()} A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.")
+                    }
+                    if (GetLastError() != platform.windows.WSAEWOULDBLOCK.toUInt()) {
+                        throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()}")
+                    }
+                }
+                NSocket(native, family = domain)
+            }
         }
 
         actual fun udp(): NSocket {
             init_sockets()
-            val native = socket(AF_INET, platform.windows.SOCK_DGRAM.convert(), 0)
-            if (native < 0uL) {
-                throw RuntimeException("Datagram Socket Creation")
+            val native = socket(AF_INET6, platform.windows.SOCK_DGRAM.convert(), 0)
+            if (native == INVALID_SOCKET) {
+                throw IOException("Can't create UDP socket. Error: ${GetLastError()}")
             }
-            return NSocket(native, false)
+            allowIpv4(native)
+            return NSocket(native, family = AF_INET6)
         }
     }
-    private var type = NetworkAddress.Type.IPV4
+
+    actual val raw: RawSocket
+        get() = native.convert()
+
     actual val port: Int?
         get() {
             return memScoped {
-                val sin = alloc<sockaddr_in>()
-                memset(sin.ptr, 0, sizeOf<sockaddr_in>().convert())
+                val sin = alloc<sockaddr_in6>()
+                memset(sin.ptr, 0, sizeOf<sockaddr_in6>().convert())
                 val addrlen = alloc<socklen_tVar>()
-                addrlen.value = sizeOf<sockaddr_in>().convert()
+                addrlen.value = sizeOf<sockaddr_in6>().convert()
                 val r = platform.windows.getsockname(native, sin.ptr.reinterpret(), addrlen.ptr)
+                println("getsockname=$r $errno")
                 if (r == 0) {
-                    ntohs(sin.sin_port).toInt()
+                    ntohs(sin.sin6_port).toInt()
                 } else {
                     // println("getsockname=$c, errno=${errno},GetLastError()=${GetLastError()}")
                     null
@@ -73,7 +207,7 @@ actual class NSocket(var native: SOCKET, var tcp: Boolean) : Closeable {
         if (native == INVALID_SOCKET) {
             return null // throw IOException("Can't accept new client")
         }
-        return NSocket(native = native, tcp = tcp)
+        return NSocket(native = native, family = family)
     }
 
     actual fun send(data: ByteBuffer): Int {
@@ -123,36 +257,10 @@ actual class NSocket(var native: SOCKET, var tcp: Boolean) : Closeable {
     }
 
     actual fun setBlocking(value: Boolean) {
-        memScoped {
-            val nonBlocking = alloc<UIntVar>()
-            nonBlocking.value = if (value) 0u else 1u
-            if (ioctlsocket(native, FIONBIO.convert(), nonBlocking.ptr) == -1)
-                throw IOException("ioctlsocket() error. ErrNo: ${GetLastError()}")
-        }
-    }
-
-    private fun prepareSocket(type: NetworkAddress.Type, tcp: Boolean) {
-        if (this.type == type && this.tcp == tcp) {
-            return
-        }
-        nativeClose()
-        val nativeAddressType = when (type) {
-            NetworkAddress.Type.IPV4 -> AF_INET
-            NetworkAddress.Type.IPV6 -> AF_INET6
-        }
-        val nativeType = when (tcp) {
-            true -> SOCK_STREAM
-            false -> platform.posix.SOCK_DGRAM
-        }
-        native = socket(nativeAddressType, nativeType, 0)
-        if (native < 0uL) {
-            throw RuntimeException("Tcp Socket Creation ipv4")
-        }
-        this.type = type
+        setBlocking(native, value)
     }
 
     actual fun connect(address: NetworkAddress) {
-        prepareSocket(type = address.type, tcp = true)
         memScoped {
             address.data.usePinned { data ->
                 val con = platform.windows.connect(
@@ -176,42 +284,31 @@ actual class NSocket(var native: SOCKET, var tcp: Boolean) : Closeable {
     }
 
     actual fun bind(address: NetworkAddress) {
-        prepareSocket(type = address.type, tcp = tcp)
-        memScoped {
-            val bindResult = platform.posix.bind(
-                native,
-                address.data.refTo(0).getPointer(this).reinterpret(),
-                address.size.convert()
-            )
-            if (bindResult < 0) {
-                if (GetLastError().toInt() == platform.windows.WSAEADDRINUSE) { // 10048
-                    throw BindException("Address already in use: ${address.host}:${address.port}")
-                }
-                if (GetLastError().toInt() == platform.windows.WSAEACCES) { // 10013
-                    throw BindException("Can't bind ${address.host}:${address.port}: An attempt was made to access a socket in a way forbidden by its access permissions.")
-                }
-
-                throw IOException("Bind error. errno: [$errno], GetLastError: [${GetLastError()}]")
-            }
-            val listenResult = platform.windows.listen(native, 1000)
-            if (listenResult < 0) {
-                if (GetLastError().toInt() == platform.windows.WSAEOPNOTSUPP) { // 10045
-                    return
-                }
-                throw IOException("Listen error. errno: [$errno], GetLastError: [${GetLastError()}]")
-            }
-        }
+        bind(native, address, family)
     }
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
         memScoped {
             val rr = data.ref { dataPtr, remaining ->
                 address.data.usePinned { addressPtr ->
-                    sendto(
-                        native, dataPtr.getPointer(this), remaining.convert(),
-                        0,
-                        addressPtr.addressOf(0).getPointer(this).reinterpret(), address.size.convert()
-                    )
+                    println("current ipv6 = ${family == AF_INET6}, dest=${address.type}")
+                    if (family == AF_INET6) {
+
+                        address.isAddrV6 { addr ->
+                            println("send to port ${ntohs(addr.pointed.sin6_port)}")
+                            sendto(
+                                native, dataPtr.getPointer(this), remaining.convert(),
+                                0,
+                                addr.reinterpret(), sizeOf<sockaddr_in6>().convert()
+                            )
+                        }
+                    } else {
+                        sendto(
+                            native, dataPtr.getPointer(this), remaining.convert(),
+                            0,
+                            addressPtr.addressOf(0).getPointer(this).reinterpret(), address.size.convert()
+                        )
+                    }
                 }
             }
             if (rr == SOCKET_ERROR) {

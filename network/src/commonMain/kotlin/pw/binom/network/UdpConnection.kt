@@ -49,6 +49,9 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         channel.bind(address)
     }
 
+    val port
+        get() = channel.port
+
     override fun readyForWrite() {
         if (sendData.continuation == null) {
             key.removeListen(Selector.OUTPUT_READY)

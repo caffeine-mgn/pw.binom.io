@@ -3,30 +3,50 @@ package pw.binom.network
 import pw.binom.ByteBuffer
 import pw.binom.io.Channel
 
-actual class TcpClientSocketChannel(val native: NSocket, val connectable: Boolean) : Channel {
-    actual constructor() : this(NSocket.tcp(), true)
+actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
+    var native: NSocket? = null
 
-    init {
-        native.setBlocking(false)
+    //    var selector: AbstractSelector? = null
+    var key: AbstractSelector.AbstractKey? = null
+        set(value) {
+            if (field != null && native != null) {
+                field!!.removeSocket(native!!.raw)
+            }
+            field = value
+            if (native != null) {
+                value?.addSocket(native!!.raw)
+            }
+        }
+
+    actual constructor() : this(true)
+    constructor(socket: NSocket) : this(false) {
+        this.native = socket
+        socket.setBlocking(false)
     }
 
     actual fun connect(address: NetworkAddress) {
-        native.connect(address)
+        if (!connectable) {
+            throw IllegalStateException()
+        }
+        native = NSocket.connectTcp(address, blocking = false)
+        key?.addSocket(native!!.raw)
     }
 
-    override fun read(dest: ByteBuffer): Int{
-        val read = native.recv(dest)
+    override fun read(dest: ByteBuffer): Int {
+        val read = native!!.recv(dest)
         return read
     }
 
     override fun close() {
-        native.close()
+        native?.also {
+            key?.removeSocket(it.raw)
+            it.close()
+        }
     }
 
     override fun write(data: ByteBuffer): Int =
-        native.send(data)
+        native!!.send(data)
 
     override fun flush() {
-
     }
 }

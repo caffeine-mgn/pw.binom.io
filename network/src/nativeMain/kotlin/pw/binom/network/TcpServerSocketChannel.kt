@@ -3,25 +3,42 @@ package pw.binom.network
 import pw.binom.io.Closeable
 
 actual class TcpServerSocketChannel : Closeable {
-    val native = NSocket.tcp()
+    var key: AbstractSelector.AbstractKey? = null
+        set(value) {
+            if (field != null && native != null) {
+                field!!.removeSocket(native!!.raw)
+            }
+            field = value
+            if (native != null) {
+                println("tcp-server: add socket to key")
+                value?.addSocket(native!!.raw)
+            }
+        }
 
-    init {
-        native.setBlocking(false)
-    }
+    var native: NSocket? = null
 
     actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? {
-        val socket = native.accept(address) ?: return null
-        return TcpClientSocketChannel(socket, false)
+        val socket = native!!.accept(address) ?: return null
+        return TcpClientSocketChannel(socket)
     }
 
     actual fun bind(address: NetworkAddress) {
-        native.bind(address)
+        if (native != null) {
+            throw IllegalStateException()
+        }
+        native = NSocket.serverTcp(address)
+        native!!.setBlocking(false)
+        key?.addSocket(native!!.raw)
+        println("tcp Bind. key=$key")
     }
 
     override fun close() {
-        native.close()
+        native?.also {
+            key?.removeSocket(it.raw)
+            it.close()
+        }
     }
 
     actual val port: Int?
-        get() = native.port
+        get() = native!!.port
 }

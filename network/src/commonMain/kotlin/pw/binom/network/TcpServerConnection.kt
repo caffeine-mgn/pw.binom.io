@@ -86,23 +86,29 @@ class TcpServerConnection internal constructor(
 
     suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection =
         withContext(dispatcher) TT@{
+            println("Start accepting")
             if (acceptListener != null) {
+                println("!!!!")
                 throw IllegalStateException("Connection already have read listener")
             }
 
             val newClient = channel.accept(address)
             if (newClient != null) {
+                println("2222")
                 return@TT dispatcher.attach(newClient)
             }
+            println("Suspend...")
             val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
                 acceptListener = con
                 key.listensFlag = Selector.INPUT_READY
                 con.invokeOnCancellation {
+                    println("Cancel accept called")
                     acceptListener = null
                     if (!key.closed) {
                         key.listensFlag = 0
                     }
                 }
+                println("on cancel waiter sent!")
             }
             return@TT dispatcher.attach(newChannel)
         }

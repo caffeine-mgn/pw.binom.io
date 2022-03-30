@@ -1,9 +1,6 @@
 package pw.binom.network
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runTest
 import pw.binom.ByteBuffer
 import pw.binom.alloc
@@ -19,26 +16,32 @@ private val dt = DeadlineTimer.create()
 @OptIn(ExperimentalCoroutinesApi::class)
 class CancellationTest {
     @Test
-    fun cancellationAccept() = runTest {
-        println("dispatcher: ${this.coroutineContext[ContinuationInterceptor]}")
-        println("cancellationAccept - #0")
-        val nd = NetworkCoroutineDispatcherImpl()
-        var firstReadCanceled = false
-        val server =
-            nd.bindTcp(NetworkAddress.Immutable(host = "127.0.0.1", port = 0))
-        println("Server start on port ${server.port}")
-        val job = launch(nd) {
-            try {
-                server.accept()
-            } catch (e: CancellationException) {
-                firstReadCanceled = true
-            } finally {
-                server.close()
+    fun cancellationAccept() = runTest(dispatchTimeoutMs = 5_000) {
+        withContext(Dispatchers.Default) {
+            println("dispatcher: ${this.coroutineContext[ContinuationInterceptor]}")
+            println("cancellationAccept - #0")
+
+            var firstReadCanceled = false
+            val server =
+                Dispatchers.Network.bindTcp(NetworkAddress.Immutable(host = "127.0.0.1", port = 0))
+            println("Server start on port ${server.port}")
+            val job = launch {
+                println("Try accept")
+                try {
+                    server.accept()
+                } catch (e: CancellationException) {
+                    firstReadCanceled = true
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                } finally {
+                    server.close()
+                }
             }
+            realDelay(4.seconds)
+            println("Execute cancel!")
+            job.cancelAndJoin()
+            assertTrue(firstReadCanceled)
         }
-        realDelay(1.seconds)
-        job.cancelAndJoin()
-        assertTrue(firstReadCanceled)
     }
 
     @Test

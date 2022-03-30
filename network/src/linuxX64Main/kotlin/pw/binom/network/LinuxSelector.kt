@@ -2,25 +2,66 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.*
+import platform.posix.AF_INET
+import platform.posix.errno
 
 class LinuxSelector : AbstractSelector() {
 
-    inner class LinuxKey(val list: Int, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
+    inner class LinuxKey(
+        val list: Int,
+        attachment: Any?,
+    ) : AbstractKey(attachment) {
+        private var nativeSocket: RawSocket = 0
+
+        override fun addSocket(raw: RawSocket) {
+            println("add $raw $attachment, old: $nativeSocket")
+            if (nativeSocket != 0) {
+                throw IllegalStateException()
+            }
+            memScoped {
+                val event = alloc<epoll_event>()
+                event.events = epollCommonToNative(listensFlag.convert()).convert()
+                event.data.ptr = ptr
+                val c = epoll_ctl(native, EPOLL_CTL_ADD, raw.convert(), event.ptr)
+                println("epoll_ctl=$c raw=$raw $errno attachment=$attachment this=${hashCode()}")
+            }
+            nativeSocket = raw
+        }
+
+        override fun removeSocket(raw: RawSocket) {
+            println("remove $raw $attachment")
+            if (nativeSocket == raw) {
+                epoll_ctl(list, EPOLL_CTL_DEL, raw.convert(), null)
+                nativeSocket = 0
+                return
+            }
+            throw IllegalArgumentException("Socket $raw not attached to Selector.Key")
+        }
+
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
         override fun resetMode(mode: Int) {
+            if (nativeSocket == 0) {
+                println("No active sockets")
+                return
+            }
             memScoped {
                 val event = alloc<epoll_event>()
-                event.events = epollCommonToNative(mode).convert()
+                event.events = epollCommonToNative(mode.convert()).convert()
                 event.data.ptr = ptr
-                epoll_ctl(list, EPOLL_CTL_MOD, socket.native, event.ptr)
+                if (nativeSocket != 0) {
+                    println("set mode s1 $attachment ${mode.toString(2)} ${event.events} $connected")
+                    epoll_ctl(list, EPOLL_CTL_MOD, nativeSocket.convert(), event.ptr)
+                }
             }
         }
 
         override fun close() {
             super.close()
-            epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
+            if (nativeSocket != 0) {
+                epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), null)
+            }
             keys -= this
         }
         override fun toString(): String = "LinuxKey(mode: ${modeToString(listensFlag)}, attachment: $attachment, connected: $connected)"
@@ -60,7 +101,6 @@ class LinuxSelector : AbstractSelector() {
             currentNum = 0
         }
 
-
         override fun hasNext(): Boolean {
             if (currentNum == eventCount) {
                 return false
@@ -72,7 +112,6 @@ class LinuxSelector : AbstractSelector() {
             if (!hasNext()) {
                 throw NoSuchElementException()
             }
-
 
             val item = list[currentNum++]
 
@@ -92,7 +131,7 @@ class LinuxSelector : AbstractSelector() {
                     event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
                     return event
                 }
-                if (EPOLLHUP in item.events){
+                if (EPOLLHUP in item.events) {
 //                    key.connected = true
                     event.key = key
                     event.mode = 0
@@ -101,7 +140,7 @@ class LinuxSelector : AbstractSelector() {
                 throw IllegalStateException("Unknown connection state: ${modeToString(item.events.toInt())}")
             }
             if (EPOLLHUP in item.events) {
-                NSocket(native = item.data.fd, tcp=true).close()
+                NSocket(native = item.data.fd, family = AF_INET).close()
                 key.close()
                 event.key = key
                 event.mode = 0
@@ -117,21 +156,22 @@ class LinuxSelector : AbstractSelector() {
         }
     }
 
+    override fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
+        val key = LinuxKey(native, attachment)
+        key.listensFlag = mode
+        keys += key
+        if (!connectable) {
+            key.connected = true
+        }
+        return key
+    }
 
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
-        val key = LinuxKey(native, attachment, socket)
-        memScoped {
-            val event = alloc<epoll_event>()
-            if (!connectable) {
-                key.connected = true
-            }
-
-            key.listensFlag = key.epollCommonToNative(mode)
-            event.data.ptr = key.ptr
-            event.events=key.listensFlag.convert()
-            keys += key
-            epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
+        val key = LinuxKey(native, attachment)
+        if (!connectable) {
+            key.connected = true
         }
+        keys += key
         return key
     }
 
@@ -160,7 +200,7 @@ class LinuxSelector : AbstractSelector() {
                 throw IllegalStateException("Unknown connection state")
             }
             if (EPOLLHUP in item.events) {
-                NSocket(native = item.data.fd, tcp = true).close()
+                NSocket(native = item.data.fd, family = AF_INET).close()
                 key.close()
             } else {
                 val common = epollNativeToCommon(item.events.convert())
@@ -172,7 +212,6 @@ class LinuxSelector : AbstractSelector() {
         }
         return eventCount
     }
-
 
     override fun nativeSelect(timeout: Long) {
         nativeSelectedKeys2.reset()

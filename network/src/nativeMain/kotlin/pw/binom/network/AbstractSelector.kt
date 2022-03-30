@@ -7,11 +7,13 @@ import pw.binom.atomic.AtomicInt
 import pw.binom.io.ClosedException
 
 abstract class AbstractSelector : Selector {
-    abstract class AbstractKey(attachment: Any?, val socket: NSocket) : Selector.Key {
+    abstract class AbstractKey(attachment: Any?) : Selector.Key {
         var connected by AtomicBoolean(false)
 
         //        private val attachmentReference = attachment?.asReference()
         override val attachment: Any? = attachment
+        abstract fun addSocket(raw: RawSocket)
+        abstract fun removeSocket(raw: RawSocket)
 
         //            get() = attachmentReference?.value
         var ptr = StableRef.create(this).asCPointer()
@@ -31,12 +33,12 @@ abstract class AbstractSelector : Selector {
 
         override var listensFlag: Int
             get() {
-                checkClosed()
                 return _listensFlag
             }
             set(value) {
                 checkClosed()
                 if (_listensFlag == value) {
+                    println("Not need to change mode")
                     return
                 }
                 _listensFlag = value
@@ -53,34 +55,48 @@ abstract class AbstractSelector : Selector {
     }
 
     override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): AbstractKey {
-        val key = nativeAttach(
-            socket.native,
-            mode,
-            true,
-            attachment
-        )
+        val key = if (socket.native == null) {
+            nativePrepare(mode = mode, attachment = attachment, connectable = socket.connectable)
+        } else {
+            nativeAttach(
+                socket.native!!,
+                mode,
+                true,
+                attachment
+            )
+        }
+
         if (!socket.connectable) {
             key.connected = true
         }
+        socket.key = key
         return key
     }
 
-    override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?) =
-        nativeAttach(
-            socket.native,
-            mode,
-            false,
-            attachment
-        )
+    override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?): AbstractKey {
+        val key = if (socket.native == null) {
+            nativePrepare(mode = mode, attachment = attachment, connectable = false)
+        } else {
+            nativeAttach(
+                socket.native!!,
+                mode,
+                false,
+                attachment
+            )
+        }
+        socket.key = key
+        return key
+    }
 
-    override fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?) =
-        nativeAttach(
-            socket.native,
-            mode,
-            false,
-            attachment
+    override fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?): AbstractKey {
+        val key = nativePrepare(
+            mode = mode,
+            connectable = false,
+            attachment = attachment
         )
-
+        socket.key = key
+        return key
+    }
 
     override fun select(timeout: Long, func: (Selector.Key, mode: Int) -> Unit): Int =
         nativeSelect(timeout) { key, nativeMode ->
@@ -138,7 +154,6 @@ abstract class AbstractSelector : Selector {
                 return event
             }
         }
-
     }
 
     override fun select(timeout: Long): Iterator<Selector.KeyEvent> {
@@ -153,13 +168,14 @@ abstract class AbstractSelector : Selector {
 
     protected abstract val nativeSelectedKeys: Iterator<NativeKeyEvent>
 
+    protected abstract fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractKey
     protected abstract fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey
     protected abstract fun nativeSelect(timeout: Long, func: (AbstractKey, mode: Int) -> Unit): Int
     protected abstract fun nativeSelect(timeout: Long)
 }
 
-//internal expect fun epollCommonToNative(mode: Int): Int
-//internal expect fun epollNativeToCommon(mode: Int): Int
+// internal expect fun epollCommonToNative(mode: Int): Int
+// internal expect fun epollNativeToCommon(mode: Int): Int
 
 internal inline operator fun Int.contains(value: Int): Boolean = value and this != 0
 internal inline operator fun Int.contains(value: UInt): Boolean = value.toInt() in this

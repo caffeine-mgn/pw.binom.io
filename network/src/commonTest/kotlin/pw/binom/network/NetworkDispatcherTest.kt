@@ -11,7 +11,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
@@ -19,12 +18,9 @@ import kotlin.time.seconds
 class NetworkDispatcherTest {
 
     @Test
-    fun aaa() = runTest {
+    fun aaa() = runTest(dispatchTimeoutMs = 5_000) {
         val nd = NetworkCoroutineDispatcherImpl()
-        var connected = false
         nd.tcpConnect(NetworkAddress.Immutable("google.com", 443))
-        connected = true
-        assertTrue(connected)
     }
 
     @Test
@@ -150,7 +146,6 @@ class NetworkDispatcherTest {
         }
     }
 
-
     @OptIn(ExperimentalTime::class)
     @Test
     fun multiThreadingTest() = runTest {
@@ -239,18 +234,18 @@ class NetworkDispatcherTest {
                 println("Client[$name-${client2.hashCode()}]:Connected! Write...")
                 println(
                     "Client[$name-${client2.hashCode()}]: Wrote ${
-                        client2.write(
-                            ByteBuffer.wrap(ByteArray(32)).clean()
-                        )
+                    client2.write(
+                        ByteBuffer.wrap(ByteArray(32)).clean()
+                    )
                     }"
                 )
                 println("Client[$name-${client2.hashCode()}]:Wrote! Try read...")
                 val readTime = measureTime {
                     println(
                         "Client[$name-${client2.hashCode()}]: read ${
-                            client2.readFully(
-                                ByteBuffer.alloc(64).clean()
-                            )
+                        client2.readFully(
+                            ByteBuffer.alloc(64).clean()
+                        )
                         }"
                     )
                 }

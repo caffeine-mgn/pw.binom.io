@@ -2,11 +2,42 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.*
+import platform.posix.errno
+import platform.windows.GetLastError
 import platform.windows.HANDLE
 
 class MingwSelector : AbstractSelector() {
 
-    inner class MingwKey(val list: HANDLE, attachment: Any?, socket: NSocket) : AbstractKey(attachment, socket) {
+    inner class MingwKey(
+        val list: HANDLE,
+        attachment: Any?,
+    ) : AbstractKey(attachment) {
+        private var nativeSocket: RawSocket = 0
+        override fun addSocket(raw: RawSocket) {
+            println("add $raw $attachment")
+            if (nativeSocket != 0) {
+                throw IllegalStateException()
+            }
+            memScoped {
+                val event = alloc<epoll_event>()
+                event.events = epollCommonToNative(listensFlag.convert()).convert()
+                event.data.ptr = ptr
+                val c = epoll_ctl(native, EPOLL_CTL_ADD, raw.convert(), event.ptr)
+                println("epoll_ctl=$c raw=$raw $errno ${GetLastError()}  attachment=$attachment this=${hashCode()}")
+            }
+            nativeSocket = raw
+        }
+
+        override fun removeSocket(raw: RawSocket) {
+            println("remove $raw $attachment")
+            if (nativeSocket == raw) {
+                epoll_ctl(list, EPOLL_CTL_DEL, raw.convert(), null)
+                nativeSocket = 0
+                return
+            }
+            throw IllegalArgumentException("Socket $raw not attached to Selector.Key")
+        }
+
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
@@ -27,17 +58,26 @@ class MingwSelector : AbstractSelector() {
 
         override fun toString(): String = "MinGW(mode: ${modeToString(listensFlag.toUInt())}, attachment: $attachment)"
         override fun resetMode(mode: Int) {
+            if (nativeSocket == 0) {
+                println("No active sockets")
+                return
+            }
             memScoped {
                 val event = alloc<epoll_event>()
                 event.events = epollCommonToNative(mode.convert()).convert()
                 event.data.ptr = ptr
-                epoll_ctl(list, EPOLL_CTL_MOD, socket.native, event.ptr)
+                if (nativeSocket != 0) {
+                    println("set mode s1 $attachment ${mode.toString(2)} ${event.events} $connected")
+                    epoll_ctl(list, EPOLL_CTL_MOD, nativeSocket.convert(), event.ptr)
+                }
             }
         }
 
         override fun close() {
             super.close()
-            epoll_ctl(list, EPOLL_CTL_DEL, socket.native, null)
+            if (nativeSocket != 0) {
+                epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), null)
+            }
             keys -= this
         }
     }
@@ -47,21 +87,25 @@ class MingwSelector : AbstractSelector() {
     override val nativeSelectedKeys
         get() = nativeSelectedKeys2
 
+    override fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
+        val key = MingwKey(native, attachment)
+        key.listensFlag = mode
+        keys += key
+        if (!connectable) {
+            key.connected = true
+        }
+        return key
+    }
+
     private val keys = HashSet<MingwKey>()
 
-
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
-        val key = MingwKey(native, attachment, socket)
-        memScoped {
-            val event = alloc<epoll_event>()
-            if (!connectable) {
-                key.connected = true
-            }
-            event.events = key.epollCommonToNative(mode).convert()
-            event.data.ptr = key.ptr
-            epoll_ctl(native, EPOLL_CTL_ADD, socket.native, event.ptr)
-            keys += key
+        val key = MingwKey(native, attachment)
+        if (!connectable) {
+            key.connected = true
         }
+        keys += key
+
         return key
     }
 
@@ -90,6 +134,7 @@ class MingwSelector : AbstractSelector() {
             val item = list[currentNum++]
             val keyPtr = item.data.ptr!!.asStableRef<MingwKey>()
             val key = keyPtr.get()
+            println("---event->${item.events}")
             if (!key.connected) {
                 when {
                     EPOLLERR in item.events || EPOLLRDHUP in item.events -> {
@@ -104,7 +149,6 @@ class MingwSelector : AbstractSelector() {
                         event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
                         key.connected = true
                         return event
-
                     }
                     else -> throw IllegalStateException("Unknown selector key status")
                 }

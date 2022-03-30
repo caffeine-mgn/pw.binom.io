@@ -2,6 +2,7 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.inet_ntop
+import platform.linux.internal_ipv4_to_ipv6
 import platform.posix.*
 import pw.binom.io.IOException
 
@@ -21,6 +22,36 @@ actual sealed class NetworkAddress {
     }
 
     override fun hashCode(): Int = hashCode
+
+    fun <T> isAddrV6(func: (CPointer<sockaddr_in6>) -> T): T {
+        memScoped {
+            val addrPtr = data.refTo(0).getPointer(this)
+            val family = addrPtr.reinterpret<sockaddr_in>().pointed.sin_family.toInt()
+            if (family == AF_INET6) {
+                return func(addrPtr.reinterpret())
+            }
+            val vvv = addrPtr.reinterpret<sockaddr_in>().pointed.sin_addr
+            val out = alloc<sockaddr_in6>()
+            out.sin6_family = AF_INET6.convert()
+            out.sin6_port = addrPtr.reinterpret<sockaddr_in>().pointed.sin_port
+            internal_ipv4_to_ipv6(vvv.ptr, out.sin6_addr.ptr, 0)
+
+            val oldV = vvv.ptr.reinterpret<ByteVar>()
+            println("Before Mapping")
+            repeat(sizeOf<in_addr>().convert()) { index ->
+                print(" 0x")
+                print(oldV[index].toString(16))
+            }
+            println()
+            println("After Mapping")
+            repeat(sizeOf<in6_addr>().convert()) { index ->
+                print(" 0x")
+                print(out.sin6_addr.__in6_u.__u6_addr8[index].toString(16))
+            }
+            println()
+            return func(out.ptr)
+        }
+    }
 
     private inline fun <T> addr(f: MemScope.(CPointer<ByteVar>) -> T): T =
         memScoped {
@@ -99,7 +130,7 @@ actual sealed class NetworkAddress {
                 }
                 when (err) {
                     0 -> break@LOOP
-                    else -> throw RuntimeException("Unknown error: ${err}")
+                    else -> throw RuntimeException("Unknown error: $err")
                 }
             }
             memcpy(

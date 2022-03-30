@@ -2,16 +2,20 @@ package pw.binom.network
 
 import pw.binom.ByteBuffer
 import pw.binom.io.Closeable
+expect class RawSocket
 
 /**
  * Native socket. Used only for native targets
  */
 expect class NSocket : Closeable {
+    val raw:RawSocket
     companion object {
         /**
          * Creates and return tcp socket
          */
-        fun tcp(): NSocket
+//        fun tcp(): NSocket
+        fun serverTcp(address: NetworkAddress): NSocket
+        fun connectTcp(address: NetworkAddress, blocking: Boolean): NSocket
 
         /**
          * Creates and returns udp socket
@@ -25,7 +29,7 @@ expect class NSocket : Closeable {
     fun setBlocking(value: Boolean)
     fun connect(address: NetworkAddress)
     fun bind(address: NetworkAddress)
-    val port:Int?
+    val port: Int?
 
     /**
      * Used for tcp server socket. Method will accept new connection. Connection of remote socket will put in to [address]
