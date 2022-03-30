@@ -144,14 +144,14 @@ class HttpServer(
             } finally {
                 println("Finish!")
                 binds -= server
-                server.close()
+                runCatching { server.close() }
             }
         }
         return JobWithCancelWaiter(listenJob) {
             closed.value = true
-            GlobalScope.launch(dispatcher) {
-                server.close()
-            }
+//            GlobalScope.launch(dispatcher) {
+            server.close()
+//            }
         }
     }
 
