@@ -92,7 +92,7 @@ class NetworkDispatcherTest {
 
     @Test
     fun rebindTest() = runTest {
-        val addr = NetworkAddress.Immutable("127.0.0.1", port = 50905)
+        val addr = NetworkAddress.Immutable("127.0.0.1", port = 0)
         val nd = NetworkCoroutineDispatcherImpl()
         val a = nd.bindTcp(addr)
         val port = a.port

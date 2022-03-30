@@ -33,18 +33,21 @@ private fun bind(native: RawSocket, address: NetworkAddress, family: Int) {
                 )
             }
         } else {
+            if (address.type != NetworkAddress.Type.IPV4) {
+                throw BindException("Can't bind to $address to IPV4")
+            }
             address.data.usePinned {
                 bind(
                     native,
-                    it.addressOf(0).reinterpret(),
+                    it.addressOf(0).getPointer(this).reinterpret(),
                     address.size.convert()
                 )
             }
         }
 
         if (bindResult < 0) {
-            println("bind on $address. errno: $errno")
-            if (errno == EADDRINUSE) {
+            println("bind on $address. errno: $errno  ${posix_errno()}")
+            if (errno == EADDRINUSE || errno == 0) {
                 throw BindException("Address already in use: ${address.host}:${address.port}")
             }
             throw IOException("Bind error. errno: [$errno], bind: [$bindResult]")
@@ -66,6 +69,14 @@ private fun bind(native: RawSocket, address: NetworkAddress, family: Int) {
 }
 
 private fun unbind(native: Int) {
+    memScoped {
+        val flag = alloc<IntVar>()
+        flag.value = 1
+        setsockopt(native, SOL_SOCKET, SO_REUSEADDR, flag.ptr, sizeOf<IntVar>().convert())
+    }
+}
+
+private fun applyReuse(native: Int) {
     memScoped {
         val flag = alloc<IntVar>()
         flag.value = 1
@@ -100,6 +111,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
             if (native < 0) {
                 throw RuntimeException("Tcp Socket Creation")
             }
+            applyReuse(native)
             bind(native, address, family = domain)
             if (address.type == NetworkAddress.Type.IPV6) {
                 allowIpv4(native)
@@ -148,6 +160,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
             return NSocket(native = native, family = AF_INET6)
         }
     }
+
     actual val raw: RawSocket
         get() = native.convert()
     private val closed = AtomicBoolean(false)
