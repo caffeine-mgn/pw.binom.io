@@ -48,7 +48,7 @@ kotlin {
         tasks.findByName(compileTaskName)?.dependsOn(sqliteStaticTask)
         binaries {
             compilations["main"].cinterops {
-                create("sqlite") {
+                val sqlite by creating {
                     defFile = project.file("src/nativeInterop/nativeSqlite3.def")
                     packageName = sqlitePackageName
                     includeDirs.headerFilterOnly(headersPath.absolutePath)
@@ -67,6 +67,11 @@ kotlin {
                 api(project(":db"))
                 api(project(":file"))
                 api(project(":concurrency"))
+            }
+        }
+
+        val commonNative by creating {
+            dependencies {
             }
         }
 

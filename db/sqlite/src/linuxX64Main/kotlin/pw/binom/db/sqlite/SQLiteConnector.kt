@@ -5,8 +5,9 @@ import cnames.structs.sqlite3_stmt
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
-import pw.binom.concurrency.*
-import pw.binom.db.*
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
+import pw.binom.db.SQLException
 import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement

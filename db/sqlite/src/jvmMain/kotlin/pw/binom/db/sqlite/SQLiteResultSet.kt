@@ -1,6 +1,6 @@
 package pw.binom.db.sqlite
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
+// import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.date.Date
 import pw.binom.db.sync.SyncResultSet
 import java.sql.ResultSet
@@ -60,13 +60,13 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
         return native.getFloat(column)
     }
 
-    override fun getBigDecimal(index: Int): BigDecimal? {
-        TODO("Not yet implemented")
-    }
-
-    override fun getBigDecimal(column: String): BigDecimal? {
-        TODO("Not yet implemented")
-    }
+//    override fun getBigDecimal(index: Int): BigDecimal? {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun getBigDecimal(column: String): BigDecimal? {
+//        TODO("Not yet implemented")
+//    }
 
     override fun getDouble(index: Int): Double? {
         native.getObject(index + 1) ?: return null

@@ -8,50 +8,25 @@ apply {
 
 kotlin {
     jvm()
-    linuxX64 {
-        binaries {
-            staticLib()
-        }
-    }
+    linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp {
-            binaries {
-                staticLib()
-            }
-        }
+        linuxArm32Hfp()
     }
-    mingwX64 {
-        binaries {
-            staticLib()
-        }
-    }
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 {
-            binaries {
-                staticLib()
-            }
-        }
+        mingwX86()
     }
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64 {
-            binaries {
-                staticLib {
-                }
-            }
-        }
+        linuxArm64()
     }
-    macosX64 {
-        binaries {
-            framework()
-        }
-    }
+    macosX64()
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
                 api(project(":core"))
                 api(project(":date"))
-                api("com.ionspin.kotlin:bignum:0.2.3")
+//                api("com.ionspin.kotlin:bignum:0.3.4")
             }
         }
 

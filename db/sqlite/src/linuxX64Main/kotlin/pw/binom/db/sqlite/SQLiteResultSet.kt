@@ -1,6 +1,6 @@
 package pw.binom.db.sqlite
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
+// import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import pw.binom.date.Date
@@ -107,7 +107,7 @@ class SQLiteResultSet(
         if (isNullColumn(index)) {
             return null
         }
-        sqlite3_column_type(stmt,index)
+        sqlite3_column_type(stmt, index)
         return sqlite3_column_int64(stmt, index)
     }
 
@@ -121,13 +121,13 @@ class SQLiteResultSet(
     override fun getFloat(column: String): Float? =
         getFloat(columnIndex(column))
 
-    override fun getBigDecimal(index: Int): BigDecimal? {
-        TODO("Not yet implemented")
-    }
-
-    override fun getBigDecimal(column: String): BigDecimal? {
-        TODO("Not yet implemented")
-    }
+//    override fun getBigDecimal(index: Int): BigDecimal? {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun getBigDecimal(column: String): BigDecimal? {
+//        TODO("Not yet implemented")
+//    }
 
     override fun getDouble(index: Int): Double? {
         checkRange(index)
@@ -177,5 +177,4 @@ class SQLiteResultSet(
         sqlite3_reset(stmt)
         closed = true
     }
-
 }

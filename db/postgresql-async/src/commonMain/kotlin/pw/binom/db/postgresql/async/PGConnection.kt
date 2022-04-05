@@ -331,7 +331,6 @@ class PGConnection private constructor(
     }
 
     override suspend fun asyncClose() {
-        println("Close postgres: ${RuntimeException().stackTraceToString()}")
         checkClosed()
         prepareStatements.toTypedArray().forEach {
             it.asyncClose()

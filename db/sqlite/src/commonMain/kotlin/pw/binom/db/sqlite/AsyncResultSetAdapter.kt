@@ -1,6 +1,5 @@
 package pw.binom.db.sqlite
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.withContext
 import pw.binom.concurrency.*
 import pw.binom.date.Date
@@ -56,15 +55,15 @@ class AsyncResultSetAdapter(val ref: SyncResultSet, val worker: Worker, override
             it.getLong(column)
         }.joinAndGetOrThrow()
 
-    override fun getBigDecimal(index: Int): BigDecimal? =
-        worker.execute(ref) {
-            it.getBigDecimal(index)
-        }.joinAndGetOrThrow()
-
-    override fun getBigDecimal(column: String): BigDecimal? =
-        worker.execute(ref) {
-            it.getBigDecimal(column)
-        }.joinAndGetOrThrow()
+//    override fun getBigDecimal(index: Int): BigDecimal? =
+//        worker.execute(ref) {
+//            it.getBigDecimal(index)
+//        }.joinAndGetOrThrow()
+//
+//    override fun getBigDecimal(column: String): BigDecimal? =
+//        worker.execute(ref) {
+//            it.getBigDecimal(column)
+//        }.joinAndGetOrThrow()
 
     override fun getDouble(index: Int): Double? =
         worker.execute(ref) {

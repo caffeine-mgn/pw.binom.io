@@ -1,7 +1,7 @@
 package pw.binom.db.postgresql.async.messages.frontend
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import com.ionspin.kotlin.bignum.integer.BigInteger
+//import com.ionspin.kotlin.bignum.decimal.BigDecimal
+//import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Calendar
 import pw.binom.date.Date
@@ -164,7 +164,7 @@ object TypeWriter {
                     }
                     sb.toString()
                 }
-                is BigInteger, is BigDecimal, is Float, is Double, is Long, is Int, is UUID -> value.toString()
+                /*is BigInteger, is BigDecimal, */is Float, is Double, is Long, is Int, is UUID -> value.toString()
                 is Boolean -> if (value) "t" else "f"
                 is UUID -> value.toString()
                 is Calendar->{

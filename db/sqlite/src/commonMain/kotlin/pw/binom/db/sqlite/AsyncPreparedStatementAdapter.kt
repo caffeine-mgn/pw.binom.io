@@ -1,7 +1,5 @@
 package pw.binom.db.sqlite
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.coroutines.withContext
 import pw.binom.UUID
 import pw.binom.concurrency.*
@@ -23,19 +21,19 @@ class AsyncPreparedStatementAdapter(
         neverFreeze()
     }
 
-    override suspend fun set(index: Int, value: BigInteger) {
-        val ref = ref
-        withContext(worker) {
-            ref.set(index, value)
-        }
-    }
-
-    override suspend fun set(index: Int, value: BigDecimal) {
-        val ref = ref
-        withContext(worker) {
-            ref.set(index, value)
-        }
-    }
+//    override suspend fun set(index: Int, value: BigInteger) {
+//        val ref = ref
+//        withContext(worker) {
+//            ref.set(index, value)
+//        }
+//    }
+//
+//    override suspend fun set(index: Int, value: BigDecimal) {
+//        val ref = ref
+//        withContext(worker) {
+//            ref.set(index, value)
+//        }
+//    }
 
     override suspend fun set(index: Int, value: Double) {
         val ref = ref

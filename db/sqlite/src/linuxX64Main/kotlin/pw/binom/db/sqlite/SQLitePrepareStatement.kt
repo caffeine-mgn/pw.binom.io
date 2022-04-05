@@ -1,13 +1,13 @@
 package pw.binom.db.sqlite
 
+// import com.ionspin.kotlin.bignum.decimal.BigDecimal
+// import com.ionspin.kotlin.bignum.integer.BigInteger
 import cnames.structs.sqlite3_stmt
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import pw.binom.date.Date
-import pw.binom.db.*
+import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.sync.SyncResultSet
 import pw.binom.io.ClosedException
@@ -37,17 +37,17 @@ class SQLitePrepareStatement(
             throw ArrayIndexOutOfBoundsException()
     }
 
-    override fun set(index: Int, value: BigInteger) {
-        checkClosed()
-        checkRange(index)
-        connection.checkSqlCode(sqlite3_bind_text(stmt, index + 1, value.toString(), -1, null))
-    }
-
-    override fun set(index: Int, value: BigDecimal) {
-        checkClosed()
-        checkRange(index)
-        connection.checkSqlCode(sqlite3_bind_text(stmt, index + 1, value.toString(), -1, null))
-    }
+//    override fun set(index: Int, value: BigInteger) {
+//        checkClosed()
+//        checkRange(index)
+//        connection.checkSqlCode(sqlite3_bind_text(stmt, index + 1, value.toString(), -1, null))
+//    }
+//
+//    override fun set(index: Int, value: BigDecimal) {
+//        checkClosed()
+//        checkRange(index)
+//        connection.checkSqlCode(sqlite3_bind_text(stmt, index + 1, value.toString(), -1, null))
+//    }
 
     override fun set(index: Int, value: Double) {
         checkClosed()

@@ -1,9 +1,8 @@
 package pw.binom.db
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
+// import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.date.Date
-import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
 interface ResultSet {
@@ -16,8 +15,8 @@ interface ResultSet {
     fun getFloat(index: Int): Float? =
         getDouble(index)?.toFloat()
 
-    fun getBigDecimal(index:Int):BigDecimal?
-    fun getBigDecimal(column:String):BigDecimal?
+//    fun getBigDecimal(index:Int):BigDecimal?
+//    fun getBigDecimal(column:String):BigDecimal?
 
     fun getDouble(index: Int): Double?
     fun getBlob(index: Int): ByteArray?
@@ -37,7 +36,7 @@ interface ResultSet {
     fun isNull(column: String): Boolean
     fun getUUID(column: String) = getBlob(column)?.let { UUID.create(it) }
     fun getDate(column: String): Date?
-    fun columnIndex(column:String):Int{
+    fun columnIndex(column: String): Int {
         val p = columns.indexOfFirst { it.lowercase() == column.lowercase() }
         if (p == -1) {
             throw IllegalStateException("Column \"$column\" not found")

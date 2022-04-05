@@ -1,7 +1,7 @@
 package pw.binom.db.sync
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import com.ionspin.kotlin.bignum.integer.BigInteger
+// import com.ionspin.kotlin.bignum.decimal.BigDecimal
+// import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Calendar
 import pw.binom.date.Date
@@ -10,8 +10,8 @@ import pw.binom.io.Closeable
 
 interface SyncPreparedStatement : Closeable {
     val connection: SyncConnection
-    fun set(index: Int, value: BigInteger)
-    fun set(index: Int, value: BigDecimal)
+//    fun set(index: Int, value: BigInteger)
+//    fun set(index: Int, value: BigDecimal)
     fun set(index: Int, value: Double)
     fun set(index: Int, value: Float)
     fun set(index: Int, value: Int)
@@ -31,8 +31,8 @@ interface SyncPreparedStatement : Closeable {
     fun setValue(index: Int, value: Any?) {
         when (value) {
             null -> setNull(index)
-            is BigInteger -> set(index, value)
-            is BigDecimal -> set(index, value)
+//            is BigInteger -> set(index, value)
+//            is BigDecimal -> set(index, value)
             is Double -> set(index, value)
             is Float -> set(index, value)
             is Int -> set(index, value)

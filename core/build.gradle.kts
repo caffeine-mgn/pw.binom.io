@@ -11,7 +11,6 @@ apply {
 
 kotlin {
     jvm()
-
     linuxX64 {
         binaries {
             compilations["main"].cinterops {
@@ -130,29 +129,29 @@ kotlin {
             dependsOn(nativeMain)
         }
         val linuxArm64Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(nativeMain)
         }
         val linuxArm32HfpMain by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(nativeMain)
         }
         val linuxMips32Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(nativeMain)
         }
 
         val linuxMipsel32Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(nativeMain)
         }
         val mingwX64Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(nativeMain)
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
-                dependsOn(linuxX64Main)
+                dependsOn(nativeMain)
             }
         }
 
         val macosX64Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(nativeMain)
         }
 
         val commonTest by getting {

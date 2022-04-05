@@ -1,7 +1,7 @@
 package pw.binom.db.postgresql.async
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import com.ionspin.kotlin.bignum.integer.BigInteger
+// import com.ionspin.kotlin.bignum.decimal.BigDecimal
+// import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Date
 import pw.binom.db.ResultSet
@@ -70,13 +70,13 @@ class PostgresPreparedStatement(
     }
 
     private val params = arrayOfNulls<Any>(paramCount)
-    override suspend fun set(index: Int, value: BigInteger) {
-        params[index] = value
-    }
-
-    override suspend fun set(index: Int, value: BigDecimal) {
-        params[index] = value
-    }
+//    override suspend fun set(index: Int, value: BigInteger) {
+//        params[index] = value
+//    }
+//
+//    override suspend fun set(index: Int, value: BigDecimal) {
+//        params[index] = value
+//    }
 
     override suspend fun set(index: Int, value: Double) {
         params[index] = value

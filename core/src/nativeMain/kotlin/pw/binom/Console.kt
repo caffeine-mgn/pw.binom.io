@@ -4,7 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.io.*
 
-//private val tmp1 = ByteBuffer.alloc(32)
+// private val tmp1 = ByteBuffer.alloc(32)
 
 actual object Console {
 
@@ -49,34 +49,28 @@ actual object Console {
         override fun close() {
         }
     }
-    actual val std: Appendable = AppendableUTF8(stdChannel)
-    actual val err: Appendable = object : Appendable {
+
+    private class StdOutput(val stream: CPointer<FILE>?) : Appendable {
         override fun append(value: Char): Appendable {
-            memScoped {
-                val v = value.toString().wcstr
-                fwprintf(stdout, v.ptr.reinterpret(), v.size)
-            }
+            fprintf(stream, value.toString())
             return this
         }
 
         override fun append(value: CharSequence?): Appendable {
             value ?: return this
-            memScoped {
-                val v = value.toString().wcstr
-                fwprintf(stdout, v.ptr.reinterpret(), v.size)
-            }
+            fprintf(stream, if (value is String) value else value.toString())
             return this
         }
 
         override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): Appendable {
             value ?: return this
-            memScoped {
-                val v = value.substring(startIndex, endIndex).wcstr
-                fwprintf(stdout, v.ptr.reinterpret(), v.size)
-            }
+            fprintf(stream, value.substring(startIndex, endIndex))
             return this
         }
     }
+
+    actual val std: Appendable = StdOutput(stdout)
+    actual val err: Appendable = StdOutput(stderr)
 
     //    actual val input: Reader = ReaderUTF82(inChannel)
     actual val input: Reader = object : Reader {
@@ -93,7 +87,7 @@ actual object Console {
             return char
         }
 
-        override fun readln(): String? = kotlin.io.readLine()
+        override fun readln(): String? = kotlin.io.readlnOrNull()
 
         override fun read(): Char? {
             val b1 = readCharCode()
@@ -101,7 +95,7 @@ actual object Console {
                 return null
             }
             return if (b1 and 0x80 != 0 && (b1 and 0x40).inv() != 0) {
-                val size = UTF8.utf8CharSize(b1.toByte())
+                val size = UTF8.getUtf8CharSize(b1.toByte()) - 1
                 when (size) {
                     1 -> return b1.toChar()
                     2 -> {
@@ -189,6 +183,5 @@ actual object Console {
         override fun close() {
             TODO("Not yet implemented")
         }
-
     }
 }

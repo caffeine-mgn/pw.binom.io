@@ -7,11 +7,10 @@ import platform.internal_sqlite.SQLITE_OK
 import platform.internal_sqlite.sqlite3_changes
 import platform.internal_sqlite.sqlite3_errmsg
 import platform.internal_sqlite.sqlite3_exec
-import pw.binom.db.*
+import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.sync.SyncResultSet
 import pw.binom.db.sync.SyncStatement
-import pw.binom.io.use
 
 private class AResultSet(val source: SyncResultSet, val statement: SyncPreparedStatement) : SyncResultSet by source {
     override fun close() {

@@ -22,7 +22,7 @@ class WebdavEntity(
 ) : FileSystem.Entity {
 
     override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
-        val allPathUrl = fileSystem.url.addPath(path)
+        val allPathUrl = fileSystem.url.appendPath(path)
         val r = fileSystem.client.connect(HTTPMethod.GET.code, allPathUrl)
         if (offset != 0uL) {
             if (length == null) {
@@ -50,10 +50,10 @@ class WebdavEntity(
     }
 
     override suspend fun copy(path: Path, overwrite: Boolean): FileSystem.Entity {
-        val destinationUrl = fileSystem.url.addPath(path)
+        val destinationUrl = fileSystem.url.appendPath(path)
         val r = fileSystem.client.connect(
             method = HTTPMethod.COPY.code,
-            uri = fileSystem.url.addPath(this.path),
+            uri = fileSystem.url.appendPath(this.path),
         )
         user?.apply(r)
         r.addHeader("Destination", destinationUrl.toString())
@@ -85,10 +85,10 @@ class WebdavEntity(
     }
 
     override suspend fun move(path: Path, overwrite: Boolean): FileSystem.Entity {
-        val destinationUrl = fileSystem.url.addPath(path)
+        val destinationUrl = fileSystem.url.appendPath(path)
         val r = fileSystem.client.connect(
             HTTPMethod.MOVE.code,
-            fileSystem.url.addPath(this.path),
+            fileSystem.url.appendPath(this.path),
         )
         user?.apply(r)
         r.addHeader("Destination", destinationUrl.toString())
@@ -127,7 +127,7 @@ class WebdavEntity(
     override suspend fun delete() {
         val r = fileSystem.client.connect(
             HTTPMethod.DELETE.code,
-            fileSystem.url.addPath(this.path),
+            fileSystem.url.appendPath(this.path),
         )
         user?.apply(r)
         val responseCode = r.getResponse().use {
@@ -149,7 +149,7 @@ class WebdavEntity(
     }
 
     override suspend fun rewrite(): AsyncOutput {
-        val allPathUrl = fileSystem.url.addPath(path)
+        val allPathUrl = fileSystem.url.appendPath(path)
         val r = fileSystem.client.connect(HTTPMethod.PUT.code, allPathUrl)
 //            r.addHeader("Overwrite", "T")
         user?.apply(r)

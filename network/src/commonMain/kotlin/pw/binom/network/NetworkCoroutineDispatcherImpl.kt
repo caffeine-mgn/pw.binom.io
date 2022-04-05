@@ -88,7 +88,6 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         readyForWriteListenerLock.synchronize {
             readyForWriteListener.add(block)
-            println("set internal udp to read-for-write")
             internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
         }
     }

@@ -80,12 +80,6 @@ kotlin {
         }
     }
 
-//    linuxArm64 {
-//        binaries {
-//            staticLib {
-//            }
-//        }
-//    }
     macosX64 {
         binaries {
             compilations["main"].cinterops {
@@ -114,17 +108,18 @@ kotlin {
                 api(project(":concurrency"))
             }
         }
-        val mingwX64Main by getting {
-            dependsOn(commonMain)
-        }
         val linuxX64Main by getting {
 //            dependsOn(mingwX64Main)
-            dependsOn(mingwX64Main)
+            dependsOn(commonMain)
         }
+        val mingwX64Main by getting {
+            dependsOn(linuxX64Main)
+        }
+
         if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
             val linuxArm32HfpMain by getting {
 //            dependsOn(linuxX64Main)
-                dependsOn(mingwX64Main)
+                dependsOn(linuxX64Main)
             }
         }
 
@@ -136,7 +131,7 @@ kotlin {
         }
         val macosX64Main by getting {
 //            dependsOn(mingwX64Main)
-            dependsOn(mingwX64Main)
+            dependsOn(linuxX64Main)
         }
 
         val commonTest by getting {

@@ -1,6 +1,6 @@
 package pw.binom.db.serialization
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
+// import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
@@ -14,7 +14,7 @@ import pw.binom.db.async.pool.SelectQueryWithMapper
 
 val SqlSerializersModule = SerializersModule {
     this.contextual(UUID::class, UUIDSerializer)
-    this.contextual(BigDecimal::class, BigDecimalSerializer)
+//    this.contextual(BigDecimal::class, BigDecimalSerializer)
     this.contextual(Date::class, DateSerializer)
     this.contextual(Calendar::class, CalendarSerializer)
 }
