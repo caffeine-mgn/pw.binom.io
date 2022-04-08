@@ -38,7 +38,6 @@ abstract class AbstractSelector : Selector {
             set(value) {
                 checkClosed()
                 if (_listensFlag == value) {
-                    println("Not need to change mode")
                     return
                 }
                 _listensFlag = value

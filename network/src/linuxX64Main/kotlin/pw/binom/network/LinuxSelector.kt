@@ -14,7 +14,6 @@ class LinuxSelector : AbstractSelector() {
         private var nativeSocket: RawSocket = 0
 
         override fun addSocket(raw: RawSocket) {
-            println("add $raw $attachment, old: $nativeSocket")
             if (nativeSocket != 0) {
                 throw IllegalStateException()
             }
@@ -23,13 +22,11 @@ class LinuxSelector : AbstractSelector() {
                 event.events = epollCommonToNative(listensFlag.convert()).convert()
                 event.data.ptr = ptr
                 val c = epoll_ctl(native, EPOLL_CTL_ADD, raw.convert(), event.ptr)
-                println("epoll_ctl=$c raw=$raw $errno attachment=$attachment this=${hashCode()}")
             }
             nativeSocket = raw
         }
 
         override fun removeSocket(raw: RawSocket) {
-            println("remove $raw $attachment")
             if (nativeSocket == raw) {
                 epoll_ctl(list, EPOLL_CTL_DEL, raw.convert(), null)
                 nativeSocket = 0
@@ -43,7 +40,6 @@ class LinuxSelector : AbstractSelector() {
 
         override fun resetMode(mode: Int) {
             if (nativeSocket == 0) {
-                println("No active sockets")
                 return
             }
             memScoped {
@@ -51,7 +47,6 @@ class LinuxSelector : AbstractSelector() {
                 event.events = epollCommonToNative(mode.convert()).convert()
                 event.data.ptr = ptr
                 if (nativeSocket != 0) {
-                    println("set mode s1 $attachment ${mode.toString(2)} ${event.events} $connected")
                     epoll_ctl(list, EPOLL_CTL_MOD, nativeSocket.convert(), event.ptr)
                 }
             }
