@@ -11,7 +11,6 @@ actual class UdpSocketChannel : Closeable {
                 field!!.removeSocket(native.raw)
             }
             field = value
-            println("udp: add socket to key")
             value?.addSocket(native.raw)
         }
 
@@ -34,9 +33,7 @@ actual class UdpSocketChannel : Closeable {
 
     actual fun bind(address: NetworkAddress) {
 //        check(native.port == null) { "Already bindded. port: $port" }
-        println("Bind native to $address")
         native.bind(address)
-        println("port after bind: ${native.port}")
     }
 
     actual val port: Int?

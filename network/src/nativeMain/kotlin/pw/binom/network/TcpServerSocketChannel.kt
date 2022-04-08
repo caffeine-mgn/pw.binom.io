@@ -10,7 +10,6 @@ actual class TcpServerSocketChannel : Closeable {
             }
             field = value
             if (native != null) {
-                println("tcp-server: add socket to key")
                 value?.addSocket(native!!.raw)
             }
         }
@@ -29,7 +28,6 @@ actual class TcpServerSocketChannel : Closeable {
         native = NSocket.serverTcp(address)
         native!!.setBlocking(false)
         key?.addSocket(native!!.raw)
-        println("tcp Bind. key=$key")
     }
 
     override fun close() {

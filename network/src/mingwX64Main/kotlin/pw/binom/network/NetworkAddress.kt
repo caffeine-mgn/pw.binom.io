@@ -28,20 +28,6 @@ actual sealed class NetworkAddress {
             out.sin6_family = AF_INET6.convert()
             out.sin6_port = addrPtr.reinterpret<sockaddr_in>().pointed.sin_port
             internal_ipv4_to_ipv6(vvv.ptr, out.sin6_addr.ptr, 0)
-
-            val oldV = vvv.ptr.reinterpret<ByteVar>()
-            println("Before Mapping")
-            repeat(sizeOf<in_addr>().convert()) { index ->
-                print(" 0x")
-                print(oldV[index].toString(16))
-            }
-            println()
-            println("After Mapping")
-            repeat(sizeOf<in6_addr>().convert()) { index ->
-                print(" 0x")
-                print(out.sin6_addr.u.Byte[index].toString(16))
-            }
-            println()
             return func(out.ptr)
         }
     }

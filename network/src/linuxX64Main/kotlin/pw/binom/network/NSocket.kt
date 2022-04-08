@@ -46,7 +46,6 @@ private fun bind(native: RawSocket, address: NetworkAddress, family: Int) {
         }
 
         if (bindResult < 0) {
-            println("bind on $address. errno: $errno  ${posix_errno()}")
             if (errno == EADDRINUSE || errno == 0) {
                 throw BindException("Address already in use: ${address.host}:${address.port}")
             }
@@ -96,7 +95,6 @@ private fun allowIpv4(native: RawSocket) {
             close(native)
             throw IOException("Can't allow ipv6 connection for UDP socket. Error: $errno")
         }
-        println("set ipv6 only result: $iResult for $native")
     }
 }
 
@@ -175,7 +173,6 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
                 if (r == 0) {
                     ntohs(sin.sin_port).toInt()
                 } else {
-                    println("getsockname=$r, errno=$errno")
                     null
                 }
             }

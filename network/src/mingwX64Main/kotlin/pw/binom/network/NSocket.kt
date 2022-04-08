@@ -52,7 +52,6 @@ private fun bind(native: SOCKET, address: NetworkAddress, family: Int) {
             }
         }
 
-        println("$address bindResult: $bindResult")
         if (bindResult < 0) {
             if (GetLastError().toInt() == platform.windows.WSAEADDRINUSE) { // 10048
                 throw BindException("Address already in use: $address")
@@ -93,12 +92,10 @@ private fun allowIpv4(native: SOCKET) {
         flag[0] = 3
         flag2[0] = sizeOf<IntVar>().convert()
         val vv = platform.windows.getsockopt(native, IPPROTO_IPV6, IPV6_V6ONLY, flag.reinterpret(), flag2)
-        println("--------->$vv ${flag[0]} ${flag2[0]}")
         if (iResult == SOCKET_ERROR) {
             closesocket(native)
             throw IOException("Can't allow ipv6 connection for UDP socket. Error: ${GetLastError()}")
         }
-        println("set ipv6 only result: $iResult")
     }
 }
 
@@ -177,11 +174,9 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                 val addrlen = alloc<socklen_tVar>()
                 addrlen.value = sizeOf<sockaddr_in6>().convert()
                 val r = platform.windows.getsockname(native, sin.ptr.reinterpret(), addrlen.ptr)
-                println("getsockname=$r $errno")
                 if (r == 0) {
                     ntohs(sin.sin6_port).toInt()
                 } else {
-                    // println("getsockname=$c, errno=${errno},GetLastError()=${GetLastError()}")
                     null
                 }
             }
@@ -291,11 +286,9 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         memScoped {
             val rr = data.ref { dataPtr, remaining ->
                 address.data.usePinned { addressPtr ->
-                    println("current ipv6 = ${family == AF_INET6}, dest=${address.type}")
                     if (family == AF_INET6) {
 
                         address.isAddrV6 { addr ->
-                            println("send to port ${ntohs(addr.pointed.sin6_port)}")
                             sendto(
                                 native, dataPtr.getPointer(this), remaining.convert(),
                                 0,
