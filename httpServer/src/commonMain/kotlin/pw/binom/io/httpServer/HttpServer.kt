@@ -8,6 +8,7 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.date.Date
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ClosedException
+import pw.binom.io.http.ReusableAsyncChunkedOutput
 import pw.binom.io.http.websocket.MessagePool
 import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.network.*
@@ -41,11 +42,13 @@ class HttpServer(
             e
         ).printStackTrace()
     },
-    websocketMessagePoolSize: Int = 16
+    websocketMessagePoolSize: Int = 16,
+    outputBufferPoolSize: Int = 16,
 ) : AsyncCloseable {
     internal val messagePool by lazy { MessagePool(websocketMessagePoolSize) }
     internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     internal val textBufferPool = ByteBufferPool(capacity = 16)
+    internal val reusableAsyncChunkedOutputPool by lazy { ReusableAsyncChunkedOutput.Pool(outputBufferPoolSize) }
     private var closed = false
     private fun checkClosed() {
         if (closed) {
@@ -189,6 +192,7 @@ class HttpServer(
             runCatching { it.asyncClose() }
         }
         idleConnections.clear()
+        reusableAsyncChunkedOutputPool.close()
     }
 }
 

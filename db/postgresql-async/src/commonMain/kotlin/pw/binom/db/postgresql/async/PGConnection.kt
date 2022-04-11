@@ -5,7 +5,6 @@ import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
-import pw.binom.concurrency.AsyncReentrantLock
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.TransactionMode
@@ -83,7 +82,6 @@ class PGConnection private constructor(
     }
 
     private val packageWriter = PackageWriter(this)
-    private val packageWriterLock = AsyncReentrantLock()
     internal val charsetUtils = CharsetCoder(charset)
     private var connected = true
     override val isConnected
@@ -98,10 +96,12 @@ class PGConnection private constructor(
     }
 
     override suspend fun setTransactionMode(mode: TransactionMode) {
-        if (transactionStarted) {
-            query("SET TRANSACTION ${mode.pg}")
+        busy {
+            if (transactionStarted) {
+                query("SET TRANSACTION ${mode.pg}")
+            }
+            _transactionMode = mode
         }
-        _transactionMode = mode
     }
 
     private var transactionStarted = false
@@ -122,6 +122,18 @@ class PGConnection private constructor(
         val msg = this.reader.queryMessage
         msg.query = query
         return sendRecive(msg)
+    }
+
+    private inline fun <T> busy(f: () -> T): T {
+        if (busy) {
+            throw IllegalStateException("Connection are busy")
+        }
+        busy = true
+        try {
+            return f()
+        } finally {
+            busy = false
+        }
     }
 
     internal suspend fun query(query: String): QueryResponse {
@@ -168,10 +180,8 @@ class PGConnection private constructor(
     }
 
     internal suspend fun sendOnly(msg: KindedMessage) {
-        packageWriterLock.synchronize {
-            msg.write(packageWriter)
-            packageWriter.finishAsync(connection)
-        }
+        msg.write(packageWriter)
+        packageWriter.finishAsync(connection)
         connection.flush()
     }
 
@@ -189,10 +199,8 @@ class PGConnection private constructor(
         KindedMessage.read(reader)
 
     private suspend fun request(msg: KindedMessage): KindedMessage {
-        packageWriterLock.synchronize {
-            msg.write(packageWriter)
-            packageWriter.finishAsync(connection)
-        }
+        msg.write(packageWriter)
+        packageWriter.finishAsync(connection)
         return readDesponse()
     }
 

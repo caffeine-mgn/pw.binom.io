@@ -11,7 +11,6 @@ import pw.binom.io.*
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.http.websocket.WebSocketConnectionImpl
 import pw.binom.net.Path
 import pw.binom.net.Query
 import pw.binom.net.toPath
@@ -332,7 +331,7 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
 
         fun wrap(name: String, stream: AsyncOutput) = when (name) {
             Encoding.IDENTITY -> stream
-            Encoding.CHUNKED -> AsyncChunkedOutput(
+            Encoding.CHUNKED -> req.server.reusableAsyncChunkedOutputPool.new(
                 stream = stream,
                 closeStream = stream !== req.channel.writer,
             )

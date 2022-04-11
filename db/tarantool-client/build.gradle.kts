@@ -16,12 +16,12 @@ kotlin {
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
         linuxArm32Hfp()
     }
+    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+        linuxArm64()
+    }
     mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86()
-    }
-    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64()
     }
     macosX64()
     baseStaticLibConfig()

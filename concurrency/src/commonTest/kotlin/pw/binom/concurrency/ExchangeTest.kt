@@ -10,6 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -99,12 +100,12 @@ class ExchangeTest {
     fun getDelayTest2() {
         val e = BlockingExchange<Int>()
         val w = Worker()
-        w.execute(e) {e->
+        w.execute(e) { e ->
             sleep(500)
             e.put(100)
         }
         val now = TimeSource.Monotonic.markNow()
-        e.get(Duration.seconds(1))
+        e.get(1.seconds)
         val duration = now.elapsedNow().inWholeMilliseconds
         assertTrue(duration >= 500)
         assertTrue(duration < 1000)

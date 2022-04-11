@@ -1,17 +1,8 @@
 package pw.binom.db.async
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import com.ionspin.kotlin.bignum.integer.BigInteger
-import kotlinx.coroutines.delay
 import pw.binom.date.Date
 
 class StubAsyncPreparedStatement(override val connection: StubConnection, val sql: String) : AsyncPreparedStatement {
-    override suspend fun set(index: Int, value: BigInteger) {
-    }
-
-    override suspend fun set(index: Int, value: BigDecimal) {
-    }
-
     override suspend fun set(index: Int, value: Double) {
     }
 

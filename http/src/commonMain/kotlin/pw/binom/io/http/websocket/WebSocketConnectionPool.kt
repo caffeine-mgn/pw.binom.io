@@ -5,13 +5,9 @@ import pw.binom.AsyncOutput
 import pw.binom.pool.DefaultPool
 
 class WebSocketConnectionPool(capacity: Int) {
-    private fun onClose(msg: WebSocketConnectionImpl2) {
-        pool.recycle(msg)
-    }
-
-    private val pool = DefaultPool(
+    private val pool = DefaultPool<WebSocketConnectionImpl2>(
         capacity = capacity,
-        new = { WebSocketConnectionImpl2(onClose = this::onClose) }
+        new = { pool -> WebSocketConnectionImpl2 { self -> pool.recycle(self) } }
     )
 
     fun new(

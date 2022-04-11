@@ -2,8 +2,7 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.*
-import platform.posix.errno
-import platform.windows.GetLastError
+import platform.posix.AF_INET
 import platform.windows.HANDLE
 
 class MingwSelector : AbstractSelector() {
@@ -131,7 +130,7 @@ class MingwSelector : AbstractSelector() {
             val key = keyPtr.get()
             if (!key.connected) {
                 when {
-                    EPOLLERR in item.events || EPOLLRDHUP in item.events -> {
+                    EPOLLERR in item.events || EPOLLRDHUP in item.events/* || EPOLLHUP in item.events*/ -> {
                         key.resetMode(0)
                         event.key = key
                         event.mode = 0
@@ -144,9 +143,20 @@ class MingwSelector : AbstractSelector() {
                         key.connected = true
                         return event
                     }
-                    else -> throw IllegalStateException("Unknown selector key status")
+                    else -> throw IllegalStateException(
+                        "Unknown selector key status. epoll status: ${modeToString(item.events)}, ${
+                        item.events.toString(2)
+                        }"
+                    )
                 }
             } else {
+//                if (EPOLLHUP in item.events) {
+//                    NSocket(native = item.data.sock, family = AF_INET).close()
+//                    key.close()
+//                    event.key = key
+//                    event.mode = Selector.EVENT_ERROR
+//                    return event
+//                }
                 event.key = key
                 event.mode = epollNativeToCommon(item.events.convert())
                 return event
@@ -242,5 +252,5 @@ internal fun modeToString(mode: UInt): String {
     if (mode and EPOLLONESHOT != 0u)
         sb.append("EPOLLONESHOT ")
 
-    return sb.toString()
+    return sb.toString().trim()
 }

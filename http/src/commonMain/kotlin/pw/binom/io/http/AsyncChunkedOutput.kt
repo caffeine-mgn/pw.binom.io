@@ -14,13 +14,17 @@ import pw.binom.io.UTF8
  * @param closeStream flag for auto close [stream] when this stream will close
  */
 open class AsyncChunkedOutput(
-    val stream: AsyncOutput,
+    stream: AsyncOutput,
     private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
-    val closeStream: Boolean = false
+    closeStream: Boolean = false
 ) : AsyncOutput {
-    private var closed = false
-    private var finished = false
-    private val buffer = ByteBuffer.alloc(autoFlushBuffer)
+    var stream: AsyncOutput = stream
+        protected set
+    var closeStream: Boolean = closeStream
+        protected set
+    protected var closed = false
+    protected var finished = false
+    protected val buffer = ByteBuffer.alloc(autoFlushBuffer)
 
     private val tmp = ByteBuffer.alloc(50)
     override suspend fun write(data: ByteBuffer): Int {
@@ -81,6 +85,11 @@ open class AsyncChunkedOutput(
         finished = true
     }
 
+    protected open fun closeInternalBuffers() {
+        tmp.close()
+        buffer.close()
+    }
+
     override suspend fun asyncClose() {
         checkClosed()
         if (finished) {
@@ -93,13 +102,13 @@ open class AsyncChunkedOutput(
                 stream.asyncClose()
             }
         } finally {
-            tmp.close()
-            buffer.close()
+            closeInternalBuffers()
         }
     }
 
     protected fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw StreamClosedException()
+        }
     }
 }

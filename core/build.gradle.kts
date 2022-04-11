@@ -3,10 +3,15 @@ import java.util.*
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jmailen.kotlinter")
+    id("com.bnorm.template.kotlin-ir-plugin")
 }
 
 apply {
     plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+}
+template {
+    companionProcessing.set(false)
+    valueClassProcessing.set(false)
 }
 
 kotlin {
@@ -98,7 +103,6 @@ kotlin {
 
     macosX64 {
         binaries {
-            framework()
             compilations["main"].cinterops {
                 create("native") {
                     defFile = project.file("src/nativeMain/cinterop/core.def")
@@ -118,6 +122,7 @@ kotlin {
             dependencies {
                 api(kotlin("stdlib-common"))
                 api(project(":env"))
+                api("com.bnorm.template:tracker:0.1.0-SNAPSHOT")
             }
         }
 

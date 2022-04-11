@@ -28,4 +28,5 @@ dependencies {
     api("pw.binom:kn-clang:0.1.1")
     api("com.bmuschko:gradle-docker-plugin:7.3.0")
     api("org.jmailen.gradle:kotlinter-gradle:3.9.0")
+    api("com.bnorm.template:kotlin-ir-plugin-gradle:0.1.0-SNAPSHOT")
 }

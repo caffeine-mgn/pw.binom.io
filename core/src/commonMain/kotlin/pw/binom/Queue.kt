@@ -6,8 +6,9 @@ class PopResult<T> {
         get() = empty
     val value: T
         get() {
-            if (isEmpty)
+            if (isEmpty) {
                 throw IllegalStateException("PopResult is Empty")
+            }
             return _value as T
         }
 

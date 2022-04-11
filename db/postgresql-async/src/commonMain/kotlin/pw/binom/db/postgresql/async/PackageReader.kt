@@ -6,12 +6,8 @@ import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Closeable
-import pw.binom.io.use
 
 class PackageReader(val connection: PGConnection, val charset: Charset, val rawInput: AsyncInput) : Closeable {
-    val buf16 = ByteBuffer.alloc(16)
-    val buf64 = ByteBuffer.alloc(64)
-    val output = ByteArrayOutput()
     val authenticationChallengeMessage = AuthenticationMessage.AuthenticationChallengeMessage()
     val errorMessage = ErrorMessage()
     val noticeMessage = NoticeMessage()
@@ -29,6 +25,10 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
     val executeMessage = ExecuteMessage()
     val describeMessage = DescribeMessage()
     val closeMessage = CloseMessage()
+
+    val buf16 = ByteBuffer.alloc(16)
+    private val output = ByteArrayOutput()
+    private val stringBuffer = ByteArrayOutput()
     private val limitInput = AsyncInputLimit(rawInput)
     private val columns = ArrayList<ColumnMeta>()
     private var columnIndex = 0
@@ -68,27 +68,28 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
     }
 
     override fun close() {
+        stringBuffer.close()
         buf16.close()
-        buf64.close()
         output.close()
     }
 
-    suspend fun readCString(): String =
-        ByteArrayOutput().use { o ->
-            while (true) {
-                val byte = input.readByte(buf16)
-                if (byte == 0.toByte()) {
-                    break
-                }
-                o.writeByte(buf16, byte)
+    suspend fun readCString(): String {
+        while (true) {
+            val byte = input.readByte(buf16)
+            if (byte == 0.toByte()) {
+                break
             }
-            if (o.size <= 0) {
-                return ""
-            }
-            o.locked {
-                connection.charsetUtils.decode(it)
-            }
+            stringBuffer.writeByte(buf16, byte)
         }
+        if (stringBuffer.size <= 0) {
+            return ""
+        }
+        val data = stringBuffer.locked {
+            connection.charsetUtils.decode(it)
+        }
+        this.stringBuffer.clear()
+        return data
+    }
 
     suspend fun readByteArray(length: Int): ByteArray {
         val out = ByteArray(length) {
@@ -96,8 +97,6 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
         }
         return out
     }
-
-
 }
 
 private class AsyncInputLimit(val input: AsyncInput) : AsyncInput {

@@ -6,7 +6,7 @@ import pw.binom.concurrency.synchronize
 /**
  * Object pool. All methods are thread-save
  */
-open class DefaultPool<T : Any>(val capacity: Int, val new: () -> T) : ObjectPool<T> {
+open class DefaultPool<T : Any>(val capacity: Int, val new: (DefaultPool<T>) -> T) : ObjectPool<T> {
 
     protected val pool = arrayOfNulls<Any>(capacity)
     private val lock = SpinLock()
@@ -17,7 +17,7 @@ open class DefaultPool<T : Any>(val capacity: Int, val new: () -> T) : ObjectPoo
     override fun borrow(init: ((T) -> Unit)?): T {
         lock.synchronize {
             if (size == 0) {
-                return new().also { init?.invoke(it) }
+                return new(this).also { init?.invoke(it) }
             }
             val index = --size
             val result = pool[index]!!

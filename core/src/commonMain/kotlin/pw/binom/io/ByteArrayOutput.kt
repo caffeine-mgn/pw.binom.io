@@ -2,11 +2,10 @@ package pw.binom.io
 
 import pw.binom.ByteBuffer
 import pw.binom.Output
-import pw.binom.atomic.AtomicReference
 import kotlin.math.ceil
 
 open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
-    var data by AtomicReference(ByteBuffer.alloc(capacity))
+    var data = ByteBuffer.alloc(capacity)
         private set
     private var _wrote = 0
     private var closed = false
