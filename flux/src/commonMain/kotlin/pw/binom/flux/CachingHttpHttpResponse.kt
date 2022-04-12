@@ -9,41 +9,57 @@ import pw.binom.io.bufferedWriter
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.httpServer.HttpResponse
 
-class CachingHttpHttpResponse(val original: HttpResponse) : HttpResponse {
+class CachingHttpHttpResponse(val onClose: ((CachingHttpHttpResponse) -> Unit)?) : HttpResponse {
+    private var original: HttpResponse? = null
+    internal fun resetOriginal(original: HttpResponse?) {
+        this.original = original
+    }
+
     override val headers: MutableHeaders
-        get() = original.headers
+        get() = original!!.headers
 
     override var status: Int
-        get() = original.status
+        get() = original!!.status
         set(value) {
-            original.status = value
+            original!!.status = value
         }
 
     override suspend fun asyncClose() {
+        sendAndClose()
     }
 
     suspend fun sendAndClose() {
         try {
-            data.trimToSize()
-            data.data.clear()
-            original.sendBinary(data.data)
+            data.locked {
+                original!!.sendBinary(it)
+            }
         } finally {
-            data.close()
+            data.clear()
         }
+        onClose?.invoke(this)
     }
 
-    private val data = ByteArrayOutput()
+    internal fun free() {
+        data.forceClose()
+    }
+
+    private val data = NoCloseByteArrayOutput()
+    private val asyncData = data.asyncOutput()
 
     override suspend fun startWriteBinary(): AsyncOutput =
-        NoCloseAsyncOutput(data.asyncOutput())
+        asyncData
 
     override suspend fun startWriteText(): AsyncWriter {
         val charset = Charsets.get(headers.charset ?: "utf-8")
         return startWriteBinary().bufferedWriter(charset = charset)
     }
 
-    private class NoCloseAsyncOutput(val original: AsyncOutput) : AsyncOutput by original {
-        override suspend fun asyncClose() {
+    class NoCloseByteArrayOutput : ByteArrayOutput() {
+        fun forceClose() {
+            super.close()
+        }
+
+        override fun close() {
         }
     }
 }

@@ -152,6 +152,7 @@ class BufferedOutputAppendable private constructor(
         checkClosed()
         flush()
         try {
+            encoder.close()
             if (closeBuffer) {
                 buffer.close()
             } else {

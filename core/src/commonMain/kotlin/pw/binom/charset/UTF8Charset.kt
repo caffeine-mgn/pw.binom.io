@@ -5,8 +5,8 @@ object UTF8Charset : Charset {
         get() = "UTF-8"
 
     override fun newDecoder(): CharsetDecoder =
-            UTF8CharsetDecoder()
+        UTF8CharsetDecoder()
 
     override fun newEncoder(): CharsetEncoder =
-            UTF8CharsetEncoder()
+        UTF8CharsetEncoder()
 }

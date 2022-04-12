@@ -28,4 +28,8 @@ class UTF8CharsetDecoder : CharsetDecoder {
             }
         }
     }
+
+    override fun close() {
+        // Do nothing
+    }
 }

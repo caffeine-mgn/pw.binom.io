@@ -123,6 +123,7 @@ class BufferedInputReader(
                 input.close()
             }
         } finally {
+            decoder.close()
             output.close()
             if (closeBuffer) {
                 buffer.close()
@@ -131,7 +132,6 @@ class BufferedInputReader(
             }
         }
     }
-
 }
 
 private fun Input.readByte2(buffer: ByteBuffer): Byte? {

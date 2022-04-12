@@ -53,7 +53,6 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
         }
     }
 
-
     fun decode(bytes: ByteArray): String {
         checkClosed()
         if (byteBuffer.capacity < bytes.size) {
@@ -92,6 +91,8 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
 
     override fun close() {
         checkClosed()
+        encoder.close()
+        decoder.close()
         charBuffer.close()
         byteBuffer.close()
         closed = true

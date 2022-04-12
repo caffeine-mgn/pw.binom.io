@@ -219,10 +219,13 @@ internal class HttpRequest2Impl(
             throw IllegalStateException("Response already got")
         }
         if (readInput == null) {
-            ByteBuffer.alloc(DEFAULT_BUFFER_SIZE) { buf ->
+            val buf = server.textBufferPool.borrow()
+            try {
                 readBinary().use {
                     it.skipAll(buf)
                 }
+            } finally {
+                server.textBufferPool.recycle(buf)
             }
         }
         val r = HttpResponse2Impl(this)

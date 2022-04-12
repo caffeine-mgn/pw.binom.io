@@ -27,10 +27,16 @@ open class DefaultPool<T : Any>(val capacity: Int, val new: (DefaultPool<T>) -> 
         }
     }
 
+    protected open fun overflow(value: T) {
+        // Do nothing
+    }
+
     override fun recycle(value: T) {
         lock.synchronize {
             if (size < capacity) {
                 pool[size++] = value
+            } else {
+                overflow(value)
             }
         }
     }

@@ -2,8 +2,6 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.memcpy
-import pw.binom.atomic.AtomicBoolean
-import pw.binom.atomic.AtomicInt
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import kotlin.native.internal.createCleaner
@@ -19,11 +17,12 @@ actual class ByteBuffer(
 
     //    private val native = createNativeByteBuffer(capacity)!!
     private val native = nativeHeap.allocArray<ByteVar>(capacity)
-    private var closed by AtomicBoolean(false)
+    private var closed = false
 
     private inline fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw ClosedException()
+        }
     }
 
 //    val bytes = ByteArray(capacity)
@@ -56,8 +55,8 @@ actual class ByteBuffer(
         position = 0
     }
 
-    private val _position = AtomicInt(0)
-    private val _limit = AtomicInt(capacity)
+    private var _position = 0
+    private var _limit = capacity
 
     actual override val remaining: Int
         get() {
@@ -68,24 +67,24 @@ actual class ByteBuffer(
     actual override var position: Int
         get() {
             checkClosed()
-            return _position.value
+            return _position
         }
         set(value) {
             checkClosed()
             require(value >= 0) { "position should be more or equal 0" }
             require(value <= limit) { "position should be less or equal limit" }
-            _position.value = value
+            _position = value
         }
 
     actual override var limit: Int
         get() {
             checkClosed()
-            return _limit.value
+            return _limit
         }
         set(value) {
             checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
-            _limit.value = value
+            _limit = value
             if (position > value)
                 position = value
         }

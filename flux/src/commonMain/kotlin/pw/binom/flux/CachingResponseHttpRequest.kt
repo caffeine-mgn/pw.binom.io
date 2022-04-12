@@ -9,50 +9,59 @@ import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.net.Path
 import pw.binom.net.Query
+import pw.binom.pool.DefaultPool
 
-class CachingResponseHttpRequest(val original: HttpRequest) : HttpRequest {
+class CachingResponseHttpRequest(
+    val responsePool: DefaultPool<CachingHttpHttpResponse>
+) : HttpRequest {
+    internal var original: HttpRequest? = null
+        set(value) {
+            field = value
+            resp = null
+        }
     override val headers: Headers
-        get() = original.headers
+        get() = original!!.headers
     override val method: String
-        get() = original.method
+        get() = original!!.method
     override val path: Path
-        get() = original.path
+        get() = original!!.path
     override val query: Query?
-        get() = original.query
+        get() = original!!.query
     override val request: String
-        get() = original.request
+        get() = original!!.request
 
     private var resp: CachingHttpHttpResponse? = null
 
     override val response: CachingHttpHttpResponse?
         get() = resp
 
-    override suspend fun acceptTcp(): AsyncChannel = original.acceptTcp()
+    override suspend fun acceptTcp(): AsyncChannel = original!!.acceptTcp()
 
-    override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection = original.acceptWebsocket(masking)
+    override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection = original!!.acceptWebsocket(masking)
 
     override suspend fun asyncClose() {
-        original.asyncClose()
+        original!!.asyncClose()
     }
 
     override fun readBinary(): AsyncInput =
-        original.readBinary()
+        original!!.readBinary()
 
     override fun readText(): AsyncReader =
-        original.readText()
+        original!!.readText()
 
-    override suspend fun rejectTcp() = original.rejectTcp()
+    override suspend fun rejectTcp() = original!!.rejectTcp()
 
     override suspend fun rejectWebsocket() {
-        original.rejectWebsocket()
+        original!!.rejectWebsocket()
     }
 
     override suspend fun response(): HttpResponse {
         if (resp != null) {
             throw IllegalStateException("Response already started")
         }
-        val r = CachingHttpHttpResponse(original.response())
-        resp = r
-        return r
+        val response = responsePool.borrow()
+        response.resetOriginal(original!!.response())
+        resp = response
+        return response
     }
 }

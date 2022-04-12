@@ -167,6 +167,7 @@ class AsyncBufferedInputReader private constructor(
                 input.asyncClose()
             }
         } finally {
+            decoder.close()
             charBuffer.close()
             if (closeBuffer) {
                 buffer.close()

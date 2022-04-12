@@ -14,4 +14,8 @@ class JvmCharsetEncoder(val native: JCharsetEncoder) : CharsetEncoder {
             else -> TODO("Not yet implemented")
         }
     }
+
+    override fun close() {
+        // Do nothing
+    }
 }

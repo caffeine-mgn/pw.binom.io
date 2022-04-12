@@ -5,22 +5,93 @@ import platform.iconv.iconv_close
 import platform.iconv.iconv_open
 import platform.posix.*
 import pw.binom.Buffer
-import pw.binom.ByteBuffer
-import pw.binom.CharBuffer
-import pw.binom.atomic.AtomicBoolean
-import pw.binom.doFreeze
 import pw.binom.io.Closeable
-import kotlin.native.concurrent.AtomicInt
 import kotlin.native.concurrent.freeze
-import kotlin.native.internal.createCleaner
 
+/*
+@Suppress("VARIABLE_IN_SINGLETON_WITHOUT_THREAD_LOCAL")
+internal object IconvResourcePool {
+    private class Item(val res: AbstractIconv.Resource) {
+        val lastAccess = getTimeMillis()
+    }
+
+    private val data = HashMap<String, HashSet<Item>>()
+    private val dataLock = SpinLock()
+    private var count = 0
+    internal fun get(fromCharset: String, toCharset: String): AbstractIconv.Resource {
+        val key = "$fromCharset..$toCharset"
+        val out = dataLock.synchronize {
+            val exist = data[key]
+            if (exist != null) {
+                if (exist.isEmpty()) {
+                    data.remove(key)
+                    count--
+                    return@synchronize AbstractIconv.Resource(fromCharset = fromCharset, toCharset = toCharset)
+                }
+                if (exist.size == 1) {
+                    data.remove(key)
+                    count--
+                    return@synchronize exist.first().res
+                }
+                val i = exist.first()
+                exist.remove(i)
+                count--
+                return@synchronize i.res
+            }
+            return@synchronize AbstractIconv.Resource(fromCharset = fromCharset, toCharset = toCharset)
+        }
+        clean()
+        return out
+    }
+
+    internal fun reuse(res: AbstractIconv.Resource) {
+        val item = Item(res = res)
+        count++
+        dataLock.synchronize {
+            data.getOrPut(res.key) { HashSet() }.add(item)
+        }
+        clean()
+    }
+
+    private var lastClean = getTimeMillis()
+    private fun clean() {
+        if (count < 20) {
+            return
+        }
+        val now = getTimeMillis()
+        if (now - lastClean <= 60_000) {
+            return
+        }
+        dataLock.synchronize {
+            data.forEach {
+                val forRemove = it.value.filter { item -> now - item.lastAccess > 60_000 }
+                it.value.removeAll(forRemove)
+                if (forRemove.isNotEmpty()) {
+                    forRemove.forEach {
+                        it.res.dispose()
+                    }
+                    count -= forRemove.size
+                }
+            }
+        }
+        lastClean = now
+    }
+}
+*/
 /**
  * Abstract Charset convertor. Uses Iconv native library
  */
+@Suppress("OPT_IN_IS_NOT_ENABLED")
 @OptIn(ExperimentalStdlibApi::class)
-abstract class AbstractIconv(val fromCharset: String, val toCharset: String) {
+abstract class AbstractIconv(
+    fromCharset: String,
+    toCharset: String,
+    val onClose: ((AbstractIconv) -> Unit)?
+) : Closeable {
 
-    private class Resource(fromCharset: String,toCharset: String){
+    @OptIn(UnsafeNumber::class)
+    internal class Resource(fromCharset: String, toCharset: String) {
+        //        val key = "$fromCharset..$toCharset"
         val iconvHandle = iconv_open(toCharset, fromCharset)
         val inputAvail = nativeHeap.alloc<size_tVar>()
         val outputAvail = nativeHeap.alloc<size_tVar>()
@@ -49,19 +120,20 @@ abstract class AbstractIconv(val fromCharset: String, val toCharset: String) {
             nativeHeap.free(inputPointer)
         }
     }
-    private val resource = Resource(fromCharset,toCharset).freeze()
 
-    private val cleaner = createCleaner(resource) { self ->
-        self.dispose()
+    private val resource = Resource(fromCharset, toCharset).freeze()
+
+    internal fun free() {
+        resource.dispose()
     }
 
-    init {
-        freeze()
+    override fun close() {
+        onClose?.invoke(this)
     }
 
     protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
-        return output.refTo(output.position){outputPtr->
-            input.refTo(input.position){inputPtr->
+        return output.refTo(output.position) { outputPtr ->
+            input.refTo(input.position) { inputPtr ->
                 memScoped {
                     resource.outputAvail.value = (output.remaining * output.elementSizeInBytes).convert()
                     resource.outputPointer.value = outputPtr.getPointer(this).reinterpret()

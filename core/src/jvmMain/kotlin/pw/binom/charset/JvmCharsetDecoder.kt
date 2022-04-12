@@ -11,8 +11,12 @@ class JvmCharsetDecoder(val native: JCharsetDecoder) : CharsetDecoder {
         return when {
             r.isUnderflow -> CharsetTransformResult.SUCCESS
             r.isOverflow -> CharsetTransformResult.OUTPUT_OVER
-            r.isMalformed->CharsetTransformResult.MALFORMED
-            else->TODO("Invalid state of decoder")
+            r.isMalformed -> CharsetTransformResult.MALFORMED
+            else -> TODO("Invalid state of decoder")
         }
+    }
+
+    override fun close() {
+        // Do nothing
     }
 }
