@@ -27,9 +27,10 @@ open class ReusableAsyncChunkedOutput(
         ),
         Closeable {
         fun new(stream: AsyncOutput, closeStream: Boolean) =
-            borrow {
-                it.reset(stream = stream, closeStream = closeStream)
-            }
+            borrow()
+                .also {
+                    it.reset(stream = stream, closeStream = closeStream)
+                }
 
         override fun close() {
             pool.forEach {
@@ -38,7 +39,7 @@ open class ReusableAsyncChunkedOutput(
         }
     }
 
-    internal fun forceCloseBuffer(){
+    internal fun forceCloseBuffer() {
         super.closeInternalBuffers()
     }
 

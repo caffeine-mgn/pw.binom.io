@@ -17,7 +17,7 @@ class IconvCharset(override val name: String) : Charset {
 
 private class CoderDefaultPool<T : AbstractIconv>(capacity: Int, new: (DefaultPool<T>) -> T) :
     DefaultPool<T>(capacity = capacity, new = new) {
-    override fun overflow(value: T) {
+    override fun free(value: T) {
         value.free()
     }
 }

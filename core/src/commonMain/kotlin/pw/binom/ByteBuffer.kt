@@ -4,7 +4,7 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.io.UTF8
-import pw.binom.pool.DefaultPool
+import pw.binom.pool.AbstractFixedSizePool
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
@@ -152,14 +152,9 @@ fun ByteBuffer.empty(): ByteBuffer {
     return this
 }
 
-class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
-    DefaultPool<ByteBuffer>(capacity, { ByteBuffer.alloc(size.toInt()) }), ByteBufferAllocator, Closeable {
-    override fun borrow(init: ((ByteBuffer) -> Unit)?): ByteBuffer {
-        val buf = super.borrow(init)
-        buf.clear()
-        init?.invoke(buf)
-        return buf
-    }
+class ByteBufferPool(capacity: Int, val bufferSize: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
+    AbstractFixedSizePool<ByteBuffer>(capacity), ByteBufferAllocator, Closeable {
+    override fun new(): ByteBuffer = ByteBuffer.alloc(bufferSize.toInt())
 
     override fun close() {
         pool.indices.forEach {
@@ -170,6 +165,10 @@ class ByteBufferPool(capacity: Int, size: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
             }
         }
         this.size = 0
+    }
+
+    override fun free(value: ByteBuffer) {
+        value.close()
     }
 }
 

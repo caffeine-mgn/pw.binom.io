@@ -6,7 +6,7 @@ import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
 import pw.binom.pool.ObjectPool
 
-class AsyncBufferedInputReader private constructor(
+open class AsyncBufferedInputReader protected constructor(
     charset: Charset,
     val input: AsyncInput,
     private val pool: ObjectPool<ByteBuffer>?,

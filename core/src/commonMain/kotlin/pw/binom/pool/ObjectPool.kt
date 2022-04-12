@@ -7,7 +7,8 @@ interface ObjectPool<T : Any> {
     /**
      * Return object from pool
      */
-    fun borrow(init: ((T) -> Unit)? = null): T
+    fun borrow(init: ((T) -> Unit)?): T
+    fun borrow(): T = borrow(null)
 
     /**
      * Return object to pool

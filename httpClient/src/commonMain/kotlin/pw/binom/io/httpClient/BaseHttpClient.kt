@@ -25,7 +25,7 @@ class BaseHttpClient(
     internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     private val sslContext: SSLContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     private val connections = HashMap<String, ArrayList<AsyncAsciiChannel>>()
-    internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, size = bufferSize.toUInt())
+    internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, bufferSize = bufferSize.toUInt())
 
     internal fun recycleConnection(URI: URL, channel: AsyncAsciiChannel) {
         connections.getOrPut(URI.asKey) { ArrayList() }.add(channel)

@@ -17,14 +17,15 @@ class MessagePool(capacity: Int) {
         maskFlag: Boolean,
         mask: Int,
         input: AsyncInput
-    ): Message = pool.borrow {
-        it.reset(
-            initLength = initLength,
-            type = type,
-            lastFrame = lastFrame,
-            maskFlag = maskFlag,
-            mask = mask,
-            input = input,
-        )
-    }
+    ): Message = pool.borrow()
+        .also {
+            it.reset(
+                initLength = initLength,
+                type = type,
+                lastFrame = lastFrame,
+                maskFlag = maskFlag,
+                mask = mask,
+                input = input,
+            )
+        }
 }

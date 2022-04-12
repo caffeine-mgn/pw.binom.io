@@ -1,43 +1,11 @@
 package pw.binom.pool
 
-import pw.binom.concurrency.SpinLock
-import pw.binom.concurrency.synchronize
-
 /**
  * Object pool. All methods are thread-save
  */
-open class DefaultPool<T : Any>(val capacity: Int, val new: (DefaultPool<T>) -> T) : ObjectPool<T> {
+open class DefaultPool<T : Any>(capacity: Int, new: (DefaultPool<T>) -> T) : AbstractFixedSizePool<T>(capacity) {
 
-    protected val pool = arrayOfNulls<Any>(capacity)
-    private val lock = SpinLock()
-    var size = 0
-        protected set
+    private val newFunc: (DefaultPool<T>) -> T = new
 
-    @Suppress("UNCHECKED_CAST")
-    override fun borrow(init: ((T) -> Unit)?): T {
-        lock.synchronize {
-            if (size == 0) {
-                return new(this).also { init?.invoke(it) }
-            }
-            val index = --size
-            val result = pool[index]!!
-            pool[index] = null
-            init?.invoke(result as T)
-            return result as T
-        }
-    }
-
-    protected open fun overflow(value: T) {
-        // Do nothing
-    }
-
-    override fun recycle(value: T) {
-        lock.synchronize {
-            if (size < capacity) {
-                pool[size++] = value
-            } else {
-                overflow(value)
-            }
-        }
-    }
+    override fun new(): T = newFunc(this)
 }

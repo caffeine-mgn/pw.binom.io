@@ -19,9 +19,10 @@ class CachingHandler(val forward: Handler, objectPoolSize: Int = 16) : Handler, 
         DefaultPool<T>(capacity = capacity, new = new)
 
     override suspend fun request(req: HttpRequest) {
-        val cachingRequest = cachingResponseHttpRequestPool.borrow {
-            it.original = req
-        }
+        val cachingRequest = cachingResponseHttpRequestPool.borrow()
+            .also {
+                it.original = req
+            }
         try {
             forward.request(cachingRequest)
         } finally {

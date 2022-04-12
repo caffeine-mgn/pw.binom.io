@@ -14,11 +14,12 @@ class WebSocketConnectionPool(capacity: Int) {
         input: AsyncInput,
         output: AsyncOutput,
         masking: Boolean,
-    ) = pool.borrow {
-        it.reset(
-            input = input,
-            output = output,
-            masking = masking,
-        )
-    }
+    ) = pool.borrow()
+        .also {
+            it.reset(
+                input = input,
+                output = output,
+                masking = masking,
+            )
+        }
 }
