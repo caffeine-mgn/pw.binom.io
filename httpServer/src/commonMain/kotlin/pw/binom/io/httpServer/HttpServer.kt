@@ -1,17 +1,17 @@
 package pw.binom.io.httpServer
 
 import kotlinx.coroutines.*
-import pw.binom.ByteBufferPool
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.System
+import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.date.Date
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ClosedException
+import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
 import pw.binom.io.http.ReusableAsyncChunkedOutput
 import pw.binom.io.http.websocket.MessagePool
 import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.network.*
+import pw.binom.pool.FixedSizePool
 
 interface Handler {
     suspend fun request(req: HttpRequest)
@@ -37,10 +37,7 @@ class HttpServer(
     val idleCheckInterval: Long = 30_000,
     internal val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE,
     val errorHandler: (Throwable) -> Unit = { e ->
-        RuntimeException(
-            "Exception during http processing",
-            e
-        ).printStackTrace()
+        e.printStackTrace()
     },
     websocketMessagePoolSize: Int = 16,
     outputBufferPoolSize: Int = 16,
@@ -49,6 +46,12 @@ class HttpServer(
     internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     internal val textBufferPool = ByteBufferPool(capacity = 16)
     internal val reusableAsyncChunkedOutputPool by lazy { ReusableAsyncChunkedOutput.Pool(outputBufferPoolSize) }
+    internal val bufferWriterPool by lazy {
+        FixedSizePool(
+            outputBufferPoolSize,
+            ReusableAsyncBufferedOutputAppendable.Manager()
+        )
+    }
     private var closed = false
     private fun checkClosed() {
         if (closed) {
@@ -111,6 +114,8 @@ class HttpServer(
                 handler.request(req)
                 idleCheck()
             } catch (e: SocketClosedException) {
+                runCatching { channel.asyncClose() }
+            } catch (e: CancellationException) {
                 runCatching { channel.asyncClose() }
             } catch (e: Throwable) {
                 runCatching { channel.asyncClose() }

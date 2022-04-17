@@ -11,12 +11,12 @@ abstract class AbstractSelector : Selector {
         var connected by AtomicBoolean(false)
 
         //        private val attachmentReference = attachment?.asReference()
-        override val attachment: Any? = attachment
+        override var attachment: Any? = attachment
         abstract fun addSocket(raw: RawSocket)
         abstract fun removeSocket(raw: RawSocket)
 
         //            get() = attachmentReference?.value
-        var ptr = StableRef.create(this).asCPointer()
+        val ptr = StableRef.create(this).asCPointer()
         private var _listensFlag by AtomicInt(0)
         private var _closed by AtomicBoolean(false)
 
@@ -49,7 +49,11 @@ abstract class AbstractSelector : Selector {
             checkClosed()
             _closed = true
 //            runCatching { attachmentReference?.close() }
-            runCatching { ptr.asStableRef<AbstractKey>().dispose() }
+            runCatching {
+//                attachment=null
+                ptr.asStableRef<AbstractKey>().dispose()
+                println("Closing Selector Key")
+            }
         }
     }
 

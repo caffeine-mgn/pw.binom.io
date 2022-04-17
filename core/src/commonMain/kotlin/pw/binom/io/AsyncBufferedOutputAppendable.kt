@@ -9,13 +9,13 @@ import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
 import pw.binom.pool.ObjectPool
 
-class AsyncBufferedOutputAppendable private constructor(
+open class AsyncBufferedOutputAppendable protected constructor(
     charset: Charset,
-    val output: AsyncOutput,
+    output: AsyncOutput,
     private val pool: ObjectPool<ByteBuffer>?,
     charBufferSize: Int,
     val closeParent: Boolean,
-    private val buffer: ByteBuffer,
+    protected val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
 ) : AsyncWriter, AsyncFlushable, AsyncCloseable {
 
@@ -67,8 +67,10 @@ class AsyncBufferedOutputAppendable private constructor(
         closeBuffer = false,
     )
 
-    private val charBuffer = CharBuffer.alloc(charBufferSize)
-    private val encoder = charset.newEncoder()
+    var output: AsyncOutput = output
+        protected set
+    protected val charBuffer = CharBuffer.alloc(charBufferSize)
+    protected var encoder = charset.newEncoder()
     private var closed = false
     val isClosed
         get() = closed

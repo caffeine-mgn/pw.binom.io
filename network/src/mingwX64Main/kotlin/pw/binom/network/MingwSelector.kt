@@ -2,16 +2,21 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.*
-import platform.posix.AF_INET
 import platform.windows.HANDLE
+import kotlin.native.internal.createCleaner
 
 class MingwSelector : AbstractSelector() {
 
+    @OptIn(ExperimentalStdlibApi::class)
     inner class MingwKey(
         val list: HANDLE,
         attachment: Any?,
     ) : AbstractKey(attachment) {
         private var nativeSocket: RawSocket = 0
+        private val cleaner = createCleaner(Unit) {
+            println("MingwKey removed!")
+        }
+
         override fun addSocket(raw: RawSocket) {
             if (nativeSocket != 0) {
                 throw IllegalStateException()
@@ -143,8 +148,15 @@ class MingwSelector : AbstractSelector() {
                         key.connected = true
                         return event
                     }
+                    EPOLLIN in item.events -> {
+                        key.resetMode(0)
+                        event.key = key
+                        event.mode = Selector.EVENT_CONNECTED or Selector.INPUT_READY
+                        key.connected = true
+                        return event
+                    }
                     else -> throw IllegalStateException(
-                        "Unknown selector key status. epoll status: ${modeToString(item.events)}, ${
+                        "Connect error. Unknown selector key status. epoll status: ${modeToString(item.events)}, ${
                         item.events.toString(2)
                         }"
                     )
@@ -159,6 +171,9 @@ class MingwSelector : AbstractSelector() {
 //                }
                 event.key = key
                 event.mode = epollNativeToCommon(item.events.convert())
+                if (item.events.toInt() != 0 && event.mode == 0) {
+                    println("Can't convert ${modeToString(item.events)}")
+                }
                 return event
             }
         }
@@ -213,6 +228,9 @@ fun epollNativeToCommon(mode: Int): Int {
     }
     if (EPOLLOUT in mode) {
         events = events or Selector.OUTPUT_READY
+    }
+    if (EPOLLHUP in mode) {
+        events = events or Selector.EVENT_ERROR
     }
     return events
 }

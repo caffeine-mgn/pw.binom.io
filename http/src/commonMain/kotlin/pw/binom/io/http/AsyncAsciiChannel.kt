@@ -1,7 +1,6 @@
 package pw.binom.io.http
 
 import pw.binom.ByteBuffer
-import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.bufferedAsciiReader
@@ -17,6 +16,7 @@ open class AsyncAsciiChannel(
     override suspend fun asyncClose() {
         runCatching { reader.asyncClose() }
         runCatching { writer.asyncClose() }
+        println("Closing channel ${channel::class}")
         channel.asyncClose()
     }
 }

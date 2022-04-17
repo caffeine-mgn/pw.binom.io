@@ -87,6 +87,7 @@ class TcpConnection(val channel: TcpClientSocketChannel) : AbstractConnection(),
     private var error = false
     override fun error() {
         error = true
+        runCatching { this.channel.close() }
         if (connect != null) {
             val e = SocketConnectException()
             connect?.resumeWith(Result.failure(e))

@@ -11,14 +11,18 @@ import pw.binom.net.Path
 import pw.binom.net.Query
 import pw.binom.pool.DefaultPool
 
-class CachingResponseHttpRequest(
-    val responsePool: DefaultPool<CachingHttpHttpResponse>
+class CachingHttpRequest(
+    val responsePool: DefaultPool<CachingHttpResponse>,
+    val onClose: (CachingHttpRequest) -> Unit
 ) : HttpRequest {
-    internal var original: HttpRequest? = null
-        set(value) {
-            field = value
-            resp = null
-        }
+    var original: HttpRequest? = null
+        private set
+
+    suspend fun reset(original: HttpRequest) {
+        this.original = original
+        resp = null
+    }
+
     override val headers: Headers
         get() = original!!.headers
     override val method: String
@@ -30,9 +34,9 @@ class CachingResponseHttpRequest(
     override val request: String
         get() = original!!.request
 
-    private var resp: CachingHttpHttpResponse? = null
+    private var resp: CachingHttpResponse? = null
 
-    override val response: CachingHttpHttpResponse?
+    override val response: CachingHttpResponse?
         get() = resp
 
     override suspend fun acceptTcp(): AsyncChannel = original!!.acceptTcp()
@@ -40,7 +44,6 @@ class CachingResponseHttpRequest(
     override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection = original!!.acceptWebsocket(masking)
 
     override suspend fun asyncClose() {
-        original!!.asyncClose()
     }
 
     override fun readBinary(): AsyncInput =
@@ -60,8 +63,23 @@ class CachingResponseHttpRequest(
             throw IllegalStateException("Response already started")
         }
         val response = responsePool.borrow()
-        response.resetOriginal(original!!.response())
+        response.resetOriginal(original!!.response(), this)
         resp = response
         return response
+    }
+
+    internal suspend fun finish() {
+        try {
+            val resp = resp
+            if (resp == null) {
+                original?.asyncClose()
+            } else {
+                resp.finish()
+            }
+        } finally {
+            original = null
+            resp = null
+            onClose(this)
+        }
     }
 }

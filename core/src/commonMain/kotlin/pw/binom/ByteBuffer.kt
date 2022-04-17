@@ -43,7 +43,7 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
      */
     fun peek(): Byte
     fun reset(position: Int, length: Int): ByteBuffer
-    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int
+    fun write(data: ByteArray, offset: Int = 0, length: Int = minOf(data.size - offset, remaining)): Int
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
 

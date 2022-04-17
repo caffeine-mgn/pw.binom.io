@@ -9,12 +9,29 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val dt = DeadlineTimer.create()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CancellationTest {
+
+    @Test
+    fun cancelNetworkManager() = runTest {
+        withContext(Dispatchers.Network) {
+            val backgroundJob = CoroutineScope(Dispatchers.Network).launch {
+                try {
+                    delay(1.minutes)
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    throw e
+                }
+            }
+            backgroundJob.cancelAndJoin()
+        }
+    }
+
     @Test
     fun cancellationAccept() = runTest(dispatchTimeoutMs = 5_000) {
         withContext(Dispatchers.Default) {

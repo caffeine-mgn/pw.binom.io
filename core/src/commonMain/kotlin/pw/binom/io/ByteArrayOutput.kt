@@ -84,10 +84,10 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         return l
     }
 
-    fun write(data: ByteArray): Int {
+    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int {
         checkLocked()
         alloc(data.size)
-        val l = this.data.write(data)
+        val l = this.data.write(data, offset = offset, length = length)
         _wrote += l
         return l
     }

@@ -10,7 +10,7 @@ class DefaultPoolTest {
     @Test
     fun test() {
         var newInstanceCount = 0
-        val pool = DefaultPool(5) { newInstanceCount++;Item(0) }
+        val pool = DefaultPool<Item>(5) { newInstanceCount++; Item(0) }
 
         assertEquals(0, pool.size)
         assertEquals(0, newInstanceCount)

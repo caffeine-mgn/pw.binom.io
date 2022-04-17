@@ -3,8 +3,10 @@ package pw.binom.flux
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
+import pw.binom.pool.DefaultPool
+import pw.binom.pool.borrow
 
-abstract class AbstractRoute : Route, Handler {
+abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
     private val routers = HashMap<String, ArrayList<Route>>()
     private val methods = HashMap<String, HashMap<String, ArrayList<suspend (FluxHttpRequest) -> Unit>>>()
     private var forwardHandler: Handler? = null
@@ -54,6 +56,8 @@ abstract class AbstractRoute : Route, Handler {
         forwardHandler = handler
     }
 
+    private val requestWrapperPool = DefaultPool<FluxHttpRequestImpl>(wrapperPoolCapacity) { FluxHttpRequestImpl() }
+
     override suspend fun execute(action: HttpRequest) {
         val forward = forwardHandler
         if (forward != null) {
@@ -84,9 +88,21 @@ abstract class AbstractRoute : Route, Handler {
                 }
                 ?.forEach { route ->
                     route.value.forEach {
-                        it(FluxHttpRequestImpl(mask = route.key, serialization = serialization, request = action))
-                        if (action.response != null) {
-                            return
+                        val wrapper = requestWrapperPool.borrow {
+                            it.reset(
+                                mask = route.key,
+                                original = action,
+                                serialization = serialization,
+                            )
+                        }
+
+                        try {
+                            it(wrapper)
+                            if (action.response != null) {
+                                return
+                            }
+                        } finally {
+                            requestWrapperPool.recycle(wrapper)
                         }
                     }
                 }

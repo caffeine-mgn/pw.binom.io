@@ -1,11 +1,10 @@
 package pw.binom.network
 
 import kotlinx.coroutines.*
+import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.ThreadRef
 import pw.binom.concurrency.Worker
-import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resumeWithException
@@ -25,8 +24,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private var worker = Worker()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
-    private val readyForWriteListener = ArrayList<Runnable>()
-    private val readyForWriteListenerLock = SpinLock()
+    private val readyForWriteListener = BatchExchange<Runnable>()
     private val internalUdpContinuationConnection = attach(internalUdpChannel)
     private var networkThread = ThreadRef()
 
@@ -40,30 +38,26 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
                         val attachment = event.key.attachment
+                        attachment?:throw IllegalStateException("Attachment is null")
                         if (attachment === self.internalUdpContinuationConnection) {
                             executeOnNetwork = true
                         } else {
                             val connection = attachment as AbstractConnection
-                            if (event.mode and Selector.EVENT_CONNECTED != 0) {
-                                connection.connected()
-                            }
-                            if (event.mode and Selector.EVENT_ERROR != 0) {
-                                connection.error()
-                            }
-                            if (event.mode and Selector.OUTPUT_READY != 0) {
-                                connection.readyForWrite()
-                            }
-                            if (event.mode and Selector.INPUT_READY != 0) {
-                                connection.readyForRead()
+                            when {
+                                event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
+                                event.mode and Selector.EVENT_ERROR != 0 -> connection.error()
+                                event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite()
+                                event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead()
+                                else -> throw IllegalStateException("Unknown connection event")
                             }
                         }
                     }
                     if (executeOnNetwork) {
-                        self.readyForWriteListenerLock.synchronize {
-                            if (readyForWriteListener.isEmpty()) {
-                                self.internalUdpContinuationConnection.key.listensFlag = 0
-                            } else {
-                                readyForWriteListener.forEach {
+                        if (self.readyForWriteListener.isEmpty()) {
+                            self.internalUdpContinuationConnection.key.listensFlag = 0
+                        } else {
+                            self.readyForWriteListener.popAll {
+                                it.forEach {
                                     try {
                                         it.run()
                                     } catch (e: Throwable) {
@@ -71,7 +65,6 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                                         e.printStackTrace()
                                     }
                                 }
-                                readyForWriteListener.clear()
                             }
                         }
                     }
@@ -86,9 +79,11 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        readyForWriteListenerLock.synchronize {
-            readyForWriteListener.add(block)
+        readyForWriteListener.push(block)
+        try {
             internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
+        } catch (e: Throwable) {
+            throw IllegalStateException("Can't switch on internal udp interrupt", e)
         }
     }
 

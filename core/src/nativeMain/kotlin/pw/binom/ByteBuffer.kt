@@ -1,7 +1,7 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.posix.memcpy
+import platform.posix.*
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import kotlin.native.internal.createCleaner
@@ -16,7 +16,9 @@ actual class ByteBuffer(
     }
 
     //    private val native = createNativeByteBuffer(capacity)!!
-    private val native = nativeHeap.allocArray<ByteVar>(capacity)
+    private val native = platform.posix.malloc(capacity.convert())!!.reinterpret<ByteVar>()
+
+    //    val bb = nativeHeap.allocArray<ByteVar>(capacity)
     private var closed = false
 
     private inline fun checkClosed() {
@@ -124,7 +126,8 @@ actual class ByteBuffer(
     override fun close() {
         checkClosed()
         if (!autoClean) {
-            nativeHeap.free(native)
+            free(native)
+//            nativeHeap.free(native)
         }
         closed = true
     }
@@ -246,7 +249,8 @@ actual class ByteBuffer(
     }
 
     private val cleaner = if (autoClean) createCleaner(native) { self ->
-        nativeHeap.free(self)
+        free(self)
+//        nativeHeap.free(self)
     } else {
         null
     }

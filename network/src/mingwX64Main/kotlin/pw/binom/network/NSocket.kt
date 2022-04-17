@@ -234,7 +234,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
             val error = GetLastError()
             if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
                 return 0
-            throw IOException("Error on send data to network. send: [$r], error: [${GetLastError()}]")
+            throw IOException("Error on reading data from network. read: [$r], error: [${GetLastError()}, $errno]")
         }
         if (r > 0) {
             data.position += r

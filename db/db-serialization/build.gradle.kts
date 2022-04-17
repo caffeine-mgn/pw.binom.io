@@ -5,6 +5,12 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("kotlinx-serialization")
     id("com.bmuschko.docker-remote-api")
+    id("com.bnorm.template.kotlin-ir-plugin")
+}
+
+template {
+    companionProcessing.set(false)
+    valueClassProcessing.set(false)
 }
 
 apply {

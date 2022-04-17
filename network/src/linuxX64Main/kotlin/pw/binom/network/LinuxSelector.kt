@@ -147,6 +147,9 @@ class LinuxSelector : AbstractSelector() {
             }
             event.key = key
             event.mode = epollNativeToCommon(item.events.convert())
+            if (item.events.toInt() != 0 && event.mode == 0) {
+                println("Can't convert ${modeToString(item.events.convert())}")
+            }
             return event
         }
     }

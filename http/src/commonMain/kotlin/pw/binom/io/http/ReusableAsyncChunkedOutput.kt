@@ -27,6 +27,9 @@ open class ReusableAsyncChunkedOutput(
         ),
         Closeable {
         fun new(stream: AsyncOutput, closeStream: Boolean) =
+//            AsyncChunkedOutput(
+//                stream = stream, closeStream = closeStream
+//            )
             borrow()
                 .also {
                     it.reset(stream = stream, closeStream = closeStream)
@@ -56,9 +59,13 @@ open class ReusableAsyncChunkedOutput(
     }
 
     override suspend fun asyncClose() {
+        if (stream === NullAsyncOutput) {
+            throw IllegalStateException("Output stream not set")
+        }
         try {
             super.asyncClose()
         } finally {
+            stream = NullAsyncOutput
             onRevert?.invoke(this)
         }
     }

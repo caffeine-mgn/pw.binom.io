@@ -26,6 +26,7 @@ kotlin {
                 }
             }
         }
+        this.compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
     }
 
     linuxArm32Hfp {

@@ -16,6 +16,7 @@ import pw.binom.net.Query
 import pw.binom.net.toPath
 import pw.binom.net.toQuery
 import pw.binom.network.SocketClosedException
+import pw.binom.pool.borrow
 
 internal class HttpRequest2Impl(
     val channel: ServerAsyncAsciiChannel,
@@ -250,23 +251,6 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
     override val headers = HashHeaders()
 
     init {
-        /*
-        headers.contentEncoding = when {
-            req.server.zlibBufferSize > 0 && req.headers.acceptEncoding?.any {
-                it.equals(
-                    "gzip",
-                    ignoreCase = true
-                )
-            } == true -> "gzip"
-            req.server.zlibBufferSize > 0 && req.headers.acceptEncoding?.any {
-                it.equals(
-                    "deflate",
-                    ignoreCase = true
-                )
-            } == true -> "deflate"
-            else -> "identity"
-        }
-        */
         headers.keepAlive = req.server.maxIdleTime > 0 && req.headers.keepAlive
     }
 
@@ -379,7 +363,23 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
 
     override suspend fun startWriteText(): AsyncWriter {
         val charset = Charsets.get(headers.charset ?: "utf-8")
-        return startWriteBinary().bufferedWriter(charset = charset)
+        val output = startWriteBinary()
+        try {
+            return this.req.server.bufferWriterPool.borrow {
+                it.reset(
+                    output = output,
+                    charset = charset
+                )
+            }
+        } catch (e: Throwable) {
+            try {
+                output.asyncClose()
+            } catch (ex: Throwable) {
+                ex.addSuppressed(e)
+                throw ex
+            }
+            throw e
+        }
     }
 
     override suspend fun asyncClose() {
@@ -398,22 +398,6 @@ internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
         } else {
             runCatching { req.channel.asyncClose() }
         }
-    }
-}
-
-private fun <T : AsyncOutput> T.onClose(func: (T) -> Unit) = object : AsyncOutput by this {
-    override suspend fun asyncClose() {
-        func(this@onClose)
-        this@onClose.asyncClose()
-    }
-}
-
-private fun <T : AsyncOutput> T.onWrite(func: (T, ByteBuffer) -> Unit) = object : AsyncOutput by this {
-    override suspend fun write(data: ByteBuffer): Int {
-        data.holdState {
-            func(this@onWrite, data)
-        }
-        return this@onWrite.write(data)
     }
 }
 

@@ -286,6 +286,9 @@ private fun epollNativeToCommon(mode: Int): Int {
     if (EVFILT_WRITE in mode) {
         events = events or Selector.OUTPUT_READY
     }
+    if (EV_EOF in mode) {
+        events = events or Selector.EVENT_ERROR
+    }
     return events
 }
 

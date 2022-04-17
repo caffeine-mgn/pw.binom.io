@@ -12,6 +12,20 @@ class ByteBufferTest {
     }
 
     @Test
+    fun putToByteArray() {
+        val buf = ByteBuffer.alloc(5)
+        val array = ByteArray(50)
+        buf.write(array)
+    }
+
+    @Test
+    fun putToByteArrayBufferOverflow() {
+        val buf = ByteBuffer.alloc(5)
+        val array = ByteArray(50)
+        buf.write(array, length = 50)
+    }
+
+    @Test
     fun toByteArrayTest() {
         val b = ByteBuffer.alloc(5)
         repeat(b.capacity) {

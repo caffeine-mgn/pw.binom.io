@@ -9,19 +9,20 @@ abstract class AbstractFixedSizePool<T : Any>(capacity: Int) : ObjectPool<T>, Cl
     protected val lock = SpinLock()
     var size = 0
         protected set
+    val capacity
+        get() = pool.size
 
     protected abstract fun new(): T
 
     @Suppress("UNCHECKED_CAST")
-    override fun borrow(init: ((T) -> Unit)?): T {
+    override fun borrow(): T {
         lock.synchronize {
             if (size == 0) {
-                return new().also { init?.invoke(it) }
+                return new()
             }
             val index = --size
             val result = pool[index]!!
             pool[index] = null
-            init?.invoke(result as T)
             return result as T
         }
     }
@@ -53,3 +54,5 @@ abstract class AbstractFixedSizePool<T : Any>(capacity: Int) : ObjectPool<T>, Cl
         }
     }
 }
+
+

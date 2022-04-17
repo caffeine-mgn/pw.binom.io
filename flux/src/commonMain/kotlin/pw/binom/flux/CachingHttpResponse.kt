@@ -9,10 +9,13 @@ import pw.binom.io.bufferedWriter
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.httpServer.HttpResponse
 
-class CachingHttpHttpResponse(val onClose: ((CachingHttpHttpResponse) -> Unit)?) : HttpResponse {
-    private var original: HttpResponse? = null
-    internal fun resetOriginal(original: HttpResponse?) {
+class CachingHttpResponse(val onClose: ((CachingHttpResponse) -> Unit)?) : HttpResponse {
+    var original: HttpResponse? = null
+        private set
+    private var request: CachingHttpRequest? = null
+    internal fun resetOriginal(original: HttpResponse, request: CachingHttpRequest) {
         this.original = original
+        this.request = request
     }
 
     override val headers: MutableHeaders
@@ -25,41 +28,45 @@ class CachingHttpHttpResponse(val onClose: ((CachingHttpHttpResponse) -> Unit)?)
         }
 
     override suspend fun asyncClose() {
-        sendAndClose()
-    }
-
-    suspend fun sendAndClose() {
-        try {
-            data.locked {
-                original!!.sendBinary(it)
-            }
-        } finally {
-            data.clear()
-        }
-        onClose?.invoke(this)
-    }
-
-    internal fun free() {
-        data.forceClose()
     }
 
     private val data = NoCloseByteArrayOutput()
     private val asyncData = data.asyncOutput()
 
-    override suspend fun startWriteBinary(): AsyncOutput =
-        asyncData
+    override suspend fun startWriteBinary(): AsyncOutput {
+        if (original == null) {
+            throw IllegalStateException("Original HttpResponse not set")
+        }
+        return asyncData
+    }
 
     override suspend fun startWriteText(): AsyncWriter {
         val charset = Charsets.get(headers.charset ?: "utf-8")
         return startWriteBinary().bufferedWriter(charset = charset)
     }
 
-    class NoCloseByteArrayOutput : ByteArrayOutput() {
+    private class NoCloseByteArrayOutput : ByteArrayOutput() {
         fun forceClose() {
             super.close()
         }
 
         override fun close() {
         }
+    }
+
+    internal suspend fun finish() {
+        if (original == null) {
+            return
+        }
+        try {
+            data.locked {
+                original!!.sendBinary(it)
+            }
+            original!!.asyncClose()
+        } finally {
+            data.clear()
+        }
+        original = null
+        onClose?.invoke(this)
     }
 }

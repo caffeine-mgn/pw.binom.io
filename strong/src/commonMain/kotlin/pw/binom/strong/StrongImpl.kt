@@ -2,6 +2,9 @@ package pw.binom.strong
 
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
+import pw.binom.logger.Logger
+import pw.binom.logger.debug
+import pw.binom.logger.severe
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -9,7 +12,7 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KClass
 
 internal class StrongImpl : Strong {
-
+    private val logger = Logger.getLogger("Strong.Starter")
     internal var beans = HashMap<String, BeanEntity>()
     internal lateinit var destroyOrder: List<Strong.DestroyableBean>
 
@@ -52,14 +55,21 @@ internal class StrongImpl : Strong {
     }
 
     override suspend fun destroy() {
-        println("start destroy")
+        logger.debug("start destroy")
         check(!isDestroyed) { "Strong already isDestroyed" }
         check(!isDestroying) { "Strong already destroying" }
         isDestroying = true
         try {
             destroyOrder.forEach {
-                it.destroy(this)
+                try {
+                    logger.debug("Destroying $it")
+                    it.destroy(this)
+                    logger.debug("Destroyed $it success")
+                } catch (e: Throwable) {
+                    logger.severe("Fail to destroy $it bean", e)
+                }
             }
+            logger.severe("Calling destroy interrupters...")
             interruptingListenersLock.synchronize {
                 interruptingListeners.forEach {
                     it.resume(Unit)
@@ -71,6 +81,7 @@ internal class StrongImpl : Strong {
                     it.resumeWithException(e)
                 }
             }
+            logger.severe("Fail to destroy", e)
             throw e
         } finally {
             isDestroying = false

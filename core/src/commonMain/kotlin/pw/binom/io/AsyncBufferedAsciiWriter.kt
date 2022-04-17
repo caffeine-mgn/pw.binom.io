@@ -1,8 +1,6 @@
 package pw.binom.io
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
-import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.*
 import pw.binom.pool.ObjectPool
 
 abstract class AbstractAsyncBufferedAsciiWriter(
@@ -104,7 +102,7 @@ class AsyncBufferedAsciiWriter private constructor(
     constructor(output: AsyncOutput, pool: ObjectPool<ByteBuffer>, closeParent: Boolean = true) : this(
         output = output,
         pool = pool,
-        buffer = pool.borrow(),
+        buffer = pool.borrow().clean(),
         closeBuffer = false,
         closeParent = closeParent,
     )
@@ -112,7 +110,7 @@ class AsyncBufferedAsciiWriter private constructor(
     constructor(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) : this(
         output = output,
         pool = null,
-        buffer = ByteBuffer.alloc(bufferSize),
+        buffer = ByteBuffer.alloc(bufferSize).clean(),
         closeBuffer = true,
         closeParent = closeParent,
     )
@@ -131,7 +129,7 @@ class AsyncBufferedAsciiWriter private constructor(
     }
 }
 
-fun AsyncOutput.bufferedAsciiWriter(pool:ObjectPool<ByteBuffer>, closeParent: Boolean = true) =
+fun AsyncOutput.bufferedAsciiWriter(pool: ObjectPool<ByteBuffer>, closeParent: Boolean = true) =
     AsyncBufferedAsciiWriter(
         output = this,
         pool = pool,
