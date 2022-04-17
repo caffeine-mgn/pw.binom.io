@@ -1,10 +1,8 @@
 package pw.binom.io.httpServer
 
-import pw.binom.*
+import pw.binom.AsyncInput
 import pw.binom.charset.Charsets
-import pw.binom.compression.zlib.AsyncDeflaterOutput
 import pw.binom.compression.zlib.AsyncGZIPInput
-import pw.binom.compression.zlib.AsyncGZIPOutput
 import pw.binom.compression.zlib.AsyncInflateInput
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
@@ -16,15 +14,19 @@ import pw.binom.net.Query
 import pw.binom.net.toPath
 import pw.binom.net.toQuery
 import pw.binom.network.SocketClosedException
-import pw.binom.pool.borrow
+import pw.binom.pool.ObjectManger
+import pw.binom.pool.ObjectPool
+import pw.binom.skipAll
 
-internal class HttpRequest2Impl(
-    val channel: ServerAsyncAsciiChannel,
-    val server: HttpServer,
-    override val method: String,
-    override val headers: Headers,
-    override val request: String
-) : HttpRequest {
+internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpRequest {
+    object Manager : ObjectManger<HttpRequest2Impl> {
+        override fun new(pool: ObjectPool<HttpRequest2Impl>): HttpRequest2Impl =
+            HttpRequest2Impl { pool.recycle(it) }
+
+        override fun free(value: HttpRequest2Impl) {
+        }
+    }
+
     companion object {
         suspend fun read(
             channel: ServerAsyncAsciiChannel,
@@ -52,26 +54,32 @@ internal class HttpRequest2Impl(
                 val headerValue = s.substring(p + 2)
                 headers.add(headerKey, headerValue)
             }
-
-            return HttpRequest2Impl(
+            val p = server.httpRequest2Impl.borrow()
+            p.reset(
                 request = (items.getOrNull(1) ?: ""),
                 method = items[0],
                 channel = channel,
                 headers = headers,
                 server = server,
             )
+            return p
         }
     }
+
+    var channel: ServerAsyncAsciiChannel? = null
+    var server: HttpServer? = null
+
+    private var internalHeaders: Headers? = null
+    override var method: String = ""
+
+    override var request: String = ""
+        private set
 
     private val closed = false
-    private fun checkClosed() {
-        if (closed) {
-            throw ClosedException()
-        }
-    }
-
     private var readInput: AsyncInput? = null
 
+    override val headers: Headers
+        get() = internalHeaders!!
     override val path: Path
         get() {
             val p = request.indexOf('?')
@@ -91,6 +99,45 @@ internal class HttpRequest2Impl(
                 request.substring(p + 1).toQuery
             }
         }
+    private var startedResponse: HttpResponse2Impl? = null
+    override val response: HttpResponse?
+        get() = startedResponse
+
+    var isFree = true
+        private set
+
+    fun reset(
+        request: String,
+        method: String,
+        channel: ServerAsyncAsciiChannel,
+        headers: Headers,
+        server: HttpServer,
+    ) {
+        this.request = request
+        this.method = method
+        this.channel = channel
+        this.internalHeaders = headers
+        this.server = server
+        isFree = false
+    }
+
+    fun free() {
+        startedResponse = null
+        request = ""
+        method = ""
+        channel = null
+        internalHeaders = null
+        server = null
+        readInput = null
+        onClose(this)
+        isFree = true
+    }
+
+    private fun checkClosed() {
+        if (closed) {
+            throw ClosedException()
+        }
+    }
 
     override fun readBinary(): AsyncInput {
         checkClosed()
@@ -103,14 +150,13 @@ internal class HttpRequest2Impl(
         }
         val contentLength = headers.contentLength
         val transferEncoding = headers.getTransferEncodingList()
-        var stream: AsyncInput = channel.reader
+        var stream: AsyncInput = channel!!.reader
         if (contentLength != null) {
-            val input = AsyncContentLengthInput(
+            stream = AsyncContentLengthInput(
                 stream = stream,
                 contentLength = contentLength,
                 closeStream = false
             )
-            stream = input
         }
 
         fun wrap(name: String, stream: AsyncInput) = when (name) {
@@ -132,7 +178,7 @@ internal class HttpRequest2Impl(
         }
 
         for (i in transferEncoding.lastIndex downTo 0) {
-            stream = wrap(transferEncoding[i], stream)
+            stream = wrap(name = transferEncoding[i], stream = stream)
                 ?: throw IOException("Not supported encoding \"${transferEncoding[i]}\"")
         }
         readInput = stream
@@ -181,9 +227,9 @@ internal class HttpRequest2Impl(
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.headers[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
         resp.sendHeadersAndFree()
-        return server.webSocketConnectionPool.new(
-            input = channel.reader,
-            output = channel.writer,
+        return server!!.webSocketConnectionPool.new(
+            input = channel!!.reader,
+            output = channel!!.writer,
             masking = masking,
         )
     }
@@ -204,7 +250,7 @@ internal class HttpRequest2Impl(
         resp.headers[Headers.CONNECTION] = Headers.UPGRADE
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.sendHeadersAndFree()
-        return channel.channel
+        return channel!!.channel
     }
 
     override suspend fun rejectTcp() {
@@ -220,208 +266,30 @@ internal class HttpRequest2Impl(
             throw IllegalStateException("Response already got")
         }
         if (readInput == null) {
-            val buf = server.textBufferPool.borrow()
+            val buf = server!!.textBufferPool.borrow()
             try {
                 readBinary().use {
                     it.skipAll(buf)
                 }
             } finally {
-                server.textBufferPool.recycle(buf)
+                server!!.textBufferPool.recycle(buf)
             }
         }
-        val r = HttpResponse2Impl(this)
+        val r = HttpResponse2Impl(
+            keepAliveEnabled = server!!.maxIdleTime > 0 && headers.keepAlive,
+            channel = channel!!,
+            acceptEncoding = headers.acceptEncoding,
+            server = server!!
+        )
         startedResponse = r
+        free()
         return r
     }
-
-    private var startedResponse: HttpResponse2Impl? = null
-    override val response: HttpResponse?
-        get() = startedResponse
 
     override suspend fun asyncClose() {
         checkClosed()
         response().use {
             it.status = 404
         }
-    }
-}
-
-internal class HttpResponse2Impl(val req: HttpRequest2Impl) : HttpResponse {
-    override var status = 404
-    override val headers = HashHeaders()
-
-    init {
-        headers.keepAlive = req.server.maxIdleTime > 0 && req.headers.keepAlive
-    }
-
-    private var closed = false
-    private var responseStarted = false
-
-    private fun checkClosed() {
-        if (closed) {
-            throw IllegalStateException("Already closed")
-        }
-    }
-
-    private suspend fun sendRequest() {
-        if (req.server.zlibBufferSize <= 0 && (
-            headers.contentEncoding.equals("gzip", ignoreCase = true) ||
-                headers.contentEncoding.equals("deflate", ignoreCase = true)
-            )
-        ) {
-            throw IllegalStateException("Response doesn't support compress. Make sure you set HttpServer::zlibBufferSize more than 0")
-        }
-        req.channel.writer.append("HTTP/1.1 ")
-            .append(status.toString()).append(" ")
-            .append(statusToText(status))
-            .append("\r\n")
-        headers.forEachHeader { key, value ->
-            req.channel.writer.append(key).append(": ").append(value).append("\r\n")
-        }
-        req.channel.writer.append("\r\n")
-    }
-
-    internal suspend fun sendHeadersAndFree() {
-        checkClosed()
-        sendRequest()
-        req.channel.writer.flush()
-        closed = true
-    }
-
-    override suspend fun startWriteBinary(): AsyncOutput {
-        checkClosed()
-        responseStarted = true
-        if (!req.headers.keepAlive && headers.keepAlive) {
-            throw IllegalStateException("Client not support Keep-Alive mode")
-        }
-        if (headers.contentEncoding == null && headers.getTransferEncodingList()
-            .isEmpty() && headers.contentLength == null
-        ) {
-            val en = req.headers.acceptEncoding
-            headers.contentEncoding = when {
-                "gzip" in en -> "gzip"
-                "deflate" in en -> "deflate"
-                else -> null
-            }
-            headers.transferEncoding = "chunked"
-        }
-        val transferEncoding = headers.getTransferEncodingList()
-        val contentEncoding = headers.getContentEncodingList()
-
-        val baseResponse = HttpResponseOutput(req = req, keepAlive = headers.keepAlive)
-
-        transferEncoding.forEach {
-            if (it != "chunked" && it != "deflate" && it != "gzip" && it != "identity") {
-                throw IOException("Not supported Transfer Encoding \"$it\"")
-            }
-        }
-
-        fun wrap(name: String, stream: AsyncOutput) = when (name) {
-            Encoding.IDENTITY -> stream
-            Encoding.CHUNKED -> req.server.reusableAsyncChunkedOutputPool.new(
-                stream = stream,
-                closeStream = stream !== req.channel.writer,
-            )
-            Encoding.GZIP -> AsyncGZIPOutput(
-                stream = stream,
-                level = 6,
-                closeStream = true,
-                bufferSize = req.server.zlibBufferSize,
-            )
-            Encoding.DEFLATE -> AsyncDeflaterOutput(
-                stream = stream,
-                level = 6,
-                closeStream = true,
-                bufferSize = req.server.zlibBufferSize,
-            )
-            else -> null
-        }
-
-        var resultOutput: AsyncOutput = baseResponse
-        val contentLength = headers.contentLength
-        if (contentLength != null) {
-            resultOutput = AsyncContentLengthOutput(
-                stream = resultOutput,
-                contentLength = contentLength,
-                closeStream = true
-            )
-        }
-        for (i in transferEncoding.lastIndex downTo 0) {
-            val it = transferEncoding[i]
-            resultOutput = wrap(it, resultOutput) ?: throw IOException("Not supported encoding \"$it\"")
-        }
-
-        for (i in contentEncoding.lastIndex downTo 0) {
-            val it = contentEncoding[i]
-            resultOutput = wrap(it, resultOutput) ?: throw IOException("Not supported encoding \"$it\"")
-        }
-
-        sendRequest()
-        closed = true
-        return resultOutput
-    }
-
-    override suspend fun startWriteText(): AsyncWriter {
-        val charset = Charsets.get(headers.charset ?: "utf-8")
-        val output = startWriteBinary()
-        try {
-            return this.req.server.bufferWriterPool.borrow {
-                it.reset(
-                    output = output,
-                    charset = charset
-                )
-            }
-        } catch (e: Throwable) {
-            try {
-                output.asyncClose()
-            } catch (ex: Throwable) {
-                ex.addSuppressed(e)
-                throw ex
-            }
-            throw e
-        }
-    }
-
-    override suspend fun asyncClose() {
-        if (closed && responseStarted) {
-            return
-        }
-        checkClosed()
-//        if (headers.bodyExist && req.method.lowercase() != "head") {
-//            throw IllegalStateException("Require Http Response Body")
-//        }
-        headers.contentLength = 0uL
-        sendRequest()
-        req.channel.writer.flush()
-        if (req.headers.keepAlive && headers.keepAlive) {
-            req.server.clientReProcessing(req.channel)
-        } else {
-            runCatching { req.channel.asyncClose() }
-        }
-    }
-}
-
-private class HttpResponseOutput(
-    val req: HttpRequest2Impl,
-    val keepAlive: Boolean,
-) : AsyncOutput {
-    override suspend fun write(data: ByteBuffer): Int =
-        req.channel.writer.write(data)
-
-    override suspend fun asyncClose() {
-        flush()
-        if (keepAlive) {
-            req.server.clientReProcessing(req.channel)
-        } else {
-            req.channel.asyncClose()
-        }
-    }
-
-    override suspend fun writeFully(data: ByteBuffer) {
-        req.channel.writer.writeFully(data)
-    }
-
-    override suspend fun flush() {
-        req.channel.writer.flush()
     }
 }

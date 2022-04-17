@@ -13,14 +13,8 @@ import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.network.*
 import pw.binom.pool.FixedSizePool
 
-interface Handler {
+fun interface Handler {
     suspend fun request(req: HttpRequest)
-}
-
-fun Handler(func: suspend (HttpRequest) -> Unit) = object : Handler {
-    override suspend fun request(req: HttpRequest) {
-        func(req)
-    }
 }
 
 /**
@@ -45,6 +39,7 @@ class HttpServer(
     internal val messagePool by lazy { MessagePool(websocketMessagePoolSize) }
     internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     internal val textBufferPool = ByteBufferPool(capacity = 16)
+    internal val httpRequest2Impl = FixedSizePool(16, HttpRequest2Impl.Manager)
     internal val reusableAsyncChunkedOutputPool by lazy { ReusableAsyncChunkedOutput.Pool(outputBufferPoolSize) }
     internal val bufferWriterPool by lazy {
         FixedSizePool(
@@ -108,9 +103,13 @@ class HttpServer(
 
     internal fun clientProcessing(channel: ServerAsyncAsciiChannel, isNewConnect: Boolean) {
         GlobalScope.launch(manager) {
+            var req: HttpRequest2Impl? = null
             try {
-                val req =
-                    HttpRequest2Impl.read(channel = channel, server = this@HttpServer, isNewConnect = isNewConnect)
+                req = HttpRequest2Impl.read(
+                    channel = channel,
+                    server = this@HttpServer,
+                    isNewConnect = isNewConnect,
+                )
                 handler.request(req)
                 idleCheck()
             } catch (e: SocketClosedException) {
@@ -120,6 +119,10 @@ class HttpServer(
             } catch (e: Throwable) {
                 runCatching { channel.asyncClose() }
                 runCatching { errorHandler(e) }
+            } finally {
+                if (req != null && !req.isFree) {
+                    req.free()
+                }
             }
         }
     }
