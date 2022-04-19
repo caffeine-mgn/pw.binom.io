@@ -16,7 +16,6 @@ open class AsyncAsciiChannel(
     override suspend fun asyncClose() {
         runCatching { reader.asyncClose() }
         runCatching { writer.asyncClose() }
-        println("Closing channel ${channel::class}")
         channel.asyncClose()
     }
 }

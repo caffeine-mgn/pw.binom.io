@@ -21,7 +21,12 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
     actual constructor() : this(true)
     constructor(socket: NSocket) : this(false) {
         this.native = socket
-        socket.setBlocking(false)
+    }
+
+    private var blocking = true
+    actual fun setBlocking(value: Boolean) {
+        native?.setBlocking(value)
+        blocking = value
     }
 
     actual fun connect(address: NetworkAddress) {
@@ -29,18 +34,31 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
             throw IllegalStateException()
         }
         native = NSocket.connectTcp(address, blocking = false)
+        native!!.setBlocking(blocking)
         key?.addSocket(native!!.raw)
     }
 
     override fun read(dest: ByteBuffer): Int {
         val read = native!!.recv(dest)
+        if (read == -1) {
+            close()
+            return -1
+        }
         return read
     }
 
     override fun close() {
+
         native?.also {
-            key?.removeSocket(it.raw)
+            val c = key
+            key = null
+            c?.let {
+                if (!it.closed) {
+                    it.close()
+                }
+            }
             it.close()
+            native = null
         }
     }
 

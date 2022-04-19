@@ -47,13 +47,13 @@ class AsyncMultipartOutput(
     }
 
     suspend fun formData(formName: String, headers: Headers = emptyHeaders()) {
-        if ("\r\n" in formName) {
+        if (Utils.CRLF in formName) {
             throw IllegalArgumentException("formName can't concate \\r\\n")
         }
         internalPart(headers = headers)
 
-        writer.append("Content-Disposition: form-data; name=\"").append(formName).append("\"\r\n")
-        writer.append("\r\n")
+        writer.append("Content-Disposition: form-data; name=\"").append(formName).append("\"").append(Utils.CRLF)
+        writer.append(Utils.CRLF)
     }
 
     suspend fun part(mimeType: String, headers: Headers = emptyHeaders()) {
@@ -61,42 +61,45 @@ class AsyncMultipartOutput(
             throw IllegalArgumentException("Headers already contains header ${Headers.CONTENT_TYPE}")
         }
         internalPart(headers = headers)
-        writer.append("Content-Type: ").append(mimeType).append("\r\n")
-        writer.append("\r\n")
+        writer.append("Content-Type: ").append(mimeType).append(Utils.CRLF)
+        writer.append(Utils.CRLF)
     }
 
     suspend fun part(headers: Headers = emptyHeaders()) {
         internalPart(headers = headers)
-        writer.append("\r\n")
+        writer.append(Utils.CRLF)
     }
 
     private suspend fun internalPart(headers: Headers = emptyHeaders()) {
         headers.forEach {
-            if ("\r\n" in it.value)
+            if (Utils.CRLF in it.value) {
                 throw IllegalArgumentException("Header Name can't concate \\r\\n")
+            }
             it.value.forEach { value ->
-                if ("\r\n" in value)
+                if (Utils.CRLF in value) {
                     throw IllegalArgumentException("Header Value can't concate \\r\\n")
+                }
             }
         }
 
         if (!first) {
-            writer.append("\r\n")
+            writer.append(Utils.CRLF)
         }
         first = false
         printBoundary()
-        writer.append("\r\n")
+        writer.append(Utils.CRLF)
         headers.forEach {
             it.value.forEach { value ->
-                writer.append(it.key).append(": ").append(value).append("\r\n")
+                writer.append(it.key).append(": ").append(value).append(Utils.CRLF)
             }
         }
     }
 
     override suspend fun write(data: ByteBuffer): Int {
         writer.flush()
-        if (first)
+        if (first) {
             throw IllegalStateException("No defined part")
+        }
         return stream.write(data)
     }
 
@@ -106,9 +109,9 @@ class AsyncMultipartOutput(
 
     override suspend fun asyncClose() {
         if (!first) {
-            writer.append("\r\n")
+            writer.append(Utils.CRLF)
             printBoundary()
-            writer.append("--\r\n")
+            writer.append("--").append(Utils.CRLF)
             writer.flush()
         }
         if (closeParent) {

@@ -2,31 +2,25 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.*
+import platform.posix.errno
 import platform.windows.HANDLE
-import kotlin.native.internal.createCleaner
 
 class MingwSelector : AbstractSelector() {
 
-    @OptIn(ExperimentalStdlibApi::class)
     inner class MingwKey(
         val list: HANDLE,
         attachment: Any?,
     ) : AbstractKey(attachment) {
+        private val epollEvent = nativeHeap.alloc<epoll_event>()
         private var nativeSocket: RawSocket = 0
-        private val cleaner = createCleaner(Unit) {
-            println("MingwKey removed!")
-        }
 
         override fun addSocket(raw: RawSocket) {
             if (nativeSocket != 0) {
                 throw IllegalStateException()
             }
-            memScoped {
-                val event = alloc<epoll_event>()
-                event.events = epollCommonToNative(listensFlag.convert()).convert()
-                event.data.ptr = ptr
-                val c = epoll_ctl(native, EPOLL_CTL_ADD, raw.convert(), event.ptr)
-            }
+            epollEvent.events = epollCommonToNative(listensFlag.convert()).convert()
+            epollEvent.data.ptr = ptr
+            epoll_ctl(native, EPOLL_CTL_ADD, raw.convert(), epollEvent.ptr)
             nativeSocket = raw
         }
 
@@ -44,8 +38,11 @@ class MingwSelector : AbstractSelector() {
 
         fun epollCommonToNative(mode: Int): Int {
             var events = 0u
+            if (Selector.EVENT_ERROR in mode) {
+                events = events or EPOLLHUP or EPOLLERR
+            }
             if (Selector.INPUT_READY in mode) {
-                events = events or EPOLLIN
+                events = events or EPOLLIN or EPOLLHUP or EPOLLERR
             }
             if (!connected && Selector.EVENT_CONNECTED in mode) {
                 events = events or EPOLLOUT
@@ -62,20 +59,20 @@ class MingwSelector : AbstractSelector() {
             if (nativeSocket == 0) {
                 return
             }
-            memScoped {
-                val event = alloc<epoll_event>()
-                event.events = epollCommonToNative(mode.convert()).convert()
-                event.data.ptr = ptr
-                if (nativeSocket != 0) {
-                    epoll_ctl(list, EPOLL_CTL_MOD, nativeSocket.convert(), event.ptr)
-                }
+
+            val epoll = epollCommonToNative(mode.convert())
+            epollEvent.events = epoll.convert()
+            if (nativeSocket != 0) {
+                epoll_ctl(list, EPOLL_CTL_MOD, nativeSocket.convert(), epollEvent.ptr)
             }
         }
-
         override fun close() {
             super.close()
+            nativeHeap.free(epollEvent)
             if (nativeSocket != 0) {
-                epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), null)
+                if (epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), null) != 0) {
+                    println("epoll_ctl fail. errno: $errno")
+                }
             }
             keys -= this
         }
@@ -83,16 +80,28 @@ class MingwSelector : AbstractSelector() {
 
     private val native = epoll_create(1000)!!
     private val list = nativeHeap.allocArray<epoll_event>(1000)
+    override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
+        selectedEvents as MingwSelectedEvents
+        val eventCount = epoll_wait(
+            native,
+            selectedEvents.native.reinterpret(),
+            minOf(selectedEvents.maxElements, 1000),
+            timeout.toInt()
+        )
+        selectedEvents.eventCount = eventCount
+        return eventCount
+    }
+
     override val nativeSelectedKeys
         get() = nativeSelectedKeys2
 
     override fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
         val key = MingwKey(native, attachment)
-        key.listensFlag = mode
         keys += key
         if (!connectable) {
             key.connected = true
         }
+        key.listensFlag = mode
         return key
     }
 
@@ -104,7 +113,7 @@ class MingwSelector : AbstractSelector() {
             key.connected = true
         }
         keys += key
-
+        key.listensFlag = mode
         return key
     }
 
@@ -142,17 +151,17 @@ class MingwSelector : AbstractSelector() {
                         return event
                     }
                     EPOLLOUT in item.events -> {
-                        key.resetMode(0)
                         event.key = key
                         event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
                         key.connected = true
+                        key.resetMode(key.listensFlag)
                         return event
                     }
                     EPOLLIN in item.events -> {
-                        key.resetMode(0)
                         event.key = key
                         event.mode = Selector.EVENT_CONNECTED or Selector.INPUT_READY
                         key.connected = true
+                        key.resetMode(key.listensFlag)
                         return event
                     }
                     else -> throw IllegalStateException(
@@ -172,7 +181,7 @@ class MingwSelector : AbstractSelector() {
                 event.key = key
                 event.mode = epollNativeToCommon(item.events.convert())
                 if (item.events.toInt() != 0 && event.mode == 0) {
-                    println("Can't convert ${modeToString(item.events)}")
+                    throw Exception("MingwSelector: Can't convert ${modeToString(item.events)} to common")
                 }
                 return event
             }
@@ -239,36 +248,41 @@ actual fun createSelector(): Selector = MingwSelector()
 
 internal fun modeToString(mode: UInt): String {
     val sb = StringBuilder()
-    if (mode and EPOLLIN != 0u)
+    if (mode and EPOLLIN != 0u) {
         sb.append("EPOLLIN ")
-    if (mode and EPOLLPRI != 0u)
+    }
+    if (mode and EPOLLPRI != 0u) {
         sb.append("EPOLLPRI ")
-
-    if (mode and EPOLLOUT != 0u)
+    }
+    if (mode and EPOLLOUT != 0u) {
         sb.append("EPOLLOUT ")
-
-    if (mode and EPOLLERR != 0u)
+    }
+    if (mode and EPOLLERR != 0u) {
         sb.append("EPOLLERR ")
-
-    if (mode and EPOLLHUP != 0u)
+    }
+    if (mode and EPOLLHUP != 0u) {
         sb.append("EPOLLHUP ")
-
-    if (mode and EPOLLRDNORM != 0u)
+    }
+    if (mode and EPOLLRDNORM != 0u) {
         sb.append("EPOLLRDNORM ")
-
-    if (mode and EPOLLRDBAND != 0u)
+    }
+    if (mode and EPOLLRDBAND != 0u) {
         sb.append("EPOLLRDBAND ")
-
-    if (mode and EPOLLWRNORM != 0u)
+    }
+    if (mode and EPOLLWRNORM != 0u) {
         sb.append("EPOLLWRNORM ")
-    if (mode and EPOLLWRBAND != 0u)
+    }
+    if (mode and EPOLLWRBAND != 0u) {
         sb.append("EPOLLWRBAND ")
-    if (mode and EPOLLMSG != 0u)
+    }
+    if (mode and EPOLLMSG != 0u) {
         sb.append("EPOLLMSG ")
-    if (mode and EPOLLRDHUP != 0u)
+    }
+    if (mode and EPOLLRDHUP != 0u) {
         sb.append("EPOLLRDHUP ")
-    if (mode and EPOLLONESHOT != 0u)
+    }
+    if (mode and EPOLLONESHOT != 0u) {
         sb.append("EPOLLONESHOT ")
-
+    }
     return sb.toString().trim()
 }

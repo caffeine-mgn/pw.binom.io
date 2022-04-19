@@ -11,7 +11,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.6.20"
     id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 val kotlinVersion = project.property("kotlin.version") as String

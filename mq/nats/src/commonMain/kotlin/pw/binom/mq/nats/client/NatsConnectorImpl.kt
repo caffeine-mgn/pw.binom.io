@@ -5,12 +5,11 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.ByteBuffer
 import pw.binom.io.AsyncCloseable
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkCoroutineDispatcher
+import pw.binom.network.NetworkManager
 import pw.binom.network.SocketConnectException
-import kotlin.coroutines.Continuation
+import pw.binom.network.tcpConnect
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 internal class NatsConnectorImpl(
     val clientName: String? = null,
@@ -21,7 +20,7 @@ internal class NatsConnectorImpl(
     val pass: String? = null,
     val defaultGroup: String? = null,
     val attemptCount: Int = 3,
-    var networkDispatcher: NetworkCoroutineDispatcher,
+    var networkDispatcher: NetworkManager,
     serverList: List<NetworkAddress>
 ) : NatsConnector {
     init {
@@ -56,14 +55,14 @@ internal class NatsConnectorImpl(
     ): AsyncCloseable {
         checkClosed()
         checkConnection().subscribe(
-                subscribeId = subscribeId,
-                subject = subject,
-                group = group,
+            subscribeId = subscribeId,
+            subject = subject,
+            group = group,
         )
         subscribes[subscribeId] = Subscribe(
-                subscribeId = subscribeId,
-                subject = subject,
-                group = group,
+            subscribeId = subscribeId,
+            subject = subject,
+            group = group,
         )
 
         return AsyncCloseable {
@@ -118,24 +117,24 @@ internal class NatsConnectorImpl(
                 }
                 try {
                     val connect = NatsRawConnection(
-                            channel = tcpConnection,
+                        channel = tcpConnection,
                     )
                     val c = connect.prepareConnect(
-                            clientName = clientName,
-                            lang = lang,
-                            echo = echo,
-                            tlsRequired = tlsRequired,
-                            user = user,
-                            pass = pass
+                        clientName = clientName,
+                        lang = lang,
+                        echo = echo,
+                        tlsRequired = tlsRequired,
+                        user = user,
+                        pass = pass
                     )
                     val list = (serverList + c.clusterAddresses).distinct()
                     _serverList.clear()
                     _serverList.addAll(list)
                     subscribes.values.forEach {
                         connect.subscribe(
-                                subscribeId = it.subscribeId,
-                                subject = it.subject,
-                                group = it.group
+                            subscribeId = it.subscribeId,
+                            subject = it.subject,
+                            group = it.group
                         )
                     }
                     this.connection = connect
@@ -168,17 +167,17 @@ internal class NatsConnectorImpl(
 
     override suspend fun publish(subject: String, replyTo: String?, data: ByteArray?) {
         checkConnection().publish(
-                subject = subject,
-                replyTo = replyTo,
-                data = data
+            subject = subject,
+            replyTo = replyTo,
+            data = data
         )
     }
 
     override suspend fun publish(subject: String, replyTo: String?, data: ByteBuffer?) {
         checkConnection().publish(
-                subject = subject,
-                replyTo = replyTo,
-                data = data
+            subject = subject,
+            replyTo = replyTo,
+            data = data
         )
     }
 }

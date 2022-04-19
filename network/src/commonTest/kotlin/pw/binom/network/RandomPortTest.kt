@@ -8,4 +8,9 @@ class RandomPortTest {
     fun tcpRandomPortTest() {
         assertTrue(TcpServerConnection.randomPort() > 0)
     }
+
+    @Test
+    fun udpRandomPortTest() {
+        assertTrue(UdpConnection.randomPort() > 0)
+    }
 }

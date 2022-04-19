@@ -1,13 +1,15 @@
 package pw.binom.network
 
+import pw.binom.io.ClosedException
 import java.net.ConnectException
 import java.net.SocketException
 import java.nio.channels.*
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import java.nio.channels.Selector as JSelector
 
-private fun javaToCommon(mode: Int): Int {
+internal fun javaToCommon(mode: Int): Int {
     var opts = 0
     if (SelectionKey.OP_ACCEPT and mode != 0 || SelectionKey.OP_READ and mode != 0) {
         opts = opts or Selector.INPUT_READY
@@ -72,14 +74,20 @@ class JvmSelector : Selector {
             set(value) {
                 checkClosed()
                 val javaOps = commonToJava(native.channel(), value)
+                println("Change mode to ${jvmModeToString(javaOps)} $attachment")
                 native.interestOps(javaOps)
                 native.selector().wakeup()
             }
 
         override fun close() {
+            println("native.isValid->${native.isValid} $attachment")
             checkClosed()
             _closed = true
-            native.interestOps(0)
+            try {
+                native.interestOps(0)
+            } catch (e: CancelledKeyException) {
+                throw ClosedException()
+            }
         }
     }
 
@@ -130,15 +138,16 @@ class JvmSelector : Selector {
         }
     }
 
-    override fun getAttachedKeys(): Collection<Selector.Key> =
-        this.native.keys().mapNotNull {
+    override fun getAttachedKeys(): Collection<Selector.Key> {
+        return this.native.keys().mapNotNull {
             val key = it.attachment() as JvmKey
-            if (key.closed) {
+            if (key.closed || !key.native.isValid) {
                 null
             } else {
                 key
             }
         }
+    }
 
     @OptIn(ExperimentalTime::class)
     override fun select(timeout: Long, func: (Selector.Key, mode: Int) -> Unit): Int {
@@ -206,11 +215,42 @@ class JvmSelector : Selector {
                     native.select(timeout - selectTime.inWholeMilliseconds)
                 }
             }
-            timeout == 0L -> native.selectNow()
-            timeout < 0L -> native.select()
+            else -> native.select()
         }
         selectorIterator.reset()
         return selectorIterator
+    }
+
+    private val lock = ReentrantLock()
+
+    @OptIn(ExperimentalTime::class)
+    override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
+        lock.lock()
+        selectedEvents.lock.lock()
+        try {
+            native.selectedKeys().clear()
+            val eventCount = when {
+                timeout > 0L -> {
+                    var selectedCount = 0
+                    val selectTime = measureTime {
+                        selectedCount = native.select(timeout)
+                    }
+                    if (selectedCount == 0 && selectTime.inWholeMilliseconds < timeout) {
+                        native.select(timeout - selectTime.inWholeMilliseconds)
+                    } else {
+                        selectedCount
+                    }
+                }
+                else -> native.select()
+            }
+            val keys = HashSet(native.selectedKeys())
+            selectedEvents.selectedKeys = keys
+            println("native.selectedKeys().size->${native.selectedKeys().size}, eventCount=$eventCount")
+            return keys.size
+        } finally {
+            selectedEvents.lock.unlock()
+            lock.unlock()
+        }
     }
 
     override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): Selector.Key {

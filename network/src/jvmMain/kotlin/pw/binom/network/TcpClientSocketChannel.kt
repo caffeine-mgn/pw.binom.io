@@ -3,15 +3,16 @@ package pw.binom.network
 import pw.binom.ByteBuffer
 import pw.binom.io.Channel
 import java.io.IOException
+import java.nio.channels.NotYetConnectedException
 import java.nio.channels.SocketChannel as JSocketChannel
 
 actual class TcpClientSocketChannel(val native: JSocketChannel) : Channel {
 
-    init {
-        native.configureBlocking(false)
-    }
-
     actual constructor() : this(JSocketChannel.open())
+
+    actual fun setBlocking(value: Boolean) {
+        native.configureBlocking(value)
+    }
 
     actual fun connect(address: NetworkAddress) {
         val _native = address._native
@@ -24,14 +25,18 @@ actual class TcpClientSocketChannel(val native: JSocketChannel) : Channel {
             native.read(dest.native)
         } catch (e: Throwable) {
             throw SocketClosedException(e)
+        } catch (e: NotYetConnectedException) {
+            return 0
         }
-        if (count < 0) {
-            throw SocketClosedException()
+        if (count < 0 || count == 0 && !native.isConnected) {
+            native.close()
+            return -1
         }
         return count
     }
 
     override fun close() {
+        println("Close Tcp Connection")
         native.close()
     }
 

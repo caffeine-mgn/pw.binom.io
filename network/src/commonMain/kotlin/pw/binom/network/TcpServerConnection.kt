@@ -6,11 +6,10 @@ import kotlinx.coroutines.withContext
 import pw.binom.io.use
 import kotlin.coroutines.*
 
-class TcpServerConnection internal constructor(
-    val dispatcher: NetworkCoroutineDispatcher,
+class TcpServerConnection constructor(
+    val dispatcher: NetworkManager,
     val channel: TcpServerSocketChannel
-) :
-    AbstractConnection() {
+) : AbstractConnection() {
 
     companion object {
         fun randomPort() = TcpServerSocketChannel().use {
@@ -40,6 +39,7 @@ class TcpServerConnection internal constructor(
     }
 
     override fun readyForRead() {
+        val acceptListener = acceptListener
         if (acceptListener == null) {
             if (!key.closed) {
                 key.removeListen(Selector.INPUT_READY)
@@ -48,20 +48,12 @@ class TcpServerConnection internal constructor(
         }
         val newChannel = channel.accept(null)
         if (newChannel == null) {
-            if (acceptListener == null) {
-                if (!key.closed) {
-                    key.removeListen(Selector.INPUT_READY)
-                }
-            }
-            return
-        }
-        val acceptListener = acceptListener
-        if (acceptListener == null) {
             if (!key.closed) {
                 key.removeListen(Selector.INPUT_READY)
             }
-            throw IllegalStateException("Socket accepted, but listener is null")
+            return
         }
+
         this.acceptListener = null
         acceptListener.resume(newChannel)
         if (this.acceptListener == null) {

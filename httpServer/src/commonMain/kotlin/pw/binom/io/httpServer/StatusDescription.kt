@@ -1,5 +1,14 @@
 package pw.binom.io.httpServer
 
+private val statusCodes = HashMap<Int, String>().also {
+    for (i in 100..526) {
+        it[i] = i.toString()
+    }
+}
+
+internal fun statusInt(code: Int) =
+    statusCodes[code] ?: throw IllegalArgumentException("Unknown status code $code")
+
 internal fun statusToText(code: Int) =
     when (code) {
         100 -> "Continue"

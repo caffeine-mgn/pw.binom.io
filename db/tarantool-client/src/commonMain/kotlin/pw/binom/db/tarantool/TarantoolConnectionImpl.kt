@@ -8,6 +8,7 @@ import pw.binom.io.ByteArrayOutput
 import pw.binom.io.ClosedException
 import pw.binom.io.IOException
 import pw.binom.network.NetworkCoroutineDispatcher
+import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
 import kotlin.coroutines.resumeWithException
@@ -22,7 +23,7 @@ private const val VINDEX_ID_INDEX_ID = 0
 @Suppress("UNCHECKED_CAST")
 class TarantoolConnectionImpl internal constructor(
 //    private val networkThread: ThreadRef,
-    val networkDispatcher: NetworkCoroutineDispatcher,
+    val networkDispatcher: NetworkManager,
     con: TcpConnection,
     val serverVersion: String,
 ) :

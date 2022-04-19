@@ -23,5 +23,4 @@ fun Channel.asAsyncChannel() = object : AsyncChannel {
 
     override suspend fun read(dest: ByteBuffer): Int =
         this@asAsyncChannel.read(dest)
-
 }

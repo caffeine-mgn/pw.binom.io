@@ -8,6 +8,7 @@ import pw.binom.nextUuid
 import kotlin.random.Random
 import pw.binom.network.Network
 import kotlinx.coroutines.Dispatchers
+import pw.binom.network.NetworkManager
 
 interface NatsConnector : AsyncCloseable {
     companion object {
@@ -23,7 +24,7 @@ interface NatsConnector : AsyncCloseable {
             pass: String? = null,
             defaultGroup: String? = null,
             attemptCount: Int = 3,
-            networkDispatcher: NetworkCoroutineDispatcher = Dispatchers.Network,
+            networkDispatcher: NetworkManager = Dispatchers.Network,
             serverList: List<NetworkAddress>
         ): NatsConnector =
             NatsConnectorImpl(

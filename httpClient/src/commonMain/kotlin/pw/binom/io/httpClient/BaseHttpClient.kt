@@ -10,11 +10,13 @@ import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.net.URL
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcher
+import pw.binom.network.NetworkManager
+import pw.binom.network.tcpConnect
 import pw.binom.ssl.*
 import kotlin.time.ExperimentalTime
 
 class BaseHttpClient(
-    val networkDispatcher: NetworkCoroutineDispatcher,
+    val networkDispatcher: NetworkManager,
     val useKeepAlive: Boolean = true,
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,

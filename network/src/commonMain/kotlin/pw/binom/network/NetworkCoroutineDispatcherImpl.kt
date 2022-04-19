@@ -15,7 +15,7 @@ abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManage
         var default: NetworkCoroutineDispatcher = create()
     }
 
-    abstract suspend fun tcpConnect(address: NetworkAddress): TcpConnection
+//    abstract suspend fun tcpConnect(address: NetworkAddress): TcpConnection
 }
 
 class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
@@ -27,18 +27,20 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private val readyForWriteListener = BatchExchange<Runnable>()
     private val internalUdpContinuationConnection = attach(internalUdpChannel)
     private var networkThread = ThreadRef()
+    private val selectedKeys = SelectedEvents.create()
 
     init {
         worker.execute(this) { self ->
             try {
                 while (!self.closed) {
                     self.networkThread = ThreadRef()
-                    val iterator = self.selector.select()
+                    self.selector.select(selectedEvents = selectedKeys)
+                    val iterator = selectedKeys.iterator()
                     var executeOnNetwork = false
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
                         val attachment = event.key.attachment
-                        attachment?:throw IllegalStateException("Attachment is null")
+                        attachment ?: throw IllegalStateException("Attachment is null")
                         if (attachment === self.internalUdpContinuationConnection) {
                             executeOnNetwork = true
                         } else {
@@ -105,6 +107,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     override fun attach(channel: UdpSocketChannel): UdpConnection {
         val con = UdpConnection(channel)
+        channel.setBlocking(false)
         val key = selector.attach(channel, 0, con)
         con.key = key
         return con
@@ -112,6 +115,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     override fun attach(channel: TcpClientSocketChannel, mode: Int): TcpConnection {
         val con = TcpConnection(channel)
+        channel.setBlocking(false)
         val key = selector.attach(channel, mode, con)
         con.key = key
         return con
@@ -119,38 +123,40 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     override fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
         val con = TcpServerConnection(this, channel)
+        channel.setBlocking(false)
         con.key = selector.attach(channel, 0, con)
         return con
     }
 
-    override suspend fun tcpConnect(address: NetworkAddress): TcpConnection =
-        withContext(this) {
-            val channel = TcpClientSocketChannel()
-            val connection = attach(channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
-            try {
-                connection.description = address.toString()
-                suspendCancellableCoroutine<Unit> {
-                    connection.connect = it
-                    it.invokeOnCancellation {
-                        connection.cancelSelector()
-                    }
-                    try {
-//                        connection.connecting()
-                        channel.connect(address)
-                    } catch (e: Throwable) {
-                        it.resumeWithException(e)
-                    }
-                }
-            } catch (e: SocketConnectException) {
-                runCatching { connection.asyncClose() }
-                if (e.message != null) {
-                    throw e
-                } else {
-                    throw SocketConnectException(address.toString(), e.cause)
-                }
-            }
-            connection
-        }
+//    override suspend fun tcpConnect(address: NetworkAddress): TcpConnection =
+//        withContext(this) {
+//            val channel = TcpClientSocketChannel()
+//            val connection = attach(channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
+//            try {
+//                connection.description = address.toString()
+//                suspendCancellableCoroutine<Unit> {
+//                    connection.connect = it
+//                    it.invokeOnCancellation {
+//                        connection.cancelSelector()
+//                        connection.close()
+//                    }
+//                    try {
+////                        connection.connecting()
+//                        channel.connect(address)
+//                    } catch (e: Throwable) {
+//                        it.resumeWithException(e)
+//                    }
+//                }
+//            } catch (e: SocketConnectException) {
+//                runCatching { connection.asyncClose() }
+//                if (e.message != null) {
+//                    throw e
+//                } else {
+//                    throw SocketConnectException(address.toString(), e.cause)
+//                }
+//            }
+//            connection
+//        }
 }
 
 val Dispatchers.Network

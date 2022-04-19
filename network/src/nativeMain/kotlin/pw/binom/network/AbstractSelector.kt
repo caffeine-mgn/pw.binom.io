@@ -2,13 +2,11 @@ package pw.binom.network
 
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.asStableRef
-import pw.binom.atomic.AtomicBoolean
-import pw.binom.atomic.AtomicInt
 import pw.binom.io.ClosedException
 
 abstract class AbstractSelector : Selector {
     abstract class AbstractKey(attachment: Any?) : Selector.Key {
-        var connected by AtomicBoolean(false)
+        var connected = false
 
         //        private val attachmentReference = attachment?.asReference()
         override var attachment: Any? = attachment
@@ -17,8 +15,8 @@ abstract class AbstractSelector : Selector {
 
         //            get() = attachmentReference?.value
         val ptr = StableRef.create(this).asCPointer()
-        private var _listensFlag by AtomicInt(0)
-        private var _closed by AtomicBoolean(false)
+        private var _listensFlag = 0
+        private var _closed = false
 
         override val closed: Boolean
             get() = _closed
@@ -46,13 +44,14 @@ abstract class AbstractSelector : Selector {
 
         abstract fun resetMode(mode: Int)
         override fun close() {
-            checkClosed()
+            if (_closed) {
+                return
+            }
             _closed = true
 //            runCatching { attachmentReference?.close() }
             runCatching {
-//                attachment=null
                 ptr.asStableRef<AbstractKey>().dispose()
-                println("Closing Selector Key")
+                attachment = null
             }
         }
     }

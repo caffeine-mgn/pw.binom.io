@@ -36,6 +36,11 @@ expect class NSocket : Closeable {
      */
     fun accept(address: NetworkAddress.Mutable?): NSocket?
     fun send(data: ByteBuffer): Int
+
+    /**
+     * Reads data from socket to [data]. If socket disconnected will return `-1`.
+     * If return 0 in non block mode you should try read later
+     */
     fun recv(data: ByteBuffer): Int
 
     /**

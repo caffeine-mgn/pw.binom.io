@@ -7,20 +7,108 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import pw.binom.ByteBuffer
 import pw.binom.alloc
-import pw.binom.concurrency.SpinLock
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.sleep
-import pw.binom.concurrency.synchronize
+import pw.binom.concurrency.*
 import pw.binom.io.use
 import pw.binom.readByte
 import pw.binom.writeByte
-import kotlin.test.Ignore
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.fail
+import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TcpConnectionTest {
+
+    @Test
+    fun serverFlagsOnAttachTest() {
+        val selector = Selector.open()
+        val server = TcpServerSocketChannel()
+        server.bind(NetworkAddress.Immutable("127.0.0.1", 0))
+        server.setBlocking(false)
+        selector.attach(
+            server,
+            Selector.INPUT_READY or Selector.EVENT_ERROR
+        )
+//        serverKey.listensFlag =
+//            Selector.INPUT_READY or Selector.OUTPUT_READY or Selector.EVENT_CONNECTED or Selector.EVENT_ERROR
+        val client = TcpClientSocketChannel()
+        client.connect(NetworkAddress.Immutable("127.0.0.1", server.port!!))
+        assertTrue(selector.select().hasNext(), "No event for select. Socket selector should be read for input")
+    }
+
+    @Test
+    fun autoCloseKey() = runTest(dispatchTimeoutMs = 10_000) {
+        val serverConnection = Dispatchers.Network.bindTcp(NetworkAddress.Immutable("127.0.0.1", 0))
+        val lock = SpinLock()
+        lock.lock()
+        launch(Dispatchers.Network) {
+            val client = serverConnection.accept()
+            lock.synchronize {
+                client.close()
+                println("Server Side: connection closed!")
+            }
+        }
+        val selector = Selector.open()
+        val channel = TcpClientSocketChannel()
+        channel.setBlocking(false)
+        val clientKey = selector.attach(
+            channel,
+            Selector.EVENT_ERROR or Selector.EVENT_CONNECTED or Selector.INPUT_READY or Selector.OUTPUT_READY
+        )
+        println("Connect...")
+        channel.connect(NetworkAddress.Immutable("127.0.0.1", serverConnection.port))
+        println("Connect started!")
+        LOOP_CONNECT@ while (true) {
+            val o = selector.select()
+            while (o.hasNext()) {
+                val e = o.next()
+                if (e.mode and Selector.EVENT_CONNECTED > 0) {
+                    println("Connected!")
+                    break@LOOP_CONNECT
+                }
+            }
+        }
+//        clientKey.listensFlag =
+//            Selector.EVENT_ERROR or Selector.EVENT_CONNECTED or Selector.INPUT_READY or Selector.OUTPUT_READY
+        assertEquals(1, selector.getAttachedKeys().size)
+        lock.unlock()
+        clientKey.listensFlag = Selector.INPUT_READY or Selector.EVENT_ERROR
+        val list = SelectedEvents.create()
+        var c = 0
+        val buffer = ByteBuffer.alloc(512)
+        LOOP_ERROR@ while (true) {
+            println("Selecting...")
+            val eventCount = selector.select(selectedEvents = list)
+            println("Selected! eventCount=$eventCount")
+            val o = list.iterator()
+            while (o.hasNext()) {
+                c++
+                if (c > 100) {
+                    break@LOOP_ERROR
+                }
+                val e = o.next()
+
+                if (e.mode and Selector.INPUT_READY > 0) {
+                    println("Try read...")
+                    val count = channel.read(buffer)
+                    assertEquals(-1, count)
+                    break@LOOP_ERROR
+                    println("Ready for connect. count=$count")
+                }
+
+                println("Event! ${e.mode.toString(2)}")
+                if (e.mode and Selector.EVENT_ERROR > 0) {
+                    println("Error!!")
+                    break@LOOP_ERROR
+                }
+            }
+        }
+        assertEquals(0, selector.getAttachedKeys().size)
+
+//        try {
+//            clientKey.close()
+//            fail()
+//        } catch (e: ClosedException) {
+//            // Do nothing
+//        }
+    }
 
     @Test
     @Ignore

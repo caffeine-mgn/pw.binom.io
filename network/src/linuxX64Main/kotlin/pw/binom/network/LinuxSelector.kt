@@ -3,7 +3,6 @@ package pw.binom.network
 import kotlinx.cinterop.*
 import platform.linux.*
 import platform.posix.AF_INET
-import platform.posix.errno
 
 class LinuxSelector : AbstractSelector() {
 
@@ -11,18 +10,16 @@ class LinuxSelector : AbstractSelector() {
         val list: Int,
         attachment: Any?,
     ) : AbstractKey(attachment) {
+        private val epollEvent = nativeHeap.alloc<epoll_event>()
         private var nativeSocket: RawSocket = 0
 
         override fun addSocket(raw: RawSocket) {
             if (nativeSocket != 0) {
                 throw IllegalStateException()
             }
-            memScoped {
-                val event = alloc<epoll_event>()
-                event.events = epollCommonToNative(listensFlag.convert()).convert()
-                event.data.ptr = ptr
-                val c = epoll_ctl(native, EPOLL_CTL_ADD, raw.convert(), event.ptr)
-            }
+            epollEvent.events = epollCommonToNative(listensFlag.convert()).convert()
+            epollEvent.data.ptr = ptr
+            epoll_ctl(native, EPOLL_CTL_ADD, raw.convert(), epollEvent.ptr)
             nativeSocket = raw
         }
 
@@ -42,18 +39,15 @@ class LinuxSelector : AbstractSelector() {
             if (nativeSocket == 0) {
                 return
             }
-            memScoped {
-                val event = alloc<epoll_event>()
-                event.events = epollCommonToNative(mode.convert()).convert()
-                event.data.ptr = ptr
-                if (nativeSocket != 0) {
-                    epoll_ctl(list, EPOLL_CTL_MOD, nativeSocket.convert(), event.ptr)
-                }
+            epollEvent.events = epollCommonToNative(mode.convert()).convert()
+            if (nativeSocket != 0) {
+                epoll_ctl(list, EPOLL_CTL_MOD, nativeSocket.convert(), epollEvent.ptr)
             }
         }
 
         override fun close() {
             super.close()
+            nativeHeap.free(epollEvent)
             if (nativeSocket != 0) {
                 epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), null)
             }
@@ -62,8 +56,11 @@ class LinuxSelector : AbstractSelector() {
         override fun toString(): String = "LinuxKey(mode: ${modeToString(listensFlag)}, attachment: $attachment, connected: $connected)"
         fun epollCommonToNative(mode: Int): Int {
             var events = 0
+            if (Selector.EVENT_ERROR in mode) {
+                events = events or EPOLLHUP or EPOLLERR
+            }
             if (Selector.INPUT_READY in mode) {
-                events = events or EPOLLIN
+                events = events or EPOLLIN or EPOLLHUP or EPOLLERR
             }
             if (!connected && Selector.EVENT_CONNECTED in mode) {
                 events = events or EPOLLOUT
@@ -71,11 +68,6 @@ class LinuxSelector : AbstractSelector() {
             if (connected && Selector.OUTPUT_READY in mode) {
                 events = events or EPOLLOUT
             }
-
-            if (Selector.EVENT_ERROR in mode) {
-                events = events or EPOLLERR
-            }
-
             return events
         }
     }
@@ -120,10 +112,17 @@ class LinuxSelector : AbstractSelector() {
                     return event
                 }
                 if (EPOLLOUT in item.events) {
-                    key.resetMode(0)
                     key.connected = true
                     event.key = key
                     event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                    key.resetMode(key.listensFlag)
+                    return event
+                }
+                if (EPOLLIN in item.events) {
+                    key.connected = true
+                    event.key = key
+                    event.mode = Selector.EVENT_CONNECTED or Selector.INPUT_READY
+                    key.resetMode(key.listensFlag)
                     return event
                 }
                 if (EPOLLHUP in item.events) {
@@ -135,10 +134,8 @@ class LinuxSelector : AbstractSelector() {
                 throw IllegalStateException("Unknown connection state: ${modeToString(item.events.toInt())}")
             }
             if (EPOLLHUP in item.events) {
-                NSocket(native = item.data.fd, family = AF_INET).close()
-                key.close()
                 event.key = key
-                event.mode = 0
+                event.mode = Selector.INPUT_READY
                 return event
             }
             val common = epollNativeToCommon(item.events.convert())
@@ -156,11 +153,11 @@ class LinuxSelector : AbstractSelector() {
 
     override fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
         val key = LinuxKey(native, attachment)
-        key.listensFlag = mode
         keys += key
         if (!connectable) {
             key.connected = true
         }
+        key.listensFlag = mode
         return key
     }
 
@@ -169,8 +166,21 @@ class LinuxSelector : AbstractSelector() {
         if (!connectable) {
             key.connected = true
         }
+        key.listensFlag = mode
         keys += key
         return key
+    }
+
+    override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
+        selectedEvents as LinuxSelectedEvents
+        val eventCount = epoll_wait(
+            native,
+            selectedEvents.native.reinterpret(),
+            minOf(selectedEvents.maxElements, 1000),
+            timeout.toInt()
+        )
+        selectedEvents.eventCount = eventCount
+        return eventCount
     }
 
     override fun nativeSelect(timeout: Long, func: (AbstractKey, mode: Int) -> Unit): Int {
@@ -224,7 +234,7 @@ class LinuxSelector : AbstractSelector() {
     }
 }
 
-private fun epollNativeToCommon(mode: Int): Int {
+internal fun epollNativeToCommon(mode: Int): Int {
     var events = 0
     if (EPOLLIN in mode) {
         events = events or Selector.INPUT_READY
@@ -242,36 +252,41 @@ actual fun createSelector(): Selector = LinuxSelector()
 
 fun modeToString(mode: Int): String {
     val sb = StringBuilder()
-    if (mode and EPOLLIN != 0)
+    if (mode and EPOLLIN != 0) {
         sb.append("EPOLLIN ")
-    if (mode and EPOLLPRI != 0)
+    }
+    if (mode and EPOLLPRI != 0) {
         sb.append("EPOLLPRI ")
-
-    if (mode and EPOLLOUT != 0)
+    }
+    if (mode and EPOLLOUT != 0) {
         sb.append("EPOLLOUT ")
-
-    if (mode and EPOLLERR != 0)
+    }
+    if (mode and EPOLLERR != 0) {
         sb.append("EPOLLERR ")
-
-    if (mode and EPOLLHUP != 0)
+    }
+    if (mode and EPOLLHUP != 0) {
         sb.append("EPOLLHUP ")
-
-    if (mode and EPOLLRDNORM != 0)
+    }
+    if (mode and EPOLLRDNORM != 0) {
         sb.append("EPOLLRDNORM ")
-
-    if (mode and EPOLLRDBAND != 0)
+    }
+    if (mode and EPOLLRDBAND != 0) {
         sb.append("EPOLLRDBAND ")
-
-    if (mode and EPOLLWRNORM != 0)
+    }
+    if (mode and EPOLLWRNORM != 0) {
         sb.append("EPOLLWRNORM ")
-    if (mode and EPOLLWRBAND != 0)
+    }
+    if (mode and EPOLLWRBAND != 0) {
         sb.append("EPOLLWRBAND ")
-    if (mode and EPOLLMSG != 0)
+    }
+    if (mode and EPOLLMSG != 0) {
         sb.append("EPOLLMSG ")
-    if (mode and EPOLLRDHUP != 0)
+    }
+    if (mode and EPOLLRDHUP != 0) {
         sb.append("EPOLLRDHUP ")
-    if (mode and EPOLLONESHOT != 0)
+    }
+    if (mode and EPOLLONESHOT != 0) {
         sb.append("EPOLLONESHOT ")
-
+    }
     return sb.toString()
 }

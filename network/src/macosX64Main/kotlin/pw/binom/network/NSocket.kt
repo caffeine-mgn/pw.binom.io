@@ -98,13 +98,17 @@ actual class NSocket(val native: Int) : Closeable {
             recv(native, dataPtr, remaining.convert(), 0).convert()
         }
 //        val r: Int = recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
+        if (r==0){
+            return -1
+        }
         if (r < 0) {
             if (errno == EAGAIN) {
                 return 0
             }
             if (errno == EBADF){
-                nativeClose()
-                throw SocketClosedException()
+                return -1
+//                nativeClose()
+//                throw SocketClosedException()
             }
             throw IOException("Error on read data to network. send: [$r], error: [${errno}]")
         }
@@ -126,7 +130,9 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     override fun close() {
-        checkClosed()
+        if (closed){
+            return
+        }
         try {
             nativeClose()
         } finally {

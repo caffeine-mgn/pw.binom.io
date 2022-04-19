@@ -47,9 +47,10 @@ interface Selector : Closeable {
      */
     fun select(timeout: Long = -1, func: (Key, mode: Int) -> Unit): Int
     fun select(timeout: Long = -1): Iterator<KeyEvent>
+    fun select(timeout: Long = -1, selectedEvents: SelectedEvents): Int
     fun attach(socket: TcpClientSocketChannel, mode: Int = 0, attachment: Any? = null): Key
     fun attach(socket: TcpServerSocketChannel, mode: Int = 0, attachment: Any? = null): Key
-    fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?): Key
+    fun attach(socket: UdpSocketChannel, mode: Int = 0, attachment: Any? = null): Key
 }
 
 internal expect fun createSelector(): Selector
@@ -79,5 +80,5 @@ internal fun selectorModeToString(mode: Int): String {
         }
         sb.append("EVENT_ERROR")
     }
-    return sb.toString()
+    return sb.toString().trim()
 }

@@ -2,9 +2,7 @@ package pw.binom.db.radis
 
 import kotlinx.coroutines.Dispatchers
 import pw.binom.io.AsyncCloseable
-import pw.binom.network.Network
-import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkCoroutineDispatcher
+import pw.binom.network.*
 
 interface RadisConnection : AsyncCloseable {
     enum class ValueType {
@@ -16,7 +14,7 @@ interface RadisConnection : AsyncCloseable {
     companion object {
         suspend fun connect(
             address: NetworkAddress,
-            manager: NetworkCoroutineDispatcher = Dispatchers.Network,
+            manager: NetworkManager = Dispatchers.Network,
             login: String? = null,
             password: String? = null,
         ): RadisConnectionImpl {

@@ -10,14 +10,12 @@ import pw.binom.db.tarantool.protocol.Code
 import pw.binom.db.tarantool.protocol.InternalProtocolUtils
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.AsyncCloseable
-import pw.binom.network.Network
-import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkCoroutineDispatcher
+import pw.binom.network.*
 
 interface TarantoolConnection : AsyncCloseable {
     companion object {
         suspend fun connect(
-            manager: NetworkCoroutineDispatcher = Dispatchers.Network,
+            manager: NetworkManager = Dispatchers.Network,
             address: NetworkAddress,
             userName: String?,
             password: String?

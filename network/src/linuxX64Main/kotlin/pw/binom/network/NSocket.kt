@@ -3,7 +3,6 @@ package pw.binom.network
 import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.ByteBuffer
-import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -161,7 +160,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
 
     actual val raw: RawSocket
         get() = native.convert()
-    private val closed = AtomicBoolean(false)
+    private var closed = false
 
     actual val port: Int?
         get() {
@@ -179,7 +178,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
         }
 
     private fun checkClosed() {
-        if (closed.value) {
+        if (closed) {
             throw RuntimeException("Socket already closed")
         }
     }
@@ -239,16 +238,21 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
         val r: Int = data.ref { dataPtr, remaining ->
             recv(native, dataPtr, remaining.convert(), 0).convert()
         }
+        if (r == 0) {
+            return -1
+        }
         if (r < 0) {
             if (errno == EAGAIN) {
                 return 0
             }
             if (errno == ECONNRESET) {
                 nativeClose()
-                throw SocketClosedException()
+                return -1
+//                throw SocketClosedException()
             }
             if (errno == EBADF) {
-                throw SocketClosedException()
+                return -1
+//                throw SocketClosedException()
             }
             nativeClose()
 //            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}], EDEADLK=$EDEADLK")
@@ -267,11 +271,13 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
     }
 
     override fun close() {
-        checkClosed()
+        if (closed) {
+            return
+        }
         try {
             nativeClose()
         } finally {
-            closed.value = true
+            closed = true
         }
     }
 

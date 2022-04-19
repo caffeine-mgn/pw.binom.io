@@ -6,6 +6,7 @@ import pw.binom.io.Closeable
 import pw.binom.net.URL
 import pw.binom.network.Network
 import pw.binom.network.NetworkCoroutineDispatcher
+import pw.binom.network.NetworkManager
 import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.KeyManager
 import pw.binom.ssl.TrustManager
@@ -38,7 +39,7 @@ interface HttpClient : Closeable {
 }
 
 fun HttpClient.Companion.create(
-    networkDispatcher: NetworkCoroutineDispatcher = Dispatchers.Network,
+    networkDispatcher: NetworkManager = Dispatchers.Network,
     useKeepAlive: Boolean = true,
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,

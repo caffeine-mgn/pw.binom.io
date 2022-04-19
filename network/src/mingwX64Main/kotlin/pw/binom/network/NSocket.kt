@@ -13,21 +13,23 @@ import platform.windows.closesocket
 import platform.windows.ioctlsocket
 import platform.windows.shutdown
 import pw.binom.ByteBuffer
+import pw.binom.io.ClosedException
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
-private fun setBlocking(native: SOCKET, value: Boolean) {
+private fun setBlocking(native: SOCKET, value: Boolean): Boolean =
     memScoped {
         val nonBlocking = alloc<UIntVar>()
         nonBlocking.value = if (value) 0u else 1u
         if (ioctlsocket(native, FIONBIO.convert(), nonBlocking.ptr) == -1) {
             if (GetLastError() == platform.windows.WSAENOTSOCK.toUInt()) {
-                throw IOException("Can't set non blocking mode. Socket is invalid")
+                return@memScoped false
+//                throw IOException("Can't set non blocking mode. Socket is invalid")
             }
             throw IOException("Can't set non blocking mode. Error: ${GetLastError()}")
         }
+        true
     }
-}
 
 private fun bind(native: SOCKET, address: NetworkAddress, family: Int) {
     memScoped {
@@ -100,6 +102,7 @@ private fun allowIpv4(native: SOCKET) {
 }
 
 actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
+    private var closed = false
     actual companion object {
         actual fun serverTcp(address: NetworkAddress): NSocket {
             init_sockets()
@@ -129,7 +132,6 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                 if (native < 0uL) {
                     throw RuntimeException("Tcp Socket Creation")
                 }
-                setBlocking(native, blocking)
                 val con = address.data.usePinned { data ->
                     platform.windows.connect(
                         native,
@@ -139,12 +141,15 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                 }
                 if (con < 0) {
                     if (GetLastError() == platform.windows.WSAEAFNOSUPPORT.toUInt()) {
+                        native.nativeClose()
                         throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()} An address incompatible with the requested protocol was used.")
                     }
                     if (GetLastError() == platform.windows.WSAETIMEDOUT.toUInt()) {
+                        native.nativeClose()
                         throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()} A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.")
                     }
                     if (GetLastError() != platform.windows.WSAEWOULDBLOCK.toUInt()) {
+                        native.nativeClose()
                         throw SocketConnectException("Can't connect to $address. Error: ${GetLastError()}")
                     }
                 }
@@ -183,6 +188,9 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         }
 
     actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
+        if (closed) {
+            return null
+        }
         val native = if (address == null) {
             platform.windows.accept(native, null, null)
         } else {
@@ -206,6 +214,9 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
     }
 
     actual fun send(data: ByteBuffer): Int {
+        if (closed) {
+            return -1
+        }
         memScoped {
             val r: Int = data.ref { dataPtr, remaining ->
                 send(native, dataPtr, remaining.convert(), 0).convert()
@@ -226,9 +237,16 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
     }
 
     actual fun recv(data: ByteBuffer): Int {
-
+        if (closed) {
+            return -1
+        }
         val r: Int = data.ref { dataPtr, remaining ->
             platform.windows.recv(native, dataPtr, remaining.convert(), 0).convert()
+        }
+        if (r == 0) {
+            closed = true
+            native.nativeClose()
+            return -1
         }
         if (r < 0) {
             val error = GetLastError()
@@ -242,17 +260,18 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         return r
     }
 
-    private fun nativeClose() {
-        shutdown(native, SD_SEND)
-        closesocket(native)
-    }
-
     override fun close() {
-        nativeClose()
+        if (closed) {
+            return
+        }
+        closed = true
+        native.nativeClose()
     }
 
     actual fun setBlocking(value: Boolean) {
-        setBlocking(native, value)
+        if (!setBlocking(native, value)) {
+            closed = true
+        }
     }
 
     actual fun connect(address: NetworkAddress) {
@@ -378,4 +397,9 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         data.position += gotBytes.toInt()
         return gotBytes
     }
+}
+
+fun platform.linux.SOCKET.nativeClose() {
+    shutdown(this, SD_BOTH)
+    closesocket(this)
 }

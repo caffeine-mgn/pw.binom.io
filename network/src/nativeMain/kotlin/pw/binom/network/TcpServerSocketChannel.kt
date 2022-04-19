@@ -26,17 +26,30 @@ actual class TcpServerSocketChannel : Closeable {
             throw IllegalStateException()
         }
         native = NSocket.serverTcp(address)
-        native!!.setBlocking(false)
+        native!!.setBlocking(blocking)
         key?.addSocket(native!!.raw)
     }
 
     override fun close() {
         native?.also {
-            key?.removeSocket(it.raw)
+            val c = key
+            key = null
+            c?.let {
+                if (!it.closed) {
+                    it.close()
+                }
+            }
             it.close()
         }
     }
 
     actual val port: Int?
         get() = native!!.port
+
+    private var blocking = true
+
+    actual fun setBlocking(value: Boolean) {
+        native?.setBlocking(value)
+        blocking = value
+    }
 }

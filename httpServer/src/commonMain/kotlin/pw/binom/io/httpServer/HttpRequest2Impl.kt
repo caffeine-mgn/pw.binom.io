@@ -16,6 +16,7 @@ import pw.binom.net.toQuery
 import pw.binom.network.SocketClosedException
 import pw.binom.pool.ObjectManger
 import pw.binom.pool.ObjectPool
+import pw.binom.pool.borrow
 import pw.binom.skipAll
 
 internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpRequest {
@@ -38,8 +39,8 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
                 server.browConnection(channel)
             }
             val items = request.split(' ', limit = 3)
-
-            val headers = HashHeaders()
+            val requestObject = server.httpRequest2Impl.borrow()
+            val headers = requestObject.internalHeaders
             while (true) {
                 val s = channel.reader.readln() ?: break
                 if (s.isEmpty()) {
@@ -54,22 +55,21 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
                 val headerValue = s.substring(p + 2)
                 headers.add(headerKey, headerValue)
             }
-            val p = server.httpRequest2Impl.borrow()
-            p.reset(
+
+            requestObject.reset(
                 request = (items.getOrNull(1) ?: ""),
                 method = items[0],
                 channel = channel,
-                headers = headers,
                 server = server,
             )
-            return p
+            return requestObject
         }
     }
 
     var channel: ServerAsyncAsciiChannel? = null
     var server: HttpServer? = null
 
-    private var internalHeaders: Headers? = null
+    private var internalHeaders = HashHeaders()
     override var method: String = ""
 
     override var request: String = ""
@@ -79,7 +79,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
     private var readInput: AsyncInput? = null
 
     override val headers: Headers
-        get() = internalHeaders!!
+        get() = internalHeaders
     override val path: Path
         get() {
             val p = request.indexOf('?')
@@ -110,13 +110,11 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         request: String,
         method: String,
         channel: ServerAsyncAsciiChannel,
-        headers: Headers,
         server: HttpServer,
     ) {
         this.request = request
         this.method = method
         this.channel = channel
-        this.internalHeaders = headers
         this.server = server
         isFree = false
     }
@@ -126,7 +124,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         request = ""
         method = ""
         channel = null
-        internalHeaders = null
+        internalHeaders.clear()
         server = null
         readInput = null
         onClose(this)
@@ -275,12 +273,14 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
                 server!!.textBufferPool.recycle(buf)
             }
         }
-        val r = HttpResponse2Impl(
-            keepAliveEnabled = server!!.maxIdleTime > 0 && headers.keepAlive,
-            channel = channel!!,
-            acceptEncoding = headers.acceptEncoding,
-            server = server!!
-        )
+        val r = server!!.httpResponse2Impl.borrow {
+            it.reset(
+                keepAliveEnabled = server!!.maxIdleTime > 0 && headers.keepAlive,
+                channel = channel!!,
+                acceptEncoding = headers.acceptEncoding,
+                server = server!!
+            )
+        }
         startedResponse = r
         free()
         return r
@@ -288,7 +288,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
 
     override suspend fun asyncClose() {
         checkClosed()
-        response().use {
+        response {
             it.status = 404
         }
     }

@@ -8,14 +8,10 @@ import java.nio.channels.ServerSocketChannel as JServerSocketChannel
 actual class TcpServerSocketChannel : Closeable {
     val native = JServerSocketChannel.open()
 
-    init {
-        native.configureBlocking(false)
-    }
-
-    actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel?{
+    actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? {
         val s = native.accept()
-        if (s!=null && address!=null){
-            address._native=s.remoteAddress as InetSocketAddress
+        if (s != null && address != null) {
+            address._native = s.remoteAddress as InetSocketAddress
         }
         return s?.let { TcpClientSocketChannel(it) }
     }
@@ -37,4 +33,8 @@ actual class TcpServerSocketChannel : Closeable {
 
     actual val port: Int?
         get() = bindPort
+
+    actual fun setBlocking(value: Boolean) {
+        native.configureBlocking(value)
+    }
 }

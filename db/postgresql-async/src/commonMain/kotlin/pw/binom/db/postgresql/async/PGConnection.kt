@@ -24,7 +24,7 @@ class PGConnection private constructor(
     charset: Charset,
     val userName: String,
     val password: String?,
-    val networkDispatcher: NetworkCoroutineDispatcher
+    val networkDispatcher: NetworkManager
 ) : AsyncConnection {
     internal var busy = false
 
@@ -33,7 +33,7 @@ class PGConnection private constructor(
         suspend fun connect(
             address: NetworkAddress,
             applicationName: String? = "Binom Async Client",
-            networkDispatcher: NetworkCoroutineDispatcher = Dispatchers.Network,
+            networkDispatcher: NetworkManager = Dispatchers.Network,
             userName: String,
             password: String,
             dataBase: String,

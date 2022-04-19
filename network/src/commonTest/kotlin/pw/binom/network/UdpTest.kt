@@ -2,19 +2,38 @@ package pw.binom.network
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
-import pw.binom.*
+import pw.binom.ByteBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.alloc
+import pw.binom.io.ClosedException
 import pw.binom.io.bufferedReader
 import pw.binom.io.readText
 import pw.binom.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class UdpTest {
 
     @Test
     fun randomPortTest() {
         assertTrue(UdpConnection.randomPort() > 0)
+    }
+
+    @Test
+    fun closeByKey() {
+        val channel = UdpSocketChannel()
+        val selector = Selector.open()
+        channel.setBlocking(false)
+        val key = selector.attach(channel, 0, null)
+        channel.close()
+        try {
+            key.close()
+            fail()
+        } catch (e: ClosedException) {
+            // Do nothing
+        }
     }
 
     @Test
@@ -64,7 +83,6 @@ class UdpTest {
     @Test
     fun test() = runTest {
         val port = UdpConnection.randomPort()
-        println("port=$port")
         val server = Dispatchers.Network.bindUdp(NetworkAddress.Immutable(port = port))
         val client = Dispatchers.Network.attach(UdpSocketChannel())
         val message = "Hello"

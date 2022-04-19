@@ -25,7 +25,7 @@ fun interface Handler {
  * @param errorHandler handler for error during request processing
  */
 class HttpServer(
-    val manager: NetworkCoroutineDispatcher = Dispatchers.Network,
+    val manager: NetworkManager = Dispatchers.Network,
     val handler: Handler,
     val maxIdleTime: Long = 10_000,
     val idleCheckInterval: Long = 30_000,
@@ -40,6 +40,7 @@ class HttpServer(
     internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     internal val textBufferPool = ByteBufferPool(capacity = 16)
     internal val httpRequest2Impl = FixedSizePool(16, HttpRequest2Impl.Manager)
+    internal val httpResponse2Impl = FixedSizePool(16, HttpResponse2Impl.Manager)
     internal val reusableAsyncChunkedOutputPool by lazy { ReusableAsyncChunkedOutput.Pool(outputBufferPoolSize) }
     internal val bufferWriterPool by lazy {
         FixedSizePool(
@@ -127,35 +128,37 @@ class HttpServer(
         }
     }
 
-    fun listenHttp(address: NetworkAddress, dispatcher: NetworkCoroutineDispatcher = Dispatchers.Network): Job {
+    fun listenHttp(address: NetworkAddress, dispatcher: NetworkManager = Dispatchers.Network): Job {
         val serverChannel = TcpServerSocketChannel()
         serverChannel.bind(address)
+        serverChannel.setBlocking(false)
         val server = dispatcher.attach(serverChannel)
         binds += server
 
         val closed = AtomicBoolean(false)
-        val listenJob = GlobalScope.launch(dispatcher) {
-            try {
-                while (!closed.value) {
-
-                    var channel: ServerAsyncAsciiChannel? = null
-                    try {
-                        idleCheck()
-                        val client = try {
-                            server.accept(null)
-                        } catch (e: ClosedException) {
-                            null
-                        } ?: break
-                        channel = ServerAsyncAsciiChannel(channel = client, pool = textBufferPool)
-                        clientProcessing(channel = channel, isNewConnect = true)
-                    } catch (e: Throwable) {
-                        runCatching { channel?.asyncClose() }
+        val listenJob = GlobalScope.launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
+            withContext(dispatcher) {
+                try {
+                    while (!closed.value) {
+                        var channel: ServerAsyncAsciiChannel? = null
+                        try {
+                            idleCheck()
+                            val client = try {
+                                server.accept(null)
+                            } catch (e: ClosedException) {
+                                null
+                            } ?: break
+                            channel = ServerAsyncAsciiChannel(channel = client, pool = textBufferPool)
+                            clientProcessing(channel = channel, isNewConnect = true)
+                        } catch (e: Throwable) {
+                            runCatching { channel?.asyncClose() }
+                        }
                     }
+                } finally {
+                    println("Finish!")
+                    binds -= server
+                    runCatching { server.close() }
                 }
-            } finally {
-                println("Finish!")
-                binds -= server
-                runCatching { server.close() }
             }
         }
         return JobWithCancelWaiter(listenJob) {

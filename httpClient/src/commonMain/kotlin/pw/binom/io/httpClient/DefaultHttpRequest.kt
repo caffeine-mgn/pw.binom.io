@@ -44,11 +44,11 @@ class DefaultHttpRequest constructor(
     }
 
     private suspend fun sendHeaders() {
-        channel.writer.append(method).append(" ").append(uri.request).append(" ").append("HTTP/1.1\r\n")
+        channel.writer.append(method).append(" ").append(uri.request).append(" ").append("HTTP/1.1${Utils.CRLF}")
         headers.forEachHeader { key, value ->
-            channel.writer.append(key).append(": ").append(value).append("\r\n")
+            channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
         }
-        channel.writer.append("\r\n")
+        channel.writer.append(Utils.CRLF)
     }
 
     private val keepAlive

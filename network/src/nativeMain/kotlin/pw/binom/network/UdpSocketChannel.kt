@@ -14,8 +14,8 @@ actual class UdpSocketChannel : Closeable {
             value?.addSocket(native.raw)
         }
 
-    init {
-        native.setBlocking(false)
+    actual fun setBlocking(value: Boolean) {
+        native.setBlocking(value)
     }
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int {
@@ -27,7 +27,13 @@ actual class UdpSocketChannel : Closeable {
     }
 
     override fun close() {
-        key?.removeSocket(native.raw)
+        val c = key
+        key = null
+        c?.let {
+            if (!it.closed) {
+                it.close()
+            }
+        }
         native.close()
     }
 

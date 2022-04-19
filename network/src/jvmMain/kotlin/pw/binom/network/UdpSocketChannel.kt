@@ -8,10 +8,6 @@ import java.nio.channels.DatagramChannel
 actual class UdpSocketChannel : Closeable {
     val native = DatagramChannel.open()
 
-    init {
-        native.configureBlocking(false)
-    }
-
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int {
         val _native = address._native
         require(_native != null)
@@ -46,4 +42,8 @@ actual class UdpSocketChannel : Closeable {
 
     actual val port: Int?
         get() = bindPort
+
+    actual fun setBlocking(value: Boolean) {
+        native.configureBlocking(value)
+    }
 }

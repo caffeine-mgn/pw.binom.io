@@ -16,6 +16,7 @@ class SelectorTest {
     fun selectTimeoutTest2() {
         val selector = Selector.open()
         val client = TcpClientSocketChannel()
+        client.setBlocking(false)
         selector.attach(client)
         val it = selector.select(1000)
         it.forEach {
@@ -28,6 +29,7 @@ class SelectorTest {
     fun connectTest2() {
         val selector = Selector.open()
         val client = TcpClientSocketChannel()
+        client.setBlocking(false)
         val key = selector.attach(client)
         try {
             key.listensFlag = 0
@@ -44,6 +46,7 @@ class SelectorTest {
     fun connectTest() {
         val selector = Selector.open()
         val client = TcpClientSocketChannel()
+        client.setBlocking(false)
         val key = selector.attach(client)
         println("try set flags...  ${Selector.EVENT_CONNECTED}")
         key.listensFlag = Selector.EVENT_CONNECTED
@@ -69,6 +72,7 @@ class SelectorTest {
     fun connectionRefusedTest() {
         val selector = Selector.open()
         val client = TcpClientSocketChannel()
+        client.setBlocking(false)
         selector.attach(client)
         client.connect(NetworkAddress.Immutable("127.0.0.1", 12))
 
@@ -97,6 +101,7 @@ class SelectorTest {
         val server = TcpServerSocketChannel()
         val addr = NetworkAddress.Immutable("0.0.0.0", Random.nextInt(1000, 5999))
         server.bind(addr)
+        server.setBlocking(false)
         selector.attach(server)
         assertEquals(0, selector.select(1000) { _, _ -> })
     }
