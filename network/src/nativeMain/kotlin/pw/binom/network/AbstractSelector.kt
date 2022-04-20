@@ -100,69 +100,6 @@ abstract class AbstractSelector : Selector {
         return key
     }
 
-    override fun select(timeout: Long, func: (Selector.Key, mode: Int) -> Unit): Int =
-        nativeSelect(timeout) { key, nativeMode ->
-            if (!key.connected) {
-                if (nativeMode and Selector.EVENT_CONNECTED != 0) {
-                    key.connected = true
-                    func(key, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
-                } else {
-                    try {
-                        func(key, Selector.EVENT_ERROR)
-                    } finally {
-                        if (!key.closed) {
-                            key.close()
-                        }
-                    }
-                }
-                return@nativeSelect
-            }
-
-            func(key, nativeMode)
-        }
-
-    private val selected = object : Iterator<Selector.KeyEvent> {
-        override fun hasNext(): Boolean = nativeSelectedKeys.hasNext()
-        private val event = object : Selector.KeyEvent {
-            override lateinit var key: Selector.Key
-            override var mode: Int = 0
-
-            override fun toString(): String = selectorModeToString(mode)
-        }
-
-        override fun next(): Selector.KeyEvent {
-            val e = nativeSelectedKeys.next()
-
-            if (!e.key.connected) {
-                if (e.mode and Selector.EVENT_CONNECTED != 0) {
-                    e.key.connected = true
-                    event.key = e.key
-                    event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
-                    return event
-                } else {
-                    try {
-                        event.key = e.key
-                        event.mode = Selector.EVENT_ERROR
-                        return event
-                    } finally {
-                        if (!e.key.closed) {
-                            e.key.close()
-                        }
-                    }
-                }
-            } else {
-                event.key = e.key
-                event.mode = e.mode
-                return event
-            }
-        }
-    }
-
-    override fun select(timeout: Long): Iterator<Selector.KeyEvent> {
-        nativeSelect(timeout)
-        return selected
-    }
-
     interface NativeKeyEvent {
         val key: AbstractKey
         val mode: Int

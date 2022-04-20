@@ -3,9 +3,9 @@ package pw.binom.network
 import kotlinx.cinterop.*
 import platform.linux.*
 
-class LinuxSelectedEvents(val maxElements: Int) : AbstractNativeSelectedEvents() {
-    val native = nativeHeap.allocArray<epoll_event>(1000)
-    var eventCount: Int = 0
+class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelectedEvents() {
+    override val native = nativeHeap.allocArray<epoll_event>(1000)
+    override var eventCount: Int = 0
     override fun close() {
         nativeHeap.free(native)
     }

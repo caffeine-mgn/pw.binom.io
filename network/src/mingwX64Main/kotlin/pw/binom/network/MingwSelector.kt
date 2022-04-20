@@ -81,7 +81,6 @@ class MingwSelector : AbstractSelector() {
     private val native = epoll_create(1000)!!
     private val list = nativeHeap.allocArray<epoll_event>(1000)
     override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
-        selectedEvents as MingwSelectedEvents
         val eventCount = epoll_wait(
             native,
             selectedEvents.native.reinterpret(),

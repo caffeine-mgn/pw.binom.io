@@ -45,8 +45,6 @@ interface Selector : Closeable {
     /**
      * @param timeout Timeout for wait events. -1 infinity
      */
-    fun select(timeout: Long = -1, func: (Key, mode: Int) -> Unit): Int
-    fun select(timeout: Long = -1): Iterator<KeyEvent>
     fun select(timeout: Long = -1, selectedEvents: SelectedEvents): Int
     fun attach(socket: TcpClientSocketChannel, mode: Int = 0, attachment: Any? = null): Key
     fun attach(socket: TcpServerSocketChannel, mode: Int = 0, attachment: Any? = null): Key

@@ -172,7 +172,6 @@ class LinuxSelector : AbstractSelector() {
     }
 
     override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
-        selectedEvents as LinuxSelectedEvents
         val eventCount = epoll_wait(
             native,
             selectedEvents.native.reinterpret(),
