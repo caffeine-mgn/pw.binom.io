@@ -7,7 +7,6 @@ import pw.binom.concurrency.ThreadRef
 import pw.binom.concurrency.Worker
 import pw.binom.io.Closeable
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resumeWithException
 
 abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager {
     companion object {
@@ -34,7 +33,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             try {
                 while (!self.closed) {
                     self.networkThread = ThreadRef()
-                    self.selector.select(selectedEvents = selectedKeys)
+                    val selected = self.selector.select(selectedEvents = selectedKeys)
                     val iterator = selectedKeys.iterator()
                     var executeOnNetwork = false
                     while (iterator.hasNext() && !self.closed) {
@@ -82,15 +81,19 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         readyForWriteListener.push(block)
+        wakeup()
+    }
+
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
+        !networkThread.same
+
+    override fun wakeup() {
         try {
             internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
         } catch (e: Throwable) {
             throw IllegalStateException("Can't switch on internal udp interrupt", e)
         }
     }
-
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
-        !networkThread.same
 
     override fun close() {
         closed = true
@@ -141,7 +144,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 //                        connection.close()
 //                    }
 //                    try {
-////                        connection.connecting()
+// //                        connection.connecting()
 //                        channel.connect(address)
 //                    } catch (e: Throwable) {
 //                        it.resumeWithException(e)

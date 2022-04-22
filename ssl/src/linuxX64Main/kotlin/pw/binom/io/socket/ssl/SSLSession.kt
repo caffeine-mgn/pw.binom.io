@@ -6,7 +6,6 @@ import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
 import platform.openssl.*
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
 
 internal fun assertError(ssl: CPointer<SSL>, ret: Int) {
@@ -86,9 +85,8 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         var off = offset
         var readed = 0
 
-
         while (len > 0) {
-            val n = BIO_write(rbio, dst.refTo(off), len);
+            val n = BIO_write(rbio, dst.refTo(off), len)
             if (n <= 0)
                 TODO()
             readed += n
@@ -103,14 +101,14 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         val r = init()
         if (r != null)
             return Status(
-                    r,
-                    0
+                r,
+                0
             )
         val n = SSL_write(ssl, src.refTo(offset), length)
         if (n > 0) {
             return Status(
-                    State.OK,
-                    n
+                State.OK,
+                n
             )
         }
         val state = when (val e = SSL_get_error(ssl, n)) {
@@ -120,12 +118,12 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
             else -> TODO("Unknown status $e")
         }
         return Status(
-                state, 0
+            state, 0
         )
     }
 
     actual fun readNet(dst: ByteBuffer): Int {
-        val n = dst.ref{ dstPtr,remaining ->
+        val n = dst.ref { dstPtr, remaining ->
             BIO_read(wbio, dstPtr, remaining)
         }
         if (n < 0)
@@ -135,6 +133,9 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
     }
 
     actual fun writeNet(dst: ByteBuffer): Int {
+        if (dst.capacity == 0) {
+            return 0
+        }
         var len = dst.remaining
         var off = dst.position
         var readed = 0
@@ -156,11 +157,18 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
 
     actual fun readApp(dst: ByteBuffer): Status {
         val r = init()
-        if (r != null)
+        if (r != null) {
             return Status(
-                r,
-                0
+                state = r,
+                bytes = 0
             )
+        }
+        if (dst.capacity == 0) {
+            return Status(
+                state = State.OK,
+                bytes = 0,
+            )
+        }
         val n = dst.refTo(dst.position) { dstPtr ->
             SSL_read(ssl, dstPtr, dst.remaining)
         }
@@ -175,11 +183,11 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
             SSL_ERROR_WANT_READ -> State.WANT_READ
             SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
             SSL_ERROR_SSL -> State.ERROR
-            SSL_ERROR_ZERO_RETURN->State.CLOSED
+            SSL_ERROR_ZERO_RETURN -> State.CLOSED
             else -> TODO("Unknown status $e on read")
         }
         return Status(
-                state, 0
+            state, 0
         )
     }
 

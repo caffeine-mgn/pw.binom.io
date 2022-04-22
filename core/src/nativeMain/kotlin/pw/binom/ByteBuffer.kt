@@ -4,19 +4,15 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
-import kotlin.native.internal.createCleaner
-
-@OptIn(ExperimentalStdlibApi::class)
 actual class ByteBuffer(
     actual override val capacity: Int,
-    val autoClean: Boolean
 ) : Input, Output, Closeable, Buffer {
     actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size, true)
+        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
 
     //    private val native = createNativeByteBuffer(capacity)!!
-    private val native = platform.posix.malloc(capacity.convert())!!.reinterpret<ByteVar>()
+    private val data = ByteArray(capacity)
 
     //    val bb = nativeHeap.allocArray<ByteVar>(capacity)
     private var closed = false
@@ -41,7 +37,13 @@ actual class ByteBuffer(
 //    }
 
     override fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T {
-        return func((native + position)!!)
+        try {
+            return data.usePinned {
+                func(it.addressOf(position))
+            }
+        } catch (e: ArrayIndexOutOfBoundsException) {
+            throw IllegalArgumentException("Can't get access to $position address of buffer memory. capacity: $capacity, data.size: ${data.size}")
+        }
     }
 
     fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
@@ -103,6 +105,9 @@ actual class ByteBuffer(
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
+        if (position == limit) {
+            return 0
+        }
         return ref { sourceCPointer, remaining ->
             dest.ref { destCPointer, destRemaining ->
                 val len = minOf(destRemaining, remaining)
@@ -125,10 +130,6 @@ actual class ByteBuffer(
 
     override fun close() {
         checkClosed()
-        if (!autoClean) {
-            free(native)
-//            nativeHeap.free(native)
-        }
         closed = true
     }
 
@@ -144,7 +145,7 @@ actual class ByteBuffer(
 
     actual operator fun get(index: Int): Byte {
         checkClosed()
-        return native[index]
+        return data[index]
     }
 
     actual operator fun set(index: Int, value: Byte) {
@@ -157,7 +158,7 @@ actual class ByteBuffer(
     actual fun get(): Byte {
         checkClosed()
         if (position >= limit) throw IndexOutOfBoundsException()
-        return native[position++]
+        return data[position++]
     }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
@@ -185,8 +186,14 @@ actual class ByteBuffer(
         get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
+        if (newSize == 0) {
+            return alloc(0)
+        }
         checkClosed()
-        val new = ByteBuffer.alloc(newSize)
+        if (capacity == 0) {
+            return alloc(newSize).empty()
+        }
+        val new = alloc(newSize)
         val len = minOf(capacity, newSize)
         ref0 { oldCPointer, oldDataSize ->
             new.ref0 { newCPointer, newDataSize ->
@@ -248,13 +255,6 @@ actual class ByteBuffer(
         }
     }
 
-    private val cleaner = if (autoClean) createCleaner(native) { self ->
-        free(self)
-//        nativeHeap.free(self)
-    } else {
-        null
-    }
-
     actual fun peek(): Byte {
         checkClosed()
         if (position == limit) {
@@ -291,7 +291,9 @@ actual class ByteBuffer(
         checkClosed()
         val size = remaining
         if (size > 0) {
-            memcpy(native, native + position, size.convert())
+            ref0 { native, _ ->
+                memcpy(native, native + position, size.convert())
+            }
             position = 0
             limit = size
         } else {
@@ -312,7 +314,7 @@ private operator fun <T : CPointed> CPointer<T>.plus(offset: Int) =
     (this.toLong() + offset).toCPointer<T>()
 
 actual inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
-    val b = ByteBuffer(size, false)
+    val b = ByteBuffer(size)
     return try {
         block(b)
     } finally {

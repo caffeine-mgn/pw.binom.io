@@ -124,8 +124,11 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         bytes.compact()
     }
 
-    actual fun read(array: CharArray, offset: Int, length: Int): Int =
-        array.usePinned { pinnedArray ->
+    actual fun read(array: CharArray, offset: Int, length: Int): Int {
+        if (array.isEmpty() || bytes.capacity == 0) {
+            return 0
+        }
+        return array.usePinned { pinnedArray ->
             bytes.refTo(position * 2) { bytes ->
                 val len = minOf(remaining, length)
                 memcpy(pinnedArray.addressOf(offset), bytes, (len * 2).convert())
@@ -133,7 +136,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
                 len
             }
         }
-
+    }
 
     actual fun realloc(newSize: Int): CharBuffer =
         CharBuffer(bytes.realloc(newSize * Char.SIZE_BYTES))
@@ -157,6 +160,9 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, minOf(array.size - offset, length))
+        if (bytes.capacity == 0) {
+            return 0
+        }
         array.usePinned { pinnedArray ->
             bytes.refTo(position * Char.SIZE_BYTES) { bytes ->
                 memcpy(bytes, pinnedArray.addressOf(offset), (len * Char.SIZE_BYTES).convert())

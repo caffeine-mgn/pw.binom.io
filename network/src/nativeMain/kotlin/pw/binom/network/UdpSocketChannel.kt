@@ -5,7 +5,7 @@ import pw.binom.io.Closeable
 
 actual class UdpSocketChannel : Closeable {
     val native = NSocket.udp()
-    var key: AbstractSelector.AbstractKey? = null
+    var key: AbstractKey? = null
         set(value) {
             if (field != null) {
                 field!!.removeSocket(native.raw)

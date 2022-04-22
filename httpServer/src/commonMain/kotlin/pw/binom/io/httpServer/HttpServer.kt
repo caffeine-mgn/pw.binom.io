@@ -48,6 +48,8 @@ class HttpServer(
             ReusableAsyncBufferedOutputAppendable.Manager()
         )
     }
+    val idleConnectionSize: Int
+        get() = idleConnections.size
     private var closed = false
     private fun checkClosed() {
         if (closed) {
@@ -55,15 +57,13 @@ class HttpServer(
         }
     }
 
+    private var lastIdleCheckTime = Date.nowTime
     private val binds = ArrayList<TcpServerConnection>()
-
     private val idleConnections = HashSet<ServerAsyncAsciiChannel>()
 
     internal fun browConnection(channel: ServerAsyncAsciiChannel) {
         idleConnections -= channel
     }
-
-    private var lastIdleCheckTime = Date.nowTime
 
     suspend fun forceIdleCheck(): Int {
         var count = 0
@@ -92,9 +92,6 @@ class HttpServer(
         }
         forceIdleCheck()
     }
-
-    val idleConnectionSize: Int
-        get() = idleConnections.size
 
     internal fun clientReProcessing(channel: ServerAsyncAsciiChannel) {
         channel.activeUpdate()
@@ -169,41 +166,22 @@ class HttpServer(
         }
     }
 
-//    fun bindHttp(address: NetworkAddress): Closeable {
-//        val server = manager.bindTcp(address)
-//        binds += server
-//        manager.startCoroutine {
-//            while (!closed) {
-//                var channel: ServerAsyncAsciiChannel? = null
-//                try {
-//                    idleCheck()
-//                    val client = server.accept(null) ?: continue
-//                    channel = ServerAsyncAsciiChannel(channel = client, pool = textBufferPool)
-//                    clientProcessing(channel = channel, isNewConnect = true)
-//                } catch (e: Throwable) {
-//                    runCatching { channel?.asyncClose() }
-//                }
-//            }
-//        }
-//        return Closeable {
-//            checkClosed()
-//            binds -= server
-//            server.close()
-//        }
-//    }
-
     override suspend fun asyncClose() {
         checkClosed()
         closed = true
-        binds.forEach {
-            runCatching { it.close() }
-        }
-        binds.clear()
+        textBufferPool.close()
+        httpRequest2Impl.close()
+        httpResponse2Impl.close()
+        reusableAsyncChunkedOutputPool.close()
+        bufferWriterPool.close()
         idleConnections.forEach {
             runCatching { it.asyncClose() }
         }
         idleConnections.clear()
-        reusableAsyncChunkedOutputPool.close()
+        binds.forEach {
+            runCatching { it.close() }
+        }
+        binds.clear()
     }
 }
 

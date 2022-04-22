@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.linux.*
 
 class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelectedEvents() {
+    override var selector: LinuxSelector? = null
     override val native = nativeHeap.allocArray<epoll_event>(1000)
     override var eventCount: Int = 0
     override fun close() {
@@ -19,7 +20,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 
     private val nativeSelectedKeys2 = object : Iterator<AbstractSelector.NativeKeyEvent> {
         private val event = object : AbstractSelector.NativeKeyEvent {
-            override lateinit var key: AbstractSelector.AbstractKey
+            override lateinit var key: AbstractKey
             override var mode: Int = 0
         }
         private var currentNum = 0
@@ -41,8 +42,9 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 
             val item = native[currentNum++]
 
-            val keyPtr = item.data.ptr!!.asStableRef<LinuxSelector.LinuxKey>()
-            val key = keyPtr.get()
+//            val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
+//            val key = keyPtr.get()
+            val key = selector!!.idToKey[item.data.u32.convert()] ?: throw IllegalStateException("Key not found")
             if (!key.connected) {
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)

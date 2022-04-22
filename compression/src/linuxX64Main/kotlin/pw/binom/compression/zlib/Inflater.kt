@@ -5,7 +5,6 @@ import platform.posix.memset
 import platform.zlib.*
 import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import kotlin.native.concurrent.freeze
@@ -14,7 +13,7 @@ import kotlin.native.internal.createCleaner
 @OptIn(ExperimentalStdlibApi::class)
 actual class Inflater actual constructor(wrap: Boolean) : Closeable {
     internal val native =
-        nativeHeap.alloc<z_stream_s>()//malloc(sizeOf<z_stream_s>().convert())!!.reinterpret<z_stream_s>()
+        nativeHeap.alloc<z_stream_s>() // malloc(sizeOf<z_stream_s>().convert())!!.reinterpret<z_stream_s>()
 
     private var closed = AtomicBoolean(false)
 
@@ -49,8 +48,11 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
     }
 
     actual fun inflate(input: ByteBuffer, output: ByteBuffer): Int {
-        return output.refTo(output.position){outputPtr->
-            input.refTo(input.position){inputPtr->
+        if (output.capacity == 0 || input.capacity == 0) {
+            return 0
+        }
+        return output.refTo(output.position) { outputPtr ->
+            input.refTo(input.position) { inputPtr ->
                 memScoped {
                     native.avail_out = output.remaining.convert()
                     native.next_out = (outputPtr).getPointer(this).reinterpret()

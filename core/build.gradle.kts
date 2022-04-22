@@ -3,16 +3,16 @@ import java.util.*
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jmailen.kotlinter")
-    id("com.bnorm.template.kotlin-ir-plugin")
+//    id("com.bnorm.template.kotlin-ir-plugin")
 }
 
 apply {
     plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
 }
-template {
-    companionProcessing.set(false)
-    valueClassProcessing.set(false)
-}
+//template {
+//    companionProcessing.set(false)
+//    valueClassProcessing.set(false)
+//}
 
 kotlin {
     jvm()
@@ -123,7 +123,6 @@ kotlin {
             dependencies {
                 api(kotlin("stdlib-common"))
                 api(project(":env"))
-                api("com.bnorm.template:tracker:0.1.0-SNAPSHOT")
             }
         }
 
@@ -170,6 +169,9 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
+        val nativeTest by creating {
+            dependsOn(commonTest)
+        }
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
@@ -177,7 +179,11 @@ kotlin {
             }
         }
         val linuxX64Test by getting {
-            dependsOn(commonTest)
+            dependsOn(nativeTest)
+        }
+
+        val mingwX64Test by getting {
+            dependsOn(nativeTest)
         }
 
         val jsTest by getting {

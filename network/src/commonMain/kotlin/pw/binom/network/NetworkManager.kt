@@ -5,6 +5,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resumeWithException
 
 interface NetworkManager : CoroutineContext {
+    fun wakeup()
     fun attach(channel: UdpSocketChannel): UdpConnection
     fun attach(channel: TcpClientSocketChannel, mode: Int = 0): TcpConnection
     fun attach(channel: TcpServerSocketChannel): TcpServerConnection
@@ -12,7 +13,7 @@ interface NetworkManager : CoroutineContext {
 
 suspend fun NetworkManager.tcpConnect(address: NetworkAddress): TcpConnection {
     val channel = TcpClientSocketChannel()
-    val connection = attach(channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
+    val connection = attach(channel = channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
     try {
         connection.description = address.toString()
         suspendCancellableCoroutine<Unit> {
@@ -24,6 +25,7 @@ suspend fun NetworkManager.tcpConnect(address: NetworkAddress): TcpConnection {
             try {
 //                        connection.connecting()
                 channel.connect(address)
+                wakeup()
             } catch (e: Throwable) {
                 it.resumeWithException(e)
             }

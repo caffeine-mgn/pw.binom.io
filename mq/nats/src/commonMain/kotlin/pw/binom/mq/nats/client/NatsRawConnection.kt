@@ -3,7 +3,6 @@ package pw.binom.mq.nats.client
 import kotlinx.serialization.json.*
 import pw.binom.BINOM_VERSION
 import pw.binom.ByteBuffer
-import pw.binom.UUID
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.SocketClosedException

@@ -2,13 +2,13 @@ import pw.binom.baseStaticLibConfig
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    id("com.bnorm.template.kotlin-ir-plugin")
+//    id("com.bnorm.template.kotlin-ir-plugin")
 }
 
-template {
-    companionProcessing.set(false)
-    valueClassProcessing.set(false)
-}
+//template {
+//    companionProcessing.set(false)
+//    valueClassProcessing.set(false)
+//}
 
 apply {
     plugin(pw.binom.plugins.BinomPublishPlugin::class.java)

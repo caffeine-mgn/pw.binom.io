@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient
 
+import pw.binom.BINOM_VERSION
 import pw.binom.Environment
 import pw.binom.charset.Charsets
 import pw.binom.crypto.Sha1MessageDigest
@@ -9,9 +10,10 @@ import pw.binom.io.http.*
 import pw.binom.io.http.websocket.*
 import pw.binom.net.URL
 import pw.binom.os
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
+private val defaultUserAgent =
+    "binom-$BINOM_VERSION/kotlin-${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
+
 class DefaultHttpRequest constructor(
     override var method: String,
     override val uri: URL,
@@ -40,7 +42,7 @@ class DefaultHttpRequest constructor(
         headers[Headers.HOST] = host
         headers[Headers.ACCEPT_ENCODING] = "gzip, deflate, identity"
         headers[Headers.ACCEPT] = "*/*"
-        headers[Headers.USER_AGENT] = "binom/kotlin${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
+        headers[Headers.USER_AGENT] = defaultUserAgent
     }
 
     private suspend fun sendHeaders() {
@@ -63,7 +65,7 @@ class DefaultHttpRequest constructor(
         val encode = headers.transferEncoding
         if (encode != null) {
             when (encode.lowercase()) {
-                Encoding.CHUNKED.lowercase() -> {
+                Encoding.CHUNKED -> {
                     closed = true
                     return RequestAsyncChunkedOutput(
                         URI = uri,

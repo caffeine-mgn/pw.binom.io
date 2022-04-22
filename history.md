@@ -3,7 +3,7 @@
 ### 0.1.32
 * Adding support of android-native
 * Fix bugs in postgres-connector
-* Update kotlin version 1.5.21 -> 1.6.20
+* Update kotlin version 1.5.21 -> 1.6.21
 * Added BitArray64
 * Refactoring Bitset32 -> BitArray32
 

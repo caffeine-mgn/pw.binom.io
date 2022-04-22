@@ -21,8 +21,9 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
 
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (inputReady == 0uL && lastFrame)
+        if (inputReady == 0uL && lastFrame) {
             return 0
+        }
         val read = if (maskFlag) {
             val pos1 = dest.position
             val lim1 = dest.limit

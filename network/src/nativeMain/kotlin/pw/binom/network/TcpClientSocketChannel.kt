@@ -7,7 +7,7 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
     var native: NSocket? = null
 
     //    var selector: AbstractSelector? = null
-    var key: AbstractSelector.AbstractKey? = null
+    var key: AbstractKey? = null
         set(value) {
             if (field != null && native != null) {
                 field!!.removeSocket(native!!.raw)

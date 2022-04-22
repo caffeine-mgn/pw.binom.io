@@ -132,6 +132,9 @@ abstract class AbstractIconv(
     }
 
     protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
+        if (input.capacity == 0 || output.capacity == 0) {
+            return CharsetTransformResult.SUCCESS
+        }
         return output.refTo(output.position) { outputPtr ->
             input.refTo(input.position) { inputPtr ->
                 memScoped {

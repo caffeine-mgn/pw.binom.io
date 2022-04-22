@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import pw.binom.network.Network
 import pw.binom.network.NetworkAddress
+import pw.binom.network.tcpConnect
 import pw.binom.nextUuid
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume

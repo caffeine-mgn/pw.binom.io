@@ -6,12 +6,12 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21")
     }
 }
 
 plugins {
-    kotlin("jvm") version "1.6.20"
+    kotlin("jvm") version "1.6.21"
     id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 val kotlinVersion = project.property("kotlin.version") as String
@@ -36,5 +36,4 @@ dependencies {
     api("pw.binom:kn-clang:0.1.1")
     api("com.bmuschko:gradle-docker-plugin:7.3.0")
     api("org.jmailen.gradle:kotlinter-gradle:3.9.0")
-    api("com.bnorm.template:kotlin-ir-plugin-gradle:0.1.0-SNAPSHOT")
 }

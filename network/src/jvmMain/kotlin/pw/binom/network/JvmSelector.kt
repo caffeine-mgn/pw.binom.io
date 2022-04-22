@@ -37,7 +37,16 @@ class JvmSelector : Selector {
         private var _closed = false
 
         override val closed: Boolean
-            get() = _closed
+            get() {
+                if (!_closed) {
+                    if (!native.isValid) {
+                        _closed = true
+                        return true
+                    }
+                    return false
+                }
+                return true
+            }
 
         private inline fun checkClosed() {
             check(!_closed) { "SelectorKey already closed" }

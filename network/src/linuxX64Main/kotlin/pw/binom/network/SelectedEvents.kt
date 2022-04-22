@@ -8,6 +8,7 @@ actual interface SelectedEvents : Closeable, Iterable<Selector.KeyEvent> {
     val native: CArrayPointer<epoll_event>
     var eventCount: Int
     val maxElements: Int
+    var selector: LinuxSelector?
     actual companion object {
         actual fun create(maxEvents: Int): SelectedEvents = LinuxSelectedEvents(maxEvents)
     }

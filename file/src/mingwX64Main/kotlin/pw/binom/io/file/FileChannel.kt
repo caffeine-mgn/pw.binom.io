@@ -10,7 +10,8 @@ import pw.binom.io.ClosedException
 import pw.binom.io.IOException
 
 actual class FileChannel actual constructor(
-    file: File, vararg mode: AccessType
+    file: File,
+    vararg mode: AccessType
 ) : Channel, RandomAccess {
 
     init {
@@ -18,23 +19,26 @@ actual class FileChannel actual constructor(
             throw FileNotFoundException(file.path)
     }
 
-    internal val handler = fopen(file.path, run {
-        val read = AccessType.READ in mode
-        val write = AccessType.WRITE in mode
-        val append = AccessType.APPEND in mode
-        if (!read && !write)
-            throw IllegalArgumentException("Invalid mode")
-        when {
-            write && !append -> {
-                if (read) "wb+" else "wb"
+    internal val handler = fopen(
+        file.path,
+        run {
+            val read = AccessType.READ in mode
+            val write = AccessType.WRITE in mode
+            val append = AccessType.APPEND in mode
+            if (!read && !write)
+                throw IllegalArgumentException("Invalid mode")
+            when {
+                write && !append -> {
+                    if (read) "wb+" else "wb"
+                }
+                write && append -> {
+                    if (read) "cb+" else "cb"
+                }
+                read -> "rb"
+                else -> throw IllegalArgumentException("Invalid mode")
             }
-            write && append -> {
-                if (read) "cb+" else "cb"
-            }
-            read -> "rb"
-            else -> throw IllegalArgumentException("Invalid mode")
         }
-    }) ?: throw IOException("Can't open file ${file.path}. Error: #${GetLastError()}")
+    ) ?: throw IOException("Can't open file ${file.path}. Error: #${GetLastError()}")
 
     actual fun skip(length: Long): Long {
         checkClosed()
@@ -50,9 +54,11 @@ actual class FileChannel actual constructor(
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
+        if (dest.capacity == 0) {
+            return 0
+        }
         if (feof(handler) != 0)
             return 0
-
         val l = dest.refTo(dest.position) { destPtr ->
             fread(destPtr, 1.convert(), dest.remaining.convert(), handler).convert<Int>()
         }
@@ -78,6 +84,9 @@ actual class FileChannel actual constructor(
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
+        if (data.capacity == 0) {
+            return 0
+        }
         if (feof(handler) != 0)
             return 0
         val wroted: Int = data.refTo(data.position) { dataPtr ->

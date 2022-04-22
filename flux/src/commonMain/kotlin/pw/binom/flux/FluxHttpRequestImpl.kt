@@ -55,9 +55,12 @@ internal class FluxHttpRequestImpl : FluxHttpRequest, HttpRequest {
         this.mask = mask
         this.original = original
         this.serialization = serialization
+        internalQueryVariables = null
+        internalPathVariables = null
     }
 
     fun free() {
+        internalQueryVariables = null
         internalPathVariables = null
         original = null
     }

@@ -3,7 +3,7 @@ package pw.binom.network
 import pw.binom.io.Closeable
 
 actual class TcpServerSocketChannel : Closeable {
-    var key: AbstractSelector.AbstractKey? = null
+    var key: AbstractKey? = null
         set(value) {
             if (field != null && native != null) {
                 field!!.removeSocket(native!!.raw)

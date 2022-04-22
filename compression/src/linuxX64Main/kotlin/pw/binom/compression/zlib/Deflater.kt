@@ -4,10 +4,8 @@ import kotlinx.cinterop.*
 import platform.posix.memset
 import platform.zlib.*
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicLong
-import pw.binom.doFreeze
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import kotlin.native.concurrent.freeze
@@ -38,7 +36,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
             throw IOException("deflateInit() error")
     }
 
-    private val cleaner = createCleaner(native){self->
+    private val cleaner = createCleaner(native) { self ->
         deflateEnd(self.ptr)
         nativeHeap.free(self)
     }
@@ -46,8 +44,6 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     init {
         freeze()
     }
-
-
 
     private fun checkClosed() {
         if (closed.value)
@@ -70,8 +66,11 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 
     actual fun deflate(input: ByteBuffer, output: ByteBuffer): Int {
-        return output.refTo(output.position){outputPtr->
-            input.refTo(input.position){inputPtr->
+        if (output.capacity == 0 || input.capacity == null) {
+            return 0
+        }
+        return output.refTo(output.position) { outputPtr ->
+            input.refTo(input.position) { inputPtr ->
                 memScoped {
                     checkClosed()
                     if (output.remaining == 0)
@@ -112,18 +111,20 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 
     actual fun flush(output: ByteBuffer): Boolean {
+        if (output.capacity == 0) {
+            return false
+        }
         if (!_finishing)
             return false
         while (true) {
             val writed = output.remaining
             val mode = if (_finishing)
                 Z_FINISH
+            else if (syncFlush)
+                Z_SYNC_FLUSH
             else
-                if (syncFlush)
-                    Z_SYNC_FLUSH
-                else
-                    Z_NO_FLUSH
-            val r = output.refTo(output.position){outputPtr->
+                Z_NO_FLUSH
+            val r = output.refTo(output.position) { outputPtr ->
                 memScoped {
                     native.next_out = outputPtr.getPointer(this).reinterpret()
                     native.avail_out = output.remaining.convert()
@@ -148,5 +149,4 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                 return false
         }
     }
-
 }

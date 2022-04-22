@@ -156,17 +156,6 @@ class ByteBufferPool(capacity: Int, val bufferSize: UInt = DEFAULT_BUFFER_SIZE.t
     AbstractFixedSizePool<ByteBuffer>(capacity), ByteBufferAllocator, Closeable {
     override fun new(): ByteBuffer = ByteBuffer.alloc(bufferSize.toInt())
 
-    override fun close() {
-        pool.indices.forEach {
-            val element = pool[it] as? ByteBuffer?
-            if (element != null) {
-                element.close()
-                pool[it] = null
-            }
-        }
-        this.size = 0
-    }
-
     override fun free(value: ByteBuffer) {
         value.close()
     }

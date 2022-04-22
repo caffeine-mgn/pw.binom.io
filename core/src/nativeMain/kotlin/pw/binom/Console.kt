@@ -16,10 +16,14 @@ actual object Console {
 //        override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
 //                platform.posix.write(fd, data.refTo(offset), length.convert()).convert()
 
-        override fun write(data: ByteBuffer): Int =
-            data.refTo(data.position) { data2 ->
+        override fun write(data: ByteBuffer): Int {
+            if (data.capacity == 0) {
+                return 0
+            }
+            return data.refTo(data.position) { data2 ->
                 platform.posix.write(fd, data2, data.remaining.convert()).convert()
             }
+        }
 
         override fun flush() {
         }
@@ -38,10 +42,14 @@ actual object Console {
 //            return length
 //        }
 
-        override fun read(dest: ByteBuffer): Int =
-            dest.refTo(dest.position) { dest2 ->
+        override fun read(dest: ByteBuffer): Int {
+            if (dest.capacity == 0) {
+                return 0
+            }
+            return dest.refTo(dest.position) { dest2 ->
                 platform.posix.write(STDIN_FILENO, dest2, dest.remaining.convert()).convert()
             }
+        }
 
 //        override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int =
 //                platform.posix.write(STDIN_FILENO, data.refTo(offset), length.convert()).convert()

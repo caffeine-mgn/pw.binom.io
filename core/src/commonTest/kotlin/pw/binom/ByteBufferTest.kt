@@ -7,8 +7,10 @@ import kotlin.test.assertEquals
 
 class ByteBufferTest {
 
-    fun ff() {
-        val bb = ByteBuffer.alloc(100)
+    @Test
+    fun reallocEmpty() {
+        val bb = ByteBuffer.alloc(0)
+        bb.realloc(50)
     }
 
     @Test
@@ -51,13 +53,6 @@ class ByteBufferTest {
         b.flip()
         assertEquals(0, b.position)
         assertEquals(2, b.limit)
-    }
-
-    @Test
-    fun test() {
-        ff()
-        println("OLOLO")
-        System.gc()
     }
 
     @Test

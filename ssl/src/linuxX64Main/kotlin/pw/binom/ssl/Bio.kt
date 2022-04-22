@@ -2,9 +2,9 @@ package pw.binom.ssl
 
 import kotlinx.cinterop.*
 import platform.openssl.*
+import pw.binom.*
 import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.*
 import pw.binom.io.Closeable
 
 value class Bio(val self: CPointer<BIO>) : Closeable {
@@ -18,9 +18,12 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
             r
         }
 
-    fun read(data: ByteBuffer): Int =
-        memScoped {
-            val r = data.refTo(data.position){dataPtr->
+    fun read(data: ByteBuffer): Int {
+        if (data.capacity == 0) {
+            return 0
+        }
+        return memScoped {
+            val r = data.refTo(data.position) { dataPtr ->
                 BIO_read(self, dataPtr, data.remaining.convert())
             }
             if (r < 0)
@@ -28,6 +31,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
             data.position += r
             r
         }
+    }
 
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
         memScoped {
@@ -78,7 +82,6 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
                 stream.write(data = buf)
             }
         }
-
     }
 
     companion object {

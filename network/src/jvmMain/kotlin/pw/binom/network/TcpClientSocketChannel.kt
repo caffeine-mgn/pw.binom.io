@@ -36,7 +36,6 @@ actual class TcpClientSocketChannel(val native: JSocketChannel) : Channel {
     }
 
     override fun close() {
-        println("Close Tcp Connection")
         native.close()
     }
 

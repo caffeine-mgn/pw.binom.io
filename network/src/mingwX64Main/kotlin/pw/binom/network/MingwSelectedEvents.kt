@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.linux.*
 
 class MingwSelectedEvents(override val maxElements: Int) : AbstractNativeSelectedEvents() {
+    override var selector: MingwSelector? = null
     override val native = nativeHeap.allocArray<epoll_event>(maxElements)
     override var eventCount: Int = 0
 
@@ -20,7 +21,7 @@ class MingwSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 
     private val nativeSelectedKeys2 = object : Iterator<AbstractSelector.NativeKeyEvent> {
         private val event = object : AbstractSelector.NativeKeyEvent {
-            override lateinit var key: AbstractSelector.AbstractKey
+            override lateinit var key: AbstractKey
             override var mode: Int = 0
         }
         private var currentNum = 0
@@ -40,10 +41,11 @@ class MingwSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
                 throw NoSuchElementException()
             }
             val item = native[currentNum++]
-            val keyPtr = item.data.ptr
-                ?.asStableRef<MingwSelector.MingwKey>()
-                ?: throw IllegalStateException("Native key not attached to epoll")
-            val key = keyPtr.get()
+            val key = selector!!.idToKey[item.data.u32.convert()] ?: throw IllegalStateException("Key not found")
+//            val keyPtr = item.data.ptr
+//                ?.asStableRef<MingwKey>()
+//                ?: throw IllegalStateException("Native key not attached to epoll")
+//            val key = keyPtr.get()
             if (!key.connected) {
                 when {
                     EPOLLERR in item.events || EPOLLRDHUP in item.events/* || EPOLLHUP in item.events*/ -> {

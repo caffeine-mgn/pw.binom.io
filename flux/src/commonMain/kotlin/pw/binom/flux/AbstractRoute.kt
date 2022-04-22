@@ -95,13 +95,13 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                                 serialization = serialization,
                             )
                         }
-
                         try {
                             it(wrapper)
                             if (action.response != null) {
                                 return
                             }
                         } finally {
+                            wrapper.free()
                             requestWrapperPool.recycle(wrapper)
                         }
                     }

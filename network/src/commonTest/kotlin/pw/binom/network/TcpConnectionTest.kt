@@ -18,6 +18,7 @@ class TcpConnectionTest {
 
     @Test
     fun serverFlagsOnAttachTest() {
+        val selectKeys = SelectedEvents.create()
         val selector = Selector.open()
         val server = TcpServerSocketChannel()
         server.bind(NetworkAddress.Immutable("127.0.0.1", 0))
@@ -30,7 +31,8 @@ class TcpConnectionTest {
 //            Selector.INPUT_READY or Selector.OUTPUT_READY or Selector.EVENT_CONNECTED or Selector.EVENT_ERROR
         val client = TcpClientSocketChannel()
         client.connect(NetworkAddress.Immutable("127.0.0.1", server.port!!))
-        assertTrue(selector.select().hasNext(), "No event for select. Socket selector should be read for input")
+        selector.select(selectedEvents = selectKeys)
+        assertTrue(selectKeys.iterator().hasNext(), "No event for select. Socket selector should be read for input")
     }
 
     @Test
@@ -55,8 +57,10 @@ class TcpConnectionTest {
         println("Connect...")
         channel.connect(NetworkAddress.Immutable("127.0.0.1", serverConnection.port))
         println("Connect started!")
+        val selectKeys = SelectedEvents.create()
         LOOP_CONNECT@ while (true) {
-            val o = selector.select()
+            selector.select(selectedEvents = selectKeys)
+            val o = selectKeys.iterator()
             while (o.hasNext()) {
                 val e = o.next()
                 if (e.mode and Selector.EVENT_CONNECTED > 0) {
