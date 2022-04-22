@@ -66,9 +66,6 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 
     actual fun deflate(input: ByteBuffer, output: ByteBuffer): Int {
-        if (output.capacity == 0 || input.capacity == null) {
-            return 0
-        }
         return output.refTo(output.position) { outputPtr ->
             input.refTo(input.position) { inputPtr ->
                 memScoped {
@@ -107,7 +104,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                     return@memScoped outLength
                 }
             }
-        }
+        } ?: 0
     }
 
     actual fun flush(output: ByteBuffer): Boolean {
@@ -133,7 +130,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                     native.avail_in = 0.convert()
                     deflate(native.ptr, mode)
                 }
-            }
+            } ?: 0
 
 //            if (r != Z_OK)
 //                throw IOException("Can't flush data. Code: $r (${zlibConsts(r)})")

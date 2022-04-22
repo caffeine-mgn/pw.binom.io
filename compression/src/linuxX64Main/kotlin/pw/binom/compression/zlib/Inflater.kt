@@ -71,6 +71,6 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
                     return@memScoped wrote
                 }
             }
-        }
+        } ?: 0
     }
 }

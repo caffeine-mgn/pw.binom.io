@@ -133,7 +133,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
     }
 
     actual fun writeNet(dst: ByteBuffer): Int {
-        if (dst.capacity == 0) {
+        if (!dst.isReferenceAccessAvailable) {
             return 0
         }
         var len = dst.remaining
@@ -163,7 +163,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
                 bytes = 0
             )
         }
-        if (dst.capacity == 0) {
+        if (!dst.isReferenceAccessAvailable) {
             return Status(
                 state = State.OK,
                 bytes = 0,

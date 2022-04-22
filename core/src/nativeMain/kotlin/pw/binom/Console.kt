@@ -22,7 +22,7 @@ actual object Console {
             }
             return data.refTo(data.position) { data2 ->
                 platform.posix.write(fd, data2, data.remaining.convert()).convert()
-            }
+            } ?: 0
         }
 
         override fun flush() {
@@ -48,7 +48,7 @@ actual object Console {
             }
             return dest.refTo(dest.position) { dest2 ->
                 platform.posix.write(STDIN_FILENO, dest2, dest.remaining.convert()).convert()
-            }
+            } ?: 0
         }
 
 //        override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int =

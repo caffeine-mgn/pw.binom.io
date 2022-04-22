@@ -54,7 +54,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 
         val r = dest.ref { destPtr, destRemaining ->
             fread(destPtr, 1.convert(), destRemaining.convert(), handler).convert<Int>()
-        }
+        } ?: 0
         dest.position += r
         return r
     }
@@ -86,7 +86,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 
         val r = data.ref { dataPtr, dataRemaining ->
             fwrite(dataPtr, 1.convert(), dataRemaining.convert(), handler).convert<Int>()
-        }
+        } ?: 0
         data.position += r
         return r
     }

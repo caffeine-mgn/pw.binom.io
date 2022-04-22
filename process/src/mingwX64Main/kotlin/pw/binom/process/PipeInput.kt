@@ -50,7 +50,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
     }
 
     override fun read(dest: ByteBuffer): Int {
-        if (dest.capacity == 0) {
+        if (!dest.isReferenceAccessAvailable) {
             return 0
         }
         while (true) {
@@ -72,7 +72,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
                     otherHandler, (destPtr).getPointer(this).reinterpret(),
                     dest.remaining.convert(), dwWritten.ptr, null
                 )
-            }
+            } ?: 0
             if (r <= 0)
                 TODO()
             val read = dwWritten.value.toInt()

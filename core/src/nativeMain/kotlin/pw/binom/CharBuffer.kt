@@ -59,7 +59,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         bytes.close()
     }
 
-    override fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T =
+    override fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T? =
         bytes.refTo(position * Char.SIZE_BYTES, func)
 
     actual operator fun set(index: Int, value: Char) {
@@ -134,7 +134,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
                 memcpy(pinnedArray.addressOf(offset), bytes, (len * 2).convert())
                 position += len
                 len
-            }
+            } ?: 0
         }
     }
 
@@ -160,7 +160,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, minOf(array.size - offset, length))
-        if (bytes.capacity == 0) {
+        if (!bytes.isReferenceAccessAvailable) {
             return 0
         }
         array.usePinned { pinnedArray ->

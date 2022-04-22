@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
+
 actual class ByteBuffer(
     actual override val capacity: Int,
 ) : Input, Output, Closeable, Buffer {
@@ -16,48 +17,6 @@ actual class ByteBuffer(
 
     //    val bb = nativeHeap.allocArray<ByteVar>(capacity)
     private var closed = false
-
-    private inline fun checkClosed() {
-        if (closed) {
-            throw ClosedException()
-        }
-    }
-
-//    val bytes = ByteArray(capacity)
-
-//    val native: CPointer<ByteVar> = run {
-//        memScoped {
-//            bytes.refTo(0).getPointer(this).toLong()
-//        }.toCPointer<ByteVar>()!!
-//    }
-
-//    override fun refTo(position: Int): CPointer<ByteVar> {
-//        checkClosed()
-//        return (native + position)!!
-//    }
-
-    override fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T {
-        try {
-            return data.usePinned {
-                func(it.addressOf(position))
-            }
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            throw IllegalArgumentException("Can't get access to $position address of buffer memory. capacity: $capacity, data.size: ${data.size}")
-        }
-    }
-
-    fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
-        func(it, remaining)
-    }
-
-    fun <T> ref0(func: (CPointer<ByteVar>, Int) -> T) = refTo(0) { ptr ->
-        func(ptr, capacity)
-    }
-
-    actual override fun flip() {
-        limit = position
-        position = 0
-    }
 
     private var _position = 0
     private var _limit = capacity
@@ -79,6 +38,56 @@ actual class ByteBuffer(
             require(value <= limit) { "position should be less or equal limit" }
             _position = value
         }
+
+    val isReferenceAccessAvailable: Boolean
+        get() = capacity != 0 && position < limit
+
+    private inline fun checkClosed() {
+        if (closed) {
+            throw ClosedException()
+        }
+    }
+
+//    val bytes = ByteArray(capacity)
+
+//    val native: CPointer<ByteVar> = run {
+//        memScoped {
+//            bytes.refTo(0).getPointer(this).toLong()
+//        }.toCPointer<ByteVar>()!!
+//    }
+
+//    override fun refTo(position: Int): CPointer<ByteVar> {
+//        checkClosed()
+//        return (native + position)!!
+//    }
+
+    override
+
+    fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T? {
+        if (!isReferenceAccessAvailable) {
+            return null
+        }
+        try {
+            return data.usePinned {
+                func(it.addressOf(position))
+            }
+        } catch (e: ArrayIndexOutOfBoundsException) {
+            throw IllegalArgumentException("Can't get access to $position address of buffer memory. capacity: $capacity, data.size: ${data.size}")
+        }
+    }
+
+    fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
+        func(it, remaining)
+    }
+
+    fun <T> ref0(func: (CPointer<ByteVar>, Int) -> T) = refTo(0) { ptr ->
+        func(ptr, capacity)
+    }
+
+    actual override fun flip() {
+        limit = position
+        position = 0
+    }
 
     actual override var limit: Int
         get() {
@@ -105,7 +114,7 @@ actual class ByteBuffer(
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (position == limit) {
+        if (!isReferenceAccessAvailable) {
             return 0
         }
         return ref { sourceCPointer, remaining ->
@@ -116,7 +125,7 @@ actual class ByteBuffer(
                 dest.position += len
                 len
             }
-        }
+        } ?: 0
     }
 
     override fun write(data: ByteBuffer): Int {
@@ -284,7 +293,7 @@ actual class ByteBuffer(
                 memcpy(dest.addressOf(0), cPointer + position, l.convert())
             }
             l
-        }
+        } ?: 0
     }
 
     actual fun free() {
