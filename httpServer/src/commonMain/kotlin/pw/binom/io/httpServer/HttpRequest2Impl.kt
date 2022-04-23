@@ -211,7 +211,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
     }
 
     override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection {
-        val server  = server!!
+        val server = server!!
         val channel = channel!!
         checkClosed()
         checkWebSocket()

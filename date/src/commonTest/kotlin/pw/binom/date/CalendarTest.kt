@@ -26,9 +26,11 @@ class CalendarTest {
             millis = 0,
             timeZoneOffset = 0
         )
-
         val calc = date.calendar(0)
+        println("Current timezone: $test_data_currentTZ")
         assertEquals(1, calc.month)
+        assertEquals(13, calc.hours)
+        assertEquals(0, calc.minutes)
         assertEquals("Thu, 05 Jan 1989 13:00:00 GMT", calc.rfc822())
     }
 }

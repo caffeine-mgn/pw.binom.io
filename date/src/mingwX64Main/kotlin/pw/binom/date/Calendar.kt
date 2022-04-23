@@ -16,6 +16,7 @@ actual class Calendar(private val utcTime: Long, actual val offset: Int) {
     private var tm_wday: Int = 0
 
     init {
+        println("utcTime: $utcTime")
         memScoped {
             val dateTime = alloc<tm>()
             val timeSec = alloc<time_tVar>()

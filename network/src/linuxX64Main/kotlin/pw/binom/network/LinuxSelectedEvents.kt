@@ -7,6 +7,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
     override var selector: LinuxSelector? = null
     override val native = nativeHeap.allocArray<epoll_event>(1000)
     override var eventCount: Int = 0
+
     override fun close() {
         nativeHeap.free(native)
     }
@@ -44,7 +45,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 
 //            val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
 //            val key = keyPtr.get()
-            val key = selector!!.idToKey[item.data.u32.convert()] ?: throw IllegalStateException("Key not found")
+            val key = selector!!.idToKey[item.data.u32.convert()] ?: throw IllegalStateException("Key not found ${item.data.u32.toInt()}")
             if (!key.connected) {
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)

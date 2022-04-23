@@ -49,7 +49,8 @@ actual value class Date(val time: Long = Date.nowTime) {
                 t.tm_hour = hours
                 t.tm_min = minutes
                 t.tm_sec = seconds
-                val tx = timeZoneOffset// - Date.timeZoneOffset
+                val tx = timeZoneOffset - Date.systemZoneOffset
+                println("Date.of tx=$tx")
                 val r = (mktime(t.ptr) - tx * 60L) * 1000L + millis
                 Date(r)
             }
