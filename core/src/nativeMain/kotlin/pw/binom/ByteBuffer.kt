@@ -39,8 +39,8 @@ actual class ByteBuffer(
             _position = value
         }
 
-    val isReferenceAccessAvailable: Boolean
-        get() = capacity != 0 && position < limit
+    fun isReferenceAccessAvailable(position: Int = this.position) =
+        capacity != 0 && position < capacity
 
     private inline fun checkClosed() {
         if (closed) {
@@ -64,7 +64,7 @@ actual class ByteBuffer(
     override
 
     fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T? {
-        if (!isReferenceAccessAvailable) {
+        if (capacity == 0 || position == capacity) {
             return null
         }
         try {
@@ -114,9 +114,6 @@ actual class ByteBuffer(
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (!isReferenceAccessAvailable) {
-            return 0
-        }
         return ref { sourceCPointer, remaining ->
             dest.ref { destCPointer, destRemaining ->
                 val len = minOf(destRemaining, remaining)

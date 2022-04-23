@@ -32,8 +32,17 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
 
     init {
         memset(native.ptr, 0, sizeOf<z_stream_s>().convert())
-        if (deflateInit2(native.ptr, level.convert(), Z_DEFLATED, if (wrap) 15 else -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
+        if (deflateInit2(
+                native.ptr,
+                level.convert(),
+                Z_DEFLATED,
+                if (wrap) 15 else -15,
+                8,
+                Z_DEFAULT_STRATEGY
+            ) != Z_OK
+        ) {
             throw IOException("deflateInit() error")
+        }
     }
 
     private val cleaner = createCleaner(native) { self ->
@@ -99,8 +108,9 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                     val inLength = freeInput - input.remaining
                     _totalOut += outLength
                     _totalIn += inLength
-                    if (_finishing)
+                    if (_finishing) {
                         _finished = true
+                    }
                     return@memScoped outLength
                 }
             }
@@ -108,19 +118,20 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 
     actual fun flush(output: ByteBuffer): Boolean {
-        if (output.capacity == 0) {
+        if (output.remaining == 0) {
             return false
         }
         if (!_finishing)
             return false
         while (true) {
             val writed = output.remaining
-            val mode = if (_finishing)
-                Z_FINISH
-            else if (syncFlush)
-                Z_SYNC_FLUSH
-            else
-                Z_NO_FLUSH
+
+            val mode = when {
+                _finishing -> Z_FINISH
+                syncFlush -> Z_SYNC_FLUSH
+                else -> Z_NO_FLUSH
+            }
+
             val r = output.refTo(output.position) { outputPtr ->
                 memScoped {
                     native.next_out = outputPtr.getPointer(this).reinterpret()

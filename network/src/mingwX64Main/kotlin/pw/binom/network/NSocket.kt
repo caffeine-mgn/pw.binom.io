@@ -13,7 +13,6 @@ import platform.windows.closesocket
 import platform.windows.ioctlsocket
 import platform.windows.shutdown
 import pw.binom.ByteBuffer
-import pw.binom.io.ClosedException
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -220,7 +219,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         memScoped {
             val r: Int = data.ref { dataPtr, remaining ->
                 send(native, dataPtr, remaining.convert(), 0).convert()
-            }
+            } ?: 0
             if (r < 0) {
                 val error = GetLastError()
                 if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
@@ -242,7 +241,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         }
         val r: Int = data.ref { dataPtr, remaining ->
             platform.windows.recv(native, dataPtr, remaining.convert(), 0).convert()
-        }
+        } ?: 0
         if (r == 0) {
             closed = true
             native.nativeClose()
@@ -301,12 +300,14 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         bind(native, address, family)
     }
 
-    actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
-        memScoped {
+    actual fun send(data: ByteBuffer, address: NetworkAddress): Int {
+        if (!data.isReferenceAccessAvailable(data.position)) {
+            return 0
+        }
+        return memScoped {
             val rr = data.ref { dataPtr, remaining ->
                 address.data.usePinned { addressPtr ->
                     if (family == AF_INET6) {
-
                         address.isAddrV6 { addr ->
                             sendto(
                                 native, dataPtr.getPointer(this), remaining.convert(),
@@ -322,7 +323,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                         )
                     }
                 }
-            }
+            } ?: 0
             if (rr == SOCKET_ERROR) {
                 if (GetLastError().toInt() == platform.windows.WSAEFAULT) { // 10014
                     throw IOException("The system detected an invalid pointer address in attempting to use a pointer argument in a call.")
@@ -336,6 +337,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
             data.position += rr.toInt()
             rr
         }
+    }
 
     actual fun recv(
         data: ByteBuffer,
@@ -352,7 +354,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                     null,
                     null
                 )
-            }
+            } ?: 0
             if (rr == SOCKET_ERROR) {
                 if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {
                     return 0
@@ -378,7 +380,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                             len
                         )
                     }
-                }
+                } ?: 0
 
                 if (rr == SOCKET_ERROR) {
                     if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {

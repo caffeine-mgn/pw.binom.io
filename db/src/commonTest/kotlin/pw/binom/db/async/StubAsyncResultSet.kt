@@ -1,6 +1,5 @@
 package pw.binom.db.async
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.date.Date
 
 class StubAsyncResultSet(
@@ -44,10 +43,6 @@ class StubAsyncResultSet(
     override fun getLong(index: Int): Long? = element!![index]?.let { it as Long }
 
     override fun getLong(column: String): Long? = getLong(getColumn(column))
-
-    override fun getBigDecimal(index: Int): BigDecimal? = element!![index]?.let { it as BigDecimal }
-
-    override fun getBigDecimal(column: String): BigDecimal? = getBigDecimal(getColumn(column))
 
     override fun getDouble(index: Int): Double? = element!![index]?.let { it as Double }
 

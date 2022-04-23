@@ -125,17 +125,15 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
     actual fun readNet(dst: ByteBuffer): Int {
         val n = dst.ref { dstPtr, remaining ->
             BIO_read(wbio, dstPtr, remaining)
-        }
-        if (n < 0)
+        } ?: 0
+        if (n < 0) {
             return 0
+        }
         dst.position += n
         return n
     }
 
     actual fun writeNet(dst: ByteBuffer): Int {
-        if (!dst.isReferenceAccessAvailable) {
-            return 0
-        }
         var len = dst.remaining
         var off = dst.position
         var readed = 0
@@ -143,7 +141,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
         while (len > 0) {
             val n = dst.refTo(off) { dstPtr ->
                 BIO_write(rbio, dstPtr, len)
-            }
+            } ?: 0
             if (n <= 0)
                 TODO()
             readed += n
@@ -163,15 +161,15 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
                 bytes = 0
             )
         }
-        if (!dst.isReferenceAccessAvailable) {
+        if (!dst.isReferenceAccessAvailable()) {
             return Status(
-                state = State.OK,
+                state = State.WANT_WRITE,
                 bytes = 0,
             )
         }
-        val n = dst.refTo(dst.position) { dstPtr ->
+        val n = dst.ref { dstPtr, remaining ->
             SSL_read(ssl, dstPtr, dst.remaining)
-        }
+        } ?: 0
         if (n > 0) {
             dst.position += n
             return Status(
@@ -198,9 +196,15 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
                 r,
                 0
             )
+        if (!src.isReferenceAccessAvailable()) {
+            return Status(
+                State.WANT_WRITE,
+                0
+            )
+        }
         val n = src.ref { srcPtr, remaining ->
             SSL_write(ssl, srcPtr, remaining)
-        }
+        } ?: 0
         if (n > 0) {
             src.position += n
             return Status(

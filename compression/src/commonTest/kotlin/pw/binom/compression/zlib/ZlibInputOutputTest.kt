@@ -10,17 +10,24 @@ class ZlibInputOutputTest {
     fun testSync() {
         val source = TestData.SOURCE_DATA.clone()
         source.clear()
+        source.forEachIndexed { index, it ->
+            println("->$index->$it")
+        }
         val compressed = ByteBuffer.alloc(TestData.SOURCE_DATA.capacity * 2)
         repeat(compressed.capacity) {
             compressed.put(10)
         }
         compressed.clear()
         val def = DeflaterOutput(stream = compressed, level = 6, wrap = true, closeStream = false)
-        def.write(source)
+        val c = def.write(source)
+        println("c=$c")
         def.close()
 
         compressed.flip()
         assertEquals(11, compressed.remaining)
+        (compressed.position until compressed.limit).forEach {
+            println("->${compressed[it]}")
+        }
         (compressed.position until compressed.limit).forEach {
             assertEquals(TestData.COMPRESSED[it], compressed[it])
         }
@@ -63,7 +70,6 @@ class ZlibInputOutputTest {
         source.clear()
         assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
     }
-
 }
 /*
 

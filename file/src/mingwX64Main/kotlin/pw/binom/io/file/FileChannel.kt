@@ -54,9 +54,6 @@ actual class FileChannel actual constructor(
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (!dest.isReferenceAccessAvailable == 0) {
-            return 0
-        }
         if (feof(handler) != 0)
             return 0
         val l = dest.refTo(dest.position) { destPtr ->
@@ -84,13 +81,10 @@ actual class FileChannel actual constructor(
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
-        if (!data.isReferenceAccessAvailable) {
-            return 0
-        }
         if (feof(handler) != 0)
             return 0
-        val wroted = data.refTo(data.position) { dataPtr ->
-            fwrite(dataPtr, 1.convert(), data.remaining.convert(), handler).convert()
+        val wroted = data.ref { dataPtr, remaining ->
+            fwrite(dataPtr, 1.convert(), remaining.convert(), handler).convert()
         } ?: 0
         if (wroted > 0) {
             data.position += wroted

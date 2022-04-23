@@ -160,11 +160,12 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
         val len = minOf(remaining, minOf(array.size - offset, length))
-        if (!bytes.isReferenceAccessAvailable) {
+        val pos = position * Char.SIZE_BYTES
+        if (!bytes.isReferenceAccessAvailable(pos)) {
             return 0
         }
         array.usePinned { pinnedArray ->
-            bytes.refTo(position * Char.SIZE_BYTES) { bytes ->
+            bytes.refTo(pos) { bytes ->
                 memcpy(bytes, pinnedArray.addressOf(offset), (len * Char.SIZE_BYTES).convert())
                 position += len
             }

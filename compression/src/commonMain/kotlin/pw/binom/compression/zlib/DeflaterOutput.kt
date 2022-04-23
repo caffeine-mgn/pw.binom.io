@@ -59,10 +59,10 @@ open class DeflaterOutput(
             buffer.flip()
             if (buffer.remaining > 0) {
                 stream.write(buffer)
-
             }
-            if (!r)
+            if (!r) {
                 break
+            }
         }
         stream.flush()
     }
@@ -71,8 +71,9 @@ open class DeflaterOutput(
         checkClosed()
         deflater.finish()
         flush()
-        if (usesDefaultDeflater)
+        if (usesDefaultDeflater) {
             deflater.end()
+        }
     }
 
     override fun close() {
