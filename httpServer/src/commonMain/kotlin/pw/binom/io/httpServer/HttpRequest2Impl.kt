@@ -211,6 +211,8 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
     }
 
     override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection {
+        val server  = server!!
+        val channel = channel!!
         checkClosed()
         checkWebSocket()
         val key = headers.getSingleOrNull(Headers.SEC_WEBSOCKET_KEY)
@@ -225,9 +227,9 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.headers[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
         resp.sendHeadersAndFree()
-        return server!!.webSocketConnectionPool.new(
-            input = channel!!.reader,
-            output = channel!!.writer,
+        return server.webSocketConnectionPool.new(
+            input = channel.reader,
+            output = channel.writer,
             masking = masking,
         )
     }
@@ -243,12 +245,13 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
     override suspend fun acceptTcp(): AsyncChannel {
         checkClosed()
         checkTcp()
+        val channel = channel!!
         val resp = response() as HttpResponse2Impl
         resp.status = 101
         resp.headers[Headers.CONNECTION] = Headers.UPGRADE
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.sendHeadersAndFree()
-        return channel!!.channel
+        return channel.channel
     }
 
     override suspend fun rejectTcp() {

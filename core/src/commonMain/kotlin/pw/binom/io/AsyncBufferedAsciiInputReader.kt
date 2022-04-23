@@ -112,8 +112,9 @@ class AsyncBufferedAsciiInputReader private constructor(
     override suspend fun readChar(): Char? {
         checkClosed()
         full()
-        if (buffer.remaining <= 0)
+        if (buffer.remaining <= 0) {
             return null
+        }
         return buffer.get().toInt().toChar()
     }
 
@@ -169,7 +170,7 @@ class AsyncBufferedAsciiInputReader private constructor(
                     exist = true
                     break@LOOP
                 } else {
-                    out.append(buffer[i].toChar())
+                    out.append(buffer[i].toInt().toChar())
                 }
 
             }
