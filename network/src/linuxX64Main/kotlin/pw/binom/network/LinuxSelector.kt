@@ -23,7 +23,6 @@ class LinuxSelector : AbstractSelector() {
 
     internal fun removeKey(key: LinuxKey) {
         keysLock.synchronize {
-            println("Key marker for remove ${key.hashCode()}")
             keyForRemove += key.hashCode()
         }
     }
@@ -54,7 +53,6 @@ class LinuxSelector : AbstractSelector() {
         keysLock.synchronize {
             if (keyForRemove.isNotEmpty()) {
                 keyForRemove.forEach {
-                    println("Key removed ${it.hashCode()}")
                     idToKey.remove(it)?.attachment = null
                 }
                 keyForRemove.clear()

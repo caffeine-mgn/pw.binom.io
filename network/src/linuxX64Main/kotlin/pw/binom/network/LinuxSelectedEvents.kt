@@ -29,24 +29,8 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
             currentNum = 0
         }
 
-        override fun hasNext(): Boolean {
-            if (currentNum == eventCount) {
-                return false
-            }
-            var c = 0
-            while (true) {
-                val id = native[currentNum].data.u32
-                if (id != 0u) {
-                    break
-                }
-                c++
-                currentNum++
-                if (currentNum == eventCount) {
-                    return false
-                }
-            }
-            return true
-        }
+        override fun hasNext(): Boolean =
+            currentNum != eventCount
 
         override fun next(): AbstractSelector.NativeKeyEvent {
             if (!hasNext()) {

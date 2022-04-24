@@ -21,18 +21,21 @@ class PipeOutput : Pipe(), Output {
     }
 
     override fun write(data: ByteBuffer): Int {
+        if (!data.isReferenceAccessAvailable()) {
+            return 0
+        }
         memScoped {
             val dwWritten = alloc<UIntVar>()
-
 
             val r = data.ref { dataPtr, _ ->
                 WriteFile(
                     writePipe.pointed.value, dataPtr.getPointer(this).reinterpret(),
                     data.remaining.convert(), dwWritten.ptr, null
                 )
+            } ?: 0
+            if (r <= 0) {
+                TODO("WriteFile returned $r")
             }
-            if (r <= 0)
-                TODO()
             val wrote = dwWritten.value.toInt()
             data.position += wrote
             return wrote

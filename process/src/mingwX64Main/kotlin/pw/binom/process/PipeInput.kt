@@ -50,7 +50,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
     }
 
     override fun read(dest: ByteBuffer): Int {
-        if (!dest.isReferenceAccessAvailable) {
+        if (!dest.isReferenceAccessAvailable()) {
             return 0
         }
         while (true) {

@@ -14,7 +14,7 @@ class PipeOutput : Pipe(), Output {
             } else {
                 0
             }
-        }
+        } ?: 0
         data.position += wrote
         return wrote
     }

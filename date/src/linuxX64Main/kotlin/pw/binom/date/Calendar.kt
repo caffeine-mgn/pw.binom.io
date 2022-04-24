@@ -7,7 +7,6 @@ import platform.posix.time_tVar
 actual class Calendar(private val utcTime: Long, actual val offset: Int) {
 
     private val tt = memScoped {
-        println("utcTime: $utcTime")
         val t = alloc<time_tVar>()
         val tx = offset - Date.systemZoneOffset
         t.value = (utcTime / 1000L + tx * 60L).convert()

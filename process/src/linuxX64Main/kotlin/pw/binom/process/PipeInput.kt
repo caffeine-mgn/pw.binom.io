@@ -15,12 +15,12 @@ class PipeInput : Pipe(), Input {
             return 0
 
         val r = dest.ref { destPtr, remaining ->
-            if (remaining>0) {
+            if (remaining > 0) {
                 platform.posix.read(read, destPtr, remaining.convert()).convert<Int>()
-            } else{
+            } else {
                 0
             }
-        }
+        } ?: 0
         if (r <= 0)
             endded.value = true
         else {
@@ -32,7 +32,7 @@ class PipeInput : Pipe(), Input {
     override fun close() {
     }
 
-    init{
+    init {
         doFreeze()
     }
 }
