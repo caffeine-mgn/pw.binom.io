@@ -4,6 +4,7 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.toURL
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 class DownloadTest {
@@ -21,6 +22,7 @@ class DownloadTest {
         }
     }
 
+    @Ignore
     @Test
     fun test2() = runTest {
         HttpClient.create().use { client ->

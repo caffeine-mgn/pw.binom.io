@@ -50,7 +50,7 @@ abstract class AbstractKey(attachment: Any?) : Selector.Key {
 //            runCatching { attachmentReference?.close() }
         runCatching {
 //            ptr.asStableRef<AbstractKey>().dispose()
-            attachment = null
+
         }
     }
 }

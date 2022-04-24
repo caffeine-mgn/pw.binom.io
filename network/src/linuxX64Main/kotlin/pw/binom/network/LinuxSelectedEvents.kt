@@ -33,6 +33,18 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
             if (currentNum == eventCount) {
                 return false
             }
+            var c = 0
+            while (true) {
+                val id = native[currentNum].data.u32
+                if (id != 0u) {
+                    break
+                }
+                c++
+                currentNum++
+                if (currentNum == eventCount) {
+                    return false
+                }
+            }
             return true
         }
 
@@ -45,7 +57,8 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 
 //            val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
 //            val key = keyPtr.get()
-            val key = selector!!.idToKey[item.data.u32.convert()] ?: throw IllegalStateException("Key not found ${item.data.u32.toInt()}")
+            val key = selector!!.idToKey[item.data.u32.convert()]
+                ?: throw IllegalStateException("Key not found ${item.data.u32.toInt()}")
             if (!key.connected) {
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)

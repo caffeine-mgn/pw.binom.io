@@ -48,7 +48,7 @@ class LinuxKey(
         super.close()
         nativeHeap.free(epollEvent)
         if (nativeSocket != 0) {
-            epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), null)
+            epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), epollEvent.ptr)
         }
         selector.removeKey(this)
         selector.keys -= this

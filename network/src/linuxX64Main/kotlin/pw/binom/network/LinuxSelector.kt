@@ -55,7 +55,7 @@ class LinuxSelector : AbstractSelector() {
             if (keyForRemove.isNotEmpty()) {
                 keyForRemove.forEach {
                     println("Key removed ${it.hashCode()}")
-                    idToKey.remove(it)
+                    idToKey.remove(it)?.attachment = null
                 }
                 keyForRemove.clear()
             }

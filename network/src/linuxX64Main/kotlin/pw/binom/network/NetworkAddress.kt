@@ -111,7 +111,7 @@ actual sealed class NetworkAddress {
             set_posix_errno(0)
             LOOP@ while (true) {
                 val err = getaddrinfo(host, port.toString(), hints.ptr, result.ptr)
-                if (err == EAI_AGAIN && errno == 11) {
+                if (err == EAI_AGAIN && errno == 11 || err == EAI_NONAME) {
                     throw UnknownHostException(host)
                 }
                 when (err) {

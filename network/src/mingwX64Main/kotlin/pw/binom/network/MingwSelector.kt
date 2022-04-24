@@ -16,7 +16,7 @@ class MingwSelector : AbstractSelector() {
         keysLock.synchronize {
             if (keyForRemove.isNotEmpty()) {
                 keyForRemove.forEach {
-                    idToKey.remove(it)
+                    idToKey.remove(it)?.attachment = null
                 }
                 keyForRemove.clear()
             }

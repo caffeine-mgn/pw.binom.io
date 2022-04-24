@@ -23,8 +23,12 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private var worker = Worker()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
+    init {
+        internalUdpChannel.setBlocking(false)
+    }
+    private val internalKey = selector.attach(internalUdpChannel)
     private val readyForWriteListener = BatchExchange<Runnable>()
-    private val internalUdpContinuationConnection = attach(internalUdpChannel)
+//    private val internalUdpContinuationConnection = attach(internalUdpChannel)
     private var networkThread = ThreadRef()
     private val selectedKeys = SelectedEvents.create()
 
@@ -33,16 +37,16 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             try {
                 while (!self.closed) {
                     self.networkThread = ThreadRef()
-                    val selected = self.selector.select(selectedEvents = selectedKeys)
+                    self.selector.select(selectedEvents = selectedKeys)
                     val iterator = selectedKeys.iterator()
                     var executeOnNetwork = false
                     while (iterator.hasNext() && !self.closed) {
                         val event = iterator.next()
-                        val attachment = event.key.attachment
-                        attachment ?: throw IllegalStateException("Attachment is null")
-                        if (attachment === self.internalUdpContinuationConnection) {
+                        if (event.key === self.internalKey) {
                             executeOnNetwork = true
                         } else {
+                            val attachment = event.key.attachment
+                            attachment ?: throw IllegalStateException("Attachment is null")
                             val connection = attachment as AbstractConnection
                             when {
                                 event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
@@ -55,7 +59,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                     }
                     if (executeOnNetwork) {
                         if (self.readyForWriteListener.isEmpty()) {
-                            self.internalUdpContinuationConnection.key.listensFlag = 0
+                            self.internalKey.listensFlag = 0
                         } else {
                             self.readyForWriteListener.popAll {
                                 it.forEach {
@@ -89,7 +93,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     override fun wakeup() {
         try {
-            internalUdpContinuationConnection.key.addListen(Selector.OUTPUT_READY)
+            internalKey.addListen(Selector.OUTPUT_READY)
         } catch (e: Throwable) {
             throw IllegalStateException("Can't switch on internal udp interrupt", e)
         }
@@ -97,7 +101,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     override fun close() {
         closed = true
-        internalUdpContinuationConnection.key.close()
+        internalKey.close()
         internalUdpChannel.close()
 
         selector.getAttachedKeys().forEach {
