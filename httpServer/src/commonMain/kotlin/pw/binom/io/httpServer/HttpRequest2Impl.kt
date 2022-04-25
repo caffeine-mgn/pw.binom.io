@@ -41,6 +41,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
             val items = request.split(' ', limit = 3)
             val requestObject = server.httpRequest2Impl.borrow()
             val headers = requestObject.internalHeaders
+            headers.clear()
             while (true) {
                 val s = channel.reader.readln() ?: break
                 if (s.isEmpty()) {
@@ -55,7 +56,6 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
                 val headerValue = s.substring(p + 2)
                 headers.add(headerKey, headerValue)
             }
-
             requestObject.reset(
                 request = (items.getOrNull(1) ?: ""),
                 method = items[0],
@@ -121,10 +121,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
 
     fun free() {
         startedResponse = null
-        request = ""
-        method = ""
         channel = null
-        internalHeaders.clear()
         server = null
         readInput = null
         onClose(this)
