@@ -69,7 +69,6 @@ actual value class Date(val time: Long = nowTime) {
                 t.tm_min = minutes
                 t.tm_sec = seconds
                 val tx = timeZoneOffset - Date.systemZoneOffset
-                println("Date.of tx=$tx")
                 val time = _mktime64(t.ptr)
                 if (time == -1L) {
                     throw IllegalStateException("Fail on _mktime64. Input: ${year.as4()}-${month.as2()}-${dayOfMonth.as2()} ${hours.as2()}:${minutes.as2()}:${seconds.as2()}.${millis.as3()} TZ=$timeZoneOffset")
