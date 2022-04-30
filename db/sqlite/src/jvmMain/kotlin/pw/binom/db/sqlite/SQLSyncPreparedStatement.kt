@@ -38,7 +38,7 @@ class SQLSyncPreparedStatement(override val connection: SQLiteConnector, interna
     }
 
     override fun set(index: Int, value: Boolean) {
-        set(index + 1, if (value) 1 else 0)
+        set(index, if (value) 1 else 0)
     }
 
     override fun set(index: Int, value: ByteArray) {
