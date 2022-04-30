@@ -28,6 +28,7 @@ interface Definer {
 fun <T : Any> KClass<T>.getClassName(): String {
     return this.toString()
         .removePrefix("class ")
+        .removePrefix("interface ")
         .removeSuffix(" (Kotlin reflection is not available)")
 }
 

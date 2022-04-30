@@ -61,7 +61,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
     }
 
     override suspend fun mkdir(path: Path): FileSystem.Entity? {
-        val allPathUrl = url.appendPath(path)
+        val allPathUrl = url.addPath(path)
         val r = try {
             client.connect(HTTPMethod.MKCOL.code, allPathUrl)
         } catch (e: SocketClosedException) {
@@ -100,7 +100,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
         depth: Int,
         excludeCurrent: Boolean
     ): List<WebdavEntity>? {
-        val allPathUrl = url.appendPath(path)
+        val allPathUrl = url.addPath(path)
         val r = try {
             client.connect(HTTPMethod.PROPFIND.code, allPathUrl)
         } catch (e: SocketClosedException) {
@@ -166,7 +166,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
     }
 
     override suspend fun new(path: Path): AsyncOutput {
-        val allPathUrl = url.appendPath(path)
+        val allPathUrl = url.addPath(path)
         val r = client.connect(HTTPMethod.PUT.code, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
         val upload = r.writeData()

@@ -226,10 +226,11 @@ value class URL internal constructor(val fullPath: String) {
         )
     }
 
-    fun appendPath(path: Path) =
+    fun addPath(path: Path) =
         appendPath(path = path.toString(), direction = true, encode = true)
 
-    fun appendQuery(key: String)=copy(query = query?.append(key = key, value = null) ?: Query.new(key = key, value = null))
+    fun appendQuery(key: String) =
+        copy(query = query?.append(key = key, value = null) ?: Query.new(key = key, value = null))
 
     fun appendQuery(key: String, value: String): URL =
         copy(query = query?.append(key = key, value = value) ?: Query.new(key = key, value = value))

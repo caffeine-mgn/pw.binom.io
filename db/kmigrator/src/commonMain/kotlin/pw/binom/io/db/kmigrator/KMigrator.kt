@@ -43,7 +43,6 @@ class KMigrator(
             override suspend fun execute(connection: PooledAsyncConnection) {
                 connection.executeUpdate(sql)
             }
-
         }
 
         class StepFunction(override val id: String, val func: suspend (PooledAsyncConnection) -> Unit) : Step() {

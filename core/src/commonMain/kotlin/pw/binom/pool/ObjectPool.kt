@@ -4,7 +4,7 @@ package pw.binom.pool
  * Object Pool. [borrow] return object from pool. When object is not need you should call [recycle] for free object
  */
 interface ObjectPool<T : Any> {
-    fun borrow(): T = borrow(null)
+    fun borrow(): T
 
     /**
      * Return object to pool
@@ -18,12 +18,19 @@ interface ObjectManger<T : Any> {
 }
 
 /**
- * Return object from pool
+ * Return object from pool and apply [init] for config obejct from pool
  */
-fun <T : Any> ObjectPool<T>.borrow(init: ((T) -> Unit)?): T {
+inline fun <T : Any> ObjectPool<T>.borrow(init: ((T) -> Unit)): T {
     val result = borrow()
-    if (init != null) {
-        init(result)
-    }
+    init(result)
     return result
+}
+
+inline fun <T : Any, R> ObjectPool<T>.using(action: ((T) -> R)): R {
+    val value = borrow()
+    try {
+        return action(value)
+    } finally {
+        recycle(value)
+    }
 }

@@ -28,6 +28,7 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
     override var limit: Int
     override val capacity: Int
     override val elementSizeInBytes: Int
+
     override fun flip()
     override fun compact()
     override fun clear()
