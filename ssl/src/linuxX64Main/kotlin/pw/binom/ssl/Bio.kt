@@ -18,6 +18,18 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
             r
         }
 
+    fun toByteArray(): ByteArray {
+        val c = cursor
+        try {
+            cursor = 0
+            val bytes = ByteArray(size)
+            read(bytes)
+            return bytes
+        } finally {
+            cursor = c
+        }
+    }
+
     fun read(data: ByteBuffer): Int {
         if (!data.isReferenceAccessAvailable()) {
             return 0
@@ -39,8 +51,9 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
             val r = data.usePinned { data ->
                 BIO_write(self, data.addressOf(offset), length.convert())
             }
-            if (r < 0)
+            if (r < 0) {
                 TODO()
+            }
             r
         }
 
@@ -61,8 +74,9 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
         get() = BIO_ctrl(self, BIO_CTRL_INFO, 0, null).convert()
 
     fun reset() {
-        if (BIO_ctrl(self, BIO_CTRL_RESET, 0, null) < 0)
+        if (BIO_ctrl(self, BIO_CTRL_RESET, 0, null) < 0) {
             TODO()
+        }
     }
 
     fun copyTo(stream: Bio, bufferLength: Int = DEFAULT_BUFFER_SIZE) {
@@ -90,15 +104,19 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
         fun mem(size: Int): Bio {
             val ptr = platform.posix.malloc(size.convert())
             val bio = BIO_new_mem_buf(ptr, size)!!
-            if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_CLOSE.convert(), null) < 0)
+            if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_CLOSE.convert(), null) < 0) {
                 TODO()
+            }
             return Bio(bio)
         }
 
         fun mem(data: ByteArray): Bio {
-            val bio = BIO_new_mem_buf(data.refTo(0), data.size)!!
-            if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_NOCLOSE.convert(), null) < 0)
+            val bio = data.usePinned { pinnedData ->
+                BIO_new_mem_buf(pinnedData.addressOf(0), data.size)!!
+            }
+            if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_NOCLOSE.convert(), null) < 0) {
                 TODO()
+            }
             return Bio(bio)
         }
     }

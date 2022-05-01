@@ -5,15 +5,14 @@ import java.io.InputStreamReader
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
 
-
-class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: java.security.PrivateKey) : pw.binom.ssl.PrivateKey {
+class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: java.security.PrivateKey) :
+    pw.binom.ssl.PrivateKey {
     override val data: ByteArray
         get() = native.encoded
 
     override fun close() {
-        //NOPs
+        // NOP
     }
-
 }
 
 actual fun PrivateKey.Companion.loadRSA(data: ByteArray): pw.binom.ssl.PrivateKey {

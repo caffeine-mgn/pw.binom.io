@@ -7,6 +7,6 @@ expect object KeyGenerator {
     fun generate(algorithm: KeyAlgorithm, keySize: Int): KeyPair
 
     class KeyPair : Closeable {
-        fun createPrivateKey():PrivateKey
+        fun createPrivateKey(): PrivateKey
     }
 }

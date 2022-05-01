@@ -7,8 +7,6 @@ import java.math.BigInteger
 import javax.security.auth.x500.X500Principal
 
 actual fun X509Builder.generate(): X509Certificate {
-    if (pair == null)
-        throw IllegalArgumentException("Field pair is null")
     when (version) {
         X509Builder.Version.V1 -> {
             val certGen = X509V1CertificateGenerator()
@@ -21,7 +19,6 @@ actual fun X509Builder.generate(): X509Certificate {
 
             certGen.setPublicKey(pair!!.native.public)
             return X509Certificate(certGen.generate(sign.native))
-
         }
         X509Builder.Version.V3 -> {
             val certGen = X509V3CertificateGenerator()
