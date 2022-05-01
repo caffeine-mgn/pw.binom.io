@@ -12,7 +12,7 @@ interface ObjectPool<T : Any> {
     fun recycle(value: T)
 }
 
-interface ObjectManger<T : Any> {
+interface ObjectFactory<T : Any> {
     fun new(pool: ObjectPool<T>): T
     fun free(value: T)
 }

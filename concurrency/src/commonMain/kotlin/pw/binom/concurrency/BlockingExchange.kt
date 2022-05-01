@@ -22,6 +22,7 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
     private class Item<T>(val value: T?) {
         var next = AtomicReference<Item<T>?>(null)
         var previous = AtomicReference<Item<T>?>(null)
+
         init {
             doFreeze()
         }

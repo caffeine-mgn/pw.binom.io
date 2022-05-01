@@ -6,7 +6,6 @@ import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
 import pw.binom.doFreeze
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 class ConcurrentQueue<T> : AppendableQueue<T> {
     private var _size by AtomicInt(0)

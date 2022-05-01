@@ -8,7 +8,7 @@ import pw.binom.compression.zlib.AsyncGZIPOutput
 import pw.binom.io.AsyncWriter
 import pw.binom.io.IOException
 import pw.binom.io.http.*
-import pw.binom.pool.ObjectManger
+import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 import pw.binom.pool.borrow
 
@@ -16,7 +16,7 @@ internal class HttpResponse2Impl(
     val onClose: (HttpResponse2Impl) -> Unit,
 ) : HttpResponse {
 
-    object Manager : ObjectManger<HttpResponse2Impl> {
+    object Manager : ObjectFactory<HttpResponse2Impl> {
         override fun new(pool: ObjectPool<HttpResponse2Impl>): HttpResponse2Impl =
             HttpResponse2Impl { pool.recycle(it) }
 

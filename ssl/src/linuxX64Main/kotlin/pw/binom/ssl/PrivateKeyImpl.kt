@@ -2,18 +2,18 @@ package pw.binom.ssl
 
 import kotlinx.cinterop.CPointer
 import platform.openssl.*
-import pw.binom.io.*
+import pw.binom.io.ByteArrayOutput
 
 // Documentation https://stackoverflow.com/questions/18155559/how-does-one-access-the-raw-ecdh-public-key-private-key-and-params-inside-opens
 class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: CPointer<EVP_PKEY>) : PrivateKey {
     override val data: ByteArray
         get() {
 
-            when (algorithm){
-                KeyAlgorithm.RSA->{
-                    val rsa = EVP_PKEY_get1_RSA(native)?:TODO("EVP_PKEY_get1_RSA returns null")
+            when (algorithm) {
+                KeyAlgorithm.RSA -> {
+                    val rsa = EVP_PKEY_get1_RSA(native) ?: TODO("EVP_PKEY_get1_RSA returns null")
                     val b = Bio.mem()
-                    i2d_RSAPrivateKey_bio(b.self,rsa)
+                    i2d_RSAPrivateKey_bio(b.self, rsa)
                     val o = ByteArrayOutput()
                     b.copyTo(o)
                     b.close()
@@ -48,19 +48,8 @@ class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: 
 actual fun PrivateKey.Companion.loadRSA(data: ByteArray): PrivateKey {
 
     val b = Bio.mem(data)
-    val rsa = d2i_RSAPrivateKey_bio(b.self,null)
+    val rsa = d2i_RSAPrivateKey_bio(b.self, null)
     val k = EVP_PKEY_new()!!
-    EVP_PKEY_set1_RSA(k,rsa)
+    EVP_PKEY_set1_RSA(k, rsa)
     return PrivateKeyImpl(algorithm = KeyAlgorithm.RSA, native = k)
-
-//    val u = data.toUByteArray()
-//    val bigNum = BN_mpi2bn(u.refTo(0), u.size, null)
-//    val ec = EC_KEY_new()
-//    EC_KEY_set_private_key(ec, bigNum)
-//    BN_free(bigNum)
-//
-//    val key = EVP_PKEY_new()!!
-//    EVP_PKEY_set1_EC_KEY(key, ec)
-//    EC_KEY_free(ec)
-//    return PrivateKeyImpl(algorithm = KeyAlgorithm.RSA, native = key)
 }

@@ -6,7 +6,7 @@ import kotlin.native.concurrent.AtomicNativePtr
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.microseconds
 
 private inline val AtomicNativePtr.cc
     get() = this.value.reinterpret<pthread_cond_t>()!!
@@ -18,7 +18,7 @@ private const val checkTime = 100
 fun <T : NativePointed> NativePtr.reinterpret() = interpretNullablePointed<T>(this)
 
 @OptIn(ExperimentalStdlibApi::class)
-actual class ReentrantLock:Lock {
+actual class ReentrantLock : Lock {
 
     private val native = nativeHeap.alloc<pthread_mutex_t>()
 
@@ -36,13 +36,15 @@ actual class ReentrantLock:Lock {
     }
 
     actual override fun lock() {
-        if (pthread_mutex_lock(native.ptr) != 0)
+        if (pthread_mutex_lock(native.ptr) != 0) {
             throw IllegalStateException("Can't lock mutex")
+        }
     }
 
     actual override fun unlock() {
-        if (pthread_mutex_unlock(native.ptr) != 0)
+        if (pthread_mutex_unlock(native.ptr) != 0) {
             throw IllegalStateException("Can't unlock mutex")
+        }
     }
 
     actual fun newCondition() = Condition(native)
@@ -50,20 +52,17 @@ actual class ReentrantLock:Lock {
     actual class Condition(val mutex: pthread_mutex_t) {
         //        val native = cValue<pthread_cond_t>()//nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
         val native =
-            nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
+            nativeHeap.alloc<pthread_cond_t>() // malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
-            if (pthread_cond_init(native.ptr, null) != 0)
+            if (pthread_cond_init(native.ptr, null) != 0) {
                 throw IllegalStateException("Can't init Condition")
+            }
         }
 
         private val cleaner = createCleaner(native) { native ->
             pthread_cond_destroy(native.ptr)
             nativeHeap.free(native)
-        }
-
-        init {
-            freeze()
         }
 
         actual fun await() {
@@ -78,7 +77,6 @@ actual class ReentrantLock:Lock {
             pthread_cond_broadcast(native.ptr)
         }
 
-        @OptIn(ExperimentalTime::class)
         actual fun await(duration: Duration): Boolean {
             if (duration.isInfinite()) {
                 await()
@@ -107,9 +105,8 @@ actual class ReentrantLock:Lock {
     }
 }
 
-@OptIn(ExperimentalTime::class)
 private fun timespec.set(base: timeval, diff: Duration) {
-    val nsecDiff = Duration.microseconds(base.tv_usec) + diff
+    val nsecDiff = base.tv_usec.microseconds + diff
 
     tv_sec = base.tv_sec + nsecDiff.inWholeSeconds.toInt()
     tv_nsec = (nsecDiff.inWholeNanoseconds - nsecDiff.inWholeSeconds * 1_000_000_000).convert()

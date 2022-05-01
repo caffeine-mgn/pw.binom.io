@@ -3,14 +3,14 @@ package pw.binom.ssl
 import pw.binom.date.Date
 
 class X509Builder(
-        val pair: KeyGenerator.KeyPair,
-        val sign: PrivateKey = pair.createPrivateKey(),
-        val version: Version = Version.V3,
-        val subject: String,
-        val issuer: String,
-        val notBefore: Date,
-        val notAfter: Date,
-        val serialNumber: Long = 0L
+    val pair: KeyGenerator.KeyPair,
+    val sign: PrivateKey = pair.createPrivateKey(),
+    val version: Version = Version.V3,
+    val subject: String,
+    val issuer: String,
+    val notBefore: Date,
+    val notAfter: Date,
+    val serialNumber: Long = 0L
 ) {
     enum class Version {
         V1, V3

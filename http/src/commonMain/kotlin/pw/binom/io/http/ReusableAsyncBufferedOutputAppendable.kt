@@ -9,7 +9,7 @@ import pw.binom.NullAsyncOutput
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.io.AsyncBufferedOutputAppendable
-import pw.binom.pool.ObjectManger
+import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 
 class ReusableAsyncBufferedOutputAppendable(
@@ -28,7 +28,7 @@ class ReusableAsyncBufferedOutputAppendable(
     class Manager(
         val bufferSize: Int = DEFAULT_BUFFER_SIZE,
         val charBufferSize: Int = bufferSize / 2,
-    ) : ObjectManger<ReusableAsyncBufferedOutputAppendable> {
+    ) : ObjectFactory<ReusableAsyncBufferedOutputAppendable> {
         override fun new(pool: ObjectPool<ReusableAsyncBufferedOutputAppendable>): ReusableAsyncBufferedOutputAppendable =
             ReusableAsyncBufferedOutputAppendable(
                 bufferSize = bufferSize,
