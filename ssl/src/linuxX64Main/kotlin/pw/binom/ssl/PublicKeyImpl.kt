@@ -1,10 +1,7 @@
 package pw.binom.ssl
 
 import kotlinx.cinterop.CPointer
-import platform.openssl.EVP_PKEY
-import platform.openssl.EVP_PKEY_get1_RSA
-import platform.openssl.i2d_RSAPrivateKey_bio
-import platform.openssl.i2d_RSAPublicKey_bio
+import platform.openssl.*
 import pw.binom.io.ByteArrayOutput
 
 class PublicKeyImpl(override val algorithm: KeyAlgorithm, override val native: CPointer<EVP_PKEY>):PublicKey {
@@ -29,4 +26,12 @@ class PublicKeyImpl(override val algorithm: KeyAlgorithm, override val native: C
     override fun close() {
         TODO("Not yet implemented")
     }
+}
+
+actual fun PublicKey.Companion.loadRSA(data: ByteArray): PublicKey {
+    val b = Bio.mem(data)
+    val rsa = d2i_RSAPublicKey_bio(b.self, null)
+    val k = EVP_PKEY_new()!!
+    EVP_PKEY_set1_RSA(k, rsa)
+    return PublicKeyImpl(algorithm = KeyAlgorithm.RSA, native = k)
 }

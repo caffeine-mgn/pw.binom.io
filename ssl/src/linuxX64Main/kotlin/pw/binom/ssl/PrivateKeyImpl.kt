@@ -46,7 +46,6 @@ class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: 
 }
 
 actual fun PrivateKey.Companion.loadRSA(data: ByteArray): PrivateKey {
-
     val b = Bio.mem(data)
     val rsa = d2i_RSAPrivateKey_bio(b.self, null)
     val k = EVP_PKEY_new()!!
