@@ -69,7 +69,6 @@ internal class StrongImpl : Strong {
                     logger.severe("Fail to destroy $it bean", e)
                 }
             }
-            logger.severe("Calling destroy interrupters...")
             interruptingListenersLock.synchronize {
                 interruptingListeners.forEach {
                     it.resume(Unit)
