@@ -10,14 +10,14 @@ import pw.binom.date.Calendar
 object CalendarSerializer : KSerializer<Calendar> {
     override fun deserialize(decoder: Decoder): Calendar {
         if (decoder !is SQLValueDecoder) {
-            throw IllegalArgumentException("UUIDSerializer support only pw.binom.db.serialization.SQLValueDecoder")
+            throw IllegalArgumentException("CalendarSerializer support only pw.binom.db.serialization.SQLValueDecoder")
         }
         return decoder.resultSet.getDate(decoder.columnName)!!.calendar()
     }
 
     override fun serialize(encoder: Encoder, value: Calendar) {
         if (encoder !is SQLValueEncoder) {
-            throw IllegalArgumentException("UUIDSerializer support only pw.binom.db.serialization.SQLValueEncoder")
+            throw IllegalArgumentException("CalendarSerializer support only pw.binom.db.serialization.SQLValueEncoder")
         }
 
         encoder.classDescriptor.getElementName(encoder.fieldIndex)

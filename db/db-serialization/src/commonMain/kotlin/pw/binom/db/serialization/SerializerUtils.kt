@@ -2,6 +2,7 @@ package pw.binom.db.serialization
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlin.jvm.JvmName
 
 @get:JvmName("getIdColumn2")
@@ -20,3 +21,6 @@ val KSerializer<out Any>.idColumn: String?
 
 fun KSerializer<out Any>.getIdColumn() =
     idColumn ?: throw IllegalArgumentException("Can't find Id Column in ${descriptor.serialName}")
+
+inline fun <reified T : Any> SerialDescriptor.getElementAnnotation(index: Int) =
+    getElementAnnotations(index).find { it is T }?.let { it as T }

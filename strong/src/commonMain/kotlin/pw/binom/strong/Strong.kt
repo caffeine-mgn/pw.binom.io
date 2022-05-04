@@ -34,7 +34,6 @@ private class AfterInit<T>(val fieldName: String, val init: suspend () -> T) : R
         inited = true
         value = init()
     }
-
 }
 
 interface Strong {

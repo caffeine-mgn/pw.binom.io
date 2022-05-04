@@ -3,11 +3,8 @@ package pw.binom.db.serialization
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialInfo
 
-/**
- * Define default table name for entity
- */
 @OptIn(ExperimentalSerializationApi::class)
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.BINARY)
 @SerialInfo
-annotation class TableName(val tableName: String)
+annotation class Embedded(val prefix: String)

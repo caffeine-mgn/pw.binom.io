@@ -2,8 +2,8 @@ package pw.binom.db.serialization
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
-import pw.binom.getOrException
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -22,7 +22,7 @@ class SQLSerializationTest {
     }
 
     @Test
-    fun testDecodeByteArray() = runBlocking{
+    fun testDecodeByteArray() = runBlocking {
         val data = byteArrayOf(10, 15, 20)
         val mapper = SQLSerialization.DEFAULT.mapper<EntityWithArray>()
         val resultSet = ListStaticSyncResultSet(
@@ -38,5 +38,36 @@ class SQLSerializationTest {
         }.await()
 
         assertContentEquals(data, decoded.array)
+    }
+
+    @Test
+    fun selectEmbedded() = runTest {
+        @Serializable
+        data class Em(
+            val t2: String
+        )
+
+        @Serializable
+        data class Root(
+            val t1: String,
+            @Embedded("t2_")
+            val embebbedT2: Em
+        )
+
+        val result = ListStaticSyncResultSet(
+            list = listOf(
+                listOf(
+                    "test-t1",
+                    "test-t2"
+                )
+            ),
+            columns = listOf(
+                "t1",
+                "t2_t2"
+            )
+        )
+        result.next()
+        val value = SQLSerialization.DEFAULT.mapper<Root>().invoke(result)
+        println("value:$value")
     }
 }

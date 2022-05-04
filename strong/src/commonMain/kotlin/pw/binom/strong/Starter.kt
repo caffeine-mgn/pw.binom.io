@@ -2,12 +2,8 @@ package pw.binom.strong
 
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
-import pw.binom.strong.exceptions.BeanCreateException
-import pw.binom.strong.exceptions.CycleDependencyException
-import pw.binom.strong.exceptions.NoSuchBeanException
-import pw.binom.strong.exceptions.StrongException
+import pw.binom.strong.exceptions.*
 import kotlin.reflect.KClass
-
 
 class ClassDependency(val clazz: KClass<out Any>, val name: String?, val require: Boolean)
 
@@ -135,18 +131,37 @@ internal class Starter(
         createdBeans.forEach { node ->
             node.deps.forEach { dep ->
                 val foundBean = if (dep.name != null) {
-                    createdBeans.find { it.name == dep.name }
+                    val bean = createdBeans.find { it.name == dep.name }
+                    if (bean != null && !bean.isMatch(dep.clazz)) {
+                        throw StrongException("Can't cast \"${bean.name}\" (${bean.beanClass::class.getClassName()}) to ${dep.clazz::getClassName}")
+                    }
+                    bean
                 } else {
-                    createdBeans.find { it.isMatch(dep.clazz) }
+                    val beans = createdBeans.filter { it.isMatch(dep.clazz) }
+                    when {
+                        beans.isEmpty() -> null
+                        beans.size == 1 -> beans.first()
+                        else -> {
+                            val primary = beans.filter { it.primary }
+                            when {
+                                primary.size == 1 -> primary.first()
+                                primary.isEmpty() -> null
+                                else -> throw SeveralBeanException(klazz = dep.clazz, name = null)
+                            }
+                        }
+                    }
                 }
                 if (foundBean == null) {
                     if (dep.require) {
+                        println("All beans:")
+                        createdBeans.forEach {
+                            println("->${it.name} (${it.bean::class.getClassName()})")
+                        }
                         throw BeanCreateException(
                             clazz = node.bean::class,
                             name = node.name,
                             cause = NoSuchBeanException(klazz = dep.clazz, name = dep.name),
                         )
-
                     } else {
                         return@forEach
                     }
@@ -156,9 +171,8 @@ internal class Starter(
                     throw BeanCreateException(
                         clazz = node.bean::class,
                         name = node.name,
-                        cause = StrongException("Found invalid bean type. Except ${dep.clazz}, actual ${foundBean.beanClass}"),//TODO сделать нормальное описание ошибки
+                        cause = StrongException("Found invalid bean type. Except ${dep.clazz}, actual ${foundBean.beanClass}"), // TODO сделать нормальное описание ошибки
                     )
-
                 }
                 if (node !== foundBean) {
                     node.nodes += foundBean
@@ -313,7 +327,6 @@ internal class Starter(
                     throw StrongException("Can't link bean ${it.name} (${it.bean::class.getClassName()})", e)
                 }
             }
-
 
 /*
             logger.debug("Check cycle bean init")

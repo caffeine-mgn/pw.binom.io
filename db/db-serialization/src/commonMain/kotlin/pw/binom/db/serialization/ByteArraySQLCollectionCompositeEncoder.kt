@@ -79,5 +79,5 @@ class ByteArraySQLCollectionCompositeEncoder(
         map[columnName] = resultList
     }
 
-    private fun throwNotSupported():Nothing = throw SerializationException("Not supported")
+    private fun throwNotSupported(): Nothing = throw SerializationException("Not supported")
 }

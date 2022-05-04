@@ -12,13 +12,12 @@ class SQLDecoder(
     val resultSet: ResultSet,
     override val serializersModule: SerializersModule,
 ) : Decoder {
-    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        return SQLCompositeDecoder(
+    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder =
+        SQLCompositeDecoder(
             serializersModule = serializersModule,
             columnPrefix = columnPrefix,
             resultSet = resultSet,
         )
-    }
 
     override fun decodeBoolean(): Boolean {
         TODO("Not yet implemented")

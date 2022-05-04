@@ -51,7 +51,7 @@ class ByteArraySQLCompositeDecoder(val data: ByteArray, override val serializers
         index: Int,
         deserializer: DeserializationStrategy<T?>,
         previousValue: T?
-    ): T? =throwNotSupported()
+    ): T? = throwNotSupported()
 
     override fun <T> decodeSerializableElement(
         descriptor: SerialDescriptor,
@@ -69,5 +69,5 @@ class ByteArraySQLCompositeDecoder(val data: ByteArray, override val serializers
     override fun endStructure(descriptor: SerialDescriptor) {
     }
 
-    private fun throwNotSupported():Nothing = throw SerializationException("Not supported")
+    private fun throwNotSupported(): Nothing = throw SerializationException("Not supported")
 }

@@ -78,9 +78,9 @@ class XmlObjectEncoder(
             if (wrapper == null && wrapperNs != null) {
                 throw IllegalArgumentException(
                     "Can't serialaze ${descriptor.serialName} field ${
-                        descriptor.getElementName(
-                            index
-                        )
+                    descriptor.getElementName(
+                        index
+                    )
                     }. Invalid configuration of XML Namespace"
                 )
             }
@@ -121,15 +121,16 @@ class XmlObjectEncoder(
             e.body = value
             e.parent = body
         } else {
-            body.attributes[Attribute(
-                nameSpace = descriptor.xmlNamespace(index),
-                name = descriptor.xmlName(index)
-            )] = value
+            body.attributes[
+                Attribute(
+                    nameSpace = descriptor.xmlNamespace(index),
+                    name = descriptor.xmlName(index)
+                )
+            ] = value
         }
     }
 
     override fun endStructure(descriptor: SerialDescriptor) {
-
     }
 }
 

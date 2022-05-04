@@ -1,6 +1,5 @@
 package pw.binom.db.serialization
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
 import pw.binom.date.Date
 import pw.binom.date.parseIso8601Date
@@ -42,8 +41,8 @@ abstract class AbstractStaticSyncResultSet<T>() : AsyncResultSet {
     protected open fun getDate(index: Int, value: T): Date? =
         getString(index, value)?.parseIso8601Date()
 
-    protected open fun getBigDecimal(index: Int, value: T): BigDecimal? =
-        getString(index, value)?.let { BigDecimal.parseString(it) }
+//    protected open fun getBigDecimal(index: Int, value: T): BigDecimal? =
+//        getString(index, value)?.let { BigDecimal.parseString(it) }
 
     protected abstract fun getBlob(index: Int, value: T): ByteArray?
     protected abstract fun isNull(index: Int, value: T): Boolean
@@ -96,11 +95,11 @@ abstract class AbstractStaticSyncResultSet<T>() : AsyncResultSet {
     override fun getLong(column: String): Long? =
         getLong(columnIndex(column))
 
-    override fun getBigDecimal(index: Int): BigDecimal? =
-        getElement()?.let { getBigDecimal(index, it) }
+//    override fun getBigDecimal(index: Int): BigDecimal? =
+//        getElement()?.let { getBigDecimal(index, it) }
 
-    override fun getBigDecimal(column: String): BigDecimal? =
-        getBigDecimal(columnIndex(column))
+//    override fun getBigDecimal(column: String): BigDecimal? =
+//        getBigDecimal(columnIndex(column))
 
     override fun getDouble(index: Int): Double? =
         getElement()?.let { getDouble(index, it) }
@@ -127,6 +126,6 @@ abstract class AbstractStaticSyncResultSet<T>() : AsyncResultSet {
         getDate(columnIndex(column))
 
     override suspend fun asyncClose() {
-        //NOP
+        // NOP
     }
 }

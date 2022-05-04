@@ -1,17 +1,13 @@
 package pw.binom.db.serialization
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
 import pw.binom.db.async.pool.*
-
-private inline fun <reified T : Any> SerialDescriptor.getElementAnnotation(index: Int) =
-    (getElementAnnotations(index).find { it is T } as T?)
 
 abstract class Repository<T : Any, ID : Any>(
     val serializer: KSerializer<T>,
     val sqlSerialization: SQLSerialization = SQLSerialization.DEFAULT
 ) {
-    protected abstract val db:AsyncConnectionPool
+    protected abstract val db: AsyncConnectionPool
     private val idFieldName = run {
         for (i in 0 until serializer.descriptor.elementsCount) {
             serializer.descriptor.getElementAnnotation<Id>(i) ?: continue
@@ -50,7 +46,6 @@ abstract class Repository<T : Any, ID : Any>(
         SelectQuery(
             SQLSerialization.selectQuery(serializer) + " where $where"
         ).mapper(sqlSerialization.mapper(serializer))
-
 
     private val SELECT_BY_ID =
         buildSelect("$idFieldName = :$idFieldName\"")

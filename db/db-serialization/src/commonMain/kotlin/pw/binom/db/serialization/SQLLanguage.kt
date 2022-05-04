@@ -8,7 +8,7 @@ interface SQLLanguage {
     fun isSupport(databaseInfo: DatabaseInfo): Boolean
 
     fun select(
-        tableName:String?,
+        tableName: String?,
         query: String?,
         result: EntityDescription,
     ): SQLQueryNamedArguments

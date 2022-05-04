@@ -8,9 +8,9 @@ class ListStaticSyncResultSet(
     override fun getString(index: Int, value: List<Any?>): String? =
         value[index].toString()
 
-    override fun getBlob(index: Int, value: List<Any?>): ByteArray? {
-        val el = value[index] ?: return null
-        return when (el) {
+    override fun getBlob(index: Int, value: List<Any?>): ByteArray? =
+        when (val el = value[index]) {
+            null -> null
             is ByteArray -> el
             is Collection<*> -> {
                 val iter = el.iterator()
@@ -20,7 +20,6 @@ class ListStaticSyncResultSet(
             }
             else -> TODO("Can't cast ${el::class} to ByteArray")
         }
-    }
 
     override fun isNull(index: Int, value: List<Any?>): Boolean =
         value[index] == null

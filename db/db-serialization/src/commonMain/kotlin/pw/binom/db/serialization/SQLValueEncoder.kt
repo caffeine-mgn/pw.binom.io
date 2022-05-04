@@ -52,15 +52,23 @@ class SQLValueEncoder(
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {
-        val code = enumDescriptor.getElementAnnotations(index).find { it is EnumCodeValue }?.let { it as EnumCodeValue }?.code
-        val alias = enumDescriptor.getElementAnnotations(index).find { it is EnumAliasValue }?.let { it as EnumAliasValue }?.alias
+        val code =
+            enumDescriptor.getElementAnnotations(index).find { it is EnumCodeValue }?.let { it as EnumCodeValue }?.code
+        val alias = enumDescriptor.getElementAnnotations(index).find { it is EnumAliasValue }
+            ?.let { it as EnumAliasValue }?.alias
         val byOrder = enumDescriptor.annotations.any { it is EnumOrderValue }
         val byName = enumDescriptor.annotations.any { it is EnumNameValue }
         if (byOrder && byName) {
             throw SerializationException("Invalid configuration of ${enumDescriptor.serialName}. Enum should use only one of @EnumOrderValue or @EnumNameValue")
         }
-        if (code!=null && alias != null) {
-            throw SerializationException("Invalid configuration of ${enumDescriptor.serialName}.${enumDescriptor.getElementName(index)} Enum should use only one of @EnumCodeValue or @EnumAliasValue")
+        if (code != null && alias != null) {
+            throw SerializationException(
+                "Invalid configuration of ${enumDescriptor.serialName}.${
+                enumDescriptor.getElementName(
+                    index
+                )
+                } Enum should use only one of @EnumCodeValue or @EnumAliasValue"
+            )
         }
         val value: Any = when {
             code != null -> code
@@ -68,7 +76,6 @@ class SQLValueEncoder(
             enumDescriptor.annotations.any { it is EnumOrderValue } -> index
             enumDescriptor.annotations.any { it is EnumNameValue } -> enumDescriptor.getElementName(index)
             else -> throw SerializationException("Can't detect valid enum ${enumDescriptor.serialName} serialization method")
-
         }
         map[columnName] = value
     }

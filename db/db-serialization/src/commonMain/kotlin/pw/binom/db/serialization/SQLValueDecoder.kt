@@ -8,7 +8,6 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.db.ResultSet
-import pw.binom.db.SQLException
 
 class SQLValueDecoder(
     val classDescriptor: SerialDescriptor,
@@ -21,11 +20,20 @@ class SQLValueDecoder(
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
+        println("classDescriptor=$classDescriptor fieldIndex=$fieldIndex, classDescriptor.elementsCount=${classDescriptor.elementsCount}")
+        val prefix = (columnPrefix ?: "") +
+            (classDescriptor.getElementAnnotation<Embedded>(fieldIndex)?.prefix ?: "")
+
         return when {
             descriptor == ByteArraySerializer().descriptor -> ByteArraySQLCompositeDecoder(
                 data = resultSet.getBlob(columnName)!!, serializersModule = serializersModule
             )
-            else -> throw SQLException("")
+            else -> SQLCompositeDecoder(
+                columnPrefix = prefix,
+                resultSet = resultSet,
+                serializersModule = serializersModule
+            )
+//            else -> throw SQLException("")
         }
     }
 
@@ -43,7 +51,6 @@ class SQLValueDecoder(
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun decodeEnum(enumDescriptor: SerialDescriptor): Int {
-
         val byOrder = enumDescriptor.annotations.any { it is EnumOrderValue }
         val byName = enumDescriptor.annotations.any { it is EnumNameValue }
         if (byOrder && byName) {
@@ -65,29 +72,6 @@ class SQLValueDecoder(
             }
         }
         throw SerializationException("Can't find enum ${enumDescriptor.serialName} by value \"$columnValue\"")
-//
-//
-//
-//        return if (byOrder) {
-//            val order = resultSet.getInt(columnName)!!
-//            if (order < 0 || order >= enumDescriptor.elementsCount) {
-//                throw SerializationException("Can't find enum by order $order")
-//            }
-//            order
-//        } else {
-//            val value = resultSet.getString(columnName)!!
-//            val index = enumDescriptor.elementNames.indexOf(value)
-//            if (index == -1) {
-//                throw SerializationException(
-//                    "Can't find enum by name \"$value\". Field: ${classDescriptor.serialName}.${
-//                        classDescriptor.getElementName(
-//                            fieldIndex
-//                        )
-//                    }"
-//                )
-//            }
-//            index
-//        }
     }
 
     override fun decodeFloat(): Float =

@@ -60,7 +60,6 @@ class SchemaGenerationTest {
                         serializer = MyEntity.serializer(),
                     )
                 }
-
         }
         println(tableSchema)
     }

@@ -1,4 +1,4 @@
-import pw.binom.baseStaticLibConfig
+
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -27,7 +27,9 @@ kotlin {
         browser()
         nodejs()
     }
-    baseStaticLibConfig()
+    targets.all {
+        compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {

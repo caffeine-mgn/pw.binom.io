@@ -4,6 +4,7 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
@@ -44,9 +45,13 @@ class SQLCompositeDecoder(
             return CompositeDecoder.DECODE_DONE
         }
         for (it in cursor until descriptor.elementsCount) {
-            val column = (columnPrefix ?: "") + descriptor.getElementName(it)
-            if (resultSet.columns.indexOfFirst { it == column } != -1) {
+            if (descriptor.getElementDescriptor(it).kind is StructureKind) {
                 return cursor++
+            } else {
+                val column = (columnPrefix ?: "") + descriptor.getElementName(it)
+                if (resultSet.columns.indexOfFirst { it == column } != -1) {
+                    return cursor++
+                }
             }
         }
         return CompositeDecoder.DECODE_DONE
@@ -64,7 +69,7 @@ class SQLCompositeDecoder(
         resultSet.getInt((columnPrefix ?: "") + descriptor.getElementName(index))!!
 
     override fun decodeLongElement(descriptor: SerialDescriptor, index: Int): Long =
-        resultSet.getLong((columnPrefix?:"")+descriptor.getElementName(index))!!
+        resultSet.getLong((columnPrefix ?: "") + descriptor.getElementName(index))!!
 
     @ExperimentalSerializationApi
     override fun <T : Any> decodeNullableSerializableElement(
@@ -73,10 +78,16 @@ class SQLCompositeDecoder(
         deserializer: DeserializationStrategy<T?>,
         previousValue: T?
     ): T? {
-        return if (resultSet.isNull((columnPrefix?:"")+descriptor.getElementName(index))){
+        return if (resultSet.isNull((columnPrefix ?: "") + descriptor.getElementName(index))) {
             previousValue
         } else {
-            val decoder = SQLValueDecoder(classDescriptor = descriptor,fieldIndex = index,columnPrefix=columnPrefix,resultSet = resultSet,serializersModule=serializersModule)
+            val decoder = SQLValueDecoder(
+                classDescriptor = descriptor,
+                fieldIndex = index,
+                columnPrefix = columnPrefix,
+                resultSet = resultSet,
+                serializersModule = serializersModule
+            )
             deserializer.deserialize(decoder)
         }
     }

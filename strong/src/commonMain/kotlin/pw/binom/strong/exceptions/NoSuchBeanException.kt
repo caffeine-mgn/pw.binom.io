@@ -5,5 +5,5 @@ import kotlin.reflect.KClass
 
 class NoSuchBeanException(val klazz: KClass<out Any>, val name: String?) : StrongException() {
     override val message: String
-        get() = "Bean ${klazz.getClassName()} not found"
+        get() = if (name == null) "Bean ${klazz.getClassName()} not found" else "Bean \"$name\" (${klazz.getClassName()}) not found"
 }

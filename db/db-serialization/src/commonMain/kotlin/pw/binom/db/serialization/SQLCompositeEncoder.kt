@@ -92,6 +92,5 @@ class SQLCompositeEncoder(
     }
 
     override fun endStructure(descriptor: SerialDescriptor) {
-
     }
 }

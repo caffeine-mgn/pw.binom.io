@@ -26,7 +26,7 @@ internal class InternalDefiner : Definer {
         }
         alreadyDefined[defName] = BeanAlreadyDefinedException(beanName = defName)
         definitions += Definition(
-            name = clazz.genDefaultName(),
+            name = name ?: clazz.genDefaultName(),
             clazz = clazz,
             init = bean,
             primary = primary,
