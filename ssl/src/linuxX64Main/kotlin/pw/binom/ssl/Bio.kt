@@ -18,6 +18,13 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
             r
         }
 
+    val ptr
+        get() = memScoped {
+            val ptr = allocPointerTo<ByteVar>()
+            BIO_ctrl(self, BIO_C_GET_BUF_MEM_PTR, 0, ptr.reinterpret())
+            ptr.value!!
+        }
+
     fun toByteArray(): ByteArray {
         val c = cursor
         try {
@@ -73,9 +80,16 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     val size: Int
         get() = BIO_ctrl(self, BIO_CTRL_INFO, 0, null).convert()
 
+    fun push(bio: Bio): Bio {
+        BIO_push(self, bio.self)
+        return this
+    }
+
+    fun pop() = BIO_pop(self)?.let { Bio(it) }
+
     fun reset() {
         if (BIO_ctrl(self, BIO_CTRL_RESET, 0, null) < 0) {
-            TODO()
+            TODO("BIO_ctrl(BIO_CTRL_RESET) is fail")
         }
     }
 
@@ -83,8 +97,9 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
         val buf = ByteArray(bufferLength)
         while (!eof) {
             val len = read(buf)
-            if (len > 0)
+            if (len > 0) {
                 stream.write(data = buf, length = len)
+            }
         }
     }
 

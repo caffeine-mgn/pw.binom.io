@@ -7,6 +7,7 @@ import pw.binom.date.Date
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.bindTcp
+import pw.binom.network.tcpConnect
 import pw.binom.ssl.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,7 +37,6 @@ class SSLTest {
             KeyAlgorithm.RSA,
             2048
         )
-
 
         val pair1 = KeyGenerator.generate(
             KeyAlgorithm.RSA,

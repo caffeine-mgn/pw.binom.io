@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import pw.binom.io.bufferedAsciiReader
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
+import pw.binom.network.tcpConnect
 import pw.binom.ssl.*
 import kotlin.test.Test
 

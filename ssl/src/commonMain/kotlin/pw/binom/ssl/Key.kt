@@ -1,6 +1,6 @@
 package pw.binom.ssl
 
-interface Key {
+sealed interface Key {
     val algorithm: KeyAlgorithm
     val data: ByteArray
 
