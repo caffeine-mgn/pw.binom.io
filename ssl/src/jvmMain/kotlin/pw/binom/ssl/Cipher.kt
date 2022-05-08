@@ -1,6 +1,6 @@
 package pw.binom.ssl
 
-import org.bouncycastle.crypto.encodings.PKCS1Encoding
+import pw.binom.crypto.RsaPadding
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
@@ -8,8 +8,18 @@ import javax.crypto.Cipher as JvmCipher
 
 actual interface Cipher {
     actual companion object {
-        actual fun getInstance(transformation: String): Cipher =
-            CipherJvm(JvmCipher.getInstance(transformation))
+        actual fun getInstance(transformation: String): Cipher {
+            val fullArgs = transformation.split("/")
+            val args = if (fullArgs.size == 1) {
+                emptyList()
+            } else {
+                fullArgs.subList(1, fullArgs.lastIndex)
+            }
+            return when (fullArgs[0]) {
+                "RSA" -> RSACipherJvm(args)
+                else -> TODO("Unknown transformation \"$transformation\"")
+            }
+        }
     }
 
     actual enum class Mode(val code: Int) {
@@ -20,7 +30,19 @@ actual interface Cipher {
     actual fun doFinal(data: ByteArray): ByteArray
 }
 
-class CipherJvm(val native: JvmCipher) : Cipher {
+class RSACipherJvm(args: List<String>) : Cipher {
+    private val native: JvmCipher
+
+    init {
+        val padding = if (args.isNotEmpty()) {
+            val padding = args.last()
+            RsaPadding.valueOf(padding)
+        } else {
+            RsaPadding.PKCS1Padding
+        }
+        native = JvmCipher.getInstance("RSA/ECB/${padding.jvmName}")
+    }
+
     override fun init(mode: Cipher.Mode, key: Key) {
         val jvmKey = when (key.algorithm) {
             KeyAlgorithm.RSA -> {

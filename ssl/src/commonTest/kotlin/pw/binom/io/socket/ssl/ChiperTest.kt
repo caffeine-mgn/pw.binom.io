@@ -55,7 +55,7 @@ class ChiperTest {
             mode = Cipher.Mode.DECODE,
             key = pair.private,
         )
-        val msg = String.gen(100)
+        val msg = "Hello world"//String.gen(100)
         val encoeded = encideInstance.doFinal(msg.encodeToByteArray())
         println("encoded [${encoeded.size}]: ${encoeded.toHex()}")
         println("decoded: ${decodeInstance.doFinal(encoeded).decodeToString()}")

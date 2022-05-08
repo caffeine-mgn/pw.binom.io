@@ -77,8 +77,8 @@ class RsaCipherImpl(args: List<String>) : Cipher {
     private lateinit var buffer: ByteArray
 
     override fun doFinal(data: ByteArray): ByteArray {
-        if (data.size > rsa!!.dataSize - padding.size) {
-            throw IllegalArgumentException("Data should be less then ${rsa!!.dataSize - padding.size}")
+        if (mode == Cipher.Mode.ENCODE && data.size > rsa!!.dataSize - padding.size) {
+            throw IllegalArgumentException("Data should be less then ${rsa!!.dataSize - padding.size}. Actual size: ${data.size}")
         }
         println("--->#1")
         val result = buffer.usePinned { output ->
