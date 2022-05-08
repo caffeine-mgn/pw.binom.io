@@ -1,8 +1,13 @@
 package pw.binom.ssl
 
 import kotlinx.atomicfu.atomic
-import kotlinx.cinterop.*
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.toKString
 import platform.openssl.*
+import pw.binom.base64.Base64
+import pw.binom.getSslError
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
 import pw.binom.io.use
@@ -17,13 +22,18 @@ internal fun loadOpenSSL() {
     }
 }
 
-fun createRsaFromPublicKey(data: ByteArray) = Bio.mem(data).use { priv ->
-    val vvv = PEM_read_bio_X509(priv.self, null, null, null)
-    PEM_read_bio_RSAPublicKey(priv.self, null, null, null) ?: throw IOException("Can't load public key")
+fun createRsaFromPublicKey(data: ByteArray): CPointer<RSA> {
+    val pem = "-----BEGIN PUBLIC KEY-----\n${Base64.encode(data)}\n-----END PUBLIC KEY-----\n"
+    return Bio.mem(pem.encodeToByteArray()).use { priv ->
+        PEM_read_bio_RSA_PUBKEY(priv.self, null, null, null) ?: throw IOException("Can't load public key: ${getSslError()}")
+    }
 }
 
-fun createRsaFromPrivateKey(data: ByteArray) = Bio.mem(data).use { priv ->
-    PEM_read_bio_RSAPrivateKey(priv.self, null, null, null) ?: throw IOException("Can't load public key")
+fun createRsaFromPrivateKey(data: ByteArray): CPointer<RSA> {
+    val pem = "-----BEGIN RSA PRIVATE KEY-----\n${Base64.encode(data)}\n-----END RSA PRIVATE KEY-----\n"
+    return Bio.mem(pem.encodeToByteArray()).use { priv ->
+        PEM_read_bio_RSAPrivateKey(priv.self, null, null, null) ?: throw IOException("Can't load private key: ${getSslError()}")
+    }
 }
 
 var CPointer<RSA>.publicKey: ByteArray

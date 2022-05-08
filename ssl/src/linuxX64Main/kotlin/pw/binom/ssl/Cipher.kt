@@ -1,17 +1,28 @@
 package pw.binom.ssl
 
-import kotlinx.cinterop.*
-import kotlinx.wasm.jsinterop.allocateArena
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.usePinned
 import platform.openssl.*
+import pw.binom.crypto.RsaPadding
+import kotlin.native.internal.Cleaner
 import kotlin.native.internal.createCleaner
 
 actual interface Cipher {
     actual companion object {
-        actual fun getInstance(transformation: String): Cipher =
-            when (transformation) {
-                "RSA" -> RsaCipherImpl()
+        actual fun getInstance(transformation: String): Cipher {
+            val fullArgs = transformation.split("/")
+            val args = if (fullArgs.size == 1) {
+                emptyList()
+            } else {
+                fullArgs.subList(1, fullArgs.lastIndex)
+            }
+            return when (fullArgs[0]) {
+                "RSA" -> RsaCipherImpl(args)
                 else -> TODO("Unknown transformation \"$transformation\"")
             }
+        }
     }
 
     actual enum class Mode {
@@ -22,20 +33,26 @@ actual interface Cipher {
     actual fun doFinal(data: ByteArray): ByteArray
 }
 
-class RsaCipherImpl : Cipher {
+@OptIn(ExperimentalStdlibApi::class)
+class RsaCipherImpl(args: List<String>) : Cipher {
     init {
         loadOpenSSL()
     }
 
+    private val padding = if (args.isNotEmpty()) {
+        val padding = args.last()
+        RsaPadding.valueOf(padding)
+    } else {
+        RsaPadding.PKCS1Padding
+    }
+
     var rsa: CPointer<RSA>? = null
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private val cleaner = createCleaner(rsa) { rsa ->
-        RSA_free(rsa)
-    }
+    private var cleaner: Cleaner? = null
 
     private var mode = Cipher.Mode.ENCODE
     private var isPublicKey = false
+//    private val padding: Int = RSA_PKCS1_PADDING_SIZE // RSA_PKCS1_OAEP_PADDING
 
     override fun init(mode: Cipher.Mode, key: Key) {
         this.mode = mode
@@ -50,12 +67,19 @@ class RsaCipherImpl : Cipher {
             }
         }
         buffer = ByteArray(rsa.dataSize)
+        println("rsa.dataSize=${rsa.dataSize}")
         this.rsa = rsa
+        cleaner = createCleaner(rsa) { rsa ->
+            RSA_free(rsa)
+        }
     }
 
     private lateinit var buffer: ByteArray
 
     override fun doFinal(data: ByteArray): ByteArray {
+        if (data.size > rsa!!.dataSize - padding.size) {
+            throw IllegalArgumentException("Data should be less then ${rsa!!.dataSize - padding.size}")
+        }
         println("--->#1")
         val result = buffer.usePinned { output ->
             data.usePinned { pinned ->
@@ -67,7 +91,7 @@ class RsaCipherImpl : Cipher {
                             pinned.addressOf(0).reinterpret(),
                             output.addressOf(0).reinterpret(),
                             rsa,
-                            RSA_PKCS1_OAEP_PADDING,
+                            padding.id,
                         )
                     } else {
                         RSA_public_decrypt(
@@ -75,7 +99,7 @@ class RsaCipherImpl : Cipher {
                             pinned.addressOf(0).reinterpret(),
                             output.addressOf(0).reinterpret(),
                             rsa,
-                            RSA_PKCS1_OAEP_PADDING,
+                            padding.id,
                         )
                     }
                 } else {
@@ -85,7 +109,7 @@ class RsaCipherImpl : Cipher {
                             pinned.addressOf(0).reinterpret(),
                             output.addressOf(0).reinterpret(),
                             rsa,
-                            RSA_PKCS1_OAEP_PADDING,
+                            padding.id,
                         )
                     } else {
                         RSA_private_decrypt(
@@ -93,7 +117,7 @@ class RsaCipherImpl : Cipher {
                             pinned.addressOf(0).reinterpret(),
                             output.addressOf(0).reinterpret(),
                             rsa,
-                            RSA_PKCS1_OAEP_PADDING,
+                            padding.id,
                         )
                     }
                 }

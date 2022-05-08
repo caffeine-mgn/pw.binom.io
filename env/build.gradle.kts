@@ -34,6 +34,7 @@ kotlin {
         mingwX86()
     }
     macosX64()
+    macosArm64()
     js("js", BOTH) {
         browser()
         nodejs()
@@ -105,6 +106,9 @@ kotlin {
         }
 
         val macosX64Main by getting {
+            dependsOn(nativeMain)
+        }
+        val macosArm64Main by getting {
             dependsOn(nativeMain)
         }
 

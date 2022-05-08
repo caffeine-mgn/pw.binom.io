@@ -6,7 +6,7 @@ import pw.binom.io.IOException
 import pw.binom.io.bufferedAsciiReader
 import pw.binom.io.bufferedAsciiWriter
 
-class BaseSMTPClient(val connect: AsyncChannel):SMTPClient {
+class BaseSMTPClient(val connect: AsyncChannel) : SMTPClient {
     private val writer = connect.bufferedAsciiWriter()
     private val reader = connect.bufferedAsciiReader()
 
@@ -39,7 +39,6 @@ class BaseSMTPClient(val connect: AsyncChannel):SMTPClient {
     internal suspend fun start(sendFromDomain: String, login: String, password: String) {
         checkResponse(250, 220)
         writer.append("EHLO ").append(sendFromDomain).append("\r\n")
-
 
         writer.append("AUTH LOGIN\r\n")
         writer.flush()
@@ -112,18 +111,17 @@ class BaseSMTPClient(val connect: AsyncChannel):SMTPClient {
         checkResponse(250)
     }
 
-
     private suspend fun checkResponse(cmd: Int) {
         readCmd2()
         if (code != cmd) {
-            throw IOException("Invalid response code. ${code} ${this.cmd ?: ""} ${description}")
+            throw IOException("Invalid response code. $code ${this.cmd ?: ""} $description")
         }
     }
 
     private suspend fun checkResponse(cmd1: Int, cmd2: Int) {
         readCmd2()
         if (code != cmd1 && code != cmd2) {
-            throw IOException("Invalid response code. ${code} ${this.cmd ?: ""} ${description}")
+            throw IOException("Invalid response code. $code ${this.cmd ?: ""} $description")
         }
     }
 
