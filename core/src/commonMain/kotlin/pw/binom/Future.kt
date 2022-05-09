@@ -134,31 +134,27 @@ class FreezableFuture<T> : Future<T> {
             if (!isDone) {
                 throw Future.FutureNotReadyException()
             }
-            return _isSuccess.value
+            return _isSuccess.getValue()
         }
     override val exceptionOrNull: Throwable?
         get() =
             if (isSuccess) {
                 null
             } else {
-                result as Throwable
+                result.getValue() as Throwable
             }
     private var _isDone = AtomicBoolean(false)
     override val isDone: Boolean
-        get() = _isDone.value
+        get() = _isDone.getValue()
 
-    private var result by AtomicReference<Any?>(null)
+    private val result = AtomicReference<Any?>(null)
 
     fun resume(result: Result<T>) {
         if (!_isDone.compareAndSet(false, true)) {
             throw Future.FutureAlreadyResumedException()
         }
-        _isSuccess.value = result.isSuccess
+        _isSuccess.setValue(result.isSuccess)
         result.doFreeze()
-        this.result = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
-    }
-
-    init {
-        doFreeze()
+        this.result.setValue(if (result.isSuccess) result.getOrNull() else result.exceptionOrNull())
     }
 }

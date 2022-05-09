@@ -19,7 +19,7 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
     }
 
     val isLocked
-        get() = lock.value
+        get() = lock.getValue()
 
     /**
      * Trying lock. If [duration] is not null will wait only [duration] time. And if [duration]==null will
@@ -44,7 +44,7 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
     }
 
     override fun unlock() {
-        lock.value = false
+        lock.setValue(false)
     }
 }
 

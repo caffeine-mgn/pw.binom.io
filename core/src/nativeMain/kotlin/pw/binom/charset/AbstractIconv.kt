@@ -1,3 +1,5 @@
+@file:OptIn(UnsafeNumber::class)
+
 package pw.binom.charset
 
 import kotlinx.cinterop.*

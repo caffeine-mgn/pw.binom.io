@@ -1,27 +1,19 @@
 package pw.binom.concurrency
 
-import pw.binom.atomic.AtomicLong
-import pw.binom.atomic.AtomicReference
-import pw.binom.doFreeze
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class FrozenQueue<T> {
     private class Item<T>(val value: T?) {
-        var next = AtomicReference<Item<T>?>(null)
-        var previous = AtomicReference<Item<T>?>(null)
-
-        init {
-            doFreeze()
-        }
+        var next: Item<T>? = null
+        var previous: Item<T>? = null
     }
 
     private val lock = SpinLock()
-    private var first by AtomicReference<Item<T>?>(null)
-    private var last by AtomicReference<Item<T>?>(null)
-    var size by AtomicLong(0)
-        private set
+    private var first: Item<T>? = null
+    private var last: Item<T>? = null
+    private var _size = 0L
+    val size
+        get() = _size
 
     val isEmpty
         get() = lock.synchronize { first == null }
@@ -32,16 +24,17 @@ class FrozenQueue<T> {
     fun push(value: T) {
         lock.synchronize {
             val item = Item(value)
-            item.previous.value = last
-            last?.next?.value = item
+            item.previous = last
+            last?.next = item
             last = item
             if (first == null) {
                 first = item
             }
-            size++
+            _size++
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun pop(duration: Duration? = null): T {
         try {
             lock.lock(duration)
@@ -53,17 +46,13 @@ class FrozenQueue<T> {
                 first = null
                 last = null
             } else {
-                first = item.next.value
-                first?.previous?.value = null
+                first = item.next
+                first?.previous = null
             }
-            size--
+            size.dec()
             return item.value as T
         } finally {
             lock.unlock()
         }
-    }
-
-    init {
-        doFreeze()
     }
 }

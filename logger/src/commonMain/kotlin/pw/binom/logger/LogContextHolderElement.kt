@@ -1,19 +1,15 @@
 package pw.binom.logger
 
 import pw.binom.atomic.AtomicReference
-import pw.binom.coroutine.CrossThreadCoroutineContextElement
-import pw.binom.doFreeze
 import kotlin.coroutines.CoroutineContext
 
-internal class LogContextHolderElement(tags: Map<String, String> = emptyMap()) : CrossThreadCoroutineContextElement,
-    CoroutineContext.Element {
-    var tags by AtomicReference<Map<String, String>>(emptyMap())
-
-    override fun fork(): CrossThreadCoroutineContextElement =
-        LogContextHolderElement(tags)
+internal class LogContextHolderElement(tags: Map<String, String> = emptyMap()) : CoroutineContext.Element {
+    private val _tags = AtomicReference<Map<String, String>>(emptyMap())
+    val tags
+        get() = _tags.getValue()
 
     init {
-        this.tags = tags.doFreeze()
+        _tags.setValue(tags)
     }
 
     override val key: CoroutineContext.Key<LogContextHolderElement>

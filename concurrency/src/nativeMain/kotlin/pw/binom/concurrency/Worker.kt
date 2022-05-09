@@ -16,9 +16,9 @@ private var privateCurrentWorker: Worker? = null
 actual class Worker actual constructor(name:String?) : CoroutineDispatcher() {
     private val nativeWorker = KWorker.start(errorReporting = true, name = name)
     private val _isInterrupted = AtomicBoolean(false)
-    private var _taskCount by AtomicInt(0)
+    private val _taskCount = AtomicInt(0)
     actual val taskCount
-        get() = _taskCount
+        get() = _taskCount.getValue()
 
     actual fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
         val r = FreezableFuture<RESULT>()
@@ -26,13 +26,13 @@ actual class Worker actual constructor(name:String?) : CoroutineDispatcher() {
             initRuntimeIfNeeded()
             val ff = it.func.attach()
             privateCurrentWorker = it.worker
-            it.worker._taskCount++
+            it.worker._taskCount.inc()
             val result = try {
                 Result.success(ff(it.input))
             } catch (e: Throwable) {
                 Result.failure(e)
             }
-            it.worker._taskCount--
+            it.worker._taskCount.dec()
             privateCurrentWorker = null
             it.future.resume(result)
             result
@@ -44,7 +44,7 @@ actual class Worker actual constructor(name:String?) : CoroutineDispatcher() {
         FutureUnit(nativeWorker.requestTermination(true))
 
     actual val isInterrupted: Boolean
-        get() = _isInterrupted.value
+        get() = _isInterrupted.getValue()
 
     init {
         freeze()

@@ -114,6 +114,7 @@ kotlin {
             dependencies {
                 api(kotlin("stdlib-common"))
                 api(project(":env"))
+                api(project(":atomic"))
             }
         }
 

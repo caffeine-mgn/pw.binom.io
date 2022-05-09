@@ -61,7 +61,7 @@ fun ByteBuffer.getOrNull(index: Int) =
 val ByteBuffer.indices: IntRange
     get() = IntRange(position, limit - 1)
 
-inline fun ByteBuffer.clone() = realloc(capacity)
+fun ByteBuffer.clone() = realloc(capacity)
 
 /**
  * Allocs [ByteBuffer] with [size]. Then execute [block] and after that close created buffer

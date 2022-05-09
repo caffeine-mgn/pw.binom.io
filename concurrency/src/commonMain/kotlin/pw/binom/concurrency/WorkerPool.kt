@@ -73,20 +73,20 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
     private val list = Array(size) { Worker() }
 
     fun shutdown() {
-        if (state.interotped.value) {
+        if (state.interotped.getValue()) {
             throw IllegalStateException("WorkerPool already has Interotped")
         }
-        state.interotped.value = true
-        while (state.tasks.value > 0 || list.any { it.taskCount > 0 }) {
+        state.interotped.setValue(true)
+        while (state.tasks.getValue() > 0 || list.any { it.taskCount > 0 }) {
             sleep(50)
         }
     }
 
     fun shutdownNow(): List<() -> Any?> {
-        if (state.interotped.value) {
+        if (state.interotped.getValue()) {
             throw IllegalStateException("WorkerPool already has Interrupted")
         }
-        state.interotped.value = true
+        state.interotped.setValue(true)
         val out = ArrayList<() -> Any?>(state.queue.size)
 
         while (!state.queue.isEmpty) {
@@ -96,7 +96,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
     }
 
     fun <T> submit(f: () -> T): Future<T> {
-        if (state.interotped.value) {
+        if (state.interotped.getValue()) {
             throw IllegalStateException("WorkerPool already has Interrupted")
         }
         val future = FreezableFuture<T>()
