@@ -25,7 +25,7 @@ internal fun String.toDnsString(): CharArray {
 internal fun CharArray.fromDns(): String {
     val name = this
     var i = 0
-    var p:Char
+    var p: Char
 
     while (i < name.size) {
         p = name[i]
@@ -49,10 +49,9 @@ internal fun String.fromDns(): String =
     toCharArray().fromDns()
 
 fun ByteBuffer.readDns(): CharArray {
-    if (get(position).toInt() and 0xC0 != 0) {//check is reference
+    if (get(position).toInt() and 0xC0 != 0) { // check is reference
         val firstByte = get().toInt() and 0xF
         val second = get()
-
 
         val ptr = Short.fromBytes((firstByte.inv() or 0xC0).inv().toByte(), second)
         val pos = position

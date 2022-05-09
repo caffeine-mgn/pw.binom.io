@@ -2,10 +2,7 @@ import pw.binom.baseStaticLibConfig
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 kotlin {
@@ -77,4 +74,4 @@ kotlin {
         }
     }
 }
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()

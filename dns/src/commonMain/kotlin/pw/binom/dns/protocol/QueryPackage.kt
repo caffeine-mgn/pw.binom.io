@@ -1,13 +1,15 @@
 package pw.binom.dns.protocol
 
-import pw.binom.*
+import pw.binom.ByteBuffer
+import pw.binom.readShort
+import pw.binom.writeShort
 
 class QueryPackage {
     var name: String = ""
     var type: UShort = 0u
     var clazz: UShort = 0u
 
-    fun read(buf: ByteBuffer):QueryPackage {
+    fun read(buf: ByteBuffer): QueryPackage {
         name = buf.readDns().fromDns()
         type = buf.readShort().toUShort()
         clazz = buf.readShort().toUShort()
@@ -29,6 +31,4 @@ class QueryPackage {
     override fun toString(): String {
         return "Query(name='$name', type=$type, clazz=$clazz)"
     }
-
-
 }

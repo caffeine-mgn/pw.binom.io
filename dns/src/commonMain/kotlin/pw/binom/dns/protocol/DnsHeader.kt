@@ -146,9 +146,7 @@ class DnsHeader {
 
     override fun toString(): String {
         return "DnsHeader(id=0x${
-            id.toUShort().toString(16)
+        id.toUShort().toString(16)
         }, qr=$qr, opcode=$opcode, aa=$aa, tc=$tc, rd=$rd, ra=$ra, z=$z, ad=$ad, cd=$cd, rcode=$rcode, q_count=$q_count, ans_count=$ans_count, auth_count=$auth_count, add_count=$add_count)"
     }
-
-
 }

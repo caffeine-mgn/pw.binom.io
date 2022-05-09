@@ -7,7 +7,7 @@ data class Query(
     var type: UShort,
     var clazz: UShort,
 ) {
-    fun toMutable(query: QueryPackage):QueryPackage {
+    fun toMutable(query: QueryPackage): QueryPackage {
         query.name = name
         query.type = type
         query.clazz = clazz

@@ -42,11 +42,9 @@ class ResourcePackage {
 
     override fun toString(): String {
         return "Resource(name='$name', type=$type, clazz=$clazz, ttl=$ttl, rdata=${
-            rdata.map {
-                it.toUByte().toString(16)
-            }
+        rdata.map {
+            it.toUByte().toString(16)
+        }
         })"
     }
-
-
 }
