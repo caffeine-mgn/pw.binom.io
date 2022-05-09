@@ -5,7 +5,12 @@ import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicInt
 
 internal class AsyncInputWithCounter(val input: AsyncInput) : AsyncInput {
-    var limit by AtomicInt(0)
+    private val _limit = AtomicInt(0)
+    var limit: Int
+        get() = _limit.getValue()
+        set(value) {
+            _limit.setValue(value)
+        }
     override val available: Int
         get() = minOf(input.available, limit)
 

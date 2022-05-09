@@ -2,14 +2,15 @@ package pw.binom.db.sqlite
 
 import kotlinx.coroutines.withContext
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.*
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.execute
+import pw.binom.concurrency.joinAndGetOrThrow
 import pw.binom.db.TransactionMode
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.async.AsyncStatement
 import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
-import pw.binom.doFreeze
 import pw.binom.io.use
 import pw.binom.neverFreeze
 
@@ -105,7 +106,7 @@ class AsyncConnectionAdapter private constructor(val worker: Worker, val connect
     }
 
     override fun isReadyForQuery(): Boolean =
-        !busy.value
+        !busy.getValue()
 
     private var transactionStarted = false
 

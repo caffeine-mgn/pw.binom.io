@@ -55,7 +55,7 @@ class RadisConnectionImpl(
 
     private val closed = AtomicBoolean(false)
     private fun checkClosed() {
-        if (closed.value) {
+        if (closed.getValue()) {
             throw ClosedException()
         }
     }
@@ -69,12 +69,12 @@ class RadisConnectionImpl(
         try {
             return func()
         } finally {
-            busy.value = false
+            busy.setValue(false)
         }
     }
 
     override val readyForRequest: Boolean
-        get() = !busy.value
+        get() = !busy.getValue()
 
     override suspend fun asyncClose() {
         if (!closed.compareAndSet(false, true)) {

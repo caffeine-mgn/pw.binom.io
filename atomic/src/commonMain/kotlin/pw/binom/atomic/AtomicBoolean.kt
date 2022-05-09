@@ -1,5 +1,8 @@
 package pw.binom.atomic
 
+/**
+ * dsdf
+ */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 expect value class AtomicBoolean(val native: InternalAtomicBoolean) {
     constructor(value: Boolean)
