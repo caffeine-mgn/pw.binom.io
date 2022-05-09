@@ -9,11 +9,9 @@ class NativeByteBufferTest {
         val buf = ByteBuffer.alloc(50)
         buf.clear()
         buf.ref { cPointer, i ->
-
         }
         buf.empty()
         buf.ref { cPointer, i ->
-
         }
     }
 }

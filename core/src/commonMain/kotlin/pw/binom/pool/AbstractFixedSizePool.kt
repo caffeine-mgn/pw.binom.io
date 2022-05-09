@@ -54,5 +54,3 @@ abstract class AbstractFixedSizePool<T : Any>(capacity: Int) : ObjectPool<T>, Cl
         }
     }
 }
-
-

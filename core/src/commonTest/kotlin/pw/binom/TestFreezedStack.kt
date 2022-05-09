@@ -1,11 +1,11 @@
 package pw.binom
 //
-//import pw.binom.thread.FreezedStack
-//import kotlin.test.Test
-//import kotlin.test.assertEquals
-//import kotlin.test.assertTrue
+// import pw.binom.thread.FreezedStack
+// import kotlin.test.Test
+// import kotlin.test.assertEquals
+// import kotlin.test.assertTrue
 //
-//class TestFreezedStack {
+// class TestFreezedStack {
 //    @Test
 //    fun testLiFo() {
 //        val s = FreezedStack<String>()
@@ -41,4 +41,4 @@ package pw.binom
 //        assertEquals("3", q.pop())
 //        assertEquals("4", q.pop())
 //    }
-//}
+// }

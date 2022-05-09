@@ -1,6 +1,9 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.ByteBuffer
+import pw.binom.CharBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.Output
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
@@ -91,27 +94,27 @@ class BufferedOutputAppendable private constructor(
         return this
     }
 
-    override fun append(csq: CharSequence?): Appendable {
-        csq ?: return this
-        return append(csq, 0, csq.length)
+    override fun append(value: CharSequence?): Appendable {
+        value ?: return this
+        return append(value, 0, value.length)
     }
 
-    override fun append(csq: CharSequence?, start: Int, end: Int): Appendable {
+    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): Appendable {
         checkClosed()
-        csq ?: return this
-        if (csq.isEmpty()) {
+        value ?: return this
+        if (value.isEmpty()) {
             return this
         }
-        if (start == end) {
+        if (startIndex == endIndex) {
             checkFlush()
-            charBuffer.put(csq[start])
+            charBuffer.put(value[startIndex])
             return this
         }
-        val array = if (csq is String) {
-            csq.toCharArray(start, end)
+        val array = if (value is String) {
+            value.toCharArray(startIndex, endIndex)
         } else {
-            CharArray(end - start) {
-                csq[it + start]
+            CharArray(endIndex - startIndex) {
+                value[it + startIndex]
             }
         }
         var pos = 0

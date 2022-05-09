@@ -86,6 +86,5 @@ kotlin {
 apply<pw.binom.plugins.DocsPlugin>()
 
 kotlinter {
-    indentSize = 4
     disabledRules = arrayOf("no-wildcard-imports")
 }

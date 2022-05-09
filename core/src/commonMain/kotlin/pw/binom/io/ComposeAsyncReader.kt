@@ -16,7 +16,7 @@ class ComposeAsyncReader : AbstractAsyncReader() {
             }
             try {
                 val r = current.value.readChar()
-                if (r==null){
+                if (r == null) {
                     current.clear()
                     continue
                 }
@@ -54,4 +54,4 @@ class ComposeAsyncReader : AbstractAsyncReader() {
 }
 
 operator fun AsyncReader.plus(other: AsyncReader) =
-        ComposeAsyncReader().addLast(this).addLast(other)
+    ComposeAsyncReader().addLast(this).addLast(other)

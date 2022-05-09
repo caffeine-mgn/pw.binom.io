@@ -1,7 +1,6 @@
 package pw.binom.io
 
 import pw.binom.ByteBufferPool
-import pw.binom.forEachIndexed
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -19,7 +18,7 @@ class BufferedOutputAppendableTest {
         writer.flush()
         output.data.flip()
         val arr = txt.toCharArray()
-        assertEquals(arr.size * 2+1, output.data.remaining)
+        assertEquals(arr.size * 2 + 1, output.data.remaining)
         for (i in 0 until arr.size) {
             assertEquals(
                 arr[i].toByte(),

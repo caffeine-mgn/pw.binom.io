@@ -24,12 +24,12 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
             throw StreamClosedException()
     }
 
-    actual override fun flip() {
+    override fun flip() {
         checkClosed()
         native.flip()
     }
 
-    actual override val remaining: Int
+    override val remaining: Int
         get() {
             checkClosed()
             return native.remaining()
@@ -79,7 +79,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
         closed = true
     }
 
-    actual override var position: Int
+    override var position: Int
         get() {
             checkClosed()
             return native.position()
@@ -88,7 +88,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
             checkClosed()
             native.position(value)
         }
-    actual override var limit: Int
+    override var limit: Int
         get() {
             checkClosed()
             return native.limit()
@@ -98,7 +98,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
             native.limit(value)
         }
 
-    actual override val capacity: Int
+    override val capacity: Int
         get() {
             checkClosed()
             return native.capacity()
@@ -152,12 +152,12 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
         native.put(value)
     }
 
-    actual override fun clear() {
+    override fun clear() {
         checkClosed()
         native.clear()
     }
 
-    actual override val elementSizeInBytes: Int
+    override val elementSizeInBytes: Int
         get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
@@ -201,7 +201,7 @@ actual class ByteBuffer(var native: JByteBuffer) : Input, Output, Closeable, Buf
         return l
     }
 
-    actual override fun compact() {
+    override fun compact() {
         if (position == 0) {
             native.clear()
         } else {

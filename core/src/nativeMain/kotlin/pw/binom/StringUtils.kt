@@ -1,11 +1,6 @@
 package pw.binom
 
-import pw.binom.charset.Charset
-import pw.binom.charset.CharsetTransformResult
-import pw.binom.io.ByteArrayOutput
-import kotlin.math.roundToInt
-
-//actual fun String.encodeBytes(charset: Charset): ByteArray {
+// actual fun String.encodeBytes(charset: Charset): ByteArray {
 //    val buffer = toCharArray().toCharBuffer()
 //    val out = ByteArrayOutput(length)
 //    val encoder = charset.newEncoder()
@@ -25,9 +20,9 @@ import kotlin.math.roundToInt
 //            CharsetTransformResult.MALFORMED, CharsetTransformResult.INPUT_OVER -> throw IllegalArgumentException("Invalid Input String")
 //        }
 //    }
-//}
+// }
 
-//actual fun ByteArray.decodeString(charset: Charset, offset: Int, length: Int): String {
+// actual fun ByteArray.decodeString(charset: Charset, offset: Int, length: Int): String {
 //    if (this.isEmpty()) {
 //        return ""
 //    }
@@ -56,4 +51,4 @@ import kotlin.math.roundToInt
 //        self.close()
 //        decoder.close()
 //    }
-//}
+// }

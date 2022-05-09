@@ -72,7 +72,6 @@ class ComposeReaderTest {
             r.addLast(StringReader(str))
 
             while (r.read() != null) {
-
             }
         }
 

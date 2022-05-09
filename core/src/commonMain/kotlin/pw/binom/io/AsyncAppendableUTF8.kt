@@ -1,6 +1,7 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.AsyncOutput
+import pw.binom.ByteBuffer
 
 class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
 
@@ -12,7 +13,7 @@ class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
             UTF8.unicodeToUtf8(value, data)
             data.flip()
             stream.write(data)
-        } catch (e:Throwable) {
+        } catch (e: Throwable) {
             throw e
         }
         return this

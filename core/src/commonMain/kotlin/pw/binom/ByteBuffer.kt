@@ -10,11 +10,6 @@ import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
 
-// private val _ZERO = ByteBuffer.alloc(0)
-//
-// val ByteBuffer.Companion.ZERO
-//    get() = _ZERO
-
 /**
  * A part of memory. Also contents current read/write state
  */
@@ -22,16 +17,6 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
     companion object {
         fun alloc(size: Int): ByteBuffer
     }
-
-    override val remaining: Int
-    override var position: Int
-    override var limit: Int
-    override val capacity: Int
-    override val elementSizeInBytes: Int
-
-    override fun flip()
-    override fun compact()
-    override fun clear()
 
     fun realloc(newSize: Int): ByteBuffer
     fun skip(length: Long): Long

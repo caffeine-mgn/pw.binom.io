@@ -1,7 +1,6 @@
 package pw.binom
 
 import org.khronos.webgl.Float32Array
-import org.khronos.webgl.Int8Array
 import org.khronos.webgl.get
 import org.khronos.webgl.set
 import pw.binom.io.Closeable

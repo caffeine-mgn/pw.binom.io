@@ -22,5 +22,4 @@ open class AsyncDefaultPool<T : Any>(val capacity: Int, val new: suspend () -> T
             pool[size++] = value
         }
     }
-
 }

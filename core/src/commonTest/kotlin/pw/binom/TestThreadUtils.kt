@@ -1,10 +1,10 @@
 package pw.binom
 
-//import pw.binom.thread.Thread
-//import kotlin.test.Test
-//import kotlin.test.assertTrue
+// import pw.binom.thread.Thread
+// import kotlin.test.Test
+// import kotlin.test.assertTrue
 //
-//class TestThreadUtils {
+// class TestThreadUtils {
 //
 //    @Test
 //    fun test() {
@@ -16,4 +16,4 @@ package pw.binom
 //        println("end - start = ${end - start}")
 //        assertTrue(end - start in 500..1000)
 //    }
-//}
+// }

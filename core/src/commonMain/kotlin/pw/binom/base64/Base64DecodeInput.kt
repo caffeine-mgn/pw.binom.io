@@ -62,7 +62,6 @@ class Base64DecodeInput(val reader: Reader) : Input {
     }
 
     override fun close() {
-        //Do nothing
+        // Do nothing
     }
-
 }

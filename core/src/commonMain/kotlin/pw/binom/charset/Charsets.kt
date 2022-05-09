@@ -6,4 +6,4 @@ expect object Charsets {
     val UTF8: Charset
 }
 
-class CharsetNotSupportedException(val charset:String) : RuntimeException()
+class CharsetNotSupportedException(val charset: String) : RuntimeException()

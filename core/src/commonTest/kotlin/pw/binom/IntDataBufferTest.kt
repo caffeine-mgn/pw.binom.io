@@ -3,7 +3,7 @@ package pw.binom
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class IntDataBufferTest{
+class IntDataBufferTest {
     @Test
     fun test() {
         val d = IntDataBuffer.alloc(10)

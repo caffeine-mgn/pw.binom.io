@@ -1,10 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteDataBuffer
-import pw.binom.alloc
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.fail
 /*
 class TestByteArrayInput {
 

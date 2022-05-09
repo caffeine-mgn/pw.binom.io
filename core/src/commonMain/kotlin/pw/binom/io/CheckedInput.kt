@@ -1,7 +1,6 @@
 package pw.binom.io
 
 import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.Input
 
 class CheckedInput(val stream: Input, val cksum: CRC32Basic) : Input {

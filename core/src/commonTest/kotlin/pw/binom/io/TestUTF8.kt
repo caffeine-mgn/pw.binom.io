@@ -5,7 +5,6 @@ import pw.binom.toByteBufferUTF8
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
 class TestUTF8 {
 
     private fun testWriteChar(char: Char) {
@@ -49,7 +48,6 @@ class TestUTF8 {
             testReadChar(it)
         }
     }
-
 
     @Test
     fun testWriteENG() {

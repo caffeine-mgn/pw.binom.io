@@ -1,7 +1,5 @@
 package pw.binom.base64
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
 /*
 
 class TestBase64DecodeAppendable {

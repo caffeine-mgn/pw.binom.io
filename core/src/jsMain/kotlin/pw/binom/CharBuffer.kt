@@ -99,7 +99,6 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         chars[index]
 
     override fun close() {
-
     }
 
     private fun nextPutIndex(): Int {
@@ -128,5 +127,4 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         position += len
         return len
     }
-
 }

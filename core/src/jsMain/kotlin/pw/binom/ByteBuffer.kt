@@ -30,23 +30,23 @@ private fun memcpy(
     }
 }
 
-actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Closeable, Buffer {
+actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
 
-    actual override val remaining: Int
+    override val remaining: Int
         get() {
             checkClosed()
             return limit - position
         }
-    actual override var position: Int = 0
+    override var position: Int = 0
         set(value) {
             require(value >= 0) { "position should be more or equals 0" }
             require(value <= limit) { "position should be less or equals limit" }
             field = value
         }
-    actual override var limit: Int = capacity
+    override var limit: Int = capacity
         set(value) {
             checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
@@ -56,7 +56,7 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
             }
         }
 
-    actual override val elementSizeInBytes: Int
+    override val elementSizeInBytes: Int
         get() = 1
 
     private var closed = false
@@ -68,12 +68,12 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
             throw StreamClosedException()
     }
 
-    actual override fun flip() {
+    override fun flip() {
         limit = position
         position = 0
     }
 
-    actual override fun compact() {
+    override fun compact() {
         if (remaining > 0) {
             val size = remaining
             memcpy(native, 0, native, position, size)
@@ -84,7 +84,7 @@ actual class ByteBuffer(actual override val capacity: Int) : Input, Output, Clos
         }
     }
 
-    actual override fun clear() {
+    override fun clear() {
         limit = capacity
         position = 0
     }

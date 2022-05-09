@@ -8,10 +8,10 @@ actual class AtomicReference<T> actual constructor(value: T) : ReadWriteProperty
     private val atom = NAtomicReference(value)
 
     actual fun compareAndSet(expected: T, new: T): Boolean =
-            atom.compareAndSet(expected, new)
+        atom.compareAndSet(expected, new)
 
     actual fun compareAndSwap(expected: T, new: T): T =
-            atom.compareAndSwap(expected, new)
+        atom.compareAndSwap(expected, new)
 
     actual var value: T
         get() = atom.value

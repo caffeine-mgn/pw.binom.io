@@ -1,10 +1,10 @@
 package pw.binom.io
 
-//import pw.binom.concurrency.Lock
-//import pw.binom.thread.use
-//import kotlin.test.Test
+// import pw.binom.concurrency.Lock
+// import pw.binom.thread.use
+// import kotlin.test.Test
 //
-//class LockTest {
+// class LockTest {
 //
 //    @Test
 //    fun testRelock() {
@@ -16,4 +16,4 @@ package pw.binom.io
 //            }
 //        }
 //    }
-//}
+// }

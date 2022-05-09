@@ -1,6 +1,5 @@
 package pw.binom
 
-import kotlin.experimental.and
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -45,21 +44,21 @@ class TestUtils {
     }
 
     @Test
-    fun testLong2(){
+    fun testLong2() {
         val value = 336592112L
         val r = ByteArray(8)
         value.toBytes(r)
 
-        assertEquals(0,value[0])
-        assertEquals(0,value[1])
-        assertEquals(0,value[2])
-        assertEquals(0,value[3])
-        assertEquals(20,value[4])
-        assertEquals(15,value[5])
-        assertEquals(-4,value[6])
-        assertEquals(-16,value[7])
+        assertEquals(0, value[0])
+        assertEquals(0, value[1])
+        assertEquals(0, value[2])
+        assertEquals(0, value[3])
+        assertEquals(20, value[4])
+        assertEquals(15, value[5])
+        assertEquals(-4, value[6])
+        assertEquals(-16, value[7])
         r.forEachIndexed { index, byte ->
-            assertEquals(value[index],byte)
+            assertEquals(value[index], byte)
         }
         assertEquals(value, Long.fromBytes(r))
         assertEquals(value, Long.fromBytes(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]))

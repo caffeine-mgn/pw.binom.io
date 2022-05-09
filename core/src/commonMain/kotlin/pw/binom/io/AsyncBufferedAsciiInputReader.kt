@@ -87,7 +87,6 @@ class AsyncBufferedAsciiInputReader private constructor(
                 throw e
             }
         }
-
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
@@ -123,7 +122,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         full()
         val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
         for (i in offset until offset + len) {
-            dest[i] = buffer.get().toChar()
+            dest[i] = buffer.get().toInt().toChar()
         }
         return len
     }
@@ -172,7 +171,6 @@ class AsyncBufferedAsciiInputReader private constructor(
                 } else {
                     out.append(buffer[i].toInt().toChar())
                 }
-
             }
             exist = true
         }

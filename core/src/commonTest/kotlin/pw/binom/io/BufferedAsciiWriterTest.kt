@@ -2,7 +2,6 @@ package pw.binom.io
 
 import kotlinx.coroutines.test.runTest
 import pw.binom.asyncOutput
-import pw.binom.io.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

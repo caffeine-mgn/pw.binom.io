@@ -1,7 +1,7 @@
 package pw.binom
 
-import kotlin.native.concurrent.freeze
 import kotlin.native.concurrent.ensureNeverFrozen
+import kotlin.native.concurrent.freeze
 import kotlin.native.concurrent.isFrozen as isKNFrozen
 
 actual fun <T : Any> T.doFreeze() = freeze()

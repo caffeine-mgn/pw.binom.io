@@ -1,7 +1,5 @@
 package pw.binom.io
 
-import kotlin.jvm.JvmName
-
 interface AsyncAppendable {
     suspend fun append(value: CharSequence?): AsyncAppendable
     suspend fun append(value: Char): AsyncAppendable
@@ -18,8 +16,6 @@ interface AsyncAppendable {
     suspend fun append(value: Double): AsyncAppendable = append(value.toString())
     suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable
 }
-
-suspend fun AsyncAppendable.append(value: Boolean) = append(if (value) "true" else "false")
 
 interface AsyncWriter : AsyncAppendable, AsyncFlushable, AsyncCloseable
 interface Writer : Appendable, Flushable, Closeable

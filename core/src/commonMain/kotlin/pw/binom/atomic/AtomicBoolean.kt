@@ -6,7 +6,7 @@ import kotlin.reflect.KProperty
 class AtomicBoolean(value: Boolean) : ReadWriteProperty<Any?, Boolean> {
     private val atom = AtomicInt(boolToInt(value))
     fun compareAndSet(expected: Boolean, new: Boolean): Boolean =
-            atom.compareAndSet(boolToInt(expected), boolToInt(new))
+        atom.compareAndSet(boolToInt(expected), boolToInt(new))
 
     private fun boolToInt(value: Boolean) = if (value) 1 else 0
 

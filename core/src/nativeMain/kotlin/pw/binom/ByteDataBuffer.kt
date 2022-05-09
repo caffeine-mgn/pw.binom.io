@@ -7,7 +7,8 @@ import platform.posix.memcpy
 import platform.posix.memset
 import pw.binom.io.Closeable
 
-actual class ByteDataBuffer private constructor(actual val size: Int, var arr: ByteArray?, ptr: CPointer<ByteVar>?) : Closeable, Iterable<Byte> {
+actual class ByteDataBuffer private constructor(actual val size: Int, var arr: ByteArray?, ptr: CPointer<ByteVar>?) :
+    Closeable, Iterable<Byte> {
     actual companion object {
         actual fun alloc(size: Int): ByteDataBuffer {
             require(size > 0) { "Save must be more than 0. Size: [$size]" }

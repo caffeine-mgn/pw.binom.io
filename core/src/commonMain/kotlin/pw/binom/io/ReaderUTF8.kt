@@ -13,23 +13,23 @@ class ReaderUTF82(val stream: Input) : Reader {
     }
 
     override fun read(): Char? =
-            try {
-                data.reset(0, 1)
-                if (stream.read(data) > 0) {
-                    val firstByte = data[0]
-                    val size = UTF8.utf8CharSize(firstByte)
-                    if (size > 0) {
-                        data.reset(0, size)
-                        stream.read(data)
-                        data.flip()
-                    }
-                    UTF8.utf8toUnicode(firstByte, data)
-                } else {
-                    null
+        try {
+            data.reset(0, 1)
+            if (stream.read(data) > 0) {
+                val firstByte = data[0]
+                val size = UTF8.getUtf8CharSize(firstByte) - 1
+                if (size > 0) {
+                    data.reset(0, size)
+                    stream.read(data)
+                    data.flip()
                 }
-            } catch (e: EOFException) {
+                UTF8.utf8toUnicode(firstByte, data)
+            } else {
                 null
             }
+        } catch (e: EOFException) {
+            null
+        }
 }
 
 fun Input.utf8Reader() = ReaderUTF82(this)

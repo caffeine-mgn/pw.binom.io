@@ -1,13 +1,13 @@
 package pw.binom.coroutine
 
-//import pw.binom.async2
-//import pw.binom.getOrException
-//import pw.binom.io.ClosedException
-//import pw.binom.nextUuid
-//import kotlin.random.Random
-//import kotlin.test.*
+// import pw.binom.async2
+// import pw.binom.getOrException
+// import pw.binom.io.ClosedException
+// import pw.binom.nextUuid
+// import kotlin.random.Random
+// import kotlin.test.*
 //
-//class ConveyorTest {
+// class ConveyorTest {
 //    @Test
 //    fun test() {
 //        async2 {
@@ -80,4 +80,4 @@ package pw.binom.coroutine
 //            assertNull(conveyor.exceptionOrNull)
 //        }
 //    }
-//}
+// }

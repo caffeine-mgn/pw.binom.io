@@ -7,18 +7,19 @@ import kotlin.native.concurrent.AtomicLong as NAtomicLong
 
 actual class AtomicLong actual constructor(value: Long) : ReadWriteProperty<Any?, Long> {
     private val atom = NAtomicLong(value)
+
     init {
         doFreeze()
     }
 
     actual fun compareAndSet(expected: Long, new: Long): Boolean =
-            atom.compareAndSet(expected, new)
+        atom.compareAndSet(expected, new)
 
     actual fun compareAndSwap(expected: Long, new: Long): Long =
-            atom.compareAndSwap(expected, new)
+        atom.compareAndSwap(expected, new)
 
     actual fun addAndGet(delta: Long): Long =
-            atom.addAndGet(delta)
+        atom.addAndGet(delta)
 
     actual fun increment() {
         atom.increment()

@@ -1,11 +1,8 @@
 package pw.binom
 
 import kotlin.random.Random
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 class ByteDataBufferTest {
 
@@ -153,6 +150,5 @@ class ByteDataBufferTest {
             if (index <= 3)
                 assertEquals(index.toByte(), byte, "Invalid in index $index")
         }
-
     }
 }

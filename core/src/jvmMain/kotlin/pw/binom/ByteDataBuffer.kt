@@ -103,12 +103,11 @@ inline fun <T> ByteDataBuffer.update(offset: Int, length: Int, func: (ByteBuffer
     }
 }
 
-fun ByteBuffer.putSafeInto(buffer: ByteBuffer):Int {
+fun ByteBuffer.putSafeInto(buffer: ByteBuffer): Int {
     val l = limit()
     val r = buffer.remaining()
-    this.limit(position()+minOf(buffer.remaining(),remaining()))
+    this.limit(position() + minOf(buffer.remaining(), remaining()))
     buffer.put(this)
     limit(l)
-    return r-buffer.remaining()
+    return r - buffer.remaining()
 }
-

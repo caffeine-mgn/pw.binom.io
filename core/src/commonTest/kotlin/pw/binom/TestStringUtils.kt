@@ -1,9 +1,5 @@
 package pw.binom
 
-import pw.binom.charset.Charsets
-import kotlin.test.Test
-import kotlin.test.assertEquals
-
 /**
  * Russian word "Привет" in charset windows-1251. Translated as "Hi"
  */

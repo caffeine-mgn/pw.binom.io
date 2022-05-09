@@ -1,10 +1,10 @@
 package pw.binom
 
+import pw.binom.NullAsyncOutput.write
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncFlushable
 import pw.binom.io.IOException
 import pw.binom.io.UTF8
-import pw.binom.pool.ObjectPool
 
 interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
@@ -102,11 +102,10 @@ object NullAsyncOutput : AsyncOutput {
     }
 
     override suspend fun asyncClose() {
-        //Do nothing
+        // Do nothing
     }
 
     override suspend fun flush() {
-        //Do nothing
+        // Do nothing
     }
-
 }

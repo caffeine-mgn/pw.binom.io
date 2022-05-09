@@ -2,17 +2,8 @@ import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    id("org.jmailen.kotlinter")
-//    id("com.bnorm.template.kotlin-ir-plugin")
+    id("maven-publish")
 }
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
-}
-//template {
-//    companionProcessing.set(false)
-//    valueClassProcessing.set(false)
-//}
 
 kotlin {
     jvm()
@@ -214,9 +205,5 @@ tasks.withType<Test> {
         this.showStandardStreams = true
     }
 }
-kotlinter {
-    indentSize = 4
-    disabledRules = arrayOf("no-wildcard-imports")
-}
 
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()

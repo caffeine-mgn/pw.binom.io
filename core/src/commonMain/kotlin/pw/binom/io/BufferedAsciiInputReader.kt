@@ -1,6 +1,9 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.ByteBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.Input
+import pw.binom.empty
 
 class BufferedAsciiInputReader(
     val input: Input,
@@ -41,14 +44,14 @@ class BufferedAsciiInputReader(
         checkAvailable()
         if (buffer.remaining <= 0)
             return null
-        return buffer.get().toChar()
+        return buffer.get().toInt().toChar()
     }
 
     override fun read(data: CharArray, offset: Int, length: Int): Int {
         checkAvailable()
         val len = minOf(minOf(data.size - offset, length), buffer.remaining)
         for (i in offset until offset + len) {
-            data[i] = buffer.get().toChar()
+            data[i] = buffer.get().toInt().toChar()
         }
         return len
     }
@@ -63,13 +66,12 @@ class BufferedAsciiInputReader(
             }
             for (i in buffer.position until buffer.limit) {
                 buffer.position++
-                if (buffer[i] == char.toByte()) {
+                if (buffer[i] == char.code.toByte()) {
                     exist = true
                     break@LOOP
                 } else {
-                    out.append(buffer[i].toChar())
+                    out.append(buffer[i].toInt().toChar())
                 }
-
             }
             exist = true
         }

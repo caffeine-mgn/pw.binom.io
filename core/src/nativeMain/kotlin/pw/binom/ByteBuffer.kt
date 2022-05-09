@@ -1,12 +1,12 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.posix.*
+import platform.posix.memcpy
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 
 actual class ByteBuffer(
-    actual override val capacity: Int,
+    override val capacity: Int,
 ) : Input, Output, Closeable, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
@@ -21,13 +21,13 @@ actual class ByteBuffer(
     private var _position = 0
     private var _limit = capacity
 
-    actual override val remaining: Int
+    override val remaining: Int
         get() {
             checkClosed()
             return limit - position
         }
 
-    actual override var position: Int
+    override var position: Int
         get() {
             checkClosed()
             return _position
@@ -84,12 +84,12 @@ actual class ByteBuffer(
         func(ptr, capacity)
     }
 
-    actual override fun flip() {
+    override fun flip() {
         limit = position
         position = 0
     }
 
-    actual override var limit: Int
+    override var limit: Int
         get() {
             checkClosed()
             return _limit
@@ -182,13 +182,13 @@ actual class ByteBuffer(
         }
     }
 
-    actual override fun clear() {
+    override fun clear() {
         checkClosed()
         limit = capacity
         position = 0
     }
 
-    actual override val elementSizeInBytes: Int
+    override val elementSizeInBytes: Int
         get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
@@ -247,7 +247,7 @@ actual class ByteBuffer(
         return len
     }
 
-    actual override fun compact() {
+    override fun compact() {
         checkClosed()
         if (remaining > 0) {
             val size = remaining

@@ -6,7 +6,7 @@ import pw.binom.io.ReaderUTF82
 import java.io.PrintStream
 import java.nio.channels.Channels
 
-//private val tmpBuf = ByteBuffer.alloc(32)
+// private val tmpBuf = ByteBuffer.alloc(32)
 
 actual object Console {
     private class Out(oo: PrintStream) : Output {
@@ -19,7 +19,6 @@ actual object Console {
 
         override fun flush() {
         }
-
     }
 
     actual val stdChannel: Output = Out(java.lang.System.out)
@@ -46,10 +45,8 @@ actual object Console {
 
         override fun close() {
         }
-
     }
     actual val std: Appendable = AppendableUTF8(stdChannel)
     actual val err: Appendable = AppendableUTF8(errChannel)
     actual val input: Reader = ReaderUTF82(inChannel)
-
 }

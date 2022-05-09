@@ -2,7 +2,10 @@ package pw.binom.io
 
 import pw.binom.*
 import pw.binom.charset.Charsets
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class BufferedInputReaderTest {
     @Test

@@ -73,4 +73,4 @@ class ComposeReader : Reader {
 }
 
 operator fun Reader.plus(other: Reader) =
-        ComposeReader().addLast(this).addLast(other)
+    ComposeReader().addLast(this).addLast(other)

@@ -1,12 +1,5 @@
 package pw.binom.concurrency
 
-import pw.binom.atomic.AtomicBoolean
-import kotlin.test.Test
-import kotlin.test.assertTrue
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
-
 class SpinLockTest {
 //    @OptIn(ExperimentalTime::class)
 //    @Test

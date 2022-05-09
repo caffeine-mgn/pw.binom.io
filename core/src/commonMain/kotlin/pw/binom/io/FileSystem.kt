@@ -4,6 +4,7 @@ import pw.binom.AsyncInput
 import pw.binom.AsyncOutput
 import pw.binom.net.Path
 import pw.binom.net.toPath
+
 data class Quota(
     val availableBytes: Long,
     val usedBytes: Long,
@@ -27,6 +28,7 @@ interface FileSystem {
         suspend fun lock(): Boolean = false
         suspend fun unlock(): Boolean = false
     }
+
     suspend fun getQuota(path: Path): Quota?
     val isSupportUserSystem: Boolean
 

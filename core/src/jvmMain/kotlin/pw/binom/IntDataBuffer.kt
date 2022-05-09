@@ -48,7 +48,6 @@ actual class IntDataBuffer private constructor(size: Int) : Closeable, Iterable<
                 buffer.put(index * 4 + 0, ch4)
             }
         }
-
     }
 
     actual operator fun get(index: Int): Int {

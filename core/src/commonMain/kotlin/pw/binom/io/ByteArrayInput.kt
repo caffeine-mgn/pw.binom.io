@@ -31,5 +31,4 @@ class ByteArrayInput(val data: ByteArray) : Input {
         checkClosed()
         closed = true
     }
-
 }

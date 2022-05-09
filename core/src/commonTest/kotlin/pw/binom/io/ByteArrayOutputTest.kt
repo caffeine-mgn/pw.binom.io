@@ -60,7 +60,6 @@ class ByteArrayOutputTest {
             out.writeByte(tmp, it)
         }
 
-
 //        assertEquals(1024, out.data.capacity)
 //        assertEquals(0, out.data.remaining)
         assertEquals(pp.capacity, out.size)

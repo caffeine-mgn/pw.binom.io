@@ -1,14 +1,6 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
-import pw.binom.test_data_hello_bytes_windows_1251
-import pw.binom.wrap
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-
-//class TextReaderTest {
+// class TextReaderTest {
 //
 //    @Test
 //    fun readByCharTest() {
@@ -37,4 +29,4 @@ import kotlin.test.assertNull
 //        assertEquals('т', assertNotNull(d[5]))
 //        assertNull(reader.read())
 //    }
-//}
+// }

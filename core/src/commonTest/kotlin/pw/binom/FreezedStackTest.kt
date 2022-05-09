@@ -1,9 +1,9 @@
 package pw.binom
 //
-//import pw.binom.thread.FreezedStack
-//import kotlin.test.*
+// import pw.binom.thread.FreezedStack
+// import kotlin.test.*
 //
-//class FreezedStackTest {
+// class FreezedStackTest {
 //
 //    /*
 //    @Test
@@ -95,4 +95,4 @@ package pw.binom
 //        assertFalse(f.any { it=="2" })
 //        assertEquals(0, f.size)
 //    }
-//}
+// }

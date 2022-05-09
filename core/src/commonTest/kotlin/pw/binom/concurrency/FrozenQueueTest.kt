@@ -11,7 +11,7 @@ class FrozenQueueTest {
             q.pop()
             fail()
         } catch (e: NoSuchElementException) {
-            //Do nothing
+            // Do nothing
         }
         assertTrue(q.isEmpty)
         q.push(10)

@@ -10,9 +10,11 @@ interface MessageDigest {
             update(input[i + offset])
         }
     }
-    fun update(byte: ByteArray){
+
+    fun update(byte: ByteArray) {
         update(byte, 0, byte.size)
     }
+
     fun update(buffer: ByteBuffer) {
         while (buffer.remaining > 0) {
             update(buffer.get())

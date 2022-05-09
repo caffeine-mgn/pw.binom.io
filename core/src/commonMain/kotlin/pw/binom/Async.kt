@@ -1,9 +1,9 @@
 package pw.binom
 
-import kotlin.coroutines.*
+import kotlin.coroutines.suspendCoroutine
 
 class FeaturePromise<T> {
-    private var onResume: ((Result<T>) -> Unit)? = null// = Stack<(Result<T>) -> Unit>()
+    private var onResume: ((Result<T>) -> Unit)? = null // = Stack<(Result<T>) -> Unit>()
     private var result: Result<T>? = null
     fun onResume(func: (Result<T>) -> Unit): FeaturePromise<T> {
         val result = this.result
@@ -28,7 +28,7 @@ suspend fun <T> FeaturePromise<T>.await(): T =
         }
     }
 
-//fun <P, T> (suspend (P) -> T).start(value: P): FeaturePromise<T> {
+// fun <P, T> (suspend (P) -> T).start(value: P): FeaturePromise<T> {
 //    val promise = FeaturePromise<T>()
 //    this.startCoroutine(value, object : Continuation<T> {
 //        override val context: CoroutineContext = EmptyCoroutineContext
@@ -38,20 +38,20 @@ suspend fun <T> FeaturePromise<T>.await(): T =
 //        }
 //    })
 //    return promise
-//}
+// }
 
-//fun <T> (suspend () -> T).start() {
+// fun <T> (suspend () -> T).start() {
 //    this.startCoroutine(object : Continuation<T> {
 //        override val context: CoroutineContext = EmptyCoroutineContext
 //
 //        override fun resumeWith(result: Result<T>) {
 //        }
 //    })
-//}
+// }
 
-//fun <P> async(f: suspend () -> P) = f.start()
+// fun <P> async(f: suspend () -> P) = f.start()
 
-//fun <T> (suspend () -> T).start2(): NonFreezableFuture<T> {
+// fun <T> (suspend () -> T).start2(): NonFreezableFuture<T> {
 //    val promise = NonFreezableFuture<T>()
 //    this.startCoroutine(object : Continuation<T> {
 //        override val context: CoroutineContext = EmptyCoroutineContext
@@ -61,6 +61,6 @@ suspend fun <T> FeaturePromise<T>.await(): T =
 //        }
 //    })
 //    return promise
-//}
+// }
 
-//fun <P> async2(f: suspend () -> P) = f.start2()
+// fun <P> async2(f: suspend () -> P) = f.start2()

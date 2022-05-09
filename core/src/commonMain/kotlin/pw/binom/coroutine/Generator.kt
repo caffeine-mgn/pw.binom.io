@@ -1,9 +1,9 @@
 package pw.binom.coroutine
 
-///**
+// /**
 // * Coroutine primitive.
 // */
-//interface Generator<T> {
+// interface Generator<T> {
 //    val isFinished: Boolean
 //
 //    /**
@@ -26,4 +26,4 @@ package pw.binom.coroutine
 //            next()
 //        }
 //    }
-//}
+// }

@@ -2,7 +2,6 @@ package pw.binom.charset
 
 import pw.binom.ByteBuffer
 import pw.binom.CharBuffer
-import pw.binom.io.use
 import pw.binom.test_data_hello_bytes_windows_1251
 import pw.binom.wrap
 import kotlin.test.Test
@@ -10,7 +9,7 @@ import kotlin.test.Test
 class CharsetTest {
 
     @Test
-    fun test(){
+    fun test() {
         val buf = CharBuffer.alloc(30)
         Charsets.get("WINDOWS-1251").newDecoder()
             .decode(ByteBuffer.wrap(test_data_hello_bytes_windows_1251), buf)

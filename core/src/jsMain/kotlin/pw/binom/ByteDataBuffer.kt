@@ -16,10 +16,10 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
         }
 
         fun wrap(array: Uint8Array) =
-                wrap(Int8Array(array.buffer))
+            wrap(Int8Array(array.buffer))
 
         actual fun wrap(data: ByteArray) =
-                wrap(Int8Array(data.unsafeCast<Array<Byte>>()))
+            wrap(Int8Array(data.unsafeCast<Array<Byte>>()))
     }
 
     private constructor(size: Int) {

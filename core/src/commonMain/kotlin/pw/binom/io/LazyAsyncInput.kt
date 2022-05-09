@@ -1,6 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteDataBuffer
 import pw.binom.AsyncInput
 import pw.binom.ByteBuffer
 
@@ -43,5 +42,4 @@ class LazyAsyncInput(private val func: suspend () -> AsyncInput) : AsyncInput {
     override suspend fun asyncClose() {
         inited().asyncClose()
     }
-
 }

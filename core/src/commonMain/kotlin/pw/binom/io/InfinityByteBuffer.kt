@@ -34,9 +34,9 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 //            if (len == 0)
 //                return 0
 //            this.data.write(writePosition, data, offset, len)
-////            for (i in 0 until len) {
-////                this.data[writePosition + i] = data[i + offset]
-////            }
+// //            for (i in 0 until len) {
+// //                this.data[writePosition + i] = data[i + offset]
+// //            }
 //            this@InfinityByteBuffer.readRemaining += len
 //            writePosition += len
 //            return len

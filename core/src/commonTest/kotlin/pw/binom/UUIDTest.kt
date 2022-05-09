@@ -12,10 +12,8 @@ class UUIDTest {
         assertEquals(s, n)
         println("->\"$s\"   ${s.toShortString()}")
 
-
         val data = ByteArray(16)
         s.toByteArray(data)
-
 
         val b = UUID.create(data)
         assertEquals(s, b)

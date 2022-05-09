@@ -7,8 +7,8 @@ import kotlin.test.assertEquals
 class PathTest {
 
     @Test
-    fun testAppend(){
-        assertEquals("/test/user","/test".toPath.append("user").toString())
+    fun testAppend() {
+        assertEquals("/test/user", "/test".toPath.append("user").toString())
     }
 
     @Test
@@ -20,14 +20,14 @@ class PathTest {
     }
 
     @Test
-    fun severalDirectionInStar(){
+    fun severalDirectionInStar() {
         "/a/b/v2/my_name".toPath.getVariables("*/v2/{name}")!!.also {
             assertEquals("my_name", it["name"])
         }
     }
 
     @Test
-    fun namedParts(){
+    fun namedParts() {
 
         "/a/b/v2/ooo/my_name".toPath.getVariables("{path}/v2/*/{name}")!!.also {
             assertEquals("my_name", it["name"])

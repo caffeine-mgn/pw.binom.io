@@ -53,38 +53,41 @@ class Sha1 : MessageDigest {
     }
 
     fun blk(i: Int): Int {
-        block!![i and 15] = rol(block!![i + 13 and 15] xor block!![i + 8 and 15] xor
-                block!![i + 2 and 15] xor block!![i and 15], 1)
+        block!![i and 15] = rol(
+            block!![i + 13 and 15] xor block!![i + 8 and 15] xor
+                block!![i + 2 and 15] xor block!![i and 15],
+            1
+        )
         return block!![i and 15]
     }
 
     fun R0(data: IntArray, v: Int, w: Int, x: Int, y: Int, z: Int, i: Int) {
         data[z] += (data[w] and (data[x] xor data[y]) xor data[y]) +
-                blk0(i) + 0x5A827999 + rol(data[v], 5)
+            blk0(i) + 0x5A827999 + rol(data[v], 5)
         data[w] = rol(data[w], 30)
     }
 
     fun R1(data: IntArray, v: Int, w: Int, x: Int, y: Int, z: Int, i: Int) {
         data[z] += (data[w] and (data[x] xor data[y]) xor data[y]) +
-                blk(i) + 0x5A827999 + rol(data[v], 5)
+            blk(i) + 0x5A827999 + rol(data[v], 5)
         data[w] = rol(data[w], 30)
     }
 
     fun R2(data: IntArray, v: Int, w: Int, x: Int, y: Int, z: Int, i: Int) {
         data[z] += (data[w] xor data[x] xor data[y]) +
-                blk(i) + 0x6ED9EBA1 + rol(data[v], 5)
+            blk(i) + 0x6ED9EBA1 + rol(data[v], 5)
         data[w] = rol(data[w], 30)
     }
 
     fun R3(data: IntArray, v: Int, w: Int, x: Int, y: Int, z: Int, i: Int) {
         data[z] += (data[w] or data[x] and data[y] or (data[w] and data[x])) +
-                blk(i) + -0x70e44324 + rol(data[v], 5)
+            blk(i) + -0x70e44324 + rol(data[v], 5)
         data[w] = rol(data[w], 30)
     }
 
     fun R4(data: IntArray, v: Int, w: Int, x: Int, y: Int, z: Int, i: Int) {
         data[z] += (data[w] xor data[x] xor data[y]) +
-                blk(i) + -0x359d3e2a + rol(data[v], 5)
+            blk(i) + -0x359d3e2a + rol(data[v], 5)
         data[w] = rol(data[w], 30)
     }
 
@@ -254,7 +257,7 @@ class Sha1 : MessageDigest {
         val sb = StringBuilder()
         for (i in 0..19) {
             var c1: Char = (digestBits[i].toInt() ushr 4 and 0xf).toChar()
-            var c2: Char = (digestBits[i] and 0xf).toChar()
+            var c2: Char = (digestBits[i] and 0xf).toInt().toChar()
             c1 = (if (c1.code > 9) 'a'.code + (c1.code - 10) else '0' + c1.code) as Char
             c2 = (if (c2.code > 9) 'a'.code + (c2.code - 10) else '0' + c2.code) as Char
             sb.append(c1)
