@@ -2,7 +2,6 @@ package pw.binom.io.file
 
 import pw.binom.Environment
 import pw.binom.io.use
-import pw.binom.workDirectory
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -26,7 +25,6 @@ class TestRename {
         source.renameTo(dest)
         assertTrue(dest.isFile)
         assertFalse(source.isFile)
-
 
         dest.delete()
     }
@@ -52,7 +50,6 @@ class TestRename {
         source.renameTo(dest)
         assertTrue(dest.isFile)
         assertFalse(source.isFile)
-
 
         d1.deleteRecursive()
         d2.deleteRecursive()

@@ -74,7 +74,7 @@ class TestFile {
             File("/home/subochev/tmp").relative("/test/m1")
             fail()
         } catch (e: IllegalArgumentException) {
-            //NOP
+            // NOP
         }
     }
 }

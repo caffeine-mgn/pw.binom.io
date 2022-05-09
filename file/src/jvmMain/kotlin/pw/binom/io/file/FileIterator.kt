@@ -1,6 +1,5 @@
 package pw.binom.io.file
 
-import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
 actual class FileIterator internal actual constructor(val path: File) : Iterator<File> {

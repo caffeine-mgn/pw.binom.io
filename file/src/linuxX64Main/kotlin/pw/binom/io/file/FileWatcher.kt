@@ -1,12 +1,5 @@
 package pw.binom.io.file
 
-import kotlinx.cinterop.*
-import platform.linux.*
-import platform.posix.POLLIN
-import platform.posix.pollfd
-import platform.posix.read
-import pw.binom.io.*
-
 /*
 private const val MAX_EVENTS = 1024 */
 /*Максимальное кличество событий для обработки за один раз*//*

@@ -5,8 +5,8 @@ import platform.osx.statfs
 import platform.posix.*
 import pw.binom.Environment
 import pw.binom.getEnv
-import kotlin.native.concurrent.freeze
 import pw.binom.io.*
+import kotlin.native.concurrent.freeze
 
 private fun timespec.toMillis(): Long {
     var s = tv_sec
@@ -20,7 +20,11 @@ private fun timespec.toMillis(): Long {
 }
 
 actual class File actual constructor(path: String) {
-    actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR${name.removePrefix("/").removePrefix("\\")}")
+    actual constructor(parent: File, name: String) : this(
+        "${
+        parent.path.removeSuffix("/").removeSuffix("\\")
+        }$SEPARATOR${name.removePrefix("/").removePrefix("\\")}"
+    )
 
     actual val path: String = replacePath(path)
 
@@ -98,8 +102,8 @@ actual class File actual constructor(path: String) {
     actual fun list(): List<File> {
         val out = ArrayList<File>()
         iterator().forEach { file ->
-                out += file
-            }
+            out += file
+        }
         return out
     }
 
@@ -124,6 +128,5 @@ actual class File actual constructor(path: String) {
             val stat = alloc<statfs>()
             statfs(path, stat.ptr)
             (stat.f_blocks.toULong() * stat.f_bsize.toULong()).toLong()
-
         }
 }

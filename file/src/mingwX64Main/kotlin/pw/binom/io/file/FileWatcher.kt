@@ -1,12 +1,5 @@
 package pw.binom.io.file
 
-import kotlinx.cinterop.*
-import platform.posix.memcpy
-import platform.windows.*
-import pw.binom.io.*
-import kotlin.math.roundToInt
-import kotlin.time.Duration
-
 /*
 class PointerList(val capacityFactor: Float = 1.7f) : Closeable {
     var data = nativeHeap.allocArray<COpaquePointerVar>(0)

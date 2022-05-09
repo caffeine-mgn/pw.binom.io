@@ -2,10 +2,7 @@ import pw.binom.baseStaticLibConfig
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 kotlin {
@@ -78,14 +75,5 @@ kotlin {
         }
     }
 }
-//tasks{
-//    withType(Test::class) {
-//        useJUnitPlatform()
-//        testLogging.showStandardStreams = true
-//        testLogging.showCauses = true
-//        testLogging.showExceptions = true
-//        testLogging.showStackTraces = true
-//        testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-//    }
-//}
-apply<pw.binom.plugins.DocsPlugin>()
+
+apply<pw.binom.plugins.ConfigPublishPlugin>()

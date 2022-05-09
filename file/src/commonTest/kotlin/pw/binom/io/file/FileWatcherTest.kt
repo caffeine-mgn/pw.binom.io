@@ -1,19 +1,5 @@
 package pw.binom.io.file
 
-import pw.binom.Environment
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.execute
-import pw.binom.concurrency.sleep
-import pw.binom.io.ClosedException
-import pw.binom.io.use
-import pw.binom.nextUuid
-import kotlin.random.Random
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.fail
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-
 /*class FileWatcherTest {
 
     fun afterTime(time: Duration = 1.seconds, func: () -> Unit) {

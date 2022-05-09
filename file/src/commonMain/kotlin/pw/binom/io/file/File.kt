@@ -30,7 +30,7 @@ expect class File(path: String) {
 
     companion object {
         val SEPARATOR: Char
-        val temporalDirectory:File?
+        val temporalDirectory: File?
     }
 
     override fun equals(other: Any?): Boolean
@@ -132,7 +132,6 @@ fun File.deleteRecursive(): Boolean {
             if (!it.deleteRecursive())
                 return false
         }
-
     }
     return delete()
 }
@@ -169,7 +168,8 @@ fun File.append(text: String, charset: Charset = Charsets.UTF8) {
  * Rewrite [text] to current file. If file not exists will create it
  */
 fun File.rewrite(
-    text: String, charset: Charset = Charsets.UTF8,
+    text: String,
+    charset: Charset = Charsets.UTF8,
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charBufferSize: Int = bufferSize / 2,
 ) {

@@ -8,7 +8,8 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Channel
 import pw.binom.io.ClosedException
 
-actual class FileChannel actual constructor(file: File, vararg mode: AccessType) : Channel,
+actual class FileChannel actual constructor(file: File, vararg mode: AccessType) :
+    Channel,
     RandomAccess {
 
     init {
@@ -16,23 +17,26 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
             throw FileNotFoundException(file.path)
     }
 
-    internal val handler = fopen(file.path, run {
-        val read = AccessType.READ in mode
-        val write = AccessType.WRITE in mode
-        val append = AccessType.APPEND in mode
-        if (!read && !write)
-            throw IllegalArgumentException("Invalid mode")
-        when {
-            write && !append -> {
-                if (read) "wb+" else "wb"
+    internal val handler = fopen(
+        file.path,
+        run {
+            val read = AccessType.READ in mode
+            val write = AccessType.WRITE in mode
+            val append = AccessType.APPEND in mode
+            if (!read && !write)
+                throw IllegalArgumentException("Invalid mode")
+            when {
+                write && !append -> {
+                    if (read) "wb+" else "wb"
+                }
+                write && append -> {
+                    if (read) "cb+" else "cb"
+                }
+                read -> "rb"
+                else -> throw IllegalArgumentException("Invalid mode")
             }
-            write && append -> {
-                if (read) "cb+" else "cb"
-            }
-            read -> "rb"
-            else -> throw IllegalArgumentException("Invalid mode")
         }
-    }) ?: throw FileNotFoundException(file.path)
+    ) ?: throw FileNotFoundException(file.path)
 
     actual fun skip(length: Long): Long {
         checkClosed()

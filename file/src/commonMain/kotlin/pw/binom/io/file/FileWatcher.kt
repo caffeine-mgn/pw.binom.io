@@ -1,9 +1,8 @@
 @file:JvmName("FileWatcherCommonKt")
+
 package pw.binom.io.file
 
-import pw.binom.io.Closeable
 import kotlin.jvm.JvmName
-import kotlin.time.Duration
 
 /*
 expect class FileWatcher : Closeable {

@@ -20,7 +20,11 @@ private fun timespec.toMillis(): Long {
 }
 
 actual class File actual constructor(path: String) {
-    actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR${name.removePrefix("/").removePrefix("\\")}")
+    actual constructor(parent: File, name: String) : this(
+        "${
+        parent.path.removeSuffix("/").removeSuffix("\\")
+        }$SEPARATOR${name.removePrefix("/").removePrefix("\\")}"
+    )
 
     actual val path: String = replacePath(path)
 

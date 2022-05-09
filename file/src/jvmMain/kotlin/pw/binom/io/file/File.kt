@@ -8,7 +8,11 @@ actual class File actual constructor(path: String) {
 
     internal val native = JFile(path)
 
-    actual constructor(parent: File, name: String) : this("${parent.path.removeSuffix("/").removeSuffix("\\")}$SEPARATOR${name.removePrefix("/").removePrefix("\\")}")
+    actual constructor(parent: File, name: String) : this(
+        "${
+        parent.path.removeSuffix("/").removeSuffix("\\")
+        }$SEPARATOR${name.removePrefix("/").removePrefix("\\")}"
+    )
 
     actual val path: String = replacePath(path)
     actual val isFile: Boolean
@@ -42,7 +46,7 @@ actual class File actual constructor(path: String) {
         get() = native.lastModified()
 
     actual fun renameTo(newPath: File): Boolean =
-            native.renameTo(newPath.native)
+        native.renameTo(newPath.native)
 
     actual fun list(): List<File> {
         val out = ArrayList<File>()

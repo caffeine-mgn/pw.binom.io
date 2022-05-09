@@ -14,16 +14,17 @@ class TestWriteRead {
 
     @Test
     fun openUnknown() {
-        assertTrue(assertFails {
-            File(Random.nextUuid().toString()).openRead()
-        } is FileNotFoundException)
+        assertTrue(
+            assertFails {
+                File(Random.nextUuid().toString()).openRead()
+            } is FileNotFoundException
+        )
     }
 
     @Test
     fun `read write`() {
         val f = File("test")
         val buf = ByteBuffer.alloc(8)
-
 
         val data = byteArrayOf(
             0x0A, -0x32, -0x34, 0x2D, -0x38, 0x49, 0x55, 0x08,

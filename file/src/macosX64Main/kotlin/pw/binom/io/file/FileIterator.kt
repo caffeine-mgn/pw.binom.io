@@ -6,7 +6,6 @@ import platform.posix.closedir
 import platform.posix.dirent
 import platform.posix.opendir
 import platform.posix.readdir
-import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import kotlin.native.concurrent.ensureNeverFrozen
 import kotlin.native.internal.createCleaner

@@ -6,7 +6,8 @@ enum class AccessType {
     READ, WRITE, CREATE, APPEND
 }
 
-expect class FileChannel(file: File, vararg mode: AccessType) : Channel,
+expect class FileChannel(file: File, vararg mode: AccessType) :
+    Channel,
     RandomAccess {
     actual fun skip(length: Long): Long
 }
@@ -28,7 +29,7 @@ inline fun File.openRead() = channel(AccessType.READ)
  * @param append flag for append exists file. Default - false
  */
 inline fun File.openWrite(append: Boolean = false) =
-        if (append)
-            channel(AccessType.WRITE, AccessType.CREATE, AccessType.APPEND)
-        else
-            channel(AccessType.WRITE, AccessType.CREATE)
+    if (append)
+        channel(AccessType.WRITE, AccessType.CREATE, AccessType.APPEND)
+    else
+        channel(AccessType.WRITE, AccessType.CREATE)
