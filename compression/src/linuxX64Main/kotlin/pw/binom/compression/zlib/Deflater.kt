@@ -17,18 +17,18 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     internal val native = nativeHeap.alloc<z_stream_s>()
     private var closed = AtomicBoolean(false)
 
-    private var _totalIn by AtomicLong(0)
-    private var _totalOut by AtomicLong(0)
+    private val _totalIn = AtomicLong(0)
+    private val _totalOut = AtomicLong(0)
 
     actual val totalIn: Long
-        get() = _totalIn
+        get() = _totalIn.getValue()
     actual val totalOut: Long
-        get() = _totalOut
+        get() = _totalOut.getValue()
 
-    private var _finishing by AtomicBoolean(false)
-    private var _finished by AtomicBoolean(false)
+    private var _finishing = AtomicBoolean(false)
+    private var _finished = AtomicBoolean(false)
     actual val finished: Boolean
-        get() = _finished
+        get() = _finished.getValue()
 
     init {
         memset(native.ptr, 0, sizeOf<z_stream_s>().convert())
@@ -55,13 +55,13 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 
     private fun checkClosed() {
-        if (closed.value)
+        if (closed.getValue())
             throw IllegalStateException("Stream already closed")
     }
 
     override fun close() {
         checkClosed()
-        closed.value = true
+        closed.setValue(true)
     }
 
     actual fun end() {
@@ -71,7 +71,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
 
     actual fun finish() {
         checkClosed()
-        _finishing = true
+        _finishing.setValue(true)
     }
 
     actual fun deflate(input: ByteBuffer, output: ByteBuffer): Int {
@@ -81,7 +81,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                     checkClosed()
                     if (output.remaining == 0)
                         throw IllegalArgumentException("Output Buffer has no Free Space")
-                    if (!_finishing && input.remaining == 0)
+                    if (!_finishing.getValue() && input.remaining == 0)
                         return@memScoped 0
                     native.next_out = (outputPtr.getPointer(this)).reinterpret()
                     native.avail_out = output.remaining.convert()
@@ -91,7 +91,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                     val freeOutput = output.remaining
                     val freeInput = input.remaining
 
-                    val mode = if (_finishing)
+                    val mode = if (_finishing.getValue())
                         Z_FINISH
 //            Z_SYNC_FLUSH
 //            Z_FULL_FLUSH
@@ -106,10 +106,10 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
 
                     val outLength = freeOutput - output.remaining
                     val inLength = freeInput - input.remaining
-                    _totalOut += outLength
-                    _totalIn += inLength
-                    if (_finishing) {
-                        _finished = true
+                    _totalOut.addAndGet(outLength.toLong())
+                    _totalIn.addAndGet(inLength.toLong())
+                    if (_finishing.getValue()) {
+                        _finished.setValue(true)
                     }
                     return@memScoped outLength
                 }
@@ -121,13 +121,13 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         if (output.remaining == 0) {
             return false
         }
-        if (!_finishing)
+        if (!_finishing.getValue())
             return false
         while (true) {
             val writed = output.remaining
 
             val mode = when {
-                _finishing -> Z_FINISH
+                _finishing.getValue() -> Z_FINISH
                 syncFlush -> Z_SYNC_FLUSH
                 else -> Z_NO_FLUSH
             }
@@ -149,7 +149,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
             val outLength = writed - native.avail_out.convert<Int>()
             output.position += writed - native.avail_out.convert<Int>()
 
-            _totalOut += outLength
+            _totalOut.addAndGet(outLength.toLong())
 
             if (r == Z_OK || r == Z_BUF_ERROR)
                 return true

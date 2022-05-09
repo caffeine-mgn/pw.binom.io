@@ -45,14 +45,14 @@ class AsyncReentrantLock : AsyncLock {
             waiter
         }
         if (waiter == null) {
-            locked.value = false
+            locked.setValue(false)
         } else {
             waiter.resume(Unit)
         }
     }
 
     override val isLocked: Boolean
-        get() = locked.value
+        get() = locked.getValue()
 
     override suspend fun <T> synchronize(func: suspend () -> T): T {
         val locks = coroutineContext[AsyncReentrantLocksKey]

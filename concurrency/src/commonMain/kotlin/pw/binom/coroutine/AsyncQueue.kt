@@ -28,7 +28,7 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
 
     override fun push(value: T) {
         val listener = lock.synchronize {
-            if (closed.value) {
+            if (closed.getValue()) {
                 throw ClosedException()
             }
             return@synchronize if (listeners.isEmpty) {
@@ -43,7 +43,7 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
 
     override suspend fun pop(): T {
         lock.lock()
-        if (closed.value) {
+        if (closed.getValue()) {
             lock.unlock()
             throw ClosedException()
         }
@@ -64,14 +64,14 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
     }
 
     val isClosed
-        get() = closed.value
+        get() = closed.getValue()
 
     override fun close() {
         lock.synchronize {
-            if (closed.value) {
+            if (closed.getValue()) {
                 throw ClosedException()
             }
-            closed.value = true
+            closed.setValue(true)
             while (!values.isEmpty) {
                 values.pop()
             }

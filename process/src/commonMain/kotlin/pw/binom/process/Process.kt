@@ -25,4 +25,9 @@ interface Process : Closeable {
     class ProcessStillActive : RuntimeException()
 }
 
-expect fun Process.Companion.execute(path: String, args: List<String>, env: Map<String, String>, workDir: String?): Process
+expect fun Process.Companion.execute(
+    path: String,
+    args: List<String>,
+    env: Map<String, String>,
+    workDir: String?
+): Process

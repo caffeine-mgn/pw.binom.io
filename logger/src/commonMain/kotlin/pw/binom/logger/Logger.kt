@@ -2,7 +2,7 @@ package pw.binom.logger
 
 import pw.binom.atomic.AtomicReference
 
-internal expect fun createGlobalMap():MutableMap<String, Logger>
+internal expect fun createGlobalMap(): MutableMap<String, Logger>
 
 /**
  * Logger class
@@ -12,7 +12,7 @@ class Logger(
      * Logger package name. Meta information
      */
     val pkg: String
-    ) {
+) {
     companion object {
         private val allLoggers = createGlobalMap()
         val global: Logger = Logger("")
@@ -53,7 +53,13 @@ class Logger(
     }
 
     var level: Logger.Level? = null
-    var handler by AtomicReference<Handler?>(null)
+    private val _handler = AtomicReference<Handler?>(null)
+    var handler: Handler?
+        get() = _handler.getValue()
+        set(value) {
+            _handler.setValue(value)
+        }
+
     suspend fun log(level: Logger.Level, text: String?, trace: String? = null, exception: Throwable? = null) {
         val handler = if (this.handler != null) this.handler else if (this == global) null else global.handler
         handler?.log(

@@ -80,7 +80,7 @@ actual class Worker actual constructor(name: String?) : CoroutineDispatcher() {
         get() = _id
     private var _taskCount = AtomicInt(0)
     actual val taskCount
-        get() = _taskCount.value
+        get() = _taskCount.getValue()
 
 //    override fun coroutine(result: Result<Any?>, continuation: Reference<Continuation<Any?>>) {
 //        execute(result to continuation) {

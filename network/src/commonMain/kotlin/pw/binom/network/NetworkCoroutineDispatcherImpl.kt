@@ -19,7 +19,7 @@ abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManage
 
 class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
-    private var closed by AtomicBoolean(false)
+    private var closed = AtomicBoolean(false)
     private var worker = Worker()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
@@ -35,12 +35,12 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     init {
         worker.execute(this) { self ->
             try {
-                while (!self.closed) {
+                while (!self.closed.getValue()) {
                     self.networkThread = ThreadRef()
                     self.selector.select(selectedEvents = selectedKeys)
                     val iterator = selectedKeys.iterator()
                     var executeOnNetwork = false
-                    while (iterator.hasNext() && !self.closed) {
+                    while (iterator.hasNext() && !self.closed.getValue()) {
                         val event = iterator.next()
                         if (event.key === self.internalKey) {
                             executeOnNetwork = true
@@ -100,7 +100,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     }
 
     override fun close() {
-        closed = true
+        closed.setValue(true)
         internalKey.close()
         internalUdpChannel.close()
 

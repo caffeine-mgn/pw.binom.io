@@ -65,7 +65,7 @@ actual class FileChannel actual constructor(
 
     private val closed = AtomicBoolean(false)
     private fun checkClosed() {
-        if (closed.value) {
+        if (closed.getValue()) {
             throw ClosedException()
         }
     }
@@ -75,7 +75,7 @@ actual class FileChannel actual constructor(
             checkClosed()
             fclose(handler)
         } finally {
-            closed.value = true
+            closed.setValue(true)
         }
     }
 

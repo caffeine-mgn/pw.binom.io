@@ -8,25 +8,25 @@ import pw.binom.doFreeze
 import kotlin.time.Duration
 
 class ConcurrentQueue<T> : AppendableQueue<T> {
-    private var _size by AtomicInt(0)
+    private var _size = AtomicInt(0)
     override val size: Int
-        get() = _size
-    private var top by AtomicReference<Item<T>?>(null)
-    private var bottom by AtomicReference<Item<T>?>(null)
+        get() = _size.getValue()
+    private var top = AtomicReference<Item<T>?>(null)
+    private var bottom = AtomicReference<Item<T>?>(null)
     private val lock = ReentrantLock()
     private val condition = lock.newCondition()
 
     fun clear() {
         lock.synchronize {
-            _size = 0
-            top = null
-            bottom = null
+            _size.setValue(0)
+            top.setValue(null)
+            bottom.setValue(null)
         }
     }
 
     private class Item<T>(value: T, next: Item<T>?) {
-        val value by AtomicReference(value)
-        var next by AtomicReference(next)
+        val value = AtomicReference(value)
+        var next = AtomicReference(next)
 
         init {
             doFreeze()
@@ -34,12 +34,12 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
     }
 
     override val isEmpty: Boolean
-        get() = _size == 0
+        get() = _size.getValue() == 0
 
     fun popBlocked(): T {
         lock.synchronize {
             while (true) {
-                val item = top
+                val item = top.getValue()
                 if (item == null) {
                     condition.await()
                     continue
@@ -47,10 +47,10 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
                 top = item.next
 
                 if (bottom == item) {
-                    bottom = null
+                    bottom.setValue(null)
                 }
                 _size--
-                return item.value
+                return item.value.getValue()
             }
         }
         throw IllegalStateException()
@@ -59,7 +59,7 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
     fun popBlocked(duration: Duration): T? {
         lock.synchronize {
             while (true) {
-                val item = top
+                val item = top.getValue()
                 if (item == null) {
                     if (!condition.await(duration)) {
                         return null
@@ -69,10 +69,10 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
                 top = item.next
 
                 if (bottom == item) {
-                    bottom = null
+                    bottom.setValue(null)
                 }
                 _size--
-                return item.value
+                return item.value.getValue()
             }
         }
         throw IllegalStateException()
@@ -80,20 +80,20 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
 
     override fun pop(): T =
         lock.synchronize {
-            val item = top ?: throw NoSuchElementException()
+            val item = top.getValue() ?: throw NoSuchElementException()
 
             top = item.next
 
             if (bottom == item) {
-                bottom = null
+                bottom.setValue(null)
             }
-            _size--
-            item.value
+            _size.dec()
+            item.value.getValue()
         }
 
     override fun pop(dist: PopResult<T>) {
         lock.synchronize {
-            val item = top
+            val item = top.getValue()
             if (item == null) {
                 dist.clear()
                 return
@@ -102,10 +102,10 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
             top = item.next
 
             if (bottom == item) {
-                bottom = null
+                bottom.setValue(null)
             }
             _size--
-            dist.set(item.value)
+            dist.set(item.value.getValue())
         }
     }
 
@@ -113,18 +113,18 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
         lock.synchronize {
             val i = Item(value, next = null)
 
-            if (top == null) {
-                top = i
+            if (top.getValue() == null) {
+                top.setValue(i)
             }
 
-            bottom?.next = i
-            bottom = i
-            _size++
+            bottom.getValue()?.next?.setValue(i)
+            bottom.setValue(i)
+            _size.inc()
             condition.signal()
         }
     }
 
     override fun peek(): T = lock.synchronize {
-        (top ?: throw NoSuchElementException()).value
+        (top.getValue() ?: throw NoSuchElementException()).value.getValue()
     }
 }

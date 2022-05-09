@@ -62,7 +62,6 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?, env: Map<S
                     val rr = execv(exe, r)
                     throw IllegalStateException("This line should be no execute never")
                 }
-
             }
             else -> {
                 pid = r.toLong()
@@ -81,13 +80,17 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?, env: Map<S
         kill(pid.convert(), SIGINT)
         val now = TimeSource.Monotonic.markNow()
         while (now.elapsedNow().inMilliseconds < 1000 && isActive) {
-            //NOP
+            // NOP
         }
         if (isActive)
             kill(pid.convert(), SIGKILL)
     }
-
 }
 
-actual fun Process.Companion.execute(path: String, args: List<String>, env: Map<String, String>, workDir: String?): Process =
-        LinuxProcess(exe = path, args = args.toList(), workDir = workDir, env = env)
+actual fun Process.Companion.execute(
+    path: String,
+    args: List<String>,
+    env: Map<String, String>,
+    workDir: String?
+): Process =
+    LinuxProcess(exe = path, args = args.toList(), workDir = workDir, env = env)

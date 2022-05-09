@@ -136,7 +136,7 @@ class HttpServer(
         val listenJob = GlobalScope.launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
             withContext(dispatcher) {
                 try {
-                    while (!closed.value) {
+                    while (!closed.getValue()) {
                         var channel: ServerAsyncAsciiChannel? = null
                         try {
                             idleCheck()
@@ -159,7 +159,7 @@ class HttpServer(
             }
         }
         return JobWithCancelWaiter(listenJob) {
-            closed.value = true
+            closed.setValue(true)
 //            GlobalScope.launch(dispatcher) {
             server.close()
 //            }

@@ -20,21 +20,21 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
         _input = input
         _output = output
         this.masking = masking
-        closed = false
-        receivedCloseMessage = false
-        sentCloseMessage = false
+        closed.setValue(false)
+        receivedCloseMessage.setValue(false)
+        sentCloseMessage.setValue(false)
     }
 
-    private var closed by AtomicBoolean(false)
-    var receivedCloseMessage by AtomicBoolean(false)
+    private var closed = AtomicBoolean(false)
+    var receivedCloseMessage = AtomicBoolean(false)
         private set
-    var sentCloseMessage by AtomicBoolean(false)
+    var sentCloseMessage = AtomicBoolean(false)
         private set
 
     private val header = WebSocketHeader()
 
     private inline fun checkClosed() {
-        if (closed)
+        if (closed.getValue())
             throw StreamClosedException()
     }
 
@@ -42,10 +42,10 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
 
     override suspend fun read(): Message {
         checkClosed()
-        if (receivedCloseMessage) {
+        if (receivedCloseMessage.getValue()) {
             throw IllegalStateException("Can't read message. Already received close message")
         }
-        if (sentCloseMessage) {
+        if (sentCloseMessage.getValue()) {
             throw IllegalStateException("Can't read message. Already sent close message")
         }
         LOOP@ while (true) {
@@ -63,7 +63,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
                     }
                 }
                 if (type == MessageType.CLOSE) {
-                    this.receivedCloseMessage = true
+                    this.receivedCloseMessage.setValue(true)
                 }
                 message.reset(
                     initLength = header.length,
@@ -85,14 +85,14 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
 
     override suspend fun write(type: MessageType): AsyncOutput {
         checkClosed()
-        if (receivedCloseMessage) {
+        if (receivedCloseMessage.getValue()) {
             throw IllegalStateException("Can't write message. Already received close message")
         }
-        if (sentCloseMessage) {
+        if (sentCloseMessage.getValue()) {
             throw IllegalStateException("Can't write message. Already sent close message")
         }
         if (type == MessageType.CLOSE) {
-            sentCloseMessage = true
+            sentCloseMessage.setValue(true)
         }
         return WSOutput(
             messageType = type,
@@ -103,10 +103,10 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
     }
 
     private suspend fun closeTcp() {
-        if (closed) {
+        if (closed.getValue()) {
             return
         }
-        closed = true
+        closed.setValue(true)
         runCatching { _input.asyncClose() }
         runCatching { _output.asyncClose() }
         onClose(this)
@@ -135,7 +135,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
 
     suspend fun asyncClose(code: Short, body: ByteBuffer? = null) {
         checkClosed()
-        if (this.receivedCloseMessage) {
+        if (this.receivedCloseMessage.getValue()) {
             throw IllegalStateException("Can't send close message because already got close message")
         }
         try {
@@ -148,7 +148,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
     override suspend fun asyncClose() {
         checkClosed()
         try {
-            if (!this.receivedCloseMessage) {
+            if (!this.receivedCloseMessage.getValue()) {
                 sendFinish(code = WebSocketClosedException.CLOSE_NORMAL)
             }
         } finally {

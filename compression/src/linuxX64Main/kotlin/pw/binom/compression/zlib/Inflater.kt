@@ -18,7 +18,7 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
     private var closed = AtomicBoolean(false)
 
     private fun checkClosed() {
-        if (closed.value)
+        if (closed.getValue())
             throw IllegalStateException("Stream already closed")
     }
 
@@ -40,7 +40,7 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
 
     override fun close() {
         checkClosed()
-        closed.value = true
+        closed.setValue(true)
     }
 
     actual fun end() {

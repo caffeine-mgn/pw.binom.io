@@ -22,12 +22,12 @@ class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<Str
 
     override val pid: Long
         get() = process.pid()
-    override val stdin: Output = object :Output{
+    override val stdin: Output = object : Output {
 
         private val channel = Channels.newChannel(process.outputStream)
 
         override fun write(data: ByteBuffer): Int =
-                channel.write(data.native)
+            channel.write(data.native)
 
         override fun flush() {
         }
@@ -35,7 +35,6 @@ class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<Str
         override fun close() {
             channel.close()
         }
-
     }
     override val stdout: Input = ProcessInputStream(process, process.inputStream)
     override val stderr: Input = ProcessInputStream(process, process.errorStream)
@@ -59,11 +58,15 @@ class JvmProcess(cmd: String, args: List<String>, workDir: String?, env: Map<Str
         if (isActive)
             process.destroyForcibly()
     }
-
 }
 
-actual fun Process.Companion.execute(path: String, args: List<String>, env: Map<String, String>, workDir: String?): Process =
-        JvmProcess(cmd = path, args = args.toList(), workDir = workDir, env = env)
+actual fun Process.Companion.execute(
+    path: String,
+    args: List<String>,
+    env: Map<String, String>,
+    workDir: String?
+): Process =
+    JvmProcess(cmd = path, args = args.toList(), workDir = workDir, env = env)
 
 private class ProcessInputStream(val process: java.lang.Process, val stream: java.io.InputStream) : Input {
     private val channel = Channels.newChannel(stream)
@@ -77,5 +80,4 @@ private class ProcessInputStream(val process: java.lang.Process, val stream: jav
 
     override fun close() {
     }
-
 }

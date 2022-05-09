@@ -15,7 +15,7 @@ class ReentrantSpinLock : Lock {
     private val count = AtomicInt(0)
 
     override fun lock() {
-        if (threadId.value == (Worker.current?.id ?: 0)) {
+        if (threadId.getValue() == (Worker.current?.id ?: 0)) {
             count.increment()
         } else {
             while (true) {
@@ -29,7 +29,7 @@ class ReentrantSpinLock : Lock {
     }
 
     fun lock(duration: Duration?): Boolean {
-        if (threadId.value == (Worker.current?.id ?: 0)) {
+        if (threadId.getValue() == (Worker.current?.id ?: 0)) {
             count.increment()
             return true
         }
@@ -47,14 +47,14 @@ class ReentrantSpinLock : Lock {
     }
 
     override fun unlock() {
-        if (count.value <= 0) {
+        if (count.getValue() <= 0) {
             throw IllegalStateException("ReentrantSpinLock is not locked")
         }
-        if (threadId.value != (Worker.current?.id ?: 0)) {
+        if (threadId.getValue() != (Worker.current?.id ?: 0)) {
             throw IllegalStateException("Only locking thread can call unlock")
         }
         count.decrement()
-        if (count.value == 0) {
+        if (count.getValue() == 0) {
             if (!threadId.compareAndSet(Worker.current?.id ?: 0, 0)) {
                 throw IllegalStateException("Lock already free")
             }

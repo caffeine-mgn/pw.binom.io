@@ -28,8 +28,8 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
         }
     }
 
-    private var first by AtomicReference<Item<T>?>(null)
-    private var last by AtomicReference<Item<T>?>(null)
+    private var first = AtomicReference<Item<T>?>(null)
+    private var last = AtomicReference<Item<T>?>(null)
     private val lock = ReentrantLock()
     private val condition = lock.newCondition()
 
@@ -39,11 +39,11 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
     override fun put(value: T) {
         lock.synchronize {
             val item = Item(value)
-            item.previous.value = last
-            last?.next?.value = item
-            last = item
-            if (first == null) {
-                first = item
+            item.previous.setValue(last.getValue())
+            last.getValue()?.next?.setValue(item)
+            last.setValue(item)
+            if (first.getValue() == null) {
+                first.setValue(item)
             }
             condition.signal()
         }
@@ -52,18 +52,18 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
     @Suppress("UNCHECKED_CAST")
     override fun get(): T =
         lock.synchronize {
-            while (last == null) {
+            while (last.getValue() == null) {
                 condition.await()
             }
-            val item = last!!
-            last = item.previous.value
-            last?.next?.value = null
+            val item = last.getValue()!!
+            last.setValue(item.previous.getValue())
+            last.getValue()?.next?.setValue(null)
             if (first == item)
-                first = null
+                first.setValue(null)
 
             val value = item.value as T
-            item.next.value = null
-            item.previous.value = null
+            item.next.setValue(null)
+            item.previous.setValue(null)
             value
         }
 
@@ -71,21 +71,21 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
     override fun get(duration: Duration): T? =
         lock.synchronize {
             val now = TimeSource.Monotonic.markNow()
-            while (last == null) {
+            while (last.getValue() == null) {
                 if (now.elapsedNow() > duration) {
                     return@synchronize null
                 }
                 condition.await(duration)
             }
-            val item = last!!
-            last = item.previous.value
-            last?.next?.value = null
+            val item = last.getValue()!!
+            last.setValue(item.previous.getValue())
+            last.getValue()?.next?.setValue(null)
             if (first == item) {
-                first = null
+                first.setValue(null)
             }
             val value = item.value
-            item.next.value = null
-            item.previous.value = null
+            item.next.setValue(null)
+            item.previous.setValue(null)
             value
         }
 

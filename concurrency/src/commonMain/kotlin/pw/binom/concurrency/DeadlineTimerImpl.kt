@@ -32,7 +32,7 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
         doFreeze()
         worker.execute(Unit) {
             val tasks = TreeMap<Duration, ArrayList<() -> Unit>>()
-            MAIN_WORKER_LOOP@ while (!closedFlag.value) {
+            MAIN_WORKER_LOOP@ while (!closedFlag.getValue()) {
                 if (tasks.isEmpty() && queue.isEmpty) {
                     val e = queue.popBlocked()
                     if (e.second === CLOSE_MARKER) {
@@ -62,7 +62,7 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
                 }
                 val signal =
                     lock.synchronize { condition.await(c.key - startTime.elapsedNow()) }
-                if (closedFlag.value) {
+                if (closedFlag.getValue()) {
                     break@MAIN_WORKER_LOOP
                 }
 
@@ -143,10 +143,10 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
     }
 
     override fun close() {
-        if (closedFlag.value) {
+        if (closedFlag.getValue()) {
             throw ClosedException()
         }
-        closedFlag.value = true
+        closedFlag.setValue(true)
         lock.synchronize {
             condition.signal()
         }

@@ -14,7 +14,7 @@ class FrozenHashMap<K, V>(bucketSize: Int = 16) : MutableMap<K, V> {
 
     private var internalSize = AtomicInt(0)
     override val size: Int
-        get() = internalSize.value
+        get() = internalSize.getValue()
 
     private val entitySet = EntitySet(this)
     private val keySet = KeysSet(this)
@@ -99,18 +99,18 @@ class FrozenHashMap<K, V>(bucketSize: Int = 16) : MutableMap<K, V> {
 class EntityIterator<K, V>(val map: FrozenHashMap<K, V>) : MutableIterator<MutableMap.MutableEntry<K, V>> {
     private var bucketIndex = 0
     private var currentBucket = map.buckets[bucketIndex]
-    private var currentChangeCount = currentBucket.changeCounter.value
-    private var frozenMutableEntry: FrozenMutableEntry<K, V>? = map.buckets[0].root
+    private var currentChangeCount = currentBucket.changeCounter.getValue()
+    private var frozenMutableEntry: FrozenMutableEntry<K, V>? = map.buckets[0].root.getValue()
     private fun hasNext(skipChangeCountCheck: Boolean): Boolean {
         if (frozenMutableEntry != null) {
-            if (!skipChangeCountCheck && currentChangeCount != currentBucket.changeCounter.value) {
+            if (!skipChangeCountCheck && currentChangeCount != currentBucket.changeCounter.getValue()) {
                 throw ConcurrentModificationException()
             }
             return true
         }
-        frozenMutableEntry = frozenMutableEntry?.nextValue
+        frozenMutableEntry = frozenMutableEntry?.nextValue?.getValue()
         if (frozenMutableEntry != null) {
-            if (!skipChangeCountCheck && currentChangeCount != currentBucket.changeCounter.value) {
+            if (!skipChangeCountCheck && currentChangeCount != currentBucket.changeCounter.getValue()) {
                 throw ConcurrentModificationException()
             }
             return true
@@ -121,8 +121,8 @@ class EntityIterator<K, V>(val map: FrozenHashMap<K, V>) : MutableIterator<Mutab
             }
             bucketIndex++
             currentBucket = map.buckets[bucketIndex]
-            currentChangeCount = currentBucket.changeCounter.value
-            frozenMutableEntry = currentBucket.root
+            currentChangeCount = currentBucket.changeCounter.getValue()
+            frozenMutableEntry = currentBucket.root.getValue()
             if (frozenMutableEntry != null) {
                 return true
             }
@@ -254,22 +254,22 @@ class KeysSet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<K> {
 
 class Bucket<K, V> {
     val lock = SpinLock()
-    var root by AtomicReference<FrozenMutableEntry<K, V>?>(null)
+    var root = AtomicReference<FrozenMutableEntry<K, V>?>(null)
     internal var changeCounter = AtomicInt(0)
 
     private fun findKey2(key: K): Pair<FrozenMutableEntry<K, V>?, FrozenMutableEntry<K, V>>? {
         val hashCode = key.hashCode()
         var p: FrozenMutableEntry<K, V>? = null
-        var c = root
+        var c = root.getValue()
         while (c != null) {
             if (c.key.hashCode() != hashCode) {
                 p = c
-                c = c.nextValue
+                c = c.nextValue.getValue()
                 continue
             }
             if (c.key!! != key) {
                 p = c
-                c = c.nextValue
+                c = c.nextValue.getValue()
                 continue
             }
             return p to c
@@ -284,10 +284,10 @@ class Bucket<K, V> {
 
     fun findValue(value: V): FrozenMutableEntry<K, V>? {
         lock.synchronize {
-            var c = root
+            var c = root.getValue()
             while (c != null) {
                 if (c.value != value) {
-                    c = c.nextValue
+                    c = c.nextValue.getValue()
                     continue
                 }
                 return c
@@ -311,8 +311,8 @@ class Bucket<K, V> {
                 new?.invoke()
                 changeCounter.increment()
                 val e = FrozenMutableEntry(key, value)
-                e.nextValue = root
-                root = e
+                e.nextValue.setValue(root.getValue())
+                root.setValue(e)
                 null
             }
         }
@@ -320,7 +320,7 @@ class Bucket<K, V> {
     fun remove(key: K, modify: (() -> Unit)?): V? {
         lock.synchronize {
             val en = findKey2(key) ?: return null
-            en.first?.nextValue = en.second.nextValue
+            en.first?.nextValue?.setValue(en.second.nextValue.getValue())
             changeCounter.increment()
             modify?.invoke()
             return en.second.value
@@ -330,7 +330,7 @@ class Bucket<K, V> {
     fun clear() {
         lock.synchronize {
             changeCounter.increment()
-            root = null
+            root.setValue(null)
         }
     }
 
@@ -346,14 +346,19 @@ class FrozenMutableEntry<K, V>(key: K, value: V) : MutableMap.MutableEntry<K, V>
         value?.doFreeze()
     }
 
-    override val key by AtomicReference(key)
-    override var value by AtomicReference(value)
-    internal var nextValue by AtomicReference<FrozenMutableEntry<K, V>?>(null)
+    private val _key = AtomicReference(key)
+    private val _value = AtomicReference(value)
+
+    override val key
+        get() = _key.getValue()
+    override val value
+        get() = _value.getValue()
+    internal val nextValue = AtomicReference<FrozenMutableEntry<K, V>?>(null)
 
     override fun setValue(newValue: V): V {
         newValue?.doFreeze()
-        val oldValue = value
-        value = newValue
+        val oldValue = _value.getValue()
+        _value.setValue(newValue)
         return oldValue
     }
 

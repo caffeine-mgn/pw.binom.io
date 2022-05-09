@@ -72,7 +72,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     private val closed = AtomicBoolean(false)
 
     private fun checkClosed() {
-        if (closed.value) {
+        if (closed.getValue()) {
             throw ClosedException()
         }
     }
@@ -80,7 +80,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     override fun close() {
         checkClosed()
         fclose(handler)
-        closed.value = true
+        closed.setValue(true)
     }
 
     override fun write(data: ByteBuffer): Int {

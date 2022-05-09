@@ -11,7 +11,7 @@ class PipeInput : Pipe(), Input {
     private var endded = AtomicBoolean(false)
 
     override fun read(dest: ByteBuffer): Int {
-        if (endded.value)
+        if (endded.getValue())
             return 0
 
         val r = dest.ref { destPtr, remaining ->
@@ -22,7 +22,7 @@ class PipeInput : Pipe(), Input {
             }
         } ?: 0
         if (r <= 0)
-            endded.value = true
+            endded.setValue(true)
         else {
             dest.position += r
         }

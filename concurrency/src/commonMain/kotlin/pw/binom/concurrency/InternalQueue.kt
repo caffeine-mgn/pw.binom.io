@@ -18,18 +18,18 @@ internal class InternalQueue<T> {
         }
     }
 
-    private var first by AtomicReference<Item<T>?>(null)
-    private var last by AtomicReference<Item<T>?>(null)
+    private val first = AtomicReference<Item<T>?>(null)
+    private val last = AtomicReference<Item<T>?>(null)
     val isEmpty
-        get() = first == null
+        get() = first.getValue() == null
 
     fun push(value: T) {
         val item = Item(value)
-        item.previous.value = last
-        last?.next?.value = item
-        last = item
-        if (first == null) {
-            first = item
+        item.previous.setValue(last.getValue())
+        last.getValue()?.next?.setValue(item)
+        last.setValue(item)
+        if (first.getValue() == null) {
+            first.setValue(item)
         }
     }
 
@@ -37,13 +37,13 @@ internal class InternalQueue<T> {
         if (isEmpty) {
             throw NoSuchElementException()
         }
-        val item = first!!
-        if (last === item) {
-            first = null
-            last = null
+        val item = first.getValue()!!
+        if (last.getValue() === item) {
+            first.setValue(null)
+            last.setValue(null)
         } else {
-            first = item.next.value
-            first?.previous?.value = null
+            first.setValue(item.next.getValue())
+            first.getValue()?.previous?.setValue(null)
         }
         return item.value as T
     }
