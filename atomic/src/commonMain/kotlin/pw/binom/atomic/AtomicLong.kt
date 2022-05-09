@@ -11,6 +11,6 @@ expect value class AtomicLong(val native: InternalAtomicLong) {
     inline fun decrement()
     inline operator fun inc(): AtomicLong
     inline operator fun dec(): AtomicLong
-    inline fun getValue():Long
-    inline fun setValue(value:Long)
+    inline fun getValue(): Long
+    inline fun setValue(value: Long)
 }

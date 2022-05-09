@@ -1,9 +1,9 @@
 package pw.binom.atomic
 
-actual value class AtomicFloat(val native: InternalAtomicInt) {
-    actual constructor(value: Float) : this(InternalAtomicInt(value.toBits()))
+actual value class AtomicDouble(val native: InternalAtomicLong) {
+    actual constructor(value: Double) : this(InternalAtomicLong(value.toBits()))
 
-    actual fun compareAndSet(expected: Float, new: Float): Boolean {
+    actual fun compareAndSet(expected: Double, new: Double): Boolean {
         if (native.value != expected.toBits()) {
             return false
         }
@@ -11,9 +11,9 @@ actual value class AtomicFloat(val native: InternalAtomicInt) {
         return true
     }
 
-    actual inline fun getValue(): Float = Float.fromBits(native.value)
+    actual inline fun getValue(): Double = Double.fromBits(native.value)
 
-    actual inline fun setValue(value: Float) {
+    actual inline fun setValue(value: Double) {
         native.value = value.toBits()
     }
 }

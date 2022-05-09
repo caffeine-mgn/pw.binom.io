@@ -1,10 +1,10 @@
 package pw.binom.atomic
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-expect value class AtomicFloat(val native: InternalAtomicInt) {
-    constructor(value: Float)
+expect value class AtomicDouble(val native: InternalAtomicLong) {
+    constructor(value: Double)
 
-    fun getValue(): Float
-    fun setValue(value: Float)
-    fun compareAndSet(expected: Float, new: Float): Boolean
+    fun getValue(): Double
+    fun setValue(value: Double)
+    fun compareAndSet(expected: Double, new: Double): Boolean
 }

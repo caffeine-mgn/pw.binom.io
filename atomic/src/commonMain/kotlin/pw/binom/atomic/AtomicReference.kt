@@ -6,6 +6,6 @@ expect value class AtomicReference<T>(val native: InternalAtomicReference<T>) {
 
     inline fun compareAndSet(expected: T, new: T): Boolean
     inline fun compareAndSwap(expected: T, new: T): T
-    inline fun getValue():T
-    inline fun setValue(value:T)
+    inline fun getValue(): T
+    inline fun setValue(value: T)
 }
