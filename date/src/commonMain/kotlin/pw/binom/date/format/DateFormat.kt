@@ -117,6 +117,7 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
 
     fun toString(date: Date, timeZoneOffset: Int = Date.systemZoneOffset): String =
         toString(date.calendar(timeZoneOffset = timeZoneOffset))
+
     companion object {
         internal fun parsePatternList(format: String, position: Int = 0): DateFormatParseResult {
             var index = position

@@ -69,7 +69,7 @@ operator fun Date.plus(duration: Duration) =
 operator fun Date.minus(duration: Duration) =
     Date(time - duration.inWholeMilliseconds)
 
-//internal fun getJulianDay(day: Int, month: Int, year: Int): Int {
+// internal fun getJulianDay(day: Int, month: Int, year: Int): Int {
 //    val a = (14 - month) / 12
 //    val y = year + 4800 - a
 //    val m = month + 12 * a - 3
@@ -81,4 +81,4 @@ operator fun Date.minus(duration: Duration) =
 //    } else {
 //        day + (153 * m + 2) / 5 + 365 * y + y / 4 - 32045
 //    }
-//}
+// }

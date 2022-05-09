@@ -24,7 +24,6 @@ class DateTest {
         println("--------->${Date.of(year = 1960, timeZoneOffset = 0).time}")
         val c = Date.of(year = 1970, timeZoneOffset = 0).calendar()
         println("c=$c")
-
     }
 
     @Ignore
@@ -55,13 +54,13 @@ class DateTest {
     @Test
     fun calendarTest() {
         val date = Date.of(
-                year = 1989,
-                month = 1,
-                dayOfMonth = 5,
-                hours = 13,
-                minutes = 0,
-                seconds = 0,
-                millis = 0,
+            year = 1989,
+            month = 1,
+            dayOfMonth = 5,
+            hours = 13,
+            minutes = 0,
+            seconds = 0,
+            millis = 0,
             timeZoneOffset = 0
         ).calendar(0)
 

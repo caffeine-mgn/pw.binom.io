@@ -9,15 +9,16 @@ class DateParserTest {
     fun test() {
         assertEquals("2021-06-02T01:20:18.698+00:00", Date(1622596818698L).iso8601(0))
 
-        "yyyy-MM-dd".toDatePattern().parseOrNull("1989-01-05", defaultTimezoneOffset = 3 * 60)!!.calendar(3 * 60).apply {
-            assertEquals(1989, year)
-            assertEquals(1, month)
-            assertEquals(5, dayOfMonth)
-            assertEquals(0, hours)
-            assertEquals(0, minutes)
-            assertEquals(0, seconds)
-            assertEquals(3 * 60, offset)
-        }
+        "yyyy-MM-dd".toDatePattern().parseOrNull("1989-01-05", defaultTimezoneOffset = 3 * 60)!!.calendar(3 * 60)
+            .apply {
+                assertEquals(1989, year)
+                assertEquals(1, month)
+                assertEquals(5, dayOfMonth)
+                assertEquals(0, hours)
+                assertEquals(0, minutes)
+                assertEquals(0, seconds)
+                assertEquals(3 * 60, offset)
+            }
         "yyyy-MM-dd HH:mm:ss.SSSXXX".toDatePattern().parseOrNull("1989-01-05 10:31:44.456+03:00")!!.calendar(3 * 60)
             .apply {
                 assertEquals(1989, year)
@@ -84,7 +85,7 @@ class DateParserTest {
     }
 
     @Test
-    fun optionalTest3(){
+    fun optionalTest3() {
         val pattern = "yyyy[-]".toDatePattern()
 
         fun assert(date: Calendar) {

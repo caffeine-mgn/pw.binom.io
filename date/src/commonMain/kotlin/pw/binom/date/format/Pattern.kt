@@ -177,7 +177,6 @@ internal sealed interface Pattern {
     class Optional(val format: DateFormat) : Pattern {
         override val patternLength: Int = format.format.sumOf { it.patternLength } + 2
 
-
         companion object {
             fun parse(text: String, position: Int): Optional? {
                 if (text[position] != '[') {
@@ -239,7 +238,6 @@ internal sealed interface Pattern {
             format.toString(calendar)
 
         override fun toString(): String = "[$format]"
-
     }
 
     /**
@@ -413,7 +411,7 @@ internal sealed interface Pattern {
         override fun toString(): String = "mm"
     }
 
-    //Seconds. Example: "31"
+    // Seconds. Example: "31"
     object ss : Pattern {
         override val patternLength: Int
             get() = 2
@@ -440,7 +438,7 @@ internal sealed interface Pattern {
         override fun toString(): String = "ss"
     }
 
-    //Day of week. Example: "Mon"
+    // Day of week. Example: "Mon"
     object EEE : Pattern {
         override val patternLength: Int
             get() = 3
@@ -1178,4 +1176,3 @@ internal fun Int.as4() =
         this >= 1000 && this <= 9999 -> toString()
         else -> throw IllegalArgumentException("Input integer $this should be in interval 0..9999")
     }
-

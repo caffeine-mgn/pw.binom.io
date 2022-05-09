@@ -4,10 +4,7 @@ import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 kotlin {
@@ -33,7 +30,6 @@ kotlin {
 //        nodejs()
 //        binaries.library()
     }
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -109,7 +105,7 @@ tasks {
         val versionSource = sourceDir.resolve("test_data.kt")
         versionSource.writeText(
             """package pw.binom.date
-            
+
 val test_data_currentTZ get() = ${TimeZone.getDefault().rawOffset.let { it / 1000 / 60 }}
 val test_data_now get() = ${Date().time}
 """
@@ -132,4 +128,4 @@ val test_data_now get() = ${Date().time}
         testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()
