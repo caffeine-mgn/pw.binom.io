@@ -1,24 +1,10 @@
 package pw.binom.atomic
 
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect value class AtomicFloat(val native: InternalAtomicInt) {
+    constructor(value: Float)
 
-class AtomicDouble(value: Double) : ReadWriteProperty<Any?, Double> {
-    private val body = AtomicLong(value.toRawBits())
-
-    fun compareAndSet(expected: Double, new: Double): Boolean =
-        body.compareAndSet(expected = expected.toRawBits(), new = new.toRawBits())
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>): Double =
-        Double.fromBits(body.getValue())
-
-    var value: Double
-        get() = Double.fromBits(body.getValue())
-        set(value) {
-            body.setValue(value.toRawBits())
-        }
-
-    override fun setValue(thisRef: Any?, property: KProperty<*>, value: Double) {
-        body.setValue(value.toRawBits())
-    }
+    fun getValue(): Float
+    fun setValue(value: Float)
+    fun compareAndSet(expected: Float, new: Float): Boolean
 }
