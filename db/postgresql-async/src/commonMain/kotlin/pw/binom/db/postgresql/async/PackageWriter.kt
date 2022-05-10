@@ -1,21 +1,25 @@
 package pw.binom.db.postgresql.async
 
-import pw.binom.*
+import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteArrayOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+import pw.binom.writeByte
+import pw.binom.writeInt
+import pw.binom.writeShort
 
-class PackageWriter(val connection:PGConnection) : Closeable {
+class PackageWriter(val connection: PGConnection) : Closeable {
     val buf16 = ByteBuffer.alloc(16)
     val output = ByteArrayOutput()
     private var cmdExist = false
     private var bodyStarted = false
 
-    private inline fun checkBodyStarted(){
-        check(bodyStarted){"Body not started"}
+    private inline fun checkBodyStarted() {
+        check(bodyStarted) { "Body not started" }
     }
 
-    private inline fun checkBodyNotStarted(){
-        check(!bodyStarted){"Body already started"}
+    private inline fun checkBodyNotStarted() {
+        check(!bodyStarted) { "Body already started" }
     }
 
     fun startBody() {
@@ -23,6 +27,7 @@ class PackageWriter(val connection:PGConnection) : Closeable {
         output.writeInt(buf16, 0)
         bodyStarted = true
     }
+
     fun writeCmd(cmd: Byte) {
         checkBodyNotStarted()
         if (cmdExist) {
@@ -50,7 +55,7 @@ class PackageWriter(val connection:PGConnection) : Closeable {
 
     fun writeCString(text: String) {
         checkBodyStarted()
-        connection.charsetUtils.encode(text){
+        connection.charsetUtils.encode(text) {
             output.write(it)
         }
         output.writeByte(buf16, 0)
@@ -61,7 +66,7 @@ class PackageWriter(val connection:PGConnection) : Closeable {
         val pos = output.data.position
         output.writeInt(buf16, 0)
 
-        connection.charsetUtils.encode(text){
+        connection.charsetUtils.encode(text) {
             output.write(it)
         }
 

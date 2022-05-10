@@ -5,7 +5,7 @@ import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
 
-object EmptyQueryStringMessage: KindedMessage {
+object EmptyQueryStringMessage : KindedMessage {
     override val kind: Byte
         get() = MessageKinds.EmptyQueryString
 

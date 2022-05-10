@@ -1,7 +1,7 @@
 package pw.binom.db.postgresql.async.messages.frontend
 
-//import com.ionspin.kotlin.bignum.decimal.BigDecimal
-//import com.ionspin.kotlin.bignum.integer.BigInteger
+// import com.ionspin.kotlin.bignum.decimal.BigDecimal
+// import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Calendar
 import pw.binom.date.Date
@@ -71,7 +71,6 @@ class BindMessage : KindedMessage {
 //        }
 
         writer.endBody()
-
     }
 
     var statement: String = ""
@@ -116,7 +115,7 @@ object TypeWriter {
                 }
                 is String -> {
                     val intValue = value.toIntOrNull()
-                        ?: throw IllegalArgumentException("Can't convert ${value} to Integer. Invalid format")
+                        ?: throw IllegalArgumentException("Can't convert $value to Integer. Invalid format")
                     writer.writeInt(4)
                     writer.writeInt(intValue)
                 }
@@ -154,7 +153,7 @@ object TypeWriter {
             writer.writeInt(-1)
             return
         }
-        fun toText(value:Any):String=
+        fun toText(value: Any): String =
             when (value) {
                 is String -> value
                 is ByteArray -> {
@@ -167,10 +166,10 @@ object TypeWriter {
                 /*is BigInteger, is BigDecimal, */is Float, is Double, is Long, is Int, is UUID -> value.toString()
                 is Boolean -> if (value) "t" else "f"
                 is UUID -> value.toString()
-                is Calendar->{
+                is Calendar -> {
                     "${value.year}-${(value.month).asTwo()}-${value.dayOfMonth.asTwo()} " +
-                            "${value.hours.asTwo()}:${value.minutes.asTwo()}:${value.seconds.asTwo()}" +
-                            ".${value.millisecond.asThree()}000"
+                        "${value.hours.asTwo()}:${value.minutes.asTwo()}:${value.seconds.asTwo()}" +
+                        ".${value.millisecond.asThree()}000"
                 }
                 is Date -> {
                     val calendar = value.calendar(0)
@@ -178,6 +177,7 @@ object TypeWriter {
                 }
                 else -> throw SQLException("Unsupported type ${value::class}")
             }
+
         val txt = toText(value)
         writer.writeLengthString(txt)
     }

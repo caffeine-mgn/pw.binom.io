@@ -1,6 +1,6 @@
 package pw.binom.webdav.server
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.copyTo
 import pw.binom.date.Date
 import pw.binom.io.*

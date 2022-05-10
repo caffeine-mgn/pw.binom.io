@@ -2,6 +2,7 @@
 
 package pw.binom
 
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.pool.DefaultPool
 import kotlin.jvm.JvmName

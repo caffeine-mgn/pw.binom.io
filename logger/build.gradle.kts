@@ -1,17 +1,6 @@
-import pw.binom.baseStaticLibConfig
-
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-//    id("com.bnorm.template.kotlin-ir-plugin")
-}
-
-//template {
-//    companionProcessing.set(false)
-//    valueClassProcessing.set(false)
-//}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 kotlin {
@@ -38,7 +27,6 @@ kotlin {
         }
         nodejs()
     }
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -101,4 +89,4 @@ kotlin {
         }
     }
 }
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()

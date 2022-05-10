@@ -1,14 +1,14 @@
 package pw.binom.io.httpClient
 
-//@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
-//internal class UrlResponseImpl(
+// @Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
+// internal class UrlResponseImpl(
 //    override val responseCode: Int,
 //    override val headers: Map<String, List<String>>,
 //    val URI: URI,
 //    val channel: AsyncHttpClient.Connection,
 //    val input: AsyncInput,
 //    val client: AsyncHttpClient
-//) : AsyncHttpClient.UrlResponse {
+// ) : AsyncHttpClient.UrlResponse {
 //
 //    private var keepAlive = headers[Headers.CONNECTION]?.singleOrNull()?.lowercase() == Headers.KEEP_ALIVE.lowercase()
 //
@@ -61,4 +61,4 @@ package pw.binom.io.httpClient
 //        }
 //    }
 //
-//}
+// }

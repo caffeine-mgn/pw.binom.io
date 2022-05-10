@@ -1,6 +1,6 @@
 package pw.binom.compression.tar
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

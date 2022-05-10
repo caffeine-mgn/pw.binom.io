@@ -1,6 +1,5 @@
 package pw.binom.db.postgresql.async
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.test.runTest
 import pw.binom.UUID
 import pw.binom.charset.Charsets
@@ -79,7 +78,6 @@ class TestConnect : BaseTest() {
 //                    }
 //                }
 
-
         con.prepareStatement(
             "select * from osmi_cards_config where id=?",
             listOf(ResultSet.ColumnType.UUID)
@@ -157,7 +155,7 @@ class TestConnect : BaseTest() {
                 }
                 fail()
             } catch (e: PostgresqlException) {
-                //ok
+                // ok
             }
         }
     }
@@ -312,12 +310,11 @@ create table member_tag
             try {
                 it.prepareStatement("select sum(amount) from missing_column_test where company_id=?").use {
                     it.executeQuery(10).use {
-
                     }
                 }
                 fail()
             } catch (e: PostgresqlException) {
-                //ok
+                // ok
             }
         }
     }
@@ -341,7 +338,6 @@ create table member_tag
     @Test
     fun connectTest() {
         pg {
-
         }
     }
 
@@ -455,7 +451,6 @@ create table member_tag
                         assertEquals(1.5, it.getDouble(0))
                         assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
                         assertFalse(it.next())
-
                     }
                 } catch (e: Throwable) {
                     e.printStackTrace()

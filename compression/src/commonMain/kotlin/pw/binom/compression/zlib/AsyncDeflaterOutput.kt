@@ -1,7 +1,7 @@
 package pw.binom.compression.zlib
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
 
 open class AsyncDeflaterOutput(
@@ -39,13 +39,13 @@ open class AsyncDeflaterOutput(
         checkBusy()
         try {
             busy = true
-            val vv = data.remaining
+            val vv = data.remaining123
             while (true) {
                 buffer.clear()
                 val l = deflater.deflate(data, buffer)
 
                 buffer.flip()
-                while (buffer.remaining > 0) {
+                while (buffer.remaining123 > 0) {
                     stream.write(buffer)
                 }
 

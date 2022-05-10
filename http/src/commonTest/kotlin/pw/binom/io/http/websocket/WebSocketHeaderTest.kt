@@ -36,7 +36,7 @@ class WebSocketHeaderTest {
         val output = ByteBuffer.alloc(10)
         WebSocketHeader.write(output.asyncOutput(), header)
         output.flip()
-        assertEquals(8, output.remaining)
+        assertEquals(8, output.remaining123)
         output.forEachIndexed { i, byte ->
             assertEquals(rightData[i].toByte(), byte)
         }

@@ -113,6 +113,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
+                api(project(":io"))
                 api(project(":env"))
                 api(project(":atomic"))
             }

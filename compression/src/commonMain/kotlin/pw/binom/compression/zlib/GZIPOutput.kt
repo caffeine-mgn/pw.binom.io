@@ -1,10 +1,10 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteBuffer
-import pw.binom.Output
-import pw.binom.alloc
+import pw.binom.crc.CRC32
 import pw.binom.holdState
-import pw.binom.io.CRC32
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Output
+import pw.binom.io.use
 
 class GZIPOutput(
     stream: Output,
@@ -59,7 +59,7 @@ class GZIPOutput(
         if (buf.capacity >= TRAILER_SIZE) {
             writeFinal(buf)
         } else {
-            ByteBuffer.alloc(TRAILER_SIZE) { trailer ->
+            ByteBuffer.alloc(TRAILER_SIZE).use { trailer ->
                 writeFinal(trailer)
             }
         }
@@ -105,14 +105,14 @@ fun Output.gzip(level: Int = 6, bufferSize: Int = 1024, closeStream: Boolean = t
     )
 
 private val header = ByteBuffer.alloc(10).also {
-    it.put(GZIP_MAGIC1)  // Magic number (short)
-    it.put(GZIP_MAGIC2)  // Magic number (short)
-    it.put(DEFLATED)  // Compression method (CM)
-    it.put(0)  // Flags (FLG)
-    it.put(0)  // Modification time MTIME (int)
-    it.put(0)  // Modification time MTIME (int)
-    it.put(0)  // Modification time MTIME (int)
-    it.put(0)  // Modification time MTIME (int)
-    it.put(0)  // Extra flags (XFLG)
+    it.put(GZIP_MAGIC1) // Magic number (short)
+    it.put(GZIP_MAGIC2) // Magic number (short)
+    it.put(DEFLATED) // Compression method (CM)
+    it.put(0) // Flags (FLG)
+    it.put(0) // Modification time MTIME (int)
+    it.put(0) // Modification time MTIME (int)
+    it.put(0) // Modification time MTIME (int)
+    it.put(0) // Modification time MTIME (int)
+    it.put(0) // Extra flags (XFLG)
     it.put(0) // Operating system (OS)
 }

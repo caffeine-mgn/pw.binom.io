@@ -2,10 +2,7 @@ package pw.binom.io.http
 
 import kotlinx.coroutines.runBlocking
 import pw.binom.*
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.readText
-import pw.binom.io.utf8Appendable
-import pw.binom.io.utf8Reader
+import pw.binom.io.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,7 +41,7 @@ class AsyncMultipartInputTest {
         val bufferPool = ByteBufferPool(100)
         runBlocking {
             try {
-                //-------build test data-------//
+                // -------build test data-------//
                 mulipart.formData("userName")
                 mulipart.utf8Appendable().append(userName)
                 mulipart.formData("userPassword")
@@ -56,7 +53,7 @@ class AsyncMultipartInputTest {
                 val testData = stream.data.clone()
                 stream.close()
 
-                //-------test-------//
+                // -------test-------//
                 val t = ByteBuffer.alloc(100)
                 val input = AsyncMultipartInput(
                     separator = mulipart.boundary,

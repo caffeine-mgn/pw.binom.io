@@ -1,6 +1,5 @@
 package pw.binom.strong
 
-import pw.binom.strong.exceptions.NoSuchBeanException
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 

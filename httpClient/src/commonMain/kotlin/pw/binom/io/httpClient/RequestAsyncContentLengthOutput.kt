@@ -1,11 +1,9 @@
 package pw.binom.io.httpClient
 
-import pw.binom.net.URL
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthOutput
-import kotlin.time.ExperimentalTime
+import pw.binom.net.URL
 
-@OptIn(ExperimentalTime::class)
 class RequestAsyncContentLengthOutput constructor(
     val URI: URL,
     val client: BaseHttpClient,

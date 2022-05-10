@@ -4,7 +4,7 @@ import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
 
-class Terminate: KindedMessage {
+class Terminate : KindedMessage {
     override val kind: Byte
         get() = MessageKinds.Terminate
 

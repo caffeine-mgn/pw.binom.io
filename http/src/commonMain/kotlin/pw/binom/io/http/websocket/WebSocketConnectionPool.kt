@@ -1,7 +1,7 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
+import pw.binom.io.AsyncInput
+import pw.binom.io.AsyncOutput
 import pw.binom.pool.DefaultPool
 
 class WebSocketConnectionPool(capacity: Int) {

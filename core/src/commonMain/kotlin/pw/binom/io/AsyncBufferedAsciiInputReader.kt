@@ -1,9 +1,6 @@
 package pw.binom.io
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.empty
 import pw.binom.pool.ObjectPool
 
 class AsyncBufferedAsciiInputReader private constructor(
@@ -68,14 +65,14 @@ class AsyncBufferedAsciiInputReader private constructor(
 //    private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
     override val available: Int
-        get() = if (closed) 0 else if (buffer.remaining > 0) buffer.remaining else -1
+        get() = if (closed) 0 else if (buffer.remaining123 > 0) buffer.remaining123 else -1
 
     private suspend fun full() {
         if (eof) {
             return
         }
 
-        if (buffer.remaining == 0) {
+        if (buffer.remaining123 == 0) {
             try {
                 buffer.clear()
                 if (stream.read(buffer) == 0) {
@@ -111,7 +108,7 @@ class AsyncBufferedAsciiInputReader private constructor(
     override suspend fun readChar(): Char? {
         checkClosed()
         full()
-        if (buffer.remaining <= 0) {
+        if (buffer.remaining123 <= 0) {
             return null
         }
         return buffer.get().toInt().toChar()
@@ -120,7 +117,7 @@ class AsyncBufferedAsciiInputReader private constructor(
     override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
         checkClosed()
         full()
-        val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
+        val len = minOf(minOf(dest.size - offset, length), buffer.remaining123)
         for (i in offset until offset + len) {
             dest[i] = buffer.get().toInt().toChar()
         }
@@ -130,7 +127,7 @@ class AsyncBufferedAsciiInputReader private constructor(
     suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {
         checkClosed()
         full()
-        val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
+        val len = minOf(minOf(dest.size - offset, length), buffer.remaining123)
         buffer.get(
             dest = dest,
             offset = offset,
@@ -160,7 +157,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         var exist = false
         LOOP@ while (true) {
             full()
-            if (buffer.remaining <= 0) {
+            if (buffer.remaining123 <= 0) {
                 break
             }
             for (i in buffer.position until buffer.limit) {

@@ -1,18 +1,15 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.Input
-import pw.binom.empty
 
 class BufferedInput(val stream: Input, bufferSize: Int = DEFAULT_BUFFER_SIZE) : Input {
     private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
     val available
-        get() = if (buffer.remaining == 0) -1 else buffer.remaining
+        get() = if (buffer.remaining123 == 0) -1 else buffer.remaining123
 
     override fun read(dest: ByteBuffer): Int {
-        if (buffer.remaining == 0) {
+        if (buffer.remaining123 == 0) {
             buffer.clear()
             stream.read(buffer)
             buffer.flip()

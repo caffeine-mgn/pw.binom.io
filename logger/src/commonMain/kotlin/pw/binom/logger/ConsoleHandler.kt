@@ -34,7 +34,6 @@ object ConsoleHandler : Logger.Handler {
             return
         val now = Date(Date.nowTime).calendar()
 
-
         val sb = StringBuilder()
             .append(dataPattern.toString(now))
             .append(" [").append(level.name).append("]")

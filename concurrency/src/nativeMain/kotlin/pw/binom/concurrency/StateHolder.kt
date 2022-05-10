@@ -19,16 +19,16 @@ actual class StateHolder : Closeable {
     }
 
     actual fun <T : Any, R> access(value: Reference<T>, func: (T) -> R): Future<R> =
-            if (value.owner.same)
-                Future.success(func(value.value))
-            else
-                FutureWrapper(
-                        worker.execute(TransferMode.SAFE, { func.freeze() to value }) {
-                            kotlin.runCatching {
-                                it.first(it.second.value)
-                            }
-                        }
-                )
+        if (value.owner.same)
+            Future.success(func(value.value))
+        else
+            FutureWrapper(
+                worker.execute(TransferMode.SAFE, { func.freeze() to value }) {
+                    kotlin.runCatching {
+                        it.first(it.second.value)
+                    }
+                }
+            )
 
     override fun close() {
         worker.requestTermination(false)

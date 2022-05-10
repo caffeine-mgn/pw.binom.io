@@ -1,10 +1,10 @@
 package pw.binom.process
 
 import kotlinx.cinterop.convert
-import pw.binom.ByteBuffer
-import pw.binom.Input
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.doFreeze
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Input
 
 class PipeInput : Pipe(), Input {
 

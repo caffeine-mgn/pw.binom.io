@@ -2,6 +2,7 @@
 
 package pw.binom
 
+import pw.binom.io.Buffer
 import pw.binom.io.Closeable
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -16,19 +17,19 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
             CharBuffer(JCharBuffer.wrap(chars))
     }
 
-    actual override val capacity: Int
+    override val capacity: Int
         get() = native.capacity()
 
-    actual override val remaining: Int
+    override val remaining123: Int
         get() = native.remaining()
 
-    actual override var position: Int
+    override var position: Int
         get() = native.position()
         set(value) {
             native.position(value)
         }
 
-    actual override var limit: Int
+    override var limit: Int
         get() = native.limit()
         set(value) {
             native.limit(value)
@@ -79,13 +80,13 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         return this
     }
 
-    actual override fun clear() {
+    override fun clear() {
         native.clear()
         position = 0
         limit = capacity
     }
 
-    actual override val elementSizeInBytes: Int
+    override val elementSizeInBytes: Int
         get() = Char.SIZE_BYTES
 
     actual override fun toString(): String {
@@ -95,11 +96,11 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
         return result
     }
 
-    actual override fun flip() {
+    override fun flip() {
         native.flip()
     }
 
-    actual override fun compact() {
+    override fun compact() {
         native.compact()
     }
 
@@ -150,7 +151,7 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
     }
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining, minOf(array.size - offset, length))
+        val len = minOf(remaining123, minOf(array.size - offset, length))
         native.put(array, offset, len)
         return len
     }

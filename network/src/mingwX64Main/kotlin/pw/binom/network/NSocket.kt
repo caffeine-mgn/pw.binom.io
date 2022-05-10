@@ -12,7 +12,7 @@ import platform.windows.FIONBIO
 import platform.windows.closesocket
 import platform.windows.ioctlsocket
 import platform.windows.shutdown
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -102,6 +102,7 @@ private fun allowIpv4(native: SOCKET) {
 
 actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
     private var closed = false
+
     actual companion object {
         actual fun serverTcp(address: NetworkAddress): NSocket {
             init_sockets()

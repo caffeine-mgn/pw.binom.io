@@ -1,9 +1,6 @@
 package pw.binom.io
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-
-class AsyncCheckedInput(val stream: AsyncInput, val cksum: CRC32Basic) : AsyncInput {
+class AsyncCheckedInput(val stream: AsyncInput, val cksum: MessageDigest) : AsyncInput {
     override val available: Int
         get() = stream.available
 

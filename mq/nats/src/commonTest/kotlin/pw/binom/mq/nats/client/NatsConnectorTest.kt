@@ -11,7 +11,6 @@ import kotlin.time.ExperimentalTime
 
 class NatsConnectorTest {
 
-    @OptIn(ExperimentalTime::class)
     @Test
     fun test3() {
         val connector1 = NatsConnector.create(
@@ -28,7 +27,7 @@ class NatsConnectorTest {
         runBlocking {
             val msgText = Random.nextUuid().toString()
             connector1.subscribe("S1", null)
-            connector1.publish(subject = "S1", replyTo = null, data=msgText.encodeToByteArray())
+            connector1.publish(subject = "S1", replyTo = null, data = msgText.encodeToByteArray())
             val msg = connector1.readMessage()
             assertNull(msg.replyTo)
             assertEquals(msgText, msg.data.decodeToString())
@@ -134,11 +133,11 @@ class NatsConnectorTest {
 //            val t1Sub1 = connector1.subscribe(subject)
 //            connector1.publish(subject = subject, data = msg1.encodeToByteArray())
 //            connector1.publish(subject = subject, data = msg2.encodeToByteArray())
-////            connector1.unsubscribe(t1Sub)
-////            println("try assert")
-////            assertEquals(0, msg1ForCon1)
-////            assertEquals(1, msg1ForCon2)
-////            println("assert done")
+// //            connector1.unsubscribe(t1Sub)
+// //            println("try assert")
+// //            assertEquals(0, msg1ForCon1)
+// //            assertEquals(1, msg1ForCon2)
+// //            println("assert done")
 //        }
 //        val now = TimeSource.Monotonic.markNow()
 //        while (true) {

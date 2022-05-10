@@ -4,9 +4,9 @@ import pw.binom.io.Sha1
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class SecretTest{
+class SecretTest {
     @Test
-    fun testSecret(){
+    fun testSecret() {
         val sha1 = Sha1()
         assertEquals("0eLQeVFG0DiL/hPTDxXKLteQd2I=", HandshakeSecret.generateResponse(sha1, "M5QKAMGqeoZg4e0aoxeZHg=="))
     }

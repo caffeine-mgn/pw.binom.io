@@ -8,7 +8,7 @@ class QueryMessage : KindedMessage {
     var query = ""
 
     override val kind
-        get() = 'Q'.toByte()
+        get() = 'Q'.code.toByte()
 
     override fun write(writer: PackageWriter) {
         writer.writeCmd(MessageKinds.Query)

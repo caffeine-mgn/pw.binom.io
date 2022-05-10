@@ -20,7 +20,8 @@ class CommandCompleteMessage : KindedMessage {
         writer.endBody()
     }
 
-    override fun toString(): String = "CommandCompleteMessage(statusMessage: [$statusMessage], rowsAffected: [$rowsAffected])"
+    override fun toString(): String =
+        "CommandCompleteMessage(statusMessage: [$statusMessage], rowsAffected: [$rowsAffected])"
 
     companion object {
         suspend fun read(ctx: PackageReader): CommandCompleteMessage {
@@ -33,5 +34,4 @@ class CommandCompleteMessage : KindedMessage {
             return ctx.commandCompleteMessage
         }
     }
-
 }

@@ -3,8 +3,8 @@ package pw.binom.compression.zlib
 import kotlinx.cinterop.*
 import platform.posix.memset
 import platform.zlib.*
-import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import kotlin.native.concurrent.freeze
@@ -54,13 +54,13 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
         return output.refTo(output.position) { outputPtr ->
             input.refTo(input.position) { inputPtr ->
                 memScoped {
-                    native.avail_out = output.remaining.convert()
+                    native.avail_out = output.remaining123.convert()
                     native.next_out = (outputPtr).getPointer(this).reinterpret()
 
-                    native.avail_in = input.remaining.convert()
+                    native.avail_in = input.remaining123.convert()
                     native.next_in = (inputPtr).getPointer(this).reinterpret()
-                    val freeOutput = output.remaining
-                    val freeInput = input.remaining
+                    val freeOutput = output.remaining123
+                    val freeInput = input.remaining123
                     val r = inflate(native.ptr, Z_NO_FLUSH)
                     if (r != Z_OK && r != Z_STREAM_END)
                         throw IOException("inflate() returns [${zlibConsts(r)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")

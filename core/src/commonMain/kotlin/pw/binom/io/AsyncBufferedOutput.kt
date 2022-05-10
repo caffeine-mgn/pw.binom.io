@@ -1,7 +1,5 @@
 package pw.binom.io
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 
 class AsyncBufferedOutput(
@@ -39,8 +37,8 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
         var l = 0
-        while (data.remaining > 0) {
-            if (buffer.remaining <= 0)
+        while (data.remaining123 > 0) {
+            if (buffer.remaining123 <= 0)
                 flush()
             l += buffer.write(data)
         }
@@ -50,7 +48,7 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     override suspend fun flush() {
         checkClosed()
         buffer.flip()
-        while (buffer.remaining > 0) {
+        while (buffer.remaining123 > 0) {
             stream.write(buffer)
         }
         stream.flush()

@@ -5,7 +5,7 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
 import platform.openssl.*
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 
 internal fun assertError(ssl: CPointer<SSL>, ret: Int) {
@@ -134,7 +134,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
     }
 
     actual fun writeNet(dst: ByteBuffer): Int {
-        var len = dst.remaining
+        var len = dst.remaining123
         var off = dst.position
         var readed = 0
 
@@ -168,7 +168,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
             )
         }
         val n = dst.ref { dstPtr, remaining ->
-            SSL_read(ssl, dstPtr, dst.remaining)
+            SSL_read(ssl, dstPtr, dst.remaining123)
         } ?: 0
         if (n > 0) {
             dst.position += n

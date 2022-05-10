@@ -1,7 +1,9 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.*
-import pw.binom.io.use
+import pw.binom.forEachIndexed
+import pw.binom.get
+import pw.binom.io.AsyncInput
+import pw.binom.io.ByteBuffer
 import kotlin.experimental.xor
 
 interface Message : AsyncInput {

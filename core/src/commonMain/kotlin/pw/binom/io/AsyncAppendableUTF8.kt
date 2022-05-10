@@ -1,8 +1,5 @@
 package pw.binom.io
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
-
 class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
 
     private val data = ByteBuffer.alloc(4)

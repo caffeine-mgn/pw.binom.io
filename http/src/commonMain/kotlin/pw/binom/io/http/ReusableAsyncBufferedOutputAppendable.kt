@@ -2,13 +2,13 @@ package pw.binom.io.http
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.NullAsyncOutput
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.io.AsyncBufferedOutputAppendable
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 

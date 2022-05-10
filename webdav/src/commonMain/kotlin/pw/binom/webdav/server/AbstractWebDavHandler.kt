@@ -1,10 +1,10 @@
 package pw.binom.webdav.server
 
-import pw.binom.ByteBuffer
 import pw.binom.copyTo
 import pw.binom.date.Date
 import pw.binom.io.*
-import pw.binom.io.httpServer.*
+import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.HttpRequest
 import pw.binom.net.Path
 import pw.binom.net.toPath
 import pw.binom.net.toURL
@@ -29,7 +29,6 @@ suspend fun FileSystem.getEntitiesWithDepth(path: Path, depth: Int): List<FileSy
     val out = ArrayList<FileSystem.Entity>()
     val e = get(path.toString().removeSuffix("/").toPath) ?: return null
     out += e
-
 
     if (!e.isFile)
         getD(path, depth, out)
@@ -69,7 +68,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
         val entities = fs.getEntitiesWithDepth(
             UTF8.urlDecode(req.path.raw).toPath,
             depth
-        )!!//if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
+        )!! // if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
         resp.status = 207
         resp.headers.contentType = "application/xml; charset=UTF-8"
         resp.startWriteText().use {
@@ -92,7 +91,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                                                 "displayname",
                                                 DAV_NS
                                             ) {
-                                                //value(e.name)
+                                                // value(e.name)
                                             }
                                             prop.first == DAV_NS && prop.second == "getlastmodified" ->
                                                 node("getlastmodified", DAV_NS) {
@@ -139,7 +138,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
 
         val fs = getFS(req)
         try {
-            //resp.resetHeader("Connection", "close")
+            // resp.resetHeader("Connection", "close")
             if (req.method == "OPTIONS") {
                 fs.useUser2(user) {
                     fs.get(UTF8.urlDecode(req.path.raw).toPath)
@@ -305,7 +304,6 @@ abstract class AbstractWebDavHandler<U> : Handler {
             }
         }
     }
-
 }
 
 private suspend fun <T> FileSystem.useUser2(user: Any?, func: suspend () -> T): T =

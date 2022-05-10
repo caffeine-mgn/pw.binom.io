@@ -1,6 +1,6 @@
 package pw.binom.db.postgresql.async
 
-import pw.binom.db.*
+import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.AsyncStatement
 
@@ -39,5 +39,4 @@ class PostgreAsyncStatement(override val connection: PGConnection) : AsyncStatem
     override suspend fun asyncClose() {
         checkClosePreviousResultSet()
     }
-
 }

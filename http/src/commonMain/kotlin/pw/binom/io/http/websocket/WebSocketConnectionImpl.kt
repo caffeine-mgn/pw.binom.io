@@ -1,9 +1,10 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.*
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.StreamClosedException
+import pw.binom.io.*
 import pw.binom.network.SocketClosedException
+import pw.binom.writeShort
 
 open class WebSocketConnectionImpl(
     input: AsyncInput,
@@ -101,11 +102,11 @@ open class WebSocketConnectionImpl(
     private suspend fun sendFinish(code: Short = 1006, body: ByteBuffer? = null) {
         val v = WebSocketHeader()
         v.opcode = 8
-        v.length = Short.SIZE_BYTES.toULong() + (body?.remaining ?: 0).toULong()
+        v.length = Short.SIZE_BYTES.toULong() + (body?.remaining123 ?: 0).toULong()
         v.maskFlag = masking
         v.finishFlag = true
         WebSocketHeader.write(_output, v)
-        ByteBuffer.alloc(Short.SIZE_BYTES + (body?.remaining ?: 0)) {
+        ByteBuffer.alloc(Short.SIZE_BYTES + (body?.remaining123 ?: 0)).use {
             it.writeShort(code)
             if (body != null) {
                 it.write(body)

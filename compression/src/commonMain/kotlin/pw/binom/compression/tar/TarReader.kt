@@ -1,9 +1,8 @@
 package pw.binom.compression.tar
 
-import pw.binom.*
-import pw.binom.io.Closeable
-import pw.binom.io.IOException
-import pw.binom.io.StreamClosedException
+import pw.binom.asUTF8String
+import pw.binom.io.*
+import pw.binom.set
 
 internal const val BLOCK_SIZE = 512
 
@@ -32,7 +31,7 @@ class TarReader(private val stream: Input, val closeStream: Boolean = true) : Cl
             if (currentEntity != this)
                 throw StreamClosedException()
             val entity = this
-            val maxLength = minOf(dest.remaining, entity.size.toInt() - cursor)
+            val maxLength = minOf(dest.remaining123, entity.size.toInt() - cursor)
             if (maxLength == 0)
                 return 0
             dest.limit = dest.position + maxLength

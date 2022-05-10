@@ -1,14 +1,13 @@
 package pw.binom.concurrency
 
-import pw.binom.io.Closeable
-import kotlin.time.Duration
-
+/*
 @Deprecated(message = "Not use it. Will be deleted")
 interface DeadlineTimer : Closeable {
-    /**
-     * @param delay delay in milliseconds
-     * @param func function for call after [delay]
-     */
+    */
+/**
+ * @param delay delay in milliseconds
+ * @param func function for call after [delay]
+ *//*
     fun delay(delay: Duration, func: () -> Unit)
     suspend fun delay(delay: Duration)
 
@@ -17,3 +16,4 @@ interface DeadlineTimer : Closeable {
             DeadlineTimerImpl(errorProcessing = errorProcessing)
     }
 }
+*/

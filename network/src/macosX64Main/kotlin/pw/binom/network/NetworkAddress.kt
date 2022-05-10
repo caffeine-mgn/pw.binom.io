@@ -74,6 +74,7 @@ actual sealed class NetworkAddress {
         hashCode = 31 * hashCode + port.hashCode()
         this.hashCode = hashCode
     }
+
     protected fun _reset(host: String, port: Int) {
         memScoped {
             init_sockets()
@@ -94,7 +95,7 @@ actual sealed class NetworkAddress {
                 }
                 when (err) {
                     0 -> break@LOOP
-                    else -> throw RuntimeException("Unknown error: ${err}")
+                    else -> throw RuntimeException("Unknown error: $err")
                 }
             }
             memcpy(

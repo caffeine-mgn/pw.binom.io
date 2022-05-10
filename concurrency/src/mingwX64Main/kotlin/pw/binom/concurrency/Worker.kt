@@ -7,7 +7,6 @@ import kotlinx.cinterop.ptr
 import platform.windows.GetSystemInfo
 import platform.windows.SYSTEM_INFO
 
-
 actual val Worker.Companion.availableProcessors: Int
     get() =
         memScoped {

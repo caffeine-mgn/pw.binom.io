@@ -1,5 +1,6 @@
 package pw.binom
 
+import pw.binom.io.Buffer
 import pw.binom.io.Closeable
 
 /**
@@ -27,15 +28,6 @@ expect class CharBuffer : CharSequence, Closeable, Buffer {
     override fun toString(): String
     fun read(array: CharArray, offset: Int = 0, length: Int = array.size - offset): Int
     fun write(array: CharArray, offset: Int = 0, length: Int = array.size - offset): Int
-
-    override val remaining: Int
-    override var position: Int
-    override var limit: Int
-    override val capacity: Int
-    override val elementSizeInBytes: Int
-    override fun flip()
-    override fun compact()
-    override fun clear()
 }
 
 /**

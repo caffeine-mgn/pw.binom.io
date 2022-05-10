@@ -1,7 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
-import pw.binom.Output
 import kotlin.math.ceil
 
 open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
@@ -61,7 +59,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         checkLocked()
         checkClosed()
 
-        val needWrite = size - (this.data.remaining)
+        val needWrite = size - (this.data.remaining123)
 
         if (needWrite > 0) {
             val newSize = maxOf(
@@ -78,7 +76,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
 
     override fun write(data: ByteBuffer): Int {
         checkLocked()
-        alloc(data.remaining)
+        alloc(data.remaining123)
         val l = this.data.write(data)
         _wrote += l
         return l

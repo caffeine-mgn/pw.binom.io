@@ -24,7 +24,7 @@ class ZlibInputOutputTest {
         def.close()
 
         compressed.flip()
-        assertEquals(11, compressed.remaining)
+        assertEquals(11, compressed.remaining123)
         (compressed.position until compressed.limit).forEach {
             println("->${compressed[it]}")
         }
@@ -37,7 +37,7 @@ class ZlibInputOutputTest {
         inf.read(uncompressed)
         inf.close()
         uncompressed.flip()
-        assertEquals(source.capacity, uncompressed.remaining)
+        assertEquals(source.capacity, uncompressed.remaining123)
         source.clear()
         assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
     }
@@ -56,7 +56,7 @@ class ZlibInputOutputTest {
         def.asyncClose()
 
         compressed.flip()
-        assertEquals(11, compressed.remaining)
+        assertEquals(11, compressed.remaining123)
         (compressed.position until compressed.limit).forEach {
             assertEquals(TestData.COMPRESSED[it], compressed[it])
         }
@@ -66,7 +66,7 @@ class ZlibInputOutputTest {
         inf.read(uncompressed)
         inf.close()
         uncompressed.flip()
-        assertEquals(source.capacity, uncompressed.remaining)
+        assertEquals(source.capacity, uncompressed.remaining123)
         source.clear()
         assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
     }

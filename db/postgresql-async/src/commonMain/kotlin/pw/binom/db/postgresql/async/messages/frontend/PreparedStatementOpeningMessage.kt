@@ -25,5 +25,4 @@ class PreparedStatementOpeningMessage() : KindedMessage {
         }
         writer.endBody()
     }
-
 }

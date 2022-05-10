@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-class Testing:BaseTest() {
+class Testing : BaseTest() {
 
     @Test
     fun updateTest() {
@@ -77,7 +77,6 @@ s:create_index('login_pwd',
                     assertEquals(newPassword[index], byte)
                 }
             }
-
 
             it.select(
                 space = schemaName,

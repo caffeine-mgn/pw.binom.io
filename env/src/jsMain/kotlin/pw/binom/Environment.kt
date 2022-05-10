@@ -16,7 +16,6 @@ actual val Environment.isBigEndian: Boolean
 actual val Environment.workDirectory: String
     get() = "${window.location.protocol}//${window.location.host}${window.location.pathname}"
 
-
 actual val Environment.currentTimeMillis: Long
     get() = Date.now().toLong()
 actual val Environment.currentTimeNanoseconds: Long

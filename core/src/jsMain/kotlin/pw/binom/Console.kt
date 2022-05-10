@@ -1,5 +1,7 @@
 package pw.binom
 
+import pw.binom.io.Input
+import pw.binom.io.Output
 import pw.binom.io.Reader
 
 actual object Console {

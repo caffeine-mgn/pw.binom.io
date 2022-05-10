@@ -1,7 +1,5 @@
 package pw.binom.strong
 
-import pw.binom.strong.exceptions.CycleDependencyException
-
 internal object GraphUtils {
     fun <T : Any> buildDependencyGraph(
         elements: Collection<T>,
@@ -24,7 +22,7 @@ internal object GraphUtils {
             subNodes.forEach {
 
                 if (it in initing) {
-                    throw CycleException(treePath+listOf(it))
+                    throw CycleException(treePath + listOf(it))
                 }
                 init(it)
             }
@@ -39,7 +37,7 @@ internal object GraphUtils {
         return order
     }
 
-    class CycleException(val dependenciesPath: List<Any>) : RuntimeException(){
+    class CycleException(val dependenciesPath: List<Any>) : RuntimeException() {
         override val message: String?
             get() {
                 val sb = StringBuilder()

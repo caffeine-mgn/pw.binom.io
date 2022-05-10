@@ -28,5 +28,4 @@ class ProcessData : KindedMessage {
             return ctx.processData
         }
     }
-
 }

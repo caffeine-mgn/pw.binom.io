@@ -3,6 +3,7 @@ package pw.binom.io.http
 import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.io.ByteArrayOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.utf8Appendable
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +13,7 @@ fun ByteBuffer.print() {
     val l = limit
     val buf = ByteBuffer.alloc(4)
     try {
-        while (remaining > 0) {
+        while (remaining123 > 0) {
             val c = readUtf8Char(buf)!!
             when (c) {
                 '\r' -> print("\\r")
@@ -21,7 +22,7 @@ fun ByteBuffer.print() {
                 else -> print(c)
             }
         }
-        println(" position: $position, limit: $limit, capacity: $capacity, remaining: $remaining")
+        println(" position: $position, limit: $limit, capacity: $capacity, remaining: $remaining123")
     } finally {
         position = p
         limit = l
@@ -69,7 +70,7 @@ class AsyncChunkedOutputTest {
         assertEquals('\n', out.readUtf8Char(buf))
         assertEquals('\r', out.readUtf8Char(buf))
         assertEquals('\n', out.readUtf8Char(buf))
-        assertEquals(0, out.remaining)
+        assertEquals(0, out.remaining123)
         output.close()
     }
 }

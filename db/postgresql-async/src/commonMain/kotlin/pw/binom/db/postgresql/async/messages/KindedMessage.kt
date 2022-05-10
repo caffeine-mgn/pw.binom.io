@@ -1,6 +1,7 @@
 package pw.binom.db.postgresql.async.messages
 
-import pw.binom.db.postgresql.async.*
+import pw.binom.db.postgresql.async.PackageReader
+import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.io.IOException
 import pw.binom.readByte

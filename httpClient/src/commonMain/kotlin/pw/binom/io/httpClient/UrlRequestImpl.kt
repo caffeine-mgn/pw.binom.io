@@ -1,23 +1,14 @@
 package pw.binom.io.httpClient
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
-import pw.binom.compression.zlib.AsyncDeflaterOutput
-import pw.binom.compression.zlib.AsyncGZIPOutput
-import pw.binom.io.IOException
-import pw.binom.io.http.AsyncChunkedOutput
-import pw.binom.io.http.AsyncContentLengthOutput
-import pw.binom.io.http.Headers
-
-//@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
-//internal class UrlRequestImpl(
+// @Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
+// internal class UrlRequestImpl(
 //        val headers: Map<String, List<String>>,
 //        val channel: AsyncHttpClient.Connection,
 //        val connection: UrlConnectImpl,
 //        flushBuffer: Int,
 //        val compressLevel: Int,
 //        val compressBufferSize: Int
-//) : AsyncHttpClient.UrlRequest {
+// ) : AsyncHttpClient.UrlRequest {
 //    private var dataSent = false
 //    private val httpStream: AsyncOutput = run {
 //        val encode = headers[Headers.TRANSFER_ENCODING]
@@ -61,12 +52,12 @@ import pw.binom.io.http.Headers
 //                        }
 //                    }
 //        }
-////        if (headers[Headers.TRANSFER_ENCODING]?.singleOrNull()?.split(',')?.map { it.trim() }?.any { it == Headers.CHUNKED } == true)
-////            return@run AsyncChunkedOutput(
-////                    stream = channel.channel,
-////                    autoCloseStream = false,
-////                    autoFlushBuffer = flushBuffer
-////            )
+// //        if (headers[Headers.TRANSFER_ENCODING]?.singleOrNull()?.split(',')?.map { it.trim() }?.any { it == Headers.CHUNKED } == true)
+// //            return@run AsyncChunkedOutput(
+// //                    stream = channel.channel,
+// //                    autoCloseStream = false,
+// //                    autoFlushBuffer = flushBuffer
+// //            )
 //
 //
 //        stream
@@ -91,8 +82,8 @@ import pw.binom.io.http.Headers
 //        dataSent = true
 //        ff.asyncClose()
 //
-////        channel.channel.writeByte(0x0D)
-////        channel.channel.writeByte(0x0A)
+// //        channel.channel.writeByte(0x0D)
+// //        channel.channel.writeByte(0x0A)
 //        return connection.compliteRequest()
 //    }
 //
@@ -120,4 +111,4 @@ import pw.binom.io.http.Headers
 //        channel.asyncClose()
 //    }
 //
-//}
+// }

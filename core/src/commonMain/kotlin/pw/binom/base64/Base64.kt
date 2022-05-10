@@ -1,7 +1,7 @@
 package pw.binom.base64
 
-import pw.binom.ByteBuffer
 import pw.binom.io.ByteArrayOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.use
 import kotlin.experimental.and
 import kotlin.experimental.or

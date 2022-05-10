@@ -1,9 +1,6 @@
 package pw.binom.io
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.empty
 
 class AsyncBufferedInput(
     override val stream: AsyncInput,
@@ -39,7 +36,7 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
     protected abstract val stream: AsyncInput
 
     override val available: Int
-        get() = if (buffer.remaining == 0) -1 else buffer.remaining
+        get() = if (buffer.remaining123 == 0) -1 else buffer.remaining123
 
     protected var closed = false
 
@@ -49,7 +46,7 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
-        if (buffer.remaining == 0) {
+        if (buffer.remaining123 == 0) {
             fill()
         }
         return dest.write(buffer)

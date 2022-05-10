@@ -3,7 +3,6 @@ package pw.binom.db.tarantool
 import pw.binom.db.tarantool.protocol.Key
 import kotlin.jvm.JvmInline
 
-
 @JvmInline
 value class Row(val values: List<Any?>) : Iterable<Any?> {
     override fun toString(): String = "Row $values"
@@ -71,7 +70,5 @@ value class ResultSet constructor(val body: Map<Int, Any?>) : Iterable<Row> {
             cur++
             return Row(data[cur])
         }
-
     }
-
 }

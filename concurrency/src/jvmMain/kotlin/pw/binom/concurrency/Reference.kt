@@ -11,7 +11,6 @@ actual class Reference<T : Any?> actual constructor(value: T) : Closeable, ReadO
     @Volatile
     private var closed = false
 
-
     actual val value: T = value
         @JvmName("value2")
         get() {

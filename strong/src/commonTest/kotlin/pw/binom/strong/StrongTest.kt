@@ -1,6 +1,8 @@
 package pw.binom.strong
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass
 import kotlin.test.Ignore
@@ -39,24 +41,26 @@ class StrongTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun destroyTest() = runTest{
+    fun destroyTest() = runTest {
         val time = measureTime {
             GlobalScope.launch {
-                Strong.launch(Strong.config {
-                    it.bean {
-                        VV()
-                    }
-                    it.bean {
-                        object : Strong.InitializingBean {
-                            override suspend fun init(strong: Strong) {
-                                GlobalScope.launch {
-                                    delay(3000)
-                                    strong.destroy()
+                Strong.launch(
+                    Strong.config {
+                        it.bean {
+                            VV()
+                        }
+                        it.bean {
+                            object : Strong.InitializingBean {
+                                override suspend fun init(strong: Strong) {
+                                    GlobalScope.launch {
+                                        delay(3000)
+                                        strong.destroy()
+                                    }
                                 }
                             }
                         }
                     }
-                })
+                )
             }.join()
         }
 
@@ -95,14 +99,12 @@ class StrongTest {
             override suspend fun init(strong: Strong) {
                 println("init A")
             }
-
         }
 
         class B : Strong.InitializingBean {
             override suspend fun init(strong: Strong) {
                 println("init B")
             }
-
         }
 
         class Prov : Strong.Bean(), Strong.InitializingBean {
@@ -111,7 +113,6 @@ class StrongTest {
             override suspend fun init(strong: Strong) {
                 println("init Prov")
             }
-
         }
 
         class MyBean4 : Strong.Bean()
@@ -125,7 +126,6 @@ class StrongTest {
             override suspend fun link(strong: Strong) {
                 println("link MyBean3")
             }
-
         }
 
         class Server(val client: Client)
@@ -136,7 +136,6 @@ class StrongTest {
             override suspend fun init(strong: Strong) {
                 ClientImpl(lll)
             }
-
         }
 
         class MyBean : Strong.InitializingBean, Strong.LinkingBean, Strong.Bean() {
@@ -152,7 +151,6 @@ class StrongTest {
         }
 
         val strong = StrongImpl()
-
 
         val ss = Strong.create(
             Strong.config { definer ->

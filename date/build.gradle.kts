@@ -1,4 +1,3 @@
-import pw.binom.baseStaticLibConfig
 import pw.binom.eachKotlinCompile
 import java.util.*
 
@@ -27,8 +26,7 @@ kotlin {
                 }
             }
         }
-//        nodejs()
-//        binaries.library()
+        nodejs()
     }
     sourceSets {
         val commonMain by getting {
@@ -128,4 +126,5 @@ val test_data_now get() = ${Date().time}
         testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
+
 apply<pw.binom.plugins.ConfigPublishPlugin>()

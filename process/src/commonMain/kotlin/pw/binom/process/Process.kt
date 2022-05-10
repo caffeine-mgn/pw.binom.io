@@ -1,8 +1,8 @@
 package pw.binom.process
 
-import pw.binom.Input
-import pw.binom.Output
 import pw.binom.io.Closeable
+import pw.binom.io.Input
+import pw.binom.io.Output
 
 interface Process : Closeable {
     companion object

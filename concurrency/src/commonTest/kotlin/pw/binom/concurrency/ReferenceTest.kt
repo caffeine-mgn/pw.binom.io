@@ -6,7 +6,6 @@ class ReferenceTest {
 
     class A {
         fun doSomething() {
-
         }
     }
 

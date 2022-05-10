@@ -1,12 +1,8 @@
-import pw.binom.baseStaticLibConfig
 import pw.binom.eachKotlinCompile
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 fun androidCInterop(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) {
@@ -52,11 +48,10 @@ kotlin {
         androidCInterop(this)
     }
     wasm32()
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(kotlin("stdlib-common"))
+                api(kotlin("stdlib"))
             }
             kotlin.srcDir("build/gen")
         }
@@ -140,13 +135,13 @@ tasks {
 
         versionSource.writeText(
             """package pw.binom
-            
+
 const val BINOM_VERSION = "${project.version}"
-            """
+"""
         )
     }
     eachKotlinCompile {
         it.dependsOn(generateVersion)
     }
 }
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()

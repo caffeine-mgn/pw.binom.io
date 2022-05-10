@@ -8,7 +8,6 @@ import kotlin.native.concurrent.AtomicInt
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-
 actual class Reference<T : Any?> actual constructor(value: T) : Closeable, ReadOnlyProperty<Any?, T> {
     private val ptr = value?.let { StableRef.create(it) }
     private var closed = AtomicInt(0)

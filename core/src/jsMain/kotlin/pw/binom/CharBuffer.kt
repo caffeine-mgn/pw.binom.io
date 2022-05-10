@@ -1,5 +1,6 @@
 package pw.binom
 
+import pw.binom.io.Buffer
 import pw.binom.io.Closeable
 
 actual class CharBuffer private constructor(var chars: CharArray) : CharSequence, Closeable, Buffer {
@@ -11,17 +12,17 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
             CharBuffer(chars.copyOf())
     }
 
-    actual override val capacity: Int
+    override val capacity: Int
         get() = chars.size
-    actual override val remaining: Int
+    override val remaining123: Int
         get() = limit - position
-    actual override var position: Int = 0
+    override var position: Int = 0
         set(value) {
             require(position >= 0)
             require(position <= limit)
             field = value
         }
-    actual override var limit: Int = 0
+    override var limit: Int = 0
         set(value) {
             if (value > capacity || value < 0) throw createLimitException(value)
             field = value
@@ -65,28 +66,28 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         return this
     }
 
-    actual override fun clear() {
+    override fun clear() {
         limit = capacity
         position = 0
     }
 
-    actual override val elementSizeInBytes: Int
+    override val elementSizeInBytes: Int
         get() = Char.SIZE_BYTES
 
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining, length)
+        val len = minOf(remaining123, length)
         chars.copyInto(array, offset, position, position + len)
         return len
     }
 
-    actual override fun flip() {
+    override fun flip() {
         limit = position
         position = 0
     }
 
-    actual override fun compact() {
-        if (remaining > 0) {
-            val size = remaining
+    override fun compact() {
+        if (remaining123 > 0) {
+            val size = remaining123
             chars.copyInto(chars, 0, position, position + size)
             position = size
             limit = capacity
@@ -120,7 +121,7 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         chars.concatToString(startIndex, endIndex)
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining, minOf(array.size - offset, length))
+        val len = minOf(remaining123, minOf(array.size - offset, length))
         for (i in 0 until (len)) {
             chars[position + i] = array[offset + i]
         }

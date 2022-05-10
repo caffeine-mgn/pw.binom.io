@@ -1,4 +1,4 @@
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.base64.Base16
 import pw.binom.base64.Base64
 import pw.binom.crypto.HMac

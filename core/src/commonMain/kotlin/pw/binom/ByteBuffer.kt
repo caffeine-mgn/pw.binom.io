@@ -2,6 +2,7 @@
 
 package pw.binom
 
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.UTF8
 import pw.binom.pool.AbstractFixedSizePool
@@ -9,38 +10,6 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
-
-/**
- * A part of memory. Also contents current read/write state
- */
-expect class ByteBuffer : Input, Output, Closeable, Buffer {
-    companion object {
-        fun alloc(size: Int): ByteBuffer
-    }
-
-    fun realloc(newSize: Int): ByteBuffer
-    fun skip(length: Long): Long
-    fun get(): Byte
-    fun put(value: Byte)
-    fun get(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
-
-    /**
-     * Returns last byte. Work as [get] but don'tm move position when he reads
-     */
-    fun peek(): Byte
-    fun reset(position: Int, length: Int): ByteBuffer
-    fun write(data: ByteArray, offset: Int = 0, length: Int = minOf(data.size - offset, remaining)): Int
-    operator fun get(index: Int): Byte
-    operator fun set(index: Int, value: Byte)
-
-    /**
-     * push all available data (between [position] and [limit]) from this bytebuffer to bytearray.
-     * Don't change [position] and [limit] of current buffer. Thread unsafe.
-     */
-    fun toByteArray(): ByteArray
-    fun subBuffer(index: Int, length: Int): ByteBuffer
-    fun free()
-}
 
 fun ByteBuffer.indexOfFirst(predicate: (Byte) -> Boolean): Int {
     forEachIndexed { index, value ->
@@ -64,18 +33,10 @@ val ByteBuffer.indices: IntRange
 fun ByteBuffer.clone() = realloc(capacity)
 
 /**
- * Allocs [ByteBuffer] with [size]. Then execute [block] and after that close created buffer
- *
- * @param size Size of Buffer
- * @param block function for call with created buffer
- */
-expect inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T
-
-/**
  * Puts random bytes to free space of [data]
  */
 fun Random.nextBytes(data: ByteBuffer) {
-    repeat(data.remaining) {
+    repeat(data.remaining123) {
         data.put(nextInt().toByte())
     }
 }
@@ -132,32 +93,12 @@ fun String.toByteBufferUTF8(): ByteBuffer {
     return buf
 }
 
-fun ByteBuffer.empty(): ByteBuffer {
-    position = 0
-    limit = 0
-    return this
-}
-
 class ByteBufferPool(capacity: Int, val bufferSize: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
     AbstractFixedSizePool<ByteBuffer>(capacity), ByteBufferAllocator, Closeable {
     override fun new(): ByteBuffer = ByteBuffer.alloc(bufferSize.toInt())
 
     override fun free(value: ByteBuffer) {
         value.close()
-    }
-}
-
-@OptIn(ExperimentalContracts::class)
-inline fun <T> pw.binom.ByteBuffer.length(length: Int, func: (pw.binom.ByteBuffer) -> T): T {
-    contract {
-        callsInPlace(func)
-    }
-    val l = limit
-    try {
-        limit = position + length
-        return func(this)
-    } finally {
-        limit = l
     }
 }
 
@@ -177,7 +118,7 @@ inline fun <T> ByteBuffer.holdState(func: (ByteBuffer) -> T): T {
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T> ByteBuffer.set(position: Int, length: Int, func: (pw.binom.ByteBuffer) -> T): T {
+inline fun <T> ByteBuffer.set(position: Int, length: Int, func: (ByteBuffer) -> T): T {
     contract {
         callsInPlace(func)
     }
@@ -210,7 +151,7 @@ inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
 inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
     val pos = position
     val lim = limit
-    val output = ArrayList<T>(remaining)
+    val output = ArrayList<T>(remaining123)
     for (it in pos until lim)
         output += func(this[it])
     return output
@@ -234,11 +175,11 @@ inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
 }
 
 fun ByteBuffer.asUTF8String(): String {
-    if (remaining == 0) {
+    if (remaining123 == 0) {
         return ""
     }
-    val sb = StringBuilder(remaining)
-    while (remaining > 0) {
+    val sb = StringBuilder(remaining123)
+    while (remaining123 > 0) {
         val first = get()
         sb.append(UTF8.utf8toUnicode(first, this))
     }

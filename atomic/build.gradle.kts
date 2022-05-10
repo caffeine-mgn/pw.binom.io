@@ -1,5 +1,3 @@
-import pw.binom.baseStaticLibConfig
-
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -24,10 +22,10 @@ kotlin {
         browser()
         nodejs()
     }
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(kotlin("stdlib"))
             }
         }
 

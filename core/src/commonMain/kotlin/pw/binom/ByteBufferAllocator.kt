@@ -1,5 +1,6 @@
 package pw.binom
 
+import pw.binom.io.ByteBuffer
 import pw.binom.pool.ObjectPool
 
 interface ByteBufferAllocator : ObjectPool<ByteBuffer>

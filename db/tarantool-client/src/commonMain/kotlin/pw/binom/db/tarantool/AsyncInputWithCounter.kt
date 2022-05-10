@@ -1,8 +1,8 @@
 package pw.binom.db.tarantool
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicInt
+import pw.binom.io.AsyncInput
+import pw.binom.io.ByteBuffer
 
 internal class AsyncInputWithCounter(val input: AsyncInput) : AsyncInput {
     private val _limit = AtomicInt(0)

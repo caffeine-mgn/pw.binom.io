@@ -18,7 +18,7 @@ class BufferedOutputAppendableTest {
         writer.flush()
         output.data.flip()
         val arr = txt.toCharArray()
-        assertEquals(arr.size * 2 + 1, output.data.remaining)
+        assertEquals(arr.size * 2 + 1, output.data.remaining123)
         for (i in 0 until arr.size) {
             assertEquals(
                 arr[i].toByte(),

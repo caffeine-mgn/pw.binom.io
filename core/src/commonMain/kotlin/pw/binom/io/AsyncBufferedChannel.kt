@@ -1,6 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 
 class AsyncBufferedChannel(

@@ -5,8 +5,8 @@ import platform.windows.HANDLE
 import platform.windows.HANDLE_FLAG_INHERIT
 import platform.windows.SetHandleInformation
 import platform.windows.WriteFile
-import pw.binom.ByteBuffer
-import pw.binom.Output
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Output
 
 class PipeOutput : Pipe(), Output {
     override val handler: HANDLE
@@ -30,7 +30,7 @@ class PipeOutput : Pipe(), Output {
             val r = data.ref { dataPtr, _ ->
                 WriteFile(
                     writePipe.pointed.value, dataPtr.getPointer(this).reinterpret(),
-                    data.remaining.convert(), dwWritten.ptr, null
+                    data.remaining123.convert(), dwWritten.ptr, null
                 )
             } ?: 0
             if (r <= 0) {

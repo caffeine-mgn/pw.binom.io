@@ -1,8 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
-import pw.binom.Output
-
 class AppendableUTF8(private val stream: Output) : Writer {
     private val data = ByteBuffer.alloc(4)
     override fun append(value: Char): AppendableUTF8 {

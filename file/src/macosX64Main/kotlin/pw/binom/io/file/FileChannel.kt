@@ -2,8 +2,8 @@ package pw.binom.io.file
 
 import kotlinx.cinterop.convert
 import platform.posix.*
-import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 import pw.binom.io.ClosedException
 

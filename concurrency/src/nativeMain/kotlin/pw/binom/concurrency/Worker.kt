@@ -2,18 +2,20 @@ package pw.binom.concurrency
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Runnable
-import pw.binom.*
+import pw.binom.FreezableFuture
+import pw.binom.Future
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
+import pw.binom.doFreeze
 import kotlin.coroutines.CoroutineContext
 import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker as KWorker
 import kotlin.native.concurrent.freeze
+import kotlin.native.concurrent.Worker as KWorker
 
 @ThreadLocal
 private var privateCurrentWorker: Worker? = null
 
-actual class Worker actual constructor(name:String?) : CoroutineDispatcher() {
+actual class Worker actual constructor(name: String?) : CoroutineDispatcher() {
     private val nativeWorker = KWorker.start(errorReporting = true, name = name)
     private val _isInterrupted = AtomicBoolean(false)
     private val _taskCount = AtomicInt(0)
@@ -24,7 +26,7 @@ actual class Worker actual constructor(name:String?) : CoroutineDispatcher() {
         val r = FreezableFuture<RESULT>()
         val nativeFeature = nativeWorker.execute(TransferMode.SAFE, getFunc(this, input, func, r)) {
             initRuntimeIfNeeded()
-            val ff = it.func.attach()
+            val ff = it.func
             privateCurrentWorker = it.worker
             it.worker._taskCount.inc()
             val result = try {
@@ -53,7 +55,6 @@ actual class Worker actual constructor(name:String?) : CoroutineDispatcher() {
     actual companion object {
         actual val current: Worker?
             get() = privateCurrentWorker
-
     }
 
     actual val id: Long
@@ -121,12 +122,10 @@ actual class Worker actual constructor(name:String?) : CoroutineDispatcher() {
 //        }
 //    }
 
-
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         this.execute { block.run() }
     }
 }
-
 
 private class InputData<DATA, RESULT>(
     val worker: Worker,
@@ -134,7 +133,7 @@ private class InputData<DATA, RESULT>(
     func: (DATA) -> RESULT,
     val future: FreezableFuture<RESULT>,
 ) {
-    val func = ObjectTree { func }
+    val func = func
 }
 
 private fun <DATA, RESULT> getFunc(
@@ -142,7 +141,6 @@ private fun <DATA, RESULT> getFunc(
     input: DATA,
     func: (DATA) -> RESULT,
     future: FreezableFuture<RESULT>,
-): () -> InputData<DATA, RESULT> =
-    {
-        InputData(worker = worker, input = input, func = func, future = future)
-    }.doFreeze()
+): () -> InputData<DATA, RESULT> = {
+    InputData(worker = worker, input = input, func = func, future = future)
+}.doFreeze()

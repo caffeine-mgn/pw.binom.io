@@ -1,14 +1,11 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
-import pw.binom.Input
-
 class ByteArrayInput(val data: ByteArray) : Input {
     private var closed = false
     private var cursor = 0
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        val max = minOf(data.size - cursor, dest.remaining)
+        val max = minOf(data.size - cursor, dest.remaining123)
         if (max == 0) {
             return 0
         }

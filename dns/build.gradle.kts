@@ -1,5 +1,3 @@
-import pw.binom.baseStaticLibConfig
-
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -19,7 +17,6 @@ kotlin {
         linuxArm64()
     }
     macosX64()
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {

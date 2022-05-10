@@ -1,7 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
-
 interface MessageDigest {
     fun init()
     fun update(byte: Byte)
@@ -16,7 +14,7 @@ interface MessageDigest {
     }
 
     fun update(buffer: ByteBuffer) {
-        while (buffer.remaining > 0) {
+        while (buffer.remaining123 > 0) {
             update(buffer.get())
         }
     }

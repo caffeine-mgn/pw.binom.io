@@ -82,4 +82,3 @@ internal val ResultSet.ColumnType.typeInt
         ResultSet.ColumnType.DOUBLE -> ColumnTypes.Double
         ResultSet.ColumnType.UUID -> ColumnTypes.UUID
     }
-

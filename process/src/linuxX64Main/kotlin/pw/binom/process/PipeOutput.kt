@@ -1,9 +1,8 @@
 package pw.binom.process
 
 import kotlinx.cinterop.convert
-import pw.binom.ByteBuffer
-import pw.binom.Output
-import pw.binom.doFreeze
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Output
 
 class PipeOutput : Pipe(), Output {
 
@@ -23,9 +22,5 @@ class PipeOutput : Pipe(), Output {
     }
 
     override fun close() {
-    }
-
-    init {
-        doFreeze()
     }
 }

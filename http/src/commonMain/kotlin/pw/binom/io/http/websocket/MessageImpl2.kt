@@ -1,6 +1,10 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.*
+import pw.binom.EmptyAsyncInput
+import pw.binom.NullAsyncOutput
+import pw.binom.copyTo
+import pw.binom.io.AsyncInput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
 
 internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
@@ -27,7 +31,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
         val read = if (maskFlag) {
             val pos1 = dest.position
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining123.toULong()).toInt()
             val n = input.read(dest)
 
             dest.position = pos1
@@ -37,7 +41,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
             n
         } else {
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining123.toULong()).toInt()
             val n = input.read(dest)
             dest.limit = lim1
             n

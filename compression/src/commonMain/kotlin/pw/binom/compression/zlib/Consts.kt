@@ -6,7 +6,6 @@ internal const val GZIP_MAGIC2 = 0x8b.toByte()
 internal const val TRAILER_SIZE = 8
 internal const val DEFLATED = 8.toByte()
 
-
 internal const val FTEXT = 1 // Extra text
 internal const val FHCRC = 2 // Header CRC
 internal const val FEXTRA = 4 // Extra field

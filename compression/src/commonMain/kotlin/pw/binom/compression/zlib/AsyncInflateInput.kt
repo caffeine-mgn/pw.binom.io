@@ -1,11 +1,11 @@
 package pw.binom.compression.zlib
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.empty
+import pw.binom.io.AsyncInput
+import pw.binom.io.ByteBuffer
+import pw.binom.io.empty
 
-//private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
+// private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
 
 open class AsyncInflateInput(
     val stream: AsyncInput,
@@ -41,11 +41,11 @@ open class AsyncInflateInput(
         if (eof) {
             return
         }
-        if (buffer.remaining > 0) {
+        if (buffer.remaining123 > 0) {
             return
         }
         buffer.clear()
-        while (buffer.remaining != 0) {
+        while (buffer.remaining123 != 0) {
             val r = stream.read(buffer)
             if (r == 0) {
                 eof = true
@@ -62,17 +62,17 @@ open class AsyncInflateInput(
         checkBusy()
         try {
             busy = true
-            val l = dest.remaining
+            val l = dest.remaining123
             while (true) {
                 full()
-                if (buffer.remaining == 0 || dest.remaining == 0) {
+                if (buffer.remaining123 == 0 || dest.remaining123 == 0) {
                     break
                 }
                 val r = inflater.inflate(buffer, dest)
                 if (r == 0)
                     break
             }
-            return l - dest.remaining
+            return l - dest.remaining123
         } finally {
             busy = false
         }
@@ -94,5 +94,4 @@ open class AsyncInflateInput(
             busy = false
         }
     }
-
 }

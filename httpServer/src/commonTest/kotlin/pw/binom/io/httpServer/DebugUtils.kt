@@ -1,12 +1,12 @@
 package pw.binom.io.httpServer
 
-import pw.binom.ByteBuffer
 import pw.binom.forEachIndexed
+import pw.binom.io.ByteBuffer
 
 fun Byte.toChar2() = when (this) {
-    '\r'.toByte() -> "\\r"
-    '\n'.toByte() -> "\\n"
-    '\t'.toByte() -> "\\t"
+    '\r'.code.toByte() -> "\\r"
+    '\n'.code.toByte() -> "\\n"
+    '\t'.code.toByte() -> "\\t"
     0.toByte() -> "--"
     else -> " " + this.toChar()
 }
@@ -23,7 +23,7 @@ fun ByteBuffer.print() {
             i == p && i == l -> print("[] ${byte.toChar2()}")
             i == p -> print("[${byte.toChar2()}")
             i == l -> print("]${byte.toChar2()}")
-            else -> print("${byte.toChar2()}")
+            else -> print(byte.toChar2())
         }
     }
     if (l == capacity)

@@ -1,9 +1,8 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteBuffer
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.Input
-import pw.binom.empty
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Input
+import pw.binom.io.empty
 
 open class InflateInput(
     val stream: Input,
@@ -26,20 +25,20 @@ open class InflateInput(
 //    }
 
     override fun read(dest: ByteBuffer): Int {
-        val l = dest.remaining
+        val l = dest.remaining123
         while (true) {
             full2()
-            if (buf2.remaining == 0 || dest.remaining == 0)
+            if (buf2.remaining123 == 0 || dest.remaining123 == 0)
                 break
             val r = inflater.inflate(buf2, dest)
             if (r == 0)
                 break
         }
-        return l - dest.remaining
+        return l - dest.remaining123
     }
 
     protected fun full2() {
-        if (buf2.remaining > 0)
+        if (buf2.remaining123 > 0)
             return
         buf2.clear()
         stream.read(buf2)
@@ -78,5 +77,4 @@ open class InflateInput(
             stream.close()
         }
     }
-
 }

@@ -1,6 +1,6 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -33,8 +33,8 @@ class ZlibTest {
         (compressed.position until compressed.limit).forEach {
             assertEquals(TestData.COMPRESSED[it], compressed[it])
         }
-        println("compressed size: ${compressed.remaining}")
-        assertEquals(11, compressed.remaining)
+        println("compressed size: ${compressed.remaining123}")
+        assertEquals(11, compressed.remaining123)
 
         (compressed.position until compressed.limit).forEach {
             println("$it->${compressed[it]}")
@@ -49,7 +49,7 @@ class ZlibTest {
         inf.end()
 
         uncompressed.flip()
-        assertEquals(sourceData.capacity, uncompressed.remaining)
+        assertEquals(sourceData.capacity, uncompressed.remaining123)
         assertArrayEquals(sourceData, 0, uncompressed, 0, sourceData.capacity)
     }
 }

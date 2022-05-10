@@ -41,7 +41,6 @@ inline fun SyncResultSet.read(func: (SyncResultSet) -> Unit) {
     }
 }
 
-
 /**
  * Returns result of call [mapper] for single value from this [AsyncResultSet]. If this [AsyncResultSet] contains row more than one
  * will throw [SQLException]. If this [AsyncResultSet] is empty will return null.

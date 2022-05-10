@@ -2,6 +2,7 @@ package pw.binom.dns.protocol
 
 import pw.binom.*
 import pw.binom.dns.Resource
+import pw.binom.io.ByteBuffer
 
 class ResourcePackage {
     var name: String = ""

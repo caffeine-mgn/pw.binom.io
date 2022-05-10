@@ -11,12 +11,13 @@ actual fun Environment.getEnvs(): Map<String, String> {
     val out = HashMap<String, String>()
     var i = 0
     while (true) {
-        val line = environ?.get(i++)?.toKString()?:break
+        val line = environ?.get(i++)?.toKString() ?: break
         val items = line.split('=', limit = 2)
         out[items[0]] = items[1]
     }
     return out
 }
+
 actual val Environment.isBigEndian: Boolean
     get() = isBigEndianPrivate
 

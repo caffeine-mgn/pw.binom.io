@@ -2,7 +2,7 @@ package pw.binom.crypto
 
 import kotlinx.cinterop.*
 import platform.openssl.*
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.MessageDigest
 
 abstract class OpenSSLMessageDigest : MessageDigest {

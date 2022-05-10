@@ -1,6 +1,7 @@
 package pw.binom
 
 import pw.binom.base64.shl
+import pw.binom.io.ByteBuffer
 import kotlin.jvm.JvmName
 
 operator fun Long.get(index: Int): Byte {

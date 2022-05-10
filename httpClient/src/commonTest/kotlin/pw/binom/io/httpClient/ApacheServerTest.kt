@@ -1,16 +1,6 @@
 package pw.binom.io.httpClient
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.runTest
-import pw.binom.io.readText
-import pw.binom.io.use
-import pw.binom.net.toURL
-import pw.binom.network.Network
-import kotlin.test.Test
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
-
-//class ApacheServerTest {
+// class ApacheServerTest {
 //
 //    object ApacheContainer : TestContainer(
 //        image = "php:7.2-apache",
@@ -45,4 +35,4 @@ import kotlin.time.measureTime
 //            println("time: $time")
 //        }
 //    }
-//}
+// }

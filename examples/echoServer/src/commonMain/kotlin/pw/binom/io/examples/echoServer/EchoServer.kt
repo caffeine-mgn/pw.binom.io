@@ -1,6 +1,6 @@
 package pw.binom.io.examples.echoServer
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.network.*
 
 fun main(args: Array<String>) {

@@ -1,6 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
 import pw.binom.toByteBufferUTF8
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -134,7 +133,7 @@ class TestUTF8 {
             .split(' ')
             .map { it.toUByte(16).toByte() }
 
-        assertEquals(bytes.size, buffer.remaining)
+        assertEquals(bytes.size, buffer.remaining123)
         buffer.close()
     }
 
@@ -147,7 +146,7 @@ class TestUTF8 {
         buffer.flip()
 
         val sb = StringBuilder()
-        while (buffer.remaining > 0) {
+        while (buffer.remaining123 > 0) {
             val b = buffer.get()
             sb.append(UTF8.utf8toUnicode(b, buffer))
         }

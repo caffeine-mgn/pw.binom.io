@@ -1,6 +1,6 @@
 package pw.binom.concurrency
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
 import pw.binom.Future
 
 expect class Worker(name: String? = null) : CoroutineDispatcher {

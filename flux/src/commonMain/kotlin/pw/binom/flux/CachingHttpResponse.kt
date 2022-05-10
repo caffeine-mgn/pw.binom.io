@@ -1,8 +1,8 @@
 package pw.binom.flux
 
-import pw.binom.AsyncOutput
 import pw.binom.asyncOutput
 import pw.binom.charset.Charsets
+import pw.binom.io.AsyncOutput
 import pw.binom.io.AsyncWriter
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.bufferedWriter

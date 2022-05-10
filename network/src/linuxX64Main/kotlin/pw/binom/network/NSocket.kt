@@ -2,7 +2,7 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
 
@@ -207,7 +207,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
     }
 
     actual fun send(data: ByteBuffer): Int {
-        if (closed){
+        if (closed) {
             return -1
         }
         if (!data.isReferenceAccessAvailable()) {

@@ -1,24 +1,7 @@
 package pw.binom
 
 import pw.binom.NullAsyncOutput.write
-import pw.binom.io.AsyncCloseable
-import pw.binom.io.AsyncFlushable
-import pw.binom.io.IOException
-import pw.binom.io.UTF8
-
-interface AsyncOutput : AsyncCloseable, AsyncFlushable {
-    //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
-    suspend fun write(data: ByteBuffer): Int
-
-    suspend fun writeFully(data: ByteBuffer) {
-        while (data.remaining > 0) {
-            val wrote = write(data)
-            if (wrote <= 0) {
-                throw IOException("Can't write data")
-            }
-        }
-    }
-}
+import pw.binom.io.*
 
 fun Output.asyncOutput() = object : AsyncOutput {
 //    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
@@ -96,7 +79,7 @@ suspend fun AsyncOutput.writeLong(buffer: ByteBuffer, value: Long) {
  */
 object NullAsyncOutput : AsyncOutput {
     override suspend fun write(data: ByteBuffer): Int {
-        val remaining = data.remaining
+        val remaining = data.remaining123
         data.empty()
         return remaining
     }

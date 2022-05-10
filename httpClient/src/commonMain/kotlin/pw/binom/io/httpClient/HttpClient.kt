@@ -5,7 +5,6 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.Closeable
 import pw.binom.net.URL
 import pw.binom.network.Network
-import pw.binom.network.NetworkCoroutineDispatcher
 import pw.binom.network.NetworkManager
 import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.KeyManager

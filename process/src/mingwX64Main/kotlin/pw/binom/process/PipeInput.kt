@@ -2,9 +2,9 @@ package pw.binom.process
 
 import kotlinx.cinterop.*
 import platform.windows.*
-import pw.binom.ByteBuffer
-import pw.binom.Input
 import pw.binom.concurrency.sleep
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Input
 
 class PipeInput(val process: WinProcess) : Pipe(), Input {
     override val handler: HANDLE
@@ -70,7 +70,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
             val r = dest.refTo(dest.position) { destPtr ->
                 ReadFile(
                     otherHandler, (destPtr).getPointer(this).reinterpret(),
-                    dest.remaining.convert(), dwWritten.ptr, null
+                    dest.remaining123.convert(), dwWritten.ptr, null
                 )
             } ?: 0
             if (r <= 0)

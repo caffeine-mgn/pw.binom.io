@@ -3,10 +3,7 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("kotlinx-serialization")
-}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 kotlin {
@@ -87,4 +84,4 @@ kotlin {
     }
 }
 
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()

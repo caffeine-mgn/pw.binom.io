@@ -79,6 +79,5 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
                 listeners.pop().resumeWith(Result.failure(ClosedException()))
             }
         }
-
     }
 }

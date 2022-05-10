@@ -2,15 +2,11 @@ package pw.binom.network
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.atomic.AtomicInt
 import pw.binom.concurrency.*
 import pw.binom.io.use
 import kotlin.test.*
 import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.seconds
 
 class MultithreadingTest {
 

@@ -1,12 +1,7 @@
 package pw.binom
 
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.*
-
 actual val Environment.os: OS
-    get() =OS.WEB
+    get() = OS.WEB
 
 actual val Environment.platform: Platform
     get() = Platform.WASM32
@@ -23,7 +18,6 @@ actual val Environment.currentTimeMillis: Long
 
 actual val Environment.currentTimeNanoseconds: Long
     get() = 0L
-
 
 actual val Environment.userDirectory: String
     get() = ""

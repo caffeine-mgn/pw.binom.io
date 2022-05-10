@@ -1,10 +1,8 @@
 package pw.binom.io.socket.ssl
 
-import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
-import pw.binom.length
+import pw.binom.io.length
 import pw.binom.putSafeInto
-import pw.binom.update
 import java.nio.ByteBuffer
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult
@@ -119,7 +117,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
             tmpBuf.clear()
             val s = sslEngine.unwrap(rbio, tmpBuf)
             tmpBuf.flip()
-            clientData.write(pw.binom.ByteBuffer.wrap(tmpBuf))
+            clientData.write(pw.binom.io.ByteBuffer.wrap(tmpBuf))
             rbio.cleanup()
             val state = when (s.status) {
                 SSLEngineResult.Status.OK ->
@@ -178,7 +176,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
 
     private var wbioPos = 0
 
-    actual fun readNet(dst: pw.binom.ByteBuffer): Int {
+    actual fun readNet(dst: pw.binom.io.ByteBuffer): Int {
         while (true) {
             if (wbioPos < wbio.position()) {
                 val p = wbio.position()
@@ -198,7 +196,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                 }
             }
 
-            val length = dst.remaining
+            val length = dst.remaining123
             while (true) {
                 if (sslEngine.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_WRAP) {
 //                val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
@@ -214,12 +212,12 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         }
     }
 
-    actual fun writeNet(dst: pw.binom.ByteBuffer): Int {
+    actual fun writeNet(dst: pw.binom.io.ByteBuffer): Int {
         val p = rbio.position()
         val l = rbio.limit()
         rbio.position(l)
         rbio.limit(rbio.capacity())
-        val l1 = dst.remaining
+        val l1 = dst.remaining123
         try {
             rbio.put(dst.native)
         } catch (e: Throwable) {
@@ -249,14 +247,14 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         return l1
     }
 
-    actual fun readApp(dst: pw.binom.ByteBuffer): Status {
+    actual fun readApp(dst: pw.binom.io.ByteBuffer): Status {
         while (true) {
             if (clientData.readRemaining == 0) {
                 val s = fullBuff()
                 if (s.state != State.OK)
                     return s
             }
-            val l = minOf(clientData.readRemaining, dst.remaining)
+            val l = minOf(clientData.readRemaining, dst.remaining123)
             dst.length(l) { dst ->
                 clientData.read(dst)
             }
@@ -267,7 +265,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         }
     }
 
-    actual fun writeApp(src: pw.binom.ByteBuffer): Status {
+    actual fun writeApp(src: pw.binom.io.ByteBuffer): Status {
         val s = sslEngine.wrap(src.native, wbio)
         val state = when (s.status!!) {
             SSLEngineResult.Status.OK ->

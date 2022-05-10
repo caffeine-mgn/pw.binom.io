@@ -1,6 +1,6 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncInput
+import pw.binom.io.AsyncInput
 
 /**
  * Base Http Async Input Stream

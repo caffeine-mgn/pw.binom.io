@@ -1,7 +1,6 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 
 object AsyncEmptyHttpInput : AsyncHttpInput {
     override val isEof: Boolean

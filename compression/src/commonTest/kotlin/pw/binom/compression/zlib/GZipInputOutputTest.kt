@@ -1,7 +1,10 @@
 package pw.binom.compression.zlib
 
 import kotlinx.coroutines.runBlocking
-import pw.binom.*
+import pw.binom.asyncInput
+import pw.binom.asyncOutput
+import pw.binom.clone
+import pw.binom.io.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -20,17 +23,17 @@ class GZipInputOutputTest {
         def.close()
 
         compressed.flip()
-        println("Total Wrote: ${compressed.remaining}")
-        assertEquals(23, compressed.remaining)
+        println("Total Wrote: ${compressed.remaining123}")
+        assertEquals(23, compressed.remaining123)
 
         val uncompressed = ByteBuffer.alloc(source.capacity * 2)
         val inf = GZIPInput(compressed, 512)
         inf.read(uncompressed)
         inf.close()
         uncompressed.flip()
-        assertEquals(source.capacity, uncompressed.remaining)
+        assertEquals(source.capacity, uncompressed.remaining123)
         source.clear()
-        println("r=${compressed.remaining}")
+        println("r=${compressed.remaining123}")
         assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
     }
 
@@ -48,16 +51,15 @@ class GZipInputOutputTest {
         def.asyncClose()
 
         compressed.flip()
-        assertEquals(23, compressed.remaining)
+        assertEquals(23, compressed.remaining123)
 
         val uncompressed = ByteBuffer.alloc(source.capacity * 2)
         val inf = AsyncGZIPInput(compressed.asyncInput(), 512)
         inf.read(uncompressed)
         inf.asyncClose()
         uncompressed.flip()
-        assertEquals(source.capacity, uncompressed.remaining)
+        assertEquals(source.capacity, uncompressed.remaining123)
         source.clear()
         assertArrayEquals(source, 0, uncompressed, 0, source.capacity)
     }
-
 }

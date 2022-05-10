@@ -1,12 +1,6 @@
 package pw.binom.network
 
-import pw.binom.PopResult
-import pw.binom.concurrency.asReference
-import pw.binom.io.Closeable
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
-
-//private class NetworkExecutor(val con: CrossThreadKeyHolder, val ref: Reference<NetworkImpl>) : Executor {
+// private class NetworkExecutor(val con: CrossThreadKeyHolder, val ref: Reference<NetworkImpl>) : Executor {
 //    override fun execute(func: suspend () -> Unit) {
 //        if (ref.owner.same) {
 //            ref.value.async(func = func)
@@ -17,9 +11,9 @@ import kotlin.coroutines.suspendCoroutine
 //            }
 //        }
 //    }
-//}
+// }
 
-//internal class NetworkImpl : Closeable, NetworkManager {
+// internal class NetworkImpl : Closeable, NetworkManager {
 //    private val selector = Selector.open()
 //    private val internalUdpContinuation = UdpSocketChannel()
 //    private val internalContinuation =
@@ -28,10 +22,10 @@ import kotlin.coroutines.suspendCoroutine
 //    private val crossThreadWaiterResultHolder = PopResult<() -> Unit>()
 //    private val selfReference = this.asReference()
 //
-////    /**
-////     * Network executor. Can be use for execute some code on network thread
-////     */
-////    val executor: Executor = NetworkExecutor(internalContinuation, selfReference).doFreeze()
+// //    /**
+// //     * Network executor. Can be use for execute some code on network thread
+// //     */
+// //    val executor: Executor = NetworkExecutor(internalContinuation, selfReference).doFreeze()
 //
 //    suspend fun yield() {
 //        suspendCoroutine<Unit> {
@@ -132,4 +126,4 @@ import kotlin.coroutines.suspendCoroutine
 //        selector.close()
 //        selfReference.close()
 //    }
-//}
+// }

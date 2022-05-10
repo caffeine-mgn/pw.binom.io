@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runTest
 import pw.binom.*
 import pw.binom.concurrency.*
+import pw.binom.io.clean
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.test.Test

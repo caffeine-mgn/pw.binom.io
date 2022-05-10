@@ -1,7 +1,6 @@
 package pw.binom.io
 
 import kotlinx.coroutines.test.runTest
-import pw.binom.ByteBuffer
 import pw.binom.ByteBufferPool
 import pw.binom.asyncInput
 import pw.binom.charset.Charsets

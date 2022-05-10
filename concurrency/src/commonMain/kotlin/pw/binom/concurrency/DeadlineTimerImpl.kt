@@ -1,22 +1,11 @@
 package pw.binom.concurrency
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.suspendCancellableCoroutine
-import pw.binom.atomic.AtomicBoolean
 import pw.binom.doFreeze
-import pw.binom.io.ClosedException
-import pw.binom.popOrNull
-import pw.binom.utils.TreeMap
-import kotlin.coroutines.*
 import kotlin.native.concurrent.SharedImmutable
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
 
 @SharedImmutable
 private val CLOSE_MARKER: () -> Unit = {}.doFreeze()
+/*
 
 @Deprecated(message = "Not use it. Will be deleted")
 @OptIn(ExperimentalTime::class)
@@ -154,4 +143,4 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
         worker.requestTermination().joinAndGetOrThrow()
     }
 }
-
+*/

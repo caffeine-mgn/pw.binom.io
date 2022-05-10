@@ -1,19 +1,19 @@
 package pw.binom.compression.tar
 
-import pw.binom.ByteBuffer
-import pw.binom.Output
 import pw.binom.io.ByteArrayOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+import pw.binom.io.Output
 import pw.binom.set
 import pw.binom.wrap
 
 private val ZERO_BYTE = ByteBuffer.alloc(100).also {
-    while (it.remaining > 0)
+    while (it.remaining123 > 0)
         it.put(0)
 }
 
 fun ByteBuffer.writeZero() {
-    var s = remaining
+    var s = remaining123
     while (s > 0) {
         ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
         val b = write(ZERO_BYTE)
@@ -23,7 +23,6 @@ fun ByteBuffer.writeZero() {
         s -= b
     }
 }
-
 
 internal fun Int.forPart(partSize: Int): Int {
     var fullSize = (this / partSize) * partSize
@@ -197,7 +196,6 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
             stream.close()
         }
     }
-
 }
 
 internal fun ByteBuffer.calcCheckSum(): UInt {
@@ -208,7 +206,6 @@ internal fun ByteBuffer.calcCheckSum(): UInt {
     chksum += 256u
     return chksum
 }
-
 
 /**
  * Copies this array or its subrange into the [destination] ByteBuffer and returns that ByteBuffer.

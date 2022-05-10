@@ -1,7 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
-import pw.binom.clean
 import pw.binom.readLong
 import pw.binom.writeLong
 import kotlin.test.Test

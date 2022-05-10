@@ -154,7 +154,7 @@ class ByteBufferTest {
     @Test
     fun compactFillTest() {
         val self = ByteBuffer.alloc(10)
-        repeat(self.remaining) {
+        repeat(self.remaining123) {
             self.put(it.toByte())
         }
 
@@ -203,7 +203,7 @@ class ByteBufferTest {
     @Test
     fun frozenTest() {
         val self = ByteBuffer.alloc(10).doFreeze()
-        repeat(self.remaining) {
+        repeat(self.remaining123) {
             self.put(it.toByte())
         }
         assertEquals(10, self.position)

@@ -1,6 +1,6 @@
 package pw.binom.base64
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.StringReader
 import pw.binom.io.use
 import pw.binom.nextBytes

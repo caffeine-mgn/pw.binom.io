@@ -1,6 +1,5 @@
 package pw.binom.compression.tar
 
-import pw.binom.io.bufferedWriter
 import pw.binom.io.file.File
 import pw.binom.io.file.openWrite
 import pw.binom.io.use

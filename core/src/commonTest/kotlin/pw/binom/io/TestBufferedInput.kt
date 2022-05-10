@@ -1,6 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.nextBytes
 import kotlin.random.Random

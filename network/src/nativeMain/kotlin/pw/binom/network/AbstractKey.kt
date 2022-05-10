@@ -1,7 +1,5 @@
 package pw.binom.network
 
-import kotlinx.cinterop.StableRef
-import kotlinx.cinterop.asStableRef
 import pw.binom.io.ClosedException
 
 abstract class AbstractKey(attachment: Any?) : Selector.Key {
@@ -50,7 +48,6 @@ abstract class AbstractKey(attachment: Any?) : Selector.Key {
 //            runCatching { attachmentReference?.close() }
         runCatching {
 //            ptr.asStableRef<AbstractKey>().dispose()
-
         }
     }
 }

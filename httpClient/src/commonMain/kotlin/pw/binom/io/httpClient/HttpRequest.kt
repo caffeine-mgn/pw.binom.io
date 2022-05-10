@@ -1,14 +1,10 @@
 package pw.binom.io.httpClient
 
-import pw.binom.AsyncOutput
-import pw.binom.io.AsyncChannel
-import pw.binom.io.AsyncCloseable
-import pw.binom.io.AsyncWriter
+import pw.binom.io.*
 import pw.binom.io.http.BasicAuth
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.useBasicAuth
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.use
 import pw.binom.net.URL
 
 interface HttpRequest : AsyncCloseable {

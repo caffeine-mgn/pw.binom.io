@@ -11,7 +11,6 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.test.Ignore
 import kotlin.test.Test
 
-
 suspend fun getDispatcher(): CoroutineDispatcher? =
     suspendCoroutine {
         it.resume(it.context[ContinuationInterceptor] as CoroutineDispatcher?)

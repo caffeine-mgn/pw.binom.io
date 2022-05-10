@@ -1,6 +1,6 @@
 package pw.binom.io.file
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 import pw.binom.io.StreamClosedException
 import java.nio.channels.FileChannel

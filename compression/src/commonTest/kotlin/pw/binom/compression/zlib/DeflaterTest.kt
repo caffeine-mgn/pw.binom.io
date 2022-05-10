@@ -1,15 +1,5 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteBuffer
-import pw.binom.ByteDataBuffer
-import pw.binom.alloc
-import pw.binom.nextBytes
-import kotlin.random.Random
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-
 class DeflaterTest {
 
 //    @Test

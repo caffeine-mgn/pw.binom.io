@@ -1,9 +1,9 @@
 package pw.binom.compression.zlib
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
+import pw.binom.crc.CRC32
 import pw.binom.holdState
-import pw.binom.io.CRC32
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.use
 
 class AsyncGZIPOutput(
@@ -47,7 +47,7 @@ class AsyncGZIPOutput(
             stream.write(buf)
         }
 
-        if (buf.remaining > TRAILER_SIZE) {
+        if (buf.remaining123 > TRAILER_SIZE) {
             buf.clear()
             write(buf)
         } else {
@@ -95,14 +95,14 @@ fun AsyncOutput.gzip(level: Int = 6, bufferSize: Int = 1024, closeStream: Boolea
     )
 
 private val header = ByteBuffer.alloc(10).also {
-    it.put(GZIP_MAGIC1)// Magic number (short)
-    it.put(GZIP_MAGIC2)  // Magic number (short)
-    it.put(DEFLATED)  // Compression method (CM)
-    it.put(0)  // Flags (FLG)
-    it.put(0)  // Modification time MTIME (int)
-    it.put(0)  // Modification time MTIME (int)
-    it.put(0)  // Modification time MTIME (int)
-    it.put(0)  // Modification time MTIME (int)
-    it.put(0)  // Extra flags (XFLG)
+    it.put(GZIP_MAGIC1) // Magic number (short)
+    it.put(GZIP_MAGIC2) // Magic number (short)
+    it.put(DEFLATED) // Compression method (CM)
+    it.put(0) // Flags (FLG)
+    it.put(0) // Modification time MTIME (int)
+    it.put(0) // Modification time MTIME (int)
+    it.put(0) // Modification time MTIME (int)
+    it.put(0) // Modification time MTIME (int)
+    it.put(0) // Extra flags (XFLG)
     it.put(0) // Operating system (OS)
 }

@@ -1,6 +1,6 @@
 package pw.binom.base64
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 
 private val table = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
 
@@ -9,8 +9,8 @@ object Base16 {
         "${table[byte.toInt() and 0xf0 ushr 4]}${table[byte.toInt() and 0x0f]}"
 
     fun encode(data: ByteBuffer): String {
-        val sb = StringBuilder(data.remaining * 2)
-        while (data.remaining > 0) {
+        val sb = StringBuilder(data.remaining123 * 2)
+        while (data.remaining123 > 0) {
             sb.append(encodeByte(data.get()))
         }
         return sb.toString()

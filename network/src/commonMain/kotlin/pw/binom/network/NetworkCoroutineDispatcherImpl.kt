@@ -1,6 +1,8 @@
 package pw.binom.network
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
 import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.ThreadRef
@@ -23,12 +25,15 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private var worker = Worker()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
+
     init {
         internalUdpChannel.setBlocking(false)
     }
+
     private val internalKey = selector.attach(internalUdpChannel)
     private val readyForWriteListener = BatchExchange<Runnable>()
-//    private val internalUdpContinuationConnection = attach(internalUdpChannel)
+
+    //    private val internalUdpContinuationConnection = attach(internalUdpChannel)
     private var networkThread = ThreadRef()
     private val selectedKeys = SelectedEvents.create()
 

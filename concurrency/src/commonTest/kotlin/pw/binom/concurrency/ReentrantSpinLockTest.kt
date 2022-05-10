@@ -12,10 +12,10 @@ class ReentrantSpinLockTest {
 
         lock.synchronize {
             lock.synchronize {
-                executed.value = true
+                executed.setValue(true)
             }
         }
-        assertTrue(executed.value)
+        assertTrue(executed.getValue())
     }
 
     @Test
@@ -26,11 +26,11 @@ class ReentrantSpinLockTest {
         w.execute(Unit) {
             lock.synchronize {
                 lock.synchronize {
-                    executed.value = true
+                    executed.setValue(true)
                 }
             }
         }
         w.requestTermination().joinAndGetOrThrow()
-        assertTrue(executed.value)
+        assertTrue(executed.getValue())
     }
 }

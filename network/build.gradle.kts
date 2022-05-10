@@ -1,18 +1,13 @@
-import pw.binom.baseStaticLibConfig
-
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 //    id("com.bnorm.template.kotlin-ir-plugin")
+    id("maven-publish")
 }
 
 //template {
 //    companionProcessing.set(false)
 //    valueClassProcessing.set(false)
 //}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
-}
 
 kotlin {
     jvm()
@@ -96,7 +91,6 @@ kotlin {
             }
         }
     }
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -170,4 +164,4 @@ tasks{
         testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()

@@ -8,7 +8,6 @@ import pw.binom.concurrency.WorkerPool
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.coroutineContext
 import kotlin.test.Test
 
 class HttpServerTest {

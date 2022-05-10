@@ -1,7 +1,7 @@
 package pw.binom.dns.protocol
 
-import pw.binom.ByteBuffer
 import pw.binom.fromBytes
+import pw.binom.io.ByteBuffer
 
 internal fun String.toDnsString(): CharArray {
     var lock = 0

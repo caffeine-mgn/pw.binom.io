@@ -6,7 +6,7 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class UpsertTest:BaseTest() {
+class UpsertTest : BaseTest() {
 
     @Test
     fun updateTest() {
@@ -65,7 +65,6 @@ s:create_index('primary',
                 }
                 assertEquals(1, it.size)
             }
-
 
             it.upsert(
                 space = schemaName,

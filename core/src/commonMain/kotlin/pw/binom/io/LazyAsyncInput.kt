@@ -1,8 +1,5 @@
 package pw.binom.io
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-
 /**
  * Lazy AsyncInputStream. On first call [read] or [close] will init real stream via function [func].
  * Next calls will send to result of function [func]

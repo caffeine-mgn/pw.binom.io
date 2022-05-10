@@ -15,16 +15,18 @@ class WorkerTest {
         val worker1 = Worker()
         val worker2 = Worker()
 
-        var counter by AtomicInt(0)
-        val b =worker1.execute { runBlocking {
-            counter++
-            withContext(worker2) {
-                sleep(1000)
+        var counter = AtomicInt(0)
+        val b = worker1.execute {
+            runBlocking {
+                counter++
+                withContext(worker2) {
+                    sleep(1000)
+                    counter++
+                }
+                assertEquals(expected = 2, actual = counter.getValue())
                 counter++
             }
-            assertEquals(expected = 2, actual = counter)
-            counter++
-        } }
+        }
 //        val b1 = worker1.startCoroutine {
 //            counter++
 //            withContext(worker2) {
@@ -35,26 +37,26 @@ class WorkerTest {
 //            counter++
 //        }
         b.joinAndGetOrThrow()
-        assertEquals(expected = 3, actual = counter)
+        assertEquals(expected = 3, actual = counter.getValue())
     }
 
     @Test
-    fun asyncTest2() = runBlocking{
+    fun asyncTest2() = runBlocking {
         val worker1 = Worker()
         val worker2 = Worker()
 
-        var counter by AtomicInt(0)
-        val b = launch (worker1) {
+        var counter = AtomicInt(0)
+        val b = launch(worker1) {
             counter++
-            GlobalScope.launch (worker2) {
+            GlobalScope.launch(worker2) {
                 delay(5_000)
                 counter++
             }
-            assertEquals(expected = 1, actual = counter)
+            assertEquals(expected = 1, actual = counter.getValue())
             counter++
         }
         b.join()
-        assertEquals(expected = 2, actual = counter)
+        assertEquals(expected = 2, actual = counter.getValue())
     }
 
     @Test
@@ -73,10 +75,10 @@ class WorkerTest {
         val w = Worker()
         var r = AtomicInt(Random.nextInt())
         val r2 = w.execute(Unit) {
-            r.value + 1
+            r.getValue() + 1
         }.joinAndGetOrThrow()
 
-        assertEquals(r.value + 1, r2)
+        assertEquals(r.getValue() + 1, r2)
     }
 
     @Test
@@ -85,15 +87,15 @@ class WorkerTest {
         val closed = AtomicBoolean(false)
         val finished = AtomicBoolean(false)
         w.execute(Unit) {
-            while (!closed.value) {
+            while (!closed.getValue()) {
                 sleep(1000)
             }
-            finished.value = true
+            finished.setValue(true)
         }
 
         sleep(1000)
-        closed.value = true
+        closed.setValue(true)
         w.requestTermination().joinAndGetOrThrow()
-        assertTrue(finished.value)
+        assertTrue(finished.getValue())
     }
 }

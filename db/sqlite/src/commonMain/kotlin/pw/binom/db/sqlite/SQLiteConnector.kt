@@ -7,6 +7,6 @@ expect class SQLiteConnector : SyncConnection {
     companion object {
         fun openFile(file: File): SQLiteConnector
         fun memory(name: String? = null): SQLiteConnector
-        val TYPE:String
+        val TYPE: String
     }
 }

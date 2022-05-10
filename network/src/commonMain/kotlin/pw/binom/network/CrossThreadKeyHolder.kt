@@ -1,11 +1,6 @@
 package pw.binom.network
 
-import pw.binom.concurrency.*
-import pw.binom.doFreeze
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.suspendCoroutine
-
-//class CrossThreadKeyHolder(val key: Selector.Key)  {
+// class CrossThreadKeyHolder(val key: Selector.Key)  {
 //    val readyForWriteListener = ConcurrentQueue<() -> Unit>()
 //    private val networkThread = ThreadRef()
 //    val isNetworkThread
@@ -29,4 +24,4 @@ import kotlin.coroutines.suspendCoroutine
 //            continuation.free().resumeWith(result)
 //        }
 //    }
-//}
+// }

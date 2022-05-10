@@ -1,13 +1,15 @@
 package pw.binom.io.httpClient
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
-import pw.binom.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.toURL
 import pw.binom.network.*
+import pw.binom.skipAll
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -29,7 +31,7 @@ class TestAsyncBaseHttpClient {
                         server.accept()
                         println("client connected")
                     } catch (e: Throwable) {
-                        //Do nothing
+                        // Do nothing
                     }
                 }
                 HttpClient.create().use { client ->
@@ -43,12 +45,11 @@ class TestAsyncBaseHttpClient {
                         }
 //                                }
                     } catch (e: CancellationException) {
-                        //Do nothing
+                        // Do nothing
                     }
                 }
             }
     }
-
 
     @OptIn(ExperimentalTime::class)
     @Test
@@ -87,7 +88,6 @@ class TestAsyncBaseHttpClient {
         }
     }
 }
-
 
 /*
 class HandlerImpl(val txt: String, val chunked: Boolean) : Handler {

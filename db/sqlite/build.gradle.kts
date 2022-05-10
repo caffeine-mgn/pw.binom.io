@@ -1,12 +1,8 @@
-import pw.binom.baseStaticLibConfig
 import pw.binom.kotlin.clang.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 val sqlitePackageName = "platform.internal_sqlite"
@@ -24,7 +20,6 @@ kotlin {
         linuxArm64()
     }
     macosX64()
-    baseStaticLibConfig()
     eachNative {
         val headersPath = file("${buildFile.parentFile}/src/native")
         val sqliteStaticTask = clangBuildStatic(name = "sqlite3", target = this.konanTarget) {
@@ -127,4 +122,4 @@ kotlin {
     }
 }
 
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()

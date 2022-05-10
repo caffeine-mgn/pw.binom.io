@@ -1,8 +1,12 @@
 package pw.binom.dns
 
-import pw.binom.*
 import pw.binom.dns.protocol.DnsHeader
 import pw.binom.dns.protocol.ResourcePackage
+import pw.binom.io.AsyncInput
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
+import pw.binom.readShort
+import pw.binom.writeShort
 
 data class DnsRecord(
     /**

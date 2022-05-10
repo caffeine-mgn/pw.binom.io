@@ -145,7 +145,6 @@ class EntityIterator<K, V>(val map: FrozenHashMap<K, V>) : MutableIterator<Mutab
     }
 
     override fun hasNext(): Boolean = hasNext(false)
-
 }
 
 class EntitySet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<MutableMap.MutableEntry<K, V>> {
@@ -188,7 +187,6 @@ class EntitySet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<MutableMap.Muta
     }
 
     override fun isEmpty(): Boolean = map.isEmpty()
-
 }
 
 class KeyIterator<K, V>(val entityIterator: EntityIterator<K, V>) : MutableIterator<K> {
@@ -201,7 +199,6 @@ class KeyIterator<K, V>(val entityIterator: EntityIterator<K, V>) : MutableItera
     override fun remove() {
         entityIterator.remove()
     }
-
 }
 
 class KeysSet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<K> {

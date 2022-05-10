@@ -1,8 +1,8 @@
 package pw.binom.base64
 
-import pw.binom.ByteBuffer
-import pw.binom.Output
+import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
+import pw.binom.io.Output
 
 internal fun byteToBase64(value: Byte): Char =
     when (value) {
@@ -41,7 +41,7 @@ class Base64EncodeOutput(private val appendable: Appendable) : Output {
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
-        val length = data.remaining
+        val length = data.remaining123
         (data.position until data.limit).forEach {
             write(data[it])
         }

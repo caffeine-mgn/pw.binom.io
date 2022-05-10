@@ -4,6 +4,8 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.memcpy
+import pw.binom.io.Buffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 
 actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Closeable, Buffer {
@@ -26,19 +28,19 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return value / 2
     }
 
-    actual override val capacity: Int
+    override val capacity: Int
         get() = div2(bytes.capacity)
 
-    actual override val remaining: Int
-        get() = div2(bytes.remaining)
+    override val remaining123: Int
+        get() = div2(bytes.remaining123)
 
-    actual override var position: Int
+    override var position: Int
         get() = div2(bytes.position)
         set(value) {
             bytes.position = value * 2
         }
 
-    actual override var limit: Int
+    override var limit: Int
         get() = div2(bytes.limit)
         set(value) {
             bytes.limit = value * 2
@@ -98,16 +100,16 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return this
     }
 
-    actual override fun clear() {
+    override fun clear() {
         position = 0
         limit = capacity
     }
 
-    actual override val elementSizeInBytes: Int
+    override val elementSizeInBytes: Int
         get() = Char.SIZE_BYTES
 
     actual override fun toString(): String {
-        when (remaining) {
+        when (remaining123) {
             0 -> return ""
             1 -> return get().toString()
         }
@@ -118,11 +120,11 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return sb.toString()
     }
 
-    actual override fun flip() {
+    override fun flip() {
         bytes.flip()
     }
 
-    actual override fun compact() {
+    override fun compact() {
         bytes.compact()
     }
 
@@ -132,7 +134,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         }
         return array.usePinned { pinnedArray ->
             bytes.refTo(position * 2) { bytes ->
-                val len = minOf(remaining, length)
+                val len = minOf(remaining123, length)
                 memcpy(pinnedArray.addressOf(offset), bytes, (len * 2).convert())
                 position += len
                 len
@@ -161,7 +163,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     }
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining, minOf(array.size - offset, length))
+        val len = minOf(remaining123, minOf(array.size - offset, length))
         val pos = position * Char.SIZE_BYTES
         if (!bytes.isReferenceAccessAvailable(pos)) {
             return 0

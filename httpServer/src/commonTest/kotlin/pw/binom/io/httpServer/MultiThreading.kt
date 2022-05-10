@@ -1,9 +1,9 @@
 package pw.binom.io.httpServer
 
-import pw.binom.*
-import pw.binom.concurrency.*
+import pw.binom.Future
+import pw.binom.concurrency.sleep
 
-//class MultiThreading {
+// class MultiThreading {
 //
 //    @Ignore
 //    @OptIn(ExperimentalTime::class)
@@ -18,7 +18,7 @@ import pw.binom.concurrency.*
 //            val resp = r.response()
 //            resp.status = 200
 //            val dataBuffer = ByteBuffer.wrap(data).clean()
-////            resp.headers.contentLength = dataBuffer.remaining.toULong()
+// //            resp.headers.contentLength = dataBuffer.remaining.toULong()
 //            t.delay(Duration.seconds(1))
 //            resp.sendBinary(dataBuffer)
 //        })
@@ -84,7 +84,7 @@ import pw.binom.concurrency.*
 //                throw e
 //            }
 //        }
-////        val inParallel=Future2.success(Future2.success(1.0.seconds))
+// //        val inParallel=Future2.success(Future2.success(1.0.seconds))
 //        val inParallel = nd.startCoroutine {
 //            val callTime1 = fork { makeCall("inParallel-1") }
 //            val callTime2 = fork { makeCall("inParallel-2") }
@@ -92,13 +92,13 @@ import pw.binom.concurrency.*
 //                callTime1.join()
 //                callTime2.join()
 //            }
-////            val totalTime = worker.submit {
-////                measureTime {
-////                    callTime1.join()
-////                    callTime2.join()
-////                }
-////            }
-////            totalTime
+// //            val totalTime = worker.submit {
+// //                measureTime {
+// //                    callTime1.join()
+// //                    callTime2.join()
+// //                }
+// //            }
+// //            totalTime
 //        }
 //
 //
@@ -110,7 +110,7 @@ import pw.binom.concurrency.*
 //        val totalTime = inParallel.join()
 //        assertTrue(totalTime > 0.1.seconds && totalTime < 2.0.seconds)
 //    }
-//}
+// }
 
 fun <T> Future<T>.join(deley: Long = 50L): T {
     while (!isDone) {

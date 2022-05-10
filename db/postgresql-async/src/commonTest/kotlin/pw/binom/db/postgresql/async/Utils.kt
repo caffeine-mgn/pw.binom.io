@@ -1,11 +1,5 @@
 package pw.binom.db.postgresql.async
 
-import pw.binom.charset.Charsets
-import pw.binom.io.use
-import pw.binom.network.NetworkAddress
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.seconds
 /*
 @OptIn(ExperimentalTime::class)
 fun pg(func: suspend (PGConnection) -> Unit) {

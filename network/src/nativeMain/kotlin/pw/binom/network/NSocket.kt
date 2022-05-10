@@ -1,14 +1,16 @@
 package pw.binom.network
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+
 expect class RawSocket
 
 /**
  * Native socket. Used only for native targets
  */
 expect class NSocket : Closeable {
-    val raw:RawSocket
+    val raw: RawSocket
+
     companion object {
         /**
          * Creates and return tcp socket

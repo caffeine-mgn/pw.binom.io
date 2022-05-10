@@ -1,13 +1,9 @@
-import pw.binom.baseStaticLibConfig
 import java.util.UUID
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jmailen.kotlinter")
-}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 kotlin {
@@ -24,7 +20,6 @@ kotlin {
         linuxArm64()
     }
     macosX64()
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -83,8 +78,4 @@ kotlin {
     }
 }
 
-apply<pw.binom.plugins.DocsPlugin>()
-
-kotlinter {
-    disabledRules = arrayOf("no-wildcard-imports")
-}
+apply<pw.binom.plugins.ConfigPublishPlugin>()

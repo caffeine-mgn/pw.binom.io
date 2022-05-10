@@ -1,7 +1,6 @@
 package pw.binom.concurrency
 
-
-//actual class WorkerImpl(name: String?) : Executor, Worker, CoroutineDispatcher() {
+// actual class WorkerImpl(name: String?) : Executor, Worker, CoroutineDispatcher() {
 //    private val nativeWorker = NativeWorker.start(errorReporting = true, name = name)
 //    private val _isInterrupted = AtomicBoolean(false)
 //    private var _taskCount by AtomicInt(0)
@@ -49,9 +48,9 @@ package pw.binom.concurrency
 //
 //    override fun execute(func: suspend () -> Unit) {
 //        TODO()
-////        execute(func.doFreeze()) {
-////            async2(it)
-////        }
+// //        execute(func.doFreeze()) {
+// //            async2(it)
+// //        }
 //    }
 //
 //    actual fun <T> startCoroutine(
@@ -120,4 +119,4 @@ package pw.binom.concurrency
 //    override fun dispatch(context: CoroutineContext, block: Runnable) {
 //        this.execute { block.run() }
 //    }
-//}
+// }

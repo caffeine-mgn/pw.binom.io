@@ -1,7 +1,7 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.AsyncOutput
 import pw.binom.io.AsyncCloseable
+import pw.binom.io.AsyncOutput
 
 interface WebSocketConnection : AsyncCloseable {
 

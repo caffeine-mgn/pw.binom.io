@@ -1,8 +1,8 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
 import pw.binom.io.UTF8
 
@@ -29,11 +29,11 @@ open class AsyncChunkedOutput(
     private val tmp = ByteBuffer.alloc(50)
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
-        val len = data.remaining
+        val len = data.remaining123
         while (true) {
-            if (data.remaining == 0)
+            if (data.remaining123 == 0)
                 break
-            if (buffer.remaining == 0) {
+            if (buffer.remaining123 == 0) {
                 buffer.flip()
                 sendBuffer()
             }
@@ -44,7 +44,7 @@ open class AsyncChunkedOutput(
 
     private suspend fun sendBuffer() {
         tmp.clear()
-        UTF8.unicodeToUtf8((buffer.remaining).toString(16), tmp)
+        UTF8.unicodeToUtf8((buffer.remaining123).toString(16), tmp)
         tmp.put(CR)
         tmp.put(LF)
         tmp.flip()

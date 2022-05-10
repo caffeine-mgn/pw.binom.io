@@ -1,8 +1,8 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncOutput
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.NullAsyncOutput
+import pw.binom.io.AsyncOutput
 import pw.binom.io.Closeable
 import pw.binom.pool.DefaultPool
 

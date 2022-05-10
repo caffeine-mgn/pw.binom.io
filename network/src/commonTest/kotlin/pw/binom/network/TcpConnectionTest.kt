@@ -5,9 +5,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
-import pw.binom.ByteBuffer
-import pw.binom.alloc
-import pw.binom.concurrency.*
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.Worker
+import pw.binom.concurrency.sleep
+import pw.binom.concurrency.synchronize
+import pw.binom.io.ByteBuffer
 import pw.binom.io.use
 import pw.binom.readByte
 import pw.binom.writeByte
@@ -129,7 +131,7 @@ class TcpConnectionTest {
             try {
                 spinLock.synchronize {
                     println("Try read...")
-                    val readed = ByteBuffer.alloc(5) {
+                    val readed = ByteBuffer.alloc(5).use {
                         println("try read...")
                         client.read(it)
                     }
@@ -145,7 +147,7 @@ class TcpConnectionTest {
         val remoteClient = server.accept()
         println("Client connected")
         server.close()
-        ByteBuffer.alloc(10) { buf ->
+        ByteBuffer.alloc(10).use { buf ->
             remoteClient.write(buf)
             withContext(worker) {
                 spinLock.lock()

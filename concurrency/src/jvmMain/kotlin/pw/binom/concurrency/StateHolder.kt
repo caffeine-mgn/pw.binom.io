@@ -8,17 +8,21 @@ import java.util.concurrent.Executors
 actual class StateHolder : Closeable {
     private val worker = Executors.newSingleThreadExecutor()
     actual fun <T : Any> make(value: () -> T): Future<Reference<T>> {
-        val result = worker.submit(Callable {
-            Result.success(value().asReference())
-        })
+        val result = worker.submit(
+            Callable {
+                Result.success(value().asReference())
+            }
+        )
 
         return FutureWrapper(result)
     }
 
     actual fun <T : Any, R> access(value: Reference<T>, func: (T) -> R): Future<R> {
-        val result = worker.submit(Callable {
-            kotlin.runCatching { func(value.value) }
-        })
+        val result = worker.submit(
+            Callable {
+                kotlin.runCatching { func(value.value) }
+            }
+        )
 
         return FutureWrapper(result)
     }
@@ -26,5 +30,4 @@ actual class StateHolder : Closeable {
     override fun close() {
         worker.shutdown()
     }
-
 }

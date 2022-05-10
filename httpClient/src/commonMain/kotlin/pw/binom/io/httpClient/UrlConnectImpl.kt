@@ -1,12 +1,12 @@
 package pw.binom.io.httpClient
 
-//@Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
-//internal class UrlConnectImpl(
+// @Deprecated(message = "Use HttpClient", level = DeprecationLevel.WARNING)
+// internal class UrlConnectImpl(
 //    val method: String,
 //    val URI: URI,
 //    val client: AsyncHttpClient,
 //    val outputFlushSize: Int
-//) : AsyncHttpClient.UrlConnect {
+// ) : AsyncHttpClient.UrlConnect {
 //    override val headers: MutableMap<String, MutableList<String>> = HashMap()
 //    private var requestSent = false
 //    private var clientDataLength: ULong? = null
@@ -78,15 +78,15 @@ package pw.binom.io.httpClient
 //            compressBufferSize = DEFAULT_BUFFER_SIZE,
 //            compressLevel = 6
 //        )
-////        val chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
-////        if (!chanked && clientDataLength == null) {
-////            throw IllegalStateException("Unknown Transfer Encoding")
-////        }
+// //        val chanked = clientDataLength == null && headers[Headers.TRANSFER_ENCODING]?.singleOrNull() == Headers.CHUNKED
+// //        if (!chanked && clientDataLength == null) {
+// //            throw IllegalStateException("Unknown Transfer Encoding")
+// //        }
 //
 //        TODO()
-////        return when {
-////            else -> NoInputUrlRequest(connection)
-////        }
+// //        return when {
+// //            else -> NoInputUrlRequest(connection)
+// //        }
 //    }
 //
 //    @OptIn(ExperimentalTime::class)
@@ -181,4 +181,4 @@ package pw.binom.io.httpClient
 //        }
 //    }
 //
-//}
+// }

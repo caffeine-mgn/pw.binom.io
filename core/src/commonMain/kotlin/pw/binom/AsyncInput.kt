@@ -1,29 +1,7 @@
 package pw.binom
 
-import pw.binom.io.AsyncCloseable
-import pw.binom.io.EOFException
-import pw.binom.io.UTF8
+import pw.binom.io.*
 import pw.binom.pool.ObjectPool
-
-interface AsyncInput : AsyncCloseable {
-    /**
-     * Available Data size in bytes
-     * @return Available data in bytes. If returns value less 0 it's mean that size of available data is unknown
-     */
-    val available: Int
-
-    suspend fun read(dest: ByteBuffer): Int
-    suspend fun readFully(dest: ByteBuffer): Int {
-        val length = dest.remaining
-        while (dest.remaining > 0) {
-            val read = read(dest)
-            if (read == 0 && dest.remaining > 0) {
-                throw EOFException()
-            }
-        }
-        return length
-    }
-}
 
 fun Input.asyncInput() = object : AsyncInput {
     override val available: Int

@@ -40,6 +40,7 @@ value class SelectQuery(val query: SQLQueryNamedArguments) {
 @JvmInline
 value class UpdateQuery(val query: SQLQueryNamedArguments) {
     constructor(sql: String) : this(SQLQueryNamedArguments.parse(sql))
+
     suspend fun execute(connection: PooledAsyncConnection, vararg args: Pair<String, Any?>): Long =
         connection.usePreparedStatement(query.sql).executeUpdate(*query.buildArguments(*args))
 
@@ -74,6 +75,7 @@ suspend fun <T : Any> PooledAsyncConnection.selectAll(
             query.mapper(row)
         }
     }
+
 class SelectQueryWithMapper<T : Any>(val query: SQLQueryNamedArguments, val mapper: suspend (AsyncResultSet) -> T)
 class UpdateQueryWithParam<T : Any>(
     val query: SQLQueryNamedArguments,

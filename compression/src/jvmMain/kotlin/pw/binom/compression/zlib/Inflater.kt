@@ -1,6 +1,6 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import java.util.zip.Inflater as JInflater
 
@@ -21,5 +21,4 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
         native.inflate(output.native)
         return (native.bytesWritten - writed).toInt()
     }
-
 }

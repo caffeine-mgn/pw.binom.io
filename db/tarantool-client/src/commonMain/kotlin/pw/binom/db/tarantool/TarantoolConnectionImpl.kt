@@ -1,18 +1,18 @@
 package pw.binom.db.tarantool
 
 import kotlinx.coroutines.*
-import pw.binom.*
 import pw.binom.atomic.AtomicLong
 import pw.binom.db.tarantool.protocol.*
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.ClosedException
-import pw.binom.io.IOException
-import pw.binom.network.NetworkCoroutineDispatcher
+import pw.binom.io.*
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
-import kotlin.coroutines.resumeWithException
+import pw.binom.neverFreeze
+import pw.binom.readByte
+import pw.binom.readInt
+import kotlin.collections.set
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 private const val VSPACE_ID = 281
 private const val VSPACE_ID_INDEX_ID = 0
@@ -145,7 +145,7 @@ class TarantoolConnectionImpl internal constructor(
         try {
             mainLoopJob?.cancel()
         } catch (e: CancellationException) {
-            //Do nothing
+            // Do nothing
         }
         closed = true
         out.close()
@@ -155,7 +155,7 @@ class TarantoolConnectionImpl internal constructor(
     @OptIn(InternalCoroutinesApi::class)
     internal suspend fun startMainLoop() {
         withContext(networkDispatcher) {
-            ByteBuffer.alloc(8) { buf ->
+            ByteBuffer.alloc(8).use { buf ->
                 try {
                     val packageReader = AsyncInputWithCounter(connectionReference)
                     while (mainLoopJob?.isActive != false && !closed) {
@@ -279,7 +279,6 @@ class TarantoolConnectionImpl internal constructor(
         }
         return result.data
     }
-
 
     override suspend fun call(function: String, args: List<Any?>): Any? {
         val result = sendReceive(

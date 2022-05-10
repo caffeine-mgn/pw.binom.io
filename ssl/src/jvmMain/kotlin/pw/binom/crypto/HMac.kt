@@ -1,6 +1,6 @@
 package pw.binom.crypto
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec

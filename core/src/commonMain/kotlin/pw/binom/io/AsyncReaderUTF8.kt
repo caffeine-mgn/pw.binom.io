@@ -1,8 +1,5 @@
 package pw.binom.io
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-
 class AsyncReaderUTF82(private val stream: AsyncInput) : AbstractAsyncReader() {
 
     private val data = ByteBuffer.alloc(4)

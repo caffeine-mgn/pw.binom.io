@@ -13,7 +13,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 
         fun write(data: ByteBuffer): Int {
             checkClosed()
-            val len = minOf(writeRemaining, data.remaining)
+            val len = minOf(writeRemaining, data.remaining123)
             if (len == 0)
                 return 0
 //            this.data.writeTo(writePosition, data, offset, len)
@@ -44,7 +44,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 
         fun read(data: ByteBuffer): Int {
             checkClosed()
-            val len = minOf(readRemaining, data.remaining)
+            val len = minOf(readRemaining, data.remaining123)
             if (len == 0)
                 return 0
             try {
@@ -147,9 +147,9 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
-        if (data.remaining == 0)
+        if (data.remaining123 == 0)
             return 0
-        val len = data.remaining
+        val len = data.remaining123
         while (true) {
             val p = getReadyForWrite()
             val w = p.write(data)
@@ -183,10 +183,10 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (dest.remaining == 0)
+        if (dest.remaining123 == 0)
             return 0
         var read = 0
-        while (dest.remaining > 0) {
+        while (dest.remaining123 > 0) {
             val p = getReadyForRead() ?: return read
             val r = p.read(dest)
             read += r

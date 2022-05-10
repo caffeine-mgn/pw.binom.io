@@ -1,4 +1,3 @@
-import pw.binom.baseStaticLibConfig
 import pw.binom.eachKotlinTest
 
 plugins {
@@ -24,7 +23,6 @@ kotlin {
         linuxArm64()
     }
     macosX64()
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {

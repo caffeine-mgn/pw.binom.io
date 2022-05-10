@@ -4,7 +4,6 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.invoke
 import platform.windows.*
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 value class Mutex(val handler: HANDLE) {
     companion object {
@@ -13,7 +12,6 @@ value class Mutex(val handler: HANDLE) {
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     fun lock(dd: Duration): Boolean {
         val lockDuration = if (dd.isInfinite())
             INFINITE
@@ -28,13 +26,13 @@ value class Mutex(val handler: HANDLE) {
         }
     }
 
-    fun unlock(){
-        if (ReleaseMutex(handler)==0){
+    fun unlock() {
+        if (ReleaseMutex(handler) == 0) {
             throw RuntimeException("Can't Release Mutex. Error #${GetLastError()}")
         }
     }
 
-    fun close(){
+    fun close() {
         CloseHandle(handler)
     }
 }

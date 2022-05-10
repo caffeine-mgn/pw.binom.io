@@ -4,7 +4,6 @@ import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.toKString
 import platform.openssl.*
 import pw.binom.base64.Base64
 import pw.binom.getSslError

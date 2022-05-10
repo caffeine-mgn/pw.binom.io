@@ -24,5 +24,4 @@ class ReadyForQueryMessage : KindedMessage {
             return ctx.readyForQueryMessage
         }
     }
-
 }

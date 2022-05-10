@@ -1,6 +1,6 @@
 package pw.binom.network
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import java.net.InetSocketAddress
 import java.nio.channels.DatagramChannel
@@ -16,7 +16,7 @@ actual class UdpSocketChannel : Closeable {
 
     actual fun recv(data: ByteBuffer, address: NetworkAddress.Mutable?): Int {
         val before = data.position
-        if (before == data.remaining) {
+        if (before == data.remaining123) {
             return 0
         }
         val vv = native.receive(data.native)

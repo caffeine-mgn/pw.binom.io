@@ -17,13 +17,13 @@ class ExecutorServiceHolderElement(val executor: ExecutorService) : CoroutineCon
 
 object ExecutorServiceHolderKey : CoroutineContext.Key<ExecutorServiceHolderElement>
 
-//@Suppress("UNCHECKED_CAST")
-//class CrossThreadCoroutineElement(val crossThreadCoroutine: CrossThreadCoroutine) : CoroutineContext.Element {
+// @Suppress("UNCHECKED_CAST")
+// class CrossThreadCoroutineElement(val crossThreadCoroutine: CrossThreadCoroutine) : CoroutineContext.Element {
 //    override val key: CoroutineContext.Key<CrossThreadCoroutineElement>
 //        get() = CrossThreadCoroutineKey
-//}
+// }
 //
-//object CrossThreadCoroutineKey : CoroutineContext.Key<CrossThreadCoroutineElement>
+// object CrossThreadCoroutineKey : CoroutineContext.Key<CrossThreadCoroutineElement>
 
 fun <P> asyncWithExecutor(executor: ExecutorService, f: suspend () -> P) =
     f.startCoroutine(object : Continuation<P> {
@@ -45,7 +45,7 @@ suspend fun <T> ExecutorService.useInContext(f: suspend () -> T) {
     }
 }
 
-//fun ExecutorService.submitAsync(context: CoroutineContext = EmptyCoroutineContext, func: suspend () -> Unit) {
+// fun ExecutorService.submitAsync(context: CoroutineContext = EmptyCoroutineContext, func: suspend () -> Unit) {
 //    func.doFreeze()
 //    submit {
 //        val f = func
@@ -56,7 +56,7 @@ suspend fun <T> ExecutorService.useInContext(f: suspend () -> T) {
 //            }
 //        })
 //    }
-//}
+// }
 
 class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher() {
     private class State(size: Int) {
@@ -125,10 +125,12 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
                 }
             }
         } else {
-            state.queue.push({
-                future.resume(runCatching(f))
-                status.tasks.decrement()
-            }.doFreeze())
+            state.queue.push(
+                {
+                    future.resume(runCatching(f))
+                    status.tasks.decrement()
+                }.doFreeze()
+            )
         }
         return future
     }

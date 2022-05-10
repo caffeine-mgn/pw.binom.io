@@ -9,7 +9,6 @@ import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.net.URL
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkCoroutineDispatcher
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
 import pw.binom.ssl.*

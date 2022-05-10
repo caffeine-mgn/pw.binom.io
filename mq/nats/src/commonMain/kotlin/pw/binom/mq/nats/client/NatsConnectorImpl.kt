@@ -2,8 +2,8 @@ package pw.binom.mq.nats.client
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
-import pw.binom.ByteBuffer
 import pw.binom.io.AsyncCloseable
+import pw.binom.io.ByteBuffer
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketConnectException

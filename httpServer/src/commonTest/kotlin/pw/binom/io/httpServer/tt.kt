@@ -1,11 +1,6 @@
 package pw.binom.io.httpServer
 
-import pw.binom.io.use
-import pw.binom.network.NetworkAddress
-import kotlin.test.Ignore
-import kotlin.test.Test
-
-//class tt {
+// class tt {
 //    @Ignore
 //    @Test
 //    fun runTest() {
@@ -18,10 +13,10 @@ import kotlin.test.Test
 //                    println("Request income")
 //                    val myText = "0000000000000000000000".encodeToByteArray()
 //                    it.status = 200
-////                    it.headers.contentEncoding = "gzip"
+// //                    it.headers.contentEncoding = "gzip"
 //                    it.headers.contentType = "text/html;charset=utf-8"
-////                    it.headers.transferEncoding = "chunked"
-////                        it.headers.contentLength = myText.size.toULong()
+// //                    it.headers.transferEncoding = "chunked"
+// //                        it.headers.contentLength = myText.size.toULong()
 //                    it.sendBinary(myText)
 //                    println("Request done!")
 //                }
@@ -33,7 +28,7 @@ import kotlin.test.Test
 //            manager.select(1000)
 //        }
 //    }
-//}
+// }
 
 /*
 

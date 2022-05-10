@@ -1,8 +1,5 @@
 package pw.binom.io
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-
 class AsyncInputWithLength(val input: AsyncInput, val length: Long) : AsyncInput {
     private var l = length
     val remaining
@@ -15,7 +12,7 @@ class AsyncInputWithLength(val input: AsyncInput, val length: Long) : AsyncInput
         }
 
     override suspend fun read(dest: ByteBuffer): Int {
-        val limit = minOf(dest.remaining, l.toInt())
+        val limit = minOf(dest.remaining123, l.toInt())
         val l = dest.limit
         dest.limit = dest.position + limit
         val read = input.read(dest)

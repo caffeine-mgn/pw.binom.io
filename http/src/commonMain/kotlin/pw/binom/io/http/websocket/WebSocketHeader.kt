@@ -1,6 +1,10 @@
 package pw.binom.io.http.websocket
 
 import pw.binom.*
+import pw.binom.io.AsyncInput
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
+import pw.binom.io.use
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -36,7 +40,7 @@ class WebSocketHeader {
         }
 
         suspend fun write(output: AsyncOutput, src: WebSocketHeader) {
-            ByteBuffer.alloc(8) { buf ->
+            ByteBuffer.alloc(8).use { buf ->
                 var value = src.opcode and 0b111
                 if (src.finishFlag) {
                     value = value or 0b10000000.toByte()

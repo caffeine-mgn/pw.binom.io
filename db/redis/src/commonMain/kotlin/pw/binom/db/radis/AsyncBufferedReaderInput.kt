@@ -1,10 +1,11 @@
 package pw.binom.db.radis
 
-import pw.binom.*
+import pw.binom.CharBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
-import pw.binom.io.AbstractAsyncBufferedInput
-import pw.binom.io.IOException
+import pw.binom.indexOfFirst
+import pw.binom.io.*
 
 class AsyncBufferedReaderInput(
     override val stream: AsyncInput,
@@ -21,11 +22,11 @@ class AsyncBufferedReaderInput(
     override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
 
     suspend fun readANSIChar(): Char? {
-        if (buffer.remaining == 0) {
+        if (buffer.remaining123 == 0) {
             buffer.compact()
             fill()
         }
-        if (buffer.remaining == 0) {
+        if (buffer.remaining123 == 0) {
             return null
         }
         val c = buffer.get()
@@ -85,7 +86,7 @@ class AsyncBufferedReaderInput(
 //    }
 
     private suspend fun loadMore(minSize: Int) {
-        if (buffer.remaining >= minSize) {
+        if (buffer.remaining123 >= minSize) {
             return
         }
         buffer.free()
@@ -117,7 +118,7 @@ class AsyncBufferedReaderInput(
     suspend fun readln(): String {
         val sb = StringBuilder()
         while (true) {
-            if (buffer.remaining == 0) {
+            if (buffer.remaining123 == 0) {
                 loadMore(10)
             }
             charBuffer.clear()

@@ -2,7 +2,6 @@ package pw.binom.concurrency
 
 import pw.binom.io.Closeable
 import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 
 /**
  * Wrapper for [value]. Wrapped object can be pass from creator thread to other thread.

@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 
 class AsyncQueueTest {
     @Test
-    fun waitMessageTest() = runBlocking{
+    fun waitMessageTest() = runBlocking {
         val q = AsyncQueue<Int>()
         val NUM = Random.nextInt()
         var gotValue: Int? = null
@@ -22,7 +22,7 @@ class AsyncQueueTest {
     }
 
     @Test
-    fun popMessageTest() = runBlocking{
+    fun popMessageTest() = runBlocking {
         val q = AsyncQueue<Int>()
         val NUM = Random.nextInt()
         q.push(NUM)

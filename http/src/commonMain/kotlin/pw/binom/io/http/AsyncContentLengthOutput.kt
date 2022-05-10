@@ -1,7 +1,7 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
 
 open class AsyncContentLengthOutput(
@@ -17,7 +17,7 @@ open class AsyncContentLengthOutput(
 //            throw IllegalStateException("All Content already send. ContentLength: [$contentLength], data.remaining: [${data.remaining}]")
         }
         var lim = data.limit
-        if (wrote + data.remaining.toULong() > contentLength) {
+        if (wrote + data.remaining123.toULong() > contentLength) {
             val l = data.position + (contentLength - wrote).toInt()
             if (l == 0) {
                 return 0

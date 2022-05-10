@@ -1,7 +1,5 @@
 package pw.binom.webdav.client
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
 import pw.binom.date.Date
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
@@ -122,7 +120,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
         if (resp.responseCode != 207 && resp.responseCode != 200) {
             throw IllegalStateException("Invalid response code ${resp.responseCode}")
         }
-        val reader=resp.readText().use { it.xmlTree() }
+        val reader = resp.readText().use { it.xmlTree() }
         resp.asyncClose()
         if (reader.tag != MULTISTATUS_TAG || reader.nameSpace != DAV_NS) {
             throw IllegalStateException("Invalid response. Except $MULTISTATUS_TAG response. Got $reader")
@@ -162,7 +160,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
             path = path,
             depth = 0,
             excludeCurrent = false
-        )?.find { it.name == folderName}
+        )?.find { it.name == folderName }
     }
 
     override suspend fun new(path: Path): AsyncOutput {

@@ -1,12 +1,7 @@
 package pw.binom.compression.zlib
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
-import pw.binom.io.AsyncCheckedInput
-import pw.binom.io.CRC32
-import pw.binom.io.EOFException
-import pw.binom.io.IOException
+import pw.binom.crc.CRC32
+import pw.binom.io.*
 
 class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boolean = true) : AsyncInflateInput(
     stream = stream,
@@ -35,7 +30,7 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
         if (headerRead)
             return 0
         headerRead = true
-            crc.init()
+        crc.init()
         val stream = AsyncCheckedInput(stream, crc)
         tt.clear()
         stream.readFully(tt)

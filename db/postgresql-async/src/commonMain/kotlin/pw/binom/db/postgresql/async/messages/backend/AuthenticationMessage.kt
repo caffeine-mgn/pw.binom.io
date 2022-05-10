@@ -1,11 +1,12 @@
 package pw.binom.db.postgresql.async.messages.backend
 
-import pw.binom.ByteBuffer
 import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.*
+import pw.binom.io.ByteBuffer
+import pw.binom.io.use
+import pw.binom.readInt
 
 const val AuthenticationOk = 0
 const val AuthenticationKerberosV5 = 2
@@ -40,7 +41,6 @@ sealed class AuthenticationMessage : KindedMessage {
             Ok
         }
 
-
         var challengeType: AuthenticationResponseType = AuthenticationResponseType.Ok
         var salt: ByteArray? = null
 
@@ -58,10 +58,10 @@ sealed class AuthenticationMessage : KindedMessage {
                 AuthenticationCleartextPassword -> AuthenticationChallengeCleartextMessage
                 AuthenticationMD5Password -> {
                     val buf2 = ByteArray(ctx.length - Int.SIZE_BYTES)
-                    ByteBuffer.alloc(buf2.size) { tmp2 ->
+                    ByteBuffer.alloc(buf2.size).use { tmp2 ->
                         while (true) {
                             ctx.input.read(tmp2)
-                            if (tmp2.remaining == 0) {
+                            if (tmp2.remaining123 == 0) {
                                 break
                             }
                         }

@@ -1,6 +1,9 @@
 rootProject.name = "Binom"
 
 include(":env")
+include(":crc")
+include(":io")
+include(":charset")
 include(":core")
 include(":concurrency")
 include(":date")
@@ -25,6 +28,7 @@ include(":mq:nats")
 include(":httpClient")
 include(":httpServer")
 include(":compression")
+include(":collections")
 include(":xml")
 include(":xml:xml-serialization")
 include(":logger")
@@ -34,6 +38,8 @@ include(":process")
 include(":flux")
 include(":smtp")
 include(":signal")
+
+include(":examples:view")
 
 // include(":examples:echoServer")
 // include(":examples:simpleHttpServer")

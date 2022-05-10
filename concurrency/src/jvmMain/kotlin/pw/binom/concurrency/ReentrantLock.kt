@@ -3,10 +3,9 @@ package pw.binom.concurrency
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import java.lang.InterruptedException as JInterruptedException
 
-actual class ReentrantLock:Lock {
+actual class ReentrantLock : Lock {
 
     private val native = ReentrantLock(false)
 
@@ -19,7 +18,7 @@ actual class ReentrantLock:Lock {
     }
 
     actual fun newCondition(): Condition =
-            Condition(native, native.newCondition())
+        Condition(native, native.newCondition())
 
     actual class Condition(val lock: ReentrantLock, val native: java.util.concurrent.locks.Condition) {
         @JvmName("wait5")
@@ -50,9 +49,9 @@ actual class ReentrantLock:Lock {
 }
 
 internal inline fun <T> ReentrantLock.lock(func: () -> T): T =
-        try {
-            lock()
-            func()
-        } finally {
-            unlock()
-        }
+    try {
+        lock()
+        func()
+    } finally {
+        unlock()
+    }

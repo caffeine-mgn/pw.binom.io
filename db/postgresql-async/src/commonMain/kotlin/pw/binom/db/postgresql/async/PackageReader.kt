@@ -1,11 +1,14 @@
 package pw.binom.db.postgresql.async
 
-import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
+import pw.binom.io.AsyncInput
 import pw.binom.io.ByteArrayOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+import pw.binom.readByte
+import pw.binom.writeByte
 
 class PackageReader(val connection: PGConnection, val charset: Charset, val rawInput: AsyncInput) : Closeable {
     val authenticationChallengeMessage = AuthenticationMessage.AuthenticationChallengeMessage()
@@ -109,7 +112,7 @@ private class AsyncInputLimit(val input: AsyncInput) : AsyncInput {
         }
 
     override suspend fun read(dest: ByteBuffer): Int {
-        val limit = minOf(dest.remaining, limit)
+        val limit = minOf(dest.remaining123, limit)
         val l = dest.limit
         dest.limit = dest.position + limit
         val read = input.read(dest)

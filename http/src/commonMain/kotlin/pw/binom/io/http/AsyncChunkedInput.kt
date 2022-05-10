@@ -1,7 +1,7 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
+import pw.binom.io.AsyncInput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 import pw.binom.io.StreamClosedException
 import pw.binom.skipAll
@@ -100,7 +100,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
                 continue
             }
 
-            val r = minOf(chunkedSize!! - readed, dest.remaining.toULong())
+            val r = minOf(chunkedSize!! - readed, dest.remaining123.toULong())
 //            val oldLimit = dest.limit
             dest.limit = dest.position + r.toInt()
             val b = stream.read(dest)
@@ -136,5 +136,4 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
         if (closed)
             throw StreamClosedException()
     }
-
 }

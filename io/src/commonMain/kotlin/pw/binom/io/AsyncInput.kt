@@ -1,0 +1,21 @@
+package pw.binom.io
+
+interface AsyncInput : AsyncCloseable {
+    /**
+     * Available Data size in bytes
+     * @return Available data in bytes. If returns value less 0 it's mean that size of available data is unknown
+     */
+    val available: Int
+
+    suspend fun read(dest: ByteBuffer): Int
+    suspend fun readFully(dest: ByteBuffer): Int {
+        val length = dest.remaining123
+        while (dest.remaining123 > 0) {
+            val read = read(dest)
+            if (read == 0 && dest.remaining123 > 0) {
+                throw EOFException()
+            }
+        }
+        return length
+    }
+}

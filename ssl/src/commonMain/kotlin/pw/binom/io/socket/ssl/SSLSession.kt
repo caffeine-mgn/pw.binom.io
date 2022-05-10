@@ -1,6 +1,6 @@
 package pw.binom.io.socket.ssl
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
 

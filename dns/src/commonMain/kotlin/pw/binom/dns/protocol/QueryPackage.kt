@@ -1,6 +1,6 @@
 package pw.binom.dns.protocol
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.readShort
 import pw.binom.writeShort
 

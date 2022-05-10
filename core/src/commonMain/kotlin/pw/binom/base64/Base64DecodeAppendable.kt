@@ -1,8 +1,8 @@
 package pw.binom.base64
 
-import pw.binom.ByteBuffer
-import pw.binom.Output
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+import pw.binom.io.Output
 import pw.binom.writeByte
 import kotlin.experimental.or
 

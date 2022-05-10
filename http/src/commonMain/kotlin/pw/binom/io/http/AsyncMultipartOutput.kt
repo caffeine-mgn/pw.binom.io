@@ -1,7 +1,7 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedAsciiWriter
 import kotlin.random.Random
 

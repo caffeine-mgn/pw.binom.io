@@ -1,7 +1,7 @@
 package pw.binom.io.http
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
+import pw.binom.io.AsyncInput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
 import pw.binom.skipAll
 
@@ -27,7 +27,7 @@ open class AsyncContentLengthInput(
         checkClosed()
         if (eof)
             return 0
-        val r = if ((contentLength - readed < dest.remaining.toULong())) {
+        val r = if ((contentLength - readed < dest.remaining123.toULong())) {
             val oldLimit = dest.limit
             dest.limit = (contentLength - readed).toInt()
             val l = stream.read(dest)

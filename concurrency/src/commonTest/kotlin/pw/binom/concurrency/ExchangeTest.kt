@@ -1,8 +1,6 @@
 package pw.binom.concurrency
 
-import pw.binom.ObjectTree
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.attach
 import pw.binom.doFreeze
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.test.Test
@@ -17,19 +15,19 @@ import kotlin.time.TimeSource
 private class Data(var value: Int)
 
 @SharedImmutable
-private var done1 by AtomicBoolean(false)
+private val done1 = AtomicBoolean(false)
 
 @SharedImmutable
-private var done2 by AtomicBoolean(false)
+private val done2 = AtomicBoolean(false)
 
 @SharedImmutable
-private val exchange1 = BlockingExchange<ObjectTree<Data>>()
+private val exchange1 = BlockingExchange<Data>()
 
 @SharedImmutable
-private val exchange2 = BlockingExchange<ObjectTree<Data>>()
+private val exchange2 = BlockingExchange<Data>()
 
 @SharedImmutable
-private var exceptionExist by AtomicBoolean(false)
+private val exceptionExist = AtomicBoolean(false)
 
 class ExchangeTest {
 
@@ -43,17 +41,17 @@ class ExchangeTest {
         w1.execute(null) {
             println("w1->1")
             try {
-                exchange1.put(ObjectTree { Data(0) }.doFreeze())
+                exchange1.put(Data(0))
                 println("w1->2")
-                val d = exchange2.get().attach()
+                val d = exchange2.get()
                 println("w1->3  ${d.value}")
                 assertEquals(1, d.value)
                 println("w1->4")
             } catch (e: Throwable) {
                 e.printStackTrace()
-                exceptionExist = true
+                exceptionExist.setValue(true)
             } finally {
-                done1 = true
+                done1.setValue(true)
             }
         }
 
@@ -61,8 +59,8 @@ class ExchangeTest {
             println("w2->1")
             try {
                 println("w2->2")
-                val d = ObjectTree {
-                    val d = exchange1.get().attach()
+                val d = run {
+                    val d = exchange1.get()
                     d.value++
                     d
                 }
@@ -70,16 +68,16 @@ class ExchangeTest {
                 exchange2.put(d)
             } catch (e: Throwable) {
                 e.printStackTrace()
-                exceptionExist = true
+                exceptionExist.setValue(true)
             } finally {
-                done2 = true
+                done2.setValue(true)
             }
         }
 
-        while (!done1 || !done2) {
+        while (!done1.getValue() || !done2.getValue()) {
             sleep(100)
         }
-        if (exceptionExist) {
+        if (exceptionExist.getValue()) {
             fail("Exception in Worker1")
         }
     }

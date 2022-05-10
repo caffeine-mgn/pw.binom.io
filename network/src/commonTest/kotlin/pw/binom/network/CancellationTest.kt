@@ -2,17 +2,14 @@ package pw.binom.network
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runTest
-import pw.binom.ByteBuffer
-import pw.binom.alloc
-import pw.binom.concurrency.DeadlineTimer
+import pw.binom.io.ByteBuffer
+import pw.binom.io.use
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-
-private val dt = DeadlineTimer.create()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CancellationTest {
@@ -74,7 +71,7 @@ class CancellationTest {
                 while (!serverShouldSendResponse) {
                     delay(100)
                 }
-                ByteBuffer.alloc(10) { buf ->
+                ByteBuffer.alloc(10).use { buf ->
                     c2.write(buf)
                 }
             } finally {
@@ -83,7 +80,7 @@ class CancellationTest {
         }
         val con = nd.tcpConnect(addr)
         val readJob = launch(nd) {
-            ByteBuffer.alloc(10) { buf ->
+            ByteBuffer.alloc(10).use { buf ->
                 try {
                     con.read(buf)
                 } catch (e: CancellationException) {
@@ -98,7 +95,7 @@ class CancellationTest {
         readJob.cancelAndJoin()
         serverShouldSendResponse = true
         val readJob2 = launch(nd) {
-            ByteBuffer.alloc(10) { buf ->
+            ByteBuffer.alloc(10).use { buf ->
                 con.read(buf)
             }
         }

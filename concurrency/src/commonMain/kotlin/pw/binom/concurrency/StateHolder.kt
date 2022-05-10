@@ -15,5 +15,4 @@ fun <T : Any> StateHolder.stateOf(func: () -> T) = State(this, func)
 class State<T : Any>(val holder: StateHolder, value: () -> T) {
     private val ref = holder.make(value).resultOrNull!!
     fun <R> access(func: (T) -> R) = holder.access(ref, func)
-
 }

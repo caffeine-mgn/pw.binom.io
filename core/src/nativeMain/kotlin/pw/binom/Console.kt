@@ -21,7 +21,7 @@ actual object Console {
                 return 0
             }
             return data.refTo(data.position) { data2 ->
-                platform.posix.write(fd, data2, data.remaining.convert()).convert()
+                platform.posix.write(fd, data2, data.remaining123.convert()).convert()
             } ?: 0
         }
 
@@ -47,7 +47,7 @@ actual object Console {
                 return 0
             }
             return dest.refTo(dest.position) { dest2 ->
-                platform.posix.write(STDIN_FILENO, dest2, dest.remaining.convert()).convert()
+                platform.posix.write(STDIN_FILENO, dest2, dest.remaining123.convert()).convert()
             } ?: 0
         }
 

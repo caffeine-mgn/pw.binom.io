@@ -12,7 +12,6 @@ abstract class AbstractServiceInjector<T : Any, RESULT> internal constructor(
     protected var inited = false
     protected var bean: RESULT? = null
 
-
     protected fun init() {
         if (inited) {
             return

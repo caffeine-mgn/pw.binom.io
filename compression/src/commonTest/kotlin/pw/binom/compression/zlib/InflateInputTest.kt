@@ -1,7 +1,9 @@
 package pw.binom.compression.zlib
 
 import kotlinx.coroutines.runBlocking
-import pw.binom.*
+import pw.binom.asyncOutput
+import pw.binom.clone
+import pw.binom.io.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -21,7 +23,6 @@ class InflateInputTest {
         def.asyncClose()
 
         compressed.flip()
-        assertEquals(5, compressed.remaining)
+        assertEquals(5, compressed.remaining123)
     }
-
 }

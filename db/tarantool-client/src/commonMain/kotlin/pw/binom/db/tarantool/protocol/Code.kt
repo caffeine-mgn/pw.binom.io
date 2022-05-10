@@ -1,6 +1,6 @@
 package pw.binom.db.tarantool.protocol
 
-internal enum class Code(val id:Int){
+internal enum class Code(val id: Int) {
     SELECT(1),
     INSERT(2),
     REPLACE(3),

@@ -7,7 +7,6 @@ import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 
-
 class SQLEncoder(
     val columnPrefix: String?,
     val map: MutableMap<String, Any?>,

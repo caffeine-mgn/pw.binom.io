@@ -4,11 +4,9 @@ import kotlinx.cinterop.staticCFunction
 import platform.posix.SIGINT
 import platform.posix.SIGTERM
 import platform.posix.usleep
-import pw.binom.signal.Signal
 import kotlin.native.concurrent.AtomicInt
 
-private const val SIGBREAK=21
-
+private const val SIGBREAK = 21
 
 private var signalListening = AtomicInt(0)
 private val listeners = ArrayList<(Signal.Type) -> Unit>()
@@ -31,7 +29,7 @@ internal actual fun addSignalListener(func: (Signal.Type) -> Unit) {
     }
     lockListeners()
     listeners += func
-    listenersLock.value=0
+    listenersLock.value = 0
 }
 
 private val signalListener = staticCFunction<Int, Unit> handler@{ signal ->
@@ -53,7 +51,7 @@ private val signalListener = staticCFunction<Int, Unit> handler@{ signal ->
             }
         }
     } finally {
-        listenersLock.value=0
+        listenersLock.value = 0
     }
     return@handler
 }

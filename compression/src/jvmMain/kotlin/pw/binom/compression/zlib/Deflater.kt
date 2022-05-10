@@ -1,15 +1,12 @@
 package pw.binom.compression.zlib
 
-import pw.binom.ByteDataBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
-import pw.binom.update
-import java.nio.ByteBuffer
 import java.util.zip.Deflater as JDeflater
 
 actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlush: Boolean) : Closeable {
     private val native = JDeflater(level, !wrap)
     override fun close() {
-
     }
 
     actual fun end() {
@@ -34,7 +31,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     actual val totalOut: Long
         get() = _totalOut
 
-    actual fun deflate(input: pw.binom.ByteBuffer, output: pw.binom.ByteBuffer): Int {
+    actual fun deflate(input: ByteBuffer, output: ByteBuffer): Int {
         native.setInput(input.native)
         val readedBefore = native.bytesRead
         val writedBefore = native.bytesWritten
@@ -47,7 +44,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         return wroteAfter.toInt()
     }
 
-    actual fun flush(output: pw.binom.ByteBuffer): Boolean {
+    actual fun flush(output: ByteBuffer): Boolean {
         if (!finishCalled)
             return false
         native.setInput(EMPTY_BUFFER)
@@ -62,4 +59,4 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 }
 
-private val EMPTY_BUFFER = ByteBuffer.allocate(0)
+private val EMPTY_BUFFER = java.nio.ByteBuffer.allocate(0)

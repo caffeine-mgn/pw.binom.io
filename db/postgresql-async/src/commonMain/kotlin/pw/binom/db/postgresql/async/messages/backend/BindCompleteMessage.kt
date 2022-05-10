@@ -5,7 +5,7 @@ import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
 
-object BindCompleteMessage: KindedMessage {
+object BindCompleteMessage : KindedMessage {
     override val kind: Byte
         get() = MessageKinds.BindComplete
 
@@ -17,5 +17,4 @@ object BindCompleteMessage: KindedMessage {
         ctx.end()
         return BindCompleteMessage
     }
-
 }

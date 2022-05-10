@@ -2,17 +2,14 @@ package pw.binom.io.http
 
 import kotlinx.coroutines.runBlocking
 import pw.binom.*
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.readText
-import pw.binom.io.utf8Appendable
-import pw.binom.io.utf8Reader
+import pw.binom.io.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AsyncChunkedInputTest {
 
     @Test
-    fun test2(){
+    fun test2() {
         val output = ByteArrayOutput()
         val chunked = AsyncChunkedOutput(output.asyncOutput())
 
@@ -27,7 +24,7 @@ class AsyncChunkedInputTest {
             out.flip()
 
             val input = AsyncChunkedInput(out.asyncInput())
-            assertEquals("Wikipedia",input.utf8Reader().readText())
+            assertEquals("Wikipedia", input.utf8Reader().readText())
         }
     }
 

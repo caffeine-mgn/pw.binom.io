@@ -1,7 +1,5 @@
 package pw.binom.io
 
-import pw.binom.ByteBuffer
-import pw.binom.Input
 import pw.binom.PopResult
 import pw.binom.Stack
 

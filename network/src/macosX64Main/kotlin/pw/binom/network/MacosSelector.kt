@@ -17,7 +17,7 @@ class MacosSelector : AbstractSelector() {
             EVFILT_WRITE in nativeMode || EV_EOF !in nativeMode
 
 //        private val native = nativeHeap.alloc<kevent>()
-        //TODO("nativeMode=${nativeMode.toUInt().toString(2)}")
+        // TODO("nativeMode=${nativeMode.toUInt().toString(2)}")
 //            EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
         fun epollCommonToNative(mode: Int): Int {
@@ -43,7 +43,7 @@ class MacosSelector : AbstractSelector() {
 //                } -> ${mode.toUInt().toString(2)}"
 //            )
             val event = native
-            val flags = if (n == 0) EV_DISABLE or EV_CLEAR else EV_ADD or EV_CLEAR or EV_ENABLE// or EV_ONESHOT
+            val flags = if (n == 0) EV_DISABLE or EV_CLEAR else EV_ADD or EV_CLEAR or EV_ENABLE // or EV_ONESHOT
 
             event.filter = (if (n == 0) EVFILT_EMPTY else n).convert()
             event.flags = flags.convert()
@@ -86,15 +86,17 @@ class MacosSelector : AbstractSelector() {
         }
     }
 
-    private val kqueueNative = kqueue()//epoll_create(1000)!!
+    private val kqueueNative = kqueue() // epoll_create(1000)!!
     private var eventCount = 0
+
     init {
         if (kqueueNative == -1) {
             throw IOException("Can't init kqueue. errno: $errno")
         }
     }
+
     private var c = 0
-    private val list = nativeHeap.allocArray<kevent>(1000)//nativeHeap.allocArray<epoll_event>(1000)
+    private val list = nativeHeap.allocArray<kevent>(1000) // nativeHeap.allocArray<epoll_event>(1000)
     private val keys = HashSet<MacosKey>()
     private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
         private val event = object : NativeKeyEvent {
@@ -167,7 +169,6 @@ class MacosSelector : AbstractSelector() {
     override val nativeSelectedKeys: Iterator<NativeKeyEvent>
         get() = nativeSelectedKeys2
 
-
     override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
         val event = nativeHeap.alloc<kevent>()
         val key = MacosKey(event, kqueueNative, attachment, socket)
@@ -190,7 +191,7 @@ class MacosSelector : AbstractSelector() {
         if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
             throw IOException("Can't set filter of kevent mode to 0b${mode.toUInt().toString(2)}, errno: $errno")
         }
-        //key.listensFlag = mode
+        // key.listensFlag = mode
         return key
     }
 
@@ -250,7 +251,6 @@ class MacosSelector : AbstractSelector() {
                     func(key, Selector.EVENT_ERROR)
                 }
             }
-
         }
         return count
     }
@@ -276,7 +276,6 @@ class MacosSelector : AbstractSelector() {
         nativeHeap.free(list)
     }
 }
-
 
 private fun epollNativeToCommon(mode: Int): Int {
     var events = 0

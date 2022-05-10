@@ -9,6 +9,7 @@ actual interface SelectedEvents : Closeable, Iterable<Selector.KeyEvent> {
     var eventCount: Int
     val maxElements: Int
     var selector: MingwSelector?
+
     actual companion object {
         actual fun create(maxEvents: Int): SelectedEvents = MingwSelectedEvents(maxEvents)
     }

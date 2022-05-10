@@ -2,7 +2,6 @@ package pw.binom.mq.nats.client
 
 import kotlinx.serialization.json.*
 import pw.binom.BINOM_VERSION
-import pw.binom.ByteBuffer
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.SocketClosedException
@@ -71,8 +70,6 @@ class NatsRawConnection(
                 writer.append(",\"user\":\"").append(user).append("\"")
                     .append(",\"pass\":\"").append(pass).append("\"")
             }
-
-
 
             writer.append("}\r\n")
             writer.flush()
@@ -149,10 +146,10 @@ class NatsRawConnection(
         if (replyTo != null) {
             writer.append(" ").append(replyTo)
         }
-        writer.append(" ").append((data?.remaining ?: 0).toString()).append("\r\n")
+        writer.append(" ").append((data?.remaining123 ?: 0).toString()).append("\r\n")
         writer.flush()
         if (data != null) {
-            while (data.remaining > 0) {
+            while (data.remaining123 > 0) {
                 writer.write(data)
             }
         }

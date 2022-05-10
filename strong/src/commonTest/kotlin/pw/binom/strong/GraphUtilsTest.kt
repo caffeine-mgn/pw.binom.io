@@ -5,7 +5,7 @@ import kotlin.test.fail
 
 class GraphUtilsTest {
 
-    class Node(val id:Int) {
+    class Node(val id: Int) {
         val deps = ArrayList<Node>()
         override fun toString(): String = "$id"
     }
@@ -22,8 +22,8 @@ class GraphUtilsTest {
         try {
             GraphUtils.buildDependencyGraph(listOf(n0, n1, n2)) { it.deps }
             fail()
-        } catch (e:GraphUtils.CycleException){
-            //Do nothing
+        } catch (e: GraphUtils.CycleException) {
+            // Do nothing
         }
     }
 }

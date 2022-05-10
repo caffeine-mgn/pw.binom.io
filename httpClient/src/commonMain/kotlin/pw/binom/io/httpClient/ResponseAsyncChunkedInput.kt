@@ -1,9 +1,9 @@
 package pw.binom.io.httpClient
 
-import pw.binom.AsyncInput
-import pw.binom.net.URL
+import pw.binom.io.AsyncInput
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncChunkedInput
+import pw.binom.net.URL
 import pw.binom.skipAll
 
 class ResponseAsyncChunkedInput(

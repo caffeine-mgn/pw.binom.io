@@ -1,8 +1,8 @@
 package pw.binom.network
 
 import kotlinx.cinterop.convert
-import platform.linux.internal_isBigEndian
 import platform.linux.*
+import platform.linux.internal_isBigEndian
 import platform.posix.*
 import pw.binom.Environment
 
@@ -23,7 +23,6 @@ actual val Long.hton: Long
 
 actual val Long.ntoh: Long
     get() = internal_ntohll(convert()).convert()
-
 
 actual val Environment.isBigEndian2: Boolean
     get() = internal_isBigEndian() == 1.toUByte()

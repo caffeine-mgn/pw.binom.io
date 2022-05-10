@@ -3,8 +3,8 @@ package pw.binom.io.file
 import kotlinx.cinterop.convert
 import platform.posix.*
 import platform.windows.GetLastError
-import pw.binom.ByteBuffer
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 import pw.binom.io.ClosedException
 import pw.binom.io.IOException
@@ -57,7 +57,7 @@ actual class FileChannel actual constructor(
         if (feof(handler) != 0)
             return 0
         val l = dest.refTo(dest.position) { destPtr ->
-            fread(destPtr, 1.convert(), dest.remaining.convert(), handler).convert<Int>()
+            fread(destPtr, 1.convert(), dest.remaining123.convert(), handler).convert<Int>()
         } ?: 0
         dest.position += l
         return l

@@ -6,7 +6,7 @@ data class BasicAuth(val login: String, val password: String) {
     companion object
 
     val base64
-        get() = Base64.encode("${login}:${password}".encodeToByteArray())
+        get() = Base64.encode("$login:$password".encodeToByteArray())
 
     val headerValue
         get() = "Basic $base64"

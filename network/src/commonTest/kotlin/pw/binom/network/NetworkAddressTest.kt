@@ -2,7 +2,10 @@ package pw.binom.network
 
 import pw.binom.nextUuid
 import kotlin.random.Random
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class NetworkAddressTest {
 

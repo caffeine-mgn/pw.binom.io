@@ -17,7 +17,6 @@ class DataRowMessage : KindedMessage {
 
     var data: Array<ByteArray?> = emptyArray()
 
-
     companion object {
         suspend fun read(ctx: PackageReader): DataRowMessage {
             val columnCount = ctx.input.readShort(ctx.buf16)

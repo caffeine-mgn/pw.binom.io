@@ -2,7 +2,7 @@ package pw.binom.db.sqlite
 
 import kotlinx.coroutines.withContext
 import pw.binom.UUID
-import pw.binom.concurrency.*
+import pw.binom.concurrency.Worker
 import pw.binom.date.Date
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
@@ -16,10 +16,6 @@ class AsyncPreparedStatementAdapter(
     val worker: Worker,
     override val connection: AsyncConnection,
 ) : AsyncPreparedStatement {
-
-    init {
-        neverFreeze()
-    }
 
 //    override suspend fun set(index: Int, value: BigInteger) {
 //        val ref = ref

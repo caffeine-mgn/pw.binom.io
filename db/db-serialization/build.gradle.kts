@@ -1,20 +1,10 @@
-import pw.binom.baseStaticLibConfig
 import pw.binom.eachKotlinTest
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("kotlinx-serialization")
     id("com.bmuschko.docker-remote-api")
-//    id("com.bnorm.template.kotlin-ir-plugin")
-}
-
-//template {
-//    companionProcessing.set(false)
-//    valueClassProcessing.set(false)
-//}
-
-apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+    id("maven-publish")
 }
 
 kotlin {
@@ -31,7 +21,6 @@ kotlin {
         linuxArm64()
     }
     macosX64()
-    baseStaticLibConfig()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -114,4 +103,4 @@ tasks {
     }
 }
 
-apply<pw.binom.plugins.DocsPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()

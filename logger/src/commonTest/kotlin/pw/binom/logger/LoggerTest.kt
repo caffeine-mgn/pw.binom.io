@@ -1,6 +1,5 @@
 package pw.binom.logger
 
-import pw.binom.concurrency.sleep
 import kotlin.test.Test
 import kotlin.test.assertSame
 

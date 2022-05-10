@@ -1,10 +1,12 @@
 package pw.binom.io.http
 
-import pw.binom.*
+import pw.binom.NullAsyncOutput
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
+import pw.binom.copyTo
 import pw.binom.io.*
 import pw.binom.pool.ObjectPool
+import pw.binom.skipAll
 
 class EndState {
     enum class Type {
@@ -18,8 +20,6 @@ class EndState {
     override fun toString(): String {
         return "EndState(limit=$limit, type=$type, skip=$skip)"
     }
-
-
 }
 
 internal const val MINUS = '-'.code.toByte()
@@ -130,7 +130,7 @@ open class AsyncMultipartInput(
         get() = _headers
 //    private var nextBlockReady = false
 
-    suspend open fun next(): Boolean {
+    open suspend fun next(): Boolean {
         if (first) {
             fill()
             first = false
@@ -151,12 +151,12 @@ open class AsyncMultipartInput(
             _headers.clear()
         }
 
-        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining == 0)
+        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining123 == 0)
             return false
-        if (buffer.remaining == 0) {
+        if (buffer.remaining123 == 0) {
             fill()
         }
-        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining == 0)
+        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining123 == 0)
             return false
 
         val head = reader.readln() ?: throw IOException("Can't read part data header")
@@ -221,7 +221,7 @@ open class AsyncMultipartInput(
     }
 
     val isBlockEof
-        get() = buffer.remaining == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)
+        get() = buffer.remaining123 == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)
 
     suspend fun readText(charset: Charset = Charsets.UTF8) =
         bufferedReader(closeParent = false, charset = charset).use { it.readText() }

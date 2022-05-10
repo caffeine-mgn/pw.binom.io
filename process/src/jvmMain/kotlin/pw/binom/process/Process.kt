@@ -1,8 +1,8 @@
 package pw.binom.process
 
-import pw.binom.ByteBuffer
-import pw.binom.Input
-import pw.binom.Output
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Input
+import pw.binom.io.Output
 import java.io.File
 import java.nio.channels.Channels
 

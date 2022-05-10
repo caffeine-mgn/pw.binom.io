@@ -10,7 +10,6 @@ actual val Environment.os: OS
 actual val Environment.isBigEndian: Boolean
     get() = isBigEndianPrivate
 
-
 actual val Environment.platform: Platform
     get() = Platform.MINGW_X64
 

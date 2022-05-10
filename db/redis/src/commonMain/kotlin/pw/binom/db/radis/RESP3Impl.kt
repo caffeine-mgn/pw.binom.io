@@ -1,14 +1,9 @@
 package pw.binom.db.radis
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.EOFException
-import pw.binom.io.bufferedWriter
+import pw.binom.io.*
 
 class RESP3Impl(
     val output: AsyncOutput,
@@ -307,7 +302,7 @@ class RESP3Impl(
     }
 
     suspend fun writeDataString(data: ByteBuffer) {
-        writer.append("$").append(data.remaining).append("\r\n")
+        writer.append("$").append(data.remaining123).append("\r\n")
         writer.flush()
         output.writeFully(data)
         output.flush()

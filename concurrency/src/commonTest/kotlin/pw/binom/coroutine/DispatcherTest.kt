@@ -9,19 +9,20 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class DispatcherTest {
-    class MyClass{
+    class MyClass {
         var i = 0
     }
+
     @Test
-    fun dd()= runBlocking{
+    fun dd() = runBlocking {
         val c = MyClass()
         c.neverFreeze()
         GlobalScope.launch {
             suspendCancellableCoroutine<Int> {
                 c.i++
-                it.resume(0,null)
+                it.resume(0, null)
             }
         }.join()
-        assertEquals(1,c.i)
+        assertEquals(1, c.i)
     }
 }

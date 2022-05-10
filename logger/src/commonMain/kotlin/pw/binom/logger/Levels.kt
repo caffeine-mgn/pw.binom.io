@@ -36,7 +36,6 @@ private object INFO_LEVEL : Logger.Level {
 val Logger.Companion.INFO: Logger.Level
     get() = INFO_LEVEL
 
-
 suspend fun Logger.info(text: String, trace: String? = null, exception: Throwable? = null) {
     log(Logger.INFO, text = text, trace = trace, exception = exception)
 }

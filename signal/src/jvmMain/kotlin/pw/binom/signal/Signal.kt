@@ -1,4 +1,5 @@
 @file:JvmName("SignalJvmKt")
+
 package pw.binom.signal
 
 import sun.misc.SignalHandler

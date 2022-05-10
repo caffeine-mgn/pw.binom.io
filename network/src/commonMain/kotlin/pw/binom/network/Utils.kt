@@ -1,8 +1,8 @@
 @file:JvmName("JvmUtils")
+
 package pw.binom.network
 
 import pw.binom.Environment
-import pw.binom.atomic.AtomicLong
 import kotlin.jvm.JvmName
 
 expect val Short.hton: Short

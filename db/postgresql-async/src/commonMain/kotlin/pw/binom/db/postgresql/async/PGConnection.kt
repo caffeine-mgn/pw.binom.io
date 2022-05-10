@@ -1,7 +1,6 @@
 package pw.binom.db.postgresql.async
 
 import kotlinx.coroutines.Dispatchers
-import pw.binom.*
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
@@ -17,7 +16,9 @@ import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
 import pw.binom.db.postgresql.async.messages.frontend.Terminate
 import pw.binom.io.*
 import pw.binom.network.*
-import pw.binom.network.Network
+import pw.binom.writeByte
+import pw.binom.writeInt
+import pw.binom.writeShort
 
 class PGConnection private constructor(
     val connection: TcpConnection,

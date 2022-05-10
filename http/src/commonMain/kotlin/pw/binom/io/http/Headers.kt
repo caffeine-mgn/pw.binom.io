@@ -43,7 +43,7 @@ interface Headers : Map<String, List<String>> {
         get() {
             val txt = getLast(CONTENT_LENGTH) ?: return null
             return txt.toULongOrNull()
-                ?: throw IllegalStateException("Invalid header \"${CONTENT_LENGTH}:${txt}\"")
+                ?: throw IllegalStateException("Invalid header \"$CONTENT_LENGTH:${txt}\"")
         }
 
     val transferEncoding: String?
@@ -79,12 +79,10 @@ interface Headers : Map<String, List<String>> {
             } else {
                 charset.substring(0, s).trim()
             }
-
         }
 
     val names
         get() = keys
-
 
     val location: String?
         get() = getSingleOrNull(LOCATION)
@@ -206,7 +204,7 @@ fun headersOf(vararg headers: Pair<String, String>): Headers {
 
 fun emptyHeaders() = EmptyHeaders
 
-//fun Headers.getCookies() =
+// fun Headers.getCookies() =
 //    this[Headers.COOKIE]
 //        ?.asSequence()
 //        ?.flatMap { it.splitToSequence("; ") }

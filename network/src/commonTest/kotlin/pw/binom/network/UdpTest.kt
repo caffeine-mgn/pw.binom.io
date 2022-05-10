@@ -2,9 +2,8 @@ package pw.binom.network
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.alloc
+import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
 import pw.binom.io.bufferedReader
 import pw.binom.io.readText

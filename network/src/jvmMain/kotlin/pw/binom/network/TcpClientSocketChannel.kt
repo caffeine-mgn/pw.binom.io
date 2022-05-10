@@ -1,6 +1,6 @@
 package pw.binom.network
 
-import pw.binom.ByteBuffer
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 import java.io.IOException
 import java.nio.channels.NotYetConnectedException

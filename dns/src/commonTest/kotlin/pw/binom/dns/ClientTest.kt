@@ -7,6 +7,7 @@ import pw.binom.*
 import pw.binom.dns.protocol.DnsHeader
 import pw.binom.dns.protocol.QueryPackage
 import pw.binom.dns.protocol.ResourcePackage
+import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedInput
 import pw.binom.io.bufferedOutput
 import pw.binom.network.NetworkAddress

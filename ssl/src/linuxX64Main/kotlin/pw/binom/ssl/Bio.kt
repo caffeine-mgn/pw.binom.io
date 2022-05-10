@@ -2,10 +2,11 @@ package pw.binom.ssl
 
 import kotlinx.cinterop.*
 import platform.openssl.*
-import pw.binom.*
-import pw.binom.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+import pw.binom.io.Output
+import pw.binom.io.use
 
 value class Bio(val self: CPointer<BIO>) : Closeable {
     fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
@@ -104,7 +105,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     }
 
     fun copyTo(stream: Output, bufferLength: Int = DEFAULT_BUFFER_SIZE) {
-        ByteBuffer.alloc(bufferLength) { buf ->
+        ByteBuffer.alloc(bufferLength).use { buf ->
             while (!eof) {
                 buf.clear()
                 read(buf)

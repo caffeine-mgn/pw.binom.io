@@ -1,7 +1,7 @@
 package pw.binom.smtp
 
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
+import pw.binom.io.AsyncOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.ByteBufferPool
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets

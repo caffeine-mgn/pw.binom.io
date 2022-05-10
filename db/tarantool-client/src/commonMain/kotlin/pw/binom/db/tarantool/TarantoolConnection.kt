@@ -3,14 +3,17 @@ package pw.binom.db.tarantool
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import pw.binom.ByteBuffer
-import pw.binom.alloc
 import pw.binom.asUTF8String
 import pw.binom.db.tarantool.protocol.Code
 import pw.binom.db.tarantool.protocol.InternalProtocolUtils
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.AsyncCloseable
-import pw.binom.network.*
+import pw.binom.io.ByteBuffer
+import pw.binom.io.use
+import pw.binom.network.Network
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkManager
+import pw.binom.network.tcpConnect
 
 interface TarantoolConnection : AsyncCloseable {
     companion object {
@@ -21,7 +24,7 @@ interface TarantoolConnection : AsyncCloseable {
             password: String?
         ): TarantoolConnectionImpl {
             val con = manager.tcpConnect(address)
-            ByteBuffer.alloc(64) { buf ->
+            ByteBuffer.alloc(64).use { buf ->
                 var connection: TarantoolConnectionImpl? = null
                 try {
                     con.readFully(buf)

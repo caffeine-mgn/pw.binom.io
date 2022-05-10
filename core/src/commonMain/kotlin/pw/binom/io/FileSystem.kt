@@ -1,7 +1,5 @@
 package pw.binom.io
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
 import pw.binom.net.Path
 import pw.binom.net.toPath
 

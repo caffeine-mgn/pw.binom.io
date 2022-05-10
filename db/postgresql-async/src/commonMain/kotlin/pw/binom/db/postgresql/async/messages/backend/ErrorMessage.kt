@@ -33,5 +33,4 @@ class ErrorMessage : KindedMessage {
             return msg
         }
     }
-
 }

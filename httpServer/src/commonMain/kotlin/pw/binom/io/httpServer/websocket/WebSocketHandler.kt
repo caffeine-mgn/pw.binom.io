@@ -1,16 +1,7 @@
 package pw.binom.io.httpServer.websocket
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
-import pw.binom.io.IOException
-import pw.binom.crypto.Sha1MessageDigest
-import pw.binom.io.http.Headers
-import pw.binom.io.http.websocket.HandshakeSecret
-import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.network.TcpConnection
-
-//@Deprecated("Not use it")
-//abstract class WebSocketHandler : Handler3Deprecated {
+// @Deprecated("Not use it")
+// abstract class WebSocketHandler : Handler3Deprecated {
 //
 //    interface ConnectRequest {
 //        val uri: String
@@ -100,9 +91,9 @@ import pw.binom.network.TcpConnection
 //                headers = req.headers
 //            )
 //            connected(con)
-////            if (con.currentConnection?.incomeMessageListener != null) {
-////                suspendCoroutine<Unit> { }
-////            }
+// //            if (con.currentConnection?.incomeMessageListener != null) {
+// //                suspendCoroutine<Unit> { }
+// //            }
 //        } catch (e: RejectedException) {
 //            e.printStackTrace()
 //            resp.status = 403
@@ -111,4 +102,4 @@ import pw.binom.network.TcpConnection
 //            return
 //        }
 //    }
-//}
+// }

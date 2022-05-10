@@ -17,11 +17,11 @@ class LockTest {
         val b1 = w1.execute {
             repeat(10) {
                 l.synchronize {
-                    if (atom.value == 0) {
-                        atom.value = 1
+                    if (atom.getValue() == 0) {
+                        atom.setValue(1)
                         println("OK-1")
                         sleep(50)
-                        atom.value = 0
+                        atom.setValue(0)
                     } else {
                         println("ERROR-1")
                         errorCount.increment()
@@ -30,15 +30,14 @@ class LockTest {
             }
         }
 
-        val b2 = w2.execute(Unit)
-        {
+        val b2 = w2.execute(Unit) {
             repeat(10) {
                 l.synchronize {
-                    if (atom.value == 0) {
-                        atom.value = 1
+                    if (atom.getValue() == 0) {
+                        atom.setValue(1)
                         println("OK-2")
                         sleep(100)
-                        atom.value = 0
+                        atom.setValue(0)
                     } else {
                         println("ERROR-2")
                         errorCount.increment()
@@ -51,6 +50,6 @@ class LockTest {
         while (!b1.isDone || !b2.isDone) {
             sleep(100)
         }
-        assertEquals(0, errorCount.value)
+        assertEquals(0, errorCount.getValue())
     }
 }

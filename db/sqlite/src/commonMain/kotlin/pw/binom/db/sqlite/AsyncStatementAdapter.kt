@@ -1,7 +1,7 @@
 package pw.binom.db.sqlite
 
 import kotlinx.coroutines.withContext
-import pw.binom.concurrency.*
+import pw.binom.concurrency.Worker
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.AsyncStatement
@@ -36,6 +36,4 @@ class AsyncStatementAdapter(
         }
         ref.close()
     }
-
-
 }

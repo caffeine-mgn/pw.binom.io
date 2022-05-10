@@ -1,10 +1,9 @@
 package pw.binom.signal
 
 import kotlinx.cinterop.staticCFunction
+import platform.posix.usleep
 import platform.windows.*
 import kotlin.native.concurrent.AtomicInt
-import platform.posix.usleep
-import pw.binom.signal.Signal
 
 private var signalListening = AtomicInt(0)
 private val listeners = ArrayList<(Signal.Type) -> Unit>()

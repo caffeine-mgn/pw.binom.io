@@ -35,5 +35,4 @@ class NoticeMessage : KindedMessage {
             return msg
         }
     }
-
 }

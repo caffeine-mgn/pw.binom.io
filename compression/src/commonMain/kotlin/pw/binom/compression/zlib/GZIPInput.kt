@@ -1,22 +1,18 @@
 package pw.binom.compression.zlib
 
-import pw.binom.AsyncInput
-import pw.binom.ByteBuffer
-import pw.binom.Input
-import pw.binom.io.CRC32
-import pw.binom.io.CheckedInput
-import pw.binom.io.EOFException
-import pw.binom.io.IOException
+import pw.binom.crc.CRC32
+import pw.binom.io.*
 
 class GZIPInput(
-        stream: Input,
-        bufferSize: Int = 512,
-        closeStream: Boolean = false
+    stream: Input,
+    bufferSize: Int = 512,
+    closeStream: Boolean = false
 ) : InflateInput(
-        stream = stream,
-        bufferSize = bufferSize,
-        wrap = false,
-        closeStream = closeStream) {
+    stream = stream,
+    bufferSize = bufferSize,
+    wrap = false,
+    closeStream = closeStream
+) {
     private val crc = CRC32()
     private val tmpbuf = ByteBuffer.alloc(128)
     private val tt = ByteBuffer.alloc(2)

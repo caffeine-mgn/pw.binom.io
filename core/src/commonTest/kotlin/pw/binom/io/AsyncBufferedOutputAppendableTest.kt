@@ -24,7 +24,7 @@ class AsyncBufferedOutputAppendableTest {
                 println("Result: ${out1.toByteArray().decodeToString()}")
                 out1.data.flip()
                 val arr = txt.toCharArray()
-                assertEquals(arr.size * 2 + 1, out1.data.remaining)
+                assertEquals(arr.size * 2 + 1, out1.data.remaining123)
                 for (i in 0 until arr.size) {
                     assertEquals(
                         arr[i].toByte(),

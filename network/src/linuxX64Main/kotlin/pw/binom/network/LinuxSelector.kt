@@ -1,9 +1,16 @@
 package pw.binom.network
 
-import kotlinx.cinterop.*
+import kotlinx.cinterop.reinterpret
 import platform.linux.*
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
+import kotlin.collections.Collection
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+import kotlin.collections.forEach
+import kotlin.collections.isNotEmpty
+import kotlin.collections.plusAssign
+import kotlin.collections.set
 
 class LinuxSelector : AbstractSelector() {
 

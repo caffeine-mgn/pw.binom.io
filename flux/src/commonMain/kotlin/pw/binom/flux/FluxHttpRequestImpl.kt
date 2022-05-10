@@ -1,8 +1,8 @@
 package pw.binom.flux
 
 import kotlinx.serialization.KSerializer
-import pw.binom.AsyncInput
 import pw.binom.io.AsyncChannel
+import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncReader
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.WebSocketConnection

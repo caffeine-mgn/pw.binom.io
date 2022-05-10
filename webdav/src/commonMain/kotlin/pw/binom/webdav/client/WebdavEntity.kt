@@ -1,8 +1,5 @@
 package pw.binom.webdav.client
 
-import pw.binom.AsyncInput
-import pw.binom.AsyncOutput
-import pw.binom.ByteBuffer
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.addHeader
