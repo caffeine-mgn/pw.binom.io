@@ -54,7 +54,7 @@ internal fun wildcardMatch(string: String, wildcard: String): Boolean {
 internal fun pathMatch(
     path: String,
     mask: String,
-    func: (key: String, value: String) -> Unit = { _, _ -> Unit }
+    func: (key: String, value: String) -> Unit = { _, _ -> }
 ): Boolean {
     var text = 0
     var wild = 0

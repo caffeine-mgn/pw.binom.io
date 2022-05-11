@@ -33,7 +33,7 @@ interface KindedMessage {
                 MessageKinds.ParseComplete -> ParseCompleteMessage.read(ctx)
                 MessageKinds.Notice -> NoticeMessage.read(ctx)
                 MessageKinds.NotificationResponse -> NotificationResponseMessage.read(ctx)
-                else -> throw IOException("Unknown CMD #$cmd (${cmd.toChar()})")
+                else -> throw IOException("Unknown CMD #$cmd (${cmd.toInt().toChar()})")
             }
         }
     }

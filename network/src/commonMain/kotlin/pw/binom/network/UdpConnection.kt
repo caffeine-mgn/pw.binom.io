@@ -69,7 +69,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
                 return
             }
         }
-        if (sendData.data!!.remaining123 == 0) {
+        if (sendData.data!!.remaining == 0) {
             val con = sendData.continuation!!
             sendData.reset()
             key.removeListen(Selector.OUTPUT_READY)
@@ -105,7 +105,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         }
         val readed = runCatching { channel.recv(readData.data!!, readData.address) }
         if (readData.full) {
-            if (readData.data!!.remaining123 == 0) {
+            if (readData.data!!.remaining == 0) {
                 val con = readData.continuation!!
                 readData.reset()
                 key.removeListen(Selector.INPUT_READY)
@@ -133,7 +133,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
         }
-        if (dest.remaining123 == 0) {
+        if (dest.remaining == 0) {
             return 0
         }
         val r = channel.recv(dest, address)
@@ -160,7 +160,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
     }
 
     suspend fun write(data: ByteBuffer, address: NetworkAddress): Int {
-        val l = data.remaining123
+        val l = data.remaining
         if (l == 0) {
             return 0
         }

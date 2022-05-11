@@ -25,7 +25,7 @@ class CharBufferTest {
 
     @Test
     fun substringTest2() {
-        val v = 'Я'.toInt()
+        val v = 'Я'.code
         val v0 = v shr 8
         val v1 = v and 0xff
         println("0->$v0, 1->$v1")

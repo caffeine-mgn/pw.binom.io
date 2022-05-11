@@ -6,9 +6,10 @@ import pw.binom.xml.sax.AsyncXmlRootWriterVisitor
 import pw.binom.xml.sax.AsyncXmlVisitor
 
 private class TagWriteContext constructor(
-        private val parent: TagWriteContext?,
-        private val context: Context,
-        private val writerVisitor: AsyncXmlVisitor) : NodeBodyWriter {
+    private val parent: TagWriteContext?,
+    private val context: Context,
+    private val writerVisitor: AsyncXmlVisitor
+) : NodeBodyWriter {
     private val prefixMap = HashMap<String, String>()
 
     private fun prefix(uri: String): String? = prefixMap[uri] ?: parent?.prefix(uri)
@@ -59,7 +60,6 @@ private class TagWriteContext constructor(
         } else {
             writerVisitor.attribute(name, value)
         }
-
     }
 
     override suspend fun value(text: String) {

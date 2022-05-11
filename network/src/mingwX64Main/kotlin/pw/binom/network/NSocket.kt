@@ -178,7 +178,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                 memset(sin.ptr, 0, sizeOf<sockaddr_in6>().convert())
                 val addrlen = alloc<socklen_tVar>()
                 addrlen.value = sizeOf<sockaddr_in6>().convert()
-                val r = platform.windows.getsockname(native, sin.ptr.reinterpret(), addrlen.ptr)
+                val r = platform.posix.getsockname(native, sin.ptr.reinterpret(), addrlen.ptr)
                 if (r == 0) {
                     ntohs(sin.sin6_port).toInt()
                 } else {
@@ -402,7 +402,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
     }
 }
 
-fun platform.linux.SOCKET.nativeClose() {
+fun SOCKET.nativeClose() {
     shutdown(this, SD_BOTH)
     closesocket(this)
 }

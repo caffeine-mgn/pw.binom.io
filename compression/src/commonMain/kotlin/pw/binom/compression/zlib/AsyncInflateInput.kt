@@ -41,11 +41,11 @@ open class AsyncInflateInput(
         if (eof) {
             return
         }
-        if (buffer.remaining123 > 0) {
+        if (buffer.remaining > 0) {
             return
         }
         buffer.clear()
-        while (buffer.remaining123 != 0) {
+        while (buffer.remaining != 0) {
             val r = stream.read(buffer)
             if (r == 0) {
                 eof = true
@@ -62,17 +62,17 @@ open class AsyncInflateInput(
         checkBusy()
         try {
             busy = true
-            val l = dest.remaining123
+            val l = dest.remaining
             while (true) {
                 full()
-                if (buffer.remaining123 == 0 || dest.remaining123 == 0) {
+                if (buffer.remaining == 0 || dest.remaining == 0) {
                     break
                 }
                 val r = inflater.inflate(buffer, dest)
                 if (r == 0)
                     break
             }
-            return l - dest.remaining123
+            return l - dest.remaining
         } finally {
             busy = false
         }

@@ -39,5 +39,4 @@ class SyncXmlRootWriterVisitor(val appendable: Appendable) : SyncXmlVisitor {
             throw IllegalStateException("Root Node already closed")
         return SyncXmlWriterVisitor(name, appendable)
     }
-
 }

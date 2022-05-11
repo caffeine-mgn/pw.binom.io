@@ -14,8 +14,8 @@ interface MessageDigest {
     }
 
     fun update(buffer: ByteBuffer) {
-        while (buffer.remaining123 > 0) {
-            update(buffer.get())
+        while (buffer.remaining > 0) {
+            update(buffer.getByte())
         }
     }
 

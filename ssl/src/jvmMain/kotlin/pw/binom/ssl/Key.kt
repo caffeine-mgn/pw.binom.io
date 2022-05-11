@@ -3,7 +3,6 @@ package pw.binom.ssl
 import org.bouncycastle.crypto.encodings.PKCS1Encoding
 import org.bouncycastle.crypto.engines.RSAEngine
 import java.security.KeyPairGenerator
-import java.security.spec.RSAPublicKeySpec
 
 actual fun Key.Companion.generateRsa(size: Int): Key.Pair {
     val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
@@ -11,7 +10,7 @@ actual fun Key.Companion.generateRsa(size: Int): Key.Pair {
     val pair = keyPairGenerator.generateKeyPair()
     println("")
     val bbbb = pair.public
-    val bb = bbbb.getEncoded()
+    val bb = bbbb.encoded
     val encode = PKCS1Encoding(RSAEngine())
 //    encode.init(true,)
     return Key.Pair(

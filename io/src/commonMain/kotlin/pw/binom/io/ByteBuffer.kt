@@ -1,4 +1,5 @@
 @file:JvmName("ByteBufferCommonKt")
+
 package pw.binom.io
 
 import kotlin.contracts.ExperimentalContracts
@@ -8,24 +9,33 @@ import kotlin.jvm.JvmName
 /**
  * A part of memory. Also contents current read/write state
  */
-expect class ByteBuffer : Input, Output, Closeable, Buffer {
+expect class ByteBuffer : Channel, Buffer {
     companion object {
         fun alloc(size: Int): ByteBuffer
     }
 
     fun realloc(newSize: Int): ByteBuffer
     fun skip(length: Long): Long
-    fun get(): Byte
     fun put(value: Byte)
-    fun get(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
+    fun getByte(): Byte
+    operator fun get(index: Int): Byte
+    fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
 
     /**
-     * Returns last byte. Work as [get] but don'tm move position when he reads
+     * Returns last byte. Work as [getByte] but don'tm move position when he reads
      */
     fun peek(): Byte
     fun reset(position: Int, length: Int): ByteBuffer
-    fun write(data: ByteArray, offset: Int = 0, length: Int = minOf(data.size - offset, remaining123)): Int
-    operator fun get(index: Int): Byte
+    fun write(
+        data: ByteArray,
+        offset: Int = 0, /*= 0*/
+        length: Int = calcLength(
+            self = this,
+            data = data,
+            offset = offset
+        )/* = minOf(data.size - offset, remaining)*/
+    ): Int
+
     operator fun set(index: Int, value: Byte)
 
     /**
@@ -36,6 +46,8 @@ expect class ByteBuffer : Input, Output, Closeable, Buffer {
     fun subBuffer(index: Int, length: Int): ByteBuffer
     fun free()
 }
+
+internal fun calcLength(self: ByteBuffer, data: ByteArray, offset: Int) = minOf(data.size - offset, self.remaining)
 
 fun ByteBuffer.empty(): ByteBuffer {
     position = 0

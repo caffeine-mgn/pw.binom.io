@@ -8,12 +8,12 @@ import pw.binom.set
 import pw.binom.wrap
 
 private val ZERO_BYTE = ByteBuffer.alloc(100).also {
-    while (it.remaining123 > 0)
+    while (it.remaining > 0)
         it.put(0)
 }
 
 fun ByteBuffer.writeZero() {
-    var s = remaining123
+    var s = remaining
     while (s > 0) {
         ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
         val b = write(ZERO_BYTE)

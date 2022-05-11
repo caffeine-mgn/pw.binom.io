@@ -12,7 +12,8 @@ class AsyncXmlLexerTest {
         val lexer = AsyncXmlLexer(
             """<name="KDE"/><title>
 &quot;KDE-DE&quot;
-</title>""".trimMargin().asReader().asAsync()
+</title>
+            """.trimMargin().asReader().asAsync()
         )
         assertEquals("<", lexer.nextText())
         assertEquals("name", lexer.nextText())

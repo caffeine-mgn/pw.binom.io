@@ -7,7 +7,6 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.time.ExperimentalTime
 
 class NatsConnectorTest {
 

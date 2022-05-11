@@ -158,6 +158,7 @@ kotlin {
                 api(kotlin("test-annotations-common"))
 //                api(project(":concurrency"))
 //                api(project(":file"))
+                api(project(":charset"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }

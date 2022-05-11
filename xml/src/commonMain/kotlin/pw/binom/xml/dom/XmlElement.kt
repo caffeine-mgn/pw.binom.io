@@ -56,7 +56,6 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                     prefix[ns] = p
                 }
                 "$p:${it.key.name}"
-
             } ?: it.key.name
 
             visitor.attribute(key, it.value)
@@ -98,7 +97,6 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                     prefix[ns] = p!!
                 }
                 "$p:${it.tag}"
-
             } ?: it.tag
 
             it.accept(HashMap(prefix), visitor.subNode(key))
@@ -117,7 +115,6 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                     prefix[ns] = p
                 }
                 "$p:${it.key.name}"
-
             } ?: it.key.name
 
             visitor.attribute(key, it.value)
@@ -159,7 +156,6 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                     prefix[ns] = p!!
                 }
                 "$p:${it.tag}"
-
             } ?: it.tag
 
             it.accept(HashMap(prefix), visitor.subNode(key))

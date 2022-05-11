@@ -1,6 +1,7 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.Stack
+import pw.binom.set
 
 class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Input {
     var readRemaining = 0
@@ -13,7 +14,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 
         fun write(data: ByteBuffer): Int {
             checkClosed()
-            val len = minOf(writeRemaining, data.remaining123)
+            val len = minOf(writeRemaining, data.remaining)
             if (len == 0)
                 return 0
 //            this.data.writeTo(writePosition, data, offset, len)
@@ -44,7 +45,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 
         fun read(data: ByteBuffer): Int {
             checkClosed()
-            val len = minOf(readRemaining, data.remaining123)
+            val len = minOf(readRemaining, data.remaining)
             if (len == 0)
                 return 0
             try {
@@ -147,9 +148,9 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
-        if (data.remaining123 == 0)
+        if (data.remaining == 0)
             return 0
-        val len = data.remaining123
+        val len = data.remaining
         while (true) {
             val p = getReadyForWrite()
             val w = p.write(data)
@@ -183,10 +184,10 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (dest.remaining123 == 0)
+        if (dest.remaining == 0)
             return 0
         var read = 0
-        while (dest.remaining123 > 0) {
+        while (dest.remaining > 0) {
             val p = getReadyForRead() ?: return read
             val r = p.read(dest)
             read += r

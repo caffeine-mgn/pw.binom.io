@@ -34,7 +34,7 @@ class TestWriteRead {
         f.openWrite().use {
             data.wrap { dataBuf ->
                 assertEquals(dataBuf.capacity, it.write(dataBuf))
-                assertEquals(0, dataBuf.remaining123)
+                assertEquals(0, dataBuf.remaining)
             }
 //            data.forEach { value ->
 //                it.writeByte(buf, value)

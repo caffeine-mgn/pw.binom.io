@@ -121,8 +121,8 @@ class AsyncSSLChannel private constructor(
     override suspend fun write(data: ByteBuffer): Int {
         if (eof)
             return 0
-        var len = data.remaining123
-        val length = data.remaining123
+        var len = data.remaining
+        val length = data.remaining
         var readed = 0
         LOOP@ while (len > 0) {
             val s = session.writeApp(data)
@@ -158,7 +158,7 @@ class AsyncSSLChannel private constructor(
             return 0
         sendAll()
         var readed = 0
-        LOOP@ while (dest.remaining123 > 0) {
+        LOOP@ while (dest.remaining > 0) {
             val s = session.readApp(dest)
             readed += s.bytes
             when (s.state) {

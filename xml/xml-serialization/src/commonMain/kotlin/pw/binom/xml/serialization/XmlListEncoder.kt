@@ -141,5 +141,4 @@ class XmlListEncoder(
         el.body = value
         el.parent = store
     }
-
 }

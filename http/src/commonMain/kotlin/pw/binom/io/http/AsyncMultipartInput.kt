@@ -151,12 +151,12 @@ open class AsyncMultipartInput(
             _headers.clear()
         }
 
-        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining123 == 0)
+        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining == 0)
             return false
-        if (buffer.remaining123 == 0) {
+        if (buffer.remaining == 0) {
             fill()
         }
-        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining123 == 0)
+        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining == 0)
             return false
 
         val head = reader.readln() ?: throw IOException("Can't read part data header")
@@ -221,7 +221,7 @@ open class AsyncMultipartInput(
     }
 
     val isBlockEof
-        get() = buffer.remaining123 == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)
+        get() = buffer.remaining == 0 && (endState.type == EndState.Type.BLOCK_EOF || endState.type == EndState.Type.DATA_EOF)
 
     suspend fun readText(charset: Charset = Charsets.UTF8) =
         bufferedReader(closeParent = false, charset = charset).use { it.readText() }

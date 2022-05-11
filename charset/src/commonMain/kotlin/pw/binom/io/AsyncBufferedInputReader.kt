@@ -1,9 +1,11 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.CharBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
+import pw.binom.empty
 import pw.binom.pool.ObjectPool
 
 open class AsyncBufferedInputReader protected constructor(
@@ -75,7 +77,7 @@ open class AsyncBufferedInputReader protected constructor(
         if (eof) {
             return false
         }
-        if (buffer.remaining123 > 0) {
+        if (buffer.remaining > 0) {
             buffer.compact()
         } else {
             buffer.clear()
@@ -89,9 +91,9 @@ open class AsyncBufferedInputReader protected constructor(
     }
 
     private suspend fun prepareBuffer() {
-        if (charBuffer.remaining123 == 0) {
+        if (charBuffer.remaining == 0) {
             full()
-            if (buffer.remaining123 == 0) {
+            if (buffer.remaining == 0) {
                 return
             }
             charBuffer.clear()
@@ -109,7 +111,7 @@ open class AsyncBufferedInputReader protected constructor(
         var counter = 0
         while (counter < length) {
             prepareBuffer()
-            if (charBuffer.remaining123 > 0) {
+            if (charBuffer.remaining > 0) {
                 counter += charBuffer.read(
                     array = dest,
                     offset = offset,
@@ -127,7 +129,7 @@ open class AsyncBufferedInputReader protected constructor(
         var exist = false
         LOOP@ while (true) {
             prepareBuffer()
-            if (charBuffer.remaining123 <= 0) {
+            if (charBuffer.remaining <= 0) {
                 break
             }
             for (i in charBuffer.position until charBuffer.limit) {
@@ -155,7 +157,7 @@ open class AsyncBufferedInputReader protected constructor(
 
     override suspend fun readChar(): Char? {
         prepareBuffer()
-        if (charBuffer.remaining123 == 0) {
+        if (charBuffer.remaining == 0) {
             return null
         }
         return charBuffer.get()

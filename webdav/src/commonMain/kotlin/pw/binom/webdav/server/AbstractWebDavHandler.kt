@@ -55,7 +55,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
             req.response().use { it.status = 404 }
             return
         }
-        val node = req.readText().use { it.xmlTree()!! }
+        val node = req.readText().use { it.xmlTree() }
         val resp = req.response()
 
         val properties =

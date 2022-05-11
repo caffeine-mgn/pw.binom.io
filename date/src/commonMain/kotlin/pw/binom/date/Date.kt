@@ -27,8 +27,10 @@ expect value class Date(val time: Long = nowTime) {
         ): Date
     }
 
-    fun calendar(timeZoneOffset: Int = Date.systemZoneOffset): Calendar
+    fun calendar(timeZoneOffset: Int = getSystemZoneOffset()): Calendar
 }
+
+internal fun getSystemZoneOffset() = Date.systemZoneOffset
 
 internal fun Date.Companion.new(calendar: Calendar) =
     of(

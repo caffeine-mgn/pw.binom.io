@@ -1,10 +1,12 @@
 package pw.binom.ssl
 
 import kotlinx.cinterop.*
-import platform.openssl.*
+import platform.openssl.MBSTRING_ASC
+import platform.openssl.X509_NAME
+import platform.openssl.X509_NAME_add_entry_by_txt
 import platform.posix.memcpy
 
-fun CPointer<X509_NAME>.addEntry(name:String,value:String){
+fun CPointer<X509_NAME>.addEntry(name: String, value: String) {
     memScoped {
         val value1 = allocArray<UByteVar>(value.length + 1)
         memcpy(value1, value.cstr, (value.length + 1).convert())
@@ -13,8 +15,8 @@ fun CPointer<X509_NAME>.addEntry(name:String,value:String){
     }
 }
 
-fun CPointer<X509_NAME>.addEntry(text:String){
-    val items = text.split("=",limit = 2)
+fun CPointer<X509_NAME>.addEntry(text: String) {
+    val items = text.split("=", limit = 2)
     addEntry(items[0], items[1])
 }
 

@@ -41,5 +41,4 @@ class AsyncXmlRootWriterVisitor(val appendable: AsyncAppendable) : AsyncXmlVisit
             throw IllegalStateException("Root Node already closed")
         return AsyncXmlWriterVisitor(name, appendable)
     }
-
 }

@@ -70,7 +70,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
             val r = dest.refTo(dest.position) { destPtr ->
                 ReadFile(
                     otherHandler, (destPtr).getPointer(this).reinterpret(),
-                    dest.remaining123.convert(), dwWritten.ptr, null
+                    dest.remaining.convert(), dwWritten.ptr, null
                 )
             } ?: 0
             if (r <= 0)

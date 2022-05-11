@@ -27,7 +27,7 @@ open class AsyncContentLengthInput(
         checkClosed()
         if (eof)
             return 0
-        val r = if ((contentLength - readed < dest.remaining123.toULong())) {
+        val r = if ((contentLength - readed < dest.remaining.toULong())) {
             val oldLimit = dest.limit
             dest.limit = (contentLength - readed).toInt()
             val l = stream.read(dest)

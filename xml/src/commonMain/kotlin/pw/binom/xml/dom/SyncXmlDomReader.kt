@@ -1,8 +1,8 @@
 package pw.binom.xml.dom
 
 import pw.binom.io.Reader
-import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.XML_NAMESPACE_PREFIX
+import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.sax.SyncXmlReaderVisitor
 import pw.binom.xml.sax.SyncXmlVisitor
 
@@ -16,7 +16,6 @@ class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, ta
          * value - prefix
          */
         var prefix = HashMap<String, String>()
-
 
         fun pool(uri: String) = pool.getOrPut(uri) { "ns${autoIterator++}" }
 

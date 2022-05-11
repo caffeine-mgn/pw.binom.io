@@ -59,7 +59,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         checkLocked()
         checkClosed()
 
-        val needWrite = size - (this.data.remaining123)
+        val needWrite = size - (this.data.remaining)
 
         if (needWrite > 0) {
             val newSize = maxOf(
@@ -76,7 +76,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
 
     override fun write(data: ByteBuffer): Int {
         checkLocked()
-        alloc(data.remaining123)
+        alloc(data.remaining)
         val l = this.data.write(data)
         _wrote += l
         return l

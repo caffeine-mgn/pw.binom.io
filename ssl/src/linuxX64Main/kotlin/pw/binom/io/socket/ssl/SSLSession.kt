@@ -134,7 +134,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
     }
 
     actual fun writeNet(dst: ByteBuffer): Int {
-        var len = dst.remaining123
+        var len = dst.remaining
         var off = dst.position
         var readed = 0
 
@@ -168,7 +168,7 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
             )
         }
         val n = dst.ref { dstPtr, remaining ->
-            SSL_read(ssl, dstPtr, dst.remaining123)
+            SSL_read(ssl, dstPtr, dst.remaining)
         } ?: 0
         if (n > 0) {
             dst.position += n

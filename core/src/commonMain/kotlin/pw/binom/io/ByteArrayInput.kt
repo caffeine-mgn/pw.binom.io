@@ -5,7 +5,7 @@ class ByteArrayInput(val data: ByteArray) : Input {
     private var cursor = 0
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        val max = minOf(data.size - cursor, dest.remaining123)
+        val max = minOf(data.size - cursor, dest.remaining)
         if (max == 0) {
             return 0
         }

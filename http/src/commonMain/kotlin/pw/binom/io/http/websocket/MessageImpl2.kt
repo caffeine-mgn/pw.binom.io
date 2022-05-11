@@ -31,7 +31,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
         val read = if (maskFlag) {
             val pos1 = dest.position
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining123.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
             val n = input.read(dest)
 
             dest.position = pos1
@@ -41,7 +41,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
             n
         } else {
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining123.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
             val n = input.read(dest)
             dest.limit = lim1
             n

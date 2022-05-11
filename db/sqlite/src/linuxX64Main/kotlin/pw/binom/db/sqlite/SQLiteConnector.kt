@@ -160,7 +160,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
 
 internal fun SQLiteConnector.checkSqlCode(code: Int, func: (() -> String)? = null) {
     fun detail() = if (func == null) "" else ": ${func()}"
-    fun msg() = sqlite3_errmsg(this.ctx.pointed!!.value)?.toKStringFromUtf8() ?: "Unknown Error"
+    fun msg() = sqlite3_errmsg(this.ctx.pointed.value)?.toKStringFromUtf8() ?: "Unknown Error"
     when (code) {
         SQLITE_OK, SQLITE_DONE, SQLITE_ROW -> return
         SQLITE_BUSY -> throw SQLException("Database is Busy" + detail())

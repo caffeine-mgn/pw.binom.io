@@ -25,20 +25,20 @@ open class InflateInput(
 //    }
 
     override fun read(dest: ByteBuffer): Int {
-        val l = dest.remaining123
+        val l = dest.remaining
         while (true) {
             full2()
-            if (buf2.remaining123 == 0 || dest.remaining123 == 0)
+            if (buf2.remaining == 0 || dest.remaining == 0)
                 break
             val r = inflater.inflate(buf2, dest)
             if (r == 0)
                 break
         }
-        return l - dest.remaining123
+        return l - dest.remaining
     }
 
     protected fun full2() {
-        if (buf2.remaining123 > 0)
+        if (buf2.remaining > 0)
             return
         buf2.clear()
         stream.read(buf2)

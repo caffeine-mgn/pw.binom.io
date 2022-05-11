@@ -1,7 +1,7 @@
 package pw.binom.io
 
 actual interface Buffer {
-    actual val remaining123: Int
+    actual val remaining: Int
     actual var position: Int
     actual var limit: Int
     actual val capacity: Int

@@ -3,7 +3,7 @@ package pw.binom.io
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closeable, Buffer {
+actual class ByteBuffer(var native: java.nio.ByteBuffer) : Channel, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer =
             ByteBuffer(java.nio.ByteBuffer.allocateDirect(size))
@@ -26,7 +26,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closea
         native.flip()
     }
 
-    override val remaining123: Int
+    override val remaining: Int
         get() {
             checkClosed()
             return native.remaining()
@@ -57,7 +57,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closea
     override fun write(data: ByteBuffer): Int {
         if (data === this)
             throw IllegalArgumentException()
-        val l = minOf(remaining123, data.remaining123)
+        val l = minOf(remaining, data.remaining)
         length(l) { self ->
             data.length(l) { src ->
                 self.native.put(src.native)
@@ -112,7 +112,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closea
     }
 
     override fun read(dest: ByteBuffer): Int {
-        val l = minOf(remaining123, dest.remaining123)
+        val l = minOf(remaining, dest.remaining)
         if (l == 0)
             return l
         val selfLimit = native.limit()
@@ -125,14 +125,14 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closea
         return l
     }
 
-    actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
+    actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
         require(dest.size - offset >= length)
-        val l = minOf(remaining123, length)
+        val l = minOf(remaining, length)
         native.get(dest, offset, l)
         return l
     }
 
-    actual fun get(): Byte {
+    actual fun getByte(): Byte {
         checkClosed()
         return native.get()
     }
@@ -158,7 +158,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closea
         get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
-        val new = ByteBuffer.alloc(newSize)
+        val new = alloc(newSize)
         if (newSize > capacity) {
             native.hold(0, capacity) { self ->
                 new.native.update(0, native.capacity()) { new ->
@@ -180,7 +180,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closea
     }
 
     actual fun toByteArray(): ByteArray {
-        val r = ByteArray(remaining123)
+        val r = ByteArray(remaining)
         val p = native.position()
         val l = native.limit()
         try {
@@ -193,7 +193,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closea
     }
 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
-        val l = minOf(remaining123, length)
+        val l = minOf(remaining, length)
         native.put(data, offset, length)
         return l
     }
@@ -231,7 +231,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Input, Output, Closea
     }
 
     actual fun free() {
-        val newLimit = remaining123
+        val newLimit = remaining
         native.compact()
         native.position(0)
         native.limit(newLimit)

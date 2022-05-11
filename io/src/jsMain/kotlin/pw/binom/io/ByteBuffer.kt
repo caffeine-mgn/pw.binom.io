@@ -28,7 +28,7 @@ private fun memcpy(
     }
 }
 
-actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, Buffer {
+actual class ByteBuffer(override val capacity: Int) : Channel, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
@@ -49,9 +49,8 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
             }
         }
 
-    override val remaining123: Int
-        @get:JsName("getRemaining")
-        get() {
+    override val remaining
+        get(): Int {
             checkClosed()
             return limit - position
         }
@@ -63,7 +62,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
 
     private var native = Int8Array(capacity)
 
-    private inline fun checkClosed() {
+    private fun checkClosed() {
         if (closed) {
             throw ClosedException()
         }
@@ -75,8 +74,8 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     override fun compact() {
-        if (remaining123 > 0) {
-            val size = remaining123
+        if (remaining > 0) {
+            val size = remaining
             memcpy(native, 0, native, position, size)
             position = size
             limit = capacity
@@ -123,9 +122,9 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
         native[position++] = value
     }
 
-    actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
+    actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
         require(dest.size - offset >= length)
-        val l = minOf(remaining123, length)
+        val l = minOf(remaining, length)
         memcpy(dest, 0, native, position, l)
         return l
     }
@@ -140,14 +139,14 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     override fun write(data: ByteBuffer): Int {
-        val l = minOf(remaining123, data.remaining123)
+        val l = minOf(remaining, data.remaining)
         memcpy(native, position, data.native, data.position, l)
         data.position += l
         position += l
         return l
     }
 
-    actual fun get(): Byte =
+    actual fun getByte(): Byte =
         native[position++]
 
     actual operator fun set(index: Int, value: Byte) {
@@ -156,7 +155,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     actual fun toByteArray(): ByteArray {
-        val r = ByteArray(remaining123)
+        val r = ByteArray(remaining)
         (position until limit).forEach {
             r[it - position] = native[it]
         }
@@ -172,7 +171,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     actual fun free() {
-        val size = remaining123
+        val size = remaining
         if (size > 0) {
             memcpy(native, 0, native, position, size)
             position = 0
@@ -203,7 +202,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     }
 
     override fun read(dest: ByteBuffer): Int {
-        val l = minOf(remaining123, dest.remaining123)
+        val l = minOf(remaining, dest.remaining)
         if (l == 0)
             return l
         memcpy(dest.native, dest.position, native, position, l)
@@ -215,7 +214,7 @@ actual class ByteBuffer(override val capacity: Int) : Input, Output, Closeable, 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
         if (offset + length > data.size)
             throw IndexOutOfBoundsException()
-        val l = minOf(remaining123, length)
+        val l = minOf(remaining, length)
         (offset until (offset + l)).forEach {
             native[position++] = data[it]
         }

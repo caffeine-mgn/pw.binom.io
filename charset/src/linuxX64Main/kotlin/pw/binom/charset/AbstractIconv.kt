@@ -137,10 +137,10 @@ abstract class AbstractIconv(
         return output.refTo(output.position) { outputPtr ->
             input.refTo(input.position) { inputPtr ->
                 memScoped {
-                    resource.outputAvail.value = (output.remaining123 * output.elementSizeInBytes).convert()
+                    resource.outputAvail.value = (output.remaining * output.elementSizeInBytes).convert()
                     resource.outputPointer.value = outputPtr.getPointer(this).reinterpret()
                     resource.inputPointer.value = inputPtr.getPointer(this).reinterpret()
-                    resource.inputAvail.value = (input.remaining123 * input.elementSizeInBytes).convert()
+                    resource.inputAvail.value = (input.remaining * input.elementSizeInBytes).convert()
                     set_posix_errno(0)
 
                     val beforeIn = resource.inputAvail.value.toInt()

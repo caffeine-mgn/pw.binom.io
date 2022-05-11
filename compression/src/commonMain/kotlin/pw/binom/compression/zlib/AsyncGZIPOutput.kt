@@ -47,7 +47,7 @@ class AsyncGZIPOutput(
             stream.write(buf)
         }
 
-        if (buf.remaining123 > TRAILER_SIZE) {
+        if (buf.remaining > TRAILER_SIZE) {
             buf.clear()
             write(buf)
         } else {

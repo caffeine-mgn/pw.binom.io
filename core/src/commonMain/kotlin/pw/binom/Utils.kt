@@ -134,8 +134,8 @@ fun Short.Companion.fromBytes(byte0: Byte, byte1: Byte) =
     ((byte0.toInt() and 0xFF shl 8) + (byte1.toInt() and 0xFF)).toShort()
 
 fun Short.Companion.fromBytes(source: ByteBuffer): Short {
-    val b0 = source.get()
-    val b1 = source.get()
+    val b0 = source.getByte()
+    val b1 = source.getByte()
     return fromBytes(b0, b1)
 }
 
@@ -147,22 +147,22 @@ fun Short.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) =
 
 @JvmName("Int_fromBytes3")
 fun Int.Companion.fromBytes(source: ByteBuffer): Int {
-    val b0 = source.get()
-    val b1 = source.get()
-    val b2 = source.get()
-    val b3 = source.get()
+    val b0 = source.getByte()
+    val b1 = source.getByte()
+    val b2 = source.getByte()
+    val b3 = source.getByte()
     return fromBytes(b0, b1, b2, b3)
 }
 
 fun Long.Companion.fromBytes(source: ByteBuffer): Long {
-    val b0 = source.get()
-    val b1 = source.get()
-    val b2 = source.get()
-    val b3 = source.get()
-    val b4 = source.get()
-    val b5 = source.get()
-    val b6 = source.get()
-    val b7 = source.get()
+    val b0 = source.getByte()
+    val b1 = source.getByte()
+    val b2 = source.getByte()
+    val b3 = source.getByte()
+    val b4 = source.getByte()
+    val b5 = source.getByte()
+    val b6 = source.getByte()
+    val b7 = source.getByte()
     return fromBytes(b0, b1, b2, b3, b4, b5, b6, b7)
 }
 

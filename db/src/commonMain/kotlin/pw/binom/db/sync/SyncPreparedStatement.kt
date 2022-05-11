@@ -10,7 +10,8 @@ import pw.binom.io.Closeable
 
 interface SyncPreparedStatement : Closeable {
     val connection: SyncConnection
-//    fun set(index: Int, value: BigInteger)
+
+    //    fun set(index: Int, value: BigInteger)
 //    fun set(index: Int, value: BigDecimal)
     fun set(index: Int, value: Double)
     fun set(index: Int, value: Float)

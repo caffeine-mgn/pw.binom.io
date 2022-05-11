@@ -17,10 +17,10 @@ class BufferedAsciiInputReader(
     private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
     val available: Int
-        get() = if (buffer.remaining123 > 0) buffer.remaining123 else -1
+        get() = if (buffer.remaining > 0) buffer.remaining else -1
 
     private fun checkAvailable() {
-        if (buffer.remaining123 == 0) {
+        if (buffer.remaining == 0) {
             buffer.clear()
             input.read(buffer)
             buffer.flip()
@@ -39,16 +39,16 @@ class BufferedAsciiInputReader(
 
     override fun read(): Char? {
         checkAvailable()
-        if (buffer.remaining123 <= 0)
+        if (buffer.remaining <= 0)
             return null
-        return buffer.get().toInt().toChar()
+        return buffer.getByte().toInt().toChar()
     }
 
     override fun read(data: CharArray, offset: Int, length: Int): Int {
         checkAvailable()
-        val len = minOf(minOf(data.size - offset, length), buffer.remaining123)
+        val len = minOf(minOf(data.size - offset, length), buffer.remaining)
         for (i in offset until offset + len) {
-            data[i] = buffer.get().toInt().toChar()
+            data[i] = buffer.getByte().toInt().toChar()
         }
         return len
     }
@@ -58,7 +58,7 @@ class BufferedAsciiInputReader(
         var exist = false
         LOOP@ while (true) {
             checkAvailable()
-            if (buffer.remaining123 <= 0) {
+            if (buffer.remaining <= 0) {
                 break
             }
             for (i in buffer.position until buffer.limit) {

@@ -9,7 +9,6 @@ import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.doFreeze
-import pw.binom.neverFreeze
 
 class AsyncPreparedStatementAdapter(
     val ref: SyncPreparedStatement,

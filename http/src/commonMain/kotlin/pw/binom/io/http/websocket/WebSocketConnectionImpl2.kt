@@ -118,11 +118,11 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
     private suspend fun sendFinish(code: Short = 1006, body: ByteBuffer? = null) {
         val v = WebSocketHeader()
         v.opcode = 8
-        v.length = Short.SIZE_BYTES.toULong() + (body?.remaining123 ?: 0).toULong()
+        v.length = Short.SIZE_BYTES.toULong() + (body?.remaining ?: 0).toULong()
         v.maskFlag = masking
         v.finishFlag = true
         WebSocketHeader.write(_output, v)
-        ByteBuffer.alloc(Short.SIZE_BYTES + (body?.remaining123 ?: 0)).use {
+        ByteBuffer.alloc(Short.SIZE_BYTES + (body?.remaining ?: 0)).use {
             it.writeShort(code)
             if (body != null) {
                 it.write(body)

@@ -105,7 +105,7 @@ suspend fun Input.copyTo(output: AsyncOutput, buffer: ByteBuffer): Long {
         }
         totalLength += length.toLong()
         buffer.flip()
-        while (buffer.remaining123 > 0) {
+        while (buffer.remaining > 0) {
             output.write(buffer)
         }
     }

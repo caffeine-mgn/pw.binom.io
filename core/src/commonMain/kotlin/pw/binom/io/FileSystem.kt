@@ -49,10 +49,10 @@ interface FileSystem {
     class FileLockedException(val path: Path) : IOException("File \"$path\" is locked")
     class EntityExistException(val path: Path) : IOException("Entity \"$path\" already exist")
 
-    suspend fun mkdirs(path: Path): FileSystem.Entity? {
+    suspend fun mkdirs(path: Path): Entity? {
         var first = true
         val sb = StringBuilder()
-        var last: FileSystem.Entity? = null
+        var last: Entity? = null
         path.elements.forEach {
             if (!first) {
                 sb.append("/")

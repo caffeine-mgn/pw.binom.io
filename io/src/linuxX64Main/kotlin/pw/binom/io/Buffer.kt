@@ -5,7 +5,7 @@ import kotlinx.cinterop.CPointer
 
 actual interface Buffer {
     fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T?
-    actual val remaining123: Int
+    actual val remaining: Int
     actual var position: Int
     actual var limit: Int
     actual val capacity: Int

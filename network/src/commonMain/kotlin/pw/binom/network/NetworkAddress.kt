@@ -2,7 +2,7 @@ package pw.binom.network
 
 import pw.binom.net.URL
 
-expect sealed class NetworkAddress protected constructor() {
+expect sealed class NetworkAddress() {
     val host: String
     val port: Int
     val type: Type

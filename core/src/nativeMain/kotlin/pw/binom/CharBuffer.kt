@@ -31,8 +31,8 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     override val capacity: Int
         get() = div2(bytes.capacity)
 
-    override val remaining123: Int
-        get() = div2(bytes.remaining123)
+    override val remaining: Int
+        get() = div2(bytes.remaining)
 
     override var position: Int
         get() = div2(bytes.position)
@@ -83,8 +83,8 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     }
 
     actual fun get(): Char {
-        val b1 = bytes.get()
-        val b2 = bytes.get()
+        val b1 = bytes.getByte()
+        val b2 = bytes.getByte()
         return Short.fromBytes(b2, b1).toInt().toChar()
     }
 
@@ -109,7 +109,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         get() = Char.SIZE_BYTES
 
     actual override fun toString(): String {
-        when (remaining123) {
+        when (remaining) {
             0 -> return ""
             1 -> return get().toString()
         }
@@ -134,7 +134,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         }
         return array.usePinned { pinnedArray ->
             bytes.refTo(position * 2) { bytes ->
-                val len = minOf(remaining123, length)
+                val len = minOf(remaining, length)
                 memcpy(pinnedArray.addressOf(offset), bytes, (len * 2).convert())
                 position += len
                 len
@@ -163,7 +163,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     }
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining123, minOf(array.size - offset, length))
+        val len = minOf(remaining, minOf(array.size - offset, length))
         val pos = position * Char.SIZE_BYTES
         if (!bytes.isReferenceAccessAvailable(pos)) {
             return 0

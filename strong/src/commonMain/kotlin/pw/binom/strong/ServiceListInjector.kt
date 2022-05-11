@@ -3,6 +3,7 @@ package pw.binom.strong
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
+@Suppress("UNCHECKED_CAST")
 internal class ServiceListInjector<T : Any>(
     val strong: StrongImpl,
     val beanClass: KClass<T>

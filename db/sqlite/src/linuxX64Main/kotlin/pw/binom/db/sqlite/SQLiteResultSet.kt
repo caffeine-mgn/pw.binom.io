@@ -51,7 +51,7 @@ class SQLiteResultSet(
                 true
             }
             SQLITE_ERROR -> throw SQLException(
-                sqlite3_errmsg(prepareStatement.connection.ctx.pointed!!.value)?.toKStringFromUtf8()
+                sqlite3_errmsg(prepareStatement.connection.ctx.pointed.value)?.toKStringFromUtf8()
                     ?: "Unknown Error"
             )
             SQLITE_MISUSE -> throw SQLException("Database is Misuse")

@@ -61,12 +61,12 @@ sealed class AuthenticationMessage : KindedMessage {
                     ByteBuffer.alloc(buf2.size).use { tmp2 ->
                         while (true) {
                             ctx.input.read(tmp2)
-                            if (tmp2.remaining123 == 0) {
+                            if (tmp2.remaining == 0) {
                                 break
                             }
                         }
                         tmp2.flip()
-                        tmp2.get(buf2)
+                        tmp2.read(buf2)
                     }
 //                    var l = buf2.size
 //                    while (l > 0) {

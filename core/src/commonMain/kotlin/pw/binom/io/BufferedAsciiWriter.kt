@@ -9,7 +9,7 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
     private var closed = false
 
     private fun checkFlush() {
-        if (buffer.remaining123 == 0) {
+        if (buffer.remaining == 0) {
             flush()
         }
     }
@@ -23,7 +23,7 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
     override fun write(data: ByteBuffer): Int {
         checkClosed()
         var r = 0
-        while (data.remaining123 > 0) {
+        while (data.remaining > 0) {
             checkFlush()
             r += buffer.write(data)
         }
@@ -69,9 +69,9 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
 
     override fun flush() {
         checkClosed()
-        if (buffer.remaining123 != buffer.capacity) {
+        if (buffer.remaining != buffer.capacity) {
             buffer.flip()
-            while (buffer.remaining123 > 0) {
+            while (buffer.remaining > 0) {
                 output.write(buffer)
             }
             buffer.clear()

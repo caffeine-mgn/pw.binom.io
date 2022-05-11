@@ -139,7 +139,7 @@ class AsyncXmlLexer(val reader: AsyncReader) {
                 return true
             }
             when (c) {
-                '[',']','!', '<', '>', '/', '=', '"', '?', '&', ';', '\n', ' ', '\r', '\t' -> {
+                '[', ']', '!', '<', '>', '/', '=', '"', '?', '&', ';', '\n', ' ', '\r', '\t' -> {
                     lastChar = c
                     text = sb.toString()
                     sb.clear()

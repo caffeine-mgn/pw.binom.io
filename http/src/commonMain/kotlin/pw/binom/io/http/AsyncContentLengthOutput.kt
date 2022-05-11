@@ -17,7 +17,7 @@ open class AsyncContentLengthOutput(
 //            throw IllegalStateException("All Content already send. ContentLength: [$contentLength], data.remaining: [${data.remaining}]")
         }
         var lim = data.limit
-        if (wrote + data.remaining123.toULong() > contentLength) {
+        if (wrote + data.remaining.toULong() > contentLength) {
             val l = data.position + (contentLength - wrote).toInt()
             if (l == 0) {
                 return 0

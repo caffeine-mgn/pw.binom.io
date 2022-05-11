@@ -25,13 +25,12 @@ class SimpleKeyManager(val private: PrivateKey?, val public: X509Certificate?) :
         public?.close()
         private?.close()
     }
-
 }
 
 class SSLTest {
 
     @Test
-    fun test() = runBlocking{
+    fun test() = runBlocking {
 
         val pairRoot = KeyGenerator.generate(
             KeyAlgorithm.RSA,
@@ -68,7 +67,7 @@ class SSLTest {
         val addr = NetworkAddress.Immutable("127.0.0.1", 4445)
         val server = nd.bindTcp(addr)
         val r1 = launch {
-            val client = server.accept()!!
+            val client = server.accept()
             val clientSsl = AsyncSSLChannel(
                 context2.serverSession(),
                 client

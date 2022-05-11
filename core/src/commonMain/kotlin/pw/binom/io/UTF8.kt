@@ -276,7 +276,7 @@ object UTF8 {
 
     fun utf8toUnicode(firstByte: Byte, otherBytes: ByteBuffer): Char {
         val c = firstByte.toInt()
-        fun func() = otherBytes.get()
+        fun func() = otherBytes.getByte()
         return when {
             (c and 0x80) == 0 -> c
             (c and 0xE0) == 0xC0 -> {

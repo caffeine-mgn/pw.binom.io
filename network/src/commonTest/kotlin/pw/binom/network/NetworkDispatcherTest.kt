@@ -11,9 +11,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
-import kotlin.time.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NetworkDispatcherTest {
@@ -157,7 +157,7 @@ class NetworkDispatcherTest {
         val port = server.port
         val executeWorker = WorkerPool(10)
         val serverFuture = GlobalScope.launch(nd) {
-            val client = server.accept()!!
+            val client = server.accept()
             launch {
                 client.readFully(ByteBuffer.alloc(32).clean())
                 try {
@@ -205,7 +205,7 @@ class NetworkDispatcherTest {
                 var clientCount = 0
                 while (true) {
                     println("Server: try accept")
-                    val client = server.accept()!!
+                    val client = server.accept()
                     println("Server: Accepted!")
                     launch {
                         clientCount++

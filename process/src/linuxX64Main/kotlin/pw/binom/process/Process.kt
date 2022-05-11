@@ -2,6 +2,7 @@ package pw.binom.process
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -79,7 +80,7 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?, env: Map<S
         stdin.free()
         kill(pid.convert(), SIGINT)
         val now = TimeSource.Monotonic.markNow()
-        while (now.elapsedNow().inMilliseconds < 1000 && isActive) {
+        while (now.elapsedNow().toDouble(DurationUnit.MILLISECONDS) < 1000 && isActive) {
             // NOP
         }
         if (isActive)

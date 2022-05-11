@@ -52,7 +52,7 @@ class Logger(
         )
     }
 
-    var level: Logger.Level? = null
+    var level: Level? = null
     private val _handler = AtomicReference<Handler?>(null)
     var handler: Handler?
         get() = _handler.getValue()
@@ -60,7 +60,7 @@ class Logger(
             _handler.setValue(value)
         }
 
-    suspend fun log(level: Logger.Level, text: String?, trace: String? = null, exception: Throwable? = null) {
+    suspend fun log(level: Level, text: String?, trace: String? = null, exception: Throwable? = null) {
         val handler = if (this.handler != null) this.handler else if (this == global) null else global.handler
         handler?.log(
             logger = this,
@@ -71,7 +71,7 @@ class Logger(
         )
     }
 
-    fun logSync(level: Logger.Level, text: String?, trace: String? = null, exception: Throwable? = null) {
+    fun logSync(level: Level, text: String?, trace: String? = null, exception: Throwable? = null) {
         val handler = if (this.handler != null) this.handler else if (this == global) null else global.handler
         handler?.logSync(
             logger = this,

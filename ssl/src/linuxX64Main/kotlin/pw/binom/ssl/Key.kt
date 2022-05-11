@@ -1,7 +1,10 @@
 package pw.binom.ssl
 
 import kotlinx.cinterop.convert
-import platform.openssl.*
+import platform.openssl.PEM_write_bio_RSAPrivateKey
+import platform.openssl.PEM_write_bio_RSA_PUBKEY
+import platform.openssl.RSA_F4
+import platform.openssl.RSA_generate_key
 import pw.binom.base64.Base64
 import pw.binom.io.use
 

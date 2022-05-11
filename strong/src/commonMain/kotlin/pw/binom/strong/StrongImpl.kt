@@ -11,6 +11,7 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KClass
 
+@Suppress("UNCHECKED_CAST")
 internal class StrongImpl : Strong {
     private val logger = Logger.getLogger("Strong.Starter")
     internal var beans = HashMap<String, BeanEntity>()

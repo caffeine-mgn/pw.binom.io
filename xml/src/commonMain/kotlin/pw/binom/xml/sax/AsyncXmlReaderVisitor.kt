@@ -15,6 +15,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
     private val visitors = Stack<Record>().asLiFoQueue()
 
     private var tagBodyBuilder: StringBuilder? = null
+
     /**
      * Чтение начала с <
      */
@@ -93,7 +94,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
         if (lexer.tokenType != TokenType.TAG_END) {
             TODO()
         }
-        if (tagBodyBuilder!=null) {
+        if (tagBodyBuilder != null) {
             visitors.peek().visitor.value(tagBodyBuilder!!.toString())
         }
         visitor.visitor.end()
@@ -125,8 +126,8 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                 TODO()
             val value = lexer.text.removePrefix("\"").removeSuffix("\"")
             subNode.attribute(
-                    name = attribute,
-                    value = value
+                name = attribute,
+                value = value
             )
         }
 
@@ -168,7 +169,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
 //                subNode.end()
 //                visitors.pop()
 //                println("OK!")
-                //accept()
+                // accept()
             }
             else -> TODO()
         }

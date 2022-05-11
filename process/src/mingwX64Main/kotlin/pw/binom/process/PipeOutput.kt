@@ -30,7 +30,7 @@ class PipeOutput : Pipe(), Output {
             val r = data.ref { dataPtr, _ ->
                 WriteFile(
                     writePipe.pointed.value, dataPtr.getPointer(this).reinterpret(),
-                    data.remaining123.convert(), dwWritten.ptr, null
+                    data.remaining.convert(), dwWritten.ptr, null
                 )
             } ?: 0
             if (r <= 0) {

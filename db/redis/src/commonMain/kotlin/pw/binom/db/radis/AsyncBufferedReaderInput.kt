@@ -22,14 +22,14 @@ class AsyncBufferedReaderInput(
     override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
 
     suspend fun readANSIChar(): Char? {
-        if (buffer.remaining123 == 0) {
+        if (buffer.remaining == 0) {
             buffer.compact()
             fill()
         }
-        if (buffer.remaining123 == 0) {
+        if (buffer.remaining == 0) {
             return null
         }
-        val c = buffer.get()
+        val c = buffer.getByte()
         return c.toInt().toChar()
     }
 
@@ -86,7 +86,7 @@ class AsyncBufferedReaderInput(
 //    }
 
     private suspend fun loadMore(minSize: Int) {
-        if (buffer.remaining123 >= minSize) {
+        if (buffer.remaining >= minSize) {
             return
         }
         buffer.free()
@@ -118,7 +118,7 @@ class AsyncBufferedReaderInput(
     suspend fun readln(): String {
         val sb = StringBuilder()
         while (true) {
-            if (buffer.remaining123 == 0) {
+            if (buffer.remaining == 0) {
                 loadMore(10)
             }
             charBuffer.clear()

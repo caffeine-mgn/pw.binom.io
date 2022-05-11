@@ -70,7 +70,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
 
         if (sendData.continuation != null) {
             val result = runCatching { channel.write(sendData.data!!) }
-            if (sendData.data!!.remaining123 == 0) {
+            if (sendData.data!!.remaining == 0) {
                 val con = sendData.continuation!!
                 sendData.reset()
                 key.removeListen(Selector.OUTPUT_READY)
@@ -153,7 +153,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             return
         }
         if (readData.full) {
-            if (data.remaining123 == 0) {
+            if (data.remaining == 0) {
                 val con = continuation
                 readData.reset()
                 con.resume(readed)
@@ -196,7 +196,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
     }
 
     override suspend fun write(data: ByteBuffer): Int {
-        val l = data.remaining123
+        val l = data.remaining
         if (l == 0) {
             return 0
         }
@@ -227,14 +227,14 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         get() = -1
 
     override suspend fun readFully(dest: ByteBuffer): Int {
-        if (dest.remaining123 == 0) {
+        if (dest.remaining == 0) {
             return 0
         }
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
         }
         val r = channel.read(dest)
-        if (r > 0 && dest.remaining123 == 0) {
+        if (r > 0 && dest.remaining == 0) {
             return r
         }
         readData.full = true
@@ -254,7 +254,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
         }
-        if (dest.remaining123 == 0) {
+        if (dest.remaining == 0) {
             return 0
         }
         val r = channel.read(dest)

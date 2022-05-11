@@ -1,7 +1,8 @@
 package pw.binom.crypto
 
-import kotlinx.cinterop.*
-import platform.openssl.*
+import kotlinx.cinterop.CPointer
+import platform.openssl.EVP_MD
+import platform.openssl.EVP_sha1
 import pw.binom.io.MessageDigest
 
 actual class Sha1MessageDigest : MessageDigest, OpenSSLMessageDigest() {

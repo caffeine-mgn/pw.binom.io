@@ -186,7 +186,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                     uncle.parent!!.color = RED
                     n = uncle.parent
                 } else {
-                    if (n == n!!.parent!!.right) {
+                    if (n == n.parent!!.right) {
                         // Case 2. Uncle is BLACK and x is right child.
                         // Move n to parent, and rotate n left.
                         n = n.parent
@@ -207,10 +207,10 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                     // and grandparent, and move n to grandparent.
                     n.parent!!.color = BLACK
                     uncle!!.color = BLACK
-                    uncle!!.parent!!.color = RED
-                    n = uncle!!.parent
+                    uncle.parent!!.color = RED
+                    n = uncle.parent
                 } else {
-                    if (n == n!!.parent!!.left) {
+                    if (n == n.parent!!.left) {
                         // Case 2. Uncle is BLACK and x is left child.
                         // Move n to parent, and rotate n right.
                         n = n.parent
@@ -218,9 +218,9 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                     }
                     // Case 3. Uncle is BLACK and x is right child.
                     // Recolor parent, grandparent, and rotate grandparent left.
-                    n!!.parent!!.color = BLACK
-                    n!!.parent!!.parent!!.color = RED
-                    rotateLeft(n!!.parent!!.parent!!)
+                    n.parent!!.color = BLACK
+                    n.parent!!.parent!!.color = RED
+                    rotateLeft(n.parent!!.parent!!)
                 }
             }
         }
@@ -334,7 +334,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                 if (colorOf(sibling!!.left) == BLACK && colorOf(sibling.right) == BLACK) {
                     // Case 2: Sibling has no red children.
                     // Recolor sibling, and move to parent.
-                    sibling!!.color = RED
+                    sibling.color = RED
                     node = parent
                     parent = parent.parent
                 } else {
@@ -348,7 +348,7 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
                     }
                     // Case 4: Sibling has red right child. Recolor sibling,
                     // right child, and parent, and rotate parent left.
-                    sibling!!.color = parent!!.color
+                    sibling!!.color = parent.color
                     parent.color = BLACK
                     sibling.right!!.color = BLACK
                     rotateLeft(parent)

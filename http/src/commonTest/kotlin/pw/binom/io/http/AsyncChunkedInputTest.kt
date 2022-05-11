@@ -1,8 +1,10 @@
 package pw.binom.io.http
 
 import kotlinx.coroutines.runBlocking
-import pw.binom.*
+import pw.binom.asyncInput
+import pw.binom.asyncOutput
 import pw.binom.io.*
+import pw.binom.readUtf8Char
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

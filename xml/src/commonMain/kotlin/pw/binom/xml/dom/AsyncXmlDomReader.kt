@@ -1,8 +1,8 @@
 package pw.binom.xml.dom
 
 import pw.binom.io.AsyncReader
-import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.XML_NAMESPACE_PREFIX
+import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.sax.AsyncXmlVisitor
 import pw.binom.xml.sax.XmlRootReaderVisitor
 
@@ -16,7 +16,6 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
          * value - prefix
          */
         var prefix = HashMap<String, String>()
-
 
         fun pool(uri: String) = pool.getOrPut(uri) { "ns${autoIterator++}" }
 
@@ -42,7 +41,7 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
             return
         }
         if (name.startsWith(XML_NAMESPACE_PREFIX_WITH_DOTS) && value != null) {
-            ctx.prefix[name.removePrefix(XML_NAMESPACE_PREFIX_WITH_DOTS)] = value//ctx.pool(value)
+            ctx.prefix[name.removePrefix(XML_NAMESPACE_PREFIX_WITH_DOTS)] = value // ctx.pool(value)
             return
         }
         rootNode.attributes[Attribute(null, name)] = value

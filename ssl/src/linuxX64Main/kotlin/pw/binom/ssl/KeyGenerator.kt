@@ -26,9 +26,7 @@ actual object KeyGenerator {
         }
 
         actual fun createPrivateKey(): PrivateKey = PrivateKeyImpl(algorithm = KeyAlgorithm.RSA, native = native.copy())
-
     }
-
 }
 
 fun CPointer<EVP_PKEY>.copy(): CPointer<EVP_PKEY> {

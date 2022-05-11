@@ -36,7 +36,7 @@ fun ByteBuffer.clone() = realloc(capacity)
  * Puts random bytes to free space of [data]
  */
 fun Random.nextBytes(data: ByteBuffer) {
-    repeat(data.remaining123) {
+    repeat(data.remaining) {
         data.put(nextInt().toByte())
     }
 }
@@ -151,7 +151,7 @@ inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
 inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
     val pos = position
     val lim = limit
-    val output = ArrayList<T>(remaining123)
+    val output = ArrayList<T>(remaining)
     for (it in pos until lim)
         output += func(this[it])
     return output
@@ -175,12 +175,12 @@ inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
 }
 
 fun ByteBuffer.asUTF8String(): String {
-    if (remaining123 == 0) {
+    if (remaining == 0) {
         return ""
     }
-    val sb = StringBuilder(remaining123)
-    while (remaining123 > 0) {
-        val first = get()
+    val sb = StringBuilder(remaining)
+    while (remaining > 0) {
+        val first = getByte()
         sb.append(UTF8.utf8toUnicode(first, this))
     }
     return sb.toString()

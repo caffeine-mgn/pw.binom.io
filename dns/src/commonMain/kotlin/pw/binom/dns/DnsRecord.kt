@@ -64,9 +64,9 @@ data class DnsRecord(
      */
     val rcode: Byte,
     val queries: List<Query>,
-    val ans: List<pw.binom.dns.Resource>,
-    val auth: List<pw.binom.dns.Resource>,
-    val add: List<pw.binom.dns.Resource>,
+    val ans: List<Resource>,
+    val auth: List<Resource>,
+    val add: List<Resource>,
 ) {
     companion object {
         suspend fun read(input: AsyncInput, buffer: ByteBuffer): DnsRecord {

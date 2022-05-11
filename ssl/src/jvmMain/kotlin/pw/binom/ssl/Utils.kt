@@ -1,9 +1,12 @@
 package pw.binom.ssl
 
 import java.util.*
-import kotlin.collections.ArrayList
 
-internal fun filterArray(items: Array<String>?, includedItems: List<String>?, excludedItems: List<String>?): Array<String> {
+internal fun filterArray(
+    items: Array<String>?,
+    includedItems: List<String>?,
+    excludedItems: List<String>?
+): Array<String> {
     val filteredItems = if (items == null) ArrayList() else Arrays.asList(*items)
     if (includedItems != null) {
         for (i in filteredItems.indices.reversed()) {

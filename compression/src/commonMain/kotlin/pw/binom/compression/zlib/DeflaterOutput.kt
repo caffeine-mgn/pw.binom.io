@@ -41,8 +41,8 @@ open class DeflaterOutput(
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
-        val vv = data.remaining123
-        while (data.remaining123 > 0) {
+        val vv = data.remaining
+        while (data.remaining > 0) {
             buffer.clear()
             val l = deflater.deflate(data, buffer)
             buffer.flip()
@@ -57,7 +57,7 @@ open class DeflaterOutput(
             buffer.clear()
             val r = deflater.flush(buffer)
             buffer.flip()
-            if (buffer.remaining123 > 0) {
+            if (buffer.remaining > 0) {
                 stream.write(buffer)
             }
             if (!r) {

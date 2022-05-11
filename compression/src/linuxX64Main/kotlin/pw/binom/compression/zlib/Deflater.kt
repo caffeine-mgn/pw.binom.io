@@ -79,17 +79,17 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
             input.refTo(input.position) { inputPtr ->
                 memScoped {
                     checkClosed()
-                    if (output.remaining123 == 0)
+                    if (output.remaining == 0)
                         throw IllegalArgumentException("Output Buffer has no Free Space")
-                    if (!_finishing.getValue() && input.remaining123 == 0)
+                    if (!_finishing.getValue() && input.remaining == 0)
                         return@memScoped 0
                     native.next_out = (outputPtr.getPointer(this)).reinterpret()
-                    native.avail_out = output.remaining123.convert()
+                    native.avail_out = output.remaining.convert()
 
                     native.next_in = (inputPtr).getPointer(this).reinterpret()
-                    native.avail_in = input.remaining123.convert()
-                    val freeOutput = output.remaining123
-                    val freeInput = input.remaining123
+                    native.avail_in = input.remaining.convert()
+                    val freeOutput = output.remaining
+                    val freeInput = input.remaining
 
                     val mode = if (_finishing.getValue())
                         Z_FINISH
@@ -104,8 +104,8 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                     input.position += freeInput - native.avail_in.convert<Int>()
                     output.position += wrote
 
-                    val outLength = freeOutput - output.remaining123
-                    val inLength = freeInput - input.remaining123
+                    val outLength = freeOutput - output.remaining
+                    val inLength = freeInput - input.remaining
                     _totalOut.addAndGet(outLength.toLong())
                     _totalIn.addAndGet(inLength.toLong())
                     if (_finishing.getValue()) {
@@ -118,13 +118,13 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 
     actual fun flush(output: ByteBuffer): Boolean {
-        if (output.remaining123 == 0) {
+        if (output.remaining == 0) {
             return false
         }
         if (!_finishing.getValue())
             return false
         while (true) {
-            val writed = output.remaining123
+            val writed = output.remaining
 
             val mode = when {
                 _finishing.getValue() -> Z_FINISH
@@ -135,7 +135,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
             val r = output.refTo(output.position) { outputPtr ->
                 memScoped {
                     native.next_out = outputPtr.getPointer(this).reinterpret()
-                    native.avail_out = output.remaining123.convert()
+                    native.avail_out = output.remaining.convert()
 
                     native.next_in = null
                     native.avail_in = 0.convert()

@@ -32,4 +32,10 @@ class PathTest {
         assertEquals("anton", "root/anton".toPath.removeRoot().toString())
         assertEquals("root", "root/anton".toPath.root)
     }
+
+    @Test
+    fun appendTest() {
+        val b = "/test".toPath.append("video".toPath)
+        println("->$b")
+    }
 }

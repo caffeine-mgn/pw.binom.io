@@ -37,7 +37,11 @@ fun Output.writeBytes(buffer: ByteBuffer, value: ByteArray) {
     buffer.clear()
     var l = value.size
     while (l > 0) {
-        buffer.write(value, value.size - l)
+        buffer.write(
+            data = value,
+            offset = value.size - l,
+            length = minOf(value.size - (value.size - l), buffer.remaining),
+        )
         buffer.flip()
         val wrote = write(buffer)
         if (wrote <= 0) {

@@ -1,9 +1,12 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.ByteBufferPool
+import pw.binom.CharBuffer
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
+import pw.binom.empty
 import pw.binom.pool.ObjectPool
 
 class BufferedInputReader(
@@ -78,7 +81,7 @@ class BufferedInputReader(
     }
 
     private fun prepareBuffer() {
-        if (output.remaining123 == 0) {
+        if (output.remaining == 0) {
             checkAvailable()
             output.clear()
             val r = decoder.decode(buffer, output)
@@ -96,7 +99,7 @@ class BufferedInputReader(
         var counter = 0
         while (counter < length) {
             prepareBuffer()
-            if (output.remaining123 > 0) {
+            if (output.remaining > 0) {
                 counter += output.read(
                     array = data,
                     offset = offset,
@@ -111,7 +114,7 @@ class BufferedInputReader(
 
     override fun read(): Char? {
         prepareBuffer()
-        if (output.remaining123 == 0) {
+        if (output.remaining == 0) {
             return null
         }
         return output.get()
@@ -152,6 +155,7 @@ fun Input.bufferedReader(
     pool = pool,
     charBufferSize = charBufferSize
 )
+
 fun Input.bufferedReader(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charset: Charset = Charsets.UTF8,

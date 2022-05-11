@@ -1,7 +1,7 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.*
-import pw.binom.io.*
+import pw.binom.forEachIndexed
+import pw.binom.io.ByteBuffer
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

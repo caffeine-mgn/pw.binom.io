@@ -74,7 +74,7 @@ class BaseHttpClient(
     override suspend fun connect(method: String, uri: URL): HttpRequest {
         var connect: AsyncAsciiChannel? = null
         try {
-            val schema = uri.schema ?: throw IllegalArgumentException("URL \"$uri\" must contains protocol")
+            val schema = uri.schema
             if (schema != "http" && schema != "https" && schema != "ws" && schema != "wss") {
                 throw IllegalArgumentException("Schema ${uri.schema} is not supported")
             }

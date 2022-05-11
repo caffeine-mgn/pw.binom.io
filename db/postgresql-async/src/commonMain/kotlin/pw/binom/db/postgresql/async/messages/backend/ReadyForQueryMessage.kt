@@ -20,7 +20,7 @@ class ReadyForQueryMessage : KindedMessage {
 
     companion object {
         suspend fun read(ctx: PackageReader): ReadyForQueryMessage {
-            ctx.readyForQueryMessage.transactionStatus = ctx.input.readByte(ctx.buf16).toChar()
+            ctx.readyForQueryMessage.transactionStatus = ctx.input.readByte(ctx.buf16).toInt().toChar()
             return ctx.readyForQueryMessage
         }
     }

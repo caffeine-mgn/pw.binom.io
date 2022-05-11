@@ -5,8 +5,8 @@ import pw.binom.io.socket.ssl.SSLSession
 import java.security.SecureRandom
 import javax.net.ssl.SSLContext as JSSLContext
 
-
-actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: KeyManager, trustManager: TrustManager) : Closeable {
+actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: KeyManager, trustManager: TrustManager) :
+    Closeable {
 
     override fun close() {
     }
@@ -33,8 +33,8 @@ actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: Ke
     actual fun clientSession(host: String, port: Int): SSLSession {
         val engine = ctx.createSSLEngine(host, port)
         engine.useClientMode = true
-        engine.wantClientAuth = false//wantClientAuthentication
-        engine.needClientAuth = false//needClientAuthentication
+        engine.wantClientAuth = false // wantClientAuthentication
+        engine.needClientAuth = false // needClientAuthentication
         engine.enabledProtocols = filterArray(engine.enabledProtocols, null, null)
         engine.enabledCipherSuites = filterArray(engine.enabledCipherSuites, null, null)
         return SSLSession(engine)
@@ -43,8 +43,8 @@ actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: Ke
     actual fun serverSession(): SSLSession {
         val engine = ctx.createSSLEngine()
         engine.useClientMode = false
-        engine.wantClientAuth = false//wantClientAuthentication
-        engine.needClientAuth = false//needClientAuthentication
+        engine.wantClientAuth = false // wantClientAuthentication
+        engine.needClientAuth = false // needClientAuthentication
         engine.enabledProtocols = filterArray(engine.enabledProtocols, null, null)
         engine.enabledCipherSuites = filterArray(engine.enabledCipherSuites, null, null)
         return SSLSession(engine)

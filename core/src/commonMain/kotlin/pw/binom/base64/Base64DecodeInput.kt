@@ -24,9 +24,9 @@ class Base64DecodeInput(val reader: Reader) : Input {
     }
 
     override fun read(dest: ByteBuffer): Int {
-        val length = dest.remaining123
+        val length = dest.remaining
 
-        while (dest.remaining123 > 0) {
+        while (dest.remaining > 0) {
             val c = getChar() ?: break
             if (c == '=') {
                 counter++
@@ -58,7 +58,7 @@ class Base64DecodeInput(val reader: Reader) : Input {
             if (counter == 4)
                 counter = 0
         }
-        return length - dest.remaining123
+        return length - dest.remaining
     }
 
     override fun close() {

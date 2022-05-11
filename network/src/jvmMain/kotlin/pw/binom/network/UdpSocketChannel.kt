@@ -16,7 +16,7 @@ actual class UdpSocketChannel : Closeable {
 
     actual fun recv(data: ByteBuffer, address: NetworkAddress.Mutable?): Int {
         val before = data.position
-        if (before == data.remaining123) {
+        if (before == data.remaining) {
             return 0
         }
         val vv = native.receive(data.native)

@@ -104,10 +104,7 @@ class XmlObjectDecoder(val root: XmlElement, override val serializersModule: Ser
                         nameSpace = namespace,
                     )
                 )
-
             }
-
-
         }
         val el = root.childs.find { it.tag == name && it.nameSpace == namespace }
             ?: throw SerializationException("Not found ${descriptor.serialName}::${descriptor.getElementName(index)}")

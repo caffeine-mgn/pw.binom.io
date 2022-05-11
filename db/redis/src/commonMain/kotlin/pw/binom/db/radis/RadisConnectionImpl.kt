@@ -438,7 +438,7 @@ class RadisConnectionImpl(
             resp.writeASCIStringFast("GET")
             resp.writeASCIStringFast(key)
             resp.flush()
-            return resp.readString() as String?
+            return resp.readString()
         }
     }
 

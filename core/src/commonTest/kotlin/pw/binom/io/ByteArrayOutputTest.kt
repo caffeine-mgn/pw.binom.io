@@ -20,7 +20,7 @@ class ByteArrayOutputTest {
         out.write(pp)
 
         assertEquals(1024, out.data.capacity)
-        assertEquals(0, out.data.remaining123)
+        assertEquals(0, out.data.remaining)
 
         out.data.clear()
         println("-->out.data=${out.data.hashCode()}")

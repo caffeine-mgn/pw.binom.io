@@ -146,10 +146,10 @@ class NatsRawConnection(
         if (replyTo != null) {
             writer.append(" ").append(replyTo)
         }
-        writer.append(" ").append((data?.remaining123 ?: 0).toString()).append("\r\n")
+        writer.append(" ").append((data?.remaining ?: 0).toString()).append("\r\n")
         writer.flush()
         if (data != null) {
-            while (data.remaining123 > 0) {
+            while (data.remaining > 0) {
                 writer.write(data)
             }
         }

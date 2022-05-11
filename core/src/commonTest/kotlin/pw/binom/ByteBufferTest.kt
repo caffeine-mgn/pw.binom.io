@@ -1,6 +1,6 @@
 package pw.binom
 
-import pw.binom.io.use
+import pw.binom.io.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -154,7 +154,7 @@ class ByteBufferTest {
     @Test
     fun compactFillTest() {
         val self = ByteBuffer.alloc(10)
-        repeat(self.remaining123) {
+        repeat(self.remaining) {
             self.put(it.toByte())
         }
 
@@ -203,7 +203,7 @@ class ByteBufferTest {
     @Test
     fun frozenTest() {
         val self = ByteBuffer.alloc(10).doFreeze()
-        repeat(self.remaining123) {
+        repeat(self.remaining) {
             self.put(it.toByte())
         }
         assertEquals(10, self.position)

@@ -20,7 +20,7 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
     override val capacity: Int
         get() = native.capacity()
 
-    override val remaining123: Int
+    override val remaining: Int
         get() = native.remaining()
 
     override var position: Int
@@ -151,7 +151,7 @@ actual class CharBuffer constructor(val native: JCharBuffer) : CharSequence, Clo
     }
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining123, minOf(array.size - offset, length))
+        val len = minOf(remaining, minOf(array.size - offset, length))
         native.put(array, offset, len)
         return len
     }

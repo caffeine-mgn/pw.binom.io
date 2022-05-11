@@ -3,10 +3,8 @@ package pw.binom.io.socket.ssl
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
-import java.util.concurrent.ExecutorService
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult
-
 
 internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private val sslEngine: SSLEngine) {
 
@@ -24,14 +22,12 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
 
     init {
 
-
         val networkBufferSize = session.packetBufferSize
 
         networkInboundBuffer = ByteBuffer.allocate(networkBufferSize)
 
         networkOutboundBuffer = ByteBuffer.allocate(networkBufferSize)
         networkOutboundBuffer.flip()
-
 
         unwrapBuffer = ByteBuffer.allocate(minimumApplicationBufferSize)
         wrapBuffer = ByteBuffer.allocate(minimumApplicationBufferSize)
@@ -128,11 +124,10 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
                 }
             }
 
-
             networkInboundBuffer.flip()
             if (!networkInboundBuffer.hasRemaining()) {
                 networkInboundBuffer.compact()
-                //wrap(applicationOutputBuffer, applicationInputBuffer, false);
+                // wrap(applicationOutputBuffer, applicationInputBuffer, false);
                 return totalReadFromChannel
             }
 
@@ -143,7 +138,7 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
 
                 when (result.status!!) {
                     SSLEngineResult.Status.OK -> {
-                        val handshakeStatus = result.getHandshakeStatus()
+                        val handshakeStatus = result.handshakeStatus
                         when (handshakeStatus) {
                             SSLEngineResult.HandshakeStatus.NEED_UNWRAP -> {
                             }
@@ -209,7 +204,7 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
             }
 
             when (result.status) {
-                SSLEngineResult.Status.OK -> when (result.getHandshakeStatus()) {
+                SSLEngineResult.Status.OK -> when (result.handshakeStatus) {
                     SSLEngineResult.HandshakeStatus.NEED_WRAP -> {
                     }
 
@@ -220,7 +215,6 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
                     }
 
                     SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING -> if (applicationOutboundBuffer.hasRemaining()) {
-
                     } else {
                         break@WRAP
                     }

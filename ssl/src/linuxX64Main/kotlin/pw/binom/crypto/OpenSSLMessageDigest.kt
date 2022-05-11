@@ -8,7 +8,7 @@ import pw.binom.io.MessageDigest
 abstract class OpenSSLMessageDigest : MessageDigest {
     private var ptr: CPointer<EVP_MD_CTX>? = null
     protected abstract fun createEvp(): CPointer<EVP_MD>
-    protected abstract val finalByteArraySize:Int
+    protected abstract val finalByteArraySize: Int
     override fun init() {
         if (ptr != null) {
             EVP_MD_CTX_free(ptr)
@@ -31,7 +31,6 @@ abstract class OpenSSLMessageDigest : MessageDigest {
             ar[0] = byte.toUByte()
             EVP_DigestUpdate(ptr, ar, 1.convert())
         }
-
     }
 
     override fun update(input: ByteArray, offset: Int, len: Int) {

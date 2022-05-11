@@ -11,7 +11,7 @@ object InformationParser {
                 break
             }
 
-            map[kind.toChar()] = ctx.readCString()
+            map[kind.toInt().toChar()] = ctx.readCString()
         }
     }
 }

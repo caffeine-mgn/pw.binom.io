@@ -1,7 +1,6 @@
 package pw.binom.xml.sax
 
 import kotlinx.coroutines.test.runTest
-import pw.binom.getOrException
 import pw.binom.io.StringReader
 import pw.binom.io.asAsync
 import pw.binom.io.asReader
@@ -105,7 +104,8 @@ class ParserTest {
                 |       <D:owner></D:owner>
                 |       <D:group></D:group>
                 |   </D:prop>
-                |</D:propfind>""".trimMargin()
+                |</D:propfind>
+        """.trimMargin()
         val sb = StringBuilder()
         val root = AsyncXmlRootWriterVisitor(sb.asAsync())
         root.start()

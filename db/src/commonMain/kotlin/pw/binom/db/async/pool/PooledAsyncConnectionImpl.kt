@@ -5,6 +5,7 @@ import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.async.AsyncStatement
 import pw.binom.io.use
+import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -62,7 +63,7 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
             return false
         }
         clean()
-        if (Date.nowTime - lastCheckTime > pool.pingTime.inMilliseconds.toLong()) {
+        if (Date.nowTime - lastCheckTime > pool.pingTime.toDouble(DurationUnit.MILLISECONDS).toLong()) {
             if (isReadyForQuery()) {
                 try {
                     connection.createStatement().use { it.executeQuery("select 1").asyncClose() }

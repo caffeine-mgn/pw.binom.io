@@ -1,6 +1,7 @@
 package pw.binom.flux
 
-import pw.binom.io.httpServer.*
+import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.HttpRequest
 
 class ExceptionHandlerHandler(
     private val defaultHandler: Handler,

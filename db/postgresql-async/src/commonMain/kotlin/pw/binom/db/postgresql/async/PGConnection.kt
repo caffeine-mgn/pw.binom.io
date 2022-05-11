@@ -68,7 +68,7 @@ class PGConnection private constructor(
                 }
             }
             if (applicationName != null) {
-                val appName = applicationName?.replace("\\", "\\\\")?.replace("'", "\\'")
+                val appName = applicationName.replace("\\", "\\\\").replace("'", "\\'")
                 pgConnection.sendQuery("SET application_name = E'$appName'")
             }
             while (true) {

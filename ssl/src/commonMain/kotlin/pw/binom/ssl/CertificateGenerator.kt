@@ -1,8 +1,8 @@
 package pw.binom.ssl
 
-//import pw.binom.date.Date
+// import pw.binom.date.Date
 
-//expect object CertificateGenerator{
+// expect object CertificateGenerator{
 //    fun generate(
 //            keySize:Int,
 //            algorithm:CertificateAlgorithm,
@@ -12,8 +12,8 @@ package pw.binom.ssl
 //            serialNumber:Long,
 //            subject:String?,
 //            issuer:String?):Pair<PrivateCertificate,X509Certificate>
-//}
+// }
 //
-//enum class CertificateAlgorithm{
+// enum class CertificateAlgorithm{
 //    RSA
-//}
+// }

@@ -14,7 +14,7 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
 
     override val capacity: Int
         get() = chars.size
-    override val remaining123: Int
+    override val remaining: Int
         get() = limit - position
     override var position: Int = 0
         set(value) {
@@ -75,7 +75,7 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         get() = Char.SIZE_BYTES
 
     actual fun read(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining123, length)
+        val len = minOf(remaining, length)
         chars.copyInto(array, offset, position, position + len)
         return len
     }
@@ -86,8 +86,8 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
     }
 
     override fun compact() {
-        if (remaining123 > 0) {
-            val size = remaining123
+        if (remaining > 0) {
+            val size = remaining
             chars.copyInto(chars, 0, position, position + size)
             position = size
             limit = capacity
@@ -121,7 +121,7 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         chars.concatToString(startIndex, endIndex)
 
     actual fun write(array: CharArray, offset: Int, length: Int): Int {
-        val len = minOf(remaining123, minOf(array.size - offset, length))
+        val len = minOf(remaining, minOf(array.size - offset, length))
         for (i in 0 until (len)) {
             chars[position + i] = array[offset + i]
         }

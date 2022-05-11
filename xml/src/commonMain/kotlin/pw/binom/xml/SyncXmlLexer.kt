@@ -139,7 +139,7 @@ class SyncXmlLexer(val reader: Reader) {
                 return true
             }
             when (c) {
-                '[',']','!', '<', '>', '/', '=', '"', '?', '&', ';', '\n', ' ', '\r', '\t' -> {
+                '[', ']', '!', '<', '>', '/', '=', '"', '?', '&', ';', '\n', ' ', '\r', '\t' -> {
                     lastChar = c
                     text = sb.toString()
                     sb.clear()

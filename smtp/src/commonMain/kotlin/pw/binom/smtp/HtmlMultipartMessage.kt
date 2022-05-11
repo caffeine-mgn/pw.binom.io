@@ -1,16 +1,11 @@
 package pw.binom.smtp
 
-import pw.binom.io.AsyncOutput
-import pw.binom.io.ByteBuffer
 import pw.binom.ByteBufferPool
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
-import pw.binom.io.AsyncWriter
-import pw.binom.io.UTF8
-import pw.binom.io.bufferedWriter
+import pw.binom.io.*
 import pw.binom.io.http.AsyncMultipartOutput
 import pw.binom.io.http.headersOf
-import pw.binom.io.use
 
 class HtmlMultipartMessage internal constructor(val output: AsyncOutput) : Message {
 

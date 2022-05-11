@@ -17,7 +17,6 @@ actual object KeyGenerator {
 
         actual fun createPrivateKey(): PrivateKey = PrivateKeyImpl(algorithm = algorithm, native = native.private)
     }
-
 }
 
 val KeyAlgorithm.str: String

@@ -17,7 +17,7 @@ actual fun X509Builder.generate(): X509Certificate {
             certGen.setNotBefore(java.util.Date(notBefore.time))
             certGen.setNotAfter(java.util.Date(notAfter.time))
 
-            certGen.setPublicKey(pair!!.native.public)
+            certGen.setPublicKey(pair.native.public)
             return X509Certificate(certGen.generate(sign.native))
         }
         X509Builder.Version.V3 -> {

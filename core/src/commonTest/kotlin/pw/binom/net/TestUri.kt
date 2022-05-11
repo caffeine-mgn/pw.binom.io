@@ -22,4 +22,9 @@ class TestUri {
         assertEquals(PATH, URI(PATH).path.toString())
         assertEquals(PATH, URI("$PATH?t=1#v=2").path.toString())
     }
+
+    @Test
+    fun testAddPath() {
+        assertEquals("/api/videos", "/api".toURI().appendPath("videos".toPath).toString())
+    }
 }

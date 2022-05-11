@@ -39,13 +39,13 @@ open class AsyncDeflaterOutput(
         checkBusy()
         try {
             busy = true
-            val vv = data.remaining123
+            val vv = data.remaining
             while (true) {
                 buffer.clear()
                 val l = deflater.deflate(data, buffer)
 
                 buffer.flip()
-                while (buffer.remaining123 > 0) {
+                while (buffer.remaining > 0) {
                     stream.write(buffer)
                 }
 

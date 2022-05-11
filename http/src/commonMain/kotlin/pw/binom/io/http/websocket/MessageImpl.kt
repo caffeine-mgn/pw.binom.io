@@ -51,7 +51,7 @@ class MessageImpl(
         val read = if (maskFlag) {
             val pos1 = dest.position
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining123.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
             val n = input.read(dest)
 
             dest.position = pos1
@@ -61,7 +61,7 @@ class MessageImpl(
             n
         } else {
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining123.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
             val n = input.read(dest)
             dest.limit = lim1
             n

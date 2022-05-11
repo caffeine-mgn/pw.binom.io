@@ -2,11 +2,9 @@ package pw.binom.xml.serialization
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
-import pw.binom.xml.dom.NameSpace
 import pw.binom.xml.dom.XmlElement
 
 class XmlEncoder(root: XmlElement?, val classDiscriminator: String, override val serializersModule: SerializersModule) :

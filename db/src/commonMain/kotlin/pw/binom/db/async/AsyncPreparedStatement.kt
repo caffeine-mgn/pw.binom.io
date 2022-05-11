@@ -10,7 +10,8 @@ import pw.binom.io.AsyncCloseable
 
 interface AsyncPreparedStatement : AsyncCloseable {
     val connection: AsyncConnection
-//    suspend fun set(index: Int, value: BigInteger)
+
+    //    suspend fun set(index: Int, value: BigInteger)
 //    suspend fun set(index: Int, value: BigDecimal)
     suspend fun set(index: Int, value: Double)
     suspend fun set(index: Int, value: Float)

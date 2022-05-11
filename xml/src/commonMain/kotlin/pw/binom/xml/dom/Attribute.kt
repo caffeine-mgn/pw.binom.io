@@ -6,7 +6,7 @@ class Attribute(var nameSpace: String?, var name: String) {
         return if (nameSpace == null) {
             "Attribute(name: [$name])"
         } else {
-            "Attribute(nameSpace: [${nameSpace}], name: [$name])"
+            "Attribute(nameSpace: [$nameSpace], name: [$name])"
         }
     }
 }

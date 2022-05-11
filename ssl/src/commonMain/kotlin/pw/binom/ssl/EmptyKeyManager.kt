@@ -6,6 +6,6 @@ object EmptyKeyManager : KeyManager {
     override fun getPublic(serverName: String?): X509Certificate? = null
 
     override fun close() {
-        //Do nothing
+        // Do nothing
     }
 }

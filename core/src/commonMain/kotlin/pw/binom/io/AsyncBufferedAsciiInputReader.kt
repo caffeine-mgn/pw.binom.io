@@ -65,14 +65,14 @@ class AsyncBufferedAsciiInputReader private constructor(
 //    private val buffer = ByteBuffer.alloc(bufferSize).empty()
 
     override val available: Int
-        get() = if (closed) 0 else if (buffer.remaining123 > 0) buffer.remaining123 else -1
+        get() = if (closed) 0 else if (buffer.remaining > 0) buffer.remaining else -1
 
     private suspend fun full() {
         if (eof) {
             return
         }
 
-        if (buffer.remaining123 == 0) {
+        if (buffer.remaining == 0) {
             try {
                 buffer.clear()
                 if (stream.read(buffer) == 0) {
@@ -108,18 +108,18 @@ class AsyncBufferedAsciiInputReader private constructor(
     override suspend fun readChar(): Char? {
         checkClosed()
         full()
-        if (buffer.remaining123 <= 0) {
+        if (buffer.remaining <= 0) {
             return null
         }
-        return buffer.get().toInt().toChar()
+        return buffer.getByte().toInt().toChar()
     }
 
     override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
         checkClosed()
         full()
-        val len = minOf(minOf(dest.size - offset, length), buffer.remaining123)
+        val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
         for (i in offset until offset + len) {
-            dest[i] = buffer.get().toInt().toChar()
+            dest[i] = buffer.getByte().toInt().toChar()
         }
         return len
     }
@@ -127,8 +127,8 @@ class AsyncBufferedAsciiInputReader private constructor(
     suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {
         checkClosed()
         full()
-        val len = minOf(minOf(dest.size - offset, length), buffer.remaining123)
-        buffer.get(
+        val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
+        buffer.read(
             dest = dest,
             offset = offset,
             length = len,
@@ -157,7 +157,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         var exist = false
         LOOP@ while (true) {
             full()
-            if (buffer.remaining123 <= 0) {
+            if (buffer.remaining <= 0) {
                 break
             }
             for (i in buffer.position until buffer.limit) {

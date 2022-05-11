@@ -7,17 +7,17 @@ import platform.windows.*
 import kotlin.native.concurrent.freeze
 
 private inline fun CreateProcess(
-    lpApplicationName: platform.windows.LPCWSTR?,
-    lpCommandLine: platform.windows.LPWSTR?,
-    lpProcessAttributes: platform.windows.LPSECURITY_ATTRIBUTES?,
-    lpThreadAttributes: platform.windows.LPSECURITY_ATTRIBUTES?,
-    bInheritHandles: platform.windows.WINBOOL,
-    dwCreationFlags: platform.windows.DWORD,
-    lpEnvironment: platform.windows.LPVOID?,
-    lpCurrentDirectory: platform.windows.LPCWSTR?,
-    lpStartupInfo: platform.windows.LPSTARTUPINFOW?,
-    lpProcessInformation: platform.windows.LPPROCESS_INFORMATION?
-) = platform.windows.CreateProcess!!(
+    lpApplicationName: LPCWSTR?,
+    lpCommandLine: LPWSTR?,
+    lpProcessAttributes: LPSECURITY_ATTRIBUTES?,
+    lpThreadAttributes: LPSECURITY_ATTRIBUTES?,
+    bInheritHandles: WINBOOL,
+    dwCreationFlags: DWORD,
+    lpEnvironment: LPVOID?,
+    lpCurrentDirectory: LPCWSTR?,
+    lpStartupInfo: LPSTARTUPINFOW?,
+    lpProcessInformation: LPPROCESS_INFORMATION?
+) = CreateProcess!!(
     lpApplicationName,
     lpCommandLine,
     lpProcessAttributes,
@@ -62,7 +62,7 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
             vv.dwFlags = STARTF_USESTDHANDLES.convert()
             val envList = env.map { "${it.key}=${it.value}" }
 
-            val memCount = envList.sumBy { it.length + 1 } + 1
+            val memCount = envList.sumOf { it.length + 1 } + 1
             val mem = allocArray<UShortVar>(memCount)
             var p = 0
             envList.forEachIndexed { index, s ->

@@ -1,6 +1,7 @@
 package pw.binom
 
-import kotlinx.cinterop.*
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.convert
 import platform.posix.*
 import pw.binom.io.*
 
@@ -21,7 +22,7 @@ actual object Console {
                 return 0
             }
             return data.refTo(data.position) { data2 ->
-                platform.posix.write(fd, data2, data.remaining123.convert()).convert()
+                write(fd, data2, data.remaining.convert()).convert()
             } ?: 0
         }
 
@@ -47,7 +48,7 @@ actual object Console {
                 return 0
             }
             return dest.refTo(dest.position) { dest2 ->
-                platform.posix.write(STDIN_FILENO, dest2, dest.remaining123.convert()).convert()
+                write(STDIN_FILENO, dest2, dest.remaining.convert()).convert()
             } ?: 0
         }
 
@@ -95,7 +96,7 @@ actual object Console {
             return char
         }
 
-        override fun readln(): String? = kotlin.io.readlnOrNull()
+        override fun readln(): String? = readlnOrNull()
 
         override fun read(): Char? {
             val b1 = readCharCode()

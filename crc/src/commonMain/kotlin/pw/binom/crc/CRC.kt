@@ -47,8 +47,8 @@ open class CRC32Basic(private val init: UInt, val crcTable: IntArray) : MessageD
     }
 
     override fun update(buffer: ByteBuffer) {
-        while (buffer.remaining123 > 0) {
-            crc = apply(buffer.get(), crc)
+        while (buffer.remaining > 0) {
+            crc = apply(buffer.getByte(), crc)
         }
     }
 

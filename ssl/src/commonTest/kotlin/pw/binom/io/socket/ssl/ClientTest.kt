@@ -5,17 +5,20 @@ import pw.binom.io.bufferedAsciiReader
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.tcpConnect
-import pw.binom.ssl.*
+import pw.binom.ssl.EmptyKeyManager
+import pw.binom.ssl.SSLContext
+import pw.binom.ssl.SSLMethod
+import pw.binom.ssl.TrustManager
 import kotlin.test.Test
 
-//object EmptyKeyManager : KeyManager {
+// object EmptyKeyManager : KeyManager {
 //    override fun getPrivate(serverName: String?): PrivateKey? = null
 //
 //    override fun getPublic(serverName: String?): X509Certificate? = null
 //
 //    override fun close() {
 //    }
-//}
+// }
 
 class ClientTest {
 

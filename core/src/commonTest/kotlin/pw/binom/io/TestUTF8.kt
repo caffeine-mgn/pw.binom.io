@@ -133,7 +133,7 @@ class TestUTF8 {
             .split(' ')
             .map { it.toUByte(16).toByte() }
 
-        assertEquals(bytes.size, buffer.remaining123)
+        assertEquals(bytes.size, buffer.remaining)
         buffer.close()
     }
 
@@ -146,8 +146,8 @@ class TestUTF8 {
         buffer.flip()
 
         val sb = StringBuilder()
-        while (buffer.remaining123 > 0) {
-            val b = buffer.get()
+        while (buffer.remaining > 0) {
+            val b = buffer.getByte()
             sb.append(UTF8.utf8toUnicode(b, buffer))
         }
 

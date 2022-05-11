@@ -1,6 +1,6 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.pool.ObjectPool
 
 abstract class AbstractAsyncBufferedAsciiWriter(
@@ -16,7 +16,7 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
 
     private suspend fun checkFlush() {
-        if (buffer.remaining123 == 0) {
+        if (buffer.remaining == 0) {
             flush()
         }
     }
@@ -24,7 +24,7 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
         var r = 0
-        while (data.remaining123 > 0) {
+        while (data.remaining > 0) {
             checkFlush()
             r += buffer.write(data)
         }
@@ -70,9 +70,9 @@ abstract class AbstractAsyncBufferedAsciiWriter(
 
     override suspend fun flush() {
         checkClosed()
-        if (buffer.remaining123 != buffer.capacity) {
+        if (buffer.remaining != buffer.capacity) {
             buffer.flip()
-            while (buffer.remaining123 > 0) {
+            while (buffer.remaining > 0) {
                 output.write(buffer)
             }
             buffer.clear()

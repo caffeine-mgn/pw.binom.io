@@ -12,7 +12,7 @@ class AsyncInputWithLength(val input: AsyncInput, val length: Long) : AsyncInput
         }
 
     override suspend fun read(dest: ByteBuffer): Int {
-        val limit = minOf(dest.remaining123, l.toInt())
+        val limit = minOf(dest.remaining, l.toInt())
         val l = dest.limit
         dest.limit = dest.position + limit
         val read = input.read(dest)

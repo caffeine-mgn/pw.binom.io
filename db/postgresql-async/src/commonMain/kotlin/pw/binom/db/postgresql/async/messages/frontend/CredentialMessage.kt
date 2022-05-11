@@ -8,22 +8,22 @@ import pw.binom.db.postgresql.async.messages.backend.AuthenticationMessage
 import pw.binom.writeByte
 
 private val lookup = byteArrayOf(
-    '0'.toByte(),
-    '1'.toByte(),
-    '2'.toByte(),
-    '3'.toByte(),
-    '4'.toByte(),
-    '5'.toByte(),
-    '6'.toByte(),
-    '7'.toByte(),
-    '8'.toByte(),
-    '9'.toByte(),
-    'a'.toByte(),
-    'b'.toByte(),
-    'c'.toByte(),
-    'd'.toByte(),
-    'e'.toByte(),
-    'f'.toByte()
+    '0'.code.toByte(),
+    '1'.code.toByte(),
+    '2'.code.toByte(),
+    '3'.code.toByte(),
+    '4'.code.toByte(),
+    '5'.code.toByte(),
+    '6'.code.toByte(),
+    '7'.code.toByte(),
+    '8'.code.toByte(),
+    '9'.code.toByte(),
+    'a'.code.toByte(),
+    'b'.code.toByte(),
+    'c'.code.toByte(),
+    'd'.code.toByte(),
+    'e'.code.toByte(),
+    'f'.code.toByte()
 )
 
 private fun bytesToHex(bytes: ByteArray, hex: ByteArray, offset: Int) {
@@ -71,9 +71,9 @@ class CredentialMessage : KindedMessage {
 
                 bytesToHex(passDigest, hexDigest, 3)
 
-                hexDigest[0] = 'm'.toByte()
-                hexDigest[1] = 'd'.toByte()
-                hexDigest[2] = '5'.toByte()
+                hexDigest[0] = 'm'.code.toByte()
+                hexDigest[1] = 'd'.code.toByte()
+                hexDigest[2] = '5'.code.toByte()
                 writer.write(hexDigest)
                 writer.output.writeByte(writer.buf16, 0)
             }

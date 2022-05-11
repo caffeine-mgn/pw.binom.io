@@ -80,7 +80,7 @@ open class AsyncBufferedOutputAppendable protected constructor(
     }
 
     private suspend fun checkFlush() {
-        if (charBuffer.remaining123 > 0) {
+        if (charBuffer.remaining > 0) {
             return
         }
         flush()
@@ -132,7 +132,7 @@ open class AsyncBufferedOutputAppendable protected constructor(
 
     override suspend fun flush() {
         checkClosed()
-        if (charBuffer.remaining123 == charBuffer.capacity) {
+        if (charBuffer.remaining == charBuffer.capacity) {
             return
         }
         charBuffer.flip()
@@ -143,11 +143,11 @@ open class AsyncBufferedOutputAppendable protected constructor(
                 throw RuntimeException("Malformed String")
             }
             buffer.flip()
-            if (buffer.remaining123 != buffer.capacity) {
+            if (buffer.remaining != buffer.capacity) {
                 output.write(buffer)
                 buffer.clear()
             }
-            if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining123 == 0) {
+            if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining == 0) {
                 break
             }
         }

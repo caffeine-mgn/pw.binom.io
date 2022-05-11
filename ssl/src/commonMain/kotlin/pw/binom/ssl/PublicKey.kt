@@ -3,7 +3,7 @@ package pw.binom.ssl
 import pw.binom.io.Closeable
 
 expect interface PublicKey : Closeable {
-    companion object;
+    companion object
 
     val algorithm: KeyAlgorithm
     val data: ByteArray

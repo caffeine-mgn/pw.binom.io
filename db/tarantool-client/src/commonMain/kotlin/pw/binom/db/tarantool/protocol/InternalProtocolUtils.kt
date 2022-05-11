@@ -116,11 +116,11 @@ internal object InternalProtocolUtils {
 
     private fun write(value: ByteBuffer, buffer: ByteBuffer, out: Output) {
         when {
-            value.remaining123 <= MAX_8BIT -> {
+            value.remaining <= MAX_8BIT -> {
                 out.writeByte(buffer, MP_BIN8)
                 out.writeByte(buffer, value.capacity.toByte())
             }
-            value.remaining123 <= MAX_16BIT -> {
+            value.remaining <= MAX_16BIT -> {
                 out.writeByte(buffer, MP_BIN16)
                 out.writeShort(buffer, value.capacity.toShort())
             }
@@ -278,7 +278,7 @@ internal object InternalProtocolUtils {
             val l = input.read(buf)
             buf.flip()
             repeat(l) {
-                out[cur++] = buf.get()
+                out[cur++] = buf.getByte()
             }
         }
         return out

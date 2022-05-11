@@ -50,7 +50,7 @@ interface Strong {
         private var links: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null
         private var inited = false
         private var linked = false
-        protected fun <T> onInit(func: suspend () -> T): PropertyDelegateProvider<Strong.Bean, ReadOnlyProperty<Strong.Bean, T>> {
+        protected fun <T> onInit(func: suspend () -> T): PropertyDelegateProvider<Bean, ReadOnlyProperty<Bean, T>> {
             if (inited) {
                 throw IllegalStateException("Can't create onInit property. Init phase already finished")
             }
@@ -62,7 +62,7 @@ interface Strong {
             return delegateProvider
         }
 
-        protected fun <T> onLink(func: suspend () -> T): PropertyDelegateProvider<Strong.Bean, ReadOnlyProperty<Strong.Bean, T>> {
+        protected fun <T> onLink(func: suspend () -> T): PropertyDelegateProvider<Bean, ReadOnlyProperty<Bean, T>> {
             if (linked) {
                 throw IllegalStateException("Can't create onLink property. Link phase already finished")
             }
@@ -114,7 +114,7 @@ interface Strong {
 //            }
 //        }
 
-        suspend fun create(vararg config: Strong.Config): Strong {
+        suspend fun create(vararg config: Config): Strong {
             if (STRONG_LOCAL != null) {
                 throw StrongException("Can't start strong inside strong")
             }
@@ -128,10 +128,10 @@ interface Strong {
         }
     }
 
-    fun <T : Any> service(beanClass: KClass<T>, name: String? = null): pw.binom.strong.ServiceProvider<T>
-    fun <T : Any> serviceMap(beanClass: KClass<T>): pw.binom.strong.ServiceProvider<Map<String, T>>
-    fun <T : Any> serviceList(beanClass: KClass<T>): pw.binom.strong.ServiceProvider<List<T>>
-    fun <T : Any> serviceOrNull(beanClass: KClass<T>, name: String? = null): pw.binom.strong.ServiceProvider<T?>
+    fun <T : Any> service(beanClass: KClass<T>, name: String? = null): ServiceProvider<T>
+    fun <T : Any> serviceMap(beanClass: KClass<T>): ServiceProvider<Map<String, T>>
+    fun <T : Any> serviceList(beanClass: KClass<T>): ServiceProvider<List<T>>
+    fun <T : Any> serviceOrNull(beanClass: KClass<T>, name: String? = null): ServiceProvider<T?>
     suspend fun destroy()
     val isDestroying: Boolean
     val isDestroyed: Boolean
@@ -196,7 +196,7 @@ inline fun <reified T : Any> Strong.injectOrNull(name: String? = null) = service
 inline fun <reified T : Any> Strong.exist() = contains(T::class)
 
 suspend fun Strong.Companion.launch(vararg config: Strong.Config, afterInit: ((Strong) -> Unit)? = null) {
-    val strong = Strong.create(
+    val strong = create(
         *config
     )
     if (afterInit != null) {

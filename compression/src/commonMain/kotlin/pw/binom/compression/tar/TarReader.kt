@@ -31,7 +31,7 @@ class TarReader(private val stream: Input, val closeStream: Boolean = true) : Cl
             if (currentEntity != this)
                 throw StreamClosedException()
             val entity = this
-            val maxLength = minOf(dest.remaining123, entity.size.toInt() - cursor)
+            val maxLength = minOf(dest.remaining, entity.size.toInt() - cursor)
             if (maxLength == 0)
                 return 0
             dest.limit = dest.position + maxLength

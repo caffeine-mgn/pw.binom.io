@@ -17,6 +17,9 @@ kotlin {
         linuxArm64()
     }
     macosX64()
+    targets.all {
+        compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {

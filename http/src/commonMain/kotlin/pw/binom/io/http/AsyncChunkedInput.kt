@@ -100,7 +100,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
                 continue
             }
 
-            val r = minOf(chunkedSize!! - readed, dest.remaining123.toULong())
+            val r = minOf(chunkedSize!! - readed, dest.remaining.toULong())
 //            val oldLimit = dest.limit
             dest.limit = dest.position + r.toInt()
             val b = stream.read(dest)

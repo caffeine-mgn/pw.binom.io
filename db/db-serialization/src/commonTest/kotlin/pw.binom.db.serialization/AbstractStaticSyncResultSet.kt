@@ -6,7 +6,7 @@ import pw.binom.date.parseIso8601Date
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
 
-abstract class AbstractStaticSyncResultSet<T>() : AsyncResultSet {
+abstract class AbstractStaticSyncResultSet<T> : AsyncResultSet {
     protected abstract val list: List<T>
     private var index = -1
     override suspend fun next(): Boolean {

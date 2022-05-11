@@ -79,7 +79,7 @@ class BufferedOutputAppendable private constructor(
     }
 
     private fun checkFlush() {
-        if (charBuffer.remaining123 > 0) {
+        if (charBuffer.remaining > 0) {
             return
         }
         flush()
@@ -130,7 +130,7 @@ class BufferedOutputAppendable private constructor(
 
     override fun flush() {
         checkClosed()
-        if (charBuffer.remaining123 == charBuffer.capacity) {
+        if (charBuffer.remaining == charBuffer.capacity) {
             return
         }
         charBuffer.flip()
@@ -138,11 +138,11 @@ class BufferedOutputAppendable private constructor(
             buffer.clear()
             val r = encoder.encode(charBuffer, buffer)
             buffer.flip()
-            if (buffer.remaining123 != buffer.capacity) {
+            if (buffer.remaining != buffer.capacity) {
                 output.write(buffer)
                 buffer.clear()
             }
-            if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining123 == 0) {
+            if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining == 0) {
                 break
             }
         }

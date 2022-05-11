@@ -54,13 +54,13 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
         return output.refTo(output.position) { outputPtr ->
             input.refTo(input.position) { inputPtr ->
                 memScoped {
-                    native.avail_out = output.remaining123.convert()
+                    native.avail_out = output.remaining.convert()
                     native.next_out = (outputPtr).getPointer(this).reinterpret()
 
-                    native.avail_in = input.remaining123.convert()
+                    native.avail_in = input.remaining.convert()
                     native.next_in = (inputPtr).getPointer(this).reinterpret()
-                    val freeOutput = output.remaining123
-                    val freeInput = input.remaining123
+                    val freeOutput = output.remaining
+                    val freeInput = input.remaining
                     val r = inflate(native.ptr, Z_NO_FLUSH)
                     if (r != Z_OK && r != Z_STREAM_END)
                         throw IOException("inflate() returns [${zlibConsts(r)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")

@@ -96,10 +96,10 @@ class RESP3Impl(
     }
 
     private suspend fun internalReadInlineString(): String =
-        reader.readln() ?: throw EOFException()
+        reader.readln()
 
     private suspend fun internalReadStringOrNull(): String? {
-        val line = reader.readln() ?: throw EOFException()
+        val line = reader.readln()
         val len = line.toIntOrNull() ?: throw IllegalStateException("Invalid String Bulk length \"$line\"")
         if (len < 0) {
             return null
@@ -110,7 +110,7 @@ class RESP3Impl(
     }
 
     private suspend fun internalReadStringDataOrNull(func: suspend (ByteBuffer) -> Unit): Boolean {
-        val line = reader.readln() ?: throw EOFException()
+        val line = reader.readln()
         val len = line.toIntOrNull() ?: throw IllegalStateException("Invalid String Bulk length \"$line\"")
         if (len < 0) {
             return false
@@ -127,14 +127,14 @@ class RESP3Impl(
     }
 
     private suspend fun internalReadBoolean(): Boolean =
-        when (val len = reader.readln() ?: throw EOFException()) {
+        when (val len = reader.readln()) {
             "t" -> true
             "f" -> false
             else -> throw IllegalStateException("Invalid Boolean \"$len\"")
         }
 
     private suspend fun internalReadLong(): Long? {
-        val num = reader.readln() ?: throw IllegalStateException("Invalid Integer")
+        val num = reader.readln()
         if (num == "_") {
             return null
         }
@@ -142,7 +142,7 @@ class RESP3Impl(
     }
 
     private suspend fun internalReadDouble(): Double? =
-        when (val num = reader.readln() ?: throw EOFException()) {
+        when (val num = reader.readln()) {
             "_" -> null
             "inf" -> Double.POSITIVE_INFINITY
             "-inf" -> Double.NEGATIVE_INFINITY
@@ -150,7 +150,7 @@ class RESP3Impl(
         }
 
     private suspend fun internalReadList(): List<Any?>? {
-        val line = reader.readln() ?: throw EOFException()
+        val line = reader.readln()
         val len = line.toIntOrNull() ?: throw IllegalStateException("Invalid List length \"$line\"")
         if (len < 0) { // TODO обработать бесконечный список
             return null
@@ -163,7 +163,7 @@ class RESP3Impl(
     }
 
     private suspend fun internalReadSet(): Set<Any?>? {
-        val line = reader.readln() ?: throw EOFException()
+        val line = reader.readln()
         val len = line.toIntOrNull() ?: throw IllegalStateException("Invalid Set length \"$line\"")
         if (len < 0) { // TODO обработать бесконечный список
             return null
@@ -176,7 +176,7 @@ class RESP3Impl(
     }
 
     private suspend fun internalReadMap(): Map<Any?, Any?>? {
-        val line = reader.readln() ?: throw EOFException()
+        val line = reader.readln()
         val len = line.toIntOrNull() ?: throw IllegalStateException("Invalid Map size \"$line\"")
         if (len < 0) { // TODO обработать бесконечный список
             return null
@@ -302,7 +302,7 @@ class RESP3Impl(
     }
 
     suspend fun writeDataString(data: ByteBuffer) {
-        writer.append("$").append(data.remaining123).append("\r\n")
+        writer.append("$").append(data.remaining).append("\r\n")
         writer.flush()
         output.writeFully(data)
         output.flush()

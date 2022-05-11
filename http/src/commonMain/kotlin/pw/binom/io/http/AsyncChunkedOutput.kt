@@ -29,11 +29,11 @@ open class AsyncChunkedOutput(
     private val tmp = ByteBuffer.alloc(50)
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
-        val len = data.remaining123
+        val len = data.remaining
         while (true) {
-            if (data.remaining123 == 0)
+            if (data.remaining == 0)
                 break
-            if (buffer.remaining123 == 0) {
+            if (buffer.remaining == 0) {
                 buffer.flip()
                 sendBuffer()
             }
@@ -44,7 +44,7 @@ open class AsyncChunkedOutput(
 
     private suspend fun sendBuffer() {
         tmp.clear()
-        UTF8.unicodeToUtf8((buffer.remaining123).toString(16), tmp)
+        UTF8.unicodeToUtf8((buffer.remaining).toString(16), tmp)
         tmp.put(CR)
         tmp.put(LF)
         tmp.flip()

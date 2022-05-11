@@ -8,7 +8,7 @@ fun Byte.toChar2() = when (this) {
     '\n'.code.toByte() -> "\\n"
     '\t'.code.toByte() -> "\\t"
     0.toByte() -> "--"
-    else -> " " + this.toChar()
+    else -> " " + this.toInt().toChar()
 }
 
 fun ByteBuffer.print() {

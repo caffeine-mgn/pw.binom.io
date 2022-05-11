@@ -1,7 +1,8 @@
 package pw.binom.io
 
 import kotlinx.coroutines.test.runTest
-import pw.binom.*
+import pw.binom.asyncInput
+import pw.binom.nextBytes
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

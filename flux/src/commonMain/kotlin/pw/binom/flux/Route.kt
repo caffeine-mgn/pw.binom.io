@@ -72,10 +72,10 @@ fun Route.preHandle(func: suspend (HttpRequest) -> Boolean) = object : AbstractR
     override val serialization: FluxServerSerialization
         get() = this@preHandle.serialization
 
-    override suspend fun execute(request: HttpRequest) {
-        func(request)
-        if (request.response == null) {
-            super.execute(request)
+    override suspend fun execute(action: HttpRequest) {
+        func(action)
+        if (action.response == null) {
+            super.execute(action)
         }
     }
 }
@@ -84,9 +84,9 @@ fun Route.postHandle(func: suspend (action: HttpRequest) -> Unit) = object : Abs
     override val serialization: FluxServerSerialization
         get() = this@postHandle.serialization
 
-    override suspend fun execute(request: HttpRequest) {
-        super.execute(request)
-        func(request)
+    override suspend fun execute(action: HttpRequest) {
+        super.execute(action)
+        func(action)
     }
 }
 
@@ -117,8 +117,8 @@ fun Route.wrap(func: suspend (HttpRequest, suspend (HttpRequest) -> Unit) -> Uni
     override val serialization: FluxServerSerialization
         get() = this@wrap.serialization
 
-    override suspend fun execute(request: HttpRequest) =
-        func(request) { newAction ->
+    override suspend fun execute(action: HttpRequest) =
+        func(action) { newAction ->
             super.execute(newAction)
         }
 }
@@ -131,7 +131,7 @@ abstract class RouteWrapper(val route: Route) : AbstractRoute() {
     protected suspend fun invokeSuper(action: HttpRequest) =
         super.execute(action)
 
-    override suspend fun execute(request: HttpRequest) = wraping(request)
+    override suspend fun execute(action: HttpRequest) = wraping(action)
 
     abstract suspend fun wraping(action: HttpRequest)
 }

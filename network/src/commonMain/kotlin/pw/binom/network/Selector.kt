@@ -9,13 +9,13 @@ interface Selector : Closeable {
         val mode: Int
 
         val isInputReady
-            get() = mode and Selector.INPUT_READY != 0
+            get() = mode and INPUT_READY != 0
         val isOutputReady
-            get() = mode and Selector.OUTPUT_READY != 0
+            get() = mode and OUTPUT_READY != 0
         val isConnected
-            get() = mode and Selector.EVENT_CONNECTED != 0
+            get() = mode and EVENT_CONNECTED != 0
         val isError
-            get() = mode and Selector.EVENT_ERROR != 0
+            get() = mode and EVENT_ERROR != 0
     }
 
     interface Key : Closeable {

@@ -24,23 +24,23 @@ class AsyncBufferedOutputAppendableTest {
                 println("Result: ${out1.toByteArray().decodeToString()}")
                 out1.data.flip()
                 val arr = txt.toCharArray()
-                assertEquals(arr.size * 2 + 1, out1.data.remaining123)
+                assertEquals(arr.size * 2 + 1, out1.data.remaining)
                 for (i in 0 until arr.size) {
                     assertEquals(
-                        arr[i].toByte(),
+                        arr[i].code.toByte(),
                         out1.data[i],
                         "Expected char: ${arr[i]}. Index: $i"
                     )
                 }
                 for (i in arr.size until arr.size * 2) {
                     assertEquals(
-                        arr[i - arr.size].toByte(),
+                        arr[i - arr.size].code.toByte(),
                         out1.data[i],
                         "Expected char: ${arr[i - arr.size]}. Index: $i"
                     )
                 }
                 assertEquals(
-                    '\r'.toByte(),
+                    '\r'.code.toByte(),
                     out1.data[arr.size * 2],
                     "Expected char: \\r. Index: ${out1.data[arr.size * 2]}"
                 )

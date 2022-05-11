@@ -1,17 +1,16 @@
 package pw.binom.io.socket.ssl
 
 import pw.binom.io.ByteBuffer
-import pw.binom.ByteDataBuffer
 import pw.binom.io.Closeable
 
-expect class SSLSession:Closeable {
+expect class SSLSession : Closeable {
     enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
     }
 
-    class Status{
-        val state:State
-        val bytes:Int
+    class Status {
+        val state: State
+        val bytes: Int
     }
 
     fun readNet(dst: ByteArray, offset: Int, length: Int): Int

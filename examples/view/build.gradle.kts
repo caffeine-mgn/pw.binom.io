@@ -21,7 +21,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib"))
-                api(project(":core"))
+                api(project(":io"))
             }
         }
 

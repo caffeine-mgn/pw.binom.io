@@ -9,9 +9,9 @@ object Base16 {
         "${table[byte.toInt() and 0xf0 ushr 4]}${table[byte.toInt() and 0x0f]}"
 
     fun encode(data: ByteBuffer): String {
-        val sb = StringBuilder(data.remaining123 * 2)
-        while (data.remaining123 > 0) {
-            sb.append(encodeByte(data.get()))
+        val sb = StringBuilder(data.remaining * 2)
+        while (data.remaining > 0) {
+            sb.append(encodeByte(data.getByte()))
         }
         return sb.toString()
     }

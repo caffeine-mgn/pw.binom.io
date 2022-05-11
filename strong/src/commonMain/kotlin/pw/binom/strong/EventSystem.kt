@@ -5,6 +5,7 @@ import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
 import kotlin.reflect.KClass
 
+@Suppress("UNCHECKED_CAST")
 class EventSystem {
     private val listLock = SpinLock()
     private val listeners = HashMap<KClass<Any>, ArrayList<suspend (Any) -> Unit>>()

@@ -91,6 +91,9 @@ kotlin {
             compilations["test"].kotlinOptions.freeCompilerArgs = args
         }
     }
+    targets.all {
+        compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {

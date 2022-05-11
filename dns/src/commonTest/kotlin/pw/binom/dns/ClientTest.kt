@@ -3,7 +3,6 @@ package pw.binom.dns
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
-import pw.binom.*
 import pw.binom.dns.protocol.DnsHeader
 import pw.binom.dns.protocol.QueryPackage
 import pw.binom.dns.protocol.ResourcePackage
@@ -89,7 +88,7 @@ class ClientTest {
                 )
             ),
             add = listOf(
-                pw.binom.dns.Resource(
+                Resource(
                     name = "",
                     type = 41u,
                     clazz = 4096u,

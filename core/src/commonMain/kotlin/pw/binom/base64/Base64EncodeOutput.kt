@@ -41,7 +41,7 @@ class Base64EncodeOutput(private val appendable: Appendable) : Output {
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
-        val length = data.remaining123
+        val length = data.remaining
         (data.position until data.limit).forEach {
             write(data[it])
         }

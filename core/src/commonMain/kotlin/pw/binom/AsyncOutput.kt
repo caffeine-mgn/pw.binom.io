@@ -79,7 +79,7 @@ suspend fun AsyncOutput.writeLong(buffer: ByteBuffer, value: Long) {
  */
 object NullAsyncOutput : AsyncOutput {
     override suspend fun write(data: ByteBuffer): Int {
-        val remaining = data.remaining123
+        val remaining = data.remaining
         data.empty()
         return remaining
     }

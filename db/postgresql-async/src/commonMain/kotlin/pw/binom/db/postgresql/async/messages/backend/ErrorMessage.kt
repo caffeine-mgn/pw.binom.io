@@ -16,7 +16,7 @@ class ErrorMessage : KindedMessage {
         writer.writeCmd(MessageKinds.Error)
         writer.startBody()
         fields.forEach {
-            writer.writeByte(it.key.toByte())
+            writer.writeByte(it.key.code.toByte())
             writer.writeCString(it.value)
         }
         writer.writeByte(0)

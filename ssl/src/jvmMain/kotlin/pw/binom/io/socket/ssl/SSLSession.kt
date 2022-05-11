@@ -7,7 +7,6 @@ import java.nio.ByteBuffer
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult
 
-
 actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
     actual enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
@@ -196,7 +195,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                 }
             }
 
-            val length = dst.remaining123
+            val length = dst.remaining
             while (true) {
                 if (sslEngine.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_WRAP) {
 //                val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
@@ -217,7 +216,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         val l = rbio.limit()
         rbio.position(l)
         rbio.limit(rbio.capacity())
-        val l1 = dst.remaining123
+        val l1 = dst.remaining
         try {
             rbio.put(dst.native)
         } catch (e: Throwable) {
@@ -254,7 +253,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                 if (s.state != State.OK)
                     return s
             }
-            val l = minOf(clientData.readRemaining, dst.remaining123)
+            val l = minOf(clientData.readRemaining, dst.remaining)
             dst.length(l) { dst ->
                 clientData.read(dst)
             }

@@ -10,7 +10,6 @@ import kotlin.native.concurrent.SharedImmutable
 import kotlin.random.Random
 
 class UUID(val mostSigBits: Long, val leastSigBits: Long) {
-
     companion object {
         fun create(mostSigBits: Long, leastSigBits: Long) =
             UUID(

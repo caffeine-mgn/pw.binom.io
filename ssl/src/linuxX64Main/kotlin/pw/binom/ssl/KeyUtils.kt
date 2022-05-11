@@ -24,14 +24,16 @@ internal fun loadOpenSSL() {
 fun createRsaFromPublicKey(data: ByteArray): CPointer<RSA> {
     val pem = "-----BEGIN PUBLIC KEY-----\n${Base64.encode(data)}\n-----END PUBLIC KEY-----\n"
     return Bio.mem(pem.encodeToByteArray()).use { priv ->
-        PEM_read_bio_RSA_PUBKEY(priv.self, null, null, null) ?: throw IOException("Can't load public key: ${getSslError()}")
+        PEM_read_bio_RSA_PUBKEY(priv.self, null, null, null)
+            ?: throw IOException("Can't load public key: ${getSslError()}")
     }
 }
 
 fun createRsaFromPrivateKey(data: ByteArray): CPointer<RSA> {
     val pem = "-----BEGIN RSA PRIVATE KEY-----\n${Base64.encode(data)}\n-----END RSA PRIVATE KEY-----\n"
     return Bio.mem(pem.encodeToByteArray()).use { priv ->
-        PEM_read_bio_RSAPrivateKey(priv.self, null, null, null) ?: throw IOException("Can't load private key: ${getSslError()}")
+        PEM_read_bio_RSAPrivateKey(priv.self, null, null, null)
+            ?: throw IOException("Can't load private key: ${getSslError()}")
     }
 }
 

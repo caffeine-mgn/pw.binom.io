@@ -4,7 +4,7 @@ import kotlinx.cinterop.CPointer
 import platform.openssl.*
 import pw.binom.io.ByteArrayOutput
 
-class PublicKeyImpl(override val algorithm: KeyAlgorithm, override val native: CPointer<EVP_PKEY>):PublicKey {
+class PublicKeyImpl(override val algorithm: KeyAlgorithm, override val native: CPointer<EVP_PKEY>) : PublicKey {
     override val data: ByteArray
         get() {
             when (algorithm) {

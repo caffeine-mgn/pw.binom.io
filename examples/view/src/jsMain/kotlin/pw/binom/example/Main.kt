@@ -1,8 +1,9 @@
 package pw.binom.example
 
-import pw.binom.UUID
+import pw.binom.io.ByteBuffer
+
 
 fun main() {
     console.info("OLOLO")
-    UUID.random()
+    ByteBuffer.alloc(100)
 }

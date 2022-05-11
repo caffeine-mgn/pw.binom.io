@@ -50,8 +50,8 @@ internal fun String.fromDns(): String =
 
 fun ByteBuffer.readDns(): CharArray {
     if (get(position).toInt() and 0xC0 != 0) { // check is reference
-        val firstByte = get().toInt() and 0xF
-        val second = get()
+        val firstByte = getByte().toInt() and 0xF
+        val second = getByte()
 
         val ptr = Short.fromBytes((firstByte.inv() or 0xC0).inv().toByte(), second)
         val pos = position
@@ -73,9 +73,9 @@ fun ByteBuffer.readDns(): CharArray {
         throw RuntimeException("Can't find end of dns name")
     }
     val out = CharArray(endIndex - position) {
-        get().toInt().toChar()
+        getByte().toInt().toChar()
     }
-    check(get() == 0.toByte())
+    check(getByte() == 0.toByte())
     return out
 }
 

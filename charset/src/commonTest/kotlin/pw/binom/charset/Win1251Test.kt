@@ -44,10 +44,10 @@ class Win1251Test {
                 CharsetTransformResult.SUCCESS,
                 decoder.decode(buffer, out)
             )
-            assertEquals(0, buffer.remaining123)
+            assertEquals(0, buffer.remaining)
         }
         out.flip()
-        assertEquals(out.remaining123, test_data_hello_text.length)
+        assertEquals(out.remaining, test_data_hello_text.length)
         out.forEachIndexed { index, value ->
             assertEquals(test_data_hello_text[index], value)
         }

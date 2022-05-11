@@ -3,9 +3,7 @@ package pw.binom.io
 import kotlinx.cinterop.*
 import platform.posix.memcpy
 
-actual class ByteBuffer(
-    override val capacity: Int,
-) : Input, Output, Closeable, Buffer {
+actual class ByteBuffer(override val capacity: Int) : Channel, Buffer {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
     }
@@ -19,7 +17,7 @@ actual class ByteBuffer(
     private var _position = 0
     private var _limit = capacity
 
-    override val remaining123: Int
+    override val remaining: Int
         get() {
             checkClosed()
             return limit - position
@@ -75,7 +73,7 @@ actual class ByteBuffer(
     }
 
     fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
-        func(it, remaining123)
+        func(it, remaining)
     }
 
     fun <T> ref0(func: (CPointer<ByteVar>, Int) -> T) = refTo(0) { ptr ->
@@ -159,7 +157,7 @@ actual class ByteBuffer(
         }
     }
 
-    actual fun get(): Byte {
+    actual fun getByte(): Byte {
         checkClosed()
         if (position >= limit) throw IndexOutOfBoundsException()
         return data[position++]
@@ -211,8 +209,8 @@ actual class ByteBuffer(
 
     actual fun toByteArray(): ByteArray {
         checkClosed()
-        val r = ByteArray(remaining123)
-        if (remaining123 > 0) {
+        val r = ByteArray(remaining)
+        if (remaining > 0) {
             ref { ptr, remaining ->
                 r.usePinned {
                     memcpy(it.addressOf(0), ptr, remaining.convert())
@@ -231,7 +229,7 @@ actual class ByteBuffer(
         }
         if (offset + length > data.size)
             throw IndexOutOfBoundsException()
-        val len = minOf(remaining123, length)
+        val len = minOf(remaining, length)
         if (len == 0) {
             return 0
         }
@@ -247,8 +245,8 @@ actual class ByteBuffer(
 
     override fun compact() {
         checkClosed()
-        if (remaining123 > 0) {
-            val size = remaining123
+        if (remaining > 0) {
+            val size = remaining
             ref0 { cPointer, dataSize ->
                 memcpy(cPointer, cPointer + position, size.convert())
                 position = size
@@ -269,7 +267,7 @@ actual class ByteBuffer(
 
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
         checkClosed()
-        val newBytes = ByteBuffer.alloc(length)
+        val newBytes = alloc(length)
         ref0 { oldCPointer, oldDataSize ->
             newBytes.ref0 { newCPointer, newDataSize ->
                 memcpy(newCPointer, oldCPointer + index, length.convert())
@@ -279,11 +277,11 @@ actual class ByteBuffer(
         return newBytes
     }
 
-    actual fun get(dest: ByteArray, offset: Int, length: Int): Int {
+    actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
         checkClosed()
         require(dest.size - offset >= length) { "length more then available space" }
         return ref0 { cPointer, dataSize ->
-            val l = minOf(remaining123, length)
+            val l = minOf(remaining, length)
             dest.usePinned { dest ->
                 memcpy(dest.addressOf(0), cPointer + position, l.convert())
             }
@@ -293,7 +291,7 @@ actual class ByteBuffer(
 
     actual fun free() {
         checkClosed()
-        val size = remaining123
+        val size = remaining
         if (size > 0) {
             ref0 { native, _ ->
                 memcpy(native, native + position, size.convert())
