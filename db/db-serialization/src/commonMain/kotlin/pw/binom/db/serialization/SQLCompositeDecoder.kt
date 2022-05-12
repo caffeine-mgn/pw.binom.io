@@ -78,6 +78,25 @@ class SQLCompositeDecoder(
         deserializer: DeserializationStrategy<T?>,
         previousValue: T?
     ): T? {
+        val embedded = descriptor.getElementAnnotation<Embedded>(index)
+        if (embedded != null) {
+            val exist = (0 until descriptor.elementsCount).any { index ->
+                val elementName = descriptor.getElementName(index)
+                val el = "${columnPrefix ?: ""}${embedded.prefix}$elementName"
+                resultSet.columns.any { it == el }
+            }
+            if (!exist) {
+                return previousValue
+            }
+            val decoder = SQLValueDecoder(
+                classDescriptor = descriptor,
+                fieldIndex = index,
+                columnPrefix = columnPrefix,
+                resultSet = resultSet,
+                serializersModule = serializersModule
+            )
+            return deserializer.deserialize(decoder)
+        }
         return if (resultSet.isNull((columnPrefix ?: "") + descriptor.getElementName(index))) {
             previousValue
         } else {

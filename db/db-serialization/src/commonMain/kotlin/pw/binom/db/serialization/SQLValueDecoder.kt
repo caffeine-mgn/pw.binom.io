@@ -20,7 +20,6 @@ class SQLValueDecoder(
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        println("classDescriptor=$classDescriptor fieldIndex=$fieldIndex, classDescriptor.elementsCount=${classDescriptor.elementsCount}")
         val prefix = (columnPrefix ?: "") +
             (classDescriptor.getElementAnnotation<Embedded>(fieldIndex)?.prefix ?: "")
 
