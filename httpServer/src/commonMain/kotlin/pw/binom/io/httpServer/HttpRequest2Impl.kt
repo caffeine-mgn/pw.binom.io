@@ -262,22 +262,23 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         if (startedResponse != null) {
             throw IllegalStateException("Response already got")
         }
+        val server = server ?: throw ClosedException()
         if (readInput == null) {
-            val buf = server!!.textBufferPool.borrow()
+            val buf = server.textBufferPool.borrow()
             try {
                 readBinary().use {
                     it.skipAll(buf)
                 }
             } finally {
-                server!!.textBufferPool.recycle(buf)
+                server.textBufferPool.recycle(buf)
             }
         }
-        val r = server!!.httpResponse2Impl.borrow {
+        val r = server.httpResponse2Impl.borrow {
             it.reset(
-                keepAliveEnabled = server!!.maxIdleTime > 0 && headers.keepAlive,
+                keepAliveEnabled = server.maxIdleTime > 0 && headers.keepAlive,
                 channel = channel!!,
                 acceptEncoding = headers.acceptEncoding,
-                server = server!!
+                server = server
             )
         }
         startedResponse = r

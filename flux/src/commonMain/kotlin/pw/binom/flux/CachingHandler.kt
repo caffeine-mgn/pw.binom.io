@@ -8,7 +8,7 @@ import pw.binom.pool.DefaultPool
 /**
  * Handler for wrap each request to [CachingHttpRequest] and [CachingHttpRequest]
  */
-class CachingHandler(val forward: Handler, objectPoolSize: Int = 16) : Handler, Closeable {
+open class CachingHandler(val forward: Handler, objectPoolSize: Int = 16) : Handler, Closeable {
     private val cachingHttpResponsePool = DefaultPool2<CachingHttpResponse>(capacity = objectPoolSize) { pool ->
         CachingHttpResponse { self -> pool.recycle(self) }
     }
