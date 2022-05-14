@@ -262,7 +262,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         if (startedResponse != null) {
             throw IllegalStateException("Response already got")
         }
-        val server = server ?: throw ClosedException()
+        val server = server ?: throw HttpConnectionClosedException()
         if (readInput == null) {
             val buf = server.textBufferPool.borrow()
             try {
