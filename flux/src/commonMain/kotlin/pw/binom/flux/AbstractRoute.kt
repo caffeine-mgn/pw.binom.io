@@ -18,8 +18,9 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
     override fun route(path: String, func: (Route.() -> Unit)?): Route {
         val r = RouteImpl(serialization)
         routers.getOrPut(path) { ArrayList() }.add(r)
-        if (func != null)
+        if (func != null) {
             func(r)
+        }
         return r
     }
 
@@ -65,14 +66,11 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
             return
         }
         if (routers.entries.isNotEmpty()) {
-            routers.entries
-                .asSequence()
-                .filter {
-                    action.path.isMatch(it.key)
-                }
+            routers.entries.asSequence().filter {
+                action.path.isMatch(it.key)
+            }
 //                .sortedBy { -it.key.length }
-                .flatMap { it.value.asSequence() }
-                .forEach {
+                .flatMap { it.value.asSequence() }.forEach {
                     it.execute(action)
                     if (action.response != null) {
                         return
@@ -87,23 +85,23 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                     action.path.isMatch(it.key)
                 }
                 ?.forEach { route ->
-                    route.value.forEach {
-                        val wrapper = requestWrapperPool.borrow {
-                            it.reset(
-                                mask = route.key,
-                                original = action,
-                                serialization = serialization,
-                            )
-                        }
-                        try {
+                    val wrapper = requestWrapperPool.borrow {
+                        it.reset(
+                            mask = route.key,
+                            original = action,
+                            serialization = serialization,
+                        )
+                    }
+                    try {
+                        route.value.forEach {
                             it(wrapper)
                             if (action.response != null) {
                                 return
                             }
-                        } finally {
-                            wrapper.free()
-                            requestWrapperPool.recycle(wrapper)
                         }
+                    } finally {
+                        wrapper.free()
+                        requestWrapperPool.recycle(wrapper)
                     }
                 }
         }

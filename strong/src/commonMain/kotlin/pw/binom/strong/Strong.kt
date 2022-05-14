@@ -41,10 +41,10 @@ interface Strong {
         protected val strong: Strong =
             STRONG_LOCAL ?: throw IllegalStateException("Bean should be created during strong starts")
 
-        protected inline fun <reified T : Any> inject(name: String? = null) = strong.inject<T>()
+        protected inline fun <reified T : Any> inject(name: String? = null) = strong.inject<T>(name = name)
         protected inline fun <reified T : Any> injectServiceMap() = strong.injectServiceMap<T>()
         protected inline fun <reified T : Any> injectServiceList() = strong.injectServiceList<T>()
-        protected inline fun <reified T : Any> injectOrNull(name: String? = null) = strong.injectOrNull<T>()
+        protected inline fun <reified T : Any> injectOrNull(name: String? = null) = strong.injectOrNull<T>(name = name)
 
         private var inits: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null
         private var links: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null

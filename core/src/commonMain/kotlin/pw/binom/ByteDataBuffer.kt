@@ -26,7 +26,7 @@ expect class ByteDataBuffer : Closeable, Iterable<Byte> {
 
     internal fun unsafe()
     internal fun safe()
-    fun fill(element: Byte, startIndex: Int = 0, endIndex: Int = size - 1)
+    fun fill(element: Byte, startIndex: Int = 0, endIndex: Int = getSize(this) - 1)
 
     val size: Int
     operator fun set(index: Int, value: Byte)
@@ -38,6 +38,8 @@ expect class ByteDataBuffer : Closeable, Iterable<Byte> {
 
     override fun iterator(): ByteDataBufferIterator
 }
+
+internal fun getSize(self: ByteDataBuffer) = self.size
 
 fun ByteDataBuffer.realloc(size: Int): ByteDataBuffer {
     if (this.size == size)

@@ -1,3 +1,5 @@
+import pw.binom.publish.propertyOrNull
+
 buildscript {
 
     extra.apply {
@@ -19,7 +21,10 @@ buildscript {
 }
 
 allprojects {
-    version = pw.binom.Versions.LIB_VERSION
+    version = System.getenv("GITHUB_REF_NAME")
+        ?: propertyOrNull("version")
+            ?.takeIf { it != "unspecified" }
+        ?: "1.0.0-SNAPSHOT"
     group = "pw.binom.io"
 
     repositories {
