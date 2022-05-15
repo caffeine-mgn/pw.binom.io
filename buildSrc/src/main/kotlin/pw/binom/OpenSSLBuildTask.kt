@@ -64,18 +64,24 @@ abstract class OpenSSLBuildTask : DefaultTask() {
             KonanTarget.MINGW_X64 -> "mingw64"
             KonanTarget.MINGW_X86 -> "mingw"
             KonanTarget.LINUX_X64 -> "linux-x86_64"
+            KonanTarget.LINUX_ARM64 -> "linux-aarch64"
+            KonanTarget.ANDROID_ARM32 -> "android-arm"
             KonanTarget.ANDROID_ARM64 -> "android-arm64"
             KonanTarget.ANDROID_X86 -> "android-arm64"
+            KonanTarget.ANDROID_X64 -> "android64-x86_64"
             else -> TODO()
         }
-        val target2 = when (target.get()) {
-            KonanTarget.MINGW_X64 -> "x86_64-w64-mingw32"
-            KonanTarget.MINGW_X86 -> "i686-w64-mingw32"
-            KonanTarget.LINUX_X64 -> "x86_64-unknown-linux-gnu"
-            KonanTarget.ANDROID_ARM64 -> "aarch64-linux-android"
-            KonanTarget.ANDROID_X86 -> "aarch64-linux-android"
-            else -> TODO()
-        }
+//        val target2 = when (target.get()) {
+//            KonanTarget.MINGW_X64 -> "x86_64-w64-mingw32"
+//            KonanTarget.MINGW_X86 -> "i686-w64-mingw32"
+//            KonanTarget.LINUX_X64 -> "x86_64-unknown-linux-gnu"
+//            KonanTarget.LINUX_ARM64 -> "aarch64-unknown-linux-gnu"
+//            KonanTarget.ANDROID_ARM32 -> "arm-linux-androideabi"
+//            KonanTarget.ANDROID_ARM64 -> "aarch64-linux-android"
+//            KonanTarget.ANDROID_X86 -> "i686-linux-android"
+//            KonanTarget.ANDROID_X64 -> "aarch64-linux-android"
+//            else -> TODO()
+//        }
         execute(
             args = listOf(
                 "perl".executable,
@@ -85,7 +91,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
                 "no-zlib-dynamic",
                 "no-shared",
                 "no-threads",
-                "--target=$target2 -O3 ${
+                "--target=${info.targetName} -O3 ${
                 info.sysRoot.map { "\"--sysroot=${it.toString().replace("\\", "/")}\"" }.joinToString(" ")
                 }"
             ),
