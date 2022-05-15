@@ -4,6 +4,14 @@ linkerOpts.mingw_x86 = -lwsock32 -lws2_32 -lcrypt32
 linkerOpts.mingw_x64 = -lwsock32 -lws2_32 -lcrypt32
 ---
 
+int internal_sk_X509_num(struct stack_st_X509* sk) {
+    return OPENSSL_sk_num(ossl_check_const_X509_sk_type(sk));
+}
+
+X509* internal_sk_X509_value(struct stack_st_X509* sk, int idx) {
+    return (X509*)OPENSSL_sk_value(ossl_check_const_X509_sk_type(sk), (idx));
+}
+
 unsigned char* internal_OPENSSL_malloc(int num){
     return OPENSSL_malloc(num);
 }
