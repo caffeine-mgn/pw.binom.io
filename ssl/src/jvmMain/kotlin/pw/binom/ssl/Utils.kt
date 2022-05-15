@@ -1,5 +1,8 @@
 package pw.binom.ssl
 
+import java.security.KeyFactory
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import java.util.*
 
 internal fun filterArray(
@@ -32,3 +35,27 @@ internal fun filterArray(
 
     return filteredItems.toTypedArray()
 }
+
+fun loadPublicKey(algorithm: KeyAlgorithm, data: ByteArray) =
+    when (algorithm) {
+        KeyAlgorithm.RSA -> {
+            val c = KeyFactory.getInstance("RSA")
+            c.generatePublic(X509EncodedKeySpec(data))
+        }
+        KeyAlgorithm.ECDSA -> {
+            val c = KeyFactory.getInstance("EC")
+            c.generatePublic(X509EncodedKeySpec(data))
+        }
+    }
+
+fun loadPrivateKey(algorithm: KeyAlgorithm, data: ByteArray) =
+    when (algorithm) {
+        KeyAlgorithm.RSA -> {
+            val c = KeyFactory.getInstance("RSA")
+            c.generatePrivate(PKCS8EncodedKeySpec(data))
+        }
+        KeyAlgorithm.ECDSA -> {
+            val c = KeyFactory.getInstance("EC")
+            c.generatePrivate(PKCS8EncodedKeySpec(data))
+        }
+    }

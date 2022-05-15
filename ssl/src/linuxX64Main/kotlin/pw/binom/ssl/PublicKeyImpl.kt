@@ -20,6 +20,7 @@ class PublicKeyImpl(override val algorithm: KeyAlgorithm, override val native: C
                     o.close()
                     return array
                 }
+                else -> TODO()
             }
         }
 

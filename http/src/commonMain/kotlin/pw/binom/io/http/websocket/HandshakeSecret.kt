@@ -1,8 +1,8 @@
 package pw.binom.io.http.websocket
 
 import pw.binom.base64.Base64
-import pw.binom.io.MessageDigest
 import pw.binom.io.use
+import pw.binom.security.MessageDigest
 import pw.binom.toByteBufferUTF8
 import kotlin.random.Random
 

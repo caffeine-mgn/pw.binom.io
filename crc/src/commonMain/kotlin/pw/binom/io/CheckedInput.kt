@@ -1,5 +1,7 @@
 package pw.binom.io
 
+import pw.binom.security.MessageDigest
+
 class CheckedInput(val stream: Input, val cksum: MessageDigest) : Input {
 
     override fun close() {

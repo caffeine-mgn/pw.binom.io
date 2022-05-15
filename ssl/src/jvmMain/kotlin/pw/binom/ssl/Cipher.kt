@@ -1,9 +1,6 @@
 package pw.binom.ssl
 
 import pw.binom.crypto.RsaPadding
-import java.security.KeyFactory
-import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher as JvmCipher
 
 actual interface Cipher {
@@ -44,16 +41,10 @@ class RSACipherJvm(args: List<String>) : Cipher {
     }
 
     override fun init(mode: Cipher.Mode, key: Key) {
-        val jvmKey = when (key.algorithm) {
-            KeyAlgorithm.RSA -> {
-                val c = KeyFactory.getInstance("RSA")
-                when (key) {
-                    is Key.Public -> c.generatePublic(X509EncodedKeySpec(key.data))
-                    is Key.Private -> c.generatePrivate(PKCS8EncodedKeySpec(key.data))
-                }
-            }
+        val jvmKey = when (key) {
+            is Key.Public -> loadPublicKey(key.algorithm, key.data)
+            is Key.Private -> loadPrivateKey(key.algorithm, key.data)
         }
-
         native.init(mode.code, jvmKey)
     }
 

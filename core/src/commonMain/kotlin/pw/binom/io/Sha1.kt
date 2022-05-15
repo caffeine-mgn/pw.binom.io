@@ -1,5 +1,6 @@
 package pw.binom.io
 
+import pw.binom.security.MessageDigest
 import kotlin.experimental.and
 import kotlin.jvm.Synchronized
 

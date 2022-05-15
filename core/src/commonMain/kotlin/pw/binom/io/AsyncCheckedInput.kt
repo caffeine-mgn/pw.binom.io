@@ -1,5 +1,7 @@
 package pw.binom.io
 
+import pw.binom.security.MessageDigest
+
 class AsyncCheckedInput(val stream: AsyncInput, val cksum: MessageDigest) : AsyncInput {
     override val available: Int
         get() = stream.available

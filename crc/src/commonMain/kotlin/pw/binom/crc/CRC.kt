@@ -2,7 +2,7 @@ package pw.binom.crc
 
 import pw.binom.dump
 import pw.binom.io.ByteBuffer
-import pw.binom.io.MessageDigest
+import pw.binom.security.MessageDigest
 
 internal fun makeCrcTable(poly: UInt): IntArray {
     val crcTable = IntArray(256)

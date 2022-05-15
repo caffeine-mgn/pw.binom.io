@@ -4,6 +4,13 @@ linkerOpts.mingw_x86 = -lwsock32 -lws2_32 -lcrypt32
 linkerOpts.mingw_x64 = -lwsock32 -lws2_32 -lcrypt32
 ---
 
+unsigned char* internal_OPENSSL_malloc(int num){
+    return OPENSSL_malloc(num);
+}
+
+void internal_OPENSSL_free(unsigned char* memory){
+    OPENSSL_free(memory);
+}
 
 int internal_BIO_should_retry(BIO *bp){
     return BIO_test_flags(bp, BIO_FLAGS_SHOULD_RETRY);

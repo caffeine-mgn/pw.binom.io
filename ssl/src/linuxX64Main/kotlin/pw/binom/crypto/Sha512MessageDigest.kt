@@ -4,7 +4,7 @@ import kotlinx.cinterop.CPointer
 import platform.openssl.EVP_MD
 import platform.openssl.EVP_sha512
 import platform.openssl.SHA512_DIGEST_LENGTH
-import pw.binom.io.MessageDigest
+import pw.binom.security.MessageDigest
 
 actual class Sha512MessageDigest : MessageDigest, OpenSSLMessageDigest() {
 

@@ -37,6 +37,32 @@ fun createRsaFromPrivateKey(data: ByteArray): CPointer<RSA> {
     }
 }
 
+fun createEcdsaFromPublicKey(data: ByteArray): CPointer<EC_KEY> {
+    val pem = "-----BEGIN PUBLIC KEY-----\n${Base64.encode(data)}\n-----END PUBLIC KEY-----\n"
+    return Bio.mem(pem.encodeToByteArray()).use { priv ->
+        PEM_read_bio_EC_PUBKEY(priv.self, null, null, null)
+            ?: throw IOException("Can't load public key: ${getSslError()}")
+    }
+}
+
+fun createEcdsaFromPrivateKey(data: ByteArray): CPointer<EC_KEY> {
+    val pem = "-----BEGIN EC PRIVATE KEY-----\n${Base64.encode(data)}\n-----END EC PRIVATE KEY-----\n"
+    return Bio.mem(pem.encodeToByteArray()).use { priv ->
+        PEM_read_bio_ECPrivateKey(priv.self, null, null, null)
+            ?: throw IOException("Can't load private key: ${getSslError()}")
+    }
+}
+
+fun Key.Private.load() = when (algorithm) {
+    KeyAlgorithm.RSA -> createRsaFromPrivateKey(data)
+    KeyAlgorithm.ECDSA -> createEcdsaFromPrivateKey(data)
+}
+
+fun Key.Public.load() = when (algorithm) {
+    KeyAlgorithm.RSA -> createRsaFromPublicKey(data)
+    KeyAlgorithm.ECDSA -> createEcdsaFromPublicKey(data)
+}
+
 var CPointer<RSA>.publicKey: ByteArray
     get() = Bio.mem().use { b ->
         PEM_write_bio_RSAPublicKey(b.self, this)
@@ -113,6 +139,7 @@ object KeyUtils {
                 o.close()
                 return array
             }
+            else -> TODO()
         }
     }
 
@@ -130,6 +157,7 @@ object KeyUtils {
                 o.close()
                 return array
             }
+            else -> TODO()
         }
     }
 }

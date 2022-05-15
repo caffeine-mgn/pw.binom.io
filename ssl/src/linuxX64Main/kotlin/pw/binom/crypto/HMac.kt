@@ -3,16 +3,16 @@ package pw.binom.crypto
 import kotlinx.cinterop.*
 import platform.openssl.*
 import pw.binom.io.ByteBuffer
-import pw.binom.io.MessageDigest
+import pw.binom.security.MessageDigest
 
 actual class HMac actual constructor(val algorithm: Algorithm, val key: ByteArray) : MessageDigest {
     private var ctx: CPointer<HMAC_CTX>? = null
 
     actual enum class Algorithm(val size: Int, val make: () -> CPointer<EVP_MD>) {
-        SHA512(64, { EVP_sha512()!! }), SHA256(32, { EVP_sha256()!! }), SHA1(20, { EVP_sha1()!! }), MD5(
-            16,
-            { EVP_md5()!! }
-        )
+        SHA512(64, { EVP_sha512()!! }),
+        SHA256(32, { EVP_sha256()!! }),
+        SHA1(20, { EVP_sha1()!! }),
+        MD5(16, { EVP_md5()!! }),
     }
 
     private fun checkInit() {

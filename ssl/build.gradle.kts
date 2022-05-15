@@ -156,3 +156,17 @@ kotlin {
     }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()
+tasks {
+    register("buildOpenSSLMingwX64", pw.binom.OpenSSLBuildTask::class.java).configure {
+        target.set(org.jetbrains.kotlin.konan.target.KonanTarget.MINGW_X64)
+//        opensslDirection.set(File("C:\\TMP\\openssl-3.0.3"))
+    }
+    register("buildOpenSSLMingwX86", pw.binom.OpenSSLBuildTask::class.java).configure {
+        target.set(org.jetbrains.kotlin.konan.target.KonanTarget.MINGW_X86)
+//        opensslDirection.set(File("C:\\TMP\\openssl-3.0.3"))
+    }
+    register("buildOpenSSLLinuxX64", pw.binom.OpenSSLBuildTask::class.java).configure {
+        target.set(org.jetbrains.kotlin.konan.target.KonanTarget.LINUX_X64)
+//        opensslDirection.set(File("C:\\TMP\\openssl-3.0.3"))
+    }
+}

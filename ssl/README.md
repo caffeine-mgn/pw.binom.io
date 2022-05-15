@@ -22,8 +22,9 @@ Also install make and perl using cmd `C:\msys64\usr\bin\pacman -S perl make`
 #Preparing
 ```
 set MSYS=C:\msys64
-set OPENSSL=C:\TEMP\openssl-1.1.1i
-set PATH=%PATH%;%MSYS%\usr\bin;%userprofile%\.konan\dependencies\msys2-mingw-w64-x86_64-clang-llvm-lld-compiler_rt-8.0.1\bin
+set OPENSSL=C:\TMP\openssl-3.0.3
+#set PATH=%PATH%;%MSYS%\usr\bin;%userprofile%\.konan\dependencies\msys2-mingw-w64-x86_64-clang-llvm-lld-compiler_rt-8.0.1\bin
+set PATH=%PATH%;%MSYS%\usr\bin;%userprofile%\.konan\dependencies\llvm-11.1.0-windows-x64-essentials\bin
 set CC=clang
 set CXX=clang
 set AR=llvm-ar

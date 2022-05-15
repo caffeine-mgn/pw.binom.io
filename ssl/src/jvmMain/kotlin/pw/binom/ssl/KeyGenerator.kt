@@ -19,7 +19,8 @@ actual object KeyGenerator {
     }
 }
 
-val KeyAlgorithm.str: String
+private val KeyAlgorithm.str: String
     get() = when (this) {
         KeyAlgorithm.RSA -> "RSA"
+        KeyAlgorithm.ECDSA -> "EC"
     }

@@ -8,7 +8,6 @@ import pw.binom.io.ByteArrayOutput
 class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: CPointer<EVP_PKEY>) : PrivateKey {
     override val data: ByteArray
         get() {
-
             when (algorithm) {
                 KeyAlgorithm.RSA -> {
                     val rsa = EVP_PKEY_get1_RSA(native) ?: TODO("EVP_PKEY_get1_RSA returns null")
@@ -22,6 +21,7 @@ class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: 
                     o.close()
                     return array
                 }
+                else -> TODO()
             }
 
             /*
