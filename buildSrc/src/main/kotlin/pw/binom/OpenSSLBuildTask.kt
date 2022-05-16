@@ -31,11 +31,6 @@ abstract class OpenSSLBuildTask : DefaultTask() {
 
     @TaskAction
     fun execute() {
-        val opensslDir = project.propertyOrNull("pw.binom.openssl-dir")
-//        if (opensslDir != null) {
-//            opensslDirection.set(File(opensslDir))
-//        }
-
         val opensslDirection = if (opensslDirection.isPresent) {
             opensslDirection.get().asFile
         } else {
@@ -53,35 +48,41 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         val info = targetInfoMap[target.get()] ?: TODO()
         val llvmPath = "${info.llvmDir}${File.separator}clang".executable.replace("\\", "/")
         val llvmArPath = "${info.llvmDir}${File.separator}llvm-ar".executable.replace("\\", "/")
-        val envs = mapOf(
+        var path = System.getenv("PATH")
+        if (target.get().family == Family.ANDROID) {
+            val androidSdk = System.getenv("ANDROID_NDK_ROOT")
+            val prebuildName = when (HostManager.host.family) {
+                Family.MINGW -> "windows-x86_64"
+                Family.LINUX -> "linux-x86_64"
+                Family.OSX -> "darwin-x86_64"
+                else -> TODO()
+            }
+            path =
+                path + pathSeparator + "$androidSdk${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuildName${File.separator}bin"
+        }
+        val envs = mutableMapOf(
             "CC" to llvmPath,
             "CXX" to llvmPath,
             "AR" to llvmArPath,
             "ARFLAGS" to "rc",
-//            "PATH" to "${System.getenv("PATH")}$PathSeparator${info.llvmDir}"
+            "PATH" to path,
         )
+        if (target.get().family == Family.ANDROID) {
+            envs["LDFLAGS"] = "-pie"
+            envs["CFLAGS"] = "-fPIE"
+        }
+
         val target1 = when (target.get()) {
             KonanTarget.MINGW_X64 -> "mingw64"
             KonanTarget.MINGW_X86 -> "mingw"
             KonanTarget.LINUX_X64 -> "linux-x86_64"
             KonanTarget.LINUX_ARM64 -> "linux-aarch64"
-            KonanTarget.ANDROID_ARM32 -> "android-arm"
-            KonanTarget.ANDROID_ARM64 -> "android-arm64"
-            KonanTarget.ANDROID_X86 -> "android-arm64"
-            KonanTarget.ANDROID_X64 -> "android64-x86_64"
+            KonanTarget.ANDROID_ARM32 -> "linux-generic32"
+            KonanTarget.ANDROID_ARM64 -> "linux-generic64"
+            KonanTarget.ANDROID_X86 -> "linux-generic32"
+            KonanTarget.ANDROID_X64 -> "linux-generic64"
             else -> TODO()
         }
-//        val target2 = when (target.get()) {
-//            KonanTarget.MINGW_X64 -> "x86_64-w64-mingw32"
-//            KonanTarget.MINGW_X86 -> "i686-w64-mingw32"
-//            KonanTarget.LINUX_X64 -> "x86_64-unknown-linux-gnu"
-//            KonanTarget.LINUX_ARM64 -> "aarch64-unknown-linux-gnu"
-//            KonanTarget.ANDROID_ARM32 -> "arm-linux-androideabi"
-//            KonanTarget.ANDROID_ARM64 -> "aarch64-linux-android"
-//            KonanTarget.ANDROID_X86 -> "i686-linux-android"
-//            KonanTarget.ANDROID_X64 -> "aarch64-linux-android"
-//            else -> TODO()
-//        }
         execute(
             args = listOf(
                 "perl".executable,
@@ -93,7 +94,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
                 "no-threads",
                 "--target=${info.targetName} -O3 ${
                 info.sysRoot.map { "\"--sysroot=${it.toString().replace("\\", "/")}\"" }.joinToString(" ")
-                }"
+                }",
             ),
             envs = envs,
             directory = opensslDirection,
@@ -184,7 +185,13 @@ internal val String.executable
         else -> this
     }
 
-val PathSeparator
+internal val String.cmd
+    get() = when (HostManager.host.family) {
+        Family.MINGW -> "$this.cmd"
+        else -> "$this.sh"
+    }
+
+val pathSeparator
     get() = when (HostManager.host.family) {
         Family.MINGW -> ";"
         else -> ":"

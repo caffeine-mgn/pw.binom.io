@@ -1,95 +1,60 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
 }
 
+fun config(config: KotlinNativeTarget) {
+    config.compilations["main"].cinterops {
+        create("openssl") {
+            defFile = project.file("src/cinterop/openssl.def")
+            packageName = "platform.openssl"
+            includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
+        }
+    }
+
+    val args = listOf(
+        "-include-binary", "${buildFile.parent}/src/${config.targetName}Main/cinterop/lib/libopenssl.a"
+    )
+    config.compilations["main"].kotlinOptions.freeCompilerArgs = args
+    config.compilations["test"].kotlinOptions.freeCompilerArgs = args
+}
+
 kotlin {
     jvm()
     linuxX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("openssl") {
-                    defFile = project.file("src/cinterop/openssl.def")
-                    packageName = "platform.openssl"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
-                }
-            }
-            val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/linuxX64Main/cinterop/lib/libopenssl.a"
-            )
-            compilations["main"].kotlinOptions.freeCompilerArgs = args
-            compilations["test"].kotlinOptions.freeCompilerArgs = args
-        }
+        config(this)
+//        compilations["main"].cinterops {
+//            create("openssl") {
+//                defFile = project.file("src/cinterop/openssl.def")
+//                packageName = "platform.openssl"
+//                includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
+//            }
+//        }
+//        val args = listOf(
+//            "-include-binary", "${buildFile.parent}/src/linuxX64Main/cinterop/lib/libopenssl.a"
+//        )
+//        compilations["main"].kotlinOptions.freeCompilerArgs = args
+//        compilations["test"].kotlinOptions.freeCompilerArgs = args
     }
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
         linuxArm32Hfp {
-            binaries {
-                compilations["main"].cinterops {
-                    create("openssl") {
-                        defFile = project.file("src/cinterop/openssl.def")
-                        packageName = "platform.openssl"
-                        includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
-                    }
-                }
-                val args = listOf(
-                    "-include-binary", "${buildFile.parent}/src/linuxArm32HfpMain/cinterop/lib/libopenssl.a"
-                )
-                compilations["main"].kotlinOptions.freeCompilerArgs = args
-                compilations["test"].kotlinOptions.freeCompilerArgs = args
-            }
+            config(this)
         }
     }
 
     mingwX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("openssl") {
-                    defFile = project.file("src/cinterop/openssl.def")
-                    packageName = "platform.openssl"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
-                }
-            }
-            val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/mingwX64Main/cinterop/lib/libopenssl.a"
-            )
-            compilations["main"].kotlinOptions.freeCompilerArgs = args
-            compilations["test"].kotlinOptions.freeCompilerArgs = args
-        }
+        config(this)
     }
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86 {
-            binaries {
-                compilations["main"].cinterops {
-                    create("openssl") {
-                        defFile = project.file("src/cinterop/openssl.def")
-                        packageName = "platform.openssl"
-                        includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
-                    }
-                }
-                val args = listOf(
-                    "-include-binary", "${buildFile.parent}/src/mingwX86Main/cinterop/lib/libopenssl.a"
-                )
-                compilations["main"].kotlinOptions.freeCompilerArgs = args
-                compilations["test"].kotlinOptions.freeCompilerArgs = args
-            }
+            config(this)
         }
     }
 
     macosX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("openssl") {
-                    defFile = project.file("src/cinterop/openssl.def")
-                    packageName = "platform.openssl"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
-                }
-            }
-            val args = listOf(
-                "-include-binary", "${buildFile.parent}/src/macosX64Main/cinterop/lib/libopenssl.a"
-            )
-            compilations["main"].kotlinOptions.freeCompilerArgs = args
-            compilations["test"].kotlinOptions.freeCompilerArgs = args
-        }
+        config(this)
     }
     targets.all {
         compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
@@ -159,14 +124,23 @@ apply<pw.binom.plugins.ConfigPublishPlugin>()
 tasks {
     register("buildOpenSSLMingwX64", pw.binom.OpenSSLBuildTask::class.java).configure {
         target.set(org.jetbrains.kotlin.konan.target.KonanTarget.MINGW_X64)
-//        opensslDirection.set(File("C:\\TMP\\openssl-3.0.3"))
     }
     register("buildOpenSSLMingwX86", pw.binom.OpenSSLBuildTask::class.java).configure {
         target.set(org.jetbrains.kotlin.konan.target.KonanTarget.MINGW_X86)
-//        opensslDirection.set(File("C:\\TMP\\openssl-3.0.3"))
     }
     register("buildOpenSSLLinuxX64", pw.binom.OpenSSLBuildTask::class.java).configure {
         target.set(org.jetbrains.kotlin.konan.target.KonanTarget.LINUX_X64)
-//        opensslDirection.set(File("C:\\TMP\\openssl-3.0.3"))
+    }
+    register("buildOpenSSLAndroidX64", pw.binom.OpenSSLBuildTask::class.java).configure {
+        target.set(org.jetbrains.kotlin.konan.target.KonanTarget.ANDROID_X64)
+    }
+    register("buildOpenSSLAndroidX86", pw.binom.OpenSSLBuildTask::class.java).configure {
+        target.set(org.jetbrains.kotlin.konan.target.KonanTarget.ANDROID_X86)
+    }
+    register("buildOpenSSLAndroidArm32", pw.binom.OpenSSLBuildTask::class.java).configure {
+        target.set(org.jetbrains.kotlin.konan.target.KonanTarget.ANDROID_ARM32)
+    }
+    register("buildOpenSSLAndroidArm64", pw.binom.OpenSSLBuildTask::class.java).configure {
+        target.set(org.jetbrains.kotlin.konan.target.KonanTarget.ANDROID_ARM64)
     }
 }
