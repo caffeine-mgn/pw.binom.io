@@ -9,8 +9,6 @@ import pw.binom.UUID
 import pw.binom.date.Calendar
 import pw.binom.date.Date
 import pw.binom.db.ResultSet
-import pw.binom.db.async.pool.SelectQuery
-import pw.binom.db.async.pool.SelectQueryWithMapper
 
 val SqlSerializersModule = SerializersModule {
     this.contextual(UUID::class, UUIDSerializer)
@@ -19,17 +17,17 @@ val SqlSerializersModule = SerializersModule {
     this.contextual(Calendar::class, CalendarSerializer)
 }
 
-fun <T : Any> KSerializer<T>.selectQuery(queryPart: String? = null): SelectQueryWithMapper<T> = run {
-    val q = SQLSerialization.selectQuery(this)
-    val txt = if (queryPart == null) {
-        q
-    } else {
-        "$q $queryPart"
-    }
-    SelectQuery(
-        txt
-    ).mapper(SQLSerialization.DEFAULT.mapper(this))
-}
+// fun <T : Any> KSerializer<T>.selectQuery(queryPart: String? = null): SelectQueryWithMapper<T> = run {
+//    val q = SQLSerialization.selectQuery(this)
+//    val txt = if (queryPart == null) {
+//        q
+//    } else {
+//        "$q $queryPart"
+//    }
+//    SelectQuery(
+//        txt
+//    ).mapper(SQLSerialization.DEFAULT.mapper(this))
+// }
 
 /**
  * Calls [func] for each column. [func] will called with final column name.
@@ -183,7 +181,11 @@ class SQLSerialization(val serializersModule: SerializersModule = SqlSerializers
     fun <T : Any> decode(serializer: KSerializer<T>, resultSet: ResultSet, columnPrefix: String? = null): T {
         try {
             val decoder =
-                SQLDecoder(columnPrefix = columnPrefix, resultSet = resultSet, serializersModule = serializersModule)
+                SQLDecoderImpl(
+                    columnPrefix = columnPrefix,
+                    resultSet = resultSet,
+                    serializersModule = serializersModule
+                )
             return serializer.deserialize(decoder)
         } catch (e: Throwable) {
             e.printStackTrace()
@@ -278,7 +280,7 @@ class SQLSerialization(val serializersModule: SerializersModule = SqlSerializers
         columnPrefix: String? = null,
     ) {
 
-        val encoder = SQLEncoder(
+        val encoder = SQLEncoderImpl(
             columnPrefix = columnPrefix,
             map = map,
             serializersModule = serializersModule,

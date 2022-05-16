@@ -7,7 +7,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.db.ResultSet
 
-class SQLDecoder(
+class SQLDecoderImpl(
     val columnPrefix: String?,
     val resultSet: ResultSet,
     override val serializersModule: SerializersModule,

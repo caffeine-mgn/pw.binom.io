@@ -7,6 +7,8 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import pw.binom.UUID
+import pw.binom.date.Date
 
 class SQLValueEncoder(
     val classDescriptor: SerialDescriptor,
@@ -14,9 +16,20 @@ class SQLValueEncoder(
     val columnPrefix: String?,
     val map: MutableMap<String, Any?>,
     override val serializersModule: SerializersModule,
-) : Encoder {
+) : SQLEncoder {
 
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
+    override fun encodeDate(date: Date) {
+        map[columnName] = date
+    }
+
+    override fun encodeUUID(uuid: UUID) {
+        map[columnName] = uuid
+    }
+
+    override fun encodeByteArray(array: ByteArray) {
+        map[columnName] = array
+    }
 
     override fun beginCollection(descriptor: SerialDescriptor, collectionSize: Int): CompositeEncoder {
         return when {

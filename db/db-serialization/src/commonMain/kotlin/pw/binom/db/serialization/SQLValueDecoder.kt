@@ -7,6 +7,8 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
+import pw.binom.UUID
+import pw.binom.date.Date
 import pw.binom.db.ResultSet
 
 class SQLValueDecoder(
@@ -15,9 +17,12 @@ class SQLValueDecoder(
     val columnPrefix: String?,
     val resultSet: ResultSet,
     override val serializersModule: SerializersModule,
-) : Decoder {
+) : SqlDecoder {
 
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
+    override fun decodeDate(): Date = resultSet.getDate(columnName)!!
+    override fun decodeUUID(): UUID = resultSet.getUUID(columnName)!!
+    override fun decodeByteArray(): ByteArray = resultSet.getBlob(columnName)!!
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
         val prefix = (columnPrefix ?: "") +

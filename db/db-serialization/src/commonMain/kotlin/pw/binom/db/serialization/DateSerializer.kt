@@ -9,19 +9,17 @@ import pw.binom.date.Date
 
 object DateSerializer : KSerializer<Date> {
     override fun deserialize(decoder: Decoder): Date {
-        if (decoder !is SQLValueDecoder) {
-            throw IllegalArgumentException("UUIDSerializer support only pw.binom.db.serialization.SQLValueDecoder")
+        if (decoder !is SqlDecoder) {
+            throw IllegalArgumentException("DateSerializer support only pw.binom.db.serialization.SqlDecoder")
         }
-        return decoder.resultSet.getDate(decoder.columnName)!!
+        return decoder.decodeDate()
     }
 
     override fun serialize(encoder: Encoder, value: Date) {
-        if (encoder !is SQLValueEncoder) {
-            throw IllegalArgumentException("UUIDSerializer support only pw.binom.db.serialization.SQLValueEncoder")
+        if (encoder !is SQLEncoder) {
+            throw IllegalArgumentException("DateSerializer support only pw.binom.db.serialization.SQLEncoder")
         }
-
-        encoder.classDescriptor.getElementName(encoder.fieldIndex)
-        encoder.map[encoder.columnName] = value
+        encoder.encodeDate(value)
     }
 
     override val descriptor: SerialDescriptor

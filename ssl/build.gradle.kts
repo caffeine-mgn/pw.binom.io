@@ -68,6 +68,7 @@ kotlin {
                 api(project(":file"))
                 api(project(":date"))
                 api(project(":concurrency"))
+                api("com.ionspin.kotlin:bignum:0.3.4")
             }
         }
         val linuxX64Main by getting {
