@@ -3,6 +3,9 @@ import pw.binom.eachKotlinCompile
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
 
 fun androidCInterop(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) {
@@ -17,8 +20,12 @@ fun androidCInterop(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeT
         }
     }
 }
-
 kotlin {
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        android {
+            publishAllLibraryVariants()
+        }
+    }
     jvm()
     linuxX64()
     linuxArm64()
@@ -29,8 +36,10 @@ kotlin {
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86()
     }
-    macosX64()
-    macosArm64()
+    if (pw.binom.Target.MACOS_SUPPORT) {
+        macosX64()
+        macosArm64()
+    }
     js("js", BOTH) {
         browser()
         nodejs()
@@ -100,11 +109,13 @@ kotlin {
             }
         }
 
-        val macosX64Main by getting {
-            dependsOn(nativeMain)
-        }
-        val macosArm64Main by getting {
-            dependsOn(nativeMain)
+        if (pw.binom.Target.MACOS_SUPPORT) {
+            val macosX64Main by getting {
+                dependsOn(nativeMain)
+            }
+            val macosArm64Main by getting {
+                dependsOn(nativeMain)
+            }
         }
 
         val commonTest by getting {
@@ -144,4 +155,25 @@ const val BINOM_VERSION = "${project.version}"
         it.dependsOn(generateVersion)
     }
 }
+apply<pw.binom.plugins.AndroidSupportPlugin>()
+// if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    android {
+//        compileSdkVersion("android-30")
+//        buildToolsVersion("29.0.3")
+//
+//        defaultConfig {
+//            minSdkVersion(16)
+//            targetSdkVersion(18)
+// //            versionCode(1)
+// //            versionName("1.0.0")
+//        }
+//
+//        sourceSets {
+//            getByName("main") {
+//                manifest.srcFile("src/androidMain/AndroidManifest.xml")
+//            }
+//        }
+//    }
+// }
+
 apply<pw.binom.plugins.ConfigPublishPlugin>()

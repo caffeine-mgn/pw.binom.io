@@ -2,6 +2,7 @@
 
 package pw.binom.io.file
 
+import java.nio.file.Files
 import java.io.File as JFile
 
 actual class File actual constructor(path: String) {

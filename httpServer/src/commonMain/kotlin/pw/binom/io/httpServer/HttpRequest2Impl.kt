@@ -74,7 +74,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
     override var request: String = ""
         private set
 
-    private val closed = false
+    private var closed = false
     private var readInput: AsyncInput? = null
 
     override val headers: Headers
@@ -116,6 +116,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         this.channel = channel
         this.server = server
         isFree = false
+        closed = false
     }
 
     fun free() {
@@ -259,10 +260,11 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
     }
 
     override suspend fun response(): HttpResponse {
+        checkClosed()
         if (startedResponse != null) {
             throw IllegalStateException("Response already got")
         }
-        val server = server ?: throw HttpConnectionClosedException()
+        val server = server ?: throw SocketClosedException()
         if (readInput == null) {
             val buf = server.textBufferPool.borrow()
             try {
@@ -278,11 +280,12 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
                 keepAliveEnabled = server.maxIdleTime > 0 && headers.keepAlive,
                 channel = channel!!,
                 acceptEncoding = headers.acceptEncoding,
-                server = server
+                server = server,
+                onclosed = { free() }
             )
         }
         startedResponse = r
-        free()
+        closed = true
         return r
     }
 

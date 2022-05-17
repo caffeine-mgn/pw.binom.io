@@ -3,10 +3,12 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven(url = "https://maven.google.com")
     }
 
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21")
+        classpath("com.android.tools.build:gradle:7.0.0")
     }
 }
 
@@ -26,6 +28,7 @@ repositories {
     mavenCentral()
     maven(url = "https://repo.binom.pw")
     maven(url = "https://plugins.gradle.org/m2/")
+    maven(url = "https://maven.google.com")
 }
 
 dependencies {
@@ -36,4 +39,7 @@ dependencies {
     api("pw.binom:kn-clang:0.1.1")
     api("com.bmuschko:gradle-docker-plugin:7.3.0")
     api("pw.binom:binom-publish:0.1.0")
+//    api("com.android.library:com.android.library.gradle.plugin:7.2.0")
+    api("com.android.tools.build:gradle:4.2.1")
+    api("com.google.gms:google-services:4.3.5")
 }

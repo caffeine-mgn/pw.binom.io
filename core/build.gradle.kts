@@ -3,9 +3,21 @@ import java.util.*
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
+//    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//        id("com.android.library")
+//    }
 }
-
+// if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    android {
+//        compileSdkVersion = "27"
+//    }
+// }
 kotlin {
+//    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//        android{
+//
+//        }
+//    }
     jvm()
     linuxX64 {
         binaries {
@@ -93,13 +105,15 @@ kotlin {
         }
     }
 
-    macosX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/nativeMain/cinterop/core.def")
-                    packageName = "pw.binom.internal.core_native"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+    if (pw.binom.Target.MACOS_SUPPORT) {
+        macosX64 {
+            binaries {
+                compilations["main"].cinterops {
+                    create("native") {
+                        defFile = project.file("src/nativeMain/cinterop/core.def")
+                        packageName = "pw.binom.internal.core_native"
+                        includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
+                    }
                 }
             }
         }
@@ -118,7 +132,14 @@ kotlin {
                 api(project(":atomic"))
             }
         }
-
+        val jvmMain by getting {
+            dependsOn(commonMain)
+        }
+//        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//            val androidMain by getting {
+//                dependsOn(jvmMain)
+//            }
+//        }
         val nativeMain by creating {
             dependsOn(commonMain)
         }
@@ -148,8 +169,10 @@ kotlin {
             }
         }
 
-        val macosX64Main by getting {
-            dependsOn(nativeMain)
+        if (pw.binom.Target.MACOS_SUPPORT) {
+            val macosX64Main by getting {
+                dependsOn(nativeMain)
+            }
         }
 
         val commonTest by getting {

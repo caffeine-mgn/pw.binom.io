@@ -33,12 +33,14 @@ internal class HttpResponse2Impl(
     var server: HttpServer? = null
     private var closed = false
     private var responseStarted = false
+    private var onclosed2: (() -> Unit)? = null
 
     fun reset(
         keepAliveEnabled: Boolean,
         channel: ServerAsyncAsciiChannel,
         acceptEncoding: List<String>,
         server: HttpServer,
+        onclosed: (() -> Unit)
     ) {
         headers.clear()
         headers.keepAlive = keepAliveEnabled
@@ -49,12 +51,15 @@ internal class HttpResponse2Impl(
         closed = false
         responseStarted = false
         status = 404
+        this.onclosed2 = onclosed
     }
 
     private fun free() {
+        onclosed2?.invoke()
         onClose(this)
         channel = null
         server = null
+        onclosed2 = null
     }
 
     private fun checkClosed() {
