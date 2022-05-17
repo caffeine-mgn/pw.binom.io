@@ -23,7 +23,6 @@ value class PosixPermissions(val mode: UInt) {
          * -rwsrwsrwt
          */
         fun parse(permissions: String): PosixPermissions? {
-            var state = 0
             fun test(char: Char, index: Int, value: UInt) = when (val c = permissions[index]) {
                 char -> value
                 '-' -> 0u
