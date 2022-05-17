@@ -129,4 +129,20 @@ actual class File actual constructor(path: String) {
             statfs(path, stat.ptr)
             (stat.f_blocks.toULong() * stat.f_bsize.toULong()).toLong()
         }
+
+    actual fun getPosixMode(): PosixPermissions =
+        memScoped {
+            val stat = alloc<stat>()
+            if (stat(path, stat.ptr) != 0) {
+                return@memScoped PosixPermissions(0u)
+            }
+            return PosixPermissions(stat.st_mode)
+        }
+
+    actual fun setPosixMode(mode: PosixPermissions): Boolean {
+        if (chmod(path, mode.mode.toUInt()) != 0) {
+            throw IOException("Can't change mode of file \"$path\"")
+        }
+        return true
+    }
 }

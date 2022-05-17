@@ -92,15 +92,6 @@ actual class File actual constructor(path: String) {
             return stat.st_ctim.toMillis()
         }
 
-    fun isExecutable() {
-        memScoped {
-            val stat = alloc<stat>()
-            if (stat(path, stat.ptr) != 0)
-                return@memScoped 0
-            stat.return stat.st_ctim.toMillis()
-        }
-    }
-
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
 
     actual fun list(): List<File> {
@@ -134,10 +125,14 @@ actual class File actual constructor(path: String) {
             (stat.f_blocks.toULong() * stat.f_frsize.toULong()).toLong()
         }
 
-    actual fun getPosixMode(): PosixPermissions {
-
-        TODO("Not yet implemented")
-    }
+    actual fun getPosixMode(): PosixPermissions =
+        memScoped {
+            val stat = alloc<stat>()
+            if (stat(path, stat.ptr) != 0) {
+                return@memScoped PosixPermissions(0u)
+            }
+            return PosixPermissions(stat.st_mode)
+        }
 
     actual fun setPosixMode(mode: PosixPermissions): Boolean {
         if (chmod(path, mode.mode.toUInt()) != 0) {

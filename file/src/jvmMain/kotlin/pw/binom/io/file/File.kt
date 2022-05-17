@@ -3,7 +3,10 @@
 package pw.binom.io.file
 
 import java.nio.file.Files
+import java.nio.file.attribute.PosixFileAttributeView
+import java.nio.file.attribute.PosixFilePermission
 import java.io.File as JFile
+import java.nio.file.attribute.PosixFilePermission as JvmPosixFilePermission
 
 actual class File actual constructor(path: String) {
 
@@ -66,6 +69,74 @@ actual class File actual constructor(path: String) {
 
     actual val totalSpace: Long
         get() = JFile(path).totalSpace
+
+    actual fun getPosixMode(): PosixPermissions {
+        val view = Files.getFileAttributeView(JFile(path).toPath(), PosixFileAttributeView::class.java)
+            .readAttributes()
+            .permissions()
+        var output = PosixPermissions(0u)
+        if (PosixFilePermission.OTHERS_EXECUTE in view) {
+            output += PosixPermissions.OTHERS_EXECUTE
+        }
+        if (PosixFilePermission.OTHERS_WRITE in view) {
+            output += PosixPermissions.OTHERS_WRITE
+        }
+        if (PosixFilePermission.OTHERS_READ in view) {
+            output += PosixPermissions.OTHERS_READ
+        }
+        if (PosixFilePermission.GROUP_EXECUTE in view) {
+            output += PosixPermissions.GROUP_EXECUTE
+        }
+        if (PosixFilePermission.GROUP_WRITE in view) {
+            output += PosixPermissions.GROUP_WRITE
+        }
+        if (PosixFilePermission.GROUP_READ in view) {
+            output += PosixPermissions.GROUP_READ
+        }
+        if (PosixFilePermission.OWNER_EXECUTE in view) {
+            output += PosixPermissions.OWNER_EXECUTE
+        }
+        if (PosixFilePermission.OWNER_WRITE in view) {
+            output += PosixPermissions.OWNER_WRITE
+        }
+        if (PosixFilePermission.OWNER_READ in view) {
+            output += PosixPermissions.OWNER_READ
+        }
+        return output
+    }
+
+    actual fun setPosixMode(mode: PosixPermissions): Boolean {
+        val map = HashSet<JvmPosixFilePermission>()
+        if (mode in PosixPermissions.OTHERS_EXECUTE) {
+            map += JvmPosixFilePermission.OTHERS_EXECUTE
+        }
+        if (mode in PosixPermissions.OTHERS_WRITE) {
+            map += JvmPosixFilePermission.OTHERS_WRITE
+        }
+        if (mode in PosixPermissions.OTHERS_READ) {
+            map += JvmPosixFilePermission.OTHERS_READ
+        }
+        if (mode in PosixPermissions.GROUP_EXECUTE) {
+            map += JvmPosixFilePermission.GROUP_EXECUTE
+        }
+        if (mode in PosixPermissions.GROUP_WRITE) {
+            map += JvmPosixFilePermission.GROUP_WRITE
+        }
+        if (mode in PosixPermissions.GROUP_READ) {
+            map += JvmPosixFilePermission.GROUP_READ
+        }
+        if (mode in PosixPermissions.OWNER_EXECUTE) {
+            map += JvmPosixFilePermission.OWNER_EXECUTE
+        }
+        if (mode in PosixPermissions.OWNER_WRITE) {
+            map += JvmPosixFilePermission.OWNER_WRITE
+        }
+        if (mode in PosixPermissions.OWNER_READ) {
+            map += JvmPosixFilePermission.OWNER_READ
+        }
+        Files.setPosixFilePermissions(JFile(path).toPath(), map)
+        return true
+    }
 }
 
 val JFile.binom: File
