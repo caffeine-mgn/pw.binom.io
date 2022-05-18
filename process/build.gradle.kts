@@ -5,54 +5,18 @@ plugins {
 
 kotlin {
     jvm()
-    linuxX64 {
-        binaries {
-//            compilations["main"].cinterops {
-//                create("signals") {
-//                    defFile = project.file("src/cinterop/linux.def")
-//                    packageName = "platform.linux"
-//                }
-//            }
-        }
-    }
+    linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp {
-//            binaries {
-//                compilations["main"].cinterops {
-//                    create("signals") {
-//                        defFile = project.file("src/cinterop/linux.def")
-//                        packageName = "platform.linux"
-//                    }
-//                }
-//            }
-        }
+        linuxArm32Hfp()
     }
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64 {
-//            binaries {
-//                compilations["main"].cinterops {
-//                    create("signals") {
-//                        defFile = project.file("src/cinterop/linux.def")
-//                        packageName = "platform.linux"
-//                    }
-//                }
-//            }
-        }
+        linuxArm64()
     }
     mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86()
     }
-    macosX64 {
-        binaries {
-//            compilations["main"].cinterops {
-//                create("signals") {
-//                    defFile = project.file("src/cinterop/linux.def")
-//                    packageName = "platform.linux"
-//                }
-//            }
-        }
-    }
+    macosX64()
     sourceSets {
         val commonMain by getting {
             dependencies {

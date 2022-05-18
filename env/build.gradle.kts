@@ -155,25 +155,8 @@ const val BINOM_VERSION = "${project.version}"
         it.dependsOn(generateVersion)
     }
 }
-apply<pw.binom.plugins.AndroidSupportPlugin>()
-// if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//    android {
-//        compileSdkVersion("android-30")
-//        buildToolsVersion("29.0.3")
-//
-//        defaultConfig {
-//            minSdkVersion(16)
-//            targetSdkVersion(18)
-// //            versionCode(1)
-// //            versionName("1.0.0")
-//        }
-//
-//        sourceSets {
-//            getByName("main") {
-//                manifest.srcFile("src/androidMain/AndroidManifest.xml")
-//            }
-//        }
-//    }
-// }
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
+}
 
 apply<pw.binom.plugins.ConfigPublishPlugin>()

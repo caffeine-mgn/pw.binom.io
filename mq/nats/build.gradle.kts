@@ -5,9 +5,17 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.bmuschko.docker-remote-api")
     id("maven-publish")
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
 
 kotlin {
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        android {
+            publishAllLibraryVariants()
+        }
+    }
     jvm()
     linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
@@ -63,6 +71,15 @@ kotlin {
                 api(kotlin("test-annotations-common"))
             }
         }
+        val jvmMain by getting {
+            dependsOn(commonMain)
+            dependencies {}
+        }
+        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+            val androidMain by getting {
+                dependsOn(jvmMain)
+            }
+        }
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
@@ -74,7 +91,6 @@ kotlin {
         }
     }
 }
-
 
 tasks {
     val nats = DockerUtils.dockerContanier(
@@ -244,4 +260,7 @@ tasks {
     this["macosX64Test"].finalizedBy(destoryNats2)
 }
 */
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
+}
 apply<pw.binom.plugins.ConfigPublishPlugin>()

@@ -142,4 +142,8 @@ actual class File actual constructor(path: String) {
                 0L
             }
         }
+
+    actual fun getPosixMode(): PosixPermissions = PosixPermissions(0u)
+
+    actual fun setPosixMode(mode: PosixPermissions): Boolean = false
 }

@@ -2,9 +2,17 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("kotlinx-serialization")
     id("maven-publish")
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
 
 kotlin {
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        android {
+            publishAllLibraryVariants()
+        }
+    }
     jvm()
     linuxX64()
     linuxArm32Hfp()
@@ -52,6 +60,15 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
+        val jvmMain by getting {
+            dependsOn(commonMain)
+            dependencies {}
+        }
+        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+            val androidMain by getting {
+                dependsOn(jvmMain)
+            }
+        }
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
@@ -62,5 +79,8 @@ kotlin {
             dependsOn(commonTest)
         }
     }
+}
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

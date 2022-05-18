@@ -21,8 +21,8 @@ class AndroidSupportPlugin : Plugin<Project> {
             buildToolsVersion("29.0.3")
 
             defaultConfig {
-                it.minSdkVersion(16)
-                it.targetSdkVersion(18)
+                it.minSdkVersion(28)
+                it.targetSdkVersion(30)
 //            versionCode(1)
 //            versionName("1.0.0")
             }

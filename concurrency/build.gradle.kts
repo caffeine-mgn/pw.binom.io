@@ -1,9 +1,17 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
 
 kotlin {
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        android {
+            publishAllLibraryVariants()
+        }
+    }
     jvm()
     linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
@@ -27,17 +35,11 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-        val nativeMain by creating{
+        val nativeMain by creating {
             dependsOn(commonMain)
         }
-        val posixMain by creating{
+        val posixMain by creating {
             dependsOn(nativeMain)
-        }
-        val jvmMain by getting {
-//            dependencies {
-//                api("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-//            }
-            dependsOn(commonMain)
         }
         val linuxX64Main by getting {
             dependsOn(posixMain)
@@ -71,7 +73,15 @@ kotlin {
         val macosX64Main by getting {
             dependsOn(posixMain)
         }
-
+        val jvmMain by getting {
+            dependsOn(commonMain)
+            dependencies {}
+        }
+        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+            val androidMain by getting {
+                dependsOn(jvmMain)
+            }
+        }
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -90,5 +100,8 @@ kotlin {
             dependsOn(commonTest)
         }
     }
+}
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

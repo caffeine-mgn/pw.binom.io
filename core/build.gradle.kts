@@ -3,21 +3,16 @@ import java.util.*
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
-//    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//        id("com.android.library")
-//    }
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
-// if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//    android {
-//        compileSdkVersion = "27"
-//    }
-// }
 kotlin {
-//    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//        android{
-//
-//        }
-//    }
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        android {
+            publishAllLibraryVariants()
+        }
+    }
     jvm()
     linuxX64 {
         binaries {
@@ -29,7 +24,8 @@ kotlin {
                 }
             }
         }
-        this.compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+        this.compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs =
+            listOf("-opt-in=kotlin.RequiresOptIn")
     }
 
     linuxArm32Hfp {
@@ -132,8 +128,16 @@ kotlin {
                 api(project(":atomic"))
             }
         }
-        val jvmMain by getting {
+        val jvmLikeMain by creating {
             dependsOn(commonMain)
+        }
+        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+            val androidMain by getting {
+                dependsOn(jvmLikeMain)
+            }
+        }
+        val jvmMain by getting {
+            dependsOn(jvmLikeMain)
         }
 //        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
 //            val androidMain by getting {
@@ -231,5 +235,7 @@ tasks.withType<Test> {
         this.showStandardStreams = true
     }
 }
-
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
+}
 apply<pw.binom.plugins.ConfigPublishPlugin>()

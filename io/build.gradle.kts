@@ -1,11 +1,17 @@
-import java.util.*
-
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
 
 kotlin {
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        android {
+            publishAllLibraryVariants()
+        }
+    }
     jvm()
     linuxX64()
     linuxArm32Hfp()
@@ -22,7 +28,8 @@ kotlin {
         nodejs()
     }
     targets.all {
-        compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+        compilations.findByName("main")?.compileKotlinTask?.kotlinOptions?.freeCompilerArgs =
+            listOf("-opt-in=kotlin.RequiresOptIn")
     }
     sourceSets {
         val commonMain by getting {
@@ -70,6 +77,15 @@ kotlin {
         val nativeTest by creating {
             dependsOn(commonTest)
         }
+        val jvmMain by getting {
+            dependsOn(commonMain)
+            dependencies {}
+        }
+        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+            val androidMain by getting {
+                dependsOn(jvmMain)
+            }
+        }
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
@@ -97,5 +113,7 @@ tasks.withType<Test> {
         this.showStandardStreams = true
     }
 }
-
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
+}
 apply<pw.binom.plugins.ConfigPublishPlugin>()
