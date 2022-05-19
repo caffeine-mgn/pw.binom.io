@@ -8,20 +8,22 @@ import pw.binom.io.AsyncWriter
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 import pw.binom.io.http.*
-import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
+import pw.binom.pool.PoolObjectFactory
 import pw.binom.pool.borrow
 
 internal class HttpResponse2Impl(
     val onClose: (HttpResponse2Impl) -> Unit,
 ) : HttpResponse {
 
-    object Manager : ObjectFactory<HttpResponse2Impl> {
+    object Manager : PoolObjectFactory<HttpResponse2Impl> {
         override fun new(pool: ObjectPool<HttpResponse2Impl>): HttpResponse2Impl =
             HttpResponse2Impl { pool.recycle(it) }
 
         override fun free(value: HttpResponse2Impl) {
         }
+
+        override fun new(): HttpResponse2Impl = HttpResponse2Impl { }
     }
 
     override var status = 404

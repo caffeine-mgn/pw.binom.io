@@ -3,9 +3,10 @@ package pw.binom.io
 import kotlinx.cinterop.*
 import platform.posix.memcpy
 
-actual class ByteBuffer(override val capacity: Int) : Channel, Buffer {
+actual open class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -> Unit)?) : Channel, Buffer {
     actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
+        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size, null)
+        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer = ByteBuffer(size, onClose)
     }
 
     //    private val native = createNativeByteBuffer(capacity)!!
@@ -302,15 +303,6 @@ actual class ByteBuffer(override val capacity: Int) : Channel, Buffer {
             position = 0
             limit = 0
         }
-    }
-}
-
-actual inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
-    val b = ByteBuffer(size)
-    return try {
-        block(b)
-    } finally {
-        b.close()
     }
 }
 

@@ -13,18 +13,20 @@ import pw.binom.net.Query
 import pw.binom.net.toPath
 import pw.binom.net.toQuery
 import pw.binom.network.SocketClosedException
-import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
+import pw.binom.pool.PoolObjectFactory
 import pw.binom.pool.borrow
 import pw.binom.skipAll
 
 internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpRequest {
-    object Manager : ObjectFactory<HttpRequest2Impl> {
+    object Manager : PoolObjectFactory<HttpRequest2Impl> {
         override fun new(pool: ObjectPool<HttpRequest2Impl>): HttpRequest2Impl =
             HttpRequest2Impl { pool.recycle(it) }
 
         override fun free(value: HttpRequest2Impl) {
         }
+
+        override fun new(): HttpRequest2Impl = HttpRequest2Impl { }
     }
 
     companion object {

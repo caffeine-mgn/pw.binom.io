@@ -46,7 +46,7 @@ abstract class GenerateManifestTask : DefaultTask() {
         manifestFile.parentFile.mkdirs()
         manifestFile.writeText(
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                "<manifest package=\"pw.binom.io.${project.name}\"/>"
+                "<manifest package=\"pw.binom.io.${project.name.replace('-', '_')}\"/>"
         )
     }
 }

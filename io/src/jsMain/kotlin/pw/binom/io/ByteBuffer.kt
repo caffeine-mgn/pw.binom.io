@@ -28,9 +28,10 @@ private fun memcpy(
     }
 }
 
-actual class ByteBuffer(override val capacity: Int) : Channel, Buffer {
+actual class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -> Unit)?) : Channel, Buffer {
     actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size)
+        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size, null)
+        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer = ByteBuffer(size, onClose)
     }
 
     override var position: Int = 0
@@ -219,14 +220,5 @@ actual class ByteBuffer(override val capacity: Int) : Channel, Buffer {
             native[position++] = data[it]
         }
         return l
-    }
-}
-
-actual inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
-    val b = alloc(size)
-    return try {
-        block(b)
-    } finally {
-        b.close()
     }
 }

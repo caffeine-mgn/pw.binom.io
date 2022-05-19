@@ -3,12 +3,14 @@ package pw.binom.io
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-actual class ByteBuffer(var native: java.nio.ByteBuffer) : Channel, Buffer {
+actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuffer) -> Unit)?) : Channel, Buffer {
     actual companion object {
-        actual fun alloc(size: Int): ByteBuffer =
-            ByteBuffer(java.nio.ByteBuffer.allocateDirect(size))
+        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(java.nio.ByteBuffer.allocateDirect(size), null)
 
-        fun wrap(native: java.nio.ByteBuffer) = ByteBuffer(native)
+        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer =
+            ByteBuffer(java.nio.ByteBuffer.allocateDirect(size), onClose)
+
+        fun wrap(native: java.nio.ByteBuffer) = ByteBuffer(native, null)
     }
 //    init {
 //        val stack = Thread.currentThread().stackTrace.joinToString { "${it.className}.${it.methodName}:${it.lineNumber} ->" }
@@ -223,7 +225,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Channel, Buffer {
             limit = index + length
             val newBytes = java.nio.ByteBuffer.allocate(length)
             native.copyTo(newBytes)
-            return ByteBuffer(newBytes)
+            return ByteBuffer(newBytes, null)
         } finally {
             position = p
             limit = l
@@ -235,15 +237,6 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer) : Channel, Buffer {
         native.compact()
         native.position(0)
         native.limit(newLimit)
-    }
-}
-
-actual inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T {
-    val b = alloc(size)
-    return try {
-        block(b)
-    } finally {
-        b.close()
     }
 }
 

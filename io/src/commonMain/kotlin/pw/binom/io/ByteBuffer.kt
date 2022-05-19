@@ -2,6 +2,8 @@
 
 package pw.binom.io
 
+import pw.binom.pool.ObjectPool
+import pw.binom.pool.PoolObjectFactory
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
@@ -12,6 +14,7 @@ import kotlin.jvm.JvmName
 expect class ByteBuffer : Channel, Buffer {
     companion object {
         fun alloc(size: Int): ByteBuffer
+        fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer
     }
 
     fun realloc(newSize: Int): ByteBuffer
@@ -55,13 +58,15 @@ fun ByteBuffer.empty(): ByteBuffer {
     return this
 }
 
-/**
- * Allocs [ByteBuffer] with [size]. Then execute [block] and after that close created buffer
- *
- * @param size Size of Buffer
- * @param block function for call with created buffer
- */
-expect inline fun <T> ByteBuffer.Companion.alloc(size: Int, block: (ByteBuffer) -> T): T
+class ByteBufferFactory(val size: Int) : PoolObjectFactory<ByteBuffer> {
+    override fun new(pool: ObjectPool<ByteBuffer>): ByteBuffer = ByteBuffer.alloc(size) { pool.recycle(it) }
+
+    override fun new(): ByteBuffer = ByteBuffer.alloc(size)
+
+    override fun free(value: ByteBuffer) {
+        value.close()
+    }
+}
 
 @OptIn(ExperimentalContracts::class)
 inline fun <T> ByteBuffer.length(length: Int, func: (ByteBuffer) -> T): T {
