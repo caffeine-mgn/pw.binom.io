@@ -8,7 +8,11 @@ actual value class AtomicBoolean actual constructor(val native: InternalAtomicBo
         native.compareAndSet(expected, new)
 
     actual inline fun compareAndSwap(expected: Boolean, new: Boolean): Boolean =
-        native.compareAndSet(expected, new)
+        if (native.compareAndSet(expected, new)) {
+            new
+        } else {
+            !expected
+        }
 
     actual inline fun getValue(): Boolean = native.get()
 
