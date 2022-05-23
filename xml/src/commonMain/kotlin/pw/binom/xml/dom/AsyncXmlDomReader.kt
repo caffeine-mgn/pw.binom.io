@@ -37,7 +37,7 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
 
     override suspend fun attribute(name: String, value: String?) {
         if (name == XML_NAMESPACE_PREFIX && value != null) {
-            ctx.default = ctx.pool(value)
+            ctx.default = value
             return
         }
         if (name.startsWith(XML_NAMESPACE_PREFIX_WITH_DOTS) && value != null) {
@@ -68,7 +68,7 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
         rootNode.attributes.forEach {
             if (it.key.nameSpace == null) {
                 if (":" !in it.key.name) {
-                    it.key.nameSpace = ctx.default
+                    it.key.nameSpace = rootNode.nameSpace ?: ctx.default
                 } else {
                     val i = it.key.name.indexOf(":")
                     val prefix = it.key.name.substring(0, i)

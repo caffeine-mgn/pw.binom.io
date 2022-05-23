@@ -88,7 +88,6 @@ kotlin {
         }
         val jvmMain by getting {
             dependsOn(commonMain)
-            dependencies {}
         }
         if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
             val androidMain by getting {

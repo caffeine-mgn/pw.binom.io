@@ -6,11 +6,39 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import pw.binom.concurrency.WorkerPool
 import pw.binom.io.use
+import pw.binom.net.toURL
 import pw.binom.network.NetworkAddress
+import pw.binom.network.TcpServerConnection
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class HttpServerTest {
+
+    @Test
+    fun poolTest() = runTest {
+        var httpServer: HttpServer? = null
+
+        httpServer = HttpServer(
+            handler = Handler { req ->
+                req.response {
+                    it.status = 200
+                    it.sendText("Hello")
+                }
+                assertEquals(0, httpServer?.httpRequest2Impl?.size)
+                assertEquals(0, httpServer?.httpResponse2Impl?.size)
+            }
+        )
+        httpServer.use {
+            val port = TcpServerConnection.randomPort()
+            it.listenHttp(
+                address = NetworkAddress.Immutable(port = port)
+            )
+            get("http://127.0.0.1:$port/".toURL())
+            assertEquals(1, httpServer.httpRequest2Impl.size)
+            assertEquals(1, httpServer.httpResponse2Impl.size)
+        }
+    }
 
     @Test
     fun test() = runTest {

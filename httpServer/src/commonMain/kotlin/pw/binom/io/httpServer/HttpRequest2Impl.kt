@@ -35,10 +35,10 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
             server: HttpServer,
             isNewConnect: Boolean
         ): HttpRequest2Impl {
-            val request = channel.reader.readln() ?: throw SocketClosedException()
             if (!isNewConnect) {
                 server.browConnection(channel)
             }
+            val request = channel.reader.readln() ?: throw SocketClosedException()
             val items = request.split(' ', limit = 3)
             val requestObject = server.httpRequest2Impl.borrow()
             val headers = requestObject.internalHeaders
@@ -103,6 +103,8 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
     private var startedResponse: HttpResponse2Impl? = null
     override val response: HttpResponse?
         get() = startedResponse
+    override var isReadyForResponse: Boolean = true
+        private set
 
     var isFree = true
         private set
@@ -119,9 +121,11 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         this.server = server
         isFree = false
         closed = false
+        isReadyForResponse = true
     }
 
     fun free() {
+        startedResponse?.free()
         startedResponse = null
         channel = null
         server = null
@@ -226,6 +230,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.headers[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
         resp.sendHeadersAndFree()
+        isReadyForResponse = false
         return server.webSocketConnectionPool.new(
             input = channel.reader,
             output = channel.writer,
@@ -250,6 +255,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         resp.headers[Headers.CONNECTION] = Headers.UPGRADE
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.sendHeadersAndFree()
+        isReadyForResponse = false
         return channel.channel
     }
 
@@ -283,11 +289,12 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
                 channel = channel!!,
                 acceptEncoding = headers.acceptEncoding,
                 server = server,
-                onclosed = { free() }
+                onclosed = { }
             )
         }
         startedResponse = r
         closed = true
+        isReadyForResponse = false
         return r
     }
 

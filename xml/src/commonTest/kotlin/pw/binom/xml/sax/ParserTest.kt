@@ -8,11 +8,13 @@ import pw.binom.xml.dom.xmlTree
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+private const val XML_START = """<?xml version="1.0" encoding="UTF-8"?>"""
+
 class ParserTest {
 
     @Test
     fun test31() = runTest {
-        val txt = """<?xml version="1.0" encoding="UTF-8"?>
+        val txt = """$XML_START
 <r:dd name="KDE" title="DE"><name>df</name><b><![CDATA[TEST Hi!]]></b><test fff="sdf"/></r:dd>"""
 
         val r = XmlRootReaderVisitor(txt.asReader().asAsync())
@@ -22,6 +24,21 @@ class ParserTest {
         w.start()
         r.accept(w)
         w.end()
+    }
+
+    @Test
+    fun testParseComment() = runTest {
+        val txt = """<r><bbb a="b"><!--Привет - мир!--></bbb><c>123456</c><t/></r>"""
+
+        val r = AsyncXmlReaderVisitor(txt.asReader().asAsync())
+
+        val sb = StringBuilder()
+        val w = AsyncXmlRootWriterVisitor(sb.asAsync())
+        w.start()
+        r.accept(w)
+        w.end()
+        println("->$sb")
+        assertEquals("$XML_START$txt", sb.toString())
     }
 
     @Test

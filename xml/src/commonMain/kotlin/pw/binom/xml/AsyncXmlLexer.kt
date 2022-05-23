@@ -91,6 +91,13 @@ class AsyncXmlLexer(val reader: AsyncReader) {
                 text = "&"
                 return true
             }
+            char == '-' -> {
+                position++
+                column++
+                tokenType = TokenType.MINUS
+                text = "-"
+                return true
+            }
             char == ';' -> {
                 position++
                 column++
@@ -98,8 +105,8 @@ class AsyncXmlLexer(val reader: AsyncReader) {
                 text = ";"
                 return true
             }
-            char == '"' -> {
-                val txt = readString()
+            char == '"' || char == '\'' -> {
+                val txt = readString(char)
                 return if (txt != null) {
                     text = txt
                     true
@@ -139,7 +146,7 @@ class AsyncXmlLexer(val reader: AsyncReader) {
                 return true
             }
             when (c) {
-                '[', ']', '!', '<', '>', '/', '=', '"', '?', '&', ';', '\n', ' ', '\r', '\t' -> {
+                '[', ']', '!', '<', '>', '/', '=', '"', '?', '-', '&', ';', '\n', ' ', '\r', '\t' -> {
                     lastChar = c
                     text = sb.toString()
                     sb.clear()
@@ -154,10 +161,10 @@ class AsyncXmlLexer(val reader: AsyncReader) {
         }
     }
 
-    private suspend fun readString(): String {
+    private suspend fun readString(firstChar: Char): String {
         column++
         position++
-        sb.append('"')
+        sb.append(firstChar)
         tokenType = TokenType.STRING
         while (true) {
             val c = reader.readChar()
@@ -167,11 +174,11 @@ class AsyncXmlLexer(val reader: AsyncReader) {
                 throw UnexpectedEOFException()
             }
             when (c) {
-                '"' -> {
+                firstChar -> {
                     column++
                     position++
                     lastChar = null
-                    sb.append('"')
+                    sb.append(firstChar)
                     val c = sb.toString()
                     sb.clear()
                     return c

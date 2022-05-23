@@ -2,14 +2,18 @@ package pw.binom.xml.sax
 
 import pw.binom.io.AsyncAppendable
 
-class AsyncXmlRootWriterVisitor(val appendable: AsyncAppendable) : AsyncXmlVisitor {
+class AsyncXmlRootWriterVisitor(val appendable: AsyncAppendable, val charset: String = "UTF-8") : AsyncXmlVisitor {
     private var started = false
     private var endded = false
     override suspend fun start() {
         if (started)
             throw IllegalStateException("Root Node already started")
         started = true
-        appendable.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+        appendable.append("<?xml version=\"1.0\" encoding=\"$charset\"?>")
+    }
+
+    override suspend fun comment(body: String) {
+        appendable.append("<!--").append(body).append("-->")
     }
 
     override suspend fun end() {

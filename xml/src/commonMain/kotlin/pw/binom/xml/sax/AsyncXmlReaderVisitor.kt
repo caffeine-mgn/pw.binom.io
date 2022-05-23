@@ -26,22 +26,70 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
         when (lexer.tokenType) {
             TokenType.SYMBOL -> readTagAttributes()
             TokenType.SLASH -> closeTag()
-            TokenType.EXCLAMATION -> readCDATA()
+            TokenType.EXCLAMATION -> readCDATAOrComment()
 
             else -> throw IllegalStateException("Unknown token type: ${lexer.tokenType}")
         }
     }
 
+    private suspend fun readCDATAOrComment() {
+        if (!lexer.next()) TODO()
+        if (lexer.tokenType == TokenType.LEFT_BRACKET) {
+            readCDATA()
+            return
+        }
+        if (lexer.tokenType == TokenType.MINUS) {
+            readComment()
+            return
+        }
+        TODO("Unknown token \"${lexer.text}\" on ${lexer.line + 1}:${lexer.column - lexer.text.length}")
+    }
+
     /**
-     * Чтение CDATA. Прочитанно "<!"
+     * Чтение комментариев. Прочитано "<-"
+     */
+    private suspend fun readComment() {
+        if (!lexer.next()) {
+            TODO("Неожиданный конец комментария")
+        }
+        if (lexer.tokenType != TokenType.MINUS) {
+            TODO()
+        }
+        val sb = StringBuilder()
+        while (true) {
+            if (!lexer.next()) {
+                TODO("Неожиданный конец коментария")
+            }
+            if (lexer.tokenType == TokenType.MINUS) { // возможно это конец
+                if (!lexer.next()) {
+                    TODO("Неожиданный конец коментария")
+                }
+                if (lexer.tokenType == TokenType.MINUS) { // да, это конец
+                    if (!lexer.next()) {
+                        TODO("Неожиданный конец коментария")
+                    }
+                    if (lexer.tokenType != TokenType.TAG_END) {
+                        TODO()
+                    }
+                    visitors.peek().visitor.comment(sb.toString())
+                    return
+                } else { // нет, это просто тире в комментарии
+                    sb.append("-").append(lexer.text)
+                }
+                //
+            } else {
+                sb.append(lexer.text)
+            }
+        }
+        TODO("!!!!!!!!!!")
+    }
+
+    /**
+     * Чтение CDATA. Прочитано "<!"
      */
     private suspend fun readCDATA() {
-        if (!lexer.next())
-            TODO()
-        if (lexer.tokenType != TokenType.LEFT_BRACKET)
-            TODO()
-        if (!lexer.next())
-            TODO()
+        if (lexer.tokenType != TokenType.LEFT_BRACKET) TODO("lexer.tokenType=${lexer.tokenType} ${lexer.line}:${lexer.column} ${lexer.text}")
+        if (!lexer.next()) TODO()
         if (lexer.tokenType != TokenType.SYMBOL)
             TODO()
         if (lexer.text != "CDATA")
@@ -96,6 +144,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
         }
         if (tagBodyBuilder != null) {
             visitors.peek().visitor.value(tagBodyBuilder!!.toString())
+            tagBodyBuilder = null
         }
         visitor.visitor.end()
         visitors.pop()
@@ -122,8 +171,9 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
             }
             if (!lexer.nextSkipEmpty())
                 TODO()
-            if (lexer.tokenType != TokenType.STRING)
-                TODO()
+            if (lexer.tokenType != TokenType.STRING) {
+                TODO("${lexer.line + 1}:${lexer.column}")
+            }
             val value = lexer.text.removePrefix("\"").removeSuffix("\"")
             subNode.attribute(
                 name = attribute,
@@ -186,6 +236,9 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                     if (lexer.text.isBlank() && !t)
                         continue
                     t = true
+                    if (tagBodyBuilder == null) {
+                        tagBodyBuilder = StringBuilder()
+                    }
                     tagBodyBuilder!!.append(lexer.text)
                 }
             }

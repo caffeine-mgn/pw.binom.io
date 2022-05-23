@@ -7,7 +7,7 @@ enum class TokenType {
     TAG_END,
     SLASH,
     EQUALS,
-    EXCLAMATION,
+    EXCLAMATION, // !
     LEFT_BRACKET,
     RIGHT_BRACKET,
     AMPERSAND,
@@ -15,4 +15,5 @@ enum class TokenType {
     QUESTION,
     SYMBOL,
     EMPTY,
+    MINUS, // -
 }

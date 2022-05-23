@@ -12,5 +12,6 @@ interface AsyncXmlVisitor {
     suspend fun attributeValue(value: String?) {}
     suspend fun value(body: String) {}
     suspend fun cdata(body: String) {}
+    suspend fun comment(body: String) {}
     suspend fun subNode(name: String): AsyncXmlVisitor = this
 }

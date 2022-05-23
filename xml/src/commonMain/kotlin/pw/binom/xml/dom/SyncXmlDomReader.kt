@@ -67,10 +67,10 @@ class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, ta
 
         rootNode.attributes.forEach {
             if (it.key.nameSpace == null) {
-                if (":" !in it.key.name) {
-                    it.key.nameSpace = ctx.default
+                val i = it.key.name.indexOf(":")
+                if (i == -1) {
+                    it.key.nameSpace = rootNode.nameSpace ?: ctx.default
                 } else {
-                    val i = it.key.name.indexOf(":")
                     val prefix = it.key.name.substring(0, i)
                     val ns = ctx.prefix[prefix] ?: throw RuntimeException("Can't find prefix \"$prefix\"")
                     it.key.nameSpace = ns

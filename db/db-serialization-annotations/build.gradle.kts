@@ -4,9 +4,17 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("kotlinx-serialization")
     id("maven-publish")
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
 
 kotlin {
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        android {
+            publishAllLibraryVariants()
+        }
+    }
     jvm()
     linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
@@ -25,7 +33,8 @@ kotlin {
         nodejs()
     }
     targets.all {
-        compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+        compilations.findByName("main")?.compileKotlinTask?.kotlinOptions?.freeCompilerArgs =
+            listOf("-opt-in=kotlin.RequiresOptIn")
     }
     sourceSets {
         val commonMain by getting {
@@ -65,7 +74,11 @@ kotlin {
         val jvmMain by getting {
             dependsOn(commonMain)
         }
-
+        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+            val androidMain by getting {
+                dependsOn(jvmMain)
+            }
+        }
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -83,5 +96,7 @@ kotlin {
         }
     }
 }
-
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
+}
 apply<pw.binom.plugins.ConfigPublishPlugin>()

@@ -56,7 +56,7 @@ internal class HttpResponse2Impl(
         this.onclosed2 = onclosed
     }
 
-    private fun free() {
+    internal fun free() {
         onclosed2?.invoke()
         onClose(this)
         channel = null
@@ -171,7 +171,6 @@ internal class HttpResponse2Impl(
 
         sendRequest()
         closed = true
-        free()
         return resultOutput
     }
 

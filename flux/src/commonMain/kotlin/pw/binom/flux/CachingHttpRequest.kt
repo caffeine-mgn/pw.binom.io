@@ -38,6 +38,8 @@ class CachingHttpRequest(
 
     override val response: CachingHttpResponse?
         get() = resp
+    override val isReadyForResponse: Boolean
+        get() = original!!.isReadyForResponse
 
     override suspend fun acceptTcp(): AsyncChannel = original!!.acceptTcp()
 

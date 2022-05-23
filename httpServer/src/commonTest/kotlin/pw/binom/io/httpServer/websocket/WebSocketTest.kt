@@ -9,10 +9,10 @@ import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
 import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.readText
 import pw.binom.io.use
+import pw.binom.net.URL
 import pw.binom.net.toURL
 import pw.binom.network.NetworkAddress
 import pw.binom.network.TcpServerConnection
@@ -26,14 +26,12 @@ import kotlin.time.Duration.Companion.seconds
 
 class WebSocketTest {
 
-    private fun handler(responseCallback: (String) -> Unit) = object : Handler {
-        override suspend fun request(req: HttpRequest) {
-            val con = req.acceptWebsocket()
-            val input = con.read().use {
-                it.bufferedReader().readText()
-            }
-            responseCallback(input)
+    private fun handler(responseCallback: (String) -> Unit) = Handler { req ->
+        val con = req.acceptWebsocket()
+        val input = con.read().use {
+            it.bufferedReader().readText()
         }
+        responseCallback(input)
     }
 
     @Test
@@ -41,25 +39,40 @@ class WebSocketTest {
         val message = Random.nextUuid().toString()
         val port = TcpServerConnection.randomPort()
         var ok = false
+        var ok2 = false
         val handler = handler {
             assertEquals(message, it)
             ok = true
         }
-        HttpServer(handler = handler).use { httpServer ->
+        val handlerWrapper = Handler { req ->
+            handler.request(req)
+            ok2 = true
+        }
+        HttpServer(handler = handlerWrapper).use { httpServer ->
             httpServer.listenHttp(address = NetworkAddress.Immutable(port = port))
             HttpClient.create().use { client ->
-                client.connect("GET", "ws://127.0.0.1:$port/".toURL())
-                    .startWebSocket().use { wsConnect ->
-                        wsConnect.write(MessageType.BINARY).use {
-                            message.encodeToByteArray().wrap { b -> it.write(b) }
-                        }
-                    }
+                connectAndSendText(
+                    url = "ws://127.0.0.1:$port/".toURL(),
+                    text = message
+                )
             }
         }
         withContext(Dispatchers.Default) {
             delay(1.seconds)
         }
         assertTrue(ok)
+        assertTrue(ok2, "Request looks like unhandled")
+    }
+
+    private suspend fun connectAndSendText(url: URL, text: String) {
+        HttpClient.create().use { client ->
+            client.connect("GET", url)
+                .startWebSocket().use { wsConnect ->
+                    wsConnect.write(MessageType.BINARY).use {
+                        text.encodeToByteArray().wrap { b -> it.write(b) }
+                    }
+                }
+        }
     }
 }
 

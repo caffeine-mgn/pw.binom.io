@@ -45,6 +45,7 @@ interface HttpRequest : AsyncCloseable {
 
     @JsName("HttpResponse2")
     val response: HttpResponse?
+    val isReadyForResponse: Boolean
 }
 
 interface HttpResponse : AsyncCloseable {

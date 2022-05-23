@@ -154,7 +154,6 @@ class HttpServer(
                         }
                     }
                 } finally {
-                    println("Finish!")
                     binds -= server
                     runCatching { server.close() }
                 }

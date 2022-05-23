@@ -54,6 +54,14 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
         progress = START
     }
 
+    override suspend fun comment(body: String) {
+        if (progress == START) {
+            progress = BODY
+            appendable.append(">")
+        }
+        appendable.append("<!--").append(body).append("-->")
+    }
+
     override suspend fun end() {
 
         if (progress >= END)

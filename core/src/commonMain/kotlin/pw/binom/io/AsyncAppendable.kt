@@ -18,6 +18,8 @@ fun Appendable.asAsync() = object : AsyncAppendable {
         this@asAsync.append(value, startIndex, endIndex)
         return this
     }
+
+    override fun toString(): String = this@asAsync.toString()
 }
 
 suspend inline fun AsyncAppendable.appendLine(text: String) = append(text).appendLine()

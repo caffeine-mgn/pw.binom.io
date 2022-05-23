@@ -26,6 +26,8 @@ internal class FluxHttpRequestImpl : FluxHttpRequest, HttpRequest {
     private var mask: String = ""
     override val response: HttpResponse?
         get() = original!!.response
+    override val isReadyForResponse: Boolean
+        get() = original!!.isReadyForResponse
     private var internalPathVariables: Map<String, String>? = null
     private var internalQueryVariables: Map<String, String?>? = null
     private var serialization: FluxServerSerialization = FluxServerSerializationStab
