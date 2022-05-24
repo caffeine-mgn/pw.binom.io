@@ -48,7 +48,10 @@ open class WebSocketConnectionImpl(
                         runCatching {
                             closeTcp()
                         }
-                        throw WebSocketClosedException(WebSocketClosedException.ABNORMALLY_CLOSE)
+                        throw WebSocketClosedException(
+                            connection = this,
+                            code = WebSocketClosedException.ABNORMALLY_CLOSE,
+                        )
                     }
                 }
                 if (type == MessageType.CLOSE) {
@@ -66,7 +69,10 @@ open class WebSocketConnectionImpl(
                 kotlin.runCatching {
                     closeTcp()
                 }
-                throw WebSocketClosedException(WebSocketClosedException.ABNORMALLY_CLOSE)
+                throw WebSocketClosedException(
+                    connection = this,
+                    WebSocketClosedException.ABNORMALLY_CLOSE,
+                )
             }
         }
     }

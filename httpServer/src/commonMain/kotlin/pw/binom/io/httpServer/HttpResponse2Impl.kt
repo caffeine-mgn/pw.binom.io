@@ -89,6 +89,13 @@ internal class HttpResponse2Impl(
         channel!!.writer.append(Utils.CRLF)
     }
 
+    internal suspend fun sendHeaders() {
+        checkClosed()
+        sendRequest()
+        channel!!.writer.flush()
+        closed = true
+    }
+
     internal suspend fun sendHeadersAndFree() {
         checkClosed()
         sendRequest()

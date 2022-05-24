@@ -120,8 +120,9 @@ class HttpServer(
                 runCatching { channel.asyncClose() }
                 runCatching { errorHandler(e) }
             } finally {
-                if (req != null && !req.isFree) {
+                if (req != null) {
                     req.free()
+                    httpRequest2Impl.recycle(req)
                 }
             }
         }
@@ -151,6 +152,7 @@ class HttpServer(
                             clientProcessing(channel = channel, isNewConnect = true)
                         } catch (e: Throwable) {
                             runCatching { channel?.asyncClose() }
+                            break
                         }
                     }
                 } finally {
@@ -179,7 +181,7 @@ class HttpServer(
             runCatching { it.asyncClose() }
         }
         idleConnections.clear()
-        binds.forEach {
+        ArrayList(binds).forEach {
             runCatching { it.close() }
         }
         binds.clear()

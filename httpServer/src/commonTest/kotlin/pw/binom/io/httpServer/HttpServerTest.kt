@@ -1,5 +1,6 @@
 package pw.binom.io.httpServer
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -7,18 +8,48 @@ import kotlinx.coroutines.withContext
 import pw.binom.concurrency.WorkerPool
 import pw.binom.io.use
 import pw.binom.net.toURL
+import pw.binom.network.Network
 import pw.binom.network.NetworkAddress
 import pw.binom.network.TcpServerConnection
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 class HttpServerTest {
 
     @Test
-    fun poolTest() = runTest {
+    fun poolForWebSocketTest() = runTest {
         var httpServer: HttpServer? = null
+        httpServer = HttpServer(
+            handler = Handler { req ->
+                assertTrue(req.isReadyForResponse)
+                val connection = req.acceptWebsocket()
+                assertFalse(req.isReadyForResponse)
+                connection.read().asyncClose()
+            }
+        )
+        httpServer.use {
+            val port = TcpServerConnection.randomPort()
+            it.listenHttp(
+                address = NetworkAddress.Immutable(port = port)
+            )
+            assertEquals(0, httpServer.httpRequest2Impl.size)
+            assertEquals(0, httpServer.httpResponse2Impl.size)
+            ws("http://127.0.0.1:$port/".toURL()) {
+                assertEquals(0, httpServer.httpRequest2Impl.size)
+                assertEquals(0, httpServer.httpResponse2Impl.size)
+            }
+            withContext(Dispatchers.Network) {
+                delay(1.seconds)
+            }
+            assertEquals(1, httpServer.httpRequest2Impl.size)
+            assertEquals(1, httpServer.httpResponse2Impl.size)
+        }
+    }
 
+    @Test
+    fun poolForRequestsTest() = runTest {
+        var httpServer: HttpServer? = null
         httpServer = HttpServer(
             handler = Handler { req ->
                 req.response {
@@ -40,14 +71,13 @@ class HttpServerTest {
         }
     }
 
+    @Ignore
     @Test
     fun test() = runTest {
         val oo = WorkerPool(10)
-        println("#1")
         val server = HttpServer(
             handler = Handler {
                 it.response {
-                    println("#2")
                     it.status = 202
                     it.headers.contentType = "text/html;charset=utf-8"
                     it.startWriteText().use {
@@ -59,20 +89,14 @@ class HttpServerTest {
                 }
             }
         )
-        println("#3")
         val listenJob = server.listenHttp(address = NetworkAddress.Immutable(port = 8003))
 //            var closed = false
         launch {
-            println("Wait 10 sec")
             delay(10_000)
-            println("closing server...")
             listenJob.cancel()
-            println("server closed")
 //                closed=true
         }
-        println("#4")
         listenJob.join()
-        println("#5")
 //            while (!listenJob) {
 //                delay(1_000)
 //            }

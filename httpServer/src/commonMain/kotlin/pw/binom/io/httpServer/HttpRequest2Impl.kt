@@ -13,20 +13,16 @@ import pw.binom.net.Query
 import pw.binom.net.toPath
 import pw.binom.net.toQuery
 import pw.binom.network.SocketClosedException
-import pw.binom.pool.ObjectPool
 import pw.binom.pool.PoolObjectFactory
 import pw.binom.pool.borrow
 import pw.binom.skipAll
 
-internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpRequest {
+internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : HttpRequest {
     object Manager : PoolObjectFactory<HttpRequest2Impl> {
-        override fun new(pool: ObjectPool<HttpRequest2Impl>): HttpRequest2Impl =
-            HttpRequest2Impl { pool.recycle(it) }
-
         override fun free(value: HttpRequest2Impl) {
         }
 
-        override fun new(): HttpRequest2Impl = HttpRequest2Impl { }
+        override fun new(): HttpRequest2Impl = HttpRequest2Impl()
     }
 
     companion object {
@@ -106,9 +102,6 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
     override var isReadyForResponse: Boolean = true
         private set
 
-    var isFree = true
-        private set
-
     fun reset(
         request: String,
         method: String,
@@ -119,7 +112,6 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         this.method = method
         this.channel = channel
         this.server = server
-        isFree = false
         closed = false
         isReadyForResponse = true
     }
@@ -130,8 +122,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         channel = null
         server = null
         readInput = null
-        onClose(this)
-        isFree = true
+//        onClose(this)
     }
 
     private fun checkClosed() {
@@ -229,7 +220,7 @@ internal class HttpRequest2Impl(val onClose: (HttpRequest2Impl) -> Unit) : HttpR
         resp.headers[Headers.CONNECTION] = Headers.UPGRADE
         resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
         resp.headers[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
-        resp.sendHeadersAndFree()
+        resp.sendHeaders()
         isReadyForResponse = false
         return server.webSocketConnectionPool.new(
             input = channel.reader,

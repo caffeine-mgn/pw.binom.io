@@ -71,7 +71,6 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                                     try {
                                         it.run()
                                     } catch (e: Throwable) {
-                                        println("Error on ROOT NetworkDispatcher #2")
                                         e.printStackTrace()
                                     }
                                 }
