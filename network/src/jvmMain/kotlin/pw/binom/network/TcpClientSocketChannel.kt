@@ -20,16 +20,22 @@ actual class TcpClientSocketChannel(val native: JSocketChannel) : Channel {
         native.connect(_native)
     }
 
+    private var disconneced = false
     override fun read(dest: ByteBuffer): Int {
+        if (disconneced) {
+            return -1
+        }
         val count = try {
             native.read(dest.native)
         } catch (e: IOException) {
+            runCatching { native.close() }
+            disconneced = true
             return -1
         } catch (e: NotYetConnectedException) {
             return 0
         }
         if (count < 0 || count == 0 && !native.isConnected) {
-            native.close()
+            runCatching { native.close() }
             return -1
         }
         return count
