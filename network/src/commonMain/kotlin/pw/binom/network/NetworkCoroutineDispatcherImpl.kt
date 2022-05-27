@@ -25,6 +25,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private var worker = Worker()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
+    override fun toString(): String = "Dispatchers.Network"
 
     init {
         internalUdpChannel.setBlocking(false)

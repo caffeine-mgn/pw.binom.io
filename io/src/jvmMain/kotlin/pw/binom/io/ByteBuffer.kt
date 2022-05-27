@@ -3,7 +3,10 @@ package pw.binom.io
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuffer) -> Unit)?) : Channel, Buffer {
+actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuffer) -> Unit)?) :
+    Channel,
+    Buffer,
+    ByteBufferProvider {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(java.nio.ByteBuffer.allocateDirect(size), null)
 
@@ -181,8 +184,10 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuff
         return new
     }
 
-    actual fun toByteArray(): ByteArray {
-        val r = ByteArray(remaining)
+    actual fun toByteArray(): ByteArray = toByteArray(remaining)
+
+    actual fun toByteArray(limit: Int): ByteArray {
+        val r = ByteArray(minOf(remaining, limit))
         val p = native.position()
         val l = native.limit()
         try {
@@ -237,6 +242,13 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuff
         native.compact()
         native.position(0)
         native.limit(newLimit)
+    }
+
+    override fun get(): ByteBuffer = this
+
+    override fun reestablish(buffer: ByteBuffer) {
+        require(buffer === this) { "Buffer should equals this buffer" }
+        check(!closed) { "Buffer closed" }
     }
 }
 

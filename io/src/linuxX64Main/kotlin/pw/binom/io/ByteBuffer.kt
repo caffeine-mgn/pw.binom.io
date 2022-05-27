@@ -3,7 +3,10 @@ package pw.binom.io
 import kotlinx.cinterop.*
 import platform.posix.memcpy
 
-actual open class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -> Unit)?) : Channel, Buffer {
+actual open class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -> Unit)?) :
+    Channel,
+    Buffer,
+    ByteBufferProvider {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size, null)
         actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer = ByteBuffer(size, onClose)
@@ -208,13 +211,15 @@ actual open class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuff
         return new
     }
 
-    actual fun toByteArray(): ByteArray {
+    actual fun toByteArray(): ByteArray = toByteArray(remaining)
+    actual fun toByteArray(limit: Int): ByteArray {
         checkClosed()
-        val r = ByteArray(remaining)
-        if (remaining > 0) {
+        val size = minOf(remaining, limit)
+        val r = ByteArray(size)
+        if (size > 0) {
             ref { ptr, remaining ->
                 r.usePinned {
-                    memcpy(it.addressOf(0), ptr, remaining.convert())
+                    memcpy(it.addressOf(0), ptr, size.convert())
                 }
             }
         }
@@ -303,6 +308,13 @@ actual open class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuff
             position = 0
             limit = 0
         }
+    }
+
+    override fun get(): ByteBuffer = this
+
+    override fun reestablish(buffer: ByteBuffer) {
+        require(buffer === this) { "Buffer should equals this buffer" }
+        check(!closed) { "Buffer closed" }
     }
 }
 

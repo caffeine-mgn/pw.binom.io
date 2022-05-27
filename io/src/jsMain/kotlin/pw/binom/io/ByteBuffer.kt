@@ -28,7 +28,10 @@ private fun memcpy(
     }
 }
 
-actual class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -> Unit)?) : Channel, Buffer {
+actual class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -> Unit)?) :
+    Channel,
+    Buffer,
+    ByteBufferProvider {
     actual companion object {
         actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size, null)
         actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer = ByteBuffer(size, onClose)
@@ -147,17 +150,20 @@ actual class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -
         return l
     }
 
-    actual fun getByte(): Byte =
-        native[position++]
+    actual fun getByte(): Byte = native[position++]
 
     actual operator fun set(index: Int, value: Byte) {
         checkClosed()
         native[index] = value
     }
 
-    actual fun toByteArray(): ByteArray {
+    actual fun toByteArray(): ByteArray = toByteArray(remaining)
+
+    actual fun toByteArray(limit: Int): ByteArray {
+        val size = minOf(limit, remaining)
         val r = ByteArray(remaining)
-        (position until limit).forEach {
+        val endPosition = position + size
+        (position until endPosition).forEach {
             r[it - position] = native[it]
         }
         return r
@@ -213,12 +219,18 @@ actual class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -
     }
 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
-        if (offset + length > data.size)
-            throw IndexOutOfBoundsException()
+        if (offset + length > data.size) throw IndexOutOfBoundsException()
         val l = minOf(remaining, length)
         (offset until (offset + l)).forEach {
             native[position++] = data[it]
         }
         return l
+    }
+
+    override fun get(): ByteBuffer = this
+
+    override fun reestablish(buffer: ByteBuffer) {
+        require(buffer === this) { "Buffer should equals this buffer" }
+        check(!closed) { "Buffer closed" }
     }
 }

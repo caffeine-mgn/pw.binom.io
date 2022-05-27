@@ -13,3 +13,20 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
         }
     }
 }
+
+suspend fun AsyncOutput.write(data: ByteArray, bufferProvider: ByteBufferProvider) {
+    bufferProvider.using { buffer ->
+        require(buffer.capacity > 0) { "Buffer capacity should be more than 0" }
+        var cursor = 0
+        while (cursor < data.size) {
+            buffer.clear()
+            val len = buffer.write(data, offset = cursor)
+            if (len <= 0) {
+                break
+            }
+            buffer.flip()
+            writeFully(buffer)
+            cursor += len
+        }
+    }
+}

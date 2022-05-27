@@ -11,7 +11,7 @@ import kotlin.jvm.JvmName
 /**
  * A part of memory. Also contents current read/write state
  */
-expect class ByteBuffer : Channel, Buffer {
+expect class ByteBuffer : Channel, Buffer, ByteBufferProvider {
     companion object {
         fun alloc(size: Int): ByteBuffer
         fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer
@@ -45,6 +45,7 @@ expect class ByteBuffer : Channel, Buffer {
      * push all available data (between [position] and [limit]) from this bytebuffer to bytearray.
      * Don't change [position] and [limit] of current buffer. Thread unsafe.
      */
+    fun toByteArray(limit: Int): ByteArray
     fun toByteArray(): ByteArray
     fun subBuffer(index: Int, length: Int): ByteBuffer
     fun free()
@@ -65,6 +66,42 @@ class ByteBufferFactory(val size: Int) : PoolObjectFactory<ByteBuffer> {
 
     override fun free(value: ByteBuffer) {
         value.close()
+    }
+}
+
+interface ByteBufferAllocator : ObjectPool<ByteBuffer>, ByteBufferProvider {
+    override fun reestablish(buffer: ByteBuffer) {
+        recycle(buffer)
+    }
+
+    override fun get(): ByteBuffer = borrow()
+}
+
+/**
+ * Provide access to buffer
+ */
+interface ByteBufferProvider {
+    /**
+     * Returns buffer
+     */
+    fun get(): ByteBuffer
+
+    /**
+     * Return object to provider. [buffer] should be not closed. [buffer] should be same returned by [get]
+     */
+    fun reestablish(buffer: ByteBuffer)
+}
+
+/**
+ * Calls [func] with buffer. Buffer will be got by [ByteBufferProvider.get]. And after [func] buffer
+ * will return by [ByteBufferProvider.reestablish]
+ */
+inline fun <T> ByteBufferProvider.using(func: (ByteBuffer) -> T): T {
+    val b = get()
+    return try {
+        func(b)
+    } finally {
+        reestablish(b)
     }
 }
 
