@@ -5,6 +5,7 @@ import platform.openssl.EVP_MD
 import platform.openssl.EVP_PKEY
 import platform.openssl.EVP_PKEY_free
 import platform.openssl.EVP_PKEY_new
+import pw.binom.crypto.RSAPrivateKey
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 import pw.binom.ssl.createRsaFromPrivateKey
@@ -14,6 +15,7 @@ class SignatureRsa(messageDigest: CPointer<EVP_MD>) : AbstractSignature(messageD
     override fun isAlgorithmSupport(algorithm: KeyAlgorithm) = algorithm == KeyAlgorithm.RSA
 
     override fun createPkey(key: Key.Private): CPointer<EVP_PKEY> {
+        key as RSAPrivateKey
         val ecKey = createRsaFromPrivateKey(key.data)
         val pkey = EVP_PKEY_new()!!
         if (!pkey.setKey(ecKey)) {

@@ -8,6 +8,10 @@ import pw.binom.ssl.Key
 const val RSA = "RSA"
 const val ECDSA = "ECDSA"
 const val SHA1 = "SHA1"
+const val SHA3_224 = "SHA3-224"
+const val SHA3_256 = "SHA3-256"
+const val SHA3_384 = "SHA3-384"
+const val SHA3_512 = "SHA3-512"
 const val SHA256 = "SHA256"
 const val SHA224 = "SHA224"
 const val SHA384 = "SHA384"
@@ -25,6 +29,10 @@ actual interface Signature {
             "${SHA384}with$ECDSA" -> SignatureEcdsa(EVP_sha384()!!)
             "${SHA512}with$ECDSA" -> SignatureEcdsa(EVP_sha512()!!)
             "${SM3}with$ECDSA" -> SignatureEcdsa(EVP_sm3()!!)
+            "${SHA3_256}with$ECDSA" -> SignatureEcdsa(EVP_sha3_256()!!)
+            "${SHA3_224}with$ECDSA" -> SignatureEcdsa(EVP_sha3_224()!!)
+            "${SHA3_384}with$ECDSA" -> SignatureEcdsa(EVP_sha3_384()!!)
+            "${SHA3_512}with$ECDSA" -> SignatureEcdsa(EVP_sha3_512()!!)
 
             "${SHA1}with$RSA" -> SignatureRsa(EVP_sha1()!!)
             "${SHA256}with$RSA" -> SignatureRsa(EVP_sha256()!!)

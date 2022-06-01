@@ -2,6 +2,7 @@ package pw.binom.security
 
 import kotlinx.cinterop.CPointer
 import platform.openssl.*
+import pw.binom.getSslError
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 import pw.binom.ssl.createEcdsaFromPrivateKey
@@ -21,8 +22,11 @@ class SignatureEcdsa(messageDigest: CPointer<EVP_MD>) : AbstractSignature(messag
     }
 
     override fun createPkey(key: Key.Public): CPointer<EVP_PKEY> {
+        println("-->1# getSslError()->${getSslError()}")
         val ecKey = createEcdsaFromPublicKey(key.data)
+        println("-->2# getSslError()->${getSslError()}")
         val pkey = EVP_PKEY_new()!!
+        println("-->3# getSslError()->${getSslError()}")
         if (!pkey.setKey(ecKey)) {
             EVP_PKEY_free(pkey)
             throw SignatureException("EVP_PKEY_set1_EC_KEY failed")

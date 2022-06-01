@@ -1,5 +1,6 @@
 package pw.binom.crypto
 
+import pw.binom.BouncycastleUtils
 import pw.binom.security.MessageDigest
 import java.security.MessageDigest as JMessageDigest
 
@@ -12,5 +13,9 @@ actual class Sha3MessageDigest actual constructor(size: Size) : MessageDigest, A
         S512("512"),
     }
 
-    override val messageDigest = JMessageDigest.getInstance("SHA3-${size.value}")!!
+    init {
+        BouncycastleUtils.check()
+    }
+
+    override val messageDigest = JMessageDigest.getInstance("SHA3-${size.value}", "BC")!!
 }

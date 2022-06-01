@@ -22,5 +22,11 @@ actual class Sha3MessageDigest actual constructor(val size: Size) : MessageDiges
     }
 
     override val finalByteArraySize: Int
-        get() = 20
+        get() = when (size) {
+            Size.S224 -> SHA224_DIGEST_LENGTH
+            Size.S254 -> 28
+            Size.S256 -> SHA256_DIGEST_LENGTH
+            Size.S384 -> SHA384_DIGEST_LENGTH
+            Size.S512 -> SHA512_DIGEST_LENGTH
+        }
 }

@@ -49,6 +49,9 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         val llvmPath = "${info.llvmDir}${File.separator}clang".executable.replace("\\", "/")
         val llvmArPath = "${info.llvmDir}${File.separator}llvm-ar".executable.replace("\\", "/")
         var path = System.getenv("PATH")
+            .removeFromPathExecute("clang")
+            .removeFromPathExecute("llvm-ar")
+            .addPath(info.llvmDir)
         if (target.get().family == Family.ANDROID) {
             val androidSdk = System.getenv("ANDROID_NDK_ROOT")
             val prebuildName = when (HostManager.host.family) {
@@ -58,12 +61,12 @@ abstract class OpenSSLBuildTask : DefaultTask() {
                 else -> TODO()
             }
             path =
-                path + pathSeparator + "$androidSdk${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuildName${File.separator}bin"
+                path.addPath(File("$androidSdk${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuildName${File.separator}bin"))
         }
         val envs = mutableMapOf(
-            "CC" to llvmPath,
-            "CXX" to llvmPath,
-            "AR" to llvmArPath,
+            "CC" to "clang".executable,
+            "CXX" to "clang".executable,
+            "AR" to "llvm-ar".executable,
             "ARFLAGS" to "rc",
             "PATH" to path,
         )
@@ -114,6 +117,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
                 "build_libs",
                 "-j",
                 Runtime.getRuntime().availableProcessors().toString(),
+                "-d",
             ),
             envs = envs,
         )
@@ -138,9 +142,15 @@ abstract class OpenSSLBuildTask : DefaultTask() {
             directory = objectDir,
             envs = envs,
         )
+
         val objFileExt = when (target.get().family) {
-            Family.MINGW -> "*.obj"
+            Family.MINGW -> "*.o"
             else -> "*.o"
+        }
+        if (target.get() == KonanTarget.MINGW_X64) {
+            objectDir.listFiles().forEach {
+                it.renameTo(it.parentFile.resolve("${it.nameWithoutExtension}.o"))
+            }
         }
         execute(
             args = listOf(
@@ -161,7 +171,8 @@ fun execute(args: List<String>, directory: File, envs: Map<String, String>): Int
     )
     val cmd = args.map { it.replace("\"", "\\\"") }.map { "\"$it\"" }.joinToString(" ")
     println("Executing $cmd")
-    builder.environment().putAll(System.getenv())
+    println("Env: $envs")
+//    builder.environment().putAll(System.getenv())
     builder.environment().putAll(envs)
     builder.directory(directory)
     val process = builder.start()
@@ -196,3 +207,16 @@ val pathSeparator
         Family.MINGW -> ";"
         else -> ":"
     }
+
+fun String.removeFromPathExecute(execute: String) =
+    split(pathSeparator)
+        .filter {
+            !File(it).resolve(execute.executable).isFile
+        }
+        .joinToString(separator = pathSeparator)
+
+fun String.addPath(path: File): String {
+    val r = split(pathSeparator).toMutableSet()
+    r += path.toString()
+    return r.joinToString(separator = pathSeparator)
+}

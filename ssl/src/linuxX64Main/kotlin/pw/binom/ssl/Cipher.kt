@@ -5,6 +5,7 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.usePinned
 import platform.openssl.*
+import pw.binom.checkTrue
 import pw.binom.crypto.RsaPadding
 import kotlin.native.internal.Cleaner
 import kotlin.native.internal.createCleaner
@@ -86,39 +87,43 @@ class RsaCipherImpl(args: List<String>) : Cipher {
                 println("--->#2")
                 if (isPublicKey) {
                     if (mode == Cipher.Mode.ENCODE) {
+                        println("--->#3")
                         RSA_public_encrypt(
                             pinned.get().size,
                             pinned.addressOf(0).reinterpret(),
                             output.addressOf(0).reinterpret(),
                             rsa,
                             padding.id,
-                        )
+                        ).checkTrue("RSA_public_encrypt fail")
                     } else {
+                        println("--->#4")
                         RSA_public_decrypt(
                             pinned.get().size,
                             pinned.addressOf(0).reinterpret(),
                             output.addressOf(0).reinterpret(),
                             rsa,
                             padding.id,
-                        )
+                        ).checkTrue("RSA_public_decrypt fail")
                     }
                 } else {
                     if (mode == Cipher.Mode.ENCODE) {
+                        println("--->#5")
                         RSA_private_encrypt(
                             pinned.get().size,
                             pinned.addressOf(0).reinterpret(),
                             output.addressOf(0).reinterpret(),
                             rsa,
                             padding.id,
-                        )
+                        ).checkTrue("RSA_private_encrypt fail")
                     } else {
+                        println("--->#6")
                         RSA_private_decrypt(
                             pinned.get().size,
                             pinned.addressOf(0).reinterpret(),
                             output.addressOf(0).reinterpret(),
                             rsa,
                             padding.id,
-                        )
+                        ).checkTrue("RSA_private_decrypt fail")
                     }
                 }
             }

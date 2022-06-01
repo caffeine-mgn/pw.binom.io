@@ -28,13 +28,15 @@ actual class X509Certificate internal constructor(val ptr: CPointer<X509>) : Clo
 }
 
 inline val CPointer<stack_st_X509>.size: Int
-    get() = internal_sk_X509_num(this).let { if (it < 0) 0 else it }
+//    get() = internal_sk_X509_num(this).let { if (it < 0) 0 else it }
+    get() = sk_X509_num(this).let { if (it < 0) 0 else it }
 
 inline operator fun CPointer<stack_st_X509>.get(index: Int): CPointer<X509> {
     if (index < 0 || index >= size) {
         throw IndexOutOfBoundsException()
     }
-    return internal_sk_X509_value(this, index)!!
+//    return internal_sk_X509_value(this, index)!!
+    return sk_X509_value(this, index)!!
 }
 
 inline fun CPointer<stack_st_X509>.forEach(func: (CPointer<X509>) -> Unit) {

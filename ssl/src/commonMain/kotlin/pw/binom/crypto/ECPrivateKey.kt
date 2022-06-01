@@ -1,0 +1,8 @@
+package pw.binom.crypto
+
+import com.ionspin.kotlin.bignum.integer.BigInteger
+import pw.binom.ssl.Key
+
+expect class ECPrivateKey : Key.Private {
+    val d: BigInteger
+}

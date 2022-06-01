@@ -1,23 +1,28 @@
 package pw.binom.ssl
 
+import pw.binom.crypto.ECPrivateKey
+import pw.binom.crypto.ECPublicKey
+import pw.binom.crypto.RSAPrivateKey
+import pw.binom.crypto.RSAPublicKey
+
 sealed interface Key {
     val algorithm: KeyAlgorithm
     val data: ByteArray
 
-    class Public(override val algorithm: KeyAlgorithm, override val data: ByteArray) : Key {
+    interface Public : Key {
         companion object
     }
 
-    class Private(override val algorithm: KeyAlgorithm, override val data: ByteArray) : Key {
+    interface Private : Key {
         companion object
     }
 
-    class Pair(val public: Public, val private: Private) {
+    class Pair<PUBLIC : Key.Public, PRIVATE : Key.Private>(val public: PUBLIC, val private: PRIVATE) {
         companion object
     }
 
     companion object
 }
 
-expect fun Key.Companion.generateRsa(size: Int): Key.Pair
-expect fun Key.Companion.generateEcdsa(nid: Nid): Key.Pair
+expect fun Key.Companion.generateRsa(size: Int): Key.Pair<RSAPublicKey, RSAPrivateKey>
+expect fun Key.Companion.generateEcdsa(nid: Nid): Key.Pair<ECPublicKey, ECPrivateKey>

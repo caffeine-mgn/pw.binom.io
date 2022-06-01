@@ -2,7 +2,10 @@ package pw.binom.security
 
 import pw.binom.Utils
 import pw.binom.io.socket.ssl.toHex
+import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
+import pw.binom.ssl.Nid
+import pw.binom.ssl.generateEcdsa
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -23,6 +26,11 @@ class SignatureTest {
         signature2.update(someData)
         val result = signature2.verify(signed)
         assertTrue(result)
+    }
+
+    @Test
+    fun ff() {
+        Key.generateEcdsa(Nid.secp256k1)
     }
 
     @Test

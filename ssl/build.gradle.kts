@@ -68,7 +68,7 @@ kotlin {
                 api(project(":file"))
                 api(project(":date"))
                 api(project(":concurrency"))
-                api("com.ionspin.kotlin:bignum:0.3.4")
+                api("com.ionspin.kotlin:bignum:0.3.6")
             }
         }
         val linuxX64Main by getting {
@@ -105,8 +105,8 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                api("org.bouncycastle:bcprov-jdk15on:1.61")
-                api("org.bouncycastle:bcpkix-jdk15on:1.61")
+                api("org.bouncycastle:bcprov-jdk15on:1.68")
+                api("org.bouncycastle:bcpkix-jdk15on:1.68")
             }
         }
 
@@ -122,6 +122,11 @@ kotlin {
     }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()
+extensions.getByType(org.jmailen.gradle.kotlinter.KotlinterExtension::class.java).also {
+    it.disabledRules = it.disabledRules + arrayOf("import-ordering")
+}
+// lintKotlin {
+// }
 tasks {
     register("buildOpenSSLMingwX64", pw.binom.OpenSSLBuildTask::class.java).configure {
         target.set(org.jetbrains.kotlin.konan.target.KonanTarget.MINGW_X64)

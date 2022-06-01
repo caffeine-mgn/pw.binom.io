@@ -2,6 +2,7 @@ package pw.binom.crypto
 
 import kotlinx.cinterop.*
 import platform.openssl.*
+import pw.binom.checkTrue
 import pw.binom.io.ByteBuffer
 import pw.binom.security.MessageDigest
 
@@ -52,6 +53,8 @@ abstract class OpenSSLMessageDigest : MessageDigest {
         memScoped {
             val size = alloc<UIntVar>()
             EVP_DigestFinal(ptr, out.refTo(0).getPointer(this).reinterpret(), size.ptr)
+                .checkTrue("EVP_DigestFinal fails")
+            println("size.value->${size.value} finalByteArraySize->$finalByteArraySize SHA256_DIGEST_LENGTH=$SHA256_DIGEST_LENGTH SHA_DIGEST_LENGTH=$SHA_DIGEST_LENGTH EVP_MAX_MD_SIZE=$EVP_MAX_MD_SIZE")
             if (size.value != out.size.convert<UInt>()) {
                 TODO()
             }

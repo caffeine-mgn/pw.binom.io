@@ -2,14 +2,14 @@ package pw.binom.io.socket.ssl
 
 import pw.binom.Environment
 import pw.binom.copyTo
+import pw.binom.crypto.RSAPrivateKey
+import pw.binom.crypto.RSAPublicKey
 import pw.binom.io.*
-import pw.binom.io.file.openRead
 import pw.binom.io.file.openWrite
 import pw.binom.io.file.relative
 import pw.binom.io.file.workDirectoryFile
 import pw.binom.ssl.Cipher
 import pw.binom.ssl.Key
-import pw.binom.ssl.KeyAlgorithm
 import pw.binom.ssl.generateRsa
 import pw.binom.wrap
 import kotlin.random.Random
@@ -28,17 +28,17 @@ fun Output.writeAllBytes(data: ByteArray) {
 
 class ChiperTest {
 
-    private fun findPair(name: String): Key.Pair {
+    private fun findPair(name: String): Key.Pair<out RSAPublicKey, out RSAPrivateKey> {
         val publicFile = Environment.workDirectoryFile.relative("$name.pub")
         val privateFile = Environment.workDirectoryFile.relative(name)
         println("public-file: $publicFile")
 
-        if (publicFile.isFile && privateFile.isFile) {
-            return Key.Pair(
-                public = Key.Public(algorithm = KeyAlgorithm.RSA, publicFile.openRead().use { it.readAllBytes() }),
-                private = Key.Private(algorithm = KeyAlgorithm.RSA, privateFile.openRead().use { it.readAllBytes() }),
-            )
-        }
+//        if (publicFile.isFile && privateFile.isFile) {
+//            return Key.Pair(
+//                public = Key.Public(algorithm = KeyAlgorithm.RSA, publicFile.openRead().use { it.readAllBytes() }),
+//                private = Key.Private(algorithm = KeyAlgorithm.RSA, privateFile.openRead().use { it.readAllBytes() }),
+//            )
+//        }
 
         val pair = Key.generateRsa(512)
         publicFile.openWrite().use { it.writeAllBytes(pair.public.data) }

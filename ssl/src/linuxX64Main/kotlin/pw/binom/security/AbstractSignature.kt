@@ -34,11 +34,14 @@ abstract class AbstractSignature(val messageDigest: CPointer<EVP_MD>) : Signatur
 
     override fun init(key: Key.Public) {
         algorithmCheck(key)
+        println("#1 getSslError()->${getSslError()}")
         val pkey = createPkey(key)
+        println("#2 getSslError()->${getSslError()}")
         ctx = EVP_MD_CTX_new()
+        println("#3 getSslError()->${getSslError()}")
         if (EVP_DigestVerifyInit(ctx, null, messageDigest, null, pkey) != 1) {
             EVP_MD_CTX_free(ctx)
-            throw SignatureException("EVP_DigestVerifyInit failed")
+            throw SignatureException("EVP_DigestVerifyInit failed: ${getSslError()}")
         }
         signMode = false
     }

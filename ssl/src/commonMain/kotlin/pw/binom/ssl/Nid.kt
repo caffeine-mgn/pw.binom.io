@@ -4,5 +4,7 @@ enum class Nid {
     secp256r1,
     secp192k1,
     pkcs3, // TODO возможно нужно это убрать
-    secp256k1,
+    secp256k1;
+
+    companion object;
 }
