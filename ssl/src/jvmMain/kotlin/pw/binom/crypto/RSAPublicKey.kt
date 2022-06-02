@@ -10,6 +10,8 @@ actual class RSAPublicKey(val native: BCRSAPublicKey) : Key.Public {
         get() = KeyAlgorithm.RSA
     override val data: ByteArray
         get() = TODO("Not yet implemented")
+    override val format: String
+        get() = "X.509"
     actual val e: BigInteger
         get() = native.publicExponent.toBigInteger()
     actual val n: BigInteger

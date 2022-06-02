@@ -47,4 +47,6 @@ actual class RSAPublicKey(
                 Base64.decode(str)
             }
         }
+    override val format: String
+        get() = "X.509"
 }

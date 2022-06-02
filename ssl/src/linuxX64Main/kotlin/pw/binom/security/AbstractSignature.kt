@@ -3,6 +3,7 @@ package pw.binom.security
 import kotlinx.cinterop.*
 import platform.openssl.*
 import platform.posix.size_tVar
+import pw.binom.checkTrue
 import pw.binom.getSslError
 import pw.binom.io.ByteBuffer
 import pw.binom.ssl.Key
@@ -25,9 +26,8 @@ abstract class AbstractSignature(val messageDigest: CPointer<EVP_MD>) : Signatur
         algorithmCheck(key)
         val pkey = createPkey(key)
         ctx = EVP_MD_CTX_new()
-        if (EVP_DigestSignInit(ctx, null, messageDigest, null, pkey) != 1) {
+        EVP_DigestSignInit(ctx, null, messageDigest, null, pkey).checkTrue("EVP_DigestSignInit fails") {
             EVP_MD_CTX_free(ctx)
-            throw SignatureException("EVP_DigestSignInit failed")
         }
         signMode = true
     }

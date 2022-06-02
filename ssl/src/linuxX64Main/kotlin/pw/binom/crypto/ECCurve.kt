@@ -79,13 +79,17 @@ actual class ECCurve(
         }
     }
 
-    override fun hashCode(): Int =
-        BigNumContext().use { ctx ->
-            val p1 = ctx.get()
-            val a1 = ctx.get()
-            val b1 = ctx.get()
-            p1.calcHashCode() + a1.calcHashCode() * 32 + b1.calcHashCode() * 64
-        }
+    override fun hashCode(): Int = BigNumContext().use { ctx ->
+        val p1 = ctx.get()
+        val a1 = ctx.get()
+        val b1 = ctx.get()
+        p1.calcHashCode() + a1.calcHashCode() * 32 + b1.calcHashCode() * 64
+    }
+
+    actual companion object {
+        actual fun generate(params: X9ECParameters): ECCurve =
+            ECCurve(EC_GROUP_dup(params.ptr) ?: throwError("EC_GROUP_dup fails"))
+    }
 }
 
 fun BigInteger.Companion.fromUnsignedByteArray(buf: ByteArray, off: Int, length: Int): BigInteger {

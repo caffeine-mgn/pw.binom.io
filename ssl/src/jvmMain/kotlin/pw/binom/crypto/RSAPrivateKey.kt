@@ -13,6 +13,8 @@ actual class RSAPrivateKey(val native: BCRSAPrivateKey) : Key.Private {
         get() = KeyAlgorithm.RSA
     override val data: ByteArray
         get() = native.encoded
+    override val format: String
+        get() = "PKCS#8"
     actual val e: BigInteger
         get() = native.privateExponent.toBigInteger()
     actual val d: BigInteger
@@ -39,6 +41,7 @@ actual class RSAPrivateKey(val native: BCRSAPrivateKey) : Key.Private {
                     )
                     RSAPrivateKey(key as BCRSAPrivateKey)
                 }
+                else -> throw SecurityException("${encodedKeySpec::class.java.name} not supported for RSA")
             }
     }
 }

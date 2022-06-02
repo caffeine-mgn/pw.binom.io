@@ -5,4 +5,8 @@ import pw.binom.ssl.Key
 
 expect class ECPrivateKey : Key.Private {
     val d: BigInteger
+
+    companion object {
+        fun load(data: ByteArray): ECPrivateKey
+    }
 }

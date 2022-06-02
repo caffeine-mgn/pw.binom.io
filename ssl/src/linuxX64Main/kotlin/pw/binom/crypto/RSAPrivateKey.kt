@@ -78,4 +78,6 @@ actual class RSAPrivateKey(actual val n: BigInteger, actual val e: BigInteger, a
                 Base64.decode(str)
             }
         }
+    override val format: String
+        get() = "X.509"
 }

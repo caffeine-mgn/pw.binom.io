@@ -1,23 +1,58 @@
 package pw.binom.crypto
 
-import platform.openssl.EC_POINT_point2bn
-import platform.openssl.POINT_CONVERSION_UNCOMPRESSED
-import pw.binom.BigNum
+import kotlinx.cinterop.CPointer
+import platform.openssl.*
+import pw.binom.base64.Base64
+import pw.binom.checkTrue
+import pw.binom.getSslError
+import pw.binom.io.IOException
+import pw.binom.io.use
+import pw.binom.ssl.Bio
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
-import pw.binom.throwError
+import kotlin.native.internal.createCleaner
 
-actual class ECPublicKey(private val curve: ECCurve, actual val q: EcPoint) : Key.Public {
+actual class ECPublicKey(val native: CPointer<EC_KEY>/*private val curve: ECCurve, actual val q: EcPoint*/) :
+    Key.Public {
     override val algorithm: KeyAlgorithm
         get() = KeyAlgorithm.ECDSA
     override val data: ByteArray
-        get() = TODO("Not yet implemented")
+        get() = Bio.mem().use { bio ->
+            PEM_write_bio_EC_PUBKEY(bio.self, native)
+                .checkTrue("PEM_write_bio_EC_PUBKEY fails")
+            val fullData = bio.toByteArray()
+            var str = fullData.decodeToString()
+            str = str.replace("\n", "")
+            if (!str.startsWith("-----BEGIN PUBLIC KEY-----")) {
+                TODO()
+            }
+            if (!str.endsWith("-----END PUBLIC KEY-----")) {
+                TODO()
+            }
+            str = str.substring(26, str.length - 24)
+            Base64.decode(str)
+        }
+    override val format: String
+        get() = "X.509"
+    actual val q: EcPoint
+        get() = TODO()
 
-    fun aa() {
-        val publicBiginteger = BigNum().use { bn ->
-            EC_POINT_point2bn(curve.native, q.ptr, POINT_CONVERSION_UNCOMPRESSED, bn.ptr, null)
-                ?: throwError("EC_POINT_point2bn fails")
-            bn.toBigInt()
+    @OptIn(ExperimentalStdlibApi::class)
+    private val cleaner = createCleaner(native) { native ->
+        EC_KEY_free(native)
+    }
+
+    actual companion object {
+        actual fun load(data: ByteArray): ECPublicKey {
+            val pem = "-----BEGIN PUBLIC KEY-----\n${Base64.encode(data)}\n-----END PUBLIC KEY-----\n"
+            val ecKey = Bio.mem(pem.encodeToByteArray()).use { priv ->
+                PEM_read_bio_EC_PUBKEY(priv.self, null, null, null)
+                    ?: throw IOException("Can't load public key: ${getSslError()}")
+            }
+            EC_KEY_check_key(ecKey).checkTrue("EC_KEY_check_key") {
+                EC_KEY_free(ecKey)
+            }
+            return ECPublicKey(ecKey)
         }
     }
 }

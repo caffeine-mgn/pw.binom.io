@@ -1,7 +1,5 @@
 package pw.binom.ssl
 
-import com.ionspin.kotlin.bignum.integer.BigInteger
-import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.convert
@@ -13,7 +11,6 @@ import pw.binom.io.ByteArrayOutput
 import pw.binom.io.IOException
 import pw.binom.io.use
 import pw.binom.throwError
-import pw.binom.toBigNum
 
 private val loaded = atomic(false)
 internal fun loadOpenSSL() {
@@ -41,15 +38,15 @@ fun createRsaFromPrivateKey(data: ByteArray): CPointer<RSA> {
 }
 
 fun createEcdsaFromPublicKey(data: ByteArray): CPointer<EC_KEY> {
-    val eckey = EC_KEY_new() ?: TODO("Can't create EC_KEY")
-    val point = BigInteger.fromByteArray(data, Sign.POSITIVE).toBigNum().use { num ->
-        val group = EC_GROUP_new_by_curve_name(NID_secp256k1) ?: TODO("Can't create group")
-        EC_POINT_bn2point(group, num.ptr, null, null)
-    } ?: TODO("Can't create point")
-    if (EC_KEY_set_public_key(eckey, point) <= 0) {
-        TODO("Can't set public key: ${getSslError()}. eckey=$eckey, point=$point")
-    }
-    return eckey
+//    val eckey = EC_KEY_new() ?: TODO("Can't create EC_KEY")
+//    val point = BigInteger.fromByteArray(data, Sign.POSITIVE).toBigNum().use { num ->
+//        val group = EC_GROUP_new_by_curve_name(NID_secp256k1) ?: TODO("Can't create group")
+//        EC_POINT_bn2point(group, num.ptr, null, null)
+//    } ?: TODO("Can't create point")
+//    if (EC_KEY_set_public_key(eckey, point) <= 0) {
+//        TODO("Can't set public key: ${getSslError()}. eckey=$eckey, point=$point")
+//    }
+//    return eckey
     val pem = "-----BEGIN PUBLIC KEY-----\n${Base64.encode(data)}\n-----END PUBLIC KEY-----\n"
     return Bio.mem(pem.encodeToByteArray()).use { priv ->
         PEM_read_bio_EC_PUBKEY(priv.self, null, null, null)

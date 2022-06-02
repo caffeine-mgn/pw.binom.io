@@ -39,7 +39,7 @@ actual fun Key.Companion.generateEcdsa(nid: Nid): Key.Pair<ECPublicKey, ECPrivat
     val pair = keyPairGenerator.generateKeyPair()
     val public = pair.public as BCECPublicKey
     val private = pair.private as BCECPrivateKey
-    return Key.Pair<ECPublicKey, ECPrivateKey>(
+    return Key.Pair(
         public = ECPublicKey(native = public),
         private = ECPrivateKey(native = private),
     )

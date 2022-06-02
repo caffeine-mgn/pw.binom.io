@@ -34,4 +34,8 @@ actual class ECCurve(val native: BCECCurve) {
     override fun hashCode(): Int {
         return native.hashCode()
     }
+
+    actual companion object {
+        actual fun generate(params: X9ECParameters): ECCurve = ECCurve(params.native.curve)
+    }
 }

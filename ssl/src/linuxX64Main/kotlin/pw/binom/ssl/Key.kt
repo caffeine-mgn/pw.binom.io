@@ -105,21 +105,22 @@ actual fun Key.Companion.generateEcdsa(nid: Nid): Key.Pair<ECPublicKey, ECPrivat
         EC_KEY_free(eckey)
         throw SecurityException("Failed to generate EC Key")
     }
-    val privateKeyBigInteger = BigNum(EC_KEY_get0_private_key(eckey) ?: TODO("Can't get private key")).toBigInt()
-    val publicKey2 = EC_KEY_get0_public_key(eckey)
-    val newGroup = EC_GROUP_dup(ecgroup)!!
-    val curve = ECCurve(newGroup)
-
-    EC_KEY_free(eckey)
+//    val privateKeyBigInteger = BigNum(EC_KEY_get0_private_key(eckey) ?: TODO("Can't get private key")).toBigInt()
+//    val publicKey2 = EC_KEY_get0_public_key(eckey)
+//    val newGroup = EC_GROUP_dup(ecgroup)!!
+//    val curve = ECCurve(newGroup)
+//    EC_KEY_free(eckey)
+    val publicEc = EC_KEY_dup(eckey) ?: throwError("EC_KEY_dup fails")
     return Key.Pair(
         public = ECPublicKey(
-            curve = curve,
-            q = EcPoint(
-                curve = curve,
-                ptr = EC_POINT_dup(publicKey2, curve.native) ?: throwError("EC_POINT_dup fails")
-            )
+            native = publicEc,
+//            curve = curve,
+//            q = EcPoint(
+//                curve = curve,
+//                ptr = EC_POINT_dup(publicKey2, curve.native) ?: throwError("EC_POINT_dup fails")
+//            )
         ),
-        private = ECPrivateKey(d = privateKeyBigInteger)
+        private = ECPrivateKey(native = eckey)
     )
 
 //    println("publicBiginteger->$publicBiginteger")

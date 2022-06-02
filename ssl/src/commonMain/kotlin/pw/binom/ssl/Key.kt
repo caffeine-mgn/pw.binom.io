@@ -8,6 +8,7 @@ import pw.binom.crypto.RSAPublicKey
 sealed interface Key {
     val algorithm: KeyAlgorithm
     val data: ByteArray
+    val format: String
 
     interface Public : Key {
         companion object
