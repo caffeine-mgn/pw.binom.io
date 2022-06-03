@@ -10,12 +10,13 @@ import pw.binom.getSslError
 import pw.binom.io.IOException
 import pw.binom.io.use
 import pw.binom.ssl.Bio
+import pw.binom.ssl.ECKey
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 import pw.binom.throwError
 import kotlin.native.internal.createCleaner
 
-actual class ECPrivateKey(val native: CPointer<EC_KEY>) : Key.Private {
+actual class ECPrivateKey(val native: CPointer<EC_KEY>) : Key.Private, ECKey {
     override val algorithm: KeyAlgorithm
         get() = KeyAlgorithm.ECDSA
 

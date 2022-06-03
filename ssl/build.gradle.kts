@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import pw.binom.kotlin.clang.eachNative
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -14,9 +15,16 @@ fun config(config: KotlinNativeTarget) {
         }
     }
 
+    val libFile = File("${buildFile.parent}/src/${config.targetName}Main/cinterop/lib/libopenssl.a")
     val args = listOf(
-        "-include-binary", "${buildFile.parent}/src/${config.targetName}Main/cinterop/lib/libopenssl.a"
+        "-include-binary", libFile.toString()
     )
+    config.compilations["main"].compileKotlinTask.doFirst {
+        if (!libFile.isFile) {
+            throw RuntimeException("SSL static lib not found: $libFile")
+        }
+        println("${config.targetName}: $libFile file exist!")
+    }
     config.compilations["main"].kotlinOptions.freeCompilerArgs = args
     config.compilations["test"].kotlinOptions.freeCompilerArgs = args
 }
@@ -24,7 +32,7 @@ fun config(config: KotlinNativeTarget) {
 kotlin {
     jvm()
     linuxX64 {
-        config(this)
+//        config(this)
 //        compilations["main"].cinterops {
 //            create("openssl") {
 //                defFile = project.file("src/cinterop/openssl.def")
@@ -38,26 +46,39 @@ kotlin {
 //        compilations["main"].kotlinOptions.freeCompilerArgs = args
 //        compilations["test"].kotlinOptions.freeCompilerArgs = args
     }
+
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
         linuxArm32Hfp {
-            config(this)
         }
     }
 
     mingwX64 {
-        config(this)
     }
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86 {
-            config(this)
         }
     }
 
     macosX64 {
-        config(this)
     }
-    targets.all {
-        compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+    eachNative {
+        val headersPath = file("${buildFile.parent}/src/cinterop/include")
+        binaries {
+            compilations["main"].cinterops {
+                val openssl by creating {
+                    defFile = project.file("src/cinterop/openssl.def")
+                    packageName = "platform.openssl"
+                    includeDirs.headerFilterOnly(headersPath.absolutePath)
+                }
+            }
+            val libFile = file("${buildFile.parent}/src/${targetName}Main/cinterop/lib/libopenssl.a")
+            val args = listOf(
+                "-include-binary", libFile.absolutePath,
+                "-opt-in=kotlin.RequiresOptIn"
+            )
+            compilations["main"].kotlinOptions.freeCompilerArgs = args
+            compilations["test"].kotlinOptions.freeCompilerArgs = args
+        }
     }
     sourceSets {
         val commonMain by getting {

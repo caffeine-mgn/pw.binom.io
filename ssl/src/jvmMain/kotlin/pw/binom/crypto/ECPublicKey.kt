@@ -2,12 +2,13 @@ package pw.binom.crypto
 
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey
 import pw.binom.BouncycastleUtils
+import pw.binom.ssl.ECKey
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
 
-actual class ECPublicKey(val native: BCECPublicKey) : Key.Public {
+actual class ECPublicKey(val native: BCECPublicKey) : Key.Public, ECKey {
     override val algorithm: KeyAlgorithm
         get() = KeyAlgorithm.ECDSA
     override val data: ByteArray
@@ -16,10 +17,6 @@ actual class ECPublicKey(val native: BCECPublicKey) : Key.Public {
         get() = "X.509"
     actual val q: EcPoint by lazy {
         EcPoint(native.q, ECCurve(native.q.curve))
-    }
-
-    init {
-        println("public format: ${native.format}")
     }
 
     actual companion object {

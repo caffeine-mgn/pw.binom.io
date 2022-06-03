@@ -8,9 +8,7 @@ import pw.binom.io.*
 import pw.binom.io.file.openWrite
 import pw.binom.io.file.relative
 import pw.binom.io.file.workDirectoryFile
-import pw.binom.ssl.Cipher
-import pw.binom.ssl.Key
-import pw.binom.ssl.generateRsa
+import pw.binom.ssl.*
 import pw.binom.wrap
 import kotlin.random.Random
 import kotlin.test.Test
@@ -44,6 +42,14 @@ class ChiperTest {
         publicFile.openWrite().use { it.writeAllBytes(pair.public.data) }
         privateFile.openWrite().use { it.writeAllBytes(pair.private.data) }
         return pair
+    }
+
+    @Test
+    fun test2() {
+        val pair = Key.generateEcdsa(Nid.secp256k1)
+        val dd = Cipher.getInstance("ECDSA")
+        dd.init(Cipher.Mode.ENCODE, pair.public)
+        dd.doFinal("Hello world".encodeToByteArray())
     }
 
     @Test

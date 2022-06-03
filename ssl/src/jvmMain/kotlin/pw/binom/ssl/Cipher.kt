@@ -1,5 +1,6 @@
 package pw.binom.ssl
 
+import pw.binom.BouncycastleUtils
 import pw.binom.crypto.RsaPadding
 import javax.crypto.Cipher as JvmCipher
 
@@ -37,13 +38,14 @@ class RSACipherJvm(args: List<String>) : Cipher {
         } else {
             RsaPadding.PKCS1Padding
         }
-        native = JvmCipher.getInstance("RSA/ECB/${padding.jvmName}")
+        native = JvmCipher.getInstance("RSA/ECB/${padding.jvmName}", BouncycastleUtils.provider)
     }
 
     override fun init(mode: Cipher.Mode, key: Key) {
         val jvmKey = when (key) {
             is Key.Public -> loadPublicKey(key.algorithm, key.data)
             is Key.Private -> loadPrivateKey(key.algorithm, key.data)
+            else -> TODO()
         }
         native.init(mode.code, jvmKey)
     }

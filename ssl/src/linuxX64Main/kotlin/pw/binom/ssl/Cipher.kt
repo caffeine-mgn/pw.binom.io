@@ -11,6 +11,7 @@ actual interface Cipher {
             }
             return when (fullArgs[0]) {
                 "RSA" -> RsaCipherImpl(args)
+                "ECDSA" -> ECCipherImpl(transformation.replace('/', '-'))
                 else -> TODO("Unknown transformation \"$transformation\"")
             }
         }

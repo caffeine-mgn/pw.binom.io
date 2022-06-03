@@ -42,6 +42,7 @@ class RsaCipherImpl(args: List<String>) : Cipher {
                 isPublicKey = false
                 createRsaFromPrivateKey(key.data)
             }
+            else -> TODO()
         }
         buffer = ByteArray(rsa.dataSize)
         println("rsa.dataSize=${rsa.dataSize}")

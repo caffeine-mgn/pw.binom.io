@@ -1,8 +1,9 @@
 package pw.binom.crypto
 
+import pw.binom.ssl.ECKey
 import pw.binom.ssl.Key
 
-expect class ECPublicKey : Key.Public {
+expect class ECPublicKey : Key.Public, ECKey {
     val q: EcPoint
 
     companion object {

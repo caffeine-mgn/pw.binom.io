@@ -8,12 +8,13 @@ import pw.binom.getSslError
 import pw.binom.io.IOException
 import pw.binom.io.use
 import pw.binom.ssl.Bio
+import pw.binom.ssl.ECKey
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 import kotlin.native.internal.createCleaner
 
 actual class ECPublicKey(val native: CPointer<EC_KEY>/*private val curve: ECCurve, actual val q: EcPoint*/) :
-    Key.Public {
+    Key.Public, ECKey {
     override val algorithm: KeyAlgorithm
         get() = KeyAlgorithm.ECDSA
     override val data: ByteArray
