@@ -1,5 +1,5 @@
-headers = openssl/ssl.h openssl/err.h openssl/evp.h
-headerFilter = openssl/**
+headers = openssl/ssl.h openssl/err.h openssl/evp.h internal/sha3.h keccak/sha3.h
+headerFilter = openssl/** internal/** keccak/**
 linkerOpts.mingw_x86 = -lwsock32 -lws2_32 -lcrypt32
 linkerOpts.mingw_x64 = -lwsock32 -lws2_32 -lcrypt32
 ---

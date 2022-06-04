@@ -36,15 +36,19 @@ abstract class OpenSSLMessageDigest : MessageDigest {
 
     override fun update(input: ByteArray, offset: Int, len: Int) {
         checkInit()
-        EVP_DigestUpdate(ptr, input.refTo(offset), len.convert())
+        input.usePinned { p ->
+            EVP_DigestUpdate(ptr, p.addressOf(offset), len.convert())
+        }
     }
 
     override fun update(buffer: ByteBuffer) {
         checkInit()
-        buffer.ref { bufferPtr, remaining ->
-            EVP_DigestUpdate(ptr, bufferPtr, remaining.convert())
+        if (buffer.remaining > 0) {
+            buffer.ref { bufferPtr, remaining ->
+                EVP_DigestUpdate(ptr, bufferPtr, remaining.convert())
+            }
+            buffer.position = buffer.limit
         }
-        buffer.position = buffer.limit
     }
 
     override fun finish(): ByteArray {

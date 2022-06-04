@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import pw.binom.kotlin.clang.clangBuildStatic
+import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
 
 plugins {
@@ -62,7 +64,17 @@ kotlin {
     macosX64 {
     }
     eachNative {
+
         val headersPath = file("${buildFile.parent}/src/cinterop/include")
+
+        val keccakStaticTask = clangBuildStatic(name = "keccak", target = this.konanTarget) {
+            include(headersPath.resolve("keccak"))
+            compileArgs.addAll(listOf("-std=c99", "-O3", "-g"))
+            compileFile(
+                file("${buildFile.parentFile}/src/cinterop/include/keccak/sha3.c")
+            )
+        }
+        tasks.findByName(compileTaskName)?.dependsOn(keccakStaticTask)
         binaries {
             compilations["main"].cinterops {
                 val openssl by creating {
@@ -74,6 +86,7 @@ kotlin {
             val libFile = file("${buildFile.parent}/src/${targetName}Main/cinterop/lib/libopenssl.a")
             val args = listOf(
                 "-include-binary", libFile.absolutePath,
+                "-include-binary", keccakStaticTask.staticFile.asFile.get().absolutePath,
                 "-opt-in=kotlin.RequiresOptIn"
             )
             compilations["main"].kotlinOptions.freeCompilerArgs = args
