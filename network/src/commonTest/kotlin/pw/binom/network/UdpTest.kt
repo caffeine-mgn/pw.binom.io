@@ -3,10 +3,7 @@ package pw.binom.network
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.io.ByteBuffer
-import pw.binom.io.ClosedException
-import pw.binom.io.bufferedReader
-import pw.binom.io.readText
+import pw.binom.io.*
 import pw.binom.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -73,7 +70,7 @@ class UdpTest {
         }
 
     suspend fun UdpConnection.read(address: NetworkAddress.Mutable?) =
-        ByteBuffer.alloc(DEFAULT_BUFFER_SIZE) { data ->
+        ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { data ->
             read(data, address = address)
             data.flip()
             data.toByteArray().decodeToString()
@@ -88,7 +85,7 @@ class UdpTest {
         message.encodeToByteArray().wrap {
             client.write(it, NetworkAddress.Immutable(host = "127.0.0.1", port = port))
         }
-        val resp = ByteBuffer.alloc(message.length * 2) {
+        val resp = ByteBuffer.alloc(message.length * 2).use {
             server.read(it, null)
             it.flip()
             it.bufferedReader().readText()

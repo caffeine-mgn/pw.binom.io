@@ -84,7 +84,7 @@ class Utf8Test {
 //        println("1=${emojiBytes[1].toString(16)}")
 //        println("2=${emojiBytes[2].toString(16)}")
 //        println("3=${emojiBytes[3].toString(16)}")
-        val inFact = ByteBuffer.alloc(6) {
+        val inFact = ByteBuffer.alloc(6).use {
             UTF8.unicodeToUtf8(emoji, it)
             it.clear()
             it.toByteArray()

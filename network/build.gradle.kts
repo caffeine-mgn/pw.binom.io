@@ -148,6 +148,7 @@ kotlin {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
                 api(project(":date"))
+                api(project(":charset"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }

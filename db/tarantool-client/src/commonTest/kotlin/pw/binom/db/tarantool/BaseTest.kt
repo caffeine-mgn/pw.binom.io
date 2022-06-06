@@ -24,7 +24,7 @@ abstract class BaseTest {
 //    )
 
     @OptIn(ExperimentalTime::class)
-    fun pg(func: suspend (TarantoolConnectionImpl) -> Unit) = runTest {
+    fun pg(func: suspend (TarantoolConnectionImpl) -> Unit) = runTest(dispatchTimeoutMs = 10 * 1000) {
         val now = TimeSource.Monotonic.markNow()
         val manager = NetworkCoroutineDispatcherImpl()
 //        TarantoolContainer {

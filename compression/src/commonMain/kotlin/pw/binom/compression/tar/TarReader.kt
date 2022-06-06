@@ -104,7 +104,7 @@ class TarReader(private val stream: Input, val closeStream: Boolean = true) : Cl
             var fullSize = size / BLOCK_SIZE.toUInt() * BLOCK_SIZE.toUInt()
             if (size % BLOCK_SIZE.toUInt() > 0u)
                 fullSize += BLOCK_SIZE.toUInt()
-            ByteBuffer.alloc(size.toInt() - 1) { nameBuf ->
+            ByteBuffer.alloc(size.toInt() - 1).use { nameBuf ->
                 stream.read(nameBuf)
                 stream.skip((fullSize - size).toInt() + 1)
                 nameBuf.flip()

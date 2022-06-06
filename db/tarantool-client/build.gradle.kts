@@ -95,8 +95,7 @@ kotlin {
 }
 
 tasks {
-
-    val nats = pw.binom.plugins.DockerUtils.dockerContanier(
+    val tarantool = pw.binom.plugins.DockerUtils.dockerContanier(
         project = project,
         image = "tarantool/tarantool:2.6.2",
         tcpPorts = listOf(3301 to 7040),
@@ -109,7 +108,7 @@ tasks {
     )
 
     eachKotlinTest {
-        nats.dependsOn(it)
+        tarantool.dependsOn(it)
     }
 
     withType(Test::class) {

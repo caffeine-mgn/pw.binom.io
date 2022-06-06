@@ -24,7 +24,7 @@ private const val VINDEX_ID_INDEX_ID = 0
 class TarantoolConnectionImpl internal constructor(
 //    private val networkThread: ThreadRef,
     val networkDispatcher: NetworkManager,
-    con: TcpConnection,
+    connection: TcpConnection,
     val serverVersion: String,
 ) :
     TarantoolConnection {
@@ -32,7 +32,7 @@ class TarantoolConnectionImpl internal constructor(
     internal var mainLoopJob: Job? = null
     private var syncCursor = AtomicLong(0)
     private val requests = HashMap<Long, CancellableContinuation<Package>>()
-    private val connectionReference = con
+    private val connectionReference = connection
     private var meta: List<TarantoolSpaceMeta> = emptyList()
     private var schemaVersion = 0
     private var connected = true
@@ -108,7 +108,7 @@ class TarantoolConnectionImpl internal constructor(
         return let { _ ->
             try {
                 withContext(networkDispatcher) {
-                    connectionReference.write(out.data)
+                    connectionReference.writeFully(out.data)
                 }
                 val response = suspendCancellableCoroutine<Package> {
                     requests[sync] = it
@@ -152,7 +152,6 @@ class TarantoolConnectionImpl internal constructor(
         connectionReference.close()
     }
 
-    @OptIn(InternalCoroutinesApi::class)
     internal suspend fun startMainLoop() {
         withContext(networkDispatcher) {
             ByteBuffer.alloc(8).use { buf ->
@@ -181,18 +180,22 @@ class TarantoolConnectionImpl internal constructor(
                         requests.remove(serial)?.resume(pkg)
                     }
                 } catch (e: SocketClosedException) {
+                    e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)
                     }
                 } catch (e: CancellationException) {
+                    e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)
                     }
                 } catch (e: ClosedException) {
+                    e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)
                     }
                 } catch (e: Throwable) {
+                    e.printStackTrace()
                     e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)

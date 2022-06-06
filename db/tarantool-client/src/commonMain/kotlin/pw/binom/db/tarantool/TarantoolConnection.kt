@@ -37,7 +37,7 @@ interface TarantoolConnection : AsyncCloseable {
                     connection = TarantoolConnectionImpl(
 //                        networkThread = ThreadRef(),
                         networkDispatcher = manager,
-                        con = con,
+                        connection = con,
                         serverVersion = version
                     )
                     connection.mainLoopJob = GlobalScope.launch(manager) { connection.startMainLoop() }

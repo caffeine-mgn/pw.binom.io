@@ -208,7 +208,7 @@ class PGConnection private constructor(
     private suspend fun sendFirstMessage(properties: Map<String, String>) {
         ByteArrayOutput().use { buf2 ->
             buf2.bufferedAsciiWriter(closeParent = false).use { o ->
-                ByteBuffer.alloc(8) { buf ->
+                ByteBuffer.alloc(8).use { buf ->
                     o.writeInt(buf, 0)
                     o.writeShort(buf, 3)
                     o.writeShort(buf, 0)

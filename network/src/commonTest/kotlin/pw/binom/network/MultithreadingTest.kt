@@ -3,9 +3,10 @@ package pw.binom.network
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.*
+import pw.binom.concurrency.WorkerPool
 import pw.binom.io.use
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
 
 class MultithreadingTest {
@@ -29,14 +30,14 @@ class MultithreadingTest {
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() = runTest {
-        var flag1 by AtomicBoolean(false)
+        val flag1 = AtomicBoolean(false)
         val nd = NetworkCoroutineDispatcherImpl()
         val executor = WorkerPool(10)
         val addr = NetworkAddress.Immutable("127.0.0.1", 8765)
         val server = launch {
             nd.bindTcp(addr).use { server ->
                 val client = server.accept()
-                flag1 = true
+                flag1.setValue(true)
             }
         }
         val client = launch {
@@ -44,6 +45,6 @@ class MultithreadingTest {
             Unit
         }
         server.join()
-        assertTrue(flag1, "flag1 invalid")
+        assertTrue(flag1.getValue(), "flag1 invalid")
     }
 }
