@@ -4,15 +4,18 @@ import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.cinterop.CPointer
 import platform.openssl.*
-import pw.binom.BigNumContext
-import pw.binom.checkTrue
-import pw.binom.throwError
-import pw.binom.toBigNum
+import pw.binom.*
 import kotlin.native.internal.createCleaner
 
 actual class ECCurve(
     val native: CPointer<EC_GROUP>
 ) {
+
+    actual companion object {
+        actual fun generate(params: X9ECParameters): ECCurve =
+            ECCurve(EC_GROUP_dup(params.ptr) ?: throwError("EC_GROUP_dup fails"))
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     private val cleaner = createCleaner(native) {
         EC_GROUP_free(native)
@@ -33,15 +36,21 @@ actual class ECCurve(
             ).checkTrue("EC_POINT_set_affine_coordinates fails")
         }
         return EcPoint(
-            curve = this,
-            ptr = ptr
+            curve = this, ptr = ptr
         )
     }
 
-    actual fun decodePoint(data: ByteArray, yBit: Boolean): EcPoint {
-
-//        BigInteger.fromUnsignedByteArray(data, 1)
-        TODO("Not yet implemented")
+    actual fun decodePoint(data: ByteArray): EcPoint {
+        val point = EC_POINT_new(this.native) ?: throwError("EC_POINT_new fails")
+        BigNumContext().use { ctx ->
+            val bn = ctx.get()
+            bn.setByteArray(data)
+            val r = EC_POINT_bn2point(native, bn.ptr, point, ctx.ptr) ?: throwError("EC_POINT_bn2point fails") {
+                EC_POINT_free(point)
+            }
+            check(point === r) { "Created point should be equals returned point" }
+        }
+        return EcPoint(curve = this, ptr = point)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -86,10 +95,12 @@ actual class ECCurve(
         p1.calcHashCode() + a1.calcHashCode() * 32 + b1.calcHashCode() * 64
     }
 
-    actual companion object {
-        actual fun generate(params: X9ECParameters): ECCurve =
-            ECCurve(EC_GROUP_dup(params.ptr) ?: throwError("EC_GROUP_dup fails"))
-    }
+    private fun getFieldNum() = BigNum(EC_GROUP_get0_field(native) ?: throwError("EC_GROUP_get0_field fails"))
+
+    actual val fieldSizeInBits: Int
+        get() = getFieldNum().sizeInBits
+    actual val fieldSizeInBytes: Int
+        get() = getFieldNum().sizeInBytes
 }
 
 fun BigInteger.Companion.fromUnsignedByteArray(buf: ByteArray, off: Int, length: Int): BigInteger {

@@ -7,4 +7,5 @@ expect class EcPoint {
     val y: BigInteger
     val curve: ECCurve
     fun multiply(k: BigInteger): EcPoint
+    fun getEncoded(compressed: Boolean): ByteArray
 }

@@ -1,12 +1,11 @@
 package pw.binom.crypto
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
-import kotlinx.cinterop.CPointer
-import platform.openssl.EC_POINT
-import platform.openssl.EC_POINT_free
-import platform.openssl.EC_POINT_get_affine_coordinates
+import kotlinx.cinterop.*
+import platform.openssl.*
 import pw.binom.BigNum
 import pw.binom.checkTrue
+import pw.binom.security.SecurityException
 import pw.binom.toBigNum
 import kotlin.native.internal.createCleaner
 
@@ -58,4 +57,16 @@ actual class EcPoint(actual val curve: ECCurve, val ptr: CPointer<EC_POINT>) {
             ).checkTrue("EC_POINT_get_affine_coordinates fails")
             num.toBigInt()
         }
+
+    actual fun getEncoded(compressed: Boolean): ByteArray = memScoped {
+        val bufPtr = allocPointerTo<UByteVar>()
+        val c = if (compressed) POINT_CONVERSION_COMPRESSED else POINT_CONVERSION_UNCOMPRESSED
+        val len = EC_POINT_point2buf(curve.native, ptr, c, bufPtr.ptr, null).toInt()
+        if (len <= 0) {
+            throw SecurityException("Can't encode ECPoint to ByteArray")
+        }
+        val buffer = bufPtr.value!!.readBytes(len)
+        internal_OPENSSL_free(bufPtr.value)
+        buffer
+    }
 }

@@ -11,6 +11,7 @@ import pw.binom.ssl.Bio
 import pw.binom.ssl.ECKey
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
+import pw.binom.throwError
 import kotlin.native.internal.createCleaner
 
 actual class ECPublicKey(val native: CPointer<EC_KEY>/*private val curve: ECCurve, actual val q: EcPoint*/) :
@@ -35,8 +36,15 @@ actual class ECPublicKey(val native: CPointer<EC_KEY>/*private val curve: ECCurv
         }
     override val format: String
         get() = "X.509"
-    actual val q: EcPoint
-        get() = TODO()
+    actual val q: EcPoint by lazy {
+        val curve = EC_GROUP_dup(EC_KEY_get0_group(native) ?: throwError("Can't get Curve"))
+            ?: throwError("Can't duplicate Curve")
+        EcPoint(
+            curve = ECCurve(curve),
+            ptr = EC_POINT_dup(EC_KEY_get0_public_key(native) ?: throwError("Can't get public key"), curve)
+                ?: throwError("Can't duplicate public key")
+        )
+    }
 
     @OptIn(ExperimentalStdlibApi::class)
     private val cleaner = createCleaner(native) { native ->

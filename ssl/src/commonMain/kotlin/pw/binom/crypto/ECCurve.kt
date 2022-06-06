@@ -7,6 +7,8 @@ expect class ECCurve {
         fun generate(params: X9ECParameters): ECCurve
     }
 
-    fun decodePoint(data: ByteArray, yBit: Boolean): EcPoint
+    fun decodePoint(data: ByteArray): EcPoint
     fun createPoint(x: BigInteger, y: BigInteger): EcPoint
+    val fieldSizeInBits: Int
+    val fieldSizeInBytes: Int
 }

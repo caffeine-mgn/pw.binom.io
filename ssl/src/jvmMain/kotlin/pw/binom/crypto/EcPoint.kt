@@ -11,7 +11,5 @@ actual class EcPoint(val native: BCECPoint, actual val curve: ECCurve) {
     actual val y: BigInteger
         get() = native.yCoord.toBigInteger().toBigInteger()
 
-    init {
-        native.curve
-    }
+    actual fun getEncoded(compressed: Boolean) = native.getEncoded(compressed)
 }
