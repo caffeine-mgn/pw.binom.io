@@ -4,9 +4,10 @@ import org.bouncycastle.crypto.params.ECDomainParameters
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters
 import org.bouncycastle.crypto.signers.ECDSASigner as BCECDSASigner
 
-actual object ECDSASigner {
-    actual fun sign(data: ByteArray, privateKey: ECPrivateKey): ECDSASignature {
-        val signer = BCECDSASigner(/*HMacDSAKCalculator(SHA256Digest())*/)
+actual class ECDSASigner actual constructor(privateKey: ECPrivateKey) {
+    val signer = BCECDSASigner()
+
+    init {
         val params = ECDomainParameters(
             privateKey.native.parameters.curve,
             privateKey.native.parameters.g,
@@ -17,6 +18,9 @@ actual object ECDSASigner {
             true,
             ECPrivateKeyParameters(privateKey.native.d, params),
         )
+    }
+
+    actual fun sign(data: ByteArray): ECDSASignature {
         val components = signer.generateSignature(data)
         return ECDSASignature(
             r = components[0].toBigInteger(),

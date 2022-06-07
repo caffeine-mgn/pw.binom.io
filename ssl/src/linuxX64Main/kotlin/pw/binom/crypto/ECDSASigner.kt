@@ -10,8 +10,8 @@ import platform.openssl.ECDSA_do_sign
 import pw.binom.BigNum
 import pw.binom.throwError
 
-actual object ECDSASigner {
-    actual fun sign(data: ByteArray, privateKey: ECPrivateKey): ECDSASignature {
+actual class ECDSASigner actual constructor(val privateKey: ECPrivateKey) {
+    actual fun sign(data: ByteArray): ECDSASignature {
         val signature = data.usePinned { pinned ->
             ECDSA_do_sign(
                 pinned.addressOf(0).reinterpret(),
