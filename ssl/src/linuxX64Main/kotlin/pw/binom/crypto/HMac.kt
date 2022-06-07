@@ -20,7 +20,9 @@ actual class HMac actual constructor(val algorithm: Algorithm, val key: ByteArra
             return
         }
         val ctx = HMAC_CTX_new()!!
-        HMAC_Init_ex(ctx, key.refTo(0), key.size, algorithm.make(), null)
+        key.usePinned { keyPinned ->
+            HMAC_Init_ex(ctx, keyPinned.addressOf(0), keyPinned.get().size, algorithm.make(), null)
+        }
         this.ctx = ctx
     }
 
