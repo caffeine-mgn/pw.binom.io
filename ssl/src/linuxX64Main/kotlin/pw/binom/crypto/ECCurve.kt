@@ -13,7 +13,7 @@ actual class ECCurve(
 
     actual companion object {
         actual fun generate(params: X9ECParameters): ECCurve =
-            ECCurve(EC_GROUP_dup(params.ptr) ?: throwError("EC_GROUP_dup fails"))
+            params.curve
     }
 
     @OptIn(ExperimentalStdlibApi::class)

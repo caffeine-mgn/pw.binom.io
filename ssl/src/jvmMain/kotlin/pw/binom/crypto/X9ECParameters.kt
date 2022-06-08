@@ -28,7 +28,5 @@ fun BigInteger.Companion.fromByteArray(
         1 -> Sign.POSITIVE
         else -> throw IllegalArgumentException("Invalid sign $sign")
     }
-    return BigInteger.fromByteArray(source, signValue)
+    return fromByteArray(source, signValue)
 }
-
-fun BigInteger.toJBigInteger() = JBigInteger(signum(), toByteArray())

@@ -14,11 +14,11 @@ value class BigNum(val ptr: CPointer<BIGNUM>) {
     }
 
     fun copy(dest: BigNum) {
-        BN_copy(ptr, dest.ptr) ?: throwError("Can't copy BigNum")
+        BN_copy(dest.ptr, ptr) ?: throwError("Can't copy BigNum")
     }
 
     fun add(other: BigNum, dest: BigNum) {
-        BN_add(ptr, other.ptr, dest.ptr).checkTrue("Can't add BigNum to BigNum")
+        BN_add(r = dest.ptr, a = ptr, b = other.ptr).checkTrue("Can't add BigNum to BigNum")
     }
 
     fun add(other: BigNum): BigNum {
@@ -28,7 +28,19 @@ value class BigNum(val ptr: CPointer<BIGNUM>) {
     }
 
     fun sub(other: BigNum, dest: BigNum) {
-        BN_sub(ptr, other.ptr, dest.ptr).checkTrue("Can't sub BigNum to BigNum")
+        BN_sub(r = dest.ptr, a = ptr, b = other.ptr).checkTrue("Can't sub BigNum to BigNum")
+    }
+
+    operator fun minusAssign(other: BigNum) {
+        sub(other, this)
+    }
+
+    operator fun timesAssign(value: ULong) {
+        BN_mul_word(ptr, value).checkTrue("BN_mul_word fails")
+    }
+
+    operator fun plusAssign(other: BigNum) {
+        add(other = other, dest = this)
     }
 
     fun sub(other: BigNum): BigNum {

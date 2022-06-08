@@ -1,5 +1,7 @@
 package pw.binom.crypto
 
+import pw.binom.ssl.Nid
+
 expect object NamedCurves {
-    fun getByName(name: String): X9ECParameters
+    fun getByName(nid: Nid): X9ECParameters
 }

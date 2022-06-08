@@ -1,50 +1,42 @@
 package pw.binom.crypto
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.readBytes
 import platform.openssl.*
 import pw.binom.BigNum
 import pw.binom.BigNumContext
 import pw.binom.throwError
-import kotlin.native.internal.createCleaner
 
-actual class X9ECParameters(val ptr: CPointer<EC_GROUP>, autoClean: Boolean) {
-    @OptIn(ExperimentalStdlibApi::class)
-    private val cleaner = if (!autoClean) null else createCleaner(ptr) { ptr ->
-        EC_GROUP_free(ptr)
-    }
+actual class X9ECParameters(actual val curve: ECCurve) {
 
     actual val seed: ByteArray?
         get() {
-            val bb = EC_GROUP_get0_seed(ptr)!!
-            val len = EC_GROUP_get_seed_len(ptr)
+            val bb = EC_GROUP_get0_seed(curve.native)!!
+            val len = EC_GROUP_get_seed_len(curve.native)
             if (len.convert<Int>() == 0) {
                 return null
             }
             return bb.readBytes(len.convert())
         }
     actual val n: BigInteger
-        get() = BigNum(EC_GROUP_get0_order(ptr)!!).toBigInt()
+        get() = BigNum(EC_GROUP_get0_order(curve.native)!!).toBigInt()
 
     actual val h: BigInteger
-        get() = BigNum(EC_GROUP_get0_cofactor(ptr)!!).toBigInt()
+        get() = BigNum(EC_GROUP_get0_cofactor(curve.native)!!).toBigInt()
     actual val g: EcPoint by lazy {
-//        EcPoint(EC_POINT_new(ptr)!!, autoClean = true)
-        TODO()
+        val ptr = EC_GROUP_get0_generator(curve.native) ?: throwError("EC_GROUP_get0_generator fails")
+        val newPtr = EC_POINT_dup(ptr, curve.native) ?: throwError("EC_POINT_dup fails")
+        EcPoint(curve, newPtr)
     }
 
     fun getOrder(ctx: BigNumContext): BigInteger {
         val c = BigNum()
-        if (EC_GROUP_get_order(ptr, c.ptr, ctx.ptr) <= 0) {
+        if (EC_GROUP_get_order(curve.native, c.ptr, ctx.ptr) <= 0) {
             TODO("Can't get order from EC_GROUP")
         }
         val ret = c.toBigInt()
         c.free()
         return ret
     }
-
-    actual val curve: ECCurve
-        get() = ECCurve(EC_GROUP_dup(ptr) ?: throwError("EC_GROUP_dup fails"))
 }

@@ -1,19 +1,16 @@
 package pw.binom.crypto
 
 import platform.openssl.*
-import pw.binom.security.SecurityException
 import pw.binom.ssl.Nid
+import pw.binom.throwError
 
 actual object NamedCurves {
 
-    actual fun getByName(name: String): X9ECParameters {
-        val nid = Nid.fromString(name)
-        val eckey = EC_KEY_new()
-        if (eckey == null) {
-            throw SecurityException("Failed to create new EC")
-        }
-        val ecgroup = EC_GROUP_new_by_curve_name(nid.toOpensslCurveName())
-        return X9ECParameters(ecgroup!!, autoClean = true)
+    actual fun getByName(nid: Nid): X9ECParameters {
+        val eckey = EC_KEY_new() ?: throwError("Failed to create new EC")
+        val ecgroup =
+            EC_GROUP_new_by_curve_name(nid.toOpensslCurveName()) ?: throwError("EC_GROUP_new_by_curve_name fails")
+        return X9ECParameters(ECCurve(ecgroup))
     }
 }
 
