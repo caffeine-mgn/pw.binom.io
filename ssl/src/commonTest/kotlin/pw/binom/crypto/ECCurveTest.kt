@@ -1,7 +1,6 @@
 package pw.binom.crypto
 
 import pw.binom.base64.Base64
-import pw.binom.ssl.Nid
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

@@ -40,4 +40,6 @@ actual class ECCurve(val native: BCECCurve) {
         get() = native.fieldSize
     actual val fieldSizeInBytes: Int
         get() = (fieldSizeInBits + 7) / 8
+    actual val field: BigInteger
+        get() = native.field.characteristic.toBigInteger()
 }

@@ -97,10 +97,18 @@ actual class ECCurve(
 
     private fun getFieldNum() = BigNum(EC_GROUP_get0_field(native) ?: throwError("EC_GROUP_get0_field fails"))
 
+    init {
+    }
+
     actual val fieldSizeInBits: Int
         get() = getFieldNum().sizeInBits
     actual val fieldSizeInBytes: Int
         get() = getFieldNum().sizeInBytes
+    actual val field: BigInteger
+        get() = BigNum().use { bn ->
+            EC_GROUP_get_curve_GFp(native, bn.ptr, null, null, null)
+            bn.toBigInt()
+        }
 }
 
 fun BigInteger.Companion.fromUnsignedByteArray(buf: ByteArray, off: Int, length: Int): BigInteger {

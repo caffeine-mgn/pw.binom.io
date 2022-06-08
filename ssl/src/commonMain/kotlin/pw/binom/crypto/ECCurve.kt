@@ -11,4 +11,5 @@ expect class ECCurve {
     fun createPoint(x: BigInteger, y: BigInteger): EcPoint
     val fieldSizeInBits: Int
     val fieldSizeInBytes: Int
+    val field: BigInteger
 }
