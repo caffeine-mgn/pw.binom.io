@@ -89,7 +89,13 @@ class PostgresAsyncResultSet(
         }
 
     override fun getDate(column: String): Date? =
-        getDate(getIndex(column))
+        try {
+            getDate(getIndex(column))
+        } catch (e: Throwable) {
+            println("->>>>$column<<<<-")
+            throw e
+//            throw PostgresqlException("Can't get Date from column \"$column\"", e)
+        }
 
     override fun columnIndex(column: String): Int = getIndex(column)
 

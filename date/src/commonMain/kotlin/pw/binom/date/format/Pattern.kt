@@ -19,6 +19,7 @@ internal sealed interface Pattern {
                 SSSSSSSSS.find(format, position) -> SSSSSSSSS
                 SSSSSSSS.find(format, position) -> SSSSSSSS
                 SSSSSSS.find(format, position) -> SSSSSSS
+                SSSSSS.find(format, position) -> SSSSSS
                 yyyy.find(format, position) -> yyyy
                 MMM.find(format, position) -> MMM
                 MM.find(format, position) -> MM
@@ -665,7 +666,7 @@ internal sealed interface Pattern {
      */
     object SSSSSSS : Pattern {
         override val patternLength: Int
-            get() = 8
+            get() = 7
 
         fun find(text: String, position: Int): Boolean =
             text.regionMatches(position, "SSSSSSS", 0, patternLength)
@@ -688,6 +689,36 @@ internal sealed interface Pattern {
             "${calendar.millisecond.as3()}0000"
 
         override fun toString(): String = "SSSSSSS"
+    }
+
+    /**
+     * Miliseconds. 7 numbers
+     */
+    object SSSSSS : Pattern {
+        override val patternLength: Int
+            get() = 6
+
+        fun find(text: String, position: Int): Boolean =
+            text.regionMatches(position, "SSSSSS", 0, patternLength)
+
+        override fun parse(
+            text: String,
+            position: Int,
+            defaultTimezoneOffset: Int,
+            set: ((FieldType, Int) -> Unit)?,
+        ): Int {
+            if (position + 6 > text.length) {
+                return -1
+            }
+            val hours = text.substring(position, position + patternLength).toIntOrNull() ?: return -1
+            set?.invoke(FieldType.MILLISECOND, hours / 1000)
+            return 6
+        }
+
+        override fun toString(calendar: Calendar): String =
+            "${calendar.millisecond.as3()}000"
+
+        override fun toString(): String = "SSSSSS"
     }
 
     object SSm : Pattern {

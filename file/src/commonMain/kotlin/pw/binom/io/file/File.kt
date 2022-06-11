@@ -222,5 +222,13 @@ fun File.readBinary(
     }
 }
 
+fun File.writeBinary(data: ByteArray) {
+    openWrite().use {
+        ByteBuffer.wrap(data).use { buf ->
+            it.write(buf)
+        }
+    }
+}
+
 val Environment.workDirectoryFile
     get() = File(Environment.workDirectory)

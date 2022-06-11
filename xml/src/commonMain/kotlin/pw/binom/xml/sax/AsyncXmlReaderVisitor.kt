@@ -34,15 +34,11 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
 
     private suspend fun readCDATAOrComment() {
         if (!lexer.next()) TODO()
-        if (lexer.tokenType == TokenType.LEFT_BRACKET) {
-            readCDATA()
-            return
+        return when (lexer.tokenType) {
+            TokenType.LEFT_BRACKET -> readCDATA()
+            TokenType.MINUS -> readComment()
+            else -> TODO("Unknown token \"${lexer.text}\" on ${lexer.line + 1}:${lexer.column - lexer.text.length}")
         }
-        if (lexer.tokenType == TokenType.MINUS) {
-            readComment()
-            return
-        }
-        TODO("Unknown token \"${lexer.text}\" on ${lexer.line + 1}:${lexer.column - lexer.text.length}")
     }
 
     /**
@@ -167,7 +163,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
             if (!lexer.nextSkipEmpty())
                 TODO()
             if (lexer.tokenType != TokenType.EQUALS) {
-                TODO("Обработка аттрибута без значения")
+                TODO("Обработка аттрибута без значения. Ожидалось \"=\", а по факту ${lexer.text} ${lexer.tokenType}")
             }
             if (!lexer.nextSkipEmpty())
                 TODO()

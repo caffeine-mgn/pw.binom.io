@@ -5,7 +5,7 @@ import kotlin.native.concurrent.SharedImmutable
 
 // val iso = "yyyy-MM-dd[( |'T')HH:mm:ss[.(SS|SSS)][(X|XX|XXX)]]".toDatePattern()
 @SharedImmutable
-val iso = "yyyy-MM-dd[('T'| )HH:mm[:ss[.(SSSSSSSSS|SSSSSSSS|SSSSSSS|@SSS|SS|S)]]][(XXX|XX|X|z)]".toDatePattern()
+val iso = "yyyy-MM-dd[('T'| )HH:mm[:ss[.(SSSSSSSSS|SSSSSSSS|SSSSSSS|SSSSSS|@SSS|SS|S)]]][(XXX|XX|X|z)]".toDatePattern()
 // private val dp1 = "yyyy-MM-dd".toDatePattern()
 // private val dp2 = "yyyy-MM-dd HH:mm:ss".toDatePattern()
 // private val dp3 = "yyyy-MM-dd HH:mm:ssXXX".toDatePattern()

@@ -25,7 +25,7 @@ class ECDSASignature(val r: BigInteger, val s: BigInteger) {
 
     companion object {
         fun create(data: ByteArray): ECDSASignature {
-            require(data.size == 64) { "Invalid signature size" }
+            require(data.size == 64) { "Invalid signature size. Expected: 64,  Actual: ${data.size}" }
             val rdata = data.copyOfRange(0, 32)
             val sdata = data.copyOfRange(32, data.size)
             val r = BigInteger.fromByteArray(rdata, Sign.POSITIVE)

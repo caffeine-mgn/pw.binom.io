@@ -2,6 +2,7 @@ package pw.binom.date
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class IsoParserTest {
 
@@ -77,6 +78,15 @@ class IsoParserTest {
             assertEquals(33, seconds)
             assertEquals(39, millisecond)
             assertEquals(0, offset)
+        }
+    }
+
+    @Test
+    fun aaa() {
+        "0071-08-23T12:00:00.000000000Z".parseIso8601Date().apply {
+            println("->time=${this?.time}")
+            val calc = this?.calendar()
+            assertNotNull(this)
         }
     }
 }
