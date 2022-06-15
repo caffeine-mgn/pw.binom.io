@@ -87,6 +87,7 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
                 Pattern.FieldType.SECONDS -> seconds = value
                 Pattern.FieldType.MILLISECOND -> millis = value
                 Pattern.FieldType.TIME_ZONE -> timeZoneOffset = value
+                Pattern.FieldType.DAY_OF_WEAK -> {}
             }
         }
         if (l == -1) {

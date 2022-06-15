@@ -16,6 +16,7 @@ actual object KeyGenerator {
                 if (EVP_PKEY_assign(pk, EVP_PKEY_RSA, rsa) <= 0)
                     TODO("EVP_PKEY_assign error")
             }
+            KeyAlgorithm.ECDSA -> TODO()
         }
         return KeyPair(pk)
     }

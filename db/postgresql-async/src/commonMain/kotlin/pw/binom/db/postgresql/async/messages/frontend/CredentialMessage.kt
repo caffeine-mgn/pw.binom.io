@@ -77,6 +77,7 @@ class CredentialMessage : KindedMessage {
                 writer.write(hexDigest)
                 writer.output.writeByte(writer.buf16, 0)
             }
+            else -> TODO()
         }
         writer.endBody()
     }

@@ -99,7 +99,7 @@ class SQLValueEncoder(
 
     @ExperimentalSerializationApi
     override fun encodeInline(inlineDescriptor: SerialDescriptor): Encoder {
-        TODO("Not yet implemented")
+        TODO("Not yet implemented. inlineDescriptor: ${inlineDescriptor.serialName}")
     }
 
     override fun encodeInt(value: Int) {

@@ -101,10 +101,12 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                 throw EOFException("on line ${lexer.line}:${lexer.column}")
             }
             if (lexer.tokenType == TokenType.RIGHT_BRACKET) {
-                if (!lexer.next())
-                    TODO()
-                if (lexer.tokenType != TokenType.RIGHT_BRACKET)
-                    TODO()
+                if (!lexer.next()) {
+                    throw XMLSAXException("Unexpected end of xml document on ${lexer.line + 1}:${lexer.column}")
+                }
+                if (lexer.tokenType != TokenType.RIGHT_BRACKET) {
+                    throw XMLSAXException("Unknown text \"${lexer.text}\" with type ${lexer.tokenType} on ${lexer.line + 1}:${lexer.column}")
+                }
                 if (!lexer.next())
                     TODO()
                 if (lexer.tokenType != TokenType.TAG_END)
@@ -124,17 +126,18 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
         if (!lexer.next()) {
             TODO()
         }
+
         if (lexer.tokenType != TokenType.SYMBOL) {
             TODO()
         }
         val visitor = visitors.peek()
-        val tagName = lexer.text
+        val tagName = readTagName()
         if (visitor.name != tagName) {
             throw ExpectedException("Expected closing of tag [${visitor.name}] but got [$tagName]")
         }
-        if (!lexer.next()) {
-            TODO()
-        }
+//        if (!lexer.next()) {
+//            TODO()
+//        }
         if (lexer.tokenType != TokenType.TAG_END) {
             TODO()
         }
@@ -146,27 +149,46 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
         visitors.pop()
     }
 
+    private suspend fun readTagName(): String {
+        val sb = StringBuilder()
+        sb.append(lexer.text)
+        while (true) {
+            if (!lexer.next()) {
+                TODO()
+            }
+            when (lexer.tokenType) {
+                TokenType.MINUS, TokenType.SYMBOL -> sb.append(lexer.text)
+                TokenType.EMPTY, TokenType.SLASH, TokenType.TAG_END -> break
+                else -> throw XMLSAXException("Can't read tag name. Unknown text \"${lexer.text}\" with type ${lexer.tokenType} on ${lexer.line + 1}:${lexer.column}")
+            }
+        }
+        return sb.toString()
+    }
+
     /**
      * Чтение тега. После < идёт какой-то текст
      */
     private suspend fun readTagAttributes() {
-        val nodeName = lexer.text
+        val nodeName = readTagName()
         val subNode = visitors.peek().visitor.subNode(nodeName)
         visitors.push(Record(nodeName, subNode))
         subNode.start()
-        if (!lexer.nextSkipEmpty()) {
-            TODO()
-        }
+//        if (!lexer.nextSkipEmpty()) {
+//            TODO()
+//        }
+        do {
+            if (lexer.tokenType != TokenType.EMPTY) {
+                break
+            }
+        } while (lexer.next())
 
         suspend fun readAttribute() {
             val attribute = lexer.text
-            if (!lexer.nextSkipEmpty())
-                TODO()
+            if (!lexer.nextSkipEmpty()) TODO()
             if (lexer.tokenType != TokenType.EQUALS) {
                 TODO("Обработка аттрибута без значения. Ожидалось \"=\", а по факту ${lexer.text} ${lexer.tokenType}")
             }
-            if (!lexer.nextSkipEmpty())
-                TODO()
+            if (!lexer.nextSkipEmpty()) TODO()
             if (lexer.tokenType != TokenType.STRING) {
                 TODO("${lexer.line + 1}:${lexer.column}")
             }
@@ -217,7 +239,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
 //                println("OK!")
                 // accept()
             }
-            else -> TODO()
+            else -> throw XMLSAXException("Unknown text token \"${lexer.text}\" with type ${lexer.tokenType} on ${lexer.line + 1}:${lexer.column}")
         }
     }
 

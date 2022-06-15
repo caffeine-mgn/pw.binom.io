@@ -440,39 +440,39 @@ create table member_tag
         }
     }
 
-    @Test
-    fun decamalTest() {
-        pg { con ->
-            con.prepareStatement("select 1.5").use {
-                try {
-                    it.executeQuery().use {
-                        assertEquals(1, it.columns.size)
-                        assertTrue(it.next())
-                        assertEquals(1.5, it.getDouble(0))
-                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
-                        assertFalse(it.next())
-                    }
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    throw e
-                }
-            }
-        }
-        pg { con ->
-            con.prepareStatement("select 1.5f").use {
-                try {
-                    it.executeQuery().use {
-                        assertEquals(1, it.columns.size)
-                        assertTrue(it.next())
-                        assertEquals(1.5, it.getDouble(0))
-                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
-                        assertFalse(it.next())
-                    }
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    throw e
-                }
-            }
-        }
-    }
+//    @Test
+//    fun decamalTest() {
+//        pg { con ->
+//            con.prepareStatement("select 1.5").use {
+//                try {
+//                    it.executeQuery().use {
+//                        assertEquals(1, it.columns.size)
+//                        assertTrue(it.next())
+//                        assertEquals(1.5, it.getDouble(0))
+//                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
+//                        assertFalse(it.next())
+//                    }
+//                } catch (e: Throwable) {
+//                    e.printStackTrace()
+//                    throw e
+//                }
+//            }
+//        }
+//        pg { con ->
+//            con.prepareStatement("select 1.5f").use {
+//                try {
+//                    it.executeQuery().use {
+//                        assertEquals(1, it.columns.size)
+//                        assertTrue(it.next())
+//                        assertEquals(1.5, it.getDouble(0))
+//                        assertEquals(BigDecimal.fromDouble(1.5), it.getBigDecimal(0))
+//                        assertFalse(it.next())
+//                    }
+//                } catch (e: Throwable) {
+//                    e.printStackTrace()
+//                    throw e
+//                }
+//            }
+//        }
+//    }
 }

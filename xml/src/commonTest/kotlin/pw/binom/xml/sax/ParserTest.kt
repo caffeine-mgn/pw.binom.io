@@ -27,6 +27,21 @@ class ParserTest {
     }
 
     @Test
+    fun testMinus() = runTest {
+        val txt = """$XML_START
+            |<data><title-name attr="value"/> <title2-name attr="value"></title2-name> </data>
+        """.trimMargin()
+
+        val r = XmlRootReaderVisitor(txt.asReader().asAsync())
+        val tree = txt.asReader().asAsync().xmlTree()
+        assertEquals("data", tree.tag)
+        assertEquals(2, tree.childs.size)
+        assertEquals("title-name", tree.childs[0].tag)
+        assertEquals("title2-name", tree.childs[1].tag)
+        println("tree: $tree")
+    }
+
+    @Test
     fun testParseComment() = runTest {
         val txt = """<r><bbb a="b"><!--Привет - мир!--></bbb><c>123456</c><t/></r>"""
 

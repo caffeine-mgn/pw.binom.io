@@ -208,6 +208,7 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
                     SSLEngineResult.HandshakeStatus.NEED_WRAP -> {
                     }
 
+                    SSLEngineResult.HandshakeStatus.NEED_UNWRAP_AGAIN,
                     SSLEngineResult.HandshakeStatus.NEED_UNWRAP -> break@WRAP
 
                     SSLEngineResult.HandshakeStatus.NEED_TASK -> {
@@ -218,6 +219,7 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
                     } else {
                         break@WRAP
                     }
+                    SSLEngineResult.HandshakeStatus.FINISHED -> break@WRAP
                 }
 
                 SSLEngineResult.Status.BUFFER_OVERFLOW -> {
