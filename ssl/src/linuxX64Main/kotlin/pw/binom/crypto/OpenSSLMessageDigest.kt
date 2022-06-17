@@ -58,7 +58,6 @@ abstract class OpenSSLMessageDigest : MessageDigest {
             val size = alloc<UIntVar>()
             EVP_DigestFinal(ptr, out.refTo(0).getPointer(this).reinterpret(), size.ptr)
                 .checkTrue("EVP_DigestFinal fails")
-            println("size.value->${size.value} finalByteArraySize->$finalByteArraySize SHA256_DIGEST_LENGTH=$SHA256_DIGEST_LENGTH SHA_DIGEST_LENGTH=$SHA_DIGEST_LENGTH EVP_MAX_MD_SIZE=$EVP_MAX_MD_SIZE")
             if (size.value != out.size.convert<UInt>()) {
                 TODO()
             }
