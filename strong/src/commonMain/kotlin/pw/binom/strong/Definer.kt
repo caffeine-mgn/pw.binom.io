@@ -66,8 +66,8 @@ inline fun <reified T : Closeable> Definer.beanClosable(
     bean(name = "${T::class.genDefaultName()}_closable") {
         object : Strong.DestroyableBean {
             override suspend fun destroy(strong: Strong) {
-                val bean = strong.injectOrNull<T>(name = name).service as Closeable?
-                bean?.close()
+                val bean2 = strong.injectOrNull<T>(name = name).service as Closeable?
+                bean2?.close()
             }
         }
     }
@@ -83,7 +83,7 @@ inline fun <reified T : AsyncCloseable> Definer.beanAsyncCloseable(
     ifNotExist: Boolean = false,
     noinline bean: (Strong) -> T
 ) {
-    val defName = T::class.genDefaultName()
+    val defName = name ?: T::class.genDefaultName()
     bean(
         clazz = T::class,
         name = defName,
@@ -93,8 +93,8 @@ inline fun <reified T : AsyncCloseable> Definer.beanAsyncCloseable(
     bean(name = "${T::class.genDefaultName()}_closable") {
         object : Strong.DestroyableBean {
             override suspend fun destroy(strong: Strong) {
-                val bean = strong.injectOrNull<T>(name = defName).service as AsyncCloseable?
-                bean?.asyncClose()
+                val bean2 = strong.injectOrNull<T>(name = defName).service as AsyncCloseable?
+                bean2?.asyncClose()
             }
         }
     }

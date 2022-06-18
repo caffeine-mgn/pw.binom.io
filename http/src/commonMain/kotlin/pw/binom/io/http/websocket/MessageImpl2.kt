@@ -52,7 +52,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
             val v = WebSocketHeader()
             WebSocketHeader.read(input, v)
             lastFrame = v.finishFlag
-            cursor = 0uL
+            cursor = 0L
             mask = v.mask
             maskFlag = v.maskFlag
             inputReady = v.length
@@ -60,7 +60,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
         return read
     }
 
-    private inline fun checkClosed() {
+    private fun checkClosed() {
         if (closed) {
             throw StreamClosedException()
         }
@@ -78,7 +78,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
     }
 
     override var type: MessageType = MessageType.CLOSE
-    private var cursor = 0uL
+    private var cursor = 0L
 
     fun reset(
         initLength: ULong,
@@ -95,6 +95,6 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
         this.mask = mask
         this.input = input
         closed = false
-        cursor = 0uL
+        cursor = 0L
     }
 }

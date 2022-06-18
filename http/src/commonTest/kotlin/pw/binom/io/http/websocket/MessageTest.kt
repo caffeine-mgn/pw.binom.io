@@ -1,7 +1,7 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.forEachIndexed
 import pw.binom.io.ByteBuffer
+import pw.binom.io.forEachIndexed
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,9 +48,9 @@ class MessageTest {
         }
         buf.clear()
         val mask = Random.nextInt()
-        Message.encode(0uL, mask, buf)
+        Message.encode(0L, mask, buf)
         buf.clear()
-        Message.encode(0uL, mask, buf)
+        Message.encode(0L, mask, buf)
         buf.clear()
         buf.forEachIndexed { i, byte ->
             assertEquals(data[i], byte)

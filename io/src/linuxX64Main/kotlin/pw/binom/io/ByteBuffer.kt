@@ -3,17 +3,22 @@ package pw.binom.io
 import kotlinx.cinterop.*
 import platform.posix.memcpy
 
-actual open class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -> Unit)?) :
+actual open class ByteBuffer(
+    val data: ByteArray,
+    val onClose: ((ByteBuffer) -> Unit)?
+) :
     Channel,
     Buffer,
     ByteBufferProvider {
     actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size, null)
-        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer = ByteBuffer(size, onClose)
+        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(ByteArray(size), null)
+        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer = ByteBuffer(ByteArray(size), onClose)
+        actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(array, null)
     }
 
     //    private val native = createNativeByteBuffer(capacity)!!
-    private val data = ByteArray(capacity)
+    override val capacity: Int
+        get() = data.size
 
     //    val bb = nativeHeap.allocArray<ByteVar>(capacity)
     private var closed = false
@@ -137,6 +142,7 @@ actual open class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuff
     override fun close() {
         checkClosed()
         closed = true
+        onClose?.invoke(this)
     }
 
     private fun createLimitException(newLimit: Int): IllegalArgumentException {

@@ -14,11 +14,11 @@ class PackageWriter(val connection: PGConnection) : Closeable {
     private var cmdExist = false
     private var bodyStarted = false
 
-    private inline fun checkBodyStarted() {
+    private fun checkBodyStarted() {
         check(bodyStarted) { "Body not started" }
     }
 
-    private inline fun checkBodyNotStarted() {
+    private fun checkBodyNotStarted() {
         check(!bodyStarted) { "Body already started" }
     }
 

@@ -1,9 +1,9 @@
 package pw.binom.compression.zlib
 
 import pw.binom.crc.CRC32
-import pw.binom.holdState
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
+import pw.binom.io.holdState
 import pw.binom.io.use
 
 class AsyncGZIPOutput(

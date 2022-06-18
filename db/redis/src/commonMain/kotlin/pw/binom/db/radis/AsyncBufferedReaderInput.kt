@@ -4,7 +4,6 @@ import pw.binom.CharBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
-import pw.binom.indexOfFirst
 import pw.binom.io.*
 
 class AsyncBufferedReaderInput(

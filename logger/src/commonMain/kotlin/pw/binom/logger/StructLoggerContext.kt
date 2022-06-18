@@ -1,6 +1,5 @@
 package pw.binom.logger
 
-import pw.binom.doFreeze
 import kotlin.coroutines.*
 
 object StructLoggerContext {
@@ -18,7 +17,7 @@ object StructLoggerContext {
             val ctx = it.context[LogContextHolderElementKey] ?: LogContextHolderElement()
             val newTags = HashMap(ctx.tags)
             newTags.putAll(tags)
-            ctx.tags = newTags.doFreeze()
+            ctx.tags = newTags
 
             func.startCoroutine(object : Continuation<T> {
                 override val context: CoroutineContext = it.context + ctx

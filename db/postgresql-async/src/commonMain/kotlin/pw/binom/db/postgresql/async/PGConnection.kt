@@ -138,16 +138,17 @@ class PGConnection private constructor(
     }
 
     internal suspend fun query(query: String): QueryResponse {
-        if (busy)
+        if (busy) {
             throw IllegalStateException("Connection is busy")
+        }
         val msg = this.reader.queryMessage
         msg.query = query
         sendOnly(msg)
         var statusMsg: String? = null
         var rowsAffected = 0L
         LOOP@ while (true) {
-            val msg = readDesponse()
-            when (msg) {
+            val msg2 = readDesponse()
+            when (msg2) {
                 is ReadyForQueryMessage -> {
                     return QueryResponse.Status(
                         status = statusMsg ?: "",
@@ -155,19 +156,19 @@ class PGConnection private constructor(
                     )
                 }
                 is CommandCompleteMessage -> {
-                    statusMsg = msg.statusMessage
-                    rowsAffected += msg.rowsAffected
+                    statusMsg = msg2.statusMessage
+                    rowsAffected += msg2.rowsAffected
                     continue@LOOP
                 }
                 is RowDescriptionMessage -> {
                     busy = true
-                    val msg2 = reader.data
-                    msg2.reset(msg)
-                    return msg2
+                    val msg3 = reader.data
+                    msg3.reset(msg2)
+                    return msg3
                 }
                 is ErrorMessage -> {
                     check(readDesponse() is ReadyForQueryMessage)
-                    throw PostgresqlException("${msg.fields['M']}. Query: $query")
+                    throw PostgresqlException("${msg2.fields['M']}. Query: $query")
                 }
                 is NoticeMessage -> {
                     continue@LOOP
@@ -175,7 +176,7 @@ class PGConnection private constructor(
                 is NoDataMessage -> {
                     continue@LOOP
                 }
-                else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg], Query: [$query]")
+                else -> throw SQLException("Unexpected Message. Response Type: [${msg2::class}], Message: [$msg2], Query: [$query]")
             }
         }
     }
@@ -253,12 +254,12 @@ class PGConnection private constructor(
             else -> throw RuntimeException("Unknown message type [${msg::class}]")
         }
         if (authRequest != null) {
-            when (val msg = request(authRequest)) {
-                is ErrorMessage -> throw IOException(msg.fields['M'] ?: msg.fields['R'] ?: "Error")
+            when (val msg2 = request(authRequest)) {
+                is ErrorMessage -> throw IOException(msg2.fields['M'] ?: msg2.fields['R'] ?: "Error")
                 is AuthenticationMessage.AuthenticationOkMessage -> {
                     return
                 }
-                else -> throw SQLException("Unexpected Message. Message: [$msg]")
+                else -> throw SQLException("Unexpected Message. Message: [$msg2]")
             }
         }
     }

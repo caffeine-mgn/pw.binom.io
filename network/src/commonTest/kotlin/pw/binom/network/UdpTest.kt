@@ -4,7 +4,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.*
-import pw.binom.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

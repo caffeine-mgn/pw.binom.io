@@ -3,7 +3,7 @@ package pw.binom
 import kotlinx.cinterop.CPointer
 import platform.openssl.*
 
-inline class BigNumContext(val ptr: CPointer<BN_CTX>) {
+value class BigNumContext(val ptr: CPointer<BN_CTX>) {
 
     companion object {
         fun secureNew() = BigNumContext(BN_CTX_secure_new() ?: TODO("Can't create secure BinNumContext"))

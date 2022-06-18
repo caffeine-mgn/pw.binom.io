@@ -15,7 +15,7 @@ class WSOutput(
     private var eof = false
     private var closed = false
 
-    private inline fun checkClosed() {
+    private fun checkClosed() {
         if (closed)
             throw StreamClosedException()
     }

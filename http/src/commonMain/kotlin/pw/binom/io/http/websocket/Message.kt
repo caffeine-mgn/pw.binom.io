@@ -1,9 +1,9 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.forEachIndexed
 import pw.binom.get
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
+import pw.binom.io.forEachIndexed
 import kotlin.experimental.xor
 
 interface Message : AsyncInput {
@@ -14,15 +14,15 @@ interface Message : AsyncInput {
         fun encode(mask: Int, data: ByteBuffer) {
             val length = data.position
             data.flip()
-            encode(0uL, mask, data)
+            encode(0L, mask, data)
             data.position = length
             data.limit = data.capacity
         }
 
-        fun encode(cursor: ULong, mask: Int, data: ByteBuffer): ULong {
+        fun encode(cursor: Long, mask: Int, data: ByteBuffer): Long {
             var cursorLocal = cursor
             data.forEachIndexed { _, byte ->
-                data.put(byte xor mask[(cursorLocal and 0x03uL).toInt()])
+                data.put(byte xor mask[(cursorLocal and 0x03L).toInt()])
                 cursorLocal++
             }
             return cursorLocal

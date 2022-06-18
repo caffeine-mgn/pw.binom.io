@@ -141,7 +141,7 @@ object TypeWriter {
             null,
             is ByteArray,
             is String,
-            is Float, is Double, is Long, is Int, is UUID,
+            is Float, is Double, is Long, is Int,
             is Boolean,
             is Date,
             is UUID -> true
@@ -165,7 +165,6 @@ object TypeWriter {
                 }
                 /*is BigInteger, is BigDecimal, */is Float, is Double, is Long, is Int, is UUID -> value.toString()
                 is Boolean -> if (value) "t" else "f"
-                is UUID -> value.toString()
                 is Calendar -> {
                     "${value.year}-${(value.month).asTwo()}-${value.dayOfMonth.asTwo()} " +
                         "${value.hours.asTwo()}:${value.minutes.asTwo()}:${value.seconds.asTwo()}" +

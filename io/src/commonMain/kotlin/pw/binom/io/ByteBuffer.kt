@@ -7,6 +7,7 @@ import pw.binom.pool.PoolObjectFactory
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
+import kotlin.random.Random
 
 /**
  * A part of memory. Also contents current read/write state
@@ -15,6 +16,7 @@ expect class ByteBuffer : Channel, Buffer, ByteBufferProvider {
     companion object {
         fun alloc(size: Int): ByteBuffer
         fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer
+        fun wrap(array: ByteArray): ByteBuffer
     }
 
     fun realloc(newSize: Int): ByteBuffer
@@ -116,5 +118,81 @@ inline fun <T> ByteBuffer.length(length: Int, func: (ByteBuffer) -> T): T {
         return func(this)
     } finally {
         limit = l
+    }
+}
+
+/**
+ * Makes new ByteBuffer from current [ByteArray]. Also later you must don't forgot to close created ByteBuffer
+ */
+fun ByteArray.wrap() = ByteBuffer.wrap(this)
+
+/**
+ * Makes [ByteBuffer] from current [ByteArray]. Then call [func]. And after that close created [ByteBuffer]
+ */
+inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
+    val buf = ByteBuffer.wrap(this)
+    return try {
+        func(buf)
+    } finally {
+        buf.close()
+    }
+}
+
+inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
+    val pos = position
+    val lim = limit
+    for (it in pos until lim)
+        func(this[it])
+}
+
+inline fun ByteBuffer.forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
+    val pos = position
+    val lim = limit
+    for (it in pos until lim)
+        func(it, this[it])
+}
+
+@OptIn(ExperimentalContracts::class)
+inline fun <T> ByteBuffer.holdState(func: (ByteBuffer) -> T): T {
+    contract {
+        callsInPlace(func)
+    }
+    val oldLimit = this.limit
+    val oldPosition = this.position
+    try {
+        return func(this)
+    } finally {
+        this.limit = oldLimit
+        this.position = oldPosition
+    }
+}
+
+fun ByteBuffer.indexOfFirst(predicate: (Byte) -> Boolean): Int {
+    forEachIndexed { index, value ->
+        if (predicate(value)) {
+            return index
+        }
+    }
+    return -1
+}
+
+fun ByteBuffer.getOrNull(index: Int) =
+    if (index < position || index >= limit) {
+        null
+    } else {
+        get(index)
+    }
+
+val ByteBuffer.indices: IntRange
+    get() = IntRange(position, limit - 1)
+
+fun ByteBuffer.clone() = realloc(capacity)
+
+/**
+ * Puts random bytes to free space of [data]
+ */
+fun Random.nextBytes(data: ByteBuffer) {
+    repeat(data.remaining) {
+        data.put(nextInt().toByte())
     }
 }

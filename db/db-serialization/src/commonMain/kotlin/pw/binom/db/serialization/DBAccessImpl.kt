@@ -93,7 +93,7 @@ internal class DBAccessImpl(
         if (queryCondition != null) {
             sb.append(" ").append(queryCondition)
         }
-        return select(query = sb.toString(), args = *args, result = fromSerializer)
+        return select(query = sb.toString(), args = args, result = fromSerializer)
     }
 
     override suspend fun deleteEntityFrom(

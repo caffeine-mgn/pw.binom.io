@@ -12,12 +12,12 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.readText
 import pw.binom.io.use
+import pw.binom.io.wrap
 import pw.binom.net.URL
 import pw.binom.net.toURL
 import pw.binom.network.NetworkAddress
 import pw.binom.network.TcpServerConnection
 import pw.binom.nextUuid
-import pw.binom.wrap
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -69,7 +69,7 @@ class WebSocketTest {
             client.connect("GET", url)
                 .startWebSocket().use { wsConnect ->
                     wsConnect.write(MessageType.BINARY).use {
-                        text.encodeToByteArray().wrap { b -> it.write(b) }
+                        text.encodeToByteArray().wrap().use { b -> it.write(b) }
                     }
                 }
         }

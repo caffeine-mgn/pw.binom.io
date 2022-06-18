@@ -5,7 +5,6 @@ import pw.binom.BINOM_VERSION
 import pw.binom.io.*
 import pw.binom.network.NetworkAddress
 import pw.binom.network.SocketClosedException
-import pw.binom.wrap
 
 class NatsRawConnection(
     val channel: AsyncChannel,

@@ -230,9 +230,9 @@ class PostgresPreparedStatement(
 
         var rowsAffected = 0L
         LOOP@ while (true) {
-            val msg = connection.readDesponse()
+            val msg2 = connection.readDesponse()
             var status = ""
-            when (msg) {
+            when (msg2) {
                 is ReadyForQueryMessage -> {
                     deleteSelf(isPortal = true)
                     return QueryResponse.Status(
@@ -241,29 +241,29 @@ class PostgresPreparedStatement(
                     )
                 }
                 is CommandCompleteMessage -> {
-                    status = msg.statusMessage
-                    rowsAffected += msg.rowsAffected
+                    status = msg2.statusMessage
+                    rowsAffected += msg2.rowsAffected
                     continue@LOOP
                 }
                 is RowDescriptionMessage -> {
                     connection.busy = true
                     if (!connection.reader.data.isClosed) {
                         QueryResponse.Data(connection).also {
-                            it.reset(msg)
+                            it.reset(msg2)
                             it.portalName = id
                             it.asyncClose()
                         }
                         throw IllegalStateException("Previews rest set not closed")
                     }
-                    val msg2 = connection.reader.data
-                    msg2.reset(msg)
-                    msg2.portalName = id
-                    return msg2
+                    val msg3 = connection.reader.data
+                    msg3.reset(msg2)
+                    msg3.portalName = id
+                    return msg3
                 }
                 is ErrorMessage -> {
                     check(connection.readDesponse() is ReadyForQueryMessage)
                     deleteSelf(isPortal = true)
-                    throw PostgresqlException("${msg.fields['M']}. Query: $realQuery")
+                    throw PostgresqlException("${msg2.fields['M']}. Query: $realQuery")
                 }
                 is NoticeMessage -> {
                     continue@LOOP
@@ -271,7 +271,7 @@ class PostgresPreparedStatement(
                 is NoDataMessage -> {
                     continue@LOOP
                 }
-                else -> throw SQLException("Unexpected Message. Response Type: [${msg::class}], Message: [$msg]")
+                else -> throw SQLException("Unexpected Message. Response Type: [${msg2::class}], Message: [$msg2]")
             }
         }
     }

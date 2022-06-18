@@ -5,12 +5,21 @@ import org.khronos.webgl.get
 import org.khronos.webgl.set
 
 private fun memcpy(
-    dist: Int8Array,
+    dist: NativeMem,
     distOffset: Int,
-    src: Int8Array,
+    src: NativeMem,
     srcOffset: Int,
-    srcLength: Int = src.length - srcOffset
+    srcLength: Int = src.size - srcOffset
 ) {
+    if (dist is NativeMem.ArrayNativeMem && src is NativeMem.ArrayNativeMem) {
+        src.mem.copyInto(
+            destination = dist.mem,
+            destinationOffset = distOffset,
+            startIndex = srcOffset,
+            endIndex = srcOffset + srcLength,
+        )
+        return
+    }
     (srcOffset..(srcOffset + srcLength)).forEachIndexed { index, it ->
         dist[index + distOffset] = src[it]
     }
@@ -19,23 +28,57 @@ private fun memcpy(
 private fun memcpy(
     dist: ByteArray,
     distOffset: Int,
-    src: Int8Array,
+    src: NativeMem,
     srcOffset: Int,
-    srcLength: Int = src.length - srcOffset
+    srcLength: Int = src.size - srcOffset
 ) {
     (srcOffset..(srcOffset + srcLength)).forEachIndexed { index, it ->
         dist[index + distOffset] = src[it]
     }
 }
 
-actual class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -> Unit)?) :
+sealed interface NativeMem {
+    val size: Int
+    operator fun get(index: Int): Byte
+    operator fun set(index: Int, value: Byte)
+
+    class ByteNativeMem(val mem: Int8Array) : NativeMem {
+        override val size: Int
+            get() = mem.length
+
+        override fun get(index: Int): Byte = mem[index]
+
+        override fun set(index: Int, value: Byte) {
+            mem[index] = value
+        }
+    }
+
+    class ArrayNativeMem(val mem: ByteArray) : NativeMem {
+        override val size: Int
+            get() = mem.size
+
+        override fun get(index: Int): Byte = mem[index]
+
+        override fun set(index: Int, value: Byte) {
+            mem[index] = value
+        }
+    }
+}
+
+actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Unit)?) :
     Channel,
     Buffer,
     ByteBufferProvider {
     actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(size, null)
-        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer = ByteBuffer(size, onClose)
+        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(NativeMem.ByteNativeMem(Int8Array(size)), null)
+        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer =
+            ByteBuffer(NativeMem.ByteNativeMem(Int8Array(size)), onClose)
+
+        actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(NativeMem.ArrayNativeMem(array), null)
     }
+
+    override val capacity: Int
+        get() = native.size
 
     override var position: Int = 0
         set(value) {
@@ -64,7 +107,7 @@ actual class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -
 
     private var closed = false
 
-    private var native = Int8Array(capacity)
+//    private var native = Int8Array(capacity)
 
     private fun checkClosed() {
         if (closed) {
@@ -194,7 +237,6 @@ actual class ByteBuffer(override val capacity: Int, val onClose: ((ByteBuffer) -
 
     override fun close() {
         checkClosed()
-        native = Int8Array(0)
         closed = true
     }
 

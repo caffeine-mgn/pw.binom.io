@@ -2,8 +2,8 @@ package pw.binom.io.file
 
 import pw.binom.io.ByteBuffer
 import pw.binom.io.use
+import pw.binom.io.wrap
 import pw.binom.nextUuid
-import pw.binom.wrap
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,7 +32,7 @@ class TestWriteRead {
         )
 
         f.openWrite().use {
-            data.wrap { dataBuf ->
+            data.wrap().use { dataBuf ->
                 assertEquals(dataBuf.capacity, it.write(dataBuf))
                 assertEquals(0, dataBuf.remaining)
             }

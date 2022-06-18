@@ -5,9 +5,8 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.concurrency.WorkerPool
 import pw.binom.io.ByteBuffer
 import pw.binom.io.clean
-import pw.binom.nextBytes
+import pw.binom.io.nextBytes
 import pw.binom.nextUuid
-import pw.binom.wrap
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.test.Test

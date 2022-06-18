@@ -29,7 +29,9 @@ class TarWriteTest {
                     time = 1627445903000L,
                     type = TarEntityType.NORMAL
                 ).use {
-                    it.writeFully("File #1".encodeToByteArray().wrap())
+                    "File #1".encodeToByteArray().wrap { buf ->
+                        it.writeFully(buf)
+                    }
                 }
                 it.newEntity(
                     name = "text2.txt",

@@ -66,7 +66,7 @@ class WebdavEntity(
             throw FileSystem.FileNotFoundException(this.path)
         }
         if (responseCode != 201 && responseCode != 204) {
-            throw TODO("Invalid response code $responseCode")
+            TODO("Invalid response code $responseCode")
         }
 
         return WebdavEntity(
@@ -93,9 +93,9 @@ class WebdavEntity(
             r.addHeader("Overwrite", "T")
         }
         val responseCode = r.getResponse().use {
-            val r = it.responseCode
+            val ret = it.responseCode
             it.readData().use { it.skipAll() }
-            r
+            ret
         }
         if (responseCode == 401) {
             throw FileSystemAccess.AccessException.UnauthorizedException()
@@ -107,7 +107,7 @@ class WebdavEntity(
             throw FileSystem.FileNotFoundException(path)
         }
         if (responseCode != 201 && responseCode != 204)
-            throw TODO("Invalid response code $responseCode")
+            TODO("Invalid response code $responseCode")
 
         return WebdavEntity(
             path = path,
@@ -141,7 +141,7 @@ class WebdavEntity(
             throw FileSystemAccess.AccessException.ForbiddenException()
         }
         if (responseCode != 201 && responseCode != 204) {
-            throw TODO("Invalid response code $responseCode")
+            TODO("Invalid response code $responseCode")
         }
     }
 

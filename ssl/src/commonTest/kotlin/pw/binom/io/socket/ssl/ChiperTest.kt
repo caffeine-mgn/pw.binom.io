@@ -9,7 +9,6 @@ import pw.binom.io.file.openWrite
 import pw.binom.io.file.relative
 import pw.binom.io.file.workDirectoryFile
 import pw.binom.ssl.*
-import pw.binom.wrap
 import kotlin.random.Random
 import kotlin.test.Test
 

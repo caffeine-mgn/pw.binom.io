@@ -9,7 +9,6 @@ import pw.binom.ssl.KeyManager
 import pw.binom.ssl.PrivateKey
 import pw.binom.ssl.TrustManager
 import pw.binom.ssl.X509Certificate
-import pw.binom.wrap
 import kotlin.test.Ignore
 import kotlin.test.Test
 

@@ -65,7 +65,7 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
             val memCount = envList.sumOf { it.length + 1 } + 1
             val mem = allocArray<UShortVar>(memCount)
             var p = 0
-            envList.forEachIndexed { index, s ->
+            envList.forEach { s ->
                 memcpy(mem + p, s.wcstr.ptr, (s.length * 2 + 2).convert())
                 p += s.length + 1
             }

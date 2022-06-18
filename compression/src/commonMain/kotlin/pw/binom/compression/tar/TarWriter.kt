@@ -1,11 +1,7 @@
 package pw.binom.compression.tar
 
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.Closeable
-import pw.binom.io.Output
+import pw.binom.io.*
 import pw.binom.set
-import pw.binom.wrap
 
 private val ZERO_BYTE = ByteBuffer.alloc(100).also {
     while (it.remaining > 0)
@@ -103,7 +99,7 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
         entityWriting = true
         val block = ByteBuffer.alloc(BLOCK_SIZE)
 
-        name.encodeToByteArray().wrap { nameBytes ->
+        name.encodeToByteArray().wrap().use { nameBytes ->
             if (nameBytes.capacity > 100) {
                 longLink.copyInto(block)
                 mode.toOct(block, 100, 8)

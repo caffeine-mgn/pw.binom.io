@@ -77,7 +77,6 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                 sb.append(lexer.text)
             }
         }
-        TODO("!!!!!!!!!!")
     }
 
     /**

@@ -2,18 +2,20 @@ package pw.binom.io
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import java.nio.ByteBuffer as JByteBuffer
 
-actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuffer) -> Unit)?) :
+actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> Unit)?) :
     Channel,
     Buffer,
     ByteBufferProvider {
     actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(java.nio.ByteBuffer.allocateDirect(size), null)
+        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(JByteBuffer.allocateDirect(size), null)
 
         actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer =
-            ByteBuffer(java.nio.ByteBuffer.allocateDirect(size), onClose)
+            ByteBuffer(JByteBuffer.allocateDirect(size), onClose)
 
-        fun wrap(native: java.nio.ByteBuffer) = ByteBuffer(native, null)
+        fun wrap(native: JByteBuffer) = ByteBuffer(native, null)
+        actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(JByteBuffer.wrap(array), null)
     }
 //    init {
 //        val stack = Thread.currentThread().stackTrace.joinToString { "${it.className}.${it.methodName}:${it.lineNumber} ->" }
@@ -77,8 +79,9 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuff
 
     override fun close() {
         checkClosed()
-        native = java.nio.ByteBuffer.allocate(0)
+        native = JByteBuffer.allocate(0)
         closed = true
+        onClose?.invoke(this)
     }
 
     override var position: Int
@@ -228,7 +231,7 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuff
             limit = capacity
             position = index
             limit = index + length
-            val newBytes = java.nio.ByteBuffer.allocate(length)
+            val newBytes = JByteBuffer.allocate(length)
             native.copyTo(newBytes)
             return ByteBuffer(newBytes, null)
         } finally {
@@ -252,14 +255,14 @@ actual class ByteBuffer(var native: java.nio.ByteBuffer, val onClose: ((ByteBuff
     }
 }
 
-private inline fun java.nio.ByteBuffer.copyTo(buffer: java.nio.ByteBuffer): Int {
+private inline fun JByteBuffer.copyTo(buffer: JByteBuffer): Int {
     val l = minOf(buffer.remaining(), remaining())
     buffer.put(buffer)
     return l
 }
 
 @OptIn(ExperimentalContracts::class)
-private inline fun <T> java.nio.ByteBuffer.hold(offset: Int, length: Int, func: (java.nio.ByteBuffer) -> T): T {
+private inline fun <T> JByteBuffer.hold(offset: Int, length: Int, func: (JByteBuffer) -> T): T {
     contract {
         callsInPlace(func)
     }
@@ -276,7 +279,7 @@ private inline fun <T> java.nio.ByteBuffer.hold(offset: Int, length: Int, func: 
 }
 
 @OptIn(ExperimentalContracts::class)
-private inline fun <T> java.nio.ByteBuffer.update(offset: Int, length: Int, func: (java.nio.ByteBuffer) -> T): T {
+private inline fun <T> JByteBuffer.update(offset: Int, length: Int, func: (JByteBuffer) -> T): T {
     contract {
         callsInPlace(func)
     }

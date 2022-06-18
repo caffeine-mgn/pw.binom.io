@@ -52,15 +52,15 @@ class LinuxProcess(exe: String, args: List<String>, workDir: String?, env: Map<S
                 close(stdin.write)
 
                 memScoped {
-                    val r = allocArray<CPointerVar<ByteVar>>(args.size + 2)
-                    r[0] = exe.cstr.ptr
+                    val argsPtr = allocArray<CPointerVar<ByteVar>>(args.size + 2)
+                    argsPtr[0] = exe.cstr.ptr
                     args.forEachIndexed { index, s ->
-                        r[index + 1] = s.cstr.ptr
+                        argsPtr[index + 1] = s.cstr.ptr
                     }
-                    r[args.lastIndex + 2] = null
+                    argsPtr[args.lastIndex + 2] = null
                     if (workDir != null)
                         chdir(workDir)
-                    val rr = execv(exe, r)
+                    val returnCode = execv(exe, argsPtr)
                     throw IllegalStateException("This line should be no execute never")
                 }
             }

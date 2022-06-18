@@ -47,8 +47,8 @@ class RsaCipherImpl(args: List<String>) : Cipher {
         buffer = ByteArray(rsa.dataSize)
         println("rsa.dataSize=${rsa.dataSize}")
         this.rsa = rsa
-        cleaner = createCleaner(rsa) { rsa ->
-            RSA_free(rsa)
+        cleaner = createCleaner(rsa) { rsa2 ->
+            RSA_free(rsa2)
         }
     }
 

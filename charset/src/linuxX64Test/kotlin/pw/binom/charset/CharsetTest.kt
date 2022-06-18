@@ -2,7 +2,6 @@ package pw.binom.charset
 
 import pw.binom.CharBuffer
 import pw.binom.io.ByteBuffer
-import pw.binom.wrap
 import kotlin.test.Test
 
 class CharsetTest {

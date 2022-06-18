@@ -36,7 +36,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
 
     private val header = WebSocketHeader()
 
-    private inline fun checkClosed() {
+    private fun checkClosed() {
         if (closed.getValue())
             throw StreamClosedException()
     }
