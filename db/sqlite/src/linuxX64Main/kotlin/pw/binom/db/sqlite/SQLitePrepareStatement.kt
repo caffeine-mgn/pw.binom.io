@@ -3,9 +3,9 @@ package pw.binom.db.sqlite
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
 import cnames.structs.sqlite3_stmt
-import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.date.Date
 import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncPreparedStatement
@@ -18,10 +18,10 @@ class SQLitePrepareStatement(
 ) : SyncPreparedStatement {
 
     internal var openedResultSetCount = 0
-    private val closed = atomic(false)
+    private val closed = AtomicBoolean(false)
 
     private fun checkClosed() {
-        if (closed.value) {
+        if (closed.getValue()) {
             throw ClosedException()
         }
     }

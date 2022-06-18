@@ -1,10 +1,10 @@
 package pw.binom.ssl
 
-import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.reinterpret
 import platform.openssl.*
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.base64.Base64
 import pw.binom.getSslError
 import pw.binom.io.ByteArrayOutput
@@ -12,7 +12,7 @@ import pw.binom.io.IOException
 import pw.binom.io.use
 import pw.binom.throwError
 
-private val loaded = atomic(false)
+private val loaded = AtomicBoolean(false)
 internal fun loadOpenSSL() {
     if (loaded.compareAndSet(false, true)) {
         OPENSSL_init_crypto(

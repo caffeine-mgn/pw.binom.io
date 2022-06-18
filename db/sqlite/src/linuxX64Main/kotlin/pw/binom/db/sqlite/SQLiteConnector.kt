@@ -2,9 +2,9 @@ package pw.binom.db.sqlite
 
 import cnames.structs.sqlite3
 import cnames.structs.sqlite3_stmt
-import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.db.SQLException
@@ -54,7 +54,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
             get() = "SQLite"
     }
 
-    private val closed = atomic(false)
+    private val closed = AtomicBoolean(false)
     private val prepareStatements = HashSet<SQLitePrepareStatement>()
     private val prepareStatementsLock = SpinLock()
     private val beginSt = prepareStatement("BEGIN")
@@ -72,7 +72,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     }
 
     private fun checkClosed() {
-        if (closed.value) {
+        if (closed.getValue()) {
             throw ClosedException()
         }
     }
@@ -124,7 +124,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         get() = TYPE
 
     override val isConnected: Boolean
-        get() = !closed.value
+        get() = !closed.getValue()
 
     override val dbInfo: DatabaseInfo
         get() = SQLiteSQLDatabaseInfo
