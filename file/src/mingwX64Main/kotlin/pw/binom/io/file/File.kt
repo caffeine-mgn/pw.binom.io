@@ -40,10 +40,8 @@ actual class File actual constructor(path: String) {
         actual val temporalDirectory: File?
             get() {
                 val tmpDir = Environment.getEnv("TEMP") ?: Environment.getEnv("TMP")
-                if (tmpDir != null) {
-                    return File(tmpDir).takeIfDirection()
-                }
-                return null
+                    ?: return null
+                return File(tmpDir.removeSuffix("\\")).takeIfDirection()
             }
     }
 

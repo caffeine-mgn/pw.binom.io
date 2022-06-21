@@ -19,59 +19,69 @@ fun Output.asyncOutput() = object : AsyncOutput {
     }
 }
 
-suspend fun AsyncOutput.writeUtf8Char(buffer: ByteBuffer, value: Char) {
-    buffer.clear()
-    UTF8.unicodeToUtf8(value, buffer)
-    buffer.flip()
-    write(buffer)
-}
-
-suspend fun AsyncOutput.writeUTF8String(buffer: ByteBuffer, text: String) {
-    writeInt(buffer, text.length)
-    text.forEach {
-        writeUtf8Char(buffer, it)
+suspend fun AsyncOutput.writeUtf8Char(pool: ByteBufferProvider, value: Char) {
+    pool.using { buffer ->
+        buffer.clear()
+        UTF8.unicodeToUtf8(value, buffer)
+        buffer.flip()
+        write(buffer)
     }
 }
 
-suspend fun AsyncOutput.writeUUID(buffer: ByteBuffer, value: UUID) {
-    writeLong(buffer, value.mostSigBits)
-    writeLong(buffer, value.leastSigBits)
+suspend fun AsyncOutput.writeUTF8String(pool: ByteBufferProvider, text: String) {
+    writeInt(pool, text.length)
+    text.forEach {
+        writeUtf8Char(pool, it)
+    }
 }
 
-suspend fun AsyncOutput.writeByte(buffer: ByteBuffer, value: Byte) {
-    buffer.clear()
-    buffer.put(value)
-    buffer.flip()
-    write(buffer)
+suspend fun AsyncOutput.writeUUID(pool: ByteBufferProvider, value: UUID) {
+    writeLong(pool, value.mostSigBits)
+    writeLong(pool, value.leastSigBits)
 }
 
-suspend fun AsyncOutput.writeInt(buffer: ByteBuffer, value: Int) {
-    buffer.clear()
-    value.dump(buffer)
-    buffer.flip()
-    write(buffer)
+suspend fun AsyncOutput.writeByte(pool: ByteBufferProvider, value: Byte) {
+    pool.using { buffer ->
+        buffer.clear()
+        buffer.put(value)
+        buffer.flip()
+        write(buffer)
+    }
 }
 
-suspend fun AsyncOutput.writeFloat(buffer: ByteBuffer, value: Float) {
-    writeInt(buffer, value.toBits())
+suspend fun AsyncOutput.writeInt(pool: ByteBufferProvider, value: Int) {
+    pool.using { buffer ->
+        buffer.clear()
+        value.dump(buffer)
+        buffer.flip()
+        write(buffer)
+    }
 }
 
-suspend fun AsyncOutput.writeDouble(buffer: ByteBuffer, value: Double) {
-    writeLong(buffer, value.toBits())
+suspend fun AsyncOutput.writeFloat(pool: ByteBufferProvider, value: Float) {
+    writeInt(pool, value.toBits())
 }
 
-suspend fun AsyncOutput.writeShort(buffer: ByteBuffer, value: Short) {
-    buffer.clear()
-    value.dump(buffer)
-    buffer.flip()
-    write(buffer)
+suspend fun AsyncOutput.writeDouble(pool: ByteBufferProvider, value: Double) {
+    writeLong(pool, value.toBits())
 }
 
-suspend fun AsyncOutput.writeLong(buffer: ByteBuffer, value: Long) {
-    buffer.clear()
-    value.dump(buffer)
-    buffer.flip()
-    write(buffer)
+suspend fun AsyncOutput.writeShort(pool: ByteBufferProvider, value: Short) {
+    pool.using { buffer ->
+        buffer.clear()
+        value.dump(buffer)
+        buffer.flip()
+        write(buffer)
+    }
+}
+
+suspend fun AsyncOutput.writeLong(pool: ByteBufferProvider, value: Long) {
+    pool.using { buffer ->
+        buffer.clear()
+        value.dump(buffer)
+        buffer.flip()
+        write(buffer)
+    }
 }
 
 /**

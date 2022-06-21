@@ -36,6 +36,17 @@ actual value class Date(val time: Long = nowTime) {
             millis: Int,
             timeZoneOffset: Int
         ): Date {
+            return Date(
+                DateMath.toMilisecodns(
+                    year = year,
+                    monthNumber = month,
+                    dayOfMonth = dayOfMonth,
+                    hours = hours,
+                    minutes = minutes,
+                    seconds = seconds,
+                    milliseconds = millis,
+                ) - timeZoneOffset * DateMath.MILLISECONDS_IN_MINUTE
+            )
             val year2 = year - 1900
             val month2 = month - 1
             if (year <= 1970) {
@@ -43,7 +54,7 @@ actual value class Date(val time: Long = nowTime) {
                 var currentMonth = 0
                 while (currentMonth < month2) {
                     var daysInCurrentMonth = daysInMonth[currentMonth]
-                    if (currentMonth == 1 && isLeapYear(year)) {
+                    if (currentMonth == 1 && DateMath.isLeapYear(year)) {
                         daysInCurrentMonth++
                     }
                     yearDay += daysInCurrentMonth
@@ -88,10 +99,3 @@ actual value class Date(val time: Long = nowTime) {
 
 @SharedImmutable
 private val daysInMonth = arrayOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
-
-private fun isLeapYear(year: Int): Boolean {
-    if (year % 400 == 0) return true
-    if (year % 100 == 0) return false
-    if (year % 4 == 0) return true
-    return false
-}

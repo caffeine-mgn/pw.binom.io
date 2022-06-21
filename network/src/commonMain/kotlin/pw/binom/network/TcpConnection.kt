@@ -212,9 +212,8 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             sendData.continuation = it
             key.addListen(Selector.OUTPUT_READY)
             it.invokeOnCancellation {
-                if (!key.closed) {
-                    key.removeListen(Selector.OUTPUT_READY)
-                }
+                sendData.continuation = null
+                sendData.data = null
             }
         }
         return l
@@ -239,6 +238,10 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         }
         readData.full = true
         val readed = suspendCancellableCoroutine<Int> {
+            it.invokeOnCancellation {
+                readData.continuation = null
+                readData.data = null
+            }
             readData.continuation = it
             readData.data = dest
             key.addListen(Selector.INPUT_READY)

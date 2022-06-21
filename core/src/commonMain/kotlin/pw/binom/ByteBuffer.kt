@@ -3,6 +3,7 @@
 package pw.binom
 
 import pw.binom.io.ByteBuffer
+import pw.binom.io.ByteBufferProvider
 import pw.binom.io.Closeable
 import pw.binom.io.UTF8
 import pw.binom.pool.AbstractFixedSizePool
@@ -63,11 +64,17 @@ fun String.toByteBufferUTF8(): ByteBuffer {
 }
 
 class ByteBufferPool(capacity: Int, val bufferSize: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
-    AbstractFixedSizePool<ByteBuffer>(capacity), ByteBufferAllocator, Closeable {
+    AbstractFixedSizePool<ByteBuffer>(capacity), ByteBufferAllocator, ByteBufferProvider, Closeable {
     override fun new(): ByteBuffer = ByteBuffer.alloc(bufferSize.toInt())
 
     override fun free(value: ByteBuffer) {
         value.close()
+    }
+
+    override fun get(): ByteBuffer = borrow()
+
+    override fun reestablish(buffer: ByteBuffer) {
+        recycle(buffer)
     }
 }
 

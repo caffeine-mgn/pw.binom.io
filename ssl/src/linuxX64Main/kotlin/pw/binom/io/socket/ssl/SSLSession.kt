@@ -75,8 +75,9 @@ actual class SSLSession(val ctx: CPointer<SSL_CTX>, val ssl: CPointer<SSL>, val 
 
     actual fun readNet(dst: ByteArray, offset: Int, length: Int): Int {
         val n = BIO_read(wbio, dst.refTo(0), dst.size)
-        if (n < 0)
+        if (n < 0) {
             return 0
+        }
         return n
     }
 

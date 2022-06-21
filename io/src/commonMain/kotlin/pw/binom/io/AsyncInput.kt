@@ -20,7 +20,16 @@ interface AsyncInput : AsyncCloseable {
     }
 }
 
-suspend fun AsyncInput.read(dest: ByteArray, bufferProvider: ByteBufferProvider) {
+suspend fun AsyncInput.readByteArray(size: Int, bufferProvider: ByteBufferProvider): ByteArray {
+    val array = ByteArray(size)
+    readByteArray(
+        dest = array,
+        bufferProvider = bufferProvider,
+    )
+    return array
+}
+
+suspend fun AsyncInput.readByteArray(dest: ByteArray, bufferProvider: ByteBufferProvider) {
     bufferProvider.using { buffer ->
         var cursor = 0
         while (cursor < dest.size) {

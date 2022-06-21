@@ -88,8 +88,9 @@ class AsyncSSLChannel private constructor(
         while (true) {
             buffer.clear()
             val n = session.readNet(buffer)
-            if (n == 0)
+            if (n == 0) {
                 break
+            }
             buffer.flip()
             channel.write(buffer)
         }

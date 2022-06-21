@@ -1,9 +1,6 @@
 package pw.binom.date
 
-import kotlinx.cinterop.*
-import platform.posix.localtime
-import platform.posix.time_tVar
-
+/*
 actual class Calendar(private val utcTime: Long, actual val offset: Int) {
 
     private val tt = memScoped {
@@ -55,3 +52,4 @@ actual class Calendar(private val utcTime: Long, actual val offset: Int) {
 
     actual fun toDate(): Date = Date.new(this)
 }
+*/

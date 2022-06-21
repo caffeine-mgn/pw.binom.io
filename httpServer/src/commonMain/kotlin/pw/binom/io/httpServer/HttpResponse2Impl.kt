@@ -114,10 +114,12 @@ internal class HttpResponse2Impl(
             .isEmpty() && headers.contentLength == null
         ) {
             val en = acceptEncoding
-            headers.contentEncoding = when {
-                "gzip" in en -> "gzip"
-                "deflate" in en -> "deflate"
-                else -> null
+            if (server!!.zlibBufferSize > 0) {
+                headers.contentEncoding = when {
+                    "gzip" in en -> "gzip"
+                    "deflate" in en -> "deflate"
+                    else -> null
+                }
             }
             headers.transferEncoding = "chunked"
         }

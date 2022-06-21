@@ -1,5 +1,5 @@
 package pw.binom.date
-
+/*
 actual class Calendar(private val utcTime: Long, actual val offset: Int) {
 
     private val tm = kotlin.js.Date(utcTime.toDouble() + offset * 60.0 * 1000.0)
@@ -49,3 +49,4 @@ actual class Calendar(private val utcTime: Long, actual val offset: Int) {
 
     actual fun toDate(): Date = Date.new(this)
 }
+*/

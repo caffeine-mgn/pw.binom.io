@@ -15,62 +15,72 @@ fun Input.asyncInput() = object : AsyncInput {
     }
 }
 
-suspend fun AsyncInput.readUtf8Char(buffer: ByteBuffer): Char? {
-    buffer.reset(0, 1)
-    return if (read(buffer) == 0) {
-        null
-    } else {
-        val firstByte = buffer[0]
-        val size = UTF8.getUtf8CharSize(firstByte) - 1
-        if (size > 0) {
-            buffer.reset(0, size)
-            read(buffer)
+suspend fun AsyncInput.readUtf8Char(pool: ByteBufferProvider): Char? {
+    pool.using { buffer ->
+        buffer.reset(0, 1)
+        return if (read(buffer) == 0) {
+            null
+        } else {
+            val firstByte = buffer[0]
+            val size = UTF8.getUtf8CharSize(firstByte) - 1
+            if (size > 0) {
+                buffer.reset(0, size)
+                read(buffer)
+            }
+            UTF8.utf8toUnicode(firstByte, buffer)
         }
-        UTF8.utf8toUnicode(firstByte, buffer)
     }
 }
 
-suspend fun AsyncInput.readUTF8String(buffer: ByteBuffer): String {
-    val size = readInt(buffer)
-    val sb = StringBuilder(size)
-    repeat(size) {
-        sb.append(readUtf8Char(buffer) ?: throw EOFException())
+suspend fun AsyncInput.readUTF8String(pool: ByteBufferProvider): String {
+    pool.using { buffer ->
+        val size = readInt(buffer)
+        val sb = StringBuilder(size)
+        repeat(size) {
+            sb.append(readUtf8Char(buffer) ?: throw EOFException())
+        }
+        return sb.toString()
     }
-    return sb.toString()
 }
 
-suspend fun AsyncInput.readByte(buffer: ByteBuffer): Byte {
-    buffer.reset(0, 1)
-    readFully(buffer)
-    buffer.flip()
-    return buffer[0]
+suspend fun AsyncInput.readByte(pool: ByteBufferProvider): Byte {
+    pool.using { buffer ->
+        buffer.reset(0, 1)
+        readFully(buffer)
+        buffer.flip()
+        return buffer[0]
+    }
 }
 
-suspend fun AsyncInput.readUUID(buffer: ByteBuffer) =
+suspend fun AsyncInput.readUUID(pool: ByteBufferProvider) =
     UUID.create(
-        mostSigBits = readLong(buffer),
-        leastSigBits = readLong(buffer)
+        mostSigBits = readLong(pool),
+        leastSigBits = readLong(pool)
     )
 
-suspend fun AsyncInput.readInt(buffer: ByteBuffer): Int {
-    buffer.reset(0, 4)
-    readFully(buffer)
-    buffer.flip()
-    return Int.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3])
+suspend fun AsyncInput.readInt(pool: ByteBufferProvider): Int {
+    pool.using { buffer ->
+        buffer.reset(0, 4)
+        readFully(buffer)
+        buffer.flip()
+        return Int.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3])
+    }
 }
 
-suspend fun AsyncInput.readShort(buffer: ByteBuffer): Short {
-    buffer.reset(0, 2)
-    readFully(buffer)
-    buffer.flip()
-    return Short.fromBytes(buffer[0], buffer[1])
+suspend fun AsyncInput.readShort(pool: ByteBufferProvider): Short {
+    pool.using { buffer ->
+        buffer.reset(0, 2)
+        readFully(buffer)
+        buffer.flip()
+        return Short.fromBytes(buffer[0], buffer[1])
+    }
 }
 
-suspend fun AsyncInput.readLong(buffer: ByteBuffer): Long {
+suspend fun AsyncInput.readLong(pool: ByteBufferProvider): Long = pool.using { buffer ->
     buffer.reset(0, 8)
     readFully(buffer)
     buffer.flip()
-    return Long.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7])
+    Long.fromBytes(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7])
 }
 
 suspend inline fun AsyncInput.readFloat(buffer: ByteBuffer) = Float.fromBits(readInt(buffer))

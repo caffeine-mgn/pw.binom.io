@@ -43,12 +43,16 @@ kotlin {
             }
         }
 
-        val jsMain by getting {
+        val implMain by creating {
             dependsOn(commonMain)
         }
 
+        val jsMain by getting {
+            dependsOn(implMain)
+        }
+
         val linuxX64Main by getting {
-            dependsOn(commonMain)
+            dependsOn(implMain)
         }
         val linuxArm64Main by getting {
             dependsOn(linuxX64Main)
@@ -66,7 +70,7 @@ kotlin {
         }
 
         val mingwX64Main by getting {
-            dependsOn(commonMain)
+            dependsOn(implMain)
         }
         if (pw.binom.Target.MINGW_X86_SUPPORT) {
             val mingwX86Main by getting {
@@ -75,7 +79,7 @@ kotlin {
         }
 
         val macosX64Main by getting {
-            dependsOn(linuxX64Main)
+            dependsOn(implMain)
         }
 
         val commonTest by getting {

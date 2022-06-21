@@ -24,7 +24,7 @@ class CalendarTest {
             minutes = 0,
             seconds = 0,
             millis = 0,
-            timeZoneOffset = 0
+            timeZoneOffset = 0,
         )
         val calc = date.calendar(0)
         println("Current timezone: $test_data_currentTZ")
