@@ -17,6 +17,7 @@ value class Path internal constructor(val raw: String) {
      * Example: `"/users/100500/info_data".toURN.isMatch("/users/{id}/info_*")` returns true
      */
     fun isMatch(mask: String) = pathMatch(raw, mask)
+    fun isMatch(mask: PathMask) = isMatch(mask.raw)
 
     /**
      * Returns variable from this urn. Will find [name] inside this, using [mask].

@@ -1,10 +1,36 @@
 package pw.binom
 
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class StringUtilTest {
+
+    @Test
+    fun maskParser() {
+        internalParsePathMask(
+            mask = "/video/{id}/*/?",
+            variable = { text, position ->
+                when (position) {
+                    8 -> assertEquals("id", text)
+                    else -> fail("Unexpected on $position: \"$text\"")
+                }
+            },
+            wildcard = { text, position ->
+                when (position) {
+                    12 -> assertEquals("*", text)
+                    14 -> assertEquals("?", text)
+                    else -> fail("Unexpected on $position: \"$text\"")
+                }
+            },
+            text = { text, position ->
+                when (position) {
+                    0 -> assertEquals("/video/", text)
+                    11, 13 -> assertEquals("/", text)
+                    else -> fail("Unexpected on $position: \"$text\"")
+                }
+            },
+        )
+    }
+
     @Test
     fun testWildcardMatch() {
         fun check(num: Int) {

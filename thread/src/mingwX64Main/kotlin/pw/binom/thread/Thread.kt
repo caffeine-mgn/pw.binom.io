@@ -1,6 +1,7 @@
 package pw.binom.thread
 
 import kotlinx.cinterop.*
+import platform.posix.pthread_setname_np
 import platform.posix.usleep
 import platform.windows.*
 import kotlin.time.Duration
@@ -12,8 +13,15 @@ private var localThread: Thread? = null
 
 private fun genName() = "Thread-${createCount++}"
 
-actual abstract class Thread(var _id: HANDLE?, actual var name: String) {
+actual abstract class Thread(var _id: HANDLE?, name: String) {
     actual abstract fun execute()
+    actual var name: String = name
+        set(value) {
+            if (_id != null) {
+                pthread_setname_np(id.convert(), value)
+            }
+            field = value
+        }
 
     actual constructor(name: String) : this(_id = null, name = name)
 
@@ -30,6 +38,7 @@ actual abstract class Thread(var _id: HANDLE?, actual var name: String) {
             throw IllegalArgumentException("Can't start thread")
         }
         this@Thread._id = id2
+        this.name = this.name
     }
 
     actual val id: Long
@@ -66,12 +75,19 @@ actual abstract class Thread(var _id: HANDLE?, actual var name: String) {
             sleep(duration.inWholeMilliseconds)
         }
     }
+
+    actual var uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler
 }
 
 private val func: CPointer<CFunction<(COpaquePointer?) -> DWORD>> = staticCFunction { ptr ->
     val thread = ptr!!.asStableRef<Thread>()
     try {
         thread.get().execute()
+    } catch (e: Throwable) {
+        thread.get().uncaughtExceptionHandler.uncaughtException(
+            thread = thread.get(),
+            throwable = e
+        )
     } finally {
         thread.dispose()
     }

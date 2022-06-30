@@ -1,7 +1,9 @@
+@file:JvmName("ThreadCommonKt")
 package pw.binom.thread
 
 import kotlin.time.Duration
 import java.lang.Thread as JvmThread
+import java.lang.Thread.UncaughtExceptionHandler as JvmUncaughtExceptionHandler
 
 private var createCount = 0
 private val localThread = ThreadLocal<Thread>()
@@ -12,6 +14,12 @@ actual abstract class Thread constructor(val native: JvmThread) {
     )
 
     actual constructor() : this("Thread-${createCount++}")
+
+    private val jvmUncaughtExceptionHandler = JvmUncaughtExceptionHandler { _, throwable ->
+        this@Thread.uncaughtExceptionHandler.uncaughtException(
+            thread = this, throwable = throwable
+        )
+    }
 
     private class BinonJvmThread(name: String) : JvmThread(name) {
         lateinit var binomThread: Thread
@@ -27,6 +35,7 @@ actual abstract class Thread constructor(val native: JvmThread) {
 
     init {
         (native as? BinonJvmThread)?.binomThread = this
+        native.uncaughtExceptionHandler = jvmUncaughtExceptionHandler
     }
 
     actual abstract fun execute()
@@ -60,7 +69,7 @@ actual abstract class Thread constructor(val native: JvmThread) {
                 if (thread !is BinonJvmThread) {
                     val wrapper = object : Thread(thread) {
                         override fun execute() {
-                            thread.run()
+                            throw IllegalStateException()
                         }
                     }
                     localThread.set(wrapper)
@@ -77,4 +86,6 @@ actual abstract class Thread constructor(val native: JvmThread) {
             JvmThread.sleep(duration.inWholeMilliseconds)
         }
     }
+
+    actual var uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler
 }

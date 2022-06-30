@@ -1,6 +1,7 @@
 package pw.binom.net
 
 import pw.binom.MalformedURLException
+import pw.binom.pathMatch
 import kotlin.jvm.JvmInline
 
 @JvmInline
@@ -113,6 +114,11 @@ value class URI(private val raw: String) {
         }
         return raw.toURL()
     }
+
+    operator fun plus(toPath: Path) = copy(path = path.append(toPath))
+
+    fun isMatch(mask: String) = pathMatch(raw, mask)
+    fun isMatch(mask: PathMask) = isMatch(mask.raw)
 }
 
 fun String.toURI() = URI(this)

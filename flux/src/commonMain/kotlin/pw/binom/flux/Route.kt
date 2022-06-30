@@ -4,6 +4,7 @@ import pw.binom.io.Closeable
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
+import pw.binom.net.PathMask
 
 interface Route {
     val serialization: FluxServerSerialization
@@ -22,30 +23,40 @@ interface Route {
     suspend fun execute(action: HttpRequest)
 }
 
+fun Route.get(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = get(path.raw, func)
+
 fun Route.get(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.GET, path, func)
 
+fun Route.head(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = head(path.raw, func)
 fun Route.head(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.HEAD, path, func)
 
+fun Route.patch(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = patch(path.raw, func)
 fun Route.patch(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.PATCH, path, func)
 
+fun Route.trace(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = trace(path.raw, func)
 fun Route.trace(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.TRACE, path, func)
 
+fun Route.options(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = options(path.raw, func)
 fun Route.options(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.OPTIONS, path, func)
 
+fun Route.connect(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = connect(path.raw, func)
 fun Route.connect(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.CONNECT, path, func)
 
+fun Route.post(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = post(path.raw, func)
 fun Route.post(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.POST, path, func)
 
+fun Route.put(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = put(path.raw, func)
 fun Route.put(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.PUT, path, func)
 
+fun Route.delete(path: PathMask, func: suspend (FluxHttpRequest) -> Unit) = delete(path.raw, func)
 fun Route.delete(path: String, func: suspend (FluxHttpRequest) -> Unit) =
     endpoint(HTTPMethod.DELETE, path, func)
 

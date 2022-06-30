@@ -14,7 +14,7 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     }
 }
 
-suspend fun AsyncOutput.writeBytes(data: ByteArray, bufferProvider: ByteBufferProvider) {
+suspend fun AsyncOutput.writeByteArray(data: ByteArray, bufferProvider: ByteBufferProvider) {
     bufferProvider.using { buffer ->
         require(buffer.capacity > 0) { "Buffer capacity should be more than 0" }
         var cursor = 0

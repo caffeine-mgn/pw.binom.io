@@ -80,11 +80,13 @@ class SQLCompositeDecoder(
     ): T? {
         val embedded = descriptor.getElementAnnotation<Embedded>(index)
         if (embedded != null) {
-            val exist = (0 until descriptor.elementsCount).any { index ->
-                val elementName = descriptor.getElementName(index)
+            val fieldDescriptor = descriptor.getElementDescriptor(index)
+            val exist = (0 until fieldDescriptor.elementsCount).any { fieldIndex ->
+                val elementName = fieldDescriptor.getElementName(fieldIndex)
                 val el = "${columnPrefix ?: ""}${embedded.prefix}$elementName"
                 resultSet.columns.any { it == el }
             }
+            println("--->${descriptor.getElementName(index)}  $fieldDescriptor -> $exist")
             if (!exist) {
                 return previousValue
             }

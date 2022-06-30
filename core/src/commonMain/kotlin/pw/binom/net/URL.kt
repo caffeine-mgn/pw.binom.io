@@ -2,6 +2,7 @@ package pw.binom.net
 
 import pw.binom.MalformedURLException
 import pw.binom.io.UTF8
+import pw.binom.pathMatch
 import kotlin.jvm.JvmInline
 
 @JvmInline
@@ -265,6 +266,11 @@ value class URL internal constructor(val fullPath: String) {
             fragment = other.fragment ?: fragment,
         )
     }
+
+    operator fun plus(toPath: Path) = copy(path = path.append(toPath))
+
+    fun isMatch(mask: String) = pathMatch(fullPath, mask)
+    fun isMatch(mask: PathMask) = isMatch(mask.raw)
 }
 
 /**

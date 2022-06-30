@@ -51,23 +51,30 @@ class SQLSerializationTest {
         data class Root(
             val t1: String,
             @Embedded("t2_")
-            val embebbedT2: Em
+            val embebbedT2: Em,
+            @Embedded("t3_")
+            val embebbedT3: Em?
         )
 
         val result = ListStaticSyncResultSet(
             list = listOf(
                 listOf(
                     "test-t1",
-                    "test-t2"
+                    "test-t2",
+                    "test-t3",
                 )
             ),
             columns = listOf(
                 "t1",
-                "t2_t2"
+                "t2_t2",
+                "t3_t2",
             )
         )
         result.next()
         val value = SQLSerialization.DEFAULT.mapper<Root>().invoke(result)
+        assertEquals("test-t1", value.t1)
+        assertEquals("test-t2", value.embebbedT2.t2)
+        assertEquals("test-t3", value.embebbedT3?.t2)
         println("value:$value")
     }
 }

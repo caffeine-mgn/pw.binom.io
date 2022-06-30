@@ -20,6 +20,9 @@ actual abstract class Thread(var _id: pthread_t, actual var name: String) {
     actual constructor() : this(name = genName())
 
     actual fun start() {
+        if (_id != 0.convert<pthread_t>()) {
+            throw IllegalStateException("Thread already started")
+        }
         memScoped {
             val id = alloc<pthread_tVar>()
             val ptr = StableRef.create(this@Thread)
@@ -65,12 +68,19 @@ actual abstract class Thread(var _id: pthread_t, actual var name: String) {
             sleep(duration.inWholeMilliseconds)
         }
     }
+
+    actual var uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler
 }
 
 private val func: CPointer<CFunction<(COpaquePointer?) -> COpaquePointer?>> = staticCFunction { ptr ->
     val thread = ptr!!.asStableRef<Thread>()
     try {
         thread.get().execute()
+    } catch (e: Throwable) {
+        thread.get().uncaughtExceptionHandler.uncaughtException(
+            thread = thread.get(),
+            throwable = e,
+        )
     } finally {
         thread.dispose()
     }

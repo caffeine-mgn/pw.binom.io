@@ -6,8 +6,8 @@ import kotlinx.coroutines.Runnable
 import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.ThreadRef
-import pw.binom.concurrency.Worker
 import pw.binom.io.Closeable
+import pw.binom.thread.Thread
 import kotlin.coroutines.CoroutineContext
 
 abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManager {
@@ -19,10 +19,13 @@ abstract class NetworkCoroutineDispatcher : CoroutineDispatcher(), NetworkManage
 //    abstract suspend fun tcpConnect(address: NetworkAddress): TcpConnection
 }
 
+private var counter = 0
+
 class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     private var closed = AtomicBoolean(false)
-    private var worker = Worker()
+
+    //    private var worker = Worker()
     private val selector = Selector.open()
     private val internalUdpChannel = UdpSocketChannel()
     override fun toString(): String = "Dispatchers.Network"
@@ -35,20 +38,20 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     private val readyForWriteListener = BatchExchange<Runnable>()
 
     //    private val internalUdpContinuationConnection = attach(internalUdpChannel)
-    private var networkThread = ThreadRef()
+    private var networkThreadRef = ThreadRef()
     private val selectedKeys = SelectedEvents.create()
 
-    init {
-        worker.execute(this) { self ->
-            try {
-                while (!self.closed.getValue()) {
-                    self.networkThread = ThreadRef()
-                    self.selector.select(selectedEvents = selectedKeys)
-                    val iterator = selectedKeys.iterator()
-                    var executeOnNetwork = false
-                    while (iterator.hasNext() && !self.closed.getValue()) {
+    val networkThread = Thread("NetworkThread-${counter++}") { thisThread ->
+        try {
+            while (!this.closed.getValue()) {
+                this.networkThreadRef = ThreadRef()
+                this.selector.select(selectedEvents = selectedKeys)
+                val iterator = selectedKeys.iterator()
+                var executeOnNetwork = false
+                while (iterator.hasNext() && !this.closed.getValue()) {
+                    try {
                         val event = iterator.next()
-                        if (event.key === self.internalKey) {
+                        if (event.key === this.internalKey) {
                             executeOnNetwork = true
                         } else {
                             val attachment = event.key.attachment
@@ -62,39 +65,98 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                                 else -> throw IllegalStateException("Unknown connection event")
                             }
                         }
+
+                        if (executeOnNetwork) {
+                            if (this.readyForWriteListener.isEmpty()) {
+                                this.internalKey.listensFlag = 0
+                            } else {
+                                this.readyForWriteListener.popAll {
+                                    it.forEach {
+                                        try {
+                                            it.run()
+                                        } catch (e: Throwable) {
+                                            thisThread.uncaughtExceptionHandler.uncaughtException(
+                                                thread = thisThread,
+                                                throwable = RuntimeException("Error on network queue", e)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Throwable) {
+                        thisThread.uncaughtExceptionHandler.uncaughtException(
+                            thread = thisThread, throwable = e
+                        )
                     }
-                    if (executeOnNetwork) {
-                        if (self.readyForWriteListener.isEmpty()) {
-                            self.internalKey.listensFlag = 0
-                        } else {
-                            self.readyForWriteListener.popAll {
-                                it.forEach {
-                                    try {
-                                        it.run()
-                                    } catch (e: Throwable) {
-                                        e.printStackTrace()
+                }
+            }
+        } finally {
+            this.close()
+        }
+    }
+
+    init {
+        networkThread.start()
+    }
+
+    /*
+        init {
+            worker.execute(this) { self ->
+                try {
+                    while (!self.closed.getValue()) {
+                        self.networkThread = ThreadRef()
+                        self.selector.select(selectedEvents = selectedKeys)
+                        val iterator = selectedKeys.iterator()
+                        var executeOnNetwork = false
+                        while (iterator.hasNext() && !self.closed.getValue()) {
+                            val event = iterator.next()
+                            if (event.key === self.internalKey) {
+                                executeOnNetwork = true
+                            } else {
+                                val attachment = event.key.attachment
+                                attachment ?: throw IllegalStateException("Attachment is null")
+                                val connection = attachment as AbstractConnection
+                                when {
+                                    event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
+                                    event.mode and Selector.EVENT_ERROR != 0 -> connection.error()
+                                    event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite()
+                                    event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead()
+                                    else -> throw IllegalStateException("Unknown connection event")
+                                }
+                            }
+                        }
+                        if (executeOnNetwork) {
+                            if (self.readyForWriteListener.isEmpty()) {
+                                self.internalKey.listensFlag = 0
+                            } else {
+                                self.readyForWriteListener.popAll {
+                                    it.forEach {
+                                        try {
+                                            it.run()
+                                        } catch (e: Throwable) {
+                                            e.printStackTrace()
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+                } catch (e: Throwable) {
+                    println("Error on ROOT NetworkDispatcher #1")
+                    e.printStackTrace()
+                } finally {
+                    self.close()
                 }
-            } catch (e: Throwable) {
-                println("Error on ROOT NetworkDispatcher #1")
-                e.printStackTrace()
-            } finally {
-                self.close()
             }
         }
-    }
-
+    */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         readyForWriteListener.push(block)
         wakeup()
     }
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
-        !networkThread.same
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !networkThreadRef.same
 
     override fun wakeup() {
         try {
@@ -106,6 +168,8 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     override fun close() {
         closed.setValue(true)
+        wakeup()
+        networkThread.join()
         internalKey.close()
         internalUdpChannel.close()
 

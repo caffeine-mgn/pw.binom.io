@@ -4,7 +4,19 @@ import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
 
 class ECDSASignature(val r: BigInteger, val s: BigInteger) {
-    fun toByteArray() = r.toByteArray() + s.toByteArray()
+    fun toByteArray(): ByteArray {
+        var rBytes = r.toByteArray()
+        if (rBytes.size < 32) {
+            rBytes = ByteArray(32 - rBytes.size) + rBytes
+        }
+        var sBytes = s.toByteArray()
+
+        if (sBytes.size < 32) {
+            sBytes = ByteArray(32 - sBytes.size) + sBytes
+        }
+        return rBytes + sBytes
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false

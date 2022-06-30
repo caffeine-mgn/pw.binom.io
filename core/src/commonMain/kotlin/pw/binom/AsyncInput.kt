@@ -91,19 +91,22 @@ suspend inline fun AsyncInput.readDouble(buffer: ByteBuffer) = Double.fromBits(r
  *
  * @receiver input
  * @param output output
- * @param tempBuffer buffer for coping data from [this] to [output]. Buffer will not close after data coped
+ * @param bufferProvider buffer for coping data from [this] to [output]. Buffer will not close after data coped
  * @return size of copied data
  */
-suspend fun AsyncInput.copyTo(output: AsyncOutput, tempBuffer: ByteBuffer): Long {
-    var totalLength = 0L
-    while (true) {
-        tempBuffer.clear()
-        val length = read(tempBuffer)
-        if (length == 0)
-            break
-        totalLength += length.toLong()
-        tempBuffer.flip()
-        output.write(tempBuffer)
+suspend fun AsyncInput.copyTo(output: AsyncOutput, bufferProvider: ByteBufferProvider): Long {
+    val totalLength = bufferProvider.using { tempBuffer ->
+        var totalLength = 0L
+        while (true) {
+            tempBuffer.clear()
+            val length = read(tempBuffer)
+            if (length == 0)
+                break
+            totalLength += length.toLong()
+            tempBuffer.flip()
+            output.writeFully(tempBuffer)
+        }
+        totalLength
     }
     return totalLength
 }
@@ -122,22 +125,22 @@ suspend fun AsyncInput.copyTo(output: Output, tempBuffer: ByteBuffer): Long {
     return totalLength
 }
 
-/**
- * Copy date from [this] to [output]
- *
- * @receiver input
- * @param output output
- * @param pool for get temp coping buffer
- * @return size of copied data
- */
-suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): Long {
-    val buffer = pool.borrow()
-    try {
-        return copyTo(output, buffer)
-    } finally {
-        pool.recycle(buffer)
-    }
-}
+// /**
+// * Copy date from [this] to [output]
+// *
+// * @receiver input
+// * @param output output
+// * @param pool for get temp coping buffer
+// * @return size of copied data
+// */
+// suspend fun AsyncInput.copyTo(output: AsyncOutput, pool: ObjectPool<ByteBuffer>): Long {
+//    val buffer = pool.borrow()
+//    try {
+//        return copyTo(output, buffer)
+//    } finally {
+//        pool.recycle(buffer)
+//    }
+// }
 
 /**
  * Copy date from [this] to [output]

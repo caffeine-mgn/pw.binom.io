@@ -8,7 +8,6 @@ import pw.binom.io.httpServer.HttpRequest
 import pw.binom.net.Path
 import pw.binom.net.toPath
 import pw.binom.net.toURL
-import pw.binom.pool.ObjectPool
 import pw.binom.webdav.DAV_NS
 import pw.binom.webdav.MULTISTATUS_TAG
 import pw.binom.xml.dom.findElements
@@ -38,7 +37,7 @@ suspend fun FileSystem.getEntitiesWithDepth(path: Path, depth: Int): List<FileSy
 
 abstract class AbstractWebDavHandler<U> : Handler {
 
-    protected abstract val bufferPool: ObjectPool<ByteBuffer>
+    protected abstract val bufferPool: ByteBufferProvider
 
     protected abstract fun getFS(req: HttpRequest): FileSystem
     protected abstract fun getUser(req: HttpRequest): U

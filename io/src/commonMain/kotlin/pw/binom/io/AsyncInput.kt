@@ -33,7 +33,7 @@ suspend fun AsyncInput.readByteArray(dest: ByteArray, bufferProvider: ByteBuffer
     bufferProvider.using { buffer ->
         var cursor = 0
         while (cursor < dest.size) {
-            buffer.reset(0, dest.size - cursor)
+            buffer.reset(0, minOf(dest.size - cursor, buffer.capacity))
             val len = readFully(buffer)
             buffer.flip()
             buffer.read(dest, offset = cursor)

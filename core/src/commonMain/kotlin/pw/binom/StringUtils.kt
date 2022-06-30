@@ -10,6 +10,18 @@ class InvalidPathException(val path: String) : RuntimeException() {
 }
 
 fun String.isWildcardMatch(wildcard: String): Boolean = wildcardMatch(this, wildcard)
+fun String.parsePathMask(
+    variable: ((variable: String, position: Int) -> Unit)? = null,
+    wildcard: ((variable: String, position: Int) -> Unit)? = null,
+    text: ((variable: String, position: Int) -> Unit)? = null,
+) {
+    internalParsePathMask(
+        variable = variable,
+        wildcard = wildcard,
+        text = text,
+        mask = this,
+    )
+}
 
 private inline operator fun String.invoke(index: Int) = if (index >= length) '\u0000' else this[index]
 
@@ -51,10 +63,69 @@ internal fun wildcardMatch(string: String, wildcard: String): Boolean {
     return wildcard.length == wild
 }
 
+internal fun internalParsePathMask(
+    mask: String,
+    variable: ((variable: String, position: Int) -> Unit)? = null,
+    wildcard: ((variable: String, position: Int) -> Unit)? = null,
+    text: ((variable: String, position: Int) -> Unit)? = null,
+) {
+    var cursor = 0
+
+    fun readVariable() {
+        cursor++
+        val cursorStart = cursor
+        while (cursor < mask.length) {
+            when (mask[cursor]) {
+                '}' -> {
+                    if (variable != null) {
+                        variable(mask.substring(cursorStart, cursor), cursorStart)
+                    }
+                    cursor++
+                    return
+                }
+                else -> cursor++
+            }
+        }
+        throw InvalidPathException("Invalid mask \"$mask\": variable \"${mask.substring(cursorStart)}\" not finished")
+    }
+
+    fun readWildcard() {
+        if (wildcard != null) {
+            wildcard(mask[cursor].toString(), cursor)
+        }
+        cursor++
+    }
+
+    var cursorStart = 0
+
+    fun callText() {
+        if (cursor > cursorStart && text != null) {
+            text(mask.substring(cursorStart, cursor), cursorStart)
+        }
+    }
+
+    while (cursor < mask.length) {
+        when (mask[cursor]) {
+            '{' -> {
+                callText()
+                readVariable()
+                cursorStart = cursor
+            }
+            '*', '?' -> {
+                callText()
+                readWildcard()
+                cursorStart = cursor
+            }
+            else -> cursor++
+        }
+    }
+    callText()
+}
+
 internal fun pathMatch(
     path: String,
     mask: String,
-    func: (key: String, value: String) -> Unit = { _, _ -> }
+    func: (key: String, value: String) -> Unit = { _, _ -> },
 ): Boolean {
     var text = 0
     var wild = 0
