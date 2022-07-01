@@ -1,15 +1,7 @@
 package pw.binom
 
-actual val Environment.os: OS
-    get() = OS.WEB
-
-actual val Environment.platform: Platform
-    get() = Platform.WASM32
-
 actual fun Environment.getEnv(name: String): String? = null
 actual fun Environment.getEnvs(): Map<String, String> = emptyMap()
-actual val Environment.isBigEndian: Boolean
-    get() = true
 actual val Environment.workDirectory: String
     get() = ""
 

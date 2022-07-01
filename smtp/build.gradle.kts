@@ -2,7 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     jvm()
     linuxX64()

@@ -3,10 +3,10 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.posix.memcpy
 import pw.binom.io.Buffer
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+import pw.binom.io.copy
 
 actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Closeable, Buffer {
     actual companion object {
@@ -15,7 +15,10 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
             val buf = ByteBuffer.alloc(chars.size * Char.SIZE_BYTES)
             chars.usePinned { pinnedChars ->
                 buf.ref { buf, _ ->
-                    memcpy(buf, pinnedChars.addressOf(0), (pinnedChars.get().size * Char.SIZE_BYTES).convert())
+                    pinnedChars.addressOf(0).reinterpret<ByteVar>().copy(
+                        dest = buf,
+                        size = (pinnedChars.get().size * Char.SIZE_BYTES).convert(),
+                    )
                 }
             }
             return CharBuffer(buf)
@@ -135,7 +138,10 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         return array.usePinned { pinnedArray ->
             bytes.refTo(position * 2) { bytes ->
                 val len = minOf(remaining, length)
-                memcpy(pinnedArray.addressOf(offset), bytes, (len * 2).convert())
+                bytes.copy(
+                    dest = pinnedArray.addressOf(offset).reinterpret(),
+                    size = (len * 2).convert(),
+                )
                 position += len
                 len
             } ?: 0
@@ -156,7 +162,10 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         val array = CharArray(len)
         array.usePinned { pinnedArray ->
             bytes.refTo(startIndex * Char.SIZE_BYTES) { bytes ->
-                memcpy(pinnedArray.addressOf(0), bytes, (len * Char.SIZE_BYTES).convert())
+                bytes.copy(
+                    dest = pinnedArray.addressOf(0).reinterpret(),
+                    size = (len * Char.SIZE_BYTES).convert(),
+                )
             }
         }
         return array.concatToString()
@@ -170,7 +179,10 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         }
         array.usePinned { pinnedArray ->
             bytes.refTo(pos) { bytes ->
-                memcpy(bytes, pinnedArray.addressOf(offset), (len * Char.SIZE_BYTES).convert())
+                pinnedArray.addressOf(offset).reinterpret<ByteVar>().copy(
+                    dest = bytes,
+                    size = (len * Char.SIZE_BYTES).convert(),
+                )
                 position += len
             }
         }

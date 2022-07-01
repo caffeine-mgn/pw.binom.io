@@ -12,3 +12,10 @@ interface Input : Closeable {
         return length
     }
 }
+
+object NullInput : Input {
+    override fun read(dest: ByteBuffer): Int = 0
+
+    override fun close() {
+    }
+}

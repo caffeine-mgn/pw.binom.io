@@ -12,3 +12,19 @@ interface Output : Closeable {
         }
     }
 }
+
+object NullOutput : Output {
+    override fun write(data: ByteBuffer): Int {
+        val remaining = data.remaining
+        data.empty()
+        return remaining
+    }
+
+    override fun close() {
+        // Do nothing
+    }
+
+    override fun flush() {
+        // Do nothing
+    }
+}

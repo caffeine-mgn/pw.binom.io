@@ -7,7 +7,7 @@ plugins {
         id("com.android.library")
     }
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 val sqlitePackageName = "platform.internal_sqlite"
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

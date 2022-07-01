@@ -1,3 +1,5 @@
+import pw.binom.publish.dependsOn
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -5,28 +7,39 @@ plugins {
         id("com.android.library")
     }
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
             publishAllLibraryVariants()
         }
     }
+
     jvm()
     linuxX64()
-    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp()
-    }
-    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64()
-    }
-//    linuxMips32()
-//    linuxMipsel32()
+//    linuxArm64()
+//    linuxArm32Hfp()
+    linuxMips32()
+    linuxMipsel32()
     mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
+//    mingwX86()
     macosX64()
+    macosArm64()
+    iosX64()
+    iosArm32()
+    iosArm64()
+    iosSimulatorArm64()
+    watchosX64()
+    watchosX86()
+    watchosArm32()
+    watchosArm64()
+    watchosSimulatorArm64()
+//    androidNativeX64()
+//    androidNativeX86()
+//    androidNativeArm32()
+//    androidNativeArm64()
+//    wasm32()
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -41,38 +54,20 @@ kotlin {
         val posixMain by creating {
             dependsOn(nativeMain)
         }
+
         val linuxX64Main by getting {
             dependsOn(posixMain)
         }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
-//        val linuxMips32Main by getting {
-//            dependsOn(linuxX64Main)
-//        }
-//
-//        val linuxMipsel32Main by getting {
-//            dependsOn(linuxX64Main)
-//        }
-        val mingwX64Main by getting {
-            dependsOn(nativeMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(mingwX64Main)
-            }
-        }
-
         val macosX64Main by getting {
             dependsOn(posixMain)
         }
+        dependsOn("linux*Main", linuxX64Main)
+        dependsOn("mingw*Main", nativeMain)
+        dependsOn("watchos*Main", macosX64Main)
+        dependsOn("macos*Main", macosX64Main)
+        dependsOn("ios*Main", macosX64Main)
+        dependsOn("androidNative*Main", linuxX64Main)
+
         val jvmMain by getting {
             dependsOn(commonMain)
             dependencies {}
@@ -95,9 +90,6 @@ kotlin {
             dependencies {
                 api(kotlin("test"))
             }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
         }
     }
 }

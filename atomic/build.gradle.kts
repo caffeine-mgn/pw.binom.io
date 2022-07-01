@@ -1,3 +1,5 @@
+import pw.binom.publish.dependsOn
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -5,7 +7,7 @@ plugins {
         id("com.android.library")
     }
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
@@ -20,6 +22,7 @@ kotlin {
     linuxMipsel32()
     mingwX64()
     mingwX86()
+    macosX64()
     macosX64()
     macosArm64()
     iosX64()
@@ -36,7 +39,7 @@ kotlin {
     androidNativeArm32()
     androidNativeArm64()
     wasm32()
-    js("js", BOTH) {
+    js(BOTH) {
         browser()
         nodejs()
     }
@@ -50,23 +53,10 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
-        val linuxArm64Main by getting {
-            dependsOn(linuxX64Main)
-        }
-        val linuxArm32HfpMain by getting {
-            dependsOn(linuxX64Main)
-        }
-
-        val mingwX64Main by getting {
-            dependsOn(linuxX64Main)
-        }
-        val mingwX86Main by getting {
-            dependsOn(linuxX64Main)
-        }
-
-        val macosX64Main by getting {
-            dependsOn(linuxX64Main)
-        }
+        dependsOn("linux*Main", linuxX64Main)
+        dependsOn("mingw*Main", linuxX64Main)
+        dependsOn("androidNative*Main", linuxX64Main)
+        dependsOn("wasm32*Main", linuxX64Main)
 
         val commonTest by getting {
             dependencies {

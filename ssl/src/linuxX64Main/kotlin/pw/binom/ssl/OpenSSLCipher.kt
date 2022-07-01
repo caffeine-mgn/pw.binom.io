@@ -3,9 +3,9 @@ package pw.binom.ssl
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.cinterop.*
 import platform.openssl.*
+import platform.posix.memcpy
 import pw.binom.BigNumContext
 import pw.binom.checkTrue
-import pw.binom.internal.core_native.internal_memcpy
 import pw.binom.throwError
 import pw.binom.toBigNum
 
@@ -72,10 +72,10 @@ abstract class OpenSSLCipher : Cipher {
                         }
                         else -> throw IllegalArgumentException("Can't pass value of ${it.key}: type ${value::class.simpleName} not supported")
                     }
-                    internal_memcpy(param.ptr, paramsPtr[c++].ptr, sizeOf<OSSL_PARAM>().convert())
+                    memcpy(paramsPtr[c++].ptr, param.ptr, sizeOf<OSSL_PARAM>().convert())
                 }
                 val end = OSSL_PARAM_construct_end()
-                internal_memcpy(end.ptr, paramsPtr[c++].ptr, sizeOf<OSSL_PARAM>().convert())
+                memcpy(paramsPtr[c++].ptr, end.ptr, sizeOf<OSSL_PARAM>().convert())
                 val ctx = EVP_CIPHER_CTX_new() ?: throwError("EVP_CIPHER_CTX_new fails")
                 val cipher = EVP_CIPHER_fetch(null, algoritm, null) ?: throwError("EVP_CIPHER_fetch fails")
                 EVP_CipherInit_ex2(

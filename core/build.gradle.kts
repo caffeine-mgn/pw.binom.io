@@ -1,3 +1,4 @@
+import pw.binom.publish.dependsOn
 import java.util.*
 
 plugins {
@@ -7,6 +8,8 @@ plugins {
         id("com.android.library")
     }
 }
+
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
@@ -14,106 +17,29 @@ kotlin {
         }
     }
     jvm()
-    linuxX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/nativeMain/cinterop/core.def")
-                    packageName = "pw.binom.internal.core_native"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
-                }
-            }
-        }
-        this.compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs =
-            listOf("-opt-in=kotlin.RequiresOptIn")
-    }
-
-    linuxArm32Hfp {
-        binaries {
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/nativeMain/cinterop/core.def")
-                    packageName = "pw.binom.internal.core_native"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
-                }
-            }
-        }
-    }
-
-    linuxArm64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/nativeMain/cinterop/core.def")
-                    packageName = "pw.binom.internal.core_native"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
-                }
-            }
-        }
-    }
-
-    linuxMips32 {
-        binaries {
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/nativeMain/cinterop/core.def")
-                    packageName = "pw.binom.internal.core_native"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
-                }
-            }
-        }
-    }
-
-    linuxMipsel32 {
-        binaries {
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/nativeMain/cinterop/core.def")
-                    packageName = "pw.binom.internal.core_native"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
-                }
-            }
-        }
-    }
-
-    mingwX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/nativeMain/cinterop/core.def")
-                    packageName = "pw.binom.internal.core_native"
-                    includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
-                }
-            }
-        }
-    }
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 {
-            binaries {
-                compilations["main"].cinterops {
-                    create("native") {
-                        defFile = project.file("src/nativeMain/cinterop/core.def")
-                        packageName = "pw.binom.internal.core_native"
-                        includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
-                    }
-                }
-            }
-        }
-    }
-
-    if (pw.binom.Target.MACOS_SUPPORT) {
-        macosX64 {
-            binaries {
-                compilations["main"].cinterops {
-                    create("native") {
-                        defFile = project.file("src/nativeMain/cinterop/core.def")
-                        packageName = "pw.binom.internal.core_native"
-                        includeDirs.headerFilterOnly("${buildFile.parent}/src/nativeMain/cinterop")
-                    }
-                }
-            }
-        }
-    }
+    linuxX64()
+    linuxArm64()
+    linuxArm32Hfp()
+    linuxMips32()
+    linuxMipsel32()
+    mingwX64()
+    mingwX86()
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm32()
+    iosArm64()
+    iosSimulatorArm64()
+    watchosX64()
+    watchosX86()
+    watchosArm32()
+    watchosArm64()
+    watchosSimulatorArm64()
+    androidNativeX64()
+    androidNativeX86()
+    androidNativeArm32()
+    androidNativeArm64()
+    wasm32()
     js("js", BOTH) {
         browser()
         nodejs()
@@ -147,37 +73,17 @@ kotlin {
         val nativeMain by creating {
             dependsOn(commonMain)
         }
-
-        val linuxX64Main by getting {
-            dependsOn(nativeMain)
-        }
-        val linuxArm64Main by getting {
-            dependsOn(nativeMain)
-        }
-        val linuxArm32HfpMain by getting {
-            dependsOn(nativeMain)
-        }
-        val linuxMips32Main by getting {
+        val nativeHostedMain by creating {
             dependsOn(nativeMain)
         }
 
-        val linuxMipsel32Main by getting {
-            dependsOn(nativeMain)
-        }
-        val mingwX64Main by getting {
-            dependsOn(nativeMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(nativeMain)
-            }
-        }
-
-        if (pw.binom.Target.MACOS_SUPPORT) {
-            val macosX64Main by getting {
-                dependsOn(nativeMain)
-            }
-        }
+        dependsOn("linux*Main", nativeHostedMain)
+        dependsOn("mingw*Main", nativeHostedMain)
+        dependsOn("watchos*Main", nativeHostedMain)
+        dependsOn("macos*Main", nativeHostedMain)
+        dependsOn("ios*Main", nativeHostedMain)
+        dependsOn("androidNative*Main", nativeHostedMain)
+        dependsOn("wasm*Main", nativeMain)
 
         val commonTest by getting {
             dependencies {

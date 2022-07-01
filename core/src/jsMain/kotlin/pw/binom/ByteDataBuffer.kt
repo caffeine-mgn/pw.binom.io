@@ -1,7 +1,6 @@
 package pw.binom
 
-import org.khronos.webgl.*
-import pw.binom.io.Closeable
+/*
 
 actual class ByteDataBuffer : Closeable, Iterable<Byte> {
     actual companion object {
@@ -89,3 +88,4 @@ actual class ByteDataBuffer : Closeable, Iterable<Byte> {
         }
     }
 }
+*/

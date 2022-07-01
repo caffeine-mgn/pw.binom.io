@@ -5,7 +5,7 @@ plugins {
         id("com.android.library")
     }
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {

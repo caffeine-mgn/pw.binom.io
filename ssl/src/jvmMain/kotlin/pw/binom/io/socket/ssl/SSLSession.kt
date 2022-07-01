@@ -2,7 +2,7 @@ package pw.binom.io.socket.ssl
 
 import pw.binom.io.Closeable
 import pw.binom.io.length
-import pw.binom.putSafeInto
+import pw.binom.io.putSafeInto
 import java.nio.ByteBuffer
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult

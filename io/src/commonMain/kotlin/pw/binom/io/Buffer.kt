@@ -1,5 +1,13 @@
 package pw.binom.io
 
+/**
+ * Calls [Buffer.clear] and returns [this]
+ */
+fun <T : Buffer> T.clean(): T {
+    clear()
+    return this
+}
+
 expect interface Buffer {
     var position: Int
     var limit: Int
@@ -9,12 +17,4 @@ expect interface Buffer {
     fun flip()
     fun compact()
     fun clear()
-}
-
-/**
- * Calls [Buffer.clear] and returns [this]
- */
-fun <T : Buffer> T.clean(): T {
-    clear()
-    return this
 }

@@ -134,7 +134,10 @@ class DnsHeader {
             .update(9 + Short.SIZE_BITS, z)
             .update(10 + Short.SIZE_BITS, ad)
             .update(11 + Short.SIZE_BITS, cd)
-            .updateByte4(12 + Short.SIZE_BITS, rcode).toInt().let { it and 0xFFF }.toShort()
+            .updateByte4(12 + Short.SIZE_BITS, rcode)
+            .toInt()
+            .let { it and 0xFFF }
+            .toShort()
         dest.writeShort(flags)
         dest.writeShort(q_count.toShort())
         dest.writeShort(ans_count.toShort())

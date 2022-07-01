@@ -2,7 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     jvm()
     linuxX64()
@@ -39,16 +39,16 @@ kotlin {
         val linuxMipsel32Main by getting {
             dependsOn(linuxX64Main)
         }
-        val androidNativeX64Main by getting{
+        val androidNativeX64Main by getting {
             dependsOn(linuxX64Main)
         }
-        val androidNativeX86Main by getting{
+        val androidNativeX86Main by getting {
             dependsOn(linuxX64Main)
         }
-        val androidNativeArm32Main by getting{
+        val androidNativeArm32Main by getting {
             dependsOn(linuxX64Main)
         }
-        val androidNativeArm64Main by getting{
+        val androidNativeArm64Main by getting {
             dependsOn(linuxX64Main)
         }
         val mingwX64Main by getting {
@@ -60,7 +60,7 @@ kotlin {
         val macosX64Main by getting {
             dependsOn(linuxX64Main)
         }
-        val macosArm64Main by getting{
+        val macosArm64Main by getting {
             dependsOn(macosX64Main)
         }
         val commonTest by getting {

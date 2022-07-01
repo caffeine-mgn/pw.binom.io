@@ -1,7 +1,0 @@
-headerFilter = *.c
----
-#include "bytebuffer.c"
-
-void internal_memcpy(void* from, void* to, size_t size){
-    memcpy(to, from, size);
-}

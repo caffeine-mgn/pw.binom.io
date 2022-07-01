@@ -1,17 +1,6 @@
 package pw.binom
 
-import kotlinx.cinterop.*
-import platform.posix.*
-
-actual val Environment.os: OS
-    get() = OS.LINUX
-
-actual val Environment.isBigEndian: Boolean
-    get() = isBigEndianPrivate
-
-actual val Environment.platform: Platform
-    get() = Platform.LINUX_ARM_32
-
+/*
 actual fun Environment.getEnvs(): Map<String, String> {
     val out = HashMap<String, String>()
     var i = 0
@@ -65,3 +54,4 @@ actual val Environment.currentExecutionPath: String
                 throw RuntimeException("Can't get current execution path. Error #$errno")
             }
         }
+*/

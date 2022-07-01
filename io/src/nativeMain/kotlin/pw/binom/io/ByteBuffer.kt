@@ -1,7 +1,6 @@
 package pw.binom.io
 
 import kotlinx.cinterop.*
-import platform.posix.memcpy
 
 actual open class ByteBuffer(
     val data: ByteArray,
@@ -122,7 +121,10 @@ actual open class ByteBuffer(
         return ref { sourceCPointer, remaining ->
             dest.ref { destCPointer, destRemaining ->
                 val len = minOf(destRemaining, remaining)
-                memcpy(destCPointer, sourceCPointer, len.convert())
+                sourceCPointer.copy(
+                    dest = destCPointer,
+                    size = len.convert(),
+                )
                 position += len
                 dest.position += len
                 len
@@ -209,7 +211,10 @@ actual open class ByteBuffer(
         val len = minOf(capacity, newSize)
         ref0 { oldCPointer, oldDataSize ->
             new.ref0 { newCPointer, newDataSize ->
-                memcpy(newCPointer, oldCPointer, len.convert())
+                oldCPointer.copy(
+                    dest = newCPointer,
+                    size = len.convert(),
+                )
             }
         }
         new.position = minOf(position, new.capacity)
@@ -225,7 +230,10 @@ actual open class ByteBuffer(
         if (size > 0) {
             ref { ptr, remaining ->
                 r.usePinned {
-                    memcpy(it.addressOf(0), ptr, size.convert())
+                    ptr.copy(
+                        dest = it.addressOf(0),
+                        size = size.convert(),
+                    )
                 }
             }
         }
@@ -247,7 +255,10 @@ actual open class ByteBuffer(
         }
         data.usePinned { data ->
             ref0 { cPointer, dataSize ->
-                memcpy(cPointer + position, data.addressOf(offset), len.convert())
+                data.addressOf(offset).copy(
+                    dest = (cPointer + position)!!.reinterpret(),
+                    size = len.convert(),
+                )
                 position += len
             }
         }
@@ -260,7 +271,10 @@ actual open class ByteBuffer(
         if (remaining > 0) {
             val size = remaining
             ref0 { cPointer, dataSize ->
-                memcpy(cPointer, cPointer + position, size.convert())
+                (cPointer + position)!!.copy(
+                    dest = cPointer,
+                    size = size.convert(),
+                )
                 position = size
                 limit = capacity
             }
@@ -282,7 +296,10 @@ actual open class ByteBuffer(
         val newBytes = alloc(length)
         ref0 { oldCPointer, oldDataSize ->
             newBytes.ref0 { newCPointer, newDataSize ->
-                memcpy(newCPointer, oldCPointer + index, length.convert())
+                (oldCPointer + index)!!.copy(
+                    dest = newCPointer,
+                    size = length.convert(),
+                )
             }
         }
 
@@ -295,7 +312,10 @@ actual open class ByteBuffer(
         return ref0 { cPointer, dataSize ->
             val l = minOf(remaining, length)
             dest.usePinned { dest ->
-                memcpy(dest.addressOf(0), cPointer + position, l.convert())
+                (cPointer + position)!!.copy(
+                    dest = dest.addressOf(0),
+                    size = l.convert(),
+                )
             }
             l
         } ?: 0
@@ -306,7 +326,10 @@ actual open class ByteBuffer(
         val size = remaining
         if (size > 0) {
             ref0 { native, _ ->
-                memcpy(native, native + position, size.convert())
+                (native + position)!!.copy(
+                    dest = native,
+                    size = size.convert(),
+                )
             }
             position = 0
             limit = size

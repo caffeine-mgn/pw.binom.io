@@ -291,3 +291,12 @@ private inline fun <T> JByteBuffer.update(offset: Int, length: Int, func: (JByte
         clear()
     }
 }
+
+fun JByteBuffer.putSafeInto(buffer: JByteBuffer): Int {
+    val l = limit()
+    val r = buffer.remaining()
+    this.limit(position() + minOf(buffer.remaining(), remaining()))
+    buffer.put(this)
+    limit(l)
+    return r - buffer.remaining()
+}

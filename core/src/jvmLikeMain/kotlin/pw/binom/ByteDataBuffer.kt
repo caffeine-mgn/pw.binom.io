@@ -1,9 +1,6 @@
 package pw.binom
 
-import pw.binom.io.Closeable
-import java.nio.ByteBuffer
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
+/*
 
 actual class ByteDataBuffer : Closeable, Iterable<Byte> {
     actual companion object {
@@ -111,3 +108,4 @@ fun ByteBuffer.putSafeInto(buffer: ByteBuffer): Int {
     limit(l)
     return r - buffer.remaining()
 }
+*/

@@ -3,9 +3,6 @@ package pw.binom
 import kotlinx.cinterop.*
 import platform.posix.*
 
-actual val Environment.platform: Platform
-    get() = Platform.ANDROID_X64
-
 actual fun Environment.getEnv(name: String): String? = getenv(name)?.toKString()
 actual fun Environment.getEnvs(): Map<String, String> {
     val out = HashMap<String, String>()
@@ -17,9 +14,6 @@ actual fun Environment.getEnvs(): Map<String, String> {
     }
     return out
 }
-
-actual val Environment.isBigEndian: Boolean
-    get() = isBigEndianPrivate
 
 actual val Environment.workDirectory: String
     get() {

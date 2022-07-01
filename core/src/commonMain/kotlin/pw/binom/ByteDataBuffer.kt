@@ -2,11 +2,8 @@
 
 package pw.binom
 
-import pw.binom.io.ByteBuffer
-import pw.binom.io.Closeable
-import pw.binom.pool.DefaultPool
 import kotlin.jvm.JvmName
-import kotlin.random.Random
+/*
 
 fun <T> ByteDataBuffer.unsafe(func: (ByteDataBuffer) -> T): T {
     unsafe()
@@ -120,3 +117,4 @@ class ByteDataBufferPool(size: Int = DEFAULT_BUFFER_SIZE) :
         this.size = 0
     }
 }
+*/

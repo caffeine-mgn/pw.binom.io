@@ -7,7 +7,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 fun config(config: KotlinNativeTarget) {
     config.compilations["main"].cinterops {
         create("openssl") {

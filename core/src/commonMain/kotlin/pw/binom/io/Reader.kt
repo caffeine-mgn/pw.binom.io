@@ -83,3 +83,10 @@ fun Reader.readText(): String {
     }
     return sb.toString()
 }
+
+object NullReader : Reader {
+    override fun read(): Char? = null
+
+    override fun close() {
+    }
+}

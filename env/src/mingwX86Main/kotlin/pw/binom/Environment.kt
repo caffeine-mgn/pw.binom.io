@@ -4,15 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.*
 
-actual val Environment.os: OS
-    get() = OS.WINDOWS
-
-actual val Environment.isBigEndian: Boolean
-    get() = isBigEndianPrivate
-
-actual val Environment.platform: Platform
-    get() = Platform.MINGW_X86
-
+/*
 actual fun Environment.getEnvs(): Map<String, String> {
     val out = HashMap<String, String>()
     val ff = GetEnvironmentStringsW()
@@ -66,3 +58,4 @@ actual val Environment.currentExecutionPath: String
             }
             result.toKString()
         }
+*/

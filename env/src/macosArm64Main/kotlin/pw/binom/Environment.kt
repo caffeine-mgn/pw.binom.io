@@ -17,15 +17,6 @@ return
 }
  */
 
-actual val Environment.os: OS
-    get() = OS.MACOS
-
-actual val Environment.isBigEndian: Boolean
-    get() = isBigEndianPrivate
-
-actual val Environment.platform: Platform
-    get() = Platform.MACOS
-
 actual fun Environment.getEnvs(): Map<String, String> {
     val out = HashMap<String, String>()
     var i = 0

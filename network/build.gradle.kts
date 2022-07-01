@@ -6,12 +6,7 @@ plugins {
         id("com.android.library")
     }
 }
-
-// template {
-//    companionProcessing.set(false)
-//    valueClassProcessing.set(false)
-// }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {

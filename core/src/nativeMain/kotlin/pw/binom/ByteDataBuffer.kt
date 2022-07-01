@@ -2,12 +2,9 @@
 
 package pw.binom
 
-import kotlinx.cinterop.*
-import platform.posix.free
-import platform.posix.malloc
-import platform.posix.memcpy
-import platform.posix.memset
-import pw.binom.io.Closeable
+import kotlinx.cinterop.UnsafeNumber
+
+/*
 
 actual class ByteDataBuffer private constructor(actual val size: Int, var arr: ByteArray?, ptr: CPointer<ByteVar>?) :
     Closeable, Iterable<Byte> {
@@ -108,3 +105,4 @@ actual class ByteDataBuffer private constructor(actual val size: Int, var arr: B
         memset(buffer, startIndex, (endIndex - startIndex).convert())
     }
 }
+*/

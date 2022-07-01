@@ -5,7 +5,7 @@ plugins {
     id("com.bmuschko.docker-remote-api")
     id("maven-publish")
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     jvm()
     linuxX64()

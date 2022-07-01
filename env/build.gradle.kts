@@ -1,4 +1,5 @@
 import pw.binom.eachKotlinCompile
+import pw.binom.publish.dependsOn
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -7,7 +8,7 @@ plugins {
         id("com.android.library")
     }
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 fun androidCInterop(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) {
     target.run {
         binaries {
@@ -33,13 +34,19 @@ kotlin {
     linuxMips32()
     linuxMipsel32()
     mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
-    if (pw.binom.Target.MACOS_SUPPORT) {
-        macosX64()
-        macosArm64()
-    }
+    mingwX86()
+    macosX64()
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm32()
+    iosArm64()
+    iosSimulatorArm64()
+    watchosX64()
+    watchosX86()
+    watchosArm32()
+    watchosArm64()
+    watchosSimulatorArm64()
     js("js", BOTH) {
         browser()
         nodejs()
@@ -70,53 +77,22 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(nativeMain)
         }
-        val linuxArm64Main by getting {
-            dependsOn(nativeMain)
-        }
-        val linuxArm32HfpMain by getting {
-            dependsOn(nativeMain)
-        }
-        val linuxMips32Main by getting {
-            dependsOn(nativeMain)
-        }
-
-        val linuxMipsel32Main by getting {
-            dependsOn(nativeMain)
-        }
+        dependsOn("linux*Main", linuxX64Main)
+        dependsOn("wasm*Main", nativeMain)
+//        dependsOn("ios*Main", nativeMain)
 
         val androidNativeMain by creating {
             dependsOn(nativeMain)
         }
-
-        val androidNativeX64Main by getting {
-            dependsOn(androidNativeMain)
-        }
-        val androidNativeX86Main by getting {
-            dependsOn(androidNativeMain)
-        }
-        val androidNativeArm32Main by getting {
-            dependsOn(androidNativeMain)
-        }
-        val androidNativeArm64Main by getting {
-            dependsOn(androidNativeMain)
-        }
+        dependsOn("androidNative*Main", androidNativeMain)
         val mingwX64Main by getting {
             dependsOn(nativeMain)
         }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(nativeMain)
-            }
+        dependsOn("mingw*Main", mingwX64Main)
+        val macosX64Main by getting {
+            dependsOn(nativeMain)
         }
-
-        if (pw.binom.Target.MACOS_SUPPORT) {
-            val macosX64Main by getting {
-                dependsOn(nativeMain)
-            }
-            val macosArm64Main by getting {
-                dependsOn(nativeMain)
-            }
-        }
+        dependsOn("macos*Main", macosX64Main)
 
         val commonTest by getting {
             dependencies {

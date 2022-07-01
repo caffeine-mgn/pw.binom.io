@@ -1,12 +1,11 @@
 import pw.binom.eachKotlinTest
-import java.util.UUID
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.bmuschko.docker-remote-api")
     id("maven-publish")
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     jvm()
     linuxX64()

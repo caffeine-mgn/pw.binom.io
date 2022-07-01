@@ -39,7 +39,7 @@ class NatsRawConnection(
     )
 
     /**
-     * Makes handshake before using nats connection. Retuns information about server and other server cluster addresses
+     * Makes handshake before using nats connection. Returns information about server and other server cluster addresses
      */
     suspend fun prepareConnect(
         clientName: String? = null,

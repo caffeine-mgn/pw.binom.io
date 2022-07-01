@@ -1,23 +1,37 @@
-import java.util.*
+import pw.binom.publish.dependsOn
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
 }
-
+apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     jvm()
     linuxX64()
-    linuxArm32Hfp()
-    linuxArm64()
-    linuxMips32()
-    linuxMipsel32()
+//    linuxArm64()
+//    linuxArm32Hfp()
+//    linuxMips32()
+//    linuxMipsel32()
     mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
+//    mingwX86()
     macosX64()
-    js("js", BOTH) {
+//    macosArm64()
+//    iosX64()
+//    iosArm32()
+//    iosArm64()
+//    iosSimulatorArm64()
+//    watchosX64()
+//    watchosX86()
+//    watchosArm32()
+//    watchosArm64()
+//    watchosSimulatorArm64()
+//    androidNativeX64()
+//    androidNativeX86()
+//    androidNativeArm32()
+//    androidNativeArm64()
+//    wasm32()
+
+    js(BOTH) {
         browser()
         nodejs()
     }
@@ -32,32 +46,6 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
-        val linuxArm64Main by getting {
-            dependsOn(linuxX64Main)
-        }
-        val linuxArm32HfpMain by getting {
-            dependsOn(linuxX64Main)
-        }
-        val linuxMips32Main by getting {
-            dependsOn(linuxX64Main)
-        }
-
-        val linuxMipsel32Main by getting {
-            dependsOn(linuxX64Main)
-        }
-        val mingwX64Main by getting {
-            dependsOn(linuxX64Main)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
-
-        val macosX64Main by getting {
-            dependsOn(linuxX64Main)
-        }
-
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -65,24 +53,33 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-        val nativeTest by creating {
+        val linuxX64Test by getting {
             dependsOn(commonTest)
         }
+        dependsOn("linux*Main", linuxX64Main)
+        dependsOn("mingw*Main", linuxX64Main)
+        dependsOn("watchos*Main", linuxX64Main)
+        dependsOn("macos*Main", linuxX64Main)
+        dependsOn("ios*Main", linuxX64Main)
+        dependsOn("androidNative*Main", linuxX64Main)
+        dependsOn("wasm*Main", linuxX64Main)
+
+        dependsOn("linux*Test", linuxX64Test)
+        dependsOn("mingw*Test", linuxX64Test)
+        dependsOn("watchos*Test", linuxX64Test)
+        dependsOn("macos*Test", linuxX64Test)
+        dependsOn("ios*Test", linuxX64Test)
+        dependsOn("androidNative*Test", linuxX64Test)
+
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
                 api(kotlin("test"))
             }
         }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
-
-        val mingwX64Test by getting {
-            dependsOn(linuxX64Test)
-        }
 
         val jsTest by getting {
+            dependsOn(commonTest)
             dependencies {
                 api(kotlin("test-js"))
             }
