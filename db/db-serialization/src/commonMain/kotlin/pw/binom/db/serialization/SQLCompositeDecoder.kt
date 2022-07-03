@@ -84,9 +84,8 @@ class SQLCompositeDecoder(
             val exist = (0 until fieldDescriptor.elementsCount).any { fieldIndex ->
                 val elementName = fieldDescriptor.getElementName(fieldIndex)
                 val el = "${columnPrefix ?: ""}${embedded.prefix}$elementName"
-                resultSet.columns.any { it == el }
+                resultSet.columns.any { it == el && !resultSet.isNull(el) }
             }
-            println("--->${descriptor.getElementName(index)}  $fieldDescriptor -> $exist")
             if (!exist) {
                 return previousValue
             }

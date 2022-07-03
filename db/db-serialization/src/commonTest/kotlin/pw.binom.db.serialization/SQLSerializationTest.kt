@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class SQLSerializationTest {
     @Serializable
@@ -76,5 +77,43 @@ class SQLSerializationTest {
         assertEquals("test-t2", value.embebbedT2.t2)
         assertEquals("test-t3", value.embebbedT3?.t2)
         println("value:$value")
+    }
+
+    @Test
+    fun selectEmbeddedWithNull() = runTest {
+        @Serializable
+        data class Value(
+            val code: String,
+            val role: String,
+        )
+
+        @Serializable
+        data class Root(
+            @Embedded("t2_") val embebbedT2: Value,
+            @Embedded("t3_") val embebbedT3: Value?
+        )
+
+        ListStaticSyncResultSet(
+            list = listOf(
+                listOf(
+                    "t2-code-value",
+                    "t2-role-value",
+                    null,
+                    null,
+                )
+            ),
+            columns = listOf(
+                "t2_code",
+                "t2_role",
+                "t3_code",
+                "t3_role",
+            )
+        ).also {
+            it.next()
+            val value = SQLSerialization.DEFAULT.mapper<Root>().invoke(it)
+            assertEquals("t2-code-value", value.embebbedT2.code)
+            assertEquals("t2-role-value", value.embebbedT2.role)
+            assertNull(value.embebbedT3)
+        }
     }
 }
