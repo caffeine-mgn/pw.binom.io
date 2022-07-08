@@ -4,7 +4,7 @@ package pw.binom.db.postgresql.async.messages.frontend
 // import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Calendar
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.db.postgresql.async.ColumnTypes
 import pw.binom.db.postgresql.async.PackageWriter
@@ -82,7 +82,6 @@ class BindMessage : KindedMessage {
 
 object TypeWriter {
     fun writeBinary(type: Int, value: Any?, writer: PackageWriter) {
-
         if (value == null) {
             writer.writeInt(-1)
             return
@@ -143,7 +142,7 @@ object TypeWriter {
             is String,
             is Float, is Double, is Long, is Int,
             is Boolean,
-            is Date,
+            is DateTime,
             is UUID -> true
             else -> false
         }
@@ -170,7 +169,7 @@ object TypeWriter {
                         "${value.hours.asTwo()}:${value.minutes.asTwo()}:${value.seconds.asTwo()}" +
                         ".${value.millisecond.asThree()}000"
                 }
-                is Date -> {
+                is DateTime -> {
                     val calendar = value.calendar(0)
                     toText(calendar)
                 }

@@ -1,12 +1,12 @@
 package pw.binom.webdav.server
 
 import pw.binom.date.Calendar
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.date.of
 
-fun Date.toUTC() = Date(time - Date.systemZoneOffset.toLong() * 60 * 1000)
+fun DateTime.toUTC() = DateTime(time - DateTime.systemZoneOffset.toLong() * 60 * 1000)
 
-fun String.parseDate(): Date {
+fun String.parseDate(): DateTime {
     // Sat, 30 May 2020 02:05:17 GMT
     val p = indexOf(", ")
     var dayOfMonth = 0
@@ -42,7 +42,7 @@ fun String.parseDate(): Date {
                 5 -> ss = s.toInt()
             }
         }
-    val r = Date.of(
+    val r = DateTime.of(
         year = year,
         dayOfMonth = dayOfMonth,
         hours = h,
@@ -55,7 +55,7 @@ fun String.parseDate(): Date {
     return r
 }
 
-fun Date.asString(): String = calendar(0).asString()
+fun DateTime.asString(): String = calendar(0).asString()
 
 fun Calendar.asString(): String {
     val month = when (month) {
@@ -87,7 +87,8 @@ fun Calendar.asString(): String {
 }
 
 private fun Int.asTwo(): String =
-    if (this > 9)
+    if (this > 9) {
         toString()
-    else
+    } else {
         "0$this"
+    }

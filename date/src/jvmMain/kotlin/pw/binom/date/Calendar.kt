@@ -43,8 +43,8 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
     actual val dayOfWeek: Int
         get() = javaDayOfWeekToCommon(tm.dayOfWeek.value)
 
-    actual val date
-        get() = Date(utcTime)
+    actual val dateTime
+        get() = DateTime(utcTime)
 
     actual fun timeZone(timeZoneOffset3: Int): Calendar =
         Calendar(utcTime = utcTime, timeZoneOffset = timeZoneOffset3)
@@ -61,7 +61,7 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
     actual val offset: Int
         get() = tm.offset.totalSeconds / 60
 
-    actual fun toDate(): Date = Date.new(this)
+    actual fun toDate(): DateTime = DateTime.new(this)
 }
 
 internal fun javaDayOfWeekToCommon(day: Int) =

@@ -3,7 +3,7 @@ package pw.binom.db.sqlite
 import kotlinx.coroutines.withContext
 import pw.binom.UUID
 import pw.binom.concurrency.Worker
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.async.AsyncResultSet
@@ -79,7 +79,7 @@ class AsyncPreparedStatementAdapter(
         }
     }
 
-    override suspend fun set(index: Int, value: Date) {
+    override suspend fun set(index: Int, value: DateTime) {
         val ref = ref
         withContext(worker) {
             ref.set(index, value)

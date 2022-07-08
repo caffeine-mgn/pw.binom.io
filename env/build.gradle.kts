@@ -10,16 +10,16 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 fun androidCInterop(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) {
-    target.run {
-        binaries {
-            compilations["main"].cinterops {
-                create("android") {
-                    defFile = project.file("src/androidNativeMain/cinterop/android.def")
-                    packageName = "platform.android"
-                }
-            }
-        }
-    }
+//    target.run {
+//        binaries {
+//            compilations["main"].cinterops {
+//                create("android") {
+//                    defFile = project.file("src/androidNativeMain/cinterop/android.def")
+//                    packageName = "platform.android"
+//                }
+//            }
+//        }
+//    }
 }
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

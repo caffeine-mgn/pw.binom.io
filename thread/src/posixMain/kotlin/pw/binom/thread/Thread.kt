@@ -6,7 +6,7 @@ import kotlin.time.Duration
 
 private var createCount = 0
 
-@ThreadLocal
+@kotlin.native.concurrent.ThreadLocal
 private var localThread: Thread? = null
 
 private fun genName() = "Thread-${createCount++}"
@@ -18,6 +18,15 @@ actual abstract class Thread(var _id: pthread_t, actual var name: String) {
     actual constructor(name: String) : this(_id = 0.convert(), name = name)
 
     actual constructor() : this(name = genName())
+
+    internal fun nativeExecute() {
+        try {
+            internalIsActive = true
+            execute()
+        } finally {
+            internalIsActive = false
+        }
+    }
 
     actual fun start() {
         if (_id != 0.convert<pthread_t>()) {
@@ -70,12 +79,15 @@ actual abstract class Thread(var _id: pthread_t, actual var name: String) {
     }
 
     actual var uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler
+    private var internalIsActive = false
+    actual val isActive: Boolean
+        get() = internalIsActive
 }
 
 private val func: CPointer<CFunction<(COpaquePointer?) -> COpaquePointer?>> = staticCFunction { ptr ->
     val thread = ptr!!.asStableRef<Thread>()
     try {
-        thread.get().execute()
+        thread.get().nativeExecute()
     } catch (e: Throwable) {
         thread.get().uncaughtExceptionHandler.uncaughtException(
             thread = thread.get(),

@@ -1,7 +1,7 @@
 package pw.binom.db.sqlite
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.sync.SyncResultSet
 import java.sql.ResultSet
 
@@ -98,14 +98,14 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
     override fun isNull(column: String): Boolean =
         native.getObject(column) == null
 
-    override fun getDate(index: Int): Date? {
+    override fun getDate(index: Int): DateTime? {
         native.getObject(index + 1) ?: return null
-        return Date(native.getLong(index + 1))
+        return DateTime(native.getLong(index + 1))
     }
 
-    override fun getDate(column: String): Date? {
+    override fun getDate(column: String): DateTime? {
         native.getObject(column) ?: return null
-        return Date(native.getLong(column))
+        return DateTime(native.getLong(column))
     }
 
     override fun columnIndex(column: String): Int =

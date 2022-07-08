@@ -1,7 +1,7 @@
 package pw.binom.db.serialization
 
 import pw.binom.UUID
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.date.parseIso8601Date
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
@@ -38,7 +38,7 @@ abstract class AbstractStaticSyncResultSet<T> : AsyncResultSet {
     protected open fun getDouble(index: Int, value: T): Double? =
         getString(index, value)?.toDouble()
 
-    protected open fun getDate(index: Int, value: T): Date? =
+    protected open fun getDate(index: Int, value: T): DateTime? =
         getString(index, value)?.parseIso8601Date()
 
 //    protected open fun getBigDecimal(index: Int, value: T): BigDecimal? =
@@ -119,10 +119,10 @@ abstract class AbstractStaticSyncResultSet<T> : AsyncResultSet {
     override fun isNull(column: String): Boolean =
         isNull(columnIndex(column))
 
-    override fun getDate(index: Int): Date? =
+    override fun getDate(index: Int): DateTime? =
         getElement()?.let { getDate(index, it) }
 
-    override fun getDate(column: String): Date? =
+    override fun getDate(column: String): DateTime? =
         getDate(columnIndex(column))
 
     override suspend fun asyncClose() {

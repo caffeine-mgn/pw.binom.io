@@ -1,7 +1,7 @@
 package pw.binom.webdav.server
 
 import pw.binom.copyTo
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.io.*
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
@@ -15,12 +15,14 @@ import pw.binom.xml.dom.writeXml
 import pw.binom.xml.dom.xmlTree
 
 private suspend fun FileSystem.getD(path: Path, d: Int, out: ArrayList<FileSystem.Entity>) {
-    if (d <= 0)
+    if (d <= 0) {
         return
+    }
     getDir(path)?.forEach {
         out.add(it)
-        if (!it.isFile)
+        if (!it.isFile) {
             getD(it.path, d - 1, out)
+        }
     }
 }
 
@@ -29,8 +31,9 @@ suspend fun FileSystem.getEntitiesWithDepth(path: Path, depth: Int): List<FileSy
     val e = get(path.toString().removeSuffix("/").toPath) ?: return null
     out += e
 
-    if (!e.isFile)
+    if (!e.isFile) {
         getD(path, depth, out)
+    }
 
     return out
 }
@@ -76,11 +79,11 @@ abstract class AbstractWebDavHandler<U> : Handler {
                     entities.forEach { e ->
                         node("response", DAV_NS) {
                             node("href", DAV_NS) {
-
-                                if (e.isFile)
+                                if (e.isFile) {
                                     value(getGlobalURI(req).append(e.path).raw)
-                                else
+                                } else {
                                     value(getGlobalURI(req).append(UTF8.urlEncode(e.path.toString() + "/")).raw)
+                                }
                             }
                             node("propstat", DAV_NS) {
                                 node("prop", DAV_NS) {
@@ -94,14 +97,15 @@ abstract class AbstractWebDavHandler<U> : Handler {
                                             }
                                             prop.first == DAV_NS && prop.second == "getlastmodified" ->
                                                 node("getlastmodified", DAV_NS) {
-                                                    value(Date(e.lastModified).toUTC().asString())
+                                                    value(DateTime(e.lastModified).toUTC().asString())
                                                 }
                                             prop.first == DAV_NS && prop.second == "getcontentlength" ->
                                                 node("getcontentlength", DAV_NS) {
-                                                    if (e.isFile)
+                                                    if (e.isFile) {
                                                         value(e.length.toString())
-                                                    else
+                                                    } else {
                                                         value("0")
+                                                    }
                                                 }
                                             prop.first == DAV_NS && prop.second == "resourcetype" -> {
                                                 if (e.isFile) {
@@ -306,7 +310,8 @@ abstract class AbstractWebDavHandler<U> : Handler {
 }
 
 private suspend fun <T> FileSystem.useUser2(user: Any?, func: suspend () -> T): T =
-    if (isSupportUserSystem && user != null)
+    if (isSupportUserSystem && user != null) {
         useUser(user, func)
-    else
+    } else {
         func()
+    }

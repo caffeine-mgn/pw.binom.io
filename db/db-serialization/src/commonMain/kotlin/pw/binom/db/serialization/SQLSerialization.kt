@@ -7,13 +7,13 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import pw.binom.UUID
 import pw.binom.date.Calendar
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 
 val SqlSerializersModule = SerializersModule {
     this.contextual(UUID::class, UUIDSerializer)
 //    this.contextual(BigDecimal::class, BigDecimalSerializer)
-    this.contextual(Date::class, DateSerializer)
+    this.contextual(DateTime::class, DateSerializer)
     this.contextual(Calendar::class, CalendarSerializer)
 }
 
@@ -279,7 +279,6 @@ class SQLSerialization(val serializersModule: SerializersModule = SqlSerializers
         map: MutableMap<String, Any?>,
         columnPrefix: String? = null,
     ) {
-
         val encoder = SQLEncoderImpl(
             columnPrefix = columnPrefix,
             map = map,

@@ -38,7 +38,7 @@ fun Calendar.iso8601() = iso.toString(this)
  * Converts current Date to ISO-8601 using format `yyyy-MM-dd HH:mm:ss.SSSXXX`
  * @param timeZoneOffset default timezone
  */
-fun Date.iso8601(timeZoneOffset: Int = Date.systemZoneOffset) = calendar(timeZoneOffset).iso8601()
+fun DateTime.iso8601(timeZoneOffset: Int = DateTime.systemZoneOffset) = calendar(timeZoneOffset).iso8601()
 
 /**
  * Parse current string to Date using [defaultTimezoneOffset]
@@ -66,7 +66,7 @@ fun Date.iso8601(timeZoneOffset: Int = Date.systemZoneOffset) = calendar(timeZon
  * * yyyy-MM-dd'T'HH:mm:ss.SSSX
  * * yyyy-MM-dd'T'HH:mm:ssX
  */
-fun String.parseIso8601Date(defaultTimezoneOffset: Int = Date.systemZoneOffset): Date? =
+fun String.parseIso8601Date(defaultTimezoneOffset: Int = DateTime.systemZoneOffset): DateTime? =
     iso.parseOrNull(this, defaultTimezoneOffset)
 //    dp1.parseOrNull(this, defaultTimezoneOffset)
 //        ?: dp2.parseOrNull(this, defaultTimezoneOffset)

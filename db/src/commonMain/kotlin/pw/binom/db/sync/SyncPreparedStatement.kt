@@ -4,7 +4,7 @@ package pw.binom.db.sync
 // import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Calendar
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.io.Closeable
 
@@ -20,7 +20,7 @@ interface SyncPreparedStatement : Closeable {
     fun set(index: Int, value: String)
     fun set(index: Int, value: Boolean)
     fun set(index: Int, value: ByteArray)
-    fun set(index: Int, value: Date)
+    fun set(index: Int, value: DateTime)
     fun setNull(index: Int)
     fun executeQuery(): SyncResultSet
     fun executeUpdate(): Long
@@ -41,8 +41,8 @@ interface SyncPreparedStatement : Closeable {
             is String -> set(index, value)
             is Boolean -> set(index, value)
             is ByteArray -> set(index, value)
-            is Date -> set(index, value)
-            is Calendar -> set(index, value.date)
+            is DateTime -> set(index, value)
+            is Calendar -> set(index, value.dateTime)
             is UUID -> set(index, value)
             else -> throw SQLException("Can't set value \"$value\" for argument #$index. Type \"${value::class}\" not supported")
         }

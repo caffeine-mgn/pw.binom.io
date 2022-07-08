@@ -1,5 +1,7 @@
 package pw.binom
 
+import pw.binom.io.ByteBuffer
+import pw.binom.io.empty
 import kotlin.test.Test
 
 class NativeByteBufferTest {

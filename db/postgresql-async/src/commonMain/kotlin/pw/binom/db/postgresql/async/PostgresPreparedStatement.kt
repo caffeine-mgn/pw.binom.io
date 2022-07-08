@@ -3,7 +3,7 @@ package pw.binom.db.postgresql.async
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncPreparedStatement
@@ -106,7 +106,7 @@ class PostgresPreparedStatement(
         params[index] = value
     }
 
-    override suspend fun set(index: Int, value: Date) {
+    override suspend fun set(index: Int, value: DateTime) {
         params[index] = value
     }
 

@@ -2,6 +2,7 @@ package pw.binom.db.serialization
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
 import pw.binom.db.DatabaseEngine
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.pool.AsyncConnectionPool
@@ -10,9 +11,9 @@ internal class DBContextImpl(val pool: AsyncConnectionPool, val sql: SQLSerializ
     private val tx = TransactionManagerImpl(pool)
     val statements = HashMap<String, SQLQueryNamedArguments>()
     val mappers = HashMap<KSerializer<out Any>, suspend (AsyncResultSet) -> Any>()
-    private val entityDescriptions = HashMap<KSerializer<out Any>, EntityDescription>()
-    override fun getDescription(serializer: KSerializer<out Any>) =
-        entityDescriptions.getOrPut(serializer) { EntityDescription.create(serializer) }
+    private val entityDescriptions = HashMap<SerialDescriptor, EntityDescription>()
+    override fun getDescription(serialDescriptor: SerialDescriptor): EntityDescription =
+        entityDescriptions.getOrPut(serialDescriptor) { EntityDescription.create(serialDescriptor, this) }
 
     override suspend fun <T> re(function: suspend (DBAccess) -> T): T = tx.re {
         val access = DBAccessImpl(this, it, sql)

@@ -88,4 +88,6 @@ actual abstract class Thread constructor(val native: JvmThread) {
     }
 
     actual var uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler
+    actual val isActive: Boolean
+        get() = native.isAlive
 }

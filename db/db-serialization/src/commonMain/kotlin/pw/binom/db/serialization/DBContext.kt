@@ -7,7 +7,7 @@ import pw.binom.db.DatabaseEngine
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.io.AsyncCloseable
 
-interface DBContext : AsyncCloseable {
+interface DBContext : DescriptorContext, AsyncCloseable {
     /**
      * Use current transaction if exist. If current transaction not exist will create new transaction
      */
@@ -46,8 +46,6 @@ interface DBContext : AsyncCloseable {
         ifNotExist: Boolean = true,
         tableName: String? = null
     ): String
-
-    fun getDescription(serializer: KSerializer<out Any>): EntityDescription
 
     companion object {
         fun create(pool: AsyncConnectionPool, sql: SQLSerialization = SQLSerialization.DEFAULT): DBContext =

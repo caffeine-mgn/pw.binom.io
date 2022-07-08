@@ -6,7 +6,7 @@ import cnames.structs.sqlite3_stmt
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.sync.SyncResultSet
@@ -33,8 +33,9 @@ class SQLitePrepareStatement(
         get() = sqlite3_limit(connection.ctx.pointed.value, SQLITE_LIMIT_VARIABLE_NUMBER, -1)
 
     private inline fun checkRange(index: Int) {
-        if (index < 0 || index >= maxParams)
+        if (index < 0 || index >= maxParams) {
             throw ArrayIndexOutOfBoundsException()
+        }
     }
 
 //    override fun set(index: Int, value: BigInteger) {
@@ -90,7 +91,7 @@ class SQLitePrepareStatement(
         connection.checkSqlCode(sqlite3_bind_blob(stmt, index + 1, value.refTo(0), value.size, SQLITE_STATIC))
     }
 
-    override fun set(index: Int, value: Date) {
+    override fun set(index: Int, value: DateTime) {
         checkClosed()
         set(index, value.time)
     }

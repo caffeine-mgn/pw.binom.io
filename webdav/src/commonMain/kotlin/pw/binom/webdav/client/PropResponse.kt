@@ -1,6 +1,6 @@
 package pw.binom.webdav.client
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.date.parseRfc822Date
 import pw.binom.webdav.DAV_NS
 import pw.binom.xml.dom.XmlElement
@@ -27,7 +27,7 @@ internal value class PropResponse(val element: XmlElement) {
 
 @JvmInline
 value class Props(val element: XmlElement) {
-    val getLastModified: Date?
+    val getLastModified: DateTime?
         get() {
             val getlastmodified =
                 element.findOneDav("getlastmodified") ?: throw IllegalStateException()

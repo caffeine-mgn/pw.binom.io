@@ -2,7 +2,7 @@ package pw.binom.db.postgresql.async
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.date.of
 import pw.binom.date.parseIso8601Date
 import pw.binom.db.SQLException
@@ -52,7 +52,7 @@ class PostgresAsyncResultSet(
     override fun getUUID(column: String): UUID? =
         getUUID(getIndex(column))
 
-    override fun getDate(index: Int): Date? {
+    override fun getDate(index: Int): DateTime? {
 //        val value = data[index] ?: return null
 //        val vv = getString(1)
         val value = getString(index) ?: return null
@@ -75,8 +75,8 @@ class PostgresAsyncResultSet(
     }
 
     private fun Long.toDatetime() =
-        Date(this / 1000).calendar(0).let {
-            Date.of(
+        DateTime(this / 1000).calendar(0).let {
+            DateTime.of(
                 year = it.year + 30,
                 month = it.month + 0,
                 dayOfMonth = it.dayOfMonth,
@@ -88,7 +88,7 @@ class PostgresAsyncResultSet(
             )
         }
 
-    override fun getDate(column: String): Date? =
+    override fun getDate(column: String): DateTime? =
         try {
             getDate(getIndex(column))
         } catch (e: Throwable) {

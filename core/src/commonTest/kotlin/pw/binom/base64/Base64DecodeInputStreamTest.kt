@@ -4,7 +4,6 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.StringReader
 import pw.binom.io.nextBytes
 import pw.binom.io.use
-import pw.binom.nextBytes
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

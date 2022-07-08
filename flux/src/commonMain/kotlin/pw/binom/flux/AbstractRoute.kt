@@ -1,5 +1,6 @@
 package pw.binom.flux
 
+import kotlinx.coroutines.withContext
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
@@ -93,10 +94,12 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                         )
                     }
                     try {
-                        route.value.forEach {
-                            it(wrapper)
-                            if (action.response != null) {
-                                return
+                        withContext(wrapper) {
+                            route.value.forEach {
+                                it(wrapper)
+                                if (action.response != null) {
+                                    return@forEach
+                                }
                             }
                         }
                     } finally {

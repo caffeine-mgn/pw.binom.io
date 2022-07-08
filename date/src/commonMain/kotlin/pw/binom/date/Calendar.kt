@@ -25,7 +25,7 @@ expect class Calendar {
     val minutes: Int
     val seconds: Int
     val millisecond: Int
-    val date: Date
+    val dateTime: DateTime
 
     /**
      * Returns date as string in GMT Timezone
@@ -43,7 +43,7 @@ expect class Calendar {
      * @param timeZoneOffset3 TimeZone offset in mintes
      */
     fun timeZone(timeZoneOffset3: Int): Calendar
-    fun toDate(): Date
+    fun toDate(): DateTime
 }
 
 /**
@@ -91,7 +91,7 @@ fun Calendar.date(
     millis: Int = this.millisecond,
     timeZoneOffset: Int = this.offset
 ) =
-    Date.of(
+    DateTime.of(
         year = year,
         month = month,
         dayOfMonth = dayOfMonth,

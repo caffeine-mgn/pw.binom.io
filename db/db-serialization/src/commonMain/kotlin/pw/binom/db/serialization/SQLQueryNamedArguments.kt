@@ -1,6 +1,6 @@
 package pw.binom.db.serialization
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 
 class SQLQueryNamedArguments private constructor(
@@ -8,7 +8,7 @@ class SQLQueryNamedArguments private constructor(
     val params: Map<String, List<Int>>,
     val count: Int,
 ) {
-    var lastUsaged: Long = Date.nowTime
+    var lastUsaged: Long = DateTime.nowTime
     fun buildArguments(vararg args: Pair<String, Any?>): Array<Any?> {
         val out = arrayOfNulls<Any>(count)
         args.forEach { arg ->

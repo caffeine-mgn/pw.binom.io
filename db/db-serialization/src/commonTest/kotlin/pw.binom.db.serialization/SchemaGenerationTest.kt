@@ -6,7 +6,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import pw.binom.UUID
 import pw.binom.date.Calendar
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.sqlite.AsyncSQLiteConnector
 import pw.binom.io.use
@@ -29,7 +29,7 @@ class SchemaGenerationTest {
 
         @SqliteColumnType("integer")
         @Contextual
-        val created: Date,
+        val created: DateTime,
 
         @Contextual
         @SqliteColumnType("integer")

@@ -4,7 +4,7 @@ import kotlinx.coroutines.withContext
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.execute
 import pw.binom.concurrency.joinAndGetOrThrow
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.sync.SyncResultSet
 
@@ -97,12 +97,12 @@ class AsyncResultSetAdapter(val ref: SyncResultSet, val worker: Worker, override
             it.isNull(column)
         }.joinAndGetOrThrow()
 
-    override fun getDate(index: Int): Date? =
+    override fun getDate(index: Int): DateTime? =
         worker.execute(ref) {
             it.getDate(index)
         }.joinAndGetOrThrow()
 
-    override fun getDate(column: String): Date? =
+    override fun getDate(column: String): DateTime? =
         worker.execute(ref) {
             it.getDate(column)
         }.joinAndGetOrThrow()

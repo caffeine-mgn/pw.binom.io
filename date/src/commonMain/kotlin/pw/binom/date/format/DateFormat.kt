@@ -1,27 +1,27 @@
 package pw.binom.date.format
 
 import pw.binom.date.Calendar
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import kotlin.jvm.JvmInline
 
 @JvmInline
 value class DateFormat internal constructor(internal val format: Array<Pattern>) {
     data class DateFormatParseResult(val format: DateFormat, val length: Int)
-    data class ParseResult(val date: Date, val length: Int)
+    data class ParseResult(val dateTime: DateTime, val length: Int)
 
     val length
         get() = format.sumOf { it.patternLength }
 
-    fun parseOrNull(text: String, defaultTimezoneOffset: Int = Date.systemZoneOffset): Date? =
+    fun parseOrNull(text: String, defaultTimezoneOffset: Int = DateTime.systemZoneOffset): DateTime? =
         parse3(
             text = text,
             defaultTimezoneOffset = defaultTimezoneOffset,
-        )?.date
+        )?.dateTime
 
     override fun toString(): String = format.joinToString(separator = "")
     internal fun parse2(
         text: String,
-        defaultTimezoneOffset: Int = Date.systemZoneOffset,
+        defaultTimezoneOffset: Int = DateTime.systemZoneOffset,
         returnNullOnEof: Boolean = true,
         position: Int = 0,
         set: ((Pattern.FieldType, Int) -> Unit)?
@@ -60,7 +60,7 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
 
     private fun parse3(
         text: String,
-        defaultTimezoneOffset: Int = Date.systemZoneOffset,
+        defaultTimezoneOffset: Int = DateTime.systemZoneOffset,
         returnNullOnEof: Boolean = true,
         position: Int = 0,
     ): ParseResult? {
@@ -94,7 +94,7 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
             return null
         }
         return ParseResult(
-            date = Date.internalOf(
+            dateTime = DateTime.internalOf(
                 year = year,
                 month = month,
                 dayOfMonth = dayOfMonth,
@@ -116,7 +116,7 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
         return sb.toString()
     }
 
-    fun toString(date: Date, timeZoneOffset: Int = Date.systemZoneOffset): String =
+    fun toString(date: DateTime, timeZoneOffset: Int = DateTime.systemZoneOffset): String =
         toString(date.calendar(timeZoneOffset = timeZoneOffset))
 
     companion object {

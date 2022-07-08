@@ -7,4 +7,4 @@ import kotlinx.serialization.SerialInfo
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.BINARY)
 @SerialInfo
-annotation class Embedded(val prefix: String)
+annotation class Embedded()

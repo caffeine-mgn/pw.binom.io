@@ -4,7 +4,7 @@ package pw.binom.db.async
 // import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.UUID
 import pw.binom.date.Calendar
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.io.AsyncCloseable
 
@@ -20,7 +20,7 @@ interface AsyncPreparedStatement : AsyncCloseable {
     suspend fun set(index: Int, value: String)
     suspend fun set(index: Int, value: Boolean)
     suspend fun set(index: Int, value: ByteArray)
-    suspend fun set(index: Int, value: Date)
+    suspend fun set(index: Int, value: DateTime)
     suspend fun setNull(index: Int)
     suspend fun setValue(index: Int, value: Any?) {
         when (value) {
@@ -34,8 +34,8 @@ interface AsyncPreparedStatement : AsyncCloseable {
             is String -> set(index, value)
             is Boolean -> set(index, value)
             is ByteArray -> set(index, value)
-            is Date -> set(index, value)
-            is Calendar -> set(index, value.date)
+            is DateTime -> set(index, value)
+            is Calendar -> set(index, value.dateTime)
             is UUID -> set(index, value)
             else -> throw SQLException("Can't set value \"$value\" for argument #$index. Type \"${value::class}\" not supported")
         }

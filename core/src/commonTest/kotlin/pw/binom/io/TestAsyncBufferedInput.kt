@@ -2,7 +2,6 @@ package pw.binom.io
 
 import kotlinx.coroutines.test.runTest
 import pw.binom.asyncInput
-import pw.binom.nextBytes
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -28,5 +27,11 @@ class TestAsyncBufferedInput {
         buf.reset(0, 10)
         assertEquals(10, b.readFully(buf))
         assertArrayEquals(data, 10, buf, 0, 5)
+    }
+}
+
+fun assertArrayEquals(expected: ByteBuffer, expectedOffset: Int, actual: ByteBuffer, actualOffset: Int, length: Int) {
+    for (i in expectedOffset until expectedOffset + length) {
+        assertEquals(expected[i], actual[i - expectedOffset + actualOffset], "On Element ${i - expectedOffset}")
     }
 }

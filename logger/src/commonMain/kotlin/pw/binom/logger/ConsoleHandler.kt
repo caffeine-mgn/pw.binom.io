@@ -1,6 +1,6 @@
 package pw.binom.logger
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.date.format.toDatePattern
 
 private val dataPattern = "yyyy/MM/dd HH:mm:ssXXX".toDatePattern()
@@ -30,21 +30,24 @@ object ConsoleHandler : Logger.Handler {
         exception: Throwable?
     ) {
         val currentLevel = logger.level
-        if (currentLevel != null && currentLevel.priority > level.priority)
+        if (currentLevel != null && currentLevel.priority > level.priority) {
             return
-        val now = Date(Date.nowTime).calendar()
+        }
+        val now = DateTime(DateTime.nowTime).calendar()
 
         val sb = StringBuilder()
             .append(dataPattern.toString(now))
             .append(" [").append(level.name).append("]")
-        if (logger.pkg.isNotEmpty())
+        if (logger.pkg.isNotEmpty()) {
             sb.append(" [${logger.pkg}]")
+        }
         if (trace != null) {
             sb.append(" [$trace]")
         }
         sb.append(":")
-        if (text != null)
+        if (text != null) {
             sb.append(" ").append(text)
+        }
         if (exception != null) {
             sb.append(" ").append(exception.stackTraceToString())
         }

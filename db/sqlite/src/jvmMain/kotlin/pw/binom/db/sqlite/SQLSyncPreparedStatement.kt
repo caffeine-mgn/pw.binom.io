@@ -2,7 +2,7 @@ package pw.binom.db.sqlite
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.sync.SyncPreparedStatement
 import java.sql.Timestamp
 import java.sql.PreparedStatement as JPreparedStatement
@@ -45,7 +45,7 @@ class SQLSyncPreparedStatement(override val connection: SQLiteConnector, interna
         native.setBytes(index + 1, value)
     }
 
-    override fun set(index: Int, value: Date) {
+    override fun set(index: Int, value: DateTime) {
         native.setTimestamp(index + 1, Timestamp(value.time))
     }
 

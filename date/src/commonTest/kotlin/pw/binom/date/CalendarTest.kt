@@ -9,14 +9,14 @@ class CalendarTest {
     @Ignore
     @Test
     fun zeroTest() {
-        Date(TestData.ZERO_TIME).calendar(0).also {
+        DateTime(TestData.ZERO_TIME).calendar(0).also {
             assertEquals(0, it.year)
         }
     }
 
     @Test
     fun monthTest() {
-        val date = Date.of(
+        val date = DateTime.of(
             year = 1989,
             month = 1,
             dayOfMonth = 5,

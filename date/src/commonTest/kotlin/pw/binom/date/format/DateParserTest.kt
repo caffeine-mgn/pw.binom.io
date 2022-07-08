@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 class DateParserTest {
     @Test
     fun test() {
-        assertEquals("2021-06-02T01:20:18.698+00:00", Date(1622596818698L).iso8601(0))
+        assertEquals("2021-06-02T01:20:18.698+00:00", DateTime(1622596818698L).iso8601(0))
 
         "yyyy-MM-dd".toDatePattern().parseOrNull("1989-01-05", defaultTimezoneOffset = 3 * 60)!!.calendar(3 * 60)
             .apply {
@@ -34,7 +34,7 @@ class DateParserTest {
 
     @Test
     fun rtc822Test() {
-        val date = Date.of(
+        val date = DateTime.of(
             year = 1989,
             month = 1,
             dayOfMonth = 1,
@@ -60,7 +60,7 @@ class DateParserTest {
             assertEquals(32, date.minutes)
             assertEquals(0, date.seconds)
             assertEquals(0, date.millisecond)
-            assertEquals(Date.systemZoneOffset, date.offset)
+            assertEquals(DateTime.systemZoneOffset, date.offset)
         }
         assert(pattern.parseOrNull("14:32")!!.calendar())
         assert(pattern.parseOrNull("1432")!!.calendar())
@@ -77,7 +77,7 @@ class DateParserTest {
             assertEquals(32, date.minutes)
             assertEquals(0, date.seconds)
             assertEquals(0, date.millisecond)
-            assertEquals(Date.systemZoneOffset, date.offset)
+            assertEquals(DateTime.systemZoneOffset, date.offset)
         }
         assert(pattern.parseOrNull("1432")!!.calendar())
         assert(pattern.parseOrNull("197101 1432")!!.calendar())
@@ -96,7 +96,7 @@ class DateParserTest {
             assertEquals(0, date.minutes)
             assertEquals(0, date.seconds)
             assertEquals(0, date.millisecond)
-            assertEquals(Date.systemZoneOffset, date.offset)
+            assertEquals(DateTime.systemZoneOffset, date.offset)
         }
         assert(pattern.parseOrNull("2021")!!.calendar())
         assert(pattern.parseOrNull("2021-")!!.calendar())

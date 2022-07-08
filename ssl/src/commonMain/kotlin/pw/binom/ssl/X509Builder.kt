@@ -1,6 +1,6 @@
 package pw.binom.ssl
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 
 class X509Builder(
     val pair: KeyGenerator.KeyPair,
@@ -8,8 +8,8 @@ class X509Builder(
     val version: Version = Version.V3,
     val subject: String,
     val issuer: String,
-    val notBefore: Date,
-    val notAfter: Date,
+    val notBefore: DateTime,
+    val notAfter: DateTime,
     val serialNumber: Long = 0L
 ) {
     enum class Version {

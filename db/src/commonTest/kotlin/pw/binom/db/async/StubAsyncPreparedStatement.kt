@@ -1,6 +1,6 @@
 package pw.binom.db.async
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 
 class StubAsyncPreparedStatement(override val connection: StubConnection, val sql: String) : AsyncPreparedStatement {
     override suspend fun set(index: Int, value: Double) {
@@ -24,7 +24,7 @@ class StubAsyncPreparedStatement(override val connection: StubConnection, val sq
     override suspend fun set(index: Int, value: ByteArray) {
     }
 
-    override suspend fun set(index: Int, value: Date) {
+    override suspend fun set(index: Int, value: DateTime) {
     }
 
     override suspend fun setNull(index: Int) {

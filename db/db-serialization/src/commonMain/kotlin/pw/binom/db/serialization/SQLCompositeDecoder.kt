@@ -79,11 +79,13 @@ class SQLCompositeDecoder(
         previousValue: T?
     ): T? {
         val embedded = descriptor.getElementAnnotation<Embedded>(index)
+        val embedded2 = descriptor.getElementAnnotation<EmbeddedSplitter>(index)
         if (embedded != null) {
             val fieldDescriptor = descriptor.getElementDescriptor(index)
             val exist = (0 until fieldDescriptor.elementsCount).any { fieldIndex ->
                 val elementName = fieldDescriptor.getElementName(fieldIndex)
-                val el = "${columnPrefix ?: ""}${embedded.prefix}$elementName"
+                val el =
+                    "${columnPrefix ?: ""}${descriptor.getElementName(index)}${embedded2?.splitter ?: "_"}$elementName"
                 resultSet.columns.any { it == el && !resultSet.isNull(el) }
             }
             if (!exist) {

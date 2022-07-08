@@ -8,7 +8,7 @@ import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.UUID
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 
 class SQLValueEncoder(
     val classDescriptor: SerialDescriptor,
@@ -19,8 +19,8 @@ class SQLValueEncoder(
 ) : SQLEncoder {
 
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
-    override fun encodeDate(date: Date) {
-        map[columnName] = date
+    override fun encodeDate(dateTime: DateTime) {
+        map[columnName] = dateTime
     }
 
     override fun encodeUUID(uuid: UUID) {
@@ -44,7 +44,16 @@ class SQLValueEncoder(
     }
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
-        TODO("Not yet implemented")
+        val embedded = classDescriptor.getElementAnnotation<Embedded>(fieldIndex) ?: TODO()
+        val embedded2 = classDescriptor.getElementAnnotation<EmbeddedSplitter>(fieldIndex)
+        return SQLCompositeEncoder(
+            columnPrefix = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex) + (
+                embedded2?.splitter
+                    ?: "_"
+                ),
+            map = map,
+            serializersModule = serializersModule,
+        )
     }
 
     override fun encodeBoolean(value: Boolean) {
@@ -65,32 +74,31 @@ class SQLValueEncoder(
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {
-        val code =
-            enumDescriptor.getElementAnnotations(index).find { it is EnumCodeValue }?.let { it as EnumCodeValue }?.code
-        val alias = enumDescriptor.getElementAnnotations(index).find { it is EnumAliasValue }
-            ?.let { it as EnumAliasValue }?.alias
+        val code = enumDescriptor.getElementAnnotation<EnumCodeValue>(index)?.code
+//        val alias = enumDescriptor.getElementAnnotation<EnumAliasValue>(index)?.alias
         val byOrder = enumDescriptor.annotations.any { it is EnumOrderValue }
-        val byName = enumDescriptor.annotations.any { it is EnumNameValue }
-        if (byOrder && byName) {
-            throw SerializationException("Invalid configuration of ${enumDescriptor.serialName}. Enum should use only one of @EnumOrderValue or @EnumNameValue")
+//        val byName = enumDescriptor.annotations.any { it is EnumNameValue }
+//        if (code != null && alias != null) {
+//            throw SerializationException(
+//                "Invalid configuration of ${enumDescriptor.serialName}.${
+//                enumDescriptor.getElementName(
+//                    index
+//                )
+//                } Enum should use only one of @EnumCodeValue or @EnumAliasValue"
+//            )
+//        }
+        map[columnName] = if (byOrder) {
+            code ?: index
+        } else {
+            enumDescriptor.getElementName(index)
         }
-        if (code != null && alias != null) {
-            throw SerializationException(
-                "Invalid configuration of ${enumDescriptor.serialName}.${
-                enumDescriptor.getElementName(
-                    index
-                )
-                } Enum should use only one of @EnumCodeValue or @EnumAliasValue"
-            )
-        }
-        val value: Any = when {
-            code != null -> code
-            alias != null -> alias
-            enumDescriptor.annotations.any { it is EnumOrderValue } -> index
-            enumDescriptor.annotations.any { it is EnumNameValue } -> enumDescriptor.getElementName(index)
-            else -> throw SerializationException("Can't detect valid enum ${enumDescriptor.serialName} serialization method")
-        }
-        map[columnName] = value
+//        val value: Any = when {
+//            code != null -> code
+//            alias != null -> alias
+//            enumDescriptor.annotations.any { it is EnumOrderValue } -> index
+//            else -> enumDescriptor.getElementName(index)
+//        }
+//        map[columnName] = value
     }
 
     override fun encodeFloat(value: Float) {

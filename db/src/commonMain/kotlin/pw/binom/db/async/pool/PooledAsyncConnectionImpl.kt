@@ -1,6 +1,6 @@
 package pw.binom.db.async.pool
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.async.AsyncStatement
@@ -33,12 +33,12 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
         }
     }
 
-    private var lastCheckTime = Date.nowTime
+    private var lastCheckTime = DateTime.nowTime
     var lastActive = 0L
         private set
 
     fun updateActive() {
-        lastActive = Date.nowTime
+        lastActive = DateTime.nowTime
     }
 
     private var invalid = false
@@ -63,7 +63,7 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
             return false
         }
         clean()
-        if (Date.nowTime - lastCheckTime > pool.pingTime.toDouble(DurationUnit.MILLISECONDS).toLong()) {
+        if (DateTime.nowTime - lastCheckTime > pool.pingTime.toDouble(DurationUnit.MILLISECONDS).toLong()) {
             if (isReadyForQuery()) {
                 try {
                     connection.createStatement().use { it.executeQuery("select 1").asyncClose() }
@@ -72,7 +72,7 @@ class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connectio
                     return false
                 }
             }
-            lastCheckTime = Date.nowTime
+            lastCheckTime = DateTime.nowTime
         }
         return true
     }

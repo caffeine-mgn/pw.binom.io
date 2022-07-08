@@ -51,9 +51,9 @@ class SQLSerializationTest {
         @Serializable
         data class Root(
             val t1: String,
-            @Embedded("t2_")
+            @Embedded
             val embebbedT2: Em,
-            @Embedded("t3_")
+            @Embedded
             val embebbedT3: Em?
         )
 
@@ -67,8 +67,8 @@ class SQLSerializationTest {
             ),
             columns = listOf(
                 "t1",
-                "t2_t2",
-                "t3_t2",
+                "embebbedT2_t2",
+                "embebbedT3_t2",
             )
         )
         result.next()
@@ -89,9 +89,17 @@ class SQLSerializationTest {
 
         @Serializable
         data class Root(
-            @Embedded("t2_") val embebbedT2: Value,
-            @Embedded("t3_") val embebbedT3: Value?
+            @Embedded
+            val embebbedT2: Value,
+            @Embedded
+            val embebbedT3: Value?
         )
+
+        val result = SQLSerialization.DEFAULT.buildSqlNamedParams(Root.serializer(), Root(Value("1", "2"), null))
+        result.entries.forEach {
+            println("->${it.key}: \"${it.value}\"")
+        }
+        println("->$result")
 
         ListStaticSyncResultSet(
             list = listOf(
@@ -103,10 +111,10 @@ class SQLSerializationTest {
                 )
             ),
             columns = listOf(
-                "t2_code",
-                "t2_role",
-                "t3_code",
-                "t3_role",
+                "embebbedT2_code",
+                "embebbedT2_role",
+                "embebbedT3_code",
+                "embebbedT3_role",
             )
         ).also {
             it.next()

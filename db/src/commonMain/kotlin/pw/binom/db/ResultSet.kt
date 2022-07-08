@@ -2,7 +2,7 @@ package pw.binom.db
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.UUID
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.io.IOException
 
 interface ResultSet {
@@ -22,7 +22,7 @@ interface ResultSet {
     fun getBlob(index: Int): ByteArray?
     fun isNull(index: Int): Boolean
     fun getUUID(index: Int) = getBlob(index)?.let { UUID.create(it) }
-    fun getDate(index: Int): Date?
+    fun getDate(index: Int): DateTime?
 
     fun getString(column: String): String?
     fun getBoolean(column: String): Boolean?
@@ -35,7 +35,7 @@ interface ResultSet {
     fun getBlob(column: String): ByteArray?
     fun isNull(column: String): Boolean
     fun getUUID(column: String) = getBlob(column)?.let { UUID.create(it) }
-    fun getDate(column: String): Date?
+    fun getDate(column: String): DateTime?
     fun columnIndex(column: String): Int {
         val p = columns.indexOfFirst { it.lowercase() == column.lowercase() }
         if (p == -1) {

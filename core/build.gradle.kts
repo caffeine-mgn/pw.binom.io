@@ -70,11 +70,11 @@ kotlin {
 //                dependsOn(jvmMain)
 //            }
 //        }
-        val nativeMain by creating {
+        val nativeCommonMain by creating {
             dependsOn(commonMain)
         }
         val nativeHostedMain by creating {
-            dependsOn(nativeMain)
+            dependsOn(nativeCommonMain)
         }
 
         dependsOn("linux*Main", nativeHostedMain)
@@ -83,14 +83,12 @@ kotlin {
         dependsOn("macos*Main", nativeHostedMain)
         dependsOn("ios*Main", nativeHostedMain)
         dependsOn("androidNative*Main", nativeHostedMain)
-        dependsOn("wasm*Main", nativeMain)
+        dependsOn("wasm*Main", nativeCommonMain)
 
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
-//                api(project(":concurrency"))
-//                api(project(":file"))
                 api(project(":charset"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")

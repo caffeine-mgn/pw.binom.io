@@ -1,6 +1,5 @@
 package pw.binom
 
-import pw.binom.net.plus
 import pw.binom.net.toPath
 import pw.binom.net.toURL
 import kotlin.test.Test

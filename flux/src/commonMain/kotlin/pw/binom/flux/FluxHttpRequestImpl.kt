@@ -10,8 +10,13 @@ import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.net.Path
 import pw.binom.net.Query
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
-internal class FluxHttpRequestImpl : FluxHttpRequest, HttpRequest {
+internal object FluxHttpRequestImplKey : CoroutineContext.Key<FluxHttpRequestImpl>
+
+internal class FluxHttpRequestImpl : FluxHttpRequest, HttpRequest,
+    AbstractCoroutineContextElement(FluxHttpRequestImplKey) {
     override val method: String
         get() = original!!.method
     override val headers: Headers

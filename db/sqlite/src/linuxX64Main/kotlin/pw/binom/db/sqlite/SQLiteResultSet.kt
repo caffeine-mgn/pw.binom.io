@@ -3,7 +3,7 @@ package pw.binom.db.sqlite
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncResultSet
 
@@ -32,8 +32,9 @@ class SQLiteResultSet(
     private var skipOne = true
 
     override fun next(): Boolean {
-        if (empty)
+        if (empty) {
             return false
+        }
 
         if (skipOne) {
             skipOne = false
@@ -61,8 +62,9 @@ class SQLiteResultSet(
     }
 
     private inline fun checkRange(index: Int) {
-        if (index < 0 || index >= columnCount)
+        if (index < 0 || index >= columnCount) {
             throw ArrayIndexOutOfBoundsException()
+        }
     }
 
     override fun getString(index: Int): String? {
@@ -157,17 +159,18 @@ class SQLiteResultSet(
     override fun isNull(column: String) =
         isNullColumn(columnIndex(column))
 
-    override fun getDate(index: Int): Date? =
-        getLong(index)?.let { Date(it) }
+    override fun getDate(index: Int): DateTime? =
+        getLong(index)?.let { DateTime(it) }
 
-    override fun getDate(column: String): Date? =
+    override fun getDate(column: String): DateTime? =
         getDate(columnIndex(column))
 
     private var closed = false
 
     private inline fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw SQLException("ResultSet already closed")
+        }
     }
 
     override fun close() {

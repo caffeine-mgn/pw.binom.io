@@ -1,6 +1,6 @@
 package pw.binom.io.db.kmigrator
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.async.forEach
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.async.pool.PooledAsyncConnection
@@ -53,7 +53,6 @@ class KMigrator(
     }
 
     suspend fun execute(st: AsyncConnectionPool) {
-
         val executedMigrations = HashSet<String>()
         st.borrow {
             executeUpdate(
@@ -78,7 +77,7 @@ create table if not exists $table (
                     try {
                         executeUpdate("begin")
                         it.execute(this)
-                        insertRecord.executeUpdate(it.id, Date())
+                        insertRecord.executeUpdate(it.id, DateTime())
                         executeUpdate("commit")
                         logger.debug("Step \"${it.id}\" successful applied")
                     } catch (e: Throwable) {

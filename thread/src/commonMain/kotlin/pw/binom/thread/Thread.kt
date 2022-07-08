@@ -24,6 +24,7 @@ expect abstract class Thread {
     constructor()
     constructor(name: String)
 
+    val isActive: Boolean
     var name: String
     val id: Long
     var uncaughtExceptionHandler: UncaughtExceptionHandler

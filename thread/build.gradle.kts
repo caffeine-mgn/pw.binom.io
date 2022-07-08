@@ -1,3 +1,5 @@
+import pw.binom.publish.dependsOn
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -50,35 +52,16 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(posixMain)
         }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
-//        val linuxMips32Main by getting {
-//            dependsOn(linuxX64Main)
-//        }
-//
-//        val linuxMipsel32Main by getting {
-//            dependsOn(linuxX64Main)
-//        }
+        dependsOn("linux*Main", linuxX64Main)
         val mingwX64Main by getting {
             dependsOn(nativeMain)
         }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(mingwX64Main)
-            }
-        }
+        dependsOn("mingw*Main", mingwX64Main)
 
         val macosX64Main by getting {
             dependsOn(posixMain)
         }
+        dependsOn("macos*Main", macosX64Main)
 
         val commonTest by getting {
             dependencies {

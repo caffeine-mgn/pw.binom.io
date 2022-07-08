@@ -8,7 +8,7 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.UUID
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 
 class SQLValueDecoder(
@@ -20,17 +20,18 @@ class SQLValueDecoder(
 ) : SqlDecoder {
 
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
-    override fun decodeDate(): Date = resultSet.getDate(columnName)!!
+    override fun decodeDate(): DateTime = resultSet.getDate(columnName)!!
     override fun decodeUUID(): UUID = resultSet.getUUID(columnName)!!
     override fun decodeByteArray(): ByteArray = resultSet.getBlob(columnName)!!
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        val prefix = (columnPrefix ?: "") +
-            (classDescriptor.getElementAnnotation<Embedded>(fieldIndex)?.prefix ?: "")
+        val prefix = (columnPrefix ?: "") + columnName +
+            (classDescriptor.getElementAnnotation<EmbeddedSplitter>(fieldIndex)?.splitter ?: "_")
 
         return when {
             descriptor == ByteArraySerializer().descriptor -> ByteArraySQLCompositeDecoder(
-                data = resultSet.getBlob(columnName)!!, serializersModule = serializersModule
+                data = resultSet.getBlob(columnName)!!,
+                serializersModule = serializersModule
             )
             else -> SQLCompositeDecoder(
                 columnPrefix = prefix,
@@ -56,23 +57,20 @@ class SQLValueDecoder(
     @OptIn(ExperimentalSerializationApi::class)
     override fun decodeEnum(enumDescriptor: SerialDescriptor): Int {
         val byOrder = enumDescriptor.annotations.any { it is EnumOrderValue }
-        val byName = enumDescriptor.annotations.any { it is EnumNameValue }
-        if (byOrder && byName) {
-            throw SerializationException("Invalid configuration of ${enumDescriptor.serialName}. Enum should use only one of @EnumOrderValue or @EnumNameValue")
-        }
         val columnValue = resultSet.getString(columnName)!!
         val columnValueInt = columnValue.toIntOrNull()
         for (i in 0 until enumDescriptor.elementsCount) {
-            val elementAnnotations = enumDescriptor.getElementAnnotations(i)
-            if (columnValueInt != null) {
-                val code = elementAnnotations.find { it is EnumCodeValue }?.let { it as EnumCodeValue }?.code
-                if (columnValueInt == code) {
+            if (byOrder) {
+                if (columnValueInt != null) {
+                    val code = enumDescriptor.getElementAnnotation<EnumCodeValue>(i)?.code
+                    if (columnValueInt == code) {
+                        return i
+                    }
+                }
+            } else {
+                if (columnValue == enumDescriptor.getElementName(i)) {
                     return i
                 }
-            }
-            val alias = elementAnnotations.find { it is EnumAliasValue }?.let { it as EnumAliasValue }?.alias
-            if (columnValue == alias) {
-                return i
             }
         }
         throw SerializationException("Can't find enum ${enumDescriptor.serialName} by value \"$columnValue\"")

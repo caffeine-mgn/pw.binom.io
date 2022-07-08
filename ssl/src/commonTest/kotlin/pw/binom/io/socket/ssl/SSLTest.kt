@@ -2,7 +2,7 @@ package pw.binom.io.socket.ssl
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.io.ByteBuffer
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
@@ -33,7 +33,6 @@ class SSLTest {
 
     @Test
     fun test() = runBlocking {
-
         val pairRoot = KeyGenerator.generate(
             KeyAlgorithm.RSA,
             2048
@@ -46,8 +45,8 @@ class SSLTest {
         val private1 = pair1.createPrivateKey()
         val public2 = X509Builder(
             pair = pair1,
-            notBefore = Date(),
-            notAfter = Date(Date.nowTime + 1000 * 60 * 60),
+            notBefore = DateTime(),
+            notAfter = DateTime(DateTime.nowTime + 1000 * 60 * 60),
             serialNumber = 10,
             issuer = "DC=localhost",
             subject = "CN=localhost",

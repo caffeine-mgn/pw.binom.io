@@ -1,6 +1,6 @@
 package pw.binom.webdav.client
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
@@ -79,7 +79,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
         val ss = path.toString().split('/')
         return WebdavEntity(
             user = WebAuthAccess.getCurrentUser(),
-            lastModified = Date.nowTime,
+            lastModified = DateTime.nowTime,
             path = (ss.subList(0, ss.lastIndex - 1).joinToString("/")).toPath,
             isFile = false,
             length = 0,

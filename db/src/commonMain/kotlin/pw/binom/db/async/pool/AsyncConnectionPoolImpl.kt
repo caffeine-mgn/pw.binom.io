@@ -2,7 +2,7 @@ package pw.binom.db.async.pool
 
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.io.StreamClosedException
 import pw.binom.io.use
@@ -78,7 +78,7 @@ class AsyncConnectionPoolImpl constructor(
                 val it = idleConnection.iterator()
                 while (it.hasNext()) {
                     val e = it.next()
-                    if (Date.nowTime - e.lastActive > idleTime.toLong(DurationUnit.MILLISECONDS)) {
+                    if (DateTime.nowTime - e.lastActive > idleTime.toLong(DurationUnit.MILLISECONDS)) {
                         it.remove()
                         connectionsLock.synchronize {
                             connections -= e

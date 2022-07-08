@@ -1,6 +1,6 @@
 package pw.binom.db.async
 
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 
 class StubAsyncResultSet(
     override val columns: List<String>,
@@ -56,9 +56,9 @@ class StubAsyncResultSet(
 
     override fun isNull(column: String): Boolean = isNull(getColumn(column))
 
-    override fun getDate(index: Int): Date? = element!![index]?.let { it as Date }
+    override fun getDate(index: Int): DateTime? = element!![index]?.let { it as DateTime }
 
-    override fun getDate(column: String): Date? = getDate(getColumn(column))
+    override fun getDate(column: String): DateTime? = getDate(getColumn(column))
 
     override suspend fun asyncClose() {
     }

@@ -5,7 +5,7 @@ import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.System
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ClosedException
 import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
@@ -59,7 +59,7 @@ class HttpServer(
         }
     }
 
-    private var lastIdleCheckTime = Date.nowTime
+    private var lastIdleCheckTime = DateTime.nowTime
     private val binds = ArrayList<TcpServerConnection>()
     private val idleConnections = HashSet<ServerAsyncAsciiChannel>()
 
@@ -69,7 +69,7 @@ class HttpServer(
 
     suspend fun forceIdleCheck(): Int {
         var count = 0
-        val now = Date.nowTime
+        val now = DateTime.nowTime
         lastIdleCheckTime = now
 
         val it = idleConnections.iterator()
@@ -88,7 +88,7 @@ class HttpServer(
     }
 
     private suspend fun idleCheck() {
-        val now = Date.nowTime
+        val now = DateTime.nowTime
         if (now - lastIdleCheckTime < idleCheckInterval) {
             return
         }

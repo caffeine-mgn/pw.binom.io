@@ -21,7 +21,7 @@ object CalendarSerializer : KSerializer<Calendar> {
         }
 
         encoder.classDescriptor.getElementName(encoder.fieldIndex)
-        encoder.map[encoder.columnName] = value.date
+        encoder.map[encoder.columnName] = value.dateTime
     }
 
     override val descriptor: SerialDescriptor
