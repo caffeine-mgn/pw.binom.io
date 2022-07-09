@@ -5,7 +5,7 @@ import pw.binom.UUID
 import pw.binom.date.DateTime
 
 interface SqlDecoder : Decoder {
-    fun decodeDate(): DateTime
+    fun decodeDateTime(): DateTime
     fun decodeUUID(): UUID
     fun decodeByteArray(): ByteArray
 }

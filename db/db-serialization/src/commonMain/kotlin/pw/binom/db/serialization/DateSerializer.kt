@@ -12,7 +12,7 @@ object DateSerializer : KSerializer<DateTime> {
         if (decoder !is SqlDecoder) {
             throw IllegalArgumentException("DateSerializer support only pw.binom.db.serialization.SqlDecoder")
         }
-        return decoder.decodeDate()
+        return decoder.decodeDateTime()
     }
 
     override fun serialize(encoder: Encoder, value: DateTime) {

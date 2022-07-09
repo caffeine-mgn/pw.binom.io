@@ -20,12 +20,12 @@ class SQLValueDecoder(
 ) : SqlDecoder {
 
     val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
-    override fun decodeDate(): DateTime = resultSet.getDate(columnName)!!
+    override fun decodeDateTime(): DateTime = resultSet.getDate(columnName)!!
     override fun decodeUUID(): UUID = resultSet.getUUID(columnName)!!
     override fun decodeByteArray(): ByteArray = resultSet.getBlob(columnName)!!
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        val prefix = (columnPrefix ?: "") + columnName +
+        val prefix = columnName +
             (classDescriptor.getElementAnnotation<EmbeddedSplitter>(fieldIndex)?.splitter ?: "_")
 
         return when {
