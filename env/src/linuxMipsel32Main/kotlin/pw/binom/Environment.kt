@@ -1,5 +1,5 @@
 package pw.binom
-
+/*
 import kotlinx.cinterop.*
 import platform.posix.*
 
@@ -56,3 +56,4 @@ actual val Environment.currentExecutionPath: String
                 throw RuntimeException("Can't get current execution path. Error #$errno")
             }
         }
+*/

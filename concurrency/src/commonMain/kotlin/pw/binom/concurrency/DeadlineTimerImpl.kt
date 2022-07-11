@@ -1,11 +1,23 @@
 package pw.binom.concurrency
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.suspendCancellableCoroutine
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.collections.TreeMap
 import pw.binom.doFreeze
+import pw.binom.io.ClosedException
+import pw.binom.popOrNull
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.resumeWithException
 import kotlin.native.concurrent.SharedImmutable
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 @SharedImmutable
 private val CLOSE_MARKER: () -> Unit = {}.doFreeze()
-/*
 
 @Deprecated(message = "Not use it. Will be deleted")
 @OptIn(ExperimentalTime::class)
@@ -57,9 +69,9 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
 
                 if (signal) {
                     continue
-                    //wakeup by signal
+                    // wakeup by signal
                 } else {
-                    //wakeup by time
+                    // wakeup by time
                     if (startTime.elapsedNow() < c.key) {
                         continue
                     }
@@ -74,7 +86,6 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
                 }
             }
             tasks.clear()
-
         }
     }
 
@@ -124,9 +135,12 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
                 return@suspendCancellableCoroutine
             }
             delay(delay) {
-                dispatcher.dispatch(con.context, Runnable {
-                    con.resumeWith(Result.success(Unit))
-                })
+                dispatcher.dispatch(
+                    con.context,
+                    Runnable {
+                        con.resumeWith(Result.success(Unit))
+                    }
+                )
             }
         }
     }
@@ -143,4 +157,3 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
         worker.requestTermination().joinAndGetOrThrow()
     }
 }
-*/

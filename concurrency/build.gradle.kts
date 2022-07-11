@@ -19,8 +19,8 @@ kotlin {
     linuxX64()
 //    linuxArm64()
 //    linuxArm32Hfp()
-    linuxMips32()
-    linuxMipsel32()
+//    linuxMips32()
+//    linuxMipsel32()
     mingwX64()
 //    mingwX86()
     macosX64()
@@ -44,6 +44,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":core"))
+                api(project(":collections"))
                 api(kotlin("stdlib-common"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }

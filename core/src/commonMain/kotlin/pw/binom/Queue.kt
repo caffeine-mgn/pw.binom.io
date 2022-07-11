@@ -98,15 +98,17 @@ fun <T> Queue<T>.popAwait(dist: PopResult<T>, timeout: Long? = null) {
 fun <T> Queue<T>.popOrNull(): T? {
     val result = PopResult<T>()
     pop(result)
-    if (result.isEmpty)
+    if (result.isEmpty) {
         return null
+    }
     return result.value
 }
 
 fun <T> Queue<T>.popOrElse(func: () -> T): T {
     val result = PopResult<T>()
     pop(result)
-    if (result.isEmpty)
+    if (result.isEmpty) {
         return func()
+    }
     return result.value
 }

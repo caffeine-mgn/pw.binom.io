@@ -1,4 +1,6 @@
-import pw.binom.kotlin.clang.*
+import pw.binom.kotlin.clang.clangBuildStatic
+import pw.binom.kotlin.clang.compileTaskName
+import pw.binom.kotlin.clang.eachNative
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -70,6 +72,7 @@ kotlin {
                 api(project(":db"))
                 api(project(":file"))
                 api(project(":concurrency"))
+                api(project(":thread"))
             }
         }
 

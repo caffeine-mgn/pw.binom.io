@@ -64,7 +64,6 @@ operator fun DateTime.compareTo(expDate: DateTime): Int = when {
     time < expDate.time -> -1
     else -> 0
 }
-
 fun minOf(a: DateTime, b: DateTime) = if (a < b) a else b
 fun maxOf(a: DateTime, b: DateTime) = if (a > b) a else b
 
@@ -73,17 +72,3 @@ operator fun DateTime.plus(duration: Duration) =
 
 operator fun DateTime.minus(duration: Duration) =
     DateTime(time - duration.inWholeMilliseconds)
-
-// internal fun getJulianDay(day: Int, month: Int, year: Int): Int {
-//    val a = (14 - month) / 12
-//    val y = year + 4800 - a
-//    val m = month + 12 * a - 3
-//
-//    return if ((year > 1582) || (year == 1582 && month > 10) ||
-//        (year == 1582 && month == 10 && day < 15)
-//    ) {
-//        day + (153 * m + 2) / 5 + 365 * y + y / 4 - y / 100 + y / 400 - 32045
-//    } else {
-//        day + (153 * m + 2) / 5 + 365 * y + y / 4 - 32045
-//    }
-// }

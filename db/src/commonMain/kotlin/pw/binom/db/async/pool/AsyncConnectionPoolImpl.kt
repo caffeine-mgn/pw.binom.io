@@ -140,10 +140,12 @@ class AsyncConnectionPoolImpl constructor(
         }
     }
 
-    override suspend fun <T> borrow(func: suspend PooledAsyncConnection.() -> T): T =
-        getConnectionAnyWay().use {
+    override suspend fun <T> borrow(func: suspend PooledAsyncConnection.() -> T): T {
+        val out = getConnectionAnyWay().use {
             func(it)
         }
+        return out
+    }
 
     internal suspend fun free(sql: String) {
         val connections = connectionsLock.synchronize {

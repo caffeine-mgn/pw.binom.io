@@ -1,7 +1,7 @@
 package pw.binom.db.sqlite
 
 import kotlinx.coroutines.withContext
-import pw.binom.concurrency.Worker
+import kotlinx.coroutines.withTimeout
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.AsyncStatement
@@ -9,13 +9,15 @@ import pw.binom.db.sync.SyncStatement
 
 class AsyncStatementAdapter(
     val ref: SyncStatement,
-    val worker: Worker,
+    val worker: MyWorker,
     override val connection: AsyncConnection,
 ) : AsyncStatement {
     override suspend fun executeQuery(query: String): AsyncResultSet {
-        val v = withContext(worker) {
-            val r = ref.executeQuery(query)
-            r to r.columns
+        val v = withTimeout(ASYNC_TIMEOUT) {
+            withContext(worker) {
+                val r = ref.executeQuery(query)
+                r to r.columns
+            }
         }
 
         return AsyncResultSetAdapter(
@@ -25,15 +27,17 @@ class AsyncStatementAdapter(
         )
     }
 
-    override suspend fun executeUpdate(query: String): Long =
+    override suspend fun executeUpdate(query: String): Long = withTimeout(ASYNC_TIMEOUT) {
         withContext(worker) {
             ref.executeUpdate(query)
         }
+    }
 
     override suspend fun asyncClose() {
-        withContext(worker) {
-            ref.close()
+        withTimeout(ASYNC_TIMEOUT) {
+            withContext(worker) {
+                ref.close()
+            }
         }
-        ref.close()
     }
 }

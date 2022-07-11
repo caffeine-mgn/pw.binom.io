@@ -1,9 +1,13 @@
 package pw.binom.io.file
 
-import pw.binom.*
+import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.Environment
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
+import pw.binom.copyTo
 import pw.binom.io.*
+import pw.binom.net.Path
+import pw.binom.workDirectory
 
 expect class File(path: String) {
     constructor(parent: File, name: String)
@@ -41,18 +45,20 @@ val File.isExist: Boolean
 val File.name: String
     get() {
         val p = path.lastIndexOf(File.SEPARATOR)
-        if (p == -1)
+        if (p == -1) {
             return path
+        }
         return path.substring(p + 1)
     }
 
 val File.parent: File?
     get() = path.lastIndexOf(File.SEPARATOR).let {
         File(
-            if (it == -1)
+            if (it == -1) {
                 return@let null
-            else
+            } else {
                 path.substring(0, it)
+            }
         )
     }
 
@@ -60,10 +66,11 @@ val File.nameWithoutExtension: String
     get() {
         val name = name
         return name.lastIndexOf('.').let {
-            if (it == -1)
+            if (it == -1) {
                 return name
-            else
+            } else {
                 name.substring(0, it)
+            }
         }
     }
 
@@ -71,10 +78,11 @@ val File.extension: String?
     get() {
         val name = name
         return name.lastIndexOf('.').let {
-            if (it == -1)
+            if (it == -1) {
                 return null
-            else
+            } else {
                 name.substring(it + 1)
+            }
         }
     }
 
@@ -125,18 +133,31 @@ fun File.mkdirs(): File? {
 }
 
 fun File.deleteRecursive(): Boolean {
-    if (isFile)
+    if (isFile) {
         return delete()
+    }
     if (isDirectory) {
         iterator().forEach {
-            if (!it.deleteRecursive())
+            if (!it.deleteRecursive()) {
                 return false
+            }
         }
     }
     return delete()
 }
 
+fun File.relative(path: Path): File = relative(path.raw)
+
 fun File.relative(path: String): File {
+    val s1 = path.indexOf('/')
+    val s2 = path.indexOf('\\')
+    val s3 = path.indexOf(":\\")
+    val s4 = path.indexOf(":/")
+    val isAbsolute = path.startsWith("/") || path.startsWith("\\") || ":\\" in path || ":/" in path
+    if (isAbsolute) {
+        return File(path)
+    }
+
     if (path.startsWith("/") || path.startsWith("\\")) {
         throw IllegalArgumentException("Invalid Relative Path")
     }

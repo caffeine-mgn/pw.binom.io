@@ -1,61 +1,45 @@
 package pw.binom.db.sqlite
 
 import kotlinx.coroutines.withContext
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.execute
-import pw.binom.concurrency.joinAndGetOrThrow
+import kotlinx.coroutines.withTimeout
 import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.sync.SyncResultSet
 
-class AsyncResultSetAdapter(val ref: SyncResultSet, val worker: Worker, override val columns: List<String>) :
+class AsyncResultSetAdapter(val ref: SyncResultSet, val worker: MyWorker, override val columns: List<String>) :
     AsyncResultSet {
     override suspend fun next(): Boolean {
         val ref = ref
         return withContext(worker) {
-            ref.next()
+            withTimeout(ASYNC_TIMEOUT) {
+                ref.next()
+            }
         }
     }
 
     override fun getString(index: Int): String? =
-        worker.execute(ref) {
-            it.getString(index)
-        }.joinAndGetOrThrow()
+        ref.getString(index)
 
     override fun getString(column: String): String? =
-        worker.execute(ref) {
-            it.getString(column)
-        }.joinAndGetOrThrow()
+        ref.getString(column)
 
     override fun getBoolean(index: Int): Boolean? =
-        worker.execute(ref) {
-            it.getBoolean(index)
-        }.joinAndGetOrThrow()
+        ref.getBoolean(index)
 
     override fun getBoolean(column: String): Boolean? =
-        worker.execute(ref) {
-            it.getBoolean(column)
-        }.joinAndGetOrThrow()
+        ref.getBoolean(column)
 
     override fun getInt(index: Int): Int? =
-        worker.execute(ref) {
-            it.getInt(index)
-        }.joinAndGetOrThrow()
+        ref.getInt(index)
 
     override fun getInt(column: String): Int? =
-        worker.execute(ref) {
-            it.getInt(column)
-        }.joinAndGetOrThrow()
+        ref.getInt(column)
 
     override fun getLong(index: Int): Long? =
-        worker.execute(ref) {
-            it.getLong(index)
-        }.joinAndGetOrThrow()
+        ref.getLong(index)
 
     override fun getLong(column: String): Long? =
-        worker.execute(ref) {
-            it.getLong(column)
-        }.joinAndGetOrThrow()
+        ref.getLong(column)
 
 //    override fun getBigDecimal(index: Int): BigDecimal? =
 //        worker.execute(ref) {
@@ -68,55 +52,38 @@ class AsyncResultSetAdapter(val ref: SyncResultSet, val worker: Worker, override
 //        }.joinAndGetOrThrow()
 
     override fun getDouble(index: Int): Double? =
-        worker.execute(ref) {
-            it.getDouble(index)
-        }.joinAndGetOrThrow()
+        ref.getDouble(index)
 
     override fun getDouble(column: String): Double? =
-        worker.execute(ref) {
-            it.getDouble(column)
-        }.joinAndGetOrThrow()
+        ref.getDouble(column)
 
     override fun getBlob(index: Int): ByteArray? =
-        worker.execute(ref) {
-            it.getBlob(index)
-        }.joinAndGetOrThrow()
+        ref.getBlob(index)
 
     override fun getBlob(column: String): ByteArray? =
-        worker.execute(ref) {
-            it.getBlob(column)
-        }.joinAndGetOrThrow()
+        ref.getBlob(column)
 
     override fun isNull(index: Int): Boolean =
-        worker.execute(ref) {
-            it.isNull(index)
-        }.joinAndGetOrThrow()
+        ref.isNull(index)
 
     override fun isNull(column: String): Boolean =
-        worker.execute(ref) {
-            it.isNull(column)
-        }.joinAndGetOrThrow()
+        ref.isNull(column)
 
     override fun getDate(index: Int): DateTime? =
-        worker.execute(ref) {
-            it.getDate(index)
-        }.joinAndGetOrThrow()
+        ref.getDate(index)
 
     override fun getDate(column: String): DateTime? =
-        worker.execute(ref) {
-            it.getDate(column)
-        }.joinAndGetOrThrow()
+        ref.getDate(column)
 
     override fun columnIndex(column: String): Int =
-        worker.execute(ref) {
-            it.columnIndex(column)
-        }.joinAndGetOrThrow()
+        ref.columnIndex(column)
 
     override suspend fun asyncClose() {
         val ref = ref
-        worker.execute {
-            ref.close()
+        withContext(worker) {
+            withTimeout(ASYNC_TIMEOUT) {
+                ref.close()
+            }
         }
-        ref.close()
     }
 }

@@ -64,7 +64,7 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
         returnNullOnEof: Boolean = true,
         position: Int = 0,
     ): ParseResult? {
-        var year = 1971
+        var year = 1970
         var month = 1
         var dayOfMonth = 1
         var hours = 0
