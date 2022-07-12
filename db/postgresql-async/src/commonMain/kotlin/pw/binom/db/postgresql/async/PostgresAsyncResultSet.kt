@@ -4,7 +4,6 @@ package pw.binom.db.postgresql.async
 import pw.binom.UUID
 import pw.binom.date.DateTime
 import pw.binom.date.of
-import pw.binom.date.parseIso8601Date
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
 
@@ -53,25 +52,8 @@ class PostgresAsyncResultSet(
         getUUID(getIndex(column))
 
     override fun getDate(index: Int): DateTime? {
-//        val value = data[index] ?: return null
-//        val vv = getString(1)
         val value = getString(index) ?: return null
-        return value.parseIso8601Date(0) ?: throw IllegalArgumentException("Can't parse \"$value\" to date")
-//        println("vv=$vv   ${vv?.parseIsoDate(0)?.calendar(0)?.toString()}")
-//        return when (val dataType = data.meta[index].dataType) {
-//            ColumnTypes.Timestamp -> {
-//                Long.fromBytes(value).toDatetime()
-//            }
-//            ColumnTypes.TimestampWithTimezone -> {
-//                Long.fromBytes(value).toDatetime()
-//            }
-//            else -> {
-//                val hex = value.joinToString(" ") { it.toString(16) }
-//                throw SQLException(
-//                    "Unknown Column Type. id: [$dataType], size: [${value.size}], value: [0x$hex]"
-//                )
-//            }
-//        }
+        return DateUtils.parseDate(value)
     }
 
     private fun Long.toDatetime() =
