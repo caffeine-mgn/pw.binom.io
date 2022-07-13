@@ -4,8 +4,7 @@ import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.async.pool.PooledAsyncConnection
 import kotlin.coroutines.*
 
-class TransactionContextElement(val connection: PooledAsyncConnection) :
-    CoroutineContext.Element {
+class TransactionContextElement(val connection: PooledAsyncConnection) : CoroutineContext.Element {
     var rollbackOnly = false
     var transactionStarted: Boolean = false
     override val key: CoroutineContext.Key<TransactionContextElement>
@@ -31,16 +30,13 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                     cc.transactionStarted = true
                     try {
                         val result = suspendCoroutine<T> { con ->
-                            function.startCoroutine(
-                                this,
-                                object : Continuation<T> {
-                                    override val context: CoroutineContext = con.context + cc
+                            function.startCoroutine(this, object : Continuation<T> {
+                                override val context: CoroutineContext = con.context + cc
 
-                                    override fun resumeWith(result: Result<T>) {
-                                        con.resumeWith(result)
-                                    }
+                                override fun resumeWith(result: Result<T>) {
+                                    con.resumeWith(result)
                                 }
-                            )
+                            })
                         }
                         if (cc.rollbackOnly) {
                             rollback()
@@ -49,13 +45,11 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                         }
                         result
                     } catch (e: Throwable) {
-                        if (!cc.rollbackOnly) {
-                            try {
-                                rollback()
-                            } catch (ex: Throwable) {
-                                ex.addSuppressed(e)
-                                throw ex
-                            }
+                        try {
+                            rollback()
+                        } catch (ex: Throwable) {
+                            ex.addSuppressed(e)
+                            throw ex
                         }
                         throw e
                     } finally {
@@ -76,13 +70,11 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                     }
                     result
                 } catch (e: Throwable) {
-                    if (!txContext.rollbackOnly) {
-                        try {
-                            txContext.connection.rollback()
-                        } catch (ex: Throwable) {
-                            ex.addSuppressed(e)
-                            throw ex
-                        }
+                    try {
+                        txContext.connection.rollback()
+                    } catch (ex: Throwable) {
+                        ex.addSuppressed(e)
+                        throw ex
                     }
                     throw e
                 } finally {
@@ -107,15 +99,12 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
             try {
                 val result = suspendCoroutine<T> { con ->
                     val newContext = con.context.minusKey(TransactionContextElementKey) + cc
-                    function.startCoroutine(
-                        this,
-                        object : Continuation<T> {
-                            override val context: CoroutineContext = newContext
-                            override fun resumeWith(result: Result<T>) {
-                                con.resumeWith(result)
-                            }
+                    function.startCoroutine(this, object : Continuation<T> {
+                        override val context: CoroutineContext = newContext
+                        override fun resumeWith(result: Result<T>) {
+                            con.resumeWith(result)
                         }
-                    )
+                    })
                 }
                 if (cc.rollbackOnly) {
                     rollback()
@@ -146,15 +135,12 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                 connectionPool.borrow {
                     val cc = TransactionContextElement(this)
                     suspendCoroutine { con ->
-                        function.startCoroutine(
-                            this,
-                            object : Continuation<T> {
-                                override val context: CoroutineContext = con.context + cc
-                                override fun resumeWith(result: Result<T>) {
-                                    con.resumeWith(result)
-                                }
+                        function.startCoroutine(this, object : Continuation<T> {
+                            override val context: CoroutineContext = con.context + cc
+                            override fun resumeWith(result: Result<T>) {
+                                con.resumeWith(result)
                             }
-                        )
+                        })
                     }
                 }
             }

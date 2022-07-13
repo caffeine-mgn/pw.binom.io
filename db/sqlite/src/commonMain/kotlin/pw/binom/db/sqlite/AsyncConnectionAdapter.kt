@@ -6,7 +6,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.atomic.AtomicInt
 import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.synchronize
 import pw.binom.db.TransactionMode
@@ -17,7 +16,6 @@ import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.io.Closeable
 import pw.binom.io.use
-import pw.binom.neverFreeze
 import pw.binom.thread.Thread
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.minutes
@@ -31,9 +29,8 @@ class MyWorker : CoroutineDispatcher(), Closeable {
     private val r = ReentrantLock()
     private val c = r.newCondition()
     private val closed = AtomicBoolean(false)
-    private val count = AtomicInt(0)
 
-    private val thread = Thread {
+    private val thread = Thread { thread ->
         while (!closed.getValue()) {
             r.synchronize {
                 if (readyForWriteListener.isEmpty()) {
@@ -43,10 +40,11 @@ class MyWorker : CoroutineDispatcher(), Closeable {
                     it.forEach {
                         try {
                             it.run()
-                            println("MyWorker Run: ${count.addAndGet(-1)}")
                         } catch (e: Throwable) {
-                            println("MyWorker Error on Run: ${count.addAndGet(-1)}")
-                            e.printStackTrace()
+                            thread.uncaughtExceptionHandler.uncaughtException(
+                                thread = thread,
+                                throwable = e,
+                            )
                         }
                     }
                 }
@@ -59,7 +57,6 @@ class MyWorker : CoroutineDispatcher(), Closeable {
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        println("MyWorker Add task ${count.addAndGet(1)}")
         readyForWriteListener.push(block)
         r.synchronize {
             c.signalAll()
@@ -247,9 +244,5 @@ class AsyncConnectionAdapter private constructor(/*val worker: Worker, */val con
             }
         }
         transactionStarted = false
-    }
-
-    init {
-        neverFreeze()
     }
 }

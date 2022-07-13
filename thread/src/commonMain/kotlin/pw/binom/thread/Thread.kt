@@ -2,9 +2,9 @@ package pw.binom.thread
 
 import kotlin.time.Duration
 
-fun Thread(func: () -> Unit) = object : Thread() {
+fun Thread(func: (Thread) -> Unit) = object : Thread() {
     override fun execute() {
-        func()
+        func(this)
     }
 }
 
