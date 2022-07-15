@@ -58,6 +58,12 @@ value class Path internal constructor(val raw: String) {
         return dest
     }
 
+    fun getVariables(mask: PathMask, dest: MutableMap<String, String> = HashMap()) =
+        getVariables(
+            mask = mask.raw,
+            dest = dest,
+        )
+
     /**
      * Call [func] on each variable substring. You should get last value of key.
      * can call `func("path","")`, then `func("path","/user")` and then `func("path","/user/list")`.
@@ -150,19 +156,21 @@ value class Path internal constructor(val raw: String) {
     val name: String
         get() {
             val p = raw.lastIndexOf('/')
-            return if (p == -1)
+            return if (p == -1) {
                 raw
-            else
+            } else {
                 raw.substring(p + 1)
+            }
         }
 
     val parent: Path?
         get() {
             val p = raw.lastIndexOf('/')
-            return if (p == -1)
+            return if (p == -1) {
                 null
-            else
+            } else {
                 raw.substring(0, p).toPath
+            }
         }
 
     override fun toString(): String = raw

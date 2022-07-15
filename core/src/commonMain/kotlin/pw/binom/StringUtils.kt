@@ -46,8 +46,9 @@ internal fun wildcardMatch(string: String, wildcard: String): Boolean {
             }
             else -> {
                 // if no stars we fail to match
-                if (wildBackup == -1)
+                if (wildBackup == -1) {
                     return false
+                }
                 // star-loop: backtrack to the last * by restoring the backup positions
                 // in the pattern and text
                 text = ++textBackup
@@ -134,8 +135,20 @@ internal fun pathMatch(
     var textVariableStart = -1
     var textVariableStartBackup = -1
     var wildVariableStart = -1
+//    var startWithSkipPath = false
     while (path.length != text) {
         when {
+//            mask(wild) == '*' && mask(wild + 1) == '*' -> {
+//                // invalid path pattern
+//                if (textVariableStart != -1) {
+//                    throw InvalidPathException(mask)
+//                }
+//                // new star-loop: backup positions in pattern and text
+//                wild += 2
+//                textBackup = text
+//                wildBackup = wild
+//                startWithSkipPath = true
+//            }
             mask(wild) == '*' -> {
                 // invalid path pattern
                 if (textVariableStart != -1) {
@@ -144,7 +157,7 @@ internal fun pathMatch(
                 // new star-loop: backup positions in pattern and text
                 textBackup = text
                 wildBackup = ++wild
-                textVariableStartBackup = -1
+//                startWithSkipPath = false
             }
             mask(wild) == '{' -> {
                 val index = mask.indexOf('}', wild)
@@ -167,16 +180,21 @@ internal fun pathMatch(
                 textVariableStart = -1
                 text++
                 wild++
+                wildBackup = wild + key.length
             }
             mask(wild) == '?' || mask(wild) == path(text) -> {
                 // ? matched any character or we matched the current non-NUL character
                 text++
                 wild++
             }
+            textVariableStart != -1 && (path(text) == '/' || path(text) == '\\') -> {
+                return false
+            }
             else -> {
                 // if no stars we fail to match
-                if (wildBackup == -1)
+                if (wildBackup == -1) {
                     return false
+                }
                 // star-loop: backtrack to the last * by restoring the backup positions
                 // in the pattern and text
                 if (textVariableStartBackup != -1) {

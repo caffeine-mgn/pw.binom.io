@@ -6,4 +6,7 @@ interface TransactionManager {
     suspend fun <T> re(function: suspend (PooledAsyncConnection) -> T): T
     suspend fun <T> new(function: suspend (PooledAsyncConnection) -> T): T
     suspend fun <T> su(function: suspend (PooledAsyncConnection) -> T): T
+
+    suspend fun onSuccess(action: suspend () -> Unit)
+    suspend fun onRollback(action: suspend () -> Unit)
 }
