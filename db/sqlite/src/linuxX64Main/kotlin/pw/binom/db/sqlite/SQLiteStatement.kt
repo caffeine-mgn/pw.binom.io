@@ -30,10 +30,11 @@ class SQLiteStatement(override val connection: SQLiteConnector) : SyncStatement 
     override fun executeUpdate(query: String): Long {
         if (sqlite3_exec(connection.ctx.pointed.value, query, null, null, null) != SQLITE_OK) {
             val errno = sqlite3_errmsg(connection.ctx.pointed.value)?.toKStringFromUtf8()
-            if (errno == null)
+            if (errno == null) {
                 throw SQLException()
-            else
+            } else {
                 throw SQLException(errno)
+            }
         }
         return sqlite3_changes(connection.ctx.pointed.value).toLong()
     }

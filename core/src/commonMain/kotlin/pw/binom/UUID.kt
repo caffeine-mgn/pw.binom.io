@@ -11,6 +11,7 @@ import kotlin.random.Random
 
 class UUID(val mostSigBits: Long, val leastSigBits: Long) {
     companion object {
+        const val SIZE_IN_BYTES = 16
         fun create(mostSigBits: Long, leastSigBits: Long) =
             UUID(
                 mostSigBits = mostSigBits,
@@ -18,8 +19,9 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
             )
 
         fun create(data: ByteArray): UUID {
-            if (data.size != 16)
+            if (data.size != SIZE_IN_BYTES) {
                 throw IllegalArgumentException("data must be 16 bytes in length")
+            }
             var msb: Long = 0
             var lsb: Long = 0
             for (i in 0..7) msb = msb shl 8 or (data[i].toLong() and 0xff)
@@ -80,7 +82,7 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
         return buf.concatToString()
     }
 
-    fun toByteArray(): ByteArray = toByteArray(ByteArray(16))
+    fun toByteArray(): ByteArray = toByteArray(ByteArray(SIZE_IN_BYTES))
 
     /**
      * Puts UUID to [output]. [output].size must be equals 16 or more. Puts data with 0 offset
@@ -89,8 +91,9 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
      * @param returns [output] array
      */
     fun toByteArray(output: ByteArray): ByteArray {
-        if (output.size < 16)
+        if (output.size < SIZE_IN_BYTES) {
             throw IllegalArgumentException()
+        }
         mostSigBits.toBytes(output, 0)
         leastSigBits.toBytes(output, 8)
         return output

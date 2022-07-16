@@ -127,11 +127,20 @@ kotlin {
                 api(kotlin("test"))
             }
         }
+        val androidTest by getting {
+            dependsOn(jvmTest)
+            dependencies {
+//                androidTestCompile("junit:junit:4.12")
+                api("com.android.support.test:runner:0.5")
+            }
+        }
+//        dependsOn("androidNative*Test", linuxX64Main)
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
     }
 }
+
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
     apply<pw.binom.plugins.AndroidSupportPlugin>()
 }

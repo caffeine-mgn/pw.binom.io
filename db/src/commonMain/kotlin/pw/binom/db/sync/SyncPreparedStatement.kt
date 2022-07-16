@@ -25,7 +25,7 @@ interface SyncPreparedStatement : Closeable {
     fun executeQuery(): SyncResultSet
     fun executeUpdate(): Long
     fun set(index: Int, value: UUID) {
-        val buf = ByteArray(16)
+        val buf = ByteArray(UUID.SIZE_IN_BYTES)
         set(index, value.toByteArray(buf))
     }
 

@@ -1,60 +1,73 @@
 package pw.binom.db.sqlite
 
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.sync.SyncStatement
 import pw.binom.io.file.File
+import java.io.File as JFile
 
-actual class SQLiteConnector : SyncConnection {
+actual class SQLiteConnector(val native: SQLiteDatabase) : SyncConnection {
     actual companion object {
-        actual fun openFile(file: File): SQLiteConnector {
-            TODO()
-//            SQLiteDatabase.openOrCreateDatabase(
-//                JFile(file.toString()),
-//                SQLiteDatabase.CursorFactory { db, masterQuery, editTable, query ->
-//                    SQLiteCursor
-//                }
-//            )
-//            SQLiteOpenHelper
-        }
+        /**
+         * @param mode Open mode. Use values like [Context.MODE_PRIVATE]
+         */
+        fun openInternal(context: Context, name: String, mode: Int): SQLiteConnector =
+            SQLiteConnector(context.openOrCreateDatabase(name, mode, null))
 
-        actual fun memory(name: String?): SQLiteConnector {
-            TODO()
-        }
+        actual fun openFile(file: File): SQLiteConnector = SQLiteConnector(
+            SQLiteDatabase.openOrCreateDatabase(
+                JFile(file.toString()),
+                null
+            )
+        )
+
+        actual fun memory(name: String?): SQLiteConnector =
+            SQLiteConnector(SQLiteDatabase.createInMemory(SQLiteDatabase.OpenParams.Builder().build()))
 
         actual val TYPE: String
-            get() = ""
-    }
-
-    override fun createStatement(): SyncStatement {
-        TODO("Not yet implemented")
-    }
-
-    override fun prepareStatement(query: String): SyncPreparedStatement {
-        TODO("Not yet implemented")
-    }
-
-    override fun beginTransaction() {
-        TODO("Not yet implemented")
-    }
-
-    override fun commit() {
-        TODO("Not yet implemented")
-    }
-
-    override fun rollback() {
-        TODO("Not yet implemented")
+            get() = "SQLite"
     }
 
     override val type: String
-        get() = TODO("Not yet implemented")
+        get() = TYPE
     override val isConnected: Boolean
-        get() = TODO("Not yet implemented")
+        get() = native.isOpen
     override val dbInfo: DatabaseInfo
-        get() = TODO("Not yet implemented")
+        get() = SQLiteSQLDatabaseInfo
+
+    internal fun getChanges(): Long {
+        native.rawQuery("select changes()", null).use {
+            if (it.moveToNext()) {
+                return it.getLong(0)
+            }
+        }
+        return 0
+    }
+
+    override fun createStatement(): SyncStatement = SQLiteSyncStatement(this)
+
+    override fun prepareStatement(query: String): SyncPreparedStatement = SQLSyncPreparedStatement(
+        query = query,
+        connection = this,
+    )
+
+    override fun beginTransaction() {
+        native.beginTransaction()
+    }
+
+    override fun commit() {
+        native.setTransactionSuccessful()
+        native.endTransaction()
+    }
+
+    override fun rollback() {
+        native.endTransaction()
+    }
 
     override fun close() {
-        TODO("Not yet implemented")
+        native.close()
     }
 }

@@ -21,6 +21,7 @@ class AndroidSupportPlugin : Plugin<Project> {
             buildToolsVersion("29.0.3")
 
             defaultConfig {
+                it.testInstrumentationRunner("android.support.test.runner.AndroidJUnitRunner")
                 it.minSdkVersion(28)
                 it.targetSdkVersion(30)
 //            versionCode(1)
