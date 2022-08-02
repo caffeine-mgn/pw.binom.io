@@ -11,6 +11,7 @@ import pw.binom.network.tcpConnect
 import pw.binom.readLong
 import pw.binom.ssl.*
 import pw.binom.writeLong
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -29,6 +30,7 @@ class SimpleKeyManager(val private: PrivateKey?, val public: X509Certificate?) :
     }
 }
 
+@Ignore
 class SSLTest {
 
     @Test

@@ -9,6 +9,7 @@ import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.SSLContext
 import pw.binom.ssl.SSLMethod
 import pw.binom.ssl.TrustManager
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 // object EmptyKeyManager : KeyManager {
@@ -20,6 +21,7 @@ import kotlin.test.Test
 //    }
 // }
 
+@Ignore
 class ClientTest {
 
     @Test

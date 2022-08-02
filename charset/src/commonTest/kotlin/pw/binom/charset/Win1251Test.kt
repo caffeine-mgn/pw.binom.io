@@ -1,6 +1,11 @@
 package pw.binom.charset
 
-import pw.binom.*
+import pw.binom.CharBuffer
+import pw.binom.forEachIndexed
+import pw.binom.io.ByteBuffer
+import pw.binom.io.forEachIndexed
+import pw.binom.io.wrap
+import pw.binom.toCharBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -14,7 +19,7 @@ class Win1251Test {
         val out = ByteBuffer.alloc(30)
         assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(test_data_hello_text.toCharBuffer(), out))
         out.flip()
-        assertEquals(test_data_hello_bytes_windows_1251.size, out.remaining123)
+        assertEquals(test_data_hello_bytes_windows_1251.size, out.remaining)
 
         out.forEachIndexed { index, value ->
             assertEquals(test_data_hello_bytes_windows_1251[index], value)

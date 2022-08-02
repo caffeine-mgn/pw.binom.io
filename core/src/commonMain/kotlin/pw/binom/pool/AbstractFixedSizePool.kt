@@ -18,7 +18,8 @@ abstract class AbstractFixedSizePool<T : Any>(capacity: Int) : ObjectPool<T>, Cl
     override fun borrow(): T {
         lock.synchronize {
             if (size == 0) {
-                return new()
+                val buffer = new()
+                return buffer
             }
             val index = --size
             val result = pool[index]!!

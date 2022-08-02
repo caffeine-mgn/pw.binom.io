@@ -17,6 +17,15 @@ class BatchExchange<T>(
         read.isEmpty()
     }
 
+    fun clear() {
+        processingLock.synchronize {
+            exchangeLock.synchronize {
+                read.clear()
+                read2.clear()
+            }
+        }
+    }
+
     fun push(value: T) {
         exchangeLock.synchronize {
             read += value

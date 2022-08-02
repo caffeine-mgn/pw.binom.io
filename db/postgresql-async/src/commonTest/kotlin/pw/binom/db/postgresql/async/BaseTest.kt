@@ -9,6 +9,8 @@ import pw.binom.charset.Charsets
 import pw.binom.concurrency.sleep
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkCoroutineDispatcherImpl
+import pw.binom.network.NetworkManager
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -28,7 +30,7 @@ abstract class BaseTest {
 //    )
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun connect(address: NetworkAddress): PGConnection {
+    private suspend fun connect(address: NetworkAddress, nd: NetworkManager): PGConnection {
         return withContext(Dispatchers.Default) {
             val start = TimeSource.Monotonic.markNow()
             withTimeout(10.seconds) {
@@ -40,7 +42,8 @@ abstract class BaseTest {
                             charset = Charsets.UTF8,
                             userName = "postgres",
                             password = "postgres",
-                            dataBase = "test"
+                            dataBase = "test",
+                            networkDispatcher = nd
                         )
                         println("Connected after ${start.elapsedNow()}")
                         return@withTimeout con
@@ -62,11 +65,12 @@ abstract class BaseTest {
     fun pg(func: suspend (PGConnection) -> Unit) = runTest {
         withContext(Dispatchers.Default) {
             val address = NetworkAddress.Immutable(host = "127.0.0.1", port = 6122)
-
-            val tm = connect(address)
-            withTimeout(10.seconds) {
-                tm.use {
-                    func(it)
+            NetworkCoroutineDispatcherImpl().use { nd ->
+                val tm = connect(address, nd = nd)
+                withTimeout(10.seconds) {
+                    tm.use {
+                        func(it)
+                    }
                 }
             }
         }

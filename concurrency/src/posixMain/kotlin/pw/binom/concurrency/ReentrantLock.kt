@@ -20,15 +20,15 @@ fun <T : NativePointed> NativePtr.reinterpret() = interpretNullablePointed<T>(th
 @OptIn(ExperimentalStdlibApi::class)
 actual class ReentrantLock : Lock {
 
-    private val native = nativeHeap.alloc<pthread_mutex_t>()
+    private val native = malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
 
     init {
-        pthread_mutex_init(native.ptr, null)
+        pthread_mutex_init(native, null)
     }
 
     private val cleaner = createCleaner(native) { native ->
-        pthread_mutex_destroy(native.ptr)
-        nativeHeap.free(native)
+        pthread_mutex_destroy(native)
+        free(native)
     }
 
     init {
@@ -36,45 +36,45 @@ actual class ReentrantLock : Lock {
     }
 
     actual override fun lock() {
-        if (pthread_mutex_lock(native.ptr) != 0) {
+        if (pthread_mutex_lock(native) != 0) {
             throw IllegalStateException("Can't lock mutex")
         }
     }
 
     actual override fun unlock() {
-        if (pthread_mutex_unlock(native.ptr) != 0) {
+        if (pthread_mutex_unlock(native) != 0) {
             throw IllegalStateException("Can't unlock mutex")
         }
     }
 
     actual fun newCondition() = Condition(native)
 
-    actual class Condition(val mutex: pthread_mutex_t) {
+    actual class Condition(val mutex: CPointer<pthread_mutex_t>) {
         //        val native = cValue<pthread_cond_t>()//nativeHeap.alloc<pthread_cond_t>()//malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
         val native =
-            nativeHeap.alloc<pthread_cond_t>() // malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
+            malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>() // malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
-            if (pthread_cond_init(native.ptr, null) != 0) {
+            if (pthread_cond_init(native, null) != 0) {
                 throw IllegalStateException("Can't init Condition")
             }
         }
 
         private val cleaner = createCleaner(native) { native ->
-            pthread_cond_destroy(native.ptr)
-            nativeHeap.free(native)
+            pthread_cond_destroy(native)
+            free(native)
         }
 
         actual fun await() {
-            pthread_cond_wait(native.ptr, mutex.ptr)
+            pthread_cond_wait(native, mutex)
         }
 
         actual fun signal() {
-            pthread_cond_signal(native.ptr)
+            pthread_cond_signal(native)
         }
 
         actual fun signalAll() {
-            pthread_cond_broadcast(native.ptr)
+            pthread_cond_broadcast(native)
         }
 
         actual fun await(duration: Duration): Boolean {
@@ -88,15 +88,16 @@ actual class ReentrantLock : Lock {
                 gettimeofday(now.ptr, null)
                 waitUntil.set(now, duration)
                 while (true) {
-                    val r = pthread_cond_timedwait(native.ptr, mutex.ptr, waitUntil.ptr)
+                    val r = pthread_cond_timedwait(native, mutex, waitUntil.ptr)
                     if (Worker.current?.isInterrupted == true) {
                         throw InterruptedException()
                     }
                     if (r == ETIMEDOUT) {
                         return@memScoped false
                     }
-                    if (r == 0)
+                    if (r == 0) {
                         return@memScoped true
+                    }
                     throw TODO()
                 }
                 false

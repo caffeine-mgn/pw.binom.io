@@ -28,8 +28,9 @@ class TestFile {
     fun `directory`() {
         val f = File("dir")
         try {
-            if (f.isExist)
+            if (f.isExist) {
                 f.delete()
+            }
             assertFalse(f.isDirectory)
             f.mkdir()
             assertTrue(f.isDirectory)
@@ -44,8 +45,9 @@ class TestFile {
     @Test
     fun `file list`() {
         val file = File("dir1")
-        if (!file.isExist)
+        if (!file.isExist) {
             file.mkdir()
+        }
         try {
             file.iterator().forEach {
                 assertNotEquals("..", it.name)
@@ -70,11 +72,9 @@ class TestFile {
             "/home/subochev/tmp/test/m1".replace('/', File.SEPARATOR),
             File("/home/subochev/tmp").relative("test/m1").path
         )
-        try {
-            File("/home/subochev/tmp").relative("/test/m1")
-            fail()
-        } catch (e: IllegalArgumentException) {
-            // NOP
-        }
+        assertEquals(
+            "/test/m1",
+            File("/home/subochev/tmp").relative("/test/m1").path
+        )
     }
 }

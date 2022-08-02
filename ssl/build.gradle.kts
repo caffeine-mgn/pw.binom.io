@@ -6,6 +6,9 @@ import pw.binom.kotlin.clang.eachNative
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
 apply<pw.binom.KotlinConfigPlugin>()
 fun config(config: KotlinNativeTarget) {
@@ -19,7 +22,8 @@ fun config(config: KotlinNativeTarget) {
 
     val libFile = File("${buildFile.parent}/src/${config.targetName}Main/cinterop/lib/libopenssl.a")
     val args = listOf(
-        "-include-binary", libFile.toString()
+        "-include-binary",
+        libFile.toString()
     )
     config.compilations["main"].compileKotlinTask.doFirst {
         if (!libFile.isFile) {
@@ -32,6 +36,11 @@ fun config(config: KotlinNativeTarget) {
 }
 
 kotlin {
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        android {
+            publishAllLibraryVariants()
+        }
+    }
     jvm()
     linuxX64 {
 //        config(this)
@@ -85,8 +94,10 @@ kotlin {
             }
             val libFile = file("${buildFile.parent}/src/${targetName}Main/cinterop/lib/libopenssl.a")
             val args = listOf(
-                "-include-binary", libFile.absolutePath,
-                "-include-binary", keccakStaticTask.staticFile.asFile.get().absolutePath,
+                "-include-binary",
+                libFile.absolutePath,
+                "-include-binary",
+                keccakStaticTask.staticFile.asFile.get().absolutePath,
                 "-opt-in=kotlin.RequiresOptIn"
             )
             compilations["main"].kotlinOptions.freeCompilerArgs = args
@@ -150,10 +161,27 @@ kotlin {
                 api(kotlin("test-junit"))
             }
         }
+        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+            val androidMain by getting {
+                dependsOn(jvmMain)
+            }
+            val androidTest by getting {
+                dependsOn(jvmTest)
+                dependencies {
+                    api(kotlin("test-junit"))
+                    api(kotlin("test-common"))
+                    api(kotlin("test-annotations-common"))
+                    api("com.android.support.test:runner:0.5")
+                }
+            }
+        }
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
     }
+}
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()
 extensions.getByType(org.jmailen.gradle.kotlinter.KotlinterExtension::class.java).also {

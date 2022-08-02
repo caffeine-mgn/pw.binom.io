@@ -179,3 +179,13 @@ fun BigInteger.toBigNum(): BigNum {
     toBigNum(ret)
     return ret
 }
+
+fun <T> BigInteger.toBigNum(func: (BigNum) -> T): T {
+    val ret = BigNum()
+    toBigNum(ret)
+    try {
+        return func(ret)
+    } finally {
+        ret.free()
+    }
+}

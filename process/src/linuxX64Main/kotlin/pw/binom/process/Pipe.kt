@@ -1,6 +1,7 @@
 package pw.binom.process
 
 import kotlinx.cinterop.*
+import platform.posix.close
 import platform.posix.pipe
 
 abstract class Pipe {
@@ -16,6 +17,8 @@ abstract class Pipe {
     }
 
     fun free() {
+        close(read)
+        close(write)
         nativeHeap.free(fds)
     }
 }

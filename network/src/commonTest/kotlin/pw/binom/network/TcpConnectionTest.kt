@@ -1,6 +1,5 @@
 package pw.binom.network
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -39,10 +38,11 @@ class TcpConnectionTest {
 
     @Test
     fun autoCloseKey() = runTest(dispatchTimeoutMs = 10_000) {
-        val serverConnection = Dispatchers.Network.bindTcp(NetworkAddress.Immutable("127.0.0.1", 0))
+        val nd = NetworkCoroutineDispatcherImpl()
+        val serverConnection = nd.bindTcp(NetworkAddress.Immutable("127.0.0.1", 0))
         val lock = SpinLock()
         lock.lock()
-        launch(Dispatchers.Network) {
+        launch(nd) {
             val client = serverConnection.accept()
             lock.synchronize {
                 client.close()
@@ -203,11 +203,14 @@ class TcpConnectionTest {
 
     @Test
     fun connectTest() = runTest(dispatchTimeoutMs = 10_000) {
-        val con = Dispatchers.Network.tcpConnect(
-            NetworkAddress.Immutable(
-                host = "ya.ru", port = 443
+        NetworkCoroutineDispatcherImpl().use { nd ->
+            val con = nd.tcpConnect(
+                NetworkAddress.Immutable(
+                    host = "ya.ru",
+                    port = 443
+                )
             )
-        )
-        con.close()
+            con.close()
+        }
     }
 }

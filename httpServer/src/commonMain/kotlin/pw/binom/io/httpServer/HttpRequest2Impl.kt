@@ -47,7 +47,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                 val p = s.indexOf(':')
                 if (p < 0) {
                     runCatching { channel.asyncClose() }
-                    throw IOException("Invalid HTTP Header")
+                    throw IOException("Invalid HTTP Header: \"$s\"")
                 }
                 val headerKey = s.substring(0, p)
                 val headerValue = s.substring(p + 2)
@@ -265,18 +265,15 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         }
         val server = server ?: throw SocketClosedException()
         if (readInput == null) {
-            val buf = server.textBufferPool.borrow()
-            try {
+            server.textBufferPool.using { buf ->
                 readBinary().use {
                     it.skipAll(buf)
                 }
-            } finally {
-                server.textBufferPool.recycle(buf)
             }
         }
         val r = server.httpResponse2Impl.borrow {
             it.reset(
-                keepAliveEnabled = server.maxIdleTime > 0 && headers.keepAlive,
+                keepAliveEnabled = server.maxIdleTime.isPositive() && headers.keepAlive,
                 channel = channel!!,
                 acceptEncoding = headers.acceptEncoding,
                 server = server,

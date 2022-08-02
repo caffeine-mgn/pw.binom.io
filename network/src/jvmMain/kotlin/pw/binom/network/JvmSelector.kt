@@ -96,6 +96,10 @@ class JvmSelector : Selector {
         }
     }
 
+    override fun wakeup() {
+        native.wakeup()
+    }
+
     override fun getAttachedKeys(): Collection<Selector.Key> {
         return this.native.keys().mapNotNull {
             val key = it.attachment() as JvmKey

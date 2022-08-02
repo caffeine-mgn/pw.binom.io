@@ -52,9 +52,11 @@ actual class ECDSASigner {
     ): Boolean {
         val publicKey = publicKey ?: throw IllegalStateException("ECDSASigner inited for verify")
         val sign = ECDSA_SIG_new() ?: throwError("ECDSA_SIG_new fails")
-        return r.toBigNum().use { rBn ->
-            s.toBigNum().use { sBn ->
+        return r.toBigNum().let { rBn ->
+            s.toBigNum().let { sBn ->
                 ECDSA_SIG_set0(sign, rBn.ptr, sBn.ptr).checkTrue("ECDSA_SIG_set0 fails") {
+                    rBn.free()
+                    sBn.free()
                     ECDSA_SIG_free(sign)
                 }
 

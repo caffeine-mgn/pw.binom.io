@@ -1,13 +1,9 @@
 package pw.binom.network
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.*
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import kotlin.test.*
 
 class UdpTest {
 
@@ -16,6 +12,8 @@ class UdpTest {
         assertTrue(UdpConnection.randomPort() > 0)
     }
 
+    @Deprecated(message = "selector key shouldn't throw exception on call close again")
+    @Ignore
     @Test
     fun closeByKey() {
         val channel = UdpSocketChannel()
@@ -33,9 +31,10 @@ class UdpTest {
 
     @Test
     fun testipv6() = runTest(dispatchTimeoutMs = 5_000) {
-        val udp6 = Dispatchers.Network.attach(UdpSocketChannel())
-        val udp4 = Dispatchers.Network.attach(UdpSocketChannel())
-        val udpClient = Dispatchers.Network.attach(UdpSocketChannel())
+        val nd = NetworkCoroutineDispatcherImpl()
+        val udp6 = nd.attach(UdpSocketChannel())
+        val udp4 = nd.attach(UdpSocketChannel())
+        val udpClient = nd.attach(UdpSocketChannel())
         udp6.bind(NetworkAddress.Immutable(host = "0:0:0:0:0:0:0:1", port = 0))
         udp4.bind(NetworkAddress.Immutable(host = "127.0.0.1", port = 0))
         println("#1 udp6.port=${udp6.port}")
@@ -61,6 +60,8 @@ class UdpTest {
         println("v4 txt: $txt, address: ${p.toImmutable()}")
 
         udp6.close()
+        udp4.close()
+        nd.close()
     }
 
     suspend fun UdpConnection.write(text: String, address: NetworkAddress) =
@@ -77,9 +78,10 @@ class UdpTest {
 
     @Test
     fun test() = runTest {
+        val nd = NetworkCoroutineDispatcherImpl()
         val port = UdpConnection.randomPort()
-        val server = Dispatchers.Network.bindUdp(NetworkAddress.Immutable(port = port))
-        val client = Dispatchers.Network.attach(UdpSocketChannel())
+        val server = nd.bindUdp(NetworkAddress.Immutable(port = port))
+        val client = nd.attach(UdpSocketChannel())
         val message = "Hello"
         message.encodeToByteArray().wrap {
             client.write(it, NetworkAddress.Immutable(host = "127.0.0.1", port = port))

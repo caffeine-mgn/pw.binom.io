@@ -84,7 +84,6 @@ internal object IconvResourcePool {
  * Abstract Charset convertor. Uses Iconv native library
  */
 @Suppress("OPT_IN_IS_NOT_ENABLED")
-@OptIn(ExperimentalStdlibApi::class)
 abstract class AbstractIconv(
     fromCharset: String,
     toCharset: String,

@@ -33,7 +33,9 @@ private class AsyncReentrantLocksElement : CoroutineContext.Element {
 }
 
 class AsyncReentrantLock : AsyncLock {
-    private val waiters = HashSet<CancellableContinuation<Unit>>()
+    private val waiters by lazy {
+        HashSet<CancellableContinuation<Unit>>()
+    }
     private val waiterLock = SpinLock()
     private val locked = AtomicBoolean(false)
     private fun releaseLock() {

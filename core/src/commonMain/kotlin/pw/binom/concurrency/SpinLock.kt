@@ -11,12 +11,7 @@ import kotlin.time.TimeSource
 @JvmInline
 @OptIn(ExperimentalTime::class)
 value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : Lock {
-    fun tryLock(): Boolean {
-        if (lock.compareAndSet(expected = false, new = true)) {
-            return false
-        }
-        return true
-    }
+    fun tryLock(): Boolean = lock.compareAndSet(expected = false, new = true)
 
     val isLocked
         get() = lock.getValue()

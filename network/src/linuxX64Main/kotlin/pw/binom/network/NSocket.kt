@@ -8,7 +8,7 @@ import pw.binom.io.IOException
 
 actual typealias RawSocket = Int
 
-private fun setBlocking(native: RawSocket, value: Boolean) {
+internal fun setBlocking(native: RawSocket, value: Boolean) {
     val flags = fcntl(native, F_GETFL, 0)
     val newFlags = if (value) {
         flags xor O_NONBLOCK
@@ -87,8 +87,11 @@ private fun allowIpv4(native: RawSocket) {
         val flag = allocArray<IntVar>(1)
         flag[0] = 0
         val iResult = setsockopt(
-            native, IPPROTO_IPV6,
-            IPV6_V6ONLY, flag, sizeOf<IntVar>().convert()
+            native,
+            IPPROTO_IPV6,
+            IPV6_V6ONLY,
+            flag,
+            sizeOf<IntVar>().convert()
         )
         if (iResult == -1) {
             close(native)
@@ -214,7 +217,6 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
             return 0
         }
         memScoped {
-
             val r: Int = data.ref { dataPtr, remaining ->
                 send(native, dataPtr, remaining.convert(), MSG_NOSIGNAL).convert()
             } ?: 0
@@ -329,9 +331,12 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
                 set_posix_errno(0)
                 address.data.usePinned {
                     sendto(
-                        native, dataPtr, remaining.convert(),
+                        native,
+                        dataPtr,
+                        remaining.convert(),
                         0,
-                        it.addressOf(0).reinterpret(), address.size.convert()
+                        it.addressOf(0).reinterpret(),
+                        address.size.convert()
                     )
                 }
             } ?: 0
@@ -356,7 +361,6 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
     ): Int {
         checkClosed()
         val gotBytes = if (address == null) {
-
             val rr = data.ref { dataPtr, remaining ->
                 recvfrom(native, dataPtr, remaining.convert(), 0, null, null)
             } ?: 0
@@ -371,7 +375,10 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
 
                 val rr = data.ref { dataPtr, remaining ->
                     recvfrom(
-                        native, dataPtr.getPointer(this), remaining.convert(), 0,
+                        native,
+                        dataPtr.getPointer(this),
+                        remaining.convert(),
+                        0,
                         address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
                         len
                     )

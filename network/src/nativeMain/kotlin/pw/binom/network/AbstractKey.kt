@@ -2,11 +2,10 @@ package pw.binom.network
 
 import pw.binom.io.ClosedException
 
-abstract class AbstractKey(attachment: Any?) : Selector.Key {
+abstract class AbstractKey(override var attachment: Any?) : Selector.Key, Comparable<AbstractKey> {
     var connected = false
 
     protected abstract val selector: AbstractSelector
-    override var attachment: Any? = attachment
     abstract fun addSocket(raw: RawSocket)
     abstract fun removeSocket(raw: RawSocket)
 
@@ -17,6 +16,8 @@ abstract class AbstractKey(attachment: Any?) : Selector.Key {
 
     override val closed: Boolean
         get() = _closed
+
+    override fun compareTo(other: AbstractKey): Int = hashCode() - other.hashCode()
 
     protected fun checkClosed() {
         if (_closed) {

@@ -15,7 +15,7 @@ import java.security.spec.ECGenParameterSpec
 
 actual fun Key.Companion.generateRsa(size: Int): Key.Pair<RSAPublicKey, RSAPrivateKey> {
     BouncycastleUtils.check()
-    val keyPairGenerator = KeyPairGenerator.getInstance("RSA", "BC")
+    val keyPairGenerator = KeyPairGenerator.getInstance("RSA", BouncycastleUtils.provider)
     keyPairGenerator.initialize(size)
     val pair = keyPairGenerator.generateKeyPair()
     val public = pair.public as BCRSAPublicKey
@@ -34,7 +34,7 @@ actual fun Key.Companion.generateEcdsa(nid: Nid): Key.Pair<ECPublicKey, ECPrivat
         Nid.secp256k1 -> "secp256k1"
     }
     BouncycastleUtils.check()
-    val keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC")
+    val keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", BouncycastleUtils.provider)
     keyPairGenerator.initialize(ECGenParameterSpec(nidValue), SecureRandom())
     val pair = keyPairGenerator.generateKeyPair()
     val public = pair.public as BCECPublicKey

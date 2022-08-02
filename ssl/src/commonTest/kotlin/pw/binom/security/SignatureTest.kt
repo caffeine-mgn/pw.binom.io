@@ -6,9 +6,11 @@ import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 import pw.binom.ssl.Nid
 import pw.binom.ssl.generateEcdsa
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
+@Ignore
 class SignatureTest {
 
     private val someData = "Hello world".encodeToByteArray()

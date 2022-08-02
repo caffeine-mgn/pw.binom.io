@@ -2,9 +2,11 @@ package pw.binom
 
 import pw.binom.crypto.Keccak256MessageDigest
 import pw.binom.io.socket.ssl.toHex
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@Ignore
 class Sha3Test {
 
     fun asByte(m: Int, n: Int): Byte = (m shl 4 or n).toByte()

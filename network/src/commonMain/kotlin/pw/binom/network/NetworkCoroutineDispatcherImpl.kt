@@ -43,7 +43,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     val networkThread = Thread("NetworkThread-${counter++}") { thisThread ->
         try {
-            while (!this.closed.getValue()) {
+            while (!closed.getValue()) {
                 this.networkThreadRef = ThreadRef()
                 this.selector.select(selectedEvents = selectedKeys)
                 val iterator = selectedKeys.iterator()
@@ -86,13 +86,14 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                         }
                     } catch (e: Throwable) {
                         thisThread.uncaughtExceptionHandler.uncaughtException(
-                            thread = thisThread, throwable = e
+                            thread = thisThread,
+                            throwable = e,
                         )
                     }
                 }
             }
         } finally {
-            this.close()
+            freeResources()
         }
     }
 
@@ -100,57 +101,6 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         networkThread.start()
     }
 
-    /*
-        init {
-            worker.execute(this) { self ->
-                try {
-                    while (!self.closed.getValue()) {
-                        self.networkThread = ThreadRef()
-                        self.selector.select(selectedEvents = selectedKeys)
-                        val iterator = selectedKeys.iterator()
-                        var executeOnNetwork = false
-                        while (iterator.hasNext() && !self.closed.getValue()) {
-                            val event = iterator.next()
-                            if (event.key === self.internalKey) {
-                                executeOnNetwork = true
-                            } else {
-                                val attachment = event.key.attachment
-                                attachment ?: throw IllegalStateException("Attachment is null")
-                                val connection = attachment as AbstractConnection
-                                when {
-                                    event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
-                                    event.mode and Selector.EVENT_ERROR != 0 -> connection.error()
-                                    event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite()
-                                    event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead()
-                                    else -> throw IllegalStateException("Unknown connection event")
-                                }
-                            }
-                        }
-                        if (executeOnNetwork) {
-                            if (self.readyForWriteListener.isEmpty()) {
-                                self.internalKey.listensFlag = 0
-                            } else {
-                                self.readyForWriteListener.popAll {
-                                    it.forEach {
-                                        try {
-                                            it.run()
-                                        } catch (e: Throwable) {
-                                            e.printStackTrace()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch (e: Throwable) {
-                    println("Error on ROOT NetworkDispatcher #1")
-                    e.printStackTrace()
-                } finally {
-                    self.close()
-                }
-            }
-        }
-    */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         readyForWriteListener.push(block)
         wakeup()
@@ -166,10 +116,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         }
     }
 
-    override fun close() {
-        closed.setValue(true)
-        wakeup()
-        networkThread.join()
+    private fun freeResources() {
         internalKey.close()
         internalUdpChannel.close()
 
@@ -177,8 +124,14 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             val attachment = it.attachment as AbstractConnection
             attachment.cancelSelector()
         }
-
+        readyForWriteListener.clear()
         selector.close()
+    }
+
+    override fun close() {
+        closed.setValue(true)
+        wakeup()
+        networkThread.join()
     }
 
     override fun attach(channel: UdpSocketChannel): UdpConnection {

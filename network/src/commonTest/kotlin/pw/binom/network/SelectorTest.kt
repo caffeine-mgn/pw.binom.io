@@ -1,12 +1,28 @@
 package pw.binom.network
 
+import pw.binom.thread.Thread
 import kotlin.random.Random
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 class SelectorTest {
+
+    @Test
+    fun wakeupTest() {
+        val selector = Selector.open()
+        val selectKeys = SelectedEvents.create()
+        Thread {
+            Thread.sleep(1000)
+            selector.wakeup()
+        }.start()
+        val it = selector.select(selectedEvents = selectKeys)
+        println("Count: $it")
+        selectKeys.forEach {
+            fail()
+        }
+    }
 
     @Test
     fun selectTimeoutTest1() {
@@ -17,6 +33,7 @@ class SelectorTest {
         assertFalse(selectKeys.iterator().hasNext())
     }
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun selectTimeoutTest2() {
         val selectKeys = SelectedEvents.create()
@@ -24,12 +41,12 @@ class SelectorTest {
         val client = TcpClientSocketChannel()
         client.setBlocking(false)
         selector.attach(client)
+        val beforeSelecting = TimeSource.Monotonic.markNow()
         val count = selector.select(1000, selectKeys)
         assertEquals(0, count)
         val it = selectKeys.iterator()
-        it.forEach {
-            println("->$it")
-        }
+        val selectingTime = beforeSelecting.elapsedNow()
+        assertTrue(selectingTime > 0.5.seconds && selectingTime < 1.5.seconds)
         assertFalse(it.hasNext())
     }
 

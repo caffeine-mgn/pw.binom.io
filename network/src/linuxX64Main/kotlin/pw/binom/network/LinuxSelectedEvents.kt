@@ -29,8 +29,21 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
             currentNum = 0
         }
 
-        override fun hasNext(): Boolean =
-            currentNum != eventCount
+        private fun check() {
+            if (currentNum == eventCount) {
+                return
+            }
+            val selector = selector
+            if (native[currentNum].data.fd == selector?.pipeRead) {
+                currentNum++
+                selector.interruptWakeup()
+            }
+        }
+
+        override fun hasNext(): Boolean {
+            check()
+            return currentNum != eventCount
+        }
 
         override fun next(): AbstractSelector.NativeKeyEvent {
             if (!hasNext()) {
@@ -42,7 +55,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 //            val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
 //            val key = keyPtr.get()
             val key = selector!!.idToKey[item.data.u32.convert()]
-                ?: throw IllegalStateException("Key not found ${item.data.u32.toInt()}")
+                ?: throw IllegalStateException("Key not found ${item.data.u32.toInt()} in ${selector?.native}")
             if (!key.connected) {
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)

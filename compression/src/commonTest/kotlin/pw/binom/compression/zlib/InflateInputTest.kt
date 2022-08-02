@@ -2,8 +2,8 @@ package pw.binom.compression.zlib
 
 import kotlinx.coroutines.runBlocking
 import pw.binom.asyncOutput
-import pw.binom.clone
 import pw.binom.io.ByteBuffer
+import pw.binom.io.clone
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

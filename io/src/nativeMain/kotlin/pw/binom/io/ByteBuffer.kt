@@ -102,8 +102,9 @@ actual open class ByteBuffer(
             checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
             _limit = value
-            if (position > value)
+            if (position > value) {
                 position = value
+            }
         }
 
     actual fun skip(length: Long): Long {
@@ -143,7 +144,7 @@ actual open class ByteBuffer(
 
     override fun close() {
         checkClosed()
-        closed = true
+//        closed = true
         onClose?.invoke(this)
     }
 
@@ -247,8 +248,9 @@ actual open class ByteBuffer(
         if (length == 0) {
             return 0
         }
-        if (offset + length > data.size)
+        if (offset + length > data.size) {
             throw IndexOutOfBoundsException()
+        }
         val len = minOf(remaining, length)
         if (len == 0) {
             return 0

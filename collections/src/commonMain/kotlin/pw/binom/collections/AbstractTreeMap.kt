@@ -13,17 +13,12 @@ private val COMPARATOR: Comparator<Any> = Comparator<Any> { a, b ->
     a.compareTo(b)
 }.doFreeze()
 
-abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
+abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNavigableMap<K, V> {
     private var root: Node<K, V>? = null
     private var modCount = 0
     private var _size = 0
 
-    @Suppress("UNCHECKED_CAST")
-    var comparator = COMPARATOR as Comparator<K>
-
-    constructor(comparator: Comparator<K>) : this() {
-        this.comparator = comparator
-    }
+    constructor() : this(COMPARATOR as Comparator<K>)
 
     protected abstract fun createTreeNode(key: K, value: V, color: Int): Node<K, V>
 
@@ -56,8 +51,9 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
     override fun containsValue(value: V): Boolean {
         var node = getFirstNode()
         while (node != null) {
-            if (value == node.value)
+            if (value == node.value) {
                 return true
+            }
             node = successor(node)
         }
         return false
@@ -118,11 +114,11 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
         while (current != null) {
             parent = current
             comparison = compare(key, current.key)
-            if (comparison > 0)
+            if (comparison > 0) {
                 current = current.right
-            else if (comparison < 0)
+            } else if (comparison < 0) {
                 current = current.left
-            else { // Key already in tree.
+            } else { // Key already in tree.
                 current.value = value
                 return value
             }
@@ -140,10 +136,11 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
             root = n
             return null
         }
-        if (comparison > 0)
+        if (comparison > 0) {
             parent.right = n
-        else
+        } else {
             parent.left = n
+        }
 
         // Rebalance after insert.
         fixAfterInsertion(n)
@@ -420,8 +417,9 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
             } else {
                 node.parent!!.left = child
             }
-        } else
+        } else {
             root = child
+        }
 
         // Link n and child.
         child.right = node
@@ -441,18 +439,21 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
 
         // Establish node.right link.
         node.right = child!!.left
-        if (child.left != null)
+        if (child.left != null) {
             child.left!!.parent = node
+        }
 
         // Establish child->parent link.
         child.parent = node.parent
         if (node.parent != null) {
-            if (node == node.parent!!.left)
+            if (node == node.parent!!.left) {
                 node.parent!!.left = child
-            else
+            } else {
                 node.parent!!.right = child
-        } else
+            }
+        } else {
             root = child
+        }
 
         // Link n and child.
         child.left = node
@@ -464,10 +465,11 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
 
     fun getLastNode(): Node<K, V>? {
         var p = root
-        if (p != null)
+        if (p != null) {
             while (p?.right != null) {
                 p = p.right
             }
+        }
         return p
     }
 
@@ -499,10 +501,11 @@ abstract class AbstractTreeMap<K, V>() : MutableNavigableMap<K, V> {
         while (p != null) {
             var cmp = compare(key, p.key)
             if (cmp > 0) {
-                if (p.right != null)
+                if (p.right != null) {
                     p = p.right
-                else
+                } else {
                     return p
+                }
             } else {
                 if (p.left != null) {
                     p = p.left

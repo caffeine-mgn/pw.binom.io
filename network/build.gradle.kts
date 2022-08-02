@@ -152,15 +152,25 @@ kotlin {
             dependsOn(commonMain)
             dependencies {}
         }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-                dependsOn(jvmMain)
-            }
-        }
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
                 api(kotlin("test"))
+            }
+        }
+        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+            val androidMain by getting {
+                dependsOn(jvmMain)
+            }
+            val androidTest by getting {
+                dependsOn(commonTest)
+                dependencies {
+//                    api(kotlin("test"))
+                    api(kotlin("test-junit"))
+//                    api(kotlin("test-common"))
+//                    api(kotlin("test-annotations-common"))
+                    api("com.android.support.test:runner:0.5")
+                }
             }
         }
         val linuxX64Test by getting {

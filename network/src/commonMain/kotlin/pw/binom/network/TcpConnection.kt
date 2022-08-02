@@ -9,7 +9,6 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), AsyncChannel {
-
     var connect: CancellableContinuation<Unit>? = null
     var description: String? = null
     private var closed = false
@@ -30,7 +29,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             "TcpConnection($description)"
         }
 
-    private class ReadData {
+    private val readData = object {
         var continuation: CancellableContinuation<Int>? = null
         var data: ByteBuffer? = null
         var full = false
@@ -40,8 +39,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             data = null
         }
     }
-
-    private class SendData {
+    private val sendData = object {
         var continuation: CancellableContinuation<Int>? = null
         var data: ByteBuffer? = null
         fun reset() {
@@ -49,9 +47,6 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             data = null
         }
     }
-
-    private val readData = ReadData()
-    private val sendData = SendData()
 
     private fun calcListenFlags() =
         when {
@@ -140,7 +135,9 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         val continuation = readData.continuation
         val data = readData.data
         if (continuation == null) {
-            key.removeListen(Selector.INPUT_READY)
+            if (!key.closed) {
+                key.removeListen(Selector.INPUT_READY)
+            }
             return
         }
         data ?: throw IllegalStateException("readData.data is not set")

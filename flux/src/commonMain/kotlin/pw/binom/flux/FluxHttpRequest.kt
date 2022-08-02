@@ -7,11 +7,14 @@ import pw.binom.io.http.EmptyHeaders
 import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.HttpRequest
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
-import kotlin.coroutines.resume
+import kotlin.coroutines.coroutineContext
 
 interface FluxHttpRequest : HttpRequest, CoroutineContext {
-    companion object
+    companion object {
+        suspend fun getActiveRequestOrNull(): FluxHttpRequest? = coroutineContext[FluxHttpRequestImplKey]
+        suspend fun getActiveRequest() =
+            getActiveRequestOrNull() ?: throw IllegalStateException("No active FluxHttpRequest")
+    }
 
     val pathVariables: Map<String, String>
     val queryVariables: Map<String, String?>
@@ -30,7 +33,3 @@ suspend inline fun <reified T : Any> FluxHttpRequest.finishResponse(
     headers: Headers = EmptyHeaders,
     statusCode: Int? = null
 ) = finishResponse(value = value, headers = headers, statusCode = statusCode, serializer = T::class.serializer())
-
-suspend fun FluxHttpRequest.getActiveRequest() = suspendCoroutineUninterceptedOrReturn<FluxHttpRequest?> {
-    it.resume(it.context[FluxHttpRequestImplKey])
-}

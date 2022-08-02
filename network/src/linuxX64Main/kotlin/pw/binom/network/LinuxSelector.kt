@@ -1,37 +1,79 @@
 package pw.binom.network
 
-import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.*
 import platform.linux.*
+import platform.posix.pipe
+import platform.posix.read
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import kotlin.collections.set
 
+internal val STUB_BYTE = byteArrayOf(1)
+
 class LinuxSelector : AbstractSelector() {
 
-    internal val native = epoll_create(1000)
-    internal val keys = HashSet<LinuxKey>()
+    internal val native = Epoll.create(1000)
+    internal val keys = HashSet<LinuxKey>() // { a, b -> a.hashCode() - b.hashCode() }
 
     internal val idToKey = HashMap<Int, LinuxKey>()
-    private val keyForRemove = HashSet<Int>()
-    private val keysLock = SpinLock()
+    private val keyForRemove = HashMap<Int, RawSocket>()
+    private val keyForAdd = HashMap<Int, LinuxKey>()
+    private val selectLock = SpinLock()
+    internal var pipeRead: Int = 0
+    internal var pipeWrite: Int = 0
 
-    internal fun addKey(key: LinuxKey) {
-        keysLock.synchronize {
-            val id = key.hashCode()
-            idToKey[id] = key
+    init {
+        memScoped {
+            val fds = allocArray<IntVar>(2)
+            pipe(fds)
+            pipeRead = fds[0]
+            pipeWrite = fds[1]
+            setBlocking(pipeRead, false)
+            setBlocking(pipeWrite, false)
+
+            val event1 = alloc<epoll_event>()
+            event1.data.fd = pipeRead
+            event1.events = EPOLLIN.convert()
+            native.add(pipeRead, event1.ptr)
+
+//            val event2 = alloc<epoll_event>()
+//            event2.data.fd = pipeWrite
+//            event2.events = EPOLLIN.convert()
+//            native.add(pipeWrite, event2.ptr)
         }
     }
 
-    internal fun removeKey(key: LinuxKey) {
-        keysLock.synchronize {
-            keyForRemove += key.hashCode()
+    internal fun addKey(key: LinuxKey) {
+        if (selectLock.tryLock()) {
+            try {
+                val id = key.hashCode()
+                idToKey[id] = key
+                native.add(key.nativeSocket, key.epollEvent.ptr)
+            } finally {
+                selectLock.unlock()
+            }
+        } else {
+            keyForAdd[key.hashCode()] = key
+        }
+    }
+
+    internal fun removeKey(key: LinuxKey, socket: RawSocket) {
+        if (selectLock.tryLock()) {
+            try {
+                idToKey.remove(key.hashCode())
+                native.delete(socket, failOnError = false)
+            } finally {
+                selectLock.unlock()
+            }
+        } else {
+            keyForRemove[key.hashCode()] = socket
         }
     }
 
     override fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
         val key = LinuxKey(list = native, attachment = attachment, selector = this)
         keys += key
-        addKey(key)
+//        addKey(key)
         if (!connectable) {
             key.connected = true
         }
@@ -46,34 +88,56 @@ class LinuxSelector : AbstractSelector() {
         }
         key.listensFlag = mode
         keys += key
-        addKey(key)
         return key
     }
 
+    override fun wakeup() {
+        STUB_BYTE.usePinned { p ->
+            platform.posix.write(pipeWrite, p.addressOf(0), 1.convert()).convert<Int>()
+        }
+    }
+
+    internal fun interruptWakeup() {
+        STUB_BYTE.usePinned { p ->
+            read(pipeRead, p.addressOf(0), 1.convert())
+        }
+    }
+
     override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
-        keysLock.synchronize {
+        selectLock.synchronize {
+            if (keyForAdd.isNotEmpty()) {
+                idToKey.putAll(keyForAdd)
+                keyForAdd.forEach { (_, key) ->
+                    native.add(key.nativeSocket, key.epollEvent.ptr)
+                }
+                keyForAdd.clear()
+            }
+
             if (keyForRemove.isNotEmpty()) {
-                keyForRemove.forEach {
-                    idToKey.remove(it)?.attachment = null
+                keyForRemove.forEach { (id, socket) ->
+                    native.delete(socket, failOnError = false)
+                    idToKey.remove(id)?.attachment = null
                 }
                 keyForRemove.clear()
             }
+            val eventCount = epoll_wait(
+                native.raw,
+                selectedEvents.native.reinterpret(),
+                minOf(selectedEvents.maxElements, 1000),
+                timeout.toInt()
+            )
+            selectedEvents.eventCount = eventCount
+            selectedEvents.selector = this
+            return eventCount
         }
-        val eventCount = epoll_wait(
-            native,
-            selectedEvents.native.reinterpret(),
-            minOf(selectedEvents.maxElements, 1000),
-            timeout.toInt()
-        )
-        selectedEvents.eventCount = eventCount
-        selectedEvents.selector = this
-        return eventCount
     }
 
-    override fun getAttachedKeys(): Collection<Selector.Key> = HashSet(keys)
+    override fun getAttachedKeys(): Collection<Selector.Key> = keys
 
     override fun close() {
-        platform.posix.close(native)
+        platform.posix.close(pipeRead)
+        platform.posix.close(pipeWrite)
+        native.close()
     }
 }
 

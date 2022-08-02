@@ -15,12 +15,11 @@ private val chiperList =
 actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trustManager: TrustManager) : Closeable {
 
     init {
-        if (!inited.getValue()) {
+        if (inited.compareAndSet(false, true)) {
             OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS.convert(), null)
             OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS.convert(), null)
             OPENSSL_init_ssl(0.convert(), null)
         }
-        inited.setValue(true)
     }
 
     override fun close() {
@@ -65,8 +64,9 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
 
     fun client(): CPointer<SSL_CTX> {
         val clientCtx = SSL_CTX_new(client_method)!!
-        if (SSL_CTX_set_cipher_list(clientCtx, chiperList) != 1)
+        if (SSL_CTX_set_cipher_list(clientCtx, chiperList) != 1) {
             TODO("SSL_CTX_set_cipher_list error")
+        }
 
         SSL_CTX_set_verify(clientCtx, SSL_VERIFY_PEER, null)
         SSL_CTX_set_cert_verify_callback(clientCtx, sslServerCheck().reinterpret(), self.asCPointer())
@@ -107,16 +107,18 @@ private fun sslServerCheck() = staticCFunction<CPointer<X509_STORE_CTX>, COpaque
     val cain = X509_STORE_CTX_get0_chain(x509Ctx) ?: X509_STORE_CTX_get1_chain(x509Ctx)
 
     val list = Array(1 + (cain?.size ?: 0)) {
-        if (it == 0)
+        if (it == 0) {
             X509Certificate(X509_STORE_CTX_get0_cert(x509Ctx)!!)
-        else
+        } else {
             X509Certificate(cain!![it - 1])
+        }
     }
 
-    if (self.trustManager.isServerTrusted(list))
+    if (self.trustManager.isServerTrusted(list)) {
         1
-    else
+    } else {
         -1
+    }
 }
 
 private fun sslHostCheck() = staticCFunction<CPointer<SSL>, CPointer<IntVar>, COpaquePointer, Int> { ssl, _, arg ->
@@ -125,12 +127,14 @@ private fun sslHostCheck() = staticCFunction<CPointer<SSL>, CPointer<IntVar>, CO
     val private = self.keyManager.getPrivate(hostName)
     val public = self.keyManager.getPublic(hostName)
     if (private != null) {
-        if (SSL_use_PrivateKey(ssl, private.native) < 0)
+        if (SSL_use_PrivateKey(ssl, private.native) < 0) {
             TODO("SSL_use_PrivateKey private")
+        }
     }
     if (public != null) {
-        if (SSL_use_certificate(ssl, public.ptr) < 0)
+        if (SSL_use_certificate(ssl, public.ptr) < 0) {
             TODO("SSL_use_certificate error")
+        }
     }
 
     SSL_TLSEXT_ERR_OK

@@ -27,12 +27,12 @@ actual class RSAPrivateKey(val native: BCRSAPrivateKey) : Key.Private {
             when (encodedKeySpec) {
                 is PKCS8EncodedKeySpec -> {
                     BouncycastleUtils.check()
-                    val c = KeyFactory.getInstance("RSA", "BC")
+                    val c = KeyFactory.getInstance("RSA", BouncycastleUtils.provider)
                     val key = c.generatePrivate(java.security.spec.PKCS8EncodedKeySpec(encodedKeySpec.data))
                     RSAPrivateKey(key as BCRSAPrivateKey)
                 }
                 is RSAPrivateKeySpec -> {
-                    val c = KeyFactory.getInstance("RSA", "BC")
+                    val c = KeyFactory.getInstance("RSA", BouncycastleUtils.provider)
                     val key = c.generatePrivate(
                         java.security.spec.RSAPrivateKeySpec(
                             encodedKeySpec.modulus.toJavaBigInteger(),

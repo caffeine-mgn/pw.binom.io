@@ -3,7 +3,7 @@ package pw.binom.compression.tar
 import pw.binom.io.file.File
 import pw.binom.io.file.openWrite
 import pw.binom.io.use
-import pw.binom.wrap
+import pw.binom.io.wrap
 import kotlin.test.Ignore
 import kotlin.test.Test
 

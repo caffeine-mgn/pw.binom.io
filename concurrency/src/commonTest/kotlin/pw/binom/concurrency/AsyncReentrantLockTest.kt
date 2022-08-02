@@ -17,10 +17,10 @@ class AsyncReentrantLockTest {
 
         lock.synchronize {
             lock.synchronize {
-                executed.value = true
+                executed.setValue(true)
             }
         }
-        assertTrue(executed.value)
+        assertTrue(executed.getValue())
     }
 
     @Test

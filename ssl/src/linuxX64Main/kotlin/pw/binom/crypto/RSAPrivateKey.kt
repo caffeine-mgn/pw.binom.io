@@ -32,7 +32,18 @@ actual class RSAPrivateKey(actual val n: BigInteger, actual val e: BigInteger, a
                     println("d=$d")
                     println("p=$p")
                     println("q=$q")
-                    TODO("Not yet implemented")
+                    RSAPrivateKey(
+                        n = n.toBigInt(),
+                        e = e.toBigInt(),
+                        d = d.toBigInt(),
+                    )
+                }
+                is RSAPrivateKeySpec -> {
+                    RSAPrivateKey(
+                        n = encodedKeySpec.modulus,
+                        e = BigInteger.fromInt(65537),
+                        d = encodedKeySpec.privateExponent,
+                    )
                 }
                 else -> throw SecurityException("Creating RSAPrivateKey from ${encodedKeySpec::class.simpleName} not supported")
             }

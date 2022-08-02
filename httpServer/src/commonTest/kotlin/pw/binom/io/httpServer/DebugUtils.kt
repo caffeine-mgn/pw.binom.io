@@ -1,7 +1,7 @@
 package pw.binom.io.httpServer
 
-import pw.binom.forEachIndexed
 import pw.binom.io.ByteBuffer
+import pw.binom.io.forEachIndexed
 
 fun Byte.toChar2() = when (this) {
     '\r'.code.toByte() -> "\\r"
@@ -17,8 +17,9 @@ fun ByteBuffer.print() {
 
     clear()
     forEachIndexed { i, byte ->
-        if (i > 0)
+        if (i > 0) {
             print(", ")
+        }
         when {
             i == p && i == l -> print("[] ${byte.toChar2()}")
             i == p -> print("[${byte.toChar2()}")
@@ -26,8 +27,9 @@ fun ByteBuffer.print() {
             else -> print(byte.toChar2())
         }
     }
-    if (l == capacity)
+    if (l == capacity) {
         print("]")
+    }
     println()
     limit = l
     position = p

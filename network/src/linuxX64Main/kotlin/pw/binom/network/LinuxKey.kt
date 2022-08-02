@@ -2,14 +2,28 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.*
+import kotlin.native.internal.createCleaner
+
+value class HeapMemory<T : CVariable>(val data: ByteArray) {
+    companion object {
+        fun <T : CVariable> create(size: Int) = HeapMemory<T>(ByteArray(size))
+        inline fun <reified T : CVariable> create() = create<T>(sizeOf<T>().convert())
+    }
+
+    inline fun ptr(func: (CPointer<T>) -> Unit) {
+        data.usePinned {
+            func(it.addressOf(0).reinterpret())
+        }
+    }
+}
 
 class LinuxKey(
-    val list: Int,
+    val list: Epoll,
     attachment: Any?,
     override val selector: LinuxSelector,
 ) : AbstractKey(attachment) {
-    private val epollEvent = nativeHeap.alloc<epoll_event>()
-    private var nativeSocket: RawSocket = 0
+    internal val epollEvent = nativeHeap.alloc<epoll_event>()
+    internal var nativeSocket: RawSocket = 0
 
     override fun addSocket(raw: RawSocket) {
         if (nativeSocket != 0) {
@@ -18,17 +32,17 @@ class LinuxKey(
         epollEvent.events = epollCommonToNative(listensFlag.convert()).convert()
 //        epollEvent.data.ptr = ptr
         epollEvent.data.u32 = this@LinuxKey.hashCode().convert()
-        epoll_ctl(list, EPOLL_CTL_ADD, raw.convert(), epollEvent.ptr)
         nativeSocket = raw
+        selector.addKey(this)
     }
 
     override fun removeSocket(raw: RawSocket) {
         if (nativeSocket == raw) {
-            epoll_ctl(list, EPOLL_CTL_DEL, raw.convert(), null)
+            selector.removeKey(this, raw)
             nativeSocket = 0
             return
         }
-        throw IllegalArgumentException("Socket $raw not attached to Selector.Key")
+//        throw IllegalArgumentException("Socket $raw not attached to Selector.Key $nativeSocket")
     }
 
     override fun isSuccessConnected(nativeMode: Int): Boolean =
@@ -40,17 +54,24 @@ class LinuxKey(
         }
         epollEvent.events = epollCommonToNative(mode.convert()).convert()
         if (nativeSocket != 0) {
-            epoll_ctl(list, EPOLL_CTL_MOD, nativeSocket.convert(), epollEvent.ptr)
+            list.update(socket = nativeSocket, data = epollEvent.ptr, failOnError = false)
         }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private val cleaner = createCleaner(epollEvent) {
+        nativeHeap.free(it)
     }
 
     override fun close() {
         super.close()
-        nativeHeap.free(epollEvent)
+        val nativeSocket = nativeSocket
         if (nativeSocket != 0) {
-            epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), epollEvent.ptr)
+            removeSocket(nativeSocket)
+//            if (epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), epollEvent.ptr) != 0) {
+//                throw IOException("Can't remove SelectorKey from Selector")
+//            }
         }
-        selector.removeKey(this)
         selector.keys -= this
     }
 

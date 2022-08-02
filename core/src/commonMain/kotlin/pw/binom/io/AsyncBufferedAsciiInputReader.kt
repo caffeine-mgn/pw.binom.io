@@ -71,18 +71,23 @@ class AsyncBufferedAsciiInputReader private constructor(
         if (eof) {
             return
         }
-
-        if (buffer.remaining == 0) {
-            try {
-                buffer.clear()
-                if (stream.read(buffer) == 0) {
-                    eof = true
-                }
+        if (buffer.remaining > 0) {
+            return
+        }
+        try {
+            buffer.clear()
+            val len = stream.read(buffer)
+            if (len == 0) {
+                eof = true
+            } else {
                 buffer.flip()
-            } catch (e: Throwable) {
-                buffer.empty()
-                throw e
+                val data = buffer.holdState {
+                    it.toByteArray().map { it.toInt().toChar() }.joinToString("")
+                }
             }
+        } catch (e: Throwable) {
+            buffer.empty()
+            throw e
         }
     }
 
@@ -155,20 +160,28 @@ class AsyncBufferedAsciiInputReader private constructor(
         checkClosed()
         val out = StringBuilder()
         var exist = false
+        val charValue = char.code.toByte()
         LOOP@ while (true) {
             full()
             if (buffer.remaining <= 0) {
                 break
             }
-            for (i in buffer.position until buffer.limit) {
-                buffer.position++
-                if (buffer[i] == char.code.toByte()) {
-                    exist = true
-                    break@LOOP
-                } else {
-                    out.append(buffer[i].toInt().toChar())
-                }
+            val byte = buffer.getByte()
+            if (charValue == byte) {
+                exist = true
+                break@LOOP
             }
+            out.append(byte.toInt().toChar())
+
+//            for (i in buffer.position until buffer.limit) {
+//                buffer.position++
+//                if (buffer[i] == char.code.toByte()) {
+//                    exist = true
+//                    break@LOOP
+//                } else {
+//                    out.append(buffer[i].toInt().toChar())
+//                }
+//            }
             exist = true
         }
         if (!exist) {

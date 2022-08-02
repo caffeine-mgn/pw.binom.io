@@ -45,9 +45,16 @@ abstract class GenerateManifestTask : DefaultTask() {
     fun execute() {
         val manifestFile = manifestFile.get().asFile
         manifestFile.parentFile.mkdirs()
+        val projectName = project.name.replace('-', '_')
         manifestFile.writeText(
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                "<manifest package=\"pw.binom.io.${project.name.replace('-', '_')}\"/>"
+                "<manifest package=\"pw.binom.io.$projectName\" xmlns:android=\"http://schemas.android.com/apk/res/android\">" +
+                """
+                       <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        android:minSdkVersion="30" /> 
+                    """ +
+                "</manifest>"
         )
     }
 }

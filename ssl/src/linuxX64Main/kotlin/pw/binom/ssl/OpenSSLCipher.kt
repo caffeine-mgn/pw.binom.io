@@ -36,7 +36,9 @@ abstract class OpenSSLCipher : Cipher {
         val output = ByteArray(outLen.value)
         output.usePinned { outputPinned ->
             EVP_CipherFinal_ex(
-                ctx, outputPinned.addressOf(0).reinterpret(), outLen.ptr
+                ctx,
+                outputPinned.addressOf(0).reinterpret(),
+                outLen.ptr
             ).checkTrue("EVP_CipherFinal_ex fails")
         }
         free()
@@ -45,6 +47,7 @@ abstract class OpenSSLCipher : Cipher {
 
     protected fun init(mode: Cipher.Mode, key: COpaquePointer, params: Map<String, Any>) {
         free()
+
         memScoped {
             BigNumContext().use { bnCtx ->
                 var c = 0
@@ -53,7 +56,9 @@ abstract class OpenSSLCipher : Cipher {
                     val param = when (val value = it.value) {
                         is String -> {
                             OSSL_PARAM_construct_utf8_string(
-                                it.key, value.cstr, 0
+                                it.key,
+                                value.cstr,
+                                0
                             )
                         }
                         is BigInteger -> {
@@ -77,7 +82,9 @@ abstract class OpenSSLCipher : Cipher {
                 val end = OSSL_PARAM_construct_end()
                 memcpy(paramsPtr[c++].ptr, end.ptr, sizeOf<OSSL_PARAM>().convert())
                 val ctx = EVP_CIPHER_CTX_new() ?: throwError("EVP_CIPHER_CTX_new fails")
-                val cipher = EVP_CIPHER_fetch(null, algoritm, null) ?: throwError("EVP_CIPHER_fetch fails")
+                val cipher =
+                    EVP_CIPHER_fetch(null, algoritm, null) ?: throwError("EVP_CIPHER_fetch fails. algoritm=$algoritm")
+                println("cipher=====>$cipher")
                 EVP_CipherInit_ex2(
                     ctx = ctx,
                     cipher = cipher,

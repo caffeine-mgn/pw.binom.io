@@ -8,11 +8,13 @@ class IconvCharset(override val name: String) : Charset {
     private val decodePool =
         CoderDefaultPool<IconvCharsetDecoder>(64) { pool -> IconvCharsetDecoder(name) { self -> pool.recycle(self as IconvCharsetDecoder) } }
 
-    override fun newDecoder(): CharsetDecoder =
-        decodePool.borrow()
+    override fun newDecoder(): CharsetDecoder {
+        return decodePool.borrow()
+    }
 
-    override fun newEncoder(): CharsetEncoder =
-        encodePool.borrow()
+    override fun newEncoder(): CharsetEncoder {
+        return encodePool.borrow()
+    }
 }
 
 private class CoderDefaultPool<T : AbstractIconv>(capacity: Int, new: (DefaultPool<T>) -> T) :

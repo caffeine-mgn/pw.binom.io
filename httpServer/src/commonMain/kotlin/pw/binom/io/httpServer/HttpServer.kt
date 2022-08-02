@@ -14,6 +14,11 @@ import pw.binom.io.http.websocket.MessagePool
 import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.network.*
 import pw.binom.pool.FixedSizePool
+import pw.binom.thread.DefaultUncaughtExceptionHandler
+import pw.binom.thread.Thread
+import pw.binom.thread.UncaughtExceptionHandler
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 fun interface Handler {
     suspend fun request(req: HttpRequest)
@@ -29,12 +34,10 @@ fun interface Handler {
 class HttpServer(
     val manager: NetworkManager = Dispatchers.Network,
     val handler: Handler,
-    val maxIdleTime: Long = 10_000,
-    val idleCheckInterval: Long = 30_000,
+    val maxIdleTime: Duration = 10.seconds,
+    val idleCheckInterval: Duration = 30.seconds,
     internal val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE,
-    val errorHandler: (Throwable) -> Unit = { e ->
-        e.printStackTrace()
-    },
+    val errorHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler,
     websocketMessagePoolSize: Int = 16,
     outputBufferPoolSize: Int = 16,
 ) : AsyncCloseable {
@@ -75,7 +78,7 @@ class HttpServer(
         val it = idleConnections.iterator()
         while (it.hasNext()) {
             val e = it.next()
-            if (now - e.lastActive > maxIdleTime) {
+            if (now - e.lastActive > maxIdleTime.inWholeMilliseconds) {
                 count++
                 it.remove()
                 runCatching { e.asyncClose() }
@@ -89,7 +92,7 @@ class HttpServer(
 
     private suspend fun idleCheck() {
         val now = DateTime.nowTime
-        if (now - lastIdleCheckTime < idleCheckInterval) {
+        if (now - lastIdleCheckTime < idleCheckInterval.inWholeMilliseconds) {
             return
         }
         forceIdleCheck()
@@ -118,7 +121,7 @@ class HttpServer(
                 runCatching { channel.asyncClose() }
             } catch (e: Throwable) {
                 runCatching { channel.asyncClose() }
-                runCatching { errorHandler(e) }
+                runCatching { errorHandler.uncaughtException(Thread.currentThread, e) }
             } finally {
                 if (req != null) {
                     req.free()
@@ -144,7 +147,8 @@ class HttpServer(
                         try {
                             idleCheck()
                             val client = try {
-                                server.accept(null)
+                                val client = server.accept(null)
+                                client
                             } catch (e: ClosedException) {
                                 null
                             } ?: break

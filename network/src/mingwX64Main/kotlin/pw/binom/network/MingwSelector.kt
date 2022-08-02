@@ -68,6 +68,10 @@ class MingwSelector : AbstractSelector() {
         return key
     }
 
+    override fun wakeup() {
+        TODO("Not yet implemented")
+    }
+
     override fun getAttachedKeys(): Collection<Selector.Key> = HashSet(keys)
 
     override fun close() {

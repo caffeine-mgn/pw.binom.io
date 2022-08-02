@@ -41,7 +41,7 @@ include(":flux")
 include(":smtp")
 include(":signal")
 
-include(":examples:view")
+// include(":examples:view")
 
 // include(":examples:echoServer")
 // include(":examples:simpleHttpServer")

@@ -29,12 +29,15 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
 //                val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
                 tmpBuf.clear()
                 val s = sslEngine.wrap(tmpBuf, wbio)
-                if (s.bytesConsumed() > 0)
+                if (s.bytesConsumed() > 0) {
                     TODO()
-                if (s.status != SSLEngineResult.Status.OK)
+                }
+                if (s.status != SSLEngineResult.Status.OK) {
                     break
-            } else
+                }
+            } else {
                 break
+            }
         }
         wbio.flip()
         val l = minOf(wbio.remaining(), length)
@@ -74,8 +77,9 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                 if (rr.status == SSLEngineResult.Status.BUFFER_UNDERFLOW) {
                     break
                 }
-                if (rr.bytesProduced() > 0)
+                if (rr.bytesProduced() > 0) {
                     TODO()
+                }
                 continue
             }
             break
@@ -98,7 +102,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                         }
                         State.WANT_WRITE
                     }
-                    SSLEngineResult.HandshakeStatus.NEED_UNWRAP_AGAIN -> TODO()
+                    else -> TODO()
                 }
             SSLEngineResult.Status.BUFFER_UNDERFLOW -> TODO()
             SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO("wbio size=${wbio.remaining()}")
@@ -131,7 +135,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                             }
                             State.OK
                         }
-                        SSLEngineResult.HandshakeStatus.NEED_UNWRAP_AGAIN -> TODO()
+                        else -> TODO()
                     }
                 SSLEngineResult.Status.BUFFER_UNDERFLOW -> State.WANT_READ
                 SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO()
@@ -164,8 +168,9 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
 //    }
 
     private fun ByteBuffer.cleanup() {
-        if (position() == 0)
+        if (position() == 0) {
             return
+        }
         val p = position()
         val l = limit()
         compact()
@@ -201,12 +206,15 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
 //                val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
                     tmpBuf.clear()
                     val s = sslEngine.wrap(tmpBuf, wbio)
-                    if (s.bytesConsumed() > 0)
+                    if (s.bytesConsumed() > 0) {
                         TODO()
-                    if (s.status != SSLEngineResult.Status.OK)
+                    }
+                    if (s.status != SSLEngineResult.Status.OK) {
                         break
-                } else
+                    }
+                } else {
                     return 0
+                }
             }
         }
     }
@@ -237,8 +245,9 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                 if (rr.status == SSLEngineResult.Status.BUFFER_UNDERFLOW) {
                     break
                 }
-                if (rr.bytesProduced() > 0)
+                if (rr.bytesProduced() > 0) {
                     TODO()
+                }
                 continue
             }
             break
@@ -250,8 +259,9 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         while (true) {
             if (clientData.readRemaining == 0) {
                 val s = fullBuff()
-                if (s.state != State.OK)
+                if (s.state != State.OK) {
                     return s
+                }
             }
             val l = minOf(clientData.readRemaining, dst.remaining)
             dst.length(l) { dst ->
@@ -279,7 +289,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                         }
                         State.WANT_WRITE
                     }
-                    SSLEngineResult.HandshakeStatus.NEED_UNWRAP_AGAIN -> TODO()
+                    else -> TODO()
                 }
             SSLEngineResult.Status.BUFFER_UNDERFLOW -> TODO()
             SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO("wbio size=${wbio.remaining()}")

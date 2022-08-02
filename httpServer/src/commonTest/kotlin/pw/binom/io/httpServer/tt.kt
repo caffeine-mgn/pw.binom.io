@@ -1,34 +1,32 @@
 package pw.binom.io.httpServer
 
-// class tt {
-//    @Ignore
-//    @Test
-//    fun runTest() {
-//        val manager = NetworkDispatcher()
-//        val server = HttpServer(
-//            manager = manager,
-//            handler = Handler {
-//                println("Headers: ${it.headers}")
-//                it.response().use {
-//                    println("Request income")
-//                    val myText = "0000000000000000000000".encodeToByteArray()
-//                    it.status = 200
-// //                    it.headers.contentEncoding = "gzip"
-//                    it.headers.contentType = "text/html;charset=utf-8"
-// //                    it.headers.transferEncoding = "chunked"
-// //                        it.headers.contentLength = myText.size.toULong()
-//                    it.sendBinary(myText)
-//                    println("Request done!")
-//                }
-//            }
-//        )
-//        server.bindHttp(NetworkAddress.Immutable("0.0.0.0", 7003))
-//
-//        while (true) {
-//            manager.select(1000)
-//        }
-//    }
-// }
+import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkCoroutineDispatcherImpl
+import kotlin.test.Test
+
+class tt {
+    @Test
+    fun runTest() {
+        println("Start test")
+        val manager = NetworkCoroutineDispatcherImpl()
+        val server = HttpServer(
+            manager = manager,
+            handler = Handler {
+                println("Request income ${it.request}")
+                println("Headers: ${it.headers}")
+                it.response {
+                    val myText = "0000000000000000000000".encodeToByteArray()
+                    it.status = 200
+                    it.headers.contentType = "text/html;charset=utf-8"
+                    it.sendBinary(myText)
+                    println("Request done!")
+                }
+            }
+        )
+        server.listenHttp(NetworkAddress.Immutable("0.0.0.0", 8076))
+        manager.networkThread.join()
+    }
+}
 
 /*
 

@@ -40,6 +40,8 @@ interface Selector : Closeable {
         const val EVENT_ERROR: Int = 0b1000
     }
 
+    fun wakeup()
+
     fun getAttachedKeys(): Collection<Key>
 
     /**

@@ -103,7 +103,6 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
 
     @Throws(IOException::class)
     private fun doUnwrap(applicationInputBuffer: ByteBuffer): Int {
-
         var totalReadFromChannel = 0
 
         // Keep looping until peer has no more data ready or the applicationInboundBuffer is full
@@ -208,7 +207,7 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
                     SSLEngineResult.HandshakeStatus.NEED_WRAP -> {
                     }
 
-                    SSLEngineResult.HandshakeStatus.NEED_UNWRAP_AGAIN,
+//                    SSLEngineResult.HandshakeStatus.NEED_UNWRAP_AGAIN,
                     SSLEngineResult.HandshakeStatus.NEED_UNWRAP -> break@WRAP
 
                     SSLEngineResult.HandshakeStatus.NEED_TASK -> {
@@ -220,6 +219,7 @@ internal class SSLEngineBuffer(private val socketChannel: SocketChannel, private
                         break@WRAP
                     }
                     SSLEngineResult.HandshakeStatus.FINISHED -> break@WRAP
+                    else -> TODO()
                 }
 
                 SSLEngineResult.Status.BUFFER_OVERFLOW -> {

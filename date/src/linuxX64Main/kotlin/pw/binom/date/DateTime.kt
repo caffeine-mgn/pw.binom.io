@@ -1,9 +1,8 @@
+@file:OptIn(UnsafeNumber::class)
+
 package pw.binom.date
 
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
+import kotlinx.cinterop.*
 import platform.posix.*
 
 actual value class DateTime(val time: Long = nowTime) {
@@ -14,12 +13,6 @@ actual value class DateTime(val time: Long = nowTime) {
                 val t2 = alloc<tm>()
                 localtime_r(t.ptr, t2.ptr)
                 t2.tm_gmtoff.convert<Int>() / 60
-
-//                val t = alloc<timezone>()
-//                val timeVal = alloc<timeval>()
-//                gettimeofday(timeVal.ptr, t.ptr)
-//                val r = -t.tz_minuteswest
-//                r
             }
         actual val nowTime: Long
             get() = memScoped {
