@@ -24,8 +24,9 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
 
     private var closed = false
     private inline fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw ClosedException()
+        }
     }
 
     override fun flip() {
@@ -62,8 +63,9 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
 //    }
 
     override fun write(data: ByteBuffer): Int {
-        if (data === this)
+        if (data === this) {
             throw IllegalArgumentException()
+        }
         val l = minOf(remaining, data.remaining)
         length(l) { self ->
             data.length(l) { src ->
@@ -121,8 +123,9 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
 
     override fun read(dest: ByteBuffer): Int {
         val l = minOf(remaining, dest.remaining)
-        if (l == 0)
+        if (l == 0) {
             return l
+        }
         val selfLimit = native.limit()
         val destLimit = dest.native.limit()
         native.limit(native.position() + l)

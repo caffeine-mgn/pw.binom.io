@@ -74,15 +74,19 @@ kotlin {
         val nativeTest by creating {
             dependsOn(commonTest)
         }
-        val jvmMain by getting {
+        val jvmLikeMain by creating {
             dependsOn(commonMain)
         }
-        dependsOn("androidMain", jvmMain)
+
+        val jvmMain by getting {
+            dependsOn(jvmLikeMain)
+        }
+
         if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
             val androidMain by getting {
-                dependsOn(jvmMain)
             }
         }
+        dependsOn("androidMain", jvmLikeMain)
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
