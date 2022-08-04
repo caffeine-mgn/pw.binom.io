@@ -81,7 +81,9 @@ class SQLSyncPreparedStatement(val query: String, override val connection: SQLit
             query,
             null,
             null,
-        ).close()
+        ).use { cursor ->
+            cursor.count
+        }
         return connection.getChanges()
     }
 

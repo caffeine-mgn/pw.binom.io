@@ -2,7 +2,10 @@ package pw.binom.db.sqlite
 
 import pw.binom.UUID
 import pw.binom.io.use
+import pw.binom.nextUuid
+import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class SQLiteConnectorTest {
     companion object {
@@ -29,6 +32,36 @@ class SQLiteConnectorTest {
                 }
 //                    it.commit()
             }
+        }
+    }
+
+    @Test
+    fun commitTest() {
+        SQLiteConnector.memory().use { db ->
+            db.createStatement().use {
+                it.executeUpdate(SIMPLE_COMPANY_TABLE)
+            }
+
+            db.beginTransaction()
+            db.prepareStatement("insert into company (id,name,uid) values(?,?,?)").use {
+                repeat(100) { index ->
+                    it.set(0, index)
+                    it.set(1, Random.nextUuid().toString())
+                    it.set(2, Random.nextUuid())
+                    it.executeUpdate()
+                }
+            }
+            db.commit()
+
+            var count = 0
+            db.prepareStatement("select count(*) from company").use {
+                it.executeQuery().use { q ->
+                    while (q.next()) {
+                        count = q.getInt(0) ?: 0
+                    }
+                }
+            }
+            assertEquals(100, count)
         }
     }
 

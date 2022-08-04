@@ -55,16 +55,20 @@ actual class SQLiteConnector(val native: SQLiteDatabase) : SyncConnection {
     )
 
     override fun beginTransaction() {
-        native.beginTransaction()
+        native.beginTransactionNonExclusive()
     }
 
     override fun commit() {
+        println("before commit--------------------------inTransaction=${native.inTransaction()}!")
         native.setTransactionSuccessful()
         native.endTransaction()
+        println("after commit--------------------------inTransaction=${native.inTransaction()}!")
     }
 
     override fun rollback() {
+        println("before rollback--------------------------inTransaction=${native.inTransaction()}!")
         native.endTransaction()
+        println("after rollback--------------------------inTransaction=${native.inTransaction()}!")
     }
 
     override fun close() {
