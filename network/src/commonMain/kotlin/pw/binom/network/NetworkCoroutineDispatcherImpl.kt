@@ -27,14 +27,15 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
 
     //    private var worker = Worker()
     private val selector = Selector.open()
-    private val internalUdpChannel = UdpSocketChannel()
+
+    //    private val internalUdpChannel = UdpSocketChannel()
     override fun toString(): String = "Dispatchers.Network"
 
-    init {
-        internalUdpChannel.setBlocking(false)
-    }
+//    init {
+//        internalUdpChannel.setBlocking(false)
+//    }
 
-    private val internalKey = selector.attach(internalUdpChannel)
+    //    private val internalKey = selector.attach(internalUdpChannel)
     private val readyForWriteListener = BatchExchange<Runnable>()
 
     //    private val internalUdpContinuationConnection = attach(internalUdpChannel)
@@ -46,49 +47,39 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             while (!closed.getValue()) {
                 this.networkThreadRef = ThreadRef()
                 this.selector.select(selectedEvents = selectedKeys)
+
                 val iterator = selectedKeys.iterator()
-                var executeOnNetwork = false
                 while (iterator.hasNext() && !this.closed.getValue()) {
                     try {
                         val event = iterator.next()
-                        if (event.key === this.internalKey) {
-                            executeOnNetwork = true
-                        } else {
-                            val attachment = event.key.attachment
-                            attachment ?: throw IllegalStateException("Attachment is null")
-                            val connection = attachment as AbstractConnection
-                            when {
-                                event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
-                                event.mode and Selector.EVENT_ERROR != 0 -> connection.error()
-                                event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite()
-                                event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead()
-                                else -> throw IllegalStateException("Unknown connection event")
-                            }
-                        }
-
-                        if (executeOnNetwork) {
-                            if (this.readyForWriteListener.isEmpty()) {
-                                this.internalKey.listensFlag = 0
-                            } else {
-                                this.readyForWriteListener.popAll {
-                                    it.forEach {
-                                        try {
-                                            it.run()
-                                        } catch (e: Throwable) {
-                                            thisThread.uncaughtExceptionHandler.uncaughtException(
-                                                thread = thisThread,
-                                                throwable = RuntimeException("Error on network queue", e)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                        val attachment = event.key.attachment
+                        attachment ?: throw IllegalStateException("Attachment is null")
+                        val connection = attachment as AbstractConnection
+                        when {
+                            event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
+                            event.mode and Selector.EVENT_ERROR != 0 -> connection.error()
+                            event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite()
+                            event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead()
+                            else -> throw IllegalStateException("Unknown connection event")
                         }
                     } catch (e: Throwable) {
                         thisThread.uncaughtExceptionHandler.uncaughtException(
                             thread = thisThread,
                             throwable = e,
                         )
+                    }
+                }
+
+                readyForWriteListener.popAll {
+                    it.forEach {
+                        try {
+                            it.run()
+                        } catch (e: Throwable) {
+                            thisThread.uncaughtExceptionHandler.uncaughtException(
+                                thread = thisThread,
+                                throwable = RuntimeException("Error on network queue", e)
+                            )
+                        }
                     }
                 }
             }
@@ -109,17 +100,10 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !networkThreadRef.same
 
     override fun wakeup() {
-        try {
-            internalKey.addListen(Selector.OUTPUT_READY)
-        } catch (e: Throwable) {
-            throw IllegalStateException("Can't switch on internal udp interrupt", e)
-        }
+        selector.wakeup()
     }
 
     private fun freeResources() {
-        internalKey.close()
-        internalUdpChannel.close()
-
         selector.getAttachedKeys().forEach {
             val attachment = it.attachment as AbstractConnection
             attachment.cancelSelector()
