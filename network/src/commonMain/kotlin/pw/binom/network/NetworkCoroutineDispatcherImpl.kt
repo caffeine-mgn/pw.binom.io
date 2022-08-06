@@ -46,7 +46,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         try {
             while (!closed.getValue()) {
                 this.networkThreadRef = ThreadRef()
-                this.selector.select(selectedEvents = selectedKeys)
+                val count = this.selector.select(selectedEvents = selectedKeys)
 
                 val iterator = selectedKeys.iterator()
                 while (iterator.hasNext() && !this.closed.getValue()) {
@@ -83,6 +83,11 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                     }
                 }
             }
+        } catch (e: Throwable) {
+            thisThread.uncaughtExceptionHandler.uncaughtException(
+                thread = thisThread,
+                throwable = RuntimeException("Error on network queue", e)
+            )
         } finally {
             freeResources()
         }

@@ -32,36 +32,59 @@ class SelectedEventsJvm : SelectedEvents {
             keys = selectedKeys.iterator()
         }
 
-        override fun hasNext(): Boolean = keys.hasNext()
+        private var nextReady = false
+
+        override fun hasNext(): Boolean {
+            if (nextReady) {
+                return true
+            }
+            while (true) {
+                if (!keys.hasNext()) {
+                    return false
+                }
+                val it = keys.next()
+                if (it.isConnectable) {
+                    val socketChannel = it.channel() as SocketChannel
+                    if (!socketChannel.isConnectionPending) {
+                        continue
+                    }
+                    try {
+                        val connected = socketChannel.finishConnect()
+                        if (connected) {
+                            keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                            keyEvent.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                            if (it.isValid && it.interestOps() and SelectionKey.OP_CONNECT != 0) {
+                                it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
+                            }
+                            nextReady = true
+                            return true
+                        } else {
+                            keyEvent.mode = 0
+                        }
+                    } catch (e: ConnectException) {
+                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                        keyEvent.mode = Selector.EVENT_ERROR
+                        nextReady = true
+                        return true
+                    } catch (e: SocketException) {
+                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                        keyEvent.mode = Selector.EVENT_ERROR
+                        nextReady = true
+                        return true
+                    }
+                }
+                keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                keyEvent.mode = javaToCommon(it.readyOps())
+                nextReady = true
+                return true
+            }
+        }
 
         override fun next(): Selector.KeyEvent {
-            val it = keys.next()
-            if (it.isConnectable) {
-                val socketChannel = it.channel() as SocketChannel
-                try {
-                    val connected = socketChannel.finishConnect()
-                    if (connected) {
-                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
-                        keyEvent.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
-                        if (it.isValid && it.interestOps() and SelectionKey.OP_CONNECT != 0) {
-                            it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
-                        }
-                        return keyEvent
-                    } else {
-                        keyEvent.mode = 0
-                    }
-                } catch (e: ConnectException) {
-                    keyEvent.key = it.attachment() as JvmSelector.JvmKey
-                    keyEvent.mode = Selector.EVENT_ERROR
-                    return keyEvent
-                } catch (e: SocketException) {
-                    keyEvent.key = it.attachment() as JvmSelector.JvmKey
-                    keyEvent.mode = Selector.EVENT_ERROR
-                    return keyEvent
-                }
+            if (!hasNext()) {
+                throw NoSuchElementException()
             }
-            keyEvent.key = it.attachment() as JvmSelector.JvmKey
-            keyEvent.mode = javaToCommon(it.readyOps())
+            nextReady = false
             return keyEvent
         }
     }

@@ -143,16 +143,23 @@ class JvmSelector : Selector {
     }
 
     override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): Selector.Key {
-        val key = JvmKey(attachment)
-        val nn = socket.native.register(native, key.commonToJava(socket.native, mode), key)
-        key.native = nn
-        return key
+        try {
+            val key = JvmKey(attachment)
+            native.wakeup()
+            val nn = socket.native.register(native, key.commonToJava(socket.native, mode), key)
+            key.native = nn
+            return key
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
+        }
     }
 
     override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?): Selector.Key {
         val key = JvmKey(attachment)
         val nn = socket.native.register(native, key.commonToJava(socket.native, mode), key)
         key.native = nn
+        native.wakeup()
         return key
     }
 
@@ -160,6 +167,7 @@ class JvmSelector : Selector {
         val key = JvmKey(attachment)
         val nn = socket.native.register(native, key.commonToJava(socket.native, mode), key)
         key.native = nn
+        native.wakeup()
         return key
     }
 
