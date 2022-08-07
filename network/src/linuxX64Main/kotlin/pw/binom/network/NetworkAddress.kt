@@ -10,6 +10,49 @@ actual sealed class NetworkAddress {
     val data = ByteArray(28)
     var size = 0
 
+    internal fun setAddress(sockaddr: CPointer<sockaddr>) {
+        when (val family = sockaddr.pointed.sa_family.convert<Int>()) {
+            AF_INET -> {
+                val addr = sockaddr.reinterpret<sockaddr_in>()
+                size = sizeOf<sockaddr_in>().convert()
+                data.usePinned { dataPinned ->
+                    memcpy(
+                        dataPinned.addressOf(0),
+                        addr,
+                        size.convert()
+                    )
+                }
+            }
+
+            AF_INET6 -> {
+                val addr = sockaddr.reinterpret<sockaddr_in6>()
+                size = sizeOf<sockaddr_in6>().convert()
+                data.usePinned { dataPinned ->
+                    memcpy(
+                        dataPinned.addressOf(0),
+                        addr,
+                        size.convert()
+                    )
+                }
+            }
+
+            AF_PACKET -> {
+                TODO("AF_PACKET not supported")
+//                val addr = sockaddr.reinterpret<sockaddr_ll>()
+//                size = sizeOf<sockaddr_ll>().convert()
+//                data.usePinned { dataPinned ->
+//                    memcpy(
+//                        dataPinned.addressOf(0),
+//                        addr,
+//                        size.convert()
+//                    )
+//                }
+            }
+
+            else -> throw IllegalArgumentException("Unknown family=$family")
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         other ?: return false
         if (this === other) return true
@@ -51,10 +94,11 @@ actual sealed class NetworkAddress {
                 val addr6 = it.reinterpret<sockaddr_in6>()
                 val family = addr.pointed.sin_family.toInt()
                 val isV4 = family == AF_INET
-                val ptr = if (isV4)
+                val ptr = if (isV4) {
                     addr.pointed.sin_addr
-                else
+                } else {
                     addr6.pointed.sin6_addr
+                }
                 set_posix_errno(0)
                 ByteArray(50).usePinned { buf ->
 
@@ -66,7 +110,7 @@ actual sealed class NetworkAddress {
                         ) == null
                     ) {
                         if (errno == EAFNOSUPPORT) {
-                            throw IOException("Address family not supported by protocol")
+                            throw IOException("Address family not supported by protocol. type: $type")
                         }
                         throw RuntimeException("Can't get address. $errno, family: $family")
                     }
@@ -167,6 +211,9 @@ actual sealed class NetworkAddress {
         }
 
         internal constructor()
+        internal constructor(sockaddr: CPointer<sockaddr>) : this() {
+            setAddress(sockaddr)
+        }
 
         override fun toString(): String = "$host:$port"
         override fun toImmutable(): Immutable = this

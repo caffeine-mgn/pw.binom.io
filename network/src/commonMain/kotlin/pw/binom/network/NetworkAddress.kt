@@ -2,7 +2,7 @@ package pw.binom.network
 
 import pw.binom.net.URL
 
-expect sealed class NetworkAddress() {
+expect sealed class NetworkAddress {
     val host: String
     val port: Int
     val type: Type
@@ -28,4 +28,13 @@ fun URL.toNetworkAddress(defaultPort: Int) =
     NetworkAddress.Immutable(
         host = host,
         port = port ?: defaultPort
+    )
+
+/**
+ * Extracts network address from @receiver url. If url not contains port throw IllegalStateException exception
+ */
+fun URL.toNetworkAddress() =
+    NetworkAddress.Immutable(
+        host = host,
+        port = port ?: throw IllegalStateException("Url should contains port")
     )
