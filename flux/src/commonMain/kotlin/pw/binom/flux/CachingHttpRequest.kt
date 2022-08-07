@@ -7,6 +7,7 @@ import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
+import pw.binom.io.httpServer.StubHttpResponse
 import pw.binom.net.Path
 import pw.binom.net.Query
 import pw.binom.pool.DefaultPool
@@ -21,8 +22,10 @@ class CachingHttpRequest(
     suspend fun reset(original: HttpRequest) {
         this.original = original
         resp = null
+        needClose = true
     }
 
+    private var needClose = true
     override val headers: Headers
         get() = original!!.headers
     override val method: String
@@ -34,30 +37,40 @@ class CachingHttpRequest(
     override val request: String
         get() = original!!.request
 
-    private var resp: CachingHttpResponse? = null
+    private var resp: HttpResponse? = null
 
-    override val response: CachingHttpResponse?
+    override val response: HttpResponse?
         get() = resp
     override val isReadyForResponse: Boolean
         get() = original!!.isReadyForResponse
 
-    override suspend fun acceptTcp(): AsyncChannel = original!!.acceptTcp()
+    override suspend fun acceptTcp(): AsyncChannel {
+        val r = original!!.acceptTcp()
+        needClose = false
+        resp = StubHttpResponse
+        return r
+    }
 
-    override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection = original!!.acceptWebsocket(masking)
+    override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection {
+        val r = original!!.acceptWebsocket(masking)
+        resp = StubHttpResponse
+        needClose = false
+        return r
+    }
 
     override suspend fun asyncClose() {
     }
 
-    override fun readBinary(): AsyncInput =
-        original!!.readBinary()
+    override fun readBinary(): AsyncInput = original!!.readBinary()
 
-    override fun readText(): AsyncReader =
-        original!!.readText()
+    override fun readText(): AsyncReader = original!!.readText()
 
     override suspend fun rejectTcp() = original!!.rejectTcp()
 
     override suspend fun rejectWebsocket() {
         original!!.rejectWebsocket()
+
+        needClose = false
     }
 
     override suspend fun response(): HttpResponse {
@@ -76,7 +89,9 @@ class CachingHttpRequest(
             if (resp == null) {
                 original?.asyncClose()
             } else {
-                resp.finish()
+                if (resp is CachingHttpResponse) {
+                    resp.finish()
+                }
             }
         } finally {
             original = null

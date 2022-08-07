@@ -113,8 +113,13 @@ class HttpServer(
                     server = this@HttpServer,
                     isNewConnect = isNewConnect,
                 )
-                handler.request(req)
-                idleCheck()
+                try {
+                    handler.request(req)
+                    idleCheck()
+                } catch (e: Throwable) {
+                    println("Error on \"${req.request}\" processing")
+                    throw e
+                }
             } catch (e: SocketClosedException) {
                 runCatching { channel.asyncClose() }
             } catch (e: CancellationException) {

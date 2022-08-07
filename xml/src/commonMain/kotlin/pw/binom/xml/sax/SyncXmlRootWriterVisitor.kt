@@ -4,28 +4,32 @@ class SyncXmlRootWriterVisitor(val appendable: Appendable) : SyncXmlVisitor {
     private var started = false
     private var endded = false
     override fun start() {
-        if (started)
+        if (started) {
             throw IllegalStateException("Root Node already started")
+        }
         started = true
         appendable.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
     }
 
     override fun end() {
-        if (!started)
+        if (!started) {
             throw IllegalStateException("Root Node not started")
-        if (endded)
+        }
+        if (endded) {
             throw IllegalStateException("Root Node already closed")
+        }
         endded = true
     }
 
     override fun attribute(name: String, value: String?) {
-        throw IllegalStateException("Root node not supports attributes")
+        throw IllegalStateException("Can't write attribute \"$name\" with value \"$value\": Root node not supports attributes")
     }
 
     override fun value(body: String) {
-        if (body.isBlank())
+        if (body.isBlank()) {
             return
-        throw IllegalStateException("Root node not supports attributes")
+        }
+        throw IllegalStateException("Can't write value \"$body\": Root node not supports body")
     }
 
     override fun cdata(body: String) {
@@ -33,10 +37,12 @@ class SyncXmlRootWriterVisitor(val appendable: Appendable) : SyncXmlVisitor {
     }
 
     override fun subNode(name: String): SyncXmlVisitor {
-        if (!started)
+        if (!started) {
             throw IllegalStateException("Root Node not started")
-        if (endded)
+        }
+        if (endded) {
             throw IllegalStateException("Root Node already closed")
+        }
         return SyncXmlWriterVisitor(name, appendable)
     }
 }

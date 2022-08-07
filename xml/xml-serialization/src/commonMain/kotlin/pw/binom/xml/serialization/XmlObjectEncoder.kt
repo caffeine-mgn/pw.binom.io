@@ -56,7 +56,8 @@ class XmlObjectEncoder(
         serializer: SerializationStrategy<T>,
         value: T?
     ) {
-        TODO("Not yet implemented")
+        value ?: return
+        encodeSerializableElement(index = index, descriptor = descriptor, serializer = serializer, value = value)
     }
 
     override fun <T> encodeSerializableElement(
