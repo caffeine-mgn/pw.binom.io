@@ -30,12 +30,10 @@ actual fun Key.Companion.generateRsa(size: Int): Key.Pair<RSAPublicKey, RSAPriva
             null,
             null
         ).checkTrue("PEM_write_bio_RSAPrivateKey fail")
-        b.toByteArray().decodeToString().also {
-            println("->$it")
-        }.replace("\n", "").removePrefix("-----BEGIN RSA PRIVATE KEY-----")
-            .removeSuffix("-----END RSA PRIVATE KEY-----").also {
-                println("->$it")
-            }.let { Base64.decode(it) }
+        b.toByteArray().decodeToString()
+            .replace("\n", "").removePrefix("-----BEGIN RSA PRIVATE KEY-----")
+            .removeSuffix("-----END RSA PRIVATE KEY-----")
+            .let { Base64.decode(it) }
     }
 
     val privateKeyReaded = createRsaFromPrivateKey(privateKeyBytes)

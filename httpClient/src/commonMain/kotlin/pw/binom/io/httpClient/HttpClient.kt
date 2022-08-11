@@ -43,7 +43,8 @@ fun HttpClient.Companion.create(
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
-    bufferCapacity: Int = 16
+    bufferCapacity: Int = 16,
+    connectionFactory: ConnectionFactory = ConnectionFactory.DEFAULT
 ) =
     BaseHttpClient(
         networkDispatcher = networkDispatcher,
@@ -52,4 +53,5 @@ fun HttpClient.Companion.create(
         trustManager = trustManager,
         bufferSize = bufferSize,
         bufferCapacity = bufferCapacity,
+        connectionFactory = connectionFactory,
     )

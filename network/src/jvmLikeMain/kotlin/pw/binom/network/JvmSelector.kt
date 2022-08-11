@@ -46,7 +46,6 @@ class JvmSelector : Selector {
             keysNotInSelector -= this
             this.native = native.register(this@JvmSelector.native, commonToJava(native, initMode), this)
             this@JvmSelector.native.wakeup()
-            println("Add socket key $native, mode ${jvmModeToString(commonToJava(native, initMode))}")
         }
 
         override val closed: Boolean

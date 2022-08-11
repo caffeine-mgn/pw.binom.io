@@ -148,8 +148,11 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-        val jvmMain by getting {
+        val jvmLikeMain by creating {
             dependsOn(commonMain)
+        }
+        val jvmMain by getting {
+            dependsOn(jvmLikeMain)
             dependencies {}
         }
         val jvmTest by getting {
@@ -160,7 +163,7 @@ kotlin {
         }
         if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
             val androidMain by getting {
-                dependsOn(jvmMain)
+                dependsOn(jvmLikeMain)
             }
             val androidTest by getting {
                 dependsOn(commonTest)
