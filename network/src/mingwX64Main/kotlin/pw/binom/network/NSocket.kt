@@ -86,8 +86,11 @@ private fun allowIpv4(native: SOCKET) {
         val flag = allocArray<IntVar>(1)
         flag[0] = 0
         val iResult = internal_setsockopt(
-            native, IPPROTO_IPV6,
-            IPV6_V6ONLY, flag, sizeOf<IntVar>().convert()
+            native,
+            IPPROTO_IPV6,
+            IPV6_V6ONLY,
+            flag,
+            sizeOf<IntVar>().convert()
         )
         val flag2 = allocArray<IntVar>(1)
         flag[0] = 3
@@ -166,6 +169,13 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
             allowIpv4(native)
             return NSocket(native, family = AF_INET6)
         }
+
+        private fun throwUnixSocketNotSupported(): Nothing =
+            throw RuntimeException("Mingw Target not supports Unix Domain Socket")
+
+        actual fun serverTcpUnixSocket(fileName: String): NSocket = throwUnixSocketNotSupported()
+
+        actual fun connectTcpUnixSocket(fileName: String, blocking: Boolean): NSocket = throwUnixSocketNotSupported()
     }
 
     actual val raw: RawSocket
@@ -223,8 +233,9 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
             } ?: 0
             if (r < 0) {
                 val error = GetLastError()
-                if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
+                if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>()) {
                     return 0
+                }
 
                 if (error == platform.windows.WSAECONNABORTED.convert<DWORD>() || error == platform.windows.WSAENOTSOCK.convert<DWORD>() || error == platform.windows.WSAECONNRESET.convert<DWORD>()) {
                     throw SocketClosedException()
@@ -250,8 +261,9 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         }
         if (r < 0) {
             val error = GetLastError()
-            if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>())
+            if (error == platform.windows.WSAEWOULDBLOCK.convert<DWORD>()) {
                 return 0
+            }
             throw IOException("Error on reading data from network. read: [$r], error: [${GetLastError()}, $errno]")
         }
         if (r > 0) {
@@ -311,16 +323,22 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                     if (family == AF_INET6) {
                         address.isAddrV6 { addr ->
                             sendto(
-                                native, dataPtr.getPointer(this), remaining.convert(),
+                                native,
+                                dataPtr.getPointer(this),
+                                remaining.convert(),
                                 0,
-                                addr.reinterpret(), sizeOf<sockaddr_in6>().convert()
+                                addr.reinterpret(),
+                                sizeOf<sockaddr_in6>().convert()
                             )
                         }
                     } else {
                         sendto(
-                            native, dataPtr.getPointer(this), remaining.convert(),
+                            native,
+                            dataPtr.getPointer(this),
+                            remaining.convert(),
                             0,
-                            addressPtr.addressOf(0).getPointer(this).reinterpret(), address.size.convert()
+                            addressPtr.addressOf(0).getPointer(this).reinterpret(),
+                            address.size.convert()
                         )
                     }
                 }
@@ -345,7 +363,6 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         address: NetworkAddress.Mutable?
     ): Int {
         val gotBytes = if (address == null) {
-
             val rr = data.ref { dataPtr, remaining ->
                 platform.windows.recvfrom(
                     native,
@@ -376,7 +393,10 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
                 val rr = data.ref { dataPtr, remaining ->
                     address.data.usePinned { addressPtr ->
                         platform.windows.recvfrom(
-                            native, dataPtr.getPointer(this), remaining.convert(), 0,
+                            native,
+                            dataPtr.getPointer(this),
+                            remaining.convert(),
+                            0,
                             addressPtr.addressOf(0).getPointer(this).reinterpret<sockaddr>(),
                             len
                         )

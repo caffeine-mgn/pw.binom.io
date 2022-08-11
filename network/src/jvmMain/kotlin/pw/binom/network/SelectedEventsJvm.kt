@@ -43,6 +43,31 @@ class SelectedEventsJvm : SelectedEvents {
                     return false
                 }
                 val it = keys.next()
+                val key = it.attachment() as JvmSelector.JvmKey
+                val socketChannel = it.channel() as? SocketChannel
+                if (socketChannel != null && !key.connected && socketChannel.isConnected && it.isWritable) {
+                    try {
+                        keyEvent.key = key
+                        keyEvent.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                        if (it.isValid && (it.isConnectable || it.isWritable)) {
+                            it.interestOps(
+                                (it.interestOps().inv() or SelectionKey.OP_CONNECT or Selector.OUTPUT_READY).inv()
+                            )
+                        }
+                        nextReady = true
+                        return true
+                    } catch (e: ConnectException) {
+                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                        keyEvent.mode = Selector.EVENT_ERROR
+                        nextReady = true
+                        return true
+                    } catch (e: SocketException) {
+                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                        keyEvent.mode = Selector.EVENT_ERROR
+                        nextReady = true
+                        return true
+                    }
+                }
                 if (it.isConnectable) {
                     val socketChannel = it.channel() as SocketChannel
                     if (!socketChannel.isConnectionPending) {
@@ -50,13 +75,19 @@ class SelectedEventsJvm : SelectedEvents {
                     }
                     try {
                         val connected = socketChannel.finishConnect()
+                        if (!socketChannel.isConnected) {
+                            continue
+                        }
                         if (connected) {
-                            keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                            keyEvent.key = key
                             keyEvent.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
-                            if (it.isValid && it.interestOps() and SelectionKey.OP_CONNECT != 0) {
-                                it.interestOps((it.interestOps().inv() or SelectionKey.OP_CONNECT).inv())
+                            if (it.isValid && (it.isConnectable || it.isWritable)) {
+                                it.interestOps(
+                                    (it.interestOps().inv() or SelectionKey.OP_CONNECT or SelectionKey.OP_WRITE).inv()
+                                )
                             }
                             nextReady = true
+                            key.connected = true
                             return true
                         } else {
                             keyEvent.mode = 0

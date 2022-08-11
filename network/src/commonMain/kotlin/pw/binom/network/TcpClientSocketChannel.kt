@@ -7,4 +7,5 @@ expect class TcpClientSocketChannel : Channel {
 
     fun setBlocking(value: Boolean)
     fun connect(address: NetworkAddress)
+    fun connect(fileName: String)
 }

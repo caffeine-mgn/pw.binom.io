@@ -12,11 +12,10 @@ expect class NSocket : Closeable {
     val raw: RawSocket
 
     companion object {
-        /**
-         * Creates and return tcp socket
-         */
-//        fun tcp(): NSocket
+
+        fun serverTcpUnixSocket(fileName: String): NSocket
         fun serverTcp(address: NetworkAddress): NSocket
+        fun connectTcpUnixSocket(fileName: String, blocking: Boolean): NSocket
         fun connectTcp(address: NetworkAddress, blocking: Boolean): NSocket
 
         /**

@@ -41,10 +41,46 @@ suspend fun NetworkManager.tcpConnect(address: NetworkAddress): TcpConnection {
     return connection
 }
 
+suspend fun NetworkManager.tcpConnectUnixSocket(fileName: String): TcpConnection {
+    val channel = TcpClientSocketChannel()
+    val connection = attach(channel = channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
+    try {
+        connection.description = fileName
+        suspendCancellableCoroutine<Unit> {
+            connection.connect = it
+            it.invokeOnCancellation {
+                connection.cancelSelector()
+                connection.close()
+            }
+            try {
+                channel.connect(fileName)
+                wakeup()
+            } catch (e: Throwable) {
+                it.resumeWithException(e)
+            }
+        }
+    } catch (e: SocketConnectException) {
+        runCatching { connection.asyncClose() }
+        if (e.message != null) {
+            throw e
+        } else {
+            throw SocketConnectException(fileName, e.cause)
+        }
+    }
+    return connection
+}
+
 fun NetworkManager.bindTcp(address: NetworkAddress): TcpServerConnection {
     val channel = TcpServerSocketChannel()
     channel.setBlocking(false)
     channel.bind(address)
+    return attach(channel)
+}
+
+fun NetworkManager.bindTcpUnixSocket(fileName: String): TcpServerConnection {
+    val channel = TcpServerSocketChannel()
+    channel.setBlocking(false)
+    channel.bind(fileName)
     return attach(channel)
 }
 

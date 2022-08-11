@@ -2,6 +2,7 @@ package pw.binom.network
 
 import pw.binom.io.ClosedException
 import java.nio.channels.*
+import java.nio.channels.spi.AbstractSelectableChannel
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -29,17 +30,30 @@ class JvmSelector : Selector {
     @Volatile
     private var selecting = false
 
+    private var keysNotInSelector = HashSet<JvmKey>()
+
     inner class JvmKey(
-        override val attachment: Any?
+        override val attachment: Any?,
+        private var initMode: Int,
+        var connected: Boolean,
     ) : Selector.Key {
-        lateinit var native: SelectionKey
+        var native: SelectionKey? = null
+            private set
 
         private var _closed = false
+
+        fun setNative(native: AbstractSelectableChannel) {
+            keysNotInSelector -= this
+            this.native = native.register(this@JvmSelector.native, commonToJava(native, initMode), this)
+            this@JvmSelector.native.wakeup()
+            println("Add socket key $native, mode ${jvmModeToString(commonToJava(native, initMode))}")
+        }
 
         override val closed: Boolean
             get() {
                 if (!_closed) {
-                    if (!native.isValid) {
+                    val native = native
+                    if (native != null && !native.isValid) {
                         _closed = true
                         return true
                     }
@@ -68,28 +82,32 @@ class JvmSelector : Selector {
             }
             if (Selector.EVENT_CONNECTED and mode != 0) {
                 require(channel is SocketChannel)
-                opts = opts or SelectionKey.OP_CONNECT or SelectionKey.OP_READ
+                opts = opts or SelectionKey.OP_CONNECT or SelectionKey.OP_READ or SelectionKey.OP_WRITE
             }
             return opts
         }
 
         override var listensFlag: Int
             get() {
-                checkClosed()
-                return javaToCommon(native.interestOps())
+                return initMode
+//                checkClosed()
+//                return javaToCommon(native.interestOps())
             }
             set(value) {
                 checkClosed()
-                val javaOps = commonToJava(native.channel(), value)
-                native.interestOps(javaOps)
-                native.selector().wakeup()
+                initMode = value
+                native?.let { native ->
+                    val javaOps = commonToJava(native.channel(), value)
+                    native.interestOps(javaOps)
+                    native.selector().wakeup()
+                }
             }
 
         override fun close() {
             checkClosed()
             _closed = true
             try {
-                native.interestOps(0)
+                native?.interestOps(0)
             } catch (e: CancelledKeyException) {
                 throw ClosedException()
             }
@@ -103,12 +121,13 @@ class JvmSelector : Selector {
     override fun getAttachedKeys(): Collection<Selector.Key> {
         return this.native.keys().mapNotNull {
             val key = it.attachment() as JvmKey
-            if (key.closed || !key.native.isValid) {
+            val native = key.native ?: return@mapNotNull null
+            if (key.closed || !native.isValid) {
                 null
             } else {
                 key
             }
-        }
+        } + keysNotInSelector
     }
 
     private val lock = ReentrantLock()
@@ -144,10 +163,12 @@ class JvmSelector : Selector {
 
     override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): Selector.Key {
         try {
-            val key = JvmKey(attachment)
-            native.wakeup()
-            val nn = socket.native.register(native, key.commonToJava(socket.native, mode), key)
-            key.native = nn
+            val key = JvmKey(attachment, initMode = mode, connected = false)
+            keysNotInSelector += key
+            socket.key = key
+//            native.wakeup()
+//            val nn = socket.native!!.register(native, key.commonToJava(socket.native!!, mode), key)
+//            key.native = nn
             return key
         } catch (e: Throwable) {
             e.printStackTrace()
@@ -156,18 +177,22 @@ class JvmSelector : Selector {
     }
 
     override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?): Selector.Key {
-        val key = JvmKey(attachment)
-        val nn = socket.native.register(native, key.commonToJava(socket.native, mode), key)
-        key.native = nn
-        native.wakeup()
+        val key = JvmKey(attachment, initMode = mode, connected = true)
+        keysNotInSelector += key
+        socket.key = key
+//        val nn = socket.native!!.register(native, key.commonToJava(socket.native!!, mode), key)
+//        key.native = nn
+//        native.wakeup()
         return key
     }
 
     override fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?): Selector.Key {
-        val key = JvmKey(attachment)
-        val nn = socket.native.register(native, key.commonToJava(socket.native, mode), key)
-        key.native = nn
-        native.wakeup()
+        val key = JvmKey(attachment, initMode = mode, connected = true)
+        key.setNative(socket.native)
+//        socket.key = key
+//        val nn = socket.native.register(native, key.commonToJava(socket.native, mode), key)
+//        key.native = nn
+//        native.wakeup()
         return key
     }
 

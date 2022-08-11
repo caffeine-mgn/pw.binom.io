@@ -94,6 +94,9 @@ class SelectorTest {
 //            println("--3")
 //        })
         selector.select(1000, selectKeys)
+        selectKeys.iterator().forEach {
+            println("->$it")
+        }
         it = selectKeys.iterator()
         assertFalse(it.hasNext())
     }

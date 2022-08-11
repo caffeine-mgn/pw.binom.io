@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import kotlinx.cinterop.*
+import platform.linux.sockaddr_un
 import platform.posix.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
@@ -18,6 +19,41 @@ internal fun setBlocking(native: RawSocket, value: Boolean) {
 
     if (0 != fcntl(native, F_SETFL, newFlags)) {
         throw IOException()
+    }
+}
+
+private fun bind(native: RawSocket, fileName: String) {
+    memScoped {
+        val addr = alloc<sockaddr_un>()
+        memset(addr.ptr, 0, sizeOf<sockaddr_un>().convert())
+        addr.sun_family = AF_UNIX.convert()
+        strcpy(addr.sun_path, fileName)
+        unlink(fileName)
+        val bindResult = platform.posix.bind(
+            native,
+            addr.ptr.getPointer(this).reinterpret(),
+            sizeOf<sockaddr_un>().convert()
+        )
+
+        if (bindResult < 0) {
+            if (errno == EADDRINUSE || errno == 0) {
+                throw BindException("Address already in use: \"$fileName\"")
+            }
+            throw IOException("Bind error. errno: [$errno], bind: [$bindResult]")
+        }
+        val listenResult = listen(native, 1000)
+        if (listenResult < 0) {
+            if (errno == ESOCKTNOSUPPORT) {
+                return@memScoped
+            }
+            if (errno == EOPNOTSUPP) {
+                return@memScoped
+//                    unbind(native)
+//                    throw IOException("Can't bind socket: Operation not supported on transport endpoint")
+            }
+            unbind(native)
+            throw IOException("Listen error. errno: [$errno], listen: [$listenResult]")
+        }
     }
 }
 
@@ -119,6 +155,53 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
             return NSocket(native, family = domain)
         }
 
+        actual fun serverTcpUnixSocket(fileName: String): NSocket {
+            val domain = PF_UNIX
+            val native = socket(domain, SOCK_STREAM, 0)
+            if (native < 0) {
+                throw RuntimeException("Tcp Socket Creation")
+            }
+            applyReuse(native)
+            bind(native, fileName)
+            return NSocket(native, family = domain)
+        }
+
+        private fun socketResultProcessing(r: Int) {
+            if (r < 0) {
+                if (errno == EAFNOSUPPORT) {
+                    throw IOException("Can't connect. Error: $errno, Address family not supported by protocol")
+                }
+                if (errno != EINPROGRESS) {
+                    throw IOException("Can't connect. Error: $errno")
+                }
+            }
+        }
+
+        actual fun connectTcpUnixSocket(fileName: String, blocking: Boolean): NSocket {
+            val domain = PF_UNIX
+            val native = socket(domain, SOCK_STREAM, 0)
+            if (native < 0) {
+                throw RuntimeException("Tcp Socket Creation")
+            }
+            setBlocking(native, blocking)
+
+            memScoped {
+                val addr = alloc<sockaddr_un>()
+                memset(addr.ptr, 0, sizeOf<sockaddr_un>().convert())
+                addr.sun_family = AF_UNIX.convert()
+                strcpy(addr.sun_path, fileName)
+                set_posix_errno(0)
+                val r = connect(
+                    native,
+                    addr.ptr.reinterpret(),
+                    sizeOf<sockaddr_un>().convert()
+                )
+
+                socketResultProcessing(r)
+            }
+            return NSocket(native, family = domain)
+        }
+
         actual fun connectTcp(address: NetworkAddress, blocking: Boolean): NSocket {
             val domain = when (address.type) {
                 NetworkAddress.Type.IPV4 -> AF_INET
@@ -139,14 +222,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
                         data.get().size.convert()
                     )
                 }
-                if (r < 0) {
-                    if (errno == EAFNOSUPPORT) {
-                        throw IOException("Can't connect. Error: $errno, Address family not supported by protocol")
-                    }
-                    if (errno != EINPROGRESS) {
-                        throw IOException("Can't connect. Error: $errno")
-                    }
-                }
+                socketResultProcessing(r)
             }
             return NSocket(native, family = domain)
         }

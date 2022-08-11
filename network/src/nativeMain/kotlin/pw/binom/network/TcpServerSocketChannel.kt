@@ -52,4 +52,13 @@ actual class TcpServerSocketChannel : Closeable {
         native?.setBlocking(value)
         blocking = value
     }
+
+    actual fun bind(fileName: String) {
+        if (native != null) {
+            throw IllegalStateException()
+        }
+        native = NSocket.serverTcpUnixSocket(fileName)
+        native!!.setBlocking(blocking)
+        key?.addSocket(native!!.raw)
+    }
 }

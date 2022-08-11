@@ -61,45 +61,52 @@ class CancellationTest {
     @Test
     fun cancellationRead() = runTest(dispatchTimeoutMs = 5_000) {
         val nd = NetworkCoroutineDispatcherImpl()
-        var firstReadCanceled = false
-        val addr = NetworkAddress.Immutable(host = "127.0.0.1", port = TcpServerConnection.randomPort())
-        val server = nd.bindTcp(addr)
-        var serverShouldSendResponse = false
-        launch(nd) {
-            try {
-                val c2 = server.accept()
-                while (!serverShouldSendResponse) {
-                    delay(100)
-                }
-                ByteBuffer.alloc(10).use { buf ->
-                    c2.write(buf)
-                }
-            } finally {
-                server.close()
-            }
-        }
-        val con = nd.tcpConnect(addr)
-        val readJob = launch(nd) {
-            ByteBuffer.alloc(10).use { buf ->
+        withContext(nd) {
+            var firstReadCanceled = false
+            val addr = NetworkAddress.Immutable(host = "127.0.0.1", port = TcpServerConnection.randomPort())
+            val server = nd.bindTcp(addr)
+            var serverShouldSendResponse = false
+            launch {
                 try {
-                    con.read(buf)
-                } catch (e: CancellationException) {
-                    firstReadCanceled = true
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    throw e
+                    val c2 = server.accept()
+                    while (!serverShouldSendResponse) {
+                        delay(100)
+                    }
+                    ByteBuffer.alloc(10).use { buf ->
+                        c2.write(buf)
+                    }
+                } finally {
+                    server.close()
                 }
             }
-        }
-        delay(1000L)
-        readJob.cancelAndJoin()
-        serverShouldSendResponse = true
-        val readJob2 = launch(nd) {
-            ByteBuffer.alloc(10).use { buf ->
-                con.read(buf)
+            println("Try connect")
+            val con = nd.tcpConnect(addr)
+            println("Connected!")
+            val readJob = launch(nd) {
+                ByteBuffer.alloc(10).use { buf ->
+                    try {
+                        println("Try read data")
+                        con.read(buf)
+                    } catch (e: CancellationException) {
+                        firstReadCanceled = true
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                        throw e
+                    } finally {
+                        println("read try is finished")
+                    }
+                }
             }
+            delay(1000L)
+            readJob.cancelAndJoin()
+            serverShouldSendResponse = true
+            val readJob2 = launch(nd) {
+                ByteBuffer.alloc(10).use { buf ->
+                    con.read(buf)
+                }
+            }
+            readJob2.join()
+            assertTrue(firstReadCanceled, "firstReadCanceled fails")
         }
-        readJob2.join()
-        assertTrue(firstReadCanceled)
     }
 }

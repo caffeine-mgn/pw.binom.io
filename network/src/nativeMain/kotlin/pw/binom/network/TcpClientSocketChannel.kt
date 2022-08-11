@@ -48,7 +48,6 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
     }
 
     override fun close() {
-
         native?.also {
             val c = key
             key = null
@@ -66,5 +65,14 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
         native!!.send(data)
 
     override fun flush() {
+    }
+
+    actual fun connect(fileName: String) {
+        if (!connectable) {
+            throw IllegalStateException()
+        }
+        native = NSocket.connectTcpUnixSocket(fileName = fileName, blocking = false)
+        native!!.setBlocking(blocking)
+        key?.addSocket(native!!.raw)
     }
 }

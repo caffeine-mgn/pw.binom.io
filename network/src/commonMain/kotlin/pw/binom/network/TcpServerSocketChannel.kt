@@ -7,4 +7,5 @@ expect class TcpServerSocketChannel() : Closeable {
     fun setBlocking(value: Boolean)
     fun accept(address: NetworkAddress.Mutable? = null): TcpClientSocketChannel?
     fun bind(address: NetworkAddress)
+    fun bind(fileName: String)
 }

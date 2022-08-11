@@ -54,6 +54,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                         val event = iterator.next()
                         val attachment = event.key.attachment
                         attachment ?: throw IllegalStateException("Attachment is null")
+                        println("->$event -> $attachment")
                         val connection = attachment as AbstractConnection
                         when {
                             event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
