@@ -118,8 +118,9 @@ class PGConnection private constructor(
         get() = TYPE
 
     internal suspend fun sendQuery(query: String): KindedMessage {
-        if (busy)
+        if (busy) {
             throw IllegalStateException("Connection is busy")
+        }
         val msg = this.reader.queryMessage
         msg.query = query
         return sendRecive(msg)
@@ -182,6 +183,7 @@ class PGConnection private constructor(
     }
 
     internal suspend fun sendOnly(msg: KindedMessage) {
+//        println("PGConnection -> $msg")
         msg.write(packageWriter)
         packageWriter.finishAsync(connection)
         connection.flush()
@@ -197,8 +199,11 @@ class PGConnection private constructor(
         }
     }
 
-    internal suspend fun readDesponse(): KindedMessage =
-        KindedMessage.read(reader)
+    internal suspend fun readDesponse(): KindedMessage {
+        val result = KindedMessage.read(reader)
+//        println("PGConnection <- $result")
+        return result
+    }
 
     private suspend fun request(msg: KindedMessage): KindedMessage {
         msg.write(packageWriter)
@@ -342,6 +347,7 @@ class PGConnection private constructor(
 
     override suspend fun asyncClose() {
         checkClosed()
+        closed = true
         prepareStatements.toTypedArray().forEach {
             it.asyncClose()
         }
@@ -352,7 +358,6 @@ class PGConnection private constructor(
             runCatching { connection.asyncClose() }
         } finally {
             connected = false
-            closed = true
             charsetUtils.close()
             packageWriter.close()
             packageReader.asyncClose()

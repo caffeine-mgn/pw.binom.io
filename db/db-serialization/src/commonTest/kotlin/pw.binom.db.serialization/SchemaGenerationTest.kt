@@ -1,6 +1,8 @@
 package pw.binom.db.serialization
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -10,6 +12,7 @@ import pw.binom.date.DateTime
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.sqlite.AsyncSQLiteConnector
 import pw.binom.io.use
+import pw.binom.network.Network
 import kotlin.test.Test
 
 class SchemaGenerationTest {
@@ -46,11 +49,10 @@ class SchemaGenerationTest {
     @Test
     fun test() {
         val tableSchema = runTest {
-            AsyncConnectionPool.create(maxConnections = 1) {
-                AsyncSQLiteConnector.memory()
-            }
-                .let { DBContext.create(it) }
-                .use {
+            withContext(Dispatchers.Network) {
+                AsyncConnectionPool.create(maxConnections = 1) {
+                    AsyncSQLiteConnector.memory()
+                }.let { DBContext.create(it) }.use {
                     val engine = it.re {
                         it.dbDatabaseInfo.engine
                     }
@@ -60,6 +62,7 @@ class SchemaGenerationTest {
                         serializer = MyEntity.serializer(),
                     )
                 }
+            }
         }
         println(tableSchema)
     }

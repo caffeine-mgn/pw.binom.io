@@ -1,11 +1,27 @@
 package pw.binom.io
 
-import pw.binom.*
+import pw.binom.System
+import pw.binom.writeByte
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ByteArrayOutputTest {
+
+    @Test
+    fun toByteArrayTest() {
+        val b = ByteArrayOutput()
+        b.writeByte(10)
+        b.writeByte(20)
+        b.writeByte(30)
+        b.writeByte(40)
+        val r = b.toByteArray()
+        assertEquals(4, r.size)
+        assertEquals(10, r[0])
+        assertEquals(20, r[1])
+        assertEquals(30, r[2])
+        assertEquals(40, r[3])
+    }
 
     @Test
     fun reallocBigPartTest() {

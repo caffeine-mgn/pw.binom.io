@@ -4,13 +4,12 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
-import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
+import pw.binom.db.serialization.codes.SQLDecoder
 
 class ByteArraySQLCompositeDecoder(val data: ByteArray, override val serializersModule: SerializersModule) :
-    CompositeDecoder {
+    SQLCompositeDecoder {
     override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean =
         throwNotSupported()
 
@@ -36,7 +35,7 @@ class ByteArraySQLCompositeDecoder(val data: ByteArray, override val serializers
         throwNotSupported()
 
     @ExperimentalSerializationApi
-    override fun decodeInlineElement(descriptor: SerialDescriptor, index: Int): Decoder =
+    override fun decodeInlineElement(descriptor: SerialDescriptor, index: Int): SQLDecoder =
         throwNotSupported()
 
     override fun decodeIntElement(descriptor: SerialDescriptor, index: Int): Int =

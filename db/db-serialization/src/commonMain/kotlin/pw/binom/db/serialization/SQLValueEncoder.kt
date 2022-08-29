@@ -5,10 +5,10 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
-import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.UUID
 import pw.binom.date.DateTime
+import pw.binom.db.serialization.codes.SQLEncoder
 
 class SQLValueEncoder(
     val classDescriptor: SerialDescriptor,
@@ -39,14 +39,15 @@ class SQLValueEncoder(
                 serializersModule = serializersModule,
                 collectionSize = collectionSize,
             )
+
             else -> throw SerializationException("Not supported collection ${descriptor.serialName}")
         }
     }
 
-    override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
+    override fun beginStructure(descriptor: SerialDescriptor): SQLCompositeEncoder {
         val embedded = classDescriptor.getElementAnnotation<Embedded>(fieldIndex) ?: TODO()
         val embedded2 = classDescriptor.getElementAnnotation<EmbeddedSplitter>(fieldIndex)
-        return SQLCompositeEncoder(
+        return SQLCompositeEncoderImpl2(
             columnPrefix = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex) + (
                 embedded2?.splitter
                     ?: "_"
@@ -87,10 +88,13 @@ class SQLValueEncoder(
 //                } Enum should use only one of @EnumCodeValue or @EnumAliasValue"
 //            )
 //        }
+        if (byOrder && code != null) {
+            throw IllegalArgumentException("Invalid ${enumDescriptor.serialName} enum config: used both @EnumCodeValue and @EnumOrderValue")
+        }
         map[columnName] = if (byOrder) {
-            code ?: index
+            index
         } else {
-            enumDescriptor.getElementName(index)
+            code ?: enumDescriptor.getElementName(index)
         }
 //        val value: Any = when {
 //            code != null -> code
@@ -106,7 +110,7 @@ class SQLValueEncoder(
     }
 
     @ExperimentalSerializationApi
-    override fun encodeInline(inlineDescriptor: SerialDescriptor): Encoder {
+    override fun encodeInline(inlineDescriptor: SerialDescriptor): SQLEncoder {
         TODO("Not yet implemented. inlineDescriptor: ${inlineDescriptor.serialName}")
     }
 

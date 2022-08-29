@@ -306,6 +306,7 @@ internal class Starter(
             createdBeans.forEach {
                 strongImpl.beans[it.name] = BeanEntity(bean = it.bean, primary = it.primary)
             }
+            STRONG_LOCAL = null
             logger.debug("Bean Graph made")
             iniList.forEach {
                 try {

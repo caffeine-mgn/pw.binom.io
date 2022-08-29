@@ -1,7 +1,6 @@
 package pw.binom.date
 
 import kotlin.jvm.JvmInline
-import kotlin.time.Duration
 
 @JvmInline
 expect value class DateTime(val time: Long = nowTime) {
@@ -58,17 +57,3 @@ fun DateTime.Companion.of(
     require(millis >= 0 && millis <= 999) { "Invalid value of millis. Valid values 0-999" }
     return internalOf(year, month, dayOfMonth, hours, minutes, seconds, millis, timeZoneOffset)
 }
-
-operator fun DateTime.compareTo(expDate: DateTime): Int = when {
-    time > expDate.time -> 1
-    time < expDate.time -> -1
-    else -> 0
-}
-fun minOf(a: DateTime, b: DateTime) = if (a < b) a else b
-fun maxOf(a: DateTime, b: DateTime) = if (a > b) a else b
-
-operator fun DateTime.plus(duration: Duration) =
-    DateTime(time + duration.inWholeMilliseconds)
-
-operator fun DateTime.minus(duration: Duration) =
-    DateTime(time - duration.inWholeMilliseconds)

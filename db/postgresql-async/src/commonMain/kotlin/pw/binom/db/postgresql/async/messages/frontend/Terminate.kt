@@ -13,4 +13,6 @@ class Terminate : KindedMessage {
         writer.startBody()
         writer.endBody()
     }
+
+    override fun toString(): String = "Terminate()"
 }

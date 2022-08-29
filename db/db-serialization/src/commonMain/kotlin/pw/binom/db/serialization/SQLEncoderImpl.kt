@@ -12,7 +12,7 @@ class SQLEncoderImpl(
     override val serializersModule: SerializersModule
 ) : Encoder {
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder =
-        SQLCompositeEncoder(columnPrefix = columnPrefix, map = map, serializersModule = serializersModule)
+        SQLCompositeEncoderImpl2(columnPrefix = columnPrefix, map = map, serializersModule = serializersModule)
 
     override fun encodeBoolean(value: Boolean) {
         TODO("Not yet implemented")

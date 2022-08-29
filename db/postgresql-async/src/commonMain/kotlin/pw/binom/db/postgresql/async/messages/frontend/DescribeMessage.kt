@@ -16,6 +16,10 @@ class DescribeMessage : KindedMessage {
         writer.endBody()
     }
 
+    override fun toString(): String {
+        return "DescribeMessage(statement='$statement', portal=$portal)"
+    }
+
     var statement: String = ""
     var portal = true
 }

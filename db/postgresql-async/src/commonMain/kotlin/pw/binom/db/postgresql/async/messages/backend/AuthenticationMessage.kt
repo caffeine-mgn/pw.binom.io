@@ -25,12 +25,16 @@ sealed class AuthenticationMessage : KindedMessage {
         override fun write(writer: PackageWriter) {
             TODO("Not yet implemented")
         }
+
+        override fun toString(): String = "AuthenticationMessage()"
     }
 
     object AuthenticationChallengeCleartextMessage : AuthenticationMessage() {
         override fun write(writer: PackageWriter) {
             TODO("Not yet implemented")
         }
+
+        override fun toString(): String = "AuthenticationChallengeCleartextMessage()"
     }
 
     class AuthenticationChallengeMessage : AuthenticationMessage() {
@@ -46,6 +50,10 @@ sealed class AuthenticationMessage : KindedMessage {
 
         override fun write(writer: PackageWriter) {
             TODO("Not yet implemented")
+        }
+
+        override fun toString(): String {
+            return "AuthenticationChallengeMessage(challengeType=$challengeType, salt=${salt?.contentToString()})"
         }
     }
 

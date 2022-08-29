@@ -8,4 +8,7 @@ class ColumnMeta {
     var dataTypeSize: Long = 0
     var dataTypeModifier: Int = 0
     var fieldFormat: Int = 0
+    override fun toString(): String {
+        return "ColumnMeta(name='$name', tableObjectId=$tableObjectId, columnNumber=$columnNumber, dataType=$dataType, dataTypeSize=$dataTypeSize, dataTypeModifier=$dataTypeModifier, fieldFormat=$fieldFormat)"
+    }
 }

@@ -13,7 +13,7 @@ class SQLDecoderImpl(
     override val serializersModule: SerializersModule,
 ) : Decoder {
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder =
-        SQLCompositeDecoder(
+        SQLCompositeDecoder2(
             serializersModule = serializersModule,
             columnPrefix = columnPrefix,
             resultSet = resultSet,

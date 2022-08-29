@@ -33,7 +33,7 @@ private suspend fun getCurrentTransactionContextOrNull(): TransactionContextElem
 private suspend fun getCurrentTransactionContext() = getCurrentTransactionContextOrNull()
     ?: throw IllegalStateException("This function should calling inside re,su or new functions")
 
-class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : TransactionManager {
+class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : TransactionManager<PooledAsyncConnection> {
     override suspend fun <T> re(function: suspend (PooledAsyncConnection) -> T): T {
         val txContext = getCurrentTransactionContextOrNull()
         return when {
@@ -66,14 +66,11 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                         }
                         result
                     } catch (e: Throwable) {
-                        try {
+                        e.wrap {
                             if (!rollbackExecuted) {
                                 rollback()
                                 cc.executeRollbackActions()
                             }
-                        } catch (ex: Throwable) {
-                            ex.addSuppressed(e)
-                            throw ex
                         }
                         throw e
                     } finally {
@@ -82,6 +79,7 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                     }
                 }
             }
+
             !txContext.transactionStarted -> {
                 txContext.connection.beginTransaction()
                 txContext.transactionStarted = true
@@ -98,14 +96,11 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                     }
                     result
                 } catch (e: Throwable) {
-                    try {
+                    e.wrap {
                         if (!rollbackExecuted) {
                             txContext.connection.rollback()
                             txContext.executeRollbackActions()
                         }
-                    } catch (ex: Throwable) {
-                        ex.addSuppressed(e)
-                        throw ex
                     }
                     throw e
                 } finally {
@@ -113,6 +108,7 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                     txContext.rollbackOnly = false
                 }
             }
+
             else -> try {
                 function(txContext.connection)
             } catch (e: Throwable) {
@@ -151,14 +147,11 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                 }
                 result
             } catch (e: Throwable) {
-                try {
+                e.wrap {
                     if (!rollbackExecuted) {
                         rollback()
                         cc.executeRollbackActions()
                     }
-                } catch (ex: Throwable) {
-                    ex.addSuppressed(e)
-                    throw ex
                 }
                 throw e
             } finally {
@@ -188,6 +181,7 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
                     }
                 }
             }
+
             else -> try {
                 function(txContext.connection)
             } catch (e: Throwable) {

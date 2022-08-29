@@ -16,6 +16,10 @@ class RowDescriptionMessage : KindedMessage {
         TODO("Not yet implemented")
     }
 
+    override fun toString(): String {
+        return "RowDescriptionMessage(columns=${columns.contentToString()})"
+    }
+
     var columns: Array<ColumnMeta> = emptyArray()
 
     companion object {

@@ -31,7 +31,9 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
 
     fun toByteArray(): ByteArray {
+        checkClosed()
         checkLocked()
+        locked = true
         val position = data.position
         val limit = data.limit
         try {
@@ -40,12 +42,14 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         } finally {
             data.limit = limit
             data.position = position
+            locked = false
         }
     }
 
     private inline fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw StreamClosedException()
+        }
     }
 
     fun writeByte(byte: Byte) {

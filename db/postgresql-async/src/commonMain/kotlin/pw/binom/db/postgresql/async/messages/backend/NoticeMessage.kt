@@ -16,7 +16,7 @@ class NoticeMessage : KindedMessage {
         TODO("Not yet implemented")
     }
 
-    override fun toString(): String = "Error: $fields"
+    override fun toString(): String = "NoticeMessage(fields=$fields)"
 
     companion object {
         suspend fun read(ctx: PackageReader): NoticeMessage {

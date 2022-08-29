@@ -17,6 +17,10 @@ class ExecuteMessage : KindedMessage {
         writer.endBody()
     }
 
+    override fun toString(): String {
+        return "ExecuteMessage(statementId='$statementId', limit=$limit)"
+    }
+
     var statementId = ""
     var limit = 0
 }

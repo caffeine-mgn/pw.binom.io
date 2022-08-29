@@ -12,16 +12,19 @@ interface DBContext : DescriptorContext, AsyncCloseable {
      * Use current transaction if exist. If current transaction not exist will create new transaction
      */
     suspend fun <T> re(function: suspend (DBAccess) -> T): T
+    suspend fun <T> re2(function: suspend (DBAccess2) -> T): T
 
     /**
      * Use current transaction if exist. If current transaction not exist will work outside transaction
      */
     suspend fun <T> su(function: suspend (DBAccess) -> T): T
+    suspend fun <T> su2(function: suspend (DBAccess2) -> T): T
 
     /**
      * Always creates new transaction
      */
     suspend fun <T> new(function: suspend (DBAccess) -> T): T
+    suspend fun <T> new2(function: suspend (DBAccess2) -> T): T
 
     /**
      * Creates schema for [serializer]. For generation used method [generateSchema]

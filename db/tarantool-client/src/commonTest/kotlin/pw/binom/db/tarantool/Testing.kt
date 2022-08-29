@@ -12,7 +12,7 @@ class Testing : BaseTest() {
     @Test
     fun updateTest() {
         val schemaName = Random.nextUuid().toShortString()
-        pg {
+        tarantool {
             it.eval(
                 """
 s=box.schema.space.create('$schemaName',{engine = 'memtx', if_not_exists = true})

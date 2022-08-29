@@ -19,4 +19,6 @@ object CloseCompleteMessage : KindedMessage {
         ctx.end()
         return CloseCompleteMessage
     }
+
+    override fun toString(): String = "CloseCompleteMessage()"
 }

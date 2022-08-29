@@ -77,8 +77,13 @@ class CredentialMessage : KindedMessage {
                 writer.write(hexDigest)
                 writer.output.writeByte(writer.buf16, 0)
             }
+
             else -> TODO()
         }
         writer.endBody()
+    }
+
+    override fun toString(): String {
+        return "CredentialMessage(username='$username', password=$password, authenticationType=$authenticationType, salt=${salt?.contentToString()})"
     }
 }

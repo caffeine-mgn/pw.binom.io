@@ -73,6 +73,10 @@ class BindMessage : KindedMessage {
         writer.endBody()
     }
 
+    override fun toString(): String {
+        return "BindMessage(statement='$statement', portal='$portal', values=${values.contentToString()}, valuesTypes=$valuesTypes, binaryResult=$binaryResult)"
+    }
+
     var statement: String = ""
     var portal: String = ""
     var values: Array<Any?> = emptyArray()

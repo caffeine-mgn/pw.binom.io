@@ -4,6 +4,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.EmptySerializersModule
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -12,6 +13,74 @@ import kotlin.test.assertNull
 class SQLSerializationTest {
     @Serializable
     data class EntityWithArray(val array: ByteArray)
+
+    @EnumOrderValue
+    @Serializable
+    enum class MyEnumOrder {
+        VALUE1, VALUE2
+    }
+
+    @Serializable
+    enum class MyEnumCode {
+        VALUE1, VALUE2
+    }
+
+    @Serializable
+    enum class MyEnumCode2 {
+        @EnumCodeValue(10)
+        VALUE1,
+
+        @EnumCodeValue(20)
+        VALUE2
+    }
+
+    @Serializable
+    data class EntityWithEnumOrder(val enum: MyEnumOrder)
+
+    @Serializable
+    data class EntityWithEnumCode(val enum: MyEnumCode)
+
+    @Serializable
+    data class EntityWithEnumCode2(val enum: MyEnumCode2)
+
+    @Test
+    fun enumOrderTest() {
+        val output = HashMap<String, Any?>()
+        SQLSerialization.toMap(
+            serializer = EntityWithEnumOrder.serializer(),
+            value = EntityWithEnumOrder(enum = MyEnumOrder.VALUE1),
+            map = output,
+            columnPrefix = null,
+            serializersModule = EmptySerializersModule,
+        )
+        assertEquals(0, output["enum"])
+    }
+
+    @Test
+    fun enumCodeTest() {
+        val output = HashMap<String, Any?>()
+        SQLSerialization.toMap(
+            serializer = EntityWithEnumCode.serializer(),
+            value = EntityWithEnumCode(enum = MyEnumCode.VALUE1),
+            map = output,
+            columnPrefix = null,
+            serializersModule = EmptySerializersModule,
+        )
+        assertEquals("VALUE1", output["enum"])
+    }
+
+    @Test
+    fun customEnumCode() {
+        val output = HashMap<String, Any?>()
+        SQLSerialization.toMap(
+            serializer = EntityWithEnumCode2.serializer(),
+            value = EntityWithEnumCode2(enum = MyEnumCode2.VALUE1),
+            map = output,
+            columnPrefix = null,
+            serializersModule = EmptySerializersModule,
+        )
+        assertEquals(10, output["enum"])
+    }
 
     @Test
     fun testEncodeByteArray() {

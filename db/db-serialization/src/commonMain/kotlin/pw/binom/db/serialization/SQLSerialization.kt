@@ -48,6 +48,22 @@ fun <T : Any> KSerializer<T>.eachColumn(mapper: (String) -> String? = { it }, fu
 
 class SQLSerialization(val serializersModule: SerializersModule = SqlSerializersModule) {
     companion object {
+
+        fun <T : Any> toMap(
+            serializer: KSerializer<T>,
+            value: T,
+            map: MutableMap<String, Any?>,
+            columnPrefix: String?,
+            serializersModule: SerializersModule,
+        ) {
+            val encoder = SQLEncoderImpl(
+                columnPrefix = columnPrefix,
+                map = map,
+                serializersModule = serializersModule,
+            )
+            serializer.serialize(encoder, value)
+        }
+
         val DEFAULT = SQLSerialization()
         private fun <T : Any> getTableName(serializer: KSerializer<T>, tableName: String?): String =
             tableName ?: serializer.tableName

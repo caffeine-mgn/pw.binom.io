@@ -108,14 +108,14 @@ class TestConnection : BaseTest() {
 
     @Test
     fun stringPass() {
-        pg { con ->
+        tarantool { con ->
             val text = "Response From Tarantool: ${Random.nextUuid()}"
             val response = con.eval("return '$text'")
             assertTrue(response is List<*>)
             assertEquals(1, response.size)
             assertEquals(text, response[0])
         }
-        pg { con ->
+        tarantool { con ->
             val text = "Response From Tarantool: ${Random.nextUuid()}"
             val response = con.eval("return ...", text, text)
             assertTrue(response is List<*>)
@@ -127,7 +127,7 @@ class TestConnection : BaseTest() {
 
     @Test
     fun uuidPass() {
-        pg { con ->
+        tarantool { con ->
             val uuid = Random.nextUuid()
             val response = con.eval("return ...", uuid)
             assertTrue(response is List<*>)
@@ -138,7 +138,7 @@ class TestConnection : BaseTest() {
 
     @Test
     fun intPass() {
-        pg { con ->
+        tarantool { con ->
             val value = Random.nextInt()
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)
@@ -149,7 +149,7 @@ class TestConnection : BaseTest() {
 
     @Test
     fun bytesPass() {
-        pg { con ->
+        tarantool { con ->
             val response = con.eval("return type(...)", Random.nextBytes(10))
             assertTrue(response is List<*>)
             assertEquals(1, response.size)
@@ -159,7 +159,7 @@ class TestConnection : BaseTest() {
 
     @Test
     fun listPass() {
-        pg { con ->
+        tarantool { con ->
             val value = listOf(Random.nextInt(), Random.nextInt())
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)
@@ -171,7 +171,7 @@ class TestConnection : BaseTest() {
 
     @Test
     fun listOfListPass() {
-        pg { con ->
+        tarantool { con ->
             val value = listOf(listOf(Random.nextInt()), listOf(Random.nextInt()))
             val response = con.eval("return ...", value)
             assertTrue(response is List<*>)
@@ -183,7 +183,7 @@ class TestConnection : BaseTest() {
 
     @Test
     fun cacheTest() {
-        pg { con ->
+        tarantool { con ->
             withTimeout(10_000) {
                 con.eval("return cacheDefined~=nil")
                 con.eval(TARANTOOL_CACHE_TOOL)

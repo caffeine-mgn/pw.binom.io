@@ -6,10 +6,12 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import pw.binom.UUID
+import pw.binom.db.serialization.codes.SQLDecoder
+import pw.binom.db.serialization.codes.SQLEncoder
 
 object UUIDSerializer : KSerializer<UUID> {
     override fun deserialize(decoder: Decoder): UUID {
-        if (decoder !is SqlDecoder) {
+        if (decoder !is SQLDecoder) {
             throw IllegalArgumentException("UUIDSerializer support only pw.binom.db.serialization.SQLValueDecoder")
         }
         return decoder.decodeUUID()

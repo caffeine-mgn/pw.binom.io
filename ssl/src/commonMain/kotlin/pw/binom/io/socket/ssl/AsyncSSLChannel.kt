@@ -18,6 +18,8 @@ fun SSLSession.asyncChannel(
         closeParent = closeParent
     )
 
+private var callId = 0
+
 /**
  * SSL wrapper for [channel] using [session]
  */
@@ -120,8 +122,9 @@ class AsyncSSLChannel private constructor(
     }
 
     override suspend fun write(data: ByteBuffer): Int {
-        if (eof)
+        if (eof) {
             return 0
+        }
         var len = data.remaining
         val length = data.remaining
         var readed = 0
@@ -134,14 +137,17 @@ class AsyncSSLChannel private constructor(
                 SSLSession.State.WANT_WRITE -> {
                     sendAll()
                 }
+
                 SSLSession.State.WANT_READ -> {
                     readAll()
                 }
+
                 SSLSession.State.OK -> break@LOOP
                 SSLSession.State.CLOSED -> {
                     eof = true
                     break@LOOP
                 }
+
                 else -> TODO("Unknown state ${s.state}")
             }
         }
@@ -155,8 +161,10 @@ class AsyncSSLChannel private constructor(
         get() = -1
 
     override suspend fun read(dest: ByteBuffer): Int {
-        if (eof)
+        if (eof) {
             return 0
+        }
+        val id = callId++
         sendAll()
         var readed = 0
         LOOP@ while (dest.remaining > 0) {
@@ -166,17 +174,23 @@ class AsyncSSLChannel private constructor(
                 SSLSession.State.WANT_WRITE -> {
                     sendAll()
                 }
+
                 SSLSession.State.WANT_READ -> {
                     sendAll()
                     readAll()
                 }
+
                 SSLSession.State.OK -> {
-                    if (readed > 0)
+                    if (readed > 0) {
                         break@LOOP
+                    }
                 }
+
                 SSLSession.State.CLOSED -> {
                     eof = true
+                    break@LOOP
                 }
+
                 else -> TODO("Unknown state ${s.state}")
             }
         }

@@ -25,4 +25,8 @@ class PreparedStatementOpeningMessage : KindedMessage {
         }
         writer.endBody()
     }
+
+    override fun toString(): String {
+        return "PreparedStatementOpeningMessage(statementId='$statementId', query='$query', valuesTypes=$valuesTypes)"
+    }
 }

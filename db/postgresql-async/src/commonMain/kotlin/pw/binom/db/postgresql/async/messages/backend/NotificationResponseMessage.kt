@@ -24,6 +24,10 @@ class NotificationResponseMessage : KindedMessage {
         writer.endBody()
     }
 
+    override fun toString(): String {
+        return "NotificationResponseMessage(backendPid=$backendPid, channel='$channel', payload='$payload')"
+    }
+
     companion object {
         suspend fun read(ctx: PackageReader): NotificationResponseMessage {
             val msg = ctx.notificationResponseMessage

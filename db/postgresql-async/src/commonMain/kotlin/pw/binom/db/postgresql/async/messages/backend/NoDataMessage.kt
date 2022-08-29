@@ -17,4 +17,6 @@ object NoDataMessage : KindedMessage {
         ctx.end()
         return NoDataMessage
     }
+
+    override fun toString(): String = "NoDataMessage()"
 }

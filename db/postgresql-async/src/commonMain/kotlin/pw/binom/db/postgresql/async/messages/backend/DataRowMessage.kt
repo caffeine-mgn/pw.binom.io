@@ -15,6 +15,10 @@ class DataRowMessage : KindedMessage {
         TODO("Not yet implemented")
     }
 
+    override fun toString(): String {
+        return "DataRowMessage(data=${data.contentToString()})"
+    }
+
     var data: Array<ByteArray?> = emptyArray()
 
     companion object {

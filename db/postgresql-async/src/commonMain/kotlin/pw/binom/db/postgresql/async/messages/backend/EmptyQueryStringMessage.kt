@@ -19,4 +19,6 @@ object EmptyQueryStringMessage : KindedMessage {
         ctx.end()
         return EmptyQueryStringMessage
     }
+
+    override fun toString(): String = "EmptyQueryStringMessage()"
 }

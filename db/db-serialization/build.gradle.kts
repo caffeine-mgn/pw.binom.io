@@ -1,4 +1,4 @@
-import pw.binom.eachKotlinTest
+
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -35,6 +35,7 @@ kotlin {
                 api(kotlin("stdlib-common"))
                 api(project(":db"))
                 api(project(":db:db-serialization-annotations"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
         if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
@@ -110,9 +111,9 @@ tasks {
         this.attachStdout.set(true)
         this.attachStderr.set(true)
     }
-    eachKotlinTest {
-        postgresServer.dependsOn(it)
-    }
+//    eachKotlinTest {
+//        postgresServer.dependsOn(it)
+//    }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
     apply<pw.binom.plugins.AndroidSupportPlugin>()

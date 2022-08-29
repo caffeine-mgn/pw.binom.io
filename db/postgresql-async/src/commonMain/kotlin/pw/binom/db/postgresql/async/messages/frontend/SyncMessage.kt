@@ -13,4 +13,6 @@ object SyncMessage : KindedMessage {
         writer.startBody()
         writer.endBody()
     }
+
+    override fun toString(): String = "SyncMessage()"
 }

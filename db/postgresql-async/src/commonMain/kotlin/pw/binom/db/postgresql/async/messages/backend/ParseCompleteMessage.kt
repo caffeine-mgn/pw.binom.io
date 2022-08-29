@@ -19,4 +19,6 @@ object ParseCompleteMessage : KindedMessage {
         ctx.end()
         return ParseCompleteMessage
     }
+
+    override fun toString(): String = "ParseCompleteMessage()"
 }

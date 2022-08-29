@@ -10,11 +10,15 @@ object BindCompleteMessage : KindedMessage {
         get() = MessageKinds.BindComplete
 
     override fun write(writer: PackageWriter) {
-        TODO("Not yet implemented")
+        writer.writeCmd(MessageKinds.BindComplete)
+        writer.startBody()
+        writer.endBody()
     }
 
     suspend fun read(ctx: PackageReader): BindCompleteMessage {
         ctx.end()
         return BindCompleteMessage
     }
+
+    override fun toString(): String = "BindCompleteMessage()"
 }
