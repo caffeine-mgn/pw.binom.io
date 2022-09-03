@@ -10,19 +10,21 @@ import java.nio.channels.Selector as JSelector
 
 internal fun javaToCommon(mode: Int): Int {
     var opts = 0
-    if (SelectionKey.OP_ACCEPT and mode != 0 || SelectionKey.OP_READ and mode != 0) {
+    if (SelectionKey.OP_ACCEPT in mode || SelectionKey.OP_READ in mode) {
         opts = opts or Selector.INPUT_READY
     }
 
-    if (SelectionKey.OP_WRITE and mode != 0) {
+    if (SelectionKey.OP_WRITE in mode) {
         opts = opts or Selector.OUTPUT_READY
     }
 
-    if (SelectionKey.OP_CONNECT and mode != 0) {
+    if (SelectionKey.OP_CONNECT in mode) {
         opts = opts or Selector.EVENT_CONNECTED
     }
     return opts
 }
+
+private operator fun Int.contains(opConnect: Int): Boolean = this and opConnect != 0
 
 class JvmSelector : Selector {
     private val native = JSelector.open()

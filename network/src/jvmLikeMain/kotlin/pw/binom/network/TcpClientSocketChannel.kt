@@ -8,7 +8,7 @@ import java.nio.channels.SocketChannel as JSocketChannel
 
 actual class TcpClientSocketChannel actual constructor() : Channel {
     var native: JSocketChannel? = null
-        private set
+        internal set
 
     var key: JvmSelector.JvmKey? = null
         set(value) {
@@ -22,7 +22,7 @@ actual class TcpClientSocketChannel actual constructor() : Channel {
         this.native = native
     }
 
-    private var blocking = false
+    internal var blocking = false
     private fun get(): JSocketChannel {
         var native = native
         if (native == null) {
@@ -86,9 +86,6 @@ actual class TcpClientSocketChannel actual constructor() : Channel {
     }
 
     actual fun connect(fileName: String) {
-        throwUnixSocketNotSupported()
+        internalConnectToUnixSocket(fileName)
     }
 }
-
-internal fun throwUnixSocketNotSupported(): Nothing =
-    throw RuntimeException("Mingw Target not supports Unix Domain Socket")
