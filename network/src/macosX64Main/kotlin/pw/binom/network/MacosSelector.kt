@@ -97,7 +97,7 @@ class MacosSelector : AbstractSelector() {
 
     private var c = 0
     private val list = nativeHeap.allocArray<kevent>(1000) // nativeHeap.allocArray<epoll_event>(1000)
-    private val keys = HashSet<MacosKey>()
+    private val keys = NoMemoryLeakHashSet<MacosKey>()
     private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
         private val event = object : NativeKeyEvent {
             override lateinit var key: AbstractKey

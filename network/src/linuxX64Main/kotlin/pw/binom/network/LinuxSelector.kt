@@ -13,11 +13,11 @@ internal val STUB_BYTE = byteArrayOf(1)
 class LinuxSelector : AbstractSelector() {
 
     internal val native = Epoll.create(1000)
-    internal val keys = HashSet<LinuxKey>() // { a, b -> a.hashCode() - b.hashCode() }
+    internal val keys = NoMemoryLeakHashSet<LinuxKey>() // { a, b -> a.hashCode() - b.hashCode() }
 
-    internal val idToKey = HashMap<Int, LinuxKey>()
-    private val keyForRemove = HashMap<Int, RawSocket>()
-    private val keyForAdd = HashMap<Int, LinuxKey>()
+    internal val idToKey = NoMemoryLeakHashMap<Int, LinuxKey>()
+    private val keyForRemove = NoMemoryLeakHashMap<Int, RawSocket>()
+    private val keyForAdd = NoMemoryLeakHashMap<Int, LinuxKey>()
     private val selectLock = SpinLock()
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0

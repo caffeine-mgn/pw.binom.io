@@ -3,6 +3,7 @@ package pw.binom.io.socket.ssl
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
+import pw.binom.io.ClosedException
 import pw.binom.io.empty
 import pw.binom.pool.ObjectPool
 
@@ -50,6 +51,13 @@ class AsyncSSLChannel private constructor(
         closeParent = closeParent,
     )
 
+    private var closed = false
+    private fun checkClosed() {
+        if (closed) {
+            throw ClosedException()
+        }
+    }
+
     constructor(
         session: SSLSession,
         channel: AsyncChannel,
@@ -87,6 +95,7 @@ class AsyncSSLChannel private constructor(
     private var eof = false
 
     private suspend fun sendAll() {
+        checkClosed()
         while (true) {
             buffer.clear()
             val n = session.readNet(buffer)
@@ -99,6 +108,7 @@ class AsyncSSLChannel private constructor(
     }
 
     private suspend fun readAll() {
+        checkClosed()
         buffer.clear()
         channel.read(buffer)
         buffer.flip()
@@ -106,6 +116,8 @@ class AsyncSSLChannel private constructor(
     }
 
     override suspend fun asyncClose() {
+        checkClosed()
+        closed = false
         try {
             flush()
             if (closeParent) {
@@ -122,6 +134,7 @@ class AsyncSSLChannel private constructor(
     }
 
     override suspend fun write(data: ByteBuffer): Int {
+        checkClosed()
         if (eof) {
             return 0
         }
@@ -155,12 +168,14 @@ class AsyncSSLChannel private constructor(
     }
 
     override suspend fun flush() {
+        checkClosed()
     }
 
     override val available: Int
         get() = -1
 
     override suspend fun read(dest: ByteBuffer): Int {
+        checkClosed()
         if (eof) {
             return 0
         }
