@@ -53,7 +53,7 @@ class MingwKey(
         return events.toInt()
     }
 
-    override fun toString(): String = "MinGW(mode: ${modeToString(listensFlag.toUInt())}, attachment: $attachment)"
+    override fun toString(): String = "MingwKey(native=${modeToString(listensFlag.toUInt())}, ${generateToString()})"
     override fun resetMode(mode: Int) {
         if (nativeSocket == 0) {
             return

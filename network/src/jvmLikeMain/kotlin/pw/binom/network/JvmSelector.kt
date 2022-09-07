@@ -85,15 +85,14 @@ class JvmSelector : Selector {
                 require(channel is SocketChannel)
                 opts = opts or SelectionKey.OP_CONNECT or SelectionKey.OP_READ or SelectionKey.OP_WRITE
             }
+//            if (Selector.EVENT_ERROR and mode != 0) {
+//                opts = opts or SelectionKey.OP_WRITE
+//            }
             return opts
         }
 
         override var listensFlag: Int
-            get() {
-                return initMode
-//                checkClosed()
-//                return javaToCommon(native.interestOps())
-            }
+            get() = initMode
             set(value) {
                 checkClosed()
                 initMode = value
@@ -113,6 +112,9 @@ class JvmSelector : Selector {
                 throw ClosedException()
             }
         }
+
+        override fun toString(): String =
+            "JvmSelector.JvmKey(native=${jvmModeToString(native?.interestOps() ?: 0)}, ${generateToString()})"
     }
 
     override fun wakeup() {
@@ -151,6 +153,7 @@ class JvmSelector : Selector {
                         selectedCount
                     }
                 }
+
                 else -> native.select()
             }
             val keys = HashSet(native.selectedKeys())
@@ -163,18 +166,13 @@ class JvmSelector : Selector {
     }
 
     override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): Selector.Key {
-        try {
-            val key = JvmKey(attachment, initMode = mode, connected = false)
-            keysNotInSelector += key
-            socket.key = key
+        val key = JvmKey(attachment, initMode = mode, connected = false)
+        keysNotInSelector += key
+        socket.key = key
 //            native.wakeup()
 //            val nn = socket.native!!.register(native, key.commonToJava(socket.native!!, mode), key)
 //            key.native = nn
-            return key
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            throw e
-        }
+        return key
     }
 
     override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?): Selector.Key {

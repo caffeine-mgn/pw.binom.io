@@ -28,6 +28,7 @@ actual class TcpClientSocketChannel actual constructor() : Channel {
         if (native == null) {
             native = JSocketChannel.open()
             native.configureBlocking(blocking)
+            native.socket().tcpNoDelay = true
             this.native = native
             key?.setNative(native)
             return native
@@ -68,18 +69,23 @@ actual class TcpClientSocketChannel actual constructor() : Channel {
     }
 
     override fun close() {
-        get().close()
+        val socket = get()
+//        runCatching { socket.shutdownInput() }
+//        runCatching { socket.shutdownOutput() }
+        socket.close()
     }
 
     override fun write(data: ByteBuffer): Int =
         try {
             val ret = get().write(data.native)
             if (ret < 0) {
-                throw SocketClosedException()
+                -1
+            } else {
+                ret
             }
-            ret
         } catch (e: IOException) {
-            throw SocketClosedException()
+            close()
+            -1
         }
 
     override fun flush() {

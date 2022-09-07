@@ -11,6 +11,7 @@ class TcpServerConnection constructor(
     val dispatcher: NetworkManager,
     val channel: TcpServerSocketChannel
 ) : AbstractConnection() {
+    var description: String = "TcpServer"
 
     companion object {
         fun randomPort() = TcpServerSocketChannel().use {
@@ -85,7 +86,9 @@ class TcpServerConnection constructor(
 
             val newClient = channel.accept(address)
             if (newClient != null) {
-                return@TT dispatcher.attach(newClient)
+                val c = dispatcher.attach(newClient)
+                c.description = "Client of $description"
+                return@TT c
             }
             val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
                 acceptListener = con
@@ -97,7 +100,9 @@ class TcpServerConnection constructor(
                     }
                 }
             }
-            return@TT dispatcher.attach(newChannel)
+            val c = dispatcher.attach(newChannel)
+            c.description = "Client of $description"
+            return@TT c
         }
 
     override fun cancelSelector() {

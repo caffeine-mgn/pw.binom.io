@@ -12,6 +12,7 @@ private fun TcpClientSocketChannel.internalGetUnixSocket(): SocketChannel {
     if (native == null) {
         native = SocketChannel.open(StandardProtocolFamily.UNIX)
         native.configureBlocking(blocking)
+        native.socket().tcpNoDelay = true
         this.native = native
         key?.setNative(native)
         return native

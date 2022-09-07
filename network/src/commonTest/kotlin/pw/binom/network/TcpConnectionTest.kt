@@ -1,18 +1,20 @@
 package pw.binom.network
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.Worker
 import pw.binom.concurrency.sleep
 import pw.binom.concurrency.synchronize
 import pw.binom.io.ByteBuffer
+import pw.binom.io.bufferedAsciiWriter
 import pw.binom.io.use
 import pw.binom.readByte
 import pw.binom.writeByte
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TcpConnectionTest {
@@ -211,6 +213,54 @@ class TcpConnectionTest {
                 )
             )
             con.close()
+        }
+    }
+
+    fun aaa() = runTest(dispatchTimeoutMs = 10_000) {
+        NetworkCoroutineDispatcherImpl().use { nd ->
+            withContext(nd) {
+                val c = nd.bindTcp(NetworkAddress.Immutable("127.0.0.1", 8030))
+                val vv = c.accept()
+                val writer = vv.bufferedAsciiWriter()
+                writer.append("HTTP/1.0 200 OK\r\n")
+            }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun tryToWriteBreakConnection() = runTest(dispatchTimeoutMs = 10_000) {
+        NetworkCoroutineDispatcherImpl().use { nd ->
+            withContext(nd) {
+                val server = nd.bindTcp(NetworkAddress.Immutable("127.0.0.1", 0))
+                val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", server.port))
+                val connectedClient = server.accept()
+                GlobalScope.launch {
+                    println("Reading data.... from ${server.port}")
+                    ByteBuffer.alloc(50).use { buf ->
+                        client.readFully(buf)
+                    }
+                    println("Client disconnected!  $client   ${server.port}")
+                    client.close()
+                }
+                try {
+                    ByteBuffer.alloc(100).use { buf ->
+                        delay(1000)
+                        buf.clear()
+                        connectedClient.write(buf)
+//                        delay(1000)
+                        val now = TimeSource.Monotonic.markNow()
+                        while (now.elapsedNow() < 10.seconds) {
+                            buf.clear()
+                            connectedClient.write(buf)
+                        }
+                    }
+                    fail("Should throws SocketClosedException")
+                } catch (e: SocketClosedException) {
+                    e.printStackTrace()
+                    // Do nothing
+                }
+            }
         }
     }
 }

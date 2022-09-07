@@ -71,7 +71,10 @@ fun Input.copyTo(output: Output, buffer: ByteBuffer): Long {
             break
         totalLength += length.toLong()
         buffer.flip()
-        output.write(buffer)
+        val ret = output.write(buffer)
+        if (ret <= 0) {
+            throw IOException("Can't write data to output")
+        }
     }
     return totalLength
 }
@@ -106,7 +109,10 @@ suspend fun Input.copyTo(output: AsyncOutput, buffer: ByteBuffer): Long {
         totalLength += length.toLong()
         buffer.flip()
         while (buffer.remaining > 0) {
-            output.write(buffer)
+            val wrote = output.write(buffer)
+            if (wrote <= 0) {
+                throw IOException("Can't copy data into output")
+            }
         }
     }
     return totalLength

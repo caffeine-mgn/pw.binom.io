@@ -54,6 +54,7 @@ class SelectedEventsJvm : SelectedEvents {
                                 (it.interestOps().inv() or SelectionKey.OP_CONNECT or Selector.OUTPUT_READY).inv()
                             )
                         }
+                        key.connected = true
                         nextReady = true
                         return true
                     } catch (e: ConnectException) {
@@ -119,4 +120,21 @@ class SelectedEventsJvm : SelectedEvents {
             return keyEvent
         }
     }
+}
+
+private fun jvmKeysToString(m: Int): String {
+    val sb = StringBuffer()
+    if (SelectionKey.OP_READ and m != 0) {
+        sb.append("OP_READ ")
+    }
+    if (SelectionKey.OP_WRITE and m != 0) {
+        sb.append("OP_WRITE ")
+    }
+    if (SelectionKey.OP_CONNECT and m != 0) {
+        sb.append("OP_CONNECT ")
+    }
+    if (SelectionKey.OP_ACCEPT and m != 0) {
+        sb.append("OP_ACCEPT ")
+    }
+    return sb.toString()
 }

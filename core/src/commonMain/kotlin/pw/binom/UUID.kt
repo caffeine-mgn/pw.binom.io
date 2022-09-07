@@ -11,21 +11,22 @@ import kotlin.random.Random
 
 class UUID(val mostSigBits: Long, val leastSigBits: Long) {
     companion object {
-        const val SIZE_IN_BYTES = 16
+        const val SIZE_BYTES = Long.SIZE_BYTES * 2
+        const val SIZE_BITS = Long.SIZE_BITS * 2
         fun create(mostSigBits: Long, leastSigBits: Long) =
             UUID(
                 mostSigBits = mostSigBits,
                 leastSigBits = leastSigBits
             )
 
-        fun create(data: ByteArray): UUID {
-            if (data.size != SIZE_IN_BYTES) {
+        fun create(data: ByteArray, offset: Int = 0): UUID {
+            if (data.size - offset < SIZE_BYTES) {
                 throw IllegalArgumentException("data must be 16 bytes in length")
             }
             var msb: Long = 0
             var lsb: Long = 0
-            for (i in 0..7) msb = msb shl 8 or (data[i].toLong() and 0xff)
-            for (i in 8..15) lsb = lsb shl 8 or (data[i].toLong() and 0xff)
+            for (i in 0..7) msb = msb shl 8 or (data[i + offset].toLong() and 0xff)
+            for (i in 8..15) lsb = lsb shl 8 or (data[i + offset].toLong() and 0xff)
             val mostSigBits = msb
             val leastSigBits = lsb
             return UUID(
@@ -35,7 +36,7 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
         }
 
         fun random(): UUID {
-            val randomBytes = Random.nextBytes(16)
+            val randomBytes = Random.nextBytes(SIZE_BYTES)
             randomBytes[6] = randomBytes[6] and 0x0f
             randomBytes[6] = randomBytes[6] or 0x40
             randomBytes[8] = randomBytes[8] and 0x3f
@@ -82,7 +83,7 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
         return buf.concatToString()
     }
 
-    fun toByteArray(): ByteArray = toByteArray(ByteArray(SIZE_IN_BYTES))
+    fun toByteArray(): ByteArray = toByteArray(ByteArray(SIZE_BYTES))
 
     /**
      * Puts UUID to [output]. [output].size must be equals 16 or more. Puts data with 0 offset
@@ -90,13 +91,13 @@ class UUID(val mostSigBits: Long, val leastSigBits: Long) {
      * @param output Array for store current uuid
      * @param returns [output] array
      */
-    fun toByteArray(output: ByteArray): ByteArray {
-        if (output.size < SIZE_IN_BYTES) {
+    fun toByteArray(destination: ByteArray, destinationOffset: Int = 0): ByteArray {
+        if (destination.size + destinationOffset < SIZE_BYTES) {
             throw IllegalArgumentException()
         }
-        mostSigBits.toBytes(output, 0)
-        leastSigBits.toBytes(output, 8)
-        return output
+        mostSigBits.toBytes(destination, destinationOffset + 0)
+        leastSigBits.toBytes(destination, destinationOffset + Long.SIZE_BYTES)
+        return destination
     }
 
     fun dump(dest: ByteBuffer) {
@@ -168,6 +169,7 @@ private fun String.toLong(beginIndex: Int, endIndex: Int, radix: Int) =
 inline fun Random.nextUuid() = UUID.random()
 
 fun String.toUUID() = UUID.fromString(this)
+
 fun String.toUUIDOrNull() = try {
     UUID.fromString(this)
 } catch (e: Throwable) {

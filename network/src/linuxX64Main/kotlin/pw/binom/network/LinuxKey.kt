@@ -76,7 +76,7 @@ class LinuxKey(
     }
 
     override fun toString(): String =
-        "LinuxKey(mode: ${modeToString(listensFlag)}, attachment: $attachment, connected: $connected)"
+        "LinuxKey(native=${modeToString(listensFlag)}, connected=$connected, ${generateToString()})"
 
     fun epollCommonToNative(mode: Int): Int {
         var events = 0

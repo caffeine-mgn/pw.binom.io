@@ -71,12 +71,13 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                 action.path.isMatch(it.key)
             }
 //                .sortedBy { -it.key.length }
-                .flatMap { it.value.asSequence() }.forEach {
+                .flatMap { it.value.asSequence() }.any {
                     it.execute(action)
-                    if (action.response != null) {
-                        return
-                    }
+                    action.response != null
                 }
+        }
+        if (action.response != null) {
+            return
         }
         if (methods.isNotEmpty()) {
             methods[action.method]
@@ -85,7 +86,7 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                 ?.filter {
                     action.path.isMatch(it.key)
                 }
-                ?.forEach { route ->
+                ?.any { route ->
                     val wrapper = requestWrapperPool.borrow {
                         it.reset(
                             mask = route.key,
@@ -94,12 +95,13 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                         )
                     }
                     try {
+                        if (action.response != null) {
+                            return@any true
+                        }
                         withContext(wrapper) {
-                            route.value.forEach {
+                            route.value.any {
                                 it(wrapper)
-                                if (action.response != null) {
-                                    return@forEach
-                                }
+                                action.response != null
                             }
                         }
                     } finally {

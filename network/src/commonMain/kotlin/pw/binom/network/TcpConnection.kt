@@ -65,6 +65,11 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
 
         if (sendData.continuation != null) {
             val result = runCatching { channel.write(sendData.data!!) }
+            if (result.isSuccess && result.getOrNull()!! < 0) {
+                sendData.continuation?.cancel(SocketClosedException())
+                sendData.reset()
+                return
+            }
             if (sendData.data!!.remaining == 0) {
                 val con = sendData.continuation!!
                 sendData.reset()
@@ -193,19 +198,23 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
     }
 
     override suspend fun write(data: ByteBuffer): Int {
-        val l = data.remaining
-        if (l == 0) {
+        val oldRemaining = data.remaining
+        if (oldRemaining == 0) {
             return 0
         }
         if (sendData.continuation != null) {
             throw IllegalStateException("Connection already have write listener")
         }
         val wrote = channel.write(data)
-        if (wrote == l) {
+        if (wrote > 0) {
             return wrote
         }
+        if (wrote == -1) {
+            close()
+            throw SocketClosedException()
+        }
         sendData.data = data
-        suspendCancellableCoroutine<Int> {
+        return suspendCancellableCoroutine<Int> {
             sendData.continuation = it
             key.addListen(Selector.OUTPUT_READY)
             it.invokeOnCancellation {
@@ -213,7 +222,6 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
                 sendData.data = null
             }
         }
-        return l
     }
 
     override suspend fun flush() {

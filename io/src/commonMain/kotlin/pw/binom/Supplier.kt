@@ -1,14 +1,14 @@
 package pw.binom
 
-fun interface AsyncSupplier<T> {
-    suspend fun get(): T
+fun interface Supplier<T> {
+    fun get(): T
 }
 
-fun <T, R> AsyncSupplier<T>.map(func: suspend (T) -> R) = AsyncSupplier {
+fun <T, R> Supplier<T>.map(func: (T) -> R) = Supplier {
     func(get())
 }
 
-suspend fun <T> AsyncSupplier<T>.takeIf(func: (T) -> Boolean): T? {
+fun <T> Supplier<T>.takeIf(func: (T) -> Boolean): T? {
     val r = get()
     return if (func(r)) {
         r
@@ -17,11 +17,11 @@ suspend fun <T> AsyncSupplier<T>.takeIf(func: (T) -> Boolean): T? {
     }
 }
 
-fun <T> AsyncSupplier<T>.oneShot() = object : AsyncSupplier<T> {
+fun <T> Supplier<T>.oneShot() = object : Supplier<T> {
     private var result: T? = null
     private var done = false
 
-    override suspend fun get(): T {
+    override fun get(): T {
         if (!done) {
             result = this@oneShot.get()
             done = true

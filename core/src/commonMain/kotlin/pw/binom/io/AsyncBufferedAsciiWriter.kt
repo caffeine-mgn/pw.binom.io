@@ -73,8 +73,9 @@ abstract class AbstractAsyncBufferedAsciiWriter(
         if (buffer.remaining != buffer.capacity) {
             buffer.flip()
             while (buffer.remaining > 0) {
-                if (output.write(buffer) <= 0) {
-                    throw EOFException("Can't write data to output")
+                val v = output.write(buffer)
+                if (v <= 0) {
+                    throw IOException("Can't write data to output, v=$v")
                 }
             }
             buffer.clear()
