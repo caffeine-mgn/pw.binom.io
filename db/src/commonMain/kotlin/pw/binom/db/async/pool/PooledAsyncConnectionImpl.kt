@@ -6,10 +6,8 @@ import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.async.AsyncStatement
 import pw.binom.io.use
 import kotlin.time.DurationUnit
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
-class PooledAsyncConnectionImpl(val pool: AsyncConnectionPoolImpl, val connection: AsyncConnection) :
+class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val connection: AsyncConnection) :
     PooledAsyncConnection, AsyncConnection by connection {
 
     private val createdPreparedStatement = HashMap<String, AsyncPreparedStatement>()

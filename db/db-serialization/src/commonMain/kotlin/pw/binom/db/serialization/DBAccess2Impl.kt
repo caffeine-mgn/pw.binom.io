@@ -131,20 +131,20 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
             .append("(")
         var i = 0
         params.forEach {
-            sb.append(it.key)
             if (i > 0) {
                 sb.append(",")
             }
+            sb.append(it.key)
             i++
         }
         i = 0
         sb.append(") values(")
         val args = arrayOfNulls<Any>(params.size)
         params.forEach {
-            sb.append("?")
             if (i > 0) {
                 sb.append(",")
             }
+            sb.append("?")
             args[i++] = it.value
         }
         sb.append(")")
@@ -152,10 +152,10 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
             sb.append(" returning ")
             i = 0
             params.forEach {
-                sb.append(it.key)
                 if (i > 0) {
                     sb.append(",")
                 }
+                sb.append(it.key)
             }
         }
         val ps = con.usePreparedStatement(sb.toString())
@@ -174,7 +174,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
                 }
             }
         } else {
-            ps.executeUpdate()
+            ps.executeUpdate(*args)
             null
         }
     }
@@ -208,4 +208,16 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
         val ps = con.usePreparedStatement(query)
         return ps.executeUpdate(*params.args.toTypedArray())
     }
+
+    override suspend fun <T : Any> selectAll(
+        k: KSerializer<T>,
+        condition: (suspend QueryContext.() -> String)?
+    ): Flow<T> =
+        select(k = k) {
+            if (condition != null) {
+                "select * from ${tableName(k.descriptor)} where ${condition(this)}"
+            } else {
+                "select * from ${tableName(k.descriptor)}"
+            }
+        }
 }

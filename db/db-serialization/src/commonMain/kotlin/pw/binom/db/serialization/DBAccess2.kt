@@ -11,6 +11,8 @@ interface DBAccess2 {
     suspend fun <T : Any> insertAndReturn(k: KSerializer<T>, value: T, excludeGenerated: Boolean = false): T
     suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T>
     suspend fun update(func: suspend QueryContext.() -> String): Long
+
+    suspend fun <T : Any> selectAll(k: KSerializer<T>, condition: (suspend QueryContext.() -> String)? = null): Flow<T>
 }
 
 @OptIn(InternalSerializationApi::class)
