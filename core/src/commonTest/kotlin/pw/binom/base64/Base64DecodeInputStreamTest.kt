@@ -13,9 +13,11 @@ class Base64DecodeInputStreamTest {
 
     @Test
     fun test2() {
-        val txt = "c3Vib2NoZXY6RHJvdm9zZWszMTk="
+        val txt = "SGVsbG8gd29ybGQhIQ=="
         val b = Base64.decode(txt)
         println("b=${b.decodeToString()}")
+        assertEquals(13, b.size)
+        assertEquals("Hello world!!", b.decodeToString())
     }
 
     @Test

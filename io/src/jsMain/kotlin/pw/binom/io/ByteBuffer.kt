@@ -8,10 +8,12 @@ private fun memcpy(
     dist: NativeMem,
     distOffset: Int,
     src: NativeMem,
-    srcOffset: Int,
+    srcOffset: Int = 0,
     srcLength: Int = src.size - srcOffset
 ) {
+//    println("memcpy #1 dist=${dist::class} src=${src::class}, distOffset=$distOffset, srcOffset=$srcOffset, srcLength=$srcLength, src.size=${src.size}, dist.size=${dist.size}")
     if (dist is NativeMem.ArrayNativeMem && src is NativeMem.ArrayNativeMem) {
+//        println("memcpy #2")
         src.mem.copyInto(
             destination = dist.mem,
             destinationOffset = distOffset,
@@ -20,19 +22,25 @@ private fun memcpy(
         )
         return
     }
-    (srcOffset..(srcOffset + srcLength)).forEachIndexed { index, it ->
+//    println("memcpy #3 srcOffset=$srcOffset, srcLength=$srcLength")
+    (srcOffset until (srcOffset + srcLength)).forEachIndexed { index, it ->
         dist[index + distOffset] = src[it]
+//        println("src[$it]->dist[${index + distOffset}] = ${src[it]}")
     }
+
+//    repeat(dist.size) { index ->
+//        println("dist[$index]=${dist[index]}")
+//    }
 }
 
 private fun memcpy(
     dist: ByteArray,
     distOffset: Int,
     src: NativeMem,
-    srcOffset: Int,
+    srcOffset: Int = 0,
     srcLength: Int = src.size - srcOffset
 ) {
-    (srcOffset..(srcOffset + srcLength)).forEachIndexed { index, it ->
+    (srcOffset until (srcOffset + srcLength)).forEachIndexed { index, it ->
         dist[index + distOffset] = src[it]
     }
 }
@@ -123,7 +131,7 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
     override fun compact() {
         if (remaining > 0) {
             val size = remaining
-            memcpy(native, 0, native, position, size)
+            memcpy(dist = native, distOffset = 0, src = native, srcOffset = position, srcLength = size)
             position = size
             limit = capacity
         } else {
@@ -139,11 +147,11 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
     actual fun realloc(newSize: Int): ByteBuffer {
         val new = alloc(newSize)
         if (newSize > capacity) {
-            memcpy(new.native, 0, native, capacity)
+            memcpy(dist = new.native, distOffset = 0, src = native, srcLength = capacity)
             new.position = position
             new.limit = limit
         } else {
-            memcpy(new.native, 0, native, newSize)
+            memcpy(dist = new.native, distOffset = 0, src = native, srcLength = newSize)
             new.position = minOf(position, newSize)
             new.limit = minOf(limit, newSize)
         }
@@ -172,7 +180,7 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
     actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
         require(dest.size - offset >= length)
         val l = minOf(remaining, length)
-        memcpy(dest, 0, native, position, l)
+        memcpy(dist = dest, distOffset = 0, src = native, srcOffset = position, srcLength = l)
         return l
     }
 
@@ -187,7 +195,7 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
 
     override fun write(data: ByteBuffer): Int {
         val l = minOf(remaining, data.remaining)
-        memcpy(native, position, data.native, data.position, l)
+        memcpy(dist = native, distOffset = position, src = data.native, srcOffset = data.position, srcLength = l)
         data.position += l
         position += l
         return l
@@ -214,7 +222,7 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
 
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
         val new = alloc(length)
-        memcpy(new.native, 0, native, length)
+        memcpy(dist = new.native, distOffset = 0, src = native, srcLength = length)
         new.position = minOf(position, length)
         new.limit = minOf(limit, length)
         return new
@@ -223,7 +231,7 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
     actual fun free() {
         val size = remaining
         if (size > 0) {
-            memcpy(native, 0, native, position, size)
+            memcpy(dist = native, distOffset = 0, src = native, srcOffset = position, srcLength = size)
             position = 0
             limit = size
         } else {
@@ -252,9 +260,10 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
 
     override fun read(dest: ByteBuffer): Int {
         val l = minOf(remaining, dest.remaining)
-        if (l == 0)
+        if (l == 0) {
             return l
-        memcpy(dest.native, dest.position, native, position, l)
+        }
+        memcpy(dist = dest.native, distOffset = dest.position, src = native, srcOffset = position, srcLength = l)
         dest.position += l
         position += l
         return l

@@ -16,16 +16,19 @@ object Base64 {
                 newOld((data and 3) shl 4)
                 byteToBase64(ff).toString()
             }
+
             1 -> {
                 val ff = old or (data shr 4)
                 newOld((data and 15) shl 2)
                 byteToBase64(ff).toString()
             }
+
             2 -> {
                 val ff = old or (data shr 6)
                 newOld(0)
                 "${byteToBase64(ff)}${byteToBase64((data and 63))}"
             }
+
             else -> throw IllegalArgumentException("Argument counter should be between 0 and 2. Got $counter")
         }
 
@@ -56,6 +59,19 @@ object Base64 {
     }
 
     fun decode(data: String, offset: Int = 0, length: Int = data.length - offset): ByteArray {
+//        var buffer = ByteArray(Base64Decoder.calcSize(length))
+//        var cursor = 0
+//        val decoder = Base64Decoder {
+//            buffer[cursor++] = it
+//        }
+//        for (i in offset until offset + length) {
+//            decoder.add(data[i])
+//        }
+//        if (cursor != buffer.size) {
+//            buffer = buffer.copyOf(cursor)
+//        }
+//        return buffer
+//      -----------------------------
         val out = ByteArrayOutput()
         Base64DecodeAppendable(out).use { o ->
             o.append(data, offset, offset + length)

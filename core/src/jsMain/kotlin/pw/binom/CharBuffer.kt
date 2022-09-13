@@ -22,7 +22,7 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
             require(position <= limit)
             field = value
         }
-    override var limit: Int = 0
+    override var limit: Int = capacity
         set(value) {
             if (value > capacity || value < 0) throw createLimitException(value)
             field = value
@@ -36,6 +36,7 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         val result = wrap(chars.copyOfRange(0, minOf(capacity, newSize)))
         result.limit = limit
         result.position = position
+        println("limit=$limit, position=$position")
         return result
     }
 

@@ -13,7 +13,10 @@ internal fun charFromBase64(value: Char): Byte =
         in ('0'..'9') -> (52 + value.code - '0'.code).toByte()
         '+' -> 62.toByte()
         '/' -> 63.toByte()
-        else -> throw IllegalArgumentException("Invalid char [$value] (0x${value.code.toString(16)})")
+        else -> {
+            val hex = value.code.toString(16).padStart(length = 2, padChar = '0')
+            throw IllegalArgumentException("Invalid char [$value] (0x$hex)")
+        }
     }
 
 class Base64DecodeAppendable(val stream: Output) : Appendable, Closeable {
@@ -21,8 +24,13 @@ class Base64DecodeAppendable(val stream: Output) : Appendable, Closeable {
     private var g = 0
     private var b = 0.toByte()
     private val buf = ByteBuffer.alloc(1)
+    private val decoder = Base64Decoder { byte ->
+        stream.writeByte(buf, byte)
+    }
 
     override fun append(value: Char): Appendable {
+        decoder.add(value)
+        return this
         if (value == '=') {
             g++
             return this
@@ -32,26 +40,31 @@ class Base64DecodeAppendable(val stream: Output) : Appendable, Closeable {
             0 -> {
                 b = b or (value2 shl 2)
             }
+
             1 -> {
                 val write = b or (value2 shr 4)
                 stream.writeByte(buf, write)
                 b = value2 shl 4
             }
+
             2 -> {
                 val write = b or (value2 shr 2)
                 stream.writeByte(buf, write)
                 b = value2 shl 6
             }
+
             3 -> {
                 val write = b or (value2)
                 stream.writeByte(buf, write)
                 b = 0
             }
+
             else -> throw RuntimeException()
         }
         g++
-        if (g == 4)
+        if (g == 4) {
             g = 0
+        }
         return this
     }
 
