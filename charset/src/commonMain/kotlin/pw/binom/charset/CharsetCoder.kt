@@ -42,9 +42,11 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
                     byteBuffer = newByteBuffer
                     byteBuffer.limit = byteBuffer.capacity
                 }
-                CharsetTransformResult.INPUT_OVER, CharsetTransformResult.MALFORMED -> {
+
+                CharsetTransformResult.INPUT_OVER, CharsetTransformResult.MALFORMED, CharsetTransformResult.ERROR, CharsetTransformResult.UNMAPPABLE -> {
                     throw IOException("Can't decode string")
                 }
+
                 CharsetTransformResult.SUCCESS -> {
                     byteBuffer.flip()
                     return using(byteBuffer)
@@ -78,9 +80,11 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
                     charBuffer = newCharbuffer
                     charBuffer.limit = charBuffer.capacity
                 }
-                CharsetTransformResult.INPUT_OVER, CharsetTransformResult.MALFORMED -> {
+
+                CharsetTransformResult.INPUT_OVER, CharsetTransformResult.MALFORMED, CharsetTransformResult.ERROR, CharsetTransformResult.UNMAPPABLE -> {
                     throw IOException("Can't decode string")
                 }
+
                 CharsetTransformResult.SUCCESS -> {
                     charBuffer.flip()
                     return charBuffer.toString()

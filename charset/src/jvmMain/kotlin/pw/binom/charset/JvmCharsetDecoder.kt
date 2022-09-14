@@ -11,6 +11,8 @@ class JvmCharsetDecoder(val native: java.nio.charset.CharsetDecoder) : CharsetDe
             r.isUnderflow -> CharsetTransformResult.SUCCESS
             r.isOverflow -> CharsetTransformResult.OUTPUT_OVER
             r.isMalformed -> CharsetTransformResult.MALFORMED
+            r.isError -> CharsetTransformResult.ERROR
+            r.isUnmappable -> CharsetTransformResult.UNMAPPABLE
             else -> TODO("Invalid state of decoder")
         }
     }
