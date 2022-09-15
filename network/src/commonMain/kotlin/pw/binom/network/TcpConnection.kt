@@ -218,8 +218,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             sendData.continuation = it
             key.addListen(Selector.OUTPUT_READY)
             it.invokeOnCancellation {
-                sendData.continuation = null
-                sendData.data = null
+                sendData.reset()
             }
         }
     }
