@@ -4,7 +4,6 @@ import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
-import pw.binom.neverFreeze
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -197,13 +196,15 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         close()
     }
 
+    private var lastWriteStackTrace: String? = null
     override suspend fun write(data: ByteBuffer): Int {
         val oldRemaining = data.remaining
         if (oldRemaining == 0) {
             return 0
         }
         if (sendData.continuation != null) {
-            throw IllegalStateException("Connection already have write listener")
+            println("Connection busy! last stack trace:\n$lastWriteStackTrace")
+            return 0
         }
         val wrote = channel.write(data)
         if (wrote > 0) {
@@ -214,6 +215,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             throw SocketClosedException()
         }
         sendData.data = data
+//        lastWriteStackTrace = Throwable().stackTraceToString()
         return suspendCancellableCoroutine<Int> {
             sendData.continuation = it
             key.addListen(Selector.OUTPUT_READY)
@@ -290,9 +292,5 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
 //            throw SocketClosedException()
 //        }
         return readed
-    }
-
-    init {
-        neverFreeze()
     }
 }
