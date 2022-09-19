@@ -125,14 +125,13 @@ class SQLitePrepareStatement(
     }
 
     override fun close() {
-        if (!closed.compareAndSet(false, true)) {
-            throw ClosedException()
-        }
-        println("Closing SQLite Prepared Statement")
-        connection.delete(this)
         if (openedResultSetCount > 0) {
             throw SQLException("Not all ResultSet closed")
         }
+        if (!closed.compareAndSet(false, true)) {
+            return
+        }
+        connection.delete(this)
         sqlite3_clear_bindings(stmt)
         sqlite3_finalize(stmt)
         nativeHeap.free(native)

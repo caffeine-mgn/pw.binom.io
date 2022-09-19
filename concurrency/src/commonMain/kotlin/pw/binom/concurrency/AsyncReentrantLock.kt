@@ -3,10 +3,16 @@ package pw.binom.concurrency
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import pw.binom.atomic.AtomicBoolean
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration
 
 private object AsyncReentrantLocksKey : CoroutineContext.Key<AsyncReentrantLocksElement>
 private class AsyncReentrantLocksElement : CoroutineContext.Element {
@@ -32,6 +38,19 @@ private class AsyncReentrantLocksElement : CoroutineContext.Element {
         }
 }
 
+@OptIn(ExperimentalContracts::class)
+private suspend fun <T> withTimeout2(timeout: Duration?, block: suspend () -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+
+    return if (timeout == null || timeout == Duration.INFINITE) {
+        block()
+    } else {
+        withTimeout(timeout) { block() }
+    }
+}
+
 class AsyncReentrantLock : AsyncLock {
     private val waiters by lazy {
         HashSet<CancellableContinuation<Unit>>()
@@ -53,10 +72,24 @@ class AsyncReentrantLock : AsyncLock {
         }
     }
 
+    /**
+     * Resumes all waiting coroutines with [exception]
+     */
+    fun resumeAllWithException(exception: Throwable) = waiterLock.synchronize {
+        waiters.forEach {
+            it.resumeWithException(exception)
+        }
+        val size = waiters.size
+        waiters.clear()
+        size
+    }
+
     override val isLocked: Boolean
         get() = locked.getValue()
 
-    override suspend fun <T> synchronize(func: suspend () -> T): T {
+    override suspend fun <T> synchronize(func: suspend () -> T): T = synchronize(Duration.INFINITE, func)
+
+    override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T {
         val locks = coroutineContext[AsyncReentrantLocksKey]
         val isCurrentLockActive = locks?.isExist(this) == true // is this lock already locked in this coroutine
         if (isCurrentLockActive) {
@@ -81,12 +114,16 @@ class AsyncReentrantLock : AsyncLock {
                 val newLocks = AsyncReentrantLocksElement()
                 newLocks.add(this)
                 withContext(coroutineContext + newLocks) {
-                    func()
+                    withTimeout2(lockingTimeout) {
+                        func()
+                    }
                 }
             } else {
                 locks.add(this)
                 try {
-                    func()
+                    withTimeout2(lockingTimeout) {
+                        func()
+                    }
                 } finally {
                     locks.remove(this)
                 }

@@ -83,7 +83,6 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     }
 
     override fun prepareStatement(query: String): SyncPreparedStatement {
-        println("SQLITE_VERSION=$SQLITE_VERSION")
         checkClosed()
         val stmt = nativeHeap.allocArray<CPointerVar<sqlite3_stmt>>(1)
         checkSqlCode(

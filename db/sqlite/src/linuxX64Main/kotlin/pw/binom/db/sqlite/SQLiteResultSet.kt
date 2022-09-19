@@ -174,6 +174,9 @@ class SQLiteResultSet(
     }
 
     override fun close() {
+        if (closed) {
+            return
+        }
         checkClosed()
         prepareStatement.openedResultSetCount--
         sqlite3_clear_bindings(stmt)

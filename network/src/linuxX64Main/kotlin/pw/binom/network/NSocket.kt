@@ -84,6 +84,9 @@ private fun bind(native: RawSocket, address: NetworkAddress, family: Int) {
             if (errno == EADDRINUSE || errno == 0) {
                 throw BindException("Address already in use: ${address.host}:${address.port}")
             }
+            if (errno == EACCES) {
+                throw BindException("Can't bind to $address: Permission denied")
+            }
             throw IOException("Bind error. errno: [$errno], bind: [$bindResult]")
         }
         val listenResult = listen(native, 1000)

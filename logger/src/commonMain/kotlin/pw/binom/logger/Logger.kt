@@ -23,6 +23,9 @@ class Logger(
 
         fun getLogger(pkg: String): Logger =
             allLoggers.getOrPut(pkg) { Logger(pkg) }
+
+        val ofThisOrGlobal
+            get() = LoggerPropertyDelegatorProvider()
     }
 
     /**
