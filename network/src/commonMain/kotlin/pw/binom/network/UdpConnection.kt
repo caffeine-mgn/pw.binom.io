@@ -16,6 +16,15 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         }
     }
 
+    var description: String? = null
+
+    override fun toString(): String =
+        if (description == null) {
+            "UdpConnection"
+        } else {
+            "UdpConnection($description)"
+        }
+
     lateinit var key: Selector.Key
 
     private class ReadData {

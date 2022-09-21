@@ -110,7 +110,7 @@ tasks {
     val redisServer = pw.binom.plugins.DockerUtils.dockerContanier(
         project = project,
         image = "redis:6.2.6-bullseye",
-        tcpPorts = listOf(6379 to 7132),
+        tcpPorts = listOf(6379 to 7133),
         args = listOf(),
         suffix = "Redis"
     )

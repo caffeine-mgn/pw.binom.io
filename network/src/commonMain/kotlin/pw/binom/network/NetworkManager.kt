@@ -74,19 +74,25 @@ fun NetworkManager.bindTcp(address: NetworkAddress): TcpServerConnection {
     val channel = TcpServerSocketChannel()
     channel.setBlocking(false)
     channel.bind(address)
-    return attach(channel)
+    val connection = attach(channel)
+    connection.description = address.toString()
+    return connection
 }
 
 fun NetworkManager.bindTcpUnixSocket(fileName: String): TcpServerConnection {
     val channel = TcpServerSocketChannel()
     channel.setBlocking(false)
     channel.bind(fileName)
-    return attach(channel)
+    val connection = attach(channel)
+    connection.description = fileName
+    return connection
 }
 
 fun NetworkManager.bindUdp(address: NetworkAddress): UdpConnection {
     val channel = UdpSocketChannel()
     channel.setBlocking(false)
     channel.bind(address)
-    return attach(channel)
+    val connection = attach(channel)
+    connection.description = address.toString()
+    return connection
 }

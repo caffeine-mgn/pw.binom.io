@@ -304,12 +304,14 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
                 if (errno == EPIPE) {
                     nativeClose()
                     return -1
-                    throw SocketClosedException()
                 }
                 if (error == ECONNRESET) {
                     nativeClose()
                     return -1
 //                    throw SocketClosedException()
+                }
+                if (errno == EAGAIN) {
+                    return 0
                 }
                 if (errno == EBADF) {
                     return -1

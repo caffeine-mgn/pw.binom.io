@@ -38,6 +38,7 @@ abstract class AbstractKey(override var attachment: Any?) : Selector.Key, Compar
             }
             _listensFlag = value
             resetMode(value)
+            selector.wakeup()
         }
 
     abstract fun resetMode(mode: Int)

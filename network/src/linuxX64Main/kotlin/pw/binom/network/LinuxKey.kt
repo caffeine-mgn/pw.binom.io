@@ -34,12 +34,14 @@ class LinuxKey(
         epollEvent.data.u32 = this@LinuxKey.hashCode().convert()
         nativeSocket = raw
         selector.addKey(this)
+        selector.wakeup()
     }
 
     override fun removeSocket(raw: RawSocket) {
         if (nativeSocket == raw) {
             selector.removeKey(this, raw)
             nativeSocket = 0
+            selector.wakeup()
             return
         }
 //        throw IllegalArgumentException("Socket $raw not attached to Selector.Key $nativeSocket")
@@ -76,7 +78,7 @@ class LinuxKey(
     }
 
     override fun toString(): String =
-        "LinuxKey(native=${modeToString(listensFlag)}, connected=$connected, ${generateToString()})"
+        "LinuxKey(native=${modeToString(epollCommonToNative(listensFlag))}, connected=$connected, ${generateToString()})"
 
     fun epollCommonToNative(mode: Int): Int {
         var events = 0

@@ -129,7 +129,6 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         get() = SQLiteSQLDatabaseInfo
 
     override fun close() {
-        println("Closing SQLite Connection")
         if (!closed.compareAndSet(false, true)) {
             throw ClosedException()
         }

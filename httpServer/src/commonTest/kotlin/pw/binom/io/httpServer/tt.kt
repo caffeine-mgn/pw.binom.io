@@ -2,8 +2,10 @@ package pw.binom.io.httpServer
 
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
+import kotlin.test.Ignore
 import kotlin.test.Test
 
+@Ignore
 class tt {
     @Test
     fun runTest() {
@@ -12,6 +14,8 @@ class tt {
         val server = HttpServer(
             manager = manager,
             handler = Handler {
+                println("->${it.request}")
+                println("->${it.headers}")
                 println("Request income ${it.request}")
                 println("Headers: ${it.headers}")
                 it.response {
@@ -23,7 +27,7 @@ class tt {
                 }
             }
         )
-        server.listenHttp(NetworkAddress.Immutable("0.0.0.0", 8076))
+        server.listenHttp(NetworkAddress.Immutable("0.0.0.0", 50051))
         manager.networkThread.join()
     }
 }

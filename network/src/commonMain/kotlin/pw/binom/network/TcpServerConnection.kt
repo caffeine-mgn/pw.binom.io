@@ -11,7 +11,7 @@ class TcpServerConnection constructor(
     val dispatcher: NetworkManager,
     val channel: TcpServerSocketChannel
 ) : AbstractConnection() {
-    var description: String = "TcpServer"
+    var description: String? = null
 
     companion object {
         fun randomPort() = TcpServerSocketChannel().use {
@@ -19,6 +19,13 @@ class TcpServerConnection constructor(
             it.port!!
         }
     }
+
+    override fun toString(): String =
+        if (description == null) {
+            "TcpServerConnection"
+        } else {
+            "TcpServerConnection($description)"
+        }
 
     lateinit var key: Selector.Key
 
@@ -79,7 +86,7 @@ class TcpServerConnection constructor(
     private var acceptListener: CancellableContinuation<TcpClientSocketChannel>? = null
 
     suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection =
-        withContext(dispatcher) TT@{
+        withContext(dispatcher) acceptContext@{
             if (acceptListener != null) {
                 throw IllegalStateException("Connection already have read listener")
             }
@@ -88,7 +95,7 @@ class TcpServerConnection constructor(
             if (newClient != null) {
                 val c = dispatcher.attach(newClient)
                 c.description = "Client of $description"
-                return@TT c
+                return@acceptContext c
             }
             val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
                 acceptListener = con
@@ -102,7 +109,7 @@ class TcpServerConnection constructor(
             }
             val c = dispatcher.attach(newChannel)
             c.description = "Client of $description"
-            return@TT c
+            return@acceptContext c
         }
 
     override fun cancelSelector() {
