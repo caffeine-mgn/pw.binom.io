@@ -40,6 +40,7 @@ kotlin {
             dependencies {
                 api(project(":core"))
                 api(project(":logger"))
+                api(project(":collections"))
             }
         }
 

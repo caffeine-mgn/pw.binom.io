@@ -2,6 +2,7 @@ package pw.binom.db.tarantool.protocol
 
 import pw.binom.*
 import pw.binom.base64.Base64
+import pw.binom.collections.defaultHashMap
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import kotlin.experimental.xor
@@ -250,7 +251,7 @@ internal object InternalProtocolUtils {
         if (size == 0) {
             return emptyMap()
         }
-        val out = HashMap<Any?, Any?>()
+        val out = defaultHashMap<Any?, Any?>()
         repeat(size) {
             val key = unpack(buf, input)
             val value = unpack(buf, input)

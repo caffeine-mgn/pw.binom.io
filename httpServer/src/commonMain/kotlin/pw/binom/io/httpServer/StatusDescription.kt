@@ -1,6 +1,8 @@
 package pw.binom.io.httpServer
 
-private val statusCodes = HashMap<Int, String>().also {
+import pw.binom.collections.defaultHashMap
+
+private val statusCodes = defaultHashMap<Int, String>().also {
     for (i in 100..526) {
         it[i] = i.toString()
     }

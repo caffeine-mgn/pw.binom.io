@@ -1,6 +1,7 @@
 package pw.binom.flux
 
 import kotlinx.coroutines.withContext
+import pw.binom.collections.defaultHashMap
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
@@ -8,8 +9,8 @@ import pw.binom.pool.DefaultPool
 import pw.binom.pool.borrow
 
 abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
-    private val routers = HashMap<String, ArrayList<Route>>()
-    private val methods = HashMap<String, HashMap<String, ArrayList<suspend (FluxHttpRequest) -> Unit>>>()
+    private val routers = defaultHashMap<String, ArrayList<Route>>()
+    private val methods = defaultHashMap<String, HashMap<String, ArrayList<suspend (FluxHttpRequest) -> Unit>>>()
     private var forwardHandler: Handler? = null
 
     override fun route(path: String, route: Route) {

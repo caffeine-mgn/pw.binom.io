@@ -16,7 +16,7 @@ abstract class AbstractServiceInjector<T : Any, RESULT> internal constructor(
         if (inited) {
             return
         }
-        if (bean == null)
+        if (bean == null) {
             bean = run {
                 val st = strong.findBean(beanClass as KClass<Any>, name).toList()
                 if (name == null && st.size > 1) {
@@ -29,6 +29,7 @@ abstract class AbstractServiceInjector<T : Any, RESULT> internal constructor(
                     }
                 }
                 if (st.isEmpty()) {
+                    println("Beans:\n${strong.beans}\n${strong.beans.entries.joinToString()}")
                     return@run null
                 }
                 if (st.size == 1) {
@@ -36,6 +37,7 @@ abstract class AbstractServiceInjector<T : Any, RESULT> internal constructor(
                 }
                 throw SeveralBeanException(beanClass, name)
             }
+        }
         inited = true
     }
 

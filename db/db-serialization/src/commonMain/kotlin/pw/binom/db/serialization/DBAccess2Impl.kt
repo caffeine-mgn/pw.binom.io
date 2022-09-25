@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.UUID
+import pw.binom.collections.defaultHashMap
 import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
@@ -109,7 +110,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
         returning: Boolean,
         excludeGenerated: Boolean
     ): T? {
-        val params = HashMap<String, Any?>()
+        val params = defaultHashMap<String, Any?>()
 
         val output = object : DataBinder {
             override fun get(key: String): Any? = params[key]

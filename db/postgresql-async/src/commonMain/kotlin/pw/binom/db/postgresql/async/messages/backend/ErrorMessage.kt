@@ -1,5 +1,6 @@
 package pw.binom.db.postgresql.async.messages.backend
 
+import pw.binom.collections.defaultHashMap
 import pw.binom.db.postgresql.async.InformationParser
 import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
@@ -10,7 +11,7 @@ class ErrorMessage : KindedMessage {
     override val kind: Byte
         get() = MessageKinds.Error
 
-    val fields = HashMap<Char, String>()
+    val fields = defaultHashMap<Char, String>()
 
     override fun write(writer: PackageWriter) {
         writer.writeCmd(MessageKinds.Error)

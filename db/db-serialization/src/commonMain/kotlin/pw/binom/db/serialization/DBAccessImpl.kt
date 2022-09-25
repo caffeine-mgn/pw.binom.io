@@ -3,6 +3,7 @@ package pw.binom.db.serialization
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.encoding.CompositeDecoder
+import pw.binom.collections.defaultHashMap
 import pw.binom.db.DatabaseEngine
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
@@ -301,7 +302,7 @@ internal class DBAccessImpl(
                 args = sql.nameParams(serializer, value),
             ).use {
                 if (it.next()) {
-                    val generatedMap = HashMap<String, String?>()
+                    val generatedMap = defaultHashMap<String, String?>()
                     it.columns.mapIndexed { index, column ->
                         generatedMap[column] = it.getString(index)
                     }

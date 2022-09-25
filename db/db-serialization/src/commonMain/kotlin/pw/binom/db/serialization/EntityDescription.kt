@@ -4,6 +4,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
+import pw.binom.collections.defaultHashMap
 import pw.binom.db.serialization.Index as AIndex
 
 class EntityDescription private constructor(
@@ -149,7 +150,7 @@ class EntityDescription private constructor(
                 ?.let { it as TableName }
                 ?.tableName
                 ?: descriptor.serialName
-            val columns = HashMap<String, Column>()
+            val columns = defaultHashMap<String, Column>()
             var idColumn: Column? = null
             repeat(descriptor.elementsCount) {
                 val fieldDescription = descriptor.getElementDescriptor(it)

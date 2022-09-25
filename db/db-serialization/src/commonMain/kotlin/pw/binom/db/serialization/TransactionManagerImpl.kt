@@ -1,5 +1,6 @@
 package pw.binom.db.serialization
 
+import pw.binom.collections.defaultHashMap
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.async.pool.PooledAsyncConnection
 import kotlin.coroutines.*
@@ -24,7 +25,7 @@ class TransactionContext {
 }
 
 class TransactionContextElement(val ctx: TransactionContext) : CoroutineContext.Element {
-    val connections = HashMap<AsyncConnectionPool, TransactionContext>()
+    val connections = defaultHashMap<AsyncConnectionPool, TransactionContext>()
 
     override val key: CoroutineContext.Key<TransactionContextElement>
         get() = TransactionContextElementKey

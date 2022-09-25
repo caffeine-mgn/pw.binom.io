@@ -1,12 +1,14 @@
 package pw.binom.network
 
-class NoMemoryLeakHashSet<E> : MutableSet<E> {
+class NoMemoryLeakHashSet<E>(val name: String) : MutableSet<E> {
     private var currentSet = HashSet<E>()
 
     private var coutner = 0
     private fun checkClean() {
         coutner++
-        if (coutner > 10000) {
+        println("counter of $name: $coutner")
+        if (coutner > 1000) {
+            println("Clean $name")
             coutner = 0
             val new = HashSet<E>()
             new.addAll(currentSet)

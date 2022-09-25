@@ -34,6 +34,7 @@ kotlin {
             dependencies {
                 api(kotlin("stdlib-common"))
                 api(project(":db"))
+                api(project(":collections"))
                 api(project(":db:db-serialization-annotations"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }

@@ -4,6 +4,9 @@ import kotlinx.cinterop.*
 import platform.linux.*
 import platform.posix.pipe
 import platform.posix.read
+import pw.binom.autoTrimmed
+import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultHashSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import kotlin.collections.set
@@ -13,11 +16,14 @@ internal val STUB_BYTE = byteArrayOf(1)
 class LinuxSelector : AbstractSelector() {
 
     internal val native = Epoll.create(1000)
-    internal val keys = NoMemoryLeakHashSet<LinuxKey>() // { a, b -> a.hashCode() - b.hashCode() }
 
-    internal val idToKey = NoMemoryLeakHashMap<Int, LinuxKey>()
-    private val keyForRemove = NoMemoryLeakHashMap<Int, RawSocket>()
-    private val keyForAdd = NoMemoryLeakHashMap<Int, LinuxKey>()
+    internal val keys = defaultHashSet<LinuxKey>()
+//    internal val keys = TreeSet<LinuxKey>() { a, b -> a.hashCode() - b.hashCode() }
+
+    //    internal val idToKey = HashMap2<Int, LinuxKey>()
+    internal val idToKey = defaultHashMap<Int, LinuxKey>()
+    private val keyForRemove = ArrayList<Pair<Int, RawSocket>>().autoTrimmed()
+    private val keyForAdd = ArrayList<Pair<Int, LinuxKey>>().autoTrimmed()
     private val selectLock = SpinLock()
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
@@ -53,7 +59,7 @@ class LinuxSelector : AbstractSelector() {
                 selectLock.unlock()
             }
         } else {
-            keyForAdd[key.hashCode()] = key
+            keyForAdd += key.hashCode() to key
         }
     }
 
@@ -66,7 +72,7 @@ class LinuxSelector : AbstractSelector() {
                 selectLock.unlock()
             }
         } else {
-            keyForRemove[key.hashCode()] = socket
+            keyForRemove += key.hashCode() to socket
         }
     }
 

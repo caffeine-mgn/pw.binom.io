@@ -2,6 +2,7 @@ package pw.binom.db.tarantool
 
 import kotlinx.coroutines.*
 import pw.binom.atomic.AtomicLong
+import pw.binom.collections.defaultHashMap
 import pw.binom.db.tarantool.protocol.*
 import pw.binom.io.*
 import pw.binom.network.NetworkManager
@@ -31,7 +32,7 @@ class TarantoolConnectionImpl internal constructor(
 
     internal var mainLoopJob: Job? = null
     private var syncCursor = AtomicLong(0)
-    private val requests = HashMap<Long, CancellableContinuation<Package>>()
+    private val requests = defaultHashMap<Long, CancellableContinuation<Package>>()
     private val connectionReference = connection
     private var meta: List<TarantoolSpaceMeta> = emptyList()
     private var schemaVersion = 0
@@ -92,7 +93,7 @@ class TarantoolConnectionImpl internal constructor(
 
     internal suspend fun sendReceive(code: Code, schemaId: Int? = null, body: Map<Any, Any?>): Package {
         val sync = syncCursor.addAndGet(1)
-        val headers = HashMap<Int, Any?>()
+        val headers = defaultHashMap<Int, Any?>()
         headers[Key.CODE.id] = code.id
         headers[Key.SYNC.id] = sync
         if (schemaId != null) {
@@ -170,8 +171,9 @@ class TarantoolConnectionImpl internal constructor(
                         val headers = msg as Map<Int, Any?>
                         val body = if (packageReader.limit > 0) {
                             InternalProtocolUtils.unpack(buf, packageReader) as Map<Int, Any?>
-                        } else
+                        } else {
                             emptyMap()
+                        }
                         val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
                         val pkg = Package(
                             header = headers,
@@ -336,7 +338,7 @@ class TarantoolConnectionImpl internal constructor(
         limit: Int,
         iterator: QueryIterator?
     ): ResultSet {
-        val body = HashMap<Any, Any?>()
+        val body = defaultHashMap<Any, Any?>()
         body[Key.SPACE.id] = space
         body[Key.INDEX.id] = index
         body[Key.LIMIT.id] = limit
@@ -383,7 +385,6 @@ class TarantoolConnectionImpl internal constructor(
         space: Int,
         values: List<Any?>
     ) {
-
         val result = this.sendReceive(
             code = Code.REPLACE,
             body = mapOf(
@@ -413,7 +414,6 @@ class TarantoolConnectionImpl internal constructor(
         key: List<Any?>,
         values: List<FieldUpdate>
     ): Row? {
-
         val result = this.sendReceive(
             code = Code.UPDATE,
             body = mapOf(
@@ -447,7 +447,6 @@ class TarantoolConnectionImpl internal constructor(
         indexValues: List<Any?>,
         values: List<FieldUpdate>,
     ) {
-
         val result = this.sendReceive(
             code = Code.UPSERT,
             body = mapOf(
@@ -465,7 +464,6 @@ class TarantoolConnectionImpl internal constructor(
         space: Int,
         keys: List<Any?>
     ): Row? {
-
         val result = this.sendReceive(
             code = Code.DELETE,
             body = mapOf(
@@ -493,7 +491,6 @@ class TarantoolConnectionImpl internal constructor(
         space: Int,
         values: List<Any?>
     ) {
-
         val result = this.sendReceive(
             code = Code.INSERT,
             body = mapOf(

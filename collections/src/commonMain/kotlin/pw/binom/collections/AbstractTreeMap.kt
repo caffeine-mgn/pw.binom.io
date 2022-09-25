@@ -1,6 +1,6 @@
 package pw.binom.collections
 
-import pw.binom.doFreeze
+import kotlin.js.JsName
 import kotlin.native.concurrent.SharedImmutable
 
 private const val RED = -1
@@ -9,9 +9,11 @@ private const val BLACK = 1
 @Suppress("UNCHECKED_CAST")
 @SharedImmutable
 private val COMPARATOR: Comparator<Any> = Comparator<Any> { a, b ->
-    a as Comparable<Any>
-    a.compareTo(b)
-}.doFreeze()
+    (a as? Comparable<Any>)?.compareTo(b)?.let {
+        return@Comparator it
+    }
+    a.hashCode().compareTo(b.hashCode())
+}
 
 abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNavigableMap<K, V> {
     private var root: Node<K, V>? = null
@@ -22,7 +24,7 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
 
     protected abstract fun createTreeNode(key: K, value: V, color: Int): Node<K, V>
 
-    interface Node<K, V> : Map.Entry<K, V> {
+    interface Node<K, V> : MutableMap.MutableEntry<K, V> {
         var left: Node<K, V>?
         var right: Node<K, V>?
         var parent: Node<K, V>?
@@ -74,6 +76,7 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
                 while (p?.left != null) p = p.left
                 p
             }
+
             else -> {
                 var p = node.parent
                 var ch = node
@@ -85,13 +88,57 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
             }
         }
 
+    private fun <K, V> predecessor(t: Node<K, V>?): Node<K, V>? {
+        return if (t == null) null else if (t.left != null) {
+            var p: Node<K, V>? = t.left
+            while (p?.right != null) p = p?.right
+            p
+        } else {
+            var p: Node<K, V>? = t.parent
+            var ch: Node<K, V>? = t
+            while (p != null && ch === p.left) {
+                ch = p
+                p = p.parent
+            }
+            p
+        }
+    }
+
     override fun get(key: K): V? =
         getNode(key)?.value
 
     override fun isEmpty(): Boolean = root == null
 
-    override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-        get() = TODO("Not yet implemented")
+    private inner class EntrySet : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
+        override val size: Int
+            get() = this@AbstractTreeMap.size
+
+        override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
+            throw UnsupportedOperationException()
+        }
+
+        override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> = EntryIterator(getFirstNode())
+
+        fun contains(o: Any?): Boolean {
+            val entry = (o as? Map.Entry<K, V>) ?: return false
+            val value = entry.value
+            val p = getNode(entry.key)
+            return p != null && p.value == value
+        }
+
+        fun remove(o: Any?): Boolean {
+            val entry = (o as? Map.Entry<K, V>) ?: return false
+            val value = entry.value
+            val p = getNode(entry.key)
+            if (p != null && p.value == value) {
+                removeNode(p)
+                return true
+            }
+            return false
+        }
+    }
+
+    override val entries: MutableSet<MutableMap.MutableEntry<K, V>> = EntrySet()
     override val keys: MutableSet<K>
         get() = TODO("Not yet implemented")
     override val values: MutableCollection<V>
@@ -257,11 +304,13 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
                 splice = node
                 child = node.right
             }
+
             node.right == null -> {
                 // Node to be deleted has 1 child.
                 splice = node
                 child = node.left
             }
+
             else -> {
                 // Node has 2 children. Splice is node's predecessor, and we swap
                 // its contents into node.
@@ -617,6 +666,184 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
 
     override fun higherEntry(key: K): Map.Entry<K, V>? =
         getHigherEntry(key)
+
+    abstract inner class PrivateEntryIterator<T>(first: Node<K, V>?) : MutableIterator<T> {
+        @JsName("next2")
+        var next: Node<K, V>? = null
+        var lastReturned: Node<K, V>? = null
+        var expectedModCount: Int
+
+        init {
+            expectedModCount = modCount
+            lastReturned = null
+            next = first
+        }
+
+        override fun hasNext(): Boolean {
+            return next != null
+        }
+
+        fun nextEntry(): Node<K, V> {
+            val e = next ?: throw NoSuchElementException()
+            if (modCount != expectedModCount) throw ConcurrentModificationException()
+            next = successor(e)
+            lastReturned = e
+            return e
+        }
+
+        fun prevEntry(): Node<K, V> {
+            val e = next ?: throw NoSuchElementException()
+            if (modCount != expectedModCount) throw ConcurrentModificationException()
+            next = predecessor<K, V>(e)
+            lastReturned = e
+            return e
+        }
+
+        override fun remove() {
+            val lastReturned = lastReturned ?: throw IllegalStateException()
+            if (modCount != expectedModCount) throw ConcurrentModificationException()
+            // deleted entries are replaced by their successors
+            if (lastReturned.left != null && lastReturned.right != null) next = lastReturned
+            removeNode(lastReturned)
+            expectedModCount = modCount
+            this.lastReturned = null
+        }
+    }
+
+    private inner class EntryIterator(first: Node<K, V>?) : PrivateEntryIterator<MutableMap.MutableEntry<K, V>>(first) {
+        override operator fun next(): MutableMap.MutableEntry<K, V> {
+            return nextEntry()
+        }
+    }
+
+    private inner class ValueIterator(first: Node<K, V>?) : PrivateEntryIterator<V>(first) {
+        override operator fun next(): V {
+            return nextEntry().value
+        }
+    }
+
+    private inner class KeyIterator(first: Node<K, V>?) : PrivateEntryIterator<K?>(first) {
+        override operator fun next(): K {
+            return nextEntry().key
+        }
+    }
 }
 
+/*
+internal class KeySet<E>(map: MutableNavigableMap<E, *>) : AbstractMutableSet<E>(), MutableNavigableSet<E> {
+    private val m = map
+
+    override operator fun iterator(): MutableIterator<E> {
+        return if (m is TreeMap) (m as TreeMap<E, *>).keyIterator() else (m as NavigableSubMap<E, *>).keyIterator()
+    }
+
+    override fun descendingIterator(): Iterator<E> {
+        return if (m is TreeMap) (m as TreeMap<E, *>).descendingKeyIterator() else (m as NavigableSubMap<E, *>).descendingKeyIterator()
+    }
+
+    override fun size(): Int {
+        return m.size
+    }
+
+    @JsName("isEmpty2")
+    val isEmpty: Boolean
+        get() = m.isEmpty()
+
+    override operator fun contains(o: Any): Boolean {
+        return m.containsKey(o)
+    }
+
+    override fun clear() {
+        m.clear()
+    }
+
+    override fun lower(e: E): E {
+        return m.lowerKey(e)
+    }
+
+    override fun floor(e: E): E {
+        return m.floorKey(e)
+    }
+
+    override fun ceiling(e: E): E {
+        return m.ceilingKey(e)
+    }
+
+    override fun higher(e: E): E {
+        return m.higherKey(e)
+    }
+
+    override fun first(): E {
+        return m.firstKey()
+    }
+
+    override fun last(): E {
+        return m.lastKey()
+    }
+
+    override fun comparator(): java.util.Comparator<in E> {
+        return m.comparator()
+    }
+
+    override fun pollFirst(): E {
+        val e: Map.Entry<E, *> = m.pollFirstEntry()
+        return if (e == null) null else e.key
+    }
+
+    override fun pollLast(): E {
+        val e: Map.Entry<E, *> = m.pollLastEntry()
+        return if (e == null) null else e.key
+    }
+
+    override fun remove(o: Any): Boolean {
+        val oldSize = size
+        m.remove(o)
+        return size != oldSize
+    }
+
+    override fun subSet(
+        fromElement: E,
+        fromInclusive: Boolean,
+        toElement: E,
+        toInclusive: Boolean
+    ): NavigableSet<E> {
+        return KeySet<E>(
+            m.subMap(
+                fromElement,
+                fromInclusive,
+                toElement,
+                toInclusive
+            )
+        )
+    }
+
+    override fun headSet(toElement: E, inclusive: Boolean): NavigableSet<E> {
+        return KeySet<E>(m.headMap(toElement, inclusive))
+    }
+
+    override fun tailSet(fromElement: E, inclusive: Boolean): NavigableSet<E> {
+        return KeySet<E>(m.tailMap(fromElement, inclusive))
+    }
+
+    override fun subSet(fromElement: E, toElement: E): SortedSet<E> {
+        return subSet(fromElement, true, toElement, false)
+    }
+
+    override fun headSet(toElement: E): SortedSet<E> {
+        return headSet(toElement, false)
+    }
+
+    override fun tailSet(fromElement: E): SortedSet<E> {
+        return tailSet(fromElement, true)
+    }
+
+    override fun descendingSet(): java.util.NavigableSet<E> {
+        return KeySet<E>(m.descendingMap())
+    }
+
+    override fun spliterator(): java.util.Spliterator<E> {
+        return java.util.TreeMap.keySpliteratorFor<E>(m)
+    }
+}
+*/
 class MapNode<K, V>(override val key: K, override val value: V) : Map.Entry<K, V>

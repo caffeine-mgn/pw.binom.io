@@ -14,7 +14,8 @@ import pw.binom.io.ClosedException
 
 class SQLitePrepareStatement(
     override val connection: SQLiteConnector,
-    internal val native: CPointer<CPointerVar<sqlite3_stmt>>
+    internal val native: CPointer<CPointerVar<sqlite3_stmt>>,
+    query: String,
 ) : SyncPreparedStatement {
 
     internal var openedResultSetCount = 0
@@ -124,6 +125,10 @@ class SQLitePrepareStatement(
         connection.checkSqlCode(sqlite3_bind_null(stmt, index + 1))
     }
 
+    init {
+        println("Create PreparedStatement. count: ${++count}. SQL: \"$query\"")
+    }
+
     override fun close() {
         if (openedResultSetCount > 0) {
             throw SQLException("Not all ResultSet closed")
@@ -131,9 +136,12 @@ class SQLitePrepareStatement(
         if (!closed.compareAndSet(false, true)) {
             return
         }
+        println("Close PreparedStatement. count: ${--count}")
         connection.delete(this)
         sqlite3_clear_bindings(stmt)
         sqlite3_finalize(stmt)
         nativeHeap.free(native)
     }
 }
+
+private var count = 0

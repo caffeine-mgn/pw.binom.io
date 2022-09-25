@@ -8,7 +8,6 @@ import platform.iconv.iconv_open
 import platform.posix.*
 import pw.binom.io.Buffer
 import pw.binom.io.Closeable
-import kotlin.native.concurrent.freeze
 
 /*
 @Suppress("VARIABLE_IN_SINGLETON_WITHOUT_THREAD_LOCAL")
@@ -80,6 +79,9 @@ internal object IconvResourcePool {
     }
 }
 */
+
+private var count = 0
+
 /**
  * Abstract Charset convertor. Uses Iconv native library
  */
@@ -90,7 +92,6 @@ abstract class AbstractIconv(
     val onClose: ((AbstractIconv) -> Unit)?
 ) : Closeable {
 
-    @OptIn(UnsafeNumber::class)
     internal class Resource(fromCharset: String, toCharset: String) {
         //        val key = "$fromCharset..$toCharset"
         val iconvHandle = iconv_open(toCharset, fromCharset)
@@ -122,13 +123,19 @@ abstract class AbstractIconv(
         }
     }
 
-    private val resource = Resource(fromCharset, toCharset).freeze()
+    private val resource = Resource(fromCharset, toCharset)
+
+    init {
+        println("Create Iconv. count: ${++count}")
+    }
 
     internal fun free() {
+        println("Free Iconv. count: ${--count}")
         resource.dispose()
     }
 
     override fun close() {
+        println("Return Iconv to Pool. count: $count")
         onClose?.invoke(this)
     }
 

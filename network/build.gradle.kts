@@ -101,6 +101,7 @@ kotlin {
                 api(project(":env"))
                 api(project(":concurrency"))
                 api(project(":thread"))
+                api(project(":collections"))
                 api(kotlin("stdlib-common"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }

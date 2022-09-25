@@ -1,5 +1,6 @@
 package pw.binom.strong
 
+import pw.binom.collections.defaultHashMap
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.logger.Logger
@@ -14,7 +15,7 @@ import kotlin.reflect.KClass
 @Suppress("UNCHECKED_CAST")
 internal class StrongImpl : Strong {
     private val logger = Logger.getLogger("Strong.Starter")
-    internal var beans = HashMap<String, BeanEntity>()
+    internal var beans = defaultHashMap<String, BeanEntity>()
     internal lateinit var destroyOrder: List<Strong.DestroyableBean>
 
     sealed class Dependency {

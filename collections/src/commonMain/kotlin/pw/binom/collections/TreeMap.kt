@@ -8,6 +8,11 @@ class TreeMap<K, V> : AbstractTreeMap<K, V> {
         override var left: Node<K, V>? = null
         override var right: Node<K, V>? = null
         override var parent: Node<K, V>? = null
+        override fun setValue(newValue: V): V {
+            val oldValue = this.value
+            this.value = newValue
+            return oldValue
+        }
     }
 
     override fun createTreeNode(key: K, value: V, color: Int): Node<K, V> =

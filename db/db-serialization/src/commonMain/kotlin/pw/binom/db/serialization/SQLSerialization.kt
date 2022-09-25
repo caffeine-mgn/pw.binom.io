@@ -6,6 +6,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import pw.binom.UUID
+import pw.binom.collections.defaultHashMap
 import pw.binom.date.Calendar
 import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
@@ -256,9 +257,9 @@ class SQLSerialization(val serializersModule: SerializersModule = SqlSerializers
         serializer: KSerializer<T>,
         value: T,
         columnPrefix: String? = null,
-    ): HashMap<String, Any?> {
+    ): MutableMap<String, Any?> {
         try {
-            val map = HashMap<String, Any?>()
+            val map = defaultHashMap<String, Any?>()
             buildSqlNamedParamsTo(
                 serializer = serializer,
                 value = value,

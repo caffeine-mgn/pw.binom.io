@@ -16,11 +16,11 @@ class FrozenHashMap<K, V>(bucketSize: Int = 16) : MutableMap<K, V> {
     override val size: Int
         get() = internalSize.getValue()
 
-    private val entitySet = EntitySet(this)
-    private val keySet = KeysSet(this)
+    private val entitySet = FrozenEntitySet(this)
+    private val keySet = FrozenKeysSet(this)
 
     internal val buckets = Array(bucketSize) {
-        Bucket<K, V>()
+        FrozenBucket<K, V>()
     }
 
     override fun containsKey(key: K): Boolean {
@@ -96,7 +96,7 @@ class FrozenHashMap<K, V>(bucketSize: Int = 16) : MutableMap<K, V> {
     }
 }
 
-class EntityIterator<K, V>(val map: FrozenHashMap<K, V>) : MutableIterator<MutableMap.MutableEntry<K, V>> {
+class FrozenEntityIterator<K, V>(val map: FrozenHashMap<K, V>) : MutableIterator<MutableMap.MutableEntry<K, V>> {
     private var bucketIndex = 0
     private var currentBucket = map.buckets[bucketIndex]
     private var currentChangeCount = currentBucket.changeCounter.getValue()
@@ -147,7 +147,7 @@ class EntityIterator<K, V>(val map: FrozenHashMap<K, V>) : MutableIterator<Mutab
     override fun hasNext(): Boolean = hasNext(false)
 }
 
-class EntitySet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<MutableMap.MutableEntry<K, V>> {
+class FrozenEntitySet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<MutableMap.MutableEntry<K, V>> {
     override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
         TODO("Not yet implemented")
     }
@@ -161,7 +161,7 @@ class EntitySet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<MutableMap.Muta
     }
 
     override fun iterator() =
-        EntityIterator(map)
+        FrozenEntityIterator(map)
 
     override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean {
         TODO("Not yet implemented")
@@ -189,7 +189,7 @@ class EntitySet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<MutableMap.Muta
     override fun isEmpty(): Boolean = map.isEmpty()
 }
 
-class KeyIterator<K, V>(val entityIterator: EntityIterator<K, V>) : MutableIterator<K> {
+class FrozenKeyIterator<K, V>(val entityIterator: FrozenEntityIterator<K, V>) : MutableIterator<K> {
     override fun hasNext(): Boolean =
         entityIterator.hasNext()
 
@@ -201,7 +201,7 @@ class KeyIterator<K, V>(val entityIterator: EntityIterator<K, V>) : MutableItera
     }
 }
 
-class KeysSet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<K> {
+class FrozenKeysSet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<K> {
     override fun add(element: K): Boolean {
         TODO("Not yet implemented")
     }
@@ -215,7 +215,7 @@ class KeysSet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<K> {
     }
 
     override fun iterator(): MutableIterator<K> =
-        KeyIterator(map.entries.iterator())
+        FrozenKeyIterator(map.entries.iterator())
 
     override fun remove(element: K): Boolean {
         var changed = false
@@ -249,7 +249,7 @@ class KeysSet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<K> {
     override fun isEmpty(): Boolean = map.isEmpty()
 }
 
-class Bucket<K, V> {
+class FrozenBucket<K, V> {
     val lock = SpinLock()
     var root = AtomicReference<FrozenMutableEntry<K, V>?>(null)
     internal var changeCounter = AtomicInt(0)

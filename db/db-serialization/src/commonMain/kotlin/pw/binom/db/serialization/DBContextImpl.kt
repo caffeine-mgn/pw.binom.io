@@ -3,15 +3,16 @@ package pw.binom.db.serialization
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
+import pw.binom.collections.defaultHashMap
 import pw.binom.db.DatabaseEngine
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.pool.AsyncConnectionPool
 
 internal class DBContextImpl(val pool: AsyncConnectionPool, val sql: SQLSerialization) : DBContext {
     private val tx = TransactionManagerImpl(pool)
-    val statements = HashMap<String, SQLQueryNamedArguments>()
-    val mappers = HashMap<KSerializer<out Any>, suspend (AsyncResultSet) -> Any>()
-    private val entityDescriptions = HashMap<SerialDescriptor, EntityDescription>()
+    val statements = defaultHashMap<String, SQLQueryNamedArguments>()
+    val mappers = defaultHashMap<KSerializer<out Any>, suspend (AsyncResultSet) -> Any>()
+    private val entityDescriptions = defaultHashMap<SerialDescriptor, EntityDescription>()
     override fun getDescription(serialDescriptor: SerialDescriptor): EntityDescription =
         entityDescriptions.getOrPut(serialDescriptor) { EntityDescription.create(serialDescriptor, this) }
 

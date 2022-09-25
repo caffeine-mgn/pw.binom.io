@@ -9,6 +9,9 @@ import kotlin.time.DurationUnit
 
 class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val connection: AsyncConnection) :
     PooledAsyncConnection, AsyncConnection by connection {
+    private fun log(txt: String) {
+        println("PooledAsyncConnectionImpl: $txt")
+    }
 
     private val createdPreparedStatement = HashMap<String, AsyncPreparedStatement>()
     private val forRemove = HashMap<String, AsyncPreparedStatement>()
@@ -55,23 +58,31 @@ class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val 
 
     suspend fun checkValid(): Boolean {
         if (invalid) {
+            log("was marked as invalid")
             return false
         }
         if (!connection.isConnected) {
+            log("not connected")
             return false
         }
         clean()
         if (DateTime.nowTime - lastCheckTime > pool.pingTime.toDouble(DurationUnit.MILLISECONDS).toLong()) {
             if (isReadyForQuery()) {
                 try {
+                    log("try to make ping")
                     connection.createStatement().use { it.executeQuery("select 1").asyncClose() }
                 } catch (e: Throwable) {
+                    log("ping fail. marked as invalid! stack:\n${e.stackTraceToString()}")
                     invalid = true
                     return false
                 }
+
+                lastCheckTime = DateTime.nowTime
+            } else {
+                log("Connection isn't ready for query")
             }
-            lastCheckTime = DateTime.nowTime
         }
+        log("connectino valid!")
         return true
     }
 

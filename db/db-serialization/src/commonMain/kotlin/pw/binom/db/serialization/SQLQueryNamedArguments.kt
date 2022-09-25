@@ -1,5 +1,6 @@
 package pw.binom.db.serialization
 
+import pw.binom.collections.defaultHashMap
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 
@@ -29,7 +30,7 @@ class SQLQueryNamedArguments private constructor(
             var cur = 0
             val sb = StringBuilder()
             var str = false
-            val params = HashMap<String, ArrayList<Int>>()
+            val params = defaultHashMap<String, ArrayList<Int>>()
             var paramCount = 0
             var columnNameStarted = false
             var columnOpenPosition = -1

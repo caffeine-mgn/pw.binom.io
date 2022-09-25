@@ -85,17 +85,22 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     override fun prepareStatement(query: String): SyncPreparedStatement {
         checkClosed()
         val stmt = nativeHeap.allocArray<CPointerVar<sqlite3_stmt>>(1)
-        checkSqlCode(
-            sqlite3_prepare_v3(
-                ctx.pointed.value,
-                query,
-                -1,
-                0u,
-                stmt,
-                null
-            )
-        ) { "Can't compile query \"$query\"" }
-        val statement = SQLitePrepareStatement(this, stmt)
+        val statement = try {
+            checkSqlCode(
+                sqlite3_prepare_v3(
+                    ctx.pointed.value,
+                    query,
+                    -1,
+                    0u,
+                    stmt,
+                    null
+                )
+            ) { "Can't compile query \"$query\"" }
+            SQLitePrepareStatement(connection = this, native = stmt, query = query)
+        } catch (e: Throwable) {
+            nativeHeap.free(stmt)
+            throw e
+        }
         prepareStatementsLock.synchronize {
             prepareStatements += statement
         }

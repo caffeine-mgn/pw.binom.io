@@ -4,12 +4,14 @@ package pw.binom.network
  * Workaround for native memory leak in [HashMap]
  * Task [KT-53310](https://youtrack.jetbrains.com/issue/KT-53310)
  */
-class NoMemoryLeakHashMap<K, V> : MutableMap<K, V> {
+class NoMemoryLeakHashMap<K, V>(val name: String) : MutableMap<K, V> {
 
     private var coutner = 0
     private fun checkClean() {
         coutner++
-        if (coutner > 10000) {
+        println("counter of $name: $coutner")
+        if (coutner > 1000) {
+            println("Clean $name")
             coutner = 0
             val new = HashMap<K, V>()
             new.putAll(currentMap)

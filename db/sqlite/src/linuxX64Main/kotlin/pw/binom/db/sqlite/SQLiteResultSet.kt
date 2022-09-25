@@ -3,6 +3,7 @@ package pw.binom.db.sqlite
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
+import pw.binom.collections.defaultHashMap
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncResultSet
@@ -12,7 +13,7 @@ class SQLiteResultSet(
     var empty: Boolean,
 ) : SyncResultSet {
     private var columnCount = 0
-    private val columnsMap = HashMap<String, Int>()
+    private val columnsMap = defaultHashMap<String, Int>()
 
     override lateinit var columns: List<String>
 
@@ -20,9 +21,10 @@ class SQLiteResultSet(
         columnCount = sqlite3_column_count(stmt)
         val out = ArrayList<String>(columnCount)
         (0 until columnCount).forEach {
-            val name = sqlite3_column_origin_name(stmt, it)!!
-                .reinterpret<ByteVar>()
-                .toKStringFromUtf8()
+            val name = sqlite3_column_origin_name(stmt, it)
+                ?.reinterpret<ByteVar>()
+                ?.toKStringFromUtf8()
+                ?: ""
             out += name
             columnsMap[name] = it
         }
@@ -47,14 +49,17 @@ class SQLiteResultSet(
                 empty = true
                 false
             }
+
             SQLITE_ROW -> {
                 columnCount = sqlite3_column_count(stmt)
                 true
             }
+
             SQLITE_ERROR -> throw SQLException(
                 sqlite3_errmsg(prepareStatement.connection.ctx.pointed.value)?.toKStringFromUtf8()
                     ?: "Unknown Error"
             )
+
             SQLITE_MISUSE -> throw SQLException("Database is Misuse")
             else -> throw SQLException()
         }

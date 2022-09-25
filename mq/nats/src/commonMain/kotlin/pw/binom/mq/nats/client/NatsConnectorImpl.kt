@@ -2,6 +2,7 @@ package pw.binom.mq.nats.client
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
+import pw.binom.collections.defaultHashMap
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
 import pw.binom.network.NetworkAddress
@@ -35,7 +36,7 @@ internal class NatsConnectorImpl(
     )
 
     private var closed = false
-    private val subscribes = HashMap<String, Subscribe>()
+    private val subscribes = defaultHashMap<String, Subscribe>()
     private var connection: NatsRawConnection? = null
     private var _serverList = ArrayList(serverList)
     val serverList: List<NetworkAddress>

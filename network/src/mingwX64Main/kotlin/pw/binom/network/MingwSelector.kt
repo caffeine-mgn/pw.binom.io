@@ -8,10 +8,10 @@ import kotlin.collections.set
 
 class MingwSelector : AbstractSelector() {
     private val native = epoll_create(1000)!!
-    internal val idToKey = NoMemoryLeakHashMap<Int, MingwKey>()
+    internal val idToKey = NoMemoryLeakHashMap<Int, MingwKey>("idToKey")
     private val keysLock = SpinLock()
-    private val keyForRemove = NoMemoryLeakHashSet<Int>()
-    internal val keys = NoMemoryLeakHashSet<MingwKey>()
+    private val keyForRemove = NoMemoryLeakHashSet<Int>("keyForRemove")
+    internal val keys = NoMemoryLeakHashSet<MingwKey>("keys")
 
     override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
         keysLock.synchronize {
