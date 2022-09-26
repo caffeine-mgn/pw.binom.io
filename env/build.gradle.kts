@@ -68,6 +68,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib"))
+                api(project(":collections"))
             }
             kotlin.srcDir("build/gen")
         }

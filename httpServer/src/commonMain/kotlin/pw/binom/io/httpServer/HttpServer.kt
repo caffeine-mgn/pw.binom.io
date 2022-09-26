@@ -5,6 +5,8 @@ import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.System
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.collections.defaultArrayList
+import pw.binom.coroutines.onCancel
 import pw.binom.date.DateTime
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ClosedException
@@ -19,10 +21,6 @@ import pw.binom.thread.Thread
 import pw.binom.thread.UncaughtExceptionHandler
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-
-fun interface Handler {
-    suspend fun request(req: HttpRequest)
-}
 
 /**
  * Base Http Server
@@ -87,6 +85,7 @@ class HttpServer(
         if (count > 0) {
             System.gc()
         }
+        println("after processing idleConnections.size: ${idleConnections.size}, removed: $count")
         return count
     }
 
@@ -128,6 +127,7 @@ class HttpServer(
                 runCatching { channel.asyncClose() }
                 runCatching { errorHandler.uncaughtException(Thread.currentThread, e) }
             } finally {
+                println("after processing idleConnections.size: ${idleConnections.size}")
                 if (req != null) {
                     req.free()
                     httpRequest2Impl.recycle(req)
@@ -170,11 +170,9 @@ class HttpServer(
                 }
             }
         }
-        return JobWithCancelWaiter(listenJob) {
+        return listenJob.onCancel {
             closed.setValue(true)
-//            GlobalScope.launch(dispatcher) {
             server.close()
-//            }
         }
     }
 
@@ -190,16 +188,9 @@ class HttpServer(
             runCatching { it.asyncClose() }
         }
         idleConnections.clear()
-        ArrayList(binds).forEach {
+        defaultArrayList(binds).forEach {
             runCatching { it.close() }
         }
         binds.clear()
-    }
-}
-
-private class JobWithCancelWaiter(val job: Job, val func: (cause: CancellationException?) -> Unit) : Job by job {
-    override fun cancel(cause: CancellationException?) {
-        func(cause)
-        job.cancel(cause)
     }
 }

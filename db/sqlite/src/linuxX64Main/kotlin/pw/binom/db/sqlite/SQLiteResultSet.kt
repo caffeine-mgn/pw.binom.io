@@ -3,6 +3,7 @@ package pw.binom.db.sqlite
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
+import pw.binom.collections.defaultArrayList
 import pw.binom.collections.defaultHashMap
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
@@ -19,7 +20,7 @@ class SQLiteResultSet(
 
     init {
         columnCount = sqlite3_column_count(stmt)
-        val out = ArrayList<String>(columnCount)
+        val out = defaultArrayList<String>(columnCount)
         (0 until columnCount).forEach {
             val name = sqlite3_column_origin_name(stmt, it)
                 ?.reinterpret<ByteVar>()

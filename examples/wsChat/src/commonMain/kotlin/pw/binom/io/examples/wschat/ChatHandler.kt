@@ -14,7 +14,7 @@ class ChatHandler : Handler {
 
     private val clients = HashSet<WebSocketConnection>()
     private suspend fun sendToClients(text: String, currentClient: WebSocketConnection) {
-        val forDelete = ArrayList<WebSocketConnection>()
+        val forDelete = defaultArrayList<WebSocketConnection>()
         clients.asSequence()
             .filter { it !== currentClient }
             .forEach {

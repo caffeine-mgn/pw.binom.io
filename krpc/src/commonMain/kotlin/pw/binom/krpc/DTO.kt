@@ -47,8 +47,8 @@ interface StructLibrary {
 }
 
 class SimpleStructLibrary(val factories: List<StructFactory<out Struct>>) : StructLibrary {
-    private val uids = HashMap<UInt, StructFactory<out Struct>>()
-    private val names = HashMap<String, StructFactory<out Struct>>()
+    private val uids = defaultHashMap<UInt, StructFactory<out Struct>>()
+    private val names = defaultHashMap<String, StructFactory<out Struct>>()
 
     init {
         factories.forEach {
@@ -64,8 +64,8 @@ class SimpleStructLibrary(val factories: List<StructFactory<out Struct>>) : Stru
 
 abstract class CommonStructLibrary(private val libraries: List<StructLibrary>) : StructLibrary {
     override fun getByUid(uid: UInt): StructFactory<out Struct>? =
-            libraries.asSequence().map { it.getByUid(uid) }.filterNotNull().firstOrNull()
+        libraries.asSequence().map { it.getByUid(uid) }.filterNotNull().firstOrNull()
 
     override fun getByName(name: String): StructFactory<out Struct>? =
-            libraries.asSequence().map { it.getByName(name) }.filterNotNull().firstOrNull()
+        libraries.asSequence().map { it.getByName(name) }.filterNotNull().firstOrNull()
 }

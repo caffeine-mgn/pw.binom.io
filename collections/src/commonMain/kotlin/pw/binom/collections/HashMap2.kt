@@ -1,12 +1,12 @@
 package pw.binom.collections
 
 import pw.binom.atomic.AtomicInt
-import pw.binom.concurrency.SpinLock
-import pw.binom.concurrency.synchronize
 import kotlin.math.absoluteValue
 
 private val DEFAULT_LOAD_FACTOR = 0.75f
 private val DEFAULT_CAPACITY = 11
+
+private object NullKey
 
 class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float = DEFAULT_LOAD_FACTOR) :
     MutableMap<K, V> {
@@ -28,19 +28,17 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
         Bucket<K, V>()
     }
 
-    override fun containsKey(key: K): Boolean {
-        require(key != null)
-        return getEntity(key) != null
-    }
+    override fun containsKey(key: K): Boolean = getEntity(key) != null
 
     override fun containsValue(value: V): Boolean = buckets.any { it.findValue(value) != null }
 
     override fun get(key: K): V? = getEntity(key)?.value
 
+    @Suppress("UNCHECKED_CAST")
     private fun getEntity(key: K): MutableEntry<K, V>? {
-        require(key != null)
-        val bucket = hash(key)
-        return buckets[bucket].findKey(key)
+        val notNullKey = key ?: NullKey as K
+        val bucket = hash(notNullKey)
+        return buckets[bucket].findKey(notNullKey)
     }
 
     private fun hash(key: K) = if (key == null) -1 else (key.hashCode() % buckets.size).absoluteValue
@@ -73,13 +71,23 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     internal fun internalPut(key: K, value: V, modify: (() -> Unit)?): V? {
-        require(key != null)
-        val bucket = buckets[hash(key)]
-        return bucket.put(key = key, value = value, modify = modify, new = { internalSize.increment() })
+        val notNullKey = key ?: (NullKey as K)
+        val bucket = buckets[hash(notNullKey)]
+        return bucket.put(
+            key = notNullKey,
+            value = value,
+            modify = modify,
+            new = { internalSize.increment() },
+        )
     }
 
-    override fun put(key: K, value: V): V? = internalPut(key, value, null)
+    override fun put(key: K, value: V): V? = internalPut(
+        key = key,
+        value = value,
+        modify = null,
+    )
 
     override fun putAll(from: Map<out K, V>) {
         from.forEach {
@@ -87,9 +95,10 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     internal fun internalRemove(key: K, modify: (() -> Unit)?): V? {
-        require(key != null)
-        return buckets[hash(key)].remove(key) {
+        val notNullKey = key ?: (NullKey as K)
+        return buckets[hash(notNullKey)].remove(notNullKey) {
             internalSize.decrement()
             modify?.invoke()
         }
@@ -182,17 +191,13 @@ class EntitySet<K, V>(val map: HashMap2<K, V>) : MutableSet<MutableMap.MutableEn
 
     override fun iterator() = EntityIterator(map)
 
-    override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean {
-        throw UnsupportedOperationException()
-    }
+    override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean = throw UnsupportedOperationException()
 
-    override fun removeAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean {
+    override fun removeAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean =
         throw UnsupportedOperationException()
-    }
 
-    override fun retainAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean {
+    override fun retainAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean =
         throw UnsupportedOperationException()
-    }
 
     override val size: Int
         get() = map.size
@@ -319,21 +324,18 @@ class KeysSet<K, V>(val map: HashMap2<K, V>) : MutableSet<K> {
 }
 
 class Bucket<K, V> {
-    val lock = SpinLock()
     var root: MutableEntry<K, V>? = null
     var size: Int = 0
         private set
     internal var changeCounter = AtomicInt(0)
 
     fun forEach(func: (MutableEntry<K, V>) -> Boolean) {
-        lock.synchronize {
-            var c = root
-            while (c != null) {
-                if (!func(c)) {
-                    return
-                }
-                c = c.nextValue
+        var c = root
+        while (c != null) {
+            if (!func(c)) {
+                return
             }
+            c = c.nextValue
         }
     }
 
@@ -357,33 +359,29 @@ class Bucket<K, V> {
         return null
     }
 
-    fun findKey(key: K): MutableEntry<K, V>? = lock.synchronize {
-        findKey2(key)?.second
-    }
+    fun findKey(key: K): MutableEntry<K, V>? = findKey2(key)?.second
 
     fun findValue(value: V): Pair<MutableEntry<K, V>?, MutableEntry<K, V>>? {
         val hashCode = value.hashCode()
         var p: MutableEntry<K, V>? = null
-        lock.synchronize {
-            var c = root
-            while (c != null) {
-                if (c.value.hashCode() != hashCode) {
-                    p = c
-                    c = c.nextValue
-                    continue
-                }
-                if (c.value != value) {
-                    p = c
-                    c = c.nextValue
-                    continue
-                }
-                return p to c
+        var c = root
+        while (c != null) {
+            if (c.value.hashCode() != hashCode) {
+                p = c
+                c = c.nextValue
+                continue
             }
+            if (c.value != value) {
+                p = c
+                c = c.nextValue
+                continue
+            }
+            return p to c
         }
         return null
     }
 
-    fun put(key: K, value: V, modify: (() -> Unit)?, new: (() -> Unit)?): V? = lock.synchronize {
+    fun put(key: K, value: V, modify: (() -> Unit)?, new: (() -> Unit)?): V? = run {
         val old = findKey2(key)?.second
         if (old != null) {
             val v = old.setValue(value)
@@ -405,33 +403,30 @@ class Bucket<K, V> {
     }
 
     fun removeValue(value: V, modify: (() -> Unit)?): Boolean {
-        lock.synchronize {
-            val en = findValue(value) ?: return false
-            en.first?.nextValue = en.second.nextValue
-            changeCounter.increment()
-            modify?.invoke()
-            size--
-            return true // en.second.key
-        }
+        val en = findValue(value) ?: return false
+        en.first?.nextValue = en.second.nextValue
+        changeCounter.increment()
+        modify?.invoke()
+        size--
+        return true // en.second.key
     }
 
     fun remove(key: K, modify: (() -> Unit)?): V? {
-        lock.synchronize {
-            val en = findKey2(key) ?: return null
-            en.first?.nextValue = en.second.nextValue
-            changeCounter.increment()
-            modify?.invoke()
-            size--
-            return en.second.value
+        val en = findKey2(key) ?: return null
+        en.first?.nextValue = en.second.nextValue
+        if (en.first == null) {
+            root = en.second.nextValue
         }
+        changeCounter.increment()
+        modify?.invoke()
+        size--
+        return en.second.value
     }
 
     fun clear() {
-        lock.synchronize {
-            changeCounter.increment()
-            root = null
-            size = 0
-        }
+        changeCounter.increment()
+        root = null
+        size = 0
     }
 
     override fun toString(): String {
@@ -450,12 +445,19 @@ class Bucket<K, V> {
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 class MutableEntry<K, V>(key: K, value: V) : MutableMap.MutableEntry<K, V> {
     private var _key = key
     private var _value = value
 
     override val key
-        get() = _key
+        get() = _key.let {
+            if (it == NullKey) {
+                null as K
+            } else {
+                it
+            }
+        }
     override val value
         get() = _value
     internal var nextValue: MutableEntry<K, V>? = null

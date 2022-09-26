@@ -1,5 +1,6 @@
 package pw.binom.db.async
 
+import pw.binom.collections.defaultArrayList
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.io.AsyncCloseable
@@ -14,7 +15,7 @@ interface AsyncResultSet : ResultSet, AsyncCloseable {
  * Closes this [AsyncResultSet] after call [mapper] for each values of this [AsyncResultSet]
  */
 suspend inline fun <T> AsyncResultSet.map(mapper: (AsyncResultSet) -> T): List<T> {
-    val out = ArrayList<T>()
+    val out = defaultArrayList<T>()
     use {
         while (next()) {
             out += mapper(this)

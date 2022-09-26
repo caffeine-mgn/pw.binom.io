@@ -31,6 +31,7 @@ kotlin {
                 api(kotlin("stdlib-common"))
                 api(project(":core"))
                 api(project(":date"))
+                api(project(":collections"))
 //                api("com.ionspin.kotlin:bignum:0.3.4")
             }
         }

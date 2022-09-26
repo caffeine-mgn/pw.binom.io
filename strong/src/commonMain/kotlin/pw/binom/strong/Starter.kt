@@ -1,5 +1,6 @@
 package pw.binom.strong
 
+import pw.binom.collections.defaultArrayList
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
 import pw.binom.strong.exceptions.*
@@ -8,7 +9,7 @@ import kotlin.reflect.KClass
 class ClassDependency(val clazz: KClass<out Any>, val name: String?, val require: Boolean)
 
 internal class StrongWithDependenciesSpy(val strong: Strong) : Strong by strong {
-    private val dependencies = ArrayList<ClassDependency>()
+    private val dependencies = defaultArrayList<ClassDependency>()
     private var inited = false
     private fun checkStatus() {
         if (inited) {
@@ -27,7 +28,7 @@ internal class StrongWithDependenciesSpy(val strong: Strong) : Strong by strong 
 
     fun getLastDependencies(): List<ClassDependency> {
         checkStatus()
-        val r = ArrayList(dependencies)
+        val r = defaultArrayList(dependencies)
         dependencies.clear()
         return r
     }
@@ -60,6 +61,7 @@ internal class Starter(
         val primary: Boolean,
         val deps: List<ClassDependency>
     ) : BeanDescription {
+
         var inited = false
         var linked = false
         var initing = false
@@ -88,9 +90,27 @@ internal class Starter(
             }
             return false
         }
+
+        override fun toString() = "BeanConfig(name=\"$name\", beanClass=$beanClass)"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other == null || this::class != other::class) return false
+
+            other as BeanConfig
+
+            if (name != other.name) return false
+            if (beanClass != other.beanClass) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return name.hashCode()
+        }
     }
 
-    private val createdBeans = ArrayList<BeanConfig>()
+    private val createdBeans = defaultArrayList<BeanConfig>()
 
     private fun init() {
         val beanFromConfig = dd.getLastDefinitions().map {
@@ -271,10 +291,11 @@ internal class Starter(
     private val logger = Logger.getLogger("Strong.Starter")
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T> wrapDependenciesException(func: () -> T): T =
+    private inline fun <T> wrapDependenciesException(func: () -> T): T =
         try {
             func()
         } catch (e: GraphUtils.CycleException) {
+            e.printStackTrace()
             throw CycleDependencyException(e.dependenciesPath as List<BeanDescription>)
         }
 

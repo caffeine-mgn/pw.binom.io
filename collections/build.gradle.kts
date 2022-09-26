@@ -1,5 +1,3 @@
-import java.util.*
-
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -16,15 +14,28 @@ kotlin {
     }
     jvm()
     linuxX64()
-    linuxArm32Hfp()
     linuxArm64()
+    linuxArm32Hfp()
     linuxMips32()
     linuxMipsel32()
     mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
+    mingwX86()
     macosX64()
+    macosArm64()
+    iosX64()
+    iosArm32()
+    iosArm64()
+    iosSimulatorArm64()
+    watchosX64()
+    watchosX86()
+    watchosArm32()
+    watchosArm64()
+    watchosSimulatorArm64()
+    androidNativeX64()
+    androidNativeX86()
+    androidNativeArm32()
+    androidNativeArm64()
+    wasm32()
     js("js", BOTH) {
         browser()
         nodejs()
@@ -33,8 +44,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(project(":atomic"))
 //                api(kotlin("stdlib-common"))
-                api(project(":core"))
+//                api(project(":core"))
             }
         }
 

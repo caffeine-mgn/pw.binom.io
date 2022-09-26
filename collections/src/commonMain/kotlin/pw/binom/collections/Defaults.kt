@@ -1,5 +1,8 @@
 package pw.binom.collections
 
+fun <T> defaultArrayList() = ArrayList<T>().autoTrimmed()
+fun <T> defaultArrayList(list: Collection<T>) = ArrayList(list).autoTrimmed()
+fun <T> defaultArrayList(capacity: Int) = ArrayList<T>(capacity).autoTrimmed().also { it.ensureCapacity(capacity) }
 fun <K, V> defaultHashMap(): MutableMap<K, V> = HashMap2()
 fun <K, V> defaultHashMap(capacity: Int) = defaultHashMap<K, V>()
 fun <K, V> defaultHashMap(map: Map<K, V>): MutableMap<K, V> {

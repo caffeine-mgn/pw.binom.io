@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.UUID
+import pw.binom.collections.defaultArrayList
 import pw.binom.collections.defaultHashMap
 import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
@@ -61,7 +62,7 @@ class ResultSetDataProvider(val rs: ResultSet) : DataProvider {
 }
 
 private class QueryContextImpl(override val serializersModule: SerializersModule) : UpdateContext {
-    var args = ArrayList<Any?>()
+    var args = defaultArrayList<Any?>()
     var returning: Returning<out Any>? = null
 
     class Returning<T : Any>(val serializer: KSerializer<T>, val func: suspend (T) -> Unit)

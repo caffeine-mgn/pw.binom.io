@@ -52,4 +52,6 @@ class MutableSetBridge<E>(val map: MutableMap<E, Boolean>) : MutableSet<E> {
     }
 
     override fun remove(element: E): Boolean = map.remove(element) != null
+
+    override fun toString(): String = map.toString()
 }

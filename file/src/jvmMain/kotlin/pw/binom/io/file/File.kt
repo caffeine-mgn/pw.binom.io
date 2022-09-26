@@ -2,6 +2,7 @@
 
 package pw.binom.io.file
 
+import pw.binom.collections.defaultArrayList
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
@@ -56,7 +57,7 @@ actual class File actual constructor(path: String) {
         native.renameTo(newPath.native)
 
     actual fun list(): List<File> {
-        val out = ArrayList<File>()
+        val out = defaultArrayList<File>()
         iterator().forEach { file ->
             out += file
         }

@@ -1,5 +1,6 @@
 package pw.binom.net
 
+import pw.binom.collections.defaultHashMap
 import pw.binom.io.UTF8
 import kotlin.jvm.JvmInline
 
@@ -71,8 +72,9 @@ value class Query internal constructor(val raw: String) {
                     return@forEach
                 }
                 val items = it.split('=', limit = 2)
-                if (func(UTF8.decode(items[0]), items.getOrNull(1)?.let { UTF8.decode(it) }))
+                if (func(UTF8.decode(items[0]), items.getOrNull(1)?.let { UTF8.decode(it) })) {
                     return
+                }
             }
     }
 
@@ -95,7 +97,7 @@ value class Query internal constructor(val raw: String) {
     /**
      * Search all values and keys and store them in to [dst]. Default value of [dst] is new [HashMap]
      */
-    fun toMap(dst: MutableMap<String, String?> = HashMap()): Map<String, String?> {
+    fun toMap(dst: MutableMap<String, String?> = defaultHashMap()): Map<String, String?> {
         search { key, value ->
             dst[key] = value
             false

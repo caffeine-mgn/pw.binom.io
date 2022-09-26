@@ -1,9 +1,10 @@
 package pw.binom.io.http
 
+import pw.binom.collections.defaultArrayList
 import pw.binom.collections.defaultHashMap
 
 class HashHeaders : MutableHeaders, Map<String, List<String>> {
-    private var body = defaultHashMap<String, ArrayList<String>>()
+    private var body = defaultHashMap<String, MutableList<String>>()
     private var ref = defaultHashMap<String, String>()
     override fun set(key: String, value: List<String>): MutableHeaders {
         if (value.isEmpty()) {
@@ -12,7 +13,7 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
         }
         val v = ref[key.lowercase()]
         if (v == null) {
-            val list = ArrayList(value)
+            val list = defaultArrayList(value)
             body[key] = list
             ref[key.lowercase()] = key
         } else {

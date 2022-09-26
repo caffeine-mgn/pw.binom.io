@@ -2,6 +2,7 @@ package pw.binom.io.file
 
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
+import pw.binom.collections.defaultArrayList
 import pw.binom.copyTo
 import pw.binom.io.*
 import pw.binom.net.Path
@@ -20,8 +21,9 @@ class LocalFileSystem(
 
     override suspend fun get(path: Path): FileSystem.Entity? {
         val f = File(root, path.toString().removePrefix("/"))
-        if (!f.isExist)
+        if (!f.isExist) {
             return null
+        }
         return EntityImpl(f)
     }
 
@@ -46,17 +48,19 @@ class LocalFileSystem(
     }
 
     override suspend fun getDir(path: Path): List<FileSystem.Entity>? {
-        if (path.toString().isEmpty())
+        if (path.toString().isEmpty()) {
             return root.listEntities()
+        }
 
         val f = File(root, path.toString().removePrefix("/"))
-        if (f.isDirectory)
+        if (f.isDirectory) {
             return f.listEntities()
+        }
         return null
     }
 
     private suspend fun File.listEntities(): List<EntityImpl> {
-        val out = ArrayList<EntityImpl>()
+        val out = defaultArrayList<EntityImpl>()
         this.iterator().forEach {
             out += EntityImpl(it)
         }
@@ -69,8 +73,9 @@ class LocalFileSystem(
 
         override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
             val file = File(root, path.toString().removePrefix("/"))
-            if (!file.isFile)
+            if (!file.isFile) {
                 return null
+            }
             val channel = file.openRead()
             if (offset > 0uL) {
                 channel.position = offset.toLong()
@@ -82,11 +87,13 @@ class LocalFileSystem(
         override suspend fun copy(path: Path, overwrite: Boolean): FileSystem.Entity {
             val toFile = File(root, path.toString().removePrefix("/"))
 
-            if (toFile.isExist && !overwrite)
+            if (toFile.isExist && !overwrite) {
                 throw FileSystem.EntityExistException(path)
+            }
 
-            if (!file.isExist)
+            if (!file.isExist) {
                 throw FileSystem.FileNotFoundException(this.path)
+            }
 
             this.file.openRead().use { s ->
                 toFile.openWrite().use { d ->
@@ -99,11 +106,13 @@ class LocalFileSystem(
         override suspend fun move(path: Path, overwrite: Boolean): FileSystem.Entity {
             val toFile = File(root, path.toString().removePrefix("/"))
 
-            if (toFile.isExist && !overwrite)
+            if (toFile.isExist && !overwrite) {
                 throw FileSystem.EntityExistException(path)
+            }
 
-            if (!file.isExist)
+            if (!file.isExist) {
                 throw FileSystem.FileNotFoundException(this.path)
+            }
 
             file.renameTo(toFile)
             return EntityImpl(toFile)

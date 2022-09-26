@@ -1,5 +1,6 @@
 package pw.binom.db.tarantool
 
+import pw.binom.collections.defaultArrayList
 import pw.binom.db.tarantool.protocol.Key
 import kotlin.jvm.JvmInline
 
@@ -44,7 +45,7 @@ value class ResultSet constructor(val body: Map<Int, Any?>) : Iterable<Row> {
     val columnNames: List<String>?
         get() {
             val meta = meta ?: return null
-            val list = ArrayList<String>(columnSize)
+            val list = defaultArrayList<String>(columnSize)
             repeat(columnSize) {
                 list += meta[it][0] as String
             }

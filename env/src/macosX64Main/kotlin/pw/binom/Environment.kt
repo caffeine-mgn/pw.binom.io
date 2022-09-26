@@ -3,6 +3,7 @@ package pw.binom
 import kotlinx.cinterop.*
 import platform.osx.*
 import platform.posix.*
+import pw.binom.collections.defaultHashMap
 
 /**
  * constexpr endian_t getEndianOrder() {
@@ -18,7 +19,7 @@ return
  */
 
 actual fun Environment.getEnvs(): Map<String, String> {
-    val out = HashMap<String, String>()
+    val out = defaultHashMap<String, String>()
     var i = 0
     val envs = _NSGetEnviron()
     while (true) {
@@ -32,8 +33,9 @@ actual fun Environment.getEnvs(): Map<String, String> {
 actual val Environment.workDirectory: String
     get() {
         val data = getcwd(null, 0.convert()) ?: TODO()
-        if (errno == EACCES)
+        if (errno == EACCES) {
             throw RuntimeException("Forbidden")
+        }
         try {
             return data.toKString()
         } finally {

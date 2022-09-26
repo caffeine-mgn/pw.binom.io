@@ -3,8 +3,8 @@ package pw.binom.db.internal
 import kotlinx.serialization.Serializable
 
 class Table2 {
-    val columns = ArrayList<ColumnInfo>()
-    val records = ArrayList<RecordLine>()
+    val columns = defaultArrayList<ColumnInfo>()
+    val records = defaultArrayList<RecordLine>()
 
     fun insert(values: Map<String, Any?>) {
         values.keys.forEach { valueKey ->

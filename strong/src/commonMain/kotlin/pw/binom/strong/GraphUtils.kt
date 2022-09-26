@@ -1,14 +1,22 @@
 package pw.binom.strong
 
+import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultHashSet
+
 internal object GraphUtils {
     fun <T : Any> buildDependencyGraph(
         elements: Collection<T>,
         subNodeProvider: (T) -> Collection<T>,
     ): List<T> {
-        val order = ArrayList<T>()
+//        val order = ArrayList<T>()
         val inited = HashSet<T>()
-        val initing = HashSet<T>()
-        val treePath = ArrayList<T>()
+//        val initing = HashSet<T>()
+//        val treePath = ArrayList<T>()
+
+        val order = defaultArrayList<T>()
+//        val inited = defaultHashSet<T>()
+        val initing = defaultHashSet<T>()
+        val treePath = defaultArrayList<T>()
         fun init(e: T) {
             if (e in inited) {
                 return
@@ -20,14 +28,18 @@ internal object GraphUtils {
             treePath += e
             val subNodes = subNodeProvider(e)
             subNodes.forEach {
-
                 if (it in initing) {
                     throw CycleException(treePath + listOf(it))
                 }
                 init(it)
             }
             inited += e
-            initing -= e
+            if (!initing.remove(e)) {
+                TODO("$e not in $initing")
+            }
+            if (e in initing) {
+                TODO("$e steel in initing")
+            }
             order += e
         }
         elements.forEach {

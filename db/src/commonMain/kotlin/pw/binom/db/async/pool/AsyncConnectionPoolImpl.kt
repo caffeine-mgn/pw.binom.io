@@ -1,5 +1,6 @@
 package pw.binom.db.async.pool
 
+import pw.binom.collections.defaultArrayList
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.date.DateTime
@@ -34,9 +35,9 @@ class AsyncConnectionPoolImpl constructor(
     }
 
     private val connections = HashSet<PooledAsyncConnectionImpl>(maxConnections)
-    private val idleConnection = ArrayList<PooledAsyncConnectionImpl>(maxConnections)
+    private val idleConnection = defaultArrayList<PooledAsyncConnectionImpl>(maxConnections)
 
-    private val waiters = ArrayList<Continuation<PooledAsyncConnectionImpl>>()
+    private val waiters = defaultArrayList<Continuation<PooledAsyncConnectionImpl>>()
     private val idleConnectionLock = SpinLock()
     private val connectionsLock = SpinLock()
 
@@ -182,7 +183,7 @@ class AsyncConnectionPoolImpl constructor(
             runCatching { it.resumeWithException(StreamClosedException()) }
         }
         waiters.clear()
-        ArrayList(connections).forEach {
+        defaultArrayList(connections).forEach {
             runCatching { it.asyncClose() }
         }
         connections.clear()

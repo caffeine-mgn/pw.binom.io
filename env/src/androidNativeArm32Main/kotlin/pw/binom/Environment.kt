@@ -2,10 +2,11 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import pw.binom.collections.defaultHashMap
 
 actual fun Environment.getEnv(name: String): String? = getenv(name)?.toKString()
 actual fun Environment.getEnvs(): Map<String, String> {
-    val out = HashMap<String, String>()
+    val out = defaultHashMap<String, String>()
     var i = 0
     while (true) {
         val line = environ?.get(i++)?.toKString() ?: break
@@ -18,8 +19,9 @@ actual fun Environment.getEnvs(): Map<String, String> {
 actual val Environment.workDirectory: String
     get() {
         val data = getcwd(null, 0.convert()) ?: TODO()
-        if (errno == EACCES)
+        if (errno == EACCES) {
             throw RuntimeException("Forbidden")
+        }
         try {
             return data.toKString()
         } finally {

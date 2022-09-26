@@ -5,6 +5,7 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.TreeMap
+import pw.binom.collections.defaultArrayList
 import pw.binom.doFreeze
 import pw.binom.io.ClosedException
 import pw.binom.popOrNull
@@ -32,21 +33,21 @@ class DeadlineTimerImpl(val errorProcessing: ((Throwable) -> Unit)? = null) : De
     init {
         doFreeze()
         worker.execute(Unit) {
-            val tasks = TreeMap<Duration, ArrayList<() -> Unit>>()
+            val tasks = TreeMap<Duration, MutableList<() -> Unit>>()
             MAIN_WORKER_LOOP@ while (!closedFlag.getValue()) {
                 if (tasks.isEmpty() && queue.isEmpty) {
                     val e = queue.popBlocked()
                     if (e.second === CLOSE_MARKER) {
                         break
                     }
-                    tasks.getOrPut(e.first) { ArrayList() }.add(e.second)
+                    tasks.getOrPut(e.first) { defaultArrayList() }.add(e.second)
                 } else {
                     while (!queue.isEmpty) {
                         val e = queue.popOrNull() ?: break
                         if (e.second === CLOSE_MARKER) {
                             break@MAIN_WORKER_LOOP
                         }
-                        tasks.getOrPut(e.first) { ArrayList() }.add(e.second)
+                        tasks.getOrPut(e.first) { defaultArrayList() }.add(e.second)
                     }
                 }
                 val c = tasks.firstEntry ?: continue

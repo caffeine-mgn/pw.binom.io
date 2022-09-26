@@ -1,5 +1,7 @@
 package pw.binom.db.async.pool
 
+import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultHashMap
 import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
@@ -13,8 +15,8 @@ class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val 
         println("PooledAsyncConnectionImpl: $txt")
     }
 
-    private val createdPreparedStatement = HashMap<String, AsyncPreparedStatement>()
-    private val forRemove = HashMap<String, AsyncPreparedStatement>()
+    private val createdPreparedStatement = defaultHashMap<String, AsyncPreparedStatement>()
+    private val forRemove = defaultHashMap<String, AsyncPreparedStatement>()
 
     override suspend fun usePreparedStatement(sql: String): AsyncPreparedStatement {
         val p = forRemove.remove(sql)
@@ -98,7 +100,7 @@ class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val 
 
     private suspend fun cleanUp() {
         clean()
-        val statements = ArrayList(prepareStatements)
+        val statements = defaultArrayList(prepareStatements)
         prepareStatements.clear()
         statements.forEach {
             it.asyncClose()

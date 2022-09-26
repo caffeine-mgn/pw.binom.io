@@ -3,6 +3,21 @@ package pw.binom.collections
 import kotlin.test.*
 
 class HashMap3Test {
+
+    @Test
+    fun removeTest() {
+        val v = defaultHashMap<Int, Boolean>()
+        v[0] = true
+        v[1] = true
+        v[2] = true
+        println("Before remove: $v")
+        assertEquals(3, v.size)
+        assertEquals(true, v.remove(2))
+        assertEquals(2, v.size)
+        println("---------------\nAfter remove: $v")
+        assertFalse(v.containsKey(2))
+    }
+
     @Test
     fun test3() {
         val v = defaultHashMap<Int, Boolean>()

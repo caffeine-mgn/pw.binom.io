@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.GetDiskFreeSpaceEx
 import pw.binom.Environment
+import pw.binom.collections.defaultArrayList
 import pw.binom.getEnv
 import kotlin.native.concurrent.freeze
 
@@ -20,8 +21,9 @@ actual class File actual constructor(path: String) {
         get() =
             memScoped {
                 val stat = alloc<stat>()
-                if (stat(path, stat.ptr) != 0)
+                if (stat(path, stat.ptr) != 0) {
                     return@memScoped false
+                }
                 (S_IFDIR != (stat.st_mode and S_IFMT.convert()).convert<Int>())
             }
 
@@ -29,8 +31,9 @@ actual class File actual constructor(path: String) {
         get() =
             memScoped {
                 val stat = alloc<stat>()
-                if (stat(path, stat.ptr) != 0)
+                if (stat(path, stat.ptr) != 0) {
                     return@memScoped false
+                }
                 S_IFDIR == (stat.st_mode and S_IFMT.convert()).convert<Int>()
             }
 
@@ -46,11 +49,13 @@ actual class File actual constructor(path: String) {
     }
 
     actual fun delete(): Boolean {
-        if (isDirectory)
+        if (isDirectory) {
             return rmdir(path) == 0
+        }
 
-        if (isFile)
+        if (isFile) {
             return remove(path) == 0
+        }
         return false
     }
 
@@ -71,23 +76,25 @@ actual class File actual constructor(path: String) {
     actual val size: Long
         get() = memScoped {
             val stat = alloc<_stat64>()
-            if (_stat64(path, stat.ptr) != 0)
+            if (_stat64(path, stat.ptr) != 0) {
                 return@memScoped 0
+            }
             return stat.st_size
         }
 
     actual val lastModified: Long
         get() = memScoped {
             val stat = alloc<_stat64>()
-            if (_stat64(path, stat.ptr) != 0)
+            if (_stat64(path, stat.ptr) != 0) {
                 return@memScoped 0
+            }
             return stat.st_ctime
         }
 
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
 
     actual fun list(): List<File> {
-        val out = ArrayList<File>()
+        val out = defaultArrayList<File>()
         iterator().forEach { file ->
             out += file
         }

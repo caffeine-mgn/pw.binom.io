@@ -3,6 +3,7 @@ package pw.binom.db.serialization
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.encoding.CompositeDecoder
+import pw.binom.collections.defaultArrayList
 import pw.binom.collections.defaultHashMap
 import pw.binom.db.DatabaseEngine
 import pw.binom.db.SQLException
@@ -48,7 +49,7 @@ internal class DBAccessImpl(
     ): List<T> {
         val response = internalSelect(query = query, args = args)
         val mapper = getMapper(result)
-        val resultList = ArrayList<T>()
+        val resultList = defaultArrayList<T>()
         response.use { resp ->
             while (resp.next()) {
                 resultList += mapper(resp) as T

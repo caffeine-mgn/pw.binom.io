@@ -17,10 +17,14 @@ plugins {
     id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 val kotlinVersion = project.property("kotlin.version") as String
+val ionspinBignumVersion = project.property("ionspin_bignum.version") as String
+val kotlinxCoroutinesVersion = project.property("kotlinx_coroutines.version") as String
 
 buildConfig {
     packageName(project.group.toString())
     buildConfigField("String", "KOTLIN_VERSION", "\"$kotlinVersion\"")
+    buildConfigField("String", "IONSPIN_BIGNUM_VERSION", "\"$ionspinBignumVersion\"")
+    buildConfigField("String", "KOTLINX_COROUTINES_VERSION", "\"$kotlinxCoroutinesVersion\"")
 }
 
 repositories {

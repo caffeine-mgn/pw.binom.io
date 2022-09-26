@@ -1,5 +1,8 @@
 package pw.binom.db
 
+import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultHashMap
+
 class SQLQueryNamedArguments private constructor(
     val sql: String,
     val params: Map<String, List<Int>>,
@@ -25,7 +28,7 @@ class SQLQueryNamedArguments private constructor(
             var cur = 0
             val sb = StringBuilder()
             var str = false
-            val params = HashMap<String, ArrayList<Int>>()
+            val params = defaultHashMap<String, MutableList<Int>>()
             var paramCount = 0
             while (cur < sql.length) {
                 if (sql[cur] == '\\') {
@@ -53,7 +56,7 @@ class SQLQueryNamedArguments private constructor(
                     }
                     sb.append("?")
                     val varName = sql.substring(start + 1, cur)
-                    params.getOrPut(varName) { ArrayList() }.add(paramCount)
+                    params.getOrPut(varName) { defaultArrayList() }.add(paramCount)
                     paramCount++
                     continue
                 }

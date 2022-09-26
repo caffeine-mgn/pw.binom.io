@@ -16,19 +16,21 @@ kotlin {
     }
     jvm()
     linuxX64()
-    linuxArm64()
-    linuxArm32Hfp()
-    linuxMips32()
-    linuxMipsel32()
+//    linuxArm64()
+//    linuxArm32Hfp()
+//    linuxMips32()
+//    linuxMipsel32()
     mingwX64()
-    mingwX86()
+//    mingwX86()
     macosX64()
     macosArm64()
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
-                api(project(":collections"))
+                api(project(":thread"))
+                api(project(":concurrency"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
         val nativeMain by creating {

@@ -4,7 +4,7 @@ import kotlinx.cinterop.*
 import platform.linux.*
 import platform.posix.pipe
 import platform.posix.read
-import pw.binom.autoTrimmed
+import pw.binom.collections.LinkedList
 import pw.binom.collections.defaultHashMap
 import pw.binom.collections.defaultHashSet
 import pw.binom.concurrency.SpinLock
@@ -22,8 +22,8 @@ class LinuxSelector : AbstractSelector() {
 
     //    internal val idToKey = HashMap2<Int, LinuxKey>()
     internal val idToKey = defaultHashMap<Int, LinuxKey>()
-    private val keyForRemove = ArrayList<Pair<Int, RawSocket>>().autoTrimmed()
-    private val keyForAdd = ArrayList<Pair<Int, LinuxKey>>().autoTrimmed()
+    private val keyForRemove = LinkedList<Pair<Int, RawSocket>>()
+    private val keyForAdd = LinkedList<Pair<Int, LinuxKey>>()
     private val selectLock = SpinLock()
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0

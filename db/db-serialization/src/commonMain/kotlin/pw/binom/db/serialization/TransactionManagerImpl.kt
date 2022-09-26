@@ -1,5 +1,6 @@
 package pw.binom.db.serialization
 
+import pw.binom.collections.defaultArrayList
 import pw.binom.collections.defaultHashMap
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.async.pool.PooledAsyncConnection
@@ -9,8 +10,8 @@ class TransactionContext {
     lateinit var connection: PooledAsyncConnection
     var rollbackOnly = false
     var transactionStarted: Boolean = false
-    val successFullActions = ArrayList<suspend () -> Unit>()
-    val rollbackActions = ArrayList<suspend () -> Unit>()
+    val successFullActions = defaultArrayList<suspend () -> Unit>()
+    val rollbackActions = defaultArrayList<suspend () -> Unit>()
     suspend fun executeSuccessActions() {
         successFullActions.forEach {
             it()

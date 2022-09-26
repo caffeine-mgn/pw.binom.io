@@ -40,6 +40,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":core"))
+                api(project(":collections"))
             }
         }
 

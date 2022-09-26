@@ -1,4 +1,4 @@
-package pw.binom
+package pw.binom.collections
 
 /**
  * Wrapper for array list. Makes auto trim to size when [list].size * [trimFactor] < [max]. When it happed
@@ -10,34 +10,41 @@ package pw.binom
 open class AutoTrimmer<T>(
     val list: ArrayList<T>,
     var trimFactor: Float = 0.5f,
-    var checkSizeCounter: Int = 50
+//    var checkSizeCounter: Int = 50
 ) : RandomAccess, MutableList<T> by list {
-    constructor(initialCapacity: Int, trimFactor: Float = 0.5f, checkSizeCounter: Int = 50) : this(
+    constructor(initialCapacity: Int, trimFactor: Float = 0.5f/*, checkSizeCounter: Int = 50*/) : this(
         list = ArrayList(initialCapacity),
         trimFactor = trimFactor,
-        checkSizeCounter = checkSizeCounter,
+//        checkSizeCounter = checkSizeCounter,
     )
 
-    constructor(elements: Collection<T>, trimFactor: Float = 0.5f, checkSizeCounter: Int = 50) : this(
+    constructor(elements: Collection<T>, trimFactor: Float = 0.5f/*, checkSizeCounter: Int = 50*/) : this(
         list = ArrayList(elements),
         trimFactor = trimFactor,
-        checkSizeCounter = checkSizeCounter,
+//        checkSizeCounter = checkSizeCounter,
     )
 
     var max = list.size
         private set
-    private var counter = 0
+//    private var counter = 0
+
+    fun ensureCapacity(minCapacity: Int) {
+        list.ensureCapacity(minCapacity)
+        if (max < minCapacity) {
+            max = minCapacity
+        }
+    }
 
     protected open fun trim() {
         list.trimToSize()
     }
 
     private fun checkTrim() {
-        if (counter <= checkSizeCounter) {
-            counter++
-            return
-        }
-        counter = 0
+//        if (counter <= checkSizeCounter) {
+//            counter++
+//            return
+//        }
+//        counter = 0
         val size = list.size
         if (size > max) {
             max = size
@@ -51,36 +58,41 @@ open class AutoTrimmer<T>(
 
     override fun add(element: T): Boolean {
         val e = list.add(element)
+        max++
         checkTrim()
         return e
     }
 
     override fun add(index: Int, element: T) {
         list.add(index, element)
-        checkTrim()
+        max++
     }
 
     override fun addAll(index: Int, elements: Collection<T>): Boolean {
         val out = list.addAll(index, elements)
-        checkTrim()
+        max += elements.size
         return out
     }
 
     override fun addAll(elements: Collection<T>): Boolean {
         val out = list.addAll(elements)
-        checkTrim()
+        max += elements.size
         return out
     }
 
     override fun remove(element: T): Boolean {
         val out = list.remove(element)
-        checkTrim()
+        if (out) {
+            checkTrim()
+        }
         return out
     }
 
     override fun removeAll(elements: Collection<T>): Boolean {
         val out = list.removeAll(elements)
-        checkTrim()
+        if (out) {
+            checkTrim()
+        }
         return out
     }
 
@@ -89,11 +101,19 @@ open class AutoTrimmer<T>(
         checkTrim()
         return out
     }
+
+    override fun retainAll(elements: Collection<T>): Boolean {
+        val r = list.retainAll(elements)
+        if (r) {
+            checkTrim()
+        }
+        return r
+    }
 }
 
-fun <T> ArrayList<T>.autoTrimmed(trimFactor: Float = 0.5f, checkSizeCounter: Int = 50) =
+fun <T> ArrayList<T>.autoTrimmed(trimFactor: Float = 0.5f/*, checkSizeCounter: Int = 50*/) =
     AutoTrimmer(
         list = this,
         trimFactor = trimFactor,
-        checkSizeCounter = checkSizeCounter,
+//        checkSizeCounter = checkSizeCounter,
     )

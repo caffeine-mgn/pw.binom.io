@@ -1,10 +1,11 @@
 package pw.binom.rpc
 
+import pw.binom.collections.defaultHashMap
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.reflect.KProperty
 
 abstract class AbstractLocalService : CrossService {
-    private val methods = HashMap<String, CrossService.CrossMethod<Any?>>()
+    private val methods = defaultHashMap<String, CrossService.CrossMethod<Any?>>()
     fun findMethod(name: String) = methods[name]
 
     class LocalMethod<T> internal constructor(val name: String, val func: suspend (Map<String, Any?>) -> T) :

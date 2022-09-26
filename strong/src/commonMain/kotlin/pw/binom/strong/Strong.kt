@@ -1,5 +1,6 @@
 package pw.binom.strong
 
+import pw.binom.collections.defaultArrayList
 import pw.binom.strong.exceptions.StrongException
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty
@@ -46,8 +47,8 @@ interface Strong {
         protected inline fun <reified T : Any> injectServiceList() = strong.injectServiceList<T>()
         protected inline fun <reified T : Any> injectOrNull(name: String? = null) = strong.injectOrNull<T>(name = name)
 
-        private var inits: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null
-        private var links: ArrayList<LazyInitPropertyDelegateProvider<*>>? = null
+        private var inits: MutableList<LazyInitPropertyDelegateProvider<*>>? = null
+        private var links: MutableList<LazyInitPropertyDelegateProvider<*>>? = null
         private var inited = false
         private var linked = false
         protected fun <T> onInit(func: suspend () -> T): PropertyDelegateProvider<Bean, ReadOnlyProperty<Bean, T>> {
@@ -56,7 +57,7 @@ interface Strong {
             }
             val delegateProvider = LazyInitPropertyDelegateProvider(func)
             if (inits == null) {
-                inits = ArrayList()
+                inits = defaultArrayList()
             }
             inits!!.add(delegateProvider)
             return delegateProvider
@@ -68,7 +69,7 @@ interface Strong {
             }
             val delegateProvider = LazyInitPropertyDelegateProvider(func)
             if (links == null) {
-                links = ArrayList()
+                links = defaultArrayList()
             }
             links!!.add(delegateProvider)
             return delegateProvider

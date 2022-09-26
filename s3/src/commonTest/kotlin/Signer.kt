@@ -1,4 +1,3 @@
-import pw.binom.io.ByteBuffer
 import pw.binom.base64.Base16
 import pw.binom.base64.Base64
 import pw.binom.crypto.HMac
@@ -6,6 +5,7 @@ import pw.binom.crypto.MD5MessageDigest
 import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.date.Date
 import pw.binom.date.format.toDatePattern
+import pw.binom.io.ByteBuffer
 import pw.binom.io.UTF8
 import pw.binom.io.http.Headers
 import pw.binom.net.URI
@@ -50,32 +50,32 @@ class Signer private constructor(
 
     lateinit var signingKey: ByteArray
     private fun setSigningKey(serviceName: String) {
-        val aws4SecretKey = "AWS4" + this.secretKey;
+        val aws4SecretKey = "AWS4" + this.secretKey
 
         val dateKey =
             sumHmac(
                 aws4SecretKey.encodeToByteArray(),
                 SIGNER_DATE_FORMAT.toString(this.date.calendar(0)).encodeToByteArray()
-            );
+            )
 
         val dateRegionKey = sumHmac(dateKey, this.region.encodeToByteArray())
 
         val dateRegionServiceKey =
             sumHmac(dateRegionKey, serviceName.encodeToByteArray())
 
-        this.signingKey = sumHmac(dateRegionServiceKey, "aws4_request".encodeToByteArray());
+        this.signingKey = sumHmac(dateRegionServiceKey, "aws4_request".encodeToByteArray())
     }
 
     public fun sumHmac(key: ByteArray, data: ByteArray): ByteArray {
         val mac = HMac(HMac.Algorithm.SHA256, key)
-        mac.update(data);
+        mac.update(data)
 
         return mac.finish()
     }
 
     private fun setStringToSign() {
         this.stringToSign =
-            "AWS4-HMAC-SHA256" + "\n" + AMZ_DATE_FORMAT.toString(this.date.calendar(0)) + "\n" + this.scope + "\n" + this.canonicalRequestHash;
+            "AWS4-HMAC-SHA256" + "\n" + AMZ_DATE_FORMAT.toString(this.date.calendar(0)) + "\n" + this.scope + "\n" + this.canonicalRequestHash
     }
 
     lateinit var stringToSign: String
@@ -85,17 +85,16 @@ class Signer private constructor(
 
     @JvmName("setScope2")
     private fun setScope(serviceName: String) {
-
         this.scope =
-            SIGNER_DATE_FORMAT.toString(date.calendar(0)) + "/" + this.region + "/" + serviceName + "/aws4_request";
+            SIGNER_DATE_FORMAT.toString(date.calendar(0)) + "/" + this.region + "/" + serviceName + "/aws4_request"
     }
 
     var url: URI = "http://aaa/".toURI()
-    lateinit var canonicalHeaders: HashMap<String, String>
+    lateinit var canonicalHeaders: defaultHashMap<String, String>
     lateinit var signedHeaders: String
 
     private fun setCanonicalHeaders(ignored_headers: Set<String>) {
-        this.canonicalHeaders = HashMap<String, String>()
+        this.canonicalHeaders = defaultHashMap<String, String>()
         val headers: Headers = request.headers
         for (name in headers.names) {
             val signedHeader = name.lowercase()
@@ -116,7 +115,7 @@ class Signer private constructor(
     private fun setCanonicalQueryString() {
         val encodedQuery = this.url.query?.raw
         if (encodedQuery == null) {
-            this.canonicalQueryString = "";
+            this.canonicalQueryString = ""
             return
         }
         this.canonicalQueryString = encodedQuery
@@ -134,17 +133,19 @@ class Signer private constructor(
         //   CanonicalHeaders + '\n' +
         //   SignedHeaders + '\n' +
         //   HexEncode(Hash(RequestPayload))
-        canonicalRequest = (request.method
-            .toString() + "\n"
-                + this.url.path.raw.split('/').map { UTF8.encode(it) }.joinToString("/")
-                + "\n"
-                + this.canonicalQueryString
-                + "\n"
-                + this.canonicalHeaders.map { "${it.key}:${it.value}" }.joinToString("\n")
-                + "\n\n"
-                + this.signedHeaders
-                + "\n"
-                + contentSha256)
+        canonicalRequest = (
+            request.method
+                .toString() + "\n" +
+                this.url.path.raw.split('/').map { UTF8.encode(it) }.joinToString("/") +
+                "\n" +
+                this.canonicalQueryString +
+                "\n" +
+                this.canonicalHeaders.map { "${it.key}:${it.value}" }.joinToString("\n") +
+                "\n\n" +
+                this.signedHeaders +
+                "\n" +
+                contentSha256
+            )
         canonicalRequestHash = Digest.sha256Hash(canonicalRequest)
     }
 
@@ -165,13 +166,13 @@ object Digest {
         return Base16.encode(sha256Digest.finish()).lowercase()
     }
 
-    fun sha256Hash(data:ByteBuffer): String {
+    fun sha256Hash(data: ByteBuffer): String {
         val sha256Digest = Sha256MessageDigest()
         sha256Digest.update(data)
         return Base16.encode(sha256Digest.finish()).lowercase()
     }
 
-    fun md5Hash(data:ByteBuffer): String {
+    fun md5Hash(data: ByteBuffer): String {
         val md5Digest = MD5MessageDigest()
         md5Digest.update(data)
         return Base64.encode(md5Digest.finish()).lowercase()

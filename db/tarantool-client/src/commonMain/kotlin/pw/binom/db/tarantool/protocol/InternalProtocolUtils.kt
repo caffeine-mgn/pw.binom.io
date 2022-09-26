@@ -2,6 +2,7 @@ package pw.binom.db.tarantool.protocol
 
 import pw.binom.*
 import pw.binom.base64.Base64
+import pw.binom.collections.defaultArrayList
 import pw.binom.collections.defaultHashMap
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
@@ -16,7 +17,7 @@ internal object InternalProtocolUtils {
     ): Map<Any, Any?> {
         val sha1 = Sha1MessageDigest()
 
-        val auth = ArrayList<Any>(2)
+        val auth = defaultArrayList<Any>(2)
         auth.add("chap-sha1")
         sha1.update(password.encodeToByteArray())
         val p = sha1.finish()
@@ -237,7 +238,7 @@ internal object InternalProtocolUtils {
         if (size == 0) {
             return emptyList()
         }
-        val out = ArrayList<Any?>(size)
+        val out = defaultArrayList<Any?>(size)
         repeat(size) {
             out += unpack(buf, input)
         }

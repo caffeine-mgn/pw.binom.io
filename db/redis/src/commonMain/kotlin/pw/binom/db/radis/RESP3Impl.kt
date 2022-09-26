@@ -3,6 +3,8 @@ package pw.binom.db.radis
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
+import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultHashMap
 import pw.binom.io.*
 
 class RESP3Impl(
@@ -155,7 +157,7 @@ class RESP3Impl(
         if (len < 0) { // TODO обработать бесконечный список
             return null
         }
-        val result = ArrayList<Any?>(len)
+        val result = defaultArrayList<Any?>(len)
         repeat(len) {
             result += readResponse()
         }
@@ -181,7 +183,7 @@ class RESP3Impl(
         if (len < 0) { // TODO обработать бесконечный список
             return null
         }
-        val result = HashMap<Any?, Any?>()
+        val result = defaultHashMap<Any?, Any?>()
         repeat(len) {
             val key = readResponse()
             val value = readResponse()

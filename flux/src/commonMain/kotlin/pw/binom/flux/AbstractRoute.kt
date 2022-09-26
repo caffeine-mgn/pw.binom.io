@@ -1,6 +1,7 @@
 package pw.binom.flux
 
 import kotlinx.coroutines.withContext
+import pw.binom.collections.defaultArrayList
 import pw.binom.collections.defaultHashMap
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
@@ -9,17 +10,17 @@ import pw.binom.pool.DefaultPool
 import pw.binom.pool.borrow
 
 abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
-    private val routers = defaultHashMap<String, ArrayList<Route>>()
-    private val methods = defaultHashMap<String, HashMap<String, ArrayList<suspend (FluxHttpRequest) -> Unit>>>()
+    private val routers = defaultHashMap<String, MutableList<Route>>()
+    private val methods = defaultHashMap<String, HashMap<String, MutableList<suspend (FluxHttpRequest) -> Unit>>>()
     private var forwardHandler: Handler? = null
 
     override fun route(path: String, route: Route) {
-        routers.getOrPut(path) { ArrayList() }.add(route)
+        routers.getOrPut(path) { defaultArrayList() }.add(route)
     }
 
     override fun route(path: String, func: (Route.() -> Unit)?): Route {
         val r = RouteImpl(serialization)
-        routers.getOrPut(path) { ArrayList() }.add(r)
+        routers.getOrPut(path) { defaultArrayList() }.add(r)
         if (func != null) {
             func(r)
         }
@@ -37,7 +38,7 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
         if (forwardHandler != null) {
             throw IllegalStateException("Router has already defined forward")
         }
-        methods.getOrPut(method) { HashMap() }.getOrPut(path) { ArrayList() }.add(func)
+        methods.getOrPut(method) { HashMap() }.getOrPut(path) { defaultArrayList() }.add(func)
         return Closeable {
             methods[method]?.get(path)?.remove(func)
             if (methods[method]?.get(path)?.isEmpty() == true) {

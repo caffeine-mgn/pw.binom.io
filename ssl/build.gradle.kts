@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
+import pw.binom.publish.dependsOn
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -42,36 +43,18 @@ kotlin {
         }
     }
     jvm()
-    linuxX64 {
-//        config(this)
-//        compilations["main"].cinterops {
-//            create("openssl") {
-//                defFile = project.file("src/cinterop/openssl.def")
-//                packageName = "platform.openssl"
-//                includeDirs.headerFilterOnly("${buildFile.parent}/src/cinterop/include")
-//            }
-//        }
-//        val args = listOf(
-//            "-include-binary", "${buildFile.parent}/src/linuxX64Main/cinterop/lib/libopenssl.a"
-//        )
-//        compilations["main"].kotlinOptions.freeCompilerArgs = args
-//        compilations["test"].kotlinOptions.freeCompilerArgs = args
-    }
+    linuxX64()
 
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp {
-        }
+        linuxArm32Hfp()
     }
 
-    mingwX64 {
-    }
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 {
-        }
+        mingwX86()
     }
 
-    macosX64 {
-    }
+    macosX64()
     eachNative {
 
         val headersPath = file("${buildFile.parent}/src/cinterop/include")
@@ -113,13 +96,22 @@ kotlin {
                 api(project(":file"))
                 api(project(":date"))
                 api(project(":concurrency"))
-                api("com.ionspin.kotlin:bignum:0.3.6")
+                api("com.ionspin.kotlin:bignum:${pw.binom.Versions.IONSPIN_BIGNUM_VERSION}")
             }
         }
-        val linuxX64Main by getting {
-//            dependsOn(mingwX64Main)
+
+        val nativeMain by creating {
             dependsOn(commonMain)
         }
+        val linuxX64Main by getting {
+            dependsOn(nativeMain)
+        }
+        dependsOn("linux*Main", linuxX64Main)
+        dependsOn("mingw*Main", linuxX64Main)
+        dependsOn("macos*Main", linuxX64Main)
+        /*
+        applyAllNative()
+
         val mingwX64Main by getting {
             dependsOn(linuxX64Main)
         }
@@ -141,7 +133,7 @@ kotlin {
 //            dependsOn(mingwX64Main)
             dependsOn(linuxX64Main)
         }
-
+*/
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))

@@ -14,16 +14,19 @@ class JsonObject(private val childs: MutableMap<String, JsonNode?> = HashMap()) 
     suspend fun accept(visiter: JsonObjectVisiter) {
         visiter.start()
         childs.forEach {
-            if (it.value == null)
+            if (it.value == null) {
                 visiter.property(it.key).nullValue()
-            else
+            } else {
                 it.value!!.accept(visiter.property(it.key))
+            }
         }
         visiter.end()
     }
 }
 
-class JsonArray(private val elements: MutableList<JsonNode?> = ArrayList()) : JsonNode, MutableList<JsonNode?> by elements {
+class JsonArray(private val elements: MutableList<JsonNode?> = defaultArrayList()) :
+    JsonNode,
+    MutableList<JsonNode?> by elements {
     override suspend fun accept(visiter: JsonVisiter) {
         accept(visiter.arrayValue())
     }
@@ -31,35 +34,32 @@ class JsonArray(private val elements: MutableList<JsonNode?> = ArrayList()) : Js
     suspend fun accept(visiter: JsonArrayVisiter) {
         visiter.start()
         forEach {
-            if (it == null)
+            if (it == null) {
                 visiter.element().nullValue()
-            else
+            } else {
                 it.accept(visiter.element())
+            }
         }
         visiter.end()
     }
-
 }
 
 class JsonString(val value: String) : JsonNode {
     override suspend fun accept(visiter: JsonVisiter) {
         visiter.textValue(value)
     }
-
 }
 
 class JsonNumber(val value: String) : JsonNode {
     override suspend fun accept(visiter: JsonVisiter) {
         visiter.numberValue(value)
     }
-
 }
 
 class JsonBoolean(val value: Boolean) : JsonNode {
     override suspend fun accept(visiter: JsonVisiter) {
         visiter.booleanValue(value)
     }
-
 }
 
 val JsonNode.string: String
@@ -120,15 +120,17 @@ val JsonNode.double: Double
 
 val JsonNode.array: JsonArray
     get() {
-        if (this !is JsonArray)
+        if (this !is JsonArray) {
             throw RuntimeException("Node $this is not array")
+        }
         return this
     }
 
 val JsonNode.obj: JsonObject
     get() {
-        if (this !is JsonObject)
+        if (this !is JsonObject) {
             throw RuntimeException("Node $this is not object")
+        }
         return this
     }
 

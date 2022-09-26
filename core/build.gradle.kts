@@ -52,6 +52,7 @@ kotlin {
                 api(project(":io"))
                 api(project(":env"))
                 api(project(":atomic"))
+                api(project(":collections"))
             }
         }
         val jvmLikeMain by creating {
