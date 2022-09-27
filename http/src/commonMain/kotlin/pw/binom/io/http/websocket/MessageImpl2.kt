@@ -8,7 +8,7 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
 
 internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
-    private var inputReady = 0uL
+    private var inputReady = 0L
     private var closed = false
     private var lastFrame: Boolean = false
     private var maskFlag: Boolean = false
@@ -18,20 +18,20 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
     override val available: Int
         get() =
             when {
-                inputReady == 0uL && lastFrame -> 0
-                inputReady > 0uL -> inputReady.toInt()
+                inputReady == 0L && lastFrame -> 0
+                inputReady > 0L -> inputReady.toInt()
                 else -> -1
             }
 
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (inputReady == 0uL && lastFrame) {
+        if (inputReady == 0L && lastFrame) {
             return 0
         }
         val read = if (maskFlag) {
             val pos1 = dest.position
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
             val n = input.read(dest)
 
             dest.position = pos1
@@ -41,14 +41,14 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
             n
         } else {
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
             val n = input.read(dest)
             dest.limit = lim1
             n
         }
-        inputReady -= read.toULong()
+        inputReady -= read.toLong()
 
-        if (inputReady == 0uL && !lastFrame) {
+        if (inputReady == 0L && !lastFrame) {
             val v = WebSocketHeader()
             WebSocketHeader.read(input, v)
             lastFrame = v.finishFlag
@@ -69,7 +69,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
     override suspend fun asyncClose() {
         checkClosed()
 
-        if (inputReady > 0uL) {
+        if (inputReady > 0L) {
             copyTo(NullAsyncOutput)
         }
         input = EmptyAsyncInput
@@ -81,7 +81,7 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
     private var cursor = 0L
 
     fun reset(
-        initLength: ULong,
+        initLength: Long,
         type: MessageType,
         lastFrame: Boolean,
         maskFlag: Boolean,

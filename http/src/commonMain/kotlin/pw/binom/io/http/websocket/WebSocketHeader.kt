@@ -10,7 +10,7 @@ import kotlin.experimental.or
 
 class WebSocketHeader {
     var opcode: Byte = 0
-    var length = 0uL
+    var length = 0L
     var maskFlag = false
     var mask = 0
     var finishFlag = false
@@ -26,9 +26,9 @@ class WebSocketHeader {
 
             dest.length = (second and 0b1111111.toByte()).let {
                 when (it) {
-                    126.toByte() -> input.readShort(buf).toULong()
-                    127.toByte() -> input.readLong(buf).toULong()
-                    else -> it.toULong()
+                    126.toByte() -> input.readShort(buf).toLong()
+                    127.toByte() -> input.readLong(buf).toLong()
+                    else -> it.toLong()
                 }
             }
             dest.maskFlag = second and 0b10000000.toByte() != 0.toByte()
@@ -47,23 +47,27 @@ class WebSocketHeader {
                 }
                 output.writeByte(buf, value)
 
-                value = if (src.maskFlag)
+                value = if (src.maskFlag) {
                     0b10000000.toByte()
-                else
+                } else {
                     0b00000000.toByte()
+                }
                 when {
-                    src.length > UShort.MAX_VALUE -> {
+                    src.length > Short.MAX_VALUE -> {
                         output.writeByte(buf, 127.toByte() or value)
-                        output.writeLong(buf, src.length.toLong())
+                        output.writeLong(buf, src.length)
                     }
-                    src.length >= 126uL -> {
+
+                    src.length >= 126L -> {
                         output.writeByte(buf, 126.toByte() or value)
                         output.writeShort(buf, src.length.toShort())
                     }
+
                     else -> output.writeByte(buf, src.length.toByte() or value)
                 }
-                if (src.maskFlag)
+                if (src.maskFlag) {
                     output.writeInt(buf, src.mask)
+                }
             }
         }
     }

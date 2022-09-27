@@ -26,10 +26,6 @@ class AsyncConnectionPoolImpl constructor(
     val waitFreeConnection: Boolean = true,
     val factory: suspend () -> AsyncConnection,
 ) : AsyncConnectionPool {
-    private fun log(txt: String) {
-        println("AsyncConnectionPoolImpl: $txt")
-    }
-
     init {
         require(maxConnections >= 1) { "maxConnections should be grate than 0" }
     }
@@ -116,11 +112,9 @@ class AsyncConnectionPoolImpl constructor(
                     connectionsLock.synchronize {
                         connections -= connection
                     }
-                    log("found invalid connection.... connection.checkValid()=${connection.checkValid()}")
                     forRemove += connection
                     continue
                 }
-                log("got connection from pool")
                 connection.updateActive()
                 return connection
             }
@@ -128,7 +122,6 @@ class AsyncConnectionPoolImpl constructor(
             if (needCreateNew) {
                 val con = PooledAsyncConnectionImpl(this, factory())
                 connectionsLock.synchronize { connections.add(con) }
-                log("return NEW connection")
                 return con
             }
             if (!waitFreeConnection) {
@@ -141,11 +134,9 @@ class AsyncConnectionPoolImpl constructor(
                     connections -= con
                 }
                 forRemove += con
-                log("Connection got, but invalid :(")
                 continue
             }
             con.updateActive()
-            log("return connection....")
             return con
         }
     }

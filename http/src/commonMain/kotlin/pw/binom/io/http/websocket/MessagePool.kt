@@ -11,7 +11,7 @@ class MessagePool(capacity: Int) {
         )
 
     fun new(
-        initLength: ULong,
+        initLength: Long,
         type: MessageType,
         lastFrame: Boolean,
         maskFlag: Boolean,

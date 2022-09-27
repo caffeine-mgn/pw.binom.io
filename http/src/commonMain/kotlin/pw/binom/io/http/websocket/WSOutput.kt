@@ -16,8 +16,9 @@ class WSOutput(
     private var closed = false
 
     private fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw StreamClosedException()
+        }
     }
 
     override suspend fun flush() {
@@ -31,15 +32,16 @@ class WSOutput(
                 v.mask = Random.nextInt()
                 Message.encode(v.mask, buffer)
             }
-            v.length = length.toULong()
-            v.opcode = if (!first)
+            v.length = length.toLong()
+            v.opcode = if (!first) {
                 0
-            else
+            } else {
                 when (messageType) {
                     MessageType.TEXT -> 1
                     MessageType.BINARY -> 2
                     MessageType.CLOSE -> 8
                 }
+            }
             WebSocketHeader.write(stream, v)
             first = false
         }
@@ -57,10 +59,11 @@ class WSOutput(
             if (needSendEnd) {
                 val v = WebSocketHeader()
                 v.opcode = 0
-                v.length = 0uL
+                v.length = 0L
                 v.maskFlag = masked
-                if (masked)
+                if (masked) {
                     v.mask = Random.nextInt()
+                }
                 v.finishFlag = true
                 WebSocketHeader.write(stream, v)
                 stream.flush()

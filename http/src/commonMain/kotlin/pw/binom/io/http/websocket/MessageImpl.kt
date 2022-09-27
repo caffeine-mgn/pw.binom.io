@@ -8,7 +8,7 @@ import pw.binom.io.StreamClosedException
 
 class MessageImpl(
     override val type: MessageType,
-    initLength: ULong,
+    initLength: Long,
     val input: AsyncInput,
     private var maskFlag: Boolean,
     private var mask: Int,
@@ -18,14 +18,15 @@ class MessageImpl(
     private var closed = false
 
     private fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw StreamClosedException()
+        }
     }
 
     override suspend fun asyncClose() {
         checkClosed()
 
-        if (inputReady > 0uL) {
+        if (inputReady > 0L) {
             copyTo(NullAsyncOutput)
         }
         closed = true
@@ -39,19 +40,20 @@ class MessageImpl(
     override val available: Int
         get() =
             when {
-                inputReady == 0uL && lastFrame -> 0
-                inputReady > 0uL -> inputReady.toInt()
+                inputReady == 0L && lastFrame -> 0
+                inputReady > 0L -> inputReady.toInt()
                 else -> -1
             }
 
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (inputReady == 0uL && lastFrame)
+        if (inputReady == 0L && lastFrame) {
             return 0
+        }
         val read = if (maskFlag) {
             val pos1 = dest.position
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
             val n = input.read(dest)
 
             dest.position = pos1
@@ -61,14 +63,14 @@ class MessageImpl(
             n
         } else {
             val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining.toULong()).toInt()
+            dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
             val n = input.read(dest)
             dest.limit = lim1
             n
         }
-        inputReady -= read.toULong()
+        inputReady -= read.toLong()
 
-        if (inputReady == 0uL && !lastFrame) {
+        if (inputReady == 0L && !lastFrame) {
             val v = WebSocketHeader()
             WebSocketHeader.read(input, v)
             lastFrame = v.finishFlag

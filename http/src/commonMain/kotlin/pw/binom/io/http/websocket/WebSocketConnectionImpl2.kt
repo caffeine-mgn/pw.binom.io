@@ -37,8 +37,9 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
     private val header = WebSocketHeader()
 
     private fun checkClosed() {
-        if (closed.getValue())
+        if (closed.getValue()) {
             throw StreamClosedException()
+        }
     }
 
     private val message = MessageImpl3()
@@ -124,7 +125,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
     private suspend fun sendFinish(code: Short = 1006, body: ByteBuffer? = null) {
         val v = WebSocketHeader()
         v.opcode = 8
-        v.length = Short.SIZE_BYTES.toULong() + (body?.remaining ?: 0).toULong()
+        v.length = Short.SIZE_BYTES.toLong() + (body?.remaining ?: 0).toLong()
         v.maskFlag = masking
         v.finishFlag = true
         WebSocketHeader.write(_output, v)

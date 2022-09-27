@@ -13,7 +13,7 @@ interface AsyncInput : AsyncCloseable {
         while (dest.remaining > 0) {
             val read = read(dest)
             if (read == 0 && dest.remaining > 0) {
-                throw EOFException()
+                throw EOFException("Full message $length bytes, can't read ${dest.remaining} bytes")
             }
         }
         return length
@@ -34,7 +34,10 @@ suspend fun AsyncInput.readByteArray(dest: ByteArray, bufferProvider: ByteBuffer
         var cursor = 0
         while (cursor < dest.size) {
             buffer.reset(0, minOf(dest.size - cursor, buffer.capacity))
-            val len = readFully(buffer)
+            val len = read(buffer)
+            if (len == 0) {
+                throw EOFException("Read $cursor/${dest.size}, can't read ${dest.size - cursor}")
+            }
             buffer.flip()
             buffer.read(dest, offset = cursor)
             cursor += len
