@@ -85,7 +85,6 @@ class HttpServer(
         if (count > 0) {
             System.gc()
         }
-        println("after processing idleConnections.size: ${idleConnections.size}, removed: $count")
         return count
     }
 
@@ -116,7 +115,6 @@ class HttpServer(
                     handler.request(req)
                     idleCheck()
                 } catch (e: Throwable) {
-                    println("Error on \"${req.request}\" processing")
                     throw e
                 }
             } catch (e: SocketClosedException) {
@@ -127,7 +125,6 @@ class HttpServer(
                 runCatching { channel.asyncClose() }
                 runCatching { errorHandler.uncaughtException(Thread.currentThread, e) }
             } finally {
-                println("after processing idleConnections.size: ${idleConnections.size}")
                 if (req != null) {
                     req.free()
                     httpRequest2Impl.recycle(req)
