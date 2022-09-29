@@ -107,13 +107,7 @@ class AsyncConnectionAdapter private constructor(/*val worker: Worker, */val con
     internal val busy = AtomicBoolean(false)
 
     override val isConnected: Boolean
-        get() {
-            return connection.isConnected
-//            val connection = connection
-//            return worker.execute {
-//                connection.isConnected
-//            }.joinAndGetOrThrow()
-        }
+        get() = connection.isConnected
 
     override val dbInfo: DatabaseInfo
         get() = SQLiteSQLDatabaseInfo
@@ -130,6 +124,7 @@ class AsyncConnectionAdapter private constructor(/*val worker: Worker, */val con
                     }
                 }
             }
+
             TransactionMode.READ_UNCOMMITTED -> {
                 withTimeout(ASYNC_TIMEOUT) {
                     withContext(b) {
@@ -139,6 +134,7 @@ class AsyncConnectionAdapter private constructor(/*val worker: Worker, */val con
                     }
                 }
             }
+
             else -> throw IllegalArgumentException("SQLite not support transaction isolation mode $mode")
         }
         _transactionMode = mode
@@ -150,13 +146,7 @@ class AsyncConnectionAdapter private constructor(/*val worker: Worker, */val con
         get() = _transactionMode
 
     override val type: String
-        get() {
-//            val connection = connection
-            return connection.type
-//            return worker.execute {
-//                connection.type
-//            }.joinAndGetOrThrow()
-        }
+        get() = connection.type
 
     override suspend fun asyncClose() {
         withTimeout(ASYNC_TIMEOUT) {
