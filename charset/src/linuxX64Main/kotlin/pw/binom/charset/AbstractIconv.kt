@@ -125,17 +125,11 @@ abstract class AbstractIconv(
 
     private val resource = Resource(fromCharset, toCharset)
 
-    init {
-        println("Create Iconv. count: ${++count}")
-    }
-
     internal fun free() {
-        println("Free Iconv. count: ${--count}")
         resource.dispose()
     }
 
     override fun close() {
-        println("Return Iconv to Pool. count: $count")
         onClose?.invoke(this)
     }
 
