@@ -14,6 +14,26 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     }
 }
 
+fun AsyncOutput.withCounter() = AsyncOutputWithWriteCounter(this)
+
+class AsyncOutputWithWriteCounter(val stream: AsyncOutput) : AsyncOutput {
+    var writedBytes = 0L
+
+    override suspend fun write(data: ByteBuffer): Int {
+        val r = stream.write(data)
+        writedBytes += r
+        return r
+    }
+
+    override suspend fun asyncClose() {
+        stream.flush()
+    }
+
+    override suspend fun flush() {
+        stream.flush()
+    }
+}
+
 suspend fun AsyncOutput.writeByteArray(data: ByteArray, bufferProvider: ByteBufferProvider) {
     bufferProvider.using { buffer ->
         require(buffer.capacity > 0) { "Buffer capacity should be more than 0" }

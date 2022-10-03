@@ -185,4 +185,23 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
             }
         }
     }
+
+    override suspend fun new(path: Path, writeAction: suspend (AsyncOutput) -> Unit): FileSystem.Entity {
+        var size = 0L
+        new(path).use { fout ->
+            val foutWithCounter = fout.withCounter()
+            writeAction(foutWithCounter)
+            size = foutWithCounter.writedBytes
+        }
+        return WebdavEntity(
+            length = size,
+            lastModified = DateTime.nowTime,
+            path = path,
+            user = WebAuthAccess.getCurrentUser(),
+            isFile = true,
+            fileSystem = this,
+            quotaUsedBytes = null,
+            quotaAvailableBytes = null,
+        )
+    }
 }

@@ -44,6 +44,12 @@ interface FileSystem {
 
     suspend fun get(path: Path): Entity?
     suspend fun new(path: Path): AsyncOutput
+    suspend fun new(path: Path, writeAction: suspend (AsyncOutput) -> Unit): Entity {
+        new(path).use { output ->
+            writeAction(output)
+        }
+        return get(path)!!
+    }
 
     class FileNotFoundException(val path: Path) : IOException("File \"$path\" not found")
     class FileLockedException(val path: Path) : IOException("File \"$path\" is locked")
@@ -70,23 +76,27 @@ interface FileSystem {
 }
 
 val FileSystem.Entity.extension: String
-    get() {
-        val name = name
-        return name.lastIndexOf('.').let {
-            if (it == -1)
-                return ""
-            else
-                name.substring(it + 1)
+    get() = name.lastIndexOf('.').let {
+        if (it == -1) {
+            ""
+        } else {
+            name.substring(it + 1)
         }
     }
 
 val FileSystem.Entity.nameWithoutExtension: String
-    get() {
-        val name = name
-        return name.lastIndexOf('.').let {
-            if (it == -1)
-                return name
-            else
-                name.substring(0, it)
+    get() = name.lastIndexOf('.').let {
+        if (it == -1) {
+            name
+        } else {
+            name.substring(0, it)
         }
+    }
+
+fun FileSystem.withDefaultUser(user: Any) =
+    when {
+        !isSupportUserSystem -> throw IllegalArgumentException("File system $this not supports user for access")
+        this is FileSystemWithDefaultUser && this.user == user -> this
+        this is FileSystemWithDefaultUser && this.user != user -> throw IllegalArgumentException("File system already use user ${this.user}")
+        else -> FileSystemWithDefaultUser(user = user, fileSystem = this)
     }

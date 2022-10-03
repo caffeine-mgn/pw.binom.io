@@ -4,6 +4,8 @@ Kotlin Library for listen external OS signals
 
 ## Using
 
+For work on JVM platform you should run your program with `-Xrs` flag
+
 ### Gradle
 
 You must add repository. See [README](../README.md)
@@ -27,7 +29,7 @@ private fun stop() {
     //Stops your service
 }
 
-fun init() {
+fun main() {
     start() //staring service
 
     // Adding terminate hook
@@ -35,6 +37,10 @@ fun init() {
         if (signalType.isInterrupted) {
             stop() //stopping service
         }
+    }
+
+    while (true) {
+        Thread.sleep(1000)
     }
 }
 ```

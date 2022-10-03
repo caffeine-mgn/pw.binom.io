@@ -37,3 +37,9 @@ class OAuthAuthorization(val token: String) : WebAuthAccess {
         connection.headers[Headers.AUTHORIZATION] = "OAuth $token"
     }
 }
+
+class BearerAuthorization(val token: String) : WebAuthAccess {
+    override suspend fun apply(connection: HttpRequest) {
+        connection.headers[Headers.AUTHORIZATION] = "Bearer $token"
+    }
+}

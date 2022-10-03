@@ -10,13 +10,15 @@ import pw.binom.webdav.WebAuthAccess
 class WebdavEntity(
     override val length: Long,
     override val lastModified: Long,
-    override val path: Path,
+    path: Path,
     val user: WebAuthAccess?,
     override val isFile: Boolean,
     override val fileSystem: WebDavClient,
     val quotaUsedBytes: Long?,
     val quotaAvailableBytes: Long?,
 ) : FileSystem.Entity {
+    override var path: Path = path
+        private set
 
     override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
         val allPathUrl = fileSystem.url.addPath(path)
@@ -30,13 +32,14 @@ class WebdavEntity(
         }
         user?.apply(r)
         val resp = r.getResponse()
-        if (resp.responseCode == 404)
+        if (resp.responseCode == 404) {
             return null
+        }
         val body = resp.readData()
 
         return object : AsyncInput {
             override val available: Int
-                get() = -1
+                get() = body.available
 
             override suspend fun read(dest: ByteBuffer): Int = body.read(dest)
 
@@ -106,19 +109,21 @@ class WebdavEntity(
         if (responseCode == 404) {
             throw FileSystem.FileNotFoundException(path)
         }
-        if (responseCode != 201 && responseCode != 204)
+        if (responseCode != 201 && responseCode != 204) {
             TODO("Invalid response code $responseCode")
-
-        return WebdavEntity(
-            path = path,
-            lastModified = lastModified,
-            user = user,
-            length = length,
-            isFile = true,
-            fileSystem = fileSystem,
-            quotaAvailableBytes = null,
-            quotaUsedBytes = null,
-        )
+        }
+        this.path = path
+        return this
+//        return WebdavEntity(
+//            path = path,
+//            lastModified = lastModified,
+//            user = user,
+//            length = length,
+//            isFile = true,
+//            fileSystem = fileSystem,
+//            quotaAvailableBytes = null,
+//            quotaUsedBytes = null,
+//        )
     }
 
     override suspend fun delete() {
