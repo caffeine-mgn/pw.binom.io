@@ -12,7 +12,7 @@ interface MessageDigest {
     }
 
     fun update(byte: ByteArray) {
-        update(byte, 0, byte.size)
+        update(input = byte, offset = 0, len = byte.size)
     }
 
     fun update(buffer: ByteBuffer) {

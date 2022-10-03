@@ -7,14 +7,13 @@ import pw.binom.crypto.MD5MessageDigest
 import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.date.DateTime
 import pw.binom.date.format.toDatePattern
-import pw.binom.io.ByteBuffer
-import pw.binom.io.UTF8
+import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.HttpResponse
 import pw.binom.io.httpClient.create
-import pw.binom.io.readText
-import pw.binom.io.use
 import pw.binom.net.URI
+import pw.binom.net.URL
 import pw.binom.net.toURI
 import pw.binom.net.toURL
 import kotlin.jvm.JvmName
@@ -194,21 +193,91 @@ val AMZ_DATE_FORMAT = "yyyyMMdd'T'HHmmss'Z'".toDatePattern()
 
 data class Request(val method: String, val url: URI, val headers: Headers)
 
+const val UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD"
+
 class OOOO {
+
+    suspend fun s3Call(
+        client: HttpClient,
+        method: String,
+        url: URL,
+        payloadSha256: ByteArray? = null,
+        overrideHost: String? = null,
+        service: String = "s3",
+        regin: String = "ru-central1",
+        accessKey: String = "rGIU8vPsmnOx4Prv",
+        secretAccessKey: String = "bT6YEZsstWsjXh8fJzZdbXvdFZGp3IbR",
+        payload: (suspend (AsyncOutput) -> Unit)? = null,
+    ): HttpResponse {
+        client.connect(method = method, uri = url).use { connection ->
+            val host = overrideHost ?: url.host
+            val date = DateTime.now
+            val specialHeaders: List<Pair<String, String>> = listOf(
+                "host" to host,
+                "x-amz-content-sha256" to (payloadSha256?.toHex() ?: UNSIGNED_PAYLOAD),
+                "x-amz-date" to date.awsDateTime(),
+            ).sortedBy { it.first }
+            val canonicalRequest = buildCanonicalRequest(
+                method = method,
+                uri = url.path.toString(),
+                query = url.query?.toString() ?: "",
+                headers = specialHeaders,
+                contentSha256 = payloadSha256,
+            )
+            val stringToSign = buildStringToSign(
+                date = date,
+                regin = regin,
+                service = service,
+                canonicalRequestHashed = canonicalRequest.sha256()
+            )
+            val signingKey = buildSignature(
+                secretAccessKey = secretAccessKey,
+                date = date,
+                region = regin,
+                service = service,
+            )
+            val authHeader = buildAuthorizationHeader(
+                accessKey = accessKey,
+                date = date,
+                regin = regin,
+                service = service,
+                headers = specialHeaders.map { it.first },
+                signature = sumHmac(signingKey, stringToSign.encodeToByteArray()),
+            )
+            connection.headers[Headers.AUTHORIZATION] = authHeader
+            specialHeaders.forEach { (key, value) ->
+                connection.headers[key] = value
+            }
+            if (payload != null) {
+                connection.writeData { payload(it) }
+            }
+            return connection.getResponse()
+        }
+    }
+
     @Test
     fun test() = runTest {
         println("OLOLO")
         val content = ByteArray(0)
-        val contentSha256 = content.sha256()
+        val contentSha256: ByteArray? = null // content.sha256()
         HttpClient.create().use { client ->
+            s3Call(
+                client = client,
+                method = "GET",
+                url = "http://127.0.0.1:9000/".toURL(),
+            ).use { r ->
+                println("r.responseCode=${r.responseCode}")
+                println("text: ${r.readText().readText()}")
+            }
+            return@use
             client.connect("GET", "http://127.0.0.1:9000/".toURL()).use { connection ->
-                val host = "127.0.0.1:9000"
+                val host = "google"
                 val date = DateTime.now
                 val specialHeaders: List<Pair<String, String>> = listOf(
                     "host" to host,
-                    "x-amz-content-sha256" to contentSha256.toHex(),
+                    "x-amz-content-sha256" to (contentSha256?.toHex() ?: UNSIGNED_PAYLOAD),
                     "x-amz-date" to date.awsDateTime(),
-                )
+                ).sortedBy { it.first }
 
                 val service = "s3"
                 val regin = "ru-central1"
@@ -278,7 +347,7 @@ class OOOO {
         uri: String,
         query: String,
         headers: List<Pair<String, String>>,
-        contentSha256: ByteArray
+        contentSha256: ByteArray?
     ): String {
         val sb = StringBuilder()
         sb
@@ -290,12 +359,17 @@ class OOOO {
         }
         sb.append("\n")
         sb.append(headers.map { it.first }.joinToString(";")).append("\n") // SignedHeaders
-        sb.append(contentSha256.toHex()) // HashedPayload
+        if (contentSha256 == null) { // HashedPayload
+            sb.append(UNSIGNED_PAYLOAD)
+        } else {
+            sb.appendHex(contentSha256)
+        }
         return sb.toString()
     }
 
     /**
-     * Калькуляция String to Sign
+     * Калькуляция StringToSign
+     *
      * @param date дата запроса
      * @param regin регион
      * @param service название сервиса. Например `iam` или `s3`
@@ -307,7 +381,7 @@ class OOOO {
             .append(date.awsDateTime()).append("\n") // RequestDateTime
             .append(date.awsDate()).append("/").append(regin).append("/").append(service)
             .append("/aws4_request\n") // CredentialScope
-            .append(canonicalRequestHashed.toHex()) // HashedCanonicalRequest
+            .appendHex(canonicalRequestHashed) // HashedCanonicalRequest
         return sb.toString()
     }
 
@@ -331,20 +405,27 @@ class OOOO {
         sb.append("Credential=").append(accessKey).append("/").append(date.awsDate()).append("/").append(regin)
             .append("/").append(service).append("/").append("aws4_request")
         sb.append(",SignedHeaders=").append(headers.joinToString(";"))
-        sb.append(",Signature=").append(signature.toHex())
+        sb.append(",Signature=").appendHex(signature)
         return sb.toString()
-//        AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;range;x-amz-content-sha256;x-amz-date,Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41
     }
 
     fun sumHmac(key: ByteArray, data: ByteArray): ByteArray {
         val mac = HMac(HMac.Algorithm.SHA256, key)
         mac.update(data)
-
         return mac.finish()
     }
 }
 
-fun ByteArray.toHex() = joinToString("") { it.toUByte().toString(16).padStart(2, '0') }
+fun ByteArray.toHex(): String = StringBuilder(size * 2)
+    .appendHex(this)
+    .toString()
+
+fun <T : Appendable> T.appendHex(data: ByteArray): T {
+    data.forEach {
+        append(it.toUByte().toString(16).padStart(2, '0'))
+    }
+    return this
+}
 
 val awsDateTimePattern = "yyyyMMdd'T'HHmmss'Z'".toDatePattern()
 val awsDatePattern = "yyyyMMdd".toDatePattern()

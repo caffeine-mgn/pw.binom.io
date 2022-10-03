@@ -36,9 +36,15 @@ abstract class OpenSSLMessageDigest : MessageDigest {
 
     override fun update(input: ByteArray, offset: Int, len: Int) {
         checkInit()
-        input.usePinned { p ->
-            EVP_DigestUpdate(ptr, p.addressOf(offset), len.convert())
+        if (input.isNotEmpty()) {
+            input.usePinned { p ->
+                EVP_DigestUpdate(ptr, p.addressOf(offset), len.convert())
+            }
         }
+    }
+
+    override fun update(byte: ByteArray) {
+        super.update(byte)
     }
 
     override fun update(buffer: ByteBuffer) {
