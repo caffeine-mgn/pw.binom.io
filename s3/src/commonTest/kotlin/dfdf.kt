@@ -1,11 +1,13 @@
+/*
 import pw.binom.*
 import pw.binom.base64.Base16
 import pw.binom.base64.Base64
 import pw.binom.crypto.MD5MessageDigest
 import pw.binom.crypto.Sha256MessageDigest
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.date.of
 import pw.binom.date.rfc822
+import pw.binom.io.ByteBuffer
 import pw.binom.io.UTF8
 import pw.binom.io.http.*
 import pw.binom.io.httpClient.HttpClient
@@ -17,14 +19,13 @@ import pw.binom.io.use
 import pw.binom.net.URI
 import pw.binom.net.toURI
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkDispatcher
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.test.Test
 
 class S3Client(val accessKey: String, val secretKey: String, val client: HttpClient) {
     suspend fun request(uri: URI, method: HTTPMethod, data: ByteBuffer): HttpResponse {
-        val date = Date()
+        val date = DateTime()
 //        val date = Date.of(
 //            2021,1,1,1,1,0,0,Date.timeZoneOffset
 //        )
@@ -71,7 +72,7 @@ class S3Client(val accessKey: String, val secretKey: String, val client: HttpCli
 }
 
 suspend fun HttpClient.request(uri: URI, accessKey: String, secretKey: String, bucketName: String) {
-    val date = Date()
+    val date = DateTime()
     val fullUri = uri.appendPath("http://minio-test.dev.binom.pw/${UTF8.encode(bucketName)}?location=")
     request(HTTPMethod.HEAD, fullUri).also {
         it.headers["x-amz-date"] = AMZ_DATE_FORMAT.toString(date.calendar(0))
@@ -230,7 +231,7 @@ class AAA() {
                 it.headers["X-Xss-Protection"] = "X-Xss-Protection: 1; mode=block"
                 it.writeText(
                     """
-<Error><Code>AccessDenied</Code><Message>Access Denied.</Message><Resource>/</Resource><RequestId>$requestId</RequestId><HostId>8868d5ce-d5eb-4745-8b1d-771332c63806</HostId></Error> 
+<Error><Code>AccessDenied</Code><Message>Access Denied.</Message><Resource>/</Resource><RequestId>$requestId</RequestId><HostId>8868d5ce-d5eb-4745-8b1d-771332c63806</HostId></Error>
                 """
                 )
             }
@@ -242,3 +243,4 @@ class AAA() {
         }
     }
 }
+*/

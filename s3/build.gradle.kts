@@ -9,17 +9,9 @@ apply {
 kotlin {
     jvm()
 
-    linuxX64 {
-        binaries {
-            staticLib()
-        }
-    }
+    linuxX64()
 
-    linuxArm32Hfp {
-        binaries {
-            staticLib()
-        }
-    }
+    linuxArm32Hfp()
 
 //    linuxArm64 {
 //        binaries {
@@ -27,23 +19,9 @@ kotlin {
 //        }
 //    }
 
-    mingwX64 {
-        binaries {
-            staticLib()
-        }
-    }
-
-    mingwX86 {
-        binaries {
-            staticLib()
-        }
-    }
-
-    macosX64 {
-        binaries {
-            framework()
-        }
-    }
+    mingwX64()
+    mingwX86()
+    macosX64()
 
     sourceSets {
         val commonMain by getting {
@@ -52,6 +30,7 @@ kotlin {
                 api(project(":httpServer"))
                 api(project(":xml"))
                 api(project(":date"))
+                api(project(":collections"))
             }
         }
 
@@ -80,6 +59,7 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
                 api(project(":httpClient"))
             }
         }
