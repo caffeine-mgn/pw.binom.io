@@ -1,7 +1,7 @@
 package pw.binom.xml.sax
 
 interface SyncXmlVisitor {
-    fun start() {}
+    fun start(tagName: String) {}
     fun end() {}
     fun attribute(name: String, value: String?) {
         attributeName(name)

@@ -3,8 +3,9 @@ package pw.binom.xml.sax
 class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : SyncXmlVisitor {
 
     init {
-        if ('<' in nodeName || '>' in nodeName)
+        if ('<' in nodeName || '>' in nodeName) {
             throw IllegalArgumentException("Invalid node name \"$nodeName\"")
+        }
     }
 
     private var progress = 0
@@ -13,18 +14,19 @@ class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : S
     private var started = false
     private var endded = false
 
-    override fun start() {
-        if (progress >= START)
+    override fun start(tagName: String) {
+        if (progress >= START) {
             throw IllegalStateException("Node already started")
-        appendable.append("<").append(nodeName)
+        }
+        appendable.append("<").append(tagName)
         started = true
         progress = START
     }
 
     override fun end() {
-
-        if (progress >= END)
+        if (progress >= END) {
             throw IllegalStateException("Node \"$nodeName\" already ended")
+        }
 
         endded = true
         when (progress) {
@@ -35,11 +37,13 @@ class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : S
     }
 
     override fun attributeName(name: String) {
-        if (progress < START)
+        if (progress < START) {
             throw IllegalStateException("Node not started")
+        }
 
-        if (progress > START)
+        if (progress > START) {
             throw IllegalStateException("Can't write attribute after body")
+        }
         appendable.append(" ").append(name)
         super.attributeName(name)
     }
@@ -51,10 +55,12 @@ class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : S
     }
 
     override fun value(body: String) {
-        if (progress < START)
+        if (progress < START) {
             throw IllegalStateException("Node not started")
-        if (progress >= END)
+        }
+        if (progress >= END) {
             throw IllegalStateException("Node \"$nodeName\" already closed")
+        }
         if (progress == START) {
             progress = BODY
             appendable.append(">")
@@ -63,10 +69,12 @@ class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : S
     }
 
     override fun subNode(name: String): SyncXmlVisitor {
-        if (progress < START)
+        if (progress < START) {
             throw IllegalStateException("Node not started")
-        if (progress >= END)
+        }
+        if (progress >= END) {
             throw IllegalStateException("Node already closed")
+        }
         if (progress == START) {
             progress = BODY
             appendable.append(">")
@@ -75,10 +83,12 @@ class SyncXmlWriterVisitor(val nodeName: String, val appendable: Appendable) : S
     }
 
     override fun cdata(body: String) {
-        if (progress < START)
+        if (progress < START) {
             throw IllegalStateException("Node not started")
-        if (progress >= END)
+        }
+        if (progress >= END) {
             throw IllegalStateException("Node already closed")
+        }
         if (progress == START) {
             progress = BODY
             appendable.append(">")

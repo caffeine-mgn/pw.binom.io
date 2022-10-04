@@ -3,7 +3,7 @@ package pw.binom.xml.sax
 class SyncXmlRootWriterVisitor(val appendable: Appendable) : SyncXmlVisitor {
     private var started = false
     private var endded = false
-    override fun start() {
+    override fun start(tagName: String) {
         if (started) {
             throw IllegalStateException("Root Node already started")
         }

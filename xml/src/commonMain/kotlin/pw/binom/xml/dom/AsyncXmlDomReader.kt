@@ -84,7 +84,7 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
         fixCurrentNS()
     }
 
-    override suspend fun start() {
+    override suspend fun start(tagName: String) {
     }
 
     override suspend fun subNode(name: String): AsyncXmlVisitor {

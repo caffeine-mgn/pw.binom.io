@@ -85,14 +85,18 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
     private suspend fun readCDATA() {
         if (lexer.tokenType != TokenType.LEFT_BRACKET) TODO("lexer.tokenType=${lexer.tokenType} ${lexer.line}:${lexer.column} ${lexer.text}")
         if (!lexer.next()) TODO()
-        if (lexer.tokenType != TokenType.SYMBOL)
+        if (lexer.tokenType != TokenType.SYMBOL) {
             TODO()
-        if (lexer.text != "CDATA")
+        }
+        if (lexer.text != "CDATA") {
             TODO()
-        if (!lexer.next())
+        }
+        if (!lexer.next()) {
             TODO()
-        if (lexer.tokenType != TokenType.LEFT_BRACKET)
+        }
+        if (lexer.tokenType != TokenType.LEFT_BRACKET) {
             TODO()
+        }
         val v = visitors.peek()
         val data = StringBuilder()
         while (true) {
@@ -106,10 +110,12 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                 if (lexer.tokenType != TokenType.RIGHT_BRACKET) {
                     throw XMLSAXException("Unknown text \"${lexer.text}\" with type ${lexer.tokenType} on ${lexer.line + 1}:${lexer.column}")
                 }
-                if (!lexer.next())
+                if (!lexer.next()) {
                     TODO()
-                if (lexer.tokenType != TokenType.TAG_END)
+                }
+                if (lexer.tokenType != TokenType.TAG_END) {
                     TODO()
+                }
                 v.visitor.cdata(data.toString())
                 break
             }
@@ -171,7 +177,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
         val nodeName = readTagName()
         val subNode = visitors.peek().visitor.subNode(nodeName)
         visitors.push(Record(nodeName, subNode))
-        subNode.start()
+        subNode.start(nodeName)
 //        if (!lexer.nextSkipEmpty()) {
 //            TODO()
 //        }
@@ -212,8 +218,9 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                             if (!lexer.nextSkipEmpty()) {
                                 TODO()
                             }
-                            if (lexer.tokenType != TokenType.TAG_END)
+                            if (lexer.tokenType != TokenType.TAG_END) {
                                 TODO()
+                            }
                             subNode.end()
                             visitors.pop()
                             break
@@ -226,8 +233,9 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                 if (!lexer.nextSkipEmpty()) {
                     TODO()
                 }
-                if (lexer.tokenType != TokenType.TAG_END)
+                if (lexer.tokenType != TokenType.TAG_END) {
                     TODO()
+                }
                 subNode.end()
                 visitors.pop()
             }
@@ -250,8 +258,9 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                     readTagStart()
                 }
                 else -> {
-                    if (lexer.text.isBlank() && !t)
+                    if (lexer.text.isBlank() && !t) {
                         continue
+                    }
                     t = true
                     if (tagBodyBuilder == null) {
                         tagBodyBuilder = StringBuilder()

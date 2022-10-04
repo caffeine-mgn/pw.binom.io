@@ -19,31 +19,34 @@ private class TagWriteContext constructor(
             var prefix = prefix(ns)
             if (prefix != null) {
                 val w = writerVisitor.subNode("$prefix:$tag")
-                w.start()
+                w.start("$prefix:$tag")
 
                 val ctx = TagWriteContext(this, context, w)
-                if (func != null)
+                if (func != null) {
                     ctx.func()
+                }
                 w.end()
             } else {
                 prefix = "ns${context.prefixCount++}"
                 val w = writerVisitor.subNode("$prefix:$tag")
-                w.start()
+                w.start("$prefix:$tag")
 
                 val ctx = TagWriteContext(this, context, w)
                 ctx.prefixMap[ns] = prefix
                 w.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$prefix", ns)
-                if (func != null)
+                if (func != null) {
                     ctx.func()
+                }
                 w.end()
             }
         } else {
             val w = writerVisitor.subNode(tag)
-            w.start()
+            w.start(tag)
 
             val ctx = TagWriteContext(this, context, w)
-            if (func != null)
+            if (func != null) {
                 ctx.func()
+            }
             w.end()
         }
     }
@@ -75,10 +78,14 @@ internal class Context {
     var prefixCount = 0
 }
 
-suspend fun AsyncAppendable.writeXml(func: suspend NodeWriter.() -> Unit) {
-    val w = AsyncXmlRootWriterVisitor(this)
+suspend fun AsyncAppendable.writeXml(headerCharset: String? = null, func: suspend NodeWriter.() -> Unit) {
+    val w = if (headerCharset == null) {
+        AsyncXmlRootWriterVisitor.withoutHeader(this)
+    } else {
+        AsyncXmlRootWriterVisitor.withHeader(this, headerCharset)
+    }
     val ctx = TagWriteContext(null, Context(), w)
-    w.start()
+    w.start("")
     func(ctx)
     w.end()
 }

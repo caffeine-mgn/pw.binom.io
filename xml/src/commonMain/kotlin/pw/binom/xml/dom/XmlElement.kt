@@ -46,14 +46,25 @@ class XmlElement(var tag: String, var nameSpace: String?) {
     operator fun get(index: Int) = childs[index]
 
     private fun accept(prefix: HashMap<String, String>, visitor: SyncXmlVisitor) {
-        visitor.start()
+        var tagName = tag
+        val nameSpace = nameSpace
+        if (nameSpace != null) {
+            var p = prefix[nameSpace]
+            if (p == null) {
+                p = "ns${prefix.size + 1}"
+                tagName = "$p:$tagName"
+                visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace)
+                prefix[nameSpace] = p
+            }
+        }
+        visitor.start(tagName)
         attributes.forEach {
             val key = it.key.nameSpace?.let { ns ->
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
                     visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
-                    prefix[ns] = p
+                    prefix[ns] = p!!
                 }
                 "$p:${it.key.name}"
             } ?: it.key.name
@@ -88,7 +99,6 @@ class XmlElement(var tag: String, var nameSpace: String?) {
         }
 
         privateChilds.forEach {
-
             val key = it.nameSpace?.let { ns ->
                 var p = prefix[ns]
                 if (p == null) {
@@ -105,14 +115,30 @@ class XmlElement(var tag: String, var nameSpace: String?) {
     }
 
     private suspend fun accept(prefix: HashMap<String, String>, visitor: AsyncXmlVisitor) {
-        visitor.start()
+        var tagName = tag
+        val nameSpace = nameSpace
+        var started = false
+        if (nameSpace != null) {
+            var p = prefix[nameSpace]
+            if (p == null) {
+                p = "ns${prefix.size + 1}"
+                tagName = "$p:$tagName"
+                visitor.start(tagName)
+                started = true
+                visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace)
+                prefix[nameSpace] = p
+            }
+        }
+        if (!started) {
+            visitor.start(tagName)
+        }
         attributes.forEach {
             val key = it.key.nameSpace?.let { ns ->
                 var p = prefix[ns]
                 if (p == null) {
                     p = "ns${prefix.size + 1}"
                     visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", ns)
-                    prefix[ns] = p
+                    prefix[ns] = p!!
                 }
                 "$p:${it.key.name}"
             } ?: it.key.name
@@ -147,7 +173,6 @@ class XmlElement(var tag: String, var nameSpace: String?) {
         }
 
         privateChilds.forEach {
-
             val key = it.nameSpace?.let { ns ->
                 var p = prefix[ns]
                 if (p == null) {

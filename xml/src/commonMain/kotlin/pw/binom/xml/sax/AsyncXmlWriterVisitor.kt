@@ -35,8 +35,9 @@ internal suspend fun String.asyncEncode(appendable: AsyncAppendable) {
 class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendable) : AsyncXmlVisitor {
 
     init {
-        if ('<' in nodeName || '>' in nodeName)
+        if ('<' in nodeName || '>' in nodeName) {
             throw IllegalArgumentException("Invalid node name \"$nodeName\"")
+        }
     }
 
     private var progress = 0
@@ -45,7 +46,7 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
     private var started = false
     private var endded = false
 
-    override suspend fun start() {
+    override suspend fun start(tagName: String) {
         if (progress >= START) {
             throw IllegalStateException("Node already started")
         }
@@ -63,9 +64,9 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
     }
 
     override suspend fun end() {
-
-        if (progress >= END)
+        if (progress >= END) {
             throw IllegalStateException("Node \"$nodeName\" already ended")
+        }
 
         endded = true
         when (progress) {

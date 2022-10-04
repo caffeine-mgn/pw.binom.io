@@ -1,5 +1,6 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("kotlinx-serialization")
 }
 
 apply {
@@ -31,6 +32,7 @@ kotlin {
                 api(project(":xml"))
                 api(project(":date"))
                 api(project(":collections"))
+                api(project(":xml:xml-serialization"))
             }
         }
 

@@ -74,7 +74,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
         resp.status = 207
         resp.headers.contentType = "application/xml; charset=UTF-8"
         resp.startWriteText().use {
-            it.writeXml {
+            it.writeXml("UTF-8") {
                 node(MULTISTATUS_TAG, DAV_NS) {
                     entities.forEach { e ->
                         node("response", DAV_NS) {

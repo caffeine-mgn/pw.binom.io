@@ -23,4 +23,17 @@ class ParserTest {
         assertEquals("http://binom.pw", node.childs[0].attributes.entries.first().key.nameSpace)
         assertEquals("http://binom.pw", node.childs[0].nameSpace)
     }
+
+    @Test
+    fun test2() = runTest {
+        val txt =
+            """<ns1:Response ns1:name="Anton" xmlns:ns1="http://binom.pw"><value><ns1:TestData ns1:value="OLOLO"/></value></ns1:Response>"""
+        val node = txt.xmlTree()!!
+        val root = node
+
+        println("->$node")
+        assertEquals("Response", root.tag)
+        assertEquals("http://binom.pw", root.attributes.entries.first().key.nameSpace)
+        assertEquals("http://binom.pw", root.nameSpace)
+    }
 }

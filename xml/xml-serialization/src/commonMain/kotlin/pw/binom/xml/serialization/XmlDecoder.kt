@@ -1,6 +1,7 @@
 package pw.binom.xml.serialization
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
@@ -9,7 +10,7 @@ import pw.binom.xml.dom.XmlElement
 
 class XmlDecoder(val root: XmlElement, override val serializersModule: SerializersModule) : Decoder {
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        return XmlObjectDecoder(root = root, serializersModule = serializersModule)
+        return XmlObjectDecoder(root = root, serializersModule = serializersModule, descriptor = descriptor)
     }
 
     override fun decodeBoolean(): Boolean {
@@ -63,7 +64,5 @@ class XmlDecoder(val root: XmlElement, override val serializersModule: Serialize
         TODO("Not yet implemented")
     }
 
-    override fun decodeString(): String {
-        TODO("Not yet implemented")
-    }
+    override fun decodeString(): String = root.body ?: throw SerializationException("Tag ${root.tag} not have any body")
 }
