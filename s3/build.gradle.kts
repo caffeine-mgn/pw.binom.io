@@ -25,7 +25,7 @@ kotlin {
 //    }
 
     mingwX64()
-    mingwX86()
+//    mingwX86()
     macosX64()
 
     sourceSets {
