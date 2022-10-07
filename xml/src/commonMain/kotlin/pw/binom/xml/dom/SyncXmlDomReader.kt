@@ -101,14 +101,28 @@ class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, ta
     }
 }
 
-fun Reader.xmlTree(): XmlElement? {
+fun Reader.xmlTree(withHeader: Boolean = false): XmlElement {
     return a {
         val r = AsyncXmlDomReader("")
         AsyncXmlReaderVisitor(this.asAsync()).accept(r)
-        val element = r.rootNode.childs.getOrNull(0)
-        element?.parent = null
+        val element = r.rootNode.childs.get(0)
+        element.parent = null
         element
     }
 }
 
-fun String.xmlTree() = StringReader(this).xmlTree()
+// <?xml version="1.0" encoding="UTF-8"?>
+fun String.xmlTree(withHeader: Boolean = false): XmlElement {
+    var str = this
+    if (withHeader) {
+        if (!startsWith("<?xml")) {
+            throw IllegalArgumentException("Xml not starts with header")
+        }
+        val p = indexOf("?>")
+        if (p == -1) {
+            throw IllegalArgumentException("Invalid Xml: can't find end of header")
+        }
+        str = substring(p + 2)
+    }
+    return StringReader(str).xmlTree(withHeader = false)
+}

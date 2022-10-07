@@ -3,6 +3,8 @@ package pw.binom.s3.v4
 import pw.binom.date.DateTime
 import pw.binom.io.AsyncOutput
 import pw.binom.io.http.Headers
+import pw.binom.io.http.range.Range
+import pw.binom.io.http.range.toHeader
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.HttpResponse
 import pw.binom.io.use
@@ -18,6 +20,7 @@ internal suspend fun s3Call(
     regin: String = "ru-central1",
     accessKey: String = "rGIU8vPsmnOx4Prv",
     secretAccessKey: String = "bT6YEZsstWsjXh8fJzZdbXvdFZGp3IbR",
+    range: List<Range> = emptyList(),
     payload: (suspend (AsyncOutput) -> Unit)? = null,
 ): HttpResponse {
     client.connect(method = method, uri = url).use { connection ->
@@ -39,7 +42,7 @@ internal suspend fun s3Call(
             headers = specialHeaders,
             contentSha256 = payloadSha256,
         )
-        println("---===canonicalRequest===---\n$canonicalRequest\n---===canonicalRequest===---")
+//        println("---===canonicalRequest===---\n$canonicalRequest\n---===canonicalRequest===---")
         val stringToSign = buildStringToSign(
             date = date,
             regin = regin,
@@ -64,9 +67,13 @@ internal suspend fun s3Call(
         specialHeaders.forEach { (key, value) ->
             connection.headers[key] = value
         }
-        if (payload != null) {
-            connection.writeData { payload(it) }
+        if (range.isNotEmpty()) {
+            connection.headers[Headers.RANGE] = range.toHeader()
         }
-        return connection.getResponse()
+        return if (payload != null) {
+            connection.writeData { payload(it) }
+        } else {
+            connection.getResponse()
+        }
     }
 }

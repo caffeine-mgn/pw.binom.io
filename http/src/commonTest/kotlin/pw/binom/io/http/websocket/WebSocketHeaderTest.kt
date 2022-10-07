@@ -1,7 +1,10 @@
 package pw.binom.io.http.websocket
 
 import kotlinx.coroutines.test.runTest
-import pw.binom.*
+import pw.binom.asyncInput
+import pw.binom.asyncOutput
+import pw.binom.io.ByteBuffer
+import pw.binom.io.forEachIndexed
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -15,7 +18,7 @@ class WebSocketHeaderTest {
         WebSocketHeader.read(data.asyncInput(), header)
         header.apply {
             assertEquals(2, opcode)
-            assertEquals(130uL, length)
+            assertEquals(130L, length)
             assertTrue(header.maskFlag)
             assertEquals(-2008212092, mask)
             assertTrue(finishFlag)
@@ -28,7 +31,7 @@ class WebSocketHeaderTest {
         val header = WebSocketHeader()
         header.apply {
             opcode = 2
-            length = 130uL
+            length = 130L
             maskFlag = true
             mask = -2008212092
             finishFlag = true
@@ -36,7 +39,7 @@ class WebSocketHeaderTest {
         val output = ByteBuffer.alloc(10)
         WebSocketHeader.write(output.asyncOutput(), header)
         output.flip()
-        assertEquals(8, output.remaining123)
+        assertEquals(8, output.remaining)
         output.forEachIndexed { i, byte ->
             assertEquals(rightData[i].toByte(), byte)
         }

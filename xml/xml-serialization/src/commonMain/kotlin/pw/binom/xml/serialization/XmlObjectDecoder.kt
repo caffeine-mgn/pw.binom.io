@@ -52,7 +52,25 @@ class XmlObjectDecoder(
         if (cursor + 1 == descriptor.elementsCount) {
             return CompositeDecoder.DECODE_DONE
         }
-        return ++cursor
+        while (true) {
+            ++cursor
+            if (cursor >= descriptor.elementsCount) {
+                return CompositeDecoder.DECODE_DONE
+            }
+            if (descriptor.isElementOptional(cursor)) {
+                val tag = descriptor.xmlName(cursor)
+                val ns = descriptor.xmlNamespace(cursor)
+                val optionalElement =
+                    root.childs.find { it.tag == tag && it.nameSpace.inArray(ns) }
+                if (optionalElement == null) {
+                    continue
+                } else {
+                    break
+                }
+            }
+            break
+        }
+        return cursor
     }
 
     override fun decodeBoolean(): Boolean = when (val str = decodeString()) {
@@ -127,22 +145,24 @@ class XmlObjectDecoder(
             val wrapper = descriptor.getElementAnnotation<XmlWrapper>(cursor)?.tag
             val wrapperNs = descriptor.getElementAnnotation<XmlWrapperNamespace>(cursor)?.ns
             if (wrapper != null) {
-                from =
-                    from.childs.find { it.tag == wrapper && it.nameSpace == wrapperNs } ?: throw SerializationException(
+                from = from.childs.find { it.tag == wrapper && it.nameSpace.inArray(wrapperNs) }
+                    ?: throw SerializationException(
                         "Wrapper not found"
                     )
             }
+            val elementDescription = deserializer.descriptor.getElementDescriptor(0)
             return deserializer.deserialize(
                 XmlListDecoder(
                     storage = from,
                     serializersModule = serializersModule,
-                    tagName = name,
-                    nameSpace = namespace,
+                    tagName = elementDescription.xmlName(),
+                    nameSpace = elementDescription.xmlNamespace(),
                 )
             )
         }
-        val el = root.childs.find { it.tag == name && it.nameSpace == namespace }
-            ?: throw SerializationException("Not found ${descriptor.serialName}::${descriptor.getElementName(cursor)}")
+        val el =
+            root.childs.find { it.tag == name && it.nameSpace.inArray(namespace) }
+                ?: throw SerializationException("Not found ${descriptor.serialName}::${descriptor.getElementName(cursor)} (tag $name, ${root.childs.map { it.tag }})")
         return deserializer.deserialize(XmlDecoder(el, serializersModule))
     }
 
@@ -192,9 +212,9 @@ class XmlObjectDecoder(
                 "Can't find element ${descriptor.serialName}::${descriptor.getElementName(cursor)}"
             )
         return if (isWrapped) {
-            root.childs.find { it.tag == name && it.nameSpace == ns }?.body ?: genErr()
+            root.childs.find { it.tag == name && it.nameSpace.inArray(ns) }?.body ?: genErr()
         } else {
-            root.attributes.entries.find { it.key.name == name && it.key.nameSpace == ns }?.value ?: genErr()
+            root.attributes.entries.find { it.key.name == name && it.key.nameSpace.inArray(ns) }?.value ?: genErr()
         }
     }
 
@@ -212,7 +232,4 @@ class XmlObjectDecoder(
 //            root.attributes.entries.find { it.key.name == name && it.key.nameSpace == ns }?.value ?: genErr()
 //        }
 //    }
-
-    override fun endStructure(descriptor: SerialDescriptor) {
-    }
 }

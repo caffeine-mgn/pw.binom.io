@@ -28,7 +28,7 @@ class Xml(
         val v = AsyncXmlRootWriterVisitor.withoutHeader(sb.asAsync())
 //        val v = SyncXmlRootWriterVisitor(sb)
         val b = encodeToXmlElement(serializer, value)
-        b.nameSpace = serializer.descriptor.xmlNamespace()
+        b.nameSpace = serializer.descriptor.xmlNamespace()?.getOrNull(0)
         val root = XmlElement()
         b.parent = root
         a {
@@ -39,18 +39,24 @@ class Xml(
 
     fun <T : Any> decodeFromXmlElement(serializer: KSerializer<T>, xmlElement: XmlElement): T {
         if (xmlElement.tag != serializer.descriptor.xmlName()) {
-            throw SerializationException("Can't decode to ${serializer.descriptor.serialName}: invalid xml tag ${xmlElement.tag}")
+            throw SerializationException("Can't decode to ${serializer.descriptor.serialName}: invalid xml tag \"${xmlElement.tag}\"")
         }
-        if (xmlElement.nameSpace != serializer.descriptor.xmlNamespace()) {
-            val expected = serializer.descriptor.xmlNamespace()?.let { "\"$it\"" } ?: "none"
+        if (!xmlElement.nameSpace.inArray(serializer.descriptor.xmlNamespace())) {
+            val expected = serializer.descriptor.xmlNamespace()
             val actual = xmlElement.nameSpace?.let { "\"$it\"" } ?: "none"
+            val expectedStr = when {
+                expected == null || expected.isEmpty() -> "none"
+                expected.size == 1 && expected[0].isEmpty() -> "empty"
+                expected.size == 1 -> "\"${expected[0]}\""
+                else -> "one of ${expected.map { if (it.isEmpty()) "empty" else "\"$it\"" }.joinToString(", ")}"
+            }
             throw SerializationException(
-                "Can't decode to ${serializer.descriptor.serialName}: Expected $expected, actual $actual"
+                "Can't decode to ${serializer.descriptor.serialName}: Expected $expectedStr, actual $actual"
             )
         }
         return serializer.deserialize(XmlDecoder(xmlElement, serializersModule))
     }
 
     fun <T : Any> decodeFromString(serializer: KSerializer<T>, xml: String): T =
-        decodeFromXmlElement(serializer, xml.xmlTree()!!)
+        decodeFromXmlElement(serializer, xml.xmlTree())
 }

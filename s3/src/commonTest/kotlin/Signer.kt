@@ -15,16 +15,15 @@ import pw.binom.date.DateTime
 import pw.binom.date.format.toDatePattern
 import pw.binom.date.iso8601
 import pw.binom.date.parseIso8601Date
-import pw.binom.io.ByteBuffer
-import pw.binom.io.UTF8
+import pw.binom.io.*
 import pw.binom.io.http.Headers
+import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
-import pw.binom.io.readText
-import pw.binom.io.use
 import pw.binom.net.URI
 import pw.binom.net.toURI
 import pw.binom.net.toURL
+import pw.binom.s3.S3ClientApi
 import pw.binom.s3.v4.s3Call
 import pw.binom.xml.dom.xmlTree
 import pw.binom.xml.serialization.Xml
@@ -211,46 +210,46 @@ data class Request(val method: String, val url: URI, val headers: Headers)
 const val AWS_NS = "http://s3.amazonaws.com/doc/2006-03-01/"
 
 @Serializable
-@XmlNamespace(AWS_NS)
+@XmlNamespace([AWS_NS])
 data class Content(
     @XmlNode
     @XmlName("Key")
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     val key: String,
 
     @XmlNode
     @XmlName("LastModified")
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     @Serializable(IsoDateS::class)
     val lastModified: DateTime,
 
     @XmlNode
     @XmlName("ETag")
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     val eTag: String,
 
     @XmlNode
     @XmlName("Size")
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     val size: Long,
 
     @XmlNode
     @XmlName("Owner")
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     val owner: Owner,
 )
 
 @Serializable
-@XmlNamespace(AWS_NS)
+@XmlNamespace([AWS_NS])
 data class Owner(
     @XmlNode
     @XmlName("ID")
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     val id: String,
 
     @XmlNode
     @XmlName("DisplayName")
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     val displayName: String,
 
 )
@@ -267,51 +266,41 @@ object IsoDateS : KSerializer<DateTime> {
 }
 
 @Serializable
-@XmlNamespace(AWS_NS)
+@XmlNamespace([AWS_NS])
 data class ListBucketResult(
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     @XmlName("Name")
     @XmlNode
     val name: String,
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     @XmlName("Prefix")
     @XmlNode
     val prefix: String,
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     @XmlName("Marker")
     @XmlNode
     val marker: String,
 
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     @XmlName("NextMarker")
     @XmlNode
     val nextMarker: String? = null,
-    @XmlNamespace(AWS_NS)
+    @XmlNamespace([AWS_NS])
     @XmlName("MaxKeys")
     @XmlNode
     val maxKeys: Long,
-    @XmlNamespace(AWS_NS)
-    @XmlName("Delimiter")
-    @XmlNode
+    @XmlNamespace([AWS_NS])
+    @XmlName("Delimiter") @XmlNode
     val delimiter: String,
-    @XmlNamespace(AWS_NS)
-    @XmlName("IsTruncated")
-    @XmlNode
+    @XmlNamespace([AWS_NS]) @XmlName("IsTruncated") @XmlNode
     val isTruncated: Boolean,
-    @XmlNamespace(AWS_NS)
-    @XmlName("Contents")
+    @XmlNamespace([AWS_NS]) @XmlName("Contents")
     val contents: List<Content>,
 )
 
-class OOOO {
+object S3Client
 
-    @Test
-    fun aa() {
-        val txt =
-            """<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>02d6176db174dc93cb1b899f7c6078f08654445fe8cf1b6ce98d8855f66bdbf4</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>test</Name><CreationDate>2022-10-02T23:44:16.322Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>"""
-        val tree = txt.xmlTree()!!
-        println("->${tree.tag}")
-    }
+class OOOO {
 
 //    @Test
 //    fun test2() = runTest {
@@ -334,18 +323,59 @@ class OOOO {
 //    }
 
     @Test
+    fun test3() = runTest {
+        val url = "http://127.0.0.1:9000".toURL()
+        val regin = "ru-central1"
+        val bucket = "test"
+        val accessKey = "rGIU8vPsmnOx4Prv"
+        val secretAccessKey = "bT6YEZsstWsjXh8fJzZdbXvdFZGp3IbR"
+        HttpClient.create().use { client ->
+            S3ClientApi.listObjectFlow(
+                client = client,
+                url = url,
+                accessKey = accessKey,
+                secretAccessKey = secretAccessKey,
+                regin = regin,
+                bucket = bucket,
+                fetchOwner = true,
+                prefix = null,
+                startAfter = null,
+                xAmzExpectedBucketOwner = null,
+                xAmzRequestPayer = null,
+            ).collect {
+                val b = S3ClientApi.head(
+                    client = client,
+                    url = url,
+                    accessKey = accessKey,
+                    secretAccessKey = secretAccessKey,
+                    regin = regin,
+                    bucket = bucket,
+                    key = it.key,
+                )
+                println("->${it.key} exist=$b")
+            }
+
+            val dd: String? = S3ClientApi.get(
+                client = client,
+                url = url,
+                accessKey = accessKey,
+                secretAccessKey = secretAccessKey,
+                regin = regin,
+                bucket = bucket,
+                key = "test",
+                range = listOf(Range.Last("bytes", 7))
+            ) { it ->
+                it ?: return@get null
+                it.input.bufferedReader().readText()
+            }
+            println("Test: \"$dd\"")
+        }
+    }
+
+    @Test
     fun test() = runTest {
         println("OLOLO")
         HttpClient.create().use { client ->
-//            s3Call(
-//                client = client,
-//                method = "GET",
-//                url = "http://127.0.0.1:9000/".toURL(),
-//            ).use { r ->
-//                println("r.responseCode=${r.responseCode}")
-//                println("text: ${r.readText().readText()}")
-//            }
-
             s3Call(
                 client = client,
                 method = "GET",

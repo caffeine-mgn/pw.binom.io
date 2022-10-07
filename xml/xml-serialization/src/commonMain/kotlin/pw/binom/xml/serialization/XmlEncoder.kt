@@ -16,7 +16,7 @@ class XmlEncoder(root: XmlElement?, val classDiscriminator: String, override val
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
         val el = if (root == null) {
             val xmlName = descriptor.xmlName()
-            val xmlNamespace = descriptor.xmlNamespace()
+            val xmlNamespace = descriptor.xmlNamespace()?.getOrNull(0)
             val tag = XmlElement(
                 tag = xmlName,
                 nameSpace = xmlNamespace,

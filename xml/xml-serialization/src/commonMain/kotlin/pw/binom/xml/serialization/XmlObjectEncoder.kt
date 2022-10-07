@@ -76,7 +76,7 @@ class XmlObjectEncoder(
     ) {
         val el = XmlElement(
             tag = descriptor.xmlName(index),
-            nameSpace = descriptor.xmlNamespace(index)
+            nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0)
         )
 
         if (descriptor.getElementDescriptor(index).kind is StructureKind.LIST) {
@@ -96,14 +96,14 @@ class XmlObjectEncoder(
             if (wrapper != null) {
                 store = XmlElement(
                     tag = wrapper,
-                    nameSpace = wrapperNs
+                    nameSpace = wrapperNs?.getOrNull(0)
                 )
                 store.parent = body
             }
             val encoder = XmlListEncoder(
                 store = store,
                 tagName = descriptor.xmlName(index),
-                ns = descriptor.xmlNamespace(index),
+                ns = descriptor.xmlNamespace(index)?.getOrNull(0),
                 serializersModule = serializersModule,
                 classDiscriminator = classDiscriminator,
             )
@@ -125,14 +125,14 @@ class XmlObjectEncoder(
             if (wrapper != null) {
                 val e = XmlElement(
                     tag = descriptor.xmlName(index),
-                    nameSpace = descriptor.xmlNamespace(index)
+                    nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0)
                 )
                 e.body = value
                 e.parent = body
             } else {
                 body.attributes[
                     Attribute(
-                        nameSpace = descriptor.xmlNamespace(index),
+                        nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0),
                         name = descriptor.xmlName(index)
                     )
                 ] = value

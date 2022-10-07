@@ -6,4 +6,4 @@ import kotlinx.serialization.SerialInfo
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.SOURCE)
 @Repeatable
-annotation class XmlWrapperNamespace(val ns: String)
+annotation class XmlWrapperNamespace(val ns: Array<String>)
