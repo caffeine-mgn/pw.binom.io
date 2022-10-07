@@ -59,7 +59,7 @@ class S3IntegrationTest {
                 accessKey = accessKey,
                 secretAccessKey = secretAccessKey,
             )
-            list()
+            list().list.all { it.name != bucketName }
             S3ClientApi.createBucket(
                 client = client,
                 locationConstraint = null,
@@ -69,7 +69,7 @@ class S3IntegrationTest {
                 accessKey = accessKey,
                 secretAccessKey = secretAccessKey,
             )
-            list()
+            list().list.any { it.name == bucketName }
         }
     }
 }

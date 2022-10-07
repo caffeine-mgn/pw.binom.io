@@ -53,7 +53,6 @@ class DefaultHttpRequest constructor(
         } else {
             uri.request
         }
-        println("uri.request=${uri.request}")
         channel.writer.append(method).append(" ").append(request).append(" ").append("HTTP/1.1${Utils.CRLF}")
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)

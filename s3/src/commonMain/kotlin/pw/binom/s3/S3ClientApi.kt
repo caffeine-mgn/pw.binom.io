@@ -51,8 +51,7 @@ object S3ClientApi {
                 it.append(payload)
             }
         }.use {
-            println("it.responseCode=${it.responseCode}")
-            val resp = if (it.responseCode == 200) {
+            if (it.responseCode == 200) {
                 null
             } else {
                 val resp = it.readText().use { it.readText() }
@@ -272,7 +271,7 @@ object S3ClientApi {
         }
     }
 
-    suspend fun listBuckets(client: HttpClient, regin: String, url: URL, accessKey: String, secretAccessKey: String) {
+    suspend fun listBuckets(client: HttpClient, regin: String, url: URL, accessKey: String, secretAccessKey: String) =
         s3Call(
             client = client,
             method = "GET",
@@ -281,13 +280,16 @@ object S3ClientApi {
             accessKey = accessKey,
             secretAccessKey = secretAccessKey,
         ).use {
-            println("it.responseCode=${it.responseCode}")
             val txt = it.readText().use {
                 it.readText()
             }
-            println("->$txt")
-            val r = xml.decodeFromXmlElement(ListAllMyBucketsResult.serializer(), txt.xmlTree(true))
-            println(r)
+            val result = xml.decodeFromXmlElement(
+                serializer = ListAllMyBucketsResult.serializer(),
+                xmlElement = txt.xmlTree(true),
+            )
+            Buckets(
+                owner = result.owner,
+                list = result.buckets
+            )
         }
-    }
 }
