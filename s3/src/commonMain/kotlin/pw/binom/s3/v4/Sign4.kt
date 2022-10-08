@@ -2,6 +2,7 @@ package pw.binom.s3.v4
 
 import pw.binom.date.DateTime
 import pw.binom.io.AsyncOutput
+import pw.binom.io.UTF8
 import pw.binom.io.http.Headers
 import pw.binom.io.http.range.Range
 import pw.binom.io.http.range.toHeader
@@ -16,6 +17,7 @@ internal suspend fun s3Call(
     url: URL,
     payloadSha256: ByteArray? = null,
     overrideHost: String? = null,
+    xAmzCopySource: String? = null,
     service: String = "s3",
     regin: String = "ru-central1",
     accessKey: String = "rGIU8vPsmnOx4Prv",
@@ -26,11 +28,14 @@ internal suspend fun s3Call(
     client.connect(method = method, uri = url).use { connection ->
         val host = overrideHost ?: url.host
         val date = DateTime.now
-        val specialHeaders: List<Pair<String, String>> = listOf(
-            "host" to host,
-            "x-amz-content-sha256" to (payloadSha256?.toHex() ?: UNSIGNED_PAYLOAD),
-            "x-amz-date" to date.awsDateTime(),
-        ).sortedBy { it.first }
+        val specialHeaders: List<Pair<String, String>> = buildList {
+            add("host" to host)
+            add("x-amz-content-sha256" to (payloadSha256?.toHex() ?: UNSIGNED_PAYLOAD))
+            if (xAmzCopySource != null) {
+                add("x-amz-copy-source" to UTF8.urlEncode(xAmzCopySource))
+            }
+            add("x-amz-date" to date.awsDateTime())
+        }.sortedBy { it.first }
         val query = url.query?.let {
             it.toMap().entries.sortedBy { it.key }.map { if (it.value == null) it.key else "${it.key}=${it.value}" }
                 .joinToString("&")

@@ -1,5 +1,9 @@
 package pw.binom.io.http.range
 
+import pw.binom.io.http.Headers
+
+fun Headers.getRange(): List<Range>? = this[Headers.RANGE]?.firstOrNull()?.let { Range.parseRange(it) }
+
 fun List<Range>.toHeader(): String {
     if (isEmpty()) {
         throw IllegalArgumentException("Range list is empty")

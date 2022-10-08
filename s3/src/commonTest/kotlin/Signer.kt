@@ -343,7 +343,7 @@ class OOOO {
                 xAmzExpectedBucketOwner = null,
                 xAmzRequestPayer = null,
             ).collect {
-                val b = S3ClientApi.head(
+                val b = S3ClientApi.headObject(
                     client = client,
                     url = url,
                     accessKey = accessKey,
@@ -355,7 +355,7 @@ class OOOO {
                 println("->${it.key} exist=$b")
             }
 
-            val dd: String? = S3ClientApi.get(
+            val dd: String? = S3ClientApi.getObject(
                 client = client,
                 url = url,
                 accessKey = accessKey,
@@ -365,7 +365,7 @@ class OOOO {
                 key = "test",
                 range = listOf(Range.Last("bytes", 7))
             ) { it ->
-                it ?: return@get null
+                it ?: return@getObject null
                 it.input.bufferedReader().readText()
             }
             println("Test: \"$dd\"")

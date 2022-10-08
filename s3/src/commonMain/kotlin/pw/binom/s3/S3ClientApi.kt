@@ -4,9 +4,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.date.DateTime
 import pw.binom.date.parseRfc822Date
+import pw.binom.io.AsyncOutput
 import pw.binom.io.bufferedWriter
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.HttpResponse
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.net.Query
@@ -25,6 +27,20 @@ private val dd = SerializersModule {
 private val xml = Xml(serializersModule = dd)
 
 object S3ClientApi {
+
+    private suspend fun HttpResponse.throwErrorText(code: Int): Nothing {
+        val resp = readText().use { it.readText() }
+        val element by lazy { resp.xmlTree(true) }
+        if (resp.isEmpty()) {
+            throw S3Exception("Unknown response $code")
+        } else {
+            val error = xml.decodeFromXmlElement(Error.serializer(), element)
+            throw S3ErrorException(
+                code = error.key,
+                description = error.message,
+            )
+        }
+    }
 
     suspend fun createBucket(
         client: HttpClient,
@@ -51,26 +67,86 @@ object S3ClientApi {
                 it.append(payload)
             }
         }.use {
-            if (it.responseCode == 200) {
-                null
-            } else {
-                val resp = it.readText().use { it.readText() }
-                val element by lazy { resp.xmlTree(true) }
-                when (val code = it.responseCode) {
-                    409 -> {
-                        if (resp.isEmpty()) {
-                            throw S3Exception()
-                        } else {
-                            val error = xml.decodeFromXmlElement(Error.serializer(), element)
-                            throw S3ErrorException(
-                                code = error.key,
-                                description = error.message,
-                            )
-                        }
-                    }
+            when (val code = it.responseCode) {
+                200 -> null
+                else -> it.throwErrorText(code)
+            }
+        }
+    }
 
-                    else -> throw S3Exception("Invalid http response: ${it.responseCode}")
-                }
+    suspend fun deleteObject(
+        client: HttpClient,
+        regin: String,
+        bucket: String,
+        key: String,
+        url: URL,
+        accessKey: String,
+        secretAccessKey: String,
+    ) = s3Call(
+        client = client,
+        method = "DELETE",
+        url = url.copy(path = url.path.append(bucket).append(key)),
+        regin = regin,
+        accessKey = accessKey,
+        secretAccessKey = secretAccessKey,
+    ).use {
+        when (val code = it.responseCode) {
+            200 -> true
+            404 -> false
+            else -> it.throwErrorText(code)
+        }
+    }
+
+    suspend fun putObject(
+        client: HttpClient,
+        regin: String,
+        bucket: String,
+        key: String,
+        url: URL,
+        accessKey: String,
+        secretAccessKey: String,
+        payload: suspend (AsyncOutput) -> Unit,
+    ) {
+        s3Call(
+            client = client,
+            method = "PUT",
+            url = url.copy(path = url.path.append(bucket).append(key)),
+            regin = regin,
+            accessKey = accessKey,
+            secretAccessKey = secretAccessKey,
+        ) { output ->
+            payload(output)
+        }.use {
+            when (val code = it.responseCode) {
+                200 -> null
+                else -> it.throwErrorText(code)
+            }
+        }
+    }
+
+    suspend fun copyObject(
+        client: HttpClient,
+        regin: String,
+        sourceBucket: String,
+        sourceKey: String,
+        destinationBucket: String,
+        destinationKey: String,
+        url: URL,
+        accessKey: String,
+        secretAccessKey: String,
+    ) {
+        s3Call(
+            client = client,
+            method = "PUT",
+            url = url.copy(path = url.path.append(destinationBucket).append(destinationKey)),
+            regin = regin,
+            accessKey = accessKey,
+            secretAccessKey = secretAccessKey,
+            xAmzCopySource = "$sourceBucket/$sourceKey"
+        ).use {
+            when (val code = it.responseCode) {
+                200 -> null
+                else -> it.throwErrorText(code)
             }
         }
     }
@@ -168,7 +244,7 @@ object S3ClientApi {
         }
     }
 
-    suspend fun head(
+    suspend fun headObject(
         client: HttpClient,
         url: URL,
         regin: String,
@@ -200,21 +276,22 @@ object S3ClientApi {
             val type = it.headers.contentType
             val eTag = it.headers["ETag"]?.firstOrNull()
             val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
-            if (it.responseCode == 200) {
-                ContentHead(
+            when (val code = it.responseCode) {
+                200 -> ContentHead(
                     region = region,
                     length = length,
                     contentType = type,
                     eTag = eTag,
                     lastModify = lastModify,
                 )
-            } else {
-                null
+
+                404 -> null
+                else -> it.throwErrorText(code)
             }
         }
     }
 
-    suspend fun <T> get(
+    suspend fun <T> getObject(
         client: HttpClient,
         url: URL,
         regin: String,
@@ -244,29 +321,32 @@ object S3ClientApi {
             range = range,
             secretAccessKey = secretAccessKey,
         ).use {
-            if (it.responseCode == 200) {
-                val region = it.headers["X-Amz-Bucket-Region"]?.firstOrNull()
-                val length = it.headers.contentLength?.toLong()
-                val type = it.headers.contentType
-                val eTag = it.headers["ETag"]?.firstOrNull()
-                val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
-                val data = ContentHead(
-                    region = region,
-                    length = length,
-                    contentType = type,
-                    eTag = eTag,
-                    lastModify = lastModify,
-                )
-                it.readData().use { input ->
-                    consumer(
-                        InputFile(
-                            data = data,
-                            input = input
-                        )
+            when (val code = it.responseCode) {
+                200, 206 -> {
+                    val region = it.headers["X-Amz-Bucket-Region"]?.firstOrNull()
+                    val length = it.headers.contentLength?.toLong()
+                    val type = it.headers.contentType
+                    val eTag = it.headers["ETag"]?.firstOrNull()
+                    val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
+                    val data = ContentHead(
+                        region = region,
+                        length = length,
+                        contentType = type,
+                        eTag = eTag,
+                        lastModify = lastModify,
                     )
+                    it.readData().use { input ->
+                        consumer(
+                            InputFile(
+                                data = data,
+                                input = input
+                            )
+                        )
+                    }
                 }
-            } else {
-                consumer(null)
+
+                404 -> consumer(null)
+                else -> it.throwErrorText(code)
             }
         }
     }
@@ -280,16 +360,22 @@ object S3ClientApi {
             accessKey = accessKey,
             secretAccessKey = secretAccessKey,
         ).use {
-            val txt = it.readText().use {
-                it.readText()
+            when (val code = it.responseCode) {
+                200 -> {
+                    val txt = it.readText().use {
+                        it.readText()
+                    }
+                    val result = xml.decodeFromXmlElement(
+                        serializer = ListAllMyBucketsResult.serializer(),
+                        xmlElement = txt.xmlTree(true),
+                    )
+                    Buckets(
+                        owner = result.owner,
+                        list = result.buckets
+                    )
+                }
+
+                else -> it.throwErrorText(code)
             }
-            val result = xml.decodeFromXmlElement(
-                serializer = ListAllMyBucketsResult.serializer(),
-                xmlElement = txt.xmlTree(true),
-            )
-            Buckets(
-                owner = result.owner,
-                list = result.buckets
-            )
         }
 }
