@@ -26,7 +26,6 @@ open class AsyncInflateInput(
     }
 
     private suspend fun full() {
-
 //        if (eof) {
 //            return
 //        }
@@ -69,8 +68,9 @@ open class AsyncInflateInput(
                     break
                 }
                 val r = inflater.inflate(buffer, dest)
-                if (r == 0)
+                if (r == 0) {
                     break
+                }
             }
             return l - dest.remaining
         } finally {
