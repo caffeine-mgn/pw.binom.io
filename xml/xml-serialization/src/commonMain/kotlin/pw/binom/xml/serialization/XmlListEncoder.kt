@@ -14,6 +14,9 @@ class XmlListEncoder(
     val classDiscriminator: String,
     override val serializersModule: SerializersModule
 ) : AbstractEncoder() {
+    init {
+        require(ns == null || ns.isNotEmpty()) { "Invalid NameSpace \"$ns\" value" }
+    }
 
     private var descriptor: SerialDescriptor? = null
     private var index: Int = 0
@@ -28,8 +31,10 @@ class XmlListEncoder(
         val descriptor = this.descriptor
         if (descriptor != null) {
             if (descriptor.kind is StructureKind.LIST) {
+                val tag = serializer.descriptor.xmlName()
+                val ns = serializer.descriptor.xmlNamespace()?.getOrNull(0)?.takeIf { it.isNotEmpty() }
                 val el = XmlElement(
-                    tag = tagName,
+                    tag = tag,
                     nameSpace = ns,
                 )
                 val encoder = XmlObjectEncoder(

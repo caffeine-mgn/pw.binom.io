@@ -5,7 +5,6 @@ import pw.binom.pool.ObjectPool
 
 class AsyncBufferedAsciiInputReader private constructor(
     val stream: AsyncInput,
-//    val bufferSize: Int = DEFAULT_BUFFER_SIZE,
     private val pool: ObjectPool<ByteBuffer>?,
     private val buffer: ByteBuffer,
     private var closeBuffer: Boolean,

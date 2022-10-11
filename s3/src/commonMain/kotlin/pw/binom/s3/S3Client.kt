@@ -4,8 +4,10 @@ import kotlinx.coroutines.flow.flow
 import pw.binom.io.AsyncOutput
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.use
 import pw.binom.net.URL
 import pw.binom.s3.dto.ContentHead
+import pw.binom.s3.dto.Part
 
 class S3Client(
     val url: URL,
@@ -44,10 +46,34 @@ class S3Client(
         secretAccessKey = secretAccessKey
     )
 
+    suspend fun putObjectContent(
+        bucket: String,
+        key: String,
+        regin: String,
+        contentType: String? = null,
+        packageSize: Int = ObjectAsyncOutput.MIN_PACKAGE_SIZE,
+        payload: suspend (ObjectAsyncOutput) -> Unit,
+    ) {
+        ObjectAsyncOutput(
+            bucket = bucket,
+            key = key,
+            regin = regin,
+            contentType = contentType,
+            client = this,
+            bufferSize = packageSize,
+        ).use { output ->
+            payload(output)
+        }
+    }
+
     suspend fun putObject(
         bucket: String,
         key: String,
         regin: String,
+        payloadContentLength: Long? = null,
+        partNumber: Int? = null,
+        uploadId: String? = null,
+        payloadSha256: ByteArray? = null,
         payload: suspend (AsyncOutput) -> Unit,
     ) {
         S3ClientApi.putObject(
@@ -56,9 +82,13 @@ class S3Client(
             bucket = bucket,
             key = key,
             url = url,
+            partNumber = partNumber,
+            payloadContentLength = payloadContentLength,
             accessKey = accessKey,
             secretAccessKey = secretAccessKey,
-            payload = payload
+            payload = payload,
+            uploadId = uploadId,
+            payloadSha256 = payloadSha256,
         )
     }
 
@@ -186,5 +216,39 @@ class S3Client(
         url = url,
         accessKey = accessKey,
         secretAccessKey = secretAccessKey,
+    )
+
+    suspend fun createMultipartUpload(
+        regin: String,
+        bucket: String,
+        key: String,
+        contentType: String? = null,
+    ) = S3ClientApi.createMultipartUpload(
+        client = client,
+        regin = regin,
+        url = url,
+        bucket = bucket,
+        key = key,
+        contentType = contentType,
+        accessKey = accessKey,
+        secretAccessKey = secretAccessKey,
+    )
+
+    suspend fun completeMultipartUpload(
+        regin: String,
+        bucket: String,
+        key: String,
+        uploadId: String,
+        parts: List<Part>
+    ) = S3ClientApi.completeMultipartUpload(
+        client = client,
+        regin = regin,
+        url = url,
+        bucket = bucket,
+        key = key,
+        uploadId = uploadId,
+        accessKey = accessKey,
+        secretAccessKey = secretAccessKey,
+        parts = parts,
     )
 }

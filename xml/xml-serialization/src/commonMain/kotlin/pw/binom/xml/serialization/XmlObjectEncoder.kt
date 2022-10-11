@@ -8,7 +8,9 @@ import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.xml.dom.Attribute
 import pw.binom.xml.dom.XmlElement
-import pw.binom.xml.serialization.annotations.*
+import pw.binom.xml.serialization.annotations.XmlNode
+import pw.binom.xml.serialization.annotations.XmlWrapper
+import pw.binom.xml.serialization.annotations.XmlWrapperNamespace
 
 class XmlObjectEncoder(
     val body: XmlElement,
@@ -56,7 +58,12 @@ class XmlObjectEncoder(
         value: T?
     ) {
         value ?: return
-        encodeSerializableElement(index = index, descriptor = descriptor, serializer = serializer, value = value)
+        encodeSerializableElement(
+            index = index,
+            descriptor = descriptor,
+            serializer = serializer,
+            value = value,
+        )
     }
 
     private var descriptor: SerialDescriptor? = null
@@ -76,14 +83,14 @@ class XmlObjectEncoder(
     ) {
         val el = XmlElement(
             tag = descriptor.xmlName(index),
-            nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0)
+            nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0)?.takeIf { it.isNotEmpty() }
         )
 
         if (descriptor.getElementDescriptor(index).kind is StructureKind.LIST) {
             var store = body
 
             val wrapper = descriptor.getElementAnnotation<XmlWrapper>(index)?.tag
-            val wrapperNs = descriptor.getElementAnnotation<XmlWrapperNamespace>(index)?.ns
+            val wrapperNs = descriptor.getElementAnnotation<XmlWrapperNamespace>(index)?.ns?.takeIf { it.isNotEmpty() }
             if (wrapper == null && wrapperNs != null) {
                 throw IllegalArgumentException(
                     "Can't serialaze ${descriptor.serialName} field ${
@@ -96,14 +103,14 @@ class XmlObjectEncoder(
             if (wrapper != null) {
                 store = XmlElement(
                     tag = wrapper,
-                    nameSpace = wrapperNs?.getOrNull(0)
+                    nameSpace = wrapperNs?.getOrNull(0)?.takeIf { it.isNotEmpty() }
                 )
                 store.parent = body
             }
             val encoder = XmlListEncoder(
                 store = store,
                 tagName = descriptor.xmlName(index),
-                ns = descriptor.xmlNamespace(index)?.getOrNull(0),
+                ns = descriptor.xmlNamespace(index)?.getOrNull(0)?.takeIf { it.isNotEmpty() },
                 serializersModule = serializersModule,
                 classDiscriminator = classDiscriminator,
             )
@@ -125,14 +132,14 @@ class XmlObjectEncoder(
             if (wrapper != null) {
                 val e = XmlElement(
                     tag = descriptor.xmlName(index),
-                    nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0)
+                    nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0)?.takeIf { it.isNotEmpty() }
                 )
                 e.body = value
                 e.parent = body
             } else {
                 body.attributes[
                     Attribute(
-                        nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0),
+                        nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0)?.takeIf { it.isNotEmpty() },
                         name = descriptor.xmlName(index)
                     )
                 ] = value
@@ -140,19 +147,3 @@ class XmlObjectEncoder(
         }
     }
 }
-
-fun SerialDescriptor.xmlName() =
-    (annotations.find { it is XmlName } as XmlName?)?.name ?: serialName
-
-fun SerialDescriptor.xmlName(index: Int) =
-    (getElementAnnotations(index).find { it is XmlName } as XmlName?)?.name
-        ?: getElementName(index)
-
-fun SerialDescriptor.xmlNamespace() =
-    (annotations.find { it is XmlNamespace } as XmlNamespace?)?.ns
-
-fun SerialDescriptor.xmlNamespace(index: Int) =
-    (getElementAnnotations(index).find { it is XmlNamespace } as XmlNamespace?)?.ns
-
-inline fun <reified T : Any> SerialDescriptor.getElementAnnotation(index: Int) =
-    (getElementAnnotations(index).find { it is T } as T?)

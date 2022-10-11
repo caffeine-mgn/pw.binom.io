@@ -37,7 +37,7 @@ value class URL internal constructor(val fullPath: String) {
                 sb.append(":").append(port)
             }
             sb.append(UTF8.urlEncode(path.raw))
-            if (query != null) {
+            if (query != null && query.isNotEmpty) {
                 sb.append("?").append(query)
             }
             if (fragment != null) {
@@ -256,8 +256,9 @@ value class URL internal constructor(val fullPath: String) {
     fun goto(other: URI): URL {
         val otherSchema = other.schema
         val schema = if (otherSchema.isNullOrEmpty()) this.schema else otherSchema
-        if (otherSchema != null && otherSchema.isNotEmpty())
+        if (otherSchema != null && otherSchema.isNotEmpty()) {
             return other.toURL()
+        }
         val newPath = (path.parent ?: Path.EMPTY).relative(other.path)
         return copy(
             schema = schema,

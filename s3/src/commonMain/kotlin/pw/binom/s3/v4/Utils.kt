@@ -6,6 +6,7 @@ import pw.binom.date.DateTime
 import pw.binom.date.format.toDatePattern
 
 internal const val UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD"
+internal const val STREAMING_AWS4_HMAC_SHA256_PAYLOAD = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD"
 private val aws4_requestEncoded = "aws4_request".encodeToByteArray()
 private val awsDateTimePattern = "yyyyMMdd'T'HHmmss'Z'".toDatePattern()
 private val awsDatePattern = "yyyyMMdd".toDatePattern()
@@ -29,7 +30,7 @@ internal fun buildCanonicalRequest(
     val sb = StringBuilder()
     sb
         .append(method).append("\n") // HTTPMethod
-        .append(uri).append("\n") // CanonicalURI
+        .append(uri.ifEmpty { "/" }).append("\n") // CanonicalURI
         .append(query).append("\n") // CanonicalQueryString
     headers.forEach { (key, value) ->
         sb.append(key).append(":").append(value.trim()).append("\n") // CanonicalHeaders

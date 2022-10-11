@@ -54,6 +54,7 @@ class DefaultHttpRequest constructor(
             uri.request
         }
         channel.writer.append(method).append(" ").append(request).append(" ").append("HTTP/1.1${Utils.CRLF}")
+        println("REQUEST $method $request HTTP/1.1")
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
         }

@@ -2,6 +2,7 @@ package pw.binom.s3
 
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.modules.SerializersModule
+import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.date.DateTime
 import pw.binom.date.parseRfc822Date
 import pw.binom.io.AsyncOutput
@@ -52,8 +53,9 @@ object S3ClientApi {
         secretAccessKey: String,
     ) {
         val payload = xml.encodeToString(
-            CreateBucketConfiguration.serializer(),
-            CreateBucketConfiguration(locationConstraint = locationConstraint)
+            serializer = CreateBucketConfiguration.serializer(),
+            value = CreateBucketConfiguration(locationConstraint = locationConstraint),
+            withHeader = true
         )
         s3Call(
             client = client,
@@ -89,9 +91,10 @@ object S3ClientApi {
         regin = regin,
         accessKey = accessKey,
         secretAccessKey = secretAccessKey,
+        payloadContentLength = 0
     ).use {
         when (val code = it.responseCode) {
-            200 -> true
+            200, 204 -> true
             404 -> false
             else -> it.throwErrorText(code)
         }
@@ -103,20 +106,36 @@ object S3ClientApi {
         bucket: String,
         key: String,
         url: URL,
+        partNumber: Int? = null,
+        uploadId: String? = null,
         accessKey: String,
         secretAccessKey: String,
+        payloadContentLength: Long?,
+        payloadSha256: ByteArray? = null,
         payload: suspend (AsyncOutput) -> Unit,
     ) {
+        val query = Query.build {
+            if (partNumber != null) {
+                add("partNumber", partNumber.toString())
+            }
+            if (uploadId != null) {
+                add("uploadId", uploadId)
+            }
+        }
+        println("put $partNumber to $bucket/$key")
         s3Call(
             client = client,
             method = "PUT",
-            url = url.copy(path = url.path.append(bucket).append(key)),
+            url = url.copy(path = url.path.append(bucket).append(key), query = query),
             regin = regin,
             accessKey = accessKey,
             secretAccessKey = secretAccessKey,
+            payloadContentLength = payloadContentLength,
+            payloadSha256 = payloadSha256
         ) { output ->
             payload(output)
         }.use {
+            println("putObject it.responseCode->${it.responseCode}")
             when (val code = it.responseCode) {
                 200 -> null
                 else -> it.throwErrorText(code)
@@ -348,6 +367,96 @@ object S3ClientApi {
                 404 -> consumer(null)
                 else -> it.throwErrorText(code)
             }
+        }
+    }
+
+    suspend fun createMultipartUpload(
+        client: HttpClient,
+        regin: String,
+        url: URL,
+        bucket: String,
+        key: String,
+        contentType: String?,
+        accessKey: String,
+        secretAccessKey: String
+    ): String {
+        val query = Query.build {
+            add("uploads")
+        }
+        return s3Call(
+            client = client,
+            method = "POST",
+            url = url.copy(query = query, path = url.path.append(bucket).append(key)),
+            contentType = contentType,
+            regin = regin,
+            accessKey = accessKey,
+            secretAccessKey = secretAccessKey,
+            payloadSha256 = emptySha256,
+            payloadContentLength = 0,
+        ).use {
+            when (val code = it.responseCode) {
+                200 -> {
+                    val responseText = it.readText().use { it.readText() }
+                    val element = responseText.xmlTree(true)
+                    xml.decodeFromXmlElement(InitiateMultipartUploadResult.serializer(), element)?.uploadId
+                }
+
+                else -> it.throwErrorText(code)
+            }
+        }
+    }
+
+    suspend fun completeMultipartUpload(
+        client: HttpClient,
+        regin: String,
+        url: URL,
+        bucket: String,
+        key: String,
+        uploadId: String,
+        accessKey: String,
+        secretAccessKey: String,
+        parts: List<Part>
+    ): CompleteMultipartUploadResult {
+        val payloadStr = xml.encodeToString(
+            serializer = CompleteMultipartUpload.serializer(),
+            value = CompleteMultipartUpload(parts),
+            withHeader = true,
+        )
+        val payload = payloadStr.encodeToByteArray()
+        val query = Query.build {
+            add("uploadId", uploadId)
+        }
+        val b = Sha256MessageDigest()
+        b.update(payload)
+        val requestHash = b.finish()
+        println("complite $bucket/$key, parts: ${parts.size}")
+        println("payload:\n$payloadStr")
+        parts.forEach {
+            println("->${it.partNumber}")
+        }
+        s3Call(
+            client = client,
+            method = "POST",
+            url = url.copy(query = query, path = url.path.append(bucket).append(key)),
+            regin = regin,
+            accessKey = accessKey,
+            secretAccessKey = secretAccessKey,
+            payloadContentLength = payload.size.toLong(),
+            payloadSha256 = requestHash,
+        ) { output ->
+            output.bufferedWriter(closeParent = false).use {
+                it.append(payloadStr)
+            }
+//            output.bufferedOutput(closeStream = false).use {
+//                it.writeFully(payload)
+//            }
+        }.use {
+            val txt = when (val code = it.responseCode) {
+                200 -> it.readText().use { it.readText() }
+                else -> it.throwErrorText(code)
+            }
+            val element = txt.xmlTree(true)
+            return xml.decodeFromXmlElement(CompleteMultipartUploadResult.serializer(), element)
         }
     }
 

@@ -158,19 +158,23 @@ internal class Starter(
                     bean
                 } else {
                     val beans = createdBeans.filter { it.isMatch(dep.clazz) }
+                    if (beans.isEmpty() || beans.size > 1) {
+                        println("Searching class=${dep.clazz}, with name=${dep.name} beans after filter: ${beans.size}")
+                    }
                     when {
                         beans.isEmpty() -> null
                         beans.size == 1 -> beans.first()
                         else -> {
                             val primary = beans.filter { it.primary }
+                            println("primary: $primary")
                             when {
                                 primary.size == 1 -> primary.first()
-                                primary.isEmpty() -> null
                                 else -> throw SeveralBeanException(klazz = dep.clazz, name = null)
                             }
                         }
                     }
                 }
+                println("As result: $foundBean")
                 if (foundBean == null) {
                     if (dep.require) {
                         println("All beans:")

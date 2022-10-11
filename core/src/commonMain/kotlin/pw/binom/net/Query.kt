@@ -7,22 +7,36 @@ import kotlin.jvm.JvmInline
 
 interface QueryBuilder {
     fun add(key: String, value: String?)
+    fun add(key: String)
 }
 
 private class QueryBuilderImpl(val sb: Appendable) : QueryBuilder {
     private var first = true
-    override fun add(key: String, value: String?) {
-        if (key.isEmpty()) {
-            throw IllegalArgumentException("Key can't be empty")
-        }
+    private fun prepare() {
         if (!first) {
             sb.append("&")
         }
+        first = false
+    }
+
+    private fun keyCheck(key: String) {
+        if (key.isEmpty()) {
+            throw IllegalArgumentException("Key can't be empty")
+        }
+    }
+
+    override fun add(key: String, value: String?) {
+        keyCheck(key)
+        prepare()
+
         sb.append(UTF8.encode(key))
         if (value != null) {
             sb.append("=").append(UTF8.encode(value))
         }
-        first = false
+    }
+
+    override fun add(key: String) {
+        add(key = key, value = null)
     }
 }
 

@@ -67,8 +67,9 @@ fun Input.copyTo(output: Output, buffer: ByteBuffer): Long {
     while (true) {
         buffer.clear()
         val length = read(buffer)
-        if (length == 0)
+        if (length == 0) {
             break
+        }
         totalLength += length.toLong()
         buffer.flip()
         val ret = output.write(buffer)

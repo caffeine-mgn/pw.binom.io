@@ -1,6 +1,7 @@
 package pw.binom.io.http
 
 import pw.binom.base64.Base64
+import pw.binom.io.http.range.Range
 
 /**
  * Keywords in http headers
@@ -52,6 +53,9 @@ interface Headers : Map<String, List<String>> {
 
     fun getTransferEncodingList() = transferEncoding?.split(',')?.map { it.trim().lowercase() } ?: emptyList()
     fun getContentEncodingList() = contentEncoding?.split(',')?.map { it.trim().lowercase() } ?: emptyList()
+
+    val range: List<Range>
+        get() = this[Headers.RANGE]?.firstOrNull()?.let { Range.parseRange(it) } ?: emptyList()
 
     val bodyExist: Boolean
         get() = transferEncoding.equals(Encoding.CHUNKED, ignoreCase = true) || contentLength ?: 0uL > 0uL

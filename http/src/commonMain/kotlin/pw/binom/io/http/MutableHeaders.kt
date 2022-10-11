@@ -1,5 +1,8 @@
 package pw.binom.io.http
 
+import pw.binom.io.http.range.Range
+import pw.binom.io.http.range.RangeVisitorWriter
+
 interface MutableHeaders : Headers {
     operator fun set(key: String, value: List<String>): MutableHeaders
     operator fun set(key: String, value: String?): MutableHeaders
@@ -58,6 +61,27 @@ interface MutableHeaders : Headers {
             this[Headers.CONTENT_LENGTH] = value?.toString()
         }
 
+    override var range: List<Range>
+        get() = super.range
+        set(value) {
+            if (value.isEmpty()) {
+                this.remove(Headers.RANGE)
+                return
+            }
+            val sb = StringBuilder()
+            val it = value.iterator()
+            val first = it.next()
+            val visitor = RangeVisitorWriter(sb).startParse(first.unit)
+            first.accept(visitor)
+
+            it.forEach { item ->
+                if (item.unit != first.unit) {
+                    throw IllegalArgumentException("Can't write different range units in one range header")
+                }
+                item.accept(visitor)
+            }
+            this[Headers.RANGE] = sb.toString()
+        }
     override var keepAlive: Boolean
         get() = super.keepAlive
         set(value) {

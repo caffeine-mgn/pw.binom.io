@@ -56,7 +56,8 @@ open class AsyncContentLengthOutput(
     private var closed = false
 
     protected fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw StreamClosedException()
+        }
     }
 }

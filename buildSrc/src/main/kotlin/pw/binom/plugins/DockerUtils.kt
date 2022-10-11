@@ -31,7 +31,7 @@ object DockerUtils {
         project: Project,
         image: String,
         tcpPorts: List<Pair<Int, Int>>,
-        args: List<String>,
+        args: List<String> = emptyList(),
         suffix: String,
         envs: Map<String, String> = emptyMap(),
         healthCheck: String? = null

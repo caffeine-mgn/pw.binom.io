@@ -24,9 +24,6 @@ import pw.binom.net.URI
 import pw.binom.net.toURI
 import pw.binom.net.toURL
 import pw.binom.s3.S3ClientApi
-import pw.binom.s3.v4.s3Call
-import pw.binom.xml.dom.xmlTree
-import pw.binom.xml.serialization.Xml
 import pw.binom.xml.serialization.annotations.XmlName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 import pw.binom.xml.serialization.annotations.XmlNode
@@ -372,28 +369,28 @@ class OOOO {
         }
     }
 
-    @Test
-    fun test() = runTest {
-        println("OLOLO")
-        HttpClient.create().use { client ->
-            s3Call(
-                client = client,
-                method = "GET",
-                url = "http://127.0.0.1:9000/test".toURL().appendQuery("max-keys", "3").appendQuery("delimiter", "F"),
-            ).use { r ->
-                println("r.responseCode=${r.responseCode}")
-                var txt = r.readText().readText()
-                txt = txt.removePrefix("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-                println(txt)
-                val r = txt.xmlTree()
-                println(r)
-                val ff = Xml().decodeFromXmlElement(ListBucketResult.serializer(), r!!)
-                println(ff)
-
-                ff.contents.forEach {
-                    println("--->${it.key}")
-                }
-            }
-        }
-    }
+//    @Test
+//    fun test() = runTest {
+//        println("OLOLO")
+//        HttpClient.create().use { client ->
+//            s3Call(
+//                client = client,
+//                method = "GET",
+//                url = "http://127.0.0.1:9000/test".toURL().appendQuery("max-keys", "3").appendQuery("delimiter", "F"),
+//            ).use { r ->
+//                println("r.responseCode=${r.responseCode}")
+//                var txt = r.readText().readText()
+//                txt = txt.removePrefix("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+//                println(txt)
+//                val r = txt.xmlTree()
+//                println(r)
+//                val ff = Xml().decodeFromXmlElement(ListBucketResult.serializer(), r!!)
+//                println(ff)
+//
+//                ff.contents.forEach {
+//                    println("--->${it.key}")
+//                }
+//            }
+//        }
+//    }
 }

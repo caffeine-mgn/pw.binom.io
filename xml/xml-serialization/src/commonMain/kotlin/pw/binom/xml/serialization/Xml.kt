@@ -21,14 +21,19 @@ class Xml(
         return encoder.root!!
     }
 
-    fun <T : Any> encodeToString(serializer: KSerializer<T>, value: T): String {
+    fun <T : Any> encodeToString(serializer: KSerializer<T>, value: T, withHeader: Boolean = false): String {
         val sb = StringBuilder()
         val tagName = serializer.descriptor.annotations.find { it is XmlName }?.let { it as XmlName }?.name
             ?: serializer.descriptor.serialName
-        val v = AsyncXmlRootWriterVisitor.withoutHeader(sb.asAsync())
+        val v = if (withHeader) {
+            AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
+        } else {
+            AsyncXmlRootWriterVisitor.withoutHeader(sb.asAsync())
+        }
+//        val v = AsyncXmlRootWriterVisitor.withoutHeader(sb.asAsync())
 //        val v = SyncXmlRootWriterVisitor(sb)
         val b = encodeToXmlElement(serializer, value)
-        b.nameSpace = serializer.descriptor.xmlNamespace()?.getOrNull(0)
+        b.nameSpace = serializer.descriptor.xmlNamespace()?.getOrNull(0)?.takeIf { it.isNotEmpty() }
         val root = XmlElement()
         b.parent = root
         a {

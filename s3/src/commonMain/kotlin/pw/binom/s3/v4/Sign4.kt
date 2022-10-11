@@ -5,7 +5,6 @@ import pw.binom.io.AsyncOutput
 import pw.binom.io.UTF8
 import pw.binom.io.http.Headers
 import pw.binom.io.http.range.Range
-import pw.binom.io.http.range.toHeader
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.HttpResponse
 import pw.binom.io.use
@@ -18,27 +17,34 @@ internal suspend fun s3Call(
     payloadSha256: ByteArray? = null,
     overrideHost: String? = null,
     xAmzCopySource: String? = null,
+    payloadContentLength: Long? = null,
+    contentType: String? = null,
     service: String = "s3",
-    regin: String = "ru-central1",
-    accessKey: String = "rGIU8vPsmnOx4Prv",
-    secretAccessKey: String = "bT6YEZsstWsjXh8fJzZdbXvdFZGp3IbR",
+    regin: String,
+    accessKey: String,
+    secretAccessKey: String,
     range: List<Range> = emptyList(),
     payload: (suspend (AsyncOutput) -> Unit)? = null,
 ): HttpResponse {
+    println("$method $url")
     client.connect(method = method, uri = url).use { connection ->
         val host = overrideHost ?: url.host
         val date = DateTime.now
         val specialHeaders: List<Pair<String, String>> = buildList {
             add("host" to host)
-            add("x-amz-content-sha256" to (payloadSha256?.toHex() ?: UNSIGNED_PAYLOAD))
+            val contentSha256 = when (payloadSha256) {
+//                null -> if (method == "PUT") STREAMING_AWS4_HMAC_SHA256_PAYLOAD else UNSIGNED_PAYLOAD
+                null -> UNSIGNED_PAYLOAD
+                else -> payloadSha256.toHex()
+            }
+            add("x-amz-content-sha256" to contentSha256)
             if (xAmzCopySource != null) {
                 add("x-amz-copy-source" to UTF8.urlEncode(xAmzCopySource))
             }
             add("x-amz-date" to date.awsDateTime())
         }.sortedBy { it.first }
         val query = url.query?.let {
-            it.toMap().entries.sortedBy { it.key }.map { if (it.value == null) it.key else "${it.key}=${it.value}" }
-                .joinToString("&")
+            it.toMap().entries.sortedBy { it.key }.map { "${it.key}=${it.value ?: ""}" }.joinToString("&")
         }
         val canonicalRequest = buildCanonicalRequest(
             method = method,
@@ -69,14 +75,22 @@ internal suspend fun s3Call(
             signature = sumHmac(signingKey, stringToSign.encodeToByteArray()),
         )
         connection.headers[Headers.AUTHORIZATION] = authHeader
+        if (contentType != null) {
+            connection.headers.contentType = contentType
+        }
+        if (payloadContentLength != null) {
+            connection.headers.contentLength = payloadContentLength.toULong()
+        }
         specialHeaders.forEach { (key, value) ->
             connection.headers[key] = value
         }
         if (range.isNotEmpty()) {
-            connection.headers[Headers.RANGE] = range.toHeader()
+            connection.headers.range = range
         }
         return if (payload != null) {
-            connection.writeData { payload(it) }
+            connection.writeData {
+                payload(it)
+            }
         } else {
             connection.getResponse()
         }

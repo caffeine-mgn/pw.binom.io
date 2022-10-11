@@ -34,12 +34,25 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
         }
     }
 
+    suspend fun writeFully(data: ByteArray): Int {
+        checkClosed()
+        var l = 0
+        while (l < data.size) {
+            if (buffer.remaining <= 0) {
+                flush()
+            }
+            l += buffer.write(data)
+        }
+        return l
+    }
+
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
         var l = 0
         while (data.remaining > 0) {
-            if (buffer.remaining <= 0)
+            if (buffer.remaining <= 0) {
                 flush()
+            }
             l += buffer.write(data)
         }
         return l
@@ -66,8 +79,9 @@ fun AsyncOutput.bufferedOutput(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     closeStream: Boolean = true
 ): AsyncBufferedOutput {
-    if (this is AsyncBufferedOutput && this.bufferSize == bufferSize)
+    if (this is AsyncBufferedOutput && this.bufferSize == bufferSize) {
         return this
+    }
     return AsyncBufferedOutput(
         stream = this,
         bufferSize = bufferSize,

@@ -16,7 +16,7 @@ class XmlEncoder(root: XmlElement?, val classDiscriminator: String, override val
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
         val el = if (root == null) {
             val xmlName = descriptor.xmlName()
-            val xmlNamespace = descriptor.xmlNamespace()?.getOrNull(0)
+            val xmlNamespace = descriptor.xmlNamespace()?.getOrNull(0)?.takeIf { it.isNotEmpty() }
             val tag = XmlElement(
                 tag = xmlName,
                 nameSpace = xmlNamespace,
@@ -34,19 +34,19 @@ class XmlEncoder(root: XmlElement?, val classDiscriminator: String, override val
     }
 
     override fun encodeBoolean(value: Boolean) {
-        TODO("Not yet implemented")
+        encodeString(value.toString())
     }
 
     override fun encodeByte(value: Byte) {
-        TODO("Not yet implemented")
+        encodeString(value.toString())
     }
 
     override fun encodeChar(value: Char) {
-        TODO("Not yet implemented")
+        encodeString(value.toString())
     }
 
     override fun encodeDouble(value: Double) {
-        TODO("Not yet implemented")
+        encodeString(value.toString())
     }
 
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {
@@ -54,7 +54,7 @@ class XmlEncoder(root: XmlElement?, val classDiscriminator: String, override val
     }
 
     override fun encodeFloat(value: Float) {
-        TODO("Not yet implemented")
+        encodeString(value.toString())
     }
 
     @ExperimentalSerializationApi
@@ -63,11 +63,11 @@ class XmlEncoder(root: XmlElement?, val classDiscriminator: String, override val
     }
 
     override fun encodeInt(value: Int) {
-        TODO("Not yet implemented")
+        encodeString(value.toString())
     }
 
     override fun encodeLong(value: Long) {
-        TODO("Not yet implemented")
+        encodeString(value.toString())
     }
 
     @ExperimentalSerializationApi
@@ -76,7 +76,7 @@ class XmlEncoder(root: XmlElement?, val classDiscriminator: String, override val
     }
 
     override fun encodeShort(value: Short) {
-        TODO("Not yet implemented")
+        encodeString(value.toString())
     }
 
     override fun encodeString(value: String) {

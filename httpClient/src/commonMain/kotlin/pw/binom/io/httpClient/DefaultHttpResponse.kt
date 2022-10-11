@@ -31,6 +31,7 @@ class DefaultHttpResponse(
                 throw IOException("Unsupported HTTP version. Response: \"$title\"")
             }
             val responseCode = title.substring(9, 12).toInt()
+            println("RESPONSE CODE $responseCode")
             val headers = HashHeaders()
             while (true) {
                 val str = channel.reader.readln() ?: throw EOFException()
@@ -40,7 +41,6 @@ class DefaultHttpResponse(
                 val items = str.split(": ")
                 headers.add(key = items[0], value = items[1])
             }
-
             return DefaultHttpResponse(
                 URI = uri,
                 client = client,
@@ -90,6 +90,7 @@ class DefaultHttpResponse(
                     stream = stream,
                     channel = channel,
                 )
+
                 Encoding.GZIP -> AsyncGZIPInput(stream, closeStream = true)
                 Encoding.DEFLATE -> AsyncInflateInput(stream = stream, closeStream = true, wrap = true)
                 Encoding.IDENTITY -> stream

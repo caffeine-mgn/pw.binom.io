@@ -3,30 +3,50 @@ package pw.binom.s3
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.concurrency.sleep
+import pw.binom.crypto.MD5MessageDigest
+import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.io.*
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
 import pw.binom.net.toURL
 import pw.binom.nextUuid
+import pw.binom.s3.dto.Part
 import pw.binom.s3.exceptions.S3ErrorException
+import pw.binom.s3.v4.toHex
 import kotlin.random.Random
 import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class S3IntegrationTest {
-    private val regin = "ru-central1"
+    private val regin = "us-east-1"
     lateinit var client: S3Client
     lateinit var httpClient: HttpClient
     lateinit var bucketName: String
 
+    suspend fun S3Client.createBucket() = createBucket(name = bucketName, regin = regin, locationConstraint = regin)
+
+    @Test
+    fun aaaa() {
+        val bb = Sha256MessageDigest()
+        println("--->${bb.finish().joinToString()}")
+    }
+
+    private var started = false
+
     @BeforeTest
     fun setup() {
-        bucketName = Random.nextUuid().toString()
+        if (!started) {
+            sleep(5_000)
+            started = true
+        }
+        bucketName = Random.nextUuid().toShortString()
         httpClient = HttpClient.create()
         client = S3Client(
             url = "http://127.0.0.1:7122".toURL(),
-            accessKey = "S3RVER",
-            secretAccessKey = "S3RVER",
+//            url = "http://127.0.0.1:8000".toURL(),
+            accessKey = "accessKey1",
+            secretAccessKey = "verySecretKey1",
             client = httpClient,
         )
     }
@@ -46,12 +66,14 @@ class S3IntegrationTest {
         client.createBucket(
             name = bucketName,
             regin = regin,
+            locationConstraint = regin,
         )
 
         try {
             client.createBucket(
                 name = bucketName,
                 regin = regin,
+                locationConstraint = regin,
             )
         } catch (e: S3ErrorException) {
             assertEquals(ErrorTexts.BUCKET_ALREADY_EXISTS, e.code)
@@ -65,7 +87,8 @@ class S3IntegrationTest {
         list().list.all { it.name != bucketName }
         client.createBucket(
             name = bucketName,
-            regin = regin
+            regin = regin,
+            locationConstraint = regin,
         )
         assertTrue(list().list.any { it.name == bucketName })
     }
@@ -74,7 +97,8 @@ class S3IntegrationTest {
     fun putGetObjectTest() = runTest {
         client.createBucket(
             name = bucketName,
-            regin = regin
+            regin = regin,
+            locationConstraint = regin,
         )
         val key = Random.nextUuid().toString()
         val expectedContent = (0..9).map { Random.nextUuid().toString() }.joinToString().encodeToByteArray()
@@ -82,6 +106,7 @@ class S3IntegrationTest {
             bucket = bucketName,
             key = key,
             regin = regin,
+            payloadContentLength = expectedContent.size.toLong(),
         ) { output ->
             ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { buffer ->
                 output.writeByteArray(expectedContent, buffer)
@@ -102,7 +127,8 @@ class S3IntegrationTest {
     fun copyTest() = runTest {
         client.createBucket(
             name = bucketName,
-            regin = regin
+            regin = regin,
+            locationConstraint = regin,
         )
         val key = Random.nextUuid().toString()
         val newKey = Random.nextUuid().toString()
@@ -112,6 +138,7 @@ class S3IntegrationTest {
             bucket = bucketName,
             key = key,
             regin = regin,
+            payloadContentLength = expectedContent.size.toLong(),
         ) { output ->
             ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { buffer ->
                 output.writeByteArray(expectedContent, buffer)
@@ -122,7 +149,7 @@ class S3IntegrationTest {
             sourceBucket = bucketName,
             sourceKey = key,
             destinationBucket = bucketName,
-            destinationKey = newKey
+            destinationKey = newKey,
         )
         val actualContent = client.getObject(
             regin = regin,
@@ -133,5 +160,94 @@ class S3IntegrationTest {
             input.input.readBytes()
         }
         assertContentEquals(expectedContent, actualContent)
+    }
+
+    @Test
+    fun multipartUpload() = runTest(dispatchTimeoutMs = 20_000) {
+        val key = Random.nextUuid().toShortString()
+
+        client.createBucket()
+        val part1 = ByteArray(1024 * 1024 * 5)
+        val part2 = ByteArray(1024 * 1024 * 5)
+        val part3 = ByteArray(1024 * 1024 * 4)
+        val full = part1 + part2 + part3
+        println("Data: ${full.size} index=${full.indexOfFirst { it != 0.toByte() }}")
+        val uploadId = client.createMultipartUpload(
+            regin = regin,
+            bucket = bucketName,
+            key = key,
+        )
+
+        suspend fun putPart(number: Int, data: ByteArray): Part {
+            val d = MD5MessageDigest()
+            d.update(data)
+            val md5 = d.finish()
+            val b = Sha256MessageDigest()
+            b.update(data)
+            val sha256 = b.finish()
+            client.putObject(
+                bucket = bucketName,
+                key = key,
+                regin = regin,
+                payloadContentLength = data.size.toLong(),
+                partNumber = number,
+                uploadId = uploadId,
+//                payloadSha256 = sha256,
+                payload = { ByteBuffer.wrap(data).use { buffer -> it.write(buffer) } },
+            )
+            return Part(
+                checksumSHA256 = sha256.toHex(),
+                eTag = md5.toHex(),
+                partNumber = number,
+            )
+        }
+
+        val p1 = putPart(number = 1, data = part1)
+        val p2 = putPart(number = 2, data = part2)
+        val p3 = putPart(number = 3, data = part3)
+        client.completeMultipartUpload(
+            regin = regin,
+            bucket = bucketName,
+            key = key,
+            uploadId = uploadId,
+            parts = listOf(
+                p1,
+                p2,
+                p3,
+            )
+        )
+        val actualData = client.getObject(
+            regin = regin,
+            bucket = bucketName,
+            key = key,
+        ) { it?.input?.readBytes() }
+
+        assertContentEquals(full, actualData)
+    }
+
+    @Test
+    fun putObjectContentTest() = runTest {
+        val key = Random.nextUuid().toShortString()
+        client.createBucket()
+
+        val full = ByteArray(1024 * 1024 * 14)
+        println("Data: ${full.size} index=${full.indexOfFirst { it != 0.toByte() }}")
+        client.putObjectContent(
+            bucket = bucketName,
+            key = key,
+            regin = regin,
+        ) { output ->
+            ByteBuffer.wrap(full).use { data ->
+                output.writeFully(data)
+            }
+        }
+
+        val actualData = client.getObject(
+            regin = regin,
+            bucket = bucketName,
+            key = key,
+        ) { it?.input?.readBytes() }
+
+        assertContentEquals(full, actualData)
     }
 }
