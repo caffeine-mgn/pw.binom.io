@@ -26,12 +26,6 @@ class S3IntegrationTest {
 
     suspend fun S3Client.createBucket() = createBucket(name = bucketName, regin = regin, locationConstraint = regin)
 
-    @Test
-    fun aaaa() {
-        val bb = Sha256MessageDigest()
-        println("--->${bb.finish().joinToString()}")
-    }
-
     private var started = false
 
     @BeforeTest
@@ -171,7 +165,6 @@ class S3IntegrationTest {
         val part2 = ByteArray(1024 * 1024 * 5)
         val part3 = ByteArray(1024 * 1024 * 4)
         val full = part1 + part2 + part3
-        println("Data: ${full.size} index=${full.indexOfFirst { it != 0.toByte() }}")
         val uploadId = client.createMultipartUpload(
             regin = regin,
             bucket = bucketName,
@@ -231,7 +224,6 @@ class S3IntegrationTest {
         client.createBucket()
 
         val full = ByteArray(1024 * 1024 * 14)
-        println("Data: ${full.size} index=${full.indexOfFirst { it != 0.toByte() }}")
         client.putObjectContent(
             bucket = bucketName,
             key = key,

@@ -26,7 +26,6 @@ internal suspend fun s3Call(
     range: List<Range> = emptyList(),
     payload: (suspend (AsyncOutput) -> Unit)? = null,
 ): HttpResponse {
-    println("$method $url")
     client.connect(method = method, uri = url).use { connection ->
         val host = overrideHost ?: url.host
         val date = DateTime.now

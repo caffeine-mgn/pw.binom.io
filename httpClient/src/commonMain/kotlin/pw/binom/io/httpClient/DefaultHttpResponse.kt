@@ -31,7 +31,6 @@ class DefaultHttpResponse(
                 throw IOException("Unsupported HTTP version. Response: \"$title\"")
             }
             val responseCode = title.substring(9, 12).toInt()
-            println("RESPONSE CODE $responseCode")
             val headers = HashHeaders()
             while (true) {
                 val str = channel.reader.readln() ?: throw EOFException()

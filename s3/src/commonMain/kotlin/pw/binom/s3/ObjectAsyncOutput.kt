@@ -20,10 +20,17 @@ class ObjectAsyncOutput(
         const val MIN_PACKAGE_SIZE = 1024 * 1024 * 5
     }
 
+    init {
+        require(bufferSize >= MIN_PACKAGE_SIZE) { "S3 support support minimal size of package is $MIN_PACKAGE_SIZE bytes" }
+    }
+
     private val buffer = ByteBuffer.alloc(bufferSize)
     private var uploadId: String? = null
     private val parts = ArrayList<Part>()
     override suspend fun write(data: ByteBuffer): Int {
+        if (data.remaining == 0) {
+            return 0
+        }
         if (buffer.remaining <= 0) {
             throw IllegalStateException("No free buffer size")
         }

@@ -17,7 +17,6 @@ class RequestAsyncContentLengthOutput constructor(
 ) {
     override suspend fun getResponse(): HttpResponse {
         checkClosed()
-        println("FINISH REQUEST $wrote/$contentLength")
         if (!isFull) {
             throw IllegalStateException("Not all content was sent")
         }

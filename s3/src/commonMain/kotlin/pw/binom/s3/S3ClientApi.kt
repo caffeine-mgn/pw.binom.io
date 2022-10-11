@@ -122,7 +122,6 @@ object S3ClientApi {
                 add("uploadId", uploadId)
             }
         }
-        println("put $partNumber to $bucket/$key")
         s3Call(
             client = client,
             method = "PUT",
@@ -135,7 +134,6 @@ object S3ClientApi {
         ) { output ->
             payload(output)
         }.use {
-            println("putObject it.responseCode->${it.responseCode}")
             when (val code = it.responseCode) {
                 200 -> null
                 else -> it.throwErrorText(code)
@@ -429,11 +427,6 @@ object S3ClientApi {
         val b = Sha256MessageDigest()
         b.update(payload)
         val requestHash = b.finish()
-        println("complite $bucket/$key, parts: ${parts.size}")
-        println("payload:\n$payloadStr")
-        parts.forEach {
-            println("->${it.partNumber}")
-        }
         s3Call(
             client = client,
             method = "POST",
