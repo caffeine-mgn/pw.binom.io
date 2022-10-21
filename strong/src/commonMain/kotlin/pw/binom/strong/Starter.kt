@@ -23,7 +23,7 @@ internal class StrongWithDependenciesSpy(val strong: Strong) : Strong by strong 
     }
 
     override suspend fun destroy() {
-        TODO("Not yet implemented")
+        strong.destroy()
     }
 
     fun getLastDependencies(): List<ClassDependency> {
