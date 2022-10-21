@@ -1,6 +1,7 @@
 package pw.binom.db.async.pool
 
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.date.DateTime
@@ -30,10 +31,10 @@ class AsyncConnectionPoolImpl constructor(
         require(maxConnections >= 1) { "maxConnections should be grate than 0" }
     }
 
-    private val connections = HashSet<PooledAsyncConnectionImpl>(maxConnections)
-    private val idleConnection = defaultArrayList<PooledAsyncConnectionImpl>(maxConnections)
+    private val connections = defaultMutableSet<PooledAsyncConnectionImpl>(maxConnections)
+    private val idleConnection = defaultMutableList<PooledAsyncConnectionImpl>(maxConnections)
 
-    private val waiters = defaultArrayList<Continuation<PooledAsyncConnectionImpl>>()
+    private val waiters = defaultMutableList<Continuation<PooledAsyncConnectionImpl>>()
     private val idleConnectionLock = SpinLock()
     private val connectionsLock = SpinLock()
 
@@ -50,7 +51,7 @@ class AsyncConnectionPoolImpl constructor(
     /**
      * Set for connection for delete
      */
-    private val forRemove = HashSet<PooledAsyncConnectionImpl>()
+    private val forRemove = defaultMutableSet<PooledAsyncConnectionImpl>()
     private var cleaning = false
 
     private fun getOneWater(): Continuation<PooledAsyncConnectionImpl>? =
@@ -174,7 +175,7 @@ class AsyncConnectionPoolImpl constructor(
             runCatching { it.resumeWithException(StreamClosedException()) }
         }
         waiters.clear()
-        defaultArrayList(connections).forEach {
+        defaultMutableList(connections).forEach {
             runCatching { it.asyncClose() }
         }
         connections.clear()

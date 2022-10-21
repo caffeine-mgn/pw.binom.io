@@ -1,5 +1,6 @@
 package pw.binom.network
 
+import pw.binom.collections.defaultMutableSet
 import pw.binom.io.ClosedException
 import java.nio.channels.*
 import java.nio.channels.spi.AbstractSelectableChannel
@@ -32,7 +33,7 @@ class JvmSelector : Selector {
     @Volatile
     private var selecting = false
 
-    private var keysNotInSelector = HashSet<JvmKey>()
+    private var keysNotInSelector = defaultMutableSet<JvmKey>()
 
     inner class JvmKey(
         override val attachment: Any?,
@@ -156,7 +157,7 @@ class JvmSelector : Selector {
 
                 else -> native.select()
             }
-            val keys = HashSet(native.selectedKeys())
+            val keys = defaultMutableSet(native.selectedKeys())
             selectedEvents.selectedKeys = keys
             return keys.size
         } finally {

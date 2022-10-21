@@ -1,5 +1,6 @@
 package pw.binom.io.db.kmigrator
 
+import pw.binom.collections.defaultMutableSet
 import pw.binom.date.DateTime
 import pw.binom.db.async.forEach
 import pw.binom.db.async.pool.AsyncConnectionPool
@@ -53,7 +54,7 @@ class KMigrator(
     }
 
     suspend fun execute(st: AsyncConnectionPool) {
-        val executedMigrations = HashSet<String>()
+        val executedMigrations = defaultMutableSet<String>()
         st.borrow {
             executeUpdate(
                 """

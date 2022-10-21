@@ -5,7 +5,8 @@ import cnames.structs.sqlite3_stmt
 import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.db.SQLException
@@ -56,7 +57,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     }
 
     private val closed = AtomicBoolean(false)
-    private val prepareStatements = HashSet<SQLitePrepareStatement>()
+    private val prepareStatements = defaultMutableSet<SQLitePrepareStatement>()
     private val prepareStatementsLock = SpinLock()
     private val beginSt = prepareStatement("BEGIN")
     private val commitSt = prepareStatement("COMMIT")
@@ -138,7 +139,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
         if (!closed.compareAndSet(false, true)) {
             throw ClosedException()
         }
-        val l = defaultArrayList(prepareStatements)
+        val l = defaultMutableList(prepareStatements)
         prepareStatements.clear()
         l.forEach {
             it.close()

@@ -1,7 +1,7 @@
 package pw.binom.net
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.io.UTF8
 import kotlin.jvm.JvmInline
 
@@ -147,7 +147,7 @@ value class Query internal constructor(val raw: String) {
         return dst
     }
 
-    fun toMap(): Map<String, String?> = toMap(defaultHashMap())
+    fun toMap(): Map<String, String?> = toMap(defaultMutableMap())
 
     fun toList(dst: MutableList<Pair<String, String?>>): MutableList<Pair<String, String?>> {
         search { key, value ->
@@ -157,7 +157,7 @@ value class Query internal constructor(val raw: String) {
         return dst
     }
 
-    fun toList(): List<Pair<String, String?>> = toList(defaultArrayList())
+    fun toList(): List<Pair<String, String?>> = toList(defaultMutableList())
 
     fun find(key: String) = toMap()[key]
 

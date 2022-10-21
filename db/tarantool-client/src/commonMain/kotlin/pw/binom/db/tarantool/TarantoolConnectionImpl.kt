@@ -2,7 +2,7 @@ package pw.binom.db.tarantool
 
 import kotlinx.coroutines.*
 import pw.binom.atomic.AtomicLong
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableMap
 import pw.binom.db.tarantool.protocol.*
 import pw.binom.io.*
 import pw.binom.network.NetworkManager
@@ -32,7 +32,7 @@ class TarantoolConnectionImpl internal constructor(
 
     internal var mainLoopJob: Job? = null
     private var syncCursor = AtomicLong(0)
-    private val requests = defaultHashMap<Long, CancellableContinuation<Package>>()
+    private val requests = defaultMutableMap<Long, CancellableContinuation<Package>>()
     private val connectionReference = connection
     private var meta: List<TarantoolSpaceMeta> = emptyList()
     private var schemaVersion = 0
@@ -93,7 +93,7 @@ class TarantoolConnectionImpl internal constructor(
 
     internal suspend fun sendReceive(code: Code, schemaId: Int? = null, body: Map<Any, Any?>): Package {
         val sync = syncCursor.addAndGet(1)
-        val headers = defaultHashMap<Int, Any?>()
+        val headers = defaultMutableMap<Int, Any?>()
         headers[Key.CODE.id] = code.id
         headers[Key.SYNC.id] = sync
         if (schemaId != null) {
@@ -338,7 +338,7 @@ class TarantoolConnectionImpl internal constructor(
         limit: Int,
         iterator: QueryIterator?
     ): ResultSet {
-        val body = defaultHashMap<Any, Any?>()
+        val body = defaultMutableMap<Any, Any?>()
         body[Key.SPACE.id] = space
         body[Key.INDEX.id] = index
         body[Key.LIMIT.id] = limit

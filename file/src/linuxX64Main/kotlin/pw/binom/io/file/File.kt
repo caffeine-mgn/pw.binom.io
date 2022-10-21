@@ -6,7 +6,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import platform.linux.statvfs
 import platform.posix.*
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.io.IOException
 import kotlin.native.concurrent.freeze
 
@@ -102,7 +102,7 @@ actual class File actual constructor(path: String) {
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
 
     actual fun list(): List<File> {
-        val out = defaultArrayList<File>()
+        val out = defaultMutableList<File>()
         iterator().forEach { file ->
             out += file
         }

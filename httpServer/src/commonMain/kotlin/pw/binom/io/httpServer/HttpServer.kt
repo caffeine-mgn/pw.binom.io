@@ -5,7 +5,8 @@ import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.System
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableSet
 import pw.binom.coroutines.onCancel
 import pw.binom.date.DateTime
 import pw.binom.io.AsyncCloseable
@@ -62,7 +63,7 @@ class HttpServer(
 
     private var lastIdleCheckTime = DateTime.nowTime
     private val binds = ArrayList<TcpServerConnection>()
-    private val idleConnections = HashSet<ServerAsyncAsciiChannel>()
+    private val idleConnections = defaultMutableSet<ServerAsyncAsciiChannel>()
 
     internal fun browConnection(channel: ServerAsyncAsciiChannel) {
         idleConnections -= channel
@@ -185,7 +186,7 @@ class HttpServer(
             runCatching { it.asyncClose() }
         }
         idleConnections.clear()
-        defaultArrayList(binds).forEach {
+        defaultMutableList(binds).forEach {
             runCatching { it.close() }
         }
         binds.clear()

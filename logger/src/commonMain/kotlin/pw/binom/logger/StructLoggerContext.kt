@@ -1,6 +1,6 @@
 package pw.binom.logger
 
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableMap
 import kotlin.coroutines.*
 
 object StructLoggerContext {
@@ -16,7 +16,7 @@ object StructLoggerContext {
     suspend fun <T> useTags(tags: Map<String, String>, func: suspend () -> T) =
         suspendCoroutine<T> {
             val ctx = it.context[LogContextHolderElementKey] ?: LogContextHolderElement()
-            val newTags = defaultHashMap(ctx.tags)
+            val newTags = defaultMutableMap(ctx.tags)
             newTags.putAll(tags)
             ctx.tags = newTags
 

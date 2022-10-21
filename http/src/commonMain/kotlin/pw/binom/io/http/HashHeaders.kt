@@ -1,11 +1,11 @@
 package pw.binom.io.http
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 
 class HashHeaders : MutableHeaders, Map<String, List<String>> {
-    private var body = defaultHashMap<String, MutableList<String>>()
-    private var ref = defaultHashMap<String, String>()
+    private var body = defaultMutableMap<String, MutableList<String>>()
+    private var ref = defaultMutableMap<String, String>()
     override fun set(key: String, value: List<String>): MutableHeaders {
         if (value.isEmpty()) {
             remove(key)
@@ -13,7 +13,7 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
         }
         val v = ref[key.lowercase()]
         if (v == null) {
-            val list = defaultArrayList(value)
+            val list = defaultMutableList(value)
             body[key] = list
             ref[key.lowercase()] = key
         } else {

@@ -3,8 +3,9 @@ package pw.binom.db.serialization
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.encoding.CompositeDecoder
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.defaultMutableSet
 import pw.binom.db.DatabaseEngine
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
@@ -49,7 +50,7 @@ internal class DBAccessImpl(
     ): List<T> {
         val response = internalSelect(query = query, args = args)
         val mapper = getMapper(result)
-        val resultList = defaultArrayList<T>()
+        val resultList = defaultMutableList<T>()
         response.use { resp ->
             while (resp.next()) {
                 resultList += mapper(resp) as T
@@ -103,7 +104,7 @@ internal class DBAccessImpl(
         sb.append(SQLSerialization.insertQuery(serializer))
         val args = sql.nameParams(serializer, value)
         val descriptor = serializer.descriptor
-        val indexColumns = HashSet<String>()
+        val indexColumns = defaultMutableSet<String>()
         descriptor.annotations.forEach {
             if (it !is Index || !it.unique) {
                 return@forEach
@@ -303,7 +304,7 @@ internal class DBAccessImpl(
                 args = sql.nameParams(serializer, value),
             ).use {
                 if (it.next()) {
-                    val generatedMap = defaultHashMap<String, String?>()
+                    val generatedMap = defaultMutableMap<String, String?>()
                     it.columns.mapIndexed { index, column ->
                         generatedMap[column] = it.getString(index)
                     }

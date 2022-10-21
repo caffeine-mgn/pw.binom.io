@@ -22,8 +22,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
         while (true) {
             val r = read()
             if (r == CR) {
-                if (read() != LF)
+                if (read() != LF) {
                     throw IllegalStateException("Invalid end of line")
+                }
                 return sb.toString()
             }
 
@@ -53,8 +54,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     private var closed = false
 
     private suspend fun readChankSize() {
-        if (eof)
+        if (eof) {
             return
+        }
         val chunkedSize = stream.readLineCRLF()
         if (chunkedSize.isEmpty()) {
             eof = true
@@ -69,8 +71,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
             stream.readFully(staticData)
             val b1 = staticData[0]
             val b2 = staticData[1]
-            if (b1 != CR || b2 != LF)
+            if (b1 != CR || b2 != LF) {
                 throw IOException("Invalid end body  $b1  $b2")
+            }
             eof = true
             return
         }
@@ -86,8 +89,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
                 readChankSize()
             }
 
-            if (eof)
+            if (eof) {
                 return 0
+            }
 
             if (chunkedSize!! - readed == 0uL) {
                 chunkedSize = null
@@ -95,8 +99,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
                 stream.readFully(staticData)
                 val b1 = staticData[0]
                 val b2 = staticData[1]
-                if (b1 != CR || b2 != LF)
+                if (b1 != CR || b2 != LF) {
                     throw IOException("Invalid end of chunk")
+                }
                 continue
             }
 
@@ -133,7 +138,8 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     }
 
     protected fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw StreamClosedException()
+        }
     }
 }

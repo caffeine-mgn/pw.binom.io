@@ -3,9 +3,10 @@ package pw.binom
 import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.*
+import pw.binom.collections.defaultMutableMap
 
 actual fun Environment.getEnvs(): Map<String, String> {
-    val out = HashMap<String, String>()
+    val out = defaultMutableMap<String, String>()
     val ff = GetEnvironmentStringsW()
     var vv = ff!!
     while (vv.pointed.value != 0.toUShort()) {

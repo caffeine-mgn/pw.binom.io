@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.UUID
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
@@ -62,7 +62,7 @@ class ResultSetDataProvider(val rs: ResultSet) : DataProvider {
 }
 
 private class QueryContextImpl(override val serializersModule: SerializersModule) : UpdateContext {
-    var args = defaultArrayList<Any?>()
+    var args = defaultMutableList<Any?>()
     var returning: Returning<out Any>? = null
 
     class Returning<T : Any>(val serializer: KSerializer<T>, val func: suspend (T) -> Unit)
@@ -111,7 +111,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
         returning: Boolean,
         excludeGenerated: Boolean
     ): T? {
-        val params = defaultHashMap<String, Any?>()
+        val params = defaultMutableMap<String, Any?>()
 
         val output = object : DataBinder {
             override fun get(key: String): Any? = params[key]

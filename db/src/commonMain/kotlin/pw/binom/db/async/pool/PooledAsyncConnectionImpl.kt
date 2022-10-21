@@ -1,7 +1,8 @@
 package pw.binom.db.async.pool
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.defaultMutableSet
 import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
@@ -12,8 +13,8 @@ import kotlin.time.DurationUnit
 class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val connection: AsyncConnection) :
     PooledAsyncConnection, AsyncConnection by connection {
 
-    private val createdPreparedStatement = defaultHashMap<String, AsyncPreparedStatement>()
-    private val forRemove = defaultHashMap<String, AsyncPreparedStatement>()
+    private val createdPreparedStatement = defaultMutableMap<String, AsyncPreparedStatement>()
+    private val forRemove = defaultMutableMap<String, AsyncPreparedStatement>()
 
     override suspend fun usePreparedStatement(sql: String): AsyncPreparedStatement {
         val p = forRemove.remove(sql)
@@ -79,7 +80,7 @@ class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val 
     }
 
     override suspend fun createStatement(): AsyncStatement = connection.createStatement()
-    internal val prepareStatements = HashSet<PooledAsyncPreparedStatement>()
+    internal val prepareStatements = defaultMutableSet<PooledAsyncPreparedStatement>()
 
     override suspend fun prepareStatement(query: String): AsyncPreparedStatement {
         val pst = connection.prepareStatement(query)
@@ -90,7 +91,7 @@ class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val 
 
     private suspend fun cleanUp() {
         clean()
-        val statements = defaultArrayList(prepareStatements)
+        val statements = defaultMutableList(prepareStatements)
         prepareStatements.clear()
         statements.forEach {
             it.asyncClose()

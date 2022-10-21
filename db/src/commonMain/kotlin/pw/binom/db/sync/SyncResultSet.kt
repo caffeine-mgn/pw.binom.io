@@ -1,6 +1,6 @@
 package pw.binom.db.sync
 
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
@@ -19,7 +19,7 @@ interface SyncResultSet : ResultSet, Closeable {
  * Closes this [AsyncResultSet] after call [mapper] for each values of this [AsyncResultSet]
  */
 suspend inline fun <T> SyncResultSet.map(mapper: (SyncResultSet) -> T): List<T> {
-    val out = defaultArrayList<T>()
+    val out = defaultMutableList<T>()
     use {
         while (next()) {
             out += mapper(this)

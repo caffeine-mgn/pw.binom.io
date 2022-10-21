@@ -1,6 +1,6 @@
 package pw.binom.db.postgresql.async.messages.backend
 
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableMap
 import pw.binom.db.postgresql.async.InformationParser
 import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
@@ -11,7 +11,7 @@ class NoticeMessage : KindedMessage {
     override val kind: Byte
         get() = MessageKinds.Notice
 
-    val fields = defaultHashMap<Char, String>()
+    val fields = defaultMutableMap<Char, String>()
 
     override fun write(writer: PackageWriter) {
         TODO("Not yet implemented")

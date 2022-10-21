@@ -1,7 +1,7 @@
 package pw.binom.db.serialization
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 
@@ -31,7 +31,7 @@ class SQLQueryNamedArguments private constructor(
             var cur = 0
             val sb = StringBuilder()
             var str = false
-            val params = defaultHashMap<String, MutableList<Int>>()
+            val params = defaultMutableMap<String, MutableList<Int>>()
             var paramCount = 0
             var columnNameStarted = false
             var columnOpenPosition = -1
@@ -72,7 +72,7 @@ class SQLQueryNamedArguments private constructor(
                     }
                     sb.append("?")
                     val varName = sql.substring(start + 1, cur)
-                    params.getOrPut(varName) { defaultArrayList() }.add(paramCount)
+                    params.getOrPut(varName) { defaultMutableList() }.add(paramCount)
                     paramCount++
                     continue
                 }

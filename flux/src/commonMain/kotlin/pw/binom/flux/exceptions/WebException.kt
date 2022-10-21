@@ -11,7 +11,7 @@ abstract class WebException : Exception {
     /**
      * Calls when request processing method throw exception. Can change response of server
      */
-    open fun processing(response: HttpResponse) {
+    open suspend fun processing(response: HttpResponse) {
         response.status = 500
     }
 }

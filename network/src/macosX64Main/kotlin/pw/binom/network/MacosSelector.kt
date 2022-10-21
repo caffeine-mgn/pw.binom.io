@@ -7,6 +7,7 @@ import platform.linux.internal_EV_SET
 import platform.posix.ENOENT
 import platform.posix.errno
 import platform.posix.timespec
+import pw.binom.collections.defaultMutableSet
 import pw.binom.io.IOException
 
 class MacosSelector : AbstractSelector() {
@@ -35,7 +36,6 @@ class MacosSelector : AbstractSelector() {
         }
 
         override fun resetMode(mode: Int) {
-
             val n = epollCommonToNative(mode)
 //            println(
 //                "${(attachment!!)::class.simpleName}-${attachment!!.hashCode()}-Reset ${
@@ -97,7 +97,7 @@ class MacosSelector : AbstractSelector() {
 
     private var c = 0
     private val list = nativeHeap.allocArray<kevent>(1000) // nativeHeap.allocArray<epoll_event>(1000)
-    private val keys = NoMemoryLeakHashSet<MacosKey>()
+    private val keys = defaultMutableSet<MacosKey>()
     private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
         private val event = object : NativeKeyEvent {
             override lateinit var key: AbstractKey
@@ -197,10 +197,9 @@ class MacosSelector : AbstractSelector() {
 
     override fun nativeSelect(timeout: Long, func: (AbstractKey, mode: Int) -> Unit): Int {
         val eventCount = memScoped {
-            val time = if (timeout < 0)
+            val time = if (timeout < 0) {
                 null
-            else {
-
+            } else {
                 val c = alloc<timespec>()
                 c.tv_sec = timeout / 1000L
                 c.tv_nsec = (timeout - c.tv_sec * 1000) * 1000L
@@ -269,7 +268,7 @@ class MacosSelector : AbstractSelector() {
         }
     }
 
-    override fun getAttachedKeys(): Collection<Selector.Key> = HashSet(keys)
+    override fun getAttachedKeys(): Collection<Selector.Key> = defaultMutableSet(keys)
 
     override fun close() {
         platform.posix.close(kqueueNative)
@@ -295,69 +294,88 @@ actual fun createSelector(): Selector = MacosSelector()
 
 fun modeToString1(mode: Int): String {
     val sb = StringBuilder()
-    if (mode and EVFILT_READ != 0)
+    if (mode and EVFILT_READ != 0) {
         sb.append("EVFILT_READ ")
-    if (mode and EVFILT_WRITE != 0)
+    }
+    if (mode and EVFILT_WRITE != 0) {
         sb.append("EVFILT_WRITE ")
+    }
 
 //    if (mode and EVFILT_EMPTY != 0)
 //        sb.append("EVFILT_EMPTY ")
 
-    if (mode and EVFILT_AIO != 0)
+    if (mode and EVFILT_AIO != 0) {
         sb.append("EVFILT_AIO ")
+    }
 
-    if (mode and EVFILT_VNODE != 0)
+    if (mode and EVFILT_VNODE != 0) {
         sb.append("EVFILT_VNODE ")
+    }
 
-    if (mode and EVFILT_PROC != 0)
+    if (mode and EVFILT_PROC != 0) {
         sb.append("EVFILT_PROC ")
+    }
 
 //    if (mode and EVFILT_PROCDESC != 0)
 //        sb.append("EVFILT_PROCDESC ")
 
-    if (mode and EVFILT_SIGNAL != 0)
+    if (mode and EVFILT_SIGNAL != 0) {
         sb.append("EVFILT_SIGNAL ")
-    if (mode and EVFILT_TIMER != 0)
+    }
+    if (mode and EVFILT_TIMER != 0) {
         sb.append("EVFILT_TIMER ")
-    if (mode and EVFILT_USER != 0)
+    }
+    if (mode and EVFILT_USER != 0) {
         sb.append("EVFILT_USER ")
+    }
 
     return sb.toString()
 }
 
 fun flagsToString(mode: Int): String {
     val sb = StringBuilder()
-    if (mode and EV_ADD != 0)
+    if (mode and EV_ADD != 0) {
         sb.append("EV_ADD ")
-    if (mode and EV_ENABLE != 0)
+    }
+    if (mode and EV_ENABLE != 0) {
         sb.append("EV_ENABLE ")
+    }
 
-    if (mode and EV_DISABLE != 0)
+    if (mode and EV_DISABLE != 0) {
         sb.append("EV_DISABLE ")
+    }
 
-    if (mode and EV_DISPATCH != 0)
+    if (mode and EV_DISPATCH != 0) {
         sb.append("EV_DISPATCH ")
+    }
 
-    if (mode and EV_DISPATCH2 != 0)
+    if (mode and EV_DISPATCH2 != 0) {
         sb.append("EV_DISPATCH2 ")
+    }
 
-    if (mode and EV_DELETE != 0)
+    if (mode and EV_DELETE != 0) {
         sb.append("EV_DELETE ")
+    }
 
-    if (mode and EV_RECEIPT != 0)
+    if (mode and EV_RECEIPT != 0) {
         sb.append("EV_RECEIPT ")
+    }
 
-    if (mode and EV_ONESHOT != 0)
+    if (mode and EV_ONESHOT != 0) {
         sb.append("EV_ONESHOT ")
+    }
 
-    if (mode and EV_CLEAR != 0)
+    if (mode and EV_CLEAR != 0) {
         sb.append("EV_CLEAR ")
+    }
 
-    if (mode and EV_EOF != 0)
+    if (mode and EV_EOF != 0) {
         sb.append("EV_EOF ")
+    }
 
-    if (mode and EV_ERROR != 0)
+    if (mode and EV_ERROR != 0) {
         sb.append("EV_ERROR ")
+    }
 
     return sb.toString()
 }

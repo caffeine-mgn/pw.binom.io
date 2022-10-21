@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
+import pw.binom.collections.defaultMutableSet
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.TransactionMode
@@ -300,7 +301,7 @@ class PGConnection private constructor(
         }
     }
 
-    internal var prepareStatements = HashSet<PostgresPreparedStatement>()
+    internal var prepareStatements = defaultMutableSet<PostgresPreparedStatement>()
 
     fun prepareStatement(
         query: String,

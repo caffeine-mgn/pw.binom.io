@@ -2,8 +2,8 @@ package pw.binom.io.httpClient
 
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.WebSocketConnectionPool
@@ -27,11 +27,11 @@ class BaseHttpClient(
     private val sslContext: SSLContext by lazy {
         SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
     }
-    private val connections = defaultHashMap<String, MutableList<AsyncAsciiChannel>>()
+    private val connections = defaultMutableMap<String, MutableList<AsyncAsciiChannel>>()
     internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, bufferSize = bufferSize.toUInt())
 
     internal fun recycleConnection(URI: URL, channel: AsyncAsciiChannel) {
-        connections.getOrPut(URI.asKey) { defaultArrayList() }.add(channel)
+        connections.getOrPut(URI.asKey) { defaultMutableList() }.add(channel)
     }
 
     private suspend fun borrowConnection(uri: URL): AsyncAsciiChannel {

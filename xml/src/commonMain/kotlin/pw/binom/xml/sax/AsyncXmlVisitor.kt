@@ -1,7 +1,7 @@
 package pw.binom.xml.sax
 
 interface AsyncXmlVisitor {
-    suspend fun start(tagName: String) {}
+    suspend fun start() {}
     suspend fun end() {}
     suspend fun attribute(name: String, value: String?) {
         attributeName(name)

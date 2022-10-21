@@ -177,7 +177,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
         val nodeName = readTagName()
         val subNode = visitors.peek().visitor.subNode(nodeName)
         visitors.push(Record(nodeName, subNode))
-        subNode.start(nodeName)
+        subNode.start()
 //        if (!lexer.nextSkipEmpty()) {
 //            TODO()
 //        }

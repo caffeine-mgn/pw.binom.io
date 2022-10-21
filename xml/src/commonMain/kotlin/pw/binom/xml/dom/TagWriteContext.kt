@@ -1,5 +1,6 @@
 package pw.binom.xml.dom
 
+import pw.binom.collections.defaultMutableMap
 import pw.binom.io.AsyncAppendable
 import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.sax.AsyncXmlRootWriterVisitor
@@ -10,7 +11,7 @@ private class TagWriteContext constructor(
     private val context: Context,
     private val writerVisitor: AsyncXmlVisitor
 ) : NodeBodyWriter {
-    private val prefixMap = HashMap<String, String>()
+    private val prefixMap = defaultMutableMap<String, String>()
 
     private fun prefix(uri: String): String? = prefixMap[uri] ?: parent?.prefix(uri)
 
@@ -19,7 +20,7 @@ private class TagWriteContext constructor(
             var prefix = prefix(ns)
             if (prefix != null) {
                 val w = writerVisitor.subNode("$prefix:$tag")
-                w.start("$prefix:$tag")
+                w.start()
 
                 val ctx = TagWriteContext(this, context, w)
                 if (func != null) {
@@ -29,7 +30,7 @@ private class TagWriteContext constructor(
             } else {
                 prefix = "ns${context.prefixCount++}"
                 val w = writerVisitor.subNode("$prefix:$tag")
-                w.start("$prefix:$tag")
+                w.start()
 
                 val ctx = TagWriteContext(this, context, w)
                 ctx.prefixMap[ns] = prefix
@@ -41,7 +42,7 @@ private class TagWriteContext constructor(
             }
         } else {
             val w = writerVisitor.subNode(tag)
-            w.start(tag)
+            w.start()
 
             val ctx = TagWriteContext(this, context, w)
             if (func != null) {
@@ -85,7 +86,7 @@ suspend fun AsyncAppendable.writeXml(headerCharset: String? = null, func: suspen
         AsyncXmlRootWriterVisitor.withHeader(this, headerCharset)
     }
     val ctx = TagWriteContext(null, Context(), w)
-    w.start("")
+    w.start()
     func(ctx)
     w.end()
 }

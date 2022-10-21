@@ -6,7 +6,7 @@ import pw.binom.FreezableFuture
 import pw.binom.Future
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.doFreeze
 import pw.binom.popOrNull
 import kotlin.coroutines.*
@@ -88,7 +88,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
             throw IllegalStateException("WorkerPool already has Interrupted")
         }
         state.interotped.setValue(true)
-        val out = defaultArrayList<() -> Any?>(state.queue.size)
+        val out = defaultMutableList<() -> Any?>(state.queue.size)
 
         while (!state.queue.isEmpty) {
             out += state.queue.pop()

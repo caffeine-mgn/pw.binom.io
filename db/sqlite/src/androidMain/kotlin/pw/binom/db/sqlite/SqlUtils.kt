@@ -1,10 +1,10 @@
 package pw.binom.db.sqlite
 
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 
 object SqlUtils {
     fun splitQueryStatements(query: String): List<String> {
-        val result = defaultArrayList<String>()
+        val result = defaultMutableList<String>()
         var cursor = 0
         var start = 0
         var endChar = '"'

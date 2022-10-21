@@ -46,7 +46,7 @@ class AsyncXmlWriterVisitor(val nodeName: String, val appendable: AsyncAppendabl
     private var started = false
     private var endded = false
 
-    override suspend fun start(tagName: String) {
+    override suspend fun start() {
         if (progress >= START) {
             throw IllegalStateException("Node already started")
         }

@@ -2,7 +2,8 @@
 
 package pw.binom.io.file
 
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableSet
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
@@ -57,7 +58,7 @@ actual class File actual constructor(path: String) {
         native.renameTo(newPath.native)
 
     actual fun list(): List<File> {
-        val out = defaultArrayList<File>()
+        val out = defaultMutableList<File>()
         iterator().forEach { file ->
             out += file
         }
@@ -110,7 +111,7 @@ actual class File actual constructor(path: String) {
     }
 
     actual fun setPosixMode(mode: PosixPermissions): Boolean {
-        val map = HashSet<JvmPosixFilePermission>()
+        val map = defaultMutableSet<JvmPosixFilePermission>()
         if (mode in PosixPermissions.OTHERS_EXECUTE) {
             map += JvmPosixFilePermission.OTHERS_EXECUTE
         }

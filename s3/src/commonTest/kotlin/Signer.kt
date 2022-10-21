@@ -7,7 +7,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import pw.binom.base64.Base16
 import pw.binom.base64.Base64
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableMap
 import pw.binom.crypto.HMac
 import pw.binom.crypto.MD5MessageDigest
 import pw.binom.crypto.Sha256MessageDigest
@@ -112,7 +112,7 @@ class Signer private constructor(
     lateinit var signedHeaders: String
 
     private fun setCanonicalHeaders(ignored_headers: Set<String>) {
-        this.canonicalHeaders = defaultHashMap<String, String>()
+        this.canonicalHeaders = defaultMutableMap<String, String>()
         val headers: Headers = request.headers
         for (name in headers.names) {
             val signedHeader = name.lowercase()

@@ -1,7 +1,7 @@
 package pw.binom.db.serialization
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.async.pool.PooledAsyncConnection
 import kotlin.coroutines.*
@@ -10,8 +10,8 @@ class TransactionContext {
     lateinit var connection: PooledAsyncConnection
     var rollbackOnly = false
     var transactionStarted: Boolean = false
-    val successFullActions = defaultArrayList<suspend () -> Unit>()
-    val rollbackActions = defaultArrayList<suspend () -> Unit>()
+    val successFullActions = defaultMutableList<suspend () -> Unit>()
+    val rollbackActions = defaultMutableList<suspend () -> Unit>()
     suspend fun executeSuccessActions() {
         successFullActions.forEach {
             it()
@@ -26,7 +26,7 @@ class TransactionContext {
 }
 
 class TransactionContextElement(val ctx: TransactionContext) : CoroutineContext.Element {
-    val connections = defaultHashMap<AsyncConnectionPool, TransactionContext>()
+    val connections = defaultMutableMap<AsyncConnectionPool, TransactionContext>()
 
     override val key: CoroutineContext.Key<TransactionContextElement>
         get() = TransactionContextElementKey

@@ -6,7 +6,7 @@ class HashMap3Test {
 
     @Test
     fun removeTest() {
-        val v = defaultHashMap<Int, Boolean>()
+        val v = defaultMutableMap<Int, Boolean>()
         v[0] = true
         v[1] = true
         v[2] = true
@@ -20,7 +20,7 @@ class HashMap3Test {
 
     @Test
     fun test3() {
-        val v = defaultHashMap<Int, Boolean>()
+        val v = defaultMutableMap<Int, Boolean>()
         v[10] = true
         v[12] = true
         val it = v.iterator()
@@ -43,7 +43,7 @@ class HashMap3Test {
 
     @Test
     fun test5() {
-        val dd = defaultHashMap<String, String>()
+        val dd = defaultMutableMap<String, String>()
 
         dd["993"] = "993"
         dd["981"] = "981"
@@ -63,7 +63,7 @@ class HashMap3Test {
 
     @Test
     fun test4() {
-        val dd = defaultHashMap<String, String>()
+        val dd = defaultMutableMap<String, String>()
         dd["database.sqlite.file"] = "index.db"
         dd["external_http.0.port"] = "8080"
 

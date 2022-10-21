@@ -5,6 +5,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.collections.defaultMutableSet
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -18,7 +19,7 @@ private object AsyncReentrantLocksKey : CoroutineContext.Key<AsyncReentrantLocks
 private class AsyncReentrantLocksElement : CoroutineContext.Element {
     override val key: CoroutineContext.Key<*>
         get() = AsyncReentrantLocksKey
-    private val locks = HashSet<AsyncReentrantLock>()
+    private val locks = defaultMutableSet<AsyncReentrantLock>()
     private val locksLock = SpinLock()
     fun add(lock: AsyncReentrantLock) {
         locksLock.synchronize {
@@ -53,7 +54,7 @@ private suspend fun <T> withTimeout2(timeout: Duration?, block: suspend () -> T)
 
 class AsyncReentrantLock : AsyncLock {
     private val waiters by lazy {
-        HashSet<CancellableContinuation<Unit>>()
+        defaultMutableSet<CancellableContinuation<Unit>>()
     }
     private val waiterLock = SpinLock()
     private val locked = AtomicBoolean(false)

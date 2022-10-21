@@ -2,11 +2,11 @@ package pw.binom
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableMap
 
 actual fun Environment.getEnv(name: String): String? = getenv(name)?.toKString()
 actual fun Environment.getEnvs(): Map<String, String> {
-    val out = defaultHashMap<String, String>()
+    val out = defaultMutableMap<String, String>()
     var i = 0
     while (true) {
         val line = environ?.get(i++)?.toKString() ?: break

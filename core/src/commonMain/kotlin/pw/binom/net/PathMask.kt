@@ -9,6 +9,12 @@ value class PathMask(val raw: String) {
         throw IllegalArgumentException("Can't convert mask \"$raw\" to path: can't replace variable \"$it\"")
     }
 
+    fun toPath(map: Map<String, String>) = toPath { name ->
+        map[name] ?: throw IllegalArgumentException("Can't find value for variable \"$name\"")
+    }
+
+    fun toPath(vararg values: Pair<String, String>) = toPath(values.toMap())
+
     fun toPath(variable: (String) -> String): Path {
         val sb = StringBuilder()
         raw.parsePathMask(
@@ -18,6 +24,8 @@ value class PathMask(val raw: String) {
         )
         return sb.toString().toPath
     }
+
+    override fun toString(): String = raw
 }
 
 fun String.toPathMask() = PathMask(this)

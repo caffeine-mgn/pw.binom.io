@@ -1,5 +1,6 @@
 package pw.binom.xml.dom
 
+import pw.binom.collections.defaultMutableMap
 import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.sax.AsyncXmlVisitor
 import pw.binom.xml.sax.SyncXmlVisitor
@@ -11,7 +12,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
         nameSpace = null
     )
 
-    val attributes = HashMap<Attribute, String?>()
+    val attributes = defaultMutableMap<Attribute, String?>()
     var cdata = false
 
     private val privateChilds = ArrayList<XmlElement>()
@@ -26,11 +27,11 @@ class XmlElement(var tag: String, var nameSpace: String?) {
         }
 
     suspend fun accept(visitor: AsyncXmlVisitor) {
-        accept(HashMap(), visitor)
+        accept(defaultMutableMap(), visitor)
     }
 
     fun accept(visitor: SyncXmlVisitor) {
-        accept(HashMap(), visitor)
+        accept(defaultMutableMap(), visitor)
     }
 
     override fun toString(): String {
@@ -45,7 +46,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
 
     operator fun get(index: Int) = childs[index]
 
-    private fun accept(prefix: HashMap<String, String>, visitor: SyncXmlVisitor) {
+    private fun accept(prefix: MutableMap<String, String>, visitor: SyncXmlVisitor) {
         var tagName = tag
         val nameSpace = nameSpace
         if (nameSpace != null) {
@@ -109,12 +110,12 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 "$p:${it.tag}"
             } ?: it.tag
 
-            it.accept(HashMap(prefix), visitor.subNode(key))
+            it.accept(defaultMutableMap(prefix), visitor.subNode(key))
         }
         visitor.end()
     }
 
-    private suspend fun accept(prefix: HashMap<String, String>, visitor: AsyncXmlVisitor) {
+    private suspend fun accept(prefix: MutableMap<String, String>, visitor: AsyncXmlVisitor) {
         var tagName = tag
         val nameSpace = nameSpace
         var started = false
@@ -123,14 +124,14 @@ class XmlElement(var tag: String, var nameSpace: String?) {
             if (p == null) {
                 p = "ns${prefix.size + 1}"
                 tagName = "$p:$tagName"
-                visitor.start(tagName)
+                visitor.start()
                 started = true
                 visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace)
                 prefix[nameSpace] = p
             }
         }
         if (!started) {
-            visitor.start(tagName)
+            visitor.start()
         }
         attributes.forEach {
             val key = it.key.nameSpace?.let { ns ->
@@ -183,7 +184,7 @@ class XmlElement(var tag: String, var nameSpace: String?) {
                 "$p:${it.tag}"
             } ?: it.tag
 
-            it.accept(HashMap(prefix), visitor.subNode(key))
+            it.accept(defaultMutableMap(prefix), visitor.subNode(key))
         }
         visitor.end()
     }

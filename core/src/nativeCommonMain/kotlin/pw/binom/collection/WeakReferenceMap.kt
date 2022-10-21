@@ -1,11 +1,11 @@
 package pw.binom.collection
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import kotlin.native.ref.WeakReference
 
 actual class WeakReferenceMap<K : Any, V : Any> actual constructor() {
-    val native = defaultHashMap<WeakReference<K>, V>()
+    val native = defaultMutableMap<WeakReference<K>, V>()
 
     private var cleanCounter = 0
 
@@ -33,7 +33,7 @@ actual class WeakReferenceMap<K : Any, V : Any> actual constructor() {
         native.keys.forEach {
             if (it.value == null) {
                 if (list == null) {
-                    list = defaultArrayList()
+                    list = defaultMutableList()
                 }
                 list!!.add(it)
             }

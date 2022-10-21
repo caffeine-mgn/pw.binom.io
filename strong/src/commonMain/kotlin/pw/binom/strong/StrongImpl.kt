@@ -1,7 +1,7 @@
 package pw.binom.strong
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.logger.Logger
@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
 @Suppress("UNCHECKED_CAST")
 internal class StrongImpl : Strong {
     private val logger = Logger.getLogger("Strong.Starter")
-    internal var beans = defaultHashMap<String, BeanEntity>()
+    internal var beans = defaultMutableMap<String, BeanEntity>()
     internal lateinit var destroyOrder: List<Strong.DestroyableBean>
 
     sealed class Dependency {
@@ -24,7 +24,7 @@ internal class StrongImpl : Strong {
         class ClassSetDependency(val clazz: KClass<Any>) : Dependency()
     }
 
-    private val internalDependencies = defaultArrayList<Dependency>()
+    private val internalDependencies = defaultMutableList<Dependency>()
     val dependencies: List<Dependency>
         get() = internalDependencies
 
@@ -97,7 +97,7 @@ internal class StrongImpl : Strong {
         private set
 
     private val interruptingListenersLock = SpinLock()
-    private val interruptingListeners = defaultArrayList<Continuation<Unit>>()
+    private val interruptingListeners = defaultMutableList<Continuation<Unit>>()
 
     override suspend fun awaitDestroy() {
         if (isDestroyed) {

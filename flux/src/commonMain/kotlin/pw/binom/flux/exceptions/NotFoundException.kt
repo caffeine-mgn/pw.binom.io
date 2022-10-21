@@ -8,7 +8,7 @@ class NotFoundException : WebException {
     constructor(message: String?, cause: Throwable?) : super(message, cause)
     constructor(cause: Throwable?) : super(cause)
 
-    override fun processing(response: HttpResponse) {
+    override suspend fun processing(response: HttpResponse) {
         response.status = 404
     }
 }

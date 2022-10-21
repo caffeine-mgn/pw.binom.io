@@ -1,6 +1,7 @@
 package pw.binom.strong
 
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableSet
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
 import pw.binom.strong.exceptions.*
@@ -9,7 +10,7 @@ import kotlin.reflect.KClass
 class ClassDependency(val clazz: KClass<out Any>, val name: String?, val require: Boolean)
 
 internal class StrongWithDependenciesSpy(val strong: Strong) : Strong by strong {
-    private val dependencies = defaultArrayList<ClassDependency>()
+    private val dependencies = defaultMutableList<ClassDependency>()
     private var inited = false
     private fun checkStatus() {
         if (inited) {
@@ -28,7 +29,7 @@ internal class StrongWithDependenciesSpy(val strong: Strong) : Strong by strong 
 
     fun getLastDependencies(): List<ClassDependency> {
         checkStatus()
-        val r = defaultArrayList(dependencies)
+        val r = defaultMutableList(dependencies)
         dependencies.clear()
         return r
     }
@@ -70,7 +71,7 @@ internal class Starter(
         fun isReadyForInit() = !nodes.any { !it.inited }
         fun isReadyForLink() = !nodes.any { !it.linked }
 
-        val nodes = HashSet<BeanConfig>()
+        val nodes = defaultMutableSet<BeanConfig>()
         override val beanClass: KClass<out Any>
             get() {
                 if (bean is Strong.BeanFactory<out Any>) {
@@ -110,7 +111,7 @@ internal class Starter(
         }
     }
 
-    private val createdBeans = defaultArrayList<BeanConfig>()
+    private val createdBeans = defaultMutableList<BeanConfig>()
 
     private fun init() {
         val beanFromConfig = dd.getLastDefinitions().map {

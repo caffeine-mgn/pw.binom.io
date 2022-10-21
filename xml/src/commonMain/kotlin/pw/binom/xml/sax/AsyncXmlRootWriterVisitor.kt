@@ -18,7 +18,7 @@ class AsyncXmlRootWriterVisitor private constructor(val appendable: AsyncAppenda
 
     private var started = false
     private var endded = false
-    override suspend fun start(tagName: String) {
+    override suspend fun start() {
         if (started) {
             throw IllegalStateException("Root Node already started")
         }

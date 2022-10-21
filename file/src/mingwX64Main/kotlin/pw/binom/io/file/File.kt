@@ -4,7 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.GetDiskFreeSpaceEx
 import pw.binom.Environment
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.getEnv
 import kotlin.native.concurrent.freeze
 
@@ -94,7 +94,7 @@ actual class File actual constructor(path: String) {
     actual fun renameTo(newPath: File): Boolean = rename(path, newPath.path) == 0
 
     actual fun list(): List<File> {
-        val out = defaultArrayList<File>()
+        val out = defaultMutableList<File>()
         iterator().forEach { file ->
             out += file
         }

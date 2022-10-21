@@ -1,8 +1,8 @@
 package pw.binom.io.httpServer
 
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableMap
 
-private val statusCodes = defaultHashMap<Int, String>().also {
+private val statusCodes = defaultMutableMap<Int, String>().also {
     for (i in 100..526) {
         it[i] = i.toString()
     }

@@ -2,7 +2,7 @@ package pw.binom.io.file
 
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.copyTo
 import pw.binom.io.*
 import pw.binom.net.Path
@@ -60,7 +60,7 @@ class LocalFileSystem(
     }
 
     private suspend fun File.listEntities(): List<EntityImpl> {
-        val out = defaultArrayList<EntityImpl>()
+        val out = defaultMutableList<EntityImpl>()
         this.iterator().forEach {
             out += EntityImpl(it)
         }

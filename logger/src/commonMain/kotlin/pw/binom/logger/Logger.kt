@@ -1,6 +1,8 @@
 package pw.binom.logger
 
 import pw.binom.atomic.AtomicReference
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
 
 internal expect fun createGlobalMap(): MutableMap<String, Logger>
 
@@ -16,13 +18,16 @@ class Logger(
     companion object {
         private val allLoggers = createGlobalMap()
         val global: Logger = Logger("")
+        private val lock = SpinLock()
 
         init {
             global.handler = ConsoleHandler
         }
 
         fun getLogger(pkg: String): Logger =
-            allLoggers.getOrPut(pkg) { Logger(pkg) }
+            lock.synchronize {
+                allLoggers.getOrPut(pkg) { Logger(pkg) }
+            }
 
         val ofThisOrGlobal
             get() = LoggerPropertyDelegatorProvider()

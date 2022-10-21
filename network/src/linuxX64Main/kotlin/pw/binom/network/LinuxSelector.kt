@@ -5,8 +5,8 @@ import platform.linux.*
 import platform.posix.pipe
 import platform.posix.read
 import pw.binom.collections.LinkedList
-import pw.binom.collections.defaultHashMap
-import pw.binom.collections.defaultHashSet
+import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import kotlin.collections.set
@@ -17,11 +17,11 @@ class LinuxSelector : AbstractSelector() {
 
     internal val native = Epoll.create(1000)
 
-    internal val keys = defaultHashSet<LinuxKey>()
+    internal val keys = defaultMutableSet<LinuxKey>()
 //    internal val keys = TreeSet<LinuxKey>() { a, b -> a.hashCode() - b.hashCode() }
 
     //    internal val idToKey = HashMap2<Int, LinuxKey>()
-    internal val idToKey = defaultHashMap<Int, LinuxKey>()
+    internal val idToKey = defaultMutableMap<Int, LinuxKey>()
     private val keyForRemove = LinkedList<Pair<Int, RawSocket>>()
     private val keyForAdd = LinkedList<Pair<Int, LinuxKey>>()
     private val selectLock = SpinLock()

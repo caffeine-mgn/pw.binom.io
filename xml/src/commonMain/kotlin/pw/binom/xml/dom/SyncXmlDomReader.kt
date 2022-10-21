@@ -1,5 +1,6 @@
 package pw.binom.xml.dom
 
+import pw.binom.collections.defaultMutableMap
 import pw.binom.io.Reader
 import pw.binom.io.StringReader
 import pw.binom.io.asAsync
@@ -9,7 +10,7 @@ import pw.binom.xml.sax.AsyncXmlReaderVisitor
 import pw.binom.xml.sax.SyncXmlVisitor
 
 class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : SyncXmlVisitor {
-    class NameSpaceContext(var pool: HashMap<String, String> = HashMap()) {
+    class NameSpaceContext(var pool: MutableMap<String, String> = defaultMutableMap()) {
         var default: String? = null
         private var autoIterator = 0
 
@@ -17,7 +18,7 @@ class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, ta
          * key - url
          * value - prefix
          */
-        var prefix = HashMap<String, String>()
+        var prefix = defaultMutableMap<String, String>()
 
         fun pool(uri: String) = pool.getOrPut(uri) { "ns${autoIterator++}" }
 

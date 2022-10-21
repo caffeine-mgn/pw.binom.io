@@ -31,8 +31,9 @@ open class AsyncChunkedOutput(
         checkClosed()
         val len = data.remaining
         while (true) {
-            if (data.remaining == 0)
+            if (data.remaining == 0) {
                 break
+            }
             if (buffer.remaining == 0) {
                 buffer.flip()
                 sendBuffer()
@@ -61,16 +62,18 @@ open class AsyncChunkedOutput(
 
     override suspend fun flush() {
         checkClosed()
-        if (buffer.position == 0)
+        if (buffer.position == 0) {
             return
+        }
         buffer.flip()
         sendBuffer()
     }
 
     private suspend fun finish() {
         checkClosed()
-        if (finished)
+        if (finished) {
             return
+        }
         flush()
         tmp.clear()
         tmp.put('0'.code.toByte())

@@ -2,7 +2,7 @@ package pw.binom.io
 
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.net.Path
 import pw.binom.net.toPath
 
@@ -99,7 +99,7 @@ class MemoryFileSystem : FileSystem {
             }
         override val path: Path
             get() {
-                val r = defaultArrayList<FileEntity>()
+                val r = defaultMutableList<FileEntity>()
                 var c = e
                 do {
                     r += c
@@ -157,6 +157,6 @@ private sealed interface FileEntity {
     }
 
     class Directory(override var name: String, override var parent: Directory?) : FileEntity {
-        val entities = defaultArrayList<FileEntity>()
+        val entities = defaultMutableList<FileEntity>()
     }
 }

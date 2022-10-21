@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.EmptySerializersModule
+import pw.binom.collections.defaultMutableMap
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -45,33 +46,33 @@ class SQLSerializationTest {
 
     @Test
     fun enumOrderTest() {
-        val output = HashMap<String, Any?>()
+        val output = defaultMutableMap<String, Any?>()
         SQLSerialization.toMap(
             serializer = EntityWithEnumOrder.serializer(),
             value = EntityWithEnumOrder(enum = MyEnumOrder.VALUE1),
             map = output,
             columnPrefix = null,
-            serializersModule = EmptySerializersModule,
+            serializersModule = EmptySerializersModule(),
         )
         assertEquals(0, output["enum"])
     }
 
     @Test
     fun enumCodeTest() {
-        val output = HashMap<String, Any?>()
+        val output = defaultMutableMap<String, Any?>()
         SQLSerialization.toMap(
             serializer = EntityWithEnumCode.serializer(),
             value = EntityWithEnumCode(enum = MyEnumCode.VALUE1),
             map = output,
             columnPrefix = null,
-            serializersModule = EmptySerializersModule,
+            serializersModule = EmptySerializersModule(),
         )
         assertEquals("VALUE1", output["enum"])
     }
 
     @Test
     fun customEnumCode() {
-        val output = HashMap<String, Any?>()
+        val output = defaultMutableMap<String, Any?>()
         SQLSerialization.toMap(
             serializer = EntityWithEnumCode2.serializer(),
             value = EntityWithEnumCode2(enum = MyEnumCode2.VALUE1),

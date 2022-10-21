@@ -1,7 +1,7 @@
 package pw.binom.net
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.pathMatch
 import kotlin.jvm.JvmInline
 
@@ -53,14 +53,17 @@ value class Path internal constructor(val raw: String) {
      * @param dest map for put parsed variables. Default value is `defaultHashMap<String,String>()`
      * @return Returns [dest] if path is match. If path is not match will returns null
      */
-    fun getVariables(mask: String, dest: MutableMap<String, String> = defaultHashMap()): MutableMap<String, String>? {
+    fun getVariables(
+        mask: String,
+        dest: MutableMap<String, String> = defaultMutableMap()
+    ): MutableMap<String, String>? {
         if (!pathMatch(raw, mask) { key, value -> dest[key] = value }) {
             return null
         }
         return dest
     }
 
-    fun getVariables(mask: PathMask, dest: MutableMap<String, String> = defaultHashMap()) =
+    fun getVariables(mask: PathMask, dest: MutableMap<String, String> = defaultMutableMap()) =
         getVariables(
             mask = mask.raw,
             dest = dest,
@@ -95,7 +98,7 @@ value class Path internal constructor(val raw: String) {
             if (el.any { it == ".." || it == "." }) {
                 return this
             }
-            val elements = defaultArrayList<String>(el.size)
+            val elements = defaultMutableList<String>(el.size)
             el.forEach {
                 when (it) {
                     "." -> return@forEach

@@ -2,7 +2,7 @@
 
 package pw.binom
 
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ByteBufferProvider
 import pw.binom.io.Closeable
@@ -99,7 +99,7 @@ inline fun <T> ByteBuffer.set(position: Int, length: Int, func: (ByteBuffer) -> 
 inline fun <T> ByteBuffer.map(func: (Byte) -> T): List<T> {
     val pos = position
     val lim = limit
-    val output = defaultArrayList<T>(remaining)
+    val output = defaultMutableList<T>(remaining)
     for (it in pos until lim)
         output += func(this[it])
     return output

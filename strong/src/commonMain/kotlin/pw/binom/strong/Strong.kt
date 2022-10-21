@@ -1,6 +1,6 @@
 package pw.binom.strong
 
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.strong.exceptions.StrongException
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty
@@ -57,7 +57,7 @@ interface Strong {
             }
             val delegateProvider = LazyInitPropertyDelegateProvider(func)
             if (inits == null) {
-                inits = defaultArrayList()
+                inits = defaultMutableList()
             }
             inits!!.add(delegateProvider)
             return delegateProvider
@@ -69,7 +69,7 @@ interface Strong {
             }
             val delegateProvider = LazyInitPropertyDelegateProvider(func)
             if (links == null) {
-                links = defaultArrayList()
+                links = defaultMutableList()
             }
             links!!.add(delegateProvider)
             return delegateProvider

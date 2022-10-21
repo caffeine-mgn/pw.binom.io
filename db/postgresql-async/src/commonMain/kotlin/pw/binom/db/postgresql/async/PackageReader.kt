@@ -1,7 +1,7 @@
 package pw.binom.db.postgresql.async
 
 import pw.binom.charset.Charset
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.io.AsyncInput
@@ -34,7 +34,7 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
     private val output = ByteArrayOutput()
     private val stringBuffer = ByteArrayOutput()
     private val limitInput = AsyncInputLimit(rawInput)
-    private val columns = defaultArrayList<ColumnMeta>()
+    private val columns = defaultMutableList<ColumnMeta>()
     private var columnIndex = 0
 
     fun giveColumnData(): ColumnMeta {

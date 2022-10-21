@@ -40,6 +40,7 @@ internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState):
                 state++
                 start = i
             }
+
             state == 1 -> if (b == LF) state++ else reset()
             state == 2 -> if (b == MINUS) state++ else reset()
             state == 3 -> if (b == MINUS) state++ else reset()
@@ -58,34 +59,40 @@ internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState):
                         blockEnd = true
                         state++
                     }
+
                     MINUS -> {
                         blockEnd = false
                         state++
                     }
+
                     else -> reset()
                 }
             }
+
             state == separator.length + 4 + 1 && blockEnd -> {
                 if (b == LF) {
                     endState.type = EndState.Type.BLOCK_EOF
                     endState.skip = state + 1
                     break@LOOP
-                } else
+                } else {
                     reset()
+                }
             }
 
             state == separator.length + 4 + 1 && !blockEnd -> {
                 if (b == MINUS) {
                     state++
-                } else
+                } else {
                     reset()
+                }
             }
 
             state == separator.length + 4 + 2 && !blockEnd -> {
                 if (b == CR) {
                     state++
-                } else
+                } else {
                     reset()
+                }
             }
 
             state == separator.length + 4 + 3 && !blockEnd -> {
@@ -93,8 +100,9 @@ internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState):
                     endState.type = EndState.Type.DATA_EOF
                     endState.skip = state + 1
                     break@LOOP
-                } else
+                } else {
                     reset()
+                }
             }
         }
     }
@@ -151,29 +159,35 @@ open class AsyncMultipartInput(
             _headers.clear()
         }
 
-        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining == 0)
+        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining == 0) {
             return false
+        }
         if (buffer.remaining == 0) {
             fill()
         }
-        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining == 0)
+        if (endState.type == EndState.Type.DATA_EOF && buffer.remaining == 0) {
             return false
+        }
 
         val head = reader.readln() ?: throw IOException("Can't read part data header")
         val items = head.split(':', limit = 2)
-        if (items[0].lowercase() != "content-disposition")
+        if (items[0].lowercase() != "content-disposition") {
             throw IOException("Invalid part header \"${items[0]}\"")
+        }
         val headValues = items[1].split(';').map { it.trim() }
-        if ("form-data" != headValues[0])
+        if ("form-data" != headValues[0]) {
             throw IOException("Invalid part header: is not form-data part")
-        if (!headValues[1].startsWith("name="))
+        }
+        if (!headValues[1].startsWith("name=")) {
             throw IOException("Invalid part header: Can't get name of part")
+        }
         formName = headValues[1].removePrefix("name=\"").removeSuffix("\"")
         _headers.clear()
         while (true) {
             val l = reader.readln() ?: ""
-            if (l.isEmpty())
+            if (l.isEmpty()) {
                 break
+            }
             val headItems = l.split(':', limit = 2)
             _headers.add(
                 key = headItems[0].trim(),
@@ -197,8 +211,9 @@ open class AsyncMultipartInput(
                     if (endState.type == EndState.Type.LIMIT) {
                         buffer.limit = buffer.capacity
                         buffer.compact()
-                    } else
+                    } else {
                         buffer.clear()
+                    }
                 }
             } else {
                 buffer.clear()

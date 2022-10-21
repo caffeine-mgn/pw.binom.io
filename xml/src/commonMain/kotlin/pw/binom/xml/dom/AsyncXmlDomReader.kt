@@ -1,5 +1,6 @@
 package pw.binom.xml.dom
 
+import pw.binom.collections.defaultMutableMap
 import pw.binom.io.AsyncReader
 import pw.binom.xml.XML_NAMESPACE_PREFIX
 import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
@@ -7,7 +8,7 @@ import pw.binom.xml.sax.AsyncXmlVisitor
 import pw.binom.xml.sax.XmlRootReaderVisitor
 
 class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : AsyncXmlVisitor {
-    class NameSpaceContext(var pool: HashMap<String, String> = HashMap()) {
+    class NameSpaceContext(var pool: MutableMap<String, String> = defaultMutableMap()) {
         var default: String? = null
         private var autoIterator = 0
 
@@ -15,7 +16,7 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
          * key - url
          * value - prefix
          */
-        var prefix = HashMap<String, String>()
+        var prefix = defaultMutableMap<String, String>()
 
         fun pool(uri: String) = pool.getOrPut(uri) { "ns${autoIterator++}" }
 
@@ -84,7 +85,7 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
         fixCurrentNS()
     }
 
-    override suspend fun start(tagName: String) {
+    override suspend fun start() {
     }
 
     override suspend fun subNode(name: String): AsyncXmlVisitor {

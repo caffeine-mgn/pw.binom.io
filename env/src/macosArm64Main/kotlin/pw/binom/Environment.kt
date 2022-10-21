@@ -3,7 +3,7 @@ package pw.binom
 import kotlinx.cinterop.*
 import platform.osx.*
 import platform.posix.*
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableMap
 
 /**
  * constexpr endian_t getEndianOrder() {
@@ -19,7 +19,7 @@ return
  */
 
 actual fun Environment.getEnvs(): Map<String, String> {
-    val out = defaultHashMap<String, String>()
+    val out = defaultMutableMap<String, String>()
     var i = 0
     val envs = _NSGetEnviron()
     while (true) {

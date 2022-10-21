@@ -1,15 +1,15 @@
 package pw.binom.strong
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.strong.exceptions.BeanAlreadyDefinedException
 import kotlin.reflect.KClass
 
 internal class InternalDefiner : Definer {
-    private val alreadyDefined = defaultHashMap<String, Throwable>()
-    private val definitions = defaultArrayList<Definition>()
+    private val alreadyDefined = defaultMutableMap<String, Throwable>()
+    private val definitions = defaultMutableList<Definition>()
     fun getLastDefinitions(): List<Definition> {
-        val l = defaultArrayList(definitions)
+        val l = defaultMutableList(definitions)
         definitions.clear()
         return l
     }

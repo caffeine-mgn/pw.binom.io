@@ -1,7 +1,7 @@
 package pw.binom.strong
 
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashSet
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableSet
 
 internal object GraphUtils {
     fun <T : Any> buildDependencyGraph(
@@ -9,14 +9,14 @@ internal object GraphUtils {
         subNodeProvider: (T) -> Collection<T>,
     ): List<T> {
 //        val order = ArrayList<T>()
-        val inited = HashSet<T>()
+        val inited = defaultMutableSet<T>()
 //        val initing = HashSet<T>()
 //        val treePath = ArrayList<T>()
 
-        val order = defaultArrayList<T>()
+        val order = defaultMutableList<T>()
 //        val inited = defaultHashSet<T>()
-        val initing = defaultHashSet<T>()
-        val treePath = defaultArrayList<T>()
+        val initing = defaultMutableSet<T>()
+        val treePath = defaultMutableList<T>()
         fun init(e: T) {
             if (e in inited) {
                 return

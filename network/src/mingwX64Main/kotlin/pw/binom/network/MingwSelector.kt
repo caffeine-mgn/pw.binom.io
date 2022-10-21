@@ -2,16 +2,18 @@ package pw.binom.network
 
 import kotlinx.cinterop.reinterpret
 import platform.linux.*
+import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import kotlin.collections.set
 
 class MingwSelector : AbstractSelector() {
     private val native = epoll_create(1000)!!
-    internal val idToKey = NoMemoryLeakHashMap<Int, MingwKey>("idToKey")
+    internal val idToKey = defaultMutableMap<Int, MingwKey>()
     private val keysLock = SpinLock()
-    private val keyForRemove = NoMemoryLeakHashSet<Int>("keyForRemove")
-    internal val keys = NoMemoryLeakHashSet<MingwKey>("keys")
+    private val keyForRemove = defaultMutableSet<Int>()
+    internal val keys = defaultMutableSet<MingwKey>()
 
     override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
         keysLock.synchronize {
@@ -72,7 +74,7 @@ class MingwSelector : AbstractSelector() {
         TODO("Not yet implemented")
     }
 
-    override fun getAttachedKeys(): Collection<Selector.Key> = HashSet(keys)
+    override fun getAttachedKeys(): Collection<Selector.Key> = defaultMutableSet(keys)
 
     override fun close() {
         epoll_close(native)

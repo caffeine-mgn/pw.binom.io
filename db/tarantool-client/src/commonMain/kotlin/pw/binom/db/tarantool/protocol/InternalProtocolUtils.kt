@@ -2,8 +2,8 @@ package pw.binom.db.tarantool.protocol
 
 import pw.binom.*
 import pw.binom.base64.Base64
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import kotlin.experimental.xor
@@ -17,7 +17,7 @@ internal object InternalProtocolUtils {
     ): Map<Any, Any?> {
         val sha1 = Sha1MessageDigest()
 
-        val auth = defaultArrayList<Any>(2)
+        val auth = defaultMutableList<Any>(2)
         auth.add("chap-sha1")
         sha1.update(password.encodeToByteArray())
         val p = sha1.finish()
@@ -238,7 +238,7 @@ internal object InternalProtocolUtils {
         if (size == 0) {
             return emptyList()
         }
-        val out = defaultArrayList<Any?>(size)
+        val out = defaultMutableList<Any?>(size)
         repeat(size) {
             out += unpack(buf, input)
         }
@@ -252,7 +252,7 @@ internal object InternalProtocolUtils {
         if (size == 0) {
             return emptyMap()
         }
-        val out = defaultHashMap<Any?, Any?>()
+        val out = defaultMutableMap<Any?, Any?>()
         repeat(size) {
             val key = unpack(buf, input)
             val value = unpack(buf, input)

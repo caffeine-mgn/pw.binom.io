@@ -1,7 +1,7 @@
 package pw.binom.db.sqlite
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import pw.binom.collections.defaultArrayList
+import pw.binom.collections.defaultMutableList
 import pw.binom.date.DateTime
 import pw.binom.db.sync.SyncResultSet
 import java.sql.ResultSet
@@ -10,7 +10,7 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
 
     override val columns: List<String> by lazy {
         val count = native.metaData.columnCount
-        val out = defaultArrayList<String>(count)
+        val out = defaultMutableList<String>(count)
         (0 until count).forEach {
             out += native.metaData.getColumnName(it + 1)
         }

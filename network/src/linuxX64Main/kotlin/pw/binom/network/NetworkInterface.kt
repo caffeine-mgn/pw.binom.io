@@ -6,8 +6,8 @@ import platform.linux.getifaddrs
 import platform.linux.ifaddrs
 import platform.linux.sockaddr_ll
 import platform.posix.*
-import pw.binom.collections.defaultArrayList
-import pw.binom.collections.defaultHashMap
+import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.io.IOException
 import kotlin.experimental.and
 
@@ -74,7 +74,7 @@ actual class NetworkInterface private constructor(
                 }
                 try {
                     var addressPtr = ptrIfaddrs.value
-                    val addresses = defaultHashMap<String, ArrayList<NetworkInterfaceAddress>>()
+                    val addresses = defaultMutableMap<String, ArrayList<NetworkInterfaceAddress>>()
                     while (addressPtr != null) {
                         when (addressPtr.pointed.ifa_addr?.pointed?.sa_family!!.toInt()) {
                             AF_INET, AF_INET6 -> {
@@ -88,7 +88,7 @@ actual class NetworkInterface private constructor(
                         addressPtr = addressPtr.pointed.ifa_next
                     }
 
-                    val resultList = defaultArrayList<NetworkInterface>()
+                    val resultList = defaultMutableList<NetworkInterface>()
                     addressPtr = ptrIfaddrs.value
                     while (addressPtr != null) {
                         if (addressPtr.pointed.ifa_addr?.pointed?.sa_family?.toInt() != AF_PACKET) {
