@@ -3,6 +3,7 @@ package pw.binom.db.async.pool
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.defaultMutableSet
+import pw.binom.collections.useName
 import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
@@ -13,8 +14,10 @@ import kotlin.time.DurationUnit
 class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val connection: AsyncConnection) :
     PooledAsyncConnection, AsyncConnection by connection {
 
-    private val createdPreparedStatement = defaultMutableMap<String, AsyncPreparedStatement>()
-    private val forRemove = defaultMutableMap<String, AsyncPreparedStatement>()
+    private val createdPreparedStatement =
+        defaultMutableMap<String, AsyncPreparedStatement>().useName("PooledAsyncConnectionImpl.createdPreparedStatement")
+    private val forRemove =
+        defaultMutableMap<String, AsyncPreparedStatement>().useName("PooledAsyncConnectionImpl.forRemove")
 
     override suspend fun usePreparedStatement(sql: String): AsyncPreparedStatement {
         val p = forRemove.remove(sql)

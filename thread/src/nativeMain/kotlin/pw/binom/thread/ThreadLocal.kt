@@ -1,11 +1,12 @@
 package pw.binom.thread
 
 import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.useName
 import kotlin.native.concurrent.AtomicInt
 
 actual class ThreadLocal<T> actual constructor() {
     private val lock = AtomicInt(0)
-    private val map = defaultMutableMap<Thread, T>()
+    private val map = defaultMutableMap<Thread, T>().useName("ThreadLocal.map")
     private var counter = 0
 
     private inline fun <T> locking(func: () -> T): T {

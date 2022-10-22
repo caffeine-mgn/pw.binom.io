@@ -3,6 +3,7 @@ package pw.binom.flux
 import kotlinx.coroutines.withContext
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.useName
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
@@ -10,9 +11,9 @@ import pw.binom.pool.DefaultPool
 import pw.binom.pool.borrow
 
 abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
-    private val routers = defaultMutableMap<String, MutableList<Route>>()
+    private val routers = defaultMutableMap<String, MutableList<Route>>().useName("AbstractRoute.routers")
     private val methods =
-        defaultMutableMap<String, MutableMap<String, MutableList<suspend (FluxHttpRequest) -> Unit>>>()
+        defaultMutableMap<String, MutableMap<String, MutableList<suspend (FluxHttpRequest) -> Unit>>>().useName("AbstractRoute.methods")
     private var forwardHandler: Handler? = null
 
     override fun route(path: String, route: Route) {
@@ -39,7 +40,8 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
         if (forwardHandler != null) {
             throw IllegalStateException("Router has already defined forward")
         }
-        methods.getOrPut(method) { defaultMutableMap() }.getOrPut(path) { defaultMutableList() }.add(func)
+        methods.getOrPut(method) { defaultMutableMap<String, MutableList<suspend (FluxHttpRequest) -> Unit>>().useName("AbstractRoute.endpoint #1") }
+            .getOrPut(path) { defaultMutableList() }.add(func)
         return Closeable {
             methods[method]?.get(path)?.remove(func)
             if (methods[method]?.get(path)?.isEmpty() == true) {

@@ -2,17 +2,27 @@ package pw.binom.collections
 
 import pw.binom.atomic.AtomicInt
 import kotlin.math.absoluteValue
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 private val DEFAULT_LOAD_FACTOR = 0.75f
 private val DEFAULT_CAPACITY = 11
 
 private object NullKey
 
+@OptIn(ExperimentalTime::class)
 class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float = DEFAULT_LOAD_FACTOR) :
-    MutableMap<K, V> {
+    MutableMap<K, V>, BinomCollection {
     init {
         require(bucketSize >= 1)
     }
+
+    private val constructTime = TimeSource.Monotonic.markNow()
+
+    override val liveTime: Duration
+        get() = constructTime.elapsedNow()
+    override var name: String = ""
 
     private var threshold = (bucketSize * loadFactor).toInt()
 
@@ -69,6 +79,7 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
         buckets.forEach {
             it.clear()
         }
+        internalSize.setValue(0)
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -109,7 +109,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     }
 
     private fun freeResources() {
-        selector.getAttachedKeys().forEach {
+        selector.getAttachedKeys().toTypedArray().forEach {
             val attachment = it.attachment as AbstractConnection
             attachment.cancelSelector()
         }

@@ -2,10 +2,11 @@ package pw.binom.io.http
 
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.useName
 
 class HashHeaders : MutableHeaders, Map<String, List<String>> {
-    private var body = defaultMutableMap<String, MutableList<String>>()
-    private var ref = defaultMutableMap<String, String>()
+    private var body = defaultMutableMap<String, MutableList<String>>().useName("HashHeaders.body")
+    private var ref = defaultMutableMap<String, String>().useName("HashHeaders.ref")
     override fun set(key: String, value: List<String>): MutableHeaders {
         if (value.isEmpty()) {
             remove(key)

@@ -2,6 +2,7 @@ package pw.binom.strong
 
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.useName
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
@@ -10,7 +11,8 @@ import kotlin.reflect.KClass
 @Suppress("UNCHECKED_CAST")
 class EventSystem {
     private val listLock = SpinLock()
-    private val listeners = defaultMutableMap<KClass<Any>, MutableList<suspend (Any) -> Unit>>()
+    private val listeners =
+        defaultMutableMap<KClass<Any>, MutableList<suspend (Any) -> Unit>>().useName("EventSystem.listeners")
     inline fun <reified T : Any> listen(noinline listener: suspend (T) -> Unit): Closeable = listen(T::class, listener)
     inline fun <reified T : Any> once(noinline listener: suspend (T) -> Unit): Closeable {
         var closable: Closeable? = null

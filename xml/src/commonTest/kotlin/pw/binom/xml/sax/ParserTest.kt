@@ -20,7 +20,7 @@ class ParserTest {
         val r = XmlRootReaderVisitor(txt.asReader().asAsync())
 
         val sb = StringBuilder()
-        val w = AsyncXmlRootWriterVisitor(sb.asAsync())
+        val w = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
         w.start()
         r.accept(w)
         w.end()
@@ -48,7 +48,7 @@ class ParserTest {
         val r = AsyncXmlReaderVisitor(txt.asReader().asAsync())
 
         val sb = StringBuilder()
-        val w = AsyncXmlRootWriterVisitor(sb.asAsync())
+        val w = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
         w.start()
         r.accept(w)
         w.end()
@@ -63,7 +63,7 @@ class ParserTest {
         val r = AsyncXmlReaderVisitor(txt.asReader().asAsync())
 
         val sb = StringBuilder()
-        val w = AsyncXmlRootWriterVisitor(sb.asAsync())
+        val w = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
         w.start()
         r.accept(w)
         w.end()
@@ -74,7 +74,7 @@ class ParserTest {
 //        val txt = """<?xml version="1.0" encoding="UTF-8"?><root><![CDATA[AA BB CC]]></root>"""
         val txt = """<?xml version="1.0" encoding="UTF-8"?><root>AA BB CC</root>"""
         val sb = StringBuilder()
-        val root = AsyncXmlRootWriterVisitor(sb.asAsync())
+        val root = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
         root.start()
         XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
         root.end()
@@ -112,7 +112,7 @@ class ParserTest {
     fun test2() = runTest {
         val txt = """<?xml version="1.0" encoding="UTF-8"?><root title="Binom"></root>"""
         val sb = StringBuilder()
-        val root = AsyncXmlRootWriterVisitor(sb.asAsync())
+        val root = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
         root.start()
         XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
         root.end()
@@ -139,7 +139,7 @@ class ParserTest {
                 |</D:propfind>
         """.trimMargin()
         val sb = StringBuilder()
-        val root = AsyncXmlRootWriterVisitor(sb.asAsync())
+        val root = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
         root.start()
         XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
         root.end()

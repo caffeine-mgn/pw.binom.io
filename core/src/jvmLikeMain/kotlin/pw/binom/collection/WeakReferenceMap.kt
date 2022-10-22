@@ -14,4 +14,5 @@ actual class WeakReferenceMap<K : Any, V : Any> actual constructor() {
     }
 
     actual operator fun contains(key: K): Boolean = key in native
+    actual fun cleanUp(): Int = 0
 }

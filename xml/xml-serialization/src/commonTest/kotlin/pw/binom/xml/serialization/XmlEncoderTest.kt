@@ -15,13 +15,13 @@ import pw.binom.xml.serialization.annotations.XmlWrapper
 import kotlin.test.Test
 
 @Serializable
-@XmlNamespace("https://1")
+@XmlNamespace(["https://1"])
 @SerialName("data")
 data class TestData(
-    @XmlNamespace("https://1")
+    @XmlNamespace(["https://1"])
     val name: String,
 
-    @XmlNamespace("https://1")
+    @XmlNamespace(["https://1"])
     val value: TestData2,
 
     @XmlWrapper("names")
@@ -31,7 +31,10 @@ data class TestData(
 
 @Serializable
 @SerialName("data2")
-data class TestData2(@XmlNamespace("https://1") @XmlNode val age: Int)
+data class TestData2(
+    @XmlNamespace(["https://1"]) @XmlNode
+    val age: Int
+)
 
 @Polymorphic
 @Serializable
@@ -50,7 +53,7 @@ class XmlEncoderTest {
         val sb = StringBuilder()
         val root = XmlElement()
         xx.parent = root
-        root.accept(AsyncXmlRootWriterVisitor(sb.asAsync()))
+        root.accept(AsyncXmlRootWriterVisitor.withHeader(sb.asAsync()))
         val vv = Xml(module).decodeFromXmlElement(TestData.serializer(), xx)
         println("Before: $oo")
         println("After: $vv")

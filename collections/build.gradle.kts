@@ -1,3 +1,5 @@
+import pw.binom.publish.dependsOn
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -118,6 +120,14 @@ kotlin {
                 api(kotlin("test-js"))
             }
         }
+        dependsOn("linux*Main", nativeMain)
+        dependsOn("mingw*Main", nativeMain)
+        dependsOn("watchos*Main", nativeMain)
+        dependsOn("macos*Main", nativeMain)
+        dependsOn("ios*Main", nativeMain)
+        dependsOn("androidNative*Main", nativeMain)
+        dependsOn("wasm*Main", nativeMain)
+        dependsOn("androidMain", jvmMain)
     }
 }
 

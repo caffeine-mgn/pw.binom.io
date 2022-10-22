@@ -97,6 +97,10 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             }
         }
     private var startedResponse: HttpResponse2Impl? = null
+    override suspend fun <T> response(func: suspend (HttpResponse) -> T): T {
+        return super.response(func)
+    }
+
     override val response: HttpResponse?
         get() = startedResponse
     override var isReadyForResponse: Boolean = true
@@ -114,6 +118,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         this.server = server
         closed = false
         isReadyForResponse = true
+        internalHeaders.clear()
     }
 
     fun free() {

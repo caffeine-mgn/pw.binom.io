@@ -8,14 +8,15 @@ import platform.linux.sockaddr_ll
 import platform.posix.*
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.useName
 import pw.binom.io.IOException
 import kotlin.experimental.and
 
 private inline infix fun Byte.ushr(other: Byte): Byte = (this.toInt() ushr other.toInt()).toByte()
 private inline infix fun Byte.shr(other: Byte): Byte = (this.toInt() shr other.toInt()).toByte()
 
-private fun calc(c: Byte): Int {
-    var b = c
+private fun calc(address: Byte): Int {
+    var b = address
     var r = 0
     for (i in 0 until Byte.SIZE_BITS) {
         if ((b and 1) == 0.toByte()) {
@@ -27,10 +28,10 @@ private fun calc(c: Byte): Int {
     return r
 }
 
-private fun calc(c: CArrayPointer<ByteVar>, size: Int): Int {
+private fun calc(address: CArrayPointer<ByteVar>, size: Int): Int {
     var r = 0
     for (i in 0 until size) {
-        val b = calc(c[0])
+        val b = calc(address = address[0])
         r += b
         if (b != Byte.SIZE_BITS) {
             break
@@ -39,19 +40,10 @@ private fun calc(c: CArrayPointer<ByteVar>, size: Int): Int {
     return r
 }
 
-private fun calcNetworkPrefix(c: CPointer<sockaddr>) = when (val family = c.pointed.sa_family.toInt()) {
-    AF_INET -> {
-        calc(c.pointed.sa_data, 4)
-    }
-
-    AF_INET6 -> {
-        calc(c.pointed.sa_data, 16)
-    }
-
-    AF_PACKET -> {
-        calc(c.pointed.sa_data, 20)
-    }
-
+private fun calcNetworkPrefix(address: CPointer<sockaddr>) = when (val family = address.pointed.sa_family.toInt()) {
+    AF_INET -> calc(address = address.pointed.sa_data, size = 4)
+    AF_INET6 -> calc(address = address.pointed.sa_data, size = 16)
+    AF_PACKET -> calc(address = address.pointed.sa_data, size = 20)
     else -> throw IllegalArgumentException("Unknown family $family")
 }
 
@@ -74,14 +66,15 @@ actual class NetworkInterface private constructor(
                 }
                 try {
                     var addressPtr = ptrIfaddrs.value
-                    val addresses = defaultMutableMap<String, ArrayList<NetworkInterfaceAddress>>()
+                    val addresses =
+                        defaultMutableMap<String, ArrayList<NetworkInterfaceAddress>>().useName("NetworkInterface")
                     while (addressPtr != null) {
                         when (addressPtr.pointed.ifa_addr?.pointed?.sa_family!!.toInt()) {
                             AF_INET, AF_INET6 -> {
                                 val list = addresses.getOrPut(addressPtr.pointed.ifa_name!!.toKString()) { ArrayList() }
                                 list += NetworkInterfaceAddress(
-                                    address = NetworkAddress.Immutable(addressPtr.pointed.ifa_addr!!),
-                                    networkPrefixAddress = calcNetworkPrefix(addressPtr.pointed.ifa_netmask!!)
+                                    address = NetworkAddress.Immutable(sockaddr = addressPtr.pointed.ifa_addr!!),
+                                    networkPrefixAddress = calcNetworkPrefix(address = addressPtr.pointed.ifa_netmask!!)
                                 )
                             }
                         }

@@ -25,9 +25,9 @@ actual class WeakReferenceMap<K : Any, V : Any> actual constructor() {
         cleanUp()
     }
 
-    private fun cleanUp() {
+    actual fun cleanUp(): Int {
         if (cleanCounter++ < 500) {
-            return
+            return 0
         }
         var list: MutableList<WeakReference<K>>? = null
         native.keys.forEach {
@@ -42,6 +42,7 @@ actual class WeakReferenceMap<K : Any, V : Any> actual constructor() {
             native.remove(it)
         }
         cleanCounter = 0
+        return list?.size ?: 0
     }
 
     actual operator fun contains(key: K): Boolean = native.entries.any { it.key.value === key }
