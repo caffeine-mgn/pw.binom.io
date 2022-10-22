@@ -41,6 +41,7 @@ object LiveCollections {
 
 // ------------------------------------//
 // fun <T> defaultMutableList(): MutableList<T> = LiveCollections.reg(ArrayList2())
+fun <T> defaultMutableList2(): MutableList<T> = LiveCollections.reg(ArrayList2())
 
 fun <T> defaultMutableList(list: Collection<T>): MutableList<T> = LiveCollections.reg(ArrayList2(list))
 fun <T> defaultMutableList(capacity: Int): MutableList<T> = LiveCollections.reg(ArrayList2(capacity))

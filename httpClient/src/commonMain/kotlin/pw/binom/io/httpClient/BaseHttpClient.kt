@@ -2,7 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableList2
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.useName
 import pw.binom.io.http.AsyncAsciiChannel
@@ -33,7 +33,7 @@ class BaseHttpClient(
     internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, bufferSize = bufferSize.toUInt())
 
     internal fun recycleConnection(URI: URL, channel: AsyncAsciiChannel) {
-        connections.getOrPut(URI.asKey) { defaultMutableList() }.add(channel)
+        connections.getOrPut(URI.asKey) { defaultMutableList2() }.add(channel)
     }
 
     private suspend fun borrowConnection(uri: URL): AsyncAsciiChannel {
