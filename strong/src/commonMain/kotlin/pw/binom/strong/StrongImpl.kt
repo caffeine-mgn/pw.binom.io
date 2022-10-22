@@ -1,6 +1,6 @@
 package pw.binom.strong
 
-import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableList2
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.useName
 import pw.binom.concurrency.SpinLock
@@ -25,7 +25,7 @@ internal class StrongImpl : Strong {
         class ClassSetDependency(val clazz: KClass<Any>) : Dependency()
     }
 
-    private val internalDependencies = defaultMutableList<Dependency>()
+    private val internalDependencies = defaultMutableList2<Dependency>()
     val dependencies: List<Dependency>
         get() = internalDependencies
 
@@ -98,7 +98,7 @@ internal class StrongImpl : Strong {
         private set
 
     private val interruptingListenersLock = SpinLock()
-    private val interruptingListeners = defaultMutableList<Continuation<Unit>>()
+    private val interruptingListeners = defaultMutableList2<Continuation<Unit>>()
 
     override suspend fun awaitDestroy() {
         if (isDestroyed) {

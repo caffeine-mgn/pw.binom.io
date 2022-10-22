@@ -1,6 +1,6 @@
 package pw.binom.strong
 
-import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableList2
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.useName
 import pw.binom.concurrency.SpinLock
@@ -31,7 +31,7 @@ class EventSystem {
             objectClass as KClass<Any>
             listener as suspend (Any) -> Unit
             listLock.synchronize {
-                listeners.getOrPut(objectClass) { defaultMutableList() }.add(listener)
+                listeners.getOrPut(objectClass) { defaultMutableList2() }.add(listener)
             }
             Closeable {
                 listLock.synchronize {
