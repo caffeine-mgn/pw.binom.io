@@ -46,17 +46,52 @@ object LiveCollections {
 
 private const val USE_NEW_LIST = true
 private const val USE_NEW_MAP = true
+private const val REG_NEW = true
+internal const val USE_TRIM_LIST = false
 
 fun <T> defaultMutableList(list: Collection<T>): MutableList<T> =
-    if (USE_NEW_LIST) LiveCollections.reg(ArrayList2(list)) else ArrayList(list)
+    if (USE_NEW_LIST) {
+        if (REG_NEW) {
+            LiveCollections.reg(ArrayList2(list))
+        } else {
+            ArrayList2(list)
+        }
+    } else {
+        ArrayList(list)
+    }
 
 fun <T> defaultMutableList(capacity: Int): MutableList<T> =
-    if (USE_NEW_LIST) LiveCollections.reg(ArrayList2(capacity)) else ArrayList(capacity)
+    if (USE_NEW_LIST) {
+        if (REG_NEW) {
+            LiveCollections.reg(ArrayList2(capacity))
+        } else {
+            ArrayList2(capacity)
+        }
+    } else {
+        ArrayList(capacity)
+    }
 
-fun <T> defaultMutableList(): MutableList<T> = if (USE_NEW_LIST) LiveCollections.reg(ArrayList2()) else ArrayList()
+fun <T> defaultMutableList(): MutableList<T> = if (USE_NEW_LIST) {
+    if (REG_NEW) {
+        LiveCollections.reg(ArrayList2())
+    } else {
+        ArrayList2()
+    }
+} else {
+    ArrayList()
+}
 
 // ------------------------------------//
-fun <K, V> defaultMutableMap(): MutableMap<K, V> = if (USE_NEW_MAP) LiveCollections.reg(HashMap2()) else HashMap()
+fun <K, V> defaultMutableMap(): MutableMap<K, V> = if (USE_NEW_MAP) {
+    if (REG_NEW) {
+        LiveCollections.reg(HashMap2())
+    } else {
+        HashMap2()
+    }
+} else {
+    HashMap()
+}
+
 fun <K, V> defaultMutableMap(capacity: Int) = defaultMutableMap<K, V>()
 fun <K, V> defaultMutableMap(map: Map<K, V>) = defaultMutableMap<K, V>().also {
     if (map.isEmpty()) {

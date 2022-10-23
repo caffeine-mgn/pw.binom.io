@@ -24,3 +24,9 @@ fun KSerializer<out Any>.getIdColumn() =
 
 inline fun <reified T : Any> SerialDescriptor.getElementAnnotation(index: Int) =
     getElementAnnotations(index).find { it is T }?.let { it as T }
+
+fun SerialDescriptor.isUseQuotes(index: Int) =
+    getElementAnnotation<UseQuotes>(index) != null
+
+fun SerialDescriptor.isUseQuotes() =
+    annotations.any { it is UseQuotes }

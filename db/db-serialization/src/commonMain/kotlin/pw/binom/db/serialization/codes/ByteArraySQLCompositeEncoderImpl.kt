@@ -12,11 +12,12 @@ import pw.binom.db.serialization.SQLCompositeEncoder
 class ByteArraySQLCompositeEncoderImpl(val onClose: (ByteArraySQLCompositeEncoderImpl) -> Unit) : SQLCompositeEncoder {
     var prefix = ""
     var output: DateContainer = DateContainer.EMPTY
+    var useQuotes: Boolean = false
     var body = ByteArray(0)
         private set
 
     private fun throwNotSupported(): Nothing = throw SerializationException("Not supported")
-    override var serializersModule: SerializersModule = EmptySerializersModule
+    override var serializersModule: SerializersModule = EmptySerializersModule()
         private set
 
     fun reset(size: Int, serializersModule: SerializersModule) {
@@ -29,7 +30,11 @@ class ByteArraySQLCompositeEncoderImpl(val onClose: (ByteArraySQLCompositeEncode
     }
 
     override fun endStructure(descriptor: SerialDescriptor) {
-        output[prefix] = body
+        output.set(
+            key = prefix,
+            value = body,
+            useQuotes = useQuotes,
+        )
         onClose(this)
     }
 

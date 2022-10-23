@@ -12,20 +12,33 @@ import pw.binom.db.serialization.*
 
 class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEncoder {
     var name = ""
+    var useQuotes: Boolean = false
     override var serializersModule: SerializersModule = EmptySerializersModule
     var output: DateContainer = DateContainer.EMPTY
     override fun encodeDate(dateTime: DateTime) {
-        output[name] = dateTime
+        output.set(
+            key = name,
+            value = dateTime,
+            useQuotes = useQuotes
+        )
         onClose()
     }
 
     override fun encodeUUID(uuid: UUID) {
-        output[name] = uuid
+        output.set(
+            key = name,
+            value = uuid,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
     override fun encodeByteArray(array: ByteArray) {
-        output[name] = array
+        output.set(
+            key = name,
+            value = array,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
@@ -34,6 +47,7 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
             prefix = name,
             output = output,
             serializersModule = serializersModule,
+            useQuotes = useQuotes,
         )
         onClose()
         return c
@@ -45,29 +59,46 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
                 size = collectionSize,
                 prefix = name,
                 output = output,
-                serializersModule = serializersModule
+                serializersModule = serializersModule,
+                useQuotes = useQuotes,
             )
         }
         return super.beginCollection(descriptor, collectionSize)
     }
 
     override fun encodeBoolean(value: Boolean) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
     override fun encodeByte(value: Byte) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
     override fun encodeChar(value: Char) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
     override fun encodeDouble(value: Double) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
@@ -90,7 +121,11 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
     }
 
     override fun encodeFloat(value: Float) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
@@ -98,28 +133,48 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
     override fun encodeInline(inlineDescriptor: SerialDescriptor): SQLEncoder = this
 
     override fun encodeInt(value: Int) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
     override fun encodeLong(value: Long) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
     @ExperimentalSerializationApi
     override fun encodeNull() {
-        output[name] = null
+        output.set(
+            key = name,
+            value = null,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
     override fun encodeShort(value: Short) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 
     override fun encodeString(value: String) {
-        output[name] = value
+        output.set(
+            key = name,
+            value = value,
+            useQuotes = useQuotes,
+        )
         onClose()
     }
 }

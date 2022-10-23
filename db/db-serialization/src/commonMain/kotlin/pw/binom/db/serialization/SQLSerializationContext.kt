@@ -18,12 +18,14 @@ interface SQLEncoderPool {
         name: String,
         output: DateContainer,
         serializersModule: SerializersModule,
+        useQuotes: Boolean,
     ): SQLEncoder
 
     fun encodeStruct(
         prefix: String,
         output: DateContainer,
         serializersModule: SerializersModule,
+        useQuotes: Boolean,
     ): SQLCompositeEncoder
 
     fun encodeByteArray(
@@ -31,6 +33,7 @@ interface SQLEncoderPool {
         prefix: String,
         output: DateContainer,
         serializersModule: SerializersModule,
+        useQuotes: Boolean,
     ): SQLCompositeEncoder
 
     fun <T> encode(
@@ -38,12 +41,14 @@ interface SQLEncoderPool {
         value: T,
         name: String,
         output: DateContainer,
-        serializersModule: SerializersModule = EmptySerializersModule
+        serializersModule: SerializersModule = EmptySerializersModule(),
+        useQuotes: Boolean,
     ) {
         val encoder = encodeValue(
             name = name,
             output = output,
-            serializersModule = serializersModule
+            serializersModule = serializersModule,
+            useQuotes = useQuotes,
         )
         serializer.serialize(encoder, value)
     }
@@ -73,7 +78,7 @@ interface SQLDecoderPool {
         serializer: KSerializer<T>,
         name: String,
         input: DataProvider,
-        serializersModule: SerializersModule = EmptySerializersModule
+        serializersModule: SerializersModule = EmptySerializersModule()
     ): T {
         val decoder = decoderValue(
             name = name,
@@ -89,9 +94,11 @@ object DefaultSQLSerializePool : SQLEncoderPool, SQLDecoderPool {
         name: String,
         output: DateContainer,
         serializersModule: SerializersModule,
+        useQuotes: Boolean
     ): SQLEncoder {
         val c = SQLEncoderImpl(this) {}
         c.name = name
+        c.useQuotes = useQuotes
         c.serializersModule = serializersModule
         c.output = output
         return c
@@ -101,10 +108,12 @@ object DefaultSQLSerializePool : SQLEncoderPool, SQLDecoderPool {
         prefix: String,
         output: DateContainer,
         serializersModule: SerializersModule,
+        useQuotes: Boolean,
     ): SQLCompositeEncoder {
         val c = SQLCompositeEncoderImpl(this) {}
         c.prefix = prefix
         c.output = output
+        c.useQuotes = useQuotes
         c.serializersModule = serializersModule
         return c
     }
@@ -113,11 +122,13 @@ object DefaultSQLSerializePool : SQLEncoderPool, SQLDecoderPool {
         size: Int,
         prefix: String,
         output: DateContainer,
-        serializersModule: SerializersModule
+        serializersModule: SerializersModule,
+        useQuotes: Boolean,
     ): SQLCompositeEncoder {
         val c = ByteArraySQLCompositeEncoderImpl {}
         c.prefix = prefix
         c.output = output
+        c.useQuotes = useQuotes
         c.reset(
             size = size,
             serializersModule = serializersModule
@@ -210,10 +221,10 @@ interface DataProvider {
 }
 
 fun interface DateContainer {
-    operator fun set(key: String, value: Any?)
+    operator fun set(key: String, value: Any?, useQuotes: Boolean)
 
     companion object {
-        val EMPTY = DateContainer { key, value -> throw IllegalStateException("Not supported") }
+        val EMPTY = DateContainer { key, value, useQuotes -> throw IllegalStateException("Not supported") }
     }
 }
 

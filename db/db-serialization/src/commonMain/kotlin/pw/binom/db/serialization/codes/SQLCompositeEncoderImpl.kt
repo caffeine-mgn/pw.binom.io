@@ -11,6 +11,7 @@ class SQLCompositeEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) 
 
     var prefix = ""
     var output: DateContainer = DateContainer.EMPTY
+    var useQuotes: Boolean = false
 
     @ExperimentalSerializationApi
     override fun encodeInlineElement(descriptor: SerialDescriptor, index: Int): SQLEncoder {
@@ -18,38 +19,67 @@ class SQLCompositeEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) 
             name = prefix + descriptor.getElementName(index),
             output = output,
             serializersModule = serializersModule,
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes
         )
         return c
     }
 
-    override var serializersModule: SerializersModule = EmptySerializersModule
+    override var serializersModule: SerializersModule = EmptySerializersModule()
 
     override fun encodeBooleanElement(descriptor: SerialDescriptor, index: Int, value: Boolean) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     override fun encodeByteElement(descriptor: SerialDescriptor, index: Int, value: Byte) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     override fun encodeCharElement(descriptor: SerialDescriptor, index: Int, value: Char) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     override fun encodeDoubleElement(descriptor: SerialDescriptor, index: Int, value: Double) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     override fun encodeFloatElement(descriptor: SerialDescriptor, index: Int, value: Float) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     override fun encodeIntElement(descriptor: SerialDescriptor, index: Int, value: Int) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     override fun encodeLongElement(descriptor: SerialDescriptor, index: Int, value: Long) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     @ExperimentalSerializationApi
@@ -60,7 +90,11 @@ class SQLCompositeEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) 
         value: T?
     ) {
         if (value == null) {
-            output[prefix + descriptor.getElementName(index)] = null
+            output.set(
+                key = prefix + descriptor.getElementName(index),
+                value = null,
+                useQuotes = descriptor.isUseQuotes(index) || useQuotes
+            )
         } else {
             encodeSerializableElement(
                 descriptor = descriptor,
@@ -81,7 +115,8 @@ class SQLCompositeEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) 
         val encoder = ctx.encodeValue(
             name = prefix + descriptor.getElementName(index) + splitter,
             output = output,
-            serializersModule = serializersModule
+            serializersModule = serializersModule,
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes
         )
         serializer.serialize(
             encoder = encoder,
@@ -90,11 +125,19 @@ class SQLCompositeEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) 
     }
 
     override fun encodeShortElement(descriptor: SerialDescriptor, index: Int, value: Short) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     override fun encodeStringElement(descriptor: SerialDescriptor, index: Int, value: String) {
-        output[prefix + descriptor.getElementName(index)] = value
+        output.set(
+            key = prefix + descriptor.getElementName(index),
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+            value = value,
+        )
     }
 
     override fun endStructure(descriptor: SerialDescriptor) {

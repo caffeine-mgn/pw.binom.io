@@ -15,8 +15,10 @@ import pw.binom.io.use
 
 private class SingleValueDateContainer : DateContainer {
     var value: Any? = null
-    override fun set(key: String, value: Any?) {
+    var useQuotes: Boolean = false
+    override fun set(key: String, value: Any?, useQuotes: Boolean) {
         this.value = value
+        this.useQuotes = useQuotes
     }
 }
 
@@ -88,6 +90,7 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
                 name = "",
                 output = singleValueDateContainer,
                 serializersModule = serializersModule,
+                useQuotes = false,
             )
             args += singleValueDateContainer.value
         }
@@ -111,13 +114,12 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
         returning: Boolean,
         excludeGenerated: Boolean
     ): T? {
-        val params = defaultMutableMap<String, Any?>()
-
+        val params = defaultMutableMap<String, Pair<Boolean, Any?>>()
         val output = object : DataBinder {
             override fun get(key: String): Any? = params[key]
             override fun contains(key: String): Boolean = params.containsKey(key)
-            override fun set(key: String, value: Any?) {
-                params[key] = value
+            override fun set(key: String, value: Any?, useQuotes: Boolean) {
+                params[key] = useQuotes to value
             }
         }
         DefaultSQLSerializePool.encode(
@@ -126,6 +128,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
             name = "",
             output = output,
             serializersModule = serializersModule,
+            useQuotes = k.descriptor.isUseQuotes()
         )
         val sb = StringBuilder()
         sb.append("insert into ")
@@ -136,7 +139,14 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
             if (i > 0) {
                 sb.append(",")
             }
+            val useQuotes = it.value.first
+            if (useQuotes) {
+                sb.append("\"")
+            }
             sb.append(it.key)
+            if (useQuotes) {
+                sb.append("\"")
+            }
             i++
         }
         i = 0
@@ -147,7 +157,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
                 sb.append(",")
             }
             sb.append("?")
-            args[i++] = it.value
+            args[i++] = it.value.second
         }
         sb.append(")")
         if (returning) {
@@ -157,7 +167,14 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
                 if (i > 0) {
                     sb.append(",")
                 }
+                val useQuotes = it.value.first
+                if (useQuotes) {
+                    sb.append("\"")
+                }
                 sb.append(it.key)
+                if (useQuotes) {
+                    sb.append("\"")
+                }
             }
         }
         val ps = con.usePreparedStatement(sb.toString())

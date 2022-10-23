@@ -1,6 +1,7 @@
 package pw.binom.db.postgresql.async
 
 import kotlinx.coroutines.Dispatchers
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
@@ -26,7 +27,8 @@ class PGConnection private constructor(
     charset: Charset,
     val userName: String,
     val password: String?,
-    val networkDispatcher: NetworkManager
+    val networkDispatcher: NetworkManager,
+    readBufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncConnection {
     internal var busy = false
 
@@ -40,6 +42,7 @@ class PGConnection private constructor(
             password: String,
             dataBase: String,
             charset: Charset = Charsets.UTF8,
+            readBufferSize: Int = DEFAULT_BUFFER_SIZE,
         ): PGConnection {
             val connection = networkDispatcher.tcpConnect(address)
             val pgConnection = PGConnection(
@@ -48,6 +51,7 @@ class PGConnection private constructor(
                 userName = userName,
                 password = password,
                 networkDispatcher = networkDispatcher,
+                readBufferSize = readBufferSize,
             )
             pgConnection.sendFirstMessage(
                 mapOf(
@@ -112,7 +116,7 @@ class PGConnection private constructor(
     override val transactionMode: TransactionMode
         get() = _transactionMode
 
-    private val packageReader = connection.bufferedAsciiReader(closeParent = false)
+    private val packageReader = connection.bufferedAsciiReader(closeParent = false, bufferSize = readBufferSize)
     internal val reader = PackageReader(this, charset, packageReader)
     private var credentialMessage = CredentialMessage()
     override val type: String
@@ -157,27 +161,33 @@ class PGConnection private constructor(
                         rowsAffected = rowsAffected
                     )
                 }
+
                 is CommandCompleteMessage -> {
                     statusMsg = msg2.statusMessage
                     rowsAffected += msg2.rowsAffected
                     continue@LOOP
                 }
+
                 is RowDescriptionMessage -> {
                     busy = true
                     val msg3 = reader.data
                     msg3.reset(msg2)
                     return msg3
                 }
+
                 is ErrorMessage -> {
                     check(readDesponse() is ReadyForQueryMessage)
                     throw PostgresqlException("${msg2.fields['M']}. Query: $query")
                 }
+
                 is NoticeMessage -> {
                     continue@LOOP
                 }
+
                 is NoDataMessage -> {
                     continue@LOOP
                 }
+
                 else -> throw SQLException("Unexpected Message. Response Type: [${msg2::class}], Message: [$msg2], Query: [$query]")
             }
         }
@@ -248,6 +258,7 @@ class PGConnection private constructor(
                     AuthenticationMessage.AuthenticationChallengeMessage.AuthenticationResponseType.Cleartext
                 credentialMessage
             }
+
             is AuthenticationMessage.AuthenticationChallengeMessage -> {
                 credentialMessage.username = userName
                 credentialMessage.password = password
@@ -255,6 +266,7 @@ class PGConnection private constructor(
                 credentialMessage.authenticationType = msg.challengeType
                 credentialMessage
             }
+
             is AuthenticationMessage.AuthenticationOkMessage -> null
             is ErrorMessage -> throw IOException(msg.fields['M'] ?: msg.fields['R'] ?: "Error")
             else -> throw RuntimeException("Unknown message type [${msg::class}]")
@@ -265,6 +277,7 @@ class PGConnection private constructor(
                 is AuthenticationMessage.AuthenticationOkMessage -> {
                     return
                 }
+
                 else -> throw SQLException("Unexpected Message. Message: [$msg2]")
             }
         }

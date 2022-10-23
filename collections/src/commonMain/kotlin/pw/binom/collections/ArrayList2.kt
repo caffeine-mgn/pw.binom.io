@@ -62,7 +62,9 @@ class ArrayList2<E> private constructor(
     }
 
     private fun checkTrim() {
-        return
+        if (!USE_TRIM_LIST) {
+            return
+        }
         val factor = 0.7f
         // capacity=100
         // size=30
