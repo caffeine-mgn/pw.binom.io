@@ -118,7 +118,6 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         this.server = server
         closed = false
         isReadyForResponse = true
-        internalHeaders.clear()
     }
 
     fun free() {

@@ -15,7 +15,7 @@ class ArrayList2<E> private constructor(
 ) : MutableList<E>, RandomAccess, AbstractMutableList<E>(), BinomCollection {
 
     private fun log(txt: String) {
-        println("ArrayList2: $txt")
+//        println("ArrayList2: $txt")
     }
 
     constructor() : this(10)

@@ -40,17 +40,23 @@ object LiveCollections {
 }
 
 // ------------------------------------//
+// fun <T> defaultMutableList(list: Collection<T>): MutableList<T> = LiveCollections.reg(ArrayList2(list))
+// fun <T> defaultMutableList(capacity: Int): MutableList<T> = LiveCollections.reg(ArrayList2(capacity))
 // fun <T> defaultMutableList(): MutableList<T> = LiveCollections.reg(ArrayList2())
-fun <T> defaultMutableList2(): MutableList<T> = LiveCollections.reg(ArrayList2())
 
-fun <T> defaultMutableList(list: Collection<T>): MutableList<T> = LiveCollections.reg(ArrayList2(list))
-fun <T> defaultMutableList(capacity: Int): MutableList<T> = LiveCollections.reg(ArrayList2(capacity))
-fun <T> defaultMutableList(): MutableList<T> = ArrayList()
-// fun <T> defaultMutableList(list: Collection<T>): MutableList<T> = ArrayList(list)
-// fun <T> defaultMutableList(capacity: Int): MutableList<T> = ArrayList(capacity)
+private const val USE_NEW_LIST = true
+private const val USE_NEW_MAP = true
+
+fun <T> defaultMutableList(list: Collection<T>): MutableList<T> =
+    if (USE_NEW_LIST) LiveCollections.reg(ArrayList2(list)) else ArrayList(list)
+
+fun <T> defaultMutableList(capacity: Int): MutableList<T> =
+    if (USE_NEW_LIST) LiveCollections.reg(ArrayList2(capacity)) else ArrayList(capacity)
+
+fun <T> defaultMutableList(): MutableList<T> = if (USE_NEW_LIST) LiveCollections.reg(ArrayList2()) else ArrayList()
 
 // ------------------------------------//
-fun <K, V> defaultMutableMap() = LiveCollections.reg(HashMap2<K, V>())
+fun <K, V> defaultMutableMap(): MutableMap<K, V> = if (USE_NEW_MAP) LiveCollections.reg(HashMap2()) else HashMap()
 fun <K, V> defaultMutableMap(capacity: Int) = defaultMutableMap<K, V>()
 fun <K, V> defaultMutableMap(map: Map<K, V>) = defaultMutableMap<K, V>().also {
     if (map.isEmpty()) {
@@ -61,7 +67,7 @@ fun <K, V> defaultMutableMap(map: Map<K, V>) = defaultMutableMap<K, V>().also {
 
 fun <K> defaultMutableSet(): MutableSet<K> = defaultMutableMap<K, Boolean>().toBridgeSet()
 fun <K> defaultMutableSet(capacity: Int): MutableSet<K> =
-    defaultMutableMap<K, Boolean>(capacity).toBridgeSet() // defaultHashMap<K, Boolean>().toBridgeSet()
+    defaultMutableMap<K, Boolean>(capacity).toBridgeSet()
 
 fun <K> defaultMutableSet(set: Set<K>): MutableSet<K> {
     val out = defaultMutableSet<K>()

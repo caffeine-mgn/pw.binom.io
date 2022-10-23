@@ -1,6 +1,6 @@
 package pw.binom.strong
 
-import pw.binom.collections.defaultMutableList2
+import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableSet
 
 internal object GraphUtils {
@@ -13,10 +13,10 @@ internal object GraphUtils {
 //        val initing = HashSet<T>()
 //        val treePath = ArrayList<T>()
 
-        val order = defaultMutableList2<T>()
+        val order = defaultMutableList<T>()
 //        val inited = defaultHashSet<T>()
         val initing = defaultMutableSet<T>()
-        val treePath = defaultMutableList2<T>()
+        val treePath = defaultMutableList<T>()
         fun init(e: T) {
             if (e in inited) {
                 return

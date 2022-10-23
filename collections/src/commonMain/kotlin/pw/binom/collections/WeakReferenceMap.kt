@@ -39,7 +39,7 @@ class WeakReferenceMap<K : Any, V : Any> {
         native.keys.forEach {
             if (it.get == null) {
                 if (list == null) {
-                    list = defaultMutableList2()
+                    list = ArrayList2()
                 }
                 list!!.add(it)
             }

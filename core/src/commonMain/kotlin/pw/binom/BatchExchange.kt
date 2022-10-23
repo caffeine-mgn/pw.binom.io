@@ -1,14 +1,14 @@
 package pw.binom
 
-import pw.binom.collections.defaultMutableList2
+import pw.binom.collections.defaultMutableList
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 
 class BatchExchange<T>(
     trimFactor: Float = 0.5f,
 ) {
-    private var read = defaultMutableList2<T>()
-    private var read2 = defaultMutableList2<T>()
+    private var read = defaultMutableList<T>()
+    private var read2 = defaultMutableList<T>()
 
     private val exchangeLock = SpinLock()
     private val processingLock = SpinLock()
