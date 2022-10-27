@@ -1,19 +1,65 @@
 package pw.binom.charset
 
-import pw.binom.pool.DefaultPool
+import pw.binom.io.Closeable
+import pw.binom.pool.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
-class IconvCharset(override val name: String) : Charset {
-    private val encodePool =
-        CoderDefaultPool<IncovCharsetEncoder>(64) { pool -> IncovCharsetEncoder(name) { self -> pool.recycle(self as IncovCharsetEncoder) } }
-    private val decodePool =
-        CoderDefaultPool<IconvCharsetDecoder>(64) { pool -> IconvCharsetDecoder(name) { self -> pool.recycle(self as IconvCharsetDecoder) } }
+private class EncoderFactory(val name: String) : ObjectFactory<IncovCharsetEncoder> {
+    override fun allocate(pool: ObjectPool<IncovCharsetEncoder>): IncovCharsetEncoder =
+        IncovCharsetEncoder(name) { pool.recycle(it as IncovCharsetEncoder) }
+
+    override fun deallocate(value: IncovCharsetEncoder, pool: ObjectPool<IncovCharsetEncoder>) {
+        value.free()
+    }
+}
+
+private class DecoderFactory(val name: String) : ObjectFactory<IconvCharsetDecoder> {
+    override fun allocate(pool: ObjectPool<IconvCharsetDecoder>): IconvCharsetDecoder =
+        IconvCharsetDecoder(name) { pool.recycle(it as IconvCharsetDecoder) }
+
+    override fun deallocate(value: IconvCharsetDecoder, pool: ObjectPool<IconvCharsetDecoder>) {
+        value.free()
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+class IconvCharset(override val name: String) : Charset, Closeable {
+
+    private val encodePool = GenericObjectPool(EncoderFactory(name))
+    private val decodePool = GenericObjectPool(DecoderFactory(name))
+
+    var lastActive = TimeSource.Monotonic.markNow()
+        private set
+
+    internal fun markActive() {
+        lastActive = TimeSource.Monotonic.markNow()
+    }
 
     override fun newDecoder(): CharsetDecoder {
-        return decodePool.borrow()
+        return decodePool.borrow { it.reset() }
     }
 
     override fun newEncoder(): CharsetEncoder {
-        return encodePool.borrow()
+        return encodePool.borrow { it.reset() }
+    }
+
+    fun checkTrim() {
+        encodePool.checkTrim()
+        decodePool.checkTrim()
+    }
+
+    init {
+        println("IconvCharset: $name NEW")
+    }
+
+    override fun close() {
+        println("IconvCharset: $name CLOSE")
+        try {
+            encodePool.close()
+        } finally {
+            decodePool.close()
+        }
     }
 }
 

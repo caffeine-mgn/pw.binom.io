@@ -103,9 +103,7 @@ class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val 
 
     internal suspend fun fullClose() {
         cleanUp()
-        if (connection.isConnected) {
-            connection.asyncClose()
-        }
+        connection.asyncClose()
     }
 
     override suspend fun asyncClose() {

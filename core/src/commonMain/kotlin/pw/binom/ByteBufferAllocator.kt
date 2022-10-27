@@ -10,6 +10,9 @@ open class AlwaysNewAllocator(val size: Int = DEFAULT_BUFFER_SIZE) : ByteBufferA
     override fun recycle(value: ByteBuffer) {
         value.close()
     }
+
+    override fun close() {
+    }
 }
 
 object DEFAULT_BYTEBUFFER_ALLOCATOR : ByteBufferAllocator {
@@ -20,5 +23,8 @@ object DEFAULT_BYTEBUFFER_ALLOCATOR : ByteBufferAllocator {
 
     override fun recycle(value: ByteBuffer) {
         value.close()
+    }
+
+    override fun close() {
     }
 }

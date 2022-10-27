@@ -7,8 +7,8 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlin.jvm.JvmInline
 
 interface DBAccess2 {
-    suspend fun <T : Any> insert(k: KSerializer<T>, value: T, excludeGenerated: Boolean = false)
-    suspend fun <T : Any> insertAndReturn(k: KSerializer<T>, value: T, excludeGenerated: Boolean = false): T
+    suspend fun <T : Any> insert(k: KSerializer<T>, value: T, excludeGenerated: Boolean = true)
+    suspend fun <T : Any> insertAndReturn(k: KSerializer<T>, value: T, excludeGenerated: Boolean = true): T
     suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T>
     suspend fun update(func: suspend QueryContext.() -> String): Long
 

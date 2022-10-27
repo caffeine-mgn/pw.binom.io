@@ -5,23 +5,52 @@ import platform.openssl.*
 import pw.binom.checkTrue
 import pw.binom.io.ByteBuffer
 import pw.binom.security.MessageDigest
+import kotlin.native.internal.createCleaner
 
 abstract class OpenSSLMessageDigest : MessageDigest {
-    private var ptr: CPointer<EVP_MD_CTX>? = null
+
+    private class Resource(
+        var ptr: CPointer<EVP_MD_CTX>? = null
+    ) {
+        fun init(): Boolean {
+            return if (ptr == null) {
+                ptr = EVP_MD_CTX_new()
+                true
+            } else {
+                false
+            }
+        }
+
+        fun free() {
+            if (ptr != null) {
+                EVP_MD_CTX_free(ptr)
+                ptr = null
+            }
+        }
+    }
+
+    private val resource = Resource()
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private val cleaner = createCleaner(resource) {
+        it.free()
+    }
+
     protected abstract fun createEvp(): CPointer<EVP_MD>
     protected abstract val finalByteArraySize: Int
     override fun init() {
-        if (ptr != null) {
-            EVP_MD_CTX_free(ptr)
-            ptr = null
+        if (resource.ptr != null) {
+            EVP_MD_CTX_free(resource.ptr)
+            resource.ptr = null
         }
         checkInit()
     }
 
     private fun checkInit() {
-        if (ptr == null) {
-            ptr = EVP_MD_CTX_new()
-            EVP_DigestInit_ex(ptr, createEvp(), null)
+        if (resource.init()) {
+            EVP_DigestInit_ex(resource.ptr, createEvp(), null).checkTrue("EVP_DigestInit_ex") {
+                resource.free()
+            }
         }
     }
 
@@ -30,7 +59,7 @@ abstract class OpenSSLMessageDigest : MessageDigest {
         memScoped {
             val ar = allocArray<UByteVar>(1)
             ar[0] = byte.toUByte()
-            EVP_DigestUpdate(ptr, ar, 1.convert())
+            EVP_DigestUpdate(resource.ptr, ar, 1.convert())
         }
     }
 
@@ -38,7 +67,7 @@ abstract class OpenSSLMessageDigest : MessageDigest {
         checkInit()
         if (input.isNotEmpty()) {
             input.usePinned { p ->
-                EVP_DigestUpdate(ptr, p.addressOf(offset), len.convert())
+                EVP_DigestUpdate(resource.ptr, p.addressOf(offset), len.convert())
             }
         }
     }
@@ -51,7 +80,7 @@ abstract class OpenSSLMessageDigest : MessageDigest {
         checkInit()
         if (buffer.remaining > 0) {
             buffer.ref { bufferPtr, remaining ->
-                EVP_DigestUpdate(ptr, bufferPtr, remaining.convert())
+                EVP_DigestUpdate(resource.ptr, bufferPtr, remaining.convert())
             }
             buffer.position = buffer.limit
         }
@@ -62,14 +91,13 @@ abstract class OpenSSLMessageDigest : MessageDigest {
         val out = ByteArray(finalByteArraySize)
         memScoped {
             val size = alloc<UIntVar>()
-            EVP_DigestFinal(ptr, out.refTo(0).getPointer(this).reinterpret(), size.ptr)
+            EVP_DigestFinal(resource.ptr, out.refTo(0).getPointer(this).reinterpret(), size.ptr)
                 .checkTrue("EVP_DigestFinal fails")
             if (size.value != out.size.convert<UInt>()) {
                 TODO()
             }
         }
-        EVP_MD_CTX_free(ptr)
-        ptr = null
+        resource.free()
         return out
     }
 }

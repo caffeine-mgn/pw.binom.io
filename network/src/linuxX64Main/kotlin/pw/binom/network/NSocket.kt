@@ -406,7 +406,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
     }
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
-        memScoped {
+        run {
             checkClosed()
             val rr = data.ref { dataPtr, remaining ->
                 set_posix_errno(0)

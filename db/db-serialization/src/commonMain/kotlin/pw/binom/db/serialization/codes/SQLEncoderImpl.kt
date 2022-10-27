@@ -15,6 +15,7 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
     var useQuotes: Boolean = false
     override var serializersModule: SerializersModule = EmptySerializersModule
     var output: DateContainer = DateContainer.EMPTY
+    var excludeGenerated: Boolean = false
     override fun encodeDate(dateTime: DateTime) {
         output.set(
             key = name,
@@ -48,6 +49,7 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
             output = output,
             serializersModule = serializersModule,
             useQuotes = useQuotes,
+            excludeGenerated = excludeGenerated,
         )
         onClose()
         return c
@@ -61,6 +63,7 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
                 output = output,
                 serializersModule = serializersModule,
                 useQuotes = useQuotes,
+                excludeGenerated = excludeGenerated,
             )
         }
         return super.beginCollection(descriptor, collectionSize)

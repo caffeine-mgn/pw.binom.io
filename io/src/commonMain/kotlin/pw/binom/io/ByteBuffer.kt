@@ -2,9 +2,10 @@
 
 package pw.binom.io
 
+import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
-import pw.binom.pool.PoolObjectFactory
 import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
@@ -61,12 +62,10 @@ fun ByteBuffer.empty(): ByteBuffer {
     return this
 }
 
-class ByteBufferFactory(val size: Int) : PoolObjectFactory<ByteBuffer> {
-    override fun new(pool: ObjectPool<ByteBuffer>): ByteBuffer = ByteBuffer.alloc(size) { pool.recycle(it) }
+class ByteBufferFactory(val size: Int) : ObjectFactory<ByteBuffer> {
+    override fun allocate(pool: ObjectPool<ByteBuffer>): ByteBuffer = ByteBuffer.alloc(size) { pool.recycle(it) }
 
-    override fun new(): ByteBuffer = ByteBuffer.alloc(size)
-
-    override fun free(value: ByteBuffer) {
+    override fun deallocate(value: ByteBuffer, pool: ObjectPool<ByteBuffer>) {
         value.close()
     }
 }
@@ -110,7 +109,7 @@ inline fun <T> ByteBufferProvider.using(func: (ByteBuffer) -> T): T {
 @OptIn(ExperimentalContracts::class)
 inline fun <T> ByteBuffer.length(length: Int, func: (ByteBuffer) -> T): T {
     contract {
-        callsInPlace(func)
+        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
     }
     val l = limit
     try {
@@ -155,7 +154,7 @@ inline fun ByteBuffer.forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
 @OptIn(ExperimentalContracts::class)
 inline fun <T> ByteBuffer.holdState(func: (ByteBuffer) -> T): T {
     contract {
-        callsInPlace(func)
+        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
     }
     val oldLimit = this.limit
     val oldPosition = this.position

@@ -8,9 +8,6 @@ import pw.binom.UUID
 import pw.binom.date.DateTime
 import pw.binom.date.parseIso8601Date
 import pw.binom.db.serialization.codes.*
-import pw.binom.db.serialization.codes.ByteArraySQLCompositeDecoder
-import pw.binom.db.serialization.codes.SQLDecoderImpl
-import pw.binom.db.serialization.codes.SQLEncoderImpl
 import pw.binom.toUUID
 
 interface SQLEncoderPool {
@@ -19,6 +16,7 @@ interface SQLEncoderPool {
         output: DateContainer,
         serializersModule: SerializersModule,
         useQuotes: Boolean,
+        excludeGenerated: Boolean,
     ): SQLEncoder
 
     fun encodeStruct(
@@ -26,6 +24,7 @@ interface SQLEncoderPool {
         output: DateContainer,
         serializersModule: SerializersModule,
         useQuotes: Boolean,
+        excludeGenerated: Boolean,
     ): SQLCompositeEncoder
 
     fun encodeByteArray(
@@ -34,6 +33,7 @@ interface SQLEncoderPool {
         output: DateContainer,
         serializersModule: SerializersModule,
         useQuotes: Boolean,
+        excludeGenerated: Boolean,
     ): SQLCompositeEncoder
 
     fun <T> encode(
@@ -43,12 +43,14 @@ interface SQLEncoderPool {
         output: DateContainer,
         serializersModule: SerializersModule = EmptySerializersModule(),
         useQuotes: Boolean,
+        excludeGenerated: Boolean,
     ) {
         val encoder = encodeValue(
             name = name,
             output = output,
             serializersModule = serializersModule,
             useQuotes = useQuotes,
+            excludeGenerated = excludeGenerated,
         )
         serializer.serialize(encoder, value)
     }
@@ -94,12 +96,14 @@ object DefaultSQLSerializePool : SQLEncoderPool, SQLDecoderPool {
         name: String,
         output: DateContainer,
         serializersModule: SerializersModule,
-        useQuotes: Boolean
+        useQuotes: Boolean,
+        excludeGenerated: Boolean,
     ): SQLEncoder {
         val c = SQLEncoderImpl(this) {}
         c.name = name
         c.useQuotes = useQuotes
         c.serializersModule = serializersModule
+        c.excludeGenerated = excludeGenerated
         c.output = output
         return c
     }
@@ -109,12 +113,14 @@ object DefaultSQLSerializePool : SQLEncoderPool, SQLDecoderPool {
         output: DateContainer,
         serializersModule: SerializersModule,
         useQuotes: Boolean,
+        excludeGenerated: Boolean,
     ): SQLCompositeEncoder {
         val c = SQLCompositeEncoderImpl(this) {}
         c.prefix = prefix
         c.output = output
         c.useQuotes = useQuotes
         c.serializersModule = serializersModule
+        c.excludeGenerated = excludeGenerated
         return c
     }
 
@@ -124,11 +130,13 @@ object DefaultSQLSerializePool : SQLEncoderPool, SQLDecoderPool {
         output: DateContainer,
         serializersModule: SerializersModule,
         useQuotes: Boolean,
+        excludeGenerated: Boolean,
     ): SQLCompositeEncoder {
         val c = ByteArraySQLCompositeEncoderImpl {}
         c.prefix = prefix
         c.output = output
         c.useQuotes = useQuotes
+        c.excludeGenerated = excludeGenerated
         c.reset(
             size = size,
             serializersModule = serializersModule

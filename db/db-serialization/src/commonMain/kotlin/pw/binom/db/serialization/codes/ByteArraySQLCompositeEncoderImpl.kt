@@ -13,6 +13,7 @@ class ByteArraySQLCompositeEncoderImpl(val onClose: (ByteArraySQLCompositeEncode
     var prefix = ""
     var output: DateContainer = DateContainer.EMPTY
     var useQuotes: Boolean = false
+    var excludeGenerated: Boolean = false
     var body = ByteArray(0)
         private set
 

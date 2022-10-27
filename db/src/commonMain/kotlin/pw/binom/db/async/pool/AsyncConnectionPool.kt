@@ -9,6 +9,7 @@ interface AsyncConnectionPool : AsyncCloseable {
     val idleConnectionCount: Int
     val connectionCount: Int
     suspend fun <T> borrow(func: suspend PooledAsyncConnection.() -> T): T
+    suspend fun cleanUp(): Int
 
     companion object {
         fun create(

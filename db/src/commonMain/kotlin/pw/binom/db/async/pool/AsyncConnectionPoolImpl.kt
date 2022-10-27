@@ -1,5 +1,6 @@
 package pw.binom.db.async.pool
 
+import pw.binom.collections.WeakReferenceMap
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
@@ -8,14 +9,13 @@ import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.io.StreamClosedException
 import pw.binom.io.use
-import pw.binom.neverFreeze
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -31,16 +31,13 @@ class AsyncConnectionPoolImpl constructor(
         require(maxConnections >= 1) { "maxConnections should be grate than 0" }
     }
 
-    private val connections = defaultMutableSet<PooledAsyncConnectionImpl>(maxConnections)
+    private val connections = defaultMutableSet<PooledAsyncConnectionImpl>()
     private val idleConnection = defaultMutableList<PooledAsyncConnectionImpl>(maxConnections)
 
     private val waiters = defaultMutableList<Continuation<PooledAsyncConnectionImpl>>()
     private val idleConnectionLock = SpinLock()
     private val connectionsLock = SpinLock()
-
-    init {
-        neverFreeze()
-    }
+    private val avalibles = WeakReferenceMap<PooledAsyncConnection, Boolean>()
 
     override val idleConnectionCount
         get() = idleConnectionLock.synchronize { idleConnection.size }
@@ -48,14 +45,9 @@ class AsyncConnectionPoolImpl constructor(
     override val connectionCount
         get() = connectionsLock.synchronize { connections.size }
 
-    /**
-     * Set for connection for delete
-     */
-    private val forRemove = defaultMutableSet<PooledAsyncConnectionImpl>()
     private var cleaning = false
 
-    private fun getOneWater(): Continuation<PooledAsyncConnectionImpl>? =
-        waiters.removeLastOrNull()
+    private fun getOneWater(): Continuation<PooledAsyncConnectionImpl>? = waiters.removeLastOrNull()
 
     fun prepareStatement(sql: String) {
         PooledAsyncPreparedStatement2(this, sql)
@@ -63,23 +55,20 @@ class AsyncConnectionPoolImpl constructor(
 
     private var lastCleanup = TimeSource.Monotonic.markNow()
 
-    suspend fun cleanUp(): Int {
-        if (lastCleanup.elapsedNow() < idleTime) {
-            return 0
-        }
-        lastCleanup = TimeSource.Monotonic.markNow()
+    override suspend fun cleanUp(): Int {
         var count = 0
-        var hasRemovedAny = false
-        if (cleaning) {
-            return 0
-        }
+        val forRemove = defaultMutableSet<PooledAsyncConnectionImpl>()
         try {
+            println("Cleanup process....")
             cleaning = true
             idleConnectionLock.synchronize {
+                println("idleConnection size: ${idleConnection.size}")
                 val it = idleConnection.iterator()
                 while (it.hasNext()) {
                     val e = it.next()
-                    if (DateTime.nowTime - e.lastActive > idleTime.toLong(DurationUnit.MILLISECONDS)) {
+                    val connectionIdleTime = (DateTime.nowTime - e.lastActive).milliseconds
+                    if (connectionIdleTime > idleTime) {
+                        println("Connection should be removed")
                         it.remove()
                         connectionsLock.synchronize {
                             connections -= e
@@ -87,22 +76,39 @@ class AsyncConnectionPoolImpl constructor(
                         forRemove += e
                         count++
                         continue
+                    } else {
+                        println("Connection is still accessible. idle=$connectionIdleTime, maxIdle=$idleTime")
                     }
                 }
             }
             if (forRemove.isNotEmpty()) {
-                hasRemovedAny = true
+                println("Close connections: ${forRemove.size}")
                 forRemove.forEach {
+                    avalibles[it] = true
                     runCatching { it.fullClose() }
                 }
                 forRemove.clear()
+            } else {
+                println("No connection for stop")
+            }
+            avalibles.forEach { pooledAsyncConnection, _ ->
+                println("Available $pooledAsyncConnection")
             }
         } finally {
             cleaning = false
         }
-        val idleSize = idleConnectionLock.synchronize { idleConnection.size }
-        val activeSize = connectionsLock.synchronize { connections.size }
         return count
+    }
+
+    suspend fun checkCleanUp(): Int {
+        if (lastCleanup.elapsedNow() < idleTime) {
+            return 0
+        }
+        lastCleanup = TimeSource.Monotonic.markNow()
+        if (cleaning) {
+            return 0
+        }
+        return cleanUp()
     }
 
     private suspend fun getConnectionAnyWay(): PooledAsyncConnectionImpl {
@@ -113,7 +119,8 @@ class AsyncConnectionPoolImpl constructor(
                     connectionsLock.synchronize {
                         connections -= connection
                     }
-                    forRemove += connection
+                    avalibles[connection] = true
+                    kotlin.runCatching { connection.fullClose() }
                     continue
                 }
                 connection.updateActive()
@@ -134,7 +141,7 @@ class AsyncConnectionPoolImpl constructor(
                 connectionsLock.synchronize {
                     connections -= con
                 }
-                forRemove += con
+                runCatching { con.fullClose() }
                 continue
             }
             con.updateActive()
@@ -159,7 +166,7 @@ class AsyncConnectionPoolImpl constructor(
     }
 
     internal suspend fun free(connection: PooledAsyncConnectionImpl) {
-        cleanUp()
+        checkCleanUp()
         val w = getOneWater()
         if (w == null) {
             idleConnectionLock.synchronize {

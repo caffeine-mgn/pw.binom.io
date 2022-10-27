@@ -55,7 +55,7 @@ class DateParserTest {
         fun assert(date: Calendar) {
             assertEquals(1, date.month)
             assertEquals(1, date.dayOfMonth)
-            assertEquals(1971, date.year)
+            assertEquals(1970, date.year)
             assertEquals(14, date.hours)
             assertEquals(32, date.minutes)
             assertEquals(0, date.seconds)
@@ -72,7 +72,7 @@ class DateParserTest {
         fun assert(date: Calendar) {
             assertEquals(1, date.month)
             assertEquals(1, date.dayOfMonth)
-            assertEquals(1971, date.year)
+            assertEquals(1970, date.year)
             assertEquals(14, date.hours)
             assertEquals(32, date.minutes)
             assertEquals(0, date.seconds)
@@ -80,8 +80,8 @@ class DateParserTest {
             assertEquals(DateTime.systemZoneOffset, date.offset)
         }
         assert(pattern.parseOrNull("1432")!!.calendar())
-        assert(pattern.parseOrNull("197101 1432")!!.calendar())
-        assert(pattern.parseOrNull("1971-01 1432")!!.calendar())
+        assert(pattern.parseOrNull("197001 1432")!!.calendar())
+        assert(pattern.parseOrNull("1970-01 1432")!!.calendar())
     }
 
     @Test

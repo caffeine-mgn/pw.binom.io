@@ -22,6 +22,18 @@ class WeakReferenceMap<K : Any, V : Any> {
         cleanUp()
     }
 
+    val size: Int
+        get() {
+            var size = 0
+            native.forEach {
+                val key = it.key.get
+                if (key != null) {
+                    size++
+                }
+            }
+            return size
+        }
+
     fun forEach(func: (K, V) -> Unit) {
         native.forEach {
             val key = it.key.get

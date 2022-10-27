@@ -8,12 +8,28 @@ import platform.posix.*
 actual value class DateTime(val time: Long = nowTime) {
     actual companion object {
         actual val systemZoneOffset: Int
-            get() = memScoped {
-                val t = alloc<time_tVar>()
-                val t2 = alloc<tm>()
-                localtime_r(t.ptr, t2.ptr)
-                t2.tm_gmtoff.convert<Int>() / 60
+            get() {
+                val t = nativeHeap.alloc<time_tVar>()
+                val t2 = nativeHeap.alloc<tm>()
+                try {
+                    memset(t.ptr, 0, sizeOf<time_tVar>().convert())
+                    val r = localtime_r(t.ptr, t2.ptr) ?: throw IllegalStateException("Can't get current time")
+                    return r.pointed.tm_gmtoff.convert<Int>() / 60
+                } finally {
+                    nativeHeap.free(t)
+                    nativeHeap.free(t2)
+                }
             }
+
+        //            get() = memScoped {
+//                val b = nativeHeap.alloc<tm>()
+//                nativeHeap.free(b)
+//                val t = cValue<time_tVar>()
+//                val t2 = cValue<tm>()
+//                localtime_r(t.ptr, t2.ptr)
+//                val result = t2.useContents { tm_gmtoff.convert<Int>() } / 60
+//                result
+//            }
         actual val nowTime: Long
             get() = memScoped {
                 val ff = alloc<timespec>()

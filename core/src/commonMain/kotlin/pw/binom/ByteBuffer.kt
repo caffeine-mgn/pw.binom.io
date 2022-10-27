@@ -9,6 +9,7 @@ import pw.binom.io.Closeable
 import pw.binom.io.UTF8
 import pw.binom.pool.AbstractFixedSizePool
 import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 
@@ -82,7 +83,7 @@ class ByteBufferPool(capacity: Int, val bufferSize: UInt = DEFAULT_BUFFER_SIZE.t
 @OptIn(ExperimentalContracts::class)
 inline fun <T> ByteBuffer.set(position: Int, length: Int, func: (ByteBuffer) -> T): T {
     contract {
-        callsInPlace(func)
+        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
     }
     val oldLimit = this.limit
     val oldPosition = this.position

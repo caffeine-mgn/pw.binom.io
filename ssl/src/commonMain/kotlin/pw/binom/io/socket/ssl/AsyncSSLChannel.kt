@@ -115,13 +115,18 @@ class AsyncSSLChannel private constructor(
         session.writeNet(buffer)
     }
 
+    init {
+        println("AsyncSSLChannel: New")
+    }
+
     override suspend fun asyncClose() {
+        println("AsyncSSLChannel: Close")
         checkClosed()
         closed = false
         try {
             flush()
+            session.close()
             if (closeParent) {
-                session.close()
                 channel.asyncClose()
             }
         } finally {

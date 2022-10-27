@@ -91,6 +91,7 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
                 output = singleValueDateContainer,
                 serializersModule = serializersModule,
                 useQuotes = false,
+                excludeGenerated = false,
             )
             args += singleValueDateContainer.value
         }
@@ -128,7 +129,8 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
             name = "",
             output = output,
             serializersModule = serializersModule,
-            useQuotes = k.descriptor.isUseQuotes()
+            useQuotes = k.descriptor.isUseQuotes(),
+            excludeGenerated = excludeGenerated,
         )
         val sb = StringBuilder()
         sb.append("insert into ")

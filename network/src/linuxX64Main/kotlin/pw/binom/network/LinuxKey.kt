@@ -2,7 +2,6 @@ package pw.binom.network
 
 import kotlinx.cinterop.*
 import platform.linux.*
-import kotlin.native.internal.createCleaner
 
 value class HeapMemory<T : CVariable>(val data: ByteArray) {
     companion object {
@@ -10,10 +9,26 @@ value class HeapMemory<T : CVariable>(val data: ByteArray) {
         inline fun <reified T : CVariable> create() = create<T>(sizeOf<T>().convert())
     }
 
-    inline fun ptr(func: (CPointer<T>) -> Unit) {
-        data.usePinned {
-            func(it.addressOf(0).reinterpret())
-        }
+    inline fun <R> ptr(offset: Int, func: (CPointer<T>) -> R): R = data.usePinned {
+        func(it.addressOf(offset).reinterpret())
+    }
+
+    inline fun <R> ptr(func: (CPointer<T>) -> R) = ptr(offset = 0, func = func)
+}
+
+value class HeapValue<T : CVariable>(val heap: ByteArray) {
+    companion object {
+        internal inline fun <reified T : CVariable> alloc(): HeapValue<T> =
+            HeapValue(ByteArray(sizeOf<T>().convert()))
+
+        internal inline fun <reified T : CVariable> alloc(size: Int): HeapValue<T> =
+            HeapValue(ByteArray(sizeOf<T>().convert<Int>() * size))
+    }
+
+    inline fun <R> content(func: (CPointer<T>) -> R) = content(offset = 0, func = func)
+
+    inline fun <R> content(offset: Int, func: (CPointer<T>) -> R) = heap.usePinned {
+        func(it.addressOf(offset).reinterpret())
     }
 }
 
@@ -22,16 +37,21 @@ class LinuxKey(
     attachment: Any?,
     override val selector: LinuxSelector,
 ) : AbstractKey(attachment) {
-    internal val epollEvent = nativeHeap.alloc<epoll_event>()
+    internal val epollEvent = HeapValue.alloc<epoll_event>()
+
+    //    internal val epollEvent = nativeHeap.alloc<epoll_event>()
     internal var nativeSocket: RawSocket = 0
 
     override fun addSocket(raw: RawSocket) {
         if (nativeSocket != 0) {
             throw IllegalStateException()
         }
-        epollEvent.events = epollCommonToNative(listensFlag.convert()).convert()
-//        epollEvent.data.ptr = ptr
-        epollEvent.data.u32 = this@LinuxKey.hashCode().convert()
+        epollEvent.content {
+            it.pointed.events = epollCommonToNative(listensFlag.convert()).convert()
+            it.pointed.data.u32 = this@LinuxKey.hashCode().convert()
+        }
+//        epollEvent.events = epollCommonToNative(listensFlag.convert()).convert()
+//        epollEvent.data.u32 = this@LinuxKey.hashCode().convert()
         nativeSocket = raw
         selector.addKey(this)
         selector.wakeup()
@@ -54,15 +74,13 @@ class LinuxKey(
         if (nativeSocket == 0) {
             return
         }
-        epollEvent.events = epollCommonToNative(mode.convert()).convert()
-        if (nativeSocket != 0) {
-            list.update(socket = nativeSocket, data = epollEvent.ptr, failOnError = false)
-        }
-    }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private val cleaner = createCleaner(epollEvent) {
-        nativeHeap.free(it)
+        epollEvent.content {
+            it.pointed.events = epollCommonToNative(mode.convert()).convert()
+            if (nativeSocket != 0) {
+                list.update(socket = nativeSocket, data = it, failOnError = false)
+            }
+        }
     }
 
     override fun close() {

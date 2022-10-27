@@ -55,7 +55,9 @@ class LinuxSelector : AbstractSelector() {
             try {
                 val id = key.hashCode()
                 idToKey[id] = key
-                native.add(key.nativeSocket, key.epollEvent.ptr)
+                key.epollEvent.content {
+                    native.add(key.nativeSocket, it)
+                }
             } finally {
                 selectLock.unlock()
             }
@@ -115,7 +117,9 @@ class LinuxSelector : AbstractSelector() {
             if (keyForAdd.isNotEmpty()) {
                 idToKey.putAll(keyForAdd)
                 keyForAdd.forEach { (_, key) ->
-                    native.add(key.nativeSocket, key.epollEvent.ptr)
+                    key.epollEvent.content {
+                        native.add(key.nativeSocket, it)
+                    }
                 }
                 keyForAdd.clear()
             }

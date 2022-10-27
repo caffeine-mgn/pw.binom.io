@@ -4,6 +4,7 @@ import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicLong
 import pw.binom.doFreeze
 import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -69,7 +70,7 @@ class ReentrantSpinLock : Lock {
 @OptIn(ExperimentalContracts::class)
 inline fun <T> ReentrantSpinLock.synchronize(duration: Duration, func: () -> T): T {
     contract {
-        callsInPlace(func)
+        callsInPlace(func, InvocationKind.AT_MOST_ONCE)
     }
     try {
         if (!lock(duration)) {

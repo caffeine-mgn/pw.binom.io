@@ -13,16 +13,17 @@ import pw.binom.net.Query
 import pw.binom.net.toPath
 import pw.binom.net.toQuery
 import pw.binom.network.SocketClosedException
-import pw.binom.pool.PoolObjectFactory
+import pw.binom.pool.ObjectFactory
+import pw.binom.pool.ObjectPool
 import pw.binom.pool.borrow
 import pw.binom.skipAll
 
 internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : HttpRequest {
-    object Manager : PoolObjectFactory<HttpRequest2Impl> {
-        override fun free(value: HttpRequest2Impl) {
+    object Manager : ObjectFactory<HttpRequest2Impl> {
+        override fun deallocate(value: HttpRequest2Impl, pool: ObjectPool<HttpRequest2Impl>) {
         }
 
-        override fun new(): HttpRequest2Impl = HttpRequest2Impl()
+        override fun allocate(pool: ObjectPool<HttpRequest2Impl>): HttpRequest2Impl = HttpRequest2Impl()
     }
 
     companion object {
@@ -161,15 +162,18 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                 stream = stream,
                 closeStream = false,
             )
+
             Encoding.GZIP -> AsyncGZIPInput(
                 stream = stream,
                 closeStream = false,
             )
+
             Encoding.DEFLATE -> AsyncInflateInput(
                 stream = stream,
                 wrap = true,
                 closeStream = false
             )
+
             else -> null
         }
 

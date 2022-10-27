@@ -9,8 +9,8 @@ import pw.binom.charset.Charsets
 import pw.binom.io.AsyncBufferedOutputAppendable
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
+import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
-import pw.binom.pool.PoolObjectFactory
 
 class ReusableAsyncBufferedOutputAppendable(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
@@ -28,25 +28,22 @@ class ReusableAsyncBufferedOutputAppendable(
     class Manager(
         val bufferSize: Int = DEFAULT_BUFFER_SIZE,
         val charBufferSize: Int = bufferSize / 2,
-    ) : PoolObjectFactory<ReusableAsyncBufferedOutputAppendable> {
-        override fun new(pool: ObjectPool<ReusableAsyncBufferedOutputAppendable>): ReusableAsyncBufferedOutputAppendable =
-            ReusableAsyncBufferedOutputAppendable(
-                bufferSize = bufferSize,
-                charBufferSize = charBufferSize,
-                onClose = { pool.recycle(it) }
-            )
+    ) : ObjectFactory<ReusableAsyncBufferedOutputAppendable> {
 
-        override fun free(value: ReusableAsyncBufferedOutputAppendable) {
+        override fun deallocate(
+            value: ReusableAsyncBufferedOutputAppendable,
+            pool: ObjectPool<ReusableAsyncBufferedOutputAppendable>
+        ) {
             GlobalScope.launch {
                 value.free()
             }
         }
 
-        override fun new(): ReusableAsyncBufferedOutputAppendable =
+        override fun allocate(pool: ObjectPool<ReusableAsyncBufferedOutputAppendable>): ReusableAsyncBufferedOutputAppendable =
             ReusableAsyncBufferedOutputAppendable(
                 bufferSize = bufferSize,
                 charBufferSize = charBufferSize,
-                onClose = { }
+                onClose = { pool.recycle(it) }
             )
     }
 

@@ -1,6 +1,7 @@
 package pw.binom.io
 
 import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
 
@@ -267,7 +268,7 @@ private inline fun JByteBuffer.copyTo(buffer: JByteBuffer): Int {
 @OptIn(ExperimentalContracts::class)
 private inline fun <T> JByteBuffer.hold(offset: Int, length: Int, func: (JByteBuffer) -> T): T {
     contract {
-        callsInPlace(func)
+        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
     }
     val p = position()
     val l = limit()
@@ -284,7 +285,7 @@ private inline fun <T> JByteBuffer.hold(offset: Int, length: Int, func: (JByteBu
 @OptIn(ExperimentalContracts::class)
 private inline fun <T> JByteBuffer.update(offset: Int, length: Int, func: (JByteBuffer) -> T): T {
     contract {
-        callsInPlace(func)
+        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
     }
     try {
         position(offset)

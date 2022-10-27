@@ -8,22 +8,20 @@ import pw.binom.io.AsyncWriter
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 import pw.binom.io.http.*
+import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
-import pw.binom.pool.PoolObjectFactory
 import pw.binom.pool.borrow
 
 internal class HttpResponse2Impl(
     val onClose: (HttpResponse2Impl) -> Unit,
 ) : HttpResponse {
 
-    object Manager : PoolObjectFactory<HttpResponse2Impl> {
-        override fun new(pool: ObjectPool<HttpResponse2Impl>): HttpResponse2Impl =
-            HttpResponse2Impl { pool.recycle(it) }
-
-        override fun free(value: HttpResponse2Impl) {
+    object Manager : ObjectFactory<HttpResponse2Impl> {
+        override fun deallocate(value: HttpResponse2Impl, pool: ObjectPool<HttpResponse2Impl>) {
         }
 
-        override fun new(): HttpResponse2Impl = HttpResponse2Impl { }
+        override fun allocate(pool: ObjectPool<HttpResponse2Impl>): HttpResponse2Impl =
+            HttpResponse2Impl { pool.recycle(it) }
     }
 
     override var status = 404
@@ -144,18 +142,21 @@ internal class HttpResponse2Impl(
                 stream = stream,
                 closeStream = stream !== channel!!.writer,
             )
+
             Encoding.GZIP -> AsyncGZIPOutput(
                 stream = stream,
                 level = 6,
                 closeStream = true,
                 bufferSize = server!!.zlibBufferSize,
             )
+
             Encoding.DEFLATE -> AsyncDeflaterOutput(
                 stream = stream,
                 level = 6,
                 closeStream = true,
                 bufferSize = server!!.zlibBufferSize,
             )
+
             else -> null
         }
 

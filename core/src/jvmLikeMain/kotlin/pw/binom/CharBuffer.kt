@@ -5,6 +5,7 @@ package pw.binom
 import pw.binom.io.Buffer
 import pw.binom.io.Closeable
 import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 actual class CharBuffer constructor(val native: java.nio.CharBuffer) : CharSequence, Closeable, Buffer {
@@ -159,7 +160,7 @@ actual class CharBuffer constructor(val native: java.nio.CharBuffer) : CharSeque
 @OptIn(ExperimentalContracts::class)
 private inline fun <T> java.nio.CharBuffer.hold(offset: Int, length: Int, func: (java.nio.CharBuffer) -> T): T {
     contract {
-        callsInPlace(func)
+        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
     }
     val p = position()
     val l = limit()
@@ -176,7 +177,7 @@ private inline fun <T> java.nio.CharBuffer.hold(offset: Int, length: Int, func: 
 @OptIn(ExperimentalContracts::class)
 private inline fun <T> java.nio.CharBuffer.update(offset: Int, length: Int, func: (java.nio.CharBuffer) -> T): T {
     contract {
-        callsInPlace(func)
+        callsInPlace(func, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
     }
     try {
         position(offset)
