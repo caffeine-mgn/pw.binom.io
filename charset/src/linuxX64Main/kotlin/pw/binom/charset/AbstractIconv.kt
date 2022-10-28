@@ -9,13 +9,6 @@ import platform.posix.*
 import pw.binom.io.Buffer
 import pw.binom.io.Closeable
 
-private var allocated = 0
-private var using = 0
-
-private fun printStatus(action: String) {
-    println("Iconv: $action. allocated: $allocated, using: $using")
-}
-
 /**
  * Abstract Charset convertor. Uses Iconv native library
  */
@@ -27,10 +20,6 @@ abstract class AbstractIconv(
 ) : Closeable {
 
     internal class Resource(fromCharset: String, toCharset: String) {
-        init {
-            allocated++
-            printStatus("Allocated")
-        }
 
         //        val key = "$fromCharset..$toCharset"
         val iconvHandle = iconv_open(toCharset, fromCharset)
@@ -54,8 +43,6 @@ abstract class AbstractIconv(
         }
 
         fun dispose() {
-            allocated--
-            printStatus("Free")
             iconv_close(iconvHandle)
             nativeHeap.free(inputAvail)
             nativeHeap.free(outputAvail)
@@ -67,7 +54,6 @@ abstract class AbstractIconv(
     private val resource = Resource(fromCharset, toCharset)
 
     internal fun reset() {
-        using++
     }
 
     internal fun free() {
@@ -75,8 +61,6 @@ abstract class AbstractIconv(
     }
 
     override fun close() {
-        using--
-        printStatus("Close. callback exist: ${onClose != null}")
         onClose?.invoke(this)
     }
 

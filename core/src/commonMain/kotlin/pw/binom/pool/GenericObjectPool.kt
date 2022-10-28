@@ -4,7 +4,7 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import kotlin.math.roundToInt
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -17,14 +17,9 @@ class GenericObjectPool<T : Any>(
     val minSize: Int = 0,
     val growFactor: Float = 1.5f,
     val shrinkFactor: Float = 0.5f,
-    val delayBeforeResize: Duration = 0.seconds
+    val delayBeforeResize: Duration = 2.minutes
 ) : ObjectPool<T> {
 
-    private enum class Action {
-        STAY, GROW, SHRINK
-    }
-
-    private var action = Action.STAY
     private var lastDate = TimeSource.Monotonic.markNow()
 
     init {
@@ -129,7 +124,6 @@ class GenericObjectPool<T : Any>(
 
     override fun borrow(): T = lock.synchronize {
         if (size == 0) {
-            println("borrow NEW. size=$size")
             factory.allocate(this)
         } else {
             val index = --size
@@ -137,7 +131,6 @@ class GenericObjectPool<T : Any>(
             val obj = pool[index] as T
             pool[index] = null
             checkShrink()
-            println("borrow OLD")
             obj
         }
     }
@@ -157,11 +150,9 @@ class GenericObjectPool<T : Any>(
                 factory.deallocate(value, this)
                 nextCapacity = maxOf(pool.size, nextCapacity + 1)
                 checkGrow()
-                println("recycle SKIP ${value::class}")
             } else {
                 pool[size++] = value
                 nextCapacity = size
-                println("recycle PUT. size=$size ${value::class}")
             }
         }
     }

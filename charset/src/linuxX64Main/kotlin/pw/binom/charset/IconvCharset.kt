@@ -26,8 +26,8 @@ private class DecoderFactory(val name: String) : ObjectFactory<IconvCharsetDecod
 @OptIn(ExperimentalTime::class)
 class IconvCharset(override val name: String) : Charset, Closeable {
 
-    private val encodePool = GenericObjectPool(EncoderFactory(name))
-    private val decodePool = GenericObjectPool(DecoderFactory(name))
+    private val encodePool = GenericObjectPool(factory = EncoderFactory(name), initCapacity = 0)
+    private val decodePool = GenericObjectPool(factory = DecoderFactory(name), initCapacity = 0)
 
     var lastActive = TimeSource.Monotonic.markNow()
         private set
