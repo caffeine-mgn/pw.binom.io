@@ -24,6 +24,8 @@ class ObjectAsyncOutput(
         require(bufferSize >= MIN_PACKAGE_SIZE) { "S3 support support minimal size of package is $MIN_PACKAGE_SIZE bytes" }
     }
 
+    var contentSize: Long = 0
+        private set
     private val buffer = ByteBuffer.alloc(bufferSize)
     private var uploadId: String? = null
     private val parts = ArrayList<Part>()
@@ -35,6 +37,9 @@ class ObjectAsyncOutput(
             throw IllegalStateException("No free buffer size")
         }
         val wrote = buffer.write(data)
+        if (wrote > 0) {
+            contentSize += wrote
+        }
         if (buffer.remaining == 0) {
             makePart()
         }
@@ -80,6 +85,7 @@ class ObjectAsyncOutput(
             partNumber = parts.size,
             uploadId = uploadId,
         ) { output ->
+            println("Multipart Sent ${buffer.remaining} to S3. $key")
             output.writeFully(buffer)
         }
         buffer.clear()

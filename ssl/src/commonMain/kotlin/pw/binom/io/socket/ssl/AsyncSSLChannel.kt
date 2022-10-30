@@ -125,11 +125,11 @@ class AsyncSSLChannel private constructor(
         closed = false
         try {
             flush()
-            session.close()
             if (closeParent) {
                 channel.asyncClose()
             }
         } finally {
+            session.close()
             if (closeBuffer) {
                 buffer.close()
             } else {

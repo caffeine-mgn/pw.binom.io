@@ -1,5 +1,7 @@
 package pw.binom.io.httpClient
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.collections.defaultMutableList
@@ -20,6 +22,7 @@ class BaseHttpClient(
     keyManager: KeyManager = EmptyKeyManager,
     trustManager: TrustManager = TrustManager.TRUST_ALL,
     val bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    val sslBufferSize: Int = DEFAULT_BUFFER_SIZE,
     bufferCapacity: Int = 16,
     websocketMessagePoolSize: Int = 16,
     var connectionFactory: ConnectionFactory = ConnectionFactory.DEFAULT
@@ -32,7 +35,18 @@ class BaseHttpClient(
         defaultMutableMap<String, MutableList<AsyncAsciiChannel>>().useName("BaseHttpClient.connections")
     internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, bufferSize = bufferSize.toUInt())
 
+    val idleSize
+        get() = connections.map { it.value.size }.sum()
+
     internal fun recycleConnection(URI: URL, channel: AsyncAsciiChannel) {
+//        GlobalScope.launch(networkDispatcher) {
+//            try {
+//                channel.asyncClose()
+//                println("Connection closed success")
+//            } catch (e: Throwable) {
+//                println("Connection closed with error: $e:\n${e.stackTraceToString()}")
+//            }
+//        }
         connections.getOrPut(URI.asKey) { defaultMutableList() }.add(channel)
     }
 
@@ -58,7 +72,7 @@ class BaseHttpClient(
 
         if (uri.schema == "https" || uri.schema == "wss") {
             val sslSession = sslContext.clientSession(host = uri.host, port = port)
-            channel = sslSession.asyncChannel(channel)
+            channel = sslSession.asyncChannel(channel, closeParent = true, bufferSize = sslBufferSize)
         }
         return AsyncAsciiChannel(pool = textBufferPool, channel = channel)
     }
@@ -97,7 +111,8 @@ class BaseHttpClient(
 
     override fun close() {
 //        deadlineTimer.close()
-        sslContext.close()
+        GlobalScope.launch { connections.forEach { it.value.forEach { it.channel.asyncClose() } } }
+        connections.clear()
     }
 }
 

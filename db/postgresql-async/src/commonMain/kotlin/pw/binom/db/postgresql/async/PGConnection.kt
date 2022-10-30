@@ -5,7 +5,6 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
-import pw.binom.collections.WeakReferenceMap
 import pw.binom.collections.defaultMutableSet
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
@@ -23,12 +22,7 @@ import pw.binom.writeByte
 import pw.binom.writeInt
 import pw.binom.writeShort
 
-val ACTIVE_PG = WeakReferenceMap<PGConnection, Boolean>()
 private var counter = 0
-fun printPg() {
-    println("Active Pg count: ${ACTIVE_PG.size}")
-}
-
 class PGConnection private constructor(
     val connection: TcpConnection,
     charset: Charset,
@@ -41,11 +35,6 @@ class PGConnection private constructor(
     val id = counter++
 
     override fun toString(): String = "PGConnection-$id"
-
-    init {
-        ACTIVE_PG[this] = true
-        printPg()
-    }
 
     companion object {
         const val TYPE = "PostgreSQL"
@@ -68,7 +57,6 @@ class PGConnection private constructor(
                 networkDispatcher = networkDispatcher,
                 readBufferSize = readBufferSize,
             )
-            println("PGConnection NEW $pgConnection")
             pgConnection.sendFirstMessage(
                 mapOf(
                     "user" to userName,
@@ -213,7 +201,6 @@ class PGConnection private constructor(
         if (closed) {
             throw ClosedException()
         }
-//        println("PGConnection -> $msg")
         msg.write(packageWriter)
         packageWriter.finishAsync(connection)
         connection.flush()
@@ -231,7 +218,6 @@ class PGConnection private constructor(
 
     internal suspend fun readDesponse(): KindedMessage {
         val result = KindedMessage.read(reader)
-//        println("PGConnection <- $result")
         return result
     }
 
@@ -380,15 +366,12 @@ class PGConnection private constructor(
 
     var closing = false
     override suspend fun asyncClose() {
-        println("PGConnection CLOSE $this")
         checkClosed()
         if (closing) {
-            println("Already closing...")
             throw IllegalStateException("Connection already closing")
         }
         closing = true
         try {
-            printPg()
             prepareStatements.toTypedArray().forEach {
                 runCatching { it.asyncClose() }
             }

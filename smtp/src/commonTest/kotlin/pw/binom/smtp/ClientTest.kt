@@ -5,21 +5,10 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
-import pw.binom.ssl.KeyManager
-import pw.binom.ssl.PrivateKey
+import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.TrustManager
-import pw.binom.ssl.X509Certificate
 import kotlin.test.Ignore
 import kotlin.test.Test
-
-object EmptyKeyManager : KeyManager {
-    override fun getPrivate(serverName: String?): PrivateKey? = null
-
-    override fun getPublic(serverName: String?): X509Certificate? = null
-
-    override fun close() {
-    }
-}
 
 class ClientTest {
 

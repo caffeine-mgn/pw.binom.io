@@ -46,8 +46,8 @@ object LiveCollections {
 
 private const val USE_NEW_LIST = true
 private const val USE_NEW_MAP = true
-private const val REG_NEW = true
-internal const val USE_TRIM_LIST = false
+private const val REG_NEW = false
+internal const val USE_TRIM_LIST = true
 
 fun <T> defaultMutableList(list: Collection<T>): MutableList<T> =
     if (USE_NEW_LIST) {

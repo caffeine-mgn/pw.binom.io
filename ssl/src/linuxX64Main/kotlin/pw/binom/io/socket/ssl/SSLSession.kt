@@ -1,13 +1,12 @@
 package pw.binom.io.socket.ssl
 
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.refTo
-import kotlinx.cinterop.toKString
+import kotlinx.cinterop.*
 import platform.openssl.*
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.checkTrue
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
-import kotlin.native.internal.createCleaner
+import pw.binom.ssl.*
 
 internal fun assertError(ssl: CPointer<SSL>, ret: Int) {
     if (ret <= 0 && SSL_get_error(ssl, ret) == SSL_ERROR_SSL) {
@@ -18,9 +17,32 @@ internal fun assertError(ssl: CPointer<SSL>, ret: Int) {
 
 fun getLastError() = ERR_error_string(ERR_peek_last_error(), null)?.toKString()
 
-actual class SSLSession(ctx: CPointer<SSL_CTX>, ssl: CPointer<SSL>, val client: Boolean) : Closeable {
+actual class SSLSession(
+    ctx: CPointer<SSL_CTX>,
+    ssl: CPointer<SSL>,
+    val client: Boolean,
+    val trustManager: TrustManager,
+    val keyManager: KeyManager
+) : Closeable {
     actual enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
+    }
+
+    private val self = StableRef.create(this)
+
+    init {
+        if (client) {
+            SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, null)
+            SSL_CTX_set_cert_verify_callback(ctx, sslServerCheck.reinterpret(), self.asCPointer())
+        } else {
+            SSL_CTX_callback_ctrl(
+                ctx,
+                SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,
+                sslHostCheck.reinterpret()
+            ).convert<Int>().checkTrue("SSL_CTRL_SET_TLSEXT_SERVERNAME_CB error")
+            SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG, 0, self.asCPointer()).convert<Int>()
+                .checkTrue("SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG error")
+        }
     }
 
     actual class Status(actual val state: State, actual val bytes: Int) {
@@ -33,19 +55,21 @@ actual class SSLSession(ctx: CPointer<SSL_CTX>, ssl: CPointer<SSL>, val client: 
         val ctx: CPointer<SSL_CTX>,
         val ssl: CPointer<SSL>,
     ) {
+        private var disposed = false
         val rbio = BIO_new(BIO_s_mem()!!)!!
         val wbio = BIO_new(BIO_s_mem()!!)!!
+        fun dispose() {
+            if (disposed) {
+                throw IllegalStateException("Already disposed!")
+            }
+            SSL_CTX_free(ctx)
+            SSL_free(ssl)
+//            BIO_free(rbio)
+//            BIO_free(wbio)
+        }
     }
 
     private val resource = Resource(ctx = ctx, ssl = ssl)
-
-    @OptIn(ExperimentalStdlibApi::class)
-    private val cleaner = createCleaner(resource) {
-        SSL_CTX_free(it.ctx)
-        SSL_free(it.ssl)
-        BIO_free(it.rbio)
-        BIO_free(it.wbio)
-    }
 
     private fun init(): State? {
         if (SSL_is_init_finished(resource.ssl) != 0) {
@@ -250,6 +274,46 @@ actual class SSLSession(ctx: CPointer<SSL_CTX>, ssl: CPointer<SSL>, val client: 
         )
     }
 
+    private var closed = AtomicBoolean(false)
     override fun close() {
+        if (!closed.compareAndSet(expected = false, new = true)) {
+            throw IllegalStateException("SSLSession already closed")
+        }
+        resource.dispose()
+        self.dispose()
     }
+}
+
+private val sslServerCheck = staticCFunction<CPointer<X509_STORE_CTX>, COpaquePointer, Int> { x509Ctx, arg ->
+    val self = arg.asStableRef<SSLSession>().get()
+    val cain = X509_STORE_CTX_get0_chain(x509Ctx) ?: X509_STORE_CTX_get1_chain(x509Ctx)
+
+    val list = Array(1 + (cain?.size ?: 0)) {
+        if (it == 0) {
+            X509Certificate(X509_STORE_CTX_get0_cert(x509Ctx)!!)
+        } else {
+            X509Certificate(cain!![it - 1])
+        }
+    }
+
+    if (self.trustManager.isServerTrusted(list)) {
+        1
+    } else {
+        -1
+    }
+}
+
+private val sslHostCheck = staticCFunction<CPointer<SSL>, CPointer<IntVar>, COpaquePointer, Int> { ssl, _, arg ->
+    val self = arg.asStableRef<SSLSession>().get()
+    val hostName = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)?.toKString()
+    val private = self.keyManager.getPrivate(hostName)
+    val public = self.keyManager.getPublic(hostName)
+    if (private != null) {
+        SSL_use_PrivateKey(ssl, private.native).checkTrue("SSL_use_PrivateKey private")
+    }
+    if (public != null) {
+        SSL_use_certificate(ssl, public.ptr).checkTrue("SSL_use_certificate error")
+    }
+
+    SSL_TLSEXT_ERR_OK
 }

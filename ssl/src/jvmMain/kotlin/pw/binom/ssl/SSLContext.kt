@@ -1,15 +1,10 @@
 package pw.binom.ssl
 
-import pw.binom.io.Closeable
 import pw.binom.io.socket.ssl.SSLSession
 import java.security.SecureRandom
 import javax.net.ssl.SSLContext as JSSLContext
 
-actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: KeyManager, trustManager: TrustManager) :
-    Closeable {
-
-    override fun close() {
-    }
+actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: KeyManager, trustManager: TrustManager) {
 
 //    actual val socketFactory: SSLSocketFactory = SSLSocketFactory(this)
 
@@ -22,6 +17,7 @@ actual class SSLContext private constructor(val ctx: JSSLContext, keyManager: Ke
             val protocol = when (method) {
                 SSLMethod.TLS,
                 SSLMethod.TLSv1_2 -> "TLSv1.2"
+
                 SSLMethod.TLSv1_1 -> "TLSv1.1"
                 SSLMethod.TLSv1 -> "TLSv1.0"
                 SSLMethod.SSL, SSLMethod.SSLv2 -> "SSLv2.0"

@@ -1,6 +1,5 @@
 package pw.binom.ssl
 
-import pw.binom.io.Closeable
 import pw.binom.io.socket.ssl.SSLSession
 
 // import pw.binom.io.socket.ssl.SSLSocketFactory
@@ -16,7 +15,7 @@ enum class SSLMethod {
     TLSv1_2
 }
 
-expect class SSLContext : Closeable {
+expect class SSLContext {
 //    val socketFactory: SSLSocketFactory
 
     fun clientSession(host: String, port: Int): SSLSession

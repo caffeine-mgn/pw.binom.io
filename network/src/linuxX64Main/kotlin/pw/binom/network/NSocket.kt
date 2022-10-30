@@ -408,6 +408,9 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
         run {
             checkClosed()
+            if (data.remaining == 0) {
+                return@run 0
+            }
             val rr = data.ref { dataPtr, remaining ->
                 set_posix_errno(0)
                 address.data.usePinned {
@@ -429,6 +432,9 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
                 if (errno == EINVAL) {
                     throw IOException("Can't send data: Invalid argument")
                 }
+                if (errno == EAGAIN) {
+                    return@run 0
+                }
                 throw IOException("Can't send data. Error: $errno  $errno")
             }
 
@@ -441,6 +447,9 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
         address: NetworkAddress.Mutable?
     ): Int {
         checkClosed()
+        if (data.remaining == 0) {
+            return 0
+        }
         val gotBytes = if (address == null) {
             val rr = data.ref { dataPtr, remaining ->
                 recvfrom(native, dataPtr, remaining.convert(), 0, null, null)

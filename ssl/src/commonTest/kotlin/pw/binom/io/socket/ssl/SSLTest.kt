@@ -4,6 +4,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import pw.binom.date.DateTime
 import pw.binom.io.ByteBuffer
+import pw.binom.io.Closeable
 import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.bindTcp
@@ -15,7 +16,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class SimpleKeyManager(val private: PrivateKey?, val public: X509Certificate?) : KeyManager {
+class SimpleKeyManager(val private: PrivateKey?, val public: X509Certificate?) : KeyManager, Closeable {
     override fun getPrivate(serverName: String?): PrivateKey? {
         return private
     }

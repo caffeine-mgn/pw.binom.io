@@ -1,8 +1,6 @@
 package pw.binom.ssl
 
-import pw.binom.io.Closeable
-
-interface KeyManager : Closeable {
+interface KeyManager {
     fun getPrivate(serverName: String?): PrivateKey?
     fun getPublic(serverName: String?): X509Certificate?
 }

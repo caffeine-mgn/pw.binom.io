@@ -21,6 +21,7 @@ interface AsyncInput : AsyncCloseable {
 }
 
 suspend fun AsyncInput.readByteArray(size: Int, bufferProvider: ByteBufferProvider): ByteArray {
+    require(size >= 0) { "size should be more or equals 0" }
     val array = ByteArray(size)
     readByteArray(
         dest = array,

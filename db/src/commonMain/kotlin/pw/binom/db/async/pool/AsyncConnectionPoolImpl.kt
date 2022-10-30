@@ -59,16 +59,13 @@ class AsyncConnectionPoolImpl constructor(
         var count = 0
         val forRemove = defaultMutableSet<PooledAsyncConnectionImpl>()
         try {
-            println("Cleanup process....")
             cleaning = true
             idleConnectionLock.synchronize {
-                println("idleConnection size: ${idleConnection.size}")
                 val it = idleConnection.iterator()
                 while (it.hasNext()) {
                     val e = it.next()
                     val connectionIdleTime = (DateTime.nowTime - e.lastActive).milliseconds
                     if (connectionIdleTime > idleTime) {
-                        println("Connection should be removed")
                         it.remove()
                         connectionsLock.synchronize {
                             connections -= e
@@ -76,23 +73,15 @@ class AsyncConnectionPoolImpl constructor(
                         forRemove += e
                         count++
                         continue
-                    } else {
-                        println("Connection is still accessible. idle=$connectionIdleTime, maxIdle=$idleTime")
                     }
                 }
             }
             if (forRemove.isNotEmpty()) {
-                println("Close connections: ${forRemove.size}")
                 forRemove.forEach {
                     avalibles[it] = true
                     runCatching { it.fullClose() }
                 }
                 forRemove.clear()
-            } else {
-                println("No connection for stop")
-            }
-            avalibles.forEach { pooledAsyncConnection, _ ->
-                println("Available $pooledAsyncConnection")
             }
         } finally {
             cleaning = false
