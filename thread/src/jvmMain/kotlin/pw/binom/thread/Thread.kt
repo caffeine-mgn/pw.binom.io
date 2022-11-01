@@ -1,4 +1,5 @@
 @file:JvmName("ThreadCommonKt")
+
 package pw.binom.thread
 
 import kotlin.time.Duration
@@ -17,7 +18,8 @@ actual abstract class Thread constructor(val native: JvmThread) {
 
     private val jvmUncaughtExceptionHandler = JvmUncaughtExceptionHandler { _, throwable ->
         this@Thread.uncaughtExceptionHandler.uncaughtException(
-            thread = this, throwable = throwable
+            thread = this,
+            throwable = throwable
         )
     }
 
@@ -29,7 +31,12 @@ actual abstract class Thread constructor(val native: JvmThread) {
         }
 
         override fun run() {
-            binomThread.execute()
+            ThreadMetrics.incThread()
+            try {
+                binomThread.execute()
+            } finally {
+                ThreadMetrics.decThread()
+            }
         }
     }
 

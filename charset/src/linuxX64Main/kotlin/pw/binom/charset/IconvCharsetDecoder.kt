@@ -12,9 +12,18 @@ val NATIVE_CHARSET =
 class IconvCharsetDecoder(name: String, onClose: ((AbstractIconv) -> Unit)?) : CharsetDecoder,
     AbstractIconv(fromCharset = name, toCharset = NATIVE_CHARSET, onClose = onClose) {
 
+    init {
+        CharsetMetrics.incDecoder()
+    }
+
     override fun decode(input: ByteBuffer, output: CharBuffer): CharsetTransformResult =
         iconv(
             input,
             output
         )
+
+    override fun close() {
+        super.close()
+        CharsetMetrics.decDecoder()
+    }
 }

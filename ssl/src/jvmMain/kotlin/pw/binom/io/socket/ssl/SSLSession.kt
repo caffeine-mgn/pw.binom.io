@@ -1,5 +1,6 @@
 package pw.binom.io.socket.ssl
 
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.length
 import pw.binom.io.putSafeInto
@@ -20,6 +21,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
     private val clientData = pw.binom.io.InfinityByteBuffer(512)
 
     init {
+        SSLMetrics.incSSLSession()
         rbio.flip()
     }
 
@@ -96,14 +98,17 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                     SSLEngineResult.HandshakeStatus.NEED_WRAP -> State.WANT_WRITE
                     SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING,
                     SSLEngineResult.HandshakeStatus.FINISHED -> State.OK
+
                     SSLEngineResult.HandshakeStatus.NEED_TASK -> {
                         while (true) {
                             sslEngine.delegatedTask?.run() ?: break
                         }
                         State.WANT_WRITE
                     }
+
                     else -> TODO()
                 }
+
             SSLEngineResult.Status.BUFFER_UNDERFLOW -> TODO()
             SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO("wbio size=${wbio.remaining()}")
             SSLEngineResult.Status.CLOSED -> State.CLOSED
@@ -129,14 +134,17 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                         SSLEngineResult.HandshakeStatus.NEED_WRAP -> State.WANT_WRITE
                         SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING,
                         SSLEngineResult.HandshakeStatus.FINISHED -> State.OK
+
                         SSLEngineResult.HandshakeStatus.NEED_TASK -> {
                             while (true) {
                                 sslEngine.delegatedTask?.run() ?: break
                             }
                             State.OK
                         }
+
                         else -> TODO()
                     }
+
                 SSLEngineResult.Status.BUFFER_UNDERFLOW -> State.WANT_READ
                 SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO()
                 SSLEngineResult.Status.CLOSED -> State.CLOSED
@@ -283,17 +291,21 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                     SSLEngineResult.HandshakeStatus.NEED_WRAP -> State.WANT_WRITE
                     SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING,
                     SSLEngineResult.HandshakeStatus.FINISHED -> State.OK
+
                     SSLEngineResult.HandshakeStatus.NEED_TASK -> {
                         while (true) {
                             sslEngine.delegatedTask?.run() ?: break
                         }
                         State.WANT_WRITE
                     }
+
                     else -> TODO()
                 }
+
             SSLEngineResult.Status.BUFFER_UNDERFLOW -> TODO()
             SSLEngineResult.Status.BUFFER_OVERFLOW -> TODO("wbio size=${wbio.remaining()}")
             SSLEngineResult.Status.CLOSED -> State.CLOSED
+            else -> TODO("Unknown state: ${s.status}")
         }
         return Status(
             state,
@@ -301,7 +313,13 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         )
     }
 
+    private var closed = AtomicBoolean(false)
+
     override fun close() {
+        if (!closed.compareAndSet(false, true)) {
+            throw IllegalStateException("SSLSession already closed")
+        }
+        SSLMetrics.decSSLSession()
         sslEngine.closeOutbound()
 //        sslEngine.closeInbound()
     }

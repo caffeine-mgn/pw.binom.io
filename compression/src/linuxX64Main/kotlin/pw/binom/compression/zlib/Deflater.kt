@@ -7,8 +7,8 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicLong
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+import pw.binom.io.ClosedException
 import pw.binom.io.IOException
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -31,6 +31,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         get() = _finished.getValue()
 
     init {
+        DeflaterMetrics.incDeflaterCount()
         memset(native.ptr, 0, sizeOf<z_stream_s>().convert())
         if (deflateInit2(
                 native.ptr,
@@ -50,17 +51,17 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         nativeHeap.free(self)
     }
 
-    init {
-        freeze()
-    }
-
     private fun checkClosed() {
-        if (closed.getValue())
-            throw IllegalStateException("Stream already closed")
+        if (closed.getValue()) {
+            throw ClosedException()
+        }
     }
 
     override fun close() {
-        checkClosed()
+        if (!closed.compareAndSet(false, true)) {
+            throw ClosedException()
+        }
+        DeflaterMetrics.decDeflaterCount()
         closed.setValue(true)
     }
 
@@ -79,10 +80,12 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
             input.refTo(input.position) { inputPtr ->
                 memScoped {
                     checkClosed()
-                    if (output.remaining == 0)
+                    if (output.remaining == 0) {
                         throw IllegalArgumentException("Output Buffer has no Free Space")
-                    if (!_finishing.getValue() && input.remaining == 0)
+                    }
+                    if (!_finishing.getValue() && input.remaining == 0) {
                         return@memScoped 0
+                    }
                     native.next_out = (outputPtr.getPointer(this)).reinterpret()
                     native.avail_out = output.remaining.convert()
 
@@ -91,15 +94,18 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
                     val freeOutput = output.remaining
                     val freeInput = input.remaining
 
-                    val mode = if (_finishing.getValue())
+                    val mode = if (_finishing.getValue()) {
                         Z_FINISH
+                    }
 //            Z_SYNC_FLUSH
 //            Z_FULL_FLUSH
-                    else
+                    else {
                         Z_NO_FLUSH
+                    }
                     val deflateResult = deflate(native.ptr, mode)
-                    if (deflateResult != Z_OK)
+                    if (deflateResult != Z_OK) {
                         throw IOException("deflate() returns [${zlibConsts(deflateResult)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")
+                    }
                     val wrote = freeOutput - native.avail_out.convert<Int>()
                     input.position += freeInput - native.avail_in.convert<Int>()
                     output.position += wrote
@@ -121,8 +127,9 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         if (output.remaining == 0) {
             return false
         }
-        if (!_finishing.getValue())
+        if (!_finishing.getValue()) {
             return false
+        }
         while (true) {
             val writed = output.remaining
 
@@ -151,10 +158,12 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
 
             _totalOut.addAndGet(outLength.toLong())
 
-            if (r == Z_OK || r == Z_BUF_ERROR)
+            if (r == Z_OK || r == Z_BUF_ERROR) {
                 return true
-            if (r == Z_STREAM_END)
+            }
+            if (r == Z_STREAM_END) {
                 return false
+            }
         }
     }
 }

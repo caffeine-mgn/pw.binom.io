@@ -45,6 +45,10 @@ class JvmSelector : Selector {
 
         private var _closed = false
 
+        init {
+            NetworkMetrics.incSelectorKey()
+        }
+
         fun setNative(native: AbstractSelectableChannel) {
             keysNotInSelector -= this
             this.native = native.register(this@JvmSelector.native, commonToJava(native, initMode), this)
@@ -107,6 +111,7 @@ class JvmSelector : Selector {
         override fun close() {
             checkClosed()
             _closed = true
+            NetworkMetrics.decSelectorKey()
             try {
                 native?.interestOps(0)
             } catch (e: CancelledKeyException) {

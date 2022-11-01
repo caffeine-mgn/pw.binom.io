@@ -2,6 +2,8 @@
 
 package pw.binom.io
 
+import pw.binom.BinomMetrics
+import pw.binom.metric.MutableGauge
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 import kotlin.contracts.ExperimentalContracts
@@ -9,6 +11,21 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
+
+internal object ByteBufferMetric {
+    private val BYTEBUFFER_COUNT_METRIC = MutableGauge("binom_byte_buffer_count", description = "ByteBuffer Count")
+    fun incCount() {
+        BYTEBUFFER_COUNT_METRIC.inc()
+    }
+
+    fun decCount() {
+        BYTEBUFFER_COUNT_METRIC.dec()
+    }
+
+    init {
+        BinomMetrics.reg(BYTEBUFFER_COUNT_METRIC)
+    }
+}
 
 /**
  * A part of memory. Also contents current read/write state

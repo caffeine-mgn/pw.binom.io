@@ -6,8 +6,8 @@ import platform.zlib.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
+import pw.binom.io.ClosedException
 import pw.binom.io.IOException
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -18,15 +18,18 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
     private var closed = AtomicBoolean(false)
 
     private fun checkClosed() {
-        if (closed.getValue())
-            throw IllegalStateException("Stream already closed")
+        if (closed.getValue()) {
+            throw ClosedException()
+        }
     }
 
     init {
         memset(native.ptr, 0, sizeOf<z_stream_s>().convert())
 
-        if (inflateInit2(native.ptr, if (wrap) 15 else -15) != Z_OK)
+        if (inflateInit2(native.ptr, if (wrap) 15 else -15) != Z_OK) {
             throw IOException("inflateInit2() error")
+        }
+        DeflaterMetrics.incInflaterCount()
     }
 
     private val cleaner = createCleaner(native) { self ->
@@ -34,20 +37,21 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
         nativeHeap.free(self)
     }
 
-    init {
-        freeze()
-    }
-
     override fun close() {
-        checkClosed()
+        if (!closed.compareAndSet(false, true)) {
+            throw ClosedException()
+        }
+        DeflaterMetrics.decInflaterCount()
         closed.setValue(true)
     }
 
     actual fun end() {
+        checkClosed()
         inflateEnd(native.ptr)
     }
 
     actual fun inflate(input: ByteBuffer, output: ByteBuffer): Int {
+        checkClosed()
         if (output.capacity == 0 || input.capacity == 0) {
             return 0
         }
@@ -62,8 +66,9 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
                     val freeOutput = output.remaining
                     val freeInput = input.remaining
                     val r = inflate(native.ptr, Z_NO_FLUSH)
-                    if (r != Z_OK && r != Z_STREAM_END)
+                    if (r != Z_OK && r != Z_STREAM_END) {
                         throw IOException("inflate() returns [${zlibConsts(r)}]. avail_in: [${native.avail_in}], avail_out: [${native.avail_out}]")
+                    }
                     val wrote = freeOutput - native.avail_out.convert<Int>()
 
                     input.position += freeInput - native.avail_in.convert<Int>()

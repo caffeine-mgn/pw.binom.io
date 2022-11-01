@@ -1,5 +1,8 @@
 import pw.binom.publish.dependsOn
 
+dependencies {
+    implementation(project(mapOf("path" to ":io")))
+}
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -29,6 +32,8 @@ kotlin {
             dependencies {
                 api(kotlin("stdlib-common"))
                 api(project(":collections"))
+                api(project(":metric"))
+                api(project(":io"))
             }
         }
         val nativeMain by creating {

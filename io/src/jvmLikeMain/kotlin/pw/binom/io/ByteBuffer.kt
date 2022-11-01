@@ -18,6 +18,10 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
         fun wrap(native: JByteBuffer) = ByteBuffer(native, null)
         actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(JByteBuffer.wrap(array), null)
     }
+
+    init {
+        ByteBufferMetric.incCount()
+    }
 //    init {
 //        val stack = Thread.currentThread().stackTrace.joinToString { "${it.className}.${it.methodName}:${it.lineNumber} ->" }
 //        println("create ${rr++}   $stack")
@@ -82,6 +86,7 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
 
     override fun close() {
         checkClosed()
+        ByteBufferMetric.decCount()
         native = JByteBuffer.allocate(0)
         closed = true
         onClose?.invoke(this)

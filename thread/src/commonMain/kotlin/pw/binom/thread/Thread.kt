@@ -1,6 +1,23 @@
 package pw.binom.thread
 
+import pw.binom.BinomMetrics
+import pw.binom.metric.MutableGauge
 import kotlin.time.Duration
+
+internal object ThreadMetrics {
+    private val threadCount = MutableGauge("binom_thread_count", description = "Thread Count")
+    fun incThread() {
+        threadCount.inc()
+    }
+
+    fun decThread() {
+        threadCount.dec()
+    }
+
+    init {
+        BinomMetrics.reg(threadCount)
+    }
+}
 
 fun Thread(func: (Thread) -> Unit) = object : Thread() {
     override fun execute() {

@@ -14,6 +14,10 @@ abstract class AbstractKey(override var attachment: Any?) : Selector.Key, Compar
     private var _listensFlag = 0
     private var _closed = false
 
+    init {
+        NetworkMetrics.incSelectorKey()
+    }
+
     override val closed: Boolean
         get() = _closed
 
@@ -46,6 +50,7 @@ abstract class AbstractKey(override var attachment: Any?) : Selector.Key, Compar
         if (_closed) {
             return
         }
+        NetworkMetrics.decSelectorKey()
         _closed = true
 //            runCatching { attachmentReference?.close() }
         runCatching {

@@ -20,10 +20,12 @@ actual abstract class Thread(var _id: pthread_t, actual var name: String) {
     actual constructor() : this(name = genName())
 
     internal fun nativeExecute() {
+        ThreadMetrics.incThread()
         try {
             internalIsActive = true
             execute()
         } finally {
+            ThreadMetrics.decThread()
             internalIsActive = false
         }
     }

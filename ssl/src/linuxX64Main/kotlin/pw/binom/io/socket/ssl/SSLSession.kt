@@ -31,6 +31,7 @@ actual class SSLSession(
     private val self = StableRef.create(this)
 
     init {
+        SSLMetrics.incSSLSession()
         if (client) {
             SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, null)
             SSL_CTX_set_cert_verify_callback(ctx, sslServerCheck.reinterpret(), self.asCPointer())
@@ -279,6 +280,7 @@ actual class SSLSession(
         if (!closed.compareAndSet(expected = false, new = true)) {
             throw IllegalStateException("SSLSession already closed")
         }
+        SSLMetrics.decSSLSession()
         resource.dispose()
         self.dispose()
     }

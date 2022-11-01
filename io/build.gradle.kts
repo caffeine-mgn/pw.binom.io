@@ -47,6 +47,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib"))
+                api(project(":metric"))
             }
         }
         val nativeMain by creating {

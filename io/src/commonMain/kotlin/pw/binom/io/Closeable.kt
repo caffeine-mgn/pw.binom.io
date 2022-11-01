@@ -37,6 +37,36 @@ fun interface Closeable {
         }
 
         fun close(
+            closeable1: Closeable,
+            closeable2: Closeable,
+            closeable3: Closeable,
+            closeable4: Closeable,
+        ) {
+            var ex: RuntimeException? = null
+            ex = tryClose(ex, closeable1)
+            ex = tryClose(ex, closeable2)
+            ex = tryClose(ex, closeable3)
+            ex = tryClose(ex, closeable4)
+            ex?.doThrow()
+        }
+
+        fun close(
+            closeable1: Closeable,
+            closeable2: Closeable,
+            closeable3: Closeable,
+            closeable4: Closeable,
+            closeable5: Closeable,
+        ) {
+            var ex: RuntimeException? = null
+            ex = tryClose(ex, closeable1)
+            ex = tryClose(ex, closeable2)
+            ex = tryClose(ex, closeable3)
+            ex = tryClose(ex, closeable4)
+            ex = tryClose(ex, closeable5)
+            ex?.doThrow()
+        }
+
+        fun close(
             vararg closeable: Closeable
         ) {
             var ex: RuntimeException? = null

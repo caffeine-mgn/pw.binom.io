@@ -2,9 +2,15 @@ package pw.binom.charset
 
 import pw.binom.CharBuffer
 import pw.binom.io.ByteBuffer
+import pw.binom.io.ClosedException
 import pw.binom.io.UTF8
 
 class UTF8CharsetDecoder : CharsetDecoder {
+
+    init {
+        CharsetMetrics.incDecoder()
+    }
+
     override fun decode(input: ByteBuffer, output: CharBuffer): CharsetTransformResult {
         val inputState = input.position to input.limit
         val outputState = output.position to output.limit
@@ -29,7 +35,13 @@ class UTF8CharsetDecoder : CharsetDecoder {
         }
     }
 
+    private var closed = false
+
     override fun close() {
-        // Do nothing
+        if (closed) {
+            throw ClosedException()
+        }
+        closed = true
+        CharsetMetrics.decDecoder()
     }
 }

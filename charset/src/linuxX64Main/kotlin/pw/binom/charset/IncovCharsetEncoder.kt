@@ -11,9 +11,19 @@ class IncovCharsetEncoder(
     toCharset = name,
     onClose = onClose
 ) {
+
+    init {
+        CharsetMetrics.incEncoder()
+    }
+
     override fun encode(input: CharBuffer, output: ByteBuffer): CharsetTransformResult =
         iconv(
             input,
             output
         )
+
+    override fun close() {
+        super.close()
+        CharsetMetrics.decEncoder()
+    }
 }

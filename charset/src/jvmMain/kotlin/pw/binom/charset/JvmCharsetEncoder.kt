@@ -2,8 +2,13 @@ package pw.binom.charset
 
 import pw.binom.CharBuffer
 import pw.binom.io.ByteBuffer
+import pw.binom.io.ClosedException
 
 class JvmCharsetEncoder(val native: java.nio.charset.CharsetEncoder) : CharsetEncoder {
+
+    init {
+        CharsetMetrics.incEncoder()
+    }
 
     override fun encode(input: CharBuffer, output: ByteBuffer): CharsetTransformResult {
         val r = native.encode(input.native, output.native, true)
@@ -14,7 +19,16 @@ class JvmCharsetEncoder(val native: java.nio.charset.CharsetEncoder) : CharsetEn
         }
     }
 
+    private var closed = false
+
     override fun close() {
-        // Do nothing
+        if (closed) {
+            throw ClosedException()
+        }
+        try {
+            CharsetMetrics.decEncoder()
+        } finally {
+            closed = true
+        }
     }
 }

@@ -1,3 +1,5 @@
+import pw.binom.publish.dependsOn
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -14,17 +16,29 @@ kotlin {
     }
     jvm()
     linuxX64()
-    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp()
-    }
-    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64()
-    }
+    linuxArm64()
+    linuxArm32Hfp()
+    linuxMips32()
+    linuxMipsel32()
     mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
+    mingwX86()
     macosX64()
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm32()
+    iosArm64()
+    iosSimulatorArm64()
+    watchosX64()
+    watchosX86()
+    watchosArm32()
+    watchosArm64()
+    watchosSimulatorArm64()
+    androidNativeX64()
+    androidNativeX86()
+    androidNativeArm32()
+    androidNativeArm64()
+    wasm32()
     js("js", BOTH) {
         browser {
             testTask {
@@ -43,36 +57,19 @@ kotlin {
         }
         val commonRunnableMain by creating {
             dependsOn(commonMain)
-            dependencies {
-            }
         }
 
         val linuxX64Main by getting {
             dependsOn(commonRunnableMain)
         }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(commonRunnableMain)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(commonRunnableMain)
-            }
-        }
 
-        val mingwX64Main by getting {
-            dependsOn(commonRunnableMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonRunnableMain)
-            }
-        }
+        dependsOn("linux*Main", commonRunnableMain)
+        dependsOn("mingw*Main", commonRunnableMain)
+        dependsOn("watchos*Main", commonRunnableMain)
+        dependsOn("macos*Main", commonRunnableMain)
+        dependsOn("ios*Main", commonRunnableMain)
+        dependsOn("androidNative*Main", commonRunnableMain)
 
-        val macosX64Main by getting {
-            dependsOn(commonRunnableMain)
-        }
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -84,9 +81,9 @@ kotlin {
         }
         if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
             val androidMain by getting {
-                dependsOn(jvmMain)
             }
         }
+        dependsOn("androidMain", jvmMain)
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {

@@ -15,6 +15,10 @@ actual open class ByteBuffer(
         actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(array, null)
     }
 
+    init {
+        ByteBufferMetric.incCount()
+    }
+
     //    private val native = createNativeByteBuffer(capacity)!!
     override val capacity: Int
         get() = data.size
@@ -144,6 +148,7 @@ actual open class ByteBuffer(
 
     override fun close() {
         checkClosed()
+        ByteBufferMetric.decCount()
 //        closed = true
         onClose?.invoke(this)
     }

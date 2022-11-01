@@ -8,6 +8,7 @@ import platform.iconv.iconv_open
 import platform.posix.*
 import pw.binom.io.Buffer
 import pw.binom.io.Closeable
+import pw.binom.io.ClosedException
 
 /**
  * Abstract Charset convertor. Uses Iconv native library
@@ -53,15 +54,25 @@ abstract class AbstractIconv(
 
     private val resource = Resource(fromCharset, toCharset)
 
-    internal fun reset() {
+    internal open fun reset() {
+        closed = false
     }
 
     internal fun free() {
         resource.dispose()
     }
 
+    private var closed = false
+
     override fun close() {
-        onClose?.invoke(this)
+        if (closed) {
+            throw ClosedException()
+        }
+        try {
+            onClose?.invoke(this)
+        } finally {
+            closed = true
+        }
     }
 
     protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
