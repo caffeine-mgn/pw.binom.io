@@ -15,11 +15,11 @@ internal object CharsetMetrics {
     }
 
     fun incDecoder() {
-        encoderCount.inc()
+        decoderCount.inc()
     }
 
     fun decDecoder() {
-        encoderCount.dec()
+        decoderCount.dec()
     }
 
     init {
