@@ -5,7 +5,7 @@ import kotlin.reflect.KProperty
 
 class LoggerPropertyDelegatorProvider : PropertyDelegateProvider<Any, LoggerDelegator> {
     override fun provideDelegate(thisRef: Any, property: KProperty<*>): LoggerDelegator {
-        val name = this::class.simpleName ?: return LoggerDelegator(Logger.global)
+        val name = thisRef::class.simpleName ?: return LoggerDelegator(Logger.global)
         return LoggerDelegator(Logger.getLogger(name))
     }
 }

@@ -4,6 +4,9 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.async.pool.PooledAsyncConnection
+import pw.binom.pool.GenericObjectPool
+import pw.binom.pool.ObjectFactory
+import pw.binom.pool.ObjectPool
 import kotlin.coroutines.*
 
 class TransactionContext {
@@ -37,15 +40,15 @@ class TransactionContextElement(val ctx: TransactionContext) : CoroutineContext.
             element: TransactionContextElement?,
             func: suspend (TransactionContextElement, TransactionContext) -> T
         ): T {
-            val ctx = TransactionContext()
-            val newElement = TransactionContextElement(ctx)
-            element?.connections?.forEach {
-                if (it.key !== connectionPool) {
-                    newElement.connections[it.key] = it.value
+            val ctx = TransactionContext() // New ctx
+            val newElement = TransactionContextElement(ctx) // New coroutine context
+            element?.connections?.forEach { (pool, ctx) -> // copy old contexts from other pools
+                if (pool !== connectionPool) {
+                    newElement.connections[pool] = ctx
                 }
             }
 
-            newElement.connections[connectionPool] = ctx
+            newElement.connections[connectionPool] = ctx // set connect of current new context
             return func(newElement, ctx)
         }
     }
@@ -59,7 +62,44 @@ private suspend fun getCurrentTransactionContextOrNull(): TransactionContextElem
 private suspend fun getCurrentTransactionContext() = getCurrentTransactionContextOrNull()
     ?: throw IllegalStateException("This function should calling inside re,su or new functions")
 
+interface ConnectionCreator {
+    val isConnected: Boolean
+    suspend fun getConnect(): PooledAsyncConnection
+}
+
+private class ConnectionCreatorImpl(val connectionPool: AsyncConnectionPool) : ConnectionCreator {
+    private var connection: PooledAsyncConnection? = null
+
+    class Factory(val connectionPool: AsyncConnectionPool) : ObjectFactory<ConnectionCreatorImpl> {
+        override fun allocate(pool: ObjectPool<ConnectionCreatorImpl>): ConnectionCreatorImpl =
+            ConnectionCreatorImpl(connectionPool)
+
+        override fun deallocate(value: ConnectionCreatorImpl, pool: ObjectPool<ConnectionCreatorImpl>) {
+            // Do nothing
+        }
+
+        override fun reset(value: ConnectionCreatorImpl, pool: ObjectPool<ConnectionCreatorImpl>) {
+            super.reset(value, pool)
+            value.connection = null
+        }
+    }
+
+    override val isConnected: Boolean
+        get() = connection != null
+
+    override suspend fun getConnect(): PooledAsyncConnection {
+        var connection = connection
+        if (connection == null) {
+            connection = connectionPool.getConnection()
+            this.connection = connection
+            return connection
+        }
+        return connection
+    }
+}
+
 class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : TransactionManager<PooledAsyncConnection> {
+//    private val pool = GenericObjectPool(ConnectionCreatorImpl.Factory(connectionPool))
     override suspend fun <T> re(function: suspend (PooledAsyncConnection) -> T): T {
         val txContext = getCurrentTransactionContextOrNull()
         val context = txContext?.connections?.get(connectionPool)

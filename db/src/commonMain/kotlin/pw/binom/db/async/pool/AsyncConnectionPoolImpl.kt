@@ -138,8 +138,10 @@ class AsyncConnectionPoolImpl constructor(
         }
     }
 
+    override suspend fun getConnection(): PooledAsyncConnection = getConnectionAnyWay()
+
     override suspend fun <T> borrow(func: suspend PooledAsyncConnection.() -> T): T {
-        val out = getConnectionAnyWay().use {
+        val out = getConnection().use {
             func(it)
         }
         return out
