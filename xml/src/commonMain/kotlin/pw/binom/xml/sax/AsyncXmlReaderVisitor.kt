@@ -225,10 +225,12 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                             visitors.pop()
                             break
                         }
+
                         else -> TODO()
                     }
                 }
             }
+
             TokenType.SLASH -> {
                 if (!lexer.nextSkipEmpty()) {
                     TODO()
@@ -239,24 +241,29 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                 subNode.end()
                 visitors.pop()
             }
+
             TokenType.TAG_END -> {
                 tagBodyBuilder = StringBuilder()
 //                subNode.end()
 //                visitors.pop()
-//                println("OK!")
                 // accept()
             }
+
             else -> throw XMLSAXException("Unknown text token \"${lexer.text}\" with type ${lexer.tokenType} on ${lexer.line + 1}:${lexer.column}")
         }
     }
 
-    private suspend fun accept() {
+    private suspend fun accept(): Boolean {
         var t = false
-        while (lexer.next()) {
+        if (!lexer.next()) {
+            return false
+        }
+        do {
             when (lexer.tokenType) {
                 TokenType.TAG_START -> {
                     readTagStart()
                 }
+
                 else -> {
                     if (lexer.text.isBlank() && !t) {
                         continue
@@ -268,13 +275,16 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
                     tagBodyBuilder!!.append(lexer.text)
                 }
             }
-        }
+        } while (lexer.next())
+        return true
     }
 
     suspend fun accept(visitor: AsyncXmlVisitor) {
         visitors.push(Record("ROOT", visitor))
         do {
-            accept()
+            if (!accept()) {
+                break
+            }
         } while (visitors.size > 1)
     }
 }

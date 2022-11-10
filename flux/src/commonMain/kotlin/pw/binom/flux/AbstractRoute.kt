@@ -7,7 +7,7 @@ import pw.binom.collections.useName
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
-import pw.binom.pool.DefaultPool
+import pw.binom.pool.GenericObjectPool
 import pw.binom.pool.borrow
 
 abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
@@ -63,7 +63,7 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
         forwardHandler = handler
     }
 
-    private val requestWrapperPool = DefaultPool<FluxHttpRequestImpl>(wrapperPoolCapacity) { FluxHttpRequestImpl() }
+    private val requestWrapperPool = GenericObjectPool(factory = FluxHttpRequestImpl.FACTORY)
 
     override suspend fun execute(action: HttpRequest) {
         val forward = forwardHandler

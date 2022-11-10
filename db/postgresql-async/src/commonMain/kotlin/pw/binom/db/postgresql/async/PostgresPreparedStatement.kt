@@ -204,10 +204,10 @@ class PostgresPreparedStatement(
         if (!parsed) {
             val msg = connection.readDesponse()
             if (msg is ErrorMessage) {
-                check(connection.readDesponse() is ReadyForQueryMessage)
+                checkType<ReadyForQueryMessage>(connection.readDesponse())
                 throw PostgresqlException("$msg. Query: $realQuery")
             }
-            check(msg is ParseCompleteMessage) { "Invalid Message: $msg (${msg::class})" }
+            checkType<ParseCompleteMessage>(msg)
         }
         val msg = connection.readDesponse()
         when (msg) {
@@ -222,6 +222,7 @@ class PostgresPreparedStatement(
                 }
                 throw PostgresqlException("$msg. Query: $realQuery")
             }
+
             is BindCompleteMessage -> {
                 // ok
             }
@@ -240,11 +241,13 @@ class PostgresPreparedStatement(
                         rowsAffected = rowsAffected
                     )
                 }
+
                 is CommandCompleteMessage -> {
                     status = msg2.statusMessage
                     rowsAffected += msg2.rowsAffected
                     continue@LOOP
                 }
+
                 is RowDescriptionMessage -> {
                     connection.busy = true
                     if (!connection.reader.data.isClosed) {
@@ -260,17 +263,21 @@ class PostgresPreparedStatement(
                     msg3.portalName = id
                     return msg3
                 }
+
                 is ErrorMessage -> {
                     check(connection.readDesponse() is ReadyForQueryMessage)
                     deleteSelf(isPortal = true)
                     throw PostgresqlException("${msg2.fields['M']}. Query: $realQuery")
                 }
+
                 is NoticeMessage -> {
                     continue@LOOP
                 }
+
                 is NoDataMessage -> {
                     continue@LOOP
                 }
+
                 else -> throw SQLException("Unexpected Message. Response Type: [${msg2::class}], Message: [$msg2]")
             }
         }

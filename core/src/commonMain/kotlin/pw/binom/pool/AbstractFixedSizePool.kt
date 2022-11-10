@@ -32,9 +32,14 @@ abstract class AbstractFixedSizePool<T : Any>(capacity: Int) : ObjectPool<T>, Cl
         // Do nothing
     }
 
+    protected open fun reset(value: T) {
+        // Do nothing
+    }
+
     override fun recycle(value: T) {
         lock.synchronize {
             if (size < pool.size) {
+                reset(value)
                 pool[size++] = value
             } else {
                 free(value)

@@ -3,3 +3,7 @@ build
 .idea
 .fleet
 .gradle/**
+*.o
+buildSrc/.gradle/**
+/kotlin-js-store/**
+/desktop.files.json

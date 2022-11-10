@@ -22,8 +22,8 @@ class IconvCharsetDecoder(name: String, onClose: ((AbstractIconv) -> Unit)?) : C
             output
         )
 
-    override fun close() {
-        super.close()
+    override fun free() {
+        super.free()
         CharsetMetrics.decDecoder()
     }
 }

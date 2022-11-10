@@ -70,14 +70,15 @@ abstract class AbstractAsyncBufferedAsciiWriter(
 
     override suspend fun flush() {
         checkClosed()
-        if (buffer.remaining != buffer.capacity) {
+        if (buffer.position > 0) {
             buffer.flip()
-            while (buffer.remaining > 0) {
-                val v = output.write(buffer)
-                if (v <= 0) {
-                    throw IOException("Can't write data to output, v=$v")
-                }
-            }
+            output.writeFully(buffer)
+//            while (buffer.remaining > 0) {
+//                val v = output.write(buffer)
+//                if (v <= 0) {
+//                    throw IOException("Can't write data to output, v=$v")
+//                }
+//            }
             buffer.clear()
             output.flush()
         }
@@ -101,6 +102,7 @@ class AsyncBufferedAsciiWriter private constructor(
     closeParent: Boolean = true
 ) :
     AbstractAsyncBufferedAsciiWriter(closeParent = closeParent) {
+    override fun toString(): String = "AsyncBufferedAsciiWriter(closeBuffer=$closeBuffer, output=$output)"
 
     constructor(output: AsyncOutput, pool: ObjectPool<ByteBuffer>, closeParent: Boolean = true) : this(
         output = output,

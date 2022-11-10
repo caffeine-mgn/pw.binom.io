@@ -10,12 +10,28 @@ import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.StubHttpResponse
 import pw.binom.net.Path
 import pw.binom.net.Query
-import pw.binom.pool.DefaultPool
+import pw.binom.pool.ObjectFactory
+import pw.binom.pool.ObjectPool
 
 class CachingHttpRequest(
-    val responsePool: DefaultPool<CachingHttpResponse>,
+    val responsePool: ObjectPool<CachingHttpResponse>,
     val onClose: (CachingHttpRequest) -> Unit
 ) : HttpRequest {
+    companion object {
+        fun factory(responsePool: ObjectPool<CachingHttpResponse>) = object : ObjectFactory<CachingHttpRequest> {
+            override fun allocate(pool: ObjectPool<CachingHttpRequest>): CachingHttpRequest {
+                WebMetrics.cachingHttpRequest.inc()
+                return CachingHttpRequest(responsePool = responsePool) {
+                    pool.recycle(it)
+                }
+            }
+
+            override fun deallocate(value: CachingHttpRequest, pool: ObjectPool<CachingHttpRequest>) {
+                WebMetrics.cachingHttpRequest.dec()
+            }
+        }
+    }
+
     var original: HttpRequest? = null
         private set
 

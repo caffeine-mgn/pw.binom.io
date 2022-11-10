@@ -22,6 +22,9 @@ val KSerializer<out Any>.idColumn: String?
 fun KSerializer<out Any>.getIdColumn() =
     idColumn ?: throw IllegalArgumentException("Can't find Id Column in ${descriptor.serialName}")
 
+inline fun <reified T : Any> SerialDescriptor.getElementAnnotation() =
+    annotations.find { it is T }?.let { it as T }
+
 inline fun <reified T : Any> SerialDescriptor.getElementAnnotation(index: Int) =
     getElementAnnotations(index).find { it is T }?.let { it as T }
 
@@ -33,3 +36,6 @@ fun SerialDescriptor.isUseQuotes(index: Int) =
 
 fun SerialDescriptor.isUseQuotes() =
     annotations.any { it is UseQuotes }
+
+fun SerialDescriptor.getTableName() =
+    getElementAnnotation<TableName>()?.tableName

@@ -37,6 +37,10 @@ class AsyncSSLChannel private constructor(
     private val closeParent: Boolean,
 ) : AsyncChannel {
 
+    init {
+        SSLMetrics.asyncSSLChannelCountMetric.inc()
+    }
+
     constructor(
         session: SSLSession,
         channel: AsyncChannel,
@@ -115,12 +119,8 @@ class AsyncSSLChannel private constructor(
         session.writeNet(buffer)
     }
 
-    init {
-        println("AsyncSSLChannel: New")
-    }
-
     override suspend fun asyncClose() {
-        println("AsyncSSLChannel: Close")
+        SSLMetrics.asyncSSLChannelCountMetric.dec()
         checkClosed()
         closed = false
         try {

@@ -44,14 +44,16 @@ sealed class QueryResponse {
                     current = msg
                     true
                 }
+
                 is CommandCompleteMessage -> {
                     current = null
                     ended = true
                     connection.busy = false
-                    check(connection.readDesponse() is ReadyForQueryMessage)
+                    checkType<ReadyForQueryMessage>(connection.readDesponse())
                     closeCursor()
                     false
                 }
+
                 else -> throw IOException("Unknown response type: \"$msg\" (${msg::class})")
             }
         }
@@ -72,8 +74,10 @@ sealed class QueryResponse {
                     }
                 )
                 connection.sendOnly(SyncMessage)
-                check(connection.readDesponse() is CloseCompleteMessage)
-                check(connection.readDesponse() is ReadyForQueryMessage)
+                checkType<CloseCompleteMessage>(connection.readDesponse())
+                checkType<ReadyForQueryMessage>(connection.readDesponse())
+//                check(connection.readDesponse() is CloseCompleteMessage)
+//                check(connection.readDesponse() is ReadyForQueryMessage)
             }
         }
 
@@ -95,8 +99,9 @@ sealed class QueryResponse {
         }
 
         private fun checkClosed() {
-            if (closed)
+            if (closed) {
                 throw IllegalStateException("ResultSet already closed")
+            }
         }
     }
 }

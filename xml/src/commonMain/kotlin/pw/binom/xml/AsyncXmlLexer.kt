@@ -237,8 +237,9 @@ val Char.isEmpty
 
 suspend fun AsyncXmlLexer.nextSkipEmpty(): Boolean {
     while (next()) {
-        if (tokenType != TokenType.EMPTY)
+        if (tokenType != TokenType.EMPTY) {
             return true
+        }
     }
     return false
 }

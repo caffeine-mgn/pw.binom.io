@@ -13,8 +13,9 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     RandomAccess {
 
     init {
-        if (AccessType.CREATE !in mode && !file.isFile)
+        if (AccessType.CREATE !in mode && !file.isFile) {
             throw FileNotFoundException(file.path)
+        }
     }
 
     internal val handler = fopen(
@@ -23,15 +24,18 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
             val read = AccessType.READ in mode
             val write = AccessType.WRITE in mode
             val append = AccessType.APPEND in mode
-            if (!read && !write)
+            if (!read && !write) {
                 throw IllegalArgumentException("Invalid mode")
+            }
             when {
                 write && !append -> {
                     if (read) "wb+" else "wb"
                 }
+
                 write && append -> {
                     if (read) "cb+" else "cb"
                 }
+
                 read -> "rb"
                 else -> throw IllegalArgumentException("Invalid mode")
             }
@@ -41,10 +45,12 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     actual fun skip(length: Long): Long {
         checkClosed()
         memScoped { }
-        if (length == 0L)
+        if (length == 0L) {
             return 0L
-        if (feof(handler) != 0)
+        }
+        if (feof(handler) != 0) {
             return 0L
+        }
         val endOfFile = size
         val position = minOf(endOfFile, this.position + length)
         this.position = position
@@ -53,8 +59,12 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
 
     override fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (feof(handler) != 0)
+        if (dest.remaining <= 0) {
             return 0
+        }
+        if (feof(handler) != 0) {
+            return 0
+        }
 
         val r = dest.ref { destPtr, destRemaining ->
             fread(destPtr, 1.convert(), destRemaining.convert(), handler).convert<Int>()
@@ -78,15 +88,17 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     }
 
     override fun close() {
-        checkClosed()
+        if (!closed.compareAndSet(false, true)) {
+            throw ClosedException()
+        }
         fclose(handler)
-        closed.setValue(true)
     }
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
-        if (feof(handler) != 0)
+        if (feof(handler) != 0) {
             return 0
+        }
 
         val r = data.ref { dataPtr, dataRemaining ->
             fwrite(dataPtr, 1.convert(), dataRemaining.convert(), handler).convert<Int>()

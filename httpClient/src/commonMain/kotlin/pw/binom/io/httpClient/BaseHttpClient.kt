@@ -27,6 +27,10 @@ class BaseHttpClient(
     websocketMessagePoolSize: Int = 16,
     var connectionFactory: ConnectionFactory = ConnectionFactory.DEFAULT
 ) : HttpClient {
+    init {
+        HttpMetrics.baseHttpClientCountMetric.inc()
+    }
+
     internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
     private val sslContext: SSLContext by lazy {
         SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
@@ -110,6 +114,7 @@ class BaseHttpClient(
     }
 
     override fun close() {
+        HttpMetrics.baseHttpClientCountMetric.dec()
 //        deadlineTimer.close()
         GlobalScope.launch { connections.forEach { it.value.forEach { it.channel.asyncClose() } } }
         connections.clear()

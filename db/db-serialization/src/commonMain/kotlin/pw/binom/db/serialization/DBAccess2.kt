@@ -81,7 +81,7 @@ private fun generateColumnNames(
 */
 
 internal fun getTableName(descriptor: SerialDescriptor): String {
-    val useQuotes = descriptor.annotations.any { it is UseQuotes }
+    val useQuotes = descriptor.isUseQuotes()
     descriptor.annotations.forEach {
         if (it is TableName) {
             return if (useQuotes) {
@@ -102,6 +102,102 @@ fun QueryContext.tableName(descriptor: SerialDescriptor): String = getTableName(
 
 @OptIn(InternalSerializationApi::class)
 inline fun <reified T : Any> QueryContext.tableName(): String = tableName(T::class.serializer().descriptor)
+
+internal fun internalGenerateSelectColumns(
+    tableName: String,
+    descriptor: SerialDescriptor,
+    prefix: String,
+): String {
+    val sb = StringBuilder()
+    internalGenerateSelectColumns(
+        tableName = tableName,
+        descriptor = descriptor,
+        prefix = prefix,
+        prefix2 = "$tableName.",
+        useQuotes = false,
+        output = sb
+    )
+    return sb.toString()
+}
+
+fun QueryContext.columns(
+    descriptor: SerialDescriptor,
+    tableName: String = tableName(descriptor),
+    prefix: String = descriptor.getTableName() ?: descriptor.serialName
+) = internalGenerateSelectColumns(
+    tableName = tableName,
+    descriptor = descriptor,
+    prefix = prefix,
+)
+
+fun QueryContext.columns(
+    serializer: KSerializer<out Any>,
+    tableName: String = tableName(serializer.descriptor),
+    prefix: String = serializer.descriptor.getTableName() ?: serializer.descriptor.serialName
+) = columns(
+    descriptor = serializer.descriptor,
+    tableName = tableName,
+    prefix = prefix,
+)
+
+@OptIn(InternalSerializationApi::class)
+inline fun <reified T : Any> QueryContext.columns(
+    tableName: String = tableName(T::class.serializer().descriptor),
+    prefix: String = T::class.serializer().descriptor.getTableName() ?: T::class.serializer().descriptor.serialName
+) = columns(
+    serializer = T::class.serializer(),
+    tableName = tableName,
+    prefix = prefix,
+)
+
+private fun internalGenerateSelectColumns(
+    tableName: String,
+    descriptor: SerialDescriptor,
+    prefix: String,
+    prefix2: String,
+    useQuotes: Boolean,
+    output: StringBuilder
+) {
+    val tableNameUseQuotes = useQuotes || descriptor.isUseQuotes()
+    repeat(descriptor.elementsCount) { index ->
+        val elementName = descriptor.getElementName(index)
+        val isEmbedded = descriptor.getElementAnnotation<Embedded>(index) != null
+        val isUseQuotes = useQuotes || descriptor.isUseQuotes(index)
+        if (isEmbedded) {
+            val embeddedSpliter = descriptor.getElementAnnotation<EmbeddedSplitter>(index)?.splitter ?: "_"
+            internalGenerateSelectColumns(
+                tableName = tableName,
+                descriptor = descriptor.getElementDescriptor(index),
+                prefix = "$prefix$elementName$embeddedSpliter",
+                useQuotes = useQuotes || isUseQuotes,
+                output = output,
+                prefix2 = "$prefix2$elementName$embeddedSpliter",
+            )
+            return@repeat
+        }
+        if (output.isNotEmpty()) {
+            output.append(",")
+        }
+
+        output.append(prefix2)
+        if (isUseQuotes) {
+            output.append("\"")
+        }
+        output.append(elementName)
+        if (isUseQuotes) {
+            output.append("\"")
+        }
+        output.append(" as ")
+
+        if (isUseQuotes) {
+            output.append("\"")
+        }
+        output.append(prefix).append(elementName)
+        if (isUseQuotes) {
+            output.append("\"")
+        }
+    }
+}
 
 @OptIn(InternalSerializationApi::class)
 inline fun <reified T : Any> QueryContext.param(value: T?) = param(

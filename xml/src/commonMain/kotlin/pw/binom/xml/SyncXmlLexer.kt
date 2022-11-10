@@ -232,8 +232,9 @@ class SyncXmlLexer(val reader: Reader) {
 
 fun SyncXmlLexer.nextSkipEmpty(): Boolean {
     while (next()) {
-        if (tokenType != TokenType.EMPTY)
+        if (tokenType != TokenType.EMPTY) {
             return true
+        }
     }
     return false
 }

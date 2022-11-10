@@ -10,6 +10,8 @@ import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.net.Path
 import pw.binom.net.Query
+import pw.binom.pool.ObjectFactory
+import pw.binom.pool.ObjectPool
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
@@ -17,6 +19,20 @@ internal object FluxHttpRequestImplKey : CoroutineContext.Key<FluxHttpRequestImp
 
 internal class FluxHttpRequestImpl : FluxHttpRequest, HttpRequest,
     AbstractCoroutineContextElement(FluxHttpRequestImplKey) {
+
+    companion object {
+        val FACTORY = object : ObjectFactory<FluxHttpRequestImpl> {
+            override fun allocate(pool: ObjectPool<FluxHttpRequestImpl>): FluxHttpRequestImpl {
+                WebMetrics.fluxHttpRequest.inc()
+                return FluxHttpRequestImpl()
+            }
+
+            override fun deallocate(value: FluxHttpRequestImpl, pool: ObjectPool<FluxHttpRequestImpl>) {
+                WebMetrics.fluxHttpRequest.dec()
+            }
+        }
+    }
+
     override val method: String
         get() = original!!.method
     override val headers: Headers

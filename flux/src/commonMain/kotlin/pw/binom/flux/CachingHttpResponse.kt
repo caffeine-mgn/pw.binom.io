@@ -8,8 +8,24 @@ import pw.binom.io.ByteArrayOutput
 import pw.binom.io.bufferedWriter
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.httpServer.HttpResponse
+import pw.binom.pool.ObjectFactory
+import pw.binom.pool.ObjectPool
 
 class CachingHttpResponse(val onClose: ((CachingHttpResponse) -> Unit)?) : HttpResponse {
+
+    companion object {
+        val FACTORY = object : ObjectFactory<CachingHttpResponse> {
+            override fun allocate(pool: ObjectPool<CachingHttpResponse>): CachingHttpResponse {
+                WebMetrics.cachingHttpResponse.inc()
+                return CachingHttpResponse { pool.recycle(it) }
+            }
+
+            override fun deallocate(value: CachingHttpResponse, pool: ObjectPool<CachingHttpResponse>) {
+                WebMetrics.cachingHttpResponse.dec()
+            }
+        }
+    }
+
     var original: HttpResponse? = null
         private set
     private var request: CachingHttpRequest? = null
@@ -65,6 +81,7 @@ class CachingHttpResponse(val onClose: ((CachingHttpResponse) -> Unit)?) : HttpR
             original!!.asyncClose()
         } finally {
             data.clear()
+            data.trimToSize()
         }
         original = null
         onClose?.invoke(this)

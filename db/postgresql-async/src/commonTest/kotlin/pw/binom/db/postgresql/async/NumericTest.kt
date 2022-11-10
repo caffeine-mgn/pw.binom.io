@@ -19,7 +19,10 @@ class NumericTest {
                 host = "localhost",
                 port = 5432,
             ),
-            charset = Charsets.UTF8, userName = "postgres", password = "postgres", dataBase = "sellsystem"
+            charset = Charsets.UTF8,
+            userName = "postgres",
+            password = "postgres",
+            dataBase = "sellsystem",
         )
         connection.prepareStatement("select birthday from buyers where id=279734").use { r ->
             r.executeQuery().use { b ->

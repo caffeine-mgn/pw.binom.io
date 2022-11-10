@@ -25,6 +25,10 @@ class DefaultHttpRequest constructor(
     private var closed = false
     override val headers = HashHeaders()
 
+    init {
+        HttpMetrics.defaultHttpRequestCountMetric.inc()
+    }
+
     private fun checkClosed() {
         if (closed) {
             throw IllegalStateException("HttpRequest already closed")
@@ -74,6 +78,7 @@ class DefaultHttpRequest constructor(
             when (encode.lowercase()) {
                 Encoding.CHUNKED -> {
                     closed = true
+                    HttpMetrics.defaultHttpRequestCountMetric.dec()
                     return RequestAsyncChunkedOutput(
                         URI = uri,
                         client = client,
@@ -81,12 +86,14 @@ class DefaultHttpRequest constructor(
                         channel = channel,
                     )
                 }
+
                 else -> throw IOException("Unknown Transfer Encoding \"$encode\"")
             }
         }
         val len = headers.contentLength
         if (len != null) {
             closed = true
+            HttpMetrics.defaultHttpRequestCountMetric.dec()
             return RequestAsyncContentLengthOutput(
                 URI = uri,
                 client = client,
@@ -105,7 +112,12 @@ class DefaultHttpRequest constructor(
             data.flush()
             return data.getResponse()
         } catch (e: Throwable) {
-            runCatching { data.asyncClose() }
+            try {
+                data.asyncClose()
+            } catch (ex: Throwable) {
+                ex.addSuppressed(e)
+                throw e
+            }
             throw e
         }
     }
@@ -144,6 +156,7 @@ class DefaultHttpRequest constructor(
         sendHeaders()
         channel.writer.flush()
         closed = true
+        HttpMetrics.defaultHttpRequestCountMetric.dec()
         val v = DefaultHttpResponse.read(
             uri = uri,
             client = client,
@@ -171,6 +184,7 @@ class DefaultHttpRequest constructor(
         if (respKey != responseKey) {
             throw InvalidSecurityKeyException()
         }
+        HttpMetrics.defaultHttpRequestCountMetric.dec()
         return client.webSocketConnectionPool.new(
             input = channel.reader,
             output = channel.writer,
@@ -191,6 +205,7 @@ class DefaultHttpRequest constructor(
         if (resp.responseCode != 101) {
             throw IOException("Invalid Response code: ${resp.responseCode}")
         }
+        HttpMetrics.defaultHttpRequestCountMetric.dec()
         return channel.channel
     }
 
@@ -198,7 +213,11 @@ class DefaultHttpRequest constructor(
         if (closed) {
             return
         }
-        channel.asyncClose()
-        closed = true
+        try {
+            channel.asyncClose()
+            closed = true
+        } finally {
+            HttpMetrics.defaultHttpRequestCountMetric.dec()
+        }
     }
 }

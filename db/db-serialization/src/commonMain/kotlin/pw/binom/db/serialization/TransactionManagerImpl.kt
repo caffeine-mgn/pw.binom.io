@@ -228,6 +228,39 @@ class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : Transact
         }
     }
 
+    override suspend fun <T> no(function: suspend (PooledAsyncConnection) -> T): T {
+        return connectionPool.borrow {
+            TransactionContextElement.create(connectionPool, getCurrentTransactionContextOrNull()) { element, ctx ->
+                ctx.connection = this
+                ctx.transactionStarted = false
+                try {
+                    val result = suspendCoroutine<T> { con ->
+                        val newContext = con.context.minusKey(TransactionContextElementKey) + element
+                        function.startCoroutine(
+                            this,
+                            object : Continuation<T> {
+                                override val context: CoroutineContext = newContext
+                                override fun resumeWith(result: Result<T>) {
+                                    con.resumeWith(result)
+                                }
+                            }
+                        )
+                    }
+                    ctx.executeSuccessActions()
+                    result
+                } catch (e: Throwable) {
+                    e.wrap {
+                        ctx.executeRollbackActions()
+                    }
+                    throw e
+                } finally {
+                    ctx.rollbackOnly = false
+                    ctx.transactionStarted = false
+                }
+            }
+        }
+    }
+
     override suspend fun onSuccess(action: suspend () -> Unit) {
         val txContext = getCurrentTransactionContext()
         txContext.ctx.successFullActions += action

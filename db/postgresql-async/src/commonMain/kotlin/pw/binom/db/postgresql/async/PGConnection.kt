@@ -23,6 +23,7 @@ import pw.binom.writeInt
 import pw.binom.writeShort
 
 private var counter = 0
+
 class PGConnection private constructor(
     val connection: TcpConnection,
     charset: Charset,

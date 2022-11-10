@@ -3,25 +3,15 @@ package pw.binom.flux
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
-import pw.binom.pool.DefaultPool
+import pw.binom.pool.GenericObjectPool
 
 /**
  * Handler for wrap each request to [CachingHttpRequest] and [CachingHttpRequest]
  */
-open class CachingHandler(val forward: Handler, objectPoolSize: Int = 16) : Handler, Closeable {
-    private val cachingHttpResponsePool = DefaultPool2<CachingHttpResponse>(capacity = objectPoolSize) { pool ->
-        CachingHttpResponse { self -> pool.recycle(self) }
-    }
+open class CachingHandler(val forward: Handler) : Handler, Closeable {
+    private val cachingHttpResponsePool = GenericObjectPool(factory = CachingHttpResponse.FACTORY)
     private val cachingHttpRequestPool =
-        DefaultPool<CachingHttpRequest>(capacity = objectPoolSize) { pool ->
-            CachingHttpRequest(
-                responsePool = cachingHttpResponsePool,
-                onClose = { pool.recycle(it) }
-            )
-        }
-
-    private class DefaultPool2<T : Any>(capacity: Int, new: (DefaultPool<T>) -> T) :
-        DefaultPool<T>(capacity = capacity, new = new)
+        GenericObjectPool(factory = CachingHttpRequest.factory(cachingHttpResponsePool))
 
     override suspend fun request(req: HttpRequest) {
         val cachingRequest = cachingHttpRequestPool.borrow()

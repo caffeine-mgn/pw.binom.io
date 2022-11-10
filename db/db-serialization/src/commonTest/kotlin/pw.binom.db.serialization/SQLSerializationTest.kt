@@ -45,6 +45,30 @@ class SQLSerializationTest {
     data class EntityWithEnumCode2(val enum: MyEnumCode2)
 
     @Test
+    fun internalGenerateSelectColumnsTest() {
+        val columns = internalGenerateSelectColumns(
+            tableName = "a",
+            descriptor = User.serializer().descriptor,
+            prefix = "a_",
+        )
+        println("columns: $columns")
+    }
+
+    @Serializable
+    class User(val id: Long, @Embedded val auth: Auth)
+
+    @Serializable
+    class Exp(val time: Int)
+
+    @Serializable
+    class Auth(
+        val name: String,
+        val password: String,
+        @Embedded
+        val exp: Exp,
+    )
+
+    @Test
     fun enumOrderTest() {
         val output = defaultMutableMap<String, Any?>()
         SQLSerialization.toMap(

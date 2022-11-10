@@ -20,7 +20,7 @@ fun MutableMap<String, Any?>.toMutableDataBinder() = object : DataBinder {
     override fun get(key: String): Any? = this@toMutableDataBinder[key]
 
     override fun contains(key: String): Boolean = this@toMutableDataBinder.containsKey(key)
-    override fun set(key: String, value: Any?) {
+    override fun set(key: String, value: Any?, useQuotes: Boolean) {
         this@toMutableDataBinder[key] = value
     }
 }

@@ -25,6 +25,7 @@ interface DBContext : DescriptorContext, AsyncCloseable {
      */
     suspend fun <T> new(function: suspend (DBAccess) -> T): T
     suspend fun <T> new2(function: suspend (DBAccess2) -> T): T
+    suspend fun <T> no(function: suspend (DBAccess2) -> T): T
 
     /**
      * Creates schema for [serializer]. For generation used method [generateSchema]

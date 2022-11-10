@@ -58,7 +58,7 @@ abstract class AbstractIconv(
         closed = false
     }
 
-    internal fun free() {
+    internal open fun free() {
         resource.dispose()
     }
 

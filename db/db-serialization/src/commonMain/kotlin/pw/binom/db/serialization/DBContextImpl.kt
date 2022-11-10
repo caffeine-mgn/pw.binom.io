@@ -46,6 +46,11 @@ internal class DBContextImpl(val pool: AsyncConnectionPool, val sql: SQLSerializ
         function(access)
     }
 
+    override suspend fun <T> no(function: suspend (DBAccess2) -> T) = tx.no {
+        val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule)
+        function(access)
+    }
+
     override suspend fun asyncClose() {
         pool.asyncClose()
     }

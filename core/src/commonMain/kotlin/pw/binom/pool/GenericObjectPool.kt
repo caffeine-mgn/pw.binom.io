@@ -151,6 +151,7 @@ class GenericObjectPool<T : Any>(
                 nextCapacity = maxOf(pool.size, nextCapacity + 1)
                 checkGrow()
             } else {
+                factory.reset(value, this)
                 pool[size++] = value
                 nextCapacity = size
             }

@@ -22,8 +22,8 @@ class IncovCharsetEncoder(
             output
         )
 
-    override fun close() {
-        super.close()
+    override fun free() {
+        super.free()
         CharsetMetrics.decEncoder()
     }
 }

@@ -19,6 +19,8 @@ class ByteArrayTest {
             value = Obj(byteArrayOf(10, 20, 30)),
             name = "",
             output = result.toMutableDataBinder(),
+            useQuotes = false,
+            excludeGenerated = false,
         )
         assertEquals(1, result.size)
         val data = result["data"] as ByteArray

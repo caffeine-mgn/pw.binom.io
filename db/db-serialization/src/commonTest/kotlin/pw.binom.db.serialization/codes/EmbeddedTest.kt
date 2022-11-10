@@ -47,6 +47,8 @@ class EmbeddedTest {
             ),
             name = "",
             output = result.toMutableDataBinder(),
+            useQuotes = false,
+            excludeGenerated = false,
         )
         assertNull(result["n_b"])
         assertEquals("a", result["a"])

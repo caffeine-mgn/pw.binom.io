@@ -37,6 +37,8 @@ class EnumTest {
             value = EnumByName.A,
             name = "enum",
             output = result.toMutableDataBinder(),
+            useQuotes = false,
+            excludeGenerated = false,
         )
         assertEquals("A", result["enum"])
         assertEquals(1, result.size)
@@ -50,6 +52,8 @@ class EnumTest {
             value = EnumByOrder.A,
             name = "enum",
             output = result.toMutableDataBinder(),
+            useQuotes = false,
+            excludeGenerated = false,
         )
         assertEquals(0, result["enum"])
         assertEquals(1, result.size)
@@ -63,6 +67,8 @@ class EnumTest {
             value = EnumByCodes.A,
             name = "enum",
             output = result.toMutableDataBinder(),
+            useQuotes = false,
+            excludeGenerated = false,
         )
         assertEquals(10, result["enum"])
         assertEquals(1, result.size)
