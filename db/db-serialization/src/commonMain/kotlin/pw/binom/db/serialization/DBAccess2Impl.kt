@@ -12,6 +12,9 @@ import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.async.pool.PooledAsyncConnection
 import pw.binom.io.use
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 private class SingleValueDateContainer : DateContainer {
     var value: Any? = null
@@ -99,6 +102,7 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
     }
 }
 
+@OptIn(ExperimentalTime::class)
 class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: SerializersModule) : DBAccess2 {
 
     override suspend fun <T : Any> insert(k: KSerializer<T>, value: T, excludeGenerated: Boolean) {
@@ -123,15 +127,18 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
                 params[key] = useQuotes to value
             }
         }
-        DefaultSQLSerializePool.encode(
-            serializer = k,
-            value = value,
-            name = "",
-            output = output,
-            serializersModule = serializersModule,
-            useQuotes = k.descriptor.isUseQuotes(),
-            excludeGenerated = excludeGenerated,
-        )
+        val encodeTime = measureTime {
+            DefaultSQLSerializePool.encode(
+                serializer = k,
+                value = value,
+                name = "",
+                output = output,
+                serializersModule = serializersModule,
+                useQuotes = k.descriptor.isUseQuotes(),
+                excludeGenerated = excludeGenerated,
+            )
+        }
+        SerializationMetrics.encodeAvrTime.put(encodeTime)
         val sb = StringBuilder()
         sb.append("insert into ")
             .append(getTableName(k.descriptor))
@@ -209,13 +216,16 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
         return flow {
             try {
                 while (result.next()) {
-                    val obj = DefaultSQLSerializePool.decode(
-                        serializer = k,
-                        name = "",
-                        input = r,
-                        serializersModule = serializersModule,
-                    )
-                    emit(obj)
+                    val obj = measureTimedValue {
+                        DefaultSQLSerializePool.decode(
+                            serializer = k,
+                            name = "",
+                            input = r,
+                            serializersModule = serializersModule,
+                        )
+                    }
+                    SerializationMetrics.decodeAvrTime.put(obj.duration)
+                    emit(obj.value)
                 }
             } finally {
                 result.asyncClose()

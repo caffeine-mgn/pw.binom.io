@@ -4,7 +4,6 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.async.pool.PooledAsyncConnection
-import pw.binom.pool.GenericObjectPool
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 import kotlin.coroutines.*
@@ -99,7 +98,7 @@ private class ConnectionCreatorImpl(val connectionPool: AsyncConnectionPool) : C
 }
 
 class TransactionManagerImpl(val connectionPool: AsyncConnectionPool) : TransactionManager<PooledAsyncConnection> {
-//    private val pool = GenericObjectPool(ConnectionCreatorImpl.Factory(connectionPool))
+    //    private val pool = GenericObjectPool(ConnectionCreatorImpl.Factory(connectionPool))
     override suspend fun <T> re(function: suspend (PooledAsyncConnection) -> T): T {
         val txContext = getCurrentTransactionContextOrNull()
         val context = txContext?.connections?.get(connectionPool)
