@@ -8,7 +8,7 @@ import kotlin.test.Test
 
 class NetworkCoroutineDispatcherTest {
     @Test
-    fun clientTest() = runTest {
+    fun clientTest() = runTest(dispatchTimeoutMs = 10_000) {
         val nd = NetworkCoroutineDispatcherImpl()
         println("Dispatcher: ${getDispatcher()}")
         val client = nd.tcpConnect(NetworkAddress.Immutable("ya.ru", 443))

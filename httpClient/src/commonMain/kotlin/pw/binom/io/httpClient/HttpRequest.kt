@@ -17,6 +17,10 @@ interface HttpRequest : AsyncCloseable {
      * Closes this [DefaultHttpRequest] and delegate control to returned [AsyncHttpRequestOutput].
      */
     suspend fun writeData(): AsyncHttpRequestOutput
+    suspend fun writeData(data: ByteBuffer) = writeData {
+        it.writeFully(data)
+    }
+
     suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): HttpResponse
 
     /**

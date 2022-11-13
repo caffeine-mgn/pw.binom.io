@@ -9,14 +9,18 @@ import pw.binom.net.URL
 
 suspend fun get(url: URL): String {
     HttpClient.create().use {
+        println("TEST-HTTP-CLIENT:Connect to $url")
         val con = it.connect(
             method = "GET",
             uri = url,
         )
+        println("TEST-HTTP-CLIENT: Getting response...")
         val resp = con.getResponse()
+        println("TEST-HTTP-CLIENT:Response ${resp.responseCode}")
         if (resp.responseCode != 200) {
             throw Exception("Invalid response code: ${resp.responseCode}")
         }
+        println("HTTP-CLIENT:Reading response text...")
         return resp.readText().use { it.readText() }
     }
 }

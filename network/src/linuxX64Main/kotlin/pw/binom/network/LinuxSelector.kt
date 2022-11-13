@@ -10,6 +10,7 @@ import pw.binom.collections.defaultMutableSet
 import pw.binom.collections.useName
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
+import pw.binom.thread.Thread
 import kotlin.collections.set
 
 internal val STUB_BYTE = byteArrayOf(1)
@@ -100,13 +101,21 @@ class LinuxSelector : AbstractSelector() {
         return key
     }
 
+    private var selectThreadId = 0L
+
     override fun wakeup() {
+        if (selectThreadId == 0L || selectThreadId == Thread.currentThread.id) {
+            return
+        }
         STUB_BYTE.usePinned { p ->
             platform.posix.write(pipeWrite, p.addressOf(0), 1.convert()).convert<Int>()
         }
     }
 
     internal fun interruptWakeup() {
+        if (selectThreadId == 0L) {
+            return
+        }
         STUB_BYTE.usePinned { p ->
             read(pipeRead, p.addressOf(0), 1.convert())
         }
@@ -114,32 +123,37 @@ class LinuxSelector : AbstractSelector() {
 
     override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
         selectLock.synchronize {
-            if (keyForAdd.isNotEmpty()) {
-                idToKey.putAll(keyForAdd)
-                keyForAdd.forEach { (_, key) ->
-                    key.epollEvent.content {
-                        native.add(key.nativeSocket, it)
+            selectThreadId = Thread.currentThread.id
+            try {
+                if (keyForAdd.isNotEmpty()) {
+                    idToKey.putAll(keyForAdd)
+                    keyForAdd.forEach { (_, key) ->
+                        key.epollEvent.content {
+                            native.add(key.nativeSocket, it)
+                        }
                     }
+                    keyForAdd.clear()
                 }
-                keyForAdd.clear()
-            }
 
-            if (keyForRemove.isNotEmpty()) {
-                keyForRemove.forEach { (id, socket) ->
-                    native.delete(socket, failOnError = false)
-                    idToKey.remove(id)?.attachment = null
+                if (keyForRemove.isNotEmpty()) {
+                    keyForRemove.forEach { (id, socket) ->
+                        native.delete(socket, failOnError = false)
+                        idToKey.remove(id)?.attachment = null
+                    }
+                    keyForRemove.clear()
                 }
-                keyForRemove.clear()
+                val eventCount = epoll_wait(
+                    native.raw,
+                    selectedEvents.native.reinterpret(),
+                    minOf(selectedEvents.maxElements, 1000),
+                    timeout.toInt()
+                )
+                selectedEvents.eventCount = eventCount
+                selectedEvents.selector = this
+                return eventCount
+            } finally {
+                selectThreadId = 0L
             }
-            val eventCount = epoll_wait(
-                native.raw,
-                selectedEvents.native.reinterpret(),
-                minOf(selectedEvents.maxElements, 1000),
-                timeout.toInt()
-            )
-            selectedEvents.eventCount = eventCount
-            selectedEvents.selector = this
-            return eventCount
         }
     }
 
@@ -170,41 +184,47 @@ actual fun createSelector(): Selector = LinuxSelector()
 
 fun modeToString(mode: Int): String {
     val sb = StringBuilder()
+    fun append(text: String) {
+        if (sb.isNotEmpty()) {
+            sb.append(" ")
+        }
+        sb.append(text)
+    }
     if (mode and EPOLLIN != 0) {
-        sb.append("EPOLLIN ")
+        append("EPOLLIN")
     }
     if (mode and EPOLLPRI != 0) {
-        sb.append("EPOLLPRI ")
+        append("EPOLLPRI")
     }
     if (mode and EPOLLOUT != 0) {
-        sb.append("EPOLLOUT ")
+        append("EPOLLOUT")
     }
     if (mode and EPOLLERR != 0) {
-        sb.append("EPOLLERR ")
+        append("EPOLLERR")
     }
     if (mode and EPOLLHUP != 0) {
-        sb.append("EPOLLHUP ")
+        append("EPOLLHUP")
     }
     if (mode and EPOLLRDNORM != 0) {
-        sb.append("EPOLLRDNORM ")
+        append("EPOLLRDNORM")
     }
     if (mode and EPOLLRDBAND != 0) {
-        sb.append("EPOLLRDBAND ")
+        append("EPOLLRDBAND")
     }
     if (mode and EPOLLWRNORM != 0) {
-        sb.append("EPOLLWRNORM ")
+        append("EPOLLWRNORM")
     }
     if (mode and EPOLLWRBAND != 0) {
-        sb.append("EPOLLWRBAND ")
+        append("EPOLLWRBAND")
     }
     if (mode and EPOLLMSG != 0) {
-        sb.append("EPOLLMSG ")
+        append("EPOLLMSG")
     }
     if (mode and EPOLLRDHUP != 0) {
-        sb.append("EPOLLRDHUP ")
+        append("EPOLLRDHUP")
     }
     if (mode and EPOLLONESHOT != 0) {
-        sb.append("EPOLLONESHOT ")
+        append("EPOLLONESHOT")
     }
     return sb.toString()
 }

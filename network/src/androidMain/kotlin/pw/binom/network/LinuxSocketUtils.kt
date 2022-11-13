@@ -7,6 +7,3 @@ internal actual fun TcpClientSocketChannel.internalConnectToUnixSocket(fileName:
 internal actual fun TcpServerSocketChannel.bindUnixSocket(fileName: String) {
     throwUnixSocketNotSupported()
 }
-
-internal fun throwUnixSocketNotSupported(): Nothing =
-    throw RuntimeException("Mingw Target not supports Unix Domain Socket")

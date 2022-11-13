@@ -177,6 +177,10 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
                 if (errno != EINPROGRESS) {
                     throw IOException("Can't connect. Error: $errno")
                 }
+                if (errno == EINPROGRESS) {
+                    return // All is ok
+                }
+                throw IOException("Unknown socket error $r $errno")
             }
         }
 

@@ -83,7 +83,7 @@ class TestWS {
 //    }
 
     @Test
-    fun test() = runTest {
+    fun test() = runTest(dispatchTimeoutMs = 10_000) {
         val message = "Hello world"
         val client = HttpClient.create()
         val wsClient = client.connect(
@@ -107,7 +107,7 @@ class TestWS {
 
     @Ignore
     @Test
-    fun serverTest() = runTest {
+    fun serverTest() = runTest(dispatchTimeoutMs = 10_000) {
         try {
             val client = HttpClient.create()
             val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURL())
@@ -117,8 +117,9 @@ class TestWS {
                 val msg = wsClient.read().use {
                     it.utf8Reader().readText()
                 }
-                if (msg.trim() == "exit")
+                if (msg.trim() == "exit") {
                     break
+                }
                 println("Read [$msg]. Send response")
                 wsClient.write(MessageType.BINARY).use {
                     it.utf8Appendable().append("Echo $msg")

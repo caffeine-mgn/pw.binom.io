@@ -55,7 +55,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 //            val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
 //            val key = keyPtr.get()
             val key = selector!!.idToKey[item.data.u32.convert()]
-                ?: throw IllegalStateException("Key not found ${item.data.u32.toInt()} in ${selector?.native}")
+                ?: error("Key not found ${item.data.u32.toInt()} in ${selector?.native}")
             if (!key.connected) {
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)
@@ -83,7 +83,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
                     event.mode = 0
                     return event
                 }
-                throw IllegalStateException("Unknown connection state: ${modeToString(item.events.toInt())}")
+                error("Unknown connection state: ${modeToString(item.events.toInt())}")
             }
             if (EPOLLHUP in item.events) {
                 event.key = key
@@ -92,7 +92,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
             }
             val common = epollNativeToCommon(item.events.convert())
             if (common == 0) {
-                throw IllegalStateException("Invalid epoll mode: [${modeToString(item.events.convert())}]")
+                error("Invalid epoll mode: [${modeToString(item.events.convert())}]")
             }
             event.key = key
             event.mode = epollNativeToCommon(item.events.convert())

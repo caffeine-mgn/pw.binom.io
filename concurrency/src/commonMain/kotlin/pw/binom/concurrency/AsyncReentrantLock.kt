@@ -40,7 +40,7 @@ private class AsyncReentrantLocksElement : CoroutineContext.Element {
 }
 
 @OptIn(ExperimentalContracts::class)
-private suspend fun <T> withTimeout2(timeout: Duration?, block: suspend () -> T): T {
+internal suspend fun <T> withTimeout2(timeout: Duration?, block: suspend () -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }

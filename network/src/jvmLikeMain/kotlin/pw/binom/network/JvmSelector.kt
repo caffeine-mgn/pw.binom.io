@@ -52,7 +52,6 @@ class JvmSelector : Selector {
         fun setNative(native: AbstractSelectableChannel) {
             keysNotInSelector -= this
             this.native = native.register(this@JvmSelector.native, commonToJava(native, initMode), this)
-            this@JvmSelector.native.wakeup()
         }
 
         override val closed: Boolean
@@ -67,6 +66,8 @@ class JvmSelector : Selector {
                 }
                 return true
             }
+        override val selector: Selector
+            get() = this@JvmSelector
 
         private inline fun checkClosed() {
             check(!_closed) { "SelectorKey already closed" }
@@ -104,7 +105,6 @@ class JvmSelector : Selector {
                 native?.let { native ->
                     val javaOps = commonToJava(native.channel(), value)
                     native.interestOps(javaOps)
-                    native.selector().wakeup()
                 }
             }
 
@@ -120,7 +120,9 @@ class JvmSelector : Selector {
         }
 
         override fun toString(): String =
-            "JvmSelector.JvmKey(native=${jvmModeToString(native?.interestOps() ?: 0)}, ${generateToString()})"
+            "JvmSelector.JvmKey(native=${
+            jvmModeToString(native?.takeIf { it.isValid }?.interestOps() ?: 0)
+            }, ${generateToString()})"
     }
 
     override fun wakeup() {

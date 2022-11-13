@@ -177,9 +177,12 @@ class EntityIterator<K, V>(val map: HashMap2<K, V>) : MutableIterator<MutableMap
     }
 
     override fun remove() {
-        if (!hasNext()) {
-            throw NoSuchElementException()
+        if (frozenMutableEntry == null) {
+            throw IllegalStateException()
         }
+//        if (!hasNext()) {
+//            throw NoSuchElementException()
+//        }
         currentBucket.remove(frozenMutableEntry!!.key, null)
         hasNext(true)
     }

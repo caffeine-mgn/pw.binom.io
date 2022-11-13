@@ -5,7 +5,7 @@ import java.net.InetSocketAddress
 import java.net.BindException as JBindException
 import java.nio.channels.ServerSocketChannel as JServerSocketChannel
 
-actual class TcpServerSocketChannel : Closeable {
+actual class TcpServerSocketChannel : Closeable, NetworkChannel {
     var native: JServerSocketChannel? = null
         internal set
     var key: JvmSelector.JvmKey? = null

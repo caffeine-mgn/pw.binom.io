@@ -21,7 +21,7 @@ import kotlin.time.TimeSource
 class TestAsyncBaseHttpClient {
 
     @Test
-    fun timeoutTest2() = runTest {
+    fun timeoutTest2() = runTest(dispatchTimeoutMs = 10_000) {
         Dispatchers.Network
             .bindTcp(NetworkAddress.Immutable(port = 0))
             .use { server ->
@@ -53,7 +53,7 @@ class TestAsyncBaseHttpClient {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun timeoutTest() = runTest {
+    fun timeoutTest() = runTest(dispatchTimeoutMs = 10_000) {
         val manager = NetworkCoroutineDispatcherImpl()
         val client = BaseHttpClient(Dispatchers.Network)
         val server = manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", TcpServerConnection.randomPort()))
@@ -74,7 +74,7 @@ class TestAsyncBaseHttpClient {
 
     @Test
     @OptIn(ExperimentalTime::class)
-    fun test() = runTest {
+    fun test() = runTest(dispatchTimeoutMs = 10_000) {
         val client = BaseHttpClient(Dispatchers.Network)
         repeat(3) {
             val responseData = client

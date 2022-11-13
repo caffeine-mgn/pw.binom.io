@@ -1,11 +1,13 @@
 package pw.binom.network
 
+import pw.binom.io.ByteBuffer
+import pw.binom.io.use
 import pw.binom.thread.Thread
 import kotlin.random.Random
 import kotlin.test.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
 
 class SelectorTest {
 
@@ -76,9 +78,7 @@ class SelectorTest {
         val client = TcpClientSocketChannel()
         client.setBlocking(false)
         val key = selector.attach(client)
-        println("try set flags...  ${Selector.EVENT_CONNECTED}")
         key.listensFlag = Selector.EVENT_CONNECTED
-        println("Flag setted")
         client.connect(NetworkAddress.Immutable("google.com", 443))
         selector.select(5000, selectKeys)
         var it = selectKeys.iterator()
@@ -142,5 +142,56 @@ class SelectorTest {
         server.setBlocking(false)
         selector.attach(server)
         assertEquals(0, selector.select(1000, selectKeys))
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun reattachTest() {
+        val port = UdpConnection.randomPort()
+        fun sendDataWithDelay(port: Int, delay: Duration) {
+            Thread {
+                Thread.sleep(delay.inWholeMilliseconds)
+                UdpSocketChannel().use { channel ->
+                    ByteBuffer.alloc(30).use { buffer ->
+                        println("send tmp data")
+                        channel.send(buffer, NetworkAddress.Immutable(host = "127.0.0.1", port = port))
+                    }
+                }
+            }.start()
+        }
+
+        fun UdpSocketChannel.skip(dataSize: Int) {
+            val read = ByteBuffer.alloc(dataSize).use { buffer ->
+                this.recv(buffer, null)
+            }
+            assertEquals(dataSize, read)
+        }
+
+        val selectKeys1 = SelectedEvents.create()
+        val selector1 = Selector.open()
+
+        val selectKeys2 = SelectedEvents.create()
+        val selector2 = Selector.open()
+
+        val server = UdpSocketChannel()
+        server.setBlocking(false)
+        var k1: Selector.Key? = null
+        var k2: Selector.Key? = null
+        k1 = selector1.attach(server, Selector.INPUT_READY)
+        k2 = selector2.attach(server, Selector.INPUT_READY)
+        server.bind(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
+        sendDataWithDelay(port = port, delay = 300.milliseconds)
+        val vv1 = measureTimedValue { selector1.select(selectedEvents = selectKeys1, timeout = 1000) }
+//        val vv2 = measureTimedValue { selector2.select(selectedEvents = selectKeys2, timeout = 1000) }
+        println("vv1=$vv1")
+//        println("vv2=$vv2")
+//        assertEquals(0, selectKeys1.count())
+        selectKeys1.forEach {
+            println("selectKeys1->$it ${k1 === it.key} ${k2 === it.key}")
+        }
+        selectKeys2.forEach {
+            println("selectKeys2->$it ${k1 === it.key} ${k2 === it.key}")
+        }
+//        server.skip(30)
     }
 }

@@ -88,7 +88,21 @@ tasks {
         suffix = "WS-EchoServer"
     )
 
+    val httpStorage = pw.binom.plugins.DockerUtils.dockerContanier(
+        project = project,
+        image = "ugeek/webdav:amd64",
+        tcpPorts = listOf(80 to 7143),
+        args = listOf(),
+        suffix = "WebDav",
+        envs = mapOf(
+            "USERNAME" to "root",
+            "PASSWORD" to "root",
+            "TZ" to "GMT",
+        )
+    )
+
     eachKotlinTest {
         httpWsEcho.dependsOn(it)
+        httpStorage.dependsOn(it)
     }
 }

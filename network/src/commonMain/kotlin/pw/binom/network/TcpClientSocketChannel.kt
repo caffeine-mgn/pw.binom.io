@@ -2,7 +2,7 @@ package pw.binom.network
 
 import pw.binom.io.Channel
 
-expect class TcpClientSocketChannel : Channel {
+expect class TcpClientSocketChannel : Channel, NetworkChannel {
     constructor()
 
     fun setBlocking(value: Boolean)

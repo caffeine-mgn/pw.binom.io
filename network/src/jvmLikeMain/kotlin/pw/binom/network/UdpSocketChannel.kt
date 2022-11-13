@@ -1,11 +1,10 @@
 package pw.binom.network
 
 import pw.binom.io.ByteBuffer
-import pw.binom.io.Closeable
 import java.net.InetSocketAddress
 import java.nio.channels.DatagramChannel
 
-actual class UdpSocketChannel : Closeable {
+actual class UdpSocketChannel : NetworkChannel {
     val native = DatagramChannel.open()
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int {

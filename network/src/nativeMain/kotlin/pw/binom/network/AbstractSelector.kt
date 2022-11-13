@@ -6,32 +6,36 @@ abstract class AbstractSelector : Selector {
             nativePrepare(mode = mode, attachment = attachment, connectable = socket.connectable)
         } else {
             nativeAttach(
-                socket.native!!,
-                mode,
-                true,
-                attachment
+                socket = socket.native!!,
+                mode = mode,
+                connectable = true,
+                attachment = attachment,
             )
         }
 
         if (!socket.connectable) {
             key.connected = true
         }
-        socket.key = key
+        key.socket = socket
         return key
     }
 
     override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?): AbstractKey {
         val key = if (socket.native == null) {
-            nativePrepare(mode = mode, attachment = attachment, connectable = false)
+            nativePrepare(
+                mode = mode,
+                attachment = attachment,
+                connectable = false,
+            )
         } else {
             nativeAttach(
-                socket.native!!,
-                mode,
-                false,
-                attachment
+                socket = socket.native!!,
+                mode = mode,
+                connectable = false,
+                attachment = attachment,
             )
         }
-        socket.key = key
+        key.socket = socket
         return key
     }
 
@@ -41,13 +45,17 @@ abstract class AbstractSelector : Selector {
             connectable = false,
             attachment = attachment
         )
-        socket.key = key
+        key.socket = socket
         return key
     }
 
     interface NativeKeyEvent {
         val key: AbstractKey
         val mode: Int
+    }
+
+    override fun wakeup() {
+        TODO("Not yet implemented")
     }
 
     protected abstract fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractKey

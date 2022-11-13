@@ -1,18 +1,30 @@
 package pw.binom.network
 
+import pw.binom.collections.defaultMutableSet
 import pw.binom.io.ByteBuffer
-import pw.binom.io.Closeable
 
-actual class UdpSocketChannel : Closeable {
+actual class UdpSocketChannel : NetworkChannel {
     val native = NSocket.udp()
-    var key: AbstractKey? = null
-        set(value) {
-            if (field != null) {
-                field!!.removeSocket(native.raw)
-            }
-            field = value
-            value?.addSocket(native.raw)
+    private var keys = defaultMutableSet<AbstractKey>()
+    override fun addKey(key: AbstractKey) {
+        if (keys.add(key)) {
+            key.addSocket(native.raw)
         }
+    }
+
+    override fun removeKey(key: AbstractKey) {
+        if (keys.remove(key)) {
+            key.removeSocket(native.raw)
+        }
+    }
+//    var key: AbstractKey? = null
+//        set(value) {
+//            if (field != null) {
+//                field!!.removeSocket(native.raw)
+//            }
+//            field = value
+//            value?.addSocket(native.raw)
+//        }
 
     actual fun setBlocking(value: Boolean) {
         native.setBlocking(value)
@@ -27,13 +39,11 @@ actual class UdpSocketChannel : Closeable {
     }
 
     override fun close() {
-        val c = key
-        key = null
-        c?.let {
-            if (!it.closed) {
-                it.close()
-            }
+        keys.forEach {
+            it.internalCleanSocket()
+            it.close()
         }
+        keys.clear()
         native.close()
     }
 

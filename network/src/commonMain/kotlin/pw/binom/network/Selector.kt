@@ -22,6 +22,7 @@ interface Selector : Closeable {
         val attachment: Any?
         var listensFlag: Int
         val closed: Boolean
+        val selector: Selector
 
         fun addListen(code: Int) {
             listensFlag = listensFlag or code

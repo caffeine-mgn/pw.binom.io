@@ -14,7 +14,7 @@ import kotlin.test.Test
 
 class UnixSocketTest {
     @Test
-    fun baseTest() = runTest {
+    fun baseTest() = runTest(dispatchTimeoutMs = 10_000) {
         if (Environment.os == OS.WINDOWS) {
             return@runTest
         }

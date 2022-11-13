@@ -101,6 +101,14 @@ fun mutableHeadersOf(vararg headers: Pair<String, String>): MutableHeaders {
     return out
 }
 
+fun <T : MutableHeaders> T.useBasicAuth(login: String, password: String): T =
+    useBasicAuth(
+        BasicAuth(
+            login = login,
+            password = password,
+        )
+    )
+
 fun <T : MutableHeaders> T.useBasicAuth(basicAuth: BasicAuth): T {
     this[Headers.AUTHORIZATION] = basicAuth.headerValue
     return this

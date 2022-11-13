@@ -7,28 +7,31 @@ import kotlin.coroutines.resumeWithException
 interface NetworkManager : CoroutineContext {
     fun wakeup()
     fun attach(channel: UdpSocketChannel): UdpConnection
+    fun attach(channel: UdpConnection): UdpConnection
     fun attach(channel: TcpClientSocketChannel, mode: Int = 0): TcpConnection
+    fun attach(channel: TcpConnection, mode: Int = 0): TcpConnection
     fun attach(channel: TcpServerSocketChannel): TcpServerConnection
+    fun attach(channel: TcpServerConnection): TcpServerConnection
 }
 
 suspend fun NetworkManager.tcpConnect(address: NetworkAddress): TcpConnection {
     val channel = TcpClientSocketChannel()
     val connection = attach(channel = channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
     try {
-        connection.description = address.toString()
+        connection.description = "Client to $address"
         suspendCancellableCoroutine<Unit> {
             connection.connect = it
             it.invokeOnCancellation {
                 connection.cancelSelector()
                 connection.close()
             }
-            try {
-//                        connection.connecting()
-                channel.connect(address)
-                wakeup()
-            } catch (e: Throwable) {
-                it.resumeWithException(e)
-            }
+            channel.connect(address)
+            wakeup()
+//            it.resumeWith(
+//                runCatching {
+//
+//                }
+//            )
         }
     } catch (e: SocketConnectException) {
         runCatching { connection.asyncClose() }

@@ -14,12 +14,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
     private var _channel: TcpClientSocketChannel? = channel
     val channel: TcpClientSocketChannel
         get() = _channel!!
-    var key: Selector.Key
-        get() = _key!!
-        set(value) {
-            _key = value
-        }
-    private var _key: Selector.Key? = null
+    internal var key = KeyCollection()
 
     override fun toString(): String =
         if (description == null) {
@@ -56,9 +51,8 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         }
 
     override fun readyForWrite() {
-        val key = _key
-        if (key == null) {
-            println("illegal readyForWrite calling. connection already closed")
+        val key = this.key
+        if (key.isEmpty) {
             return
         }
 
@@ -75,13 +69,11 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
                 key.removeListen(Selector.OUTPUT_READY)
                 con.resumeWith(result)
             }
-            if (sendData.continuation == null && !key.closed) {
-                key.listensFlag = calcListenFlags()
+            if (sendData.continuation == null) {
+                key.setListensFlag(calcListenFlags())
             }
         } else {
-            if (!key.closed) {
-                key.removeListen(Selector.OUTPUT_READY)
-            }
+            key.removeListen(Selector.OUTPUT_READY)
         }
     }
 
@@ -89,13 +81,13 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         if (error) {
             throw SocketConnectException()
         }
-        key.listensFlag = Selector.EVENT_CONNECTED
+        this.key.setListensFlag(Selector.EVENT_CONNECTED)
     }
 
     override fun connected() {
         val connect = connect
         this.connect = null
-        key.removeListen(Selector.EVENT_CONNECTED)
+        this.key.removeListen(Selector.EVENT_CONNECTED)
         connect?.resumeWith(Result.success(Unit))
     }
 
@@ -131,17 +123,11 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
     }
 
     override fun readyForRead() {
-        val key = _key
-        if (key == null) {
-            println("illegal readyForRead calling. connection already closed")
-            return
-        }
+        val key = this.key
         val continuation = readData.continuation
         val data = readData.data
         if (continuation == null) {
-            if (!key.closed) {
-                key.removeListen(Selector.INPUT_READY)
-            }
+            key.removeListen(Selector.INPUT_READY)
             return
         }
         data ?: throw IllegalStateException("readData.data is not set")
@@ -158,7 +144,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
                 val con = continuation
                 readData.reset()
                 con.resume(readed)
-                if (!key.closed && readData.continuation == null) {
+                if (readData.continuation == null) {
                     key.removeListen(Selector.INPUT_READY)
                 }
             }
@@ -166,23 +152,16 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             val con = continuation
             readData.reset()
             con.resume(readed)
-            if (!key.closed && readData.continuation == null) {
+            if (readData.continuation == null) {
                 key.removeListen(Selector.INPUT_READY)
             }
         }
     }
 
     override fun close() {
-        if (_key != null && key.closed) {
-            return
-        }
         try {
-            if (!key.closed) {
-                key.listensFlag = 0
-                key.close()
-            }
-            channel.close()
-            _key = null
+            key.close()
+            _channel?.close()
             _channel = null
         } finally {
             readData.continuation?.resumeWithException(SocketClosedException())
@@ -196,15 +175,14 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         close()
     }
 
-    private var lastWriteStackTrace: String? = null
     override suspend fun write(data: ByteBuffer): Int {
+        key.checkEmpty()
         val oldRemaining = data.remaining
         if (oldRemaining == 0) {
             return 0
         }
         if (sendData.continuation != null) {
-            println("Connection busy! last stack trace:\n$lastWriteStackTrace")
-            return 0
+            error("Connection already has write operation")
         }
         val wrote = channel.write(data)
         if (wrote > 0) {
@@ -218,8 +196,11 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
 //        lastWriteStackTrace = Throwable().stackTraceToString()
         return suspendCancellableCoroutine<Int> {
             sendData.continuation = it
-            key.addListen(Selector.OUTPUT_READY)
+            this.key.addListen(Selector.OUTPUT_READY)
+            this.key.wakeup()
             it.invokeOnCancellation {
+                this.key.removeListen(Selector.OUTPUT_READY)
+                this.key.wakeup()
                 sendData.reset()
             }
         }
@@ -232,6 +213,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         get() = -1
 
     override suspend fun readFully(dest: ByteBuffer): Int {
+        key.checkEmpty()
         if (dest.remaining == 0) {
             return 0
         }
@@ -245,12 +227,15 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         readData.full = true
         val readed = suspendCancellableCoroutine<Int> {
             it.invokeOnCancellation {
+                this.key.removeListen(Selector.INPUT_READY)
+                this.key.wakeup()
                 readData.continuation = null
                 readData.data = null
             }
             readData.continuation = it
             readData.data = dest
-            key.addListen(Selector.INPUT_READY)
+            this.key.addListen(Selector.INPUT_READY)
+            this.key.wakeup()
         }
         if (readed == 0) {
             runCatching { channel.close() }
@@ -260,8 +245,9 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
+        key.checkEmpty()
         if (readData.continuation != null) {
-            throw IllegalStateException("Connection already have read listener")
+            error("Connection already have read listener")
         }
         if (dest.remaining == 0) {
             return 0
@@ -276,16 +262,16 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
         }
         readData.full = false
         val readed = suspendCancellableCoroutine<Int> {
-            readData.continuation = it
-            readData.data = dest
-            key.addListen(Selector.INPUT_READY)
             it.invokeOnCancellation {
-                if (!key.closed) {
-                    key.removeListen(Selector.INPUT_READY)
-                }
+                this.key.removeListen(Selector.INPUT_READY)
+                this.key.wakeup()
                 readData.continuation = null
                 readData.data = null
             }
+            readData.continuation = it
+            readData.data = dest
+            this.key.addListen(Selector.INPUT_READY)
+            this.key.wakeup()
         }
 //        if (readed == 0) {
 //            runCatching { channel.close() }

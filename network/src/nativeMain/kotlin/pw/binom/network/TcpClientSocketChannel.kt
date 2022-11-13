@@ -1,22 +1,36 @@
 package pw.binom.network
 
+import pw.binom.collections.defaultMutableSet
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 
-actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
+actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, NetworkChannel {
     var native: NSocket? = null
 
-    //    var selector: AbstractSelector? = null
-    var key: AbstractKey? = null
-        set(value) {
-            if (field != null && native != null) {
-                field!!.removeSocket(native!!.raw)
-            }
-            field = value
-            if (native != null) {
-                value?.addSocket(native!!.raw)
-            }
+    private var keys = defaultMutableSet<AbstractKey>()
+
+    override fun addKey(key: AbstractKey) {
+        if (keys.add(key) && native != null) {
+            key.addSocket(native!!.raw)
         }
+    }
+
+    override fun removeKey(key: AbstractKey) {
+        if (keys.remove(key) && native != null) {
+            key.removeSocket(native!!.raw)
+        }
+    }
+
+//    var key: AbstractKey? = null
+//        set(value) {
+//            if (field != null && native != null) {
+//                field!!.removeSocket(native!!.raw)
+//            }
+//            field = value
+//            if (native != null) {
+//                value?.addSocket(native!!.raw)
+//            }
+//        }
 
     actual constructor() : this(true)
     constructor(socket: NSocket) : this(false) {
@@ -33,9 +47,11 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
         if (!connectable) {
             throw IllegalStateException()
         }
-        native = NSocket.connectTcp(address, blocking = false)
-        native!!.setBlocking(blocking)
-        key?.addSocket(native!!.raw)
+        native = NSocket.connectTcp(address, blocking = blocking)
+//        native!!.setBlocking(blocking)
+        keys.forEach {
+            it.addSocket(native!!.raw)
+        }
     }
 
     override fun read(dest: ByteBuffer): Int {
@@ -48,17 +64,12 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
     }
 
     override fun close() {
-        native?.also {
-            val c = key
-            key = null
-            c?.let {
-                if (!it.closed) {
-                    it.close()
-                }
-            }
+        keys.forEach {
+            it.internalCleanSocket()
             it.close()
-            native = null
         }
+        keys.clear()
+        native?.close()
     }
 
     override fun write(data: ByteBuffer): Int =
@@ -73,6 +84,14 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel {
         }
         native = NSocket.connectTcpUnixSocket(fileName = fileName, blocking = false)
         native!!.setBlocking(blocking)
-        key?.addSocket(native!!.raw)
+        keys.forEach {
+            it.addSocket(native!!.raw)
+        }
+    }
+
+    internal fun connected() {
+        keys.forEach {
+            it.addSocket(native!!.raw)
+        }
     }
 }

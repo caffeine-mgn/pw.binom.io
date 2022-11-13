@@ -2,10 +2,28 @@ package pw.binom.network
 
 import pw.binom.io.ClosedException
 
-abstract class AbstractKey(override var attachment: Any?) : Selector.Key, Comparable<AbstractKey> {
+abstract class AbstractKey(override var attachment: Any?) :
+    Selector.Key,
+    Comparable<AbstractKey> {
     var connected = false
 
-    protected abstract val selector: AbstractSelector
+    private var internalSocket: NetworkChannel? = null
+
+    internal fun internalCleanSocket() {
+        internalSocket = null
+    }
+
+    var socket: NetworkChannel?
+        get() = internalSocket
+        set(value) {
+            if (internalSocket === value) {
+                return
+            }
+            internalSocket?.removeKey(this)
+            internalSocket = value
+            value?.addKey(this)
+        }
+    abstract override val selector: AbstractSelector
     abstract fun addSocket(raw: RawSocket)
     abstract fun removeSocket(raw: RawSocket)
 
@@ -42,7 +60,7 @@ abstract class AbstractKey(override var attachment: Any?) : Selector.Key, Compar
             }
             _listensFlag = value
             resetMode(value)
-            selector.wakeup()
+//            selector.wakeup()
         }
 
     abstract fun resetMode(mode: Int)
@@ -50,6 +68,7 @@ abstract class AbstractKey(override var attachment: Any?) : Selector.Key, Compar
         if (_closed) {
             return
         }
+        socket = null
         NetworkMetrics.decSelectorKey()
         _closed = true
 //            runCatching { attachmentReference?.close() }

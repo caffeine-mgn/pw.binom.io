@@ -25,7 +25,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
             "UdpConnection($description)"
         }
 
-    lateinit var key: Selector.Key
+    internal var key = KeyCollection()
 
     private class ReadData {
         var continuation: CancellableContinuation<Int>? = null
@@ -133,12 +133,12 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         sendData.continuation?.resumeWithException(SocketClosedException())
         readData.reset()
         sendData.reset()
-        key.listensFlag = 0
         key.close()
         channel.close()
     }
 
     suspend fun read(dest: ByteBuffer, address: NetworkAddress.Mutable?): Int {
+        key.checkEmpty()
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
         }
@@ -155,6 +155,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
             readData.data = dest
             readData.address = address
             key.addListen(Selector.INPUT_READY)
+            key.wakeup()
             it.invokeOnCancellation {
                 readData.continuation = null
                 readData.data = null
@@ -169,13 +170,14 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
     }
 
     suspend fun write(data: ByteBuffer, address: NetworkAddress): Int {
+        key.checkEmpty()
         val l = data.remaining
         if (l == 0) {
             return 0
         }
 
         if (sendData.continuation != null) {
-            throw IllegalStateException("Connection already have write listener")
+            throw IllegalStateException("Connection already has write listener")
         }
         val wrote = channel.send(data, address)
         if (wrote == l) {
@@ -187,6 +189,7 @@ class UdpConnection(val channel: UdpSocketChannel) : AbstractConnection() {
         suspendCancellableCoroutine<Int> {
             sendData.continuation = it
             key.addListen(Selector.OUTPUT_READY)
+            key.wakeup()
         }
         return l
     }

@@ -2,16 +2,17 @@ package pw.binom.network
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import pw.binom.collections.defaultMutableSet
 import pw.binom.io.use
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class TcpServerConnection constructor(
-    val dispatcher: NetworkManager,
+//    val dispatcher: NetworkManager,
     val channel: TcpServerSocketChannel
 ) : AbstractConnection() {
     var description: String? = null
+    internal var dispatchers = defaultMutableSet<NetworkManager>()
 
     companion object {
         fun randomPort() = TcpServerSocketChannel().use {
@@ -27,9 +28,10 @@ class TcpServerConnection constructor(
             "TcpServerConnection($description)"
         }
 
-    lateinit var key: Selector.Key
+    internal var key = KeyCollection()
 
     override fun readyForWrite() {
+        // Do nothing
     }
 
     val port
@@ -50,25 +52,19 @@ class TcpServerConnection constructor(
     override fun readyForRead() {
         val acceptListener = acceptListener
         if (acceptListener == null) {
-            if (!key.closed) {
-                key.removeListen(Selector.INPUT_READY)
-            }
+            key.removeListen(Selector.INPUT_READY)
             return
         }
         val newChannel = channel.accept(null)
         if (newChannel == null) {
-            if (!key.closed) {
-                key.removeListen(Selector.INPUT_READY)
-            }
+            key.removeListen(Selector.INPUT_READY)
             return
         }
 
         this.acceptListener = null
         acceptListener.resume(newChannel)
         if (this.acceptListener == null) {
-            if (!key.closed) {
-                key.removeListen(Selector.INPUT_READY)
-            }
+            key.removeListen(Selector.INPUT_READY)
         }
         return
     }
@@ -80,37 +76,55 @@ class TcpServerConnection constructor(
             }
             acceptListener = null
         }
+        key.close()
         channel.close()
+        dispatchers.clear()
     }
 
     private var acceptListener: CancellableContinuation<TcpClientSocketChannel>? = null
 
-    suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection =
-        withContext(dispatcher) acceptContext@{
-            if (acceptListener != null) {
-                throw IllegalStateException("Connection already have read listener")
-            }
+    suspend fun accept(address: NetworkAddress.Mutable? = null): TcpConnection {
+        key.checkEmpty()
 
-            val newClient = channel.accept(address)
-            if (newClient != null) {
-                val c = dispatcher.attach(newClient)
-                c.description = "Client of $description"
-                return@acceptContext c
-            }
-            val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
-                acceptListener = con
-                key.listensFlag = Selector.INPUT_READY
-                con.invokeOnCancellation {
-                    acceptListener = null
-                    if (!key.closed) {
-                        key.listensFlag = 0
-                    }
+        if (acceptListener != null) {
+            throw IllegalStateException("Connection already have read listener")
+        }
+
+        val newClient = channel.accept(address)
+        if (newClient != null) {
+            var c: TcpConnection? = null
+            dispatchers.forEach { dispatcher ->
+                if (c == null) {
+                    c = dispatcher.attach(newClient)
+                } else {
+                    dispatcher.attach(c!!)
                 }
             }
-            val c = dispatcher.attach(newChannel)
-            c.description = "Client of $description"
-            return@acceptContext c
+            c!!.description = "Server of $description"
+            return c!!
         }
+
+        val newChannel = suspendCancellableCoroutine<TcpClientSocketChannel> { con ->
+            acceptListener = con
+            key.setListensFlag(Selector.INPUT_READY)
+            key.wakeup()
+            con.invokeOnCancellation {
+                acceptListener = null
+                key.setListensFlag(0)
+            }
+        }
+
+        var c: TcpConnection? = null
+        dispatchers.forEach { dispatcher ->
+            if (c == null) {
+                c = dispatcher.attach(newChannel)
+            } else {
+                dispatcher.attach(c!!)
+            }
+        }
+        c!!.description = "Server of $description"
+        return c!!
+    }
 
     override fun cancelSelector() {
         acceptListener?.cancel()

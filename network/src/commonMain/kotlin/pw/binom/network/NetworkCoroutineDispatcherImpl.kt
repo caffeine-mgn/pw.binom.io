@@ -47,20 +47,19 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
             while (!closed.getValue()) {
                 this.networkThreadRef = ThreadRef()
                 val count = this.selector.select(selectedEvents = selectedKeys)
-
                 val iterator = selectedKeys.iterator()
                 while (iterator.hasNext() && !this.closed.getValue()) {
                     try {
                         val event = iterator.next()
                         val attachment = event.key.attachment
-                        attachment ?: throw IllegalStateException("Attachment is null")
+                        attachment ?: error("Attachment is null")
                         val connection = attachment as AbstractConnection
                         when {
                             event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
                             event.mode and Selector.EVENT_ERROR != 0 -> connection.error()
                             event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite()
                             event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead()
-                            else -> throw IllegalStateException("Unknown connection event")
+                            else -> error("Unknown connection event")
                         }
                     } catch (e: Throwable) {
                         thisThread.uncaughtExceptionHandler.uncaughtException(
@@ -127,54 +126,43 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         val con = UdpConnection(channel)
         channel.setBlocking(false)
         val key = selector.attach(channel, 0, con)
-        con.key = key
+        con.key.addKey(key)
         return con
+    }
+
+    override fun attach(channel: UdpConnection): UdpConnection {
+        val key = selector.attach(channel.channel, 0, channel)
+        channel.key.addKey(key)
+        return channel
     }
 
     override fun attach(channel: TcpClientSocketChannel, mode: Int): TcpConnection {
         val con = TcpConnection(channel)
         channel.setBlocking(false)
-        val key = selector.attach(channel, mode, con)
-        con.key = key
+        val key = selector.attach(socket = channel, mode = mode, attachment = con)
+        con.key.addKey(key)
         return con
+    }
+
+    override fun attach(channel: TcpConnection, mode: Int): TcpConnection {
+        val key = selector.attach(socket = channel.channel, mode = mode, attachment = channel)
+        channel.key.addKey(key)
+        return channel
     }
 
     override fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
-        val con = TcpServerConnection(this, channel)
+        val con = TcpServerConnection(channel)
         channel.setBlocking(false)
-        con.key = selector.attach(channel, 0, con)
+        con.dispatchers += this
+        con.key.addKey(selector.attach(channel, 0, con))
         return con
     }
 
-//    override suspend fun tcpConnect(address: NetworkAddress): TcpConnection =
-//        withContext(this) {
-//            val channel = TcpClientSocketChannel()
-//            val connection = attach(channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
-//            try {
-//                connection.description = address.toString()
-//                suspendCancellableCoroutine<Unit> {
-//                    connection.connect = it
-//                    it.invokeOnCancellation {
-//                        connection.cancelSelector()
-//                        connection.close()
-//                    }
-//                    try {
-// //                        connection.connecting()
-//                        channel.connect(address)
-//                    } catch (e: Throwable) {
-//                        it.resumeWithException(e)
-//                    }
-//                }
-//            } catch (e: SocketConnectException) {
-//                runCatching { connection.asyncClose() }
-//                if (e.message != null) {
-//                    throw e
-//                } else {
-//                    throw SocketConnectException(address.toString(), e.cause)
-//                }
-//            }
-//            connection
-//        }
+    override fun attach(channel: TcpServerConnection): TcpServerConnection {
+        channel.dispatchers += this
+        channel.key.addKey(selector.attach(channel.channel, 0, channel))
+        return channel
+    }
 }
 
 val Dispatchers.Network

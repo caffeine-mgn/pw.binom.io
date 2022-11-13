@@ -6,7 +6,7 @@ import java.io.IOException
 import java.nio.channels.NotYetConnectedException
 import java.nio.channels.SocketChannel as JSocketChannel
 
-actual class TcpClientSocketChannel actual constructor() : Channel {
+actual class TcpClientSocketChannel actual constructor() : Channel, NetworkChannel {
     var native: JSocketChannel? = null
         internal set
 

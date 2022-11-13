@@ -8,16 +8,20 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 
 private fun TcpClientSocketChannel.internalGetUnixSocket(): SocketChannel {
-    var native = native
-    if (native == null) {
-        native = SocketChannel.open(StandardProtocolFamily.UNIX)
-        native.configureBlocking(blocking)
-        native.socket().tcpNoDelay = true
-        this.native = native
-        key?.setNative(native)
+    try {
+        var native = native
+        if (native == null) {
+            native = SocketChannel.open(StandardProtocolFamily.UNIX)
+            native.configureBlocking(blocking)
+            runCatching { native.socket().tcpNoDelay = true }
+            this.native = native
+            key?.setNative(native)
+            return native
+        }
         return native
+    } catch (e: UnsupportedOperationException) {
+        throwUnixSocketNotSupported()
     }
-    return native
 }
 
 internal actual fun TcpClientSocketChannel.internalConnectToUnixSocket(fileName: String) {
@@ -25,15 +29,19 @@ internal actual fun TcpClientSocketChannel.internalConnectToUnixSocket(fileName:
 }
 
 private fun TcpServerSocketChannel.internalGetUnixSocket(): ServerSocketChannel {
-    var native = native
-    if (native == null) {
-        native = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
-        native.configureBlocking(blocking)
-        this.native = native
-        key?.setNative(native)
+    try {
+        var native = native
+        if (native == null) {
+            native = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
+            native.configureBlocking(blocking)
+            this.native = native
+            key?.setNative(native)
+            return native
+        }
         return native
+    } catch (e: UnsupportedOperationException) {
+        throwUnixSocketNotSupported()
     }
-    return native
 }
 
 internal actual fun TcpServerSocketChannel.bindUnixSocket(fileName: String) {
@@ -44,5 +52,7 @@ internal actual fun TcpServerSocketChannel.bindUnixSocket(fileName: String) {
         bindPort = 0
     } catch (e: java.net.BindException) {
         throw BindException("Address already in use: \"$fileName\"")
+    } catch (e: UnsupportedOperationException) {
+        throwUnixSocketNotSupported()
     }
 }

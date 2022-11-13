@@ -151,7 +151,7 @@ class NetworkDispatcherTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun multiThreadingTest() = runTest {
+    fun multiThreadingTest() = runTest(dispatchTimeoutMs = 10_000) {
         val address =
             NetworkAddress.Immutable(host = "127.0.0.1", port = 0)
         val nd = NetworkCoroutineDispatcherImpl()
@@ -196,7 +196,7 @@ class NetworkDispatcherTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun parallelAsync() = runTest {
+    fun parallelAsync() = runTest(dispatchTimeoutMs = 10_000) {
         val address =
             NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
         val nd = NetworkCoroutineDispatcherImpl()

@@ -1,18 +1,38 @@
 package pw.binom.network
 
+import pw.binom.collections.defaultMutableSet
 import pw.binom.io.Closeable
 
-actual class TcpServerSocketChannel : Closeable {
-    var key: AbstractKey? = null
-        set(value) {
-            if (field != null && native != null) {
-                field!!.removeSocket(native!!.raw)
-            }
-            field = value
-            if (native != null) {
-                value?.addSocket(native!!.raw)
-            }
+actual class TcpServerSocketChannel : Closeable, NetworkChannel {
+
+    private var keys = defaultMutableSet<AbstractKey>()
+
+    override fun addKey(key: AbstractKey) {
+        val native = native
+        val added = keys.add(key)
+        if (added && native != null) {
+            key.addSocket(native!!.raw)
         }
+    }
+
+    override fun removeKey(key: AbstractKey) {
+        val native = native
+        val removed = keys.remove(key)
+        if (removed && native != null) {
+            key.removeSocket(native.raw)
+        }
+    }
+
+//    var key: AbstractKey? = null
+//        set(value) {
+//            if (field != null && native != null) {
+//                field!!.removeSocket(native!!.raw)
+//            }
+//            field = value
+//            if (native != null) {
+//                value?.addSocket(native!!.raw)
+//            }
+//        }
 
     var native: NSocket? = null
 
@@ -27,20 +47,18 @@ actual class TcpServerSocketChannel : Closeable {
         }
         native = NSocket.serverTcp(address)
         native!!.setBlocking(blocking)
-        key?.addSocket(native!!.raw)
+        keys.forEach {
+            it.addSocket(native!!.raw)
+        }
     }
 
     override fun close() {
-        native?.also {
-            val c = key
-            key = null
-            c?.let {
-                if (!it.closed) {
-                    it.close()
-                }
-            }
+        keys.forEach {
+            it.internalCleanSocket()
             it.close()
         }
+        keys.clear()
+        native?.close()
     }
 
     actual val port: Int?
@@ -59,6 +77,8 @@ actual class TcpServerSocketChannel : Closeable {
         }
         native = NSocket.serverTcpUnixSocket(fileName)
         native!!.setBlocking(blocking)
-        key?.addSocket(native!!.raw)
+        keys.forEach {
+            it.addSocket(native!!.raw)
+        }
     }
 }

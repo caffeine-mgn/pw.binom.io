@@ -29,7 +29,7 @@ class MultithreadingTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun test() = runTest {
+    fun test() = runTest(dispatchTimeoutMs = 10_000) {
         val flag1 = AtomicBoolean(false)
         val nd = NetworkCoroutineDispatcherImpl()
         val executor = WorkerPool(10)

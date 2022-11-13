@@ -36,7 +36,7 @@ class LinuxKey(
     val list: Epoll,
     attachment: Any?,
     override val selector: LinuxSelector,
-) : AbstractKey(attachment) {
+) : AbstractKey(attachment = attachment) {
     internal val epollEvent = HeapValue.alloc<epoll_event>()
 
     //    internal val epollEvent = nativeHeap.alloc<epoll_event>()
@@ -44,7 +44,7 @@ class LinuxKey(
 
     override fun addSocket(raw: RawSocket) {
         if (nativeSocket != 0) {
-            throw IllegalStateException()
+            error("Native socket already set")
         }
         epollEvent.content {
             it.pointed.events = epollCommonToNative(listensFlag.convert()).convert()
@@ -54,14 +54,14 @@ class LinuxKey(
 //        epollEvent.data.u32 = this@LinuxKey.hashCode().convert()
         nativeSocket = raw
         selector.addKey(this)
-        selector.wakeup()
+//        selector.wakeup()
     }
 
     override fun removeSocket(raw: RawSocket) {
         if (nativeSocket == raw) {
             selector.removeKey(this, raw)
             nativeSocket = 0
-            selector.wakeup()
+//            selector.wakeup()
             return
         }
 //        throw IllegalArgumentException("Socket $raw not attached to Selector.Key $nativeSocket")

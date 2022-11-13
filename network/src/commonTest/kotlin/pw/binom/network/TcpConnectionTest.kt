@@ -2,14 +2,12 @@ package pw.binom.network
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runTest
-import pw.binom.concurrency.SpinLock
-import pw.binom.concurrency.Worker
-import pw.binom.concurrency.sleep
-import pw.binom.concurrency.synchronize
+import pw.binom.concurrency.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedAsciiWriter
 import pw.binom.io.use
 import pw.binom.readByte
+import pw.binom.thread.Thread
 import pw.binom.writeByte
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
@@ -27,14 +25,15 @@ class TcpConnectionTest {
         server.bind(NetworkAddress.Immutable("127.0.0.1", 0))
         server.setBlocking(false)
         selector.attach(
-            server,
-            Selector.INPUT_READY or Selector.EVENT_ERROR
+            socket = server,
+            mode = Selector.INPUT_READY, // or Selector.EVENT_ERROR,
         )
 //        serverKey.listensFlag =
 //            Selector.INPUT_READY or Selector.OUTPUT_READY or Selector.EVENT_CONNECTED or Selector.EVENT_ERROR
         val client = TcpClientSocketChannel()
-        client.connect(NetworkAddress.Immutable("127.0.0.1", server.port!!))
-        selector.select(selectedEvents = selectKeys)
+        client.connect(NetworkAddress.Immutable(host = "127.0.0.1", port = server.port!!))
+        Thread.sleep(500)
+        selector.select(selectedEvents = selectKeys, timeout = 1000)
         assertTrue(selectKeys.iterator().hasNext(), "No event for select. Socket selector should be read for input")
     }
 
@@ -171,7 +170,7 @@ class TcpConnectionTest {
     }
 
     @Test
-    fun waitWriteTest() = runTest {
+    fun waitWriteTest() = runTest(dispatchTimeoutMs = 10_000) {
         val nd = NetworkCoroutineDispatcherImpl()
         val port = TcpServerConnection.randomPort()
 
@@ -229,35 +228,41 @@ class TcpConnectionTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun tryToWriteBreakConnection() = runTest(dispatchTimeoutMs = 10_000) {
+    fun tryToWriteBreakConnection() = runTest(dispatchTimeoutMs = 2_000) {
         NetworkCoroutineDispatcherImpl().use { nd ->
             withContext(nd) {
                 val server = nd.bindTcp(NetworkAddress.Immutable("127.0.0.1", 0))
                 val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", server.port))
                 val connectedClient = server.accept()
-                GlobalScope.launch {
-                    println("Reading data.... from ${server.port}")
-                    ByteBuffer.alloc(50).use { buf ->
-                        client.readFully(buf)
+                val lock = SimpleAsyncLock()
+                lock.lock()
+                launch {
+                    try {
+                        ByteBuffer.alloc(50).use { buf ->
+                            client.readFully(buf)
+                        }
+                        client.close()
+                        lock.unlock()
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
                     }
-                    println("Client disconnected!  $client   ${server.port}")
-                    client.close()
                 }
                 try {
-                    ByteBuffer.alloc(100).use { buf ->
-                        delay(1000)
+                    ByteBuffer.alloc(50).use { buf ->
+                        delay(500)
                         buf.clear()
                         connectedClient.write(buf)
 //                        delay(1000)
-                        val now = TimeSource.Monotonic.markNow()
-                        while (now.elapsedNow() < 10.seconds) {
-                            buf.clear()
-                            connectedClient.write(buf)
+                        lock.synchronize {
+                            val now = TimeSource.Monotonic.markNow()
+                            while (now.elapsedNow() < 2.seconds) {
+                                buf.clear()
+                                val b = connectedClient.write(buf)
+                            }
                         }
                     }
                     fail("Should throws SocketClosedException")
                 } catch (e: SocketClosedException) {
-                    e.printStackTrace()
                     // Do nothing
                 }
             }
