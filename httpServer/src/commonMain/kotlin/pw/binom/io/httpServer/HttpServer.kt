@@ -107,13 +107,11 @@ class HttpServer(
         GlobalScope.launch(manager) {
             var req: HttpRequest2Impl? = null
             try {
-                println("HTTP-SERVER: Reading request header....")
                 req = HttpRequest2Impl.read(
                     channel = channel,
                     server = this@HttpServer,
                     isNewConnect = isNewConnect,
                 )
-                println("HTTP-SERVER: Request readed!")
                 handler.request(req)
                 idleCheck()
             } catch (e: SocketClosedException) {
@@ -149,9 +147,7 @@ class HttpServer(
                         try {
                             idleCheck()
                             val client = try {
-                                println("Wait a client")
                                 val client = server.accept(null)
-                                println("Client connected! $client")
                                 client
                             } catch (e: ClosedException) {
                                 null
