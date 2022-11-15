@@ -1,14 +1,17 @@
 package pw.binom
 
+import pw.binom.atomic.AtomicInt
 import pw.binom.collections.defaultMutableList
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 
-class BatchExchange<T>(
-    trimFactor: Float = 0.5f,
-) {
+class BatchExchange<T> {
     private var read = defaultMutableList<T>()
     private var read2 = defaultMutableList<T>()
+
+    private var internalSize = AtomicInt(0)
+    val size
+        get() = internalSize.getValue()
 
     private val exchangeLock = SpinLock()
     private val processingLock = SpinLock()
@@ -22,6 +25,7 @@ class BatchExchange<T>(
             exchangeLock.synchronize {
                 read.clear()
                 read2.clear()
+                internalSize.setValue(0)
             }
         }
     }
@@ -29,6 +33,7 @@ class BatchExchange<T>(
     fun push(value: T) {
         exchangeLock.synchronize {
             read += value
+            internalSize.inc()
         }
     }
 
@@ -46,6 +51,7 @@ class BatchExchange<T>(
             try {
                 func(l)
             } finally {
+                internalSize.addAndGet(l.size)
                 l.clear()
             }
         }
