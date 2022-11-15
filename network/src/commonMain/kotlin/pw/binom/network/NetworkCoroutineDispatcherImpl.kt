@@ -57,8 +57,8 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
                         when {
                             event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
                             event.mode and Selector.EVENT_ERROR != 0 -> connection.error()
-                            event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite()
-                            event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead()
+                            event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite(event.key)
+                            event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead(event.key)
                             else -> error("Unknown connection event")
                         }
                     } catch (e: Throwable) {
@@ -126,42 +126,23 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         val con = UdpConnection(channel)
         channel.setBlocking(false)
         val key = selector.attach(channel, 0, con)
-        con.key.addKey(key)
+        con.keys.addKey(key)
         return con
-    }
-
-    override fun attach(channel: UdpConnection): UdpConnection {
-        val key = selector.attach(channel.channel, 0, channel)
-        channel.key.addKey(key)
-        return channel
     }
 
     override fun attach(channel: TcpClientSocketChannel, mode: Int): TcpConnection {
         val con = TcpConnection(channel)
         channel.setBlocking(false)
         val key = selector.attach(socket = channel, mode = mode, attachment = con)
-        con.key.addKey(key)
+        con.keys.addKey(key)
         return con
-    }
-
-    override fun attach(channel: TcpConnection, mode: Int): TcpConnection {
-        val key = selector.attach(socket = channel.channel, mode = mode, attachment = channel)
-        channel.key.addKey(key)
-        return channel
     }
 
     override fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
-        val con = TcpServerConnection(channel)
+        val con = TcpServerConnection(channel = channel, dispatcher = this)
         channel.setBlocking(false)
-        con.dispatchers += this
-        con.key.addKey(selector.attach(channel, 0, con))
+        con.keys.addKey(selector.attach(socket = channel, mode = 0, attachment = con))
         return con
-    }
-
-    override fun attach(channel: TcpServerConnection): TcpServerConnection {
-        channel.dispatchers += this
-        channel.key.addKey(selector.attach(channel.channel, 0, channel))
-        return channel
     }
 }
 

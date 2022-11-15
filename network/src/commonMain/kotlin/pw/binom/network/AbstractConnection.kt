@@ -9,7 +9,7 @@ abstract class AbstractConnection : Closeable {
      *
      * @return should return whether the connection should write more
      */
-    abstract fun readyForWrite()
+    abstract fun readyForWrite(key: Selector.Key)
     abstract fun connecting()
     abstract fun connected()
     abstract fun error()
@@ -20,5 +20,5 @@ abstract class AbstractConnection : Closeable {
      *
      * @return should return, should the connection read more
      */
-    abstract fun readyForRead()
+    abstract fun readyForRead(key: Selector.Key)
 }

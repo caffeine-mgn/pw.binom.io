@@ -144,6 +144,31 @@ class SelectorTest {
         assertEquals(0, selector.select(1000, selectKeys))
     }
 
+    @Test
+    fun testSeveralKeyOfOneSocket() {
+        val server = TcpServerSocketChannel()
+        server.setBlocking(false)
+        server.bind(NetworkAddress.Immutable(host = "127.0.0.1", port = 0))
+        val selectKeys1 = SelectedEvents.create()
+        val selector1 = Selector.open()
+        println("#1")
+        val key1 = selector1.attach(server)
+        println("#2")
+        key1.listensFlag = Selector.INPUT_READY
+        val selectKeys2 = SelectedEvents.create()
+        val selector2 = Selector.open()
+        println("#3")
+        val key2 = selector2.attach(server)
+        println("#4")
+        key2.listensFlag = Selector.INPUT_READY
+        TcpClientSocketChannel().connect(NetworkAddress.Immutable(host = "127.0.0.1", port = server.port!!))
+
+        val v1 = selector1.select(timeout = 10, selectedEvents = selectKeys1)
+        val v2 = selector2.select(timeout = 10, selectedEvents = selectKeys2)
+
+        println("v1=$v1, v2=$v2")
+    }
+
     @OptIn(ExperimentalTime::class)
     @Test
     fun reattachTest() {

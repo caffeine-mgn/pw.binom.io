@@ -19,7 +19,7 @@ expect val Long.ntoh: Long
 expect val Environment.isBigEndian2: Boolean
 
 @JvmInline
-internal value class KeyCollection(private val set: MutableSet<Selector.Key>) {
+value class KeyCollection(private val set: MutableSet<Selector.Key>) {
     constructor() : this(defaultMutableSet())
 
     fun addKey(key: Selector.Key) = set.add(key)

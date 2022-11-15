@@ -7,11 +7,8 @@ import kotlin.coroutines.resumeWithException
 interface NetworkManager : CoroutineContext {
     fun wakeup()
     fun attach(channel: UdpSocketChannel): UdpConnection
-    fun attach(channel: UdpConnection): UdpConnection
     fun attach(channel: TcpClientSocketChannel, mode: Int = 0): TcpConnection
-    fun attach(channel: TcpConnection, mode: Int = 0): TcpConnection
     fun attach(channel: TcpServerSocketChannel): TcpServerConnection
-    fun attach(channel: TcpServerConnection): TcpServerConnection
 }
 
 suspend fun NetworkManager.tcpConnect(address: NetworkAddress): TcpConnection {
