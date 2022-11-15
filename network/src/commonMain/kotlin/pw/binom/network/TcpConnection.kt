@@ -2,6 +2,7 @@ package pw.binom.network
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
+import pw.binom.concurrency.SpinLock
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
 import kotlin.coroutines.resume
@@ -12,6 +13,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
     var description: String? = null
     private var closed = false
     private var _channel: TcpClientSocketChannel? = channel
+    private val readLock = SpinLock()
     val channel: TcpClientSocketChannel
         get() = _channel!!
     val keys = KeyCollection()
@@ -123,14 +125,14 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
     }
 
     override fun readyForRead(key: Selector.Key) {
-        val key = this.keys
+        val keys = this.keys
         val continuation = readData.continuation
         val data = readData.data
         if (continuation == null) {
-            key.removeListen(Selector.INPUT_READY)
+            keys.removeListen(Selector.INPUT_READY)
             return
         }
-        data ?: throw IllegalStateException("readData.data is not set")
+        data ?: error("readData.data is not set")
         val readed = channel.read(data)
         if (readed == -1) {
             val c = continuation
@@ -145,7 +147,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
                 readData.reset()
                 con.resume(readed)
                 if (readData.continuation == null) {
-                    key.removeListen(Selector.INPUT_READY)
+                    keys.removeListen(Selector.INPUT_READY)
                 }
             }
         } else {
@@ -153,7 +155,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             readData.reset()
             con.resume(readed)
             if (readData.continuation == null) {
-                key.removeListen(Selector.INPUT_READY)
+                keys.removeListen(Selector.INPUT_READY)
             }
         }
     }
@@ -218,7 +220,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             return 0
         }
         if (readData.continuation != null) {
-            throw IllegalStateException("Connection already have read listener")
+            error("Connection already have read listener")
         }
         val r = channel.read(dest)
         if (r > 0 && dest.remaining == 0) {
