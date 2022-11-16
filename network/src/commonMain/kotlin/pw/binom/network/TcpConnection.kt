@@ -209,6 +209,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
     }
 
     override suspend fun flush() {
+        // Do nothing
     }
 
     override val available: Int
@@ -263,7 +264,7 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             throw SocketClosedException()
         }
         readData.full = false
-        val readed = suspendCancellableCoroutine<Int> {
+        return suspendCancellableCoroutine {
             it.invokeOnCancellation {
                 this.keys.removeListen(Selector.INPUT_READY)
                 this.keys.wakeup()
@@ -275,10 +276,5 @@ class TcpConnection(channel: TcpClientSocketChannel) : AbstractConnection(), Asy
             this.keys.addListen(Selector.INPUT_READY)
             this.keys.wakeup()
         }
-//        if (readed == 0) {
-//            runCatching { channel.close() }
-//            throw SocketClosedException()
-//        }
-        return readed
     }
 }
