@@ -26,8 +26,9 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         set(value) {
             if (value > capacity || value < 0) throw createLimitException(value)
             field = value
-            if (position > value)
+            if (position > value) {
                 position = value
+            }
         }
     actual override val length: Int
         get() = chars.size
