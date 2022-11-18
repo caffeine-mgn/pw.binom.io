@@ -49,12 +49,7 @@ class IconvCharset(override val name: String) : Charset, Closeable {
         decodePool.checkTrim()
     }
 
-    init {
-        println("IconvCharset: $name NEW")
-    }
-
     override fun close() {
-        println("IconvCharset: $name CLOSE")
         try {
             encodePool.close()
         } finally {
