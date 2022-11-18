@@ -1,15 +1,53 @@
 package pw.binom.plugins
 
 import com.bmuschko.gradle.docker.tasks.AbstractDockerRemoteApiTask
-import com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer
-import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
-import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
-import com.bmuschko.gradle.docker.tasks.container.DockerStopContainer
+import com.bmuschko.gradle.docker.tasks.container.*
 import com.bmuschko.gradle.docker.tasks.image.DockerPullImage
+import com.github.dockerjava.api.DockerClient
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskProvider
 import java.util.*
+import java.util.concurrent.TimeoutException
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+
+abstract class DockerWaitHealthyContainer : DockerExistingContainer() {
+
+    @Input
+    @org.gradle.api.tasks.Optional
+    var timeout: Int? = 60
+
+    @field:Input
+    @field:org.gradle.api.tasks.Optional
+    var checkInterval: Long? = 5
+
+    @OptIn(ExperimentalTime::class)
+    override fun runRemoteCommand() {
+        logger.quiet("Waiting for container with ID '${containerId.get()}' to be healthy.")
+        val now = TimeSource.Monotonic.markNow()
+        val finalTime = System.currentTimeMillis() + (timeout ?: 60) * 1000
+        val sleepTime = checkInterval ?: 5 * 1000
+        while (System.currentTimeMillis() < finalTime) {
+            if (isHealthy(dockerClient)) {
+                logger.quiet("Container with ID \"${containerId.get()}\" is healthy. Startup in ${now.elapsedNow()}")
+                return
+            }
+            Thread.sleep(sleepTime)
+        }
+        if (!isHealthy(dockerClient)) {
+            throw TimeoutException("Health check timeout expired")
+        }
+    }
+
+    private fun isHealthy(dockerClient: DockerClient): Boolean {
+        val command = dockerClient.inspectContainerCmd(getContainerId().get())
+        val response = command.exec()
+        val healthStatus = response.state.health.status
+        return healthStatus == "healthy"
+    }
+}
 
 class DockerTasks(
     val containerId: String,
@@ -18,9 +56,13 @@ class DockerTasks(
     val start: TaskProvider<DockerStartContainer>,
     val stop: TaskProvider<DockerStopContainer>,
     val remove: TaskProvider<DockerRemoveContainer>,
+    val waitHealthy: TaskProvider<DockerWaitHealthyContainer>?,
 ) {
     fun dependsOn(task: Task) {
         task.dependsOn(start)
+        if (waitHealthy != null) {
+            task.dependsOn(waitHealthy)
+        }
         task.finalizedBy(stop)
         task.finalizedBy(remove)
     }
@@ -34,7 +76,8 @@ object DockerUtils {
         args: List<String> = emptyList(),
         suffix: String,
         envs: Map<String, String> = emptyMap(),
-        healthCheck: String? = null
+        healthCheck: String? = null,
+        withHealthCheck: Boolean = false,
     ): DockerTasks {
         val containerId = UUID.randomUUID().toString()
         val pullTask =
@@ -80,6 +123,19 @@ object DockerUtils {
             it.targetContainerId(containerId)
         }
 
+        val waitHealthyTask = if (withHealthCheck) {
+            project.tasks.register(
+                "waitHealthy$suffix",
+                DockerWaitHealthyContainer::class.java
+            )
+        } else {
+            null
+        }
+        waitHealthyTask?.configure {
+            it.dependsOn(startTask)
+            it.targetContainerId(containerId)
+        }
+
         val stopTask = project.tasks.register(
             "stop$suffix",
             com.bmuschko.gradle.docker.tasks.container.DockerStopContainer::class.java
@@ -105,6 +161,7 @@ object DockerUtils {
             start = startTask,
             stop = stopTask,
             remove = removeTask,
+            waitHealthy = waitHealthyTask
         )
     }
 }
