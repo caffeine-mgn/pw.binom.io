@@ -4,8 +4,6 @@ import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.io.IOException
-import pw.binom.readByte
-import pw.binom.readInt
 
 interface KindedMessage {
     val kind: Byte
@@ -13,8 +11,8 @@ interface KindedMessage {
 
     companion object {
         suspend fun read(ctx: PackageReader): KindedMessage {
-            val cmd = ctx.rawInput.readByte(ctx.buf16)
-            val len = ctx.rawInput.readInt(ctx.buf16) - Int.SIZE_BYTES
+            val cmd = ctx.readByte()
+            val len = ctx.readInt() - Int.SIZE_BYTES
             require(len >= 0)
             ctx.startBody(len)
             val v = when (cmd) {

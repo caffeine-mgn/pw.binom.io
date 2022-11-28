@@ -5,8 +5,6 @@ import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.readInt
-import pw.binom.readShort
 
 class RowDescriptionMessage : KindedMessage {
     override val kind: Byte
@@ -24,17 +22,17 @@ class RowDescriptionMessage : KindedMessage {
 
     companion object {
         suspend fun read(ctx: PackageReader): RowDescriptionMessage {
-            val columnsCount = ctx.input.readShort(ctx.buf16)
+            val columnsCount = ctx.readShort()
             val msg = ctx.rowDescriptionMessage
             msg.columns = Array(columnsCount.toInt()) {
                 val meta = ctx.giveColumnData()
                 meta.name = ctx.readCString()
-                meta.tableObjectId = ctx.input.readInt(ctx.buf16)
-                meta.columnNumber = ctx.input.readShort(ctx.buf16).toInt()
-                meta.dataType = ctx.input.readInt(ctx.buf16)
-                meta.dataTypeSize = ctx.input.readShort(ctx.buf16).toLong()
-                meta.dataTypeModifier = ctx.input.readInt(ctx.buf16)
-                meta.fieldFormat = ctx.input.readShort(ctx.buf16).toInt()
+                meta.tableObjectId = ctx.readInt()
+                meta.columnNumber = ctx.readShort().toInt()
+                meta.dataType = ctx.readInt()
+                meta.dataTypeSize = ctx.readShort().toLong()
+                meta.dataTypeModifier = ctx.readInt()
+                meta.fieldFormat = ctx.readShort().toInt()
                 meta
             }
             ctx.end()

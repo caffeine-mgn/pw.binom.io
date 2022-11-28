@@ -4,8 +4,6 @@ import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.readInt
-import pw.binom.readShort
 
 class DataRowMessage : KindedMessage {
     override val kind: Byte
@@ -23,9 +21,9 @@ class DataRowMessage : KindedMessage {
 
     companion object {
         suspend fun read(ctx: PackageReader): DataRowMessage {
-            val columnCount = ctx.input.readShort(ctx.buf16)
+            val columnCount = ctx.readShort()
             ctx.dataRowMessage.data = Array(columnCount.toInt()) {
-                val length = ctx.input.readInt(ctx.buf16)
+                val length = ctx.readInt()
                 when {
                     length < 0 -> null
                     length == 0 -> byteArrayOf()

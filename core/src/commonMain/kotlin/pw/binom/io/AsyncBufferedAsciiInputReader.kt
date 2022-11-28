@@ -1,6 +1,7 @@
 package pw.binom.io
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.fromBytes
 import pw.binom.pool.ObjectPool
 
 class AsyncBufferedAsciiInputReader private constructor(
@@ -66,15 +67,15 @@ class AsyncBufferedAsciiInputReader private constructor(
     override val available: Int
         get() = if (closed) 0 else if (buffer.remaining > 0) buffer.remaining else -1
 
-    private suspend fun full() {
+    private suspend fun full(minSize: Int = 1) {
         if (eof) {
             return
         }
-        if (buffer.remaining > 0) {
+        if (buffer.remaining >= minSize) {
             return
         }
         try {
-            buffer.clear()
+            buffer.compact()
             val len = stream.read(buffer)
             if (len == 0) {
                 eof = true
@@ -126,11 +127,35 @@ class AsyncBufferedAsciiInputReader private constructor(
     }
 
     suspend fun readByte(): Byte {
-        full()
-        if (buffer.remaining < 1) {
+        full(Byte.SIZE_BYTES)
+        if (buffer.remaining < Byte.SIZE_BYTES) {
             throw EOFException()
         }
         return buffer.getByte()
+    }
+
+    suspend fun readShort(): Short {
+        full(Short.SIZE_BYTES)
+        if (buffer.remaining < Short.SIZE_BYTES) {
+            throw EOFException()
+        }
+        return Short.fromBytes(buffer)
+    }
+
+    suspend fun readInt(): Int {
+        full(Int.SIZE_BYTES)
+        if (buffer.remaining < Int.SIZE_BYTES) {
+            throw EOFException()
+        }
+        return Int.fromBytes(buffer)
+    }
+
+    suspend fun readLong(): Long {
+        full(Long.SIZE_BYTES)
+        if (buffer.remaining < Long.SIZE_BYTES) {
+            throw EOFException()
+        }
+        return Long.fromBytes(buffer)
     }
 
     suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {

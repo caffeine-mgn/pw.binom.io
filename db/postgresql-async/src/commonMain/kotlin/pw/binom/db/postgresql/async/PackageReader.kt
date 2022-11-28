@@ -5,17 +5,13 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.io.*
-import pw.binom.readByte
-import pw.binom.readInt
-import pw.binom.readShort
 
 class PackageReader(
     val connection: PGConnection,
     val charset: Charset,
-    val temporalBuffer: ByteBuffer,
-    val rawInput: AsyncBufferedAsciiInputReader
+    private val temporalBuffer: ByteBuffer,
+    private val rawInput: AsyncBufferedAsciiInputReader
 ) : Closeable {
-    val buf16 = ByteBuffer.alloc(16)
     val authenticationChallengeMessage = AuthenticationMessage.AuthenticationChallengeMessage()
     val errorMessage = ErrorMessage()
     val noticeMessage = NoticeMessage()
@@ -65,18 +61,13 @@ class PackageReader(
     fun end() {
         check(bodyReading) { "Body not started" }
         check(remaining <= 0) { "Body read not all. remaining: [$remaining]" }
-        limitInput.limitOn = false
         bodyReading = false
     }
 
     fun startBody(length: Int) {
         check(!bodyReading) { "Body already started" }
-//        if (!bodyReading) {
-//            println()
-//        }
         this.length = length
         limitInput.limit = length
-        limitInput.limitOn = true
         output.clear()
         columnIndex = 0
         bodyReading = true
@@ -84,7 +75,6 @@ class PackageReader(
 
     override fun close() {
         stringBuffer.close()
-        buf16.close()
         output.close()
     }
 
@@ -106,43 +96,69 @@ class PackageReader(
         return data
     }
 
-    suspend fun readByte() = limitInput.readByte(buf16)
-    suspend fun readShort() = limitInput.readShort(temporalBuffer)
-    suspend fun readInt() = limitInput.readInt(buf16)
-    suspend fun readByteArray(length: Int): ByteArray {
-        return input.readByteArray(length, temporalBuffer)
+    suspend fun readByte() = if (bodyReading) limitInput.readByte() else rawInput.readByte()
+    suspend fun readShort() =
+        if (bodyReading) limitInput.readShort() else rawInput.readShort()
+
+    suspend fun readInt() = if (bodyReading) limitInput.readInt() else rawInput.readInt()
+    suspend fun readByteArray(length: Int): ByteArray = if (bodyReading) {
+        limitInput.readByteArray(length, temporalBuffer)
+    } else {
+        rawInput.readByteArray(length, temporalBuffer)
     }
 }
 
 private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncInput {
     var limit = 0
-    var limitOn = true
     override val available: Int
-        get() = if (limitOn && input.available > 0) {
+        get() = if (input.available > 0) {
             minOf(input.available, limit)
         } else {
             input.available
         }
 
     suspend fun readByte(): Byte {
-        if (limitOn && limit <= 0) {
+        if (limit < Byte.SIZE_BYTES) {
             throw EOFException()
         }
-        val byte = input.readByte()
-        if (limitOn) {
-            limit--
+        val value = input.readByte()
+        limit -= Byte.SIZE_BYTES
+        return value
+    }
+
+    suspend fun readShort(): Short {
+        if (limit < Short.SIZE_BYTES) {
+            throw EOFException()
         }
-        return byte
+        val value = input.readShort()
+        limit -= Short.SIZE_BYTES
+        return value
+    }
+
+    suspend fun readInt(): Int {
+        if (limit < Int.SIZE_BYTES) {
+            throw EOFException()
+        }
+        val value = input.readInt()
+        limit -= Int.SIZE_BYTES
+        return value
+    }
+
+    suspend fun readLong(): Long {
+        if (limit < Long.SIZE_BYTES) {
+            throw EOFException()
+        }
+        val value = input.readLong()
+        limit -= Long.SIZE_BYTES
+        return value
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
-        val limit = if (limitOn) minOf(dest.remaining, limit) else dest.remaining
+        val limit = minOf(dest.remaining, limit)
         val l = dest.limit
         dest.limit = dest.position + limit
         val read = input.read(dest)
-        if (limitOn) {
-            this.limit -= read
-        }
+        this.limit -= read
         dest.limit = l
         return read
     }

@@ -32,26 +32,16 @@ suspend fun AsyncInput.readByteArray(size: Int, bufferProvider: ByteBufferProvid
 
 suspend fun AsyncInput.readByteArray(dest: ByteArray, bufferProvider: ByteBufferProvider) {
     bufferProvider.using { buffer ->
-        println("readByteArray-> reading ${dest.size}")
         var cursor = 0
         while (cursor < dest.size) {
             buffer.reset(0, minOf(dest.size - cursor, buffer.capacity))
             val len = read(buffer)
-            println("readByteArray-> readed $len")
             if (len == 0) {
                 throw EOFException("Read $cursor/${dest.size}, can't read ${dest.size - cursor}")
             }
             buffer.flip()
-            println("readByteArray-> After read in buffer: ")
-            buffer.forEach {
-                print(it.toUByte().toString(16).padStart(2, '0'))
-            }
-            println()
             val cp = buffer.read(dest, offset = cursor)
-            println("readByteArray-> reading ${dest.size}. cp=$cp")
             cursor += len
         }
-        val str = dest.map { it.toUByte().toString(16).padStart(2, '0') }.joinToString(" ")
-        println("readByteArray-> result: $str")
     }
 }

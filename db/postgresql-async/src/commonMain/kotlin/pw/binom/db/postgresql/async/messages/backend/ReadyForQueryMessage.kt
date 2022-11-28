@@ -4,7 +4,6 @@ import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.readByte
 
 class ReadyForQueryMessage : KindedMessage {
     override val kind: Byte
@@ -20,7 +19,7 @@ class ReadyForQueryMessage : KindedMessage {
 
     companion object {
         suspend fun read(ctx: PackageReader): ReadyForQueryMessage {
-            ctx.readyForQueryMessage.transactionStatus = ctx.input.readByte(ctx.buf16).toInt().toChar()
+            ctx.readyForQueryMessage.transactionStatus = ctx.readByte().toInt().toChar()
             ctx.end()
             return ctx.readyForQueryMessage
         }

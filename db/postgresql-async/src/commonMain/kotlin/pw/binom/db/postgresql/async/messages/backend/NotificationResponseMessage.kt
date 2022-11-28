@@ -4,7 +4,6 @@ import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.readInt
 
 class NotificationResponseMessage : KindedMessage {
 
@@ -31,7 +30,7 @@ class NotificationResponseMessage : KindedMessage {
     companion object {
         suspend fun read(ctx: PackageReader): NotificationResponseMessage {
             val msg = ctx.notificationResponseMessage
-            msg.backendPid = ctx.input.readInt(ctx.buf16)
+            msg.backendPid = ctx.readInt()
             msg.channel = ctx.readCString()
             msg.payload = ctx.readCString()
             ctx.end()

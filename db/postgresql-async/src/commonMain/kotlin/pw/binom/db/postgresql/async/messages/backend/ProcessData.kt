@@ -4,7 +4,6 @@ import pw.binom.db.postgresql.async.PackageReader
 import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.readInt
 
 class ProcessData : KindedMessage {
     override val kind: Byte
@@ -23,8 +22,8 @@ class ProcessData : KindedMessage {
 
     companion object {
         suspend fun read(ctx: PackageReader): ProcessData {
-            ctx.processData.processId = ctx.input.readInt(ctx.buf16)
-            ctx.processData.secretKey = ctx.input.readInt(ctx.buf16)
+            ctx.processData.processId = ctx.readInt()
+            ctx.processData.secretKey = ctx.readInt()
             ctx.end()
             return ctx.processData
         }
