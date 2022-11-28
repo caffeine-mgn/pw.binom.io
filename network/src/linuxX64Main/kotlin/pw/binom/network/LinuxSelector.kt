@@ -4,11 +4,12 @@ import kotlinx.cinterop.*
 import platform.linux.*
 import platform.posix.pipe
 import platform.posix.read
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.LinkedList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.defaultMutableSet
 import pw.binom.collections.useName
-import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.synchronize
 import pw.binom.thread.Thread
 import kotlin.collections.set
@@ -26,7 +27,7 @@ class LinuxSelector : AbstractSelector() {
     internal val idToKey = defaultMutableMap<Int, LinuxKey>().useName("LinuxSelector")
     private val keyForRemove = LinkedList<Pair<Int, RawSocket>>()
     private val keyForAdd = LinkedList<Pair<Int, LinuxKey>>()
-    private val selectLock = SpinLock()
+    private val selectLock = ReentrantLock()
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
 
@@ -102,8 +103,12 @@ class LinuxSelector : AbstractSelector() {
     }
 
     private var selectThreadId = 0L
+    private val selecting = AtomicBoolean(false)
 
     override fun wakeup() {
+        if (!selecting.getValue()) {
+            return
+        }
         if (selectThreadId == 0L || selectThreadId == Thread.currentThread.id) {
             return
         }
@@ -121,8 +126,9 @@ class LinuxSelector : AbstractSelector() {
         }
     }
 
-    override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
+    override fun select(selectedEvents: SelectedEvents, timeout: Long): Int {
         selectLock.synchronize {
+            selecting.setValue(true)
             selectThreadId = Thread.currentThread.id
             try {
                 if (keyForAdd.isNotEmpty()) {
@@ -150,8 +156,10 @@ class LinuxSelector : AbstractSelector() {
                 )
                 selectedEvents.eventCount = eventCount
                 selectedEvents.selector = this
+                (selectedEvents as? LinuxSelectedEvents)?.internalResetFlags()
                 return eventCount
             } finally {
+                selecting.setValue(false)
                 selectThreadId = 0L
             }
         }

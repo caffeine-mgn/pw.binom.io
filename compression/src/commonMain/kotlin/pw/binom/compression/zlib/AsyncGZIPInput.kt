@@ -27,8 +27,9 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
 
     private var headerRead = false
     private suspend fun readHeader(stream: AsyncInput): Int {
-        if (headerRead)
+        if (headerRead) {
             return 0
+        }
         headerRead = true
         crc.init()
         val stream = AsyncCheckedInput(stream, crc)
@@ -36,8 +37,9 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
         stream.readFully(tt)
         val b1 = tt[0].toUByte()
         val b2 = tt[1].toUByte()
-        if (b1 != 0x1fu.toUByte() || b2 != 0x8bu.toUByte())
+        if (b1 != 0x1fu.toUByte() || b2 != 0x8bu.toUByte()) {
             throw IOException("Not in GZIP format")
+        }
         // Check compression method
         tt.reset(0, 1)
         stream.readFully(tt)

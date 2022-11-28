@@ -5,9 +5,9 @@ import pw.binom.io.AsyncOutput
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.use
-import pw.binom.net.URL
 import pw.binom.s3.dto.ContentHead
 import pw.binom.s3.dto.Part
+import pw.binom.url.URL
 
 class S3Client(
     val url: URL,

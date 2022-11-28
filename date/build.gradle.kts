@@ -39,7 +39,7 @@ kotlin {
     androidNativeX86()
     androidNativeArm32()
     androidNativeArm64()
-    js(BOTH) {
+    js(pw.binom.Target.JS_TARGET) {
         browser {
             testTask {
                 useKarma {

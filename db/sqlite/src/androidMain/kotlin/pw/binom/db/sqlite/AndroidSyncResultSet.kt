@@ -2,12 +2,43 @@ package pw.binom.db.sqlite
 
 import android.database.Cursor
 import pw.binom.date.DateTime
+import pw.binom.db.ColumnType
 import pw.binom.db.sync.SyncResultSet
 
 class AndroidSyncResultSet(val native: Cursor) : SyncResultSet {
     override fun next(): Boolean = native.moveToNext()
 
     override val columns: List<String> by lazy { native.columnNames.toList() }
+
+    override fun columnType(index: Int): ColumnType =
+        when (val type = native.getType(index + 1)) {
+//            Types.TINYINT -> ColumnType.TINYINT
+//            Types.SMALLINT -> ColumnType.SMALLINT
+            Cursor.FIELD_TYPE_INTEGER -> ColumnType.INTEGER
+//            Types.BIGINT -> ColumnType.BIGINT
+//            Types.FLOAT -> ColumnType.FLOAT
+//            Types.REAL -> ColumnType.REAL
+            Cursor.FIELD_TYPE_FLOAT -> ColumnType.DOUBLE
+//            Types.NUMERIC -> ColumnType.NUMERIC
+//            Types.DECIMAL -> ColumnType.DECIMAL
+//            Types.CHAR -> ColumnType.CHAR
+//            Types.VARCHAR -> ColumnType.VARCHAR
+//            Types.LONGVARCHAR -> ColumnType.LONGVARCHAR
+//            Types.DATE -> ColumnType.DATE
+//            Types.TIME -> ColumnType.TIME
+//            Types.TIMESTAMP -> ColumnType.TIMESTAMP
+//            Types.BINARY -> ColumnType.BINARY
+//            Types.VARBINARY -> ColumnType.VARBINARY
+//            Types.LONGVARBINARY -> ColumnType.LONGVARBINARY
+            Cursor.FIELD_TYPE_NULL -> ColumnType.NULL
+//            Types.OTHER -> ColumnType.OTHER
+            Cursor.FIELD_TYPE_BLOB -> ColumnType.BINARY
+            Cursor.FIELD_TYPE_STRING -> ColumnType.VARCHAR
+            else -> error("Unknown data type $type")
+        }
+
+    override fun columnType(column: String): ColumnType =
+        columnType(native.getColumnIndex(column))
 
     override fun getString(index: Int): String? = if (native.isNull(index)) {
         null

@@ -99,7 +99,7 @@ class LinuxKey(
         "LinuxKey(native=${modeToString(epollCommonToNative(listensFlag))}, connected=$connected, ${generateToString()})"
 
     fun epollCommonToNative(mode: Int): Int {
-        var events = 0
+        var events = EPOLLONESHOT
         if (Selector.EVENT_ERROR in mode) {
             events = events or EPOLLHUP or EPOLLERR
         }

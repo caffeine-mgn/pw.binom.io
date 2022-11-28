@@ -25,7 +25,7 @@ kotlin {
         linuxArm64()
     }
     macosX64()
-    js("js", BOTH) {
+    js(pw.binom.Target.JS_TARGET) {
         browser {
             testTask {
                 useKarma {

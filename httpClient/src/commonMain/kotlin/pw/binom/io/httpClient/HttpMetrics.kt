@@ -10,5 +10,6 @@ internal object HttpMetrics {
 
     init {
         BinomMetrics.reg(baseHttpClientCountMetric)
+        BinomMetrics.reg(defaultHttpRequestCountMetric)
     }
 }

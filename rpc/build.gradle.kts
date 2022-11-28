@@ -6,7 +6,7 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     jvm()
     linuxX64()
-    js("js", BOTH) {
+    js(pw.binom.Target.JS_TARGET) {
         browser()
         nodejs()
     }

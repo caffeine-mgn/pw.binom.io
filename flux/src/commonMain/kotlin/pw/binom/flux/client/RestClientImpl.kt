@@ -1,7 +1,7 @@
 package pw.binom.flux.client
 
 import pw.binom.io.httpClient.HttpClient
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 internal class RestClientImpl(val client: HttpClient, val serialization: RestClientSerialization) : RestClient {
     override fun close() {

@@ -40,7 +40,7 @@ kotlin {
     androidNativeArm32()
     androidNativeArm64()
     wasm32()
-    js("js", BOTH) {
+    js(pw.binom.Target.JS_TARGET) {
         browser()
         nodejs()
     }
@@ -53,16 +53,15 @@ kotlin {
                 api(project(":env"))
                 api(project(":atomic"))
                 api(project(":collections"))
+                api(project(":pool"))
+                api(project(":url"))
+                api(project(":uuid"))
             }
         }
         val jvmLikeMain by creating {
             dependsOn(commonMain)
         }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-                dependsOn(jvmLikeMain)
-            }
-        }
+        dependsOn("androidMain", jvmLikeMain)
         val jvmMain by getting {
             dependsOn(jvmLikeMain)
         }

@@ -12,6 +12,7 @@ open class AlwaysNewAllocator(val size: Int = DEFAULT_BUFFER_SIZE) : ByteBufferA
     }
 
     override fun close() {
+        // Do nothing
     }
 }
 
@@ -26,5 +27,6 @@ object DEFAULT_BYTEBUFFER_ALLOCATOR : ByteBufferAllocator {
     }
 
     override fun close() {
+        // Do nothing
     }
 }

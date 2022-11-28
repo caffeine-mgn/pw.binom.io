@@ -2,7 +2,7 @@ package pw.binom.io.httpClient
 
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthOutput
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 class RequestAsyncContentLengthOutput constructor(
     val URI: URL,

@@ -80,9 +80,6 @@ class AsyncBufferedAsciiInputReader private constructor(
                 eof = true
             } else {
                 buffer.flip()
-                val data = buffer.holdState {
-                    it.toByteArray().map { it.toInt().toChar() }.joinToString("")
-                }
             }
         } catch (e: Throwable) {
             buffer.empty()
@@ -126,6 +123,14 @@ class AsyncBufferedAsciiInputReader private constructor(
             dest[i] = buffer.getByte().toInt().toChar()
         }
         return len
+    }
+
+    suspend fun readByte(): Byte {
+        full()
+        if (buffer.remaining < 1) {
+            throw EOFException()
+        }
+        return buffer.getByte()
     }
 
     suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {

@@ -85,10 +85,10 @@ class BufferedOutputAppendable private constructor(
         flush()
     }
 
-    override fun append(c: Char): Appendable {
+    override fun append(value: Char): Appendable {
         checkClosed()
         checkFlush()
-        charBuffer.put(c)
+        charBuffer.put(value)
         return this
     }
 

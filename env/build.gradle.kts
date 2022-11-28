@@ -47,7 +47,7 @@ kotlin {
     watchosArm32()
     watchosArm64()
     watchosSimulatorArm64()
-    js("js", BOTH) {
+    js(pw.binom.Target.JS_TARGET) {
         browser()
         nodejs()
     }

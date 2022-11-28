@@ -1,6 +1,6 @@
 package pw.binom.xml.sax
 
-import pw.binom.Stack
+import pw.binom.collections.Stack
 import pw.binom.io.Reader
 import pw.binom.xml.SyncXmlLexer
 import pw.binom.xml.TokenType

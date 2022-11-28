@@ -11,9 +11,9 @@ import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.io.socket.ssl.asyncChannel
-import pw.binom.net.URL
 import pw.binom.network.NetworkManager
 import pw.binom.ssl.*
+import pw.binom.url.URL
 import kotlin.time.ExperimentalTime
 
 class BaseHttpClient(

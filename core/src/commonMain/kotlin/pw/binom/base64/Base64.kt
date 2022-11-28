@@ -37,7 +37,7 @@ object Base64 {
         var counter = 0
         var old = 0.toByte()
         for (i in offset until offset + length) {
-            sb.append(encodeByte(counter, old, data[i]) { old = it })
+            sb.append(encodeByte(counter = counter, old = old, data = data[i]) { old = it })
             counter++
             if (counter == 3) {
                 counter = 0

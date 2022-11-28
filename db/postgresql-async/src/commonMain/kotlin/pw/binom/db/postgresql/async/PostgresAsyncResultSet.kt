@@ -1,20 +1,25 @@
 package pw.binom.db.postgresql.async
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import pw.binom.UUID
 import pw.binom.date.DateTime
 import pw.binom.date.of
+import pw.binom.db.ColumnType
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
+import pw.binom.uuid.UUID
+import pw.binom.uuid.toUUID
 
 class PostgresAsyncResultSet(
     binary: Boolean,
     val data: QueryResponse.Data,
 ) : AsyncResultSet {
     override val columns: List<String> by lazy { data.meta.map { it.name } }
+    override fun columnType(index: Int): ColumnType =
+        data.meta.getOrNull(index)?.columnType ?: throw SQLException("Column $index not exist")
 
-    override suspend fun next(): Boolean =
-        data.next()
+    override fun columnType(column: String) = columnType(getIndex(column))
+
+    override suspend fun next(): Boolean = data.next()
 
     override fun getString(index: Int): String? {
         val value = data[index] ?: return null
@@ -100,6 +105,9 @@ class PostgresAsyncResultSet(
         getBoolean(getIndex(column))
 
     override fun getInt(index: Int): Int? {
+        if (data.meta[index].columnType == ColumnType.BIT) {
+            return getBoolean(index)?.let { if (it) 1 else 0 }
+        }
         return getString(index)?.toInt()
 //        return when (val dataType = data.meta[index].dataType) {
 //            ColumnTypes.Bigserial -> Long.fromBytes(value).toInt()
@@ -115,6 +123,12 @@ class PostgresAsyncResultSet(
         getInt(getIndex(column))
 
     override fun getLong(index: Int): Long? {
+        if (data.meta[index].columnType == ColumnType.TIMESTAMP) {
+            return getDate(index)?.time
+        }
+        if (data.meta[index].columnType == ColumnType.BIT) {
+            return getBoolean(index)?.let { if (it) 1L else 0L }
+        }
         return getString(index)?.toLong()
 //        val value = data[index] ?: return null
 //        return when (val dataType = data.meta[index].dataType) {
@@ -156,6 +170,9 @@ class PostgresAsyncResultSet(
 
     override fun getBlob(index: Int): ByteArray? {
         val value = getString(index) ?: return null
+        if (data.meta[index].columnType == ColumnType.UUID) {
+            return value.toUUID().toByteArray()
+        }
         if (value.length <= 2 || value[0] != '\\' || value[1] != 'x' || value.length % 2 != 0) {
             throw IllegalArgumentException("Can't parse \"$value\" to ByteArray")
         }

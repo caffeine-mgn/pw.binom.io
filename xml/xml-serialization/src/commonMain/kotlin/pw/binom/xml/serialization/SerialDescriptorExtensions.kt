@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package pw.binom.xml.serialization
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
 import pw.binom.xml.serialization.annotations.XmlName
 import pw.binom.xml.serialization.annotations.XmlNamespace

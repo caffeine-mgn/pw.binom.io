@@ -6,6 +6,15 @@ expect class HMac : MessageDigest {
     constructor(algorithm: Algorithm, key: ByteArray)
 
     enum class Algorithm {
-        SHA512, SHA256, SHA1, MD5
+        SHA512, SHA256, SHA1, MD5;
+
+        companion object {
+            fun find(name: String): Algorithm?
+
+            /**
+             * @throws NoSuchAlgorithmException throws when algorithm [name] not found
+             */
+            fun get(name: String): Algorithm
+        }
     }
 }

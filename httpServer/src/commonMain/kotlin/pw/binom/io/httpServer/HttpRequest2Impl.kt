@@ -8,15 +8,14 @@ import pw.binom.io.*
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.net.Path
-import pw.binom.net.Query
-import pw.binom.net.toPath
-import pw.binom.net.toQuery
 import pw.binom.network.SocketClosedException
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
-import pw.binom.pool.borrow
 import pw.binom.skipAll
+import pw.binom.url.Path
+import pw.binom.url.Query
+import pw.binom.url.toPath
+import pw.binom.url.toQuery
 
 internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : HttpRequest {
     object Manager : ObjectFactory<HttpRequest2Impl> {
@@ -279,7 +278,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                 }
             }
         }
-        val r = server.httpResponse2Impl.borrow {
+        val r = server.httpResponse2Impl.borrow().also {
             it.reset(
                 keepAliveEnabled = server.maxIdleTime.isPositive() && headers.keepAlive,
                 channel = channel!!,

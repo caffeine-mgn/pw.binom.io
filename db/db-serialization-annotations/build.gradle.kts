@@ -1,4 +1,4 @@
-
+import pw.binom.publish.dependsOn
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -28,10 +28,10 @@ kotlin {
         linuxArm64()
     }
     macosX64()
-    js("js", BOTH) {
-        browser()
-        nodejs()
-    }
+//    js(pw.binom.Target.JS_TARGET) {
+//        browser()
+//        nodejs()
+//    }
     targets.all {
         compilations.findByName("main")?.compileKotlinTask?.kotlinOptions?.freeCompilerArgs =
             listOf("-opt-in=kotlin.RequiresOptIn")
@@ -44,40 +44,24 @@ kotlin {
             }
         }
 
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(commonMain)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(commonMain)
-            }
-        }
+        dependsOn("js*Main", commonMain)
+        dependsOn("linux*Main", commonMain)
+        dependsOn("mingw*Main", commonMain)
+        dependsOn("watchos*Main", commonMain)
+        dependsOn("macos*Main", commonMain)
+        dependsOn("ios*Main", commonMain)
+        dependsOn("androidNative*Main", commonMain)
+        dependsOn("wasm*Main", commonMain)
 
         val mingwX64Main by getting {
             dependsOn(commonMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonMain)
-            }
         }
 
         val macosX64Main by getting {
             dependsOn(commonMain)
         }
-
         val jvmMain by getting {
             dependsOn(commonMain)
-        }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-                dependsOn(jvmMain)
-            }
         }
         val commonTest by getting {
             dependencies {

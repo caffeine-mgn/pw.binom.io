@@ -3,6 +3,7 @@ package pw.binom.db.sqlite
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import pw.binom.date.DateTime
+import pw.binom.db.ColumnType
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.sync.SyncResultSet
 
@@ -17,8 +18,11 @@ class AsyncResultSetAdapter(val ref: SyncResultSet, val worker: MyWorker, overri
         }
     }
 
-    override fun getString(index: Int): String? =
-        ref.getString(index)
+    override fun columnType(index: Int): ColumnType = ref.columnType(index)
+
+    override fun columnType(column: String): ColumnType = ref.columnType(column)
+
+    override fun getString(index: Int): String? = ref.getString(index)
 
     override fun getString(column: String): String? =
         ref.getString(column)

@@ -2,7 +2,6 @@ package pw.binom.db.postgresql.async.messages.frontend
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
-import pw.binom.UUID
 import pw.binom.date.Calendar
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
@@ -11,7 +10,7 @@ import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.PostgresqlException
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
-import pw.binom.writeUUID
+import pw.binom.uuid.UUID
 
 class BindMessage : KindedMessage {
     override val kind: Byte
@@ -99,7 +98,7 @@ object TypeWriter {
                 when (value) {
                     is UUID -> {
                         writer.writeInt(16)
-                        writer.output.writeUUID(writer.buf16, value)
+                        writer.writeUUID(value)
                     }
                     else -> throwNotSupported("UUID")
                 }

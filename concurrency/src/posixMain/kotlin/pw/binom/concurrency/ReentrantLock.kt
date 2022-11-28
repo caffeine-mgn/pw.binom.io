@@ -3,7 +3,6 @@ package pw.binom.concurrency
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.native.concurrent.AtomicNativePtr
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
@@ -31,19 +30,26 @@ actual class ReentrantLock : Lock {
         free(native)
     }
 
-    init {
-        freeze()
+    actual override fun tryLock(): Boolean {
+        val r = pthread_mutex_trylock(native)
+        if (r == EBUSY) {
+            return false
+        }
+        if (r != 0) {
+            error("Can't lock mutex")
+        }
+        return true
     }
 
     actual override fun lock() {
         if (pthread_mutex_lock(native) != 0) {
-            throw IllegalStateException("Can't lock mutex")
+            error("Can't lock mutex")
         }
     }
 
     actual override fun unlock() {
         if (pthread_mutex_unlock(native) != 0) {
-            throw IllegalStateException("Can't unlock mutex")
+            error("Can't unlock mutex")
         }
     }
 
@@ -56,7 +62,8 @@ actual class ReentrantLock : Lock {
 
         init {
             if (pthread_cond_init(native, null) != 0) {
-                throw IllegalStateException("Can't init Condition")
+                free(native)
+                error("Can't init Condition")
             }
         }
 

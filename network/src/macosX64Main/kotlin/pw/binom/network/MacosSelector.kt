@@ -277,7 +277,7 @@ class MacosSelector : AbstractSelector() {
 }
 
 private fun epollNativeToCommon(mode: Int): Int {
-    var events = 0
+    var events = EV_ONESHOT
     if (EVFILT_READ in mode) {
         events = events or Selector.INPUT_READY
     }

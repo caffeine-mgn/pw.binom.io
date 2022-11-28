@@ -1,12 +1,18 @@
 rootProject.name = "Binom"
 
 include(":env")
+include(":pool")
+include(":cleaner")
 include(":crc")
 include(":io")
+include(":scram")
 include(":charset")
 include(":core")
 include(":concurrency")
+include(":uuid")
+include(":uuid-serialization")
 include(":date")
+include(":url")
 include(":strong")
 include(":strong:strong-application")
 include(":file")

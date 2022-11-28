@@ -5,12 +5,12 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
-import pw.binom.UUID
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.defaultMutableSet
 import pw.binom.date.Calendar
 import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
+import pw.binom.uuid.UUID
 
 val SqlSerializersModule = SerializersModule {
     this.contextual(UUID::class, UUIDSerializer)

@@ -6,6 +6,7 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
+import pw.binom.uuid.UUID
 import kotlin.experimental.xor
 
 internal object InternalProtocolUtils {

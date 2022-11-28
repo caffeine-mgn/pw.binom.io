@@ -6,10 +6,23 @@ import pw.binom.NullAsyncOutput
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
 import pw.binom.network.SocketClosedException
+import pw.binom.pool.ObjectFactory
+import pw.binom.pool.ObjectPool
 import pw.binom.writeShort
 
 class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) :
     WebSocketConnection {
+
+    companion object {
+        val factory = object : ObjectFactory<WebSocketConnectionImpl2> {
+            override fun allocate(pool: ObjectPool<WebSocketConnectionImpl2>): WebSocketConnectionImpl2 =
+                WebSocketConnectionImpl2 { self -> pool.recycle(self) }
+
+            override fun deallocate(value: WebSocketConnectionImpl2, pool: ObjectPool<WebSocketConnectionImpl2>) {
+                // Do nothing
+            }
+        }
+    }
 
     private var _output: AsyncOutput = NullAsyncOutput
     private var _input: AsyncInput = EmptyAsyncInput

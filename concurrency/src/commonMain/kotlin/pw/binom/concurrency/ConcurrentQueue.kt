@@ -1,10 +1,9 @@
 package pw.binom.concurrency
 
-import pw.binom.AppendableQueue
-import pw.binom.PopResult
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
-import pw.binom.doFreeze
+import pw.binom.collections.AppendableQueue
+import pw.binom.collections.PopResult
 import kotlin.time.Duration
 
 class ConcurrentQueue<T> : AppendableQueue<T> {
@@ -27,10 +26,6 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
     private class Item<T>(value: T, next: Item<T>?) {
         val value = AtomicReference(value)
         var next = AtomicReference(next)
-
-        init {
-            doFreeze()
-        }
     }
 
     override val isEmpty: Boolean
@@ -53,7 +48,6 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
                 return item.value.getValue()
             }
         }
-        throw IllegalStateException()
     }
 
     fun popBlocked(duration: Duration): T? {
@@ -75,7 +69,6 @@ class ConcurrentQueue<T> : AppendableQueue<T> {
                 return item.value.getValue()
             }
         }
-        throw IllegalStateException()
     }
 
     override fun pop(): T =

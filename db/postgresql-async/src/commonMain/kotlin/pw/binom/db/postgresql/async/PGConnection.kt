@@ -6,7 +6,7 @@ import pw.binom.charset.Charset
 import pw.binom.charset.CharsetCoder
 import pw.binom.charset.Charsets
 import pw.binom.collections.defaultMutableSet
-import pw.binom.db.ResultSet
+import pw.binom.db.ColumnType
 import pw.binom.db.SQLException
 import pw.binom.db.TransactionMode
 import pw.binom.db.async.AsyncConnection
@@ -15,9 +15,12 @@ import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.CredentialMessage
+import pw.binom.db.postgresql.async.messages.frontend.SASLInitialResponse
+import pw.binom.db.postgresql.async.messages.frontend.SASLResponse
 import pw.binom.db.postgresql.async.messages.frontend.Terminate
 import pw.binom.io.*
 import pw.binom.network.*
+import pw.binom.scram.ScramSaslClient
 import pw.binom.writeByte
 import pw.binom.writeInt
 import pw.binom.writeShort
@@ -30,6 +33,7 @@ class PGConnection private constructor(
     val userName: String,
     val password: String?,
     val networkDispatcher: NetworkManager,
+    val temporalBufferSize: Int = DEFAULT_BUFFER_SIZE,
     readBufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncConnection {
     internal var busy = false
@@ -50,49 +54,59 @@ class PGConnection private constructor(
             readBufferSize: Int = DEFAULT_BUFFER_SIZE,
         ): PGConnection {
             val connection = networkDispatcher.tcpConnect(address)
-            val pgConnection = PGConnection(
-                connection = connection,
-                charset = charset,
-                userName = userName,
-                password = password,
-                networkDispatcher = networkDispatcher,
-                readBufferSize = readBufferSize,
-            )
-            pgConnection.sendFirstMessage(
-                mapOf(
-                    "user" to userName,
-                    "database" to dataBase,
-                    "client_encoding" to charset.name,
-                    "DateStyle" to "ISO",
-                    "TimeZone" to "GMT",
-//                    "extra_float_digits" to "2"
+            try {
+                val pgConnection = PGConnection(
+                    connection = connection,
+                    charset = charset,
+                    userName = userName,
+                    password = password,
+                    networkDispatcher = networkDispatcher,
+                    readBufferSize = readBufferSize,
                 )
-            )
-            while (true) {
-                val msg = pgConnection.readDesponse()
-                if (msg is ErrorMessage) {
-                    throw PostgresqlException(msg.toString())
+                pgConnection.sendFirstMessage(
+                    mapOf(
+                        "user" to userName,
+                        "database" to dataBase,
+                        "client_encoding" to charset.name,
+                        "DateStyle" to "ISO",
+                        "TimeZone" to "GMT",
+//                    "extra_float_digits" to "2"
+                    )
+                )
+                while (true) {
+                    val msg = pgConnection.readDesponse()
+                    if (msg is ErrorMessage) {
+                        throw PostgresqlException(msg.toString())
+                    }
+                    if (msg is ReadyForQueryMessage) {
+                        break
+                    }
                 }
-                if (msg is ReadyForQueryMessage) {
-                    break
+                if (applicationName != null) {
+                    val appName = applicationName.replace("\\", "\\\\").replace("'", "\\'")
+                    pgConnection.sendQuery("SET application_name = E'$appName'")
                 }
-            }
-            if (applicationName != null) {
-                val appName = applicationName.replace("\\", "\\\\").replace("'", "\\'")
-                pgConnection.sendQuery("SET application_name = E'$appName'")
-            }
-            while (true) {
-                val msg = pgConnection.readDesponse()
-                if (msg is ReadyForQueryMessage) {
-                    break
+                while (true) {
+                    val msg = pgConnection.readDesponse()
+                    if (msg is ReadyForQueryMessage) {
+                        break
+                    }
                 }
-            }
 //            pgConnection.query("SET AUTOCOMMIT = OFF")
-            return pgConnection
+                return pgConnection
+            } catch (e: Throwable) {
+                runCatching { connection.close() }
+                throw e
+            }
         }
     }
 
-    private val packageWriter = PackageWriter(this)
+    init {
+        PgMetrics.pgConnections.inc()
+    }
+
+    private val temporalBuffer = ByteBuffer.alloc(temporalBufferSize)
+    private val packageWriter = PackageWriter(this, temporalBuffer = temporalBuffer)
     internal val charsetUtils = CharsetCoder(charset)
     private var connected = true
     override val isConnected
@@ -122,8 +136,14 @@ class PGConnection private constructor(
         get() = _transactionMode
 
     private val packageReader = connection.bufferedAsciiReader(closeParent = false, bufferSize = readBufferSize)
-    internal val reader = PackageReader(connection = this, charset = charset, rawInput = packageReader)
+    internal val reader = PackageReader(
+        connection = this,
+        charset = charset,
+        rawInput = packageReader,
+        temporalBuffer = temporalBuffer,
+    )
     private var credentialMessage = CredentialMessage()
+    private var saslInitialResponse = SASLInitialResponse()
     override val type: String
         get() = TYPE
 
@@ -150,7 +170,7 @@ class PGConnection private constructor(
 
     internal suspend fun query(query: String): QueryResponse {
         if (busy) {
-            throw IllegalStateException("Connection is busy")
+            error("Connection is busy")
         }
         val msg = this.reader.queryMessage
         msg.query = query
@@ -160,12 +180,10 @@ class PGConnection private constructor(
         LOOP@ while (true) {
             val msg2 = readDesponse()
             when (msg2) {
-                is ReadyForQueryMessage -> {
-                    return QueryResponse.Status(
-                        status = statusMsg ?: "",
-                        rowsAffected = rowsAffected
-                    )
-                }
+                is ReadyForQueryMessage -> return QueryResponse.Status(
+                    status = statusMsg ?: "",
+                    rowsAffected = rowsAffected
+                )
 
                 is CommandCompleteMessage -> {
                     statusMsg = msg2.statusMessage
@@ -181,18 +199,12 @@ class PGConnection private constructor(
                 }
 
                 is ErrorMessage -> {
-                    check(readDesponse() is ReadyForQueryMessage)
+                    checkType<ReadyForQueryMessage>(readDesponse())
                     throw PostgresqlException("${msg2.fields['M']}. Query: $query")
                 }
 
-                is NoticeMessage -> {
-                    continue@LOOP
-                }
-
-                is NoDataMessage -> {
-                    continue@LOOP
-                }
-
+                is NoticeMessage -> continue@LOOP
+                is NoDataMessage -> continue@LOOP
                 else -> throw SQLException("Unexpected Message. Response Type: [${msg2::class}], Message: [$msg2], Query: [$query]")
             }
         }
@@ -228,6 +240,55 @@ class PGConnection private constructor(
         return readDesponse()
     }
 
+    private suspend fun oneShotAuth(authRequest: KindedMessage) {
+        when (val msg2 = request(authRequest)) {
+            is ErrorMessage -> throw IOException(msg2.fields['M'] ?: msg2.fields['R'] ?: "Error")
+            is AuthenticationMessage.AuthenticationOkMessage -> {
+                return
+            }
+
+            else -> throw SQLException("Unexpected Message. Message: [$msg2]")
+        }
+    }
+
+    private suspend fun saslAuth(algorithms: List<String>) {
+        val scramSaslClient = ScramSaslClient.create(algorithms)
+//        val scramSaslClient = ScramSaslClient.sha256()
+        val msg = scramSaslClient.start(username = userName, password = password)
+        saslInitialResponse.mechanism = scramSaslClient.mechanism
+        saslInitialResponse.slasData = msg.encodeToByteArray()
+        var resp = request(saslInitialResponse)
+        while (true) {
+            when (resp) {
+                is AuthenticationMessage.SaslContinue -> {
+                    val d = scramSaslClient.exchange(resp.data.decodeToString())
+                    if (d == null) {
+                        if (scramSaslClient.state != ScramSaslClient.State.ENDED) {
+                            throw IllegalStateException("Invalid SASL state ${scramSaslClient.state}")
+                        }
+                        break
+                    }
+                    val resp1 = SASLResponse(d.encodeToByteArray())
+                    resp = request(resp1)
+                }
+
+                is AuthenticationMessage.SaslFinal -> {
+                    val scramResponse = scramSaslClient.exchange(resp.data.decodeToString())
+                    if (scramResponse != null) {
+                        throw IllegalStateException("Invalid SASL state. ScramClient should send data")
+                    }
+                    if (scramSaslClient.state != ScramSaslClient.State.ENDED) {
+                        throw IllegalStateException("Invalid SASL state ${scramSaslClient.state}")
+                    }
+                    checkType<AuthenticationMessage.AuthenticationOkMessage>(readDesponse())
+                    break
+                }
+
+                else -> TODO("Unsupported $resp")
+            }
+        }
+    }
+
     private suspend fun sendFirstMessage(properties: Map<String, String>) {
         ByteArrayOutput().use { buf2 ->
             buf2.bufferedAsciiWriter(closeParent = false).use { o ->
@@ -255,14 +316,14 @@ class PGConnection private constructor(
             }
         }
         val msg = readDesponse()
-        val authRequest = when (msg) {
+        when (msg) {
             is AuthenticationMessage.AuthenticationChallengeCleartextMessage -> {
                 credentialMessage.username = userName
                 credentialMessage.password = password
                 credentialMessage.salt = null
                 credentialMessage.authenticationType =
                     AuthenticationMessage.AuthenticationChallengeMessage.AuthenticationResponseType.Cleartext
-                credentialMessage
+                oneShotAuth(credentialMessage)
             }
 
             is AuthenticationMessage.AuthenticationChallengeMessage -> {
@@ -270,23 +331,27 @@ class PGConnection private constructor(
                 credentialMessage.password = password
                 credentialMessage.salt = msg.salt
                 credentialMessage.authenticationType = msg.challengeType
-                credentialMessage
+                oneShotAuth(credentialMessage)
+            }
+
+            is AuthenticationMessage.SaslAuth -> {
+                saslAuth(msg.algorithms)
             }
 
             is AuthenticationMessage.AuthenticationOkMessage -> null
             is ErrorMessage -> throw IOException(msg.fields['M'] ?: msg.fields['R'] ?: "Error")
             else -> throw RuntimeException("Unknown message type [${msg::class}]")
         }
-        if (authRequest != null) {
-            when (val msg2 = request(authRequest)) {
-                is ErrorMessage -> throw IOException(msg2.fields['M'] ?: msg2.fields['R'] ?: "Error")
-                is AuthenticationMessage.AuthenticationOkMessage -> {
-                    return
-                }
-
-                else -> throw SQLException("Unexpected Message. Message: [$msg2]")
-            }
-        }
+//        if (authRequest != null) {
+//            when (val msg2 = request(authRequest)) {
+//                is ErrorMessage -> throw IOException(msg2.fields['M'] ?: msg2.fields['R'] ?: "Error")
+//                is AuthenticationMessage.AuthenticationOkMessage -> {
+//                    return
+//                }
+//
+//                else -> throw SQLException("Unexpected Message. Message: [$msg2]")
+//            }
+//        }
     }
 
     override suspend fun createStatement() =
@@ -324,8 +389,8 @@ class PGConnection private constructor(
 
     fun prepareStatement(
         query: String,
-        paramColumnTypes: List<ResultSet.ColumnType>,
-        resultColumnTypes: List<ResultSet.ColumnType> = emptyList(),
+        paramColumnTypes: List<ColumnType>,
+        resultColumnTypes: List<ColumnType> = emptyList(),
     ): AsyncPreparedStatement {
         val pst = PostgresPreparedStatement(
             query = query,
@@ -369,7 +434,7 @@ class PGConnection private constructor(
     override suspend fun asyncClose() {
         checkClosed()
         if (closing) {
-            throw IllegalStateException("Connection already closing")
+            error("Connection already closing")
         }
         closing = true
         try {
@@ -378,13 +443,14 @@ class PGConnection private constructor(
             }
             prepareStatements.clear()
         } finally {
+            PgMetrics.pgConnections.dec()
             runCatching { sendOnly(Terminate()) }
             runCatching { reader.close() }
             runCatching { connection.asyncClose() }
             closed = true
             connected = false
             try {
-                Closeable.close(charsetUtils, packageWriter)
+                Closeable.close(charsetUtils, packageWriter, temporalBuffer)
             } finally {
                 packageReader.asyncClose()
             }

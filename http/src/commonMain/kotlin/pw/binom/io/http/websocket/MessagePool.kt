@@ -1,13 +1,23 @@
 package pw.binom.io.http.websocket
 
 import pw.binom.io.AsyncInput
-import pw.binom.pool.DefaultPool
+import pw.binom.pool.GenericObjectPool
 
-class MessagePool(capacity: Int) {
+class MessagePool(
+    initCapacity: Int = 16,
+    maxSize: Int = Int.MAX_VALUE,
+    minSize: Int = 0,
+    growFactor: Float = 1.5f,
+    shrinkFactor: Float = 0.5f
+) {
     private val pool =
-        DefaultPool<MessageImpl2>(
-            capacity = capacity,
-            new = { pool -> MessageImpl2 { self -> pool.recycle(self) } }
+        GenericObjectPool(
+            factory = MessageImpl2.factory,
+            initCapacity = initCapacity,
+            maxSize = maxSize,
+            minSize = minSize,
+            growFactor = growFactor,
+            shrinkFactor = shrinkFactor,
         )
 
     fun new(

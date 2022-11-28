@@ -31,7 +31,7 @@ kotlin {
 //    androidNativeArm64()
 //    wasm32()
 
-    js(BOTH) {
+    js(pw.binom.Target.JS_TARGET) {
         browser()
         nodejs()
     }

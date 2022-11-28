@@ -12,6 +12,21 @@ class MingwSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
         nativeHeap.free(native)
     }
 
+    override fun internalResetFlags() {
+        TODO("Not implemented")
+//        val selector = selector
+//        repeat(eventCount) { index ->
+//            val item = native[index]
+//            if (item.data.fd == selector?.pipeRead) {
+//                selector.interruptWakeup()
+//                return@repeat
+//            }
+//
+//            val key = selector!!.idToKey[item.data.u32.convert()]
+//            key?.internalResetFlags()
+//        }
+    }
+
     override val nativeSelectedKeys: Iterator<AbstractSelector.NativeKeyEvent>
         get() = nativeSelectedKeys2
 

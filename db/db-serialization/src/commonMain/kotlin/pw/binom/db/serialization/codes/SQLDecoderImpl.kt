@@ -7,9 +7,9 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import pw.binom.UUID
 import pw.binom.date.DateTime
 import pw.binom.db.serialization.*
+import pw.binom.uuid.UUID
 
 class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> Unit) : SQLDecoder {
 

@@ -7,8 +7,9 @@ interface Reader : Closeable {
     fun read(): Char?
 
     fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): Int {
-        if (offset + length > data.size)
+        if (offset + length > data.size) {
             throw IndexOutOfBoundsException()
+        }
         var i = 0
         while (i < length) {
             try {

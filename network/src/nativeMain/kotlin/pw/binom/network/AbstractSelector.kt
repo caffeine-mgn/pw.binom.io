@@ -1,7 +1,7 @@
 package pw.binom.network
 
 abstract class AbstractSelector : Selector {
-    override fun attach(socket: TcpClientSocketChannel, mode: Int, attachment: Any?): AbstractKey {
+    override fun attach(socket: TcpClientSocketChannel, attachment: Any?, mode: Int): AbstractKey {
         val key = if (socket.native == null) {
             nativePrepare(mode = mode, attachment = attachment, connectable = socket.connectable)
         } else {
@@ -20,7 +20,7 @@ abstract class AbstractSelector : Selector {
         return key
     }
 
-    override fun attach(socket: TcpServerSocketChannel, mode: Int, attachment: Any?): AbstractKey {
+    override fun attach(socket: TcpServerSocketChannel, attachment: Any?, mode: Int): AbstractKey {
         val key = if (socket.native == null) {
             nativePrepare(
                 mode = mode,
@@ -39,7 +39,7 @@ abstract class AbstractSelector : Selector {
         return key
     }
 
-    override fun attach(socket: UdpSocketChannel, mode: Int, attachment: Any?): AbstractKey {
+    override fun attach(socket: UdpSocketChannel, attachment: Any?, mode: Int): AbstractKey {
         val key = nativePrepare(
             mode = mode,
             connectable = false,

@@ -10,12 +10,14 @@ actual object Console {
     private class Out(oo: PrintStream) : Output {
         val vv = Channels.newChannel(oo)
         override fun close() {
+            // Do nothing
         }
 
         override fun write(data: ByteBuffer): Int =
             vv.write(data.native)
 
         override fun flush() {
+            // Do nothing
         }
     }
 
@@ -42,6 +44,7 @@ actual object Console {
 //                }
 
         override fun close() {
+            // Do nothing
         }
     }
     actual val std: Appendable = AppendableUTF8(stdChannel)

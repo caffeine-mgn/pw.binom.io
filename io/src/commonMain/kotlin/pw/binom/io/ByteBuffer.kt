@@ -14,16 +14,21 @@ import kotlin.random.Random
 
 internal object ByteBufferMetric {
     private val BYTEBUFFER_COUNT_METRIC = MutableGauge("binom_byte_buffer_count", description = "ByteBuffer Count")
-    fun incCount() {
+    private val BYTEBUFFER_MEMORY_METRIC = MutableGauge("binom_byte_buffer_memory", description = "ByteBuffer Memory")
+
+    fun inc(buffer: ByteBuffer) {
         BYTEBUFFER_COUNT_METRIC.inc()
+        BYTEBUFFER_MEMORY_METRIC.inc(buffer.capacity.toDouble())
     }
 
-    fun decCount() {
+    fun dec(buffer: ByteBuffer) {
+        BYTEBUFFER_MEMORY_METRIC.dec(buffer.capacity.toDouble())
         BYTEBUFFER_COUNT_METRIC.dec()
     }
 
     init {
         BinomMetrics.reg(BYTEBUFFER_COUNT_METRIC)
+        BinomMetrics.reg(BYTEBUFFER_MEMORY_METRIC)
     }
 }
 

@@ -12,13 +12,13 @@ import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.HttpResponse
 import pw.binom.io.readText
 import pw.binom.io.use
-import pw.binom.net.Query
-import pw.binom.net.URL
 import pw.binom.s3.dto.*
 import pw.binom.s3.exceptions.S3ErrorException
 import pw.binom.s3.exceptions.S3Exception
 import pw.binom.s3.serialization.DateSerialization
 import pw.binom.s3.v4.s3Call
+import pw.binom.url.Query
+import pw.binom.url.URL
 import pw.binom.xml.dom.xmlTree
 import pw.binom.xml.serialization.Xml
 

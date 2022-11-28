@@ -18,7 +18,7 @@ class AndroidSupportPlugin : Plugin<Project> {
         val android = target.extensions.getByType(com.android.build.gradle.LibraryExtension::class.java)
         android.apply {
             compileSdkVersion("android-30")
-            buildToolsVersion("29.0.3")
+            buildToolsVersion("30.0.2")
 
             defaultConfig {
                 it.testInstrumentationRunner("android.support.test.runner.AndroidJUnitRunner")

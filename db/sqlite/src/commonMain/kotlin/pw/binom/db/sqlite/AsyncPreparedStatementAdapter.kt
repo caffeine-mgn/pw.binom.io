@@ -2,13 +2,12 @@ package pw.binom.db.sqlite
 
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import pw.binom.UUID
 import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.sync.SyncPreparedStatement
-import pw.binom.doFreeze
+import pw.binom.uuid.UUID
 
 class AsyncPreparedStatementAdapter(
     val ref: SyncPreparedStatement,
@@ -136,7 +135,6 @@ class AsyncPreparedStatementAdapter(
     }
 
     override suspend fun executeQuery(vararg arguments: Any?): AsyncResultSet {
-        arguments.doFreeze()
         val ref = ref
         val out = withTimeout(ASYNC_TIMEOUT) {
             withContext(worker) {
@@ -152,7 +150,6 @@ class AsyncPreparedStatementAdapter(
     }
 
     override suspend fun executeUpdate(vararg arguments: Any?): Long {
-        arguments.doFreeze()
         val ref = ref
         return withTimeout(ASYNC_TIMEOUT) {
             withContext(worker) {

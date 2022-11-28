@@ -48,10 +48,10 @@ interface Selector : Closeable {
     /**
      * @param timeout Timeout for wait events. -1 infinity
      */
-    fun select(timeout: Long = -1, selectedEvents: SelectedEvents): Int
-    fun attach(socket: TcpClientSocketChannel, mode: Int = 0, attachment: Any? = null): Key
-    fun attach(socket: TcpServerSocketChannel, mode: Int = 0, attachment: Any? = null): Key
-    fun attach(socket: UdpSocketChannel, mode: Int = 0, attachment: Any? = null): Key
+    fun select(selectedEvents: SelectedEvents, timeout: Long = -1): Int
+    fun attach(socket: TcpClientSocketChannel, attachment: Any? = null, mode: Int = 0): Key
+    fun attach(socket: TcpServerSocketChannel, attachment: Any? = null, mode: Int = 0): Key
+    fun attach(socket: UdpSocketChannel, attachment: Any? = null, mode: Int = 0): Key
 }
 
 internal expect fun createSelector(): Selector

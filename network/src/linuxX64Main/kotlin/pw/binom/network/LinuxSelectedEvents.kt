@@ -19,6 +19,20 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
         nativeSelectedKeys2.reset()
     }
 
+    override fun internalResetFlags() {
+        val selector = selector
+        repeat(eventCount) { index ->
+            val item = native[index]
+            if (item.data.fd == selector?.pipeRead) {
+                selector.interruptWakeup()
+                return@repeat
+            }
+
+            val key = selector!!.idToKey[item.data.u32.convert()]
+            key?.internalResetFlags()
+        }
+    }
+
     private val nativeSelectedKeys2 = object : Iterator<AbstractSelector.NativeKeyEvent> {
         private val event = object : AbstractSelector.NativeKeyEvent {
             override lateinit var key: AbstractKey
@@ -36,7 +50,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
             val selector = selector
             if (native[currentNum].data.fd == selector?.pipeRead) {
                 currentNum++
-                selector.interruptWakeup()
+//                selector.interruptWakeup()
             }
         }
 

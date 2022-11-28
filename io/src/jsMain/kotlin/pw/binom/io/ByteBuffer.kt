@@ -85,12 +85,12 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
         actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(NativeMem.ArrayNativeMem(array), null)
     }
 
-    init {
-        ByteBufferMetric.incCount()
-    }
-
     override val capacity: Int
         get() = native.size
+
+    init {
+        ByteBufferMetric.inc(this)
+    }
 
     override var position: Int = 0
         set(value) {
@@ -249,8 +249,9 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
 
     override fun close() {
         checkClosed()
-        ByteBufferMetric.decCount()
+        ByteBufferMetric.dec(this)
         closed = true
+        onClose?.invoke(this)
     }
 
     private fun createLimitException(newLimit: Int): IllegalArgumentException {

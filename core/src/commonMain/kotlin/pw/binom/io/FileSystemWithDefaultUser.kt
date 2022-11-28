@@ -1,6 +1,6 @@
 package pw.binom.io
 
-import pw.binom.net.Path
+import pw.binom.url.Path
 
 class FileSystemWithDefaultUser(val user: Any, val fileSystem: FileSystem) : FileSystem {
     override suspend fun getQuota(path: Path): Quota? = fileSystem.useUser(user) {

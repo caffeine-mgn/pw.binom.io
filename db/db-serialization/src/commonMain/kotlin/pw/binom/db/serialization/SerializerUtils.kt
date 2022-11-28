@@ -1,8 +1,12 @@
 package pw.binom.db.serialization
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.modules.SerializersModule
+import pw.binom.db.async.AsyncResultSet
 import kotlin.jvm.JvmName
 
 @get:JvmName("getIdColumn2")
@@ -18,6 +22,28 @@ val KSerializer<out Any>.idColumn: String?
         }
         return null
     }
+
+suspend fun <T> AsyncResultSet.decodeFlow(
+    serializer: KSerializer<T>,
+    serializersModule: SerializersModule = SQLSerialization.DEFAULT.serializersModule
+): Flow<T> {
+    val r = ResultSetDataProvider(this)
+    return flow {
+        try {
+            while (this@decodeFlow.next()) {
+                val obj = DefaultSQLSerializePool.decode(
+                    serializer = serializer,
+                    name = "",
+                    input = r,
+                    serializersModule = serializersModule,
+                )
+                emit(obj)
+            }
+        } finally {
+            this@decodeFlow.asyncClose()
+        }
+    }
+}
 
 fun KSerializer<out Any>.getIdColumn() =
     idColumn ?: throw IllegalArgumentException("Can't find Id Column in ${descriptor.serialName}")

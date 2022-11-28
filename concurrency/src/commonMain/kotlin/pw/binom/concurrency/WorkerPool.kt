@@ -7,8 +7,6 @@ import pw.binom.Future
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import pw.binom.collections.defaultMutableList
-import pw.binom.doFreeze
-import pw.binom.popOrNull
 import kotlin.coroutines.*
 
 class ExecutorServiceHolderElement(val executor: ExecutorService) : CoroutineContext.Element {
@@ -46,28 +44,11 @@ suspend fun <T> ExecutorService.useInContext(f: suspend () -> T) {
     }
 }
 
-// fun ExecutorService.submitAsync(context: CoroutineContext = EmptyCoroutineContext, func: suspend () -> Unit) {
-//    func.doFreeze()
-//    submit {
-//        val f = func
-//        f.startCoroutine(object : Continuation<Unit> {
-//            override val context: CoroutineContext = context + CrossThreadCoroutineElement(WorkerImpl.current!!)
-//
-//            override fun resumeWith(result: Result<Unit>) {
-//            }
-//        })
-//    }
-// }
-
 class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher() {
     private class State(size: Int) {
         var interotped = AtomicBoolean(false)
         val tasks = AtomicInt(0)
         val queue = ConcurrentQueue<() -> Any?>()
-
-        init {
-            doFreeze()
-        }
     }
 
     private val state = State(size)
@@ -75,7 +56,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
 
     fun shutdown() {
         if (state.interotped.getValue()) {
-            throw IllegalStateException("WorkerPool already has Interotped")
+            error("WorkerPool already has Interotped")
         }
         state.interotped.setValue(true)
         while (state.tasks.getValue() > 0 || list.any { it.taskCount > 0 }) {
@@ -85,7 +66,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
 
     fun shutdownNow(): List<() -> Any?> {
         if (state.interotped.getValue()) {
-            throw IllegalStateException("WorkerPool already has Interrupted")
+            error("WorkerPool already has Interrupted")
         }
         state.interotped.setValue(true)
         val out = defaultMutableList<() -> Any?>(state.queue.size)
@@ -111,7 +92,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
                     f = f,
                     state = state,
                     worker = freeWorker,
-                ).doFreeze()
+                )
             ) {
                 try {
                     it.future.resume(runCatching(it.f))
@@ -130,7 +111,7 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
                 {
                     future.resume(runCatching(f))
                     status.tasks.decrement()
-                }.doFreeze()
+                }
             )
         }
         return future
@@ -142,10 +123,6 @@ class WorkerPool(size: Int = Worker.availableProcessors) : CoroutineDispatcher()
         val f: () -> T,
         val state: State
     )
-
-    init {
-        doFreeze()
-    }
 
 //    override fun <T> startCoroutine(context: CoroutineContext, func: suspend () -> T): FreezableFuture<T> {
 //        val future = FreezableFuture<T>()

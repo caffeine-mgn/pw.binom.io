@@ -10,8 +10,8 @@ import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.net.URL
 import pw.binom.os
+import pw.binom.url.URL
 
 private val defaultUserAgent =
     "binom-$BINOM_VERSION/kotlin-${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"

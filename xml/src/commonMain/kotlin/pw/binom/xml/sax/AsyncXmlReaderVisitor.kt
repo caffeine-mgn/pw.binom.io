@@ -1,6 +1,6 @@
 package pw.binom.xml.sax
 
-import pw.binom.Stack
+import pw.binom.collections.Stack
 import pw.binom.io.AsyncReader
 import pw.binom.io.EOFException
 import pw.binom.xml.AsyncXmlLexer

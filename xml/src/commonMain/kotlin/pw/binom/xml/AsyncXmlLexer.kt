@@ -222,10 +222,10 @@ class AsyncXmlLexer(val reader: AsyncReader) {
                     if (c == null) {
                         isEof = true
                     }
-                    val c = sb.toString()
+                    val str = sb.toString()
                     sb.clear()
                     tokenType = TokenType.EMPTY
-                    return c
+                    return str
                 }
             }
         }

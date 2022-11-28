@@ -74,8 +74,8 @@ class XmlElement(var tag: String, var nameSpace: String?) {
         }
 
         if (nameSpace != null && parent?.tag?.isEmpty() == true) {
-            val p = prefix[nameSpace!!]
-            visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace!!)
+            val p = prefix[nameSpace]
+            visitor.attribute("$XML_NAMESPACE_PREFIX_WITH_DOTS$p", nameSpace)
         }
 
         privateChilds.forEach {

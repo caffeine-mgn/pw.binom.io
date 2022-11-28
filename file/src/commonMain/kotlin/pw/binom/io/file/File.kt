@@ -6,7 +6,7 @@ import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.copyTo
 import pw.binom.io.*
-import pw.binom.net.Path
+import pw.binom.url.Path
 import pw.binom.workDirectory
 
 expect class File(path: String) {

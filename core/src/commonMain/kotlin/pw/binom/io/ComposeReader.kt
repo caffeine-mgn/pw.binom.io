@@ -1,7 +1,7 @@
 package pw.binom.io
 
-import pw.binom.PopResult
-import pw.binom.Stack
+import pw.binom.collections.PopResult
+import pw.binom.collections.Stack
 
 class ComposeReader : Reader {
     private val readers = Stack<Reader>()
@@ -11,8 +11,9 @@ class ComposeReader : Reader {
         while (true) {
             if (current.isEmpty) {
                 readers.popFirst(current)
-                if (current.isEmpty)
+                if (current.isEmpty) {
                     return null
+                }
             }
             val r = current.value.read()
             if (r == null) {
@@ -31,16 +32,18 @@ class ComposeReader : Reader {
             while (true) {
                 if (current.isEmpty) {
                     readers.popFirst(current)
-                    if (current.isEmpty)
+                    if (current.isEmpty) {
                         return off - offset
+                    }
                 }
                 val l = current.value.read(data, off, len)
                 len -= l
                 off += l
-                if (l == 0)
+                if (l == 0) {
                     current.clear()
-                else
+                } else {
                     break
+                }
             }
         }
         return off - offset
@@ -61,12 +64,14 @@ class ComposeReader : Reader {
     }
 
     override fun close() {
-        if (!current.isEmpty)
+        if (!current.isEmpty) {
             current.value.close()
+        }
         while (true) {
             readers.popFirst(current)
-            if (current.isEmpty)
+            if (current.isEmpty) {
                 break
+            }
             current.value.close()
         }
     }

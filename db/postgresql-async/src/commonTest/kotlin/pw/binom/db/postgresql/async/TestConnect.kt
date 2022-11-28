@@ -1,17 +1,19 @@
 package pw.binom.db.postgresql.async
 
 import kotlinx.coroutines.test.runTest
-import pw.binom.UUID
 import pw.binom.charset.Charsets
 import pw.binom.date.parseIso8601Date
-import pw.binom.db.ResultSet
+import pw.binom.db.ColumnType
 import pw.binom.db.async.firstOrNull
 import pw.binom.db.async.map
 import pw.binom.io.use
 import pw.binom.network.NetworkAddress
-import pw.binom.nextUuid
+import pw.binom.uuid.UUID
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class TestConnect : BaseTest() {
 
@@ -80,7 +82,7 @@ class TestConnect : BaseTest() {
 
         con.prepareStatement(
             "select * from osmi_cards_config where id=?",
-            listOf(ResultSet.ColumnType.UUID)
+            listOf(ColumnType.UUID)
         ).use {
             try {
                 it.set(0, UUID.fromString("db5d3f68-ed81-4c01-8ac8-6eb783d67eeb"))
@@ -160,6 +162,7 @@ class TestConnect : BaseTest() {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun portalCloseTestTest() {
         pg { connect ->
@@ -178,12 +181,11 @@ create table member_tag
             connect.prepareStatement("delete from member_tag where member_id=? and tag_id=?").use { ps ->
                 ps.set(0, 0)
                 ps.set(1, 0)
-                repeat(30) {
-                    ps.executeUpdate()
-                    ps.executeUpdate()
-                    ps.executeUpdate()
-                    ps.executeUpdate()
-                }
+//                repeat(30) {
+                println("---===START===---")
+                val time = measureTime { ps.executeUpdate() }
+                println("---===END===--- $time")
+//                }
             }
             connect.commit()
         }
@@ -407,6 +409,7 @@ create table member_tag
 
     @Test
     fun timestampTest() {
+        println()
 //        pg { con ->
 //            con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
 //                try {

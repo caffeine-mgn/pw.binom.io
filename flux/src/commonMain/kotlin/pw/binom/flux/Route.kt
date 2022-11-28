@@ -4,7 +4,7 @@ import pw.binom.io.Closeable
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
-import pw.binom.net.PathMask
+import pw.binom.url.PathMask
 
 interface Route {
     val serialization: FluxServerSerialization

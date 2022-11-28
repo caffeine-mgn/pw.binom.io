@@ -5,7 +5,7 @@ import kotlin.test.*
 class FrozenQueueTest {
     @Test
     fun test() {
-        val q = FrozenQueue<Int>()
+        val q = ConcurrentLinkedQueue<Int>()
         assertEquals(0, q.size)
         try {
             q.pop()

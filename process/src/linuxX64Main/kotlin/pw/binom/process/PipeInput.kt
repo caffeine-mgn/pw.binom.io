@@ -2,7 +2,6 @@ package pw.binom.process
 
 import kotlinx.cinterop.convert
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.doFreeze
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Input
 
@@ -11,8 +10,9 @@ class PipeInput : Pipe(), Input {
     private var endded = AtomicBoolean(false)
 
     override fun read(dest: ByteBuffer): Int {
-        if (endded.getValue())
+        if (endded.getValue()) {
             return 0
+        }
 
         val r = dest.ref { destPtr, remaining ->
             if (remaining > 0) {
@@ -21,18 +21,14 @@ class PipeInput : Pipe(), Input {
                 0
             }
         } ?: 0
-        if (r <= 0)
+        if (r <= 0) {
             endded.setValue(true)
-        else {
+        } else {
             dest.position += r
         }
         return r
     }
 
     override fun close() {
-    }
-
-    init {
-        doFreeze()
     }
 }

@@ -5,11 +5,11 @@ import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.addHeader
-import pw.binom.net.Path
-import pw.binom.net.URL
-import pw.binom.net.toPath
 import pw.binom.network.SocketClosedException
 import pw.binom.skipAll
+import pw.binom.url.Path
+import pw.binom.url.URL
+import pw.binom.url.toPath
 import pw.binom.webdav.DAV_NS
 import pw.binom.webdav.DEPTH_HEADER
 import pw.binom.webdav.MULTISTATUS_TAG

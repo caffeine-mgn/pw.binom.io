@@ -5,7 +5,6 @@ import pw.binom.db.postgresql.async.PackageWriter
 import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
 import pw.binom.db.postgresql.async.messages.backend.AuthenticationMessage
-import pw.binom.writeByte
 
 private val lookup = byteArrayOf(
     '0'.code.toByte(),
@@ -75,7 +74,7 @@ class CredentialMessage : KindedMessage {
                 hexDigest[1] = 'd'.code.toByte()
                 hexDigest[2] = '5'.code.toByte()
                 writer.write(hexDigest)
-                writer.output.writeByte(writer.buf16, 0)
+                writer.writeByte(0)
             }
 
             else -> TODO()

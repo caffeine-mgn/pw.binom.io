@@ -3,6 +3,7 @@ package pw.binom.network
 abstract class AbstractNativeSelectedEvents : SelectedEvents {
 
     protected abstract val nativeSelectedKeys: Iterator<AbstractSelector.NativeKeyEvent>
+    internal abstract fun internalResetFlags()
 
     private val selected = object : Iterator<Selector.KeyEvent> {
         override fun hasNext(): Boolean = nativeSelectedKeys.hasNext()

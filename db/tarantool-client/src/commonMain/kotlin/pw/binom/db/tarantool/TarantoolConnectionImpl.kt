@@ -8,7 +8,6 @@ import pw.binom.io.*
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpConnection
-import pw.binom.neverFreeze
 import pw.binom.readByte
 import pw.binom.readInt
 import kotlin.collections.set
@@ -85,10 +84,6 @@ class TarantoolConnectionImpl internal constructor(
         if (schemaVersion == 0) {
             meta = loadMeta()
         }
-    }
-
-    init {
-        neverFreeze()
     }
 
     internal suspend fun sendReceive(code: Code, schemaId: Int? = null, body: Map<Any, Any?>): Package {

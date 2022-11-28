@@ -125,7 +125,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override fun attach(channel: UdpSocketChannel): UdpConnection {
         val con = UdpConnection(channel)
         channel.setBlocking(false)
-        val key = selector.attach(channel, 0, con)
+        val key = selector.attach(channel, con, 0)
         con.keys.addKey(key)
         return con
     }
@@ -133,7 +133,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override fun attach(channel: TcpClientSocketChannel, mode: Int): TcpConnection {
         val con = TcpConnection(channel)
         channel.setBlocking(false)
-        val key = selector.attach(socket = channel, mode = mode, attachment = con)
+        val key = selector.attach(socket = channel, attachment = con, mode = mode)
         con.keys.addKey(key)
         return con
     }
@@ -141,7 +141,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
         val con = TcpServerConnection(channel = channel, dispatcher = this)
         channel.setBlocking(false)
-        con.keys.addKey(selector.attach(socket = channel, mode = 0, attachment = con))
+        con.keys.addKey(selector.attach(socket = channel, attachment = con, mode = 0))
         return con
     }
 }

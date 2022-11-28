@@ -1,10 +1,12 @@
 package pw.binom.db.postgresql.async
 
-import pw.binom.UUID
+import pw.binom.db.ColumnType
 import pw.binom.db.ResultSet
+import pw.binom.uuid.UUID
 
 /**
  * [PostgreSQL Type Formats](https://www.npgsql.org/dev/types.html)
+ * [Codes](https://hackage.haskell.org/package/postgresql-simple-0.0.2/docs/src/Database-PostgreSQL-Simple-BuiltinTypes.html)
  */
 object ColumnTypes {
     const val Untyped = 0
@@ -72,13 +74,28 @@ object ColumnTypes {
 /**
  * Converts [ResultSet.ColumnType] to Postgresql Self Column Type
  */
-internal val ResultSet.ColumnType.typeInt
+internal val ColumnType.typeInt
     get() = when (this) {
-        ResultSet.ColumnType.STRING -> ColumnTypes.Text
-        ResultSet.ColumnType.INT -> ColumnTypes.Integer
-        ResultSet.ColumnType.BOOLEAN -> ColumnTypes.Boolean
-        ResultSet.ColumnType.LONG -> ColumnTypes.Bigserial
-        ResultSet.ColumnType.FLOAT -> ColumnTypes.Real
-        ResultSet.ColumnType.DOUBLE -> ColumnTypes.Double
-        ResultSet.ColumnType.UUID -> ColumnTypes.UUID
+        ColumnType.VARCHAR -> ColumnTypes.Text
+        ColumnType.INTEGER -> ColumnTypes.Integer
+        ColumnType.BIT -> ColumnTypes.Boolean
+        ColumnType.BIGINT -> ColumnTypes.Bigserial
+        ColumnType.FLOAT -> ColumnTypes.Real
+        ColumnType.DOUBLE -> ColumnTypes.Double
+        ColumnType.UUID -> ColumnTypes.UUID
+        ColumnType.TINYINT -> ColumnTypes.Smallint
+        ColumnType.SMALLINT -> ColumnTypes.Smallint
+        ColumnType.REAL -> ColumnTypes.Real
+        ColumnType.NUMERIC -> ColumnTypes.Numeric
+        ColumnType.DECIMAL -> ColumnTypes.Double
+        ColumnType.CHAR -> ColumnTypes.Char
+        ColumnType.LONGVARCHAR -> TODO()
+        ColumnType.DATE -> ColumnTypes.Date
+        ColumnType.TIME -> ColumnTypes.Time
+        ColumnType.TIMESTAMP -> ColumnTypes.Timestamp
+        ColumnType.BINARY -> ColumnTypes.Date
+        ColumnType.VARBINARY -> TODO()
+        ColumnType.LONGVARBINARY -> TODO()
+        ColumnType.NULL -> TODO()
+        ColumnType.OTHER -> TODO()
     }

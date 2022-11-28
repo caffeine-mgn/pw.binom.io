@@ -3,8 +3,8 @@ package pw.binom.io.http
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.NullAsyncOutput
 import pw.binom.io.AsyncOutput
-import pw.binom.io.Closeable
-import pw.binom.pool.DefaultPool
+import pw.binom.pool.ObjectFactory
+import pw.binom.pool.ObjectPool
 
 open class ReusableAsyncChunkedOutput(
     autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
@@ -15,30 +15,15 @@ open class ReusableAsyncChunkedOutput(
     autoFlushBuffer = autoFlushBuffer,
 ) {
 
-    class Pool(capasity: Int, autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE) :
-        DefaultPool<ReusableAsyncChunkedOutput>(
-            capacity = capasity,
-            new = { pool ->
-                ReusableAsyncChunkedOutput(
-                    autoFlushBuffer = autoFlushBuffer,
-                    onRevert = { self -> pool.recycle(self) },
-                )
-            }
-        ),
-        Closeable {
-        fun new(stream: AsyncOutput, closeStream: Boolean) =
-//            AsyncChunkedOutput(
-//                stream = stream, closeStream = closeStream
-//            )
-            borrow()
-                .also {
-                    it.reset(stream = stream, closeStream = closeStream)
-                }
+    class Factory(val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE) : ObjectFactory<ReusableAsyncChunkedOutput> {
+        override fun allocate(pool: ObjectPool<ReusableAsyncChunkedOutput>): ReusableAsyncChunkedOutput =
+            ReusableAsyncChunkedOutput(
+                autoFlushBuffer = autoFlushBuffer,
+                onRevert = { self -> pool.recycle(self) },
+            )
 
-        override fun close() {
-            pool.forEach {
-                (it as ReusableAsyncChunkedOutput?)?.forceCloseBuffer()
-            }
+        override fun deallocate(value: ReusableAsyncChunkedOutput, pool: ObjectPool<ReusableAsyncChunkedOutput>) {
+            value.forceCloseBuffer()
         }
     }
 
@@ -60,7 +45,7 @@ open class ReusableAsyncChunkedOutput(
 
     override suspend fun asyncClose() {
         if (stream === NullAsyncOutput) {
-            throw IllegalStateException("Output stream not set")
+            error("Output stream not set")
         }
         try {
             super.asyncClose()

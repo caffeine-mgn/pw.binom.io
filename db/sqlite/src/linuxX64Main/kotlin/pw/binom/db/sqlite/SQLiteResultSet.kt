@@ -6,6 +6,7 @@ import platform.internal_sqlite.*
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.date.DateTime
+import pw.binom.db.ColumnType
 import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncResultSet
 
@@ -17,6 +18,17 @@ class SQLiteResultSet(
     private val columnsMap = defaultMutableMap<String, Int>()
 
     override lateinit var columns: List<String>
+    override fun columnType(index: Int): ColumnType =
+        when (val type = sqlite3_column_type(stmt, index)) {
+            SQLITE_INTEGER -> ColumnType.INTEGER
+            SQLITE_FLOAT -> ColumnType.DOUBLE
+            SQLITE_BLOB -> ColumnType.BINARY
+            SQLITE_NULL -> ColumnType.NULL
+            SQLITE_TEXT -> ColumnType.VARCHAR
+            else -> error("Unknown data type $type")
+        }
+
+    override fun columnType(column: String): ColumnType = columnType(columnIndex(column))
 
     init {
         columnCount = sqlite3_column_count(stmt)
@@ -148,8 +160,8 @@ class SQLiteResultSet(
     override fun getDouble(column: String): Double? =
         getDouble(columnIndex(column))
 
-    override fun columnIndex(name: String) =
-        columnsMap[name] ?: throw SQLException("Column \"$name\" not found")
+    override fun columnIndex(column: String) =
+        columnsMap[column] ?: throw SQLException("Column \"$column\" not found")
 
     private inline val stmt
         get() = prepareStatement.native[0]

@@ -8,10 +8,10 @@ import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
 import pw.binom.io.httpServer.StubHttpResponse
-import pw.binom.net.Path
-import pw.binom.net.Query
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
+import pw.binom.url.Path
+import pw.binom.url.Query
 
 class CachingHttpRequest(
     val responsePool: ObjectPool<CachingHttpResponse>,

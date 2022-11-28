@@ -1,5 +1,6 @@
 package pw.binom
 
+import pw.binom.uuid.UUID
 import java.util.UUID as JUUID
 
 val UUID.java: JUUID

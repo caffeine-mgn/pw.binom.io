@@ -8,12 +8,13 @@ import kotlinx.coroutines.withTimeout
 import pw.binom.charset.Charsets
 import pw.binom.concurrency.sleep
 import pw.binom.io.use
+import pw.binom.network.MultiFixedSizeThreadNetworkDispatcher
 import pw.binom.network.NetworkAddress
-import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.NetworkManager
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
+import kotlin.time.measureTime
 
 abstract class BaseTest {
 //    class PostgresContainer(reuse: Boolean) : TestContainer(
@@ -31,6 +32,17 @@ abstract class BaseTest {
 
     @OptIn(ExperimentalTime::class)
     private suspend fun connect(address: NetworkAddress, nd: NetworkManager): PGConnection {
+        return withContext(nd) {
+            PGConnection.connect(
+                address = address,
+                charset = Charsets.UTF8,
+                userName = "postgres",
+                password = "postgres",
+                dataBase = "test",
+                networkDispatcher = nd
+            )
+        }
+
         return withContext(Dispatchers.Default) {
             val start = TimeSource.Monotonic.markNow()
             withTimeout(10.seconds) {
@@ -51,8 +63,8 @@ abstract class BaseTest {
                         if (e is TimeoutCancellationException) {
                             throw e
                         }
-                        sleep(100)
-                        println("Error on connect: $e")
+                        sleep(1000)
+                        println("Error on connect: ${e.stackTraceToString()}")
                         continue
                     }
                 }
@@ -62,17 +74,25 @@ abstract class BaseTest {
     }
 
     @OptIn(ExperimentalTime::class)
-    fun pg(func: suspend (PGConnection) -> Unit) = runTest {
+    fun pg(func: suspend (PGConnection) -> Unit) = runTest(dispatchTimeoutMs = 10_000) {
         withContext(Dispatchers.Default) {
             val address = NetworkAddress.Immutable(host = "127.0.0.1", port = 6122)
-            NetworkCoroutineDispatcherImpl().use { nd ->
-                val tm = connect(address, nd = nd)
-                withTimeout(10.seconds) {
-                    tm.use {
-                        func(it)
+
+            val nd = MultiFixedSizeThreadNetworkDispatcher(10)
+//            val nd = NetworkCoroutineDispatcherImpl()
+            val duration = measureTime {
+                nd.use { nd ->
+//                withContext(nd) {
+                    val tm = connect(address, nd = nd)
+                    withTimeout(10.seconds) {
+                        tm.use {
+                            func(it)
+                        }
                     }
                 }
+//                }
             }
+            println("Test duration: $duration")
         }
 
 //        val now = TimeSource.Monotonic.markNow()

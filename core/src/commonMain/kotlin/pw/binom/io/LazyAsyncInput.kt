@@ -21,16 +21,6 @@ class LazyAsyncInput(private val func: suspend () -> AsyncInput) : AsyncInput {
     override val available: Int
         get() = stream?.available ?: -1
 
-//    override suspend fun skip(length: Long): Long {
-//        val stream = inited()
-//        return stream.skip(length)
-//    }
-
-//    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
-//        val stream = inited()
-//        return stream.read(data, offset, length)
-//    }
-
     override suspend fun read(dest: ByteBuffer): Int {
         val stream = inited()
         return stream.read(dest)

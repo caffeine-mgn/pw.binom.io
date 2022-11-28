@@ -6,9 +6,9 @@ import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.modules.SerializersModule
-import pw.binom.UUID
 import pw.binom.date.DateTime
 import pw.binom.db.serialization.codes.SQLEncoder
+import pw.binom.uuid.UUID
 
 class SQLValueEncoder(
     val classDescriptor: SerialDescriptor,

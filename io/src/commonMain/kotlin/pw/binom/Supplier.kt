@@ -17,6 +17,7 @@ fun <T> Supplier<T>.takeIf(func: (T) -> Boolean): T? {
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 fun <T> Supplier<T>.oneShot() = object : Supplier<T> {
     private var result: T? = null
     private var done = false

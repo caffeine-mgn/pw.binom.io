@@ -12,7 +12,7 @@ import kotlin.time.TimeSource
 @JvmInline
 @OptIn(ExperimentalTime::class)
 value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : Lock {
-    fun tryLock(): Boolean = lock.compareAndSet(expected = false, new = true)
+    override fun tryLock(): Boolean = lock.compareAndSet(expected = false, new = true)
 
     val isLocked
         get() = lock.getValue()
@@ -24,7 +24,7 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
     fun lock(duration: Duration?): Boolean {
         val now = if (duration != null) TimeSource.Monotonic.markNow() else null
         while (true) {
-            if (lock.compareAndSet(expected = false, new = true)) {
+            if (tryLock()) {
                 break
             }
             if (now != null && now.elapsedNow() > duration!!) {

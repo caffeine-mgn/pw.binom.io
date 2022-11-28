@@ -5,9 +5,9 @@ import pw.binom.asyncOutput
 import pw.binom.collections.defaultMutableList
 import pw.binom.copyTo
 import pw.binom.io.*
-import pw.binom.net.Path
-import pw.binom.net.toPath
 import pw.binom.pool.ObjectPool
+import pw.binom.url.Path
+import pw.binom.url.toPath
 
 class LocalFileSystem(
     val root: File,

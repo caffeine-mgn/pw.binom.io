@@ -6,6 +6,8 @@ import pw.binom.copyTo
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
+import pw.binom.pool.ObjectFactory
+import pw.binom.pool.ObjectPool
 
 internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
     private var inputReady = 0L
@@ -14,6 +16,17 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
     private var maskFlag: Boolean = false
     private var mask: Int = 0
     private var input: AsyncInput = EmptyAsyncInput
+
+    companion object {
+        val factory = object : ObjectFactory<MessageImpl2> {
+            override fun allocate(pool: ObjectPool<MessageImpl2>): MessageImpl2 =
+                MessageImpl2 { self -> pool.recycle(self) }
+
+            override fun deallocate(value: MessageImpl2, pool: ObjectPool<MessageImpl2>) {
+                // Do nothing
+            }
+        }
+    }
 
     override val available: Int
         get() =

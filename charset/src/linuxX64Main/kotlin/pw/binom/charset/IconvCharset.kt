@@ -37,11 +37,11 @@ class IconvCharset(override val name: String) : Charset, Closeable {
     }
 
     override fun newDecoder(): CharsetDecoder {
-        return decodePool.borrow { it.reset() }
+        return decodePool.borrow().also { it.reset() }
     }
 
     override fun newEncoder(): CharsetEncoder {
-        return encodePool.borrow { it.reset() }
+        return encodePool.borrow().also { it.reset() }
     }
 
     fun checkTrim() {
@@ -55,12 +55,5 @@ class IconvCharset(override val name: String) : Charset, Closeable {
         } finally {
             decodePool.close()
         }
-    }
-}
-
-private class CoderDefaultPool<T : AbstractIconv>(capacity: Int, new: (DefaultPool<T>) -> T) :
-    DefaultPool<T>(capacity = capacity, new = new) {
-    override fun free(value: T) {
-        value.free()
     }
 }

@@ -6,7 +6,6 @@ import pw.binom.db.postgresql.async.messages.KindedMessage
 import pw.binom.db.postgresql.async.messages.MessageKinds
 import pw.binom.io.ByteBuffer
 import pw.binom.io.use
-import pw.binom.readInt
 
 const val AuthenticationOk = 0
 const val AuthenticationKerberosV5 = 2
@@ -16,7 +15,13 @@ const val AuthenticationSCMCredential = 6
 const val AuthenticationGSS = 7
 const val AuthenticationGSSContinue = 8
 const val AuthenticationSSPI = 9
+const val AuthenticationSASL = 10
+const val AuthenticationSASLContinue = 11
+const val AuthenticationSASLFinal = 12
 
+/**
+ * [Specification](https://www.postgresql.org/docs/current/protocol-message-formats.html)
+ */
 sealed class AuthenticationMessage : KindedMessage {
     override val kind: Byte
         get() = MessageKinds.Authentication
@@ -26,7 +31,7 @@ sealed class AuthenticationMessage : KindedMessage {
             TODO("Not yet implemented")
         }
 
-        override fun toString(): String = "AuthenticationMessage()"
+        override fun toString(): String = "AuthenticationOkMessage()"
     }
 
     object AuthenticationChallengeCleartextMessage : AuthenticationMessage() {
@@ -40,9 +45,7 @@ sealed class AuthenticationMessage : KindedMessage {
     class AuthenticationChallengeMessage : AuthenticationMessage() {
 
         enum class AuthenticationResponseType {
-            MD5,
-            Cleartext,
-            Ok
+            MD5, Cleartext, Ok
         }
 
         var challengeType: AuthenticationResponseType = AuthenticationResponseType.Ok
@@ -57,10 +60,43 @@ sealed class AuthenticationMessage : KindedMessage {
         }
     }
 
+    class SaslAuth(val algorithms: List<String>) : AuthenticationMessage() {
+        override fun write(writer: PackageWriter) {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class SaslContinue(val data: ByteArray) : AuthenticationMessage() {
+        override fun write(writer: PackageWriter) {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class SaslFinal(val data: ByteArray) : AuthenticationMessage() {
+        override fun write(writer: PackageWriter) {
+            TODO("Not yet implemented")
+        }
+    }
+
+//    class SASLInitialResponseMessage : AuthenticationMessage() {
+//        override val kind: Byte
+//            get() = MessageKinds.PasswordMessage
+//        var saslAuthMechanism = ""
+//        var data = ByteArray(0)
+//
+//        override fun write(writer: PackageWriter) {
+//            writer.writeCmd(MessageKinds.PasswordMessage)
+//            writer.startBody()
+//            writer.writeCString(saslAuthMechanism)
+//            writer.writeInt(data.size)
+//            writer.write(data)
+//            writer.endBody()
+//        }
+//    }
+
     companion object {
         suspend fun read(ctx: PackageReader): AuthenticationMessage {
-            val buf = ctx.buf16
-            val authenticationType = ctx.input.readInt(buf)
+            val authenticationType = ctx.readInt()
             val result = when (authenticationType) {
                 AuthenticationOk -> AuthenticationOkMessage
                 AuthenticationCleartextPassword -> AuthenticationChallengeCleartextMessage
@@ -76,20 +112,35 @@ sealed class AuthenticationMessage : KindedMessage {
                         tmp2.flip()
                         tmp2.read(buf2)
                     }
-//                    var l = buf2.size
-//                    while (l > 0) {
-//                        buf.position = 0
-//                        buf.limit = minOf(l, buf.capacity)
-//                        val read = ctx.input.read(buf)
-//                        buf.get(buf2, buf2.size - l)
-//                        l -= read
-//                    }
                     val msg = ctx.authenticationChallengeMessage
                     msg.challengeType = AuthenticationChallengeMessage.AuthenticationResponseType.MD5
                     msg.salt = buf2
                     msg
                 }
-                else -> TODO()
+
+                AuthenticationSASL -> {
+                    val algoritmes = ArrayList<String>()
+                    while (true) {
+                        val str = ctx.readCString()
+                        if (str.isEmpty()) {
+                            break
+                        }
+                        algoritmes += str
+                    }
+                    return SaslAuth(algoritmes)
+                }
+
+                AuthenticationSASLContinue -> {
+                    val salsData = ctx.readByteArray(ctx.length - Int.SIZE_BYTES)
+                    SaslContinue(salsData)
+                }
+
+                AuthenticationSASLFinal -> {
+                    val salsData = ctx.readByteArray(ctx.length - Int.SIZE_BYTES)
+                    SaslFinal(salsData)
+                }
+
+                else -> TODO("Unknown authenticationType $authenticationType")
             }
             ctx.end()
             return result

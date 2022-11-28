@@ -8,7 +8,6 @@ import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.pool.GenericObjectPool
-import pw.binom.pool.borrow
 
 abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
     private val routers = defaultMutableMap<String, MutableList<Route>>().useName("AbstractRoute.routers")
@@ -92,7 +91,7 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                     action.path.isMatch(it.key)
                 }
                 ?.any { route ->
-                    val wrapper = requestWrapperPool.borrow {
+                    val wrapper = requestWrapperPool.borrow().also {
                         it.reset(
                             mask = route.key,
                             original = action,

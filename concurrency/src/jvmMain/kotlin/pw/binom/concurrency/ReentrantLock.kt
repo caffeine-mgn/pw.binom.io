@@ -13,12 +13,13 @@ actual class ReentrantLock : Lock {
         native.lock()
     }
 
+    actual override fun tryLock(): Boolean = native.tryLock()
+
     actual override fun unlock() {
         native.unlock()
     }
 
-    actual fun newCondition(): Condition =
-        Condition(native, native.newCondition())
+    actual fun newCondition(): Condition = Condition(native, native.newCondition())
 
     actual class Condition(val lock: ReentrantLock, val native: java.util.concurrent.locks.Condition) {
         @JvmName("wait5")

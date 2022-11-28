@@ -19,9 +19,6 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
         actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(JByteBuffer.wrap(array), null)
     }
 
-    init {
-        ByteBufferMetric.incCount()
-    }
 //    init {
 //        val stack = Thread.currentThread().stackTrace.joinToString { "${it.className}.${it.methodName}:${it.lineNumber} ->" }
 //        println("create ${rr++}   $stack")
@@ -86,7 +83,7 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
 
     override fun close() {
         checkClosed()
-        ByteBufferMetric.decCount()
+        ByteBufferMetric.dec(this)
         native = JByteBuffer.allocate(0)
         closed = true
         onClose?.invoke(this)
@@ -116,6 +113,10 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
             checkClosed()
             return native.capacity()
         }
+
+    init {
+        ByteBufferMetric.inc(this)
+    }
 
     actual operator fun get(index: Int): Byte {
         checkClosed()

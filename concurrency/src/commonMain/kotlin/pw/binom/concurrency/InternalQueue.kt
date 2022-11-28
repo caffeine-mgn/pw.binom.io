@@ -1,7 +1,6 @@
 package pw.binom.concurrency
 
 import pw.binom.atomic.AtomicReference
-import pw.binom.doFreeze
 
 /**
  * Queue for internal using. Work like FIFO. Work without any synchronization.
@@ -12,10 +11,6 @@ internal class InternalQueue<T> {
     private class Item<T>(val value: T?) {
         var next = AtomicReference<Item<T>?>(null)
         var previous = AtomicReference<Item<T>?>(null)
-
-        init {
-            doFreeze()
-        }
     }
 
     private val first = AtomicReference<Item<T>?>(null)

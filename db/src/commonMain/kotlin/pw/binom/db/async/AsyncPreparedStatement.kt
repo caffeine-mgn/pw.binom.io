@@ -2,11 +2,11 @@ package pw.binom.db.async
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
-import pw.binom.UUID
 import pw.binom.date.Calendar
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.io.AsyncCloseable
+import pw.binom.uuid.UUID
 
 interface AsyncPreparedStatement : AsyncCloseable {
     val connection: AsyncConnection
@@ -41,11 +41,25 @@ interface AsyncPreparedStatement : AsyncCloseable {
         }
     }
 
+    suspend fun executeQuery(arguments: List<Any?>): AsyncResultSet {
+        arguments.forEachIndexed { index, value ->
+            setValue(index, value)
+        }
+        return executeQuery()
+    }
+
     suspend fun executeQuery(vararg arguments: Any?): AsyncResultSet {
         arguments.forEachIndexed { index, value ->
             setValue(index, value)
         }
         return executeQuery()
+    }
+
+    suspend fun executeUpdate(arguments: List<Any?>): Long {
+        arguments.forEachIndexed { index, value ->
+            setValue(index, value)
+        }
+        return executeUpdate()
     }
 
     suspend fun executeUpdate(vararg arguments: Any?): Long {

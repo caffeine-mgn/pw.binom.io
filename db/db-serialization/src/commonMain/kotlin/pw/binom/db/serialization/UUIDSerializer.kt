@@ -5,9 +5,9 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import pw.binom.UUID
 import pw.binom.db.serialization.codes.SQLDecoder
 import pw.binom.db.serialization.codes.SQLEncoder
+import pw.binom.uuid.UUID
 
 object UUIDSerializer : KSerializer<UUID> {
     override fun deserialize(decoder: Decoder): UUID {

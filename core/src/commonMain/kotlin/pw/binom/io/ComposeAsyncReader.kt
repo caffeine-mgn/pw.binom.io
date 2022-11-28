@@ -1,7 +1,7 @@
 package pw.binom.io
 
-import pw.binom.PopResult
-import pw.binom.Stack
+import pw.binom.collections.PopResult
+import pw.binom.collections.Stack
 
 class ComposeAsyncReader : AbstractAsyncReader() {
     private val readers = Stack<AsyncReader>()
@@ -11,8 +11,9 @@ class ComposeAsyncReader : AbstractAsyncReader() {
         while (true) {
             if (current.isEmpty) {
                 readers.popFirst(current)
-                if (current.isEmpty)
+                if (current.isEmpty) {
                     throw EOFException()
+                }
             }
             try {
                 val r = current.value.readChar()
@@ -42,12 +43,14 @@ class ComposeAsyncReader : AbstractAsyncReader() {
     }
 
     override suspend fun asyncClose() {
-        if (!current.isEmpty)
+        if (!current.isEmpty) {
             current.value.asyncClose()
+        }
         while (true) {
             readers.popFirst(current)
-            if (current.isEmpty)
+            if (current.isEmpty) {
                 break
+            }
             current.value.asyncClose()
         }
     }

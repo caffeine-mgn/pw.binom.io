@@ -9,7 +9,7 @@ import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.Encoding
 import pw.binom.io.http.HashHeaders
 import pw.binom.io.http.Headers
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 class DefaultHttpResponse(
     val URI: URL,

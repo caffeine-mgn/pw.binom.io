@@ -4,14 +4,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
-import pw.binom.UUID
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
+import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.pool.PooledAsyncConnection
 import pw.binom.io.use
+import pw.binom.uuid.UUID
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -103,7 +104,7 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
 }
 
 @OptIn(ExperimentalTime::class)
-class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: SerializersModule) : DBAccess2 {
+class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModule: SerializersModule) : DBAccess2 {
 
     override suspend fun <T : Any> insert(k: KSerializer<T>, value: T, excludeGenerated: Boolean) {
         insert2(k = k, value = value, returning = false, excludeGenerated = excludeGenerated)
@@ -111,7 +112,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
 
     override suspend fun <T : Any> insertAndReturn(k: KSerializer<T>, value: T, excludeGenerated: Boolean): T =
         insert2(k = k, value = value, returning = true, excludeGenerated = excludeGenerated)
-            ?: throw IllegalStateException("Can't extract returned inserted value")
+            ?: error("Can't extract returned inserted value")
 
     private suspend inline fun <T : Any> insert2(
         k: KSerializer<T>,
@@ -160,13 +161,13 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
         }
         i = 0
         sb.append(") values(")
-        val args = arrayOfNulls<Any>(params.size)
+        val args = defaultMutableList<Any?>(params.size)
         params.forEach {
             if (i > 0) {
                 sb.append(",")
             }
             sb.append("?")
-            args[i++] = it.value.second
+            args += it.value.second
         }
         sb.append(")")
         if (returning) {
@@ -188,7 +189,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
         }
         val ps = con.usePreparedStatement(sb.toString())
         return if (returning) {
-            return ps.executeQuery(*args).use { result ->
+            return ps.executeQuery(args).use { result ->
                 val r = ResultSetDataProvider(result)
                 if (result.next()) {
                     DefaultSQLSerializePool.decode(
@@ -202,16 +203,20 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
                 }
             }
         } else {
-            ps.executeUpdate(*args)
+            ps.executeUpdate(args)
             null
         }
     }
 
-    override suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T> {
+    override suspend fun selectRaw(func: suspend QueryContext.() -> String): AsyncResultSet {
         val params = QueryContextImpl(serializersModule)
         val query = func(params)
         val ps = con.usePreparedStatement(query)
-        val result = ps.executeQuery(*params.args.toTypedArray())
+        return ps.executeQuery(params.args)
+    }
+
+    override suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T> {
+        val result = selectRaw(func)
         val r = ResultSetDataProvider(result)
         return flow {
             try {
@@ -237,7 +242,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, val serializersModule: Seria
         val params = QueryContextImpl(serializersModule)
         val query = func(params)
         val ps = con.usePreparedStatement(query)
-        return ps.executeUpdate(*params.args.toTypedArray())
+        return ps.executeUpdate(params.args)
     }
 
     override suspend fun <T : Any> selectAll(

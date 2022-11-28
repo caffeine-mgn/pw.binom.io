@@ -3,8 +3,8 @@ package pw.binom.io.httpClient
 import pw.binom.io.AsyncInput
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthInput
-import pw.binom.net.URL
 import pw.binom.skipAll
+import pw.binom.url.URL
 
 class ResponseAsyncContentLengthInput(
     val URI: URL,

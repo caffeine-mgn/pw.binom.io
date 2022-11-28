@@ -19,7 +19,7 @@ class UdpTest {
         val channel = UdpSocketChannel()
         val selector = Selector.open()
         channel.setBlocking(false)
-        val key = selector.attach(channel, 0, null)
+        val key = selector.attach(channel, null, 0)
         channel.close()
         try {
             key.close()

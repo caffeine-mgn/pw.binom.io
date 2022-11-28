@@ -6,6 +6,7 @@ import pw.binom.charset.Charsets
 import pw.binom.io.*
 import pw.binom.io.http.AsyncMultipartOutput
 import pw.binom.io.http.headersOf
+import pw.binom.url.UrlEncoder
 
 class HtmlMultipartMessage internal constructor(val output: AsyncOutput) : Message {
 
@@ -49,7 +50,7 @@ class HtmlMultipartMessage internal constructor(val output: AsyncOutput) : Messa
             mimeType = "$mimeType;name=$name",
             headers = headersOf(
                 "Content-Transfer-Encoding" to "Binary",
-                "Content-Disposition" to "attachment;filename=\"${UTF8.encode(name)}\"",
+                "Content-Disposition" to "attachment;filename=\"${UrlEncoder.encode(name)}\"",
             )
         )
         multipart.flush()

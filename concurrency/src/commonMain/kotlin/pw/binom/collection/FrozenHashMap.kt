@@ -4,7 +4,6 @@ import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicReference
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
-import pw.binom.doFreeze
 import kotlin.math.absoluteValue
 
 class FrozenHashMap<K, V>(bucketSize: Int = 16) : MutableMap<K, V> {
@@ -90,10 +89,6 @@ class FrozenHashMap<K, V>(bucketSize: Int = 16) : MutableMap<K, V> {
 
     override fun remove(key: K): V? =
         internalRemove(key, null)
-
-    init {
-        doFreeze()
-    }
 }
 
 class FrozenEntityIterator<K, V>(val map: FrozenHashMap<K, V>) : MutableIterator<MutableMap.MutableEntry<K, V>> {
@@ -330,19 +325,9 @@ class FrozenBucket<K, V> {
             root.setValue(null)
         }
     }
-
-    init {
-        doFreeze()
-    }
 }
 
 class FrozenMutableEntry<K, V>(key: K, value: V) : MutableMap.MutableEntry<K, V> {
-
-    init {
-        key?.doFreeze()
-        value?.doFreeze()
-    }
-
     private val _key = AtomicReference(key)
     private val _value = AtomicReference(value)
 
@@ -353,13 +338,8 @@ class FrozenMutableEntry<K, V>(key: K, value: V) : MutableMap.MutableEntry<K, V>
     internal val nextValue = AtomicReference<FrozenMutableEntry<K, V>?>(null)
 
     override fun setValue(newValue: V): V {
-        newValue?.doFreeze()
         val oldValue = _value.getValue()
         _value.setValue(newValue)
         return oldValue
-    }
-
-    init {
-        doFreeze()
     }
 }

@@ -10,7 +10,6 @@ import pw.binom.io.IOException
 import pw.binom.io.http.*
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
-import pw.binom.pool.borrow
 
 internal class HttpResponse2Impl(
     val onClose: (HttpResponse2Impl) -> Unit,
@@ -138,10 +137,12 @@ internal class HttpResponse2Impl(
 
         fun wrap(name: String, stream: AsyncOutput) = when (name) {
             Encoding.IDENTITY -> stream
-            Encoding.CHUNKED -> server!!.reusableAsyncChunkedOutputPool.new(
-                stream = stream,
-                closeStream = stream !== channel!!.writer,
-            )
+            Encoding.CHUNKED -> server!!.reusableAsyncChunkedOutputPool.borrow().also {
+                it.reset(
+                    stream = stream,
+                    closeStream = stream !== channel!!.writer,
+                )
+            }
 
             Encoding.GZIP -> AsyncGZIPOutput(
                 stream = stream,
@@ -189,7 +190,7 @@ internal class HttpResponse2Impl(
         val charset = Charsets.get(headers.charset ?: "utf-8")
         val output = startWriteBinary()
         try {
-            return server.bufferWriterPool.borrow {
+            return server.bufferWriterPool.borrow().also {
                 it.reset(
                     output = output,
                     charset = charset

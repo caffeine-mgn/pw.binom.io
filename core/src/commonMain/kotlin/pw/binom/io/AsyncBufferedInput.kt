@@ -57,7 +57,7 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
         closed = true
     }
 
-    protected inline fun checkClosed() {
+    protected fun checkClosed() {
         if (closed) {
             throw StreamClosedException()
         }

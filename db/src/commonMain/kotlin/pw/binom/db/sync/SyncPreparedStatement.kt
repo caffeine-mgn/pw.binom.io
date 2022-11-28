@@ -2,11 +2,11 @@ package pw.binom.db.sync
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
-import pw.binom.UUID
 import pw.binom.date.Calendar
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.io.Closeable
+import pw.binom.uuid.UUID
 
 interface SyncPreparedStatement : Closeable {
     val connection: SyncConnection

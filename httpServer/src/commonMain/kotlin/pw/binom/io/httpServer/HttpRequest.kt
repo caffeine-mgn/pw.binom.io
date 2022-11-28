@@ -4,8 +4,8 @@ import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.net.Path
-import pw.binom.net.Query
+import pw.binom.url.Path
+import pw.binom.url.Query
 import kotlin.js.JsName
 
 interface HttpRequest : AsyncCloseable {

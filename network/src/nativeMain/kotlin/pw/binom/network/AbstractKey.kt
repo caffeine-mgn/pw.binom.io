@@ -39,6 +39,10 @@ abstract class AbstractKey(override var attachment: Any?) :
     override val closed: Boolean
         get() = _closed
 
+    internal fun internalResetFlags() {
+        _listensFlag = 0
+    }
+
     override fun compareTo(other: AbstractKey): Int = hashCode() - other.hashCode()
 
     protected fun checkClosed() {

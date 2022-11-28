@@ -9,6 +9,7 @@ expect class ReentrantLock : Lock {
     constructor()
 
     override fun lock()
+    override fun tryLock(): Boolean
     override fun unlock()
 
     fun newCondition(): Condition

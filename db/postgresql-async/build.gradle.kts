@@ -28,6 +28,7 @@ kotlin {
                 api(project(":date"))
                 api(project(":network"))
                 api(project(":ssl"))
+                api(project(":scram"))
             }
         }
 
@@ -84,7 +85,7 @@ kotlin {
 tasks {
     val postgresServer = pw.binom.plugins.DockerUtils.dockerContanier(
         project = project,
-        image = "postgres:11",
+        image = "postgres:14",
         tcpPorts = listOf(5432 to 6122),
         args = listOf(),
         suffix = "Postgres",
@@ -93,7 +94,8 @@ tasks {
             "POSTGRES_PASSWORD" to "postgres",
             "POSTGRES_DB" to "test"
         ),
-        healthCheck = "/usr/bin/pg_isready -U postgres"
+        healthCheck = "/usr/bin/pg_isready -U postgres",
+        withHealthCheck = true,
     )
     postgresServer.create.configure {
 //        this.cmd.add(

@@ -3,7 +3,7 @@ package pw.binom.io.httpClient
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncChunkedOutput
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 class RequestAsyncChunkedOutput constructor(
     val URI: URL,

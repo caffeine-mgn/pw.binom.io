@@ -1,5 +1,6 @@
 package pw.binom.io
 
+import pw.binom.dump
 import kotlin.math.ceil
 
 open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
@@ -46,7 +47,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         }
     }
 
-    private inline fun checkClosed() {
+    private fun checkClosed() {
         if (closed) {
             throw StreamClosedException()
         }
@@ -57,6 +58,27 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         alloc(1)
         data.put(byte)
         _wrote++
+    }
+
+    fun writeInt(value: Int) {
+        checkLocked()
+        alloc(Int.SIZE_BYTES)
+        value.dump(data)
+        _wrote += Int.SIZE_BYTES
+    }
+
+    fun writeLong(value: Long) {
+        checkLocked()
+        alloc(Long.SIZE_BYTES)
+        value.dump(data)
+        _wrote += Long.SIZE_BYTES
+    }
+
+    fun writeShort(value: Short) {
+        checkLocked()
+        alloc(Short.SIZE_BYTES)
+        value.dump(data)
+        _wrote += Short.SIZE_BYTES
     }
 
     fun alloc(size: Int) {

@@ -6,7 +6,6 @@ import pw.binom.FreezableFuture
 import pw.binom.Future
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
-import pw.binom.doFreeze
 import kotlin.coroutines.CoroutineContext
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.freeze
@@ -143,4 +142,4 @@ private fun <DATA, RESULT> getFunc(
     future: FreezableFuture<RESULT>,
 ): () -> InputData<DATA, RESULT> = {
     InputData(worker = worker, input = input, func = func, future = future)
-}.doFreeze()
+}

@@ -13,7 +13,6 @@ import pw.binom.db.SQLException
 import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
-import pw.binom.doFreeze
 import pw.binom.io.ClosedException
 import pw.binom.io.IOException
 import pw.binom.io.file.File
@@ -70,7 +69,6 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
 
     init {
 //        beginSt.executeUpdate()
-        doFreeze()
     }
 
     private fun checkClosed() {

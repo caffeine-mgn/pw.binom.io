@@ -1,5 +1,6 @@
 package pw.binom.network
 
+import pw.binom.concurrency.SpinLock
 import pw.binom.io.ByteBuffer
 import pw.binom.io.use
 import pw.binom.thread.Thread
@@ -30,7 +31,7 @@ class SelectorTest {
     fun selectTimeoutTest1() {
         val selectKeys = SelectedEvents.create()
         val selector = Selector.open()
-        val it = selector.select(1000, selectKeys)
+        val it = selector.select(selectKeys, 1000)
         assertEquals(0, it)
         assertFalse(selectKeys.iterator().hasNext())
     }
@@ -44,7 +45,7 @@ class SelectorTest {
         client.setBlocking(false)
         selector.attach(client)
         val beforeSelecting = TimeSource.Monotonic.markNow()
-        val count = selector.select(1000, selectKeys)
+        val count = selector.select(selectKeys, 1000)
         assertEquals(0, count)
         val it = selectKeys.iterator()
         val selectingTime = beforeSelecting.elapsedNow()
@@ -62,7 +63,7 @@ class SelectorTest {
         try {
             key.listensFlag = 0
             client.connect(NetworkAddress.Immutable("google.com", 443))
-            selector.select(2000, selectKeys)
+            selector.select(selectKeys, 2000)
             assertFalse(selectKeys.iterator().hasNext())
         } finally {
             key.close()
@@ -80,23 +81,16 @@ class SelectorTest {
         val key = selector.attach(client)
         key.listensFlag = Selector.EVENT_CONNECTED
         client.connect(NetworkAddress.Immutable("google.com", 443))
-        selector.select(5000, selectKeys)
+        selector.select(selectKeys, 5000)
         var it = selectKeys.iterator()
         assertTrue(it.hasNext())
-        val mode = it.next().mode
-        assertTrue(mode and Selector.EVENT_CONNECTED != 0)
-        assertTrue(mode and Selector.OUTPUT_READY != 0)
-//        assertEquals(1, selector.select(5000) { key, mode ->
-//            println("--1")
-//            assertTrue(mode and Selector.EVENT_CONNECTED != 0)
-//            println("--2")
-//            assertTrue(mode and Selector.OUTPUT_READY != 0)
-//            println("--3")
-//        })
-        selector.select(1000, selectKeys)
-        selectKeys.iterator().forEach {
-            println("->$it")
-        }
+        val mode = it.next().also { println("Event: $it") }.mode
+        assertTrue(mode and Selector.OUTPUT_READY != 0, "OUTPUT_READY fail")
+        assertTrue(mode and Selector.EVENT_CONNECTED != 0, "EVENT_CONNECTED fail")
+        selector.select(selectKeys, 1000)
+//        selectKeys.iterator().forEach {
+//            println("->$it")
+//        }
         it = selectKeys.iterator()
         assertFalse(it.hasNext())
     }
@@ -110,26 +104,14 @@ class SelectorTest {
         selector.attach(client)
         client.connect(NetworkAddress.Immutable("127.0.0.1", 12))
 
-        selector.select(5000, selectKeys)
+        selector.select(selectKeys, 5000)
         selectKeys.forEach {
             val mode = it.mode
             val key = it.key
-            if (mode and Selector.INPUT_READY != 0) {
-                println("Selector.INPUT_READY")
-            }
-            if (mode and Selector.OUTPUT_READY != 0) {
-                println("Selector.OUTPUT_READY")
-            }
-            if (mode and Selector.EVENT_CONNECTED != 0) {
-                println("Selector.EVENT_CONNECTED")
-            }
-            if (mode and Selector.EVENT_ERROR != 0) {
-                println("Selector.EVENT_ERROR")
-            }
             assertTrue(mode and Selector.EVENT_ERROR != 0)
             client.close()
         }
-        assertEquals(0, selector.select(1000, selectKeys))
+        assertEquals(0, selector.select(selectKeys, 1000))
     }
 
     @Test
@@ -141,7 +123,7 @@ class SelectorTest {
         server.bind(addr)
         server.setBlocking(false)
         selector.attach(server)
-        assertEquals(0, selector.select(1000, selectKeys))
+        assertEquals(0, selector.select(selectKeys, 1000))
     }
 
     @Test
@@ -163,12 +145,116 @@ class SelectorTest {
         key2.listensFlag = Selector.INPUT_READY
         TcpClientSocketChannel().connect(NetworkAddress.Immutable(host = "127.0.0.1", port = server.port!!))
 
-        val v1 = selector1.select(timeout = 10, selectedEvents = selectKeys1)
-        val v2 = selector2.select(timeout = 10, selectedEvents = selectKeys2)
+        val v1 = selector1.select(selectedEvents = selectKeys1, timeout = 10)
+        val v2 = selector2.select(selectedEvents = selectKeys2, timeout = 10)
 
         println("v1=$v1, v2=$v2")
     }
 
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun exclusiveTest() {
+//        val rr = ReentrantLock()
+//        val con = rr.newCondition()
+// EPOLLET
+        val selector = Selector.open()
+
+        class NThread : ThreadWorker() {
+
+            val list = SelectedEvents.create(100)
+            private val lock = SpinLock()
+            var lastSelectCount = 0
+                private set
+
+            fun trySelect() {
+                dispatch {
+                    println("Selecting...")
+                    val count = measureTimedValue { selector.select(selectedEvents = list, timeout = 1000) }
+                    lastSelectCount = count.value
+                    println("select count: $count")
+                }
+            }
+
+            override fun beforeStop() {
+                list.close()
+                super.beforeStop()
+            }
+        }
+
+        val s1 = NThread()
+        val s2 = NThread()
+
+        val server = UdpSocketChannel()
+        server.setBlocking(false)
+        server.bind(NetworkAddress.Immutable(host = "0.0.0.0", port = 0))
+        val addr = NetworkAddress.Immutable(host = "127.0.0.1", port = server.port!!)
+        val s1Key = selector.attach(server, mode = Selector.INPUT_READY)
+//        val s2Key = selector.attach(server, mode = Selector.INPUT_READY)
+
+        s1.trySelect()
+        s2.trySelect()
+
+        val client = UdpSocketChannel()
+        fun sendNow() {
+            ByteBuffer.alloc(16).use { buffer ->
+                client.send(buffer, addr)
+            }
+        }
+        sendNow()
+        Thread.sleep(3_000)
+        val threads = listOf(s1, s2)
+        assertEquals(1, threads.count { it.lastSelectCount == 0 })
+        assertEquals(1, threads.count { it.lastSelectCount == 1 })
+    }
+
+    private fun sendUdp(port: Int?) = sendUdp(NetworkAddress.Immutable(host = "127.0.0.1", port = port!!))
+
+    fun sendUdp(address: NetworkAddress) {
+        UdpSocketChannel().use { c ->
+            c.setBlocking(true)
+            ByteBuffer.alloc(42).use { buffer ->
+                c.send(buffer, address)
+            }
+        }
+    }
+
+    @Test
+    fun resetListenKeysAfterSelect() {
+        val selectKeys1 = SelectedEvents.create()
+        val selector1 = Selector.open()
+        val b = UdpSocketChannel()
+        b.setBlocking(false)
+        b.bind(NetworkAddress.Immutable("127.0.0.1", port = 0))
+        val udpChannel = selector1.attach(b, mode = Selector.INPUT_READY)
+        sendUdp(b.port)
+        selector1.select(selectedEvents = selectKeys1)
+        val event = selectKeys1.single()
+        assertTrue(event.mode or Selector.INPUT_READY > 0)
+        assertEquals(0, udpChannel.listensFlag)
+    }
+
+    @Test
+    fun testReselect() {
+        val selectKeys1 = SelectedEvents.create()
+        val selector1 = Selector.open()
+        val b = UdpSocketChannel()
+        b.setBlocking(false)
+        b.bind(NetworkAddress.Immutable("127.0.0.1", port = 0))
+        val udpChannel = selector1.attach(b, mode = Selector.INPUT_READY)
+
+        val c = UdpSocketChannel()
+        c.setBlocking(true)
+        ByteBuffer.alloc(42).use { buffer ->
+            c.send(buffer, NetworkAddress.Immutable(host = "127.0.0.1", port = b.port!!))
+        }
+        selector1.select(selectedEvents = selectKeys1, timeout = 1_000)
+        assertEquals(1, selectKeys1.count())
+        selector1.select(selectedEvents = selectKeys1, timeout = 1_000)
+        assertEquals(0, selectKeys1.count())
+    }
+
+    @Deprecated(message = "")
+    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun reattachTest() {
@@ -202,8 +288,8 @@ class SelectorTest {
         server.setBlocking(false)
         var k1: Selector.Key? = null
         var k2: Selector.Key? = null
-        k1 = selector1.attach(server, Selector.INPUT_READY)
-        k2 = selector2.attach(server, Selector.INPUT_READY)
+        k1 = selector1.attach(server, mode = Selector.INPUT_READY)
+        k2 = selector2.attach(server, mode = Selector.INPUT_READY)
         server.bind(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
         sendDataWithDelay(port = port, delay = 300.milliseconds)
         val vv1 = measureTimedValue { selector1.select(selectedEvents = selectKeys1, timeout = 1000) }

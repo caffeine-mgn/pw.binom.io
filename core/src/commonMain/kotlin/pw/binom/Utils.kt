@@ -5,22 +5,22 @@ import pw.binom.io.ByteBuffer
 import kotlin.jvm.JvmName
 
 operator fun Long.get(index: Int): Byte {
-    if (index !in 0..7) {
-        throw IndexOutOfBoundsException()
+    if (index !in 0 until Long.SIZE_BYTES) {
+        throw IndexOutOfBoundsException("Can't get index $index. size: ${Long.SIZE_BYTES}")
     }
     return ((this ushr (56 - 8 * index)) and 0xFF).toByte()
 }
 
 operator fun Int.get(index: Int): Byte {
-    if (index !in 0..3) {
-        throw IndexOutOfBoundsException()
+    if (index !in 0 until Int.SIZE_BYTES) {
+        throw IndexOutOfBoundsException("Can't get index $index. size: ${Int.SIZE_BYTES}")
     }
     return ((this ushr (8 * (3 - index)))).toByte()
 }
 
 operator fun Short.get(index: Int): Byte {
-    if (index !in 0..1) {
-        throw IndexOutOfBoundsException()
+    if (index !in 0 until Short.SIZE_BYTES) {
+        throw IndexOutOfBoundsException("Can't get index $index. size: ${Short.SIZE_BYTES}")
     }
     return ((this.toInt() ushr (8 - 8 * index)) and 0xFF).toByte()
 }
@@ -200,8 +200,9 @@ fun Long.Companion.fromBytes(
         (byte7.toLong() and 0xFFL shl 0)
 
 fun Long.toBytes(array: ByteArray, offset: Int = 0) {
-    if (array.size - offset < Long.SIZE_BYTES)
+    if (array.size - offset < Long.SIZE_BYTES) {
         throw IllegalArgumentException()
+    }
     array[0 + offset] = ushr(56).toByte()
     array[1 + offset] = ushr(48).toByte()
     array[2 + offset] = ushr(40).toByte()
@@ -212,11 +213,12 @@ fun Long.toBytes(array: ByteArray, offset: Int = 0) {
     array[7 + offset] = ushr(0).toByte()
 }
 
-fun Long.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) = (readBuffer[0 + offset] shl 56) +
-    ((readBuffer[1 + offset].toLong() and 0xFFL) shl 48) +
-    ((readBuffer[2 + offset].toLong() and 0xFFL) shl 40) +
-    ((readBuffer[3 + offset].toLong() and 0xFFL) shl 32) +
-    ((readBuffer[4 + offset].toLong() and 0xFFL) shl 24) +
-    (readBuffer[5 + offset].toLong() and 0xFFL shl 16) +
-    (readBuffer[6 + offset].toLong() and 0xFFL shl 8) +
-    (readBuffer[7 + offset].toLong() and 0xFFL shl 0)
+fun Long.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) =
+    (readBuffer[0 + offset] shl 56) +
+        ((readBuffer[1 + offset].toLong() and 0xFFL) shl 48) +
+        ((readBuffer[2 + offset].toLong() and 0xFFL) shl 40) +
+        ((readBuffer[3 + offset].toLong() and 0xFFL) shl 32) +
+        ((readBuffer[4 + offset].toLong() and 0xFFL) shl 24) +
+        (readBuffer[5 + offset].toLong() and 0xFFL shl 16) +
+        (readBuffer[6 + offset].toLong() and 0xFFL shl 8) +
+        (readBuffer[7 + offset].toLong() and 0xFFL shl 0)

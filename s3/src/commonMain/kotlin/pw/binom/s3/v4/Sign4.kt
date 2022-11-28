@@ -2,13 +2,13 @@ package pw.binom.s3.v4
 
 import pw.binom.date.DateTime
 import pw.binom.io.AsyncOutput
-import pw.binom.io.UTF8
 import pw.binom.io.http.Headers
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.HttpResponse
 import pw.binom.io.use
-import pw.binom.net.URL
+import pw.binom.url.URL
+import pw.binom.url.UrlEncoder
 
 internal suspend fun s3Call(
     client: HttpClient,
@@ -38,7 +38,7 @@ internal suspend fun s3Call(
             }
             add("x-amz-content-sha256" to contentSha256)
             if (xAmzCopySource != null) {
-                add("x-amz-copy-source" to UTF8.urlEncode(xAmzCopySource))
+                add("x-amz-copy-source" to UrlEncoder.pathEncode(xAmzCopySource))
             }
             add("x-amz-date" to date.awsDateTime())
         }.sortedBy { it.first }

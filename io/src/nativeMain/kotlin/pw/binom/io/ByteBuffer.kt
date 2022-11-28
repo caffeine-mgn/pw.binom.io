@@ -15,13 +15,13 @@ actual open class ByteBuffer(
         actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(array, null)
     }
 
-    init {
-        ByteBufferMetric.incCount()
-    }
-
     //    private val native = createNativeByteBuffer(capacity)!!
     override val capacity: Int
         get() = data.size
+
+    init {
+        ByteBufferMetric.inc(this)
+    }
 
     //    val bb = nativeHeap.allocArray<ByteVar>(capacity)
     private var closed = false
@@ -148,7 +148,7 @@ actual open class ByteBuffer(
 
     override fun close() {
         checkClosed()
-        ByteBufferMetric.decCount()
+        ByteBufferMetric.dec(this)
 //        closed = true
         onClose?.invoke(this)
     }
@@ -320,7 +320,7 @@ actual open class ByteBuffer(
             val l = minOf(remaining, length)
             dest.usePinned { dest ->
                 (cPointer + position)!!.copy(
-                    dest = dest.addressOf(0),
+                    dest = dest.addressOf(offset),
                     size = l.convert(),
                 )
             }

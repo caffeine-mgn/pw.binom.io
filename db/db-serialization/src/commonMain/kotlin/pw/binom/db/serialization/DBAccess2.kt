@@ -4,12 +4,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.SerializersModule
+import pw.binom.db.async.AsyncResultSet
 import kotlin.jvm.JvmInline
 
 interface DBAccess2 {
+    val serializersModule: SerializersModule
     suspend fun <T : Any> insert(k: KSerializer<T>, value: T, excludeGenerated: Boolean = true)
     suspend fun <T : Any> insertAndReturn(k: KSerializer<T>, value: T, excludeGenerated: Boolean = true): T
     suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T>
+    suspend fun selectRaw(func: suspend QueryContext.() -> String): AsyncResultSet
     suspend fun update(func: suspend QueryContext.() -> String): Long
 
     suspend fun <T : Any> selectAll(k: KSerializer<T>, condition: (suspend QueryContext.() -> String)? = null): Flow<T>

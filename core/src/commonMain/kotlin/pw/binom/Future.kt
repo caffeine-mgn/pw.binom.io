@@ -81,9 +81,6 @@ private class FailFuture<T>(val result: Throwable) : Future<T> {
 
 @Suppress("UNCHECKED_CAST")
 class NonFreezableFuture<T> : Future<T> {
-    init {
-        neverFreeze()
-    }
 
     private var result: Any? = null
     override val resultOrNull: T?
@@ -154,7 +151,6 @@ class FreezableFuture<T> : Future<T> {
             throw Future.FutureAlreadyResumedException()
         }
         _isSuccess.setValue(result.isSuccess)
-        result.doFreeze()
         this.result.setValue(if (result.isSuccess) result.getOrNull() else result.exceptionOrNull())
     }
 }

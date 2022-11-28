@@ -3,8 +3,8 @@ package pw.binom.io
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
 import pw.binom.collections.defaultMutableList
-import pw.binom.net.Path
-import pw.binom.net.toPath
+import pw.binom.url.Path
+import pw.binom.url.toPath
 
 class MemoryFileSystem : FileSystem {
     override suspend fun getQuota(path: Path): Quota? = null

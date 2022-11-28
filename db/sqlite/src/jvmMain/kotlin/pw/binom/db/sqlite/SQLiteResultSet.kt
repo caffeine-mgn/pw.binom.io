@@ -1,10 +1,11 @@
 package pw.binom.db.sqlite
 
-// import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import pw.binom.collections.defaultMutableList
 import pw.binom.date.DateTime
+import pw.binom.db.ColumnType
 import pw.binom.db.sync.SyncResultSet
 import java.sql.ResultSet
+import java.sql.Types
 
 class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
 
@@ -111,6 +112,36 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
 
     override fun columnIndex(column: String): Int =
         native.findColumn(column)
+
+    override fun columnType(index: Int): ColumnType =
+        when (val type = native.metaData.getColumnType(index + 1)) {
+            Types.BIT -> ColumnType.BIT
+            Types.TINYINT -> ColumnType.TINYINT
+            Types.SMALLINT -> ColumnType.SMALLINT
+            Types.INTEGER -> ColumnType.INTEGER
+            Types.BIGINT -> ColumnType.BIGINT
+            Types.FLOAT -> ColumnType.FLOAT
+            Types.REAL -> ColumnType.REAL
+            Types.DOUBLE -> ColumnType.DOUBLE
+            Types.NUMERIC -> ColumnType.NUMERIC
+            Types.DECIMAL -> ColumnType.DECIMAL
+            Types.CHAR -> ColumnType.CHAR
+            Types.VARCHAR -> ColumnType.VARCHAR
+            Types.LONGVARCHAR -> ColumnType.LONGVARCHAR
+            Types.DATE -> ColumnType.DATE
+            Types.TIME -> ColumnType.TIME
+            Types.TIMESTAMP -> ColumnType.TIMESTAMP
+            Types.BINARY -> ColumnType.BINARY
+            Types.VARBINARY -> ColumnType.VARBINARY
+            Types.LONGVARBINARY -> ColumnType.LONGVARBINARY
+            Types.NULL -> ColumnType.NULL
+            Types.OTHER -> ColumnType.OTHER
+            Types.BLOB -> ColumnType.BINARY
+            Types.CLOB -> ColumnType.VARCHAR
+            else -> error("Unknown data type $type")
+        }
+
+    override fun columnType(column: String): ColumnType = columnType(columnIndex(column))
 
     override fun close() {
         native.close()

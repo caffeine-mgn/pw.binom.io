@@ -2,7 +2,6 @@ package pw.binom.concurrency
 
 import kotlinx.cinterop.*
 import platform.windows.*
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.Cleaner
 import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
@@ -26,9 +25,7 @@ actual class ReentrantLock : Lock {
         nativeHeap.free(native)
     }
 
-    init {
-        freeze()
-    }
+    actual override fun tryLock(): Boolean = TryEnterCriticalSection(native.ptr) != 0
 
     actual override fun lock() {
         EnterCriticalSection(native.ptr)
@@ -51,10 +48,6 @@ actual class ReentrantLock : Lock {
 
         internal val cleaner = createCleaner(native) { native ->
             nativeHeap.free(native)
-        }
-
-        init {
-            freeze()
         }
 
         actual fun await() {

@@ -58,13 +58,10 @@ class RsaCipherImpl(args: List<String>) : Cipher {
         if (mode == Cipher.Mode.ENCODE && data.size > rsa!!.dataSize - padding.size) {
             throw IllegalArgumentException("Data should be less then ${rsa!!.dataSize - padding.size}. Actual size: ${data.size}")
         }
-        println("--->#1")
         val result = buffer.usePinned { output ->
             data.usePinned { pinned ->
-                println("--->#2")
                 if (isPublicKey) {
                     if (mode == Cipher.Mode.ENCODE) {
-                        println("--->#3")
                         RSA_public_encrypt(
                             pinned.get().size,
                             pinned.addressOf(0).reinterpret(),
@@ -73,7 +70,6 @@ class RsaCipherImpl(args: List<String>) : Cipher {
                             padding.id,
                         ).checkTrue("RSA_public_encrypt fail")
                     } else {
-                        println("--->#4")
                         RSA_public_decrypt(
                             pinned.get().size,
                             pinned.addressOf(0).reinterpret(),
@@ -84,7 +80,6 @@ class RsaCipherImpl(args: List<String>) : Cipher {
                     }
                 } else {
                     if (mode == Cipher.Mode.ENCODE) {
-                        println("--->#5")
                         RSA_private_encrypt(
                             pinned.get().size,
                             pinned.addressOf(0).reinterpret(),
@@ -93,7 +88,6 @@ class RsaCipherImpl(args: List<String>) : Cipher {
                             padding.id,
                         ).checkTrue("RSA_private_encrypt fail")
                     } else {
-                        println("--->#6")
                         RSA_private_decrypt(
                             pinned.get().size,
                             pinned.addressOf(0).reinterpret(),

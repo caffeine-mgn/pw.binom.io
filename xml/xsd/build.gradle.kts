@@ -20,7 +20,7 @@ kotlin {
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86()
     }
-    js("js", BOTH) {
+    js(pw.binom.Target.JS_TARGET) {
         browser()
         nodejs()
     }

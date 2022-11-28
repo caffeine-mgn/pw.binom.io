@@ -55,7 +55,7 @@ class TcpConnectionTest {
         channel.setBlocking(false)
         val clientKey = selector.attach(
             channel,
-            Selector.EVENT_ERROR or Selector.EVENT_CONNECTED or Selector.INPUT_READY or Selector.OUTPUT_READY
+            mode = Selector.EVENT_ERROR or Selector.EVENT_CONNECTED or Selector.INPUT_READY or Selector.OUTPUT_READY
         )
         println("Connect...")
         channel.connect(NetworkAddress.Immutable("127.0.0.1", serverConnection.port))
@@ -258,6 +258,7 @@ class TcpConnectionTest {
                             while (now.elapsedNow() < 2.seconds) {
                                 buf.clear()
                                 val b = connectedClient.write(buf)
+//                                println("b=$b")
                             }
                         }
                     }

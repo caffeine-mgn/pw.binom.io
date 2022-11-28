@@ -1,6 +1,6 @@
 package pw.binom.network
 
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 expect sealed class NetworkAddress {
     val host: String

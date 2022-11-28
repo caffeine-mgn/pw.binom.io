@@ -1,7 +1,7 @@
 package pw.binom.flux.client
 
 import pw.binom.io.httpClient.HttpClient
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 interface RestClient : HttpClient {
     override suspend fun connect(method: String, uri: URL): RestRequest

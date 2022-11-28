@@ -1,7 +1,7 @@
 package pw.binom.io
 
-import pw.binom.PopResult
-import pw.binom.Stack
+import pw.binom.collections.PopResult
+import pw.binom.collections.Stack
 
 class ComposeInput : Input {
 
@@ -10,8 +10,9 @@ class ComposeInput : Input {
 
     override fun read(dest: ByteBuffer): Int {
         while (true) {
-            if (current.isEmpty && readers.isEmpty)
+            if (current.isEmpty && readers.isEmpty) {
                 return 0
+            }
 
             if (current.isEmpty) {
                 readers.popFirst(current)
@@ -29,8 +30,9 @@ class ComposeInput : Input {
 
     override fun close() {
         do {
-            if (!current.isEmpty)
+            if (!current.isEmpty) {
                 current.value.close()
+            }
 
             readers.popFirst(current)
         } while (!current.isEmpty)

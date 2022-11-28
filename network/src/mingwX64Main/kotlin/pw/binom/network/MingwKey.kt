@@ -36,7 +36,7 @@ class MingwKey(
         EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
     fun epollCommonToNative(mode: Int): Int {
-        var events = 0u
+        var events = EPOLLONESHOT
         if (Selector.EVENT_ERROR in mode) {
             events = events or EPOLLHUP or EPOLLERR
         }

@@ -5,7 +5,7 @@ import pw.binom.io.http.BasicAuth
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.useBasicAuth
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 interface HttpRequest : AsyncCloseable {
     val headers: MutableHeaders

@@ -17,6 +17,7 @@ import pw.binom.io.http.websocket.MessagePool
 import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.network.*
 import pw.binom.pool.FixedSizePool
+import pw.binom.pool.GenericObjectPool
 import pw.binom.thread.DefaultUncaughtExceptionHandler
 import pw.binom.thread.Thread
 import pw.binom.thread.UncaughtExceptionHandler
@@ -39,13 +40,17 @@ class HttpServer(
     val errorHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler,
     websocketMessagePoolSize: Int = 16,
     outputBufferPoolSize: Int = 16,
+    chanckedAutoFlushBufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncCloseable {
-    internal val messagePool by lazy { MessagePool(websocketMessagePoolSize) }
-    internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
+    internal val messagePool = MessagePool(initCapacity = 0)
+    internal val webSocketConnectionPool = WebSocketConnectionPool(initCapacity = websocketMessagePoolSize)
     internal val textBufferPool = ByteBufferPool(capacity = 16)
-    internal val httpRequest2Impl = FixedSizePool(16, HttpRequest2Impl.Manager)
-    internal val httpResponse2Impl = FixedSizePool(16, HttpResponse2Impl.Manager)
-    internal val reusableAsyncChunkedOutputPool by lazy { ReusableAsyncChunkedOutput.Pool(outputBufferPoolSize) }
+    internal val httpRequest2Impl = GenericObjectPool(initCapacity = 0, factory = HttpRequest2Impl.Manager)
+    internal val httpResponse2Impl = GenericObjectPool(initCapacity = 0, factory = HttpResponse2Impl.Manager)
+    internal val reusableAsyncChunkedOutputPool = GenericObjectPool(
+        factory = ReusableAsyncChunkedOutput.Factory(autoFlushBuffer = chanckedAutoFlushBufferSize),
+        initCapacity = 0,
+    )
     internal val bufferWriterPool by lazy {
         FixedSizePool(
             outputBufferPoolSize,
@@ -67,6 +72,7 @@ class HttpServer(
 
     internal fun browConnection(channel: ServerAsyncAsciiChannel) {
         idleConnections -= channel
+        HttpServerMetrics.idleHttpServerConnection.dec()
     }
 
     suspend fun forceIdleCheck(): Int {
@@ -81,6 +87,7 @@ class HttpServer(
                 count++
                 it.remove()
                 runCatching { e.asyncClose() }
+                HttpServerMetrics.idleHttpServerConnection.dec()
             }
         }
         if (count > 0) {
@@ -99,6 +106,7 @@ class HttpServer(
 
     internal fun clientReProcessing(channel: ServerAsyncAsciiChannel) {
         channel.activeUpdate()
+        HttpServerMetrics.idleHttpServerConnection.inc()
         idleConnections += channel
         clientProcessing(channel = channel, isNewConnect = false)
     }

@@ -2,7 +2,6 @@ package pw.binom.concurrency
 
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicLong
-import pw.binom.doFreeze
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -29,6 +28,16 @@ class ReentrantSpinLock : Lock {
         }
     }
 
+    override fun tryLock(): Boolean {
+        if (threadId.getValue() == (Worker.current?.id ?: 0)) {
+            count.increment()
+            return true
+        }
+        return internalTryLock()
+    }
+
+    private fun internalTryLock() = threadId.compareAndSet(0, Worker.current?.id ?: 0)
+
     fun lock(duration: Duration?): Boolean {
         if (threadId.getValue() == (Worker.current?.id ?: 0)) {
             count.increment()
@@ -36,7 +45,7 @@ class ReentrantSpinLock : Lock {
         }
         val now = if (duration != null) TimeSource.Monotonic.markNow() else null
         while (true) {
-            if (threadId.compareAndSet(0, Worker.current?.id ?: 0)) {
+            if (internalTryLock()) {
                 break
             }
             if (now != null && now.elapsedNow() > duration!!) {
@@ -60,10 +69,6 @@ class ReentrantSpinLock : Lock {
                 throw IllegalStateException("Lock already free")
             }
         }
-    }
-
-    init {
-        doFreeze()
     }
 }
 

@@ -3,8 +3,8 @@ package pw.binom.webdav.client
 import pw.binom.io.*
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.addHeader
-import pw.binom.net.Path
 import pw.binom.skipAll
+import pw.binom.url.Path
 import pw.binom.webdav.WebAuthAccess
 
 class WebdavEntity(

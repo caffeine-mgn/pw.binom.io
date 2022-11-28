@@ -43,7 +43,7 @@ class SelectedEventsJvm : SelectedEvents {
                     return false
                 }
                 val it = keys.next()
-                val key = it.attachment() as JvmSelector.JvmKey
+                val key = it.attachment() as JvmKey
                 val socketChannel = it.channel() as? SocketChannel
                 if (socketChannel != null && !key.connected && socketChannel.isConnected && it.isWritable) {
                     try {
@@ -58,12 +58,12 @@ class SelectedEventsJvm : SelectedEvents {
                         nextReady = true
                         return true
                     } catch (e: ConnectException) {
-                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                        keyEvent.key = it.attachment() as JvmKey
                         keyEvent.mode = Selector.EVENT_ERROR
                         nextReady = true
                         return true
                     } catch (e: SocketException) {
-                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                        keyEvent.key = it.attachment() as JvmKey
                         keyEvent.mode = Selector.EVENT_ERROR
                         nextReady = true
                         return true
@@ -94,18 +94,18 @@ class SelectedEventsJvm : SelectedEvents {
                             keyEvent.mode = 0
                         }
                     } catch (e: ConnectException) {
-                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                        keyEvent.key = it.attachment() as JvmKey
                         keyEvent.mode = Selector.EVENT_ERROR
                         nextReady = true
                         return true
                     } catch (e: SocketException) {
-                        keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                        keyEvent.key = it.attachment() as JvmKey
                         keyEvent.mode = Selector.EVENT_ERROR
                         nextReady = true
                         return true
                     }
                 }
-                keyEvent.key = it.attachment() as JvmSelector.JvmKey
+                keyEvent.key = it.attachment() as JvmKey
                 keyEvent.mode = javaToCommon(it.readyOps())
                 nextReady = true
                 return true

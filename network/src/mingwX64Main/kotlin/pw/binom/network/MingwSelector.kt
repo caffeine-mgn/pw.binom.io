@@ -15,7 +15,7 @@ class MingwSelector : AbstractSelector() {
     private val keyForRemove = defaultMutableSet<Int>()
     internal val keys = defaultMutableSet<MingwKey>()
 
-    override fun select(timeout: Long, selectedEvents: SelectedEvents): Int {
+    override fun select(selectedEvents: SelectedEvents, timeout: Long): Int {
         keysLock.synchronize {
             if (keyForRemove.isNotEmpty()) {
                 keyForRemove.forEach {
@@ -32,6 +32,9 @@ class MingwSelector : AbstractSelector() {
         )
         selectedEvents.eventCount = eventCount
         selectedEvents.selector = this
+        selectedEvents.forEach {
+            (it.key as AbstractKey).internalResetFlags()
+        }
         return eventCount
     }
 

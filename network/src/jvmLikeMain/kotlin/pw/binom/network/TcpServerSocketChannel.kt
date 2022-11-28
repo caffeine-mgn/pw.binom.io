@@ -8,7 +8,7 @@ import java.nio.channels.ServerSocketChannel as JServerSocketChannel
 actual class TcpServerSocketChannel : Closeable, NetworkChannel {
     var native: JServerSocketChannel? = null
         internal set
-    var key: JvmSelector.JvmKey? = null
+    var key: JvmKey? = null
         set(value) {
             field = value
             if (native != null) {

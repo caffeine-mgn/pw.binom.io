@@ -1,9 +1,9 @@
 package pw.binom
 
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
+import pw.binom.atomic.synchronize
 import pw.binom.collections.defaultMutableList
-import pw.binom.concurrency.SpinLock
-import pw.binom.concurrency.synchronize
 
 class BatchExchange<T> {
     private var read = defaultMutableList<T>()
@@ -13,8 +13,8 @@ class BatchExchange<T> {
     val size
         get() = internalSize.getValue()
 
-    private val exchangeLock = SpinLock()
-    private val processingLock = SpinLock()
+    private val exchangeLock = AtomicBoolean(false)
+    private val processingLock = AtomicBoolean(false)
 
     fun isEmpty() = exchangeLock.synchronize {
         read.isEmpty()

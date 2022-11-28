@@ -1,7 +1,6 @@
 package pw.binom.concurrency
 
 import pw.binom.atomic.AtomicReference
-import pw.binom.doFreeze
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -22,10 +21,6 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
     private class Item<T>(val value: T?) {
         var next = AtomicReference<Item<T>?>(null)
         var previous = AtomicReference<Item<T>?>(null)
-
-        init {
-            doFreeze()
-        }
     }
 
     private var first = AtomicReference<Item<T>?>(null)
@@ -58,8 +53,9 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
             val item = last.getValue()!!
             last.setValue(item.previous.getValue())
             last.getValue()?.next?.setValue(null)
-            if (first == item)
+            if (first == item) {
                 first.setValue(null)
+            }
 
             val value = item.value as T
             item.next.setValue(null)
@@ -91,10 +87,6 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
 
     val isEmpty
         get() = lock.synchronize {
-            first == null
+            first.getValue() == null
         }
-
-    init {
-        doFreeze()
-    }
 }

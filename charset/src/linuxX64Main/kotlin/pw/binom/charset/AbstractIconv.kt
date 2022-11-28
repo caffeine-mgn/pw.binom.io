@@ -1,5 +1,3 @@
-@file:OptIn(UnsafeNumber::class)
-
 package pw.binom.charset
 
 import kotlinx.cinterop.*
@@ -13,7 +11,6 @@ import pw.binom.io.ClosedException
 /**
  * Abstract Charset convertor. Uses Iconv native library
  */
-@Suppress("OPT_IN_IS_NOT_ENABLED")
 abstract class AbstractIconv(
     fromCharset: String,
     toCharset: String,
@@ -105,7 +102,7 @@ abstract class AbstractIconv(
                         r != 0 && errno == EILSEQ -> CharsetTransformResult.MALFORMED
                         r != 0 && errno == EINVAL -> CharsetTransformResult.INPUT_OVER
                         r == 0 && errno == 0 -> CharsetTransformResult.SUCCESS
-                        else -> throw IllegalStateException("Iconv Exception. Errno: $errno, Result: $r")
+                        else -> error("Iconv Exception. Errno: $errno, Result: $r")
                     }
                 }
             }

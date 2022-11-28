@@ -10,7 +10,7 @@ actual class TcpClientSocketChannel actual constructor() : Channel, NetworkChann
     var native: JSocketChannel? = null
         internal set
 
-    var key: JvmSelector.JvmKey? = null
+    var key: JvmKey? = null
         set(value) {
             field = value
             if (native != null) {
@@ -70,8 +70,8 @@ actual class TcpClientSocketChannel actual constructor() : Channel, NetworkChann
 
     override fun close() {
         val socket = get()
-//        runCatching { socket.shutdownInput() }
-//        runCatching { socket.shutdownOutput() }
+        runCatching { socket.shutdownInput() }
+        runCatching { socket.shutdownOutput() }
         socket.close()
     }
 

@@ -4,14 +4,18 @@ import pw.binom.charset.Charset
 import pw.binom.collections.defaultMutableList
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
-import pw.binom.io.AsyncInput
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.Closeable
+import pw.binom.io.*
 import pw.binom.readByte
-import pw.binom.writeByte
+import pw.binom.readInt
+import pw.binom.readShort
 
-class PackageReader(val connection: PGConnection, val charset: Charset, val rawInput: AsyncInput) : Closeable {
+class PackageReader(
+    val connection: PGConnection,
+    val charset: Charset,
+    val temporalBuffer: ByteBuffer,
+    val rawInput: AsyncBufferedAsciiInputReader
+) : Closeable {
+    val buf16 = ByteBuffer.alloc(16)
     val authenticationChallengeMessage = AuthenticationMessage.AuthenticationChallengeMessage()
     val errorMessage = ErrorMessage()
     val noticeMessage = NoticeMessage()
@@ -30,7 +34,6 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
     val describeMessage = DescribeMessage()
     val closeMessage = CloseMessage()
 
-    val buf16 = ByteBuffer.alloc(16)
     private val output = ByteArrayOutput()
     private val stringBuffer = ByteArrayOutput()
     private val limitInput = AsyncInputLimit(rawInput)
@@ -59,9 +62,7 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
         get() = limitInput.limit
 
     fun end() {
-        if (remaining > 0) {
-            throw IllegalStateException("Body read not all. remaining: [$remaining]")
-        }
+        check(remaining <= 0) { "Body read not all. remaining: [$remaining]" }
     }
 
     fun startBody(length: Int) {
@@ -79,11 +80,11 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
 
     suspend fun readCString(): String {
         while (true) {
-            val byte = input.readByte(buf16)
+            val byte = readByte()
             if (byte == 0.toByte()) {
                 break
             }
-            stringBuffer.writeByte(buf16, byte)
+            stringBuffer.writeByte(byte)
         }
         if (stringBuffer.size <= 0) {
             return ""
@@ -95,15 +96,15 @@ class PackageReader(val connection: PGConnection, val charset: Charset, val rawI
         return data
     }
 
+    suspend fun readByte() = limitInput.readByte(temporalBuffer)
+    suspend fun readShort() = limitInput.readShort(temporalBuffer)
+    suspend fun readInt() = limitInput.readInt(temporalBuffer)
     suspend fun readByteArray(length: Int): ByteArray {
-        val out = ByteArray(length) {
-            input.readByte(buf16)
-        }
-        return out
+        return input.readByteArray(length, temporalBuffer)
     }
 }
 
-private class AsyncInputLimit(val input: AsyncInput) : AsyncInput {
+private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncInput {
     var limit = 0
     override val available: Int
         get() = if (input.available > 0) {
@@ -111,6 +112,15 @@ private class AsyncInputLimit(val input: AsyncInput) : AsyncInput {
         } else {
             input.available
         }
+
+    suspend fun readByte(): Byte {
+        if (limit <= 0) {
+            throw EOFException()
+        }
+        val byte = input.readByte()
+        limit--
+        return byte
+    }
 
     override suspend fun read(dest: ByteBuffer): Int {
         val limit = minOf(dest.remaining, limit)

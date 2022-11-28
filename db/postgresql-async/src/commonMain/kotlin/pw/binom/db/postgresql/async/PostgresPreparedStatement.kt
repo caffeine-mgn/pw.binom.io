@@ -2,22 +2,22 @@ package pw.binom.db.postgresql.async
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
-import pw.binom.UUID
 import pw.binom.date.DateTime
-import pw.binom.db.ResultSet
+import pw.binom.db.ColumnType
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncPreparedStatement
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.SyncMessage
-import pw.binom.nextUuid
+import pw.binom.uuid.UUID
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 
 class PostgresPreparedStatement(
     val query: String,
     override val connection: PGConnection,
-    val paramColumnTypes: List<ResultSet.ColumnType>,
-    val resultColumnTypes: List<ResultSet.ColumnType>,
+    val paramColumnTypes: List<ColumnType>,
+    val resultColumnTypes: List<ColumnType>,
 ) : AsyncPreparedStatement {
     internal var parsed = false
     private val id = Random.nextUuid().toString()
@@ -149,6 +149,10 @@ class PostgresPreparedStatement(
             }
         )
         connection.sendOnly(SyncMessage)
+//        while (true) {
+//            val r = connection.readDesponse()
+//            println("got ${r::class} -> $r")
+//        }
         val closeMsg = connection.readDesponse()
         check(closeMsg is CloseCompleteMessage) { "Expected CloseCompleteMessage, but actual $closeMsg" }
         val readyForQuery = connection.readDesponse()

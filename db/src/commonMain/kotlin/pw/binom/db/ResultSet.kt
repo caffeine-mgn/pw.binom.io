@@ -1,13 +1,15 @@
 package pw.binom.db
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import pw.binom.UUID
 import pw.binom.date.DateTime
 import pw.binom.io.IOException
+import pw.binom.uuid.UUID
 
 interface ResultSet {
 
     val columns: List<String>
+    fun columnType(index: Int): ColumnType
+    fun columnType(column: String): ColumnType
     fun getString(index: Int): String?
     fun getBoolean(index: Int): Boolean?
     fun getInt(index: Int): Int?
@@ -46,7 +48,7 @@ interface ResultSet {
 
     class InvalidColumnTypeException : IOException()
 
-    enum class ColumnType {
-        STRING, BOOLEAN, INT, LONG, FLOAT, DOUBLE, UUID
-    }
+//    enum class ColumnType {
+//        STRING, BOOLEAN, INT, LONG, FLOAT, DOUBLE, UUID
+//    }
 }

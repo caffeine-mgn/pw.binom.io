@@ -7,7 +7,7 @@ import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.AsyncHttpRequestOutput
 import pw.binom.io.httpClient.AsyncHttpRequestWriter
 import pw.binom.io.httpClient.HttpRequest
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 internal class RestRequestImpl(val request: HttpRequest, val serialization: RestClientSerialization) : RestRequest {
     override suspend fun <T : Any> writeObject(serializer: KSerializer<T>, obj: T) {
