@@ -127,7 +127,7 @@ sealed class AuthenticationMessage : KindedMessage {
                         }
                         algoritmes += str
                     }
-                    return SaslAuth(algoritmes)
+                    SaslAuth(algoritmes)
                 }
 
                 AuthenticationSASLContinue -> {

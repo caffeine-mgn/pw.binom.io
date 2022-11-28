@@ -63,11 +63,13 @@ class PackageReader(
 
     fun end() {
         check(remaining <= 0) { "Body read not all. remaining: [$remaining]" }
+        limitInput.limitOn = false
     }
 
     fun startBody(length: Int) {
         this.length = length
         limitInput.limit = length
+        limitInput.limitOn = true
         output.clear()
         columnIndex = 0
     }
@@ -96,9 +98,9 @@ class PackageReader(
         return data
     }
 
-    suspend fun readByte() = limitInput.readByte(temporalBuffer)
+    suspend fun readByte() = limitInput.readByte(buf16)
     suspend fun readShort() = limitInput.readShort(temporalBuffer)
-    suspend fun readInt() = limitInput.readInt(temporalBuffer)
+    suspend fun readInt() = limitInput.readInt(buf16)
     suspend fun readByteArray(length: Int): ByteArray {
         return input.readByteArray(length, temporalBuffer)
     }
@@ -106,28 +108,33 @@ class PackageReader(
 
 private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncInput {
     var limit = 0
+    var limitOn = true
     override val available: Int
-        get() = if (input.available > 0) {
+        get() = if (limitOn && input.available > 0) {
             minOf(input.available, limit)
         } else {
             input.available
         }
 
     suspend fun readByte(): Byte {
-        if (limit <= 0) {
+        if (limitOn && limit <= 0) {
             throw EOFException()
         }
         val byte = input.readByte()
-        limit--
+        if (limitOn) {
+            limit--
+        }
         return byte
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
-        val limit = minOf(dest.remaining, limit)
+        val limit = if (limitOn) minOf(dest.remaining, limit) else dest.remaining
         val l = dest.limit
         dest.limit = dest.position + limit
         val read = input.read(dest)
-        this.limit -= read
+        if (limitOn) {
+            this.limit -= read
+        }
         dest.limit = l
         return read
     }
