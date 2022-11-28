@@ -31,6 +31,7 @@ class CommandCompleteMessage : KindedMessage {
                 else -> result.substring(indexOfRowCount).trim().toLongOrNull() ?: 0
             }
             ctx.commandCompleteMessage.statusMessage = result
+            ctx.end()
             return ctx.commandCompleteMessage
         }
     }

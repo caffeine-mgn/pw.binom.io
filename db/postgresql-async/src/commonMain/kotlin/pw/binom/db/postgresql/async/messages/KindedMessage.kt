@@ -17,7 +17,7 @@ interface KindedMessage {
             val len = ctx.rawInput.readInt(ctx.buf16) - Int.SIZE_BYTES
             require(len >= 0)
             ctx.startBody(len)
-            return when (cmd) {
+            val v = when (cmd) {
                 MessageKinds.Authentication -> AuthenticationMessage.read(ctx)
                 MessageKinds.Error -> ErrorMessage.read(ctx)
                 MessageKinds.ParameterStatus -> ParameterStatusMessage.read(ctx)
@@ -35,6 +35,8 @@ interface KindedMessage {
                 MessageKinds.NotificationResponse -> NotificationResponseMessage.read(ctx)
                 else -> throw IOException("Unknown CMD #$cmd (${cmd.toInt().toChar()})")
             }
+            println("Return ${v::class}")
+            return v
         }
     }
 }

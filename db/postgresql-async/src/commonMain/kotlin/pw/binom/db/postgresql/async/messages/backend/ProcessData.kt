@@ -25,6 +25,7 @@ class ProcessData : KindedMessage {
         suspend fun read(ctx: PackageReader): ProcessData {
             ctx.processData.processId = ctx.input.readInt(ctx.buf16)
             ctx.processData.secretKey = ctx.input.readInt(ctx.buf16)
+            ctx.end()
             return ctx.processData
         }
     }

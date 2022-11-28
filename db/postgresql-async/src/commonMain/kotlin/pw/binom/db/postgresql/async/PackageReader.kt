@@ -60,18 +60,26 @@ class PackageReader(
 
     val remaining
         get() = limitInput.limit
+    private var bodyReading = false
 
     fun end() {
+        check(bodyReading) { "Body not started" }
         check(remaining <= 0) { "Body read not all. remaining: [$remaining]" }
         limitInput.limitOn = false
+        bodyReading = false
     }
 
     fun startBody(length: Int) {
+        check(!bodyReading) { "Body already started" }
+//        if (!bodyReading) {
+//            println()
+//        }
         this.length = length
         limitInput.limit = length
         limitInput.limitOn = true
         output.clear()
         columnIndex = 0
+        bodyReading = true
     }
 
     override fun close() {

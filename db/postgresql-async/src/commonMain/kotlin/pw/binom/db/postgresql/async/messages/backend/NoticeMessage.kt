@@ -24,6 +24,7 @@ class NoticeMessage : KindedMessage {
             val msg = ctx.noticeMessage
             msg.fields.clear()
             InformationParser.readTo(ctx, msg.fields)
+            ctx.end()
 //            while (true) {
 //                val kind = ctx.input.readByte(ctx.buf16)
 //

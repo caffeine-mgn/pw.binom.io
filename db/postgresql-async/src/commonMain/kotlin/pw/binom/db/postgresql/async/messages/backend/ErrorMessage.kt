@@ -31,6 +31,7 @@ class ErrorMessage : KindedMessage {
             val msg = ctx.errorMessage
             msg.fields.clear()
             InformationParser.readTo(ctx, msg.fields)
+            ctx.end()
             return msg
         }
     }

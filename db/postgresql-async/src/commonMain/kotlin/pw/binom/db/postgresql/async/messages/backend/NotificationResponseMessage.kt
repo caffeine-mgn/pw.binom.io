@@ -34,6 +34,7 @@ class NotificationResponseMessage : KindedMessage {
             msg.backendPid = ctx.input.readInt(ctx.buf16)
             msg.channel = ctx.readCString()
             msg.payload = ctx.readCString()
+            ctx.end()
             return msg
         }
     }

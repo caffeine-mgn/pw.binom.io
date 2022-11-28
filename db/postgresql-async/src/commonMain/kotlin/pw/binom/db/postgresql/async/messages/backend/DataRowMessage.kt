@@ -32,6 +32,7 @@ class DataRowMessage : KindedMessage {
                     else -> ctx.readByteArray(length)
                 }
             }
+            ctx.end()
             return ctx.dataRowMessage
         }
     }

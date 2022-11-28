@@ -27,6 +27,7 @@ class ParameterStatusMessage : KindedMessage {
             val msg = ctx.parameterStatusMessage
             msg.key = ctx.readCString()
             msg.value = ctx.readCString()
+            ctx.end()
             return msg
         }
     }
