@@ -41,17 +41,20 @@ class LinuxKey(
 
     //    internal val epollEvent = nativeHeap.alloc<epoll_event>()
     internal var nativeSocket: RawSocket = 0
+    private var selfPtr: StableRef<LinuxKey>? = null
 
     override fun addSocket(raw: RawSocket) {
         if (nativeSocket != 0) {
             error("Native socket already set")
         }
+        val v = StableRef.create(this)
+        selfPtr = v
         epollEvent.content {
             it.pointed.events = epollCommonToNative(listensFlag.convert()).convert()
-            it.pointed.data.u32 = this@LinuxKey.hashCode().convert()
+            it.pointed.data.u32 = 38u
+            it.pointed.data.u64 = 99u
+            it.pointed.data.ptr = v.asCPointer()
         }
-//        epollEvent.events = epollCommonToNative(listensFlag.convert()).convert()
-//        epollEvent.data.u32 = this@LinuxKey.hashCode().convert()
         nativeSocket = raw
         selector.addKey(this)
 //        selector.wakeup()
@@ -59,7 +62,12 @@ class LinuxKey(
 
     override fun removeSocket(raw: RawSocket) {
         if (nativeSocket == raw) {
+            epollEvent.content {
+                it.pointed.data.ptr = null
+            }
             selector.removeKey(this, raw)
+            selfPtr?.dispose()
+            selfPtr = null
             nativeSocket = 0
 //            selector.wakeup()
             return

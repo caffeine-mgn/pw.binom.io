@@ -11,7 +11,7 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
         val native = native
         val added = keys.add(key)
         if (added && native != null) {
-            key.addSocket(native!!.raw)
+            key.addSocket(native)
         }
     }
 
@@ -19,7 +19,7 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
         val native = native
         val removed = keys.remove(key)
         if (removed && native != null) {
-            key.removeSocket(native.raw)
+            key.removeSocket(native)
         }
     }
 
@@ -34,10 +34,14 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
 //            }
 //        }
 
-    var native: NSocket? = null
+    var internalNative: NSocket? = null
+    override val native: RawSocket?
+        get() = internalNative?.raw
+    override val nNative: NSocket?
+        get() = internalNative
 
     actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? {
-        val socket = native!!.accept(address) ?: return null
+        val socket = internalNative!!.accept(address) ?: return null
         return TcpClientSocketChannel(socket)
     }
 
@@ -45,10 +49,10 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
         if (native != null) {
             throw IllegalStateException()
         }
-        native = NSocket.serverTcp(address)
-        native!!.setBlocking(blocking)
+        internalNative = NSocket.serverTcp(address)
+        internalNative!!.setBlocking(blocking)
         keys.forEach {
-            it.addSocket(native!!.raw)
+            it.addSocket(native!!)
         }
     }
 
@@ -58,16 +62,16 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
             it.close()
         }
         keys.clear()
-        native?.close()
+        internalNative?.close()
     }
 
     actual val port: Int?
-        get() = native!!.port
+        get() = internalNative!!.port
 
     private var blocking = true
 
     actual fun setBlocking(value: Boolean) {
-        native?.setBlocking(value)
+        internalNative?.setBlocking(value)
         blocking = value
     }
 
@@ -75,10 +79,10 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
         if (native != null) {
             throw IllegalStateException()
         }
-        native = NSocket.serverTcpUnixSocket(fileName)
-        native!!.setBlocking(blocking)
+        internalNative = NSocket.serverTcpUnixSocket(fileName)
+        internalNative!!.setBlocking(blocking)
         keys.forEach {
-            it.addSocket(native!!.raw)
+            it.addSocket(native!!)
         }
     }
 }

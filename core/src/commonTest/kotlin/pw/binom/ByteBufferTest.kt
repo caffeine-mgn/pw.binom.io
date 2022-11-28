@@ -1,6 +1,9 @@
 package pw.binom
 
-import pw.binom.io.*
+import pw.binom.io.ByteBuffer
+import pw.binom.io.empty
+import pw.binom.io.forEachIndexed
+import pw.binom.io.use
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -202,7 +205,7 @@ class ByteBufferTest {
 
     @Test
     fun frozenTest() {
-        val self = ByteBuffer.alloc(10).doFreeze()
+        val self = ByteBuffer.alloc(10)
         repeat(self.remaining) {
             self.put(it.toByte())
         }

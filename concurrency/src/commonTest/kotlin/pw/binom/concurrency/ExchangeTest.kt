@@ -1,7 +1,6 @@
 package pw.binom.concurrency
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.doFreeze
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,8 +31,6 @@ class ExchangeTest {
 
     @Test
     fun passTest() {
-        exchange1.doFreeze()
-        exchange2.doFreeze()
         val w1 = Worker()
         val w2 = Worker()
 

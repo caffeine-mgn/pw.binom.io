@@ -1,7 +1,7 @@
 package pw.binom.xml.xsd
 
-import pw.binom.net.URL
-import pw.binom.net.toURL
+import pw.binom.url.URL
+import pw.binom.url.toURL
 import pw.binom.xml.dom.XmlElement
 
 class XsdAppinfo(source: URL?) : XsdAnnotation.AnnotationElement {

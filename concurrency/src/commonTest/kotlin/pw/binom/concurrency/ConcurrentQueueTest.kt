@@ -1,6 +1,5 @@
 package pw.binom.concurrency
 
-import pw.binom.popOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

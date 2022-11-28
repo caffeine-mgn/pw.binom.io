@@ -1,6 +1,7 @@
 package pw.binom.io
 
 import pw.binom.toByteBufferUTF8
+import pw.binom.url.UrlEncoder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -91,12 +92,12 @@ class TestUTF8 {
 
     @Test
     fun testEncode() {
-        assertEquals("Anton%d0%90%d0%91%20%d0%b2%d0%b3", UTF8.encode("AntonАБ вг"))
+        assertEquals("Anton%d0%90%d0%91%20%d0%b2%d0%b3", UrlEncoder.encode("AntonАБ вг"))
     }
 
     @Test
     fun testDecode() {
-        assertEquals("AntonАБ вг", UTF8.decode("Anton%D0%90%D0%91%20%D0%B2%D0%B3"))
+        assertEquals("AntonАБ вг", UrlEncoder.decode("Anton%D0%90%D0%91%20%D0%B2%D0%B3"))
     }
 
     @Test

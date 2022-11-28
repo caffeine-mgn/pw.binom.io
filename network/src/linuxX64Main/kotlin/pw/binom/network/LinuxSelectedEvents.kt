@@ -27,9 +27,9 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
                 selector.interruptWakeup()
                 return@repeat
             }
-
-            val key = selector!!.idToKey[item.data.u32.convert()]
-            key?.internalResetFlags()
+            val ptr = item.data.ptr ?: return@repeat
+            val key = ptr.asStableRef<LinuxKey>().get()
+            key.internalResetFlags()
         }
     }
 
@@ -52,6 +52,9 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
                 currentNum++
 //                selector.interruptWakeup()
             }
+            if (native[currentNum].data.ptr == null) {
+                currentNum++
+            }
         }
 
         override fun hasNext(): Boolean {
@@ -68,7 +71,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 
 //            val keyPtr = item.data.ptr!!.asStableRef<LinuxKey>()
 //            val key = keyPtr.get()
-            val key = selector!!.idToKey[item.data.u32.convert()]
+            val key = item.data.ptr!!.asStableRef<LinuxKey>().get()
                 ?: error("Key not found ${item.data.u32.toInt()} in ${selector?.native}")
             if (!key.connected) {
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {

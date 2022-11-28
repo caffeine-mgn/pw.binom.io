@@ -1,8 +1,8 @@
 package pw.binom.db.sqlite
 
-import pw.binom.UUID
 import pw.binom.io.use
-import pw.binom.nextUuid
+import pw.binom.uuid.UUID
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

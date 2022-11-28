@@ -7,8 +7,8 @@ import kotlinx.coroutines.withContext
 import pw.binom.Environment
 import pw.binom.OS
 import pw.binom.io.use
-import pw.binom.nextUuid
 import pw.binom.os
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 

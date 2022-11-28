@@ -6,13 +6,10 @@ import platform.posix.pipe
 import platform.posix.read
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.LinkedList
-import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.defaultMutableSet
-import pw.binom.collections.useName
 import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.synchronize
 import pw.binom.thread.Thread
-import kotlin.collections.set
 
 internal val STUB_BYTE = byteArrayOf(1)
 
@@ -24,9 +21,8 @@ class LinuxSelector : AbstractSelector() {
 //    internal val keys = TreeSet<LinuxKey>() { a, b -> a.hashCode() - b.hashCode() }
 
     //    internal val idToKey = HashMap2<Int, LinuxKey>()
-    internal val idToKey = defaultMutableMap<Int, LinuxKey>().useName("LinuxSelector")
-    private val keyForRemove = LinkedList<Pair<Int, RawSocket>>()
-    private val keyForAdd = LinkedList<Pair<Int, LinuxKey>>()
+    private val keyForRemove = LinkedList<LinuxKey>()
+    private val keyForAdd = LinkedList<LinuxKey>()
     private val selectLock = ReentrantLock()
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
@@ -42,6 +38,9 @@ class LinuxSelector : AbstractSelector() {
 
             val event1 = alloc<epoll_event>()
             event1.data.fd = pipeRead
+            event1.data.u32 = 99u
+            event1.data.u64 = 77u
+            event1.data.ptr = null
             event1.events = EPOLLIN.convert()
             native.add(pipeRead, event1.ptr)
 
@@ -55,8 +54,6 @@ class LinuxSelector : AbstractSelector() {
     internal fun addKey(key: LinuxKey) {
         if (selectLock.tryLock()) {
             try {
-                val id = key.hashCode()
-                idToKey[id] = key
                 key.epollEvent.content {
                     native.add(key.nativeSocket, it)
                 }
@@ -64,20 +61,19 @@ class LinuxSelector : AbstractSelector() {
                 selectLock.unlock()
             }
         } else {
-            keyForAdd += key.hashCode() to key
+            keyForAdd += key
         }
     }
 
     internal fun removeKey(key: LinuxKey, socket: RawSocket) {
         if (selectLock.tryLock()) {
             try {
-                idToKey.remove(key.hashCode())
                 native.delete(socket, failOnError = false)
             } finally {
                 selectLock.unlock()
             }
         } else {
-            keyForRemove += key.hashCode() to socket
+            keyForRemove += key
         }
     }
 
@@ -132,8 +128,7 @@ class LinuxSelector : AbstractSelector() {
             selectThreadId = Thread.currentThread.id
             try {
                 if (keyForAdd.isNotEmpty()) {
-                    idToKey.putAll(keyForAdd)
-                    keyForAdd.forEach { (_, key) ->
+                    keyForAdd.forEach { key ->
                         key.epollEvent.content {
                             native.add(key.nativeSocket, it)
                         }
@@ -142,9 +137,12 @@ class LinuxSelector : AbstractSelector() {
                 }
 
                 if (keyForRemove.isNotEmpty()) {
-                    keyForRemove.forEach { (id, socket) ->
-                        native.delete(socket, failOnError = false)
-                        idToKey.remove(id)?.attachment = null
+                    keyForRemove.forEach { key ->
+                        val socket = key.socket?.native
+                        if (socket != null) {
+                            native.delete(socket, failOnError = false)
+                        }
+                        key.attachment = null
                     }
                     keyForRemove.clear()
                 }

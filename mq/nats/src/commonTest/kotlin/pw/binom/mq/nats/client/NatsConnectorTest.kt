@@ -2,7 +2,7 @@ package pw.binom.mq.nats.client
 
 import kotlinx.coroutines.runBlocking
 import pw.binom.network.NetworkAddress
-import pw.binom.nextUuid
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

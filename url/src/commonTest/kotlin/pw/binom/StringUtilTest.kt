@@ -1,9 +1,10 @@
 package pw.binom
 
+import pw.binom.url.internalParsePathMask
+import pw.binom.url.isWildcardMatch
 import kotlin.test.*
 
 class StringUtilTest {
-
     @Test
     fun maskParser() {
         internalParsePathMask(

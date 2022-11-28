@@ -1,6 +1,7 @@
 package pw.binom.db.async
 
 import pw.binom.date.DateTime
+import pw.binom.db.ColumnType
 
 class StubAsyncResultSet(
     override val columns: List<String>,
@@ -18,6 +19,14 @@ class StubAsyncResultSet(
         }
         element = it.next()
         return true
+    }
+
+    override fun columnType(index: Int): ColumnType {
+        TODO("Not yet implemented")
+    }
+
+    override fun columnType(column: String): ColumnType {
+        TODO("Not yet implemented")
     }
 
     override fun getString(index: Int): String? = element!![index]?.toString()

@@ -5,19 +5,25 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 
 actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, NetworkChannel {
-    var native: NSocket? = null
+    private var internalNative: NSocket? = null
+    override val native: RawSocket?
+        get() = internalNative?.raw
+    override val nNative: NSocket?
+        get() = internalNative
 
     private var keys = defaultMutableSet<AbstractKey>()
 
     override fun addKey(key: AbstractKey) {
-        if (keys.add(key) && native != null) {
-            key.addSocket(native!!.raw)
+        val raw = native
+        if (keys.add(key) && raw != null) {
+            key.addSocket(raw)
         }
     }
 
     override fun removeKey(key: AbstractKey) {
-        if (keys.remove(key) && native != null) {
-            key.removeSocket(native!!.raw)
+        val raw = native
+        if (keys.remove(key) && raw != null) {
+            key.removeSocket(raw)
         }
     }
 
@@ -34,12 +40,12 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, Network
 
     actual constructor() : this(true)
     constructor(socket: NSocket) : this(false) {
-        this.native = socket
+        this.internalNative = socket
     }
 
     private var blocking = true
     actual fun setBlocking(value: Boolean) {
-        native?.setBlocking(value)
+        internalNative?.setBlocking(value)
         blocking = value
     }
 
@@ -47,15 +53,15 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, Network
         if (!connectable) {
             throw IllegalStateException()
         }
-        native = NSocket.connectTcp(address, blocking = blocking)
+        internalNative = NSocket.connectTcp(address, blocking = blocking)
 //        native!!.setBlocking(blocking)
         keys.forEach {
-            it.addSocket(native!!.raw)
+            it.addSocket(native!!)
         }
     }
 
     override fun read(dest: ByteBuffer): Int {
-        val read = native!!.recv(dest)
+        val read = internalNative!!.recv(dest)
         if (read == -1) {
             close()
             return -1
@@ -69,11 +75,11 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, Network
             it.close()
         }
         keys.clear()
-        native?.close()
+        internalNative?.close()
     }
 
     override fun write(data: ByteBuffer): Int =
-        native!!.send(data)
+        internalNative!!.send(data)
 
     override fun flush() {
     }
@@ -82,16 +88,16 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, Network
         if (!connectable) {
             throw IllegalStateException()
         }
-        native = NSocket.connectTcpUnixSocket(fileName = fileName, blocking = false)
-        native!!.setBlocking(blocking)
+        internalNative = NSocket.connectTcpUnixSocket(fileName = fileName, blocking = false)
+        internalNative!!.setBlocking(blocking)
         keys.forEach {
-            it.addSocket(native!!.raw)
+            it.addSocket(native!!)
         }
     }
 
     internal fun connected() {
         keys.forEach {
-            it.addSocket(native!!.raw)
+            it.addSocket(native!!)
         }
     }
 }

@@ -1,6 +1,6 @@
 package pw.binom.io
 
-import pw.binom.UUID
+import pw.binom.uuid.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -58,7 +58,6 @@ class ComposeReaderTest {
     @OptIn(ExperimentalTime::class)
     @Test
     fun speedTest() {
-
         val sb = StringBuilder()
         repeat(1000) {
             sb.append(UUID.toString())
@@ -84,8 +83,9 @@ class ComposeReaderTest {
             r.addLast(StringReader(str))
 
             while (true) {
-                if (r.read(c) <= 0)
+                if (r.read(c) <= 0) {
                     break
+                }
             }
         }
     }

@@ -1,11 +1,8 @@
-package pw.binom
+package pw.binom.url
 
-import pw.binom.net.toPath
-import pw.binom.net.toURL
 import kotlin.test.*
 
 class PathTest {
-
     @Test
     fun pathAppendTest() {
         assertEquals("http://google.com/search/test", ("http://google.com/search".toURL() + "/test".toPath).toString())

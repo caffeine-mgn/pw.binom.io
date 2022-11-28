@@ -6,7 +6,7 @@ abstract class AbstractSelector : Selector {
             nativePrepare(mode = mode, attachment = attachment, connectable = socket.connectable)
         } else {
             nativeAttach(
-                socket = socket.native!!,
+                socket = socket.nNative!!,
                 mode = mode,
                 connectable = true,
                 attachment = attachment,
@@ -29,7 +29,7 @@ abstract class AbstractSelector : Selector {
             )
         } else {
             nativeAttach(
-                socket = socket.native!!,
+                socket = socket.nNative!!,
                 mode = mode,
                 connectable = false,
                 attachment = attachment,

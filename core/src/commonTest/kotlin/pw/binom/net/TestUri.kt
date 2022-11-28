@@ -1,5 +1,8 @@
 package pw.binom.net
 
+import pw.binom.url.URI
+import pw.binom.url.toPath
+import pw.binom.url.toURI
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

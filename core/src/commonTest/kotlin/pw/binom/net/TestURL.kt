@@ -1,5 +1,6 @@
 package pw.binom.net
 
+import pw.binom.url.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -149,7 +150,7 @@ class TestURL {
 
     @Test
     fun `protoAddresPort`() {
-        val url = URL("http://127.0.0.1:4646")
+        val url = "http://127.0.0.1:4646".toURL()
         assertEquals("http", url.schema)
         assertEquals("", url.path.toString())
         assertEquals(4646, url.port)
@@ -162,7 +163,7 @@ class TestURL {
 
     @Test
     fun `protoAddresPortUri`() {
-        val url = URL("http://127.0.0.1:4646/")
+        val url = "http://127.0.0.1:4646/".toURL()
         assertEquals("http", url.schema)
         assertEquals("/", url.path.toString())
         assertEquals(4646, url.port)
@@ -170,7 +171,7 @@ class TestURL {
 
     @Test
     fun `protoAddres`() {
-        val url = URL("http://127.0.0.1")
+        val url = "http://127.0.0.1".toURL()
         assertEquals("http", url.schema)
         assertEquals("", url.path.raw)
         assertNull(url.port)
@@ -178,7 +179,7 @@ class TestURL {
 
     @Test
     fun `protoAddresUri`() {
-        val url = URL("http://127.0.0.1/")
+        val url = "http://127.0.0.1/".toURL()
         assertEquals("http", url.schema)
         assertEquals("/", url.path.toString())
         assertNull(url.port)
@@ -186,7 +187,7 @@ class TestURL {
 
     @Test
     fun `withUri`() {
-        var url = URL("http://127.0.0.1:4646")
+        var url = "http://127.0.0.1:4646".toURL()
         assertEquals("127.0.0.1", url.host)
         assertEquals(4646, url.port)
         url = url.copy(path = "${url.path}/var".toPath)

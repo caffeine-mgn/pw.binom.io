@@ -3,7 +3,7 @@ package pw.binom.io.file
 import pw.binom.io.ByteBuffer
 import pw.binom.io.use
 import pw.binom.io.wrap
-import pw.binom.nextUuid
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

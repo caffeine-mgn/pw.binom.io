@@ -1,7 +1,7 @@
 package pw.binom.io
 
 import kotlinx.coroutines.test.runTest
-import pw.binom.net.toPath
+import pw.binom.url.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

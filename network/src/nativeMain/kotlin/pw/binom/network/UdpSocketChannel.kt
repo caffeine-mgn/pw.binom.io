@@ -4,17 +4,21 @@ import pw.binom.collections.defaultMutableSet
 import pw.binom.io.ByteBuffer
 
 actual class UdpSocketChannel : NetworkChannel {
-    val native = NSocket.udp()
+    private val internlNative = NSocket.udp()
+    override val native: RawSocket
+        get() = internlNative.raw
+    override val nNative: NSocket
+        get() = internlNative
     private var keys = defaultMutableSet<AbstractKey>()
     override fun addKey(key: AbstractKey) {
         if (keys.add(key)) {
-            key.addSocket(native.raw)
+            key.addSocket(native)
         }
     }
 
     override fun removeKey(key: AbstractKey) {
         if (keys.remove(key)) {
-            key.removeSocket(native.raw)
+            key.removeSocket(native)
         }
     }
 //    var key: AbstractKey? = null
@@ -27,15 +31,15 @@ actual class UdpSocketChannel : NetworkChannel {
 //        }
 
     actual fun setBlocking(value: Boolean) {
-        native.setBlocking(value)
+        internlNative.setBlocking(value)
     }
 
     actual fun send(data: ByteBuffer, address: NetworkAddress): Int {
-        return native.send(data, address)
+        return internlNative.send(data, address)
     }
 
     actual fun recv(data: ByteBuffer, address: NetworkAddress.Mutable?): Int {
-        return native.recv(data, address)
+        return internlNative.recv(data, address)
     }
 
     override fun close() {
@@ -44,14 +48,14 @@ actual class UdpSocketChannel : NetworkChannel {
             it.close()
         }
         keys.clear()
-        native.close()
+        internlNative.close()
     }
 
     actual fun bind(address: NetworkAddress) {
 //        check(native.port == null) { "Already bindded. port: $port" }
-        native.bind(address)
+        internlNative.bind(address)
     }
 
     actual val port: Int?
-        get() = native.port
+        get() = internlNative.port
 }
