@@ -1,5 +1,6 @@
 package pw.binom.db.postgresql.async
 
+import pw.binom.asyncOutput
 import pw.binom.charset.Charset
 import pw.binom.collections.defaultMutableList
 import pw.binom.db.postgresql.async.messages.backend.*
@@ -32,6 +33,7 @@ class PackageReader(
 
     private val output = ByteArrayOutput()
     private val stringBuffer = ByteArrayOutput()
+    private val stringBufferAsync = stringBuffer.asyncOutput()
     private val limitInput = AsyncInputLimit(rawInput)
     private val columns = defaultMutableList<ColumnMeta>()
     private var columnIndex = 0
@@ -79,13 +81,18 @@ class PackageReader(
     }
 
     suspend fun readCString(): String {
-        while (true) {
-            val byte = readByte()
-            if (byte == 0.toByte()) {
-                break
-            }
-            stringBuffer.writeByte(byte)
+        if (bodyReading) {
+            limitInput.readUntil(byte = 0.toByte(), exclude = true, dest = stringBufferAsync)
+        } else {
+            rawInput.readUntil(byte = 0.toByte(), exclude = true, dest = stringBufferAsync)
         }
+//        while (true) {
+//            val byte = readByte()
+//            if (byte == 0.toByte()) {
+//                break
+//            }
+//            stringBuffer.writeByte(byte)
+//        }
         if (stringBuffer.size <= 0) {
             return ""
         }
@@ -110,6 +117,17 @@ class PackageReader(
 
 private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncInput {
     var limit = 0
+
+    suspend fun readUntil(byte: Byte, exclude: Boolean, dest: AsyncOutput): Int {
+        val r = input.readUntil(
+            byte = byte,
+            exclude = exclude,
+            dest = dest
+        )
+        limit -= r
+        return r
+    }
+
     override val available: Int
         get() = if (input.available > 0) {
             minOf(input.available, limit)

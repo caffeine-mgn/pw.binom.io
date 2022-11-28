@@ -185,6 +185,28 @@ class AsyncBufferedAsciiInputReader private constructor(
         }
     }
 
+    suspend fun readUntil(byte: Byte, exclude: Boolean, dest: AsyncOutput): Int {
+        var readSize = 0
+        while (true) {
+            full(1)
+            val index = buffer.indexOfFirst { it == byte }
+            if (index == -1) {
+                readSize += dest.writeFully(buffer)
+            } else {
+                val l = buffer.limit
+                buffer.limit = if (exclude) index else index + 1
+                readSize += dest.writeFully(buffer)
+                buffer.limit = l
+                if (exclude) {
+                    buffer.position++
+                    readSize++
+                }
+                break
+            }
+        }
+        return readSize
+    }
+
     suspend fun readUntil(char: Char): String? {
         checkClosed()
         val out = StringBuilder()

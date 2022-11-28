@@ -8,8 +8,8 @@ import kotlinx.coroutines.withTimeout
 import pw.binom.charset.Charsets
 import pw.binom.concurrency.sleep
 import pw.binom.io.use
-import pw.binom.network.MultiFixedSizeThreadNetworkDispatcher
 import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.NetworkManager
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -78,21 +78,21 @@ abstract class BaseTest {
         withContext(Dispatchers.Default) {
             val address = NetworkAddress.Immutable(host = "127.0.0.1", port = 6122)
 
-            val nd = MultiFixedSizeThreadNetworkDispatcher(10)
-//            val nd = NetworkCoroutineDispatcherImpl()
-            val duration = measureTime {
-                nd.use { nd ->
+//            val nd = MultiFixedSizeThreadNetworkDispatcher(10)
+            val nd = NetworkCoroutineDispatcherImpl()
+            nd.use { nd ->
 //                withContext(nd) {
-                    val tm = connect(address, nd = nd)
-                    withTimeout(10.seconds) {
+                val tm = connect(address, nd = nd)
+                withTimeout(10.seconds) {
+                    val duration = measureTime {
                         tm.use {
                             func(it)
                         }
                     }
+                    println("Test duration: $duration")
                 }
-//                }
             }
-            println("Test duration: $duration")
+//                }
         }
 
 //        val now = TimeSource.Monotonic.markNow()

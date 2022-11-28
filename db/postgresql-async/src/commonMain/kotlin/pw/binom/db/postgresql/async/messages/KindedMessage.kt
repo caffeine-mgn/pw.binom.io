@@ -33,7 +33,6 @@ interface KindedMessage {
                 MessageKinds.NotificationResponse -> NotificationResponseMessage.read(ctx)
                 else -> throw IOException("Unknown CMD #$cmd (${cmd.toInt().toChar()})")
             }
-            println("Return ${v::class}")
             return v
         }
     }
