@@ -37,10 +37,10 @@ class BatchExchange<T> {
         }
     }
 
-    fun <R> popAll(func: (List<T>) -> R) {
+    fun <R> popAll(func: (List<T>) -> R): R? {
         processingLock.synchronize {
             if (read.isEmpty()) {
-                return
+                return func(emptyList())
             }
             val l = exchangeLock.synchronize {
                 val l = read
@@ -48,7 +48,7 @@ class BatchExchange<T> {
                 read2 = l
                 l
             }
-            try {
+            return try {
                 func(l)
             } finally {
                 internalSize.addAndGet(l.size)

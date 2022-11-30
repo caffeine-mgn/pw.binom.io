@@ -4,6 +4,7 @@ import kotlinx.coroutines.Runnable
 import pw.binom.BatchExchange
 import pw.binom.LoopWatcher
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.collections.defaultMutableList
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.thread.Thread
@@ -55,9 +56,12 @@ class NetworkThread : Thread, Closeable {
         try {
             while (!closed.getValue()) {
                 loopWatcher.call()
-                this.selector.select(selectedEvents = selectedKeys)
+                var taskForRun = defaultMutableList<Runnable>()
+                var v = 0
+                val c = this.selector.select(selectedEvents = selectedKeys)
                 val iterator = selectedKeys.iterator()
                 while (iterator.hasNext() && !closed.getValue()) {
+                    v++
                     try {
                         val event = iterator.next()
                         val attachment = event.key.attachment
@@ -78,17 +82,19 @@ class NetworkThread : Thread, Closeable {
                     }
                 }
                 readyForWriteListener.popAll {
-                    it.forEach {
-                        try {
-                            it.run()
-                        } catch (e: Throwable) {
-                            uncaughtExceptionHandler.uncaughtException(
-                                thread = this,
-                                throwable = RuntimeException("Error on network queue", e)
-                            )
-                        }
+                    taskForRun.addAll(it)
+                }
+                taskForRun.forEach {
+                    try {
+                        it.run()
+                    } catch (e: Throwable) {
+                        uncaughtExceptionHandler.uncaughtException(
+                            thread = this,
+                            throwable = RuntimeException("Error on network queue", e)
+                        )
                     }
                 }
+                taskForRun.clear()
             }
         } finally {
             loopWatcher.close()

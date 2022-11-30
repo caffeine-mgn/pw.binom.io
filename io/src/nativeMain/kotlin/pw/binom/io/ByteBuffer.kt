@@ -16,8 +16,7 @@ actual open class ByteBuffer(
     }
 
     //    private val native = createNativeByteBuffer(capacity)!!
-    override val capacity: Int
-        get() = data.size
+    override val capacity: Int = data.size
 
     init {
         ByteBufferMetric.inc(this)
@@ -37,11 +36,9 @@ actual open class ByteBuffer(
 
     override var position: Int
         get() {
-            checkClosed()
             return _position
         }
         set(value) {
-            checkClosed()
             require(value >= 0) { "position should be more or equal 0" }
             require(value <= limit) { "position should be less or equal limit" }
             _position = value
@@ -99,11 +96,11 @@ actual open class ByteBuffer(
 
     override var limit: Int
         get() {
-            checkClosed()
+//            checkClosed()
             return _limit
         }
         set(value) {
-            checkClosed()
+//            checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
             _limit = value
             if (position > value) {
@@ -177,8 +174,10 @@ actual open class ByteBuffer(
 
     actual fun getByte(): Byte {
         checkClosed()
-        if (position >= limit) throw IndexOutOfBoundsException()
-        return data[position++]
+        val p = position
+        if (p >= limit) throw IndexOutOfBoundsException()
+        position = p + 1
+        return data[p]
     }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {

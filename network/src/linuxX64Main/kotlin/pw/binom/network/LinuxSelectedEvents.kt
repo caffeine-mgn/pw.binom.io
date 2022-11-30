@@ -23,8 +23,8 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
         val selector = selector
         repeat(eventCount) { index ->
             val item = native[index]
-            if (item.data.fd == selector?.pipeRead) {
-                selector.interruptWakeup()
+            if (item.data.u64 == 77uL || item.data.fd == selector?.pipeRead) {
+                selector?.interruptWakeup()
                 return@repeat
             }
             val ptr = item.data.ptr ?: return@repeat
@@ -44,22 +44,23 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
         }
 
         private fun check() {
-            if (currentNum == eventCount) {
-                return
-            }
-            val selector = selector
-            if (native[currentNum].data.fd == selector?.pipeRead) {
-                currentNum++
-//                selector.interruptWakeup()
-            }
-            if (native[currentNum].data.ptr == null) {
-                currentNum++
+            while (currentNum < eventCount) {
+                val selector = selector
+                if (native[currentNum].data.fd == selector?.pipeRead) {
+                    currentNum++
+                    continue
+                }
+                if (native[currentNum].data.ptr == null) {
+                    currentNum++
+                    continue
+                }
+                break
             }
         }
 
         override fun hasNext(): Boolean {
             check()
-            return currentNum != eventCount
+            return currentNum < eventCount
         }
 
         override fun next(): AbstractSelector.NativeKeyEvent {

@@ -6,6 +6,7 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -23,7 +24,11 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
      */
     fun lock(duration: Duration?): Boolean {
         val now = if (duration != null) TimeSource.Monotonic.markNow() else null
+        val bb = TimeSource.Monotonic.markNow()
         while (true) {
+            if (bb.elapsedNow() > 10.seconds) {
+                println("SpinLock->Lock timeout!!!\n${Throwable().stackTraceToString()}")
+            }
             if (tryLock()) {
                 break
             }

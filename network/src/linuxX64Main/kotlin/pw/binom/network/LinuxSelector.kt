@@ -38,9 +38,6 @@ class LinuxSelector : AbstractSelector() {
 
             val event1 = alloc<epoll_event>()
             event1.data.fd = pipeRead
-            event1.data.u32 = 99u
-            event1.data.u64 = 77u
-            event1.data.ptr = null
             event1.events = EPOLLIN.convert()
             native.add(pipeRead, event1.ptr)
 
@@ -69,6 +66,7 @@ class LinuxSelector : AbstractSelector() {
         if (selectLock.tryLock()) {
             try {
                 native.delete(socket, failOnError = false)
+                key.internalFree()
             } finally {
                 selectLock.unlock()
             }
@@ -114,9 +112,10 @@ class LinuxSelector : AbstractSelector() {
     }
 
     internal fun interruptWakeup() {
-        if (selectThreadId == 0L) {
-            return
-        }
+//        if (selectThreadId == 0L) {
+//            println("interruptWakeup cannceled!")
+//            return
+//        }
         STUB_BYTE.usePinned { p ->
             read(pipeRead, p.addressOf(0), 1.convert())
         }
@@ -141,6 +140,7 @@ class LinuxSelector : AbstractSelector() {
                         val socket = key.socket?.native
                         if (socket != null) {
                             native.delete(socket, failOnError = false)
+                            key.internalFree()
                         }
                         key.attachment = null
                     }

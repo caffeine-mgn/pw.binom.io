@@ -247,9 +247,7 @@ private class HttpResponseOutput(
         }
     }
 
-    override suspend fun writeFully(data: ByteBuffer) {
-        channel.writer.writeFully(data)
-    }
+    override suspend fun writeFully(data: ByteBuffer) = channel.writer.writeFully(data)
 
     override suspend fun flush() {
         channel.writer.flush()

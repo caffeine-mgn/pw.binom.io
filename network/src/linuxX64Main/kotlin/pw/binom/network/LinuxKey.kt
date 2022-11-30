@@ -60,15 +60,18 @@ class LinuxKey(
 //        selector.wakeup()
     }
 
+    internal fun internalFree() {
+        epollEvent.content {
+            it.pointed.data.ptr = null
+        }
+        selfPtr?.dispose()
+        selfPtr = null
+        nativeSocket = 0
+    }
+
     override fun removeSocket(raw: RawSocket) {
         if (nativeSocket == raw) {
-            epollEvent.content {
-                it.pointed.data.ptr = null
-            }
             selector.removeKey(this, raw)
-            selfPtr?.dispose()
-            selfPtr = null
-            nativeSocket = 0
 //            selector.wakeup()
             return
         }
