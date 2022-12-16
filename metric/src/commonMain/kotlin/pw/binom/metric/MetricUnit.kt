@@ -1,6 +1,6 @@
 package pw.binom.metric
 
-interface MetricUnit {
+sealed interface MetricUnit {
     val fields: Map<String, String>
     val name: String
     val description: String?

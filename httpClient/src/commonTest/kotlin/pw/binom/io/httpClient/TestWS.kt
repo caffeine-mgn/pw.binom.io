@@ -3,7 +3,7 @@ package pw.binom.io.httpClient
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.*
 import pw.binom.io.http.websocket.MessageType
-import pw.binom.net.toURL
+import pw.binom.url.toURL
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals

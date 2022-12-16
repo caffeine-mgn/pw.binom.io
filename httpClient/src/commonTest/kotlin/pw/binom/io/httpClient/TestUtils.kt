@@ -1,7 +1,7 @@
 package pw.binom.io.httpClient
 
 import kotlinx.coroutines.*
-import pw.binom.net.toURL
+import pw.binom.url.toURL
 import kotlin.time.Duration
 
 const val HTTP_STORAGE_PORT = 7143

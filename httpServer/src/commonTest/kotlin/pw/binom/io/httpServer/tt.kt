@@ -1,6 +1,6 @@
 package pw.binom.io.httpServer
 
-import pw.binom.network.NetworkAddress
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -27,7 +27,7 @@ class tt {
                 }
             }
         )
-        server.listenHttp(NetworkAddress.Immutable("0.0.0.0", 50051))
+        server.listenHttp(NetworkAddress.create("0.0.0.0", 50051))
         manager.networkThread.join()
     }
 }

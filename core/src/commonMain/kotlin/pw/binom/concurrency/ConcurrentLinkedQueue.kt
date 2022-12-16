@@ -37,7 +37,12 @@ class ConcurrentLinkedQueue<T> {
     @Suppress("UNCHECKED_CAST")
     fun pop(duration: Duration? = null): T {
         try {
-            lock.lock(duration)
+            if (duration == null) {
+                lock.lock()
+            } else {
+                lock.lock(duration)
+            }
+
             if (size == 0L) {
                 throw NoSuchElementException()
             }

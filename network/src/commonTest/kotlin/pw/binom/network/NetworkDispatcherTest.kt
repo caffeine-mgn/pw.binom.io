@@ -6,6 +6,9 @@ import pw.binom.concurrency.WorkerPool
 import pw.binom.io.ByteBuffer
 import pw.binom.io.clean
 import pw.binom.io.nextBytes
+import pw.binom.io.socket.MutableNetworkAddress
+import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.Socket
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.random.nextInt
@@ -23,19 +26,19 @@ class NetworkDispatcherTest {
     @Test
     fun aaa() = runTest(dispatchTimeoutMs = 5_000) {
         val nd = NetworkCoroutineDispatcherImpl()
-        nd.tcpConnect(NetworkAddress.Immutable("google.com", 443))
+        nd.tcpConnect(NetworkAddress.create("google.com", 443))
     }
 
     @Test
     fun connectTest() = runTest {
         val nd = NetworkCoroutineDispatcherImpl()
-        nd.tcpConnect(NetworkAddress.Immutable("google.com", 443))
+        nd.tcpConnect(NetworkAddress.create("google.com", 443))
     }
 
     @Test
     fun serverPortGetTest() = runTest {
         val nd = NetworkCoroutineDispatcherImpl()
-        val server = nd.bindTcp(NetworkAddress.Immutable(port = 0))
+        val server = nd.bindTcp(NetworkAddress.create(port = 0, host = "0.0.0.0"))
         assertTrue(server.port > 0)
     }
 
@@ -47,7 +50,7 @@ class NetworkDispatcherTest {
         println("OK!-2")
         try {
             println("OK!-3")
-            nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", 12))
+            nd.tcpConnect(NetworkAddress.create("127.0.0.1", 12))
             println("OK!-4")
             fail("Invalid state")
         } catch (e: SocketConnectException) {
@@ -63,7 +66,7 @@ class NetworkDispatcherTest {
 
     @Test
     fun tcpServerTest() = runTest {
-        val addr = NetworkAddress.Immutable("0.0.0.0", 0)
+        val addr = NetworkAddress.create("0.0.0.0", 0)
         val nd = NetworkCoroutineDispatcherImpl()
         val server = nd.bindTcp(addr)
         val port = server.port
@@ -72,7 +75,7 @@ class NetworkDispatcherTest {
             val buf2 = ByteBuffer.alloc(512)
             Random.nextBytes(buf1)
             buf1.flip()
-            val client = nd.tcpConnect(NetworkAddress.Immutable("127.0.0.1", port))
+            val client = nd.tcpConnect(NetworkAddress.create("127.0.0.1", port))
             val serverClient = server.accept()
             client.write(buf1)
             serverClient.readFully(buf2)
@@ -95,13 +98,13 @@ class NetworkDispatcherTest {
 
     @Test
     fun rebindTest() = runTest {
-        val addr = NetworkAddress.Immutable("127.0.0.1", port = 0)
+        val addr = NetworkAddress.create("127.0.0.1", port = 0)
         val nd = NetworkCoroutineDispatcherImpl()
         val a = nd.bindTcp(addr)
         val port = a.port
         assertTrue(port > 0)
         try {
-            nd.bindTcp(NetworkAddress.Immutable("127.0.0.1", port = port))
+            nd.bindTcp(NetworkAddress.create("127.0.0.1", port = port))
             fail("Port rebind success on 127.0.0.1:$port")
         } catch (e: BindException) {
             //
@@ -113,23 +116,22 @@ class NetworkDispatcherTest {
     @Test
     fun udpTest() = runTest {
         println("Try find free port")
-        val address =
-            NetworkAddress.Immutable(host = "127.0.0.1", port = UdpConnection.randomPort())
+        val address = NetworkAddress.create(host = "127.0.0.1", port = UdpConnection.randomPort())
         val manager = NetworkCoroutineDispatcherImpl()
         println("try bind udp $address")
         val server = manager.bindUdp(address)
         println("binded!")
-        val client = manager.attach(UdpSocketChannel())
+        val client = manager.attach(Socket.createUdpNetSocket())
         var done = false
         var exception: Throwable? = null
         val request = Random.nextUuid().toString()
         val response = Random.nextUuid().toString()
         try {
             val buf = ByteBuffer.alloc(512)
-            val addr = NetworkAddress.Mutable()
+            val addr = MutableNetworkAddress.create()
             client.write(
                 ByteBuffer.wrap(request.encodeToByteArray()),
-                NetworkAddress.Immutable("127.0.0.1", address.port)
+                NetworkAddress.create(host = "127.0.0.1", port = address.port)
             )
             server.read(buf, addr)
             buf.flip()
@@ -153,7 +155,7 @@ class NetworkDispatcherTest {
     @Test
     fun multiThreadingTest() = runTest(dispatchTimeoutMs = 10_000) {
         val address =
-            NetworkAddress.Immutable(host = "127.0.0.1", port = 0)
+            NetworkAddress.create(host = "127.0.0.1", port = 0)
         val nd = NetworkCoroutineDispatcherImpl()
         val server = nd.bindTcp(address)
         val port = server.port
@@ -163,7 +165,7 @@ class NetworkDispatcherTest {
             launch {
                 client.readFully(ByteBuffer.alloc(32).clean())
                 try {
-                    withContext(executeWorker) {
+                    withContext(ThreadCoroutineDispatcher()) {
                         println("Execute in execute")
                         delay(1000)
                         launch {
@@ -178,7 +180,7 @@ class NetworkDispatcherTest {
         }
         val clientFuture = GlobalScope.launch {
             println("Connection...")
-            val client2 = nd.tcpConnect(NetworkAddress.Immutable(host = "127.0.0.1", port = port))
+            val client2 = nd.tcpConnect(NetworkAddress.create(host = "127.0.0.1", port = port))
             println("Connected! Write...")
             client2.write(ByteBuffer.wrap(ByteArray(32)).clean())
             println("Wrote! Try read...")
@@ -198,7 +200,7 @@ class NetworkDispatcherTest {
     @Test
     fun parallelAsync() = runTest(dispatchTimeoutMs = 10_000) {
         val address =
-            NetworkAddress.Immutable(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
+            NetworkAddress.create(host = "127.0.0.1", port = Random.nextInt(9999 until (Short.MAX_VALUE - 1) / 2))
         val nd = NetworkCoroutineDispatcherImpl()
         val server = nd.bindTcp(address)
 
@@ -235,22 +237,14 @@ class NetworkDispatcherTest {
             try {
                 val client2 = nd.tcpConnect(address)
                 println("Client[$name-${client2.hashCode()}]:Connected! Write...")
-                println(
-                    "Client[$name-${client2.hashCode()}]: Wrote ${
-                    client2.write(
-                        ByteBuffer.wrap(ByteArray(32)).clean()
-                    )
-                    }"
-                )
+                val w = client2.write(ByteBuffer.wrap(ByteArray(32)))
+                println("Client[$name-${client2.hashCode()}]: Wrote $w")
                 println("Client[$name-${client2.hashCode()}]:Wrote! Try read...")
                 val readTime = measureTime {
-                    println(
-                        "Client[$name-${client2.hashCode()}]: read ${
-                        client2.readFully(
-                            ByteBuffer.alloc(64).clean()
-                        )
-                        }"
+                    val w = client2.readFully(
+                        ByteBuffer.alloc(64).clean()
                     )
+                    println("Client[$name-${client2.hashCode()}]: read $w")
                 }
 //            assertTrue(readTime > 1.0.seconds && readTime < 2.0.seconds)
                 println("Client[$name-${client2.hashCode()}]:Readed!")
@@ -271,19 +265,19 @@ class NetworkDispatcherTest {
 
 fun modeToString(mode: Int): String {
     val sb = StringBuilder()
-    if (Selector.OUTPUT_READY and mode != 0) {
+    if (SelectorOld.OUTPUT_READY and mode != 0) {
         sb.append("EVENT_EPOLLOUT ")
     }
 
-    if (Selector.INPUT_READY and mode != 0) {
+    if (SelectorOld.INPUT_READY and mode != 0) {
         sb.append("EVENT_EPOLLIN ")
     }
 
-    if (Selector.EVENT_CONNECTED and mode != 0) {
+    if (SelectorOld.EVENT_CONNECTED and mode != 0) {
         sb.append("EVENT_CONNECTED ")
     }
 
-    if (Selector.EVENT_ERROR and mode != 0) {
+    if (SelectorOld.EVENT_ERROR and mode != 0) {
         sb.append("EVENT_ERROR ")
     }
     return sb.toString()

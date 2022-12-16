@@ -62,6 +62,8 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
         get() = tm.offset.totalSeconds / 60
 
     actual fun toDate(): DateTime = DateTime.new(this)
+
+    actual companion object
 }
 
 internal fun javaDayOfWeekToCommon(day: Int) =

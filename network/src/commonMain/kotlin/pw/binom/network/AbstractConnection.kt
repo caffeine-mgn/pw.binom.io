@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import pw.binom.io.Closeable
+import pw.binom.io.socket.SelectorKey
 
 abstract class AbstractConnection : Closeable {
 
@@ -9,16 +10,17 @@ abstract class AbstractConnection : Closeable {
      *
      * @return should return whether the connection should write more
      */
-    abstract fun readyForWrite(key: Selector.Key)
-    abstract fun connecting()
-    abstract fun connected()
+    abstract fun readyForWrite(key: SelectorKey)
+    abstract suspend fun connection()
+//    abstract fun connecting()
+
+    //    abstract fun connected()
     abstract fun error()
-    abstract fun cancelSelector()
 
     /**
      * Call by SocketNIOManager. Called in network thread when connection ready for read
      *
      * @return should return, should the connection read more
      */
-    abstract fun readyForRead(key: Selector.Key)
+    abstract fun readyForRead(key: SelectorKey)
 }

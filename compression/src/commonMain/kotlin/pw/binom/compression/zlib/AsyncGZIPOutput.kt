@@ -5,20 +5,54 @@ import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.holdState
 import pw.binom.io.use
+import pw.binom.pool.ObjectPool
 
-class AsyncGZIPOutput(
+open class AsyncGZIPOutput protected constructor(
     stream: AsyncOutput,
     level: Int = 6,
-    bufferSize: Int = 512,
-    closeStream: Boolean = true
+    buffer: ByteBuffer,
+    closeStream: Boolean = true,
+    pool: ObjectPool<ByteBuffer>?,
+    closeBuffer: Boolean,
 ) : AsyncDeflaterOutput(
     stream = stream,
-    bufferSize = bufferSize,
     level = level,
+    buffer = buffer,
     wrap = false,
     syncFlush = false,
-    closeStream = closeStream
+    closeStream = closeStream,
+    pool = pool,
+    closeBuffer = closeBuffer,
 ) {
+
+    constructor(
+        stream: AsyncOutput,
+        level: Int = 6,
+        bufferSize: Int,
+        closeStream: Boolean = true
+    ) : this(
+        stream = stream,
+        level = level,
+        buffer = ByteBuffer.alloc(bufferSize),
+        closeStream = closeStream,
+        pool = null,
+        closeBuffer = true
+    )
+
+    constructor(
+        stream: AsyncOutput,
+        level: Int = 6,
+        bufferPool: ObjectPool<ByteBuffer>,
+        closeStream: Boolean = true
+    ) : this(
+        stream = stream,
+        level = level,
+        buffer = bufferPool.borrow(),
+        closeStream = closeStream,
+        pool = bufferPool,
+        closeBuffer = false
+    )
+
     private val crcCalc = CRC32()
 
     private val crc

@@ -1,26 +1,22 @@
 package pw.binom.network
 
-import pw.binom.collections.defaultMutableSet
 import pw.binom.io.Closeable
 
 actual class TcpServerSocketChannel : Closeable, NetworkChannel {
 
-    private var keys = defaultMutableSet<AbstractKey>()
+    private var currentKey: AbstractNativeKey? = null
 
-    override fun addKey(key: AbstractKey) {
-        val native = native
-        val added = keys.add(key)
-        if (added && native != null) {
-            key.addSocket(native)
+    override fun setKey(key: AbstractNativeKey) {
+        if (this.currentKey === key) {
+            return
         }
+        this.currentKey?.close()
+        this.currentKey = key
+        native?.let { nt -> key.setRaw(nt) }
     }
 
-    override fun removeKey(key: AbstractKey) {
-        val native = native
-        val removed = keys.remove(key)
-        if (removed && native != null) {
-            key.removeSocket(native)
-        }
+    override fun keyClosed() {
+        currentKey = null
     }
 
 //    var key: AbstractKey? = null
@@ -40,28 +36,22 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
     override val nNative: NSocket?
         get() = internalNative
 
-    actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? {
+    actual fun accept(address: NetworkAddressOld.Mutable?): TcpClientSocketChannel? {
         val socket = internalNative!!.accept(address) ?: return null
         return TcpClientSocketChannel(socket)
     }
 
-    actual fun bind(address: NetworkAddress) {
+    actual fun bind(address: NetworkAddressOld) {
         if (native != null) {
             throw IllegalStateException()
         }
         internalNative = NSocket.serverTcp(address)
         internalNative!!.setBlocking(blocking)
-        keys.forEach {
-            it.addSocket(native!!)
-        }
+        currentKey?.setRaw(native!!)
     }
 
     override fun close() {
-        keys.forEach {
-            it.internalCleanSocket()
-            it.close()
-        }
-        keys.clear()
+        currentKey?.close()
         internalNative?.close()
     }
 
@@ -81,8 +71,6 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
         }
         internalNative = NSocket.serverTcpUnixSocket(fileName)
         internalNative!!.setBlocking(blocking)
-        keys.forEach {
-            it.addSocket(native!!)
-        }
+        currentKey?.setRaw(native!!)
     }
 }

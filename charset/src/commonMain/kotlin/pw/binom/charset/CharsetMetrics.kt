@@ -1,11 +1,11 @@
 package pw.binom.charset
 
 import pw.binom.BinomMetrics
-import pw.binom.metric.MutableGauge
+import pw.binom.metric.MutableLongGauge
 
 internal object CharsetMetrics {
-    private val encoderCount = MutableGauge("binom_charset_encoder_count", description = "Charset Encoder Count")
-    private val decoderCount = MutableGauge("binom_charset_decoder_count", description = "Charset Decoder Count")
+    private val encoderCount = MutableLongGauge("binom_charset_encoder_count", description = "Charset Encoder Count")
+    private val decoderCount = MutableLongGauge("binom_charset_decoder_count", description = "Charset Decoder Count")
     fun incEncoder() {
         encoderCount.inc()
     }

@@ -229,7 +229,6 @@ class HashMap3<K, V> private constructor(
     private fun hash(key: K) = if (key == null) 0 else (key.hashCode() * MAGIC) ushr hashShift
 
     private fun compact() {
-        println("compact!!!!")
         var i = 0
         var j = 0
         val valuesArray = valuesArray
@@ -244,7 +243,6 @@ class HashMap3<K, V> private constructor(
         keysArray.resetRange(j, length)
         valuesArray?.resetRange(j, length)
         length = j
-        println("After compact $j")
         // check(length == size) { "Internal invariant violated during compact: length=$length != size=$size" }
     }
 
@@ -253,7 +251,6 @@ class HashMap3<K, V> private constructor(
     }
 
     private fun rehash(newHashSize: Int) {
-        println("rehash($newHashSize)")
         if (length > _size) compact()
         if (newHashSize != hashSize) {
             hashArray = IntArray(newHashSize)

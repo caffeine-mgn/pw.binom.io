@@ -73,6 +73,7 @@ kotlin {
                 api(project(":file"))
                 api(project(":concurrency"))
                 api(project(":thread"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
 

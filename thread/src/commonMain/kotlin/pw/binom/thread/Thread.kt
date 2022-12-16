@@ -1,11 +1,11 @@
 package pw.binom.thread
 
 import pw.binom.BinomMetrics
-import pw.binom.metric.MutableGauge
+import pw.binom.metric.MutableLongGauge
 import kotlin.time.Duration
 
 internal object ThreadMetrics {
-    private val threadCount = MutableGauge("binom_thread_count", description = "Thread Count")
+    private val threadCount = MutableLongGauge("binom_thread_count", description = "Thread Count")
     fun incThread() {
         threadCount.inc()
     }

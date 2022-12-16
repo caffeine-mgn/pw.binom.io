@@ -6,6 +6,6 @@ expect class TcpClientSocketChannel : Channel, NetworkChannel {
     constructor()
 
     fun setBlocking(value: Boolean)
-    fun connect(address: NetworkAddress)
+    fun connect(address: NetworkAddressOld)
     fun connect(fileName: String)
 }

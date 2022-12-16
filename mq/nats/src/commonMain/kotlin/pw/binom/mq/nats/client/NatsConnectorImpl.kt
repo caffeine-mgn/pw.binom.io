@@ -5,7 +5,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.collections.defaultMutableMap
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.network.NetworkAddress
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketConnectException
 import pw.binom.network.tcpConnect

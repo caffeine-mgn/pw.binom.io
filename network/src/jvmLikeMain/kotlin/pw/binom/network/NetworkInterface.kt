@@ -24,7 +24,7 @@ actual class NetworkInterface private constructor(
                     hardwareAddress = networkInterface.hardwareAddress,
                     addresses = networkInterface.interfaceAddresses.map { address ->
                         NetworkInterfaceAddress(
-                            address = NetworkAddress.Immutable(host = address.address.hostAddress, port = 0),
+                            address = NetworkAddressOld.Immutable(host = address.address.hostAddress, port = 0),
                             networkPrefixAddress = address.networkPrefixLength.toInt(),
                         )
                     }

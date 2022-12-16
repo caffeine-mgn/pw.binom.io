@@ -11,10 +11,10 @@ import pw.binom.concurrency.sleep
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.postgresql.async.PGConnection
 import pw.binom.db.sqlite.AsyncSQLiteConnector
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
 import pw.binom.network.Network
-import pw.binom.network.NetworkAddress
-import pw.binom.nextUuid
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -60,7 +60,7 @@ class InsertTest {
             println("---===Test PostgreSQL===---")
             try {
                 val pool = AsyncConnectionPool.create(maxConnections = 1) {
-                    connectToPostgres(NetworkAddress.Immutable(host = "127.0.0.1", port = 6102))
+                    connectToPostgres(NetworkAddress.create(host = "127.0.0.1", port = 6102))
                 }
                 DBContext.create(pool, sql).use { context ->
                     func(context)

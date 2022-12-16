@@ -7,8 +7,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import pw.binom.charset.Charsets
 import pw.binom.concurrency.sleep
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
-import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.NetworkManager
 import kotlin.time.Duration.Companion.seconds
@@ -76,7 +76,7 @@ abstract class BaseTest {
     @OptIn(ExperimentalTime::class)
     fun pg(func: suspend (PGConnection) -> Unit) = runTest(dispatchTimeoutMs = 10_000) {
         withContext(Dispatchers.Default) {
-            val address = NetworkAddress.Immutable(host = "127.0.0.1", port = 6122)
+            val address = NetworkAddress.create(host = "127.0.0.1", port = 6122)
 
 //            val nd = MultiFixedSizeThreadNetworkDispatcher(10)
             val nd = NetworkCoroutineDispatcherImpl()

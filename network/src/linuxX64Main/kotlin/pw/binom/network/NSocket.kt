@@ -57,7 +57,7 @@ private fun bind(native: RawSocket, fileName: String) {
     }
 }
 
-private fun bind(native: RawSocket, address: NetworkAddress, family: Int) {
+private fun bind(native: RawSocket, address: NetworkAddressOld, family: Int) {
     memScoped {
         val bindResult = if (family == AF_INET6) {
             address.isAddrV6 { data ->
@@ -68,7 +68,7 @@ private fun bind(native: RawSocket, address: NetworkAddress, family: Int) {
                 )
             }
         } else {
-            if (address.type != NetworkAddress.Type.IPV4) {
+            if (address.type != NetworkAddressOld.Type.IPV4) {
                 throw BindException("Can't bind to $address to IPV4")
             }
             address.data.usePinned {
@@ -139,12 +139,12 @@ private fun allowIpv4(native: RawSocket) {
     }
 }
 
-actual class NSocket(var native: Int, val family: Int) : Closeable {
+actual class NSocket(val native: Int, val family: Int) : Closeable {
     actual companion object {
-        actual fun serverTcp(address: NetworkAddress): NSocket {
+        actual fun serverTcp(address: NetworkAddressOld): NSocket {
             val domain = when (address.type) {
-                NetworkAddress.Type.IPV4 -> AF_INET
-                NetworkAddress.Type.IPV6 -> AF_INET6
+                NetworkAddressOld.Type.IPV4 -> AF_INET
+                NetworkAddressOld.Type.IPV6 -> AF_INET6
             }
             val native = socket(domain, SOCK_STREAM, 0)
             if (native < 0) {
@@ -152,7 +152,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
             }
             applyReuse(native)
             bind(native, address, family = domain)
-            if (address.type == NetworkAddress.Type.IPV6) {
+            if (address.type == NetworkAddressOld.Type.IPV6) {
                 allowIpv4(native)
             }
             return NSocket(native, family = domain)
@@ -171,15 +171,19 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
 
         private fun socketResultProcessing(r: Int) {
             if (r < 0) {
+//                val errno = errno
+                println("NSocket::socketResultProcessing errno=$errno posix_errno=${posix_errno()}")
                 if (errno == EAFNOSUPPORT) {
                     throw IOException("Can't connect. Error: $errno, Address family not supported by protocol")
                 }
                 if (errno != EINPROGRESS) {
+                    println("try throw exception!")
                     throw IOException("Can't connect. Error: $errno")
                 }
                 if (errno == EINPROGRESS) {
                     return // All is ok
                 }
+                println("try throw exception!")
                 throw IOException("Unknown socket error $r $errno")
             }
         }
@@ -209,10 +213,10 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
             return NSocket(native, family = domain)
         }
 
-        actual fun connectTcp(address: NetworkAddress, blocking: Boolean): NSocket {
+        actual fun connectTcp(address: NetworkAddressOld, blocking: Boolean): NSocket {
             val domain = when (address.type) {
-                NetworkAddress.Type.IPV4 -> AF_INET
-                NetworkAddress.Type.IPV6 -> AF_INET6
+                NetworkAddressOld.Type.IPV4 -> AF_INET
+                NetworkAddressOld.Type.IPV6 -> AF_INET6
             }
             val native = socket(domain, SOCK_STREAM, 0)
             if (native < 0) {
@@ -221,14 +225,15 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
             setBlocking(native, blocking)
 
             memScoped {
+                println("NSocket: Connect to $address, blocking=$blocking")
                 val r = address.data.usePinned { data ->
-                    set_posix_errno(0)
                     connect(
                         native,
                         data.addressOf(0).getPointer(this).reinterpret(),
                         data.get().size.convert()
                     )
                 }
+                println("NSocket: Finished connect to $address with $r, errno: $errno")
                 socketResultProcessing(r)
             }
             return NSocket(native, family = domain)
@@ -269,7 +274,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
         }
     }
 
-    actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
+    actual fun accept(address: NetworkAddressOld.Mutable?): NSocket? {
         checkClosed()
         val native = if (address == null) {
             accept(native, null, null)
@@ -384,7 +389,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
         setBlocking(native, value)
     }
 
-    actual fun connect(address: NetworkAddress) {
+    actual fun connect(address: NetworkAddressOld) {
         checkClosed()
         memScoped {
             set_posix_errno(0)
@@ -404,12 +409,12 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
         }
     }
 
-    actual fun bind(address: NetworkAddress) {
+    actual fun bind(address: NetworkAddressOld) {
         checkClosed()
         bind(native, address, family)
     }
 
-    actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
+    actual fun send(data: ByteBuffer, address: NetworkAddressOld): Int =
         run {
             checkClosed()
             if (data.remaining == 0) {
@@ -448,7 +453,7 @@ actual class NSocket(var native: Int, val family: Int) : Closeable {
 
     actual fun recv(
         data: ByteBuffer,
-        address: NetworkAddress.Mutable?
+        address: NetworkAddressOld.Mutable?
     ): Int {
         checkClosed()
         if (data.remaining == 0) {

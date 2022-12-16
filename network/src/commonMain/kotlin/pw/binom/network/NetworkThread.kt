@@ -1,30 +1,32 @@
 package pw.binom.network
 
 import kotlinx.coroutines.Runnable
-import pw.binom.BatchExchange
-import pw.binom.LoopWatcher
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.collections.defaultMutableList
+import pw.binom.concurrency.Exchange
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
+import pw.binom.io.socket.KeyListenFlags
+import pw.binom.io.socket.SelectedKeys
+import pw.binom.io.socket.Selector
 import pw.binom.thread.Thread
+import kotlin.time.Duration
 
-class NetworkThread : Thread, Closeable {
+open class NetworkThread : Thread, Closeable {
     private val selector: Selector
-    private val readyForWriteListener: BatchExchange<Runnable>
+    private val exchange: Exchange<Runnable>
 
-    constructor(name: String, selector: Selector, readyForWriteListener: BatchExchange<Runnable>) : super(name = name) {
+    constructor(name: String, selector: Selector, exchange: Exchange<Runnable>) : super(name = name) {
         this.selector = selector
-        this.readyForWriteListener = readyForWriteListener
+        this.exchange = exchange
     }
 
-    constructor(selector: Selector, readyForWriteListener: BatchExchange<Runnable>) : super() {
+    constructor(selector: Selector, exchange: Exchange<Runnable>) : super() {
         this.selector = selector
-        this.readyForWriteListener = readyForWriteListener
+        this.exchange = exchange
     }
 
     //    private val selector = Selector.open()
-    private val selectedKeys = SelectedEvents.create()
+    private val selectedKeys = SelectedKeys()
     private val closed = AtomicBoolean(false)
     private fun checkClosed() {
         if (closed.getValue()) {
@@ -50,28 +52,26 @@ class NetworkThread : Thread, Closeable {
 //        readyForWriteListener.push(block)
 //    }
 
-    private val loopWatcher by lazy { LoopWatcher("NetworkThread-$name") }
+//    private val loopWatcher by lazy { LoopWatcher("NetworkThread-$name") }
 
     override fun execute() {
         try {
             while (!closed.getValue()) {
-                loopWatcher.call()
-                var taskForRun = defaultMutableList<Runnable>()
+//                loopWatcher.call()
+//                var taskForRun = defaultMutableList<Runnable>()
                 var v = 0
-                val c = this.selector.select(selectedEvents = selectedKeys)
-                val iterator = selectedKeys.iterator()
-                while (iterator.hasNext() && !closed.getValue()) {
+                this.selector.select(timeout = Duration.INFINITE, selectedKeys = selectedKeys)
+                selectedKeys.forEach { event ->
                     v++
                     try {
-                        val event = iterator.next()
                         val attachment = event.key.attachment
                         attachment ?: error("Attachment is null")
                         val connection = attachment as AbstractConnection
                         when {
-                            event.mode and Selector.EVENT_CONNECTED != 0 -> connection.connected()
-                            event.mode and Selector.EVENT_ERROR != 0 -> connection.error()
-                            event.mode and Selector.OUTPUT_READY != 0 -> connection.readyForWrite(event.key)
-                            event.mode and Selector.INPUT_READY != 0 -> connection.readyForRead(event.key)
+//                            event.flags and SelectorOld.EVENT_CONNECTED != 0 -> connection.connected()
+                            event.flags and KeyListenFlags.ERROR != 0 -> connection.error()
+                            event.flags and KeyListenFlags.WRITE != 0 -> connection.readyForWrite(event.key)
+                            event.flags and KeyListenFlags.READ != 0 -> connection.readyForRead(event.key)
                             else -> error("Unknown connection event")
                         }
                     } catch (e: Throwable) {
@@ -81,12 +81,10 @@ class NetworkThread : Thread, Closeable {
                         )
                     }
                 }
-                readyForWriteListener.popAll {
-                    taskForRun.addAll(it)
-                }
-                taskForRun.forEach {
+                val runnable = exchange.getOrNull()
+                if (runnable != null) {
                     try {
-                        it.run()
+                        runnable.run()
                     } catch (e: Throwable) {
                         uncaughtExceptionHandler.uncaughtException(
                             thread = this,
@@ -94,11 +92,20 @@ class NetworkThread : Thread, Closeable {
                         )
                     }
                 }
-                taskForRun.clear()
+//                taskForRun.forEach {
+//                    try {
+//                        it.run()
+//                    } catch (e: Throwable) {
+//                        uncaughtExceptionHandler.uncaughtException(
+//                            thread = this,
+//                            throwable = RuntimeException("Error on network queue", e)
+//                        )
+//                    }
+//                }
+//                taskForRun.clear()
             }
         } finally {
-            loopWatcher.close()
-            selectedKeys.close()
+            // selectedKeys.close() // TODO
         }
     }
 
@@ -106,9 +113,6 @@ class NetworkThread : Thread, Closeable {
         get() = closed.getValue()
 
     override fun close() {
-        if (closed.getValue()) {
-            return
-        }
         closed.setValue(true)
     }
 

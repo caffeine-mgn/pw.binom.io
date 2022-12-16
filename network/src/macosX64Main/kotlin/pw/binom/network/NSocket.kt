@@ -51,7 +51,7 @@ actual class NSocket(val native: Int) : Closeable {
             }
         }
 
-    actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
+    actual fun accept(address: NetworkAddressOld.Mutable?): NSocket? {
         val native = if (address == null) {
             accept(native, null, null)
         } else {
@@ -152,7 +152,7 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
-    actual fun connect(address: NetworkAddress) {
+    actual fun connect(address: NetworkAddressOld) {
         memScoped {
             set_posix_errno(0)
             val r = connect(
@@ -166,7 +166,7 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
-    actual fun bind(address: NetworkAddress) {
+    actual fun bind(address: NetworkAddressOld) {
         memScoped {
             set_posix_errno(0)
             val bindResult = bind(
@@ -197,7 +197,7 @@ actual class NSocket(val native: Int) : Closeable {
         }
     }
 
-    actual fun send(data: ByteBuffer, address: NetworkAddress): Int =
+    actual fun send(data: ByteBuffer, address: NetworkAddressOld): Int =
         memScoped {
             checkClosed()
             val rr = data.ref { dataPtr, remaining ->
@@ -222,7 +222,7 @@ actual class NSocket(val native: Int) : Closeable {
 
     actual fun recv(
         data: ByteBuffer,
-        address: NetworkAddress.Mutable?
+        address: NetworkAddressOld.Mutable?
     ): Int {
         val gotBytes = if (address == null) {
             val rr = data.ref { dataPtr, remaining ->

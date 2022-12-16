@@ -27,16 +27,16 @@ class MingwSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
 //        }
     }
 
-    override val nativeSelectedKeys: Iterator<AbstractSelector.NativeKeyEvent>
+    override val nativeSelectedKeys: Iterator<AbstractNativeSelector.NativeKeyEvent>
         get() = nativeSelectedKeys2
 
     override fun resetIterator() {
         nativeSelectedKeys2.reset()
     }
 
-    private val nativeSelectedKeys2 = object : Iterator<AbstractSelector.NativeKeyEvent> {
-        private val event = object : AbstractSelector.NativeKeyEvent {
-            override lateinit var key: AbstractKey
+    private val nativeSelectedKeys2 = object : Iterator<AbstractNativeSelector.NativeKeyEvent> {
+        private val event = object : AbstractNativeSelector.NativeKeyEvent {
+            override lateinit var key: AbstractNativeKey
             override var mode: Int = 0
         }
         private var currentNum = 0
@@ -51,7 +51,7 @@ class MingwSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
             return true
         }
 
-        override fun next(): AbstractSelector.NativeKeyEvent {
+        override fun next(): AbstractNativeSelector.NativeKeyEvent {
             if (!hasNext()) {
                 throw NoSuchElementException()
             }
@@ -71,14 +71,14 @@ class MingwSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
                     }
                     EPOLLOUT in item.events -> {
                         event.key = key
-                        event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                        event.mode = SelectorOld.EVENT_CONNECTED or SelectorOld.OUTPUT_READY
                         key.connected = true
                         key.resetMode(key.listensFlag)
                         return event
                     }
                     EPOLLIN in item.events -> {
                         event.key = key
-                        event.mode = Selector.EVENT_CONNECTED or Selector.INPUT_READY
+                        event.mode = SelectorOld.EVENT_CONNECTED or SelectorOld.INPUT_READY
                         key.connected = true
                         key.resetMode(key.listensFlag)
                         return event

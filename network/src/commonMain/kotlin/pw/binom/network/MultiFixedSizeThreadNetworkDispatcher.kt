@@ -1,25 +1,27 @@
 package pw.binom.network
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Runnable
-import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.defaultMutableList
+import pw.binom.concurrency.Exchange
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
+import pw.binom.io.socket.Selector
 import pw.binom.thread.Thread
 import kotlin.coroutines.CoroutineContext
 
-class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : CoroutineDispatcher(), NetworkManager, Closeable {
-    private val selector = Selector.open()
-    private val readyForWriteListener = BatchExchange<Runnable>()
+class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkManager(), Closeable {
+    override val selector = Selector()
+
+    //    private val readyForWriteListener = BatchExchange<Runnable>()
+    private val exchange = Exchange<Runnable>()
 
     init {
         require(threadSize > 0) { "threadSize should be more than 0" }
     }
 
     private val closed = AtomicBoolean(false)
-    private fun checkClosed() {
+    override fun ensureOpen() {
         if (closed.getValue()) {
             throw ClosedException()
         }
@@ -31,7 +33,7 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : CoroutineDispatch
         repeat(threadSize) {
             val thread = NetworkThread(
                 selector = selector,
-                readyForWriteListener = readyForWriteListener,
+                exchange = exchange,
                 name = "NetworkDispatcher-$it"
             )
             thread.start()
@@ -40,70 +42,14 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : CoroutineDispatch
     }
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-        checkClosed()
+        ensureOpen()
         val currentId = Thread.currentThread.id
         return !threads.any { it.id == currentId }
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        checkClosed()
-//        var min = threads[0]
-//        for (i in 1 until threads.size) {
-//            val item = threads[i]
-//            if (item.taskSize < min.taskSize) {
-//                min = item
-//            }
-//        }
-        readyForWriteListener.push(block)
-        selector.wakeup()
-//        min.executeOnThread(block)
-//        min.wakeup()
-    }
-
-    override fun attach(channel: TcpClientSocketChannel, mode: Int): TcpConnection {
-        checkClosed()
-        val con = TcpConnection(channel)
-        channel.setBlocking(false)
-        val key = selector.attach(
-            socket = channel,
-            attachment = con,
-            mode = mode,
-        )
-        con.keys.addKey(key)
-        if (mode != 0) {
-            selector.wakeup()
-        }
-        return con
-    }
-
-    override fun attach(channel: TcpServerSocketChannel): TcpServerConnection {
-        checkClosed()
-        val con = TcpServerConnection(channel = channel, dispatcher = this)
-        channel.setBlocking(false)
-        val key = selector.attach(
-            socket = channel,
-            attachment = con,
-            mode = 0,
-        )
-        con.keys.addKey(key)
-        return con
-    }
-
-    override fun attach(channel: UdpSocketChannel): UdpConnection {
-        checkClosed()
-        val con = UdpConnection(channel)
-        channel.setBlocking(false)
-        val key = selector.attach(
-            socket = channel,
-            attachment = con,
-            mode = 0,
-        )
-        con.keys.addKey(key)
-        return con
-    }
-
-    override fun wakeup() {
-        checkClosed()
+        ensureOpen()
+        exchange.put(block)
         selector.wakeup()
     }
 

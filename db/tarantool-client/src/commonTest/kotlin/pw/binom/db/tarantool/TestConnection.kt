@@ -1,7 +1,7 @@
 package pw.binom.db.tarantool
 
 import kotlinx.coroutines.withTimeout
-import pw.binom.nextUuid
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

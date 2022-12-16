@@ -68,17 +68,15 @@ internal class HttpResponse2Impl(
     }
 
     private suspend fun sendRequest() {
-        if (server!!.zlibBufferSize <= 0 && (
-            headers.contentEncoding.equals(other = "gzip", ignoreCase = true) ||
-                headers.contentEncoding.equals(other = "deflate", ignoreCase = true)
-            )
-        ) {
+        val contentEncoding = headers.contentEncoding
+        val isCompressed = contentEncoding.equals(other = "gzip", ignoreCase = true) || contentEncoding.equals(
+            other = "deflate",
+            ignoreCase = true
+        )
+        if (server!!.zlibBufferSize <= 0 && isCompressed) {
             throw IllegalStateException("Response doesn't support compress. Make sure you set HttpServer::zlibBufferSize more than 0")
         }
-        channel!!.writer.append("HTTP/1.1 ")
-            .append(statusInt(status))
-            .append(" ")
-            .append(statusToText(status))
+        channel!!.writer.append("HTTP/1.1 ").append(statusInt(status)).append(" ").append(statusToText(status))
             .append(Utils.CRLF)
         headers.forEachHeader { key, value ->
             channel!!.writer.append(key).append(": ").append(value).append(Utils.CRLF)
@@ -107,8 +105,9 @@ internal class HttpResponse2Impl(
         if (!keepAliveEnabled && headers.keepAlive) {
             throw IllegalStateException("Client not support Keep-Alive mode")
         }
-        if (headers.contentEncoding == null && headers.getTransferEncodingList()
-            .isEmpty() && headers.contentLength == null
+        if (headers.contentEncoding == null &&
+            headers.getTransferEncodingList().isEmpty() &&
+            headers.contentLength == null
         ) {
             val en = acceptEncoding
             if (server!!.zlibBufferSize > 0) {
@@ -148,14 +147,14 @@ internal class HttpResponse2Impl(
                 stream = stream,
                 level = 6,
                 closeStream = true,
-                bufferSize = server!!.zlibBufferSize,
+                bufferPool = server!!.compressBufferPool,
             )
 
             Encoding.DEFLATE -> AsyncDeflaterOutput(
                 stream = stream,
                 level = 6,
                 closeStream = true,
-                bufferSize = server!!.zlibBufferSize,
+                bufferPool = server!!.compressBufferPool,
             )
 
             else -> null

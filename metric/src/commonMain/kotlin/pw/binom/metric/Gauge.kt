@@ -1,5 +1,3 @@
 package pw.binom.metric
 
-interface Gauge : MetricUnit {
-    val value: Double
-}
+sealed interface Gauge : MetricUnit

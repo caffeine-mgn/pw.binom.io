@@ -9,13 +9,13 @@ actual class ReentrantLock : Lock {
 
     private val native = ReentrantLock(false)
 
-    actual override fun lock() {
+    override fun lock() {
         native.lock()
     }
 
-    actual override fun tryLock(): Boolean = native.tryLock()
+    override fun tryLock(): Boolean = native.tryLock()
 
-    actual override fun unlock() {
+    override fun unlock() {
         native.unlock()
     }
 

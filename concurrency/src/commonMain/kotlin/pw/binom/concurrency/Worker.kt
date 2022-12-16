@@ -1,9 +1,8 @@
 package pw.binom.concurrency
 
-import kotlinx.coroutines.CoroutineDispatcher
 import pw.binom.Future
 
-expect class Worker(name: String? = null) : CoroutineDispatcher {
+expect class Worker(name: String? = null) {
     companion object {
         val current: Worker?
     }

@@ -3,7 +3,7 @@ package pw.binom.smtp
 import kotlinx.coroutines.runBlocking
 import pw.binom.io.ByteBuffer
 import pw.binom.io.use
-import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkAddressOld
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.TrustManager
@@ -17,7 +17,7 @@ class ClientTest {
     fun test2() = runBlocking {
         val client = SMTPClient.tcp(
             dispatcher = NetworkCoroutineDispatcherImpl(),
-            address = NetworkAddress.Immutable("127.0.0.1", 1025),
+            address = NetworkAddressOld.Immutable("127.0.0.1", 1025),
             fromEmail = "test@test.org",
             login = "test@test.org",
             password = "test_password"
@@ -57,7 +57,7 @@ class ClientTest {
     fun test() = runBlocking {
         val client = SMTPClient.tls(
             dispatcher = NetworkCoroutineDispatcherImpl(),
-            address = NetworkAddress.Immutable("smtp.yandex.ru", 465),
+            address = NetworkAddressOld.Immutable("smtp.yandex.ru", 465),
             keyManager = EmptyKeyManager,
             trustManager = TrustManager.TRUST_ALL,
             fromEmail = "test@test.org",

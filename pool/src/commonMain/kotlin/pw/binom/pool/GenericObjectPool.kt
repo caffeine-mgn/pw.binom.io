@@ -1,7 +1,8 @@
 package pw.binom.pool
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.atomic.synchronize
+import pw.binom.atomic.AtomicInt
+import pw.binom.atomic.AtomicLong
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -27,16 +28,58 @@ open class GenericObjectPool<T : Any>(
         require(minSize >= 0) { "minSize should be more or equals 0" }
     }
 
+    private var closed = AtomicBoolean(false)
     var maxSize = maxSize
         private set
     internal var nextCapacity = initCapacity
 
+    private val threadId = AtomicLong(0)
+    private val count = AtomicInt(0)
+
+    private fun lock() {
+        if (threadId.getValue() == (ThreadUtils.currentThreadId)) {
+            count.increment()
+        } else {
+            while (true) {
+                if (threadId.compareAndSet(0, ThreadUtils.currentThreadId)) {
+                    break
+                }
+//                sleep(1)
+            }
+            count.increment()
+        }
+    }
+
+    private fun unlock() {
+        if (count.getValue() <= 0) {
+            throw IllegalStateException("ReentrantSpinLock is not locked")
+        }
+        if (threadId.getValue() != (ThreadUtils.currentThreadId)) {
+            throw IllegalStateException("Only locking thread can call unlock")
+        }
+        count.decrement()
+        if (count.getValue() == 0) {
+            if (!threadId.compareAndSet(ThreadUtils.currentThreadId, 0)) {
+                throw IllegalStateException("Lock already free")
+            }
+        }
+    }
+
+    private fun <T> synchronize(func: () -> T): T {
+        lock()
+        return try {
+            func()
+        } finally {
+            unlock()
+        }
+    }
+
     fun updateMaxSize(maxSize: Int) {
         require(maxSize >= minSize) { "maxSize ($maxSize) should be more or equals than minSize ($minSize)" }
-        lock.synchronize {
+        synchronize {
             this.maxSize = maxSize
             if (pool.size > maxSize) {
-                unlockedResizePool(maxSize)
+                internalResizePool(maxSize)
             }
         }
     }
@@ -45,14 +88,16 @@ open class GenericObjectPool<T : Any>(
         if (lastDate.elapsedNow() < this.delayBeforeResize) {
             return
         }
-        if (nextCapacity > capacity) {
-            checkGrow()
-        } else {
-            checkShrink()
+        synchronize {
+            if (nextCapacity > pool.size) {
+                internalCheckGrow()
+            } else {
+                internalCheckShrink()
+            }
         }
     }
 
-    private fun unlockedResizePool(newSize: Int) {
+    private fun internalResizePool(newSize: Int) {
         require(newSize >= minSize) { "newSize ($newSize) should be more or equals newSize ($newSize)" }
         if (newSize == 0) {
             for (i in 0 until size) {
@@ -89,26 +134,25 @@ open class GenericObjectPool<T : Any>(
     }
 
     val capacity
-        get() = lock.synchronize {
+        get() = synchronize {
             pool.size
         }
     private var pool = arrayOfNulls<Any>(initCapacity)
-    val lock = AtomicBoolean(false)
     var size = 0
         private set
 
-    private fun checkGrow() {
+    private fun internalCheckGrow() {
         if (lastDate.elapsedNow() < this.delayBeforeResize) {
             return
         }
         val isTimeToGrow = (size * growFactor).roundToInt() <= nextCapacity
         if (isTimeToGrow) {
-            unlockedResizePool(nextCapacity)
+            internalResizePool(nextCapacity)
             lastDate = TimeSource.Monotonic.markNow()
         }
     }
 
-    private fun checkShrink() {
+    private fun internalCheckShrink() {
         if (pool.size == 1) {
             return
         }
@@ -117,12 +161,12 @@ open class GenericObjectPool<T : Any>(
         }
         val isTimeToShrink = (pool.size * shrinkFactor).roundToInt() >= size
         if (isTimeToShrink) {
-            unlockedResizePool(size)
+            internalResizePool(size)
             lastDate = TimeSource.Monotonic.markNow()
         }
     }
 
-    override fun borrow(): T = lock.synchronize {
+    override fun borrow(): T = synchronize {
         if (size == 0) {
             factory.allocate(this)
         } else {
@@ -130,13 +174,13 @@ open class GenericObjectPool<T : Any>(
             nextCapacity = maxOf(size, nextCapacity - 1)
             val obj = pool[index] as T
             pool[index] = null
-            checkShrink()
+            internalCheckShrink()
             obj
         }
     }
 
     override fun close() {
-        lock.synchronize {
+        synchronize {
             for (i in 0 until size) {
                 factory.deallocate(pool[i] as T, this)
             }
@@ -145,11 +189,11 @@ open class GenericObjectPool<T : Any>(
     }
 
     override fun recycle(value: T) {
-        lock.synchronize {
+        synchronize {
             if (size == pool.size) {
                 factory.deallocate(value, this)
                 nextCapacity = maxOf(pool.size, nextCapacity + 1)
-                checkGrow()
+                internalCheckGrow()
             } else {
                 factory.reset(value, this)
                 pool[size++] = value

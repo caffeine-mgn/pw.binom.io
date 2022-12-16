@@ -7,13 +7,13 @@ import java.nio.channels.DatagramChannel
 actual class UdpSocketChannel : NetworkChannel {
     val native = DatagramChannel.open()
 
-    actual fun send(data: ByteBuffer, address: NetworkAddress): Int {
+    actual fun send(data: ByteBuffer, address: NetworkAddressOld): Int {
         val _native = address._native
         require(_native != null)
         return native.send(data.native, _native)
     }
 
-    actual fun recv(data: ByteBuffer, address: NetworkAddress.Mutable?): Int {
+    actual fun recv(data: ByteBuffer, address: NetworkAddressOld.Mutable?): Int {
         val before = data.position
         if (before == data.remaining) {
             return 0
@@ -27,7 +27,7 @@ actual class UdpSocketChannel : NetworkChannel {
 
     private var bindPort: Int? = null
 
-    actual fun bind(address: NetworkAddress) {
+    actual fun bind(address: NetworkAddressOld) {
         check(bindPort == null) { "Already bindded" }
         val _native = address._native
         require(_native != null)

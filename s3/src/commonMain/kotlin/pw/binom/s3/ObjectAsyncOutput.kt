@@ -85,7 +85,6 @@ class ObjectAsyncOutput(
             partNumber = parts.size,
             uploadId = uploadId,
         ) { output ->
-            println("Multipart Sent ${buffer.remaining} to S3. $key")
             output.writeFully(buffer)
         }
         buffer.clear()

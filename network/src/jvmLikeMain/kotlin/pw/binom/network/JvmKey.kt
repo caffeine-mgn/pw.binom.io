@@ -9,7 +9,7 @@ class JvmKey(
     private var initMode: Int,
     var connected: Boolean,
     override val selector: JvmSelector
-) : Selector.Key {
+) : SelectorOld.Key {
     var native: SelectionKey? = null
         private set
 
@@ -43,7 +43,7 @@ class JvmKey(
 
     fun commonToJava(channel: SelectableChannel, mode: Int): Int {
         var opts = 0
-        if (Selector.INPUT_READY and mode != 0) {
+        if (SelectorOld.INPUT_READY and mode != 0) {
             val value = when (channel) {
                 is SocketChannel, is DatagramChannel -> SelectionKey.OP_READ
                 is ServerSocketChannel -> SelectionKey.OP_ACCEPT
@@ -51,11 +51,11 @@ class JvmKey(
             }
             opts = opts or value
         }
-        if (Selector.OUTPUT_READY and mode != 0) {
+        if (SelectorOld.OUTPUT_READY and mode != 0) {
             require(channel is SocketChannel || channel is DatagramChannel)
             opts = opts or SelectionKey.OP_WRITE
         }
-        if (Selector.EVENT_CONNECTED and mode != 0) {
+        if (SelectorOld.EVENT_CONNECTED and mode != 0) {
             require(channel is SocketChannel)
             opts = opts or SelectionKey.OP_CONNECT or SelectionKey.OP_READ or SelectionKey.OP_WRITE
         }

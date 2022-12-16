@@ -1,6 +1,7 @@
 package pw.binom.date
 
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 operator fun DateTime.compareTo(expDate: DateTime): Int = when {
     time > expDate.time -> 1
@@ -16,3 +17,5 @@ operator fun DateTime.plus(duration: Duration) =
 
 operator fun DateTime.minus(duration: Duration) =
     DateTime(time - duration.inWholeMilliseconds)
+
+operator fun DateTime.minus(other: DateTime) = (time - other.time).milliseconds

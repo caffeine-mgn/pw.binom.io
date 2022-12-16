@@ -4,6 +4,9 @@ package pw.binom.network
 
 import pw.binom.Environment
 import pw.binom.collections.defaultMutableSet
+import pw.binom.io.socket.SelectorKey
+import pw.binom.io.socket.addListen
+import pw.binom.io.socket.removeListen
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmName
 
@@ -19,18 +22,18 @@ expect val Long.ntoh: Long
 expect val Environment.isBigEndian2: Boolean
 
 @JvmInline
-value class KeyCollection(private val set: MutableSet<Selector.Key>) {
+value class KeyCollection(private val set: MutableSet<SelectorKey>) {
     constructor() : this(defaultMutableSet())
 
-    fun addKey(key: Selector.Key) = set.add(key)
-    fun removeKey(key: Selector.Key) = set.remove(key)
+    fun addKey(key: SelectorKey) = set.add(key)
+    fun removeKey(key: SelectorKey) = set.remove(key)
 
     fun setListensFlag(flags: Int) {
         set.removeIf {
-            if (it.closed) {
+            if (it.isClosed) {
                 true
             } else {
-                it.listensFlag = flags
+                it.listenFlags = flags
                 false
             }
         }
@@ -38,7 +41,7 @@ value class KeyCollection(private val set: MutableSet<Selector.Key>) {
 
     fun wakeup() {
         set.removeIf {
-            if (it.closed) {
+            if (it.isClosed) {
                 true
             } else {
                 it.selector.wakeup()
@@ -49,7 +52,7 @@ value class KeyCollection(private val set: MutableSet<Selector.Key>) {
 
     fun addListen(code: Int) {
         set.removeIf {
-            if (it.closed) {
+            if (it.isClosed) {
                 true
             } else {
                 it.addListen(code)
@@ -72,7 +75,7 @@ value class KeyCollection(private val set: MutableSet<Selector.Key>) {
 
     fun removeListen(code: Int) {
         set.removeIf {
-            if (it.closed) {
+            if (it.isClosed) {
                 true
             } else {
                 it.removeListen(code)
@@ -83,8 +86,8 @@ value class KeyCollection(private val set: MutableSet<Selector.Key>) {
 
     fun close() {
         set.forEach { key ->
-            if (!key.closed) {
-                key.listensFlag = 0
+            if (!key.isClosed) {
+                key.listenFlags = 0
                 key.close()
             }
         }

@@ -13,3 +13,13 @@ interface ObjectPool<T : Any> : Closeable {
      */
     fun recycle(value: T)
 }
+
+inline fun <T : Any, R> ObjectPool<T>.tryBorrow(func: (T) -> R): R {
+    val r = borrow()
+    return try {
+        func(r)
+    } catch (e: Throwable) {
+        recycle(r)
+        throw e
+    }
+}

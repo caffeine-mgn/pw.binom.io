@@ -28,7 +28,7 @@ internal fun toEpochDay(year: Int, monthNumber: Int, dayOfMonth: Int): Long {
     return total - DAYS_0000_TO_1970
 }
 
-fun isLeapYear(year: Int): Boolean {
+private fun isLeapYear(year: Int): Boolean {
     if (year % 400 == 0) return true
     if (year % 100 == 0) return false
     if (year % 4 == 0) return true

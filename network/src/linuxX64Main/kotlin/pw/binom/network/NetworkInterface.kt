@@ -73,7 +73,7 @@ actual class NetworkInterface private constructor(
                             AF_INET, AF_INET6 -> {
                                 val list = addresses.getOrPut(addressPtr.pointed.ifa_name!!.toKString()) { ArrayList() }
                                 list += NetworkInterfaceAddress(
-                                    address = NetworkAddress.Immutable(sockaddr = addressPtr.pointed.ifa_addr!!),
+                                    address = NetworkAddressOld.Immutable(sockaddr = addressPtr.pointed.ifa_addr!!),
                                     networkPrefixAddress = calcNetworkPrefix(address = addressPtr.pointed.ifa_netmask!!)
                                 )
                             }

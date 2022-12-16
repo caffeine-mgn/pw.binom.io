@@ -7,7 +7,7 @@ import pw.binom.db.ColumnType
 import pw.binom.db.async.firstOrNull
 import pw.binom.db.async.map
 import pw.binom.io.use
-import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkAddressOld
 import pw.binom.uuid.UUID
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
@@ -20,7 +20,7 @@ class TestConnect : BaseTest() {
     //    @Test
     fun test() = runTest {
         val con = PGConnection.connect(
-            address = NetworkAddress.Immutable(
+            address = NetworkAddressOld.Immutable(
                 host = "localhost",
                 port = 25432,
             ),

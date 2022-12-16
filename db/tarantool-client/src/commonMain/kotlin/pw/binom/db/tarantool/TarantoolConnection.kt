@@ -9,9 +9,9 @@ import pw.binom.db.tarantool.protocol.InternalProtocolUtils
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
 import pw.binom.network.Network
-import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
 

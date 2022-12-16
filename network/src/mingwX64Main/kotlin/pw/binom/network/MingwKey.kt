@@ -8,7 +8,7 @@ class MingwKey(
     val list: HANDLE,
     attachment: Any?,
     override val selector: MingwSelector,
-) : AbstractKey(attachment) {
+) : AbstractNativeKey(attachment) {
     private val epollEvent = nativeHeap.alloc<epoll_event>()
     private var nativeSocket: RawSocket = 0
 
@@ -37,16 +37,16 @@ class MingwKey(
 
     fun epollCommonToNative(mode: Int): Int {
         var events = EPOLLONESHOT
-        if (Selector.EVENT_ERROR in mode) {
+        if (SelectorOld.EVENT_ERROR in mode) {
             events = events or EPOLLHUP or EPOLLERR
         }
-        if (Selector.INPUT_READY in mode) {
+        if (SelectorOld.INPUT_READY in mode) {
             events = events or EPOLLIN or EPOLLHUP or EPOLLERR
         }
-        if (!connected && Selector.EVENT_CONNECTED in mode) {
+        if (!connected && SelectorOld.EVENT_CONNECTED in mode) {
             events = events or EPOLLOUT
         }
-        if (connected && Selector.OUTPUT_READY in mode) {
+        if (connected && SelectorOld.OUTPUT_READY in mode) {
             events = events or EPOLLOUT
         }
 

@@ -4,7 +4,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.IOException
 import pw.binom.io.use
-import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkAddressOld
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -30,7 +30,7 @@ abstract class BaseTest {
 //        TarantoolContainer {
         delay(1.seconds)
         do {
-            val address = NetworkAddress.Immutable(
+            val address = NetworkAddressOld.Immutable(
                 host = "127.0.0.1",
                 port = 7040,
             )

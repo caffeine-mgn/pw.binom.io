@@ -41,7 +41,7 @@ actual class TcpClientSocketChannel actual constructor() : Channel, NetworkChann
         blocking = value
     }
 
-    actual fun connect(address: NetworkAddress) {
+    actual fun connect(address: NetworkAddressOld) {
         val _native = address._native
         require(_native != null)
         get().connect(_native)

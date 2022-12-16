@@ -8,14 +8,14 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import kotlin.collections.set
 
-class MingwSelector : AbstractSelector() {
+class MingwSelector : AbstractNativeSelector() {
     private val native = epoll_create(1000)!!
     internal val idToKey = defaultMutableMap<Int, MingwKey>()
     private val keysLock = SpinLock()
     private val keyForRemove = defaultMutableSet<Int>()
     internal val keys = defaultMutableSet<MingwKey>()
 
-    override fun select(selectedEvents: SelectedEvents, timeout: Long): Int {
+    override fun select(selectedEvents: SelectedEventsOld, timeout: Long): Int {
         keysLock.synchronize {
             if (keyForRemove.isNotEmpty()) {
                 keyForRemove.forEach {
@@ -33,7 +33,7 @@ class MingwSelector : AbstractSelector() {
         selectedEvents.eventCount = eventCount
         selectedEvents.selector = this
         selectedEvents.forEach {
-            (it.key as AbstractKey).internalResetFlags()
+            (it.key as AbstractNativeKey).internalResetFlags()
         }
         return eventCount
     }
@@ -51,7 +51,7 @@ class MingwSelector : AbstractSelector() {
         }
     }
 
-    override fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
+    override fun nativePrepare(mode: Int, connectable: Boolean, attachment: Any?): AbstractNativeKey {
         val key = MingwKey(list = native, attachment = attachment, selector = this)
         keys += key
         addKey(key)
@@ -62,7 +62,7 @@ class MingwSelector : AbstractSelector() {
         return key
     }
 
-    override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
+    override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractNativeKey {
         val key = MingwKey(list = native, attachment = attachment, selector = this)
         if (!connectable) {
             key.connected = true
@@ -77,7 +77,7 @@ class MingwSelector : AbstractSelector() {
         TODO("Not yet implemented")
     }
 
-    override fun getAttachedKeys(): Collection<Selector.Key> = defaultMutableSet(keys)
+    override fun getAttachedKeys(): Collection<SelectorOld.Key> = defaultMutableSet(keys)
 
     override fun close() {
         epoll_close(native)
@@ -87,18 +87,18 @@ class MingwSelector : AbstractSelector() {
 fun epollNativeToCommon(mode: Int): Int {
     var events = 0
     if (EPOLLIN in mode) {
-        events = events or Selector.INPUT_READY
+        events = events or SelectorOld.INPUT_READY
     }
     if (EPOLLOUT in mode) {
-        events = events or Selector.OUTPUT_READY
+        events = events or SelectorOld.OUTPUT_READY
     }
     if (EPOLLHUP in mode) {
-        events = events or Selector.EVENT_ERROR
+        events = events or SelectorOld.EVENT_ERROR
     }
     return events
 }
 
-actual fun createSelector(): Selector = MingwSelector()
+actual fun createSelector(): SelectorOld = MingwSelector()
 
 internal fun modeToString(mode: UInt): String {
     val sb = StringBuilder()

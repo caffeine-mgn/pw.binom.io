@@ -44,6 +44,7 @@ expect class Calendar {
      */
     fun timeZone(timeZoneOffset3: Int): Calendar
     fun toDate(): DateTime
+    companion object
 }
 
 /**

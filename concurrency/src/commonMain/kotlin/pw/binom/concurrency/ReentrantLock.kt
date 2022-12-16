@@ -5,12 +5,9 @@ package pw.binom.concurrency
 import kotlin.jvm.JvmName
 import kotlin.time.Duration
 
+@Suppress("NO_ACTUAL_FOR_EXPECT")
 expect class ReentrantLock : Lock {
     constructor()
-
-    override fun lock()
-    override fun tryLock(): Boolean
-    override fun unlock()
 
     fun newCondition(): Condition
 

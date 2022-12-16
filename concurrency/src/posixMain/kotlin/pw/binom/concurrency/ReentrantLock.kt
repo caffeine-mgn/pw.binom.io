@@ -22,7 +22,7 @@ actual class ReentrantLock : Lock {
     private val native = malloc(sizeOf<pthread_mutex_t>().convert())!!.reinterpret<pthread_mutex_t>()
 
     init {
-        pthread_mutex_init(native, null)
+        internalPthread_mutex_init(native, null)
     }
 
     private val cleaner = createCleaner(native) { native ->
@@ -30,7 +30,7 @@ actual class ReentrantLock : Lock {
         free(native)
     }
 
-    actual override fun tryLock(): Boolean {
+    override fun tryLock(): Boolean {
         val r = pthread_mutex_trylock(native)
         if (r == EBUSY) {
             return false
@@ -41,13 +41,13 @@ actual class ReentrantLock : Lock {
         return true
     }
 
-    actual override fun lock() {
+    override fun lock() {
         if (pthread_mutex_lock(native) != 0) {
             error("Can't lock mutex")
         }
     }
 
-    actual override fun unlock() {
+    override fun unlock() {
         if (pthread_mutex_unlock(native) != 0) {
             error("Can't unlock mutex")
         }
@@ -61,7 +61,7 @@ actual class ReentrantLock : Lock {
             malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>() // malloc(sizeOf<pthread_cond_t>().convert())!!.reinterpret<pthread_cond_t>()
 
         init {
-            if (pthread_cond_init(native, null) != 0) {
+            if (internalPthread_cond_init(native, null) != 0) {
                 free(native)
                 error("Can't init Condition")
             }
@@ -92,7 +92,7 @@ actual class ReentrantLock : Lock {
             return memScoped<Boolean> {
                 val now = alloc<timeval>()
                 val waitUntil = alloc<timespec>()
-                gettimeofday(now.ptr, null)
+                internalGettimeofday(now.ptr, null)
                 waitUntil.set(now, duration)
                 while (true) {
                     val r = pthread_cond_timedwait(native, mutex, waitUntil.ptr)

@@ -1,64 +1,71 @@
 package pw.binom.network
 
-import kotlinx.coroutines.suspendCancellableCoroutine
+import pw.binom.io.socket.*
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resumeWithException
 
 interface NetworkManager : CoroutineContext {
     fun wakeup()
-    fun attach(channel: UdpSocketChannel): UdpConnection
-    fun attach(channel: TcpClientSocketChannel, mode: Int = 0): TcpConnection
-    fun attach(channel: TcpServerSocketChannel): TcpServerConnection
+    fun attach(channel: UdpNetSocket): UdpConnection
+    fun attach(channel: TcpClientSocket, mode: Int = 0): TcpConnection
+    fun attach(channel: TcpNetServerSocket): TcpServerConnection
+
+    fun bindTcp(address: NetworkAddress): TcpServerConnection {
+        val channel = Socket.createTcpServerNetSocket()
+        channel.blocking = false
+        val connection = attach(channel)
+        when (channel.bind(address)) {
+            BindStatus.ADDRESS_ALREADY_IN_USE -> {
+                connection.close()
+                throw BindException()
+            }
+
+            BindStatus.ALREADY_BINDED -> {
+                connection.close()
+                throw IllegalStateException()
+            }
+
+            BindStatus.OK -> {
+                val actualBindAddress = NetworkAddress.create(
+                    host = address.host,
+                    port = connection.port
+                )
+                connection.description = "Server $actualBindAddress"
+                return connection
+            }
+        }
+    }
 }
 
 suspend fun NetworkManager.tcpConnect(address: NetworkAddress): TcpConnection {
-    val channel = TcpClientSocketChannel()
-    val connection = attach(channel = channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
-    try {
-        connection.description = "Client to $address"
-        suspendCancellableCoroutine<Unit> {
-            connection.connect = it
-            it.invokeOnCancellation {
-                connection.cancelSelector()
-                connection.close()
-            }
-            channel.connect(address)
-            wakeup()
-//            it.resumeWith(
-//                runCatching {
-//
-//                }
-//            )
-        }
-    } catch (e: SocketConnectException) {
-        runCatching { connection.asyncClose() }
-        if (e.message != null) {
-            throw e
-        } else {
-            throw SocketConnectException(address.toString(), e.cause)
-        }
+    val channel = Socket.createTcpClientNetSocket()
+    val connectStatus = channel.connect(address)
+    if (connectStatus != ConnectStatus.IN_PROGRESS && connectStatus != ConnectStatus.OK) {
+        channel.close()
+        throw SocketConnectException("Invalid connect status: $connectStatus")
     }
+    channel.blocking = false
+    val connection = attach(channel = channel)
+//    try {
+    connection.description = "Connect to $address"
+    connection.connection()
+//    } catch (e: SocketConnectException) {
+//        runCatching { connection.asyncClose() }
+//        if (e.message != null) {
+//            throw e
+//        } else {
+//            throw SocketConnectException(address.toString(), e.cause)
+//        }
+//    }
     return connection
 }
 
 suspend fun NetworkManager.tcpConnectUnixSocket(fileName: String): TcpConnection {
-    val channel = TcpClientSocketChannel()
-    val connection = attach(channel = channel, mode = Selector.EVENT_CONNECTED or Selector.EVENT_ERROR)
+    val channel = Socket.createTcpClientUnixSocket()
+    channel.connect(fileName)
+    val connection = attach(channel = channel)
     try {
-        connection.description = fileName
-        suspendCancellableCoroutine<Unit> {
-            connection.connect = it
-            it.invokeOnCancellation {
-                connection.cancelSelector()
-                connection.close()
-            }
-            try {
-                channel.connect(fileName)
-                wakeup()
-            } catch (e: Throwable) {
-                it.resumeWithException(e)
-            }
-        }
+        connection.description = "Unix socket \"$fileName\""
+        connection.connection()
     } catch (e: SocketConnectException) {
         runCatching { connection.asyncClose() }
         if (e.message != null) {
@@ -69,28 +76,19 @@ suspend fun NetworkManager.tcpConnectUnixSocket(fileName: String): TcpConnection
     }
     return connection
 }
-
-fun NetworkManager.bindTcp(address: NetworkAddress): TcpServerConnection {
-    val channel = TcpServerSocketChannel()
-    channel.setBlocking(false)
-    channel.bind(address)
-    val connection = attach(channel)
-    connection.description = address.toString()
-    return connection
-}
-
-fun NetworkManager.bindTcpUnixSocket(fileName: String): TcpServerConnection {
-    val channel = TcpServerSocketChannel()
-    channel.setBlocking(false)
-    channel.bind(fileName)
-    val connection = attach(channel)
-    connection.description = fileName
-    return connection
-}
+//    TODO добавить поддержку tcp/unix
+//    fun NetworkManager.bindTcpUnixSocket(fileName: String): TcpServerConnection {
+//        val channel = Socket.createTcpServerUnixSocket()
+//        channel.blocking = false
+//        channel.bind(fileName)
+//        val connection = attach(channel)
+//        connection.description = fileName
+//        return connection
+//    }
 
 fun NetworkManager.bindUdp(address: NetworkAddress): UdpConnection {
-    val channel = UdpSocketChannel()
-    channel.setBlocking(false)
+    val channel = Socket.createUdpNetSocket()
+    channel.blocking = false
     channel.bind(address)
     val connection = attach(channel)
     connection.description = address.toString()

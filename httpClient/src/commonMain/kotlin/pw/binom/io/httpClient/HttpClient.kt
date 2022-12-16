@@ -9,6 +9,7 @@ import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.KeyManager
 import pw.binom.ssl.TrustManager
 import pw.binom.url.URL
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 interface HttpClient : Closeable {
@@ -44,7 +45,8 @@ fun HttpClient.Companion.create(
     trustManager: TrustManager = TrustManager.TRUST_ALL,
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     bufferCapacity: Int = 16,
-    connectionFactory: ConnectionFactory = ConnectionFactory.DEFAULT
+    connectionFactory: ConnectionFactory = ConnectionFactory.DEFAULT,
+    connectTimeout: Duration = Duration.INFINITE,
 ) =
     BaseHttpClient(
         networkDispatcher = networkDispatcher,
@@ -54,4 +56,5 @@ fun HttpClient.Companion.create(
         bufferSize = bufferSize,
         bufferCapacity = bufferCapacity,
         connectionFactory = connectionFactory,
+        connectTimeout = connectTimeout,
     )

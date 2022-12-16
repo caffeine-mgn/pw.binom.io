@@ -10,10 +10,10 @@ import platform.posix.timespec
 import pw.binom.collections.defaultMutableSet
 import pw.binom.io.IOException
 
-class MacosSelector : AbstractSelector() {
+class MacosSelector : AbstractNativeSelector() {
 
     inner class MacosKey(val native: kevent, val kqueueNative: Int, attachment: Any?, socket: NSocket) :
-        AbstractKey(attachment, socket) {
+        AbstractNativeKey(attachment, socket) {
         override fun isSuccessConnected(nativeMode: Int): Boolean =
             EVFILT_WRITE in nativeMode || EV_EOF !in nativeMode
 
@@ -23,13 +23,13 @@ class MacosSelector : AbstractSelector() {
 
         fun epollCommonToNative(mode: Int): Int {
             var events = 0
-            if (!connected && Selector.EVENT_CONNECTED and mode != 0) {
+            if (!connected && SelectorOld.EVENT_CONNECTED and mode != 0) {
                 return EVFILT_WRITE
             }
-            if (connected && Selector.OUTPUT_READY and mode != 0) {
+            if (connected && SelectorOld.OUTPUT_READY and mode != 0) {
                 return EVFILT_WRITE
             }
-            if (Selector.INPUT_READY and mode != 0) {
+            if (SelectorOld.INPUT_READY and mode != 0) {
                 return EVFILT_READ
             }
             return events
@@ -69,13 +69,13 @@ class MacosSelector : AbstractSelector() {
             super.close()
 
             val event = native
-            internal_EV_SET(event.ptr, socket.native, EVFILT_EMPTY, EV_ADD or EV_CLEAR or EV_DISABLE, 0, 0, null)
+            internal_EV_SET(event.ptr, channel.native, EVFILT_EMPTY, EV_ADD or EV_CLEAR or EV_DISABLE, 0, 0, null)
             if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
                 if (errno != ENOENT) {
                     throw IOException("Can't reset kevent filter. errno: $errno")
                 }
             }
-            internal_EV_SET(event.ptr, socket.native, EVFILT_EMPTY, EV_DELETE or EV_CLEAR, 0, 0, null)
+            internal_EV_SET(event.ptr, channel.native, EVFILT_EMPTY, EV_DELETE or EV_CLEAR, 0, 0, null)
             if (kevent(kqueueNative, event.ptr, 1, null, 0, null) == -1) {
                 if (errno != ENOENT) {
                     throw IOException("Can't reset kevent filter. errno: $errno")
@@ -100,7 +100,7 @@ class MacosSelector : AbstractSelector() {
     private val keys = defaultMutableSet<MacosKey>()
     private val nativeSelectedKeys2 = object : Iterator<NativeKeyEvent> {
         private val event = object : NativeKeyEvent {
-            override lateinit var key: AbstractKey
+            override lateinit var key: AbstractNativeKey
             override var mode: Int = 0
         }
         private var currentNum = 0
@@ -131,22 +131,22 @@ class MacosSelector : AbstractSelector() {
                 if (EV_EOF in item.flags && !key.closed) {
                     key.resetMode(0)
                     event.key = key
-                    event.mode = Selector.EVENT_ERROR
+                    event.mode = SelectorOld.EVENT_ERROR
                     return event
                 }
                 if (EVFILT_WRITE == item.filter.toInt()) {
                     key.resetMode(0)
                     key.connected = true
                     event.key = key
-                    event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                    event.mode = SelectorOld.EVENT_CONNECTED or SelectorOld.OUTPUT_READY
                     return event
                 }
                 throw IllegalStateException("Unknown connection state: ${flagsToString(item.filter.toInt())}")
             }
             try {
                 val code = when (item.filter.toInt()) {
-                    EVFILT_READ -> Selector.INPUT_READY
-                    EVFILT_WRITE -> Selector.OUTPUT_READY
+                    EVFILT_READ -> SelectorOld.INPUT_READY
+                    EVFILT_WRITE -> SelectorOld.OUTPUT_READY
                     else -> {
                         0
                     }
@@ -159,7 +159,7 @@ class MacosSelector : AbstractSelector() {
                 if (EV_EOF in item.flags && !key.closed) {
                     key.resetMode(0)
                     event.key = key
-                    event.mode = Selector.EVENT_ERROR
+                    event.mode = SelectorOld.EVENT_ERROR
                     return event
 //                    func(key, Selector.EVENT_ERROR)
                 }
@@ -169,7 +169,7 @@ class MacosSelector : AbstractSelector() {
     override val nativeSelectedKeys: Iterator<NativeKeyEvent>
         get() = nativeSelectedKeys2
 
-    override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractKey {
+    override fun nativeAttach(socket: NSocket, mode: Int, connectable: Boolean, attachment: Any?): AbstractNativeKey {
         val event = nativeHeap.alloc<kevent>()
         val key = MacosKey(event, kqueueNative, attachment, socket)
         if (!connectable) {
@@ -195,7 +195,7 @@ class MacosSelector : AbstractSelector() {
         return key
     }
 
-    override fun nativeSelect(timeout: Long, func: (AbstractKey, mode: Int) -> Unit): Int {
+    override fun nativeSelect(timeout: Long, func: (AbstractNativeKey, mode: Int) -> Unit): Int {
         val eventCount = memScoped {
             val time = if (timeout < 0) {
                 null
@@ -223,13 +223,13 @@ class MacosSelector : AbstractSelector() {
             if (!key.connected) {
                 if (EV_EOF in item.flags && !key.closed) {
                     key.resetMode(0)
-                    func(key, Selector.EVENT_ERROR)
+                    func(key, SelectorOld.EVENT_ERROR)
                     continue
                 }
                 if (EVFILT_WRITE == item.filter.toInt()) {
                     key.resetMode(0)
                     key.connected = true
-                    func(key, Selector.EVENT_CONNECTED or Selector.OUTPUT_READY)
+                    func(key, SelectorOld.EVENT_CONNECTED or SelectorOld.OUTPUT_READY)
                     continue
                 }
                 throw IllegalStateException("Unknown connection state")
@@ -237,8 +237,8 @@ class MacosSelector : AbstractSelector() {
 
             try {
                 val code = when (item.filter.toInt()) {
-                    EVFILT_READ -> Selector.INPUT_READY
-                    EVFILT_WRITE -> Selector.OUTPUT_READY
+                    EVFILT_READ -> SelectorOld.INPUT_READY
+                    EVFILT_WRITE -> SelectorOld.OUTPUT_READY
                     else -> {
                         0
                     }
@@ -247,7 +247,7 @@ class MacosSelector : AbstractSelector() {
             } finally {
                 if (EV_EOF in item.flags && !key.closed) {
                     key.resetMode(0)
-                    func(key, Selector.EVENT_ERROR)
+                    func(key, SelectorOld.EVENT_ERROR)
                 }
             }
         }
@@ -268,7 +268,7 @@ class MacosSelector : AbstractSelector() {
         }
     }
 
-    override fun getAttachedKeys(): Collection<Selector.Key> = defaultMutableSet(keys)
+    override fun getAttachedKeys(): Collection<SelectorOld.Key> = defaultMutableSet(keys)
 
     override fun close() {
         platform.posix.close(kqueueNative)
@@ -279,18 +279,18 @@ class MacosSelector : AbstractSelector() {
 private fun epollNativeToCommon(mode: Int): Int {
     var events = EV_ONESHOT
     if (EVFILT_READ in mode) {
-        events = events or Selector.INPUT_READY
+        events = events or SelectorOld.INPUT_READY
     }
     if (EVFILT_WRITE in mode) {
-        events = events or Selector.OUTPUT_READY
+        events = events or SelectorOld.OUTPUT_READY
     }
     if (EV_EOF in mode) {
-        events = events or Selector.EVENT_ERROR
+        events = events or SelectorOld.EVENT_ERROR
     }
     return events
 }
 
-actual fun createSelector(): Selector = MacosSelector()
+actual fun createSelector(): SelectorOld = MacosSelector()
 
 fun modeToString1(mode: Int): String {
     val sb = StringBuilder()

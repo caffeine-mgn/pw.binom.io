@@ -2,6 +2,7 @@ package pw.binom.io.httpClient
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.collections.defaultMutableList
@@ -11,9 +12,11 @@ import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.io.socket.ssl.asyncChannel
+import pw.binom.network.ConnectTimeoutException
 import pw.binom.network.NetworkManager
 import pw.binom.ssl.*
 import pw.binom.url.URL
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 class BaseHttpClient(
@@ -25,7 +28,8 @@ class BaseHttpClient(
     val sslBufferSize: Int = DEFAULT_BUFFER_SIZE,
     bufferCapacity: Int = 16,
     websocketMessagePoolSize: Int = 16,
-    var connectionFactory: ConnectionFactory = ConnectionFactory.DEFAULT
+    var connectionFactory: ConnectionFactory = ConnectionFactory.DEFAULT,
+    var connectTimeout: Duration,
 ) : HttpClient {
     init {
         HttpMetrics.baseHttpClientCountMetric.inc()
@@ -67,13 +71,25 @@ class BaseHttpClient(
             }
         }
         val port = uri.getPort()
-        var channel = connectionFactory.connect(
-            networkManager = networkDispatcher,
-            schema = uri.schema,
-            host = uri.host,
-            port = port,
-        )
+        var channel = if (connectTimeout.isInfinite()) {
+            connectionFactory.connect(
+                networkManager = networkDispatcher,
+                schema = uri.schema,
+                host = uri.host,
+                port = port,
+            )
+        } else {
+            withTimeoutOrNull(connectTimeout) {
+                connectionFactory.connect(
+                    networkManager = networkDispatcher,
+                    schema = uri.schema,
+                    host = uri.host,
+                    port = port,
+                )
+            }
+        }
 
+        channel ?: throw ConnectTimeoutException()
         if (uri.schema == "https" || uri.schema == "wss") {
             val sslSession = sslContext.clientSession(host = uri.host, port = port)
             channel = sslSession.asyncChannel(channel, closeParent = true, bufferSize = sslBufferSize)

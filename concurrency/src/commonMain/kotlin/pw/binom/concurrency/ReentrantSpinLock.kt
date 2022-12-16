@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
 @OptIn(ExperimentalTime::class)
-class ReentrantSpinLock : Lock {
+class ReentrantSpinLock : LockWithTimeout {
     private val threadId = AtomicLong(0)
     private val count = AtomicInt(0)
 
@@ -38,7 +38,9 @@ class ReentrantSpinLock : Lock {
 
     private fun internalTryLock() = threadId.compareAndSet(0, Worker.current?.id ?: 0)
 
-    fun lock(duration: Duration?): Boolean {
+    override fun lock(timeout: Duration): Boolean = internalLock(timeout)
+
+    private fun internalLock(duration: Duration?): Boolean {
         if (threadId.getValue() == (Worker.current?.id ?: 0)) {
             count.increment()
             return true
@@ -58,15 +60,15 @@ class ReentrantSpinLock : Lock {
 
     override fun unlock() {
         if (count.getValue() <= 0) {
-            throw IllegalStateException("ReentrantSpinLock is not locked")
+            error("ReentrantSpinLock is not locked")
         }
         if (threadId.getValue() != (Worker.current?.id ?: 0)) {
-            throw IllegalStateException("Only locking thread can call unlock")
+            error("Only locking thread can call unlock")
         }
         count.decrement()
         if (count.getValue() == 0) {
             if (!threadId.compareAndSet(Worker.current?.id ?: 0, 0)) {
-                throw IllegalStateException("Lock already free")
+                error("Lock already free")
             }
         }
     }

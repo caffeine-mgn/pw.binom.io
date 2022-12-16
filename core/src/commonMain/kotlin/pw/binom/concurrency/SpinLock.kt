@@ -1,38 +1,26 @@
 package pw.binom.concurrency
 
 import pw.binom.atomic.AtomicBoolean
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
 @JvmInline
 @OptIn(ExperimentalTime::class)
-value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : Lock {
+value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : LockWithTimeout {
     override fun tryLock(): Boolean = lock.compareAndSet(expected = false, new = true)
 
     val isLocked
         get() = lock.getValue()
 
-    /**
-     * Trying lock. If [duration] is not null will wait only [duration] time. And if [duration]==null will
-     * wait until lock is free infinity time
-     */
-    fun lock(duration: Duration?): Boolean {
-        val now = if (duration != null) TimeSource.Monotonic.markNow() else null
-        val bb = TimeSource.Monotonic.markNow()
+    override fun lock(timeout: Duration): Boolean {
+        val now = TimeSource.Monotonic.markNow()
         while (true) {
-            if (bb.elapsedNow() > 10.seconds) {
-                println("SpinLock->Lock timeout!!!\n${Throwable().stackTraceToString()}")
-            }
             if (tryLock()) {
                 break
             }
-            if (now != null && now.elapsedNow() > duration!!) {
+            if (now.elapsedNow() > timeout) {
                 return false
             }
             sleep(1)
@@ -41,25 +29,15 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
     }
 
     override fun lock() {
-        lock(null)
+        while (true) {
+            if (tryLock()) {
+                break
+            }
+            sleep(1)
+        }
     }
 
     override fun unlock() {
         lock.setValue(false)
-    }
-}
-
-@OptIn(ExperimentalContracts::class)
-inline fun <T> SpinLock.synchronize(duration: Duration, func: () -> T): T {
-    contract {
-        callsInPlace(func, InvocationKind.AT_MOST_ONCE)
-    }
-    try {
-        if (!lock(duration)) {
-            throw LockTimeout("Can't lock SpinLock with duration $duration")
-        }
-        return func()
-    } finally {
-        unlock()
     }
 }

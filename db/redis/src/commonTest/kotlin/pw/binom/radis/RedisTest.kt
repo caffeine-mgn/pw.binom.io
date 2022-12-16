@@ -3,7 +3,7 @@ package pw.binom.radis
 import kotlinx.coroutines.test.runTest
 import pw.binom.db.radis.RadisConnection
 import pw.binom.io.use
-import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkAddressOld
 import pw.binom.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
@@ -11,7 +11,7 @@ import kotlin.test.Test
 class RedisTest : BaseRedisTest() {
     @Test
     fun ff() = runTest {
-        val address = NetworkAddress.Immutable(host = "127.0.0.1", port = 7133)
+        val address = NetworkAddressOld.Immutable(host = "127.0.0.1", port = 7133)
         RadisConnection.connect(address).use { con ->
             con.ping()
 //            println("->${con.info()}")

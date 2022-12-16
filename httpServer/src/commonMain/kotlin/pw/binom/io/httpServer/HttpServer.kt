@@ -1,22 +1,26 @@
 package pw.binom.io.httpServer
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.System
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableSet
 import pw.binom.coroutines.onCancel
-import pw.binom.date.DateTime
 import pw.binom.io.AsyncCloseable
+import pw.binom.io.ByteBufferFactory
 import pw.binom.io.ClosedException
 import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
 import pw.binom.io.http.ReusableAsyncChunkedOutput
 import pw.binom.io.http.websocket.MessagePool
 import pw.binom.io.http.websocket.WebSocketConnectionPool
-import pw.binom.network.*
-import pw.binom.pool.FixedSizePool
+import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.Socket
+import pw.binom.network.Network
+import pw.binom.network.NetworkManager
+import pw.binom.network.SocketClosedException
+import pw.binom.network.TcpServerConnection
 import pw.binom.pool.GenericObjectPool
 import pw.binom.thread.DefaultUncaughtExceptionHandler
 import pw.binom.thread.Thread
@@ -51,12 +55,11 @@ class HttpServer(
         factory = ReusableAsyncChunkedOutput.Factory(autoFlushBuffer = chanckedAutoFlushBufferSize),
         initCapacity = 0,
     )
-    internal val bufferWriterPool by lazy {
-        FixedSizePool(
-            outputBufferPoolSize,
-            ReusableAsyncBufferedOutputAppendable.Manager()
-        )
-    }
+    internal val compressBufferPool = GenericObjectPool(initCapacity = 0, factory = ByteBufferFactory(zlibBufferSize))
+    internal val bufferWriterPool = GenericObjectPool(
+        factory = ReusableAsyncBufferedOutputAppendable.Manager(),
+        initCapacity = 0,
+    )
     val idleConnectionSize: Int
         get() = idleConnections.size
     private var closed = false
@@ -66,49 +69,52 @@ class HttpServer(
         }
     }
 
-    private var lastIdleCheckTime = DateTime.nowTime
     private val binds = ArrayList<TcpServerConnection>()
     private val idleConnections = defaultMutableSet<ServerAsyncAsciiChannel>()
+//    private var idleExchange = BatchExchange<ServerAsyncAsciiChannel?>()
+
+    private val idleChannel = Channel<ServerAsyncAsciiChannel>(Channel.RENDEZVOUS)
 
     internal fun browConnection(channel: ServerAsyncAsciiChannel) {
         idleConnections -= channel
         HttpServerMetrics.idleHttpServerConnection.dec()
     }
 
-    suspend fun forceIdleCheck(): Int {
-        var count = 0
-        val now = DateTime.nowTime
-        lastIdleCheckTime = now
+//    suspend fun forceIdleCheck(): Int {
+//        var count = 0
+//        val now = DateTime.nowTime
+//        lastIdleCheckTime = now
+//
+//        val it = idleConnections.iterator()
+//        while (it.hasNext()) {
+//            val e = it.next()
+//            if (now - e.lastActive > maxIdleTime.inWholeMilliseconds) {
+//                count++
+//                it.remove()
+//                runCatching { e.asyncClose() }
+//                HttpServerMetrics.idleHttpServerConnection.dec()
+//            }
+//        }
+//        if (count > 0) {
+//            System.gc()
+//        }
+//        return count
+//    }
 
-        val it = idleConnections.iterator()
-        while (it.hasNext()) {
-            val e = it.next()
-            if (now - e.lastActive > maxIdleTime.inWholeMilliseconds) {
-                count++
-                it.remove()
-                runCatching { e.asyncClose() }
-                HttpServerMetrics.idleHttpServerConnection.dec()
-            }
-        }
-        if (count > 0) {
-            System.gc()
-        }
-        return count
-    }
+//    private suspend fun idleCheck() {
+//        val now = DateTime.nowTime
+//        if (now - lastIdleCheckTime < idleCheckInterval.inWholeMilliseconds) {
+//            return
+//        }
+//        forceIdleCheck()
+//    }
 
-    private suspend fun idleCheck() {
-        val now = DateTime.nowTime
-        if (now - lastIdleCheckTime < idleCheckInterval.inWholeMilliseconds) {
-            return
-        }
-        forceIdleCheck()
-    }
-
-    internal fun clientReProcessing(channel: ServerAsyncAsciiChannel) {
+    internal suspend fun clientReProcessing(channel: ServerAsyncAsciiChannel) {
         channel.activeUpdate()
         HttpServerMetrics.idleHttpServerConnection.inc()
         idleConnections += channel
-        clientProcessing(channel = channel, isNewConnect = false)
+        idleChannel.send(channel)
+//        clientProcessing(channel = channel, isNewConnect = false)
     }
 
     internal fun clientProcessing(channel: ServerAsyncAsciiChannel, isNewConnect: Boolean) {
@@ -119,9 +125,20 @@ class HttpServer(
                     channel = channel,
                     server = this@HttpServer,
                     isNewConnect = isNewConnect,
+                    readStartTimeout = maxIdleTime
                 )
+
+//                req = HttpRequest2Impl.read(
+//                    channel = channel,
+//                    server = this@HttpServer,
+//                    isNewConnect = isNewConnect,
+//                )
+                if (req == null) {
+                    runCatching { channel.asyncClose() }
+                    return@launch
+                }
                 handler.request(req)
-                idleCheck()
+//                idleCheck()
             } catch (e: SocketClosedException) {
                 runCatching { channel.asyncClose() }
             } catch (e: CancellationException) {
@@ -138,10 +155,25 @@ class HttpServer(
         }
     }
 
+    private val idleProcessing = GlobalScope.launch(manager) {
+        while (isActive && !closed) {
+            val networkChannel = try {
+                idleChannel.receive()
+            } catch (e: CancellationException) {
+                break
+            }
+            try {
+                clientProcessing(channel = networkChannel, isNewConnect = false)
+            } catch (e: Throwable) {
+                runCatching { networkChannel.asyncClose() }
+            }
+        }
+    }
+
     fun listenHttp(address: NetworkAddress, dispatcher: NetworkManager = Dispatchers.Network): Job {
-        val serverChannel = TcpServerSocketChannel()
+        val serverChannel = Socket.createTcpServerNetSocket()
         serverChannel.bind(address)
-        serverChannel.setBlocking(false)
+        serverChannel.blocking = false
         val server = dispatcher.attach(serverChannel)
         server.description = address.toString()
         binds += server
@@ -153,11 +185,13 @@ class HttpServer(
                     while (!closed.getValue()) {
                         var channel: ServerAsyncAsciiChannel? = null
                         try {
-                            idleCheck()
+//                            idleCheck()
                             val client = try {
                                 val client = server.accept(null)
                                 client
                             } catch (e: ClosedException) {
+                                null
+                            } catch (e: SocketClosedException) {
                                 null
                             } ?: break
                             channel = ServerAsyncAsciiChannel(channel = client, pool = textBufferPool)
@@ -182,6 +216,7 @@ class HttpServer(
     override suspend fun asyncClose() {
         checkClosed()
         closed = true
+        idleProcessing.cancelAndJoin()
         textBufferPool.close()
         httpRequest2Impl.close()
         httpResponse2Impl.close()

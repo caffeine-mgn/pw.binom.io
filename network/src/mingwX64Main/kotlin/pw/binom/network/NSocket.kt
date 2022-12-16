@@ -30,7 +30,7 @@ private fun setBlocking(native: SOCKET, value: Boolean): Boolean =
         true
     }
 
-private fun bind(native: SOCKET, address: NetworkAddress, family: Int) {
+private fun bind(native: SOCKET, address: NetworkAddressOld, family: Int) {
     memScoped {
         val bindResult = if (family == AF_INET6) {
             address.isAddrV6 { data ->
@@ -41,7 +41,7 @@ private fun bind(native: SOCKET, address: NetworkAddress, family: Int) {
                 )
             }
         } else {
-            if (address.type != NetworkAddress.Type.IPV4) {
+            if (address.type != NetworkAddressOld.Type.IPV4) {
                 throw IllegalArgumentException("Can't bind ipv4 to ipv6 address")
             }
             address.data.usePinned { data ->
@@ -107,29 +107,29 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
     private var closed = false
 
     actual companion object {
-        actual fun serverTcp(address: NetworkAddress): NSocket {
+        actual fun serverTcp(address: NetworkAddressOld): NSocket {
             init_sockets()
             val domain = when (address.type) {
-                NetworkAddress.Type.IPV4 -> AF_INET
-                NetworkAddress.Type.IPV6 -> AF_INET6
+                NetworkAddressOld.Type.IPV4 -> AF_INET
+                NetworkAddressOld.Type.IPV6 -> AF_INET6
             }
             val native = socket(domain, SOCK_STREAM, 0)
             if (native < 0uL) {
                 throw RuntimeException("Tcp Socket Creation")
             }
             bind(native, address, family = domain)
-            if (address.type == NetworkAddress.Type.IPV6) {
+            if (address.type == NetworkAddressOld.Type.IPV6) {
                 allowIpv4(native)
             }
             return NSocket(native, family = domain)
         }
 
-        actual fun connectTcp(address: NetworkAddress, blocking: Boolean): NSocket {
+        actual fun connectTcp(address: NetworkAddressOld, blocking: Boolean): NSocket {
             return memScoped {
                 init_sockets()
                 val domain = when (address.type) {
-                    NetworkAddress.Type.IPV4 -> AF_INET
-                    NetworkAddress.Type.IPV6 -> AF_INET6
+                    NetworkAddressOld.Type.IPV4 -> AF_INET
+                    NetworkAddressOld.Type.IPV6 -> AF_INET6
                 }
                 val native = socket(domain, SOCK_STREAM, 0)
                 if (native < 0uL) {
@@ -197,7 +197,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
             }
         }
 
-    actual fun accept(address: NetworkAddress.Mutable?): NSocket? {
+    actual fun accept(address: NetworkAddressOld.Mutable?): NSocket? {
         if (closed) {
             return null
         }
@@ -286,7 +286,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         }
     }
 
-    actual fun connect(address: NetworkAddress) {
+    actual fun connect(address: NetworkAddressOld) {
         memScoped {
             address.data.usePinned { data ->
                 val con = platform.windows.connect(
@@ -309,11 +309,11 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
         }
     }
 
-    actual fun bind(address: NetworkAddress) {
+    actual fun bind(address: NetworkAddressOld) {
         bind(native, address, family)
     }
 
-    actual fun send(data: ByteBuffer, address: NetworkAddress): Int {
+    actual fun send(data: ByteBuffer, address: NetworkAddressOld): Int {
         if (!data.isReferenceAccessAvailable(data.position)) {
             return 0
         }
@@ -360,7 +360,7 @@ actual class NSocket(val native: SOCKET, val family: Int) : Closeable {
 
     actual fun recv(
         data: ByteBuffer,
-        address: NetworkAddress.Mutable?
+        address: NetworkAddressOld.Mutable?
     ): Int {
         val gotBytes = if (address == null) {
             val rr = data.ref { dataPtr, remaining ->

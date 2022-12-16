@@ -11,7 +11,7 @@ class NetworkAddressTest {
 
     @Test
     fun dataTest() {
-        val addr = NetworkAddress.Immutable("127.0.0.1", 123)
+        val addr = NetworkAddressOld.Immutable("127.0.0.1", 123)
         assertEquals("127.0.0.1", addr.host)
         assertEquals(123, addr.port)
         assertTrue(addr.equals(addr.toMutable()))
@@ -22,7 +22,7 @@ class NetworkAddressTest {
         assertEquals("127.0.0.1", addr.toMutable().toImmutable().host)
         assertEquals(123, addr.toMutable().toImmutable().port)
 
-        val addr2 = NetworkAddress.Mutable()
+        val addr2 = NetworkAddressOld.Mutable()
         addr2.reset("127.0.0.1", port = 123)
         assertEquals("127.0.0.1", addr2.host)
         assertEquals(123, addr2.port)
@@ -30,7 +30,7 @@ class NetworkAddressTest {
 
     @Test
     fun hashCodeEqualsTest() {
-        val v = NetworkAddress.Mutable().also {
+        val v = NetworkAddressOld.Mutable().also {
             it.reset(host = "127.0.0.1", port = 123)
         }
         assertTrue(v.hashCode() != 0, "#1")
@@ -40,13 +40,13 @@ class NetworkAddressTest {
     @Test
     fun unknownHost() {
         try {
-            NetworkAddress.Immutable(Random.nextUuid().toString(), 9999)
+            NetworkAddressOld.Immutable(Random.nextUuid().toString(), 9999)
             fail()
         } catch (e: UnknownHostException) {
             // NOP
         }
         try {
-            NetworkAddress.Mutable().reset(Random.nextUuid().toString(), 9999)
+            NetworkAddressOld.Mutable().reset(Random.nextUuid().toString(), 9999)
             fail()
         } catch (e: UnknownHostException) {
             // NOP
@@ -55,7 +55,7 @@ class NetworkAddressTest {
 
     @Test
     fun knownHost() {
-        NetworkAddress.Immutable("google.com", 9999)
-        NetworkAddress.Mutable().reset("google.com", 9999)
+        NetworkAddressOld.Immutable("google.com", 9999)
+        NetworkAddressOld.Mutable().reset("google.com", 9999)
     }
 }

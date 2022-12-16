@@ -1,7 +1,7 @@
 package pw.binom.db.tarantool
 
 import pw.binom.db.tarantool.protocol.QueryIterator
-import pw.binom.nextUuid
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

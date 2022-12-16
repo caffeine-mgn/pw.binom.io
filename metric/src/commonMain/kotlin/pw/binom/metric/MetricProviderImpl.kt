@@ -8,22 +8,42 @@ class MetricProviderImpl : MetricProvider, ReadOnlyProperty<Any?, List<MetricUni
     override val metrics: List<MetricUnit>
         get() = metricUnits
 
-    fun counter(
+    fun counterDouble(
         name: String,
         description: String? = null,
         fields: Map<String, String> = emptyMap(),
-    ): MutableCounter {
-        val unit = MutableCounter(name = name, description = description, fields = fields)
+    ): MutableDoubleCounter {
+        val unit = MutableDoubleCounter(name = name, description = description, fields = fields)
         metricUnits += unit
         return unit
     }
 
-    fun gauge(
+    fun counterLong(
         name: String,
         description: String? = null,
         fields: Map<String, String> = emptyMap(),
-    ): MutableGauge {
-        val unit = MutableGauge(name = name, description = description, fields = fields)
+    ): MutableLongCounter {
+        val unit = MutableLongCounter(name = name, description = description, fields = fields)
+        metricUnits += unit
+        return unit
+    }
+
+    fun gaugeDouble(
+        name: String,
+        description: String? = null,
+        fields: Map<String, String> = emptyMap(),
+    ): MutableDoubleGauge {
+        val unit = MutableDoubleGauge(name = name, description = description, fields = fields)
+        metricUnits += unit
+        return unit
+    }
+
+    fun gaugeLong(
+        name: String,
+        description: String? = null,
+        fields: Map<String, String> = emptyMap(),
+    ): MutableLongGauge {
+        val unit = MutableLongGauge(name = name, description = description, fields = fields)
         metricUnits += unit
         return unit
     }

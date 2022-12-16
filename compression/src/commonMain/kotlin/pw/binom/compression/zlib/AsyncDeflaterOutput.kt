@@ -4,18 +4,58 @@ import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.StreamClosedException
+import pw.binom.pool.ObjectPool
 
-open class AsyncDeflaterOutput(
+open class AsyncDeflaterOutput protected constructor(
     val stream: AsyncOutput,
     level: Int = 6,
-    bufferSize: Int = 512,
+    val buffer: ByteBuffer,
     wrap: Boolean = false,
     syncFlush: Boolean = true,
+    private val pool: ObjectPool<ByteBuffer>?,
+    private var closeBuffer: Boolean,
     val closeStream: Boolean = false
 ) : AsyncOutput {
 
+    constructor(
+        stream: AsyncOutput,
+        level: Int = 6,
+        bufferSize: Int = 512,
+        wrap: Boolean = false,
+        syncFlush: Boolean = true,
+        closeStream: Boolean = false
+    ) : this(
+        stream = stream,
+        level = level,
+        buffer = ByteBuffer.alloc(bufferSize),
+        wrap = wrap,
+        syncFlush = syncFlush,
+        pool = null,
+        closeBuffer = true,
+        closeStream = closeStream,
+    )
+
+    constructor(
+        stream: AsyncOutput,
+        level: Int = 6,
+        bufferPool: ObjectPool<ByteBuffer>,
+        wrap: Boolean = false,
+        syncFlush: Boolean = true,
+        closeStream: Boolean = false
+    ) : this(
+        stream = stream,
+        level = level,
+        buffer = bufferPool.borrow(),
+        wrap = wrap,
+        syncFlush = syncFlush,
+        pool = bufferPool,
+        closeBuffer = false,
+        closeStream = closeStream,
+    )
+
     private val deflater = Deflater(level, wrap, syncFlush)
-    private val buffer = ByteBuffer.alloc(bufferSize)
+
+    //    private val buffer = ByteBuffer.alloc(bufferSize)
     protected val buf
         get() = buffer
 
@@ -105,7 +145,12 @@ open class AsyncDeflaterOutput(
         closed = true
         try {
             busy = true
-            Closeable.close(deflater, buffer)
+            if (closeBuffer) {
+                buffer.close()
+            } else {
+                pool?.recycle(buffer)
+            }
+            Closeable.close(deflater)
             if (closeStream) {
                 stream.asyncClose()
             }

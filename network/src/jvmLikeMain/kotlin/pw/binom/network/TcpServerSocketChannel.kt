@@ -28,7 +28,7 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
         return native
     }
 
-    actual fun accept(address: NetworkAddress.Mutable?): TcpClientSocketChannel? {
+    actual fun accept(address: NetworkAddressOld.Mutable?): TcpClientSocketChannel? {
         val s = get().accept()
         if (s != null && address != null) {
             address._native = s.remoteAddress as InetSocketAddress
@@ -37,7 +37,7 @@ actual class TcpServerSocketChannel : Closeable, NetworkChannel {
     }
 
     internal var bindPort: Int? = null
-    actual fun bind(address: NetworkAddress) {
+    actual fun bind(address: NetworkAddressOld) {
         try {
             val _native = address._native
             require(_native != null)

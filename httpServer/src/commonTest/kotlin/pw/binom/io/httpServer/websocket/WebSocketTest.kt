@@ -11,13 +11,13 @@ import pw.binom.io.httpClient.create
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpServer
 import pw.binom.io.readText
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
 import pw.binom.io.wrap
-import pw.binom.net.URL
-import pw.binom.net.toURL
-import pw.binom.network.NetworkAddress
 import pw.binom.network.TcpServerConnection
-import pw.binom.nextUuid
+import pw.binom.url.URL
+import pw.binom.url.toURL
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,7 +35,7 @@ class WebSocketTest {
     }
 
     @Test
-    fun test() = runTest {
+    fun test() = runTest(dispatchTimeoutMs = 10_000) {
         val message = Random.nextUuid().toString()
         val port = TcpServerConnection.randomPort()
         var ok = false
@@ -49,7 +49,7 @@ class WebSocketTest {
             ok2 = true
         }
         HttpServer(handler = handlerWrapper).use { httpServer ->
-            httpServer.listenHttp(address = NetworkAddress.Immutable(port = port))
+            httpServer.listenHttp(address = NetworkAddress.create(host = "127.0.0.1", port = port))
             HttpClient.create().use { client ->
                 connectAndSendText(
                     url = "ws://127.0.0.1:$port/".toURL(),

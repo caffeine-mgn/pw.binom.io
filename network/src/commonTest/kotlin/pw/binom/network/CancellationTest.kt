@@ -3,9 +3,12 @@ package pw.binom.network
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.ByteBuffer
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
+import pw.binom.thread.Thread
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
@@ -13,6 +16,12 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CancellationTest {
+
+    @Test
+    @Ignore
+    fun sleep() {
+        Thread.sleep(10.minutes)
+    }
 
     @Test
     fun cancelNetworkManager() = runTest {
@@ -37,7 +46,7 @@ class CancellationTest {
 
             var firstReadCanceled = false
             val server =
-                Dispatchers.Network.bindTcp(NetworkAddress.Immutable(host = "127.0.0.1", port = 0))
+                Dispatchers.Network.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = 0))
             println("Server start on port ${server.port}")
             val job = launch {
                 println("Try accept")
@@ -59,28 +68,20 @@ class CancellationTest {
     }
 
     @Test
-    fun cancellationRead() = runTest(dispatchTimeoutMs = 5_000) {
+    fun cancellationRead() = runTest(dispatchTimeoutMs = 10_000) {
         val nd = NetworkCoroutineDispatcherImpl()
         withContext(nd) {
             var firstReadCanceled = false
-            val addr = NetworkAddress.Immutable(host = "127.0.0.1", port = TcpServerConnection.randomPort())
-            val server = nd.bindTcp(addr)
+//            val server = nd.bindTcp(NetworkAddress.create("0.0.0.0", 0))
             var serverShouldSendResponse = false
-            launch {
-                try {
-                    val c2 = server.accept()
-                    while (!serverShouldSendResponse) {
-                        delay(100)
-                    }
-                    ByteBuffer.alloc(10).use { buf ->
-                        c2.write(buf)
-                    }
-                } finally {
-                    server.close()
-                }
-            }
+//            launch(nd) {
+//                println("Wating client...")
+//                server.accept()
+//                println("Client connected to server!!!")
+//            }
+            delay(1000L)
             println("Try connect")
-            val con = nd.tcpConnect(addr)
+            val con = nd.tcpConnect(HTTP_SERVER_ADDRESS)
             println("Connected!")
             val readJob = launch(nd) {
                 ByteBuffer.alloc(10).use { buf ->
@@ -90,22 +91,18 @@ class CancellationTest {
                     } catch (e: CancellationException) {
                         firstReadCanceled = true
                     } catch (e: Throwable) {
-                        e.printStackTrace()
-                        throw e
+                        println("Exception happened: $e")
+//                        throw e
                     } finally {
                         println("read try is finished")
                     }
                 }
             }
+            println("wait one second")
             delay(1000L)
+            println("Try cancel read")
             readJob.cancelAndJoin()
             serverShouldSendResponse = true
-            val readJob2 = launch(nd) {
-                ByteBuffer.alloc(10).use { buf ->
-                    con.read(buf)
-                }
-            }
-            readJob2.join()
             assertTrue(firstReadCanceled, "firstReadCanceled fails")
         }
     }

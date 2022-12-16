@@ -2,24 +2,85 @@ package pw.binom.io
 
 import kotlinx.cinterop.*
 
+sealed interface MemAccess : Closeable {
+    val capacity: Int
+
+    fun <T> access(func: (CPointer<ByteVar>) -> T): T
+    fun <T> access2(func: (COpaquePointer) -> T): T
+
+    class NativeMemory(val ptr: COpaquePointer, override val capacity: Int) : MemAccess {
+        private var closed = false
+
+        constructor(size: Int) : this(
+            ptr = Memory.alloc(size.convert()),
+            capacity = size,
+        )
+
+        override fun <T> access(func: (CPointer<ByteVar>) -> T): T {
+            if (closed) {
+                throw ClosedException()
+            }
+            return func(ptr.reinterpret())
+        }
+
+        override fun <T> access2(func: (COpaquePointer) -> T): T {
+            if (closed) {
+                throw ClosedException()
+            }
+            return func(ptr)
+        }
+
+        override fun close() {
+            if (closed) {
+                return
+            }
+            closed = true
+            Memory.free(ptr)
+        }
+    }
+
+    class HeapMemory(val ptr: CArrayPointer<ByteVar>, override val capacity: Int) : MemAccess {
+        constructor(size: Int) : this(ptr = nativeHeap.allocArray<ByteVar>(size), capacity = size)
+
+        override fun <T> access(func: (CPointer<ByteVar>) -> T): T = func(ptr)
+        override fun <T> access2(func: (COpaquePointer) -> T): T = func(ptr)
+
+        override fun close() {
+            nativeHeap.free(ptr)
+        }
+    }
+
+    class ArrayMemory(array: ByteArray) : MemAccess {
+        override val capacity: Int = array.size
+        private val pin = array.pin()
+        override fun <T> access(func: (CPointer<ByteVar>) -> T): T = func(pin.addressOf(0))
+        override fun <T> access2(func: (COpaquePointer) -> T): T = func(pin.addressOf(0))
+
+        override fun close() {
+            pin.unpin()
+        }
+    }
+}
+
 actual open class ByteBuffer(
-    val data: ByteArray,
+    val data: MemAccess,
     val onClose: ((ByteBuffer) -> Unit)?
-) :
-    Channel,
-    Buffer,
-    ByteBufferProvider {
+) : Channel, Buffer, ByteBufferProvider {
     actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(ByteArray(size), null)
-        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer = ByteBuffer(ByteArray(size), onClose)
-        actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(array, null)
+        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(MemAccess.NativeMemory(size), null)
+        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer =
+            ByteBuffer(MemAccess.NativeMemory(size), onClose)
+
+        actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(MemAccess.ArrayMemory(array), null)
     }
 
     //    private val native = createNativeByteBuffer(capacity)!!
-    override val capacity: Int = data.size
+    override val capacity: Int
+        get() = data.capacity
 
     init {
         ByteBufferMetric.inc(this)
+        ByteBufferAllocationCallback.onCreate?.invoke(this)
     }
 
     //    val bb = nativeHeap.allocArray<ByteVar>(capacity)
@@ -29,18 +90,15 @@ actual open class ByteBuffer(
     private var _limit = capacity
 
     override val remaining: Int
-        get() {
-            checkClosed()
-            return limit - position
-        }
+        get() = _limit - _position
 
     override var position: Int
         get() {
             return _position
         }
         set(value) {
-            require(value >= 0) { "position should be more or equal 0" }
-            require(value <= limit) { "position should be less or equal limit" }
+            require(value >= 0) { "position ($value) should be more or equal 0" }
+            require(value <= limit) { "position ($value) should be less or equal limit ($limit)" }
             _position = value
         }
 
@@ -69,16 +127,23 @@ actual open class ByteBuffer(
     override
 
     fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T? {
+        require(position >= 0) { "position ($position) should be more or equals 0" }
         if (capacity == 0 || position == capacity) {
             return null
         }
-        try {
-            return data.usePinned {
-                func(it.addressOf(position))
-            }
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            throw IllegalArgumentException("Can't get access to $position address of buffer memory. capacity: $capacity, data.size: ${data.size}")
+        if (position > capacity) {
+            throw IllegalArgumentException("position ($position) should be less than capacity ($capacity)")
         }
+//        try {
+        return data.access {
+            func((it + position)!!)
+        }
+//            return data.usePinned {
+//                func(it.addressOf(position))
+//            }
+//        } catch (e: ArrayIndexOutOfBoundsException) {
+//            throw IllegalArgumentException("Can't get access to $position address of buffer memory. capacity: $capacity, data.size: ${data.size}")
+//        }
     }
 
     fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
@@ -147,7 +212,9 @@ actual open class ByteBuffer(
         checkClosed()
         ByteBufferMetric.dec(this)
 //        closed = true
+        data.close()
         onClose?.invoke(this)
+        ByteBufferAllocationCallback.onFree?.invoke(this)
     }
 
     private fun createLimitException(newLimit: Int): IllegalArgumentException {
@@ -162,7 +229,7 @@ actual open class ByteBuffer(
 
     actual operator fun get(index: Int): Byte {
         checkClosed()
-        return data[index]
+        return data.access { it[index] }
     }
 
     actual operator fun set(index: Int, value: Byte) {
@@ -177,7 +244,8 @@ actual open class ByteBuffer(
         val p = position
         if (p >= limit) throw IndexOutOfBoundsException()
         position = p + 1
-        return data[p]
+        return data.access { it[p] }
+//        return data[p]
     }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {

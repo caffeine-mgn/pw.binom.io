@@ -5,7 +5,7 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.asyncInput
 import pw.binom.db.radis.AsyncBufferedReaderInput
 import pw.binom.io.ByteArrayOutput
-import pw.binom.nextUuid
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals

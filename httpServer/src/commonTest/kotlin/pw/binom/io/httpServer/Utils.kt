@@ -5,7 +5,7 @@ import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
 import pw.binom.io.readText
 import pw.binom.io.use
-import pw.binom.net.URL
+import pw.binom.url.URL
 
 suspend fun get(url: URL): String {
     HttpClient.create().use {

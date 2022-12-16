@@ -1,6 +1,5 @@
 package pw.binom.network
 
-import pw.binom.collections.defaultMutableSet
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 
@@ -11,20 +10,20 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, Network
     override val nNative: NSocket?
         get() = internalNative
 
-    private var keys = defaultMutableSet<AbstractKey>()
+    private var currentKey: AbstractNativeKey? = null
 
-    override fun addKey(key: AbstractKey) {
-        val raw = native
-        if (keys.add(key) && raw != null) {
-            key.addSocket(raw)
+    override fun setKey(key: AbstractNativeKey) {
+        if (this.currentKey === key) {
+            native?.let { key.setRaw(it) }
+            return
         }
+        this.currentKey?.close()
+        this.currentKey = key
+        native?.let { key.setRaw(it) }
     }
 
-    override fun removeKey(key: AbstractKey) {
-        val raw = native
-        if (keys.remove(key) && raw != null) {
-            key.removeSocket(raw)
-        }
+    override fun keyClosed() {
+        currentKey = null
     }
 
 //    var key: AbstractKey? = null
@@ -49,15 +48,16 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, Network
         blocking = value
     }
 
-    actual fun connect(address: NetworkAddress) {
-        if (!connectable) {
-            throw IllegalStateException()
-        }
+    private fun checkConnectable() {
+        check(connectable) { "Socket is not connectable" }
+    }
+
+    actual fun connect(address: NetworkAddressOld) {
+        checkConnectable()
         internalNative = NSocket.connectTcp(address, blocking = blocking)
 //        native!!.setBlocking(blocking)
-        keys.forEach {
-            it.addSocket(native!!)
-        }
+        currentKey?.setRaw(native!!)
+//        println("TcpClientSocketChannel:: connection to $address. currentKey=$currentKey")
     }
 
     override fun read(dest: ByteBuffer): Int {
@@ -70,11 +70,7 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, Network
     }
 
     override fun close() {
-        keys.forEach {
-            it.internalCleanSocket()
-            it.close()
-        }
-        keys.clear()
+        currentKey?.close()
         internalNative?.close()
     }
 
@@ -82,22 +78,18 @@ actual class TcpClientSocketChannel(val connectable: Boolean) : Channel, Network
         internalNative!!.send(data)
 
     override fun flush() {
+        // Do nothing
     }
 
     actual fun connect(fileName: String) {
-        if (!connectable) {
-            throw IllegalStateException()
-        }
+        checkConnectable()
         internalNative = NSocket.connectTcpUnixSocket(fileName = fileName, blocking = false)
         internalNative!!.setBlocking(blocking)
-        keys.forEach {
-            it.addSocket(native!!)
-        }
+        currentKey?.setRaw(native!!)
     }
 
     internal fun connected() {
-        keys.forEach {
-            it.addSocket(native!!)
-        }
+//        println("Tcp Connection connected!!! currentKey=$currentKey")
+        currentKey?.setRaw(native!!)
     }
 }

@@ -6,9 +6,9 @@ import pw.binom.io.http.useBasicAuth
 import pw.binom.io.nextBytes
 import pw.binom.io.readText
 import pw.binom.io.use
-import pw.binom.net.toURL
-import pw.binom.nextUuid
 import pw.binom.thread.Thread
+import pw.binom.url.toURL
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Ignore
 import kotlin.test.Test

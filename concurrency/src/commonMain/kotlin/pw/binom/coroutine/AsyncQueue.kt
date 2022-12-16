@@ -1,5 +1,6 @@
 package pw.binom.coroutine
 
+/*
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.atomic.AtomicBoolean
@@ -76,3 +77,4 @@ class AsyncQueue<T> : Closeable, AsyncExchangeInput<T>, ExchangeOutput<T> {
         }
     }
 }
+*/

@@ -92,4 +92,6 @@ actual class Calendar(private val utcTime: Long, actual val offset: Int) {
     actual fun timeZone(timeZoneOffset3: Int): Calendar = Calendar(utcTime = utcTime, offset = timeZoneOffset3)
 
     actual fun toDate(): DateTime = dateTime
+
+    actual companion object
 }

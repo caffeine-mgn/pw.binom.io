@@ -2,9 +2,9 @@ package pw.binom.smtp
 
 import kotlinx.coroutines.Dispatchers
 import pw.binom.io.AsyncCloseable
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.network.Network
-import pw.binom.network.NetworkAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
 import pw.binom.ssl.KeyManager

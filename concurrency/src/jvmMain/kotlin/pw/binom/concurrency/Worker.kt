@@ -2,7 +2,6 @@
 
 package pw.binom.concurrency
 
-import kotlinx.coroutines.CoroutineDispatcher
 import pw.binom.Future
 import pw.binom.NonFreezableFuture
 import pw.binom.atomic.AtomicInt
@@ -10,7 +9,6 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.CoroutineContext
 
 private val currentWorker = ThreadLocal<Worker>()
 private val idSeq = AtomicLong(0)
@@ -32,7 +30,7 @@ private class WorkerThreadFactoryWithName(val name: String) : ThreadFactory {
     }
 }
 
-actual class Worker actual constructor(name: String?) : CoroutineDispatcher() {
+actual class Worker actual constructor(name: String?) {
     private val _id = idSeq.incrementAndGet()
     private val worker = Executors.newSingleThreadExecutor(
         if (name == null) WorkerThreadFactory1 else WorkerThreadFactoryWithName(name)
@@ -167,9 +165,9 @@ actual class Worker actual constructor(name: String?) : CoroutineDispatcher() {
     }
     */
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        this.worker.submit(block)
-    }
+//    override fun dispatch(context: CoroutineContext, block: Runnable) {
+//        this.worker.submit(block)
+//    }
 }
 
 actual val Worker.Companion.availableProcessors: Int

@@ -1,9 +1,14 @@
 package pw.binom.network
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import pw.binom.io.bufferedReader
 import pw.binom.io.bufferedWriter
+import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.Socket
 import pw.binom.io.use
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
@@ -22,9 +27,9 @@ class Ololo {
     @Test
     fun test() = runTest {
         val network = NetworkCoroutineDispatcherImpl()
-        val ccc = TcpServerSocketChannel()
+        val ccc = Socket.createTcpServerNetSocket()
         println("Bind on 8335")
-        ccc.bind(NetworkAddress.Immutable(port = 8335))
+        ccc.bind(NetworkAddress.create(port = 8335, host = "0.0.0.0"))
         println("Wait clients...")
         ccc.use {
             val server = network.attach(ccc)

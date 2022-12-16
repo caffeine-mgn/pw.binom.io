@@ -32,78 +32,127 @@ value class HeapValue<T : CVariable>(val heap: ByteArray) {
     }
 }
 
+// private val counter = AtomicInt(0)
+// private val allKeys = defaultMutableSet<LinuxKey>()
+// private val keysLock = SpinLock()
+
 class LinuxKey(
     val list: Epoll,
     attachment: Any?,
     override val selector: LinuxSelector,
-) : AbstractKey(attachment = attachment) {
-    internal val epollEvent = HeapValue.alloc<epoll_event>()
+) : AbstractNativeKey(attachment = attachment) {
+    //    internal val epollEvent = HeapValue.alloc<epoll_event>()
+    internal var epollEvent: epoll_event? = null
 
     //    internal val epollEvent = nativeHeap.alloc<epoll_event>()
     internal var nativeSocket: RawSocket = 0
     private var selfPtr: StableRef<LinuxKey>? = null
 
-    override fun addSocket(raw: RawSocket) {
-        if (nativeSocket != 0) {
-            error("Native socket already set")
+    override fun setRaw(raw: RawSocket) {
+        if (nativeSocket == raw) {
+            return
         }
+        check(nativeSocket == 0) { "Native socket already set" }
         val v = StableRef.create(this)
+        NetworkMetrics.incSelectorKeyAlloc()
+//        println("NEW KEY. ${counter.addAndGet(1)}   ${NetworkMetrics.selectorKeyAllocCountMetric.value}")
         selfPtr = v
-        epollEvent.content {
-            it.pointed.events = epollCommonToNative(listensFlag.convert()).convert()
-            it.pointed.data.u32 = 38u
-            it.pointed.data.u64 = 99u
-            it.pointed.data.ptr = v.asCPointer()
-        }
+        val epollEvent = nativeHeap.alloc<epoll_event>()
+        epollEvent.events = epollCommonToNative(listensFlag.convert()).convert()
+        println("LinuxKey: create with mode: ${modeToString(epollCommonToNative(listensFlag))}, attachment: $attachment")
+        epollEvent.data.ptr = v.asCPointer()
+        this.epollEvent = epollEvent
         nativeSocket = raw
+
         selector.addKey(this)
-//        selector.wakeup()
+//        keysLock.synchronize {
+//            allKeys += this
+//        }
+//
+//        keysLock.synchronize {
+//            val kk = selector.keys
+//            println("---===ACTIVE KEYS===---")
+//            kk.forEach {
+//                println("->$it")
+//            }
+//            println("---===ACTIVE KEYS===---")
+//            println("---===OTHER KEYS===---")
+//            allKeys.forEach {
+//                if (it in kk) {
+//                    return@forEach
+//                }
+//                println("->$it")
+//            }
+//            println("---===OTHER KEYS===---")
+//        }
     }
 
     internal fun internalFree() {
-        epollEvent.content {
-            it.pointed.data.ptr = null
+        val epollEvent = epollEvent
+        if (epollEvent != null) {
+            epollEvent.data.ptr = null
+            epollEvent.events = 0.convert()
+            list.update(socket = nativeSocket, data = epollEvent.ptr, failOnError = false)
+            nativeHeap.free(epollEvent)
+            this.epollEvent = null
         }
-        selfPtr?.dispose()
+        selfPtr?.let {
+            NetworkMetrics.decSelectorKeyAlloc()
+            it.dispose()
+//            keysLock.synchronize {
+//                allKeys -= this
+//            }
+//            println("REMOVE KEY. ${counter.addAndGet(-1)} ${NetworkMetrics.selectorKeyAllocCountMetric.value}")
+        }
         selfPtr = null
         nativeSocket = 0
     }
 
-    override fun removeSocket(raw: RawSocket) {
-        if (nativeSocket == raw) {
-            selector.removeKey(this, raw)
-//            selector.wakeup()
-            return
-        }
-//        throw IllegalArgumentException("Socket $raw not attached to Selector.Key $nativeSocket")
-    }
+//    override fun removeSocket(raw: RawSocket) {
+//        if (nativeSocket == raw) {
+//            println("Remove ok!!!")
+//            selector.removeKey(this, raw)
+// //            selector.wakeup()
+//            return
+//        } else {
+//            println("Remove fail!!! raw=$raw nativeSocket=$nativeSocket")
+//        }
+//    }
 
     override fun isSuccessConnected(nativeMode: Int): Boolean =
         EPOLLOUT in nativeMode && EPOLLERR !in nativeMode && EPOLLRDHUP !in nativeMode
 
     override fun resetMode(mode: Int) {
         if (nativeSocket == 0) {
+            println("LinuxKey: native socket is 0. attachment: $attachment")
             return
         }
-
-        epollEvent.content {
-            it.pointed.events = epollCommonToNative(mode.convert()).convert()
+        println("LinuxKey: Change mode to ${modeToString(epollCommonToNative(listensFlag))}, attachment: $attachment")
+        val epollEvent = epollEvent
+        if (epollEvent != null) {
+            epollEvent.events = epollCommonToNative(mode.convert()).convert()
             if (nativeSocket != 0) {
-                list.update(socket = nativeSocket, data = it, failOnError = false)
+                list.update(socket = nativeSocket, data = epollEvent.ptr, failOnError = false)
             }
         }
     }
 
     override fun close() {
-        super.close()
+        if (!internalClose()) {
+            return
+        }
         val nativeSocket = nativeSocket
         if (nativeSocket != 0) {
-            removeSocket(nativeSocket)
+//            println("Remove Key")
+            selector.removeKey(this)
+//            removeSocket(nativeSocket)
 //            if (epoll_ctl(list, EPOLL_CTL_DEL, nativeSocket.convert(), epollEvent.ptr) != 0) {
 //                throw IOException("Can't remove SelectorKey from Selector")
 //            }
+        } else {
+//            println("Key already removed!")
         }
-        selector.keys -= this
+        selector.undefineKey(this)
     }
 
     override fun toString(): String =
@@ -111,16 +160,16 @@ class LinuxKey(
 
     fun epollCommonToNative(mode: Int): Int {
         var events = EPOLLONESHOT
-        if (Selector.EVENT_ERROR in mode) {
+        if (SelectorOld.EVENT_ERROR in mode) {
             events = events or EPOLLHUP or EPOLLERR
         }
-        if (Selector.INPUT_READY in mode) {
+        if (SelectorOld.INPUT_READY in mode) {
             events = events or EPOLLIN or EPOLLHUP or EPOLLERR
         }
-        if (!connected && Selector.EVENT_CONNECTED in mode) {
+        if (!connected && SelectorOld.EVENT_CONNECTED in mode) {
             events = events or EPOLLOUT
         }
-        if (connected && Selector.OUTPUT_READY in mode) {
+        if (connected && SelectorOld.OUTPUT_READY in mode) {
             events = events or EPOLLOUT
         }
         return events

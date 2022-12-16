@@ -4,15 +4,19 @@ import kotlinx.cinterop.*
 import platform.linux.*
 
 class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelectedEvents() {
+    init {
+        require(maxElements >= 1) { "maxElements should be more than 0" }
+    }
+
     override var selector: LinuxSelector? = null
-    override val native = nativeHeap.allocArray<epoll_event>(1000)
+    override val native = nativeHeap.allocArray<epoll_event>(maxElements)
     override var eventCount: Int = 0
 
     override fun close() {
         nativeHeap.free(native)
     }
 
-    override val nativeSelectedKeys: Iterator<AbstractSelector.NativeKeyEvent>
+    override val nativeSelectedKeys: Iterator<AbstractNativeSelector.NativeKeyEvent>
         get() = nativeSelectedKeys2
 
     override fun resetIterator() {
@@ -33,9 +37,9 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
         }
     }
 
-    private val nativeSelectedKeys2 = object : Iterator<AbstractSelector.NativeKeyEvent> {
-        private val event = object : AbstractSelector.NativeKeyEvent {
-            override lateinit var key: AbstractKey
+    private val nativeSelectedKeys2 = object : Iterator<AbstractNativeSelector.NativeKeyEvent> {
+        private val event = object : AbstractNativeSelector.NativeKeyEvent {
+            override lateinit var key: AbstractNativeKey
             override var mode: Int = 0
         }
         private var currentNum = 0
@@ -63,7 +67,7 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
             return currentNum < eventCount
         }
 
-        override fun next(): AbstractSelector.NativeKeyEvent {
+        override fun next(): AbstractNativeSelector.NativeKeyEvent {
             if (!hasNext()) {
                 throw NoSuchElementException()
             }
@@ -78,34 +82,39 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
                 if (/*EPOLLHUP in item.events ||*/ EPOLLERR in item.events) {
                     key.resetMode(0)
                     event.key = key
-                    event.mode = Selector.EVENT_ERROR
+                    event.mode = SelectorOld.EVENT_ERROR
+                    println("LinuxSelectedEvents->$event")
                     return event
                 }
                 if (EPOLLOUT in item.events) {
                     key.connected = true
                     event.key = key
-                    event.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                    event.mode = SelectorOld.EVENT_CONNECTED or SelectorOld.OUTPUT_READY
                     key.resetMode(key.listensFlag)
+                    println("LinuxSelectedEvents->$event")
                     return event
                 }
                 if (EPOLLIN in item.events) {
                     key.connected = true
                     event.key = key
-                    event.mode = Selector.EVENT_CONNECTED or Selector.INPUT_READY
+                    event.mode = SelectorOld.EVENT_CONNECTED or SelectorOld.INPUT_READY
                     key.resetMode(key.listensFlag)
+                    println("LinuxSelectedEvents->$event")
                     return event
                 }
                 if (EPOLLHUP in item.events) {
 //                    key.connected = true
                     event.key = key
                     event.mode = 0
+                    println("LinuxSelectedEvents->$event")
                     return event
                 }
                 error("Unknown connection state: ${modeToString(item.events.toInt())}")
             }
             if (EPOLLHUP in item.events) {
                 event.key = key
-                event.mode = Selector.INPUT_READY
+                event.mode = SelectorOld.INPUT_READY
+                println("LinuxSelectedEvents->$event")
                 return event
             }
             val common = epollNativeToCommon(item.events.convert())
@@ -117,7 +126,12 @@ class LinuxSelectedEvents(override val maxElements: Int) : AbstractNativeSelecte
             if (item.events.toInt() != 0 && event.mode == 0) {
                 println("Can't convert ${modeToString(item.events.convert())}")
             }
+            println("LinuxSelectedEvents->$event")
             return event
         }
+    }
+
+    override fun addClosedKey(key: SelectorOld.Key) {
+        closedKeys2.add(key)
     }
 }

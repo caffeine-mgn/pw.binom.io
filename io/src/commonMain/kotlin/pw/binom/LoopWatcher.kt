@@ -2,7 +2,7 @@ package pw.binom
 
 import pw.binom.io.Closeable
 import pw.binom.metric.DurationRollingAverageGauge
-import pw.binom.metric.MutableCounter
+import pw.binom.metric.MutableLongGauge
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -15,7 +15,7 @@ class LoopWatcher(name: String) : Closeable {
         unit = DurationUnit.MILLISECONDS,
         windowSize = 10,
     )
-    private val countMetric = MutableCounter(name = "${metricName}_count")
+    private val countMetric = MutableLongGauge(name = "${metricName}_count")
     private var lastCall = TimeSource.Monotonic.markNow()
     private val reg = BinomMetrics.reg(avgGauge)
     private val reg2 = BinomMetrics.reg(countMetric)

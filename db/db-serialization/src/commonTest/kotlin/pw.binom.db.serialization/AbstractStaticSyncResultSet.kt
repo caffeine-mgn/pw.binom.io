@@ -1,10 +1,10 @@
 package pw.binom.db.serialization
 
-import pw.binom.UUID
 import pw.binom.date.DateTime
 import pw.binom.date.parseIso8601Date
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
+import pw.binom.uuid.UUID
 
 abstract class AbstractStaticSyncResultSet<T> : AsyncResultSet {
     protected abstract val list: List<T>

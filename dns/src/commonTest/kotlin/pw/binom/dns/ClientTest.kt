@@ -9,7 +9,7 @@ import pw.binom.dns.protocol.ResourcePackage
 import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedInput
 import pw.binom.io.bufferedOutput
-import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkAddressOld
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.bindTcp
 import pw.binom.network.tcpConnect
@@ -114,7 +114,7 @@ class ClientTest {
         )
         val buf = ByteBuffer.alloc(512)
         try {
-            val con = n.tcpConnect(NetworkAddress.Immutable("8.8.8.8", 53))
+            val con = n.tcpConnect(NetworkAddressOld.Immutable("8.8.8.8", 53))
             val output = con.bufferedOutput()
             val input = con.bufferedInput()
 
@@ -162,7 +162,7 @@ class ClientTest {
         val q = QueryPackage()
         val r = ResourcePackage()
         try {
-            val server = n.bindTcp(NetworkAddress.Immutable("0.0.0.0", 53))
+            val server = n.bindTcp(NetworkAddressOld.Immutable("0.0.0.0", 53))
             while (true) {
                 val client = server.accept()
 

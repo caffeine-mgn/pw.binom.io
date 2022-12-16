@@ -5,7 +5,7 @@ abstract class AbstractRollingAverageGauge(
     override val name: String,
     override val description: String? = null,
     windowSize: Int,
-) : Gauge {
+) : GaugeDouble {
     init {
         require(windowSize > 1) { "windowSize should be more than 1 " }
     }

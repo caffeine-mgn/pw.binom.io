@@ -1,5 +1,6 @@
 package pw.binom.io.httpServer
 
+import kotlinx.coroutines.withTimeoutOrNull
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
@@ -11,11 +12,13 @@ import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.network.SocketClosedException
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
+import pw.binom.pool.tryBorrow
 import pw.binom.skipAll
 import pw.binom.url.Path
 import pw.binom.url.Query
 import pw.binom.url.toPath
 import pw.binom.url.toQuery
+import kotlin.time.Duration
 
 internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : HttpRequest {
     object Manager : ObjectFactory<HttpRequest2Impl> {
@@ -29,37 +32,45 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         suspend fun read(
             channel: ServerAsyncAsciiChannel,
             server: HttpServer,
-            isNewConnect: Boolean
-        ): HttpRequest2Impl {
+            isNewConnect: Boolean,
+            readStartTimeout: Duration
+        ): HttpRequest2Impl? {
+            val request = withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
+//            val request = channel.reader.readln()
             if (!isNewConnect) {
                 server.browConnection(channel)
             }
-            val request = channel.reader.readln() ?: throw SocketClosedException()
-            val items = request.split(' ', limit = 3)
-            val requestObject = server.httpRequest2Impl.borrow()
-            val headers = requestObject.internalHeaders
-            headers.clear()
-            while (true) {
-                val s = channel.reader.readln() ?: break
-                if (s.isEmpty()) {
-                    break
-                }
-                val p = s.indexOf(':')
-                if (p < 0) {
-                    runCatching { channel.asyncClose() }
-                    throw IOException("Invalid HTTP Header: \"$s\"")
-                }
-                val headerKey = s.substring(0, p)
-                val headerValue = s.substring(p + 2)
-                headers.add(headerKey, headerValue)
+            if (request == null) {
+                runCatching { channel.asyncClose() }
+                return null
             }
-            requestObject.reset(
-                request = (items.getOrNull(1) ?: ""),
-                method = items[0],
-                channel = channel,
-                server = server,
-            )
-            return requestObject
+            HttpServerMetrics.httpRequestCounter.inc()
+            val items = request.split(' ', limit = 3)
+            server.httpRequest2Impl.tryBorrow { requestObject ->
+                val headers = requestObject.internalHeaders
+                headers.clear()
+                while (true) {
+                    val s = channel.reader.readln() ?: break
+                    if (s.isEmpty()) {
+                        break
+                    }
+                    val p = s.indexOf(':')
+                    if (p < 0) {
+                        runCatching { channel.asyncClose() }
+                        throw IOException("Invalid HTTP Header: \"$s\"")
+                    }
+                    val headerKey = s.substring(0, p)
+                    val headerValue = s.substring(p + 2)
+                    headers.add(headerKey, headerValue)
+                }
+                requestObject.reset(
+                    request = (items.getOrNull(1) ?: ""),
+                    method = items[0],
+                    channel = channel,
+                    server = server,
+                )
+                return requestObject
+            }
         }
     }
 

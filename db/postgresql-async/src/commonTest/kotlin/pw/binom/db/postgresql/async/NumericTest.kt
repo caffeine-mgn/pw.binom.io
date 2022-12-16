@@ -4,7 +4,7 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.charset.Charsets
 import pw.binom.date.iso8601
 import pw.binom.io.use
-import pw.binom.network.NetworkAddress
+import pw.binom.network.NetworkAddressOld
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -15,7 +15,7 @@ class NumericTest {
     @Test
     fun test3() = runTest {
         val connection = PGConnection.connect(
-            address = NetworkAddress.Immutable(
+            address = NetworkAddressOld.Immutable(
                 host = "localhost",
                 port = 5432,
             ),

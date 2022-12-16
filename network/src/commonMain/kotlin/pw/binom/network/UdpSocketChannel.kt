@@ -4,8 +4,8 @@ import pw.binom.io.ByteBuffer
 
 expect class UdpSocketChannel() : NetworkChannel {
     fun setBlocking(value: Boolean)
-    fun send(data: ByteBuffer, address: NetworkAddress): Int
-    fun recv(data: ByteBuffer, address: NetworkAddress.Mutable?): Int
-    fun bind(address: NetworkAddress)
+    fun send(data: ByteBuffer, address: NetworkAddressOld): Int
+    fun recv(data: ByteBuffer, address: NetworkAddressOld.Mutable?): Int
+    fun bind(address: NetworkAddressOld)
     val port: Int?
 }

@@ -40,7 +40,13 @@ kotlin {
     androidNativeArm64()
     wasm32()
     js(pw.binom.Target.JS_TARGET) {
-        browser()
+        browser {
+            testTask {
+                useKarma {
+                    useFirefoxHeadless()
+                }
+            }
+        }
         nodejs()
     }
     sourceSets {
@@ -80,6 +86,12 @@ kotlin {
             dependsOn(commonTest)
             dependencies {
                 api(kotlin("test-junit"))
+            }
+        }
+        val jsTest by getting {
+            dependsOn(commonTest)
+            dependencies {
+                api(kotlin("test-js"))
             }
         }
         val linuxX64Test by getting {

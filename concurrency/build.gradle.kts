@@ -1,4 +1,4 @@
-import pw.binom.publish.dependsOn
+import pw.binom.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -17,12 +17,12 @@ kotlin {
 
     jvm()
     linuxX64()
-//    linuxArm64()
-//    linuxArm32Hfp()
-//    linuxMips32()
-//    linuxMipsel32()
+    linuxArm64()
+    linuxArm32Hfp()
+    linuxMips32()
+    linuxMipsel32()
     mingwX64()
-//    mingwX86()
+    mingwX86()
     macosX64()
     macosArm64()
     iosX64()
@@ -34,10 +34,10 @@ kotlin {
     watchosArm32()
     watchosArm64()
     watchosSimulatorArm64()
-//    androidNativeX64()
-//    androidNativeX86()
-//    androidNativeArm32()
-//    androidNativeArm64()
+    androidNativeX64()
+    androidNativeX86()
+    androidNativeArm32()
+    androidNativeArm64()
 //    wasm32()
 
     sourceSets {
@@ -46,9 +46,10 @@ kotlin {
                 api(project(":core"))
                 api(project(":collections"))
                 api(kotlin("stdlib-common"))
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+//                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
+        /*
         val nativeMain by creating {
             dependsOn(commonMain)
         }
@@ -92,6 +93,8 @@ kotlin {
                 api(kotlin("test"))
             }
         }
+*/
+        useDefault()
     }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

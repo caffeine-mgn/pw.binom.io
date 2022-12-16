@@ -1,7 +1,10 @@
+import pw.binom.eachKotlinTest
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 //    id("com.bnorm.template.kotlin-ir-plugin")
     id("maven-publish")
+    id("com.bmuschko.docker-remote-api")
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         id("com.android.library")
     }
@@ -14,86 +17,33 @@ kotlin {
         }
     }
     jvm()
-    linuxX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("native") {
-                    defFile = project.file("src/cinterop/native.def")
-                    packageName = "platform.linux"
-                }
-            }
-        }
-    }
+    linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp {
-            binaries {
-                compilations["main"].cinterops {
-                    create("native") {
-                        defFile = project.file("src/cinterop/native.def")
-                        packageName = "platform.linux"
-                    }
-                }
-            }
-        }
+        linuxArm32Hfp()
     }
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64 {
-            binaries {
-                compilations["main"].cinterops {
-                    create("native") {
-                        defFile = project.file("src/cinterop/native.def")
-                        packageName = "platform.linux"
-                    }
-                }
-            }
-        }
+        linuxArm64()
     }
 
-    mingwX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("wepoll") {
-                    defFile = project.file("src/cinterop/wepoll.def")
-                    packageName = "platform.linux"
-                }
-                create("native") {
-                    defFile = project.file("src/cinterop/native.def")
-                    packageName = "platform.linux"
-                }
-            }
-        }
-    }
+    mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86 {
-            binaries {
-                compilations["main"].cinterops {
-                    create("wepoll") {
-                        defFile = project.file("src/cinterop/wepoll.def")
-                        packageName = "platform.linux"
-                    }
-                    create("native") {
-                        defFile = project.file("src/cinterop/native.def")
-                        packageName = "platform.linux"
-                    }
-                }
-            }
+//            binaries {
+//                compilations["main"].cinterops {
+//                    create("wepoll") {
+//                        defFile = project.file("src/cinterop/wepoll.def")
+//                        packageName = "platform.linux"
+//                    }
+//                    create("native") {
+//                        defFile = project.file("src/cinterop/native.def")
+//                        packageName = "platform.linux"
+//                    }
+//                }
+//            }
         }
     }
 
-    macosX64 {
-        binaries {
-            compilations["main"].cinterops {
-                create("utils") {
-                    defFile = project.file("src/cinterop/mac.def")
-                    packageName = "platform.linux"
-                }
-                create("native") {
-                    defFile = project.file("src/cinterop/native.def")
-                    packageName = "platform.linux"
-                }
-            }
-        }
-    }
+    macosX64()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -102,6 +52,8 @@ kotlin {
                 api(project(":concurrency"))
                 api(project(":thread"))
                 api(project(":collections"))
+//                api(project(":nio"))
+                api(project(":socket"))
                 api(kotlin("stdlib-common"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
@@ -146,6 +98,7 @@ kotlin {
                 api(kotlin("test-annotations-common"))
                 api(project(":date"))
                 api(project(":charset"))
+                api(project(":coroutines"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
@@ -190,6 +143,23 @@ tasks {
         testLogging.showExceptions = true
         testLogging.showStackTraces = true
         testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+
+    val httpStorage = pw.binom.plugins.DockerUtils.dockerContanier(
+        project = project,
+        image = "ugeek/webdav:amd64",
+        tcpPorts = listOf(80 to 7141),
+        args = listOf(),
+        suffix = "WebDav",
+        envs = mapOf(
+            "USERNAME" to "root",
+            "PASSWORD" to "root",
+            "TZ" to "GMT",
+        )
+    )
+
+    eachKotlinTest {
+        httpStorage.dependsOn(it)
     }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

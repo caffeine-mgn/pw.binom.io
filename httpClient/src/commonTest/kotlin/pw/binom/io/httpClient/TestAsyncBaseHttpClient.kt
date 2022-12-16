@@ -4,27 +4,31 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.readText
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
-import pw.binom.net.toURL
 import pw.binom.network.*
 import pw.binom.skipAll
+import pw.binom.url.toURL
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
+import kotlin.time.measureTime
 
 @ExperimentalTime
 class TestAsyncBaseHttpClient {
 
     @Test
     fun timeoutTest2() = runTest(dispatchTimeoutMs = 10_000) {
-        Dispatchers.Network
-            .bindTcp(NetworkAddress.Immutable(port = 0))
+        Dispatchers.Network.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = 0))
             .use { server ->
+                val serverPort = server.port
+                println("server binded port: ${server.port}")
                 launch {
                     println("wait client")
                     try {
@@ -39,7 +43,7 @@ class TestAsyncBaseHttpClient {
                         realWithTimeout(5.seconds) {
                             client.connect(
                                 method = "GET",
-                                uri = "http://127.0.0.1:${server.port}/".toURL(),
+                                uri = "http://127.0.0.1:$serverPort/".toURL(),
 //                                        uri = "http://example.com/".toURI(),
                             ).getResponse().readText().use { it.readText() }
                         }
@@ -55,14 +59,12 @@ class TestAsyncBaseHttpClient {
     @Test
     fun timeoutTest() = runTest(dispatchTimeoutMs = 10_000) {
         val manager = NetworkCoroutineDispatcherImpl()
-        val client = BaseHttpClient(Dispatchers.Network)
-        val server = manager.bindTcp(NetworkAddress.Immutable("127.0.0.1", TcpServerConnection.randomPort()))
+        val client = HttpClient.create(networkDispatcher = Dispatchers.Network)
+        val server = manager.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = TcpServerConnection.randomPort()))
         val now = TimeSource.Monotonic.markNow()
         try {
             realWithTimeout(3.seconds) {
-                client.connect(HTTPMethod.GET, "http://127.0.0.1:${server.port}".toURL())
-                    .getResponse()
-                    .responseCode
+                client.connect(HTTPMethod.GET, "http://127.0.0.1:${server.port}".toURL()).getResponse().responseCode
             }
             fail()
         } catch (e: CancellationException) {
@@ -75,16 +77,26 @@ class TestAsyncBaseHttpClient {
     @Test
     @OptIn(ExperimentalTime::class)
     fun test() = runTest(dispatchTimeoutMs = 10_000) {
-        val client = BaseHttpClient(Dispatchers.Network)
-        repeat(3) {
-            val responseData = client
-                .connect(HTTPMethod.GET, "https://google.com/".toURL())
-                .getResponse().also {
-                    println("headers:${it.headers}")
+        withContext(Dispatchers.Network) {
+            val client = HttpClient.create(
+                networkDispatcher = Dispatchers.Network,
+                useKeepAlive = false,
+                connectTimeout = 10.seconds,
+//            connectTimeout = Duration.INFINITE,
+            )
+            repeat(3) {
+                val testTime = measureTime {
+                    val responseData =
+                        client.connect(HTTPMethod.GET, "https://google.com/".toURL())
+                            .getResponse()
+                            .also {
+                                println("headers:${it.headers}")
+                            }.readData().use {
+                                it.skipAll()
+                            }
                 }
-                .readData().use {
-                    it.skipAll()
-                }
+                println("testTime=$testTime")
+            }
         }
     }
 }

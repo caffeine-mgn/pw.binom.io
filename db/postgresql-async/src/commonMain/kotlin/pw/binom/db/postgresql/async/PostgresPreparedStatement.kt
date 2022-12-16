@@ -95,6 +95,9 @@ class PostgresPreparedStatement(
     }
 
     override suspend fun set(index: Int, value: String) {
+        if (index < 0 || index >= params.size) {
+            throw IndexOutOfBoundsException("Can't set $index to \"$value\". Params count: ${params.size}. SQL: $query$")
+        }
         params[index] = value
     }
 

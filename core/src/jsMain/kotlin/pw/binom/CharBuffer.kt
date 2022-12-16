@@ -37,7 +37,6 @@ actual class CharBuffer private constructor(var chars: CharArray) : CharSequence
         val result = wrap(chars.copyOfRange(0, minOf(capacity, newSize)))
         result.limit = limit
         result.position = position
-        println("limit=$limit, position=$position")
         return result
     }
 

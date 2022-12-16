@@ -3,7 +3,7 @@
 package pw.binom.io
 
 import pw.binom.BinomMetrics
-import pw.binom.metric.MutableGauge
+import pw.binom.metric.MutableLongGauge
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 import kotlin.contracts.ExperimentalContracts
@@ -12,17 +12,24 @@ import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 import kotlin.random.Random
 
+object ByteBufferAllocationCallback {
+    var onCreate: ((ByteBuffer) -> Unit)? = null
+    var onFree: ((ByteBuffer) -> Unit)? = null
+}
+
 internal object ByteBufferMetric {
-    private val BYTEBUFFER_COUNT_METRIC = MutableGauge("binom_byte_buffer_count", description = "ByteBuffer Count")
-    private val BYTEBUFFER_MEMORY_METRIC = MutableGauge("binom_byte_buffer_memory", description = "ByteBuffer Memory")
+    private val BYTEBUFFER_COUNT_METRIC =
+        MutableLongGauge("binom_byte_buffer_count", description = "ByteBuffer Count")
+    private val BYTEBUFFER_MEMORY_METRIC =
+        MutableLongGauge("binom_byte_buffer_memory", description = "ByteBuffer Memory")
 
     fun inc(buffer: ByteBuffer) {
         BYTEBUFFER_COUNT_METRIC.inc()
-        BYTEBUFFER_MEMORY_METRIC.inc(buffer.capacity.toDouble())
+        BYTEBUFFER_MEMORY_METRIC.inc(buffer.capacity)
     }
 
     fun dec(buffer: ByteBuffer) {
-        BYTEBUFFER_MEMORY_METRIC.dec(buffer.capacity.toDouble())
+        BYTEBUFFER_MEMORY_METRIC.dec(buffer.capacity)
         BYTEBUFFER_COUNT_METRIC.dec()
     }
 

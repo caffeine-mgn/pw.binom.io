@@ -6,7 +6,7 @@ import java.nio.channels.SelectionKey
 import java.nio.channels.SocketChannel
 import java.util.concurrent.locks.ReentrantLock
 
-class SelectedEventsJvm : SelectedEvents {
+class SelectedEventsJvm : SelectedEventsOld {
 
     override var selectedKeys: Set<SelectionKey> = emptySet()
     override val lock = ReentrantLock()
@@ -14,19 +14,19 @@ class SelectedEventsJvm : SelectedEvents {
     override fun close() {
     }
 
-    override fun iterator(): Iterator<Selector.KeyEvent> {
+    override fun iterator(): Iterator<SelectorOld.KeyEvent> {
         selectorIterator.reset()
         return selectorIterator
     }
 
-    private val keyEvent = object : Selector.KeyEvent {
-        override lateinit var key: Selector.Key
+    private val keyEvent = object : SelectorOld.KeyEvent {
+        override lateinit var key: SelectorOld.Key
         override var mode: Int = 0
 
         override fun toString(): String = selectorModeToString(mode)
     }
 
-    private val selectorIterator = object : Iterator<Selector.KeyEvent> {
+    private val selectorIterator = object : Iterator<SelectorOld.KeyEvent> {
         private lateinit var keys: Iterator<SelectionKey>
         fun reset() {
             keys = selectedKeys.iterator()
@@ -48,10 +48,10 @@ class SelectedEventsJvm : SelectedEvents {
                 if (socketChannel != null && !key.connected && socketChannel.isConnected && it.isWritable) {
                     try {
                         keyEvent.key = key
-                        keyEvent.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                        keyEvent.mode = SelectorOld.EVENT_CONNECTED or SelectorOld.OUTPUT_READY
                         if (it.isValid && (it.isConnectable || it.isWritable)) {
                             it.interestOps(
-                                (it.interestOps().inv() or SelectionKey.OP_CONNECT or Selector.OUTPUT_READY).inv()
+                                (it.interestOps().inv() or SelectionKey.OP_CONNECT or SelectorOld.OUTPUT_READY).inv()
                             )
                         }
                         key.connected = true
@@ -59,12 +59,12 @@ class SelectedEventsJvm : SelectedEvents {
                         return true
                     } catch (e: ConnectException) {
                         keyEvent.key = it.attachment() as JvmKey
-                        keyEvent.mode = Selector.EVENT_ERROR
+                        keyEvent.mode = SelectorOld.EVENT_ERROR
                         nextReady = true
                         return true
                     } catch (e: SocketException) {
                         keyEvent.key = it.attachment() as JvmKey
-                        keyEvent.mode = Selector.EVENT_ERROR
+                        keyEvent.mode = SelectorOld.EVENT_ERROR
                         nextReady = true
                         return true
                     }
@@ -81,7 +81,7 @@ class SelectedEventsJvm : SelectedEvents {
                         }
                         if (connected) {
                             keyEvent.key = key
-                            keyEvent.mode = Selector.EVENT_CONNECTED or Selector.OUTPUT_READY
+                            keyEvent.mode = SelectorOld.EVENT_CONNECTED or SelectorOld.OUTPUT_READY
                             if (it.isValid && (it.isConnectable || it.isWritable)) {
                                 it.interestOps(
                                     (it.interestOps().inv() or SelectionKey.OP_CONNECT or SelectionKey.OP_WRITE).inv()
@@ -95,12 +95,12 @@ class SelectedEventsJvm : SelectedEvents {
                         }
                     } catch (e: ConnectException) {
                         keyEvent.key = it.attachment() as JvmKey
-                        keyEvent.mode = Selector.EVENT_ERROR
+                        keyEvent.mode = SelectorOld.EVENT_ERROR
                         nextReady = true
                         return true
                     } catch (e: SocketException) {
                         keyEvent.key = it.attachment() as JvmKey
-                        keyEvent.mode = Selector.EVENT_ERROR
+                        keyEvent.mode = SelectorOld.EVENT_ERROR
                         nextReady = true
                         return true
                     }
@@ -112,7 +112,7 @@ class SelectedEventsJvm : SelectedEvents {
             }
         }
 
-        override fun next(): Selector.KeyEvent {
+        override fun next(): SelectorOld.KeyEvent {
             if (!hasNext()) {
                 throw NoSuchElementException()
             }

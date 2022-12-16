@@ -144,44 +144,42 @@ class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModu
         sb.append("insert into ")
             .append(getTableName(k.descriptor))
             .append("(")
-        var i = 0
-        params.forEach {
-            if (i > 0) {
+//        var i = 0
+
+        params.entries.forEachIndexed { index, param ->
+            if (index > 0) {
                 sb.append(",")
             }
-            val useQuotes = it.value.first
+            val useQuotes = param.value.first
             if (useQuotes) {
                 sb.append("\"")
             }
-            sb.append(it.key)
+            sb.append(param.key)
             if (useQuotes) {
                 sb.append("\"")
             }
-            i++
         }
-        i = 0
         sb.append(") values(")
         val args = defaultMutableList<Any?>(params.size)
-        params.forEach {
-            if (i > 0) {
+        params.entries.forEachIndexed { index, param ->
+            if (index > 0) {
                 sb.append(",")
             }
             sb.append("?")
-            args += it.value.second
+            args += param.value.second
         }
         sb.append(")")
         if (returning) {
             sb.append(" returning ")
-            i = 0
-            params.forEach {
-                if (i > 0) {
+            params.entries.forEachIndexed { index, param ->
+                if (index > 0) {
                     sb.append(",")
                 }
-                val useQuotes = it.value.first
+                val useQuotes = param.value.first
                 if (useQuotes) {
                     sb.append("\"")
                 }
-                sb.append(it.key)
+                sb.append(param.key)
                 if (useQuotes) {
                     sb.append("\"")
                 }

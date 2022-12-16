@@ -11,22 +11,22 @@ import java.nio.channels.Selector as JSelector
 internal fun javaToCommon(mode: Int): Int {
     var opts = 0
     if (SelectionKey.OP_ACCEPT in mode || SelectionKey.OP_READ in mode) {
-        opts = opts or Selector.INPUT_READY
+        opts = opts or SelectorOld.INPUT_READY
     }
 
     if (SelectionKey.OP_WRITE in mode) {
-        opts = opts or Selector.OUTPUT_READY
+        opts = opts or SelectorOld.OUTPUT_READY
     }
 
     if (SelectionKey.OP_CONNECT in mode) {
-        opts = opts or Selector.EVENT_CONNECTED
+        opts = opts or SelectorOld.EVENT_CONNECTED
     }
     return opts
 }
 
 private operator fun Int.contains(opConnect: Int): Boolean = this and opConnect != 0
 
-class JvmSelector : Selector {
+class JvmSelector : SelectorOld {
     internal val native = JSelector.open()
 
     @Volatile
@@ -38,7 +38,7 @@ class JvmSelector : Selector {
         native.wakeup()
     }
 
-    override fun getAttachedKeys(): Collection<Selector.Key> {
+    override fun getAttachedKeys(): Collection<SelectorOld.Key> {
         return this.native.keys().mapNotNull {
             val key = it.attachment() as JvmKey
             val native = key.native ?: return@mapNotNull null
@@ -53,7 +53,7 @@ class JvmSelector : Selector {
     private val lock = ReentrantLock()
 
     @OptIn(ExperimentalTime::class)
-    override fun select(selectedEvents: SelectedEvents, timeout: Long): Int {
+    override fun select(selectedEvents: SelectedEventsOld, timeout: Long): Int {
         lock.lock()
         selectedEvents.lock.lock()
         try {
@@ -85,7 +85,7 @@ class JvmSelector : Selector {
         }
     }
 
-    override fun attach(socket: TcpClientSocketChannel, attachment: Any?, mode: Int): Selector.Key {
+    override fun attach(socket: TcpClientSocketChannel, attachment: Any?, mode: Int): SelectorOld.Key {
         val key = JvmKey(attachment, initMode = mode, connected = false, selector = this)
         keysNotInSelector += key
         socket.key = key
@@ -95,7 +95,7 @@ class JvmSelector : Selector {
         return key
     }
 
-    override fun attach(socket: TcpServerSocketChannel, attachment: Any?, mode: Int): Selector.Key {
+    override fun attach(socket: TcpServerSocketChannel, attachment: Any?, mode: Int): SelectorOld.Key {
         val key = JvmKey(attachment, initMode = mode, connected = true, selector = this)
         keysNotInSelector += key
         socket.key = key
@@ -105,7 +105,7 @@ class JvmSelector : Selector {
         return key
     }
 
-    override fun attach(socket: UdpSocketChannel, attachment: Any?, mode: Int): Selector.Key {
+    override fun attach(socket: UdpSocketChannel, attachment: Any?, mode: Int): SelectorOld.Key {
         val key = JvmKey(attachment, initMode = mode, connected = true, selector = this)
         key.setNative(socket.native)
 //        socket.key = key
@@ -120,7 +120,7 @@ class JvmSelector : Selector {
     }
 }
 
-actual fun createSelector(): Selector = JvmSelector()
+actual fun createSelector(): SelectorOld = JvmSelector()
 
 internal fun jvmModeToString(mode: Int): String {
     val sb = StringBuilder()
