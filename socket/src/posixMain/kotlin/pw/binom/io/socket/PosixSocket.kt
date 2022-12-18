@@ -4,38 +4,20 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.sizeOf
-import platform.common.internal_getSocketPort
 import platform.posix.*
 import pw.binom.io.ByteBuffer
-import pw.binom.io.ClosedException
 import pw.binom.io.IOException
 
 class PosixSocket(
-    override val native: RawSocket
-) : TcpClientUnixSocket, TcpClientNetSocket, TcpUnixServerSocket, TcpNetServerSocket, UdpUnixSocket, UdpNetSocket {
-
-    override var blocking: Boolean = false
-        set(value) {
-            field = value
-            setBlocking(native, value)
-        }
-    override val port: Int?
-        get() = internal_getSocketPort(native).takeIf { it != -1 }
-
-    override fun close() {
-        if (closed) {
-            return
-        }
-        closed = true
-        nativeClose()
-    }
+    native: RawSocket
+) : AbstractSocket(native = native) {
 
     override fun bind(address: NetworkAddress): BindStatus {
         memScoped {
-            val netAddress = if (address is PosixMutableNetworkAddress) {
+            val netAddress = if (address is CommonMutableNetworkAddress) {
                 address
             } else {
-                PosixMutableNetworkAddress(address)
+                CommonMutableNetworkAddress(address)
             }
             val bindResult = netAddress.getAsIpV6 { ipv6Addr ->
                 bind(
@@ -87,10 +69,10 @@ class PosixSocket(
     }
 
     override fun connect(address: NetworkAddress): ConnectStatus {
-        val netAddress = if (address is PosixMutableNetworkAddress) {
+        val netAddress = if (address is CommonMutableNetworkAddress) {
             address
         } else {
-            PosixMutableNetworkAddress(address)
+            CommonMutableNetworkAddress(address)
         }
         val connectResponse = netAddress.getAsIpV6 { addr ->
             connect(
@@ -115,10 +97,10 @@ class PosixSocket(
         if (data.remaining == 0) {
             return 0
         }
-        val netAddress = if (address is PosixMutableNetworkAddress) {
+        val netAddress = if (address is CommonMutableNetworkAddress) {
             address
         } else {
-            PosixMutableNetworkAddress(address)
+            CommonMutableNetworkAddress(address)
         }
         val sendResult = netAddress.getAsIpV6 { ipv6Addr ->
             data.ref { ptr, remaining ->
@@ -148,16 +130,21 @@ class PosixSocket(
         return sendResult
     }
 
-    override fun receive(data: ByteBuffer, address: MutableNetworkAddress?): Int {
-        val received = internalReceive(
-            native = native,
-            data = data,
-            address = address
-        )
-        if (received > 0) {
-            data.position += received
+    override fun processAfterSendUdp(data: ByteBuffer, code: Int): Int {
+        if (code == -1) {
+            if (errno == EPIPE) {
+                return -1
+            }
+            if (errno == EINVAL) {
+                throw IOException("Can't send data: Invalid argument")
+            }
+            if (errno == EAGAIN) {
+                return 0
+            }
+            throw IOException("Can't send data. Error: $errno  $errno")
         }
-        return received
+        data.position += code
+        return code
     }
 
     override fun connect(path: String): ConnectStatus {
@@ -173,14 +160,6 @@ class PosixSocket(
     }
 
     override fun bind(path: String): BindStatus = bindUnixSocket(native = native, fileName = path)
-
-    private var closed = false
-
-    private fun nativeClose() {
-        unbind(native)
-        shutdown(native, SHUT_RDWR)
-        close(native)
-    }
 
     override fun send(data: ByteBuffer): Int {
         if (closed) {
@@ -202,25 +181,17 @@ class PosixSocket(
                 if (error == ECONNRESET) {
                     nativeClose()
                     return -1
-//                    throw SocketClosedException()
                 }
                 if (errno == EAGAIN) {
                     return 0
                 }
                 if (errno == EBADF) {
                     return -1
-//                    throw SocketClosedException()
                 }
                 throw IOException("Error on send data to network. send: [$r], error: [$errno]")
             }
             data.position += r
             return r
-        }
-    }
-
-    private fun ensureOpen() {
-        if (!closed) {
-            throw ClosedException()
         }
     }
 
@@ -261,7 +232,7 @@ class PosixSocket(
     }
 
     override fun accept(address: MutableNetworkAddress?): TcpClientNetSocket? {
-        val clientRaw = internalAccess(native, address) ?: return null
+        val clientRaw = internalAccept(native, address) ?: return null
         return PosixSocket(clientRaw)
     }
 

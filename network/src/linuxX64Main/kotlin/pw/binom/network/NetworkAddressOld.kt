@@ -163,6 +163,7 @@ actual sealed class NetworkAddressOld {
                     else -> throw RuntimeException("Unknown error: $err")
                 }
             }
+            result.value!!.pointed.ai_next
             memcpy(
                 data.refTo(0),
                 result.value!!.pointed.ai_addr,

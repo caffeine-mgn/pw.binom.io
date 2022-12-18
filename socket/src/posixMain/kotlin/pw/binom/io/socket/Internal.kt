@@ -9,4 +9,4 @@ internal actual fun createNetworkAddress(host: String, port: Int): NetworkAddres
     return ret
 }
 
-internal actual fun createMutableNetworkAddress(): MutableNetworkAddress = PosixMutableNetworkAddress()
+internal actual fun createMutableNetworkAddress(): MutableNetworkAddress = CommonMutableNetworkAddress()

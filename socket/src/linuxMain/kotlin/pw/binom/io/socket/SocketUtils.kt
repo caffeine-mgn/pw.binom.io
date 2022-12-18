@@ -55,14 +55,14 @@ actual fun unbind(native: RawSocket) {
     }
 }
 
-actual fun internalAccess(native: RawSocket, address: MutableNetworkAddress?): RawSocket? {
+actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): RawSocket? {
     if (address == null) {
         return accept(native, null, null).takeIf { it != -1 }
     }
-    val out = if (address is PosixMutableNetworkAddress) {
+    val out = if (address is CommonMutableNetworkAddress) {
         address
     } else {
-        PosixMutableNetworkAddress()
+        CommonMutableNetworkAddress()
     }
     val newClientRaw = memScoped {
         val len = allocArray<socklen_tVar>(1)
@@ -77,7 +77,7 @@ actual fun internalAccess(native: RawSocket, address: MutableNetworkAddress?): R
     }
 
     if (out !== address) {
-        address.update(out.host, out.port)
+        address.update(host = out.host, port = out.port)
     }
     return newClientRaw
 }
@@ -91,10 +91,10 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
             recvfrom(native, dataPtr, remaining.convert(), 0, null, null)
         }!!.toInt()
     } else {
-        val netAddress = if (address is PosixMutableNetworkAddress) {
+        val netAddress = if (address is CommonMutableNetworkAddress) {
             address
         } else {
-            PosixMutableNetworkAddress(address)
+            CommonMutableNetworkAddress(address)
         }
         val readSize = netAddress.addr { addrPtr ->
             data.ref { dataPtr, remaining ->
@@ -122,3 +122,5 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
         readSize
     }
 }
+
+actual fun createSocket(socket: RawSocket): Socket = PosixSocket(socket)

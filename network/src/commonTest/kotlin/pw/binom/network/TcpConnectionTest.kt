@@ -20,6 +20,7 @@ import kotlin.time.TimeSource
 class TcpConnectionTest {
 
     @Test
+    @Ignore
     fun serverFlagsOnAttachTest() {
         val selectKeys = SelectedEventsOld.create()
         val selector = SelectorOld.open()
