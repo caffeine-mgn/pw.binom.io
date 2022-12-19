@@ -4,7 +4,6 @@ import kotlinx.coroutines.runBlocking
 import pw.binom.io.ByteBuffer
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
-import pw.binom.network.NetworkAddressOld
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.TrustManager

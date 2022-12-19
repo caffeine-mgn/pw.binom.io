@@ -119,7 +119,6 @@ actual class Selector : Closeable {
                 continue
             }
             val key = ptr.asStableRef<SelectorKey>().get()
-            println("<=${epollModeToString(event.events.toInt())} $key")
             if (event.events.toInt() and EPOLLERR.toInt() != 0 ||
                 event.events.toInt() and EPOLLHUP.toInt() != 0
             ) {

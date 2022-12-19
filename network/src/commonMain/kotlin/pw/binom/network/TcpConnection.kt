@@ -66,7 +66,6 @@ class TcpConnection(
                 sendData.reset()
                 return
             }
-            println("TcpConnection($description):: wrote lazy ${result.getOrNull()}")
             if (sendData.data!!.remaining == 0) {
                 val con = sendData.continuation!!
                 sendData.reset()
@@ -201,7 +200,6 @@ class TcpConnection(
         }
         val wrote = channel.send(data)
         if (wrote > 0) {
-            println("TcpConnection($description):: wrote $wrote")
             return wrote
         }
         if (wrote == -1) {

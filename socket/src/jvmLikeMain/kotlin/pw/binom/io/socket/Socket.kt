@@ -24,4 +24,7 @@ actual interface Socket : Closeable {
         actual fun createTcpServerUnixSocket(): TcpUnixServerSocket =
             JvmTcpServerSocket(pw.binom.io.socket.createTcpServerUnixSocket())
     }
+
+    actual val tcpNoDelay: Boolean
+    actual fun setTcpNoDelay(value: Boolean): Boolean
 }

@@ -2,10 +2,9 @@ package pw.binom.io.socket
 
 import pw.binom.io.ByteBuffer
 import java.net.ConnectException
-import java.net.UnixDomainSocketAddress
+import java.net.SocketException
 import java.nio.channels.AlreadyConnectedException
 import java.nio.channels.SocketChannel
-import kotlin.io.path.Path
 
 class JvmTcpClientSocket(
     override val native: SocketChannel
@@ -72,7 +71,7 @@ class JvmTcpClientSocket(
     }
 
     override fun connect(path: String): ConnectStatus {
-        native.connect(UnixDomainSocketAddress.of(Path(path)))
+        native.connectUnix(path)
         return ConnectStatus.OK
     }
 
@@ -80,5 +79,19 @@ class JvmTcpClientSocket(
         set(value) {
             field = value
             native.configureBlocking(value)
+        }
+    override val tcpNoDelay: Boolean
+        get() = try {
+            native.socket().tcpNoDelay
+        } catch (e: SocketException) {
+            false
+        }
+
+    override fun setTcpNoDelay(value: Boolean): Boolean =
+        try {
+            native.socket().tcpNoDelay = value
+            true
+        } catch (e: SocketException) {
+            false
         }
 }

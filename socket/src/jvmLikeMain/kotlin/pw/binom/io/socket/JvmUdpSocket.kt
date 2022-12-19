@@ -2,9 +2,7 @@ package pw.binom.io.socket
 
 import pw.binom.io.ByteBuffer
 import java.net.InetSocketAddress
-import java.net.UnixDomainSocketAddress
 import java.nio.channels.DatagramChannel
-import kotlin.io.path.Path
 
 class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSocket, UdpNetSocket {
     override fun close() {
@@ -54,17 +52,20 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
 
     override fun bind(path: String): BindStatus {
         native.socket().reuseAddress = true
-        native.bind(UnixDomainSocketAddress.of(Path(path)))
+        native.bindUnix(path)
         return BindStatus.OK
     }
 
-    override fun send(data: ByteBuffer, address: String): Int {
-        return native.send(data.native, UnixDomainSocketAddress.of(Path(address)))
-    }
+    override fun send(data: ByteBuffer, address: String): Int = native.sendUnix(address, data)
 
     override fun receive(data: ByteBuffer, address: (String) -> Unit?): Int {
         val before = data.position
         native.receive(data.native)
         return data.position - before
     }
+
+    override val tcpNoDelay: Boolean
+        get() = false
+
+    override fun setTcpNoDelay(value: Boolean): Boolean = false
 }

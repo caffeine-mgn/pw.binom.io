@@ -49,6 +49,7 @@ fun NamedDomainObjectContainer<KotlinSourceSet>.useDefault() {
     val mingwMain = createTarget("mingw").dp(nativeRunnableMain)
     val posixMain = createTarget("posix").dp(nativeRunnableMain)
     val linuxMain = createTarget("linux").dp(posixMain)
+    val androidNativeMain = createTarget("androidNative").dp(posixMain)
     val darwinMain = createTarget("darwin").dp(posixMain)
 
     dependsOn("jvm", jvmLike)
@@ -58,7 +59,8 @@ fun NamedDomainObjectContainer<KotlinSourceSet>.useDefault() {
     dependsOn("watchos*", posixMain)
     dependsOn("macos*", darwinMain)
     dependsOn("ios*", darwinMain)
-    dependsOn("androidNative*", posixMain)
+    dependsOn("tvos*", darwinMain)
+    dependsOn("androidNative*", androidNativeMain)
     dependsOn("wasm*Main", nativeCommonMain)
 
     dependsOn("androidMain", jvmLike)

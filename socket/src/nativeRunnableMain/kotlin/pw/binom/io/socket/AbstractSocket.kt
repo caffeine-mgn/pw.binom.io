@@ -4,6 +4,7 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.reinterpret
 import platform.common.internal_close_socket
 import platform.common.internal_getSocketPort
+import platform.common.internal_tcp_nodelay
 import platform.common.internal_send_to_socket_udp
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
@@ -17,6 +18,10 @@ abstract class AbstractSocket(override val native: RawSocket) :
     UdpNetSocket {
 
     protected var closed = false
+
+    private var internalTcpNoDelay = false
+    override val tcpNoDelay: Boolean
+        get() = internalTcpNoDelay
 
     override var blocking: Boolean = false
         set(value) {
@@ -85,5 +90,13 @@ abstract class AbstractSocket(override val native: RawSocket) :
     override fun accept(address: MutableNetworkAddress?): TcpClientNetSocket? {
         val clientRaw = internalAccept(native, address) ?: return null
         return createSocket(clientRaw) as TcpClientNetSocket
+    }
+
+    override fun setTcpNoDelay(value: Boolean): Boolean {
+        val result = internal_tcp_nodelay(native, if (value) 1 else 0) > 0
+        if (result) {
+            internalTcpNoDelay = value
+        }
+        return result
     }
 }

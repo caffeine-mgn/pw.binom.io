@@ -1,11 +1,8 @@
 package pw.binom.io.socket
 
 import java.net.InetSocketAddress
-import java.net.UnixDomainSocketAddress
 import java.nio.channels.AlreadyBoundException
 import java.nio.channels.ServerSocketChannel
-import java.nio.file.Files
-import kotlin.io.path.Path
 
 class JvmTcpServerSocket(override val native: ServerSocketChannel) : TcpNetServerSocket, TcpUnixServerSocket {
     override fun close() {
@@ -46,10 +43,8 @@ class JvmTcpServerSocket(override val native: ServerSocketChannel) : TcpNetServe
     }
 
     override fun bind(path: String): BindStatus {
-        val address = Path(path)
-        Files.deleteIfExists(address)
         try {
-            native.bind(UnixDomainSocketAddress.of(address))
+            native.bindUnix(path)
         } catch (e: AlreadyBoundException) {
             return BindStatus.ALREADY_BINDED
         }
@@ -63,4 +58,8 @@ class JvmTcpServerSocket(override val native: ServerSocketChannel) : TcpNetServe
         }
     override val port: Int?
         get() = native.socket().localPort.takeIf { it != -1 }
+    override val tcpNoDelay: Boolean
+        get() = false
+
+    override fun setTcpNoDelay(value: Boolean): Boolean = false
 }

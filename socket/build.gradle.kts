@@ -118,18 +118,18 @@ kotlin {
         useNativeUtils()
         useNativeMacos()
     }
-    androidNativeX64 {
-        useNativeUtils()
-    }
-    androidNativeX86 {
-        useNativeUtils()
-    }
-    androidNativeArm32 {
-        useNativeUtils()
-    }
-    androidNativeArm64 {
-        useNativeUtils()
-    }
+//    androidNativeX64 {
+//        useNativeUtils()
+//    }
+//    androidNativeX86 {
+//        useNativeUtils()
+//    }
+//    androidNativeArm32 {
+//        useNativeUtils()
+//    }
+//    androidNativeArm64 {
+//        useNativeUtils()
+//    }
 
     sourceSets {
         val commonMain by getting {

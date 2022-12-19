@@ -3,7 +3,6 @@ package pw.binom.io.socket.ssl
 import kotlinx.coroutines.runBlocking
 import pw.binom.io.bufferedAsciiReader
 import pw.binom.io.socket.NetworkAddress
-import pw.binom.network.NetworkAddressOld
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.tcpConnect
 import pw.binom.ssl.EmptyKeyManager

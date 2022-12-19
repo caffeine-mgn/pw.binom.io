@@ -46,4 +46,7 @@ actual interface Socket : Closeable {
             return createSocket(native) as TcpUnixServerSocket
         }
     }
+
+    actual val tcpNoDelay: Boolean
+    actual fun setTcpNoDelay(value: Boolean): Boolean
 }
