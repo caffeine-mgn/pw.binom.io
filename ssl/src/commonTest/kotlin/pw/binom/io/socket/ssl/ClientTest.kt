@@ -2,6 +2,7 @@ package pw.binom.io.socket.ssl
 
 import kotlinx.coroutines.runBlocking
 import pw.binom.io.bufferedAsciiReader
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.NetworkAddressOld
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.tcpConnect
@@ -27,7 +28,7 @@ class ClientTest {
     @Test
     fun test() = runBlocking {
         val nd = NetworkCoroutineDispatcherImpl()
-        val rawConnection = nd.tcpConnect(NetworkAddressOld.Immutable("smtp.yandex.ru", 465))
+        val rawConnection = nd.tcpConnect(NetworkAddress.create("smtp.yandex.ru", 465))
         val sslContext = SSLContext.getInstance(SSLMethod.TLSv1_2, EmptyKeyManager, TrustManager.TRUST_ALL)
         val clientSession = sslContext.clientSession("smtp.yandex.ru", 465)
         val sslConnect = clientSession.asyncChannel(rawConnection)

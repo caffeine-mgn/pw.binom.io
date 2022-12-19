@@ -1,0 +1,9 @@
+---
+#include <fcntl.h>
+
+int internal_O_BINARY(){
+    return _O_BINARY;
+}
+int internal_O_NOINHERIT(){
+    return O_NOINHERIT;
+}

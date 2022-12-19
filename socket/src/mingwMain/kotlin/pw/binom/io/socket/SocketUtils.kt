@@ -1,9 +1,13 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
+import platform.common.socklen_tVar
 import platform.posix.INVALID_SOCKET
+import platform.posix.recvfrom
 import platform.windows.SetLastError
 import platform.windows.accept
+import platform.windows.sockaddr_in6
+import pw.binom.io.ByteBuffer
 
 actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): RawSocket? {
     val native = if (address == null) {
@@ -72,3 +76,51 @@ actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): R
 //        true
 //    }
 // }
+
+internal actual fun createSocket(socket: RawSocket): Socket =
+    MingwSocket(socket)
+
+actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
+    throwUnixSocketNotSupported()
+}
+
+actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableNetworkAddress?): Int {
+    if (data.remaining == 0) {
+        return 0
+    }
+    return if (address == null) {
+        data.ref { dataPtr, remaining ->
+            recvfrom(native.convert(), dataPtr, remaining.convert(), 0, null, null)
+        }!!.toInt()
+    } else {
+        val netAddress = if (address is CommonMutableNetworkAddress) {
+            address
+        } else {
+            CommonMutableNetworkAddress(address)
+        }
+        val readSize = netAddress.addr { addrPtr ->
+            data.ref { dataPtr, remaining ->
+                memScoped {
+                    val len = allocArray<socklen_tVar>(1)
+                    len[0] = sizeOf<sockaddr_in6>().convert()
+                    val r = recvfrom(
+                        native.convert(),
+                        dataPtr,
+                        remaining.convert(),
+                        0,
+                        addrPtr.reinterpret(),
+                        len,
+                    )
+                    if (r >= 0) {
+                        netAddress.size = len[0].convert()
+                    }
+                    r
+                }
+            }!!.toInt()
+        }!!
+        if (readSize >= 0 && netAddress !== address) {
+            address.update(netAddress.host, netAddress.port)
+        }
+        readSize
+    }
+}

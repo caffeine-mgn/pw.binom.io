@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import pw.binom.eachKotlinTest
+import pw.binom.publish.dependsOn
 import pw.binom.useDefault
 
 plugins {
@@ -31,8 +32,12 @@ fun KotlinNativeTarget.useNativeMacos() {
 
 fun KotlinNativeTarget.useNativeMingw() {
     compilations["main"].cinterops {
-        create("mingw") {
+        create("mingw_epoll") {
             defFile = project.file("src/cinterop/wepoll.def")
+            packageName = "platform.common"
+        }
+        create("mingw") {
+            defFile = project.file("src/cinterop/mingw.def")
             packageName = "platform.common"
         }
     }
@@ -139,6 +144,11 @@ kotlin {
                 api(project(":thread"))
             }
         }
+        val epollLikeMain by creating {
+
+        }
+        dependsOn("linuxMain", epollLikeMain)
+        dependsOn("mingwMain", epollLikeMain)
         useDefault()
     }
 }

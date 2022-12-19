@@ -47,14 +47,6 @@ actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
     }
 }
 
-actual fun unbind(native: RawSocket) {
-    memScoped {
-        val flag = alloc<IntVar>()
-        flag.value = 1
-        setsockopt(native, SOL_SOCKET, SO_REUSEADDR, flag.ptr, sizeOf<IntVar>().convert())
-    }
-}
-
 actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): RawSocket? {
     if (address == null) {
         return accept(native, null, null).takeIf { it != -1 }

@@ -1,9 +1,6 @@
 linkerOpts.mingwX32= -lws2_32 -lwsock32 -lws2_64 -lwsock64
 ---
 #include <winsock2.h>
-int internal_setsockopt(SOCKET __fd, int __level, int __optname, void* __optval, int __optlen){
-    return setsockopt(__fd, __level, __optname, (char*)__optval, __optlen);
-}
 /*
  * wepoll - epoll for Windows
  * https://github.com/piscisaureus/wepoll

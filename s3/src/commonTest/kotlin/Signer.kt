@@ -20,10 +20,11 @@ import pw.binom.io.http.Headers
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
-import pw.binom.net.URI
-import pw.binom.net.toURI
-import pw.binom.net.toURL
+import pw.binom.url.URI
+import pw.binom.url.toURI
+import pw.binom.url.toURL
 import pw.binom.s3.S3ClientApi
+import pw.binom.url.UrlEncoder
 import pw.binom.xml.serialization.annotations.XmlName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 import pw.binom.xml.serialization.annotations.XmlNode
@@ -154,7 +155,7 @@ class Signer private constructor(
         canonicalRequest = (
             request.method
                 .toString() + "\n" +
-                this.url.path.raw.split('/').map { UTF8.encode(it) }.joinToString("/") +
+                this.url.path.raw.split('/').map { UrlEncoder.encode(it) }.joinToString("/") +
                 "\n" +
                 this.canonicalQueryString +
                 "\n" +

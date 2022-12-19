@@ -5,10 +5,9 @@ import kotlinx.coroutines.runBlocking
 import pw.binom.date.DateTime
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
-import pw.binom.network.NetworkAddressOld
 import pw.binom.network.NetworkCoroutineDispatcherImpl
-import pw.binom.network.bindTcp
 import pw.binom.network.tcpConnect
+import pw.binom.io.socket.*
 import pw.binom.readLong
 import pw.binom.ssl.*
 import pw.binom.writeLong
@@ -68,7 +67,7 @@ class SSLTest {
         )
         val buf = ByteBuffer.alloc(16)
         val nd = NetworkCoroutineDispatcherImpl()
-        val addr = NetworkAddressOld.Immutable("127.0.0.1", 4445)
+        val addr = NetworkAddress.create("127.0.0.1", 4445)
         val server = nd.bindTcp(addr)
         val r1 = launch {
             val client = server.accept()

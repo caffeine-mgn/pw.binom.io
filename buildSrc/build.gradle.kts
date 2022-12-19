@@ -7,13 +7,13 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.21")
         classpath("com.android.tools.build:gradle:7.0.0")
     }
 }
 
 plugins {
-    kotlin("jvm") version "1.7.10"
+    kotlin("jvm") version "1.7.21"
     id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 val kotlinVersion = project.property("kotlin.version") as String

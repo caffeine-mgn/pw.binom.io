@@ -9,11 +9,11 @@ import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.io.*
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
-import pw.binom.net.toURL
-import pw.binom.nextUuid
 import pw.binom.s3.dto.Part
 import pw.binom.s3.exceptions.S3ErrorException
 import pw.binom.s3.v4.toHex
+import pw.binom.url.toURL
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.*
 
