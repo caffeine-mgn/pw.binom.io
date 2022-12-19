@@ -1,5 +1,6 @@
 package pw.binom.network
 
+import pw.binom.io.socket.NetworkAddress
 import java.net.NetworkInterface as JvmNetworkInterface
 
 actual class NetworkInterface private constructor(
@@ -24,7 +25,7 @@ actual class NetworkInterface private constructor(
                     hardwareAddress = networkInterface.hardwareAddress,
                     addresses = networkInterface.interfaceAddresses.map { address ->
                         NetworkInterfaceAddress(
-                            address = NetworkAddressOld.Immutable(host = address.address.hostAddress, port = 0),
+                            address = NetworkAddress.create(host = address.address.hostAddress, port = 0),
                             networkPrefixAddress = address.networkPrefixLength.toInt(),
                         )
                     }

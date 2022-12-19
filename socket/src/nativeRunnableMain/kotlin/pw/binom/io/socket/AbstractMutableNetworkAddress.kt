@@ -5,7 +5,7 @@ import kotlinx.cinterop.*
 abstract class AbstractMutableNetworkAddress : MutableNetworkAddress {
     val data = ByteArray(28)
     var size = 0
-        internal set
+        set
 
     protected var hashCode = 0
 

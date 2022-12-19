@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import kotlinx.cinterop.*
+import platform.common.internal_copy_address
 import platform.linux.freeifaddrs
 import platform.linux.getifaddrs
 import platform.linux.ifaddrs
@@ -10,6 +11,7 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.useName
 import pw.binom.io.IOException
+import pw.binom.io.socket.CommonMutableNetworkAddress
 import kotlin.experimental.and
 
 private inline infix fun Byte.ushr(other: Byte): Byte = (this.toInt() ushr other.toInt()).toByte()
@@ -72,8 +74,19 @@ actual class NetworkInterface private constructor(
                         when (addressPtr.pointed.ifa_addr?.pointed?.sa_family!!.toInt()) {
                             AF_INET, AF_INET6 -> {
                                 val list = addresses.getOrPut(addressPtr.pointed.ifa_name!!.toKString()) { ArrayList() }
+                                val sizePtr = alloc<IntVar>()
+
+                                val addr = CommonMutableNetworkAddress()
+                                addr.data.usePinned { dataPinned ->
+                                    internal_copy_address(
+                                        addressPtr!!.pointed.ifa_addr!!,
+                                        dataPinned.addressOf(0),
+                                        sizePtr.ptr,
+                                    )
+                                }
+                                addr.size = sizePtr.value
                                 list += NetworkInterfaceAddress(
-                                    address = NetworkAddressOld.Immutable(sockaddr = addressPtr.pointed.ifa_addr!!),
+                                    address = addr,
                                     networkPrefixAddress = calcNetworkPrefix(address = addressPtr.pointed.ifa_netmask!!)
                                 )
                             }

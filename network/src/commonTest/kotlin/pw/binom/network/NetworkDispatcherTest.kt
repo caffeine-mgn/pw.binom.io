@@ -262,23 +262,3 @@ class NetworkDispatcherTest {
         clientFuture2.join()
     }
 }
-
-fun modeToString(mode: Int): String {
-    val sb = StringBuilder()
-    if (SelectorOld.OUTPUT_READY and mode != 0) {
-        sb.append("EVENT_EPOLLOUT ")
-    }
-
-    if (SelectorOld.INPUT_READY and mode != 0) {
-        sb.append("EVENT_EPOLLIN ")
-    }
-
-    if (SelectorOld.EVENT_CONNECTED and mode != 0) {
-        sb.append("EVENT_CONNECTED ")
-    }
-
-    if (SelectorOld.EVENT_ERROR and mode != 0) {
-        sb.append("EVENT_ERROR ")
-    }
-    return sb.toString()
-}

@@ -2,24 +2,12 @@
 
 package pw.binom.network
 
-import pw.binom.Environment
 import pw.binom.collections.defaultMutableSet
 import pw.binom.io.socket.SelectorKey
 import pw.binom.io.socket.addListen
 import pw.binom.io.socket.removeListen
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmName
-
-expect val Short.hton: Short
-expect val Short.ntoh: Short
-
-expect val Int.hton: Int
-expect val Int.ntoh: Int
-
-expect val Long.hton: Long
-expect val Long.ntoh: Long
-
-expect val Environment.isBigEndian2: Boolean
 
 @JvmInline
 value class KeyCollection(private val set: MutableSet<SelectorKey>) {

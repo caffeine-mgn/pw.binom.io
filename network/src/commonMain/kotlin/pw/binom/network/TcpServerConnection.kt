@@ -15,8 +15,8 @@ class TcpServerConnection constructor(
     var description: String? = null
 
     companion object {
-        fun randomPort() = TcpServerSocketChannel().use {
-            it.bind(NetworkAddressOld.Immutable(host = "127.0.0.1", port = 0))
+        fun randomPort() = Socket.createTcpServerNetSocket().use {
+            it.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
             it.port!!
         }
     }

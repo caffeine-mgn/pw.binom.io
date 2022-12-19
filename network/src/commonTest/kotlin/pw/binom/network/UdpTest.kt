@@ -5,6 +5,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.*
 import pw.binom.io.socket.MutableNetworkAddress
 import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.Selector
 import pw.binom.io.socket.Socket
 import kotlin.test.*
 
@@ -19,10 +20,10 @@ class UdpTest {
     @Ignore
     @Test
     fun closeByKey() {
-        val channel = UdpSocketChannel()
-        val selector = SelectorOld.open()
-        channel.setBlocking(false)
-        val key = selector.attach(channel, null, 0)
+        val channel = Socket.createUdpNetSocket()
+        val selector = Selector()
+        channel.blocking = false
+        val key = selector.attach(channel)
         channel.close()
         try {
             key.close()

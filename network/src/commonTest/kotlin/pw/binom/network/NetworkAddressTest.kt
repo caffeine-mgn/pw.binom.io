@@ -1,5 +1,7 @@
 package pw.binom.network
 
+import pw.binom.io.socket.MutableNetworkAddress
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
@@ -11,7 +13,7 @@ class NetworkAddressTest {
 
     @Test
     fun dataTest() {
-        val addr = NetworkAddressOld.Immutable("127.0.0.1", 123)
+        val addr = NetworkAddress.create("127.0.0.1", 123)
         assertEquals("127.0.0.1", addr.host)
         assertEquals(123, addr.port)
         assertTrue(addr.equals(addr.toMutable()))
@@ -22,16 +24,16 @@ class NetworkAddressTest {
         assertEquals("127.0.0.1", addr.toMutable().toImmutable().host)
         assertEquals(123, addr.toMutable().toImmutable().port)
 
-        val addr2 = NetworkAddressOld.Mutable()
-        addr2.reset("127.0.0.1", port = 123)
+        val addr2 = MutableNetworkAddress.create()
+        addr2.update(host = "127.0.0.1", port = 123)
         assertEquals("127.0.0.1", addr2.host)
         assertEquals(123, addr2.port)
     }
 
     @Test
     fun hashCodeEqualsTest() {
-        val v = NetworkAddressOld.Mutable().also {
-            it.reset(host = "127.0.0.1", port = 123)
+        val v = MutableNetworkAddress.create().also {
+            it.update(host = "127.0.0.1", port = 123)
         }
         assertTrue(v.hashCode() != 0, "#1")
         assertTrue(v.toImmutable().hashCode() != 0, "#2")
@@ -40,22 +42,22 @@ class NetworkAddressTest {
     @Test
     fun unknownHost() {
         try {
-            NetworkAddressOld.Immutable(Random.nextUuid().toString(), 9999)
+            NetworkAddress.create(host = Random.nextUuid().toString(), port = 9999)
             fail()
         } catch (e: UnknownHostException) {
-            // NOP
+            // Do nothing
         }
         try {
-            NetworkAddressOld.Mutable().reset(Random.nextUuid().toString(), 9999)
+            MutableNetworkAddress.create(host = Random.nextUuid().toString(), port = 9999)
             fail()
         } catch (e: UnknownHostException) {
-            // NOP
+            // Do nothing
         }
     }
 
     @Test
     fun knownHost() {
-        NetworkAddressOld.Immutable("google.com", 9999)
-        NetworkAddressOld.Mutable().reset("google.com", 9999)
+        NetworkAddress.create(host = "google.com", port = 9999)
+        MutableNetworkAddress.create(host = "google.com", port = 9999)
     }
 }

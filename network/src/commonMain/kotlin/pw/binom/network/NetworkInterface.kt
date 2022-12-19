@@ -1,7 +1,9 @@
 package pw.binom.network
 
+import pw.binom.io.socket.NetworkAddress
+
 data class NetworkInterfaceAddress(
-    val address: NetworkAddressOld.Immutable,
+    val address: NetworkAddress,
     val networkPrefixAddress: Int,
 )
 
