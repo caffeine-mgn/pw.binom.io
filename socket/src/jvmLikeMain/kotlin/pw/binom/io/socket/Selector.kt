@@ -42,7 +42,9 @@ actual class Selector : Closeable {
                         if (channel?.isConnectionPending == true) {
                             try {
                                 channel.finishConnect()
+                                binomKey.isErrorHappened = false
                             } catch (e: java.net.ConnectException) {
+                                binomKey.isErrorHappened = true
                                 binomKey.listenFlags = 0
                                 selectedKeys.errors += binomKey
                                 return@forEach
@@ -50,6 +52,7 @@ actual class Selector : Closeable {
                             }
                         }
                     }
+                    binomKey.isErrorHappened = false
                     binomKey.listenFlags = 0
                 }
                 selectedKeys.selectedKeys = list

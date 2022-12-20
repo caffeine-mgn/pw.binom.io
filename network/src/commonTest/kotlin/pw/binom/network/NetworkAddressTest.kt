@@ -2,6 +2,7 @@ package pw.binom.network
 
 import pw.binom.io.socket.MutableNetworkAddress
 import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.UnknownHostException
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
@@ -43,12 +44,6 @@ class NetworkAddressTest {
     fun unknownHost() {
         try {
             NetworkAddress.create(host = Random.nextUuid().toString(), port = 9999)
-            fail()
-        } catch (e: UnknownHostException) {
-            // Do nothing
-        }
-        try {
-            MutableNetworkAddress.create(host = Random.nextUuid().toString(), port = 9999)
             fail()
         } catch (e: UnknownHostException) {
             // Do nothing

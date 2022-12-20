@@ -42,6 +42,7 @@ actual class SelectedKeys(val maxElements: Int) {
             while (currentNum < count) {
                 val event = native[currentNum++]
                 val ptr = event.data.ptr ?: continue
+                println("SelectedKeys:: processing $ptr")
                 val key = ptr.asStableRef<SelectorKey>().get()
                 if (key in errors) {
                     eventImpl.internalKey = key
@@ -63,6 +64,7 @@ actual class SelectedKeys(val maxElements: Int) {
                 if (event.events.toInt() and EPOLLIN.toInt() != 0) {
                     e = e or KeyListenFlags.READ
                 }
+                key.internalReadFlags = e
                 eventImpl.internalKey = key
                 eventImpl.internalFlags = e
                 if (!key.isClosed) {

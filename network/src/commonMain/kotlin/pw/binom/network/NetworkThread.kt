@@ -69,9 +69,9 @@ open class NetworkThread : Thread, Closeable {
                         val connection = attachment as AbstractConnection
                         when {
 //                            event.flags and SelectorOld.EVENT_CONNECTED != 0 -> connection.connected()
-                            event.flags and KeyListenFlags.ERROR != 0 -> connection.error()
-                            event.flags and KeyListenFlags.WRITE != 0 -> connection.readyForWrite(event.key)
-                            event.flags and KeyListenFlags.READ != 0 -> connection.readyForRead(event.key)
+                            event.key.readFlags and KeyListenFlags.ERROR != 0 -> connection.error()
+                            event.key.readFlags and KeyListenFlags.WRITE != 0 -> connection.readyForWrite(event.key)
+                            event.key.readFlags and KeyListenFlags.READ != 0 -> connection.readyForRead(event.key)
                             else -> error("Unknown connection event")
                         }
                     } catch (e: Throwable) {

@@ -10,6 +10,25 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     }
 
     actual var attachment: Any? = null
+    internal var isErrorHappened = false
+    actual val readFlags: Int
+        get() {
+            if (closed) {
+                return 0
+            }
+            var r = 0
+            if (isErrorHappened) {
+                r = r or KeyListenFlags.READ or KeyListenFlags.ERROR
+            }
+            if (native.isAcceptable || native.isReadable || native.isConnectable) {
+                r = r or KeyListenFlags.READ
+            }
+            if (native.isWritable || native.isConnectable) {
+                r = r or KeyListenFlags.WRITE
+            }
+            return r
+        }
+
     private var closed = false
     actual var listenFlags: Int = 0
         set(value) {

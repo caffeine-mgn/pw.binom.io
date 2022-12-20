@@ -95,6 +95,7 @@ actual class Selector : Closeable {
     internal fun removeKey(key: SelectorKey) {
         if (selectLock.tryLock()) {
             try {
+                println("Selector:: removeKeyNow ${key.event.data.ptr}")
                 epoll.delete(key.rawSocket, true)
                 addKeyLock.synchronize {
                     val existKey = keys2.remove(key)
@@ -108,6 +109,7 @@ actual class Selector : Closeable {
             }
         } else {
             keyForRemoveLock.synchronize {
+                println("Selector:: removeKeyLater ${key.event.data.ptr}")
                 keyForRemove.add(key)
             }
         }
@@ -175,13 +177,13 @@ actual class Selector : Closeable {
             deferredRemoveKeys()
             selectedKeys.lock.synchronize {
                 selectedKeys.errors.clear()
-//                println("Selector:: selecting...")
+                println("Selector:: selecting...")
                 val eventCount = epoll.select(
                     events = selectedKeys.native,
                     maxEvents = selectedKeys.maxElements,
                     timeout = if (timeout.isInfinite()) -1 else timeout.inWholeMilliseconds.toInt(),
                 )
-//                println("Selector:: selected! count $eventCount")
+                println("Selector:: selected! count $eventCount")
                 cleanupPostProcessing(
                     native = selectedKeys.native,
                     count = eventCount,

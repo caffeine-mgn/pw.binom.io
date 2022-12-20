@@ -8,6 +8,9 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     actual var attachment: Any? = null
     internal var closed = false
     private var free = false
+    actual val readFlags: Int
+        get() = internalReadFlags
+    internal var internalReadFlags = 0
     internal var serverFlag = false
 
     private fun commonToEpoll(commonFlags: Int, server: Boolean): Int {
@@ -42,6 +45,9 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
 //            if (attachment?.toString()?.contains("TcpServerConnection") == true) {
 //                println("SelectorKey:: try update key: ${commonFlagsToString(commonFlags)}, serverFlag: $serverFlag")
 //            }
+            if (free) {
+                event.data.ptr = null
+            }
             event.events = commonToEpoll(commonFlags = commonFlags, server = serverFlag).convert()
             selector.updateKey(this, event.ptr)
         }
@@ -66,6 +72,7 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
             return
         }
         free = true
+        println("SocketKey:: Free ${self.asCPointer()}")
         nativeHeap.free(event)
         freeSelfClose()
     }
