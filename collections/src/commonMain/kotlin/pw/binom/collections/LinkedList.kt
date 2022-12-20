@@ -9,17 +9,20 @@ open class LinkedList<T>() : MutableList<T> {
         addAll(elements)
     }
 
-    protected class Node<T>(var prev: Node<T>?, var item: T?, var next: Node<T>?)
+    class Node<T>(var prev: Node<T>?, var item: T?, var next: Node<T>?)
 
-    private var first: Node<T>? = null
-    private var last: Node<T>? = null
+    var first: Node<T>? = null
+        private set
+    var last: Node<T>? = null
+        private set
 
     private var _size = 0
 
     override val size: Int
         get() = _size
 
-    private var modCount = 0
+    var modCount = 0
+        private set
 
     override fun contains(element: T): Boolean = indexOf(element) >= 0
 
@@ -518,6 +521,19 @@ open class LinkedList<T>() : MutableList<T> {
                 throw ConcurrentModificationException()
             }
         }
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+inline fun <T> LinkedList<T>.forEachLinked(func: (T) -> Unit) {
+    var node = first
+    val startModCount = modCount
+    while (node != null) {
+        if (modCount != startModCount) {
+            throw ConcurrentModificationException()
+        }
+        func(node.item as T)
+        node = node.next
     }
 }
 

@@ -1,8 +1,8 @@
 package pw.binom.network
 
 import kotlinx.coroutines.Runnable
+import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.Exchange
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.io.socket.KeyListenFlags
@@ -13,14 +13,14 @@ import kotlin.time.Duration
 
 open class NetworkThread : Thread, Closeable {
     private val selector: Selector
-    private val exchange: Exchange<Runnable>
+    private val exchange: BatchExchange<Runnable>
 
-    constructor(name: String, selector: Selector, exchange: Exchange<Runnable>) : super(name = name) {
+    constructor(name: String, selector: Selector, exchange: BatchExchange<Runnable>) : super(name = name) {
         this.selector = selector
         this.exchange = exchange
     }
 
-    constructor(selector: Selector, exchange: Exchange<Runnable>) : super() {
+    constructor(selector: Selector, exchange: BatchExchange<Runnable>) : super() {
         this.selector = selector
         this.exchange = exchange
     }
@@ -81,20 +81,21 @@ open class NetworkThread : Thread, Closeable {
                         )
                     }
                 }
-                val runnable = exchange.getOrNull()
-                if (runnable != null) {
-                    try {
-                        runnable.run()
-                    } catch (e: Throwable) {
-                        uncaughtExceptionHandler.uncaughtException(
-                            thread = this,
-                            throwable = RuntimeException("Error on network queue", e)
-                        )
+                exchange.popAll { runnable ->
+                    runnable.forEach { runnable ->
+                        try {
+                            runnable.run()
+                        } catch (e: Throwable) {
+                            uncaughtExceptionHandler.uncaughtException(
+                                thread = this,
+                                throwable = RuntimeException("Error on network queue", e)
+                            )
+                        }
                     }
                 }
-//                taskForRun.forEach {
+//                if (runnable != null) {
 //                    try {
-//                        it.run()
+//                        runnable.run()
 //                    } catch (e: Throwable) {
 //                        uncaughtExceptionHandler.uncaughtException(
 //                            thread = this,
@@ -102,7 +103,6 @@ open class NetworkThread : Thread, Closeable {
 //                        )
 //                    }
 //                }
-//                taskForRun.clear()
             }
         } finally {
             // selectedKeys.close() // TODO

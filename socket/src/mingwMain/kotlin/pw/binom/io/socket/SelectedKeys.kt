@@ -49,6 +49,9 @@ actual class SelectedKeys(val maxElements: Int) {
                     func(eventImpl)
                     continue
                 }
+                if (!key.serverFlag && event.events.toInt() and EPOLLHUP.toInt() != 0) {
+                    continue
+                }
                 var e = 0
                 if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
                     e = e or KeyListenFlags.ERROR

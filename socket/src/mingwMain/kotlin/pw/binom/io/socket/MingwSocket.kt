@@ -8,8 +8,9 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 
 class MingwSocket(
-    native: RawSocket
-) : AbstractSocket(native = native) {
+    native: RawSocket,
+    server: Boolean,
+) : AbstractSocket(native = native, server = server) {
     override fun connect(address: NetworkAddress): ConnectStatus {
         val netaddress = if (address is CommonMutableNetworkAddress) {
             address

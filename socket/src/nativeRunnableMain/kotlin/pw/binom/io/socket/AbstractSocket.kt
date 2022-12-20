@@ -9,7 +9,7 @@ import platform.common.internal_send_to_socket_udp
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
 
-abstract class AbstractSocket(override val native: RawSocket) :
+abstract class AbstractSocket(override val native: RawSocket, override val server: Boolean) :
     TcpClientUnixSocket,
     TcpClientNetSocket,
     TcpUnixServerSocket,
@@ -89,7 +89,7 @@ abstract class AbstractSocket(override val native: RawSocket) :
 
     override fun accept(address: MutableNetworkAddress?): TcpClientNetSocket? {
         val clientRaw = internalAccept(native, address) ?: return null
-        return createSocket(clientRaw) as TcpClientNetSocket
+        return createSocket(socket = clientRaw, server = false) as TcpClientNetSocket
     }
 
     override fun setTcpNoDelay(value: Boolean): Boolean {

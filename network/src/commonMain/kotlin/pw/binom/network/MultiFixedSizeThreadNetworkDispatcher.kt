@@ -1,9 +1,9 @@
 package pw.binom.network
 
 import kotlinx.coroutines.Runnable
+import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.defaultMutableList
-import pw.binom.concurrency.Exchange
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.io.socket.Selector
@@ -13,8 +13,8 @@ import kotlin.coroutines.CoroutineContext
 class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkManager(), Closeable {
     override val selector = Selector()
 
-    //    private val readyForWriteListener = BatchExchange<Runnable>()
-    private val exchange = Exchange<Runnable>()
+    private val exchange = BatchExchange<Runnable>()
+//    private val exchange = Exchange<Runnable>()
 
     init {
         require(threadSize > 0) { "threadSize should be more than 0" }
@@ -49,7 +49,7 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkMa
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         ensureOpen()
-        exchange.put(block)
+        exchange.push(block)
         selector.wakeup()
     }
 

@@ -67,11 +67,16 @@ value class Epoll(val raw: Int) {
         return EpollResult.OK
     }
 
-    fun update(socket: RawSocket, data: CValuesRef<epoll_event>?, failOnError: Boolean) {
+    fun update(socket: RawSocket, data: CValuesRef<epoll_event>?): Boolean {
+        // ENOENT - socket closed
         val ret = epoll_ctl(raw, EPOLL_CTL_MOD, socket.convert(), data)
-        if (ret != 0 && failOnError) {
-            throw IOException("Can't update key to selector. socket: $socket, list: $raw. errno: $errno")
+        if (ret != 0) {
+            println("Epoll update error: $errno")
         }
+        return ret == 0
+//        if (ret != 0 && failOnError) {
+//            throw IOException("Can't update key to selector. socket: $socket, list: $raw. errno: $errno")
+//        }
     }
 
     fun close() {

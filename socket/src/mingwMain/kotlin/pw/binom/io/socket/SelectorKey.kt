@@ -8,20 +8,30 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     actual var attachment: Any? = null
     internal var closed = false
     private var free = false
+    internal var serverFlag = false
 
-    private fun commonToEpoll(commonFlags: Int): Int {
+    private fun commonToEpoll(commonFlags: Int, server: Boolean): Int {
         var r = 0
         if (commonFlags and KeyListenFlags.READ != 0) {
-            r = r or EPOLLIN.toInt() or EPOLLHUP.toInt() or EPOLLERR.toInt()
+            r = r or EPOLLIN.toInt() or EPOLLERR.toInt()
+            if (!server) {
+                r = r or EPOLLHUP.toInt()
+            }
         }
         if (commonFlags and KeyListenFlags.WRITE != 0) {
             r = r or EPOLLOUT.toInt()
         }
         if (commonFlags and KeyListenFlags.ERROR != 0) {
-            r = r or EPOLLHUP.toInt() or EPOLLERR.toInt()
+            r = r or EPOLLERR.toInt()
+            if (!server) {
+                r = r or EPOLLHUP.toInt()
+            }
         }
         if (r != 0) {
             r = r or EPOLLONESHOT.toInt()
+        }
+        if (server) {
+            r = r xor EPOLLHUP.toInt()
         }
         return r
     }
@@ -32,7 +42,7 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
         set(value) {
             internalListenFlags = value
             if (!closed) {
-                event.events = commonToEpoll(value).convert()
+                event.events = commonToEpoll(commonFlags = value, server = serverFlag).convert()
                 selector.updateKey(this, event.ptr)
             }
         }

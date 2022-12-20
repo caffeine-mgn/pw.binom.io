@@ -9,8 +9,9 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 
 class PosixSocket(
-    native: RawSocket
-) : AbstractSocket(native = native) {
+    native: RawSocket,
+    server: Boolean
+) : AbstractSocket(native = native, server = server) {
 
     override fun bind(address: NetworkAddress): BindStatus {
         memScoped {
@@ -233,7 +234,7 @@ class PosixSocket(
 
     override fun accept(address: MutableNetworkAddress?): TcpClientNetSocket? {
         val clientRaw = internalAccept(native, address) ?: return null
-        return PosixSocket(clientRaw)
+        return PosixSocket(native = clientRaw, server = false)
     }
 
     override fun accept(address: ((String) -> Unit)?): TcpClientNetSocket? {

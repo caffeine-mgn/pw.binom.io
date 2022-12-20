@@ -115,4 +115,4 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
     }
 }
 
-actual fun createSocket(socket: RawSocket): Socket = PosixSocket(socket)
+actual fun createSocket(socket: RawSocket, server: Boolean): Socket = PosixSocket(native = socket, server = server)

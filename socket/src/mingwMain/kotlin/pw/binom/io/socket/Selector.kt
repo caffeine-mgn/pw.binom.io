@@ -60,6 +60,7 @@ actual class Selector : Closeable {
                 existKey
             } else {
                 val key = SelectorKey(selector = this, rawSocket = socket.native)
+                key.serverFlag = socket.server
                 epoll.add(socket.native, key.event.ptr)
                 keys[socket] = key
                 keys2[key] = socket
@@ -120,7 +121,7 @@ actual class Selector : Closeable {
             }
             val key = ptr.asStableRef<SelectorKey>().get()
             if (event.events.toInt() and EPOLLERR.toInt() != 0 ||
-                event.events.toInt() and EPOLLHUP.toInt() != 0
+                (!key.serverFlag && event.events.toInt() and EPOLLHUP.toInt() != 0)
             ) {
                 keyForRemove.add(key)
                 key.closed = true

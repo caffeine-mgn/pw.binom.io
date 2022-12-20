@@ -27,7 +27,7 @@ expect fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): R
 
 expect fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableNetworkAddress?): Int
 
-internal expect fun createSocket(socket: RawSocket): Socket
+internal expect fun createSocket(socket: RawSocket, server: Boolean): Socket
 
 internal actual fun createNetworkAddress(host: String, port: Int): NetworkAddress {
     val ret = createMutableNetworkAddress()

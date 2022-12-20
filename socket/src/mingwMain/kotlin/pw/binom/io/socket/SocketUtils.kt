@@ -77,8 +77,8 @@ actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): R
 //    }
 // }
 
-internal actual fun createSocket(socket: RawSocket): Socket =
-    MingwSocket(socket)
+internal actual fun createSocket(socket: RawSocket, server: Boolean): Socket =
+    MingwSocket(native = socket, server = server)
 
 actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
     throwUnixSocketNotSupported()
