@@ -1,24 +1,21 @@
 package pw.binom.io.socket
 
-import kotlinx.cinterop.*
-import platform.linux.*
-import pw.binom.collections.defaultMutableSet
+import pw.binom.collections.defaultMutableList
 import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.synchronize
-import kotlin.native.internal.createCleaner
 
-actual class SelectedKeys(val maxElements: Int) {
-    actual constructor() : this(1024)
+actual class SelectedKeys actual constructor() {
 
-    internal val native = nativeHeap.allocArray<epoll_event>(maxElements)
-    internal var errors = defaultMutableSet<SelectorKey>()
+    //    internal val native = nativeHeap.allocArray<epoll_event>(maxElements)
+//    internal var errors = defaultMutableSet<SelectorKey>()
     internal val lock = ReentrantLock()
-    private var count = 0
+    internal val selectedKeys = defaultMutableList<SelectorKey>()
+//    private var count = 0
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private var cleaner = createCleaner(native) {
-        nativeHeap.free(it)
-    }
+    //    @OptIn(ExperimentalStdlibApi::class)
+//    private var cleaner = createCleaner(native) {
+//        nativeHeap.free(it)
+//    }
     private val eventImpl = object : Event {
 
         var internalKey: SelectorKey? = null
@@ -33,11 +30,21 @@ actual class SelectedKeys(val maxElements: Int) {
     }
 
     internal fun selected(count: Int) {
-        this.count = count
+//        this.count = count
     }
 
     actual fun forEach(func: (Event) -> Unit) {
         lock.synchronize {
+            var i = 0
+            while (i < selectedKeys.size) {
+                val k = selectedKeys[i]
+                eventImpl.internalKey = k
+                eventImpl.internalFlags = k.readFlags
+                func(eventImpl)
+                i++
+            }
+            /*
+            return
             var currentNum = 0
             while (currentNum < count) {
                 val event = native[currentNum++]
@@ -71,6 +78,7 @@ actual class SelectedKeys(val maxElements: Int) {
                     func(eventImpl)
                 }
             }
+            */
         }
     }
 
@@ -88,10 +96,11 @@ actual class SelectedKeys(val maxElements: Int) {
     }
 
     actual fun toList(): List<Event> {
-        if (count == 0) {
+        if (selectedKeys.isEmpty()) {
             return emptyList()
         }
-        val output = ArrayList<Event>(count)
+
+        val output = ArrayList<Event>(selectedKeys.size)
         collect(output)
         return output
     }

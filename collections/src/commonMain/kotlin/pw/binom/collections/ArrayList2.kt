@@ -205,6 +205,18 @@ class ArrayList2<E> private constructor(
         return newCapacity
     }
 
+    fun prepareCapacity(minCapacity: Int) {
+        if (backingList != null) throw IllegalStateException() // just in case somebody casts subList to ArrayList
+        if (minCapacity < 0) throw IllegalArgumentException("minCapacity<0") // overflow
+        if (minCapacity > backingArray.size) {
+            checkIsMutable()
+            length = 0
+            backingArray = arrayOfUninitializedElements(minCapacity)
+        } else {
+            clear()
+        }
+    }
+
     final fun ensureCapacity(minCapacity: Int) {
         if (backingList != null) throw IllegalStateException() // just in case somebody casts subList to ArrayList
         if (minCapacity < 0) throw IllegalArgumentException("minCapacity<0") // overflow

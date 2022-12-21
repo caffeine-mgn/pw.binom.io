@@ -1,7 +1,6 @@
 package pw.binom.atomic
 
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -16,7 +15,7 @@ inline fun <T> AtomicBoolean.synchronize(func: () -> T): T {
 //            println("SpinLock->Lock timeout!!!\n${Throwable().stackTraceToString()}")
 //        }
 //    }
-    lock(10.seconds)
+    lock()
     try {
         return func()
     } finally {

@@ -1,15 +1,10 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
-import platform.linux.EPOLLERR
-import platform.linux.EPOLLHUP
-import platform.linux.EPOLLIN
-import platform.linux.epoll_event
+import platform.linux.*
 import platform.posix.pipe
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.collections.LinkedList
-import pw.binom.collections.defaultMutableMap
-import pw.binom.collections.forEachLinked
+import pw.binom.collections.*
 import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
@@ -18,16 +13,18 @@ import pw.binom.io.IOException
 import kotlin.time.Duration
 
 internal val STUB_BYTE = byteArrayOf(1).pin()
+private const val MAX_ELEMENTS = 1042
 
 actual class Selector : Closeable {
     private val selectLock = ReentrantLock()
     private val keyForRemove = LinkedList<SelectorKey>()
-    private val errorsRemove = LinkedList<SelectorKey>()
+    private val errorsRemove = defaultMutableSet<SelectorKey>()
     private val errorsRemoveLock = SpinLock()
     private val addKeyLock = SpinLock()
     private val keyForRemoveLock = SpinLock()
     internal val epoll = Epoll.create(1024)
     private val wakeupFlag = AtomicBoolean(false)
+    private val native = nativeHeap.allocArray<epoll_event>(MAX_ELEMENTS)
 
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
@@ -83,7 +80,7 @@ actual class Selector : Closeable {
             epoll.delete(key.rawSocket, false)
             errorsRemoveLock.synchronize {
                 key.closed = true
-                errorsRemove.addLast(key)
+                errorsRemove.add(key)
             }
         } else {
 //            if (key.attachment?.toString()?.contains("TcpServerConnection") == true) {
@@ -95,7 +92,7 @@ actual class Selector : Closeable {
     internal fun removeKey(key: SelectorKey) {
         if (selectLock.tryLock()) {
             try {
-                println("Selector:: removeKeyNow ${key.event.data.ptr}")
+//                println("Selector:: removeKeyNow ${key.event.data.ptr}")
                 epoll.delete(key.rawSocket, true)
                 addKeyLock.synchronize {
                     val existKey = keys2.remove(key)
@@ -109,7 +106,7 @@ actual class Selector : Closeable {
             }
         } else {
             keyForRemoveLock.synchronize {
-                println("Selector:: removeKeyLater ${key.event.data.ptr}")
+//                println("Selector:: removeKeyLater ${key.event.data.ptr}")
                 keyForRemove.add(key)
             }
         }
@@ -131,14 +128,31 @@ actual class Selector : Closeable {
         }
     }
 
-    private fun cleanupPostProcessing(native: CPointer<epoll_event>, errors: MutableSet<SelectorKey>, count: Int) {
+    private fun cleanupPostProcessing(
+//        native: CPointer<epoll_event>,
+//        errors: MutableSet<SelectorKey>,
+        selectedKeys: MutableList<SelectorKey>,
+        count: Int
+    ) {
+        selectedKeys.clear()
+        when (selectedKeys) {
+            is ArrayList -> {
+                selectedKeys.clear()
+                selectedKeys.ensureCapacity(count + errorsRemove.size)
+            }
+
+            is ArrayList2 -> selectedKeys.prepareCapacity(count + errorsRemove.size)
+            else -> selectedKeys.clear()
+        }
         var currentNum = 0
         errorsRemoveLock.synchronize {
-            errorsRemove.forEachLinked { key ->
+            errorsRemove.forEach { key ->
 //                if (key.attachment?.toString()?.contains("TcpServerConnection") == true) {
 //                    println("Selector:: remove invalid socket and send event")
 //                }
-                errors += key
+//                errors += key
+                key.internalReadFlags = KeyListenFlags.ERROR
+                selectedKeys.add(key)
                 key.internalClose()
             }
             errorsRemove.clear()
@@ -151,6 +165,11 @@ actual class Selector : Closeable {
                 continue
             }
             val key = ptr.asStableRef<SelectorKey>().get()
+//            println("KEY->$key, ${epollModeToString(event.events.toInt())}")
+            if (key.closed) {
+                key.internalClose()
+                continue
+            }
 //            if (key.attachment?.toString()?.contains("TcpServerConnection") == true) {
 //                println("Selector:: tcp server happened! Event: ${epollModeToString(event.events.toInt())}")
 //            }
@@ -160,14 +179,26 @@ actual class Selector : Closeable {
                 key.resetListenFlags(key.listenFlags)
                 continue
             }
-
-            if (event.events.toInt() and EPOLLERR.toInt() != 0 ||
-                event.events.toInt() and EPOLLHUP.toInt() != 0
-            ) {
+            var e = 0
+            if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
                 keyForRemove.add(key)
                 key.closed = true
-                errors += key
+//                errors += key
+                e = e or KeyListenFlags.ERROR
             }
+
+            if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
+                e = e or KeyListenFlags.ERROR
+            }
+            if (event.events.toInt() and EPOLLOUT.toInt() != 0) {
+                e = e or KeyListenFlags.WRITE
+            }
+            if (event.events.toInt() and EPOLLIN.toInt() != 0) {
+                e = e or KeyListenFlags.READ
+            }
+            key.internalReadFlags = e
+            selectedKeys.add(key)
+//            println("SelectedKeys: $selectedKeys")
             key.internalListenFlags = 0
         }
     }
@@ -176,18 +207,19 @@ actual class Selector : Closeable {
         selectLock.synchronize {
             deferredRemoveKeys()
             selectedKeys.lock.synchronize {
-                selectedKeys.errors.clear()
-                println("Selector:: selecting...")
+//                selectedKeys.errors.clear()
+//                println("Selector:: selecting...")
                 val eventCount = epoll.select(
-                    events = selectedKeys.native,
-                    maxEvents = selectedKeys.maxElements,
+                    events = native,
+                    maxEvents = MAX_ELEMENTS,
                     timeout = if (timeout.isInfinite()) -1 else timeout.inWholeMilliseconds.toInt(),
                 )
-                println("Selector:: selected! count $eventCount")
+//                println("Selector:: selected! count $eventCount")
                 cleanupPostProcessing(
-                    native = selectedKeys.native,
+                    selectedKeys = selectedKeys.selectedKeys,
+//                    native = selectedKeys.native,
                     count = eventCount,
-                    errors = selectedKeys.errors,
+//                    errors = selectedKeys.errors,
                 )
                 selectedKeys.selected(eventCount)
             }

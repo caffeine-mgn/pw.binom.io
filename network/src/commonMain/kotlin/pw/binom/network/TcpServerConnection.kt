@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.io.socket.*
 import pw.binom.io.use
+import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class TcpServerConnection constructor(
@@ -39,25 +40,26 @@ class TcpServerConnection constructor(
         get() = channel.port!!
 
     override fun error() {
-//        println("TcpServerConnection:: $description:: error!!!")
+        println("TcpServerConnection:: $description:: error!!!")
         // ignore error
 //        close()
     }
 
     override fun readyForRead(key: SelectorKey) {
-//        println("TcpServerConnection:: $description:: New client ready!")
+        println("TcpServerConnection:: $description:: New client ready!")
         val acceptListener = acceptListener
         if (acceptListener == null) {
-//            println("TcpServerConnection:: $description:: New client ready! acceptListener=null")
+            println("TcpServerConnection:: $description:: New client ready! acceptListener=null")
             return
         }
         val newChannel = channel.accept(null)
         if (newChannel == null) {
-//            println("TcpServerConnection:: $description:: New client ready! newChannel=null")
+            println("TcpServerConnection:: $description:: New client ready! newChannel=null")
             return
         }
         this.acceptListener = null
-        acceptListener.resume(newChannel, null)
+        println("TcpServerConnection:: $description:: resume connection!")
+        acceptListener.resume(newChannel)
     }
 
     override fun close() {
