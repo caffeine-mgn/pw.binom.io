@@ -40,11 +40,14 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     }
 
     internal var internalListenFlags = 0
+
+    init {
+        NetworkMetrics.incSelectorKey()
+        NetworkMetrics.incSelectorKeyAlloc()
+    }
+
     internal fun resetListenFlags(commonFlags: Int) {
         if (!closed) {
-//            if (attachment?.toString()?.contains("TcpServerConnection") == true) {
-//                println("SelectorKey:: try update key: ${commonFlagsToString(commonFlags)}, serverFlag: $serverFlag")
-//            }
             if (free) {
                 event.data.ptr = null
             }
@@ -71,8 +74,8 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
         if (free) {
             return
         }
+        NetworkMetrics.decSelectorKeyAlloc()
         free = true
-        println("SocketKey:: Free ${self.asCPointer()}")
         nativeHeap.free(event)
         freeSelfClose()
     }
@@ -81,6 +84,7 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
         if (closed) {
             return
         }
+        NetworkMetrics.decSelectorKey()
         closed = true
         selector.removeKey(this)
     }

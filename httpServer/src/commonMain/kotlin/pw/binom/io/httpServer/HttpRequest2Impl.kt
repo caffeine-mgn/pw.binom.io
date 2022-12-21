@@ -35,7 +35,9 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             isNewConnect: Boolean,
             readStartTimeout: Duration
         ): HttpRequest2Impl? {
+            println("HttpRequest2Impl:: Try read line...")
             val request = withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
+            println("HttpRequest2Impl:: line readed: $request. Reading headers...")
 //            val request = channel.reader.readln()
             if (!isNewConnect) {
                 server.browConnection(channel)
@@ -69,6 +71,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                     channel = channel,
                     server = server,
                 )
+                println("HttpRequest2Impl:: Header readed: $headers")
                 return requestObject
             }
         }

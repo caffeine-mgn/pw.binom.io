@@ -138,6 +138,9 @@ class HttpServer(
                     return@launch
                 }
                 handler.request(req)
+                if (req.response == null) {
+                    req.response { it.status = 404 }
+                }
 //                idleCheck()
             } catch (e: SocketClosedException) {
                 runCatching { channel.asyncClose() }

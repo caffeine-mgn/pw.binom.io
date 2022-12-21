@@ -1,4 +1,4 @@
-package pw.binom.network
+package pw.binom.io.socket
 
 import pw.binom.BinomMetrics
 import pw.binom.metric.MutableLongGauge
