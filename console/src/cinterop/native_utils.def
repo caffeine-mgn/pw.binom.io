@@ -1,0 +1,66 @@
+---
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <sys/ioctl.h>
+    #include <stdio.h>
+    #include <unistd.h>
+#endif
+
+int internal_terminal_get_size(int* width, int* height)
+{
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi) == 0){
+        return 0;
+    }
+
+    *width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    *height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+#else
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != 0) {
+        return 0;
+    }
+    *width = (int)w.ws_col;
+    *height = (int)w.ws_row;
+#endif
+    return 1;
+}
+
+int internal_terminal_set_cursor_position(int x, int y){
+#ifdef _WIN32
+    COORD Coord;
+
+    Coord.X = x;
+    Coord.Y = y;
+
+    if (SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Coord) == 0){
+        return 0;
+    }
+#else
+    printf("\033[%d;%dH", y + 1, x + 1);
+#endif
+return 1;
+}
+
+int internal_terminal_get_cursor_position(int* x, int* y){
+#ifdef _WIN32
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO bufferInfo;
+    if (GetConsoleScreenBufferInfo(h, &bufferInfo) == 0){
+        return 0;
+    }
+    *x = bufferInfo.dwCursorPosition.X;
+    *y = bufferInfo.dwCursorPosition.Y;
+#else
+    printf("\033[6n");
+    scanf("\033[%d;%dR", x, y);
+#endif
+    return 1;
+}
+
+int internal_terminal_clear_screen(){
+    clrscr();
+}
