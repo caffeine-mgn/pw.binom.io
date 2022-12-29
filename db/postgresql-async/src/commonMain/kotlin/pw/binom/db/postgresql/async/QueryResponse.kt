@@ -38,7 +38,7 @@ sealed class QueryResponse {
                 return false
             }
             check(_meta != null)
-            val msg = connection.readDesponse()
+            val msg = connection.readResponse()
             return when (msg) {
                 is DataRowMessage -> {
                     current = msg
@@ -49,7 +49,7 @@ sealed class QueryResponse {
                     current = null
                     ended = true
                     connection.busy = false
-                    checkType<ReadyForQueryMessage>(connection.readDesponse())
+                    checkType<ReadyForQueryMessage>(connection.readResponse())
                     closeCursor()
                     false
                 }
@@ -74,8 +74,8 @@ sealed class QueryResponse {
                     }
                 )
                 connection.sendOnly(SyncMessage)
-                checkType<CloseCompleteMessage>(connection.readDesponse())
-                checkType<ReadyForQueryMessage>(connection.readDesponse())
+                checkType<CloseCompleteMessage>(connection.readResponse())
+                checkType<ReadyForQueryMessage>(connection.readResponse())
 //                check(connection.readDesponse() is CloseCompleteMessage)
 //                check(connection.readDesponse() is ReadyForQueryMessage)
             }

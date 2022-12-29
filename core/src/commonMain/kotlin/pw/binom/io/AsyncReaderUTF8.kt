@@ -2,7 +2,7 @@ package pw.binom.io
 
 class AsyncReaderUTF82(private val stream: AsyncInput) : AbstractAsyncReader() {
 
-    private val data = ByteBuffer.alloc(4)
+    private val data = ByteBuffer(4)
 
     override suspend fun asyncClose() {
         data.close()

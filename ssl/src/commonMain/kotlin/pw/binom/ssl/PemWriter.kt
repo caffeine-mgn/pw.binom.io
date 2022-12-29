@@ -35,15 +35,16 @@ class PemWriter(val appendable: Appendable) {
             }
         }
         val o = Base64EncodeOutput(ap)
-        ByteBuffer.alloc(1).use { buf ->
+        ByteBuffer(1).use { buf ->
             appendable.append("-----BEGIN ").append(type).append("-----\n")
             data.forEach {
                 o.writeByte(buf, it)
             }
             o.flush()
             o.close()
-            if (ap.lineCount > 0)
+            if (ap.lineCount > 0) {
                 appendable.append("\n")
+            }
             appendable.append("-----END $type-----\n")
         }
     }

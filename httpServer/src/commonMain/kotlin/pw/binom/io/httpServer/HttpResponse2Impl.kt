@@ -221,7 +221,7 @@ internal class HttpResponse2Impl(
             if (keepAliveEnabled && headers.keepAlive) {
                 server!!.clientReProcessing(channel!!)
             } else {
-                runCatching { channel!!.asyncClose() }
+                channel!!.asyncCloseAnyway()
             }
         } finally {
             free()

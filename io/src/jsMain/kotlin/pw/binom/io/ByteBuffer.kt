@@ -73,17 +73,26 @@ sealed interface NativeMem {
     }
 }
 
-actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Unit)?) :
+actual open class ByteBuffer(val native: NativeMem) :
     Channel,
     Buffer,
     ByteBufferProvider {
-    actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(NativeMem.ByteNativeMem(Int8Array(size)), null)
-        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer =
-            ByteBuffer(NativeMem.ByteNativeMem(Int8Array(size)), onClose)
 
-        actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(NativeMem.ArrayNativeMem(array), null)
-    }
+    actual companion object;
+
+    actual constructor(size: Int) : this(NativeMem.ByteNativeMem(Int8Array(size)))
+    actual constructor(array: ByteArray) : this(NativeMem.ArrayNativeMem(array))
+
+//    actual companion object {
+//        actual fun alloc(size: Int): AbstractByteBuffer =
+//            AbstractByteBuffer(NativeMem.ByteNativeMem(Int8Array(size)), null)
+//
+//        actual fun alloc(size: Int, onClose: (AbstractByteBuffer) -> Unit): AbstractByteBuffer =
+//            AbstractByteBuffer(NativeMem.ByteNativeMem(Int8Array(size)), onClose)
+//
+//        actual fun wrap(array: ByteArray): AbstractByteBuffer =
+//            AbstractByteBuffer(NativeMem.ArrayNativeMem(array), null)
+//    }
 
     override val capacity: Int
         get() = native.size
@@ -149,7 +158,7 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
     }
 
     actual fun realloc(newSize: Int): ByteBuffer {
-        val new = alloc(newSize)
+        val new = ByteBuffer(newSize)
         if (newSize > capacity) {
             memcpy(dist = new.native, distOffset = 0, src = native, srcLength = capacity)
             new.position = position
@@ -225,7 +234,7 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
     }
 
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
-        val new = alloc(length)
+        val new = ByteBuffer(length)
         memcpy(dist = new.native, distOffset = 0, src = native, srcLength = length)
         new.position = minOf(position, length)
         new.limit = minOf(limit, length)
@@ -249,9 +258,9 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
 
     override fun close() {
         checkClosed()
+        preClose()
         ByteBufferMetric.dec(this)
         closed = true
-        onClose?.invoke(this)
     }
 
     private fun createLimitException(newLimit: Int): IllegalArgumentException {
@@ -289,5 +298,9 @@ actual class ByteBuffer(val native: NativeMem, val onClose: ((ByteBuffer) -> Uni
     override fun reestablish(buffer: ByteBuffer) {
         require(buffer === this) { "Buffer should equals this buffer" }
         check(!closed) { "Buffer closed" }
+    }
+
+    protected actual open fun preClose() {
+        // Do nothing
     }
 }

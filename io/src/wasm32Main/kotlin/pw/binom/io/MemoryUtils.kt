@@ -2,7 +2,7 @@ package pw.binom.io
 
 import kotlinx.cinterop.*
 
-actual fun CPointer<ByteVar>.copy(dest: CPointer<ByteVar>, size: Long) {
+actual fun CPointer<ByteVar>.copyInto(dest: CPointer<ByteVar>, size: Long) {
     var c = 0L
     while (c < size) {
         dest[c] = get(c)
@@ -10,7 +10,7 @@ actual fun CPointer<ByteVar>.copy(dest: CPointer<ByteVar>, size: Long) {
     }
 }
 
-actual fun COpaquePointer.copy(dest: COpaquePointer, size: Long) {
+actual fun COpaquePointer.copyInto(dest: COpaquePointer, size: Long) {
     val self = this.reinterpret<ByteVar>()
     val dest2 = dest.reinterpret<ByteVar>()
     var c = 0L

@@ -124,7 +124,7 @@ class BaseHttpClient(
                 method = method,
             )
         } catch (e: Throwable) {
-            runCatching { connect?.asyncClose() }
+            connect?.asyncCloseAnyway()
             throw e
         }
     }

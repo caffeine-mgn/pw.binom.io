@@ -91,7 +91,7 @@ class AsyncSSLChannel private constructor(
         session = session,
         channel = channel,
         pool = null,
-        buffer = ByteBuffer.alloc(bufferSize).empty(),
+        buffer = ByteBuffer(bufferSize).empty(),
         closeBuffer = true,
         closeParent = closeParent,
     )

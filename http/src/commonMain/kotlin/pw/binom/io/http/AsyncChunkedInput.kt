@@ -41,7 +41,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
         return staticData[0]
     }
 
-    private val staticData = ByteBuffer.alloc(2)
+    private val staticData = ByteBuffer(2)
     override val isEof: Boolean
         get() = closed || eof
 

@@ -38,16 +38,21 @@ class PackageReader(
     private val columns = defaultMutableList<ColumnMeta>()
     private var columnIndex = 0
 
+    fun recycleColumnData(meta: ColumnMeta) {
+        // Do nothing
+    }
+
     fun giveColumnData(): ColumnMeta {
-        if (columnIndex >= columns.size) {
-            columnIndex++
-            val r = ColumnMeta()
-            columns.add(r)
-            return r
-        }
-        val r = columns[columnIndex]
-        columnIndex++
-        return r
+        return ColumnMeta()
+//        if (columnIndex >= columns.size) {
+//            columnIndex++
+//            val r = ColumnMeta()
+//            columns.add(r)
+//            return r
+//        }
+//        val r = columns[columnIndex]
+//        columnIndex++
+//        return r
     }
 
     val input: AsyncInput

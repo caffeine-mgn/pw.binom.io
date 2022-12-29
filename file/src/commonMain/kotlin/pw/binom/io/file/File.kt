@@ -167,12 +167,14 @@ fun File.relative(path: String): File {
         when (it) {
             "." -> {
             }
+
             ".." -> {
                 if (currentPath.isEmpty()) {
                     throw IllegalArgumentException("Can't find relative from \"${this.path}\" to \"$path\"")
                 }
                 currentPath.removeLast()
             }
+
             else -> currentPath.add(it)
         }
     }
@@ -187,7 +189,7 @@ fun File.append(text: String, charset: Charset = Charsets.UTF8) {
 
 fun File.append(data: ByteArray) {
     openWrite(true).use {
-        ByteBuffer.wrap(data).use { buf ->
+        data.wrap { buf ->
             it.write(buf)
         }
     }
@@ -211,7 +213,7 @@ fun File.rewrite(
     data: ByteArray,
 ) {
     openWrite(false).use {
-        ByteBuffer.wrap(data).use { buf ->
+        data.wrap { buf ->
             it.write(buf)
         }
     }
@@ -245,7 +247,7 @@ fun File.readBinary(
 
 fun File.writeBinary(data: ByteArray) {
     openWrite().use {
-        ByteBuffer.wrap(data).use { buf ->
+        data.wrap { buf ->
             it.write(buf)
         }
     }

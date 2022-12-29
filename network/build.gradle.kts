@@ -16,7 +16,11 @@ kotlin {
             publishAllLibraryVariants()
         }
     }
-    jvm()
+    jvm {
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
+    }
     linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
         linuxArm32Hfp()
@@ -113,6 +117,9 @@ kotlin {
             dependsOn(commonTest)
             dependencies {
                 api(kotlin("test"))
+//                implementation("junit:junit:4.13.2")
+                implementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
+                implementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
             }
         }
         if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
@@ -122,6 +129,8 @@ kotlin {
             val androidTest by getting {
                 dependsOn(commonTest)
                 dependencies {
+                    implementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
+                    implementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
 //                    api(kotlin("test"))
                     api(kotlin("test-junit"))
 //                    api(kotlin("test-common"))

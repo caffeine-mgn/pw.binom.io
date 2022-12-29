@@ -2,7 +2,7 @@ package pw.binom.io
 
 class ReaderUTF82(val stream: Input) : Reader {
 
-    private val data = ByteBuffer.alloc(4)
+    private val data = ByteBuffer(4)
 
     override fun close() {
         data.close()

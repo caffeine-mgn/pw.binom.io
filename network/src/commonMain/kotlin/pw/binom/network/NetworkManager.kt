@@ -1,35 +1,36 @@
 package pw.binom.network
 
+import kotlinx.coroutines.CoroutineScope
 import pw.binom.io.socket.*
 import kotlin.coroutines.CoroutineContext
 
-interface NetworkManager : CoroutineContext {
+interface NetworkManager : CoroutineContext, CoroutineScope {
     fun wakeup()
     fun attach(channel: UdpNetSocket): UdpConnection
     fun attach(channel: TcpClientSocket, mode: Int = 0): TcpConnection
     fun attach(channel: TcpNetServerSocket): TcpServerConnection
 
+    override val coroutineContext: CoroutineContext
+        get() = this
+
     fun bindTcp(address: NetworkAddress): TcpServerConnection {
         val channel = Socket.createTcpServerNetSocket()
-        channel.blocking = false
-        val connection = attach(channel)
+
         when (channel.bind(address)) {
             BindStatus.ADDRESS_ALREADY_IN_USE -> {
-                connection.close()
+                channel.close()
                 throw BindException()
             }
 
             BindStatus.ALREADY_BINDED -> {
-                connection.close()
+                channel.close()
                 throw IllegalStateException()
             }
 
             BindStatus.OK -> {
-                val actualBindAddress = NetworkAddress.create(
-                    host = address.host,
-                    port = connection.port
-                )
-                connection.description = "Server $actualBindAddress"
+                channel.blocking = false
+                val connection = attach(channel)
+                connection.description = "Server ${address.host}:${channel.port}"
                 return connection
             }
         }
@@ -67,7 +68,7 @@ suspend fun NetworkManager.tcpConnectUnixSocket(fileName: String): TcpConnection
         connection.description = "Unix socket \"$fileName\""
         connection.connection()
     } catch (e: SocketConnectException) {
-        runCatching { connection.asyncClose() }
+        connection.asyncCloseAnyway()
         if (e.message != null) {
             throw e
         } else {

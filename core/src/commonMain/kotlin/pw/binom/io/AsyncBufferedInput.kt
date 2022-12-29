@@ -7,7 +7,7 @@ class AsyncBufferedInput(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     private val closeStream: Boolean
 ) : AbstractAsyncBufferedInput() {
-    override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
+    override val buffer: ByteBuffer = ByteBuffer(bufferSize).empty()
 
     override suspend fun fill() {
         buffer.clear()

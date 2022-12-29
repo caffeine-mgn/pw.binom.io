@@ -14,7 +14,7 @@ class Utf8Test {
     @Test
     fun encode() {
         val encoder = charset.newEncoder()
-        val out = ByteBuffer.alloc(30)
+        val out = ByteBuffer(30)
         assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(test_data_hello_text.toCharBuffer(), out))
         out.flip()
         assertEquals(out.remaining, test_data_hello_bytes_utf_8.size)
@@ -27,7 +27,7 @@ class Utf8Test {
     @Test
     fun encodeOutputOver() {
         val encoder = charset.newEncoder()
-        val out = ByteBuffer.alloc(2)
+        val out = ByteBuffer(2)
         val input = test_data_hello_text.toCharBuffer()
         assertEquals(CharsetTransformResult.OUTPUT_OVER, encoder.encode(input, out))
         assertEquals(2, out.position)
@@ -72,7 +72,7 @@ class Utf8Test {
         val emoji = "\uD83D\uDE0A"
         val emojiBytes = emoji.encodeToByteArray()
         println("->string.length=${emoji.length}, bytes.length=${emojiBytes.size}")
-        val vv = ByteBuffer.wrap(emojiBytes).use {
+        val vv = emojiBytes.wrap().use {
             it.bufferedReader().readText()
         }
         println("iconv---->${vv == emoji}")
@@ -84,7 +84,7 @@ class Utf8Test {
 //        println("1=${emojiBytes[1].toString(16)}")
 //        println("2=${emojiBytes[2].toString(16)}")
 //        println("3=${emojiBytes[3].toString(16)}")
-        val inFact = ByteBuffer.alloc(6).use {
+        val inFact = ByteBuffer(6).use {
             UTF8.unicodeToUtf8(emoji, it)
             it.clear()
             it.toByteArray()

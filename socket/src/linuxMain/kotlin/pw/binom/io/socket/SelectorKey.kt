@@ -1,6 +1,7 @@
 package pw.binom.io.socket
 
-import kotlinx.cinterop.*
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.ptr
 import platform.linux.*
 import pw.binom.io.Closeable
 
@@ -49,10 +50,11 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     internal fun resetListenFlags(commonFlags: Int) {
         if (!closed) {
             if (free) {
-                event.data.ptr = null
+                selector.eventMem.data.ptr = null
             }
-            event.events = commonToEpoll(commonFlags = commonFlags, server = serverFlag).convert()
-            selector.updateKey(this, event.ptr)
+            selector.eventMem.data.fd = rawSocket
+            selector.eventMem.events = commonToEpoll(commonFlags = commonFlags, server = serverFlag).convert()
+            selector.updateKey(this, selector.eventMem.ptr)
         }
     }
 
@@ -63,11 +65,12 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
             resetListenFlags(value)
         }
 
-    internal val event = nativeHeap.alloc<epoll_event>()
+//    internal val event = nativeHeap.alloc<epoll_event>()
 
     init {
-        event.data.ptr = self.asCPointer()
-        event.events = 0.convert()
+//        event.data.ptr = self.asCPointer()
+//        selector.eventMem.data.fd = rawSocket
+//        selector.eventMem.events = 0.convert()
     }
 
     internal fun internalClose() {
@@ -76,7 +79,7 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
         }
         NetworkMetrics.decSelectorKeyAlloc()
         free = true
-        nativeHeap.free(event)
+//        nativeHeap.free(event)
         freeSelfClose()
     }
 

@@ -17,7 +17,7 @@ open class DeflaterOutput(
     }
 
     private val deflater = Deflater(level, wrap, syncFlush)
-    private val buffer = ByteBuffer.alloc(bufferSize)
+    private val buffer = ByteBuffer(bufferSize)
     protected val buf
         get() = buffer
 
@@ -79,7 +79,7 @@ open class DeflaterOutput(
     override fun close() {
         finish()
         closed = true
-        runCatching { deflater.close() }
+        deflater.closeAnyway()
         buffer.close()
         if (closeStream) {
             stream.close()

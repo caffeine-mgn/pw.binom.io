@@ -1,6 +1,7 @@
 package pw.binom.io
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.pool.ObjectPool
 
 abstract class AbstractAsyncBufferedAsciiWriter(
@@ -8,9 +9,9 @@ abstract class AbstractAsyncBufferedAsciiWriter(
 ) : AsyncWriter, AsyncOutput {
     protected abstract val output: AsyncOutput
     protected abstract val buffer: ByteBuffer
-    private var closed = false
+    private var closed = AtomicBoolean(false)
     private fun checkClosed() {
-        if (closed) {
+        if (closed.getValue()) {
             throw StreamClosedException()
         }
     }
@@ -68,26 +69,25 @@ abstract class AbstractAsyncBufferedAsciiWriter(
         return this
     }
 
-    override suspend fun flush() {
-        checkClosed()
+    private suspend fun internalFlush() {
         if (buffer.position > 0) {
             buffer.flip()
             output.writeFully(buffer)
-//            while (buffer.remaining > 0) {
-//                val v = output.write(buffer)
-//                if (v <= 0) {
-//                    throw IOException("Can't write data to output, v=$v")
-//                }
-//            }
             buffer.clear()
             output.flush()
         }
     }
 
-    override suspend fun asyncClose() {
+    override suspend fun flush() {
         checkClosed()
-        flush()
-        closed = true
+        internalFlush()
+    }
+
+    override suspend fun asyncClose() {
+        if (!closed.compareAndSwap(false, true)) {
+            return
+        }
+        internalFlush()
         if (closeParent) {
             output.asyncClose()
         }
@@ -115,7 +115,7 @@ class AsyncBufferedAsciiWriter private constructor(
     constructor(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) : this(
         output = output,
         pool = null,
-        buffer = ByteBuffer.alloc(bufferSize).clean(),
+        buffer = ByteBuffer(bufferSize).clean(),
         closeBuffer = true,
         closeParent = closeParent,
     )

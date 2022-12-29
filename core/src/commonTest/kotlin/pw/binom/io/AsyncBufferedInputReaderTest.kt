@@ -4,7 +4,6 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.ByteBufferPool
 import pw.binom.asyncInput
 import pw.binom.charset.Charsets
-import pw.binom.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

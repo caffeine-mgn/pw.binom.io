@@ -150,7 +150,7 @@ class TarantoolConnectionImpl internal constructor(
 
     internal suspend fun startMainLoop() {
         withContext(networkDispatcher) {
-            ByteBuffer.alloc(8).use { buf ->
+            ByteBuffer(8).use { buf ->
                 try {
                     val packageReader = AsyncInputWithCounter(connectionReference)
                     while (mainLoopJob?.isActive != false && !closed) {

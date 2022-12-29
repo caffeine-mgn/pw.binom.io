@@ -8,7 +8,7 @@ import pw.binom.uuid.UUID
 import pw.binom.writeInt
 
 class PackageWriter(val connection: PGConnection, val temporalBuffer: ByteBuffer) : Closeable {
-    val buf16 = ByteBuffer.alloc(16)
+    val buf16 = ByteBuffer(16)
     val output = ByteArrayOutput()
     private var cmdExist = false
     private var bodyStarted = false

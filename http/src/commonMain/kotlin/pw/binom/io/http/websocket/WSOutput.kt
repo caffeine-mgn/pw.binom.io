@@ -9,7 +9,7 @@ class WSOutput(
     override val stream: AsyncOutput,
     bufferSize: Int
 ) : AbstractAsyncBufferedOutput() {
-    override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
+    override val buffer: ByteBuffer = ByteBuffer(bufferSize).empty()
 
     private var first = true
     private var eof = false

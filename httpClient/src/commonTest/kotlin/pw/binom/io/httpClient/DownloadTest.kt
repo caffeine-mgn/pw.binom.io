@@ -3,7 +3,6 @@ package pw.binom.io.httpClient
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.ByteBuffer
 import pw.binom.io.http.useBasicAuth
-import pw.binom.io.nextBytes
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.thread.Thread

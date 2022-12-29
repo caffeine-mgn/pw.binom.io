@@ -7,7 +7,7 @@ class AsyncBufferedOutput(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     private val closeStream: Boolean
 ) : AbstractAsyncBufferedOutput() {
-    override val buffer = ByteBuffer.alloc(bufferSize)
+    override val buffer = ByteBuffer(bufferSize)
 
     override suspend fun asyncClose() {
         try {

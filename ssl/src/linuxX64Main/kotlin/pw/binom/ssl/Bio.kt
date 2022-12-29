@@ -14,8 +14,9 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
             val r = data.usePinned { data ->
                 BIO_read(self, data.addressOf(offset), length.convert())
             }
-            if (r < 0)
+            if (r < 0) {
                 TODO()
+            }
             r
         }
 
@@ -105,7 +106,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     }
 
     fun copyTo(stream: Output, bufferLength: Int = DEFAULT_BUFFER_SIZE) {
-        ByteBuffer.alloc(bufferLength).use { buf ->
+        ByteBuffer(bufferLength).use { buf ->
             while (!eof) {
                 buf.clear()
                 read(buf)

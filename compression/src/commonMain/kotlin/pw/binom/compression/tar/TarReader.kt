@@ -28,12 +28,14 @@ class TarReader(private val stream: Input, val closeStream: Boolean = true) : Cl
         val time: Long
     ) : Input {
         override fun read(dest: ByteBuffer): Int {
-            if (currentEntity != this)
+            if (currentEntity != this) {
                 throw StreamClosedException()
+            }
             val entity = this
             val maxLength = minOf(dest.remaining, entity.size.toInt() - cursor)
-            if (maxLength == 0)
+            if (maxLength == 0) {
                 return 0
+            }
             dest.limit = dest.position + maxLength
             val read = stream.read(dest)
             cursor += read
@@ -46,7 +48,7 @@ class TarReader(private val stream: Input, val closeStream: Boolean = true) : Cl
 
     private var currentEntity: TarEntity? = null
     private var cursor = 0
-    private val tmp = ByteBuffer.alloc(128)
+    private val tmp = ByteBuffer(128)
 
     fun Input.skip(length: Int) {
         var l = length
@@ -61,13 +63,14 @@ class TarReader(private val stream: Input, val closeStream: Boolean = true) : Cl
     private fun ByteBuffer.isZeroOnly() = indexOfFirst { it != 0.toByte() } == -1
     private fun ByteBuffer.indexOfFirst(func: (Byte) -> Boolean): Int {
         (position until limit).forEach {
-            if (func(this[it]))
+            if (func(this[it])) {
                 return@indexOfFirst it
+            }
         }
         return -1
     }
 
-    private val header = ByteBuffer.alloc(BLOCK_SIZE)
+    private val header = ByteBuffer(BLOCK_SIZE)
 
     fun getNextEntity(): TarEntity? {
         if (end) {
@@ -76,8 +79,9 @@ class TarReader(private val stream: Input, val closeStream: Boolean = true) : Cl
         val entity = currentEntity
         if (entity != null) {
             var fullSize = (entity.size / BLOCK_SIZE.toUInt()) * BLOCK_SIZE.toUInt()
-            if (entity.size % BLOCK_SIZE.toUInt() > 0u)
+            if (entity.size % BLOCK_SIZE.toUInt() > 0u) {
                 fullSize += BLOCK_SIZE.toUInt()
+            }
             if (cursor.toUInt() < fullSize) {
                 val needForRead = fullSize - cursor.toUInt()
                 if (needForRead > 0u) {
@@ -102,9 +106,10 @@ class TarReader(private val stream: Input, val closeStream: Boolean = true) : Cl
         var typeNum = header[156]
         if (typeNum == 76.toByte()) {
             var fullSize = size / BLOCK_SIZE.toUInt() * BLOCK_SIZE.toUInt()
-            if (size % BLOCK_SIZE.toUInt() > 0u)
+            if (size % BLOCK_SIZE.toUInt() > 0u) {
                 fullSize += BLOCK_SIZE.toUInt()
-            ByteBuffer.alloc(size.toInt() - 1).use { nameBuf ->
+            }
+            ByteBuffer(size.toInt() - 1).use { nameBuf ->
                 stream.read(nameBuf)
                 stream.skip((fullSize - size).toInt() + 1)
                 nameBuf.flip()

@@ -59,7 +59,7 @@ open class AsyncBufferedInputReader protected constructor(
         charset = charset,
         input = input,
         pool = null,
-        buffer = ByteBuffer.alloc(bufferSize).empty(),
+        buffer = ByteBuffer(bufferSize).empty(),
         charBufferSize = charBufferSize,
         closeBuffer = true,
         closeParent = closeParent,

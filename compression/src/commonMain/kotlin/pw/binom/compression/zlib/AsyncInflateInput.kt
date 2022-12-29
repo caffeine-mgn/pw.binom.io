@@ -13,7 +13,7 @@ open class AsyncInflateInput(
     wrap: Boolean = false,
     val closeStream: Boolean = false
 ) : AsyncInput {
-    private val buffer = ByteBuffer.alloc(bufferSize).empty()
+    private val buffer = ByteBuffer(bufferSize).empty()
     private val inflater = Inflater(wrap)
     protected var usesDefaultInflater = true
     private var eof = false
@@ -85,8 +85,8 @@ open class AsyncInflateInput(
             if (usesDefaultInflater) {
                 inflater.end()
             }
-            runCatching { inflater.close() }
-            runCatching { buffer.close() }
+            inflater.closeAnyway()
+            buffer.closeAnyway()
             if (closeStream) {
                 stream.asyncClose()
             }

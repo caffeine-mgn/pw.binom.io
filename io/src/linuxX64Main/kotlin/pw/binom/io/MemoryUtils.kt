@@ -8,11 +8,11 @@ import platform.posix.malloc
 import platform.posix.memcpy
 import platform.posix.free as nativeFree
 
-actual fun CPointer<ByteVar>.copy(dest: CPointer<ByteVar>, size: Long) {
+actual fun CPointer<ByteVar>.copyInto(dest: CPointer<ByteVar>, size: Long) {
     memcpy(dest, this, size.convert())
 }
 
-actual fun COpaquePointer.copy(dest: COpaquePointer, size: Long) {
+actual fun COpaquePointer.copyInto(dest: COpaquePointer, size: Long) {
     memcpy(dest, this, size.convert())
 }
 

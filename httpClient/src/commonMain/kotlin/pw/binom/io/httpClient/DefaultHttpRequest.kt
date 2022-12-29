@@ -138,7 +138,7 @@ class DefaultHttpRequest constructor(
             data.flush()
             return data.getResponse()
         } catch (e: Throwable) {
-            runCatching { data.asyncClose() }
+            data.asyncCloseAnyway()
             throw e
         }
     }

@@ -102,7 +102,7 @@ sealed class AuthenticationMessage : KindedMessage {
                 AuthenticationCleartextPassword -> AuthenticationChallengeCleartextMessage
                 AuthenticationMD5Password -> {
                     val buf2 = ByteArray(ctx.length - Int.SIZE_BYTES)
-                    ByteBuffer.alloc(buf2.size).use { tmp2 ->
+                    ByteBuffer(buf2.size).use { tmp2 ->
                         while (true) {
                             ctx.input.read(tmp2)
                             if (tmp2.remaining == 0) {

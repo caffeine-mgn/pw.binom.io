@@ -39,26 +39,35 @@ class TcpServerConnection constructor(
     val port
         get() = channel.port!!
 
+    private var closed = false
+
     override fun error() {
-        println("TcpServerConnection:: $description:: error!!!")
+//        println("TcpServerConnection:: $description:: error!!!")
+        channel.closeAnyway()
+        currentKey.closeAnyway()
+        val acceptListener = acceptListener
+        if (acceptListener != null) {
+            this.acceptListener = null
+            acceptListener.resumeWithException(SocketClosedException())
+        }
         // ignore error
 //        close()
     }
 
     override fun readyForRead(key: SelectorKey) {
-        println("TcpServerConnection:: $description:: New client ready!")
+//        println("TcpServerConnection:: $description:: New client ready!")
         val acceptListener = acceptListener
         if (acceptListener == null) {
-            println("TcpServerConnection:: $description:: New client ready! acceptListener=null")
+//            println("TcpServerConnection:: $description:: New client ready! acceptListener=null")
             return
         }
         val newChannel = channel.accept(null)
         if (newChannel == null) {
-            println("TcpServerConnection:: $description:: New client ready! newChannel=null")
+//            println("TcpServerConnection:: $description:: New client ready! newChannel=null")
             return
         }
         this.acceptListener = null
-        println("TcpServerConnection:: $description:: resume connection!")
+//        println("TcpServerConnection:: $description:: resume connection!")
         acceptListener.resume(newChannel)
     }
 
@@ -78,6 +87,9 @@ class TcpServerConnection constructor(
     private var acceptListener: CancellableContinuation<TcpClientNetSocket>? = null
 
     suspend fun accept(address: MutableNetworkAddress? = null): TcpConnection {
+        if (closed) {
+            throw SocketClosedException()
+        }
         check(acceptListener == null) { "Connection already have read listener" }
 
 //        println("TcpServerConnection:: $description:: Try accept now...")

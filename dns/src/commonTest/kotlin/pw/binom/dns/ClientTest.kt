@@ -11,7 +11,6 @@ import pw.binom.io.bufferedInput
 import pw.binom.io.bufferedOutput
 import pw.binom.network.NetworkAddressOld
 import pw.binom.network.NetworkCoroutineDispatcherImpl
-import pw.binom.network.bindTcp
 import pw.binom.network.tcpConnect
 import kotlin.random.Random
 import kotlin.test.Ignore
@@ -188,7 +187,7 @@ class ClientTest {
                         println("ERROR!")
                         e.printStackTrace()
                     } finally {
-                        runCatching { client.close() }
+                        client.closeAnyway()
                     }
                 }
             }

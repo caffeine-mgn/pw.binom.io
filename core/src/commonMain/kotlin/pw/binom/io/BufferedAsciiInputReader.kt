@@ -14,7 +14,7 @@ class BufferedAsciiInputReader(
         buffer.empty()
     }
 
-    private val buffer = ByteBuffer.alloc(bufferSize).empty()
+    private val buffer = ByteBuffer(bufferSize).empty()
 
     val available: Int
         get() = if (buffer.remaining > 0) buffer.remaining else -1
@@ -39,8 +39,9 @@ class BufferedAsciiInputReader(
 
     override fun read(): Char? {
         checkAvailable()
-        if (buffer.remaining <= 0)
+        if (buffer.remaining <= 0) {
             return null
+        }
         return buffer.getByte().toInt().toChar()
     }
 

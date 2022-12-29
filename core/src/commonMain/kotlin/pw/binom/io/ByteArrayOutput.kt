@@ -4,7 +4,7 @@ import pw.binom.dump
 import kotlin.math.ceil
 
 open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
-    var data = ByteBuffer.alloc(capacity)
+    var data = ByteBuffer(capacity)
         private set
     private var _wrote = 0
     private var closed = false

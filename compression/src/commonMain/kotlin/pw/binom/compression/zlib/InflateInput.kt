@@ -10,7 +10,7 @@ open class InflateInput(
     wrap: Boolean = false,
     val closeStream: Boolean = false
 ) : Input {
-    private val buf2 = ByteBuffer.alloc(bufferSize).empty()
+    private val buf2 = ByteBuffer(bufferSize).empty()
     private val inflater = Inflater(wrap)
     protected var usesDefaultInflater = true
     private var first = true
@@ -28,18 +28,21 @@ open class InflateInput(
         val l = dest.remaining
         while (true) {
             full2()
-            if (buf2.remaining == 0 || dest.remaining == 0)
+            if (buf2.remaining == 0 || dest.remaining == 0) {
                 break
+            }
             val r = inflater.inflate(buf2, dest)
-            if (r == 0)
+            if (r == 0) {
                 break
+            }
         }
         return l - dest.remaining
     }
 
     protected fun full2() {
-        if (buf2.remaining > 0)
+        if (buf2.remaining > 0) {
             return
+        }
         buf2.clear()
         stream.read(buf2)
         buf2.flip()
@@ -69,9 +72,14 @@ open class InflateInput(
 //    }
 
     override fun close() {
-        if (usesDefaultInflater)
-            runCatching { inflater.end() }
-        runCatching { inflater.close() }
+        if (usesDefaultInflater) {
+            try {
+                inflater.end()
+            } catch (e: Throwable) {
+                // Do nothing
+            }
+        }
+        inflater.closeAnyway()
         buf2.close()
         if (closeStream) {
             stream.close()

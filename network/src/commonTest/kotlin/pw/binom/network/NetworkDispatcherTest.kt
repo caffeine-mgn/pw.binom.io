@@ -5,7 +5,6 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.concurrency.WorkerPool
 import pw.binom.io.ByteBuffer
 import pw.binom.io.clean
-import pw.binom.io.nextBytes
 import pw.binom.io.socket.MutableNetworkAddress
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.socket.Socket

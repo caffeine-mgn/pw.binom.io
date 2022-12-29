@@ -1,5 +1,7 @@
 package pw.binom.network
 
+// import kotlinx.coroutines.Dispatchers
+// import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
 import pw.binom.atomic.AtomicBoolean
@@ -15,6 +17,9 @@ abstract class NetworkCoroutineDispatcher : AbstractNetworkManager(), NetworkMan
         fun create() = NetworkCoroutineDispatcherImpl()
         var default: NetworkCoroutineDispatcher = create()
     }
+
+//    override val key: CoroutineContext.Key<*>
+//        get() = NetworkInterceptor.Key
 
 //    abstract suspend fun tcpConnect(address: NetworkAddress): TcpConnection
 }

@@ -38,9 +38,9 @@ class PGConnection private constructor(
     readBufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncConnection {
     internal var busy = false
-    val id = counter++
-
-    override fun toString(): String = "PGConnection-$id"
+    private val id = counter++
+    private var closing = false
+    internal var prepareStatements = defaultMutableSet<PostgresPreparedStatement>()
 
     companion object {
         const val TYPE = "PostgreSQL"
@@ -75,7 +75,7 @@ class PGConnection private constructor(
                     )
                 )
                 while (true) {
-                    val msg = pgConnection.readDesponse()
+                    val msg = pgConnection.readResponse()
                     if (msg is ErrorMessage) {
                         throw PostgresqlException(msg.toString())
                     }
@@ -88,7 +88,7 @@ class PGConnection private constructor(
                     pgConnection.sendQuery("SET application_name = E'$appName'")
                 }
                 while (true) {
-                    val msg = pgConnection.readDesponse()
+                    val msg = pgConnection.readResponse()
                     if (msg is ReadyForQueryMessage) {
                         break
                     }
@@ -96,7 +96,7 @@ class PGConnection private constructor(
 //            pgConnection.query("SET AUTOCOMMIT = OFF")
                 return pgConnection
             } catch (e: Throwable) {
-                runCatching { connection.close() }
+                connection.closeAnyway()
                 throw e
             }
         }
@@ -106,7 +106,7 @@ class PGConnection private constructor(
         PgMetrics.pgConnections.inc()
     }
 
-    private val temporalBuffer = ByteBuffer.alloc(temporalBufferSize)
+    private val temporalBuffer = ByteBuffer(temporalBufferSize)
     private val packageWriter = PackageWriter(this, temporalBuffer = temporalBuffer)
     internal val charsetUtils = CharsetCoder(charset)
     private var connected = true
@@ -118,15 +118,6 @@ class PGConnection private constructor(
     private fun checkClosed() {
         if (closed) {
             throw ClosedException()
-        }
-    }
-
-    override suspend fun setTransactionMode(mode: TransactionMode) {
-        busy {
-            if (transactionStarted) {
-                query("SET TRANSACTION ${mode.pg}")
-            }
-            _transactionMode = mode
         }
     }
 
@@ -149,18 +140,14 @@ class PGConnection private constructor(
         get() = TYPE
 
     internal suspend fun sendQuery(query: String): KindedMessage {
-        if (busy) {
-            throw IllegalStateException("Connection is busy")
-        }
+        check(!busy) { "Connection is busy" }
         val msg = this.reader.queryMessage
         msg.query = query
-        return sendRecive(msg)
+        return sendReceive(msg)
     }
 
     private inline fun <T> busy(f: () -> T): T {
-        if (busy) {
-            throw IllegalStateException("Connection are busy")
-        }
+        check(!busy) { "Connection are busy" }
         busy = true
         try {
             return f()
@@ -170,17 +157,13 @@ class PGConnection private constructor(
     }
 
     internal suspend fun query(query: String): QueryResponse {
-        if (busy) {
-            error("Connection is busy")
-        }
         val msg = this.reader.queryMessage
         msg.query = query
         sendOnly(msg)
         var statusMsg: String? = null
         var rowsAffected = 0L
         LOOP@ while (true) {
-            val msg2 = readDesponse()
-            when (msg2) {
+            when (val msg2 = readResponse()) {
                 is ReadyForQueryMessage -> return QueryResponse.Status(
                     status = statusMsg ?: "",
                     rowsAffected = rowsAffected
@@ -200,7 +183,7 @@ class PGConnection private constructor(
                 }
 
                 is ErrorMessage -> {
-                    checkType<ReadyForQueryMessage>(readDesponse())
+                    checkType<ReadyForQueryMessage>(readResponse())
                     throw PostgresqlException("${msg2.fields['M']}. Query: $query")
                 }
 
@@ -220,25 +203,22 @@ class PGConnection private constructor(
         connection.flush()
     }
 
-    internal suspend fun sendRecive(msg: KindedMessage): KindedMessage {
+    private suspend fun sendReceive(msg: KindedMessage): KindedMessage {
         try {
             sendOnly(msg)
-            return readDesponse()
+            return readResponse()
         } catch (e: SocketClosedException) {
             connected = false
             throw e
         }
     }
 
-    internal suspend fun readDesponse(): KindedMessage {
-        val result = KindedMessage.read(reader)
-        return result
-    }
+    internal suspend fun readResponse(): KindedMessage = KindedMessage.read(reader)
 
     private suspend fun request(msg: KindedMessage): KindedMessage {
         msg.write(packageWriter)
         packageWriter.finishAsync(connection)
-        return readDesponse()
+        return readResponse()
     }
 
     private suspend fun oneShotAuth(authRequest: KindedMessage) {
@@ -254,7 +234,6 @@ class PGConnection private constructor(
 
     private suspend fun saslAuth(algorithms: List<String>) {
         val scramSaslClient = ScramSaslClient.create(algorithms)
-//        val scramSaslClient = ScramSaslClient.sha256()
         val msg = scramSaslClient.start(username = userName, password = password)
         saslInitialResponse.mechanism = scramSaslClient.mechanism
         saslInitialResponse.slasData = msg.encodeToByteArray()
@@ -281,7 +260,7 @@ class PGConnection private constructor(
                     if (scramSaslClient.state != ScramSaslClient.State.ENDED) {
                         throw IllegalStateException("Invalid SASL state ${scramSaslClient.state}")
                     }
-                    checkType<AuthenticationMessage.AuthenticationOkMessage>(readDesponse())
+                    checkType<AuthenticationMessage.AuthenticationOkMessage>(readResponse())
                     break
                 }
 
@@ -293,7 +272,7 @@ class PGConnection private constructor(
     private suspend fun sendFirstMessage(properties: Map<String, String>) {
         ByteArrayOutput().use { buf2 ->
             buf2.bufferedAsciiWriter(closeParent = false).use { o ->
-                ByteBuffer.alloc(8).use { buf ->
+                ByteBuffer(8).use { buf ->
                     o.writeInt(buf, 0)
                     o.writeShort(buf, 3)
                     o.writeShort(buf, 0)
@@ -316,7 +295,7 @@ class PGConnection private constructor(
                 connection.flush()
             }
         }
-        val msg = readDesponse()
+        val msg = readResponse()
         when (msg) {
             is AuthenticationMessage.AuthenticationChallengeCleartextMessage -> {
                 credentialMessage.username = userName
@@ -343,16 +322,19 @@ class PGConnection private constructor(
             is ErrorMessage -> throw IOException(msg.fields['M'] ?: msg.fields['R'] ?: "Error")
             else -> throw RuntimeException("Unknown message type [${msg::class}]")
         }
-//        if (authRequest != null) {
-//            when (val msg2 = request(authRequest)) {
-//                is ErrorMessage -> throw IOException(msg2.fields['M'] ?: msg2.fields['R'] ?: "Error")
-//                is AuthenticationMessage.AuthenticationOkMessage -> {
-//                    return
-//                }
-//
-//                else -> throw SQLException("Unexpected Message. Message: [$msg2]")
-//            }
-//        }
+    }
+
+    private fun checkTransactionStarted() {
+        check(transactionStarted) { "Transaction not started" }
+    }
+
+    override suspend fun setTransactionMode(mode: TransactionMode) {
+        busy {
+            if (transactionStarted) {
+                query("SET TRANSACTION ${mode.pg}")
+            }
+            _transactionMode = mode
+        }
     }
 
     override suspend fun createStatement() =
@@ -364,35 +346,25 @@ class PGConnection private constructor(
     override fun isReadyForQuery(): Boolean =
         isConnected && !busy
 
-    internal val TransactionMode.pg
-        get() = when (this) {
-            TransactionMode.SERIALIZABLE -> "SERIALIZABLE"
-            TransactionMode.READ_COMMITTED -> "READ COMMITTED"
-            TransactionMode.REPEATABLE_READ -> "REPEATABLE READ"
-            TransactionMode.READ_UNCOMMITTED -> "READ UNCOMMITTED"
-        }
-
     override suspend fun beginTransaction() {
-        if (transactionStarted) {
-            throw IllegalStateException("Transaction already started")
-        }
-        val q = query("begin TRANSACTION ISOLATION LEVEL ${transactionMode.pg}")
-        transactionStarted = true
-        if (q !is QueryResponse.Status) {
-            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
-        }
-        if (q.status != "BEGIN") {
-            throw SQLException("Invalid response. Excepted Status \"BEGIN\", but got ${q.status}")
+        busy {
+            check(!transactionStarted) { "Transaction already started" }
+            val q = query("begin TRANSACTION ISOLATION LEVEL ${transactionMode.pg}")
+            transactionStarted = true
+            if (q !is QueryResponse.Status) {
+                throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+            }
+            if (q.status != "BEGIN") {
+                throw SQLException("Invalid response. Excepted Status \"BEGIN\", but got ${q.status}")
+            }
         }
     }
-
-    internal var prepareStatements = defaultMutableSet<PostgresPreparedStatement>()
 
     fun prepareStatement(
         query: String,
         paramColumnTypes: List<ColumnType>,
         resultColumnTypes: List<ColumnType> = emptyList(),
-    ): AsyncPreparedStatement {
+    ): AsyncPreparedStatement = busy {
         val pst = PostgresPreparedStatement(
             query = query,
             connection = this,
@@ -400,60 +372,62 @@ class PGConnection private constructor(
             resultColumnTypes = resultColumnTypes
         )
         prepareStatements.add(pst)
-        return pst
+        pst
     }
 
+    override fun toString(): String = "PGConnection-$id"
+
     override suspend fun commit() {
-        if (!transactionStarted) {
-            throw IllegalStateException("Transaction not started")
-        }
-        val q = query("commit")
-        transactionStarted = false
-        if (q !is QueryResponse.Status) {
-            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
-        }
-        if (q.status != "COMMIT") {
-            throw SQLException("Invalid response. Excepted Status \"COMMIT\", but got ${q.status}")
+        busy {
+            checkTransactionStarted()
+            val q = query("commit")
+            transactionStarted = false
+            if (q !is QueryResponse.Status) {
+                throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+            }
+            if (q.status != "COMMIT") {
+                throw SQLException("Invalid response. Excepted Status \"COMMIT\", but got ${q.status}")
+            }
         }
     }
 
     override suspend fun rollback() {
-        if (!transactionStarted) {
-            throw IllegalStateException("Transaction not started")
+        busy {
+            checkTransactionStarted()
+            val q = query("rollback")
+            if (q !is QueryResponse.Status) {
+                throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
+            }
+            if (q.status != "ROLLBACK") {
+                throw SQLException("Invalid response. Excepted Status \"ROLLBACK\", but got ${q.status}")
+            }
+            transactionStarted = false
         }
-        val q = query("rollback")
-        if (q !is QueryResponse.Status) {
-            throw SQLException("Invalid response. Excepted QueryResponse.Status, but got $q")
-        }
-        if (q.status != "ROLLBACK") {
-            throw SQLException("Invalid response. Excepted Status \"ROLLBACK\", but got ${q.status}")
-        }
-        transactionStarted = false
     }
 
-    var closing = false
     override suspend fun asyncClose() {
         checkClosed()
         if (closing) {
-            error("Connection already closing")
+            return
         }
+        check(!busy) { "Connection busy" }
         closing = true
         try {
             prepareStatements.toTypedArray().forEach {
-                runCatching { it.asyncClose() }
+                it.asyncCloseAnyway()
             }
             prepareStatements.clear()
         } finally {
             PgMetrics.pgConnections.dec()
             runCatching { sendOnly(Terminate()) }
-            runCatching { reader.close() }
-            runCatching { connection.asyncClose() }
+            reader.closeAnyway()
+            connection.asyncCloseAnyway()
             closed = true
             connected = false
             try {
                 Closeable.close(charsetUtils, packageWriter, temporalBuffer)
             } finally {
-                packageReader.asyncClose()
+                packageReader.asyncCloseAnyway()
             }
         }
     }

@@ -17,9 +17,15 @@ actual fun Environment.getEnvs(): Map<String, String> {
 
 actual val Environment.workDirectory: String
     get() {
-        val data = getcwd(null, 0.convert()) ?: TODO()
-        if (errno == EACCES) {
-            throw RuntimeException("Forbidden")
+        val data = getcwd(null, 0.convert())
+        if (data == null) {
+            when (val errno = errno) {
+                EACCES -> throw RuntimeException("Forbidden. Can't get getcwd")
+                ERANGE, EINVAL -> throw IllegalArgumentException("invalid size")
+                EIO -> throw RuntimeException("Can't get current directory: IO error")
+                ENOENT, ENOTDIR -> throw RuntimeException("Forbidden. Can't get getcwd")
+                else -> throw RuntimeException("Can't get directory: errno: $errno")
+            }
         }
         try {
             return data.toKString()

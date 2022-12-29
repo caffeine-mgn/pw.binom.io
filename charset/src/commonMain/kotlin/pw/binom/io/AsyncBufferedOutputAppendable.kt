@@ -45,7 +45,7 @@ open class AsyncBufferedOutputAppendable protected constructor(
         pool = null,
         charBufferSize = charBufferSize,
         closeParent = closeParent,
-        buffer = ByteBuffer.alloc(bufferSize),
+        buffer = ByteBuffer(bufferSize),
         closeBuffer = true,
     )
 

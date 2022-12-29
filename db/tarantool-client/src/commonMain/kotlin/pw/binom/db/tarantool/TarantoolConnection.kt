@@ -24,7 +24,7 @@ interface TarantoolConnection : AsyncCloseable {
             password: String?
         ): TarantoolConnectionImpl {
             val con = manager.tcpConnect(address)
-            ByteBuffer.alloc(64).use { buf ->
+            ByteBuffer(64).use { buf ->
                 var connection: TarantoolConnectionImpl? = null
                 try {
                     con.readFully(buf)

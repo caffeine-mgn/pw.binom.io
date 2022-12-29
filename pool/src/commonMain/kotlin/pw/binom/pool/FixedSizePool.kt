@@ -8,6 +8,12 @@ class FixedSizePool<T : Any>(capacity: Int, val manager: ObjectFactory<T>) : Abs
         manager.reset(value, this)
     }
 
+    override fun borrow(): T {
+        val obj = super.borrow()
+        manager.prepare(obj, this)
+        return obj
+    }
+
     override fun free(value: T) {
         manager.deallocate(value, this)
     }

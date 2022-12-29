@@ -1,9 +1,11 @@
 package pw.binom.io.httpServer
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withTimeoutOrNull
 import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
+import pw.binom.concurrency.synchronize
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import pw.binom.io.http.*
@@ -13,6 +15,7 @@ import pw.binom.network.SocketClosedException
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 import pw.binom.pool.tryBorrow
+import pw.binom.pool.using
 import pw.binom.skipAll
 import pw.binom.url.Path
 import pw.binom.url.Query
@@ -33,18 +36,23 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             channel: ServerAsyncAsciiChannel,
             server: HttpServer,
             isNewConnect: Boolean,
-            readStartTimeout: Duration
-        ): HttpRequest2Impl? {
-            println("HttpRequest2Impl:: Try read line...")
+            readStartTimeout: Duration,
+            idleJob: Job?
+        ): Result<HttpRequest2Impl?> = runCatching {
             val request = withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
-            println("HttpRequest2Impl:: line readed: $request. Reading headers...")
 //            val request = channel.reader.readln()
+            if (idleJob != null) {
+                server.idleJobsLock.synchronize {
+                    server.idleJobs -= idleJob
+                }
+            }
             if (!isNewConnect) {
                 server.browConnection(channel)
             }
             if (request == null) {
-                runCatching { channel.asyncClose() }
-                return null
+                println("HttpRequest2Impl:: read first line timeout!")
+                channel.asyncCloseAnyway()
+                return@runCatching null
             }
             HttpServerMetrics.httpRequestCounter.inc()
             val items = request.split(' ', limit = 3)
@@ -58,7 +66,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                     }
                     val p = s.indexOf(':')
                     if (p < 0) {
-                        runCatching { channel.asyncClose() }
+                        channel.asyncCloseAnyway()
                         throw IOException("Invalid HTTP Header: \"$s\"")
                     }
                     val headerKey = s.substring(0, p)
@@ -71,8 +79,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                     channel = channel,
                     server = server,
                 )
-                println("HttpRequest2Impl:: Header readed: $headers")
-                return requestObject
+                return@runCatching requestObject
             }
         }
     }

@@ -219,7 +219,7 @@ internal object InternalProtocolUtils {
     }
 
     fun buildMessagePackage(header: Map<Int, Any?>, data: Map<Any, Any?>, out: ByteArrayOutput) {
-        ByteBuffer.alloc(8).use { buf ->
+        ByteBuffer(8).use { buf ->
             out.writeByte(buf, (0xce).toByte())
             out.writeInt(buf, 0)
             writeValue(header, buf, out)

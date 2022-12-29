@@ -7,7 +7,6 @@ import pw.binom.collections.useName
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
-import pw.binom.pool.GenericObjectPool
 
 abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
     private val routers = defaultMutableMap<String, MutableList<Route>>().useName("AbstractRoute.routers")
@@ -62,7 +61,7 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
         forwardHandler = handler
     }
 
-    private val requestWrapperPool = GenericObjectPool(factory = FluxHttpRequestImpl.FACTORY)
+//    private val requestWrapperPool = GenericObjectPool(factory = FluxHttpRequestImpl.FACTORY)
 
     override suspend fun execute(action: HttpRequest) {
         val forward = forwardHandler
@@ -91,13 +90,18 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                     action.path.isMatch(it.key)
                 }
                 ?.any { route ->
-                    val wrapper = requestWrapperPool.borrow().also {
-                        it.reset(
-                            mask = route.key,
-                            original = action,
-                            serialization = serialization,
-                        )
-                    }
+//                    val wrapper = requestWrapperPool.borrow().also {
+//                        it.reset(
+//                            mask = route.key,
+//                            original = action,
+//                            serialization = serialization,
+//                        )
+//                    }
+                    val wrapper = FluxHttpRequest2Impl(
+                        original = action,
+                        mask = route.key,
+                        serialization = serialization,
+                    )
                     try {
                         if (action.response != null) {
                             return@any true
@@ -108,9 +112,12 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                                 action.response != null
                             }
                         }
+                    } catch (e: Throwable) {
+                        println("AbstractRouter BinomError: ${e.stackTraceToString()}")
+                        throw e
                     } finally {
-                        wrapper.free()
-                        requestWrapperPool.recycle(wrapper)
+//                        wrapper.free()
+//                        requestWrapperPool.recycle(wrapper)
                     }
                 }
         }

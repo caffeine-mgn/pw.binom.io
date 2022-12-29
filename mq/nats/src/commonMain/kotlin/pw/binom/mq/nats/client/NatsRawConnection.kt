@@ -157,15 +157,15 @@ class NatsRawConnection(
     }
 
     suspend fun publish(subject: String, replyTo: String? = null, data: ByteArray?) {
-        val wrapedData = data?.let { ByteBuffer.wrap(it) }
+        val buffer = data?.wrap()
         try {
             publish(
                 subject = subject,
                 replyTo = replyTo,
-                data = wrapedData
+                data = buffer
             )
         } finally {
-            wrapedData?.close()
+            buffer?.close()
         }
     }
 
@@ -173,7 +173,7 @@ class NatsRawConnection(
         disconnecting = true
         isConnected = false
         isConnecting = false
-        runCatching { channel.asyncClose() }
+        channel.asyncCloseAnyway()
     }
 }
 

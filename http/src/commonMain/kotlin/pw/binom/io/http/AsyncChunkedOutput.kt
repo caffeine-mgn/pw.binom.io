@@ -24,9 +24,9 @@ open class AsyncChunkedOutput(
         protected set
     protected var closed = false
     protected var finished = false
-    protected val buffer = ByteBuffer.alloc(autoFlushBuffer)
+    protected val buffer = ByteBuffer(autoFlushBuffer)
 
-    private val tmp = ByteBuffer.alloc(50)
+    private val tmp = ByteBuffer(50)
     override suspend fun write(data: ByteBuffer): Int {
         checkClosed()
         val len = data.remaining

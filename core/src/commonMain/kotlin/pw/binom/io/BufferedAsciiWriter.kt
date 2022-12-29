@@ -111,7 +111,7 @@ class BufferedAsciiWriter(
         }
     }
 
-    override val buffer = ByteBuffer.alloc(bufferSize)
+    override val buffer = ByteBuffer(bufferSize)
 }
 
 fun Output.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) =

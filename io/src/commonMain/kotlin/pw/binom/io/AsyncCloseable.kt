@@ -2,6 +2,12 @@ package pw.binom.io
 
 fun interface AsyncCloseable {
     suspend fun asyncClose()
+    suspend fun asyncCloseAnyway() = try {
+        asyncClose()
+        true
+    } catch (e: Throwable) {
+        false
+    }
 }
 
 suspend inline fun <T : AsyncCloseable, R> T.use(func: (T) -> R): R {

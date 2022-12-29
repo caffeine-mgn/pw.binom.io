@@ -47,6 +47,9 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkMa
         return !threads.any { it.id == currentId }
     }
 
+//    override val key: CoroutineContext.Key<*>
+//        get() = NetworkInterceptor.Key
+
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         ensureOpen()
         exchange.put(block)

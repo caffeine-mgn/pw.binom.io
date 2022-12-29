@@ -17,7 +17,7 @@ class WebSocketHeader {
 
     companion object {
         suspend fun read(input: AsyncInput, dest: WebSocketHeader) {
-            val buf = ByteBuffer.alloc(8)
+            val buf = ByteBuffer(8)
             val first = input.readByte(buf)
             val second = input.readByte(buf)
 
@@ -40,7 +40,7 @@ class WebSocketHeader {
         }
 
         suspend fun write(output: AsyncOutput, src: WebSocketHeader) {
-            ByteBuffer.alloc(8).use { buf ->
+            ByteBuffer(8).use { buf ->
                 var value = src.opcode and 0b111
                 if (src.finishFlag) {
                     value = value or 0b10000000.toByte()

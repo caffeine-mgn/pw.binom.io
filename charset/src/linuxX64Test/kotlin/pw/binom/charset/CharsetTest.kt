@@ -10,7 +10,7 @@ class CharsetTest {
     fun test() {
         val buf = CharBuffer.alloc(30)
         Charsets.get("WINDOWS-1251").newDecoder()
-            .decode(ByteBuffer.wrap(test_data_hello_bytes_windows_1251), buf)
+            .decode(ByteBuffer(test_data_hello_bytes_windows_1251), buf)
         buf.flip()
         println("data: ${buf.remaining}  $buf ${buf.toString().length}")
         buf.toString().forEachIndexed { index, c ->

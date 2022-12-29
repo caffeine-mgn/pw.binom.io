@@ -66,6 +66,7 @@ kotlin {
         dependsOn("watchos*Main", linuxX64Main)
         dependsOn("macos*Main", linuxX64Main)
         dependsOn("ios*Main", linuxX64Main)
+        dependsOn("tvos*Main", linuxX64Main)
         dependsOn("androidNative*Main", linuxX64Main)
         dependsOn("wasm*Main", nativeMain)
 

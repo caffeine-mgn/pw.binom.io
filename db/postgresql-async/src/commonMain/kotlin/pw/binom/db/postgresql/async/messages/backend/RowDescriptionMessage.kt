@@ -24,6 +24,9 @@ class RowDescriptionMessage : KindedMessage {
         suspend fun read(ctx: PackageReader): RowDescriptionMessage {
             val columnsCount = ctx.readShort()
             val msg = ctx.rowDescriptionMessage
+            msg.columns.forEach {
+                ctx.recycleColumnData(it)
+            }
             msg.columns = Array(columnsCount.toInt()) {
                 val meta = ctx.giveColumnData()
                 meta.name = ctx.readCString()

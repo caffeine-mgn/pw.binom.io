@@ -7,7 +7,7 @@ suspend fun AsyncInput.readBytes(bufferProvider: ByteBufferProvider) = bufferPro
     readBytes(buffer)
 }
 
-suspend fun AsyncInput.readBytes(bufferSize: Int = DEFAULT_BUFFER_SIZE) = ByteBuffer.alloc(bufferSize).use { buffer ->
+suspend fun AsyncInput.readBytes(bufferSize: Int = DEFAULT_BUFFER_SIZE) = ByteBuffer(bufferSize).use { buffer ->
     readBytes(buffer)
 }
 

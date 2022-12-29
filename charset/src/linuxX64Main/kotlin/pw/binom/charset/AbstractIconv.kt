@@ -74,11 +74,16 @@ abstract class AbstractIconv(
 
     protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
         return output.refTo(output.position) { outputPtr ->
-            input.refTo(input.position) { inputPtr ->
-                memScoped {
+            input.refTo(input.position) inputRefTo@{ inputPtr ->
+                var callCount = 0
+                while (true) {
+                    callCount++
+                    if (callCount > 100) {
+                        throw IllegalStateException("Iconv loop happened")
+                    }
                     resource.outputAvail.value = (output.remaining * output.elementSizeInBytes).convert()
-                    resource.outputPointer.value = outputPtr.getPointer(this).reinterpret()
-                    resource.inputPointer.value = inputPtr.getPointer(this).reinterpret()
+                    resource.outputPointer.value = outputPtr.reinterpret<CPointerVar<ByteVar>>()
+                    resource.inputPointer.value = inputPtr.reinterpret<CPointerVar<ByteVar>>()
                     resource.inputAvail.value = (input.remaining * input.elementSizeInBytes).convert()
                     set_posix_errno(0)
 
@@ -98,13 +103,15 @@ abstract class AbstractIconv(
                     input.position += readed / input.elementSizeInBytes
                     output.position += writed / output.elementSizeInBytes
                     when {
-                        r != 0 && errno == E2BIG -> CharsetTransformResult.OUTPUT_OVER
-                        r != 0 && errno == EILSEQ -> CharsetTransformResult.MALFORMED
-                        r != 0 && errno == EINVAL -> CharsetTransformResult.INPUT_OVER
-                        r == 0 && errno == 0 -> CharsetTransformResult.SUCCESS
+                        r != 0 && errno == E2BIG -> return@inputRefTo CharsetTransformResult.OUTPUT_OVER
+                        r != 0 && errno == EILSEQ -> return@inputRefTo CharsetTransformResult.MALFORMED
+                        r != 0 && errno == EINVAL -> return@inputRefTo CharsetTransformResult.INPUT_OVER
+                        r == 0 && errno == EAGAIN -> continue
+                        r == 0 && errno == 0 -> return@inputRefTo CharsetTransformResult.SUCCESS
                         else -> error("Iconv Exception. Errno: $errno, Result: $r")
                     }
                 }
+                throw IllegalStateException()
             }
         } ?: CharsetTransformResult.SUCCESS
     }

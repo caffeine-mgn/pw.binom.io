@@ -23,7 +23,7 @@ class Base64DecodeAppendable(val stream: Output) : Appendable, Closeable {
 
     private var g = 0
     private var b = 0.toByte()
-    private val buf = ByteBuffer.alloc(1)
+    private val buf = ByteBuffer(1)
     private val decoder = Base64Decoder { byte ->
         stream.writeByte(buf, byte)
     }

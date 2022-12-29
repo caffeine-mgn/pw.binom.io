@@ -3,7 +3,7 @@ package pw.binom.compression.tar
 import pw.binom.io.*
 import pw.binom.set
 
-private val ZERO_BYTE = ByteBuffer.alloc(100).also {
+private val ZERO_BYTE = ByteBuffer(100).also {
     while (it.remaining > 0)
         it.put(0)
 }
@@ -22,8 +22,9 @@ fun ByteBuffer.writeZero() {
 
 internal fun Int.forPart(partSize: Int): Int {
     var fullSize = (this / partSize) * partSize
-    if (this % partSize > 0)
+    if (this % partSize > 0) {
         fullSize += partSize
+    }
     return fullSize
 }
 
@@ -94,10 +95,11 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
 
     fun newEntity(name: String, mode: UShort, uid: UShort, gid: UShort, time: Long, type: TarEntityType): Output {
         checkFinished()
-        if (entityWriting)
+        if (entityWriting) {
             throw IllegalStateException("You mast close previous Entity")
+        }
         entityWriting = true
-        val block = ByteBuffer.alloc(BLOCK_SIZE)
+        val block = ByteBuffer(BLOCK_SIZE)
 
         name.encodeToByteArray().wrap().use { nameBytes ->
             if (nameBytes.capacity > 100) {
@@ -176,14 +178,16 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
         private set
 
     private inline fun checkFinished() {
-        if (isFinished)
+        if (isFinished) {
             throw IllegalStateException("TarWrite already finished")
+        }
     }
 
     override fun close() {
         checkFinished()
-        if (entityWriting)
+        if (entityWriting) {
             throw IllegalStateException("You mast close previous Entity")
+        }
         stream.writeZero(BLOCK_SIZE.toInt())
         stream.writeZero(BLOCK_SIZE.toInt())
         isFinished = true

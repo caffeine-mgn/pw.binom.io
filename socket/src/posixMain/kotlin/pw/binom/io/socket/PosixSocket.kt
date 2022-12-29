@@ -4,6 +4,7 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.sizeOf
+import platform.common.internal_unbind
 import platform.posix.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
@@ -20,10 +21,9 @@ class PosixSocket(
             } else {
                 CommonMutableNetworkAddress(address)
             }
+            internal_unbind(native)
             val bindResult = netAddress.getAsIpV6 { ipv6Addr ->
-                bind(
-                    native, ipv6Addr.reinterpret(), sizeOf<sockaddr_in6>().convert()
-                )
+                bind(native, ipv6Addr.reinterpret(), sizeOf<sockaddr_in6>().convert())
             }
 
             if (bindResult < 0) {
@@ -32,12 +32,6 @@ class PosixSocket(
                     EINVAL -> return BindStatus.ALREADY_BINDED
                     EADDRINUSE -> return BindStatus.ADDRESS_ALREADY_IN_USE
                 }
-//                if (errno == EADDRINUSE || errno == 0) {
-//                    throw BindException("Address already in use: ${address.host}:${address.port}")
-//                }
-//                if (errno == EACCES) {
-//                    throw BindException("Can't bind to $address: Permission denied")
-//                }
                 throw IOException("Bind error. errno: [$errno], bind: [$bindResult]")
             }
             val listenResult = listen(native, 1000)
@@ -47,23 +41,11 @@ class PosixSocket(
                     EOPNOTSUPP -> {
                         // Do nothing
                     }
-
                     else -> {
                         unbind(native)
                         throw IOException("Listen error. errno: [$errno], listen: [$listenResult]")
                     }
                 }
-//                when (errno) {
-//                    EINVAL -> throw BindException("Socket already binded")
-//                }
-//                if (errno == ESOCKTNOSUPPORT) {
-//                    return@memScoped
-//                }
-//                if (errno == EOPNOTSUPP) {
-//                    return@memScoped
-// //                   unbind(native)
-// //                   throw IOException("Can't bind socket: Operation not supported on transport endpoint")
-//                }
             }
         }
         return BindStatus.OK

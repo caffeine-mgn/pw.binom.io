@@ -164,7 +164,7 @@ suspend fun AsyncInput.copyTo(output: Output, tempBuffer: ByteBuffer): Long {
  * @return size of copied data
  */
 suspend fun AsyncInput.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
-    ByteBuffer.alloc(bufferSize).use { buffer ->
+    ByteBuffer(bufferSize).use { buffer ->
         copyTo(output, buffer)
     }
 
@@ -185,12 +185,12 @@ suspend fun AsyncInput.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Lon
 }
 
 suspend fun AsyncInput.copyTo(output: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
-    ByteBuffer.alloc(bufferSize).use { buffer ->
+    ByteBuffer(bufferSize).use { buffer ->
         copyTo(output, buffer)
     }
 
 suspend fun AsyncInput.skipAll(bufferSkipSize: Int = DEFAULT_BUFFER_SIZE) {
-    ByteBuffer.alloc(bufferSkipSize).use {
+    ByteBuffer(bufferSkipSize).use {
         skipAll(it)
     }
 }

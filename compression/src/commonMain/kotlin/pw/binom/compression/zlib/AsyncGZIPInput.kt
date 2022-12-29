@@ -10,8 +10,8 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
     closeStream = closeStream
 ) {
     private val crc = CRC32()
-    private val tmpbuf = ByteBuffer.alloc(128)
-    private val tt = ByteBuffer.alloc(2)
+    private val tmpbuf = ByteBuffer(128)
+    private val tt = ByteBuffer(2)
 
     init {
         usesDefaultInflater = true

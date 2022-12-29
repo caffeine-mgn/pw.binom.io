@@ -11,7 +11,7 @@ class CharsetCoder(charset: Charset, charBufferCapacity: Int = 256, byteBufferCa
     private val encoder = charset.newEncoder()
     private val decoder = charset.newDecoder()
     private var charBuffer = CharBuffer.alloc(charBufferCapacity)
-    private var byteBuffer = ByteBuffer.alloc(byteBufferCapacity)
+    private var byteBuffer = ByteBuffer(byteBufferCapacity)
     private var closed = false
     private fun checkClosed() {
         if (closed) {

@@ -19,7 +19,7 @@ fun setBlocking(native: Int, value: Boolean) {
 
 fun allowIpv4(native: RawSocket) {
     if (internal_set_allow_ipv6(native) <= 0) {
-        throw IOException("Can't allow ipv6 connection for UDP socket.")
+        throw IOException("Can't allow ipv6 connection socket.")
     }
 }
 

@@ -16,7 +16,7 @@ class Win1251Test {
     @Test
     fun encode() {
         val encoder = charset.newEncoder()
-        val out = ByteBuffer.alloc(30)
+        val out = ByteBuffer(30)
         assertEquals(CharsetTransformResult.SUCCESS, encoder.encode(test_data_hello_text.toCharBuffer(), out))
         out.flip()
         assertEquals(test_data_hello_bytes_windows_1251.size, out.remaining)
@@ -29,7 +29,7 @@ class Win1251Test {
     @Test
     fun encodeOutputOver() {
         val encoder = charset.newEncoder()
-        val out = ByteBuffer.alloc(30)
+        val out = ByteBuffer(30)
         out.limit = 2
         val input = test_data_hello_text.toCharBuffer()
         assertEquals(CharsetTransformResult.OUTPUT_OVER, encoder.encode(input, out))

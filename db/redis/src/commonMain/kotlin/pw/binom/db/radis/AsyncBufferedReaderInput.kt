@@ -18,7 +18,7 @@ class AsyncBufferedReaderInput(
 
     private val decoder = charset.newDecoder()
     private val charBuffer = CharBuffer.alloc(bufferSize)
-    override val buffer: ByteBuffer = ByteBuffer.alloc(bufferSize).empty()
+    override val buffer: ByteBuffer = ByteBuffer(bufferSize).empty()
 
     suspend fun readANSIChar(): Char? {
         if (buffer.remaining == 0) {

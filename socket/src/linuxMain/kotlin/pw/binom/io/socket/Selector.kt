@@ -25,10 +25,12 @@ actual class Selector : Closeable {
     internal val epoll = Epoll.create(1024)
     private val wakeupFlag = AtomicBoolean(false)
     private val native = nativeHeap.allocArray<epoll_event>(MAX_ELEMENTS)
+    internal val eventMem = nativeHeap.alloc<epoll_event>()
 
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
     private val keys = defaultMutableMap<Socket, SelectorKey>()
+    private val nativeKeys = defaultMutableMap<RawSocket, SelectorKey>()
     private val keys2 = defaultMutableMap<SelectorKey, Socket>()
 
     init {
@@ -64,9 +66,12 @@ actual class Selector : Closeable {
             } else {
                 val key = SelectorKey(selector = this, rawSocket = socket.native)
                 key.serverFlag = socket.server
-                epoll.add(socket.native, key.event.ptr)
+                eventMem.data.fd = socket.native
+                eventMem.events = 0.convert()
+                epoll.add(socket.native, eventMem.ptr)
                 keys[socket] = key
                 keys2[key] = socket
+                nativeKeys[socket.native] = key
                 key
             }
         }
@@ -92,11 +97,12 @@ actual class Selector : Closeable {
     internal fun removeKey(key: SelectorKey) {
         if (selectLock.tryLock()) {
             try {
-//                println("Selector:: removeKeyNow ${key.event.data.ptr}")
+//                println("Selector:: removeKeyNow ${key.rawSocket}")
                 epoll.delete(key.rawSocket, true)
                 addKeyLock.synchronize {
                     val existKey = keys2.remove(key)
                     if (existKey != null) {
+                        nativeKeys.remove(existKey.native)
                         keys.remove(existKey)
                     }
                 }
@@ -119,6 +125,7 @@ actual class Selector : Closeable {
                     epoll.delete(key.rawSocket, false)
                     val existKey = keys2.remove(key)
                     if (existKey != null) {
+                        nativeKeys.remove(existKey.native)
                         keys.remove(existKey)
                     }
                     key.internalClose()
@@ -164,7 +171,8 @@ actual class Selector : Closeable {
                 interruptWakeup()
                 continue
             }
-            val key = ptr.asStableRef<SelectorKey>().get()
+            val key = nativeKeys[event.data.fd] ?: continue
+//            val key = ptr.asStableRef<SelectorKey>().get()
 //            println("KEY->$key, ${epollModeToString(event.events.toInt())}")
             if (key.closed) {
                 key.internalClose()
@@ -174,11 +182,11 @@ actual class Selector : Closeable {
 //                println("Selector:: tcp server happened! Event: ${epollModeToString(event.events.toInt())}")
 //            }
 
-            if (key.serverFlag && event.events.toInt() and EPOLLHUP.toInt() != 0 && event.events.toInt() and EPOLLERR.toInt() == 0) {
-//                println("Selector:: reset listen keys")
-                key.resetListenFlags(key.listenFlags)
-                continue
-            }
+//            if (key.serverFlag && event.events.toInt() and EPOLLHUP.toInt() != 0 && event.events.toInt() and EPOLLERR.toInt() == 0) {
+//                println("Selector:: reset listen keys. attachment=${key.attachment}")
+//                key.resetListenFlags(key.listenFlags)
+//                continue
+//            }
             var e = 0
             if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
                 keyForRemove.add(key)
@@ -230,6 +238,8 @@ actual class Selector : Closeable {
     override fun close() {
         selectLock.synchronize {
             epoll.delete(pipeRead, false)
+            nativeHeap.free(eventMem)
+            nativeHeap.free(native)
             platform.posix.close(pipeRead)
             platform.posix.close(pipeWrite)
             epoll.close()

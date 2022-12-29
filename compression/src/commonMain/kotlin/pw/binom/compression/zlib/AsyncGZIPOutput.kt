@@ -33,7 +33,7 @@ open class AsyncGZIPOutput protected constructor(
     ) : this(
         stream = stream,
         level = level,
-        buffer = ByteBuffer.alloc(bufferSize),
+        buffer = ByteBuffer(bufferSize),
         closeStream = closeStream,
         pool = null,
         closeBuffer = true
@@ -42,14 +42,14 @@ open class AsyncGZIPOutput protected constructor(
     constructor(
         stream: AsyncOutput,
         level: Int = 6,
-        bufferPool: ObjectPool<ByteBuffer>,
+        bufferPool: ObjectPool<out ByteBuffer>,
         closeStream: Boolean = true
     ) : this(
         stream = stream,
         level = level,
         buffer = bufferPool.borrow(),
         closeStream = closeStream,
-        pool = bufferPool,
+        pool = bufferPool as ObjectPool<ByteBuffer>,
         closeBuffer = false
     )
 
@@ -85,7 +85,7 @@ open class AsyncGZIPOutput protected constructor(
             buf.clear()
             write(buf)
         } else {
-            ByteBuffer.alloc(TRAILER_SIZE).use { trailer ->
+            ByteBuffer(TRAILER_SIZE).use { trailer ->
                 write(trailer)
             }
         }
@@ -112,8 +112,9 @@ open class AsyncGZIPOutput protected constructor(
 
     private var headerWrited = false
     private suspend fun writeHeader() {
-        if (headerWrited)
+        if (headerWrited) {
             return
+        }
         header.clear()
         stream.write(header)
         headerWrited = true
@@ -128,7 +129,7 @@ fun AsyncOutput.gzip(level: Int = 6, bufferSize: Int = 1024, closeStream: Boolea
         closeStream = closeStream,
     )
 
-private val header = ByteBuffer.alloc(10).also {
+private val header = ByteBuffer(10).also {
     it.put(GZIP_MAGIC1) // Magic number (short)
     it.put(GZIP_MAGIC2) // Magic number (short)
     it.put(DEFLATED) // Compression method (CM)

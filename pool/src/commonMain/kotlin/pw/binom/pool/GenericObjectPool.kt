@@ -1,8 +1,7 @@
 package pw.binom.pool
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.atomic.AtomicInt
-import pw.binom.atomic.AtomicLong
+import pw.binom.atomic.synchronize
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -33,45 +32,46 @@ open class GenericObjectPool<T : Any>(
         private set
     internal var nextCapacity = initCapacity
 
-    private val threadId = AtomicLong(0)
-    private val count = AtomicInt(0)
+//    private val threadId = AtomicLong(0)
+//    private val count = AtomicInt(0)
 
-    private fun lock() {
-        if (threadId.getValue() == (ThreadUtils.currentThreadId)) {
-            count.increment()
-        } else {
-            while (true) {
-                if (threadId.compareAndSet(0, ThreadUtils.currentThreadId)) {
-                    break
-                }
-//                sleep(1)
-            }
-            count.increment()
-        }
-    }
+//    private fun lock() {
+//        if (threadId.getValue() == (ThreadUtils.currentThreadId)) {
+//            count.increment()
+//        } else {
+//            while (true) {
+//                if (threadId.compareAndSet(0, ThreadUtils.currentThreadId)) {
+//                    break
+//                }
+// //                sleep(1)
+//            }
+//            count.increment()
+//        }
+//    }
 
-    private fun unlock() {
-        if (count.getValue() <= 0) {
-            throw IllegalStateException("ReentrantSpinLock is not locked")
-        }
-        if (threadId.getValue() != (ThreadUtils.currentThreadId)) {
-            throw IllegalStateException("Only locking thread can call unlock")
-        }
-        count.decrement()
-        if (count.getValue() == 0) {
-            if (!threadId.compareAndSet(ThreadUtils.currentThreadId, 0)) {
-                throw IllegalStateException("Lock already free")
-            }
-        }
-    }
-
+    //    private fun unlock() {
+//        if (count.getValue() <= 0) {
+//            throw IllegalStateException("ReentrantSpinLock is not locked")
+//        }
+//        if (threadId.getValue() != (ThreadUtils.currentThreadId)) {
+//            throw IllegalStateException("Only locking thread can call unlock")
+//        }
+//        count.decrement()
+//        if (count.getValue() == 0) {
+//            if (!threadId.compareAndSet(ThreadUtils.currentThreadId, 0)) {
+//                throw IllegalStateException("Lock already free")
+//            }
+//        }
+//    }
+    private val lock = AtomicBoolean(false)
     private fun <T> synchronize(func: () -> T): T {
-        lock()
-        return try {
-            func()
-        } finally {
-            unlock()
-        }
+        return lock.synchronize(func)
+//        lock()
+//        return try {
+//            func()
+//        } finally {
+//            unlock()
+//        }
     }
 
     fun updateMaxSize(maxSize: Int) {
@@ -168,13 +168,16 @@ open class GenericObjectPool<T : Any>(
 
     override fun borrow(): T = synchronize {
         if (size == 0) {
-            factory.allocate(this)
+            val obj = factory.allocate(this)
+            factory.prepare(obj, this)
+            obj
         } else {
             val index = --size
             nextCapacity = maxOf(size, nextCapacity - 1)
             val obj = pool[index] as T
             pool[index] = null
             internalCheckShrink()
+            factory.prepare(obj, this)
             obj
         }
     }

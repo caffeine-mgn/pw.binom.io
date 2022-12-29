@@ -156,9 +156,9 @@ class PostgresPreparedStatement(
 //            val r = connection.readDesponse()
 //            println("got ${r::class} -> $r")
 //        }
-        val closeMsg = connection.readDesponse()
+        val closeMsg = connection.readResponse()
         check(closeMsg is CloseCompleteMessage) { "Expected CloseCompleteMessage, but actual $closeMsg" }
-        val readyForQuery = connection.readDesponse()
+        val readyForQuery = connection.readResponse()
         check(readyForQuery is ReadyForQueryMessage) { "Expected ReadyForQueryMessage, but actual $readyForQuery" }
     }
 
@@ -209,18 +209,18 @@ class PostgresPreparedStatement(
         )
         connection.sendOnly(SyncMessage)
         if (!parsed) {
-            val msg = connection.readDesponse()
+            val msg = connection.readResponse()
             if (msg is ErrorMessage) {
-                checkType<ReadyForQueryMessage>(connection.readDesponse())
+                checkType<ReadyForQueryMessage>(connection.readResponse())
                 throw PostgresqlException("$msg. Query: $realQuery")
             }
             checkType<ParseCompleteMessage>(msg)
         }
-        val msg = connection.readDesponse()
+        val msg = connection.readResponse()
         when (msg) {
             is ErrorMessage -> {
                 try {
-                    check(connection.readDesponse() is ReadyForQueryMessage)
+                    check(connection.readResponse() is ReadyForQueryMessage)
                 } finally {
                     deleteSelf(isPortal = true)
                     if (justParsed) {
@@ -238,7 +238,7 @@ class PostgresPreparedStatement(
 
         var rowsAffected = 0L
         LOOP@ while (true) {
-            val msg2 = connection.readDesponse()
+            val msg2 = connection.readResponse()
             var status = ""
             when (msg2) {
                 is ReadyForQueryMessage -> {
@@ -263,6 +263,7 @@ class PostgresPreparedStatement(
                             it.portalName = id
                             it.asyncClose()
                         }
+                        connection.busy = false
                         throw IllegalStateException("Previews rest set not closed")
                     }
                     val msg3 = connection.reader.data
@@ -272,7 +273,7 @@ class PostgresPreparedStatement(
                 }
 
                 is ErrorMessage -> {
-                    check(connection.readDesponse() is ReadyForQueryMessage)
+                    check(connection.readResponse() is ReadyForQueryMessage)
                     deleteSelf(isPortal = true)
                     throw PostgresqlException("${msg2.fields['M']}. Query: $realQuery")
                 }

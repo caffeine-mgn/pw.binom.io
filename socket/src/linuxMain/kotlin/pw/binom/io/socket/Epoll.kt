@@ -24,7 +24,10 @@ value class Epoll(val raw: Int) {
 
     fun select(events: CArrayPointer<epoll_event>, maxEvents: Int, timeout: Int): Int {
         val count = epoll_wait(
-            raw, events, maxEvents, timeout
+            raw,
+            events,
+            maxEvents,
+            timeout
         )
         if (count < 0) {
             throw IOException("Error on epoll_wait. errno: $errno")
@@ -70,13 +73,10 @@ value class Epoll(val raw: Int) {
     fun update(socket: RawSocket, data: CValuesRef<epoll_event>?): Boolean {
         // ENOENT - socket closed
         val ret = epoll_ctl(raw, EPOLL_CTL_MOD, socket.convert(), data)
-        if (ret != 0) {
-            println("Epoll update error: $errno")
-        }
-        return ret == 0
-//        if (ret != 0 && failOnError) {
-//            throw IOException("Can't update key to selector. socket: $socket, list: $raw. errno: $errno")
+//        if (ret != 0) {
+//            println("Epoll update error: $errno")
 //        }
+        return ret == 0
     }
 
     fun close() {

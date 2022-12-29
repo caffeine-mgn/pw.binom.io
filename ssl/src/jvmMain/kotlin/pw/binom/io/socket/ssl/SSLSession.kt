@@ -125,7 +125,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
             tmpBuf.clear()
             val s = sslEngine.unwrap(rbio, tmpBuf)
             tmpBuf.flip()
-            clientData.write(pw.binom.io.ByteBuffer.wrap(tmpBuf))
+            clientData.write(pw.binom.io.ByteBuffer(tmpBuf))
             rbio.cleanup()
             val state = when (s.status) {
                 SSLEngineResult.Status.OK ->

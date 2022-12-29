@@ -2,6 +2,12 @@ package pw.binom.io
 
 fun interface Closeable {
     fun close()
+    fun closeAnyway() = try {
+        close()
+        true
+    } catch (e: Throwable) {
+        false
+    }
 
     companion object {
         val STUB = Closeable { }

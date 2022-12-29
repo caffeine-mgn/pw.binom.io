@@ -22,7 +22,7 @@ class ReusableAsyncBufferedOutputAppendable(
     pool = null,
     charBufferSize = charBufferSize,
     closeParent = false,
-    buffer = ByteBuffer.alloc(bufferSize),
+    buffer = ByteBuffer(bufferSize),
     closeBuffer = true,
 ) {
     class Manager(

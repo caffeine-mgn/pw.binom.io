@@ -170,11 +170,11 @@ class AsyncConnectionPoolImpl constructor(
 
     override suspend fun asyncClose() {
         waiters.forEach {
-            runCatching { it.resumeWithException(StreamClosedException()) }
+            it.resumeWithException(StreamClosedException())
         }
         waiters.clear()
         defaultMutableList(connections).forEach {
-            runCatching { it.asyncClose() }
+            it.asyncCloseAnyway()
         }
         connections.clear()
         idleConnectionLock.synchronize {

@@ -26,7 +26,7 @@ class ObjectAsyncOutput(
 
     var contentSize: Long = 0
         private set
-    private val buffer = ByteBuffer.alloc(bufferSize)
+    private val buffer = ByteBuffer(bufferSize)
     private var uploadId: String? = null
     private val parts = ArrayList<Part>()
     override suspend fun write(data: ByteBuffer): Int {

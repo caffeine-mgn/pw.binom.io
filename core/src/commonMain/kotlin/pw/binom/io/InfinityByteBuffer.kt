@@ -8,7 +8,7 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
         private set
 
     private inner class Package {
-        val data = ByteBuffer.alloc(packageSize)
+        val data = ByteBuffer(packageSize)
         private var writePosition = 0
         private var readPosition = 0
 

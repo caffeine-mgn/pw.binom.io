@@ -1,6 +1,8 @@
 package pw.binom.io
 
 import kotlinx.cinterop.*
+import pw.binom.atomic.AtomicInt
+import kotlin.random.Random
 
 sealed interface MemAccess : Closeable {
     val capacity: Int
@@ -62,71 +64,85 @@ sealed interface MemAccess : Closeable {
     }
 }
 
-actual open class ByteBuffer(
+actual open class ByteBuffer private constructor(
     val data: MemAccess,
-    val onClose: ((ByteBuffer) -> Unit)?
 ) : Channel, Buffer, ByteBufferProvider {
-    actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(MemAccess.NativeMemory(size), null)
-        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer =
-            ByteBuffer(MemAccess.NativeMemory(size), onClose)
+    actual companion object;
 
-        actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(MemAccess.ArrayMemory(array), null)
-    }
+    actual constructor(size: Int) : this(MemAccess.NativeMemory(size))
+    actual constructor(array: ByteArray) : this(MemAccess.ArrayMemory(array))
+
+//    actual companion object {
+//        actual fun alloc(size: Int): AbstractByteBuffer = AbstractByteBuffer(MemAccess.NativeMemory(size), null)
+//        actual fun alloc(size: Int, onClose: (AbstractByteBuffer) -> Unit): AbstractByteBuffer =
+//            AbstractByteBuffer(MemAccess.NativeMemory(size), onClose)
+//
+//        actual fun wrap(array: ByteArray): AbstractByteBuffer = AbstractByteBuffer(MemAccess.ArrayMemory(array), null)
+//    }
 
     //    private val native = createNativeByteBuffer(capacity)!!
     override val capacity: Int
         get() = data.capacity
 
-    init {
-        ByteBufferMetric.inc(this)
-        ByteBufferAllocationCallback.onCreate?.invoke(this)
-    }
+    override val elementSizeInBytes: Int
+        get() = 1
 
-    //    val bb = nativeHeap.allocArray<ByteVar>(capacity)
     private var closed = false
 
-    private var _position = 0
-    private var _limit = capacity
+    private var _position = AtomicInt(0)
+    private var _limit = AtomicInt(data.capacity)
 
     override val remaining: Int
-        get() = _limit - _position
+        get() = _limit.getValue() - _position.getValue()
 
     override var position: Int
         get() {
-            return _position
+            return _position.getValue()
         }
         set(value) {
             require(value >= 0) { "position ($value) should be more or equal 0" }
             require(value <= limit) { "position ($value) should be less or equal limit ($limit)" }
-            _position = value
+//            println("ByteBuffer@${hashCode()}->limit=${_position.getValue()}->$value")
+            _position.setValue(value)
         }
 
-    fun isReferenceAccessAvailable(position: Int = this.position) =
-        capacity != 0 && position < capacity
+    override var limit: Int
+        get() {
+            return _limit.getValue()
+        }
+        set(value) {
+            if (value > capacity || value < 0) throw createLimitException(value)
+//            println("ByteBuffer@${hashCode()}->limit=${_limit.getValue()}->$value")
+            _limit.setValue(value)
+            if (position > value) {
+                position = value
+            }
+        }
 
-    private inline fun checkClosed() {
+    init {
+        ByteBufferMetric.inc(this)
+        ByteBufferAllocationCallback.onCreate(this)
+    }
+
+    private inline fun ensureOpen() {
         if (closed) {
             throw ClosedException()
         }
     }
 
-//    val bytes = ByteArray(capacity)
+    private fun createLimitException(newLimit: Int): IllegalArgumentException {
+        val msg = if (newLimit > capacity) {
+            "newLimit > capacity: ($newLimit > $capacity)"
+        } else { // assume negative
+            require(newLimit < 0) { "newLimit expected to be negative" }
+            "newLimit < 0: ($newLimit < 0)"
+        }
+        return IllegalArgumentException(msg)
+    }
 
-//    val native: CPointer<ByteVar> = run {
-//        memScoped {
-//            bytes.refTo(0).getPointer(this).toLong()
-//        }.toCPointer<ByteVar>()!!
-//    }
+    fun isReferenceAccessAvailable(position: Int = this.position) = capacity != 0 && position < capacity
 
-//    override fun refTo(position: Int): CPointer<ByteVar> {
-//        checkClosed()
-//        return (native + position)!!
-//    }
-
-    override
-
-    fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T? {
+    override fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T? {
         require(position >= 0) { "position ($position) should be more or equals 0" }
         if (capacity == 0 || position == capacity) {
             return null
@@ -134,16 +150,9 @@ actual open class ByteBuffer(
         if (position > capacity) {
             throw IllegalArgumentException("position ($position) should be less than capacity ($capacity)")
         }
-//        try {
         return data.access {
             func((it + position)!!)
         }
-//            return data.usePinned {
-//                func(it.addressOf(position))
-//            }
-//        } catch (e: ArrayIndexOutOfBoundsException) {
-//            throw IllegalArgumentException("Can't get access to $position address of buffer memory. capacity: $capacity, data.size: ${data.size}")
-//        }
     }
 
     fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
@@ -159,22 +168,8 @@ actual open class ByteBuffer(
         position = 0
     }
 
-    override var limit: Int
-        get() {
-//            checkClosed()
-            return _limit
-        }
-        set(value) {
-//            checkClosed()
-            if (value > capacity || value < 0) throw createLimitException(value)
-            _limit = value
-            if (position > value) {
-                position = value
-            }
-        }
-
     actual fun skip(length: Long): Long {
-        checkClosed()
+        ensureOpen()
         require(length > 0) { "Length must be grade than 0" }
 
         val pos = minOf((position + length).toInt(), limit)
@@ -184,11 +179,11 @@ actual open class ByteBuffer(
     }
 
     override fun read(dest: ByteBuffer): Int {
-        checkClosed()
+        ensureOpen()
         return ref { sourceCPointer, remaining ->
             dest.ref { destCPointer, destRemaining ->
                 val len = minOf(destRemaining, remaining)
-                sourceCPointer.copy(
+                sourceCPointer.copyInto(
                     dest = destCPointer,
                     size = len.convert(),
                 )
@@ -200,47 +195,37 @@ actual open class ByteBuffer(
     }
 
     override fun write(data: ByteBuffer): Int {
-        checkClosed()
+        ensureOpen()
         return data.read(this)
     }
 
     override fun flush() {
-        checkClosed()
+        ensureOpen()
     }
 
     override fun close() {
-        checkClosed()
-        ByteBufferMetric.dec(this)
-//        closed = true
+        ensureOpen()
+        preClose()
+        closed = true
         data.close()
-        onClose?.invoke(this)
-        ByteBufferAllocationCallback.onFree?.invoke(this)
-    }
-
-    private fun createLimitException(newLimit: Int): IllegalArgumentException {
-        val msg = if (newLimit > capacity) {
-            "newLimit > capacity: ($newLimit > $capacity)"
-        } else { // assume negative
-            require(newLimit < 0) { "newLimit expected to be negative" }
-            "newLimit < 0: ($newLimit < 0)"
-        }
-        return IllegalArgumentException(msg)
+        ByteBufferMetric.dec(this)
+        ByteBufferAllocationCallback.onFree(this)
     }
 
     actual operator fun get(index: Int): Byte {
-        checkClosed()
+        ensureOpen()
         return data.access { it[index] }
     }
 
     actual operator fun set(index: Int, value: Byte) {
-        checkClosed()
+        ensureOpen()
         ref0 { array, dataSize ->
             array[index] = value
         }
     }
 
     actual fun getByte(): Byte {
-        checkClosed()
+        ensureOpen()
         val p = position
         if (p >= limit) throw IndexOutOfBoundsException()
         position = p + 1
@@ -249,14 +234,14 @@ actual open class ByteBuffer(
     }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
-        checkClosed()
+        ensureOpen()
         this.position = position
         limit = position + length
         return this
     }
 
     actual fun put(value: Byte) {
-        checkClosed()
+        ensureOpen()
         if (position >= limit) throw IndexOutOfBoundsException("Position: [$position], limit: [$limit]")
         ref0 { array, dataSize ->
             array[position++] = value
@@ -264,27 +249,33 @@ actual open class ByteBuffer(
     }
 
     override fun clear() {
-        checkClosed()
+        ensureOpen()
+        val stack = try {
+            if (Random.nextInt().toString().isNotEmpty()) {
+                throw RuntimeException()
+            }
+            TODO()
+        } catch (e: Throwable) {
+            e.getStackTrace().toList()
+        }
+//        println("ByteBuffer@${hashCode()}->clear -> $stack")
         limit = capacity
         position = 0
     }
 
-    override val elementSizeInBytes: Int
-        get() = 1
-
     actual fun realloc(newSize: Int): ByteBuffer {
         if (newSize == 0) {
-            return alloc(0)
+            return ByteBuffer(0)
         }
-        checkClosed()
+        ensureOpen()
         if (capacity == 0) {
-            return alloc(newSize).empty()
+            return ByteBuffer(newSize).empty()
         }
-        val new = alloc(newSize)
+        val new = ByteBuffer(newSize)
         val len = minOf(capacity, newSize)
         ref0 { oldCPointer, oldDataSize ->
             new.ref0 { newCPointer, newDataSize ->
-                oldCPointer.copy(
+                oldCPointer.copyInto(
                     dest = newCPointer,
                     size = len.convert(),
                 )
@@ -297,13 +288,13 @@ actual open class ByteBuffer(
 
     actual fun toByteArray(): ByteArray = toByteArray(remaining)
     actual fun toByteArray(limit: Int): ByteArray {
-        checkClosed()
+        ensureOpen()
         val size = minOf(remaining, limit)
         val r = ByteArray(size)
         if (size > 0) {
             ref { ptr, remaining ->
                 r.usePinned {
-                    ptr.copy(
+                    ptr.copyInto(
                         dest = it.addressOf(0),
                         size = size.convert(),
                     )
@@ -314,7 +305,7 @@ actual open class ByteBuffer(
     }
 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
-        checkClosed()
+        ensureOpen()
         require(offset >= 0) { "Offset argument should be more or equals 0. Actual value is $offset" }
         require(length >= 0) { "Length argument should be more or equals 0. Actual value is $length" }
         if (length == 0) {
@@ -329,7 +320,7 @@ actual open class ByteBuffer(
         }
         data.usePinned { data ->
             ref0 { cPointer, dataSize ->
-                data.addressOf(offset).copy(
+                data.addressOf(offset).copyInto(
                     dest = (cPointer + position)!!.reinterpret(),
                     size = len.convert(),
                 )
@@ -341,11 +332,11 @@ actual open class ByteBuffer(
     }
 
     override fun compact() {
-        checkClosed()
+        ensureOpen()
         if (remaining > 0) {
             val size = remaining
             ref0 { cPointer, dataSize ->
-                (cPointer + position)!!.copy(
+                (cPointer + position)!!.copyInto(
                     dest = cPointer,
                     size = size.convert(),
                 )
@@ -358,7 +349,7 @@ actual open class ByteBuffer(
     }
 
     actual fun peek(): Byte {
-        checkClosed()
+        ensureOpen()
         if (position == limit) {
             throw NoSuchElementException()
         }
@@ -366,11 +357,11 @@ actual open class ByteBuffer(
     }
 
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
-        checkClosed()
-        val newBytes = alloc(length)
+        ensureOpen()
+        val newBytes = ByteBuffer(length)
         ref0 { oldCPointer, oldDataSize ->
             newBytes.ref0 { newCPointer, newDataSize ->
-                (oldCPointer + index)!!.copy(
+                (oldCPointer + index)!!.copyInto(
                     dest = newCPointer,
                     size = length.convert(),
                 )
@@ -381,12 +372,12 @@ actual open class ByteBuffer(
     }
 
     actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
-        checkClosed()
+        ensureOpen()
         require(dest.size - offset >= length) { "length more then available space" }
         return ref0 { cPointer, dataSize ->
             val l = minOf(remaining, length)
             dest.usePinned { dest ->
-                (cPointer + position)!!.copy(
+                (cPointer + position)!!.copyInto(
                     dest = dest.addressOf(offset),
                     size = l.convert(),
                 )
@@ -396,11 +387,11 @@ actual open class ByteBuffer(
     }
 
     actual fun free() {
-        checkClosed()
+        ensureOpen()
         val size = remaining
         if (size > 0) {
             ref0 { native, _ ->
-                (native + position)!!.copy(
+                (native + position)!!.copyInto(
                     dest = native,
                     size = size.convert(),
                 )
@@ -418,6 +409,10 @@ actual open class ByteBuffer(
     override fun reestablish(buffer: ByteBuffer) {
         require(buffer === this) { "Buffer should equals this buffer" }
         check(!closed) { "Buffer closed" }
+    }
+
+    protected actual open fun preClose() {
+        // Do nothing
     }
 }
 

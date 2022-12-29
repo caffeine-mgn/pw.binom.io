@@ -50,7 +50,7 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     internal val event = nativeHeap.alloc<epoll_event>()
 
     init {
-        event.data.ptr = self.asCPointer()
+//        event.data.ptr = self.asCPointer()
         event.events = 0.convert()
     }
 

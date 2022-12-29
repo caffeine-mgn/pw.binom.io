@@ -5,19 +5,24 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
 
-actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> Unit)?) :
+actual open class ByteBuffer(var native: JByteBuffer) :
     Channel,
     Buffer,
     ByteBufferProvider {
-    actual companion object {
-        actual fun alloc(size: Int): ByteBuffer = ByteBuffer(JByteBuffer.allocateDirect(size), null)
+    actual companion object;
 
-        actual fun alloc(size: Int, onClose: (ByteBuffer) -> Unit): ByteBuffer =
-            ByteBuffer(JByteBuffer.allocateDirect(size), onClose)
+    actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
+    actual constructor(array: ByteArray) : this(JByteBuffer.wrap(array))
 
-        fun wrap(native: JByteBuffer) = ByteBuffer(native, null)
-        actual fun wrap(array: ByteArray): ByteBuffer = ByteBuffer(JByteBuffer.wrap(array), null)
-    }
+//    actual companion object {
+//        actual fun alloc(size: Int): AbstractByteBuffer = AbstractByteBuffer(JByteBuffer.allocateDirect(size), null)
+//
+//        actual fun alloc(size: Int, onClose: (AbstractByteBuffer) -> Unit): AbstractByteBuffer =
+//            AbstractByteBuffer(JByteBuffer.allocateDirect(size), onClose)
+//
+//        fun wrap(native: JByteBuffer) = AbstractByteBuffer(native, null)
+//        actual fun wrap(array: ByteArray): AbstractByteBuffer = AbstractByteBuffer(JByteBuffer.wrap(array), null)
+//    }
 
 //    init {
 //        val stack = Thread.currentThread().stackTrace.joinToString { "${it.className}.${it.methodName}:${it.lineNumber} ->" }
@@ -83,10 +88,10 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
 
     override fun close() {
         checkClosed()
+        preClose()
         ByteBufferMetric.dec(this)
         native = JByteBuffer.allocate(0)
         closed = true
-        onClose?.invoke(this)
     }
 
     override var position: Int
@@ -176,7 +181,7 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
         get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
-        val new = alloc(newSize)
+        val new = ByteBuffer(newSize)
         if (newSize > capacity) {
             native.hold(0, capacity) { self ->
                 new.native.update(0, native.capacity()) { new ->
@@ -241,9 +246,9 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
             limit = capacity
             position = index
             limit = index + length
-            val newBytes = JByteBuffer.allocate(length)
-            native.copyTo(newBytes)
-            return ByteBuffer(newBytes, null)
+            val newBytes = ByteBuffer(length)
+            newBytes.write(this)
+            return newBytes
         } finally {
             position = p
             limit = l
@@ -262,6 +267,10 @@ actual class ByteBuffer(var native: JByteBuffer, val onClose: ((ByteBuffer) -> U
     override fun reestablish(buffer: ByteBuffer) {
         require(buffer === this) { "Buffer should equals this buffer" }
         check(!closed) { "Buffer closed" }
+    }
+
+    protected actual open fun preClose() {
+        // Do nothing
     }
 }
 

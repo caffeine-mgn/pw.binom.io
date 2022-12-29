@@ -59,7 +59,7 @@ class GZIPOutput(
         if (buf.capacity >= TRAILER_SIZE) {
             writeFinal(buf)
         } else {
-            ByteBuffer.alloc(TRAILER_SIZE).use { trailer ->
+            ByteBuffer(TRAILER_SIZE).use { trailer ->
                 writeFinal(trailer)
             }
         }
@@ -71,7 +71,6 @@ class GZIPOutput(
     }
 
     private fun writeInt(i: Int, buf: ByteBuffer) {
-
         writeShort(i and 0xffff, buf)
         writeShort(i shr 16 and 0xffff, buf)
     }
@@ -104,7 +103,7 @@ fun Output.gzip(level: Int = 6, bufferSize: Int = 1024, closeStream: Boolean = t
         closeStream = closeStream,
     )
 
-private val header = ByteBuffer.alloc(10).also {
+private val header = ByteBuffer(10).also {
     it.put(GZIP_MAGIC1) // Magic number (short)
     it.put(GZIP_MAGIC2) // Magic number (short)
     it.put(DEFLATED) // Compression method (CM)

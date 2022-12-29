@@ -2,7 +2,6 @@ package pw.binom.base64
 
 import pw.binom.io.ByteBuffer
 import pw.binom.io.StringReader
-import pw.binom.io.nextBytes
 import pw.binom.io.use
 import kotlin.random.Random
 import kotlin.test.Test

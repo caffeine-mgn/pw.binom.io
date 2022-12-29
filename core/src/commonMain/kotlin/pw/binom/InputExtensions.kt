@@ -91,12 +91,12 @@ fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Long {
 }
 
 fun Input.copyTo(output: Output, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
-    ByteBuffer.alloc(bufferSize).use { buffer ->
+    ByteBuffer(bufferSize).use { buffer ->
         copyTo(output, buffer)
     }
 
 suspend fun Input.copyTo(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long =
-    ByteBuffer.alloc(bufferSize).use { buffer ->
+    ByteBuffer(bufferSize).use { buffer ->
         copyTo(output, buffer)
     }
 

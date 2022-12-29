@@ -2,13 +2,15 @@ package pw.binom.io.httpServer
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableSet
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
 import pw.binom.coroutines.onCancel
 import pw.binom.io.AsyncCloseable
+import pw.binom.io.ByteBuffer
 import pw.binom.io.ByteBufferFactory
 import pw.binom.io.ClosedException
 import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
@@ -22,6 +24,7 @@ import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpServerConnection
 import pw.binom.pool.GenericObjectPool
+import pw.binom.pool.ObjectPool
 import pw.binom.thread.DefaultUncaughtExceptionHandler
 import pw.binom.thread.Thread
 import pw.binom.thread.UncaughtExceptionHandler
@@ -39,7 +42,7 @@ class HttpServer(
     val manager: NetworkManager = Dispatchers.Network,
     val handler: Handler,
     val maxIdleTime: Duration = 10.seconds,
-    val idleCheckInterval: Duration = 30.seconds,
+//    val idleCheckInterval: Duration = 30.seconds,
     internal val zlibBufferSize: Int = DEFAULT_BUFFER_SIZE,
     val errorHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler,
     websocketMessagePoolSize: Int = 16,
@@ -48,7 +51,9 @@ class HttpServer(
 ) : AsyncCloseable {
     internal val messagePool = MessagePool(initCapacity = 0)
     internal val webSocketConnectionPool = WebSocketConnectionPool(initCapacity = websocketMessagePoolSize)
-    internal val textBufferPool = ByteBufferPool(capacity = 16)
+
+    //    internal val textBufferPool = ByteBufferPool(capacity = 16)
+    internal val textBufferPool = GenericObjectPool(initCapacity = 0, factory = ByteBufferFactory(size = 50))
     internal val httpRequest2Impl = GenericObjectPool(initCapacity = 0, factory = HttpRequest2Impl.Manager)
     internal val httpResponse2Impl = GenericObjectPool(initCapacity = 0, factory = HttpResponse2Impl.Manager)
     internal val reusableAsyncChunkedOutputPool = GenericObjectPool(
@@ -61,7 +66,7 @@ class HttpServer(
         initCapacity = 0,
     )
     val idleConnectionSize: Int
-        get() = idleConnections.size
+        get() = idleJobsLock.synchronize { idleJobs.size }
     private var closed = false
     private fun checkClosed() {
         if (closed) {
@@ -70,13 +75,15 @@ class HttpServer(
     }
 
     private val binds = ArrayList<TcpServerConnection>()
-    private val idleConnections = defaultMutableSet<ServerAsyncAsciiChannel>()
+//    private val idleConnections = defaultMutableSet<ServerAsyncAsciiChannel>()
 //    private var idleExchange = BatchExchange<ServerAsyncAsciiChannel?>()
 
     private val idleChannel = Channel<ServerAsyncAsciiChannel>(Channel.RENDEZVOUS)
+    internal val idleJobs = defaultMutableSet<Job>()
+    internal val idleJobsLock = SpinLock()
 
     internal fun browConnection(channel: ServerAsyncAsciiChannel) {
-        idleConnections -= channel
+//        idleConnections -= channel
         HttpServerMetrics.idleHttpServerConnection.dec()
     }
 
@@ -112,63 +119,89 @@ class HttpServer(
     internal suspend fun clientReProcessing(channel: ServerAsyncAsciiChannel) {
         channel.activeUpdate()
         HttpServerMetrics.idleHttpServerConnection.inc()
-        idleConnections += channel
+//        idleConnections += channel
         idleChannel.send(channel)
 //        clientProcessing(channel = channel, isNewConnect = false)
     }
 
-    internal fun clientProcessing(channel: ServerAsyncAsciiChannel, isNewConnect: Boolean) {
-        GlobalScope.launch(manager) {
-            var req: HttpRequest2Impl? = null
-            try {
-                req = HttpRequest2Impl.read(
-                    channel = channel,
-                    server = this@HttpServer,
-                    isNewConnect = isNewConnect,
-                    readStartTimeout = maxIdleTime
-                )
+    internal fun clientProcessing(
+        channel: ServerAsyncAsciiChannel,
+        isNewConnect: Boolean,
+        timeout: Duration,
+    ) = manager.launch {
+        idleJobsLock.synchronize {
+            idleJobs += coroutineContext.job
+        }
+        var req: HttpRequest2Impl? = null
+        try {
+            req = HttpRequest2Impl.read(
+                channel = channel,
+                server = this@HttpServer,
+                isNewConnect = isNewConnect,
+                readStartTimeout = timeout,
+                idleJob = this.coroutineContext.job,
+            ).getOrThrow()
 
 //                req = HttpRequest2Impl.read(
 //                    channel = channel,
 //                    server = this@HttpServer,
 //                    isNewConnect = isNewConnect,
 //                )
-                if (req == null) {
-                    runCatching { channel.asyncClose() }
-                    return@launch
-                }
-                handler.request(req)
-                if (req.response == null) {
-                    req.response { it.status = 404 }
-                }
+            if (req == null) {
+//                println("HttpServer:: reading timeout!")
+                channel.asyncCloseAnyway()
+                return@launch
+            }
+//            println("HttpServer:: request got! Processing...")
+            handler.request(req)
+            if (req.response == null) {
+                req.response { it.status = 404 }
+            }
 //                idleCheck()
-            } catch (e: SocketClosedException) {
-                runCatching { channel.asyncClose() }
-            } catch (e: CancellationException) {
-                runCatching { channel.asyncClose() }
+        } catch (e: TimeoutCancellationException) {
+//            println("HttpServer:: reading timeout!")
+            req = null
+            channel.asyncCloseAnyway()
+        } catch (e: CancellationException) {
+//            println("HttpServer:: reading cancelled!")
+            req = null
+            channel.asyncCloseAnyway()
+        } catch (e: SocketClosedException) {
+            req = null
+            channel.asyncCloseAnyway()
+        } catch (e: Throwable) {
+            req = null
+            channel.asyncCloseAnyway()
+            try {
+                errorHandler.uncaughtException(Thread.currentThread, e)
+                e.printStackTrace()
             } catch (e: Throwable) {
-                runCatching { channel.asyncClose() }
-                runCatching { errorHandler.uncaughtException(Thread.currentThread, e) }
-            } finally {
-                if (req != null) {
-                    req.free()
-                    httpRequest2Impl.recycle(req)
-                }
+                // Do nothing
+            }
+        } finally {
+            if (req != null) {
+                req.free()
+                httpRequest2Impl.recycle(req)
             }
         }
     }
 
-    private val idleProcessing = GlobalScope.launch(manager) {
+    private val idleProcessing = manager.launch {
         while (isActive && !closed) {
             val networkChannel = try {
                 idleChannel.receive()
             } catch (e: CancellationException) {
                 break
             }
-            try {
-                clientProcessing(channel = networkChannel, isNewConnect = false)
-            } catch (e: Throwable) {
-                runCatching { networkChannel.asyncClose() }
+            manager.launch {
+                val thisJob = clientProcessing(
+                    channel = networkChannel,
+                    isNewConnect = false,
+                    timeout = maxIdleTime,
+                )
+//                idleJobsLock.synchronize {
+//                    idleJobs += thisJob
+//                }
             }
         }
     }
@@ -182,33 +215,41 @@ class HttpServer(
         binds += server
 
         val closed = AtomicBoolean(false)
-        val listenJob = GlobalScope.launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
-            withContext(dispatcher) {
-                try {
-                    while (!closed.getValue()) {
-                        var channel: ServerAsyncAsciiChannel? = null
-                        try {
+        val listenJob = manager.launch(dispatcher)/*(start = CoroutineStart.UNDISPATCHED)*/ {
+//            withContext(dispatcher) {
+            try {
+                while (!closed.getValue()) {
+                    var channel: ServerAsyncAsciiChannel? = null
+                    try {
 //                            idleCheck()
-                            val client = try {
-                                val client = server.accept(null)
-                                client
-                            } catch (e: ClosedException) {
-                                null
-                            } catch (e: SocketClosedException) {
-                                null
-                            } ?: break
-                            channel = ServerAsyncAsciiChannel(channel = client, pool = textBufferPool)
-                            clientProcessing(channel = channel, isNewConnect = true)
-                        } catch (e: Throwable) {
-                            runCatching { channel?.asyncClose() }
-                            break
-                        }
+                        val client = try {
+                            val client = server.accept(null)
+                            client
+                        } catch (e: ClosedException) {
+                            null
+                        } catch (e: SocketClosedException) {
+                            null
+                        } ?: break
+//                        println("------------------------------------------")
+                        channel = ServerAsyncAsciiChannel(
+                            channel = client,
+                            pool = textBufferPool as ObjectPool<ByteBuffer>
+                        )
+                        clientProcessing(
+                            channel = channel,
+                            isNewConnect = true,
+                            timeout = maxIdleTime,
+                        )
+                    } catch (e: Throwable) {
+                        channel?.asyncCloseAnyway()
+                        break
                     }
-                } finally {
-                    binds -= server
-                    runCatching { server.close() }
                 }
+            } finally {
+                binds -= server
+                server.closeAnyway()
             }
+//            }
         }
         return listenJob.onCancel {
             closed.setValue(true)
@@ -225,12 +266,18 @@ class HttpServer(
         httpResponse2Impl.close()
         reusableAsyncChunkedOutputPool.close()
         bufferWriterPool.close()
-        idleConnections.forEach {
-            runCatching { it.asyncClose() }
+        idleJobsLock.synchronize {
+            idleJobs.forEach {
+                it.cancel()
+            }
+            idleJobs.clear()
         }
-        idleConnections.clear()
+//        idleConnections.forEach {
+//            it.asyncCloseAnyway()
+//        }
+//        idleConnections.clear()
         defaultMutableList(binds).forEach {
-            runCatching { it.close() }
+            it.closeAnyway()
         }
         binds.clear()
     }

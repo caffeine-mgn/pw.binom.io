@@ -27,7 +27,7 @@ open class AsyncDeflaterOutput protected constructor(
     ) : this(
         stream = stream,
         level = level,
-        buffer = ByteBuffer.alloc(bufferSize),
+        buffer = ByteBuffer(bufferSize),
         wrap = wrap,
         syncFlush = syncFlush,
         pool = null,
@@ -38,7 +38,7 @@ open class AsyncDeflaterOutput protected constructor(
     constructor(
         stream: AsyncOutput,
         level: Int = 6,
-        bufferPool: ObjectPool<ByteBuffer>,
+        bufferPool: ObjectPool<out ByteBuffer>,
         wrap: Boolean = false,
         syncFlush: Boolean = true,
         closeStream: Boolean = false
@@ -48,7 +48,7 @@ open class AsyncDeflaterOutput protected constructor(
         buffer = bufferPool.borrow(),
         wrap = wrap,
         syncFlush = syncFlush,
-        pool = bufferPool,
+        pool = bufferPool as ObjectPool<ByteBuffer>,
         closeBuffer = false,
         closeStream = closeStream,
     )

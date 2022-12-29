@@ -42,7 +42,7 @@ fun ByteBuffer.readDouble() = Double.fromBits(readLong())
  * @return new [ByteBuffer].
  */
 fun ByteBuffer.Companion.wrap(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): ByteBuffer {
-    val out = alloc(length)
+    val out = ByteBuffer(length)
     out.write(
         data = data,
         offset = offset,
@@ -59,7 +59,7 @@ fun String.toByteBufferUTF8(): ByteBuffer {
     val len = sumOf {
         UTF8.unicodeToUtf8Size(it)
     }
-    val buf = ByteBuffer.alloc(len)
+    val buf = ByteBuffer(len)
     UTF8.unicodeToUtf8(this, buf)
     buf.clear()
     return buf
@@ -67,7 +67,7 @@ fun String.toByteBufferUTF8(): ByteBuffer {
 
 class ByteBufferPool(capacity: Int, val bufferSize: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
     AbstractFixedSizePool<ByteBuffer>(capacity), ByteBufferAllocator, ByteBufferProvider, Closeable {
-    override fun new(): ByteBuffer = ByteBuffer.alloc(bufferSize.toInt())
+    override fun new(): ByteBuffer = ByteBuffer(bufferSize.toInt())
 
     override fun free(value: ByteBuffer) {
         value.close()

@@ -95,7 +95,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
                 )
                 return message
             } catch (e: SocketClosedException) {
-                kotlin.runCatching {
+                runCatching {
                     closeTcp()
                 }
                 throw WebSocketClosedException(
@@ -130,8 +130,8 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
             return
         }
         closed.setValue(true)
-        runCatching { _input.asyncClose() }
-        runCatching { _output.asyncClose() }
+        _input.asyncCloseAnyway()
+        _output.asyncCloseAnyway()
         onClose(this)
     }
 
@@ -142,7 +142,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
         v.maskFlag = masking
         v.finishFlag = true
         WebSocketHeader.write(_output, v)
-        ByteBuffer.alloc(Short.SIZE_BYTES + (body?.remaining ?: 0)).use {
+        ByteBuffer(Short.SIZE_BYTES + (body?.remaining ?: 0)).use {
             it.writeShort(code)
             if (body != null) {
                 it.write(body)

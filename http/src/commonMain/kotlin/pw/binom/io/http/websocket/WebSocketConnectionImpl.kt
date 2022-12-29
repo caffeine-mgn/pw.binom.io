@@ -67,7 +67,7 @@ open class WebSocketConnectionImpl(
                     input = _input
                 )
             } catch (e: SocketClosedException) {
-                kotlin.runCatching {
+                runCatching {
                     closeTcp()
                 }
                 throw WebSocketClosedException(
@@ -102,8 +102,8 @@ open class WebSocketConnectionImpl(
             return
         }
         closed.setValue(true)
-        runCatching { _input.asyncClose() }
-        runCatching { _output.asyncClose() }
+        _input.asyncCloseAnyway()
+        _output.asyncCloseAnyway()
     }
 
     private suspend fun sendFinish(code: Short = 1006, body: ByteBuffer? = null) {
@@ -113,7 +113,7 @@ open class WebSocketConnectionImpl(
         v.maskFlag = masking
         v.finishFlag = true
         WebSocketHeader.write(_output, v)
-        ByteBuffer.alloc(Short.SIZE_BYTES + (body?.remaining ?: 0)).use {
+        ByteBuffer(Short.SIZE_BYTES + (body?.remaining ?: 0)).use {
             it.writeShort(code)
             if (body != null) {
                 it.write(body)

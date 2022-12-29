@@ -237,22 +237,27 @@ class TcpConnection(
         if (r > 0 && dest.remaining == 0) {
             return r
         }
+        if (r == -1) {
+            channel.close()
+            throw SocketClosedException()
+        }
         readData.full = true
-        val readed = suspendCancellableCoroutine<Int> {
-            it.invokeOnCancellation {
+        val readed = suspendCancellableCoroutine<Int> { continuation ->
+            continuation.invokeOnCancellation {
+                println("TcpConnection::readFully read cancelled! Steck: ${it?.stackTraceToString()}")
                 currentKey.removeListen(KeyListenFlags.READ)
                 readData.reset()
                 currentKey.selector.wakeup()
             }
             readData.set(
-                continuation = it,
+                continuation = continuation,
                 data = dest
             )
             currentKey.addListen(KeyListenFlags.READ)
             currentKey.selector.wakeup()
         }
         if (readed == 0) {
-            runCatching { channel.close() }
+            channel.closeAnyway()
             throw SocketClosedException()
         }
         return readed
@@ -279,9 +284,10 @@ class TcpConnection(
         readData.full = false
         return suspendCancellableCoroutine {
             it.invokeOnCancellation {
+                println("TcpConnection::read read cancelled!")
                 currentKey.removeListen(KeyListenFlags.READ)
-                currentKey.selector.wakeup()
                 readData.reset()
+                currentKey.selector.wakeup()
             }
             readData.set(
                 continuation = it,
