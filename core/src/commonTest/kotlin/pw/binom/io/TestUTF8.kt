@@ -9,7 +9,7 @@ class TestUTF8 {
 
     private fun testWriteChar(char: Char) {
         val s = ByteArrayOutput()
-        val data = ByteBuffer.alloc(6)
+        val data = ByteBuffer(6)
         UTF8.unicodeToUtf8(char, data)
         data.flip()
         s.write(data)
@@ -108,7 +108,7 @@ class TestUTF8 {
 
         assertEquals(
             txt,
-            ByteBuffer.alloc(50).also {
+            ByteBuffer(50).also {
                 it.utf8Appendable().append(txt)
                 it.flush()
                 it.flip()
@@ -124,7 +124,7 @@ class TestUTF8 {
         out.utf8Appendable().append(test_string)
         out.data.flip()
 
-        val buffer = ByteBuffer.alloc(100)
+        val buffer = ByteBuffer(100)
         test_string.forEach {
             UTF8.unicodeToUtf8(it, buffer)
         }
@@ -140,7 +140,7 @@ class TestUTF8 {
 
     @Test
     fun testdd() {
-        val buffer = ByteBuffer.alloc(100)
+        val buffer = ByteBuffer(100)
         test_string.forEach {
             UTF8.unicodeToUtf8(it, buffer)
         }

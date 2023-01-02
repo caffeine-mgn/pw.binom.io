@@ -8,7 +8,7 @@ class NativeByteBufferTest {
 
     @Test
     fun refTest() {
-        val buf = ByteBuffer.alloc(50)
+        val buf = ByteBuffer(50)
         buf.clear()
         buf.ref { cPointer, i ->
         }

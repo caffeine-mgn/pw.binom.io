@@ -46,8 +46,8 @@ class AsyncChunkedInputTest {
         out.flip()
 
         val input = AsyncChunkedInput(out.asyncInput())
-        val buf = ByteBuffer.alloc(50)
-        val tmpBuffer = ByteBuffer.alloc(6)
+        val buf = ByteBuffer(50)
+        val tmpBuffer = ByteBuffer(6)
         runBlocking {
             assertEquals(4, input.read(buf))
             buf.flip()

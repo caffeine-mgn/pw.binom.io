@@ -6,6 +6,7 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.db.postgresql.async.messages.backend.*
 import pw.binom.db.postgresql.async.messages.frontend.*
 import pw.binom.io.*
+import pw.binom.readByteArray
 
 class PackageReader(
     val connection: PGConnection,
@@ -114,9 +115,9 @@ class PackageReader(
 
     suspend fun readInt() = if (bodyReading) limitInput.readInt() else rawInput.readInt()
     suspend fun readByteArray(length: Int): ByteArray = if (bodyReading) {
-        limitInput.readByteArray(length, temporalBuffer)
+        limitInput.readByteArray(size = length, buffer = temporalBuffer)
     } else {
-        rawInput.readByteArray(length, temporalBuffer)
+        rawInput.readByteArray(size = length, buffer = temporalBuffer)
     }
 }
 

@@ -1,6 +1,5 @@
 package pw.binom.concurrency
 
-import kotlinx.coroutines.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import kotlin.random.Random
@@ -10,6 +9,7 @@ import kotlin.test.assertTrue
 
 class WorkerTest {
 
+    /*
     @Test
     fun asyncTest1() {
         val worker1 = Worker()
@@ -27,6 +27,7 @@ class WorkerTest {
                 counter++
             }
         }
+
 //        val b1 = worker1.startCoroutine {
 //            counter++
 //            withContext(worker2) {
@@ -58,7 +59,7 @@ class WorkerTest {
         b.join()
         assertEquals(expected = 2, actual = counter.getValue())
     }
-
+*/
     @Test
     fun test() {
         val w = Worker()

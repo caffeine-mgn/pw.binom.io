@@ -129,7 +129,7 @@ package pw.binom.io.httpClient
 //        sendRequest(false)
 //        val channel = channel!!
 //        if (chanked) {
-//            ByteBuffer.alloc(5) { buf ->
+//            ByteBuffer(5) { buf ->
 //                buf.put('0'.toByte())
 //                buf.put('\r'.toByte())
 //                buf.put('\n'.toByte())
@@ -151,7 +151,7 @@ package pw.binom.io.httpClient
 //            addHeader(Headers.ORIGIN, origin)
 //
 //        val requestKey = StringBuilder().let { sb ->
-//            ByteBuffer.alloc(16) { buf ->
+//            ByteBuffer(16).use { buf ->
 //                Random.nextBytes(buf)
 //                Base64EncodeOutput(sb).use {
 //                    buf.clear()

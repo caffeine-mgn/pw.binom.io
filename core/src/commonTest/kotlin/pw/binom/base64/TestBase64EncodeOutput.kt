@@ -12,7 +12,7 @@ class TestBase64EncodeOutput {
     fun test() {
         val data = "Hello world!".encodeToByteArray()
         val sb = StringBuilder()
-        val buf = ByteBuffer.alloc(4)
+        val buf = ByteBuffer(4)
         Base64EncodeOutput(sb).use { output ->
             data.forEach {
                 output.writeByte(buf, it)
@@ -24,7 +24,7 @@ class TestBase64EncodeOutput {
     @Test
     fun test2() {
         val out = StringBuilder()
-        val buf = ByteBuffer.alloc(4)
+        val buf = ByteBuffer(4)
         Base64EncodeOutput(out).also {
             it.writeByte(buf, 0)
             it.writeByte(buf, 25)

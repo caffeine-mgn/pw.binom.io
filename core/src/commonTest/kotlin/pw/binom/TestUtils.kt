@@ -41,13 +41,13 @@ class TestUtils {
         assertEquals(7, value[6])
         assertEquals(8, value[7])
         assertEquals(value, Long.fromBytes(1, 2, 3, 4, 5, 6, 7, 8))
+        assertEquals(value, Long.fromBytes(value.toBytes()))
     }
 
     @Test
     fun testLong2() {
         val value = 336592112L
-        val r = ByteArray(8)
-        value.toBytes(r)
+        val r = value.toBytes()
 
         assertEquals(0, value[0])
         assertEquals(0, value[1])
@@ -60,7 +60,7 @@ class TestUtils {
         r.forEachIndexed { index, byte ->
             assertEquals(value[index], byte)
         }
-        assertEquals(value, Long.fromBytes(r))
+        assertEquals(value, Long.fromBytes(value.toBytes()))
         assertEquals(value, Long.fromBytes(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]))
     }
 }

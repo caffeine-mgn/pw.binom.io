@@ -24,7 +24,7 @@ class TestWriteRead {
     @Test
     fun `read write`() {
         val f = File("test")
-        val buf = ByteBuffer.alloc(8)
+        val buf = ByteBuffer(8)
 
         val data = byteArrayOf(
             0x0A, -0x32, -0x34, 0x2D, -0x38, 0x49, 0x55, 0x08,
@@ -42,7 +42,7 @@ class TestWriteRead {
         }
 
         f.openRead().use {
-            val input = ByteBuffer.alloc(data.size * 2)
+            val input = ByteBuffer(data.size * 2)
             assertEquals(data.size, it.read(input))
             input.flip()
             for (i in 0 until data.size)

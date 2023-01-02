@@ -84,7 +84,7 @@ class CancellationTest {
             val con = nd.tcpConnect(HTTP_SERVER_ADDRESS)
             println("Connected!")
             val readJob = launch(nd) {
-                ByteBuffer.alloc(10).use { buf ->
+                ByteBuffer(10).use { buf ->
                     try {
                         println("Try read data")
                         con.read(buf)

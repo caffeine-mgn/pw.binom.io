@@ -1,7 +1,7 @@
 package pw.binom
 
-import pw.binom.base64.shl
 import pw.binom.io.ByteBuffer
+import kotlin.experimental.inv
 import kotlin.jvm.JvmName
 
 operator fun Long.get(index: Int): Byte {
@@ -53,15 +53,35 @@ fun Float.dump(dest: ByteBuffer) {
     toRawBits().dump(dest)
 }
 
-fun Float.dump() =
-    toRawBits().dump()
+fun Float.toByteArray(dest: ByteArray, offset: Int = 0): ByteArray {
+    if (dest.size - offset < Float.SIZE_BYTES) {
+        throw IllegalArgumentException("Not enough space for place Float")
+    }
+    return toRawBits().toByteArray(dest = dest, offset = offset)
+}
+
+fun Float.toByteArray(): ByteArray {
+    val output = ByteArray(Float.SIZE_BYTES)
+    toByteArray(output)
+    return output
+}
 
 fun Double.dump(dest: ByteBuffer) {
     toRawBits().dump(dest)
 }
 
-fun Double.dump() =
-    toRawBits().dump()
+fun Double.toByteArray(dest: ByteArray, offset: Int = 0): ByteArray {
+    if (dest.size - offset < Float.SIZE_BYTES) {
+        throw IllegalArgumentException("Not enough space for place Double")
+    }
+    return toRawBits().toByteArray(dest = dest, offset = offset)
+}
+
+fun Double.toByteArray(): ByteArray {
+    val output = ByteArray(Double.SIZE_BYTES)
+    toByteArray(output)
+    return output
+}
 
 fun Int.dump(data: ByteBuffer) {
     data.put((this ushr (8 * (3 - 0))).toByte())
@@ -70,12 +90,20 @@ fun Int.dump(data: ByteBuffer) {
     data.put((this ushr (8 * (3 - 3))).toByte())
 }
 
-fun Int.dump(): ByteArray {
+fun Int.toByteArray(dest: ByteArray, offset: Int = 0): ByteArray {
+    if (dest.size - offset < Int.SIZE_BYTES) {
+        throw IllegalArgumentException("Not enough space for place Int")
+    }
+    dest[0 + offset] = (this ushr (8 * (3 - 0))).toByte()
+    dest[1 + offset] = (this ushr (8 * (3 - 1))).toByte()
+    dest[2 + offset] = (this ushr (8 * (3 - 2))).toByte()
+    dest[3 + offset] = (this ushr (8 * (3 - 3))).toByte()
+    return dest
+}
+
+fun Int.toByteArray(): ByteArray {
     val output = ByteArray(Int.SIZE_BYTES)
-    output[0] = (this ushr (8 * (3 - 0))).toByte()
-    output[1] = (this ushr (8 * (3 - 1))).toByte()
-    output[2] = (this ushr (8 * (3 - 2))).toByte()
-    output[3] = (this ushr (8 * (3 - 3))).toByte()
+    toByteArray(output)
     return output
 }
 
@@ -84,12 +112,27 @@ fun Short.dump(data: ByteBuffer) {
     data.put(((this.toInt() ushr (8 - 8 * 1)) and 0xFF).toByte())
 }
 
-fun Short.dump(): ByteArray {
+fun Short.toByteArray(dest: ByteArray, offset: Int = 0): ByteArray {
+    if (dest.size - offset < Long.SIZE_BYTES) {
+        throw IllegalArgumentException("Not enough space for place Short")
+    }
+    dest[0 + offset] = ((this.toInt() ushr (8 - 8 * 0)) and 0xFF).toByte()
+    dest[1 + offset] = ((this.toInt() ushr (8 - 8 * 1)) and 0xFF).toByte()
+    return dest
+}
+
+fun Short.toByteArray(): ByteArray {
     val output = ByteArray(Short.SIZE_BYTES)
-    output[0] = ((this.toInt() ushr (8 - 8 * 0)) and 0xFF).toByte()
-    output[1] = ((this.toInt() ushr (8 - 8 * 1)) and 0xFF).toByte()
+    toByteArray(output)
     return output
 }
+
+// fun Short.dump(): ByteArray {
+//    val output = ByteArray(Short.SIZE_BYTES)
+//    output[0] = ((this.toInt() ushr (8 - 8 * 0)) and 0xFF).toByte()
+//    output[1] = ((this.toInt() ushr (8 - 8 * 1)) and 0xFF).toByte()
+//    return output
+// }
 
 fun Long.reverse(): Long {
     val ch1 = (this ushr 56) and 0xFF
@@ -199,26 +242,79 @@ fun Long.Companion.fromBytes(
         (byte6.toLong() and 0xFFL shl 8) +
         (byte7.toLong() and 0xFFL shl 0)
 
-fun Long.toBytes(array: ByteArray, offset: Int = 0) {
-    if (array.size - offset < Long.SIZE_BYTES) {
-        throw IllegalArgumentException()
-    }
-    array[0 + offset] = ushr(56).toByte()
-    array[1 + offset] = ushr(48).toByte()
-    array[2 + offset] = ushr(40).toByte()
-    array[3 + offset] = ushr(32).toByte()
-    array[4 + offset] = ushr(24).toByte()
-    array[5 + offset] = ushr(16).toByte()
-    array[6 + offset] = ushr(8).toByte()
-    array[7 + offset] = ushr(0).toByte()
+fun Long.toByteArray(): ByteArray {
+    val result = ByteArray(Long.SIZE_BYTES)
+    toByteArray(result)
+    return result
 }
 
-fun Long.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) =
-    (readBuffer[0 + offset] shl 56) +
-        ((readBuffer[1 + offset].toLong() and 0xFFL) shl 48) +
-        ((readBuffer[2 + offset].toLong() and 0xFFL) shl 40) +
-        ((readBuffer[3 + offset].toLong() and 0xFFL) shl 32) +
-        ((readBuffer[4 + offset].toLong() and 0xFFL) shl 24) +
-        (readBuffer[5 + offset].toLong() and 0xFFL shl 16) +
-        (readBuffer[6 + offset].toLong() and 0xFFL shl 8) +
-        (readBuffer[7 + offset].toLong() and 0xFFL shl 0)
+infix fun Long.or(other: Long) = Long.fromBytes(
+    (this[0].toInt() or other[0].toInt()).toByte(),
+    (this[1].toInt() or other[1].toInt()).toByte(),
+    (this[2].toInt() or other[2].toInt()).toByte(),
+    (this[3].toInt() or other[3].toInt()).toByte(),
+    (this[4].toInt() or other[4].toInt()).toByte(),
+    (this[5].toInt() or other[5].toInt()).toByte(),
+    (this[6].toInt() or other[6].toInt()).toByte(),
+    (this[7].toInt() or other[7].toInt()).toByte(),
+)
+
+infix fun Long.and(other: Long) = Long.fromBytes(
+    (this[0].toInt() and other[0].toInt()).toByte(),
+    (this[1].toInt() and other[1].toInt()).toByte(),
+    (this[2].toInt() and other[2].toInt()).toByte(),
+    (this[3].toInt() and other[3].toInt()).toByte(),
+    (this[4].toInt() and other[4].toInt()).toByte(),
+    (this[5].toInt() and other[5].toInt()).toByte(),
+    (this[6].toInt() and other[6].toInt()).toByte(),
+    (this[7].toInt() and other[7].toInt()).toByte(),
+)
+
+infix fun Long.xor(other: Long) = Long.fromBytes(
+    (this[0].toInt() xor other[0].toInt()).toByte(),
+    (this[1].toInt() xor other[1].toInt()).toByte(),
+    (this[2].toInt() xor other[2].toInt()).toByte(),
+    (this[3].toInt() xor other[3].toInt()).toByte(),
+    (this[4].toInt() xor other[4].toInt()).toByte(),
+    (this[5].toInt() xor other[5].toInt()).toByte(),
+    (this[6].toInt() xor other[6].toInt()).toByte(),
+    (this[7].toInt() xor other[7].toInt()).toByte(),
+)
+
+fun Long.inv() = Long.fromBytes(
+    this[0].inv(),
+    this[1].inv(),
+    this[2].inv(),
+    this[3].inv(),
+    this[4].inv(),
+    this[5].inv(),
+    this[6].inv(),
+    this[7].inv(),
+)
+
+fun Long.toByteArray(dest: ByteArray, offset: Int = 0): ByteArray {
+    if (dest.size - offset < Long.SIZE_BYTES) {
+        throw IllegalArgumentException("Not enough space for place Long")
+    }
+    dest[0 + offset] = ushr(56).toByte()
+    dest[1 + offset] = ushr(48).toByte()
+    dest[2 + offset] = ushr(40).toByte()
+    dest[3 + offset] = ushr(32).toByte()
+    dest[4 + offset] = ushr(24).toByte()
+    dest[5 + offset] = ushr(16).toByte()
+    dest[6 + offset] = ushr(8).toByte()
+    dest[7 + offset] = ushr(0).toByte()
+    return dest
+}
+
+fun Long.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0): Long =
+    fromBytes(
+        readBuffer[0 + offset],
+        readBuffer[1 + offset],
+        readBuffer[2 + offset],
+        readBuffer[3 + offset],
+        readBuffer[4 + offset],
+        readBuffer[5 + offset],
+        readBuffer[6 + offset],
+        readBuffer[7 + offset],
+    )

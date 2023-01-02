@@ -9,9 +9,9 @@ class InternalChannelTest {
 
     @Test
     fun test() {
-        val buf = ByteBuffer.alloc(16)
-        val clientBuf = ByteBuffer.alloc(1024).clean()
-        val serverBuf = ByteBuffer.alloc(1024).clean()
+        val buf = ByteBuffer(16)
+        val clientBuf = ByteBuffer(1024).clean()
+        val serverBuf = ByteBuffer(1024).clean()
 
         val server = InternalChannel(readBuffer = serverBuf, writeBuffer = clientBuf)
         val client = InternalChannel(readBuffer = clientBuf, writeBuffer = serverBuf)

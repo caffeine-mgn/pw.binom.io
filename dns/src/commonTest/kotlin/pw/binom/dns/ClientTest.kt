@@ -9,7 +9,7 @@ import pw.binom.dns.protocol.ResourcePackage
 import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedInput
 import pw.binom.io.bufferedOutput
-import pw.binom.network.NetworkAddressOld
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.tcpConnect
 import kotlin.random.Random
@@ -111,9 +111,9 @@ class ClientTest {
             ans = emptyList(),
             auth = emptyList()
         )
-        val buf = ByteBuffer.alloc(512)
+        val buf = ByteBuffer(512)
         try {
-            val con = n.tcpConnect(NetworkAddressOld.Immutable("8.8.8.8", 53))
+            val con = n.tcpConnect(NetworkAddress.create("8.8.8.8", 53))
             val output = con.bufferedOutput()
             val input = con.bufferedInput()
 
@@ -156,12 +156,12 @@ class ClientTest {
     @Test
     fun serverTest() = runTest {
         val n = NetworkCoroutineDispatcherImpl()
-        val buf = ByteBuffer.alloc(512)
+        val buf = ByteBuffer(512)
         val header = DnsHeader()
         val q = QueryPackage()
         val r = ResourcePackage()
         try {
-            val server = n.bindTcp(NetworkAddressOld.Immutable("0.0.0.0", 53))
+            val server = n.bindTcp(NetworkAddress.create("0.0.0.0", 53))
             while (true) {
                 val client = server.accept()
 

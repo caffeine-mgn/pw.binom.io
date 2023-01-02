@@ -1,9 +1,9 @@
 package pw.binom.io.examples.zlib
 
-import pw.binom.io.ByteBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.compression.zlib.GZIPInput
 import pw.binom.compression.zlib.GZIPOutput
+import pw.binom.io.ByteBuffer
 import pw.binom.io.file.AccessType
 import pw.binom.io.file.File
 import pw.binom.io.file.channel
@@ -25,7 +25,7 @@ fun main() {
         }
     }
 
-    val out = ByteBuffer.alloc(300)
+    val out = ByteBuffer(300)
     file.channel(AccessType.READ).use {
         GZIPInput(it, DEFAULT_BUFFER_SIZE, closeStream = true).use {
             it.read(out)

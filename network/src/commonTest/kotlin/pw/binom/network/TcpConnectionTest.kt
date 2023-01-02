@@ -85,7 +85,7 @@ class TcpConnectionTest {
         clientKey.listenFlags = KeyListenFlags.READ or KeyListenFlags.ERROR
         val list = SelectedKeys()
         var c = 0
-        val buffer = ByteBuffer.alloc(512)
+        val buffer = ByteBuffer(512)
         LOOP_ERROR@ while (true) {
             println("Selecting...")
             val eventCount = selector.select(selectedKeys = list, timeout = INFINITE)
@@ -138,7 +138,7 @@ class TcpConnectionTest {
             try {
                 spinLock.synchronize {
                     println("Try read...")
-                    val readed = ByteBuffer.alloc(5).use {
+                    val readed = ByteBuffer(5).use {
                         println("try read...")
                         client.read(it)
                     }
@@ -154,7 +154,7 @@ class TcpConnectionTest {
         val remoteClient = server.accept()
         println("Client connected")
         server.close()
-        ByteBuffer.alloc(10).use { buf ->
+        ByteBuffer(10).use { buf ->
             remoteClient.write(buf)
             withContext(ThreadCoroutineDispatcher()) {
                 spinLock.lock()
@@ -188,7 +188,7 @@ class TcpConnectionTest {
             withContext(ThreadCoroutineDispatcher()) {
                 println("Wait send...")
                 println("Wait net thread...")
-                ByteBuffer.alloc(10).use { buf ->
+                ByteBuffer(10).use { buf ->
                     newClient.writeByte(buf, 42)
                     newClient.flush()
                     println("wrote!")
@@ -198,7 +198,7 @@ class TcpConnectionTest {
 
         val r2 = launch {
             val client = nd.tcpConnect(NetworkAddress.create(host = "127.0.0.1", port = port))
-            ByteBuffer.alloc(10).use { b ->
+            ByteBuffer(10).use { b ->
                 println("Reading...")
                 assertEquals(42, client.readByte(b))
                 println("Read")
@@ -242,7 +242,7 @@ class TcpConnectionTest {
                 lock.lock()
                 launch {
                     try {
-                        ByteBuffer.alloc(50).use { buf ->
+                        ByteBuffer(50).use { buf ->
                             client.readFully(buf)
                         }
                         client.close()
@@ -252,7 +252,7 @@ class TcpConnectionTest {
                     }
                 }
                 try {
-                    ByteBuffer.alloc(50).use { buf ->
+                    ByteBuffer(50).use { buf ->
                         delay(500)
                         buf.clear()
                         connectedClient.write(buf)

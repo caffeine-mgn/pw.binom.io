@@ -1,10 +1,7 @@
 package pw.binom.compression.zlib
 
-import pw.binom.io.AsyncOutput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.Closeable
-import pw.binom.io.StreamClosedException
-import pw.binom.pool.ObjectPool
+import pw.binom.ByteBufferPool
+import pw.binom.io.*
 
 open class AsyncDeflaterOutput protected constructor(
     val stream: AsyncOutput,
@@ -12,7 +9,7 @@ open class AsyncDeflaterOutput protected constructor(
     val buffer: ByteBuffer,
     wrap: Boolean = false,
     syncFlush: Boolean = true,
-    private val pool: ObjectPool<ByteBuffer>?,
+    private val pool: ByteBufferPool?,
     private var closeBuffer: Boolean,
     val closeStream: Boolean = false
 ) : AsyncOutput {
@@ -38,7 +35,7 @@ open class AsyncDeflaterOutput protected constructor(
     constructor(
         stream: AsyncOutput,
         level: Int = 6,
-        bufferPool: ObjectPool<out ByteBuffer>,
+        bufferPool: ByteBufferPool,
         wrap: Boolean = false,
         syncFlush: Boolean = true,
         closeStream: Boolean = false
@@ -48,14 +45,14 @@ open class AsyncDeflaterOutput protected constructor(
         buffer = bufferPool.borrow(),
         wrap = wrap,
         syncFlush = syncFlush,
-        pool = bufferPool as ObjectPool<ByteBuffer>,
+        pool = bufferPool,
         closeBuffer = false,
         closeStream = closeStream,
     )
 
     private val deflater = Deflater(level, wrap, syncFlush)
 
-    //    private val buffer = ByteBuffer.alloc(bufferSize)
+    //    private val buffer = ByteBuffer(bufferSize)
     protected val buf
         get() = buffer
 
@@ -148,7 +145,7 @@ open class AsyncDeflaterOutput protected constructor(
             if (closeBuffer) {
                 buffer.close()
             } else {
-                pool?.recycle(buffer)
+                pool?.recycle(buffer as PooledByteBuffer)
             }
             Closeable.close(deflater)
             if (closeStream) {

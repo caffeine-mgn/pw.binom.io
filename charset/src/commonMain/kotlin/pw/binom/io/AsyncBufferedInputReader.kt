@@ -1,17 +1,17 @@
 package pw.binom.io
 
+import pw.binom.ByteBufferPool
 import pw.binom.CharBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
 import pw.binom.empty
-import pw.binom.pool.ObjectPool
 
 open class AsyncBufferedInputReader protected constructor(
     charset: Charset,
     val input: AsyncInput,
-    private val pool: ObjectPool<ByteBuffer>?,
+    private val pool: ByteBufferPool?,
     private val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
     private val closeParent: Boolean,
@@ -20,7 +20,7 @@ open class AsyncBufferedInputReader protected constructor(
     constructor(
         charset: Charset,
         input: AsyncInput,
-        pool: ObjectPool<ByteBuffer>,
+        pool: ByteBufferPool,
         charBufferSize: Int = 512,
         closeParent: Boolean = true,
     ) : this(
@@ -174,14 +174,14 @@ open class AsyncBufferedInputReader protected constructor(
             if (closeBuffer) {
                 buffer.close()
             } else {
-                pool?.recycle(buffer)
+                pool?.recycle(buffer as PooledByteBuffer)
             }
         }
     }
 }
 
 fun AsyncInput.bufferedReader(
-    pool: ObjectPool<ByteBuffer>,
+    pool: ByteBufferPool,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = 512,
     closeParent: Boolean = true,

@@ -10,12 +10,12 @@ class TestAsyncBufferedInput {
 
     @Test
     fun test() = runTest {
-        val data = ByteBuffer.alloc(256)
+        val data = ByteBuffer(256)
         Random.nextBytes(data)
         data.clear()
         val b = data.asyncInput().bufferedInput(10)
 
-        val buf = ByteBuffer.alloc(50)
+        val buf = ByteBuffer(50)
         assertEquals(-1, b.available)
         buf.reset(0, 5)
         assertEquals(5, b.readFully(buf))

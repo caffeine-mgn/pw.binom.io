@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 fun ByteBuffer.print() {
     val p = position
     val l = limit
-    val buf = ByteBuffer.alloc(4)
+    val buf = ByteBuffer(4)
     try {
         while (remaining > 0) {
             val c = readUtf8Char(buf)!!
@@ -46,7 +46,7 @@ class AsyncChunkedOutputTest {
         }
         val out = output.data
         out.flip()
-        val buf = ByteBuffer.alloc(4)
+        val buf = ByteBuffer(4)
         assertEquals('4', out.readUtf8Char(buf))
         assertEquals('\r', out.readUtf8Char(buf))
         assertEquals('\n', out.readUtf8Char(buf))

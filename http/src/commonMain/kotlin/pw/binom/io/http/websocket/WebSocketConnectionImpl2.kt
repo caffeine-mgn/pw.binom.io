@@ -67,7 +67,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
         }
         LOOP@ while (true) {
             try {
-                WebSocketHeader.read(_input, header)
+                WebSocketHeader.read(input = _input, dest = header)
                 val type = when (header.opcode) {
                     1.toByte() -> MessageType.TEXT
                     2.toByte() -> MessageType.BINARY

@@ -8,26 +8,29 @@ class ZlibTest {
 
     @Test
     fun test() {
-        val sourceData = ByteBuffer.alloc(30)
+        val sourceData = ByteBuffer(30)
         repeat(sourceData.capacity) {
             sourceData.put(10)
         }
         sourceData.clear()
-        val compressed = ByteBuffer.alloc(sourceData.capacity * 2)
+        val compressed = ByteBuffer(sourceData.capacity * 2)
         val def = Deflater(6, true, true)
 
         while (true) {
-            if (def.deflate(sourceData, compressed) <= 0)
+            if (def.deflate(sourceData, compressed) <= 0) {
                 break
+            }
         }
         while (true) {
-            if (!def.flush(compressed))
+            if (!def.flush(compressed)) {
                 break
+            }
         }
         def.finish()
         while (true) {
-            if (!def.flush(compressed))
+            if (!def.flush(compressed)) {
                 break
+            }
         }
         compressed.flip()
         (compressed.position until compressed.limit).forEach {
@@ -41,10 +44,11 @@ class ZlibTest {
         }
 
         val inf = Inflater()
-        val uncompressed = ByteBuffer.alloc(sourceData.capacity * 2)
+        val uncompressed = ByteBuffer(sourceData.capacity * 2)
         while (true) {
-            if (inf.inflate(compressed, uncompressed) <= 0)
+            if (inf.inflate(compressed, uncompressed) <= 0) {
                 break
+            }
         }
         inf.end()
 

@@ -1,13 +1,13 @@
 package pw.binom.io
 
+import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.fromBytes
-import pw.binom.pool.ObjectPool
 
 class AsyncBufferedAsciiInputReader private constructor(
     val stream: AsyncInput,
-    private val pool: ObjectPool<ByteBuffer>?,
+    private val pool: ByteBufferPool?,
     private val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
     val closeParent: Boolean = true,
@@ -15,7 +15,7 @@ class AsyncBufferedAsciiInputReader private constructor(
 
     constructor(
         stream: AsyncInput,
-        pool: ObjectPool<ByteBuffer>,
+        pool: ByteBufferPool,
         closeParent: Boolean = true,
     ) : this(
         stream = stream,
@@ -63,7 +63,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         }
     }
 
-//    private val buffer = ByteBuffer.alloc(bufferSize).empty()
+//    private val buffer = ByteBuffer(bufferSize).empty()
 
     override val available: Int
         get() = if (closed.getValue()) 0 else if (buffer.remaining > 0) buffer.remaining else -1
@@ -119,7 +119,7 @@ class AsyncBufferedAsciiInputReader private constructor(
             if (closeBuffer) {
                 buffer.close()
             } else {
-                pool?.recycle(buffer)
+                pool?.recycle(buffer as PooledByteBuffer)
             }
             if (closeParent) {
                 stream.asyncClose()
@@ -318,7 +318,7 @@ fun AsyncInput.bufferedAsciiReader(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeP
         closeParent = closeParent,
     )
 
-fun AsyncInput.bufferedAsciiReader(pool: ObjectPool<ByteBuffer>, closeParent: Boolean = true) =
+fun AsyncInput.bufferedAsciiReader(pool: ByteBufferPool, closeParent: Boolean = true) =
     AsyncBufferedAsciiInputReader(
         stream = this,
         pool = pool,

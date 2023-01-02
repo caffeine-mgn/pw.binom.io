@@ -1,16 +1,16 @@
 package pw.binom.io
 
+import pw.binom.ByteBufferPool
 import pw.binom.CharBuffer
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
-import pw.binom.pool.ObjectPool
 
 class BufferedOutputAppendable private constructor(
     charset: Charset,
     val output: Output,
-    private val pool: ObjectPool<ByteBuffer>?,
+    private val pool: ByteBufferPool?,
     charBufferSize: Int,
     val closeParent: Boolean,
     private val buffer: ByteBuffer,
@@ -20,7 +20,7 @@ class BufferedOutputAppendable private constructor(
     constructor(
         charset: Charset = Charsets.UTF8,
         output: Output,
-        pool: ObjectPool<ByteBuffer>,
+        pool: ByteBufferPool,
         charBufferSize: Int = DEFAULT_BUFFER_SIZE / 2,
         closeParent: Boolean = true,
     ) : this(
@@ -157,7 +157,7 @@ class BufferedOutputAppendable private constructor(
             if (closeBuffer) {
                 buffer.close()
             } else {
-                pool?.recycle(buffer)
+                pool?.recycle(buffer as PooledByteBuffer)
             }
             if (closeParent) {
                 output.close()
@@ -169,7 +169,7 @@ class BufferedOutputAppendable private constructor(
 }
 
 fun Output.bufferedWriter(
-    pool: ObjectPool<ByteBuffer>,
+    pool: ByteBufferPool,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = 512,
     closeParent: Boolean = true

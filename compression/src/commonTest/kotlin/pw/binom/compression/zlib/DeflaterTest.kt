@@ -5,11 +5,11 @@ class DeflaterTest {
 //    @Test
 //    fun test() {
 //        val d = Deflater(9, false, false)
-//        val input = ByteBuffer.alloc(100)
+//        val input = ByteBuffer(100)
 //        Random.nextBytes(input)
 //        input.clear()
 //
-//        val output = ByteBuffer.alloc(200)
+//        val output = ByteBuffer(200)
 //        val c = d.deflate(
 //                input,
 //                output

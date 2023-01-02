@@ -79,18 +79,11 @@ actual class Selector : Closeable {
 
     internal fun updateKey(key: SelectorKey, event: CPointer<epoll_event>) {
         if (!epoll.update(key.rawSocket, event)) {
-//            if (key.attachment?.toString()?.contains("TcpServerConnection") == true) {
-//                println("Selector:: tcp server has error on update!!!")
-//            }
             epoll.delete(key.rawSocket, false)
             errorsRemoveLock.synchronize {
                 key.closed = true
                 errorsRemove.add(key)
             }
-        } else {
-//            if (key.attachment?.toString()?.contains("TcpServerConnection") == true) {
-//                println("Selector:: tcp server has updated key to ${epollModeToString(event.pointed.events.toInt())}")
-//            }
         }
     }
 
@@ -136,8 +129,6 @@ actual class Selector : Closeable {
     }
 
     private fun cleanupPostProcessing(
-//        native: CPointer<epoll_event>,
-//        errors: MutableSet<SelectorKey>,
         selectedKeys: MutableList<SelectorKey>,
         count: Int
     ) {
@@ -154,10 +145,6 @@ actual class Selector : Closeable {
         var currentNum = 0
         errorsRemoveLock.synchronize {
             errorsRemove.forEach { key ->
-//                if (key.attachment?.toString()?.contains("TcpServerConnection") == true) {
-//                    println("Selector:: remove invalid socket and send event")
-//                }
-//                errors += key
                 key.internalReadFlags = KeyListenFlags.ERROR
                 selectedKeys.add(key)
                 key.internalClose()
@@ -172,26 +159,14 @@ actual class Selector : Closeable {
                 continue
             }
             val key = nativeKeys[event.data.fd] ?: continue
-//            val key = ptr.asStableRef<SelectorKey>().get()
-//            println("KEY->$key, ${epollModeToString(event.events.toInt())}")
             if (key.closed) {
                 key.internalClose()
                 continue
             }
-//            if (key.attachment?.toString()?.contains("TcpServerConnection") == true) {
-//                println("Selector:: tcp server happened! Event: ${epollModeToString(event.events.toInt())}")
-//            }
-
-//            if (key.serverFlag && event.events.toInt() and EPOLLHUP.toInt() != 0 && event.events.toInt() and EPOLLERR.toInt() == 0) {
-//                println("Selector:: reset listen keys. attachment=${key.attachment}")
-//                key.resetListenFlags(key.listenFlags)
-//                continue
-//            }
             var e = 0
             if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
                 keyForRemove.add(key)
                 key.closed = true
-//                errors += key
                 e = e or KeyListenFlags.ERROR
             }
 
@@ -206,13 +181,13 @@ actual class Selector : Closeable {
             }
             key.internalReadFlags = e
             selectedKeys.add(key)
-//            println("SelectedKeys: $selectedKeys")
             key.internalListenFlags = 0
         }
     }
 
     actual fun select(timeout: Duration, selectedKeys: SelectedKeys) {
         selectLock.synchronize {
+            interruptWakeup()
             deferredRemoveKeys()
             selectedKeys.lock.synchronize {
 //                selectedKeys.errors.clear()

@@ -1,6 +1,5 @@
 package pw.binom.concurrency
 
-import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -13,7 +12,7 @@ import kotlin.time.measureTime
 class WorkerPoolTest {
 
     @Test
-    fun shutdownTestEmpty() = runTest {
+    fun shutdownTestEmpty() {
         val w = WorkerPool()
         w.submit {
             sleep(1000)

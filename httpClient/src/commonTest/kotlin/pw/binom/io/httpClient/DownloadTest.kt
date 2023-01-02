@@ -3,6 +3,7 @@ package pw.binom.io.httpClient
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.ByteBuffer
 import pw.binom.io.http.useBasicAuth
+import pw.binom.io.nextBytes
 import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.thread.Thread
@@ -20,7 +21,7 @@ class DownloadTest {
     fun getPostTest() = runTest(dispatchTimeoutMs = 10_000) {
         Thread.sleep(1000)
         val filePath = HTTP_STORAGE_URL.appendPath(Random.nextUuid().toString())
-        ByteBuffer.alloc(512).use { stubData ->
+        ByteBuffer(512).use { stubData ->
             Random.nextBytes(stubData)
             stubData.clear()
             HttpClient.create().use { client ->

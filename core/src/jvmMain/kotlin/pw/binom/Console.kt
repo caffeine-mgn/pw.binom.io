@@ -4,7 +4,7 @@ import pw.binom.io.*
 import java.io.PrintStream
 import java.nio.channels.Channels
 
-// private val tmpBuf = ByteBuffer.alloc(32)
+// private val tmpBuf = ByteBuffer(32)
 
 actual object Console {
     private class Out(oo: PrintStream) : Output {

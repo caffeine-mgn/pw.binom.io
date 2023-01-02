@@ -19,29 +19,3 @@ interface AsyncInput : AsyncCloseable {
         return length
     }
 }
-
-suspend fun AsyncInput.readByteArray(size: Int, bufferProvider: ByteBufferProvider): ByteArray {
-    require(size >= 0) { "size should be more or equals 0" }
-    val array = ByteArray(size)
-    readByteArray(
-        dest = array,
-        bufferProvider = bufferProvider,
-    )
-    return array
-}
-
-suspend fun AsyncInput.readByteArray(dest: ByteArray, bufferProvider: ByteBufferProvider) {
-    bufferProvider.using { buffer ->
-        var cursor = 0
-        while (cursor < dest.size) {
-            buffer.reset(0, minOf(dest.size - cursor, buffer.capacity))
-            val len = read(buffer)
-            if (len == 0) {
-                throw EOFException("Read $cursor/${dest.size}, can't read ${dest.size - cursor}")
-            }
-            buffer.flip()
-            val cp = buffer.read(dest = dest, offset = cursor)
-            cursor += len
-        }
-    }
-}

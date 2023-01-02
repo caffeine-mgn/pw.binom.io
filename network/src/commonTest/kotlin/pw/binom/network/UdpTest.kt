@@ -74,7 +74,7 @@ class UdpTest {
         }
 
     suspend fun UdpConnection.read(address: MutableNetworkAddress?) =
-        ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { data ->
+        ByteBuffer(DEFAULT_BUFFER_SIZE).use { data ->
             read(data, address = address)
             data.flip()
             data.toByteArray().decodeToString()
@@ -90,7 +90,7 @@ class UdpTest {
         message.encodeToByteArray().wrap {
             client.write(it, NetworkAddress.create(host = "127.0.0.1", port = port))
         }
-        val resp = ByteBuffer.alloc(message.length * 2).use {
+        val resp = ByteBuffer(message.length * 2).use {
             server.read(it, null)
             it.flip()
             it.bufferedReader().readText()

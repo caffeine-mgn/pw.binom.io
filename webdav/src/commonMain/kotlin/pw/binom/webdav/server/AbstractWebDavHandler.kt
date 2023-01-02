@@ -1,8 +1,8 @@
 package pw.binom.webdav.server
 
+import pw.binom.ByteBufferPool
 import pw.binom.copyTo
 import pw.binom.date.DateTime
-import pw.binom.io.ByteBufferProvider
 import pw.binom.io.FileSystem
 import pw.binom.io.FileSystemAccess
 import pw.binom.io.httpServer.Handler
@@ -44,7 +44,7 @@ suspend fun FileSystem.getEntitiesWithDepth(path: Path, depth: Int): List<FileSy
 
 abstract class AbstractWebDavHandler<U> : Handler {
 
-    protected abstract val bufferPool: ByteBufferProvider
+    protected abstract val bufferPool: ByteBufferPool
 
     protected abstract fun getFS(req: HttpRequest): FileSystem
     protected abstract fun getUser(req: HttpRequest): U
@@ -99,10 +99,12 @@ abstract class AbstractWebDavHandler<U> : Handler {
                                             ) {
                                                 // value(e.name)
                                             }
+
                                             prop.first == DAV_NS && prop.second == "getlastmodified" ->
                                                 node("getlastmodified", DAV_NS) {
                                                     value(DateTime(e.lastModified).toUTC().asString())
                                                 }
+
                                             prop.first == DAV_NS && prop.second == "getcontentlength" ->
                                                 node("getcontentlength", DAV_NS) {
                                                     if (e.isFile) {
@@ -111,6 +113,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                                                         value("0")
                                                     }
                                                 }
+
                                             prop.first == DAV_NS && prop.second == "resourcetype" -> {
                                                 if (e.isFile) {
                                                     node("resourcetype", DAV_NS)
@@ -120,6 +123,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                                                     }
                                                 }
                                             }
+
                                             else -> node(prop.second, prop.first)
                                         }
                                     }
@@ -244,7 +248,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
 
                     e.use {
                         req.readBinary().use { b ->
-                            b.copyTo(it, bufferPool)
+                            b.copyTo(dest = it, pool = bufferPool)
                         }
                     }
                     req.response().use {

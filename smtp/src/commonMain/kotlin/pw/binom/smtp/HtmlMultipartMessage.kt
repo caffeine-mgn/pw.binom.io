@@ -1,17 +1,18 @@
 package pw.binom.smtp
 
-import pw.binom.ByteBufferPool
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.io.*
 import pw.binom.io.http.AsyncMultipartOutput
 import pw.binom.io.http.headersOf
+import pw.binom.pool.FixedSizePool
 import pw.binom.url.UrlEncoder
 
 class HtmlMultipartMessage internal constructor(val output: AsyncOutput) : Message {
 
     private val multipart = AsyncMultipartOutput(output, closeParent = false)
-    private val pool = ByteBufferPool(1)
+    private val pool = FixedSizePool(capacity = 1, manager = ByteBufferFactory(DEFAULT_BUFFER_SIZE))
 
     internal suspend fun start(from: String, fromAlias: String?, to: String, toAlias: String?, subject: String?) {
         val output = StringBuilder()

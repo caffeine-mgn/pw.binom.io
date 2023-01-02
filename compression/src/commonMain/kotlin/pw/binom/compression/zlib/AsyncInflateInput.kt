@@ -5,7 +5,7 @@ import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.empty
 
-// private val tmpBuf = ByteBuffer.alloc(DEFAULT_BUFFER_SIZE)
+// private val tmpBuf = ByteBuffer(DEFAULT_BUFFER_SIZE)
 
 open class AsyncInflateInput(
     val stream: AsyncInput,

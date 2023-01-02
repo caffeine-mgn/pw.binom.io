@@ -10,7 +10,7 @@ class BufferedOutputAppendableTest {
     fun appendFlush() {
         val output = ByteArrayOutput()
         val pool = ByteBufferPool(10)
-        val writer = output.bufferedWriter(pool)
+        val writer = output.bufferedWriter(pool = pool)
         val txt = "1234567890"
         writer.append(txt)
         writer.append(txt)

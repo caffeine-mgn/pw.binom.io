@@ -1,17 +1,17 @@
 package pw.binom.io.file
 
+import pw.binom.ByteBufferPool
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
 import pw.binom.collections.defaultMutableList
 import pw.binom.copyTo
 import pw.binom.io.*
-import pw.binom.pool.ObjectPool
 import pw.binom.url.Path
 import pw.binom.url.toPath
 
 class LocalFileSystem(
     val root: File,
-    val byteBufferPool: ObjectPool<ByteBuffer>
+    val byteBufferPool: ByteBufferPool
 ) : FileSystem {
     override suspend fun new(path: Path): AsyncOutput {
         val file = File(root, path.toString().removePrefix("/"))
@@ -95,9 +95,9 @@ class LocalFileSystem(
                 throw FileSystem.FileNotFoundException(this.path)
             }
 
-            this.file.openRead().use { s ->
-                toFile.openWrite().use { d ->
-                    s.copyTo(d, byteBufferPool)
+            this.file.openRead().use { source ->
+                toFile.openWrite().use { destination ->
+                    source.copyTo(destination, byteBufferPool)
                 }
             }
             return EntityImpl(toFile)

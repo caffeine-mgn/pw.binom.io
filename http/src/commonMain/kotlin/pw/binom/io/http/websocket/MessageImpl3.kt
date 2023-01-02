@@ -87,6 +87,7 @@ internal class MessageImpl3 : Message {
         mask: Int,
         input: AsyncInput
     ) {
+        require(initLength >= 0) { "initLength less than zero: $initLength " }
         inputReady = initLength
         this.type = type
         this.lastFrame = lastFrame

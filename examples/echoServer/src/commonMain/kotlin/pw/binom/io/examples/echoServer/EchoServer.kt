@@ -10,7 +10,7 @@ fun main(args: Array<String>) {
     server.bind(NetworkAddress.Immutable("0.0.0.0", 8899))
     selector.attach(server, 0, server)
     println("Start listen port 8899")
-    val buffer = ByteBuffer.alloc(256)
+    val buffer = ByteBuffer(256)
     while (true) {
         selector.select { key, mode ->
             if (key.attachment === server) {

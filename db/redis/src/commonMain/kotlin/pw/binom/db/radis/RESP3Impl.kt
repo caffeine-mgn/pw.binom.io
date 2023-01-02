@@ -23,7 +23,7 @@ class RESP3Impl(
     )
     private val writer = output.bufferedWriter(closeParent = false, charset = charset)
     private val outBuffer = ByteArrayOutput()
-//    private val tmp = ByteBuffer.alloc(2)
+//    private val tmp = ByteBuffer(2)
 //    private val decoder = charset.newDecoder()
 //    private suspend fun AsyncBufferedInput.readChar(): Char? {
 //        tmp.reset(0, 1)

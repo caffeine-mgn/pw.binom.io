@@ -11,7 +11,7 @@ import kotlin.test.assertNull
 class AsyncBufferedInputReaderTest {
     @Test
     fun testPrintLn1() {
-        val data = ByteBuffer.wrap("hello\nworld_world_world\nworld".encodeToByteArray())
+        val data = "hello\nworld_world_world\nworld".encodeToByteArray().wrap()
         val pool = ByteBufferPool(1000)
 
         val reader = AsyncBufferedInputReader(Charsets.UTF8, data.asyncInput(), pool, charBufferSize = 10)
@@ -31,7 +31,7 @@ class AsyncBufferedInputReaderTest {
 
     @Test
     fun testPrintLn2() {
-        val data = ByteBuffer.wrap("hello\nworld_world_world\nworld".encodeToByteArray())
+        val data = "hello\nworld_world_world\nworld".encodeToByteArray().wrap()
 
         val reader = data.asyncInput().bufferedReader(charset = Charsets.UTF8)
         var ex: Throwable? = null

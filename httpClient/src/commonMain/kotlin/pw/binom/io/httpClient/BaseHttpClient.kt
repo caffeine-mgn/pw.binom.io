@@ -3,17 +3,18 @@ package pw.binom.io.httpClient
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.useName
+import pw.binom.io.ByteBufferFactory
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.websocket.WebSocketConnectionPool
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.network.ConnectTimeoutException
 import pw.binom.network.NetworkManager
+import pw.binom.pool.FixedSizePool
 import pw.binom.ssl.*
 import pw.binom.url.URL
 import kotlin.time.Duration
@@ -41,7 +42,10 @@ class BaseHttpClient(
     }
     private val connections =
         defaultMutableMap<String, MutableList<AsyncAsciiChannel>>().useName("BaseHttpClient.connections")
-    internal val textBufferPool = ByteBufferPool(capacity = bufferCapacity, bufferSize = bufferSize.toUInt())
+    internal val textBufferPool = FixedSizePool(
+        capacity = bufferCapacity,
+        manager = ByteBufferFactory(bufferSize)
+    ) // ByteBufferPool(capacity = bufferCapacity, bufferSize = bufferSize.toUInt())
 
     val idleSize
         get() = connections.map { it.value.size }.sum()

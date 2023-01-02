@@ -200,7 +200,7 @@ class SelectorTest {
         s2.trySelect()
         val client = Socket.createUdpNetSocket()
         fun sendNow() {
-            ByteBuffer.alloc(16).use { buffer ->
+            ByteBuffer(16).use { buffer ->
                 client.send(buffer, addr)
             }
         }
@@ -216,7 +216,7 @@ class SelectorTest {
     fun sendUdp(address: NetworkAddress) {
         Socket.createUdpNetSocket().use { c ->
             c.blocking = true
-            ByteBuffer.alloc(42).use { buffer ->
+            ByteBuffer(42).use { buffer ->
                 c.send(buffer, address)
             }
         }
@@ -251,7 +251,7 @@ class SelectorTest {
         udpChannel.listenFlags = KeyListenFlags.READ
         val c = Socket.createUdpNetSocket()
         c.blocking = true
-        ByteBuffer.alloc(42).use { buffer ->
+        ByteBuffer(42).use { buffer ->
             c.send(buffer, NetworkAddress.create(host = "127.0.0.1", port = b.port!!))
         }
         selector1.select(selectedKeys = selectKeys1, timeout = 1.seconds)
@@ -270,7 +270,7 @@ class SelectorTest {
             Thread {
                 Thread.sleep(delay.inWholeMilliseconds)
                 Socket.createUdpNetSocket().use { channel ->
-                    ByteBuffer.alloc(30).use { buffer ->
+                    ByteBuffer(30).use { buffer ->
                         println("send tmp data")
                         channel.send(buffer, NetworkAddress.create(host = "127.0.0.1", port = port))
                     }
@@ -279,7 +279,7 @@ class SelectorTest {
         }
 
         fun UdpNetSocket.skip(dataSize: Int) {
-            val read = ByteBuffer.alloc(dataSize).use { buffer ->
+            val read = ByteBuffer(dataSize).use { buffer ->
                 this.receive(buffer, null)
             }
             assertEquals(dataSize, read)

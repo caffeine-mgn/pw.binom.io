@@ -5,9 +5,11 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.concurrency.WorkerPool
 import pw.binom.io.ByteBuffer
 import pw.binom.io.clean
+import pw.binom.io.nextBytes
 import pw.binom.io.socket.MutableNetworkAddress
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.socket.Socket
+import pw.binom.io.wrap
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.random.nextInt
@@ -70,8 +72,8 @@ class NetworkDispatcherTest {
         val server = nd.bindTcp(addr)
         val port = server.port
         try {
-            val buf1 = ByteBuffer.alloc(512)
-            val buf2 = ByteBuffer.alloc(512)
+            val buf1 = ByteBuffer(512)
+            val buf2 = ByteBuffer(512)
             Random.nextBytes(buf1)
             buf1.flip()
             val client = nd.tcpConnect(NetworkAddress.create("127.0.0.1", port))
@@ -126,17 +128,17 @@ class NetworkDispatcherTest {
         val request = Random.nextUuid().toString()
         val response = Random.nextUuid().toString()
         try {
-            val buf = ByteBuffer.alloc(512)
+            val buf = ByteBuffer(512)
             val addr = MutableNetworkAddress.create()
             client.write(
-                ByteBuffer.wrap(request.encodeToByteArray()),
+                request.encodeToByteArray().wrap(),
                 NetworkAddress.create(host = "127.0.0.1", port = address.port)
             )
             server.read(buf, addr)
             buf.flip()
             assertEquals(request, buf.toByteArray().decodeToString())
 
-            server.write(ByteBuffer.wrap(response.encodeToByteArray()), addr)
+            server.write(response.encodeToByteArray().wrap(), addr)
             buf.clear()
             client.read(buf, null)
             buf.flip()
@@ -162,13 +164,13 @@ class NetworkDispatcherTest {
         val serverFuture = GlobalScope.launch(nd) {
             val client = server.accept()
             launch {
-                client.readFully(ByteBuffer.alloc(32).clean())
+                client.readFully(ByteBuffer(32).clean())
                 try {
                     withContext(ThreadCoroutineDispatcher()) {
                         println("Execute in execute")
                         delay(1000)
                         launch {
-                            println("Server write: ${client.write(ByteBuffer.wrap(ByteArray(64)).clean())}")
+                            println("Server write: ${client.write(ByteArray(64).wrap().clean())}")
                         }
                     }
                 } finally {
@@ -181,10 +183,10 @@ class NetworkDispatcherTest {
             println("Connection...")
             val client2 = nd.tcpConnect(NetworkAddress.create(host = "127.0.0.1", port = port))
             println("Connected! Write...")
-            client2.write(ByteBuffer.wrap(ByteArray(32)).clean())
+            client2.write(ByteArray(32).wrap().clean())
             println("Wrote! Try read...")
             val readTime = measureTime {
-                client2.readFully(ByteBuffer.alloc(64).clean())
+                client2.readFully(ByteBuffer(64).clean())
             }
             assertTrue(readTime > 1.0.seconds && readTime < 2.0.seconds)
             println("Readed!")
@@ -214,8 +216,8 @@ class NetworkDispatcherTest {
                         clientCount++
                         println("Server: Client connected! Count: $clientCount")
                         try {
-                            println("Server: readed ${client.readFully(ByteBuffer.alloc(32).clean())}")
-                            println("Server: wrote ${client.write(ByteBuffer.wrap(ByteArray(64)).clean())}")
+                            println("Server: readed ${client.readFully(ByteBuffer(32).clean())}")
+                            println("Server: wrote ${client.write(ByteArray(64).wrap().clean())}")
                         } catch (e: Throwable) {
                             e.printStackTrace()
                             throw e
@@ -236,12 +238,12 @@ class NetworkDispatcherTest {
             try {
                 val client2 = nd.tcpConnect(address)
                 println("Client[$name-${client2.hashCode()}]:Connected! Write...")
-                val w = client2.write(ByteBuffer.wrap(ByteArray(32)))
+                val w = client2.write(ByteArray(32).wrap())
                 println("Client[$name-${client2.hashCode()}]: Wrote $w")
                 println("Client[$name-${client2.hashCode()}]:Wrote! Try read...")
                 val readTime = measureTime {
                     val w = client2.readFully(
-                        ByteBuffer.alloc(64).clean()
+                        ByteBuffer(64).clean()
                     )
                     println("Client[$name-${client2.hashCode()}]: read $w")
                 }

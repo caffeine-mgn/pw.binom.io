@@ -7,12 +7,11 @@ import pw.binom.charset.Charset
 import pw.binom.charset.CharsetTransformResult
 import pw.binom.charset.Charsets
 import pw.binom.empty
-import pw.binom.pool.ObjectPool
 
 class BufferedInputReader(
     charset: Charset,
     val input: Input,
-    private val pool: ObjectPool<ByteBuffer>?,
+    private val pool: ByteBufferPool?,
     private val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
     private val closeParent: Boolean,
@@ -26,7 +25,7 @@ class BufferedInputReader(
     constructor(
         charset: Charset,
         input: Input,
-        pool: ObjectPool<ByteBuffer>,
+        pool: ByteBufferPool,
         charBufferSize: Int = 512,
         closeParent: Boolean = true,
     ) : this(
@@ -131,7 +130,7 @@ class BufferedInputReader(
             if (closeBuffer) {
                 buffer.close()
             } else {
-                pool?.recycle(buffer)
+                pool?.recycle(buffer as PooledByteBuffer)
             }
         }
     }

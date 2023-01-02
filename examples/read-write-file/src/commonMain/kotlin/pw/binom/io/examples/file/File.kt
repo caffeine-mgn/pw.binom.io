@@ -33,7 +33,6 @@ fun usingByteArray() {
         bufferPool.close()
         file.delete()
     }
-
 }
 
 /**
@@ -75,7 +74,7 @@ fun usingByteBuffer() {
             }
         }
         println("Write data: \"$text\"")
-        ByteBuffer.alloc(512).use { readBuf ->
+        ByteBuffer(512).use { readBuf ->
 
             val read = file.openRead().use {
                 it.read(readBuf)
@@ -104,7 +103,7 @@ fun calcMd5() {
             }
         }
 
-        ByteBuffer.alloc(512).use { readBuf ->
+        ByteBuffer(512).use { readBuf ->
             file.openRead().use {
                 while (true) {
                     readBuf.clear()
@@ -116,7 +115,7 @@ fun calcMd5() {
                 }
             }
         }
-        val hash = md5.finish()//result md5 hash
+        val hash = md5.finish() // result md5 hash
         val hashString = hash.map {
             val int = it.toInt() and 0xFF
             (int ushr 4).toString(16) + (int and 0xF).toString(16)

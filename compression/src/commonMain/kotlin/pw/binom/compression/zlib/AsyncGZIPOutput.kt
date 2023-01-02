@@ -1,18 +1,18 @@
 package pw.binom.compression.zlib
 
+import pw.binom.ByteBufferPool
 import pw.binom.crc.CRC32
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.holdState
 import pw.binom.io.use
-import pw.binom.pool.ObjectPool
 
 open class AsyncGZIPOutput protected constructor(
     stream: AsyncOutput,
     level: Int = 6,
     buffer: ByteBuffer,
     closeStream: Boolean = true,
-    pool: ObjectPool<ByteBuffer>?,
+    pool: ByteBufferPool?,
     closeBuffer: Boolean,
 ) : AsyncDeflaterOutput(
     stream = stream,
@@ -42,14 +42,14 @@ open class AsyncGZIPOutput protected constructor(
     constructor(
         stream: AsyncOutput,
         level: Int = 6,
-        bufferPool: ObjectPool<out ByteBuffer>,
+        bufferPool: ByteBufferPool,
         closeStream: Boolean = true
     ) : this(
         stream = stream,
         level = level,
         buffer = bufferPool.borrow(),
         closeStream = closeStream,
-        pool = bufferPool as ObjectPool<ByteBuffer>,
+        pool = bufferPool,
         closeBuffer = false
     )
 

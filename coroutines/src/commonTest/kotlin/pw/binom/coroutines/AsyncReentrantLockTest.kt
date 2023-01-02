@@ -1,9 +1,10 @@
-package pw.binom.concurrency
+package pw.binom.coroutines
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.concurrency.SpinLock
 import kotlin.test.Test
 import kotlin.test.assertTrue
 

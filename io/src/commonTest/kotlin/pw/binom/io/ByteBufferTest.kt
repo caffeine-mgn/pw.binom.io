@@ -7,7 +7,7 @@ class ByteBufferTest {
     @Test
     fun wrapTest() {
         val array = ByteArray(10) { it.toByte() }
-        val buf = ByteBuffer.wrap(array)
+        val buf = array.wrap()
         for (i in 0 until buf.capacity) {
             assertEquals(i.toByte(), buf[i])
         }

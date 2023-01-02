@@ -10,7 +10,6 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.coroutines.onCancel
 import pw.binom.io.AsyncCloseable
-import pw.binom.io.ByteBuffer
 import pw.binom.io.ByteBufferFactory
 import pw.binom.io.ClosedException
 import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
@@ -24,7 +23,6 @@ import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
 import pw.binom.network.TcpServerConnection
 import pw.binom.pool.GenericObjectPool
-import pw.binom.pool.ObjectPool
 import pw.binom.thread.DefaultUncaughtExceptionHandler
 import pw.binom.thread.Thread
 import pw.binom.thread.UncaughtExceptionHandler
@@ -233,7 +231,7 @@ class HttpServer(
 //                        println("------------------------------------------")
                         channel = ServerAsyncAsciiChannel(
                             channel = client,
-                            pool = textBufferPool as ObjectPool<ByteBuffer>
+                            pool = textBufferPool
                         )
                         clientProcessing(
                             channel = channel,
@@ -241,6 +239,7 @@ class HttpServer(
                             timeout = maxIdleTime,
                         )
                     } catch (e: Throwable) {
+                        this@HttpServer.errorHandler.uncaughtException(Thread.currentThread, e)
                         channel?.asyncCloseAnyway()
                         break
                     }

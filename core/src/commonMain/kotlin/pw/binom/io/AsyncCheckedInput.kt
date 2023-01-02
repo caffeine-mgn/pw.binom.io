@@ -30,7 +30,7 @@ class AsyncCheckedInput(val stream: AsyncInput, val cksum: MessageDigest) : Asyn
     }
 
 //    override suspend fun skip(n: Long): Long {
-//        val buf = ByteBuffer.alloc(512)
+//        val buf = ByteBuffer(512)
 //        try {
 //            var total: Long = 0
 //            while (total < n) {

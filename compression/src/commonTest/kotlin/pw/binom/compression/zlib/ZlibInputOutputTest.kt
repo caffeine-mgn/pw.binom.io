@@ -16,7 +16,7 @@ class ZlibInputOutputTest {
         source.forEachIndexed { index, it ->
             println("->$index->$it")
         }
-        val compressed = ByteBuffer.alloc(TestData.SOURCE_DATA.capacity * 2)
+        val compressed = ByteBuffer(TestData.SOURCE_DATA.capacity * 2)
         repeat(compressed.capacity) {
             compressed.put(10)
         }
@@ -35,7 +35,7 @@ class ZlibInputOutputTest {
             assertEquals(TestData.COMPRESSED[it], compressed[it])
         }
 
-        val uncompressed = ByteBuffer.alloc(source.capacity * 2)
+        val uncompressed = ByteBuffer(source.capacity * 2)
         val inf = InflateInput(compressed, 512, true)
         inf.read(uncompressed)
         inf.close()
@@ -49,7 +49,7 @@ class ZlibInputOutputTest {
     fun testAsync() = runBlocking {
         val source = TestData.SOURCE_DATA.clone()
         source.clear()
-        val compressed = ByteBuffer.alloc(TestData.SOURCE_DATA.capacity * 2)
+        val compressed = ByteBuffer(TestData.SOURCE_DATA.capacity * 2)
         repeat(compressed.capacity) {
             compressed.put(10)
         }
@@ -64,7 +64,7 @@ class ZlibInputOutputTest {
             assertEquals(TestData.COMPRESSED[it], compressed[it])
         }
 
-        val uncompressed = ByteBuffer.alloc(source.capacity * 2)
+        val uncompressed = ByteBuffer(source.capacity * 2)
         val inf = InflateInput(compressed, 512, true)
         inf.read(uncompressed)
         inf.close()

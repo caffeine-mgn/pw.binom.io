@@ -136,11 +136,19 @@ class EntityIterator<K, V>(val map: HashMap2<K, V>) : MutableIterator<MutableMap
     private var currentChangeCount = currentBucket.changeCounter.getValue()
     private var frozenMutableEntry: MutableEntry<K, V>? = map.buckets[0].root
     private var ready = frozenMutableEntry != null
+
+    private fun checkForComodification(skipChangeCountCheck: Boolean) {
+        if (skipChangeCountCheck) {
+            return
+        }
+        if (currentChangeCount != currentBucket.changeCounter.getValue()) {
+            throw ConcurrentModificationException()
+        }
+    }
+
     private fun hasNext(skipChangeCountCheck: Boolean): Boolean {
         if (frozenMutableEntry != null && ready) {
-            if (!skipChangeCountCheck && currentChangeCount != currentBucket.changeCounter.getValue()) {
-                throw ConcurrentModificationException()
-            }
+            checkForComodification(skipChangeCountCheck = skipChangeCountCheck)
             return true
         }
         frozenMutableEntry = frozenMutableEntry?.nextValue
@@ -170,6 +178,7 @@ class EntityIterator<K, V>(val map: HashMap2<K, V>) : MutableIterator<MutableMap
         if (!hasNext()) {
             throw NoSuchElementException()
         }
+        checkForComodification(skipChangeCountCheck = false)
         val r = frozenMutableEntry!!
 //        frozenMutableEntry = null
         ready = false
@@ -177,13 +186,20 @@ class EntityIterator<K, V>(val map: HashMap2<K, V>) : MutableIterator<MutableMap
     }
 
     override fun remove() {
+        if (ready) {
+            throw IllegalStateException()
+        }
         if (frozenMutableEntry == null) {
             throw IllegalStateException()
         }
+        checkForComodification(skipChangeCountCheck = false)
 //        if (!hasNext()) {
 //            throw NoSuchElementException()
 //        }
-        currentBucket.remove(frozenMutableEntry!!.key, null)
+        val el = currentBucket.remove(frozenMutableEntry!!.key, null)
+        if (el != null) {
+            currentChangeCount++
+        }
         hasNext(true)
     }
 

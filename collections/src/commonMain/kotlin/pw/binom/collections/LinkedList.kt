@@ -21,8 +21,7 @@ open class LinkedList<T>() : MutableList<T> {
     override val size: Int
         get() = _size
 
-    var modCount = 0
-        private set
+    private var modCount = 0
 
     override fun contains(element: T): Boolean = indexOf(element) >= 0
 
@@ -107,8 +106,9 @@ open class LinkedList<T>() : MutableList<T> {
     private fun isPositionIndex(index: Int): Boolean = index >= 0 && index <= size
 
     private fun checkPositionIndex(index: Int) {
-        if (!isPositionIndex(index))
+        if (!isPositionIndex(index)) {
             throw IndexOutOfBoundsException(outOfBoundsMsg(index))
+        }
     }
 
     private fun outOfBoundsMsg(index: Int) = "Index: $index, Size: $size"
@@ -153,10 +153,11 @@ open class LinkedList<T>() : MutableList<T> {
     override fun add(index: Int, element: T) {
         checkPositionIndex(index)
 
-        if (index == size)
+        if (index == size) {
             linkLast(element)
-        else
+        } else {
             linkBefore(element, node(index)!!)
+        }
     }
 
     override fun addAll(index: Int, elements: Collection<T>): Boolean {
@@ -250,8 +251,9 @@ open class LinkedList<T>() : MutableList<T> {
     private fun isElementIndex(index: Int) = index >= 0 && index < size
 
     private fun checkElementIndex(index: Int) {
-        if (!isElementIndex(index))
+        if (!isElementIndex(index)) {
             throw IndexOutOfBoundsException(outOfBoundsMsg(index))
+        }
     }
 
     protected fun unlink(x: Node<T>): T {
@@ -355,10 +357,11 @@ open class LinkedList<T>() : MutableList<T> {
         l.item = null
         l.prev = null // help GC
         last = prev
-        if (prev == null)
+        if (prev == null) {
             first = null
-        else
+        } else {
             prev.next = null
+        }
         _size--
         modCount++
         return element as T
@@ -485,8 +488,9 @@ open class LinkedList<T>() : MutableList<T> {
 
         override fun next(): T {
             checkForComodification()
-            if (!hasNext())
+            if (!hasNext()) {
                 throw NoSuchElementException()
+            }
 
             lastReturned = next
             next = next?.next
@@ -496,44 +500,76 @@ open class LinkedList<T>() : MutableList<T> {
 
         override fun remove() {
             checkForComodification()
-            if (lastReturned == null)
+            if (lastReturned == null) {
                 throw IllegalStateException()
+            }
 
             val lastNext = lastReturned!!.next
             unlink(lastReturned!!)
-            if (next == lastReturned)
+            if (next == lastReturned) {
                 next = lastNext
-            else
+            } else {
                 nextIndex--
+            }
             lastReturned = null
             expectedModCount++
         }
 
         override fun set(element: T) {
-            if (lastReturned == null)
+            if (lastReturned == null) {
                 throw IllegalStateException()
+            }
             checkForComodification()
             lastReturned!!.item = element
         }
 
         fun checkForComodification() {
-            if (modCount != expectedModCount) {
-                throw ConcurrentModificationException()
-            }
+            checkForComodification(expectedModCount)
         }
     }
-}
 
-@Suppress("UNCHECKED_CAST")
-inline fun <T> LinkedList<T>.forEachLinked(func: (T) -> Unit) {
-    var node = first
-    val startModCount = modCount
-    while (node != null) {
-        if (modCount != startModCount) {
+    private fun checkForComodification(expectedModCount: Int) {
+        if (modCount != expectedModCount) {
             throw ConcurrentModificationException()
         }
-        func(node.item as T)
-        node = node.next
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun forEachLinked(func: (T) -> Unit) {
+        var node = first
+        val expectedModCount = modCount
+        while (node != null) {
+            checkForComodification(expectedModCount)
+            func(node.item as T)
+            node = node.next
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun forEachFromEnd(func: (T) -> Unit) {
+        var node = last
+        val expectedModCount = modCount
+        while (node != null) {
+            checkForComodification(expectedModCount)
+            func(node.item as T)
+            node = node.prev
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun findFromEnd(func: (T) -> Boolean): T? {
+        var node = last
+        val startModCount = modCount
+        while (node != null) {
+            if (modCount != startModCount) {
+                throw ConcurrentModificationException()
+            }
+            if (func(node.item as T)) {
+                return node.item
+            }
+            node = node.prev
+        }
+        return null
     }
 }
 

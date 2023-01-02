@@ -1,10 +1,13 @@
 package pw.binom.io.http
 
-import pw.binom.io.*
-import pw.binom.pool.ObjectPool
+import pw.binom.ByteBufferPool
+import pw.binom.io.AsyncChannel
+import pw.binom.io.AsyncCloseable
+import pw.binom.io.bufferedAsciiReader
+import pw.binom.io.bufferedAsciiWriter
 
 open class AsyncAsciiChannel(
-    pool: ObjectPool<ByteBuffer>,
+    pool: ByteBufferPool,
     val channel: AsyncChannel,
 ) : AsyncCloseable {
 //    var reader = channel.bufferedAsciiReader(closeParent = false, bufferSize = 50)

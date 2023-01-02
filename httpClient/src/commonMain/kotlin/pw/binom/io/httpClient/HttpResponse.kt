@@ -11,7 +11,7 @@ interface HttpResponse : AsyncCloseable {
     val headers: Headers
     suspend fun readData(): AsyncInput
     suspend fun readData(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE) = readData { input ->
-        input.copyTo(output = output, bufferSize = bufferSize)
+        input.copyTo(dest = output, bufferSize = bufferSize)
     }
 
     suspend fun readDataToByteArray(bufferSize: Int = DEFAULT_BUFFER_SIZE) = ByteArrayOutput().use { output ->

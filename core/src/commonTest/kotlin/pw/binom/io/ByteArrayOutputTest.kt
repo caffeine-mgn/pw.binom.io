@@ -30,7 +30,7 @@ class ByteArrayOutputTest {
             capacityFactor = 1.7f
         )
 
-        val pp = ByteBuffer.alloc(1024)
+        val pp = ByteBuffer(1024)
         Random.nextBytes(pp)
         pp.clear()
         out.write(pp)
@@ -66,8 +66,8 @@ class ByteArrayOutputTest {
             capacity = 10,
             capacityFactor = 1.7f
         )
-        val tmp = ByteBuffer.alloc(1)
-        val pp = ByteBuffer.alloc(50)
+        val tmp = ByteBuffer(1)
+        val pp = ByteBuffer(50)
         repeat(pp.capacity) {
             pp.put(it.toByte())
         }

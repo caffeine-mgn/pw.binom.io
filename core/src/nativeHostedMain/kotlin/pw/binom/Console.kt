@@ -5,7 +5,7 @@ import kotlinx.cinterop.convert
 import platform.posix.*
 import pw.binom.io.*
 
-// private val tmp1 = ByteBuffer.alloc(32)
+// private val tmp1 = ByteBuffer(32)
 
 actual object Console {
 

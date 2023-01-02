@@ -102,7 +102,7 @@ class S3IntegrationTest {
             regin = regin,
             payloadContentLength = expectedContent.size.toLong(),
         ) { output ->
-            ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { buffer ->
+            ByteBuffer(DEFAULT_BUFFER_SIZE).use { buffer ->
                 output.writeByteArray(expectedContent, buffer)
             }
         }
@@ -134,7 +134,7 @@ class S3IntegrationTest {
             regin = regin,
             payloadContentLength = expectedContent.size.toLong(),
         ) { output ->
-            ByteBuffer.alloc(DEFAULT_BUFFER_SIZE).use { buffer ->
+            ByteBuffer(DEFAULT_BUFFER_SIZE).use { buffer ->
                 output.writeByteArray(expectedContent, buffer)
             }
         }

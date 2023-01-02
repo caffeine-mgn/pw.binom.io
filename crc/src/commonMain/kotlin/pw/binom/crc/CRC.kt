@@ -1,8 +1,8 @@
 package pw.binom.crc
 
-import pw.binom.dump
 import pw.binom.io.ByteBuffer
 import pw.binom.security.MessageDigest
+import pw.binom.toByteArray
 
 internal fun makeCrcTable(poly: UInt): IntArray {
     val crcTable = IntArray(256)
@@ -53,7 +53,7 @@ open class CRC32Basic(private val init: UInt, val crcTable: IntArray) : MessageD
     }
 
     override fun finish(): ByteArray =
-        value.toInt().dump()
+        value.toInt().toByteArray()
 
     val value: UInt
         get() = crc.inv().toUInt()

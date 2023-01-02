@@ -1,5 +1,8 @@
 package pw.binom.io
 
+import pw.binom.pool.ObjectPool
+import pw.binom.pool.using
+
 interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
     suspend fun write(data: ByteBuffer): Int
@@ -37,19 +40,23 @@ class AsyncOutputWithWriteCounter(val stream: AsyncOutput) : AsyncOutput {
     }
 }
 
-suspend fun AsyncOutput.writeByteArray(data: ByteArray, bufferProvider: ByteBufferProvider) {
-    bufferProvider.using { buffer ->
-        require(buffer.capacity > 0) { "Buffer capacity should be more than 0" }
-        var cursor = 0
-        while (cursor < data.size) {
-            buffer.clear()
-            val len = buffer.write(data, offset = cursor)
-            if (len <= 0) {
-                break
-            }
-            buffer.flip()
-            writeFully(buffer)
-            cursor += len
+suspend fun AsyncOutput.writeByteArray(value: ByteArray, buffer: ByteBuffer) {
+    require(buffer.capacity > 0) { "Buffer capacity should be more than 0" }
+    var cursor = 0
+    while (cursor < value.size) {
+        buffer.clear()
+        val len = buffer.write(value, offset = cursor)
+        if (len <= 0) {
+            break
         }
+        buffer.flip()
+        writeFully(buffer)
+        cursor += len
+    }
+}
+
+suspend fun AsyncOutput.writeByteArray(value: ByteArray, pool: ObjectPool<PooledByteBuffer>) {
+    pool.using { buffer ->
+        writeByteArray(value = value, buffer = buffer)
     }
 }

@@ -26,11 +26,26 @@ class WebSocketHeader {
 
             dest.length = (second and 0b1111111.toByte()).let {
                 when (it) {
-                    126.toByte() -> input.readShort(buf).toLong()
-                    127.toByte() -> input.readLong(buf).toLong()
-                    else -> it.toLong()
+                    126.toByte() -> {
+                        val s = input.readShort(buf)
+//                        println(
+//                            "WebSocketHeader:: return size as Short. $s, ${s.toUShort()} ${
+//                            s.toUShort().toLong()
+//                            } ${s.toLong()}"
+//                        )
+                        s.toUShort().toLong()
+                    }
+
+                    127.toByte() -> {
+                        /*println("WebSocketHeader:: return size as Long"); */input.readLong(buf)
+                    }
+
+                    else -> {
+                        /*println("WebSocketHeader:: return size as is $it ${it.toLong()}"); */it.toLong()
+                    }
                 }
             }
+//            println("WebSocketHeader::read dest.length=${dest.length}")
             dest.maskFlag = second and 0b10000000.toByte() != 0.toByte()
 
             if (dest.maskFlag) {
@@ -45,7 +60,7 @@ class WebSocketHeader {
                 if (src.finishFlag) {
                     value = value or 0b10000000.toByte()
                 }
-                output.writeByte(buf, value)
+                output.writeByte(value = value, buffer = buf)
 
                 value = if (src.maskFlag) {
                     0b10000000.toByte()
@@ -54,19 +69,19 @@ class WebSocketHeader {
                 }
                 when {
                     src.length > Short.MAX_VALUE -> {
-                        output.writeByte(buf, 127.toByte() or value)
-                        output.writeLong(buf, src.length)
+                        output.writeByte(value = 127.toByte() or value, buffer = buf)
+                        output.writeLong(value = src.length, buffer = buf)
                     }
 
                     src.length >= 126L -> {
-                        output.writeByte(buf, 126.toByte() or value)
-                        output.writeShort(buf, src.length.toShort())
+                        output.writeByte(value = 126.toByte() or value, buffer = buf)
+                        output.writeShort(value = src.length.toShort(), buffer = buf)
                     }
 
-                    else -> output.writeByte(buf, src.length.toByte() or value)
+                    else -> output.writeByte(value = src.length.toByte() or value, buffer = buf)
                 }
                 if (src.maskFlag) {
-                    output.writeInt(buf, src.mask)
+                    output.writeInt(value = src.mask, buffer = buf)
                 }
             }
         }

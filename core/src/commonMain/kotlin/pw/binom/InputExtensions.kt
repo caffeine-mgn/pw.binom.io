@@ -81,7 +81,7 @@ fun Input.copyTo(output: Output, buffer: ByteBuffer): Long {
     return totalLength
 }
 
-fun Input.copyTo(output: Output, pool: ObjectPool<ByteBuffer>): Long {
+fun Input.copyTo(output: Output, pool: ByteBufferPool): Long {
     val buffer = pool.borrow()
     return try {
         copyTo(output, buffer)

@@ -36,7 +36,7 @@ class WebSocketHeaderTest {
             mask = -2008212092
             finishFlag = true
         }
-        val output = ByteBuffer.alloc(10)
+        val output = ByteBuffer(10)
         WebSocketHeader.write(output.asyncOutput(), header)
         output.flip()
         assertEquals(8, output.remaining)

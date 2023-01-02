@@ -3,11 +3,9 @@
 package pw.binom
 
 import pw.binom.collections.defaultMutableList
-import pw.binom.io.ByteBuffer
-import pw.binom.io.ByteBufferProvider
-import pw.binom.io.Closeable
-import pw.binom.io.UTF8
-import pw.binom.pool.AbstractFixedSizePool
+import pw.binom.io.*
+import pw.binom.pool.GenericObjectPool
+import pw.binom.pool.ObjectPool
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -64,21 +62,25 @@ fun String.toByteBufferUTF8(): ByteBuffer {
     buf.clear()
     return buf
 }
+typealias ByteBufferPool = ObjectPool<PooledByteBuffer>
 
-class ByteBufferPool(capacity: Int, val bufferSize: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
-    AbstractFixedSizePool<ByteBuffer>(capacity), ByteBufferAllocator, ByteBufferProvider, Closeable {
-    override fun new(): ByteBuffer = ByteBuffer(bufferSize.toInt())
-
-    override fun free(value: ByteBuffer) {
-        value.close()
-    }
-
-    override fun get(): ByteBuffer = borrow()
-
-    override fun reestablish(buffer: ByteBuffer) {
-        recycle(buffer)
-    }
-}
+@Suppress("FunctionName")
+fun ByteBufferPool(size: Int, initCapacity: Int = 16) =
+    GenericObjectPool(factory = ByteBufferFactory(size), initCapacity = initCapacity)
+// class ByteBufferPool(capacity: Int, val bufferSize: UInt = DEFAULT_BUFFER_SIZE.toUInt()) :
+//    AbstractFixedSizePool<ByteBuffer>(capacity), ByteBufferAllocator, ByteBufferProvider, Closeable {
+//    override fun new(): ByteBuffer = ByteBuffer(bufferSize.toInt())
+//
+//    override fun free(value: ByteBuffer) {
+//        value.close()
+//    }
+//
+//    override fun get(): ByteBuffer = borrow()
+//
+//    override fun reestablish(buffer: ByteBuffer) {
+//        recycle(buffer)
+//    }
+// }
 
 @OptIn(ExperimentalContracts::class)
 inline fun <T> ByteBuffer.set(position: Int, length: Int, func: (ByteBuffer) -> T): T {

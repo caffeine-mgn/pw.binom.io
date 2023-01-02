@@ -1,8 +1,8 @@
 package pw.binom.io
 
+import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.pool.ObjectPool
 
 abstract class AbstractAsyncBufferedAsciiWriter(
     val closeParent: Boolean
@@ -96,7 +96,7 @@ abstract class AbstractAsyncBufferedAsciiWriter(
 
 class AsyncBufferedAsciiWriter private constructor(
     override val output: AsyncOutput,
-    private val pool: ObjectPool<ByteBuffer>?,
+    private val pool: ByteBufferPool?,
     override val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
     closeParent: Boolean = true
@@ -104,7 +104,7 @@ class AsyncBufferedAsciiWriter private constructor(
     AbstractAsyncBufferedAsciiWriter(closeParent = closeParent) {
     override fun toString(): String = "AsyncBufferedAsciiWriter(closeBuffer=$closeBuffer, output=$output)"
 
-    constructor(output: AsyncOutput, pool: ObjectPool<ByteBuffer>, closeParent: Boolean = true) : this(
+    constructor(output: AsyncOutput, pool: ByteBufferPool, closeParent: Boolean = true) : this(
         output = output,
         pool = pool,
         buffer = pool.borrow().clean(),
@@ -129,12 +129,12 @@ class AsyncBufferedAsciiWriter private constructor(
         if (closeBuffer) {
             buffer.close()
         } else {
-            pool?.recycle(buffer)
+            pool?.recycle(buffer as PooledByteBuffer)
         }
     }
 }
 
-fun AsyncOutput.bufferedAsciiWriter(pool: ObjectPool<ByteBuffer>, closeParent: Boolean = true) =
+fun AsyncOutput.bufferedAsciiWriter(pool: ByteBufferPool, closeParent: Boolean = true) =
     AsyncBufferedAsciiWriter(
         output = this,
         pool = pool,

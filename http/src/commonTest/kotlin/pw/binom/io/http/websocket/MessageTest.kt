@@ -42,7 +42,7 @@ class MessageTest {
     fun encodeTest() {
         val data = ByteArray(100)
         Random.nextBytes(data)
-        val buf = ByteBuffer.alloc(data.size)
+        val buf = ByteBuffer(data.size)
         data.forEach {
             buf.put(it)
         }

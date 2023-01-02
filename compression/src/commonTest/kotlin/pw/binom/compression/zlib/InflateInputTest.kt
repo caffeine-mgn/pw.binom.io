@@ -13,7 +13,7 @@ class InflateInputTest {
     fun asyncTest() = runBlocking {
         val source = TestData.SOURCE_DATA.clone()
         source.clear()
-        val compressed = ByteBuffer.alloc(TestData.SOURCE_DATA.capacity * 2)
+        val compressed = ByteBuffer(TestData.SOURCE_DATA.capacity * 2)
         repeat(compressed.capacity) {
             compressed.put(10)
         }

@@ -12,27 +12,27 @@ class ByteBufferTest {
 
     @Test
     fun reallocEmpty() {
-        val bb = ByteBuffer.alloc(0)
+        val bb = ByteBuffer(0)
         bb.realloc(50)
     }
 
     @Test
     fun putToByteArray() {
-        val buf = ByteBuffer.alloc(5)
+        val buf = ByteBuffer(5)
         val array = ByteArray(50)
         buf.write(array)
     }
 
     @Test
     fun putToByteArrayBufferOverflow() {
-        val buf = ByteBuffer.alloc(5)
+        val buf = ByteBuffer(5)
         val array = ByteArray(50)
         buf.write(array, length = 50)
     }
 
     @Test
     fun toByteArrayTest() {
-        val b = ByteBuffer.alloc(5)
+        val b = ByteBuffer(5)
         repeat(b.capacity) {
             b.put(it.toByte())
         }
@@ -50,7 +50,7 @@ class ByteBufferTest {
 
     @Test
     fun flipTest() {
-        val b = ByteBuffer.alloc(30)
+        val b = ByteBuffer(30)
         b.put(10)
         b.put(10)
         b.flip()
@@ -60,7 +60,7 @@ class ByteBufferTest {
 
     @Test
     fun cleanTest() {
-        ByteBuffer.alloc(64).use {
+        ByteBuffer(64).use {
             assertEquals(0, it.position)
             assertEquals(it.capacity, it.limit)
         }
@@ -68,7 +68,7 @@ class ByteBufferTest {
 
     @Test
     fun reallocTest() {
-        var b = ByteBuffer.alloc(100)
+        var b = ByteBuffer(100)
         b.position = 30
         b.limit = 72
         b = b.realloc(80)
@@ -81,7 +81,7 @@ class ByteBufferTest {
     fun reallocToMax() {
         val data = ByteArray(100)
         Random.Default.nextBytes(data)
-        var source = ByteBuffer.alloc(130)
+        var source = ByteBuffer(130)
         data.forEach {
             source.put(it)
         }
@@ -98,7 +98,7 @@ class ByteBufferTest {
     fun reallocToMin() {
         val data = ByteArray(100)
         Random.Default.nextBytes(data)
-        var source = ByteBuffer.alloc(130)
+        var source = ByteBuffer(130)
 
         data.forEach {
             source.put(it)
@@ -114,7 +114,7 @@ class ByteBufferTest {
 
     @Test
     fun writeTest() {
-        val source = ByteBuffer.alloc(1024)
+        val source = ByteBuffer(1024)
         println("#1------------")
         source.put(120)
         source.put(-100)
@@ -130,7 +130,7 @@ class ByteBufferTest {
         source.flip()
         source.position = 2
 
-        val dest = ByteBuffer.alloc(100)
+        val dest = ByteBuffer(100)
         repeat(dest.capacity) {
             dest.put(0)
         }
@@ -156,7 +156,7 @@ class ByteBufferTest {
 
     @Test
     fun compactFillTest() {
-        val self = ByteBuffer.alloc(10)
+        val self = ByteBuffer(10)
         repeat(self.remaining) {
             self.put(it.toByte())
         }
@@ -177,7 +177,7 @@ class ByteBufferTest {
 
     @Test
     fun compactEmptyTest() {
-        val self = ByteBuffer.alloc(10).empty()
+        val self = ByteBuffer(10).empty()
         self.compact()
         assertEquals(0, self.position)
         assertEquals(self.capacity, self.limit)
@@ -185,7 +185,7 @@ class ByteBufferTest {
 
     @Test
     fun freeTest() {
-        val buf = ByteBuffer.alloc(30)
+        val buf = ByteBuffer(30)
         repeat(buf.capacity) {
             buf.put(it.toByte())
         }
@@ -205,7 +205,7 @@ class ByteBufferTest {
 
     @Test
     fun frozenTest() {
-        val self = ByteBuffer.alloc(10)
+        val self = ByteBuffer(10)
         repeat(self.remaining) {
             self.put(it.toByte())
         }

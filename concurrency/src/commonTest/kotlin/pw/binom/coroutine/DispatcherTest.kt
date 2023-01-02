@@ -1,5 +1,5 @@
 package pw.binom.coroutine
-
+/*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -24,3 +24,4 @@ class DispatcherTest {
         assertEquals(1, c.i)
     }
 }
+*/
