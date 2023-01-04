@@ -43,7 +43,9 @@ internal suspend fun s3Call(
             add("x-amz-date" to date.awsDateTime())
         }.sortedBy { it.first }
         val query = url.query?.let {
-            it.toMap().entries.sortedBy { it.key }.map { "${it.key}=${it.value ?: ""}" }.joinToString("&")
+            it.toMap().entries.sortedBy { it.key }
+                .map { "${UrlEncoder.encode(it.key)}=${it.value?.let { UrlEncoder.encode(it) } ?: ""}" }
+                .joinToString("&")
         }
         val canonicalRequest = buildCanonicalRequest(
             method = method,
@@ -52,7 +54,6 @@ internal suspend fun s3Call(
             headers = specialHeaders,
             contentSha256 = payloadSha256,
         )
-//        println("---===canonicalRequest===---\n$canonicalRequest\n---===canonicalRequest===---")
         val stringToSign = buildStringToSign(
             date = date,
             regin = regin,

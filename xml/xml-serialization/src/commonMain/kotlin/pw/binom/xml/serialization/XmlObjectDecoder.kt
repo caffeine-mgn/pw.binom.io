@@ -214,9 +214,23 @@ class XmlObjectDecoder(
                 "Can't find element ${descriptor.serialName}::${descriptor.getElementName(cursor)}"
             )
         return if (isWrapped) {
-            root.childs.find { it.tag == name && it.nameSpace.inArray(ns) }?.body ?: genErr()
+            val result = root.childs.find { it.tag == name && it.nameSpace.inArray(ns) }?.body
+            if (result == null) {
+                val emptyValue = descriptor.xmlEmptyValue(cursor)
+                if (emptyValue != null) {
+                    return emptyValue
+                }
+            }
+            result ?: genErr()
         } else {
-            root.attributes.entries.find { it.key.name == name && it.key.nameSpace.inArray(ns) }?.value ?: genErr()
+            val result = root.attributes.entries.find { it.key.name == name && it.key.nameSpace.inArray(ns) }?.value
+            if (result == null) {
+                val emptyValue = descriptor.xmlEmptyValue(cursor)
+                if (emptyValue != null) {
+                    return emptyValue
+                }
+            }
+            result ?: genErr()
         }
     }
 

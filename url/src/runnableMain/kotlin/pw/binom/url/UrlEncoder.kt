@@ -2,12 +2,16 @@ package pw.binom.url
 
 actual object UrlEncoder {
     actual fun encode(input: String): String {
+        if (input.isEmpty()) {
+            return input
+        }
         val sb = StringBuilder(input.length)
         input.encodeToByteArray().forEach {
             when (it) {
                 '.'.code.toByte(),
                 '-'.code.toByte(),
                 '_'.code.toByte(),
+                '~'.code.toByte(),
                 '*'.code.toByte(),
                 in 'a'.code.toByte()..'z'.code.toByte(),
                 in 'A'.code.toByte()..'Z'.code.toByte(),
@@ -17,7 +21,7 @@ actual object UrlEncoder {
                 else -> {
                     val bb1 = ((it.toInt() and 0xf0) shr 4)
                     val bb2 = it.toInt() and 0x0f
-                    sb.append("%").append(bb1.toString(16)).append(bb2.toString(16))
+                    sb.append("%").append(bb1.toString(16).uppercase()).append(bb2.toString(16).uppercase())
                 }
             }
         }

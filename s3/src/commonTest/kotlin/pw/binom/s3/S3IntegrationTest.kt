@@ -242,4 +242,39 @@ class S3IntegrationTest {
 
         assertContentEquals(full, actualData)
     }
+
+    @Test
+    fun listOfObjectTest() = runTest {
+        client.createBucket()
+        val full = ByteArray(1024)
+        val names = (0 until 10).map { Random.nextUuid().toString() }
+        names.forEach { name ->
+            client.putObjectContent(
+                bucket = bucketName,
+                key = name,
+                regin = regin,
+            ) { output ->
+                full.wrap().use { data ->
+                    output.writeFully(data)
+                }
+            }
+        }
+        val list1 = client.listObject2(
+            regin = regin,
+            bucket = bucketName,
+            continuationToken = null,
+            maxKeys = 5,
+        )
+
+        assertNotNull(list1.nextContinuationToken, "Continuation Token is null")
+        val list2 = client.listObject2(
+            regin = regin,
+            bucket = bucketName,
+            continuationToken = list1.nextContinuationToken,
+            maxKeys = 5,
+        )
+
+        val totalList = list1.contents.map { it.key } + list2.contents.map { it.key }
+        assertContentEquals(names.sorted(), totalList.sorted())
+    }
 }

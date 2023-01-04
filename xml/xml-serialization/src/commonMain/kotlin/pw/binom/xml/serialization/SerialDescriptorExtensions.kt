@@ -4,6 +4,7 @@ package pw.binom.xml.serialization
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
+import pw.binom.xml.serialization.annotations.XmlEmptyValue
 import pw.binom.xml.serialization.annotations.XmlName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 
@@ -13,6 +14,9 @@ fun SerialDescriptor.xmlName() =
 fun SerialDescriptor.xmlName(index: Int) =
     (getElementAnnotations(index).find { it is XmlName } as XmlName?)?.name
         ?: getElementName(index)
+
+fun SerialDescriptor.xmlEmptyValue(index: Int) =
+    (getElementAnnotations(index).find { it is XmlEmptyValue } as XmlEmptyValue?)?.value
 
 fun SerialDescriptor.xmlNamespace() =
     (annotations.find { it is XmlNamespace } as XmlNamespace?)?.ns?.takeIf { it.isNotEmpty() }

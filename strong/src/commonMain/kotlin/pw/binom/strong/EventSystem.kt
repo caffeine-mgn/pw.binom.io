@@ -26,6 +26,16 @@ class EventSystem {
         return closable
     }
 
+    inline fun <reified T : Any> listenUntil(noinline listener: suspend (T) -> Boolean): Closeable {
+        var closable: Closeable? = null
+        closable = listen(T::class) {
+            if (!listener(it)) {
+                closable?.close()
+            }
+        }
+        return closable
+    }
+
     fun <T : Any> listen(objectClass: KClass<T>, listener: suspend (T) -> Unit): Closeable =
         run {
             objectClass as KClass<Any>

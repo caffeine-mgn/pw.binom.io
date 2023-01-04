@@ -52,12 +52,9 @@ class DefaultHttpRequest constructor(
     }
 
     private suspend fun sendHeaders() {
-        val request = if (uri.request.isEmpty()) {
-            "/"
-        } else {
-            uri.request
-        }
-        channel.writer.append(method).append(" ").append(request).append(" ").append("HTTP/1.1${Utils.CRLF}")
+        val request = uri.request.ifEmpty { "/" }
+        println("DefaultHttpRequest::sendHeaders request=\"$request\"")
+        channel.writer.append(method).append(" ").append(request).append(" ").append("HTTP/1.1").append(Utils.CRLF)
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
         }

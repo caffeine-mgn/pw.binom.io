@@ -49,6 +49,7 @@ sealed interface NativeMem {
     val size: Int
     operator fun get(index: Int): Byte
     operator fun set(index: Int, value: Byte)
+    fun toInt8Array(startIndex: Int, endIndex: Int): Int8Array
 
     class ByteNativeMem(val mem: Int8Array) : NativeMem {
         override val size: Int
@@ -59,6 +60,9 @@ sealed interface NativeMem {
         override fun set(index: Int, value: Byte) {
             mem[index] = value
         }
+
+        override fun toInt8Array(startIndex: Int, endIndex: Int): Int8Array =
+            Int8Array(buffer = mem.buffer, byteOffset = startIndex, length = endIndex - startIndex)
     }
 
     class ArrayNativeMem(val mem: ByteArray) : NativeMem {
@@ -70,6 +74,14 @@ sealed interface NativeMem {
         override fun set(index: Int, value: Byte) {
             mem[index] = value
         }
+
+        override fun toInt8Array(startIndex: Int, endIndex: Int): Int8Array =
+            if (startIndex == 0 && endIndex == mem.size) {
+                Int8Array(mem.unsafeCast<Array<Byte>>())
+            } else {
+                val arr = mem.copyOfRange(fromIndex = startIndex, toIndex = endIndex)
+                Int8Array(arr.unsafeCast<Array<Byte>>())
+            }
     }
 }
 
@@ -80,6 +92,7 @@ actual open class ByteBuffer(val native: NativeMem) :
 
     actual companion object;
 
+    constructor(array: Int8Array) : this(NativeMem.ByteNativeMem(array))
     actual constructor(size: Int) : this(NativeMem.ByteNativeMem(Int8Array(size)))
     actual constructor(array: ByteArray) : this(NativeMem.ArrayNativeMem(array))
 
@@ -197,8 +210,18 @@ actual open class ByteBuffer(val native: NativeMem) :
         return l
     }
 
-    actual fun peek(): Byte =
-        native[position]
+    fun readInt8Array(size: Int): Int8Array {
+        require(size >= 0)
+        if (size == 0) {
+            return Int8Array(0)
+        }
+        val endIndex = minOf(position + size, limit)
+        val result = native.toInt8Array(startIndex = position, endIndex = endIndex)
+        position = endIndex
+        return result
+    }
+
+    actual fun peek(): Byte = native[position]
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
         this.position = position
@@ -219,6 +242,20 @@ actual open class ByteBuffer(val native: NativeMem) :
     actual operator fun set(index: Int, value: Byte) {
         checkClosed()
         native[index] = value
+    }
+
+    fun toInt8Array(): Int8Array {
+        if (remaining == 0) {
+            return Int8Array(0)
+        }
+        val result = native.toInt8Array(startIndex = position, endIndex = limit)
+        return result
+    }
+
+    fun readToInt8Array(): Int8Array {
+        val result = toInt8Array()
+        position += result.length
+        return result
     }
 
     actual fun toByteArray(): ByteArray = toByteArray(remaining)
