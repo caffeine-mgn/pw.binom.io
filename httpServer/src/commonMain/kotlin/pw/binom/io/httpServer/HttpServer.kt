@@ -127,59 +127,61 @@ class HttpServer(
         isNewConnect: Boolean,
         timeout: Duration,
     ) = manager.launch {
-        idleJobsLock.synchronize {
-            idleJobs += coroutineContext.job
-        }
-        var req: HttpRequest2Impl? = null
-        try {
-            req = HttpRequest2Impl.read(
-                channel = channel,
-                server = this@HttpServer,
-                isNewConnect = isNewConnect,
-                readStartTimeout = timeout,
-                idleJob = this.coroutineContext.job,
-            ).getOrThrow()
+        supervisorScope PROCESSING@{
+            idleJobsLock.synchronize {
+                idleJobs += coroutineContext.job
+            }
+            var req: HttpRequest2Impl? = null
+            try {
+                req = HttpRequest2Impl.read(
+                    channel = channel,
+                    server = this@HttpServer,
+                    isNewConnect = isNewConnect,
+                    readStartTimeout = timeout,
+                    idleJob = this.coroutineContext.job,
+                ).getOrThrow()
 
 //                req = HttpRequest2Impl.read(
 //                    channel = channel,
 //                    server = this@HttpServer,
 //                    isNewConnect = isNewConnect,
 //                )
-            if (req == null) {
+                if (req == null) {
 //                println("HttpServer:: reading timeout!")
-                channel.asyncCloseAnyway()
-                return@launch
-            }
+                    channel.asyncCloseAnyway()
+                    return@PROCESSING
+                }
 //            println("HttpServer:: request got! Processing...")
-            handler.request(req)
-            if (req.response == null) {
-                req.response { it.status = 404 }
-            }
+                handler.request(req)
+                if (req.response == null) {
+                    req.response { it.status = 404 }
+                }
 //                idleCheck()
-        } catch (e: TimeoutCancellationException) {
+            } catch (e: TimeoutCancellationException) {
 //            println("HttpServer:: reading timeout!")
-            req = null
-            channel.asyncCloseAnyway()
-        } catch (e: CancellationException) {
+                req = null
+                channel.asyncCloseAnyway()
+            } catch (e: CancellationException) {
 //            println("HttpServer:: reading cancelled!")
-            req = null
-            channel.asyncCloseAnyway()
-        } catch (e: SocketClosedException) {
-            req = null
-            channel.asyncCloseAnyway()
-        } catch (e: Throwable) {
-            req = null
-            channel.asyncCloseAnyway()
-            try {
-                errorHandler.uncaughtException(Thread.currentThread, e)
-                e.printStackTrace()
+                req = null
+                channel.asyncCloseAnyway()
+            } catch (e: SocketClosedException) {
+                req = null
+                channel.asyncCloseAnyway()
             } catch (e: Throwable) {
-                // Do nothing
-            }
-        } finally {
-            if (req != null) {
-                req.free()
-                httpRequest2Impl.recycle(req)
+                req = null
+                channel.asyncCloseAnyway()
+                try {
+                    errorHandler.uncaughtException(Thread.currentThread, e)
+                    e.printStackTrace()
+                } catch (e: Throwable) {
+                    // Do nothing
+                }
+            } finally {
+                if (req != null) {
+                    req.free()
+                    httpRequest2Impl.recycle(req)
+                }
             }
         }
     }
@@ -192,7 +194,7 @@ class HttpServer(
                 break
             }
             manager.launch {
-                val thisJob = clientProcessing(
+                clientProcessing(
                     channel = networkChannel,
                     isNewConnect = false,
                     timeout = maxIdleTime,
@@ -227,8 +229,10 @@ class HttpServer(
                             null
                         } catch (e: SocketClosedException) {
                             null
-                        } ?: break
-//                        println("------------------------------------------")
+                        }
+                        if (client == null) {
+                            break
+                        }
                         channel = ServerAsyncAsciiChannel(
                             channel = client,
                             pool = textBufferPool

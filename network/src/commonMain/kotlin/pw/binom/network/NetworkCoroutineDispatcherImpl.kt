@@ -4,8 +4,8 @@ package pw.binom.network
 // import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
+import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.Exchange
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.io.socket.Selector
@@ -39,7 +39,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override fun toString(): String = "Dispatchers.Network"
 
     //    private val exchange = Exchange<Runnable>()
-    private val exchange = Exchange<Runnable>()
+    private val exchange = BatchExchange<Runnable>()
     val networkThread = NetworkThread(
         selector = selector,
         exchange = this.exchange,
@@ -51,7 +51,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        this.exchange.put(block)
+        this.exchange.push(block)
         wakeup()
     }
 

@@ -186,7 +186,7 @@ class S3IntegrationTest {
                 partNumber = number,
                 uploadId = uploadId,
 //                payloadSha256 = sha256,
-                payload = { ByteBuffer.wrap(data).use { buffer -> it.write(buffer) } },
+                payload = { data.wrap().use { buffer -> it.write(buffer) } },
             )
             return Part(
                 checksumSHA256 = sha256.toHex(),
@@ -229,7 +229,7 @@ class S3IntegrationTest {
             key = key,
             regin = regin,
         ) { output ->
-            ByteBuffer.wrap(full).use { data ->
+            full.wrap().use { data ->
                 output.writeFully(data)
             }
         }

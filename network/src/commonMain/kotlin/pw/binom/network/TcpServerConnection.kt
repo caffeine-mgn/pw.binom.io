@@ -42,7 +42,6 @@ class TcpServerConnection constructor(
     private var closed = false
 
     override fun error() {
-//        println("TcpServerConnection:: $description:: error!!!")
         channel.closeAnyway()
         currentKey.closeAnyway()
         val acceptListener = acceptListener
@@ -55,19 +54,9 @@ class TcpServerConnection constructor(
     }
 
     override fun readyForRead(key: SelectorKey) {
-//        println("TcpServerConnection:: $description:: New client ready!")
-        val acceptListener = acceptListener
-        if (acceptListener == null) {
-//            println("TcpServerConnection:: $description:: New client ready! acceptListener=null")
-            return
-        }
-        val newChannel = channel.accept(null)
-        if (newChannel == null) {
-//            println("TcpServerConnection:: $description:: New client ready! newChannel=null")
-            return
-        }
+        val acceptListener = acceptListener ?: return
+        val newChannel = channel.accept(null) ?: return
         this.acceptListener = null
-//        println("TcpServerConnection:: $description:: resume connection!")
         acceptListener.resume(newChannel)
     }
 
@@ -92,23 +81,18 @@ class TcpServerConnection constructor(
         }
         check(acceptListener == null) { "Connection already have read listener" }
 
-//        println("TcpServerConnection:: $description:: Try accept now...")
         val newClient = channel.accept(address)
         if (newClient != null) {
-//            println("TcpServerConnection:: $description:: Now new socket found!!!")
             return dispatcher.attach(newClient).also {
                 it.description = "Server of $description"
             }
         }
-//        println("TcpServerConnection:: $description:: Now new socket not found!!! Wait lazy socket...")
 
         val newChannel = suspendCancellableCoroutine<TcpClientSocket> { con ->
             acceptListener = con
-//            println("TcpServerConnection:: $description:: Lazy socket listen1...")
             currentKey.listenFlags = KeyListenFlags.READ // or KeyListenFlags.ERROR
             currentKey.selector.wakeup()
             con.invokeOnCancellation {
-//                println("TcpServerConnection:: $description:: Cancel socket reading...")
                 acceptListener = null
                 currentKey.listenFlags = 0
                 currentKey.selector.wakeup()

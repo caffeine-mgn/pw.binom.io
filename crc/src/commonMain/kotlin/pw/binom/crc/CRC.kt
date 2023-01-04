@@ -52,9 +52,10 @@ open class CRC32Basic(private val init: UInt, val crcTable: IntArray) : MessageD
         }
     }
 
-    override fun finish(): ByteArray =
-        value.toInt().toByteArray()
+    override fun finish(): ByteArray = value.toInt().toByteArray()
 
     val value: UInt
         get() = crc.inv().toUInt()
+
+    override fun toString(): String = finish().joinToString(separator = "") { it.toUByte().toString(16).padEnd(2, '0') }
 }

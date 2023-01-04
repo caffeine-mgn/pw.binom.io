@@ -220,6 +220,13 @@ object S3ClientApi {
             it.readText().use { it.readText() }
         }
         val element = result.xmlTree(true)
+        if (element.tag == "Error") {
+            val error = xml.decodeFromXmlElement(Error.serializer(), element)
+            throw S3ErrorException(
+                code = error.key,
+                description = error.message,
+            )
+        }
         return xml.decodeFromXmlElement(ListBucketResultV2.serializer(), element)
     }
 
