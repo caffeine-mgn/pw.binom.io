@@ -244,7 +244,6 @@ class TcpConnection(
         readData.full = true
         val readed = suspendCancellableCoroutine<Int> { continuation ->
             continuation.invokeOnCancellation {
-                println("TcpConnection::readFully read cancelled! Steck: ${it?.stackTraceToString()}")
                 currentKey.removeListen(KeyListenFlags.READ)
                 readData.reset()
                 currentKey.selector.wakeup()
@@ -284,7 +283,6 @@ class TcpConnection(
         readData.full = false
         return suspendCancellableCoroutine {
             it.invokeOnCancellation {
-                println("TcpConnection::read read cancelled!")
                 currentKey.removeListen(KeyListenFlags.READ)
                 readData.reset()
                 currentKey.selector.wakeup()
