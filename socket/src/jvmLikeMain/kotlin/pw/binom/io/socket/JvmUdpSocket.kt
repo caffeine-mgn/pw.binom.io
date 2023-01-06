@@ -21,9 +21,13 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
         get() = internalPort.takeIf { it != 0 }
 
     override fun bind(address: NetworkAddress): BindStatus {
-        native.bind(address.toJvmAddress().native)
-        internalPort = native.socket().localPort
-        return BindStatus.OK
+        try {
+            native.bind(address.toJvmAddress().native)
+            internalPort = native.socket().localPort
+            return BindStatus.OK
+        } catch (e: java.net.BindException) {
+            return BindStatus.ADDRESS_ALREADY_IN_USE
+        }
     }
 
     override fun send(data: ByteBuffer, address: NetworkAddress): Int {
