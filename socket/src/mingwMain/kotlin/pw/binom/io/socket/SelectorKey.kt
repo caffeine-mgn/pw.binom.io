@@ -75,4 +75,6 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
 
     actual val isClosed: Boolean
         get() = closed
+    actual val readFlags: Int
+        get() = TODO("Not yet implemented")
 }

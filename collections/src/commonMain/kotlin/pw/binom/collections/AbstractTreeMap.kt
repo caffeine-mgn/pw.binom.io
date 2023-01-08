@@ -15,6 +15,7 @@ private val COMPARATOR: Comparator<Any> = Comparator<Any> { a, b ->
     a.hashCode().compareTo(b.hashCode())
 }
 
+@Suppress("UNCHECKED_CAST")
 abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNavigableMap<K, V> {
     private var root: Node<K, V>? = null
     private var modCount = 0

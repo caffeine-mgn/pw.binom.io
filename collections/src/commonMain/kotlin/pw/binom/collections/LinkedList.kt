@@ -1,5 +1,6 @@
 package pw.binom.collections
 
+@Suppress("UNCHECKED_CAST")
 open class LinkedList<T>() : MutableList<T> {
     constructor(elements: Iterable<T>) : this() {
         addAll(elements)
