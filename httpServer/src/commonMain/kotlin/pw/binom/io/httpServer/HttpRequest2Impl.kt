@@ -222,10 +222,30 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
     }
 
     private suspend fun checkWebSocket() {
-        if (!headers[Headers.CONNECTION]?.singleOrNull().equals(Headers.UPGRADE, true)) {
+        val connection = headers[Headers.CONNECTION]
+        if (connection == null) {
             rejectWebsocket()
-            throw IllegalStateException("Invalid Client Headers: Invalid Header \"${Headers.CONNECTION}\"")
+            throw IllegalStateException("Invalid Client Headers: Missing Header \"${Headers.CONNECTION}\"")
         }
+        val hasUpgrade = connection
+            .asSequence()
+            .flatMap { it.splitToSequence(',') }
+            .map { it.trim() }
+            .any { it.equals(Headers.UPGRADE, true) }
+        if (!hasUpgrade){
+            rejectWebsocket()
+            throw IllegalStateException("Invalid Client Headers: Header \"${Headers.CONNECTION}: ${Headers.UPGRADE}\" not found")
+        }
+//        if (connection.size > 1) {
+//            rejectWebsocket()
+//            throw IllegalStateException("Invalid Client Headers: Several headers \"${Headers.CONNECTION}\"")
+//        }
+//        val connectionValue = connection.single()
+//        if (!connectionValue.equals(Headers.UPGRADE, true)) {
+//            connectionValue.split(',').asSequence().map { it.trim() }.any { it.equals(Headers.UPGRADE, true) }
+//            rejectWebsocket()
+//            throw IllegalStateException("Invalid Client Headers: Header \"${Headers.CONNECTION}\" has value \"$connectionValue\". Excepted \"${Headers.UPGRADE}\"")
+//        }
         if (!headers[Headers.UPGRADE]?.singleOrNull().equals(Headers.WEBSOCKET, true)) {
             rejectWebsocket()
             throw IllegalStateException("Invalid Client Headers: Invalid Header \"${Headers.UPGRADE}\"")

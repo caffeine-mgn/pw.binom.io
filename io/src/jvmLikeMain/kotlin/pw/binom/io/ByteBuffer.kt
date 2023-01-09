@@ -30,6 +30,10 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 //    }
 
     private var closed = false
+
+    actual open val isClosed: Boolean
+        get() = closed
+
     private inline fun checkClosed() {
         if (closed) {
             throw ClosedException()

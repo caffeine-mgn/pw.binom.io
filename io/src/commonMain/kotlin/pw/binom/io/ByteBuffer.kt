@@ -24,6 +24,8 @@ expect open class ByteBuffer :
     constructor(size: Int)
     constructor(array: ByteArray)
 
+    open val isClosed: Boolean
+
     fun realloc(newSize: Int): ByteBuffer
     fun skip(length: Long): Long
     fun put(value: Byte)

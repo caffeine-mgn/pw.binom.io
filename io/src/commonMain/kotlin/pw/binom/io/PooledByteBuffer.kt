@@ -7,10 +7,16 @@ class PooledByteBuffer(val pool: ObjectPool<PooledByteBuffer>, size: Int) : Byte
     val inPool = AtomicBoolean(true)
 
     private fun checkPoolState() {
+        if (super.isClosed) {
+            throw ClosedException()
+        }
         if (inPool.getValue()) {
             throw IllegalStateException("ByteBuffer in pool")
         }
     }
+
+    override val isClosed: Boolean
+        get() = !inPool.getValue()
 
     override fun clear() {
         checkPoolState()
@@ -18,6 +24,12 @@ class PooledByteBuffer(val pool: ObjectPool<PooledByteBuffer>, size: Int) : Byte
     }
 
     override fun close() {
+        if (super.isClosed) {
+            throw IllegalStateException("ByteBuffer already free")
+        }
+        if (inPool.getValue()) {
+            throw IllegalStateException("ByteBuffer already in pool")
+        }
         pool.recycle(this)
     }
 

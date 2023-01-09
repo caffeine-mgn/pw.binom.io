@@ -340,4 +340,7 @@ actual open class ByteBuffer(val native: NativeMem) :
     protected actual open fun preClose() {
         // Do nothing
     }
+
+    actual open val isClosed: Boolean
+        get() = closed
 }

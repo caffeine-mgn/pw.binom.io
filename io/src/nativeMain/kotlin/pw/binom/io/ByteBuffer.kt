@@ -119,6 +119,9 @@ actual open class ByteBuffer private constructor(
             }
         }
 
+    actual open val isClosed: Boolean
+        get() = closed
+
     init {
         ByteBufferMetric.inc(this)
         ByteBufferAllocationCallback.onCreate(this)
