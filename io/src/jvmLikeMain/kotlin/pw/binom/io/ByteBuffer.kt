@@ -34,25 +34,18 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     actual open val isClosed: Boolean
         get() = closed
 
-    private inline fun checkClosed() {
-        if (closed) {
-            throw ClosedException()
-        }
-    }
-
     override fun flip() {
-        checkClosed()
+        ensureOpen()
         native.flip()
     }
 
     override val remaining: Int
         get() {
-            checkClosed()
             return native.remaining()
         }
 
     actual fun skip(length: Long): Long {
-        checkClosed()
+        ensureOpen()
         val pos = minOf((native.position() + length).toInt(), native.limit())
         val len = pos - native.position()
         native.position(pos)
@@ -74,6 +67,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 //    }
 
     override fun write(data: ByteBuffer): Int {
+        ensureOpen()
         if (data === this) {
             throw IllegalArgumentException()
         }
@@ -87,11 +81,11 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     }
 
     override fun flush() {
-        checkClosed()
+        ensureOpen()
     }
 
     override fun close() {
-        checkClosed()
+        ensureOpen()
         preClose()
         ByteBufferMetric.dec(this)
         native = JByteBuffer.allocate(0)
@@ -100,26 +94,21 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 
     override var position: Int
         get() {
-            checkClosed()
             return native.position()
         }
         set(value) {
-            checkClosed()
             native.position(value)
         }
     override var limit: Int
         get() {
-            checkClosed()
             return native.limit()
         }
         set(value) {
-            checkClosed()
             native.limit(value)
         }
 
     override val capacity: Int
         get() {
-            checkClosed()
             return native.capacity()
         }
 
@@ -128,16 +117,17 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     }
 
     actual operator fun get(index: Int): Byte {
-        checkClosed()
+        ensureOpen()
         return native.get(index)
     }
 
     actual operator fun set(index: Int, value: Byte) {
-        checkClosed()
+        ensureOpen()
         native.put(index, value)
     }
 
     override fun read(dest: ByteBuffer): Int {
+        ensureOpen()
         val l = minOf(remaining, dest.remaining)
         if (l == 0) {
             return l
@@ -154,30 +144,31 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 
     actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
         require(dest.size - offset >= length)
+        ensureOpen()
         val l = minOf(remaining, length)
         native.get(dest, offset, l)
         return l
     }
 
     actual fun getByte(): Byte {
-        checkClosed()
+        ensureOpen()
         return native.get()
     }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
-        checkClosed()
+        ensureOpen()
         native.position(position)
         native.limit(position + length)
         return this
     }
 
     actual fun put(value: Byte) {
-        checkClosed()
+        ensureOpen()
         native.put(value)
     }
 
     override fun clear() {
-        checkClosed()
+        ensureOpen()
         native.clear()
     }
 
@@ -185,6 +176,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
         get() = 1
 
     actual fun realloc(newSize: Int): ByteBuffer {
+        ensureOpen()
         val new = ByteBuffer(newSize)
         if (newSize > capacity) {
             native.hold(0, capacity) { self ->
@@ -206,9 +198,13 @@ actual open class ByteBuffer(var native: JByteBuffer) :
         return new
     }
 
-    actual fun toByteArray(): ByteArray = toByteArray(remaining)
+    actual fun toByteArray(): ByteArray {
+        ensureOpen()
+        return toByteArray(remaining)
+    }
 
     actual fun toByteArray(limit: Int): ByteArray {
+        ensureOpen()
         val r = ByteArray(minOf(remaining, limit))
         val p = native.position()
         val l = native.limit()
@@ -222,12 +218,14 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     }
 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
+        ensureOpen()
         val l = minOf(remaining, length)
         native.put(data, offset, length)
         return l
     }
 
     override fun compact() {
+        ensureOpen()
         if (position == 0) {
             native.clear()
         } else {
@@ -236,6 +234,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     }
 
     actual fun peek(): Byte {
+        ensureOpen()
         if (position == limit) {
             throw NoSuchElementException()
         }
@@ -243,6 +242,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     }
 
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
+        ensureOpen()
         val p = position
         val l = limit
         try {
@@ -260,6 +260,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     }
 
     actual fun free() {
+        ensureOpen()
         val newLimit = remaining
         native.compact()
         native.position(0)
@@ -275,6 +276,12 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 
     protected actual open fun preClose() {
         // Do nothing
+    }
+
+    protected actual open fun ensureOpen() {
+        if (closed) {
+            throw ClosedException()
+        }
     }
 }
 

@@ -5,10 +5,20 @@ import pw.binom.pool.ObjectPool
 
 class PooledByteBuffer(val pool: ObjectPool<PooledByteBuffer>, size: Int) : ByteBuffer(size) {
     val inPool = AtomicBoolean(true)
+    val deallocation = AtomicBoolean(false)
 
     private fun checkPoolState() {
         if (super.isClosed) {
             throw ClosedException()
+        }
+        if (inPool.getValue()) {
+            throw IllegalStateException("ByteBuffer in pool")
+        }
+    }
+
+    private fun ensureOpenNotInPool() {
+        if (deallocation.getValue()){
+            return
         }
         if (inPool.getValue()) {
             throw IllegalStateException("ByteBuffer in pool")
@@ -25,15 +35,23 @@ class PooledByteBuffer(val pool: ObjectPool<PooledByteBuffer>, size: Int) : Byte
 
     override fun close() {
         if (super.isClosed) {
-            throw IllegalStateException("ByteBuffer already free")
+            throw IllegalStateException("Can't reuse ByteBuffer: ByteBuffer already free")
         }
-        if (inPool.getValue()) {
-            throw IllegalStateException("ByteBuffer already in pool")
-        }
+        ensureOpenNotInPool()
         pool.recycle(this)
     }
 
     fun freeMemory() {
+        if (!inPool.getValue()) {
+            throw IllegalStateException("Cannot deallocate ByteBuffer: ByteBuffer not in pool")
+        }
+        deallocation.setValue(true)
         super.close()
     }
+
+    override fun ensureOpen() {
+        ensureOpenNotInPool()
+        super.ensureOpen()
+    }
+
 }

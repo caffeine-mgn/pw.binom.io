@@ -21,16 +21,20 @@ class SimpleAsyncLock : AsyncLock {
 
     private suspend fun internalLock(lockingTimeout: Duration?) {
         if (!locked.compareAndSet(false, true)) {
+            println("SimpleAsyncLock:: Can't lock now")
             withTimeout2(lockingTimeout) {
                 suspendCancellableCoroutine {
                     it.invokeOnCancellation { _ ->
                         waiters -= it
                     }
                     waiterLock.synchronize {
+                        println("SimpleAsyncLock:: add to water")
                         waiters += it
                     }
                 }
             }
+        } else {
+            println("SimpleAsyncLock:: Locked now!")
         }
     }
 
@@ -45,6 +49,7 @@ class SimpleAsyncLock : AsyncLock {
             }
             waiter
         }
+        println("After unlock: $waiter")
         if (waiter == null) {
             locked.setValue(false)
         } else {

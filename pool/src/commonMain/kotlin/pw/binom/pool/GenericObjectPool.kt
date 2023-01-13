@@ -194,6 +194,7 @@ open class GenericObjectPool<T : Any>(
     override fun recycle(value: T) {
         synchronize {
             if (size == pool.size) {
+                factory.reset(value, this)
                 factory.deallocate(value, this)
                 nextCapacity = maxOf(pool.size, nextCapacity + 1)
                 internalCheckGrow()

@@ -122,7 +122,6 @@ actual open class ByteBuffer(val native: NativeMem) :
         }
     override var limit: Int = capacity
         set(value) {
-            checkClosed()
             if (value > capacity || value < 0) throw createLimitException(value)
             field = value
             if (position > value) {
@@ -132,7 +131,6 @@ actual open class ByteBuffer(val native: NativeMem) :
 
     override val remaining
         get(): Int {
-            checkClosed()
             return limit - position
         }
 
@@ -143,18 +141,14 @@ actual open class ByteBuffer(val native: NativeMem) :
 
 //    private var native = Int8Array(capacity)
 
-    private fun checkClosed() {
-        if (closed) {
-            throw ClosedException()
-        }
-    }
-
     override fun flip() {
+        ensureOpen()
         limit = position
         position = 0
     }
 
     override fun compact() {
+        ensureOpen()
         if (remaining > 0) {
             val size = remaining
             memcpy(dist = native, distOffset = 0, src = native, srcOffset = position, srcLength = size)
@@ -166,11 +160,13 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     override fun clear() {
+        ensureOpen()
         limit = capacity
         position = 0
     }
 
     actual fun realloc(newSize: Int): ByteBuffer {
+        ensureOpen()
         val new = ByteBuffer(newSize)
         if (newSize > capacity) {
             memcpy(dist = new.native, distOffset = 0, src = native, srcLength = capacity)
@@ -185,7 +181,7 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     actual fun skip(length: Long): Long {
-        checkClosed()
+        ensureOpen()
         require(length > 0) { "Length must be grade than 0" }
 
         val pos = minOf((position + length).toInt(), limit)
@@ -195,22 +191,25 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     actual operator fun get(index: Int): Byte {
-        checkClosed()
+        ensureOpen()
         return native[index]
     }
 
     actual fun put(value: Byte) {
+        ensureOpen()
         native[position++] = value
     }
 
     actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
         require(dest.size - offset >= length)
+        ensureOpen()
         val l = minOf(remaining, length)
         memcpy(dist = dest, distOffset = 0, src = native, srcOffset = position, srcLength = l)
         return l
     }
 
     fun readInt8Array(size: Int): Int8Array {
+        ensureOpen()
         require(size >= 0)
         if (size == 0) {
             return Int8Array(0)
@@ -221,15 +220,20 @@ actual open class ByteBuffer(val native: NativeMem) :
         return result
     }
 
-    actual fun peek(): Byte = native[position]
+    actual fun peek(): Byte {
+        ensureOpen()
+        return native[position]
+    }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
+        ensureOpen()
         this.position = position
         limit = position + length
         return this
     }
 
     override fun write(data: ByteBuffer): Int {
+        ensureOpen()
         val l = minOf(remaining, data.remaining)
         memcpy(dist = native, distOffset = position, src = data.native, srcOffset = data.position, srcLength = l)
         data.position += l
@@ -237,14 +241,18 @@ actual open class ByteBuffer(val native: NativeMem) :
         return l
     }
 
-    actual fun getByte(): Byte = native[position++]
+    actual fun getByte(): Byte {
+        ensureOpen()
+        return native[position++]
+    }
 
     actual operator fun set(index: Int, value: Byte) {
-        checkClosed()
+        ensureOpen()
         native[index] = value
     }
 
     fun toInt8Array(): Int8Array {
+        ensureOpen()
         if (remaining == 0) {
             return Int8Array(0)
         }
@@ -253,14 +261,19 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     fun readToInt8Array(): Int8Array {
+        ensureOpen()
         val result = toInt8Array()
         position += result.length
         return result
     }
 
-    actual fun toByteArray(): ByteArray = toByteArray(remaining)
+    actual fun toByteArray(): ByteArray {
+        ensureOpen()
+        return toByteArray(remaining)
+    }
 
     actual fun toByteArray(limit: Int): ByteArray {
+        ensureOpen()
         val size = minOf(limit, remaining)
         val r = ByteArray(remaining)
         val endPosition = position + size
@@ -271,6 +284,7 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
+        ensureOpen()
         val new = ByteBuffer(length)
         memcpy(dist = new.native, distOffset = 0, src = native, srcLength = length)
         new.position = minOf(position, length)
@@ -279,6 +293,7 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     actual fun free() {
+        ensureOpen()
         val size = remaining
         if (size > 0) {
             memcpy(dist = native, distOffset = 0, src = native, srcOffset = position, srcLength = size)
@@ -291,10 +306,11 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     override fun flush() {
+        ensureOpen()
     }
 
     override fun close() {
-        checkClosed()
+        ensureOpen()
         preClose()
         ByteBufferMetric.dec(this)
         closed = true
@@ -311,6 +327,7 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     override fun read(dest: ByteBuffer): Int {
+        ensureOpen()
         val l = minOf(remaining, dest.remaining)
         if (l == 0) {
             return l
@@ -322,6 +339,7 @@ actual open class ByteBuffer(val native: NativeMem) :
     }
 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
+        ensureOpen()
         if (offset + length > data.size) throw IndexOutOfBoundsException()
         val l = minOf(remaining, length)
         (offset until (offset + l)).forEach {
@@ -330,9 +348,13 @@ actual open class ByteBuffer(val native: NativeMem) :
         return l
     }
 
-    override fun get(): ByteBuffer = this
+    override fun get(): ByteBuffer {
+        ensureOpen()
+        return this
+    }
 
     override fun reestablish(buffer: ByteBuffer) {
+        ensureOpen()
         require(buffer === this) { "Buffer should equals this buffer" }
         check(!closed) { "Buffer closed" }
     }
@@ -343,4 +365,10 @@ actual open class ByteBuffer(val native: NativeMem) :
 
     actual open val isClosed: Boolean
         get() = closed
+
+    protected actual open fun ensureOpen() {
+        if (closed) {
+            throw ClosedException()
+        }
+    }
 }

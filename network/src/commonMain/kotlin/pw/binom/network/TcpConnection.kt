@@ -191,6 +191,7 @@ class TcpConnection(
     }
 
     override suspend fun write(data: ByteBuffer): Int {
+        println("writing...")
         val oldRemaining = data.remaining
         if (oldRemaining == 0) {
             return 0
@@ -199,6 +200,7 @@ class TcpConnection(
             error("Connection already has write operation")
         }
         val wrote = channel.send(data)
+        println("wrote: $wrote")
         if (wrote > 0) {
             return wrote
         }

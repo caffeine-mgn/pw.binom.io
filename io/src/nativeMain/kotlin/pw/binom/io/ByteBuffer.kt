@@ -127,7 +127,7 @@ actual open class ByteBuffer private constructor(
         ByteBufferAllocationCallback.onCreate(this)
     }
 
-    private inline fun ensureOpen() {
+    protected actual open fun ensureOpen() {
         if (closed) {
             throw ClosedException()
         }
@@ -146,6 +146,7 @@ actual open class ByteBuffer private constructor(
     fun isReferenceAccessAvailable(position: Int = this.position) = capacity != 0 && position < capacity
 
     override fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T? {
+        ensureOpen()
         require(position >= 0) { "position ($position) should be more or equals 0" }
         if (capacity == 0 || position == capacity) {
             return null
@@ -167,6 +168,7 @@ actual open class ByteBuffer private constructor(
     }
 
     override fun flip() {
+        ensureOpen()
         limit = position
         position = 0
     }
@@ -253,24 +255,15 @@ actual open class ByteBuffer private constructor(
 
     override fun clear() {
         ensureOpen()
-        val stack = try {
-            if (Random.nextInt().toString().isNotEmpty()) {
-                throw RuntimeException()
-            }
-            TODO()
-        } catch (e: Throwable) {
-            e.getStackTrace().toList()
-        }
-//        println("ByteBuffer@${hashCode()}->clear -> $stack")
         limit = capacity
         position = 0
     }
 
     actual fun realloc(newSize: Int): ByteBuffer {
+        ensureOpen()
         if (newSize == 0) {
             return ByteBuffer(0)
         }
-        ensureOpen()
         if (capacity == 0) {
             return ByteBuffer(newSize).empty()
         }
@@ -407,9 +400,13 @@ actual open class ByteBuffer private constructor(
         }
     }
 
-    override fun get(): ByteBuffer = this
+    override fun get(): ByteBuffer {
+        ensureOpen()
+        return this
+    }
 
     override fun reestablish(buffer: ByteBuffer) {
+        ensureOpen()
         require(buffer === this) { "Buffer should equals this buffer" }
         check(!closed) { "Buffer closed" }
     }

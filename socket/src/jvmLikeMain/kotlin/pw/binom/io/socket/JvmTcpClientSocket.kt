@@ -1,6 +1,7 @@
 package pw.binom.io.socket
 
 import pw.binom.io.ByteBuffer
+import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketException
 import java.nio.channels.AlreadyConnectedException
@@ -62,8 +63,11 @@ class JvmTcpClientSocket(
         }
     }
 
-    override fun send(data: ByteBuffer): Int {
-        return native.write(data.native) ?: throw IllegalStateException()
+    override fun send(data: ByteBuffer): Int = try {
+        native.write(data.native) ?: throw IllegalStateException()
+    } catch (e: IOException) {
+        throw e
+//        -1
     }
 
     override fun receive(data: ByteBuffer): Int {

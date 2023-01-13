@@ -189,7 +189,7 @@ class TcpConnectionTest {
                 println("Wait send...")
                 println("Wait net thread...")
                 ByteBuffer(10).use { buf ->
-                    newClient.writeByte(buf, 42)
+                    newClient.writeByte(buffer = buf, value = 42)
                     newClient.flush()
                     println("wrote!")
                 }
@@ -232,21 +232,24 @@ class TcpConnectionTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun tryToWriteBreakConnection() = runTest(dispatchTimeoutMs = 2_000) {
+    fun tryToWriteBreakConnection() = runTest(dispatchTimeoutMs = 5_000) {
         NetworkCoroutineDispatcherImpl().use { nd ->
             withContext(nd) {
-                val server = nd.bindTcp(NetworkAddress.create("127.0.0.1", 0))
-                val client = nd.tcpConnect(NetworkAddress.create("127.0.0.1", server.port))
+                val server = nd.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = 0))
+                val client = nd.tcpConnect(NetworkAddress.create(host = "127.0.0.1", port = server.port))
                 val connectedClient = server.accept()
                 val lock = SimpleAsyncLock()
                 lock.lock()
                 launch {
                     try {
+                        println("Try read first bytes...")
                         ByteBuffer(50).use { buf ->
                             client.readFully(buf)
                         }
+                        println("Byte read! Try close and unlock")
                         client.close()
                         lock.unlock()
+                        println("Unlocked!")
                     } catch (e: Throwable) {
                         e.printStackTrace()
                     }
@@ -256,18 +259,21 @@ class TcpConnectionTest {
                         delay(500)
                         buf.clear()
                         connectedClient.write(buf)
+                        println("first 50 bytes wrote")
 //                        delay(1000)
                         lock.synchronize {
+                            println("start cycle")
                             val now = TimeSource.Monotonic.markNow()
                             while (now.elapsedNow() < 2.seconds) {
                                 buf.clear()
                                 val b = connectedClient.write(buf)
-//                                println("b=$b")
+                                println("b=$b")
                             }
                         }
                     }
                     fail("Should throws SocketClosedException")
                 } catch (e: SocketClosedException) {
+                    e.printStackTrace()
                     // Do nothing
                 }
             }
