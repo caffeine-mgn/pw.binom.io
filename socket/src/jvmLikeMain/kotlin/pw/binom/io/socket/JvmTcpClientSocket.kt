@@ -66,8 +66,8 @@ class JvmTcpClientSocket(
     override fun send(data: ByteBuffer): Int = try {
         native.write(data.native) ?: throw IllegalStateException()
     } catch (e: IOException) {
-        throw e
-//        -1
+//        throw RuntimeException("Can't write ${data.remaining}", e)
+        -1
     }
 
     override fun receive(data: ByteBuffer): Int {

@@ -50,7 +50,6 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                 server.browConnection(channel)
             }
             if (request == null) {
-                println("HttpRequest2Impl:: read first line timeout!")
                 channel.asyncCloseAnyway()
                 return@runCatching null
             }

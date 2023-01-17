@@ -154,7 +154,7 @@ internal class Starter(
                 val foundBean = if (dep.name != null) {
                     val bean = createdBeans.find { it.name == dep.name }
                     if (bean != null && !bean.isMatch(dep.clazz)) {
-                        throw StrongException("Can't cast \"${bean.name}\" (${bean.beanClass::class.getClassName()}) to ${dep.clazz::getClassName}")
+                        throw StrongException("Can't cast \"${bean.name}\" (${bean.beanClass::class.getClassName()}) to ${dep.clazz.getClassName()}")
                     }
                     bean
                 } else {

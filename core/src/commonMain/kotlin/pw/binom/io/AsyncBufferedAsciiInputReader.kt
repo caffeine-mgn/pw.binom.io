@@ -72,6 +72,8 @@ class AsyncBufferedAsciiInputReader private constructor(
 //        println("AsyncBufferedAsciiInputReader:: after construct. ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
     }
 
+    override fun toString(): String = "AsyncBufferedAsciiInputReader(stream=$stream)"
+
     private suspend fun full(minSize: Int = 1) {
         try {
             if (eof) {
@@ -108,7 +110,9 @@ class AsyncBufferedAsciiInputReader private constructor(
     override suspend fun read(dest: ByteBuffer): Int {
         ensureOpen()
         full()
-        return buffer.read(dest)
+        val rem = buffer.remaining
+        val read = buffer.read(dest)
+        return read
     }
 
     override suspend fun asyncClose() {

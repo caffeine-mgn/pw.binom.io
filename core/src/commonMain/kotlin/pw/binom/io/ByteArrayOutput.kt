@@ -23,7 +23,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
 
     fun trimToSize() {
-        checkLocked()
+        ensureUnlocked()
         if (data.capacity != _wrote) {
             val old = this.data
             this.data = this.data.realloc(_wrote)
@@ -32,8 +32,8 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
 
     fun toByteArray(): ByteArray {
-        checkClosed()
-        checkLocked()
+        ensureOpen()
+        ensureUnlocked()
         locked = true
         val position = data.position
         val limit = data.limit
@@ -47,43 +47,43 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         }
     }
 
-    private fun checkClosed() {
+    private fun ensureOpen() {
         if (closed) {
             throw StreamClosedException()
         }
     }
 
     fun writeByte(byte: Byte) {
-        checkLocked()
+        ensureUnlocked()
         alloc(1)
         data.put(byte)
         _wrote++
     }
 
     fun writeInt(value: Int) {
-        checkLocked()
+        ensureUnlocked()
         alloc(Int.SIZE_BYTES)
         value.dump(data)
         _wrote += Int.SIZE_BYTES
     }
 
     fun writeLong(value: Long) {
-        checkLocked()
+        ensureUnlocked()
         alloc(Long.SIZE_BYTES)
         value.dump(data)
         _wrote += Long.SIZE_BYTES
     }
 
     fun writeShort(value: Short) {
-        checkLocked()
+        ensureUnlocked()
         alloc(Short.SIZE_BYTES)
         value.dump(data)
         _wrote += Short.SIZE_BYTES
     }
 
     fun alloc(size: Int) {
-        checkLocked()
-        checkClosed()
+        ensureUnlocked()
+        ensureOpen()
 
         val needWrite = size - (this.data.remaining)
 
@@ -101,7 +101,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
 
     override fun write(data: ByteBuffer): Int {
-        checkLocked()
+        ensureUnlocked()
         alloc(data.remaining)
         val l = this.data.write(data)
         _wrote += l
@@ -109,14 +109,14 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
 
     fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int {
-        checkLocked()
+        ensureUnlocked()
         alloc(data.size)
         val l = this.data.write(data, offset = offset, length = length)
         _wrote += l
         return l
     }
 
-    private fun checkLocked() {
+    private fun ensureUnlocked() {
         if (locked) {
             throw IllegalStateException("ByteBuffer finished")
         }
@@ -127,8 +127,8 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
 
     override fun close() {
-        checkLocked()
-        checkClosed()
+        ensureUnlocked()
+        ensureOpen()
         data.close()
         closed = true
     }
@@ -149,7 +149,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
      * For modify this storage you should call [clear] or [unlock]
      */
     fun lock(): ByteBuffer {
-        checkLocked()
+        ensureUnlocked()
         locked = true
         data.flip()
         return data

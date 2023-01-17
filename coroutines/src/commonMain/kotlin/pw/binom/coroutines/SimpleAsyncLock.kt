@@ -14,23 +14,22 @@ class SimpleAsyncLock : AsyncLock {
         defaultMutableSet<CancellableContinuation<Unit>>()
     }
     private val locked = AtomicBoolean(false)
-    private val waiterLock = SpinLock()
+    private val stateLock = SpinLock()
 
     override val isLocked: Boolean
         get() = locked.getValue()
 
     private suspend fun internalLock(lockingTimeout: Duration?) {
-        if (!locked.compareAndSet(false, true)) {
+        val unlockStatus = stateLock.synchronize { locked.compareAndSet(false, true) }
+        if (!unlockStatus) {
             println("SimpleAsyncLock:: Can't lock now")
             withTimeout2(lockingTimeout) {
                 suspendCancellableCoroutine {
                     it.invokeOnCancellation { _ ->
                         waiters -= it
                     }
-                    waiterLock.synchronize {
-                        println("SimpleAsyncLock:: add to water")
-                        waiters += it
-                    }
+                    println("SimpleAsyncLock:: add to water")
+                    waiters += it
                 }
             }
         } else {
@@ -42,19 +41,18 @@ class SimpleAsyncLock : AsyncLock {
     suspend fun lock(lockingTimeout: Duration) = internalLock(lockingTimeout)
 
     fun unlock() {
-        val waiter = waiterLock.synchronize {
+        val waiter = stateLock.synchronize {
             val waiter = waiters.firstOrNull()
             if (waiter != null) {
                 waiters.remove(waiter)
             }
+            println("After unlock: $waiter")
+            if (waiter == null) {
+                locked.setValue(false)
+            }
             waiter
         }
-        println("After unlock: $waiter")
-        if (waiter == null) {
-            locked.setValue(false)
-        } else {
-            waiter.resume(Unit)
-        }
+        waiter?.resume(Unit)
     }
 
     override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T {

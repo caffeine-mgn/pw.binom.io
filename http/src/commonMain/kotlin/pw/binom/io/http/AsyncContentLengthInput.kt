@@ -25,18 +25,25 @@ open class AsyncContentLengthInput(
 
     override suspend fun read(dest: ByteBuffer): Int {
         checkClosed()
-        if (eof)
+        if (dest.remaining == 0) {
             return 0
-        val r = if ((contentLength - readed < dest.remaining.toULong())) {
+        }
+        if (eof) {
+            return 0
+        }
+        val rem = dest.remaining
+        val read = if ((contentLength - readed < dest.remaining.toULong())) {
             val oldLimit = dest.limit
-            dest.limit = (contentLength - readed).toInt()
-            val l = stream.read(dest)
+            val limit = contentLength - readed
+            dest.limit = limit.toInt()
+            val read = stream.read(dest)
             dest.limit = oldLimit
-            l
-        } else
+            read
+        } else {
             stream.read(dest)
-        readed += r.toULong()
-        return r
+        }
+        readed += read.toULong()
+        return read
     }
 
     override suspend fun asyncClose() {
@@ -51,7 +58,8 @@ open class AsyncContentLengthInput(
     }
 
     protected fun checkClosed() {
-        if (closed)
+        if (closed) {
             throw StreamClosedException()
+        }
     }
 }

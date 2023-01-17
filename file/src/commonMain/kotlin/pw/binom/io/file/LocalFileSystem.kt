@@ -80,8 +80,11 @@ class LocalFileSystem(
             if (offset > 0uL) {
                 channel.position = offset.toLong()
             }
-
-            return length?.let { channel.asyncInput().withLimit(it.toLong()) } ?: channel.asyncInput()
+            var asyncChannel = channel.asyncInput()
+            if (length != null) {
+                asyncChannel = asyncChannel.withLimit(length.toLong())
+            }
+            return asyncChannel
         }
 
         override suspend fun copy(path: Path, overwrite: Boolean): FileSystem.Entity {
