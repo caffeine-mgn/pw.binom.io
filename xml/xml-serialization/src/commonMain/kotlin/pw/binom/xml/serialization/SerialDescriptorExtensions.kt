@@ -12,8 +12,12 @@ fun SerialDescriptor.xmlName() =
     (annotations.find { it is XmlName } as XmlName?)?.name ?: serialName
 
 fun SerialDescriptor.xmlName(index: Int) =
+//    if (this is PrimitiveKind) {
+//        null
+//    } else {
     (getElementAnnotations(index).find { it is XmlName } as XmlName?)?.name
         ?: getElementName(index)
+//    }
 
 fun SerialDescriptor.xmlEmptyValue(index: Int) =
     (getElementAnnotations(index).find { it is XmlEmptyValue } as XmlEmptyValue?)?.value

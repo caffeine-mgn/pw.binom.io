@@ -1,5 +1,5 @@
 package pw.binom.io.http.websocket
-
+/*
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
@@ -89,7 +89,7 @@ open class WebSocketConnectionImpl(
         if (type == MessageType.CLOSE) {
             sentCloseMessage.setValue(true)
         }
-        return WSOutput(
+        return WebSocketOutput(
             messageType = type,
             bufferSize = DEFAULT_BUFFER_SIZE,
             stream = _output,
@@ -150,3 +150,4 @@ open class WebSocketConnectionImpl(
         }
     }
 }
+*/

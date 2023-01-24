@@ -25,11 +25,13 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
                         totalAvailableBytes.ptr,
                         null
                     ) == 0
-                )
+                ) {
                     return -2
+                }
 
-                if (totalAvailableBytes.value > 0u)
+                if (totalAvailableBytes.value > 0u) {
                     return totalAvailableBytes.value.toInt()
+                }
 
                 return if (process.isActive) -1 else 0
             }
@@ -45,8 +47,9 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
 
 //        CloseHandle(readPipe.pointed.value)
 
-        if (SetHandleInformation(readPipe.pointed.value, HANDLE_FLAG_INHERIT, 0) <= 0)
+        if (SetHandleInformation(readPipe.pointed.value, HANDLE_FLAG_INHERIT, 0) <= 0) {
             TODO("#4")
+        }
     }
 
     override fun read(dest: ByteBuffer): Int {
@@ -59,22 +62,26 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
                 return 0
             }
 
-            if (available > 0)
+            if (available > 0) {
                 break
+            }
         }
 
         memScoped {
-
             val dwWritten = alloc<UIntVar>()
 
             val r = dest.refTo(dest.position) { destPtr ->
                 ReadFile(
-                    otherHandler, (destPtr).getPointer(this).reinterpret(),
-                    dest.remaining.convert(), dwWritten.ptr, null
+                    otherHandler,
+                    (destPtr).getPointer(this).reinterpret(),
+                    dest.remaining.convert(),
+                    dwWritten.ptr,
+                    null
                 )
             } ?: 0
-            if (r <= 0)
+            if (r <= 0) {
                 TODO()
+            }
             val read = dwWritten.value.toInt()
             dest.position += read
             return read

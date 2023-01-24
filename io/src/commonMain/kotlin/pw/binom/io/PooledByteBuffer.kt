@@ -17,7 +17,7 @@ class PooledByteBuffer(val pool: ObjectPool<PooledByteBuffer>, size: Int) : Byte
     }
 
     private fun ensureOpenNotInPool() {
-        if (deallocation.getValue()){
+        if (deallocation.getValue()) {
             return
         }
         if (inPool.getValue()) {
@@ -53,5 +53,4 @@ class PooledByteBuffer(val pool: ObjectPool<PooledByteBuffer>, size: Int) : Byte
         ensureOpenNotInPool()
         super.ensureOpen()
     }
-
 }

@@ -28,9 +28,6 @@ value class Path internal constructor(val raw: String) {
         eachVariables(mask = mask) { key, value ->
             if (key == name) {
                 str = value
-                false
-            } else {
-                true
             }
         }
         return str

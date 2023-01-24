@@ -31,6 +31,7 @@ kotlin {
                 api(project(":core"))
                 api(project(":charset"))
                 api(project(":network"))
+                api(project(":coroutines"))
             }
         }
 

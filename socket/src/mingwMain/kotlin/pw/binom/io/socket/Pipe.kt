@@ -19,9 +19,9 @@ class Pipe : Closeable {
             saAttr.nLength = sizeOf<SECURITY_ATTRIBUTES>().convert()
             saAttr.bInheritHandle = TRUE
             saAttr.lpSecurityDescriptor = null
-
-            if (CreatePipe(readPipe, writePipe, saAttr.ptr, 0) <= 0)
+            if (CreatePipe(readPipe, writePipe, saAttr.ptr, 0) <= 0) {
                 TODO("#3")
+            }
         }
     }
 

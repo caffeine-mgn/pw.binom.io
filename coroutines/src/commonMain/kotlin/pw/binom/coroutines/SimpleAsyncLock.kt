@@ -10,7 +10,7 @@ import kotlin.coroutines.resume
 import kotlin.time.Duration
 
 class SimpleAsyncLock : AsyncLock {
-    private val waiters by lazy {
+    internal val waiters by lazy {
         defaultMutableSet<CancellableContinuation<Unit>>()
     }
     private val locked = AtomicBoolean(false)
@@ -22,18 +22,14 @@ class SimpleAsyncLock : AsyncLock {
     private suspend fun internalLock(lockingTimeout: Duration?) {
         val unlockStatus = stateLock.synchronize { locked.compareAndSet(false, true) }
         if (!unlockStatus) {
-            println("SimpleAsyncLock:: Can't lock now")
             withTimeout2(lockingTimeout) {
                 suspendCancellableCoroutine {
                     it.invokeOnCancellation { _ ->
                         waiters -= it
                     }
-                    println("SimpleAsyncLock:: add to water")
                     waiters += it
                 }
             }
-        } else {
-            println("SimpleAsyncLock:: Locked now!")
         }
     }
 
@@ -46,7 +42,6 @@ class SimpleAsyncLock : AsyncLock {
             if (waiter != null) {
                 waiters.remove(waiter)
             }
-            println("After unlock: $waiter")
             if (waiter == null) {
                 locked.setValue(false)
             }

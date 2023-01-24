@@ -28,7 +28,7 @@ open class NetworkThread : Thread, Closeable {
     //    private val selector = Selector.open()
     private val selectedKeys = SelectedKeys()
     private val closed = AtomicBoolean(false)
-    private fun checkClosed() {
+    private fun ensureOpen() {
         if (closed.getValue()) {
             throw ClosedException()
         }
@@ -54,11 +54,30 @@ open class NetworkThread : Thread, Closeable {
 
 //    private val loopWatcher by lazy { LoopWatcher("NetworkThread-$name") }
 
+    private fun executeLazyTasks() {
+        exchange.popAll {
+            if (it.isEmpty()) {
+                return@popAll
+            }
+            it.forEach {
+                try {
+                    it.run()
+                } catch (e: Throwable) {
+                    uncaughtExceptionHandler.uncaughtException(
+                        thread = this,
+                        throwable = RuntimeException("Error on network queue", e)
+                    )
+                }
+            }
+        }
+    }
+
     override fun execute() {
         try {
             while (!closed.getValue()) {
 //                loopWatcher.call()
 //                var taskForRun = defaultMutableList<Runnable>()
+                executeLazyTasks()
                 var v = 0
                 this.selector.select(timeout = Duration.INFINITE, selectedKeys = selectedKeys)
                 selectedKeys.forEach { event ->
@@ -93,21 +112,7 @@ open class NetworkThread : Thread, Closeable {
 //                        }
 //                    }
 //                }
-                exchange.popAll {
-                    if (it.isEmpty()) {
-                        return@popAll
-                    }
-                    it.forEach {
-                        try {
-                            it.run()
-                        } catch (e: Throwable) {
-                            uncaughtExceptionHandler.uncaughtException(
-                                thread = this,
-                                throwable = RuntimeException("Error on network queue", e)
-                            )
-                        }
-                    }
-                }
+                executeLazyTasks()
 //                println("NetworkThread::$id-$name got runnable=$runnable")
 //                if (runnable != null) {
 //                    try {

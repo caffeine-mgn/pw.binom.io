@@ -12,12 +12,6 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
     internal var writeFd = fd.first
     internal var readFd = fd.second
 
-    init {
-        if (SetHandleInformation(readFd, HANDLE_FLAG_INHERIT, 0) <= 0) {
-            TODO()
-        }
-    }
-
     val available: Int
         get() {
             memScoped {
@@ -30,11 +24,13 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
                         totalAvailableBytes.ptr,
                         null
                     ) == 0
-                )
+                ) {
                     return -2
+                }
 
-                if (totalAvailableBytes.value > 0u)
+                if (totalAvailableBytes.value > 0u) {
                     return totalAvailableBytes.value.toInt()
+                }
 
                 TODO()
 //                return if (process.isActive) -1 else 0
@@ -42,6 +38,17 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
         }
 
     private var endded = AtomicBoolean(false)
+
+    actual constructor() : this(createPipe())
+
+    actual constructor(output: PipeOutput) : this(output.writeFd to output.readFd)
+
+    init {
+        if (SetHandleInformation(readFd, HANDLE_FLAG_INHERIT, 0) <= 0) {
+            TODO()
+        }
+    }
+
     override fun read(dest: ByteBuffer): Int {
         if (!dest.isReferenceAccessAvailable()) {
             return 0
@@ -52,22 +59,26 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
                 return 0
             }
 
-            if (available > 0)
+            if (available > 0) {
                 break
+            }
         }
 
         memScoped {
-
             val dwWritten = alloc<UIntVar>()
 
             val r = dest.refTo(dest.position) { destPtr ->
                 ReadFile(
-                    readFd, (destPtr).getPointer(this).reinterpret(),
-                    dest.remaining.convert(), dwWritten.ptr, null
+                    readFd,
+                    (destPtr).getPointer(this).reinterpret(),
+                    dest.remaining.convert(),
+                    dwWritten.ptr,
+                    null
                 )
             } ?: 0
-            if (r <= 0)
+            if (r <= 0) {
                 TODO()
+            }
             val read = dwWritten.value.toInt()
             dest.position += read
             return read
@@ -77,8 +88,4 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
     override fun close() {
         CloseHandle(readFd)
     }
-
-    actual constructor() : this(createPipe())
-
-    actual constructor(output: PipeOutput) : this(output.writeFd to output.readFd)
 }

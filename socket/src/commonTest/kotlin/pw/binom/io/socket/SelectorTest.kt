@@ -19,7 +19,8 @@ class Tandem {
 
     fun select(duration: Duration = INFINITE): List<Event> {
         selector.select(
-            timeout = duration, selectedKeys = selected
+            timeout = duration,
+            selectedKeys = selected
         )
         return selected.toList()
     }
@@ -108,10 +109,11 @@ class SelectorTest {
         val events = tandem.select()
         assertEquals(1, events.size)
         assertSame(key, events.first().key)
-        assertTrue(events.first().flags and KeyListenFlags.ERROR == 0)
-        assertTrue(events.first().flags and KeyListenFlags.WRITE != 0)
+        assertTrue(events.first().flags and KeyListenFlags.ERROR == 0, "flag not contains error flag")
+        assertTrue(events.first().flags and KeyListenFlags.WRITE != 0, "flag not contains write flag")
+        assertTrue(events.first().flags and KeyListenFlags.READ == 0, "flag not contains read flag")
         assertEquals(0, key.listenFlags)
-        assertTrue(tandem.select(1.seconds).isEmpty())
+        assertTrue(tandem.select(1.seconds).isEmpty(), "should contents no events")
     }
 
     @Test

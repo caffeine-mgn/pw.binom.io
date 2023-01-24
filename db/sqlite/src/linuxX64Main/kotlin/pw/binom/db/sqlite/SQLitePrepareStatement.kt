@@ -125,10 +125,6 @@ class SQLitePrepareStatement(
         connection.checkSqlCode(sqlite3_bind_null(stmt, index + 1))
     }
 
-    init {
-        println("Create PreparedStatement. count: ${++count}. SQL: \"$query\"")
-    }
-
     override fun close() {
         if (openedResultSetCount > 0) {
             throw SQLException("Not all ResultSet closed")
@@ -136,12 +132,9 @@ class SQLitePrepareStatement(
         if (!closed.compareAndSet(false, true)) {
             return
         }
-        println("Close PreparedStatement. count: ${--count}")
         connection.delete(this)
         sqlite3_clear_bindings(stmt)
         sqlite3_finalize(stmt)
         nativeHeap.free(native)
     }
 }
-
-private var count = 0

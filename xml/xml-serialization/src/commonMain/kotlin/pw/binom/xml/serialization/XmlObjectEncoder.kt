@@ -84,7 +84,7 @@ class XmlObjectEncoder(
         value: T
     ) {
         val el = XmlElement(
-            tag = descriptor.xmlName(index),
+            tag = descriptor.xmlName(index)!!,
             nameSpace = descriptor.xmlNamespace(index)?.getOrNull(0)?.takeIf { it.isNotEmpty() }
         )
 

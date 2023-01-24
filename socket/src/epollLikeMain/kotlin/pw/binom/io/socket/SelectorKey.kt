@@ -1,8 +1,8 @@
 package pw.binom.io.socket
 
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.ptr
-import platform.linux.*
+import platform.common.setEventDataFd
+import platform.common.setEventDataPtr
+import platform.common.setEventFlags
 import pw.binom.io.Closeable
 
 actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket) : AbstractNativeKey(), Closeable {
@@ -14,32 +14,6 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     internal var internalReadFlags = 0
     internal var serverFlag = false
 
-    private fun commonToEpoll(commonFlags: Int, server: Boolean): Int {
-        var r = 0
-        if (commonFlags and KeyListenFlags.READ != 0) {
-            r = r or EPOLLIN or EPOLLERR
-            if (!server) {
-                r = r or EPOLLHUP
-            }
-        }
-        if (commonFlags and KeyListenFlags.WRITE != 0) {
-            r = r or EPOLLOUT
-        }
-        if (commonFlags and KeyListenFlags.ERROR != 0) {
-            r = r or EPOLLERR
-            if (!server) {
-                r = r or EPOLLHUP
-            }
-        }
-        if (r != 0) {
-            r = r or EPOLLONESHOT
-        }
-//        if (server) {
-//            r = r xor EPOLLHUP
-//        }
-        return r
-    }
-
     internal var internalListenFlags = 0
 
     init {
@@ -50,11 +24,12 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     internal fun resetListenFlags(commonFlags: Int) {
         if (!closed) {
             if (free) {
-                selector.eventMem.data.ptr = null
+                setEventDataPtr(selector.eventMem, null)
+            } else {
+                setEventDataFd(selector.eventMem, rawSocket)
             }
-            selector.eventMem.data.fd = rawSocket
-            selector.eventMem.events = commonToEpoll(commonFlags = commonFlags, server = serverFlag).convert()
-            selector.updateKey(this, selector.eventMem.ptr)
+            setEventFlags(selector.eventMem, commonFlags, if (serverFlag) 1 else 0)
+            selector.updateKey(this, selector.eventMem!!)
         }
     }
 

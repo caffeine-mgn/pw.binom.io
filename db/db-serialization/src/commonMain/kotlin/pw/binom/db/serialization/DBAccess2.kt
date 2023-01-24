@@ -29,6 +29,7 @@ suspend inline fun <reified T : Any> DBAccess2.insertAndReturn(value: T, exclude
 interface QueryContext {
     val serializersModule: SerializersModule
     fun <T : Any> param(k: KSerializer<T>, value: T?): String
+    operator fun String.unaryPlus(): String
 }
 
 interface UpdateContext : QueryContext {

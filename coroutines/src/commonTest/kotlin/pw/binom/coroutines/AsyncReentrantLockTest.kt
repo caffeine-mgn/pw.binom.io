@@ -8,6 +8,7 @@ import pw.binom.concurrency.SpinLock
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
+@Suppress("OPT_IN_IS_NOT_ENABLED")
 @OptIn(ExperimentalCoroutinesApi::class)
 class AsyncReentrantLockTest {
 

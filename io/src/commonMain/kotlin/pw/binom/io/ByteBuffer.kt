@@ -2,7 +2,6 @@
 
 package pw.binom.io
 
-import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 import pw.binom.pool.using
 import kotlin.contracts.ExperimentalContracts

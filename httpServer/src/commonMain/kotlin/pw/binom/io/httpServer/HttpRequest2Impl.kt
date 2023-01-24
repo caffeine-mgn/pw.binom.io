@@ -231,7 +231,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             .flatMap { it.splitToSequence(',') }
             .map { it.trim() }
             .any { it.equals(Headers.UPGRADE, true) }
-        if (!hasUpgrade){
+        if (!hasUpgrade) {
             rejectWebsocket()
             throw IllegalStateException("Invalid Client Headers: Header \"${Headers.CONNECTION}: ${Headers.UPGRADE}\" not found")
         }

@@ -1,15 +1,22 @@
 package pw.binom.io.socket
 
-import kotlinx.cinterop.*
-import platform.linux.*
-import platform.posix.pipe
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.pin
+import platform.common.*
+import platform.common.Event
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.collections.*
+import pw.binom.collections.ArrayList2
+import pw.binom.collections.LinkedList
+import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
+import kotlin.collections.set
 import kotlin.time.Duration
 
 internal val STUB_BYTE = byteArrayOf(1).pin()
@@ -24,8 +31,8 @@ actual class Selector : Closeable {
     private val keyForRemoveLock = SpinLock()
     internal val epoll = Epoll.create(1024)
     private val wakeupFlag = AtomicBoolean(false)
-    private val native = nativeHeap.allocArray<epoll_event>(MAX_ELEMENTS)
-    internal val eventMem = nativeHeap.alloc<epoll_event>()
+    private val native = createSelectedList(MAX_ELEMENTS)!!
+    internal val eventMem = mallocEvent()
 
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
@@ -34,24 +41,20 @@ actual class Selector : Closeable {
     private val keys2 = defaultMutableMap<SelectorKey, Socket>()
 
     init {
-        memScoped {
-            val fds = allocArray<IntVar>(2)
-            pipe(fds)
-            pipeRead = fds[0]
-            pipeWrite = fds[1]
-            setBlocking(pipeRead, false)
-            setBlocking(pipeWrite, false)
+        val fds = createPipe()
+        pipeRead = fds.first
+        pipeWrite = fds.second
+        setBlocking(pipeRead, false)
+        setBlocking(pipeWrite, false)
 
-            val event1 = alloc<epoll_event>()
-            event1.data.ptr = null
-            event1.events = EPOLLIN.convert()
-            val r = epoll.add(pipeRead, event1.ptr)
-            if (r != Epoll.EpollResult.OK) {
-                platform.posix.close(pipeRead)
-                platform.posix.close(pipeWrite)
-                epoll.close()
-                throw IOException("Can't init epoll. Can't add default pipe.")
-            }
+        setEventDataPtr(eventMem, null)
+        setEventFlags(eventMem, FLAG_READ, 0)
+        val r = epoll.add(pipeRead, eventMem)
+        if (r != Epoll.EpollResult.OK) {
+            platform.posix.close(pipeRead)
+            platform.posix.close(pipeWrite)
+            epoll.close()
+            throw IOException("Can't init epoll. Can't add default pipe. Status: $r")
         }
     }
 
@@ -66,9 +69,9 @@ actual class Selector : Closeable {
             } else {
                 val key = SelectorKey(selector = this, rawSocket = socket.native)
                 key.serverFlag = socket.server
-                eventMem.data.fd = socket.native
-                eventMem.events = 0.convert()
-                epoll.add(socket.native, eventMem.ptr)
+                setEventDataFd(eventMem, socket.native)
+                setEventFlags(eventMem, 0, 0)
+                epoll.add(socket.native, eventMem)
                 keys[socket] = key
                 keys2[key] = socket
                 nativeKeys[socket.native] = key
@@ -77,7 +80,7 @@ actual class Selector : Closeable {
         }
     }
 
-    internal fun updateKey(key: SelectorKey, event: CPointer<epoll_event>) {
+    internal fun updateKey(key: SelectorKey, event: CPointer<Event>) {
         if (!epoll.update(key.rawSocket, event)) {
             epoll.delete(key.rawSocket, false)
             errorsRemoveLock.synchronize {
@@ -152,31 +155,32 @@ actual class Selector : Closeable {
             errorsRemove.clear()
         }
         while (currentNum < count) {
-            val event = native[currentNum++]
-            val ptr = event.data.ptr
+            val event = getEventFromSelectedList(native, currentNum++)
+            val ptr = getEventDataPtr(event)
             if (ptr == null) {
                 interruptWakeup()
                 continue
             }
-            val key = nativeKeys[event.data.fd] ?: continue
+            val key = nativeKeys[getEventDataFd(event)] ?: continue
             if (key.closed) {
                 key.internalClose()
                 continue
             }
             var e = 0
-            if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
+            val listenFlags = getEventFlags(event)
+            if (listenFlags and FLAG_ERROR != 0) {
                 keyForRemove.add(key)
                 key.closed = true
                 e = e or KeyListenFlags.ERROR
             }
 
-            if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
-                e = e or KeyListenFlags.ERROR
-            }
-            if (event.events.toInt() and EPOLLOUT.toInt() != 0) {
+//            if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
+//                e = e or KeyListenFlags.ERROR
+//            }
+            if (listenFlags and FLAG_WRITE != 0) {
                 e = e or KeyListenFlags.WRITE
             }
-            if (event.events.toInt() and EPOLLIN.toInt() != 0) {
+            if (listenFlags and FLAG_READ != 0) {
                 e = e or KeyListenFlags.READ
             }
             key.internalReadFlags = e
@@ -191,13 +195,10 @@ actual class Selector : Closeable {
             deferredRemoveKeys()
             selectedKeys.lock.synchronize {
 //                selectedKeys.errors.clear()
-//                println("Selector:: selecting...")
                 val eventCount = epoll.select(
                     events = native,
-                    maxEvents = MAX_ELEMENTS,
                     timeout = if (timeout.isInfinite()) -1 else timeout.inWholeMilliseconds.toInt(),
                 )
-//                println("Selector:: selected! count $eventCount")
                 cleanupPostProcessing(
                     selectedKeys = selectedKeys.selectedKeys,
 //                    native = selectedKeys.native,
@@ -213,8 +214,8 @@ actual class Selector : Closeable {
     override fun close() {
         selectLock.synchronize {
             epoll.delete(pipeRead, false)
-            nativeHeap.free(eventMem)
-            nativeHeap.free(native)
+            freeEvent(eventMem)
+            closeSelectedList(native)
             platform.posix.close(pipeRead)
             platform.posix.close(pipeWrite)
             epoll.close()

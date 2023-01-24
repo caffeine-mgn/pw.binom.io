@@ -2,7 +2,6 @@ package pw.binom.io
 
 import kotlinx.cinterop.*
 import pw.binom.atomic.AtomicInt
-import kotlin.random.Random
 
 sealed interface MemAccess : Closeable {
     val capacity: Int

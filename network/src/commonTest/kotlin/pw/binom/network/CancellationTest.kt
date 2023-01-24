@@ -13,6 +13,8 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CancellationTest {
@@ -67,6 +69,7 @@ class CancellationTest {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun cancellationRead() = runTest(dispatchTimeoutMs = 10_000) {
         val nd = NetworkCoroutineDispatcherImpl()
@@ -79,15 +82,18 @@ class CancellationTest {
 //                server.accept()
 //                println("Client connected to server!!!")
 //            }
-            delay(1000L)
+
+            delay(1.seconds)
             println("Try connect")
             val con = nd.tcpConnect(HTTP_SERVER_ADDRESS)
-            println("Connected!")
+            println("Connected!  $con")
             val readJob = launch(nd) {
+                println("Task executed!")
                 ByteBuffer(10).use { buf ->
                     try {
-                        println("Try read data")
-                        con.read(buf)
+                        println("Try read data...")
+                        val bb = con.read(buf)
+                        println("done! $bb")
                     } catch (e: CancellationException) {
                         firstReadCanceled = true
                     } catch (e: Throwable) {
@@ -98,9 +104,10 @@ class CancellationTest {
                     }
                 }
             }
+            val mm = TimeSource.Monotonic.markNow()
             println("wait one second")
-            delay(1000L)
-            println("Try cancel read")
+            delay(2.seconds)
+            println("Try cancel read   ${mm.elapsedNow()}")
             readJob.cancelAndJoin()
             serverShouldSendResponse = true
             assertTrue(firstReadCanceled, "firstReadCanceled fails")

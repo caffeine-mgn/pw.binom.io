@@ -51,6 +51,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
+        check(!networkThread.isClosed) { "Network thread already closed" }
         this.exchange.push(block)
         wakeup()
     }

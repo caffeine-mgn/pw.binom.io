@@ -70,6 +70,7 @@ class ResultSetDataProvider(val rs: ResultSet) : DataProvider {
 private class QueryContextImpl(override val serializersModule: SerializersModule) : UpdateContext {
     var args = defaultMutableList<Any?>()
     var returning: Returning<out Any>? = null
+    val startQuery = StringBuilder()
 
     class Returning<T : Any>(val serializer: KSerializer<T>, val func: suspend (T) -> Unit)
 
@@ -100,6 +101,11 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
             args += singleValueDateContainer.value
         }
         return "?"
+    }
+
+    override fun String.unaryPlus(): String {
+        startQuery.append(this)
+        return ""
     }
 }
 
@@ -208,7 +214,9 @@ class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModu
 
     override suspend fun selectRaw(func: suspend QueryContext.() -> String): AsyncResultSet {
         val params = QueryContextImpl(serializersModule)
-        val query = func(params)
+        val endPart = func(params)
+        val startPart = params.startQuery.toString()
+        val query = startPart + endPart
         val ps = con.usePreparedStatement(query)
         return ps.executeQuery(params.args)
     }
@@ -238,7 +246,8 @@ class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModu
 
     override suspend fun update(func: suspend QueryContext.() -> String): Long {
         val params = QueryContextImpl(serializersModule)
-        val query = func(params)
+        val firstPart = func(params)
+        val query = params.startQuery.toString() + firstPart
         val ps = con.usePreparedStatement(query)
         return ps.executeUpdate(params.args)
     }

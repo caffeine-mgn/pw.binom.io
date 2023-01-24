@@ -10,8 +10,9 @@ actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output
     internal var readFd = fd.second
 
     init {
-        if (SetHandleInformation(writeFd, HANDLE_FLAG_INHERIT, 0) <= 0)
+        if (SetHandleInformation(writeFd, HANDLE_FLAG_INHERIT, 0) <= 0) {
             TODO("#4")
+        }
     }
 
     actual constructor() : this(createPipe())
@@ -27,8 +28,11 @@ actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output
 
             val r = data.ref { dataPtr, _ ->
                 WriteFile(
-                    writeFd, dataPtr.getPointer(this).reinterpret(),
-                    data.remaining.convert(), dwWritten.ptr, null
+                    writeFd,
+                    dataPtr.getPointer(this).reinterpret(),
+                    data.remaining.convert(),
+                    dwWritten.ptr,
+                    null
                 )
             } ?: 0
             if (r <= 0) {

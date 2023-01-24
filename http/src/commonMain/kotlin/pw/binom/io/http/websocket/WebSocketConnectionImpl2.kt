@@ -4,6 +4,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.EmptyAsyncInput
 import pw.binom.NullAsyncOutput
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.coroutines.SimpleAsyncLock
 import pw.binom.io.*
 import pw.binom.network.SocketClosedException
 import pw.binom.pool.ObjectFactory
@@ -27,6 +28,8 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
     private var _output: AsyncOutput = NullAsyncOutput
     private var _input: AsyncInput = EmptyAsyncInput
     private var masking: Boolean = false
+    private val readChannelLock = SimpleAsyncLock()
+    private val writeChannelLock = SimpleAsyncLock()
 
     fun reset(
         input: AsyncInput,
@@ -67,32 +70,34 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
         }
         LOOP@ while (true) {
             try {
-                WebSocketHeader.read(input = _input, dest = header)
-                val type = when (header.opcode) {
-                    1.toByte() -> MessageType.TEXT
-                    2.toByte() -> MessageType.BINARY
-                    8.toByte() -> MessageType.CLOSE
-                    else -> {
-                        runCatching {
-                            closeTcp()
+                readChannelLock.synchronize {
+                    WebSocketHeader.read(input = _input, dest = header)
+                    val type = when (header.opcode) {
+                        1.toByte() -> MessageType.TEXT
+                        2.toByte() -> MessageType.BINARY
+                        8.toByte() -> MessageType.CLOSE
+                        else -> {
+                            runCatching {
+                                closeTcp()
+                            }
+                            throw WebSocketClosedException(
+                                connection = this,
+                                code = WebSocketClosedException.ABNORMALLY_CLOSE,
+                            )
                         }
-                        throw WebSocketClosedException(
-                            connection = this,
-                            code = WebSocketClosedException.ABNORMALLY_CLOSE,
-                        )
                     }
+                    if (type == MessageType.CLOSE) {
+                        this.receivedCloseMessage.setValue(true)
+                    }
+                    message.reset(
+                        initLength = header.length,
+                        type = type,
+                        mask = header.mask,
+                        maskFlag = header.maskFlag,
+                        lastFrame = header.finishFlag,
+                        input = _input
+                    )
                 }
-                if (type == MessageType.CLOSE) {
-                    this.receivedCloseMessage.setValue(true)
-                }
-                message.reset(
-                    initLength = header.length,
-                    type = type,
-                    mask = header.mask,
-                    maskFlag = header.maskFlag,
-                    lastFrame = header.finishFlag,
-                    input = _input
-                )
                 return message
             } catch (e: SocketClosedException) {
                 runCatching {
@@ -117,11 +122,13 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
         if (type == MessageType.CLOSE) {
             sentCloseMessage.setValue(true)
         }
-        return WSOutput(
+        writeChannelLock.lock()
+        return WebSocketOutput(
             messageType = type,
             bufferSize = DEFAULT_BUFFER_SIZE,
             stream = _output,
-            masked = masking
+            masked = masking,
+            writeLock = writeChannelLock,
         )
     }
 
