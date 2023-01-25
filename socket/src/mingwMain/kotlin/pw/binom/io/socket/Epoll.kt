@@ -1,5 +1,5 @@
 package pw.binom.io.socket
-
+/*
 import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.convert
@@ -119,3 +119,4 @@ internal fun epollModeToString(mode: Int): String {
     }
     return sb.toString().trim()
 }
+*/

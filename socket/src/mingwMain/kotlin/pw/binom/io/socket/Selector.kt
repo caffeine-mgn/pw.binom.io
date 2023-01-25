@@ -1,5 +1,5 @@
 package pw.binom.io.socket
-
+/*
 import kotlinx.cinterop.*
 import platform.common.epoll_event
 import platform.common.*
@@ -169,3 +169,4 @@ actual class Selector : Closeable {
         platform.posix.read(pipeRead, STUB_BYTE.addressOf(0), 1.convert())
     }
 }
+*/

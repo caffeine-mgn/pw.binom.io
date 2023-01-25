@@ -21,6 +21,7 @@ fun KotlinNativeTarget.useNativeNet() {
         compileFile(file("${buildFile.parentFile}/src/native/src/Event.c"))
         compileFile(file("${buildFile.parentFile}/src/native/src/SelectedList.c"))
         compileFile(file("${buildFile.parentFile}/src/native/src/Selector.c"))
+        compileFile(file("${buildFile.parentFile}/src/native/src/wepoll.c"))
     }
     tasks.findByName(compileTaskName)?.dependsOn(staticBuildTask)
     val args = listOf("-include-binary", staticBuildTask.staticFile.asFile.get().absolutePath)

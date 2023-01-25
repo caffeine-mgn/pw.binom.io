@@ -1,5 +1,5 @@
 package pw.binom.io.socket
-
+/*
 import kotlinx.cinterop.*
 import platform.common.*
 import pw.binom.collections.defaultMutableSet
@@ -93,3 +93,4 @@ actual class SelectedKeys(val maxElements: Int) {
         return output
     }
 }
+*/

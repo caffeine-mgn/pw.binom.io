@@ -1,5 +1,5 @@
 package pw.binom.io.socket
-
+/*
 import kotlinx.cinterop.*
 import platform.common.*
 import pw.binom.io.Closeable
@@ -78,3 +78,4 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     actual val readFlags: Int
         get() = TODO("Not yet implemented")
 }
+*/
