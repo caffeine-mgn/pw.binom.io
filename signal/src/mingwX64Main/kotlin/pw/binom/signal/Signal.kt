@@ -41,11 +41,7 @@ private val signalHandler = staticCFunction<DWORD, WINBOOL> handler@{ signal ->
     lockListeners()
     try {
         listeners.forEach {
-            try {
-                it(type)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
+            it(type)
         }
     } finally {
         listenersLock.value = 0

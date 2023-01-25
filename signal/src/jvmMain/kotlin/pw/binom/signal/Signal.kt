@@ -39,11 +39,7 @@ private val globalHandler = SignalHandler { sig ->
     lockListeners()
     try {
         listeners.forEach {
-            try {
-                it(type)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
+            it(type)
         }
     } finally {
         listenersLock.set(false)

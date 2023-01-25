@@ -33,6 +33,18 @@ internal class StrongImpl : Strong {
         internalDependencies.clear()
     }
 
+    override fun <T : Any, R : T> overrideBean(oldBean: T, newBean: R): Boolean {
+        val it = beans.iterator()
+        while (it.hasNext()) {
+            val e = it.next()
+            if (e.value.bean === oldBean) {
+                e.setValue(e.value.copy(bean = newBean))
+                return true
+            }
+        }
+        return false
+    }
+
     fun findBean(clazz: KClass<Any>, name: String?) =
         beans.asSequence().filter {
             clazz.isInstance(it.value.bean) && (name == null || it.key == name)

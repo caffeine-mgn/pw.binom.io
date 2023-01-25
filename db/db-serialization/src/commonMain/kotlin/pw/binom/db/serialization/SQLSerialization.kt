@@ -197,18 +197,12 @@ class SQLSerialization(val serializersModule: SerializersModule = SqlSerializers
     }
 
     fun <T : Any> decode(serializer: KSerializer<T>, resultSet: ResultSet, columnPrefix: String? = null): T {
-        try {
-            val decoder =
-                SQLDecoderImpl(
-                    columnPrefix = columnPrefix,
-                    resultSet = resultSet,
-                    serializersModule = serializersModule
-                )
-            return serializer.deserialize(decoder)
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            throw e
-        }
+        val decoder = SQLDecoderImpl(
+            columnPrefix = columnPrefix,
+            resultSet = resultSet,
+            serializersModule = serializersModule
+        )
+        return serializer.deserialize(decoder)
     }
 
     @OptIn(InternalSerializationApi::class)
@@ -259,19 +253,14 @@ class SQLSerialization(val serializersModule: SerializersModule = SqlSerializers
         value: T,
         columnPrefix: String? = null,
     ): MutableMap<String, Any?> {
-        try {
-            val map = defaultMutableMap<String, Any?>()
-            buildSqlNamedParamsTo(
-                serializer = serializer,
-                value = value,
-                map = map,
-                columnPrefix = columnPrefix,
-            )
-            return map
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            throw e
-        }
+        val map = defaultMutableMap<String, Any?>()
+        buildSqlNamedParamsTo(
+            serializer = serializer,
+            value = value,
+            map = map,
+            columnPrefix = columnPrefix,
+        )
+        return map
     }
 
     fun <T : Any> nameParams(

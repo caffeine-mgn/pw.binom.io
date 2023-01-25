@@ -173,7 +173,6 @@ class HttpServer(
                 channel.asyncCloseAnyway()
                 try {
                     errorHandler.uncaughtException(Thread.currentThread, e)
-                    e.printStackTrace()
                 } catch (e: Throwable) {
                     // Do nothing
                 }

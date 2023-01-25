@@ -46,7 +46,15 @@ class Logger(
             text: String?,
             trace: String? = null,
             exception: Throwable?
-        )
+        ) {
+            logSync(
+                logger = logger,
+                level = level,
+                text = text,
+                trace = trace,
+                exception = exception,
+            )
+        }
 
         /**
          * Logs in sync mode

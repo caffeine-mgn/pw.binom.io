@@ -75,34 +75,28 @@ class AsyncBufferedAsciiInputReader private constructor(
     override fun toString(): String = "AsyncBufferedAsciiInputReader(stream=$stream)"
 
     private suspend fun full(minSize: Int = 1) {
-        try {
-            if (eof) {
-                return
-            }
-            if (buffer.remaining >= minSize) {
-                return
-            }
+        if (eof) {
+            return
+        }
+        if (buffer.remaining >= minSize) {
+            return
+        }
 //            println("AsyncBufferedAsciiInputReader::full #1. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-            try {
-                buffer.compact()
+        try {
+            buffer.compact()
 //                println("AsyncBufferedAsciiInputReader::full #2. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-                val len = stream.read(buffer)
+            val len = stream.read(buffer)
 //                println("AsyncBufferedAsciiInputReader::full #3. position: ${buffer.position}, limit: ${buffer.limit}, len: $len, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-                if (len == 0) {
-                    eof = true
-                } else {
-                    buffer.flip()
-                }
-//                println("AsyncBufferedAsciiInputReader::full #4. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-            } catch (e: Throwable) {
-//                println("AsyncBufferedAsciiInputReader::full #5. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-                buffer.empty()
-//                println("AsyncBufferedAsciiInputReader::full #6. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-                throw e
+            if (len == 0) {
+                eof = true
+            } else {
+                buffer.flip()
             }
+//                println("AsyncBufferedAsciiInputReader::full #4. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
         } catch (e: Throwable) {
-//            println("AsyncBufferedAsciiInputReader1::full BinomError, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-            e.printStackTrace()
+//                println("AsyncBufferedAsciiInputReader::full #5. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
+            buffer.empty()
+//                println("AsyncBufferedAsciiInputReader::full #6. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
             throw e
         }
     }
@@ -119,19 +113,13 @@ class AsyncBufferedAsciiInputReader private constructor(
         if (!closed.compareAndSet(false, true)) {
             return
         }
-        try {
-            if (closeBuffer) {
-                buffer.close()
-            } else {
-                pool?.recycle(buffer as PooledByteBuffer)
-            }
-            if (closeParent) {
-                stream.asyncClose()
-            }
-        } catch (e: Throwable) {
-//            println("AsyncBufferedAsciiInputReader4::asyncClose BinomError, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-            e.printStackTrace()
-            throw e
+        if (closeBuffer) {
+            buffer.close()
+        } else {
+            pool?.recycle(buffer as PooledByteBuffer)
+        }
+        if (closeParent) {
+            stream.asyncClose()
         }
     }
 
@@ -214,32 +202,26 @@ class AsyncBufferedAsciiInputReader private constructor(
     }
 
     suspend fun readUntil(byte: Byte, exclude: Boolean, dest: AsyncOutput): Int {
-        try {
-            ensureOpen()
-            var readSize = 0
-            while (true) {
-                full(1)
-                val index = buffer.indexOfFirst { it == byte }
-                if (index == -1) {
-                    readSize += dest.writeFully(buffer)
-                } else {
-                    val l = buffer.limit
-                    buffer.limit = if (exclude) index else index + 1
-                    readSize += dest.writeFully(buffer)
-                    buffer.limit = l
-                    if (exclude) {
-                        buffer.position++
-                        readSize++
-                    }
-                    break
+        ensureOpen()
+        var readSize = 0
+        while (true) {
+            full(1)
+            val index = buffer.indexOfFirst { it == byte }
+            if (index == -1) {
+                readSize += dest.writeFully(buffer)
+            } else {
+                val l = buffer.limit
+                buffer.limit = if (exclude) index else index + 1
+                readSize += dest.writeFully(buffer)
+                buffer.limit = l
+                if (exclude) {
+                    buffer.position++
+                    readSize++
                 }
+                break
             }
-            return readSize
-        } catch (e: Throwable) {
-//            println("AsyncBufferedAsciiInputReader2::readUntil BinomError, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-            e.printStackTrace()
-            throw e
         }
+        return readSize
     }
 
     //    suspend fun readUntil(char: Char): String? {
@@ -278,33 +260,27 @@ class AsyncBufferedAsciiInputReader private constructor(
 //        }
 //    }
     suspend fun readUntil(char: Char): String? {
-        try {
-            ensureOpen()
-            val out = StringBuilder()
-            var exist = false
-            val charValue = char.code.toByte()
-            LOOP@ while (true) {
-                full()
-                if (buffer.remaining <= 0) {
-                    break
-                }
-                val byte = buffer.getByte()
-                if (charValue == byte) {
-                    exist = true
-                    break@LOOP
-                }
-                out.append(byte.toInt().toChar())
+        ensureOpen()
+        val out = StringBuilder()
+        var exist = false
+        val charValue = char.code.toByte()
+        LOOP@ while (true) {
+            full()
+            if (buffer.remaining <= 0) {
+                break
+            }
+            val byte = buffer.getByte()
+            if (charValue == byte) {
                 exist = true
+                break@LOOP
             }
-            if (!exist) {
-                return null
-            }
-            return out.toString()
-        } catch (e: Throwable) {
-//            println("AsyncBufferedAsciiInputReader3::readUntil BinomError, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-            e.printStackTrace()
-            throw e
+            out.append(byte.toInt().toChar())
+            exist = true
         }
+        if (!exist) {
+            return null
+        }
+        return out.toString()
     }
 
     override suspend fun readln(): String? {

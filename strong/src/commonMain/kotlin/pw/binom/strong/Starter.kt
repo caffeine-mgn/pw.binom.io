@@ -291,7 +291,6 @@ internal class Starter(
         try {
             func()
         } catch (e: GraphUtils.CycleException) {
-            e.printStackTrace()
             throw CycleDependencyException(e.dependenciesPath as List<BeanDescription>)
         }
 
@@ -346,87 +345,87 @@ internal class Starter(
                 }
             }
 
-/*
-            logger.debug("Check cycle bean init")
-            checkCycle()
-            val deps = makeDestroysTree()
-            strongImpl.beanOrder = deps.map { it.name to it.bean }
+            /*
+                        logger.debug("Check cycle bean init")
+                        checkCycle()
+                        val deps = makeDestroysTree()
+                        strongImpl.beanOrder = deps.map { it.name to it.bean }
 
 
-            logger.debug("Init beans. Beans for init [${createdBeans.size}]:")
-            deps.forEach {
-                logger.debug("  * ${it.name} (${it.beanClass})")
-            }
-
-            deps.forEach { bean ->
-                bean.nodes.forEach {
-                    if (!it.inited) {
-                        throw RuntimeException("Can't init ${bean.name} (${bean.beanClass}). Bean ${it.name} (${it.beanClass}) not inited!")
-                    }
-                }
-                bean.inited = true
-            }
-
-            deps.forEach { bean ->
-                bean.nodes.forEach {
-                    if (!it.linked) {
-                        throw RuntimeException("Can't init ${bean.name} (${bean.beanClass}). Bean ${it.name} (${it.beanClass}) not linked!")
-                    }
-                }
-                bean.linked = true
-            }
-            deps.forEach { bean ->
-                bean.inited = false
-                bean.linked = false
-            }
-
-            var listForStart = ArrayList(createdBeans)
-            LOOP@ do {
-                for (it in listForStart) {
-                    logger.debug("#1 ${listForStart.map { "${it.name} ${it.inited} ${it.linked}" }}")
-                    if (!it.inited) {
-                        if (it.bean is Strong.InitializingBean) {
-                            val notInitedBeans = it.nodes.filter { !it.inited }
-                            if (notInitedBeans.isNotEmpty()) {
-                                listForStart.removeAll(notInitedBeans)
-                                listForStart.addAll(0, notInitedBeans)
-                                continue@LOOP
-                            }
-                            logger.debug("Bean ${it.name} (${it.beanClass}) initing")
-                            it.bean.init(strongImpl)
-                            it.inited = true
-                        } else {
-                            it.inited = true
+                        logger.debug("Init beans. Beans for init [${createdBeans.size}]:")
+                        deps.forEach {
+                            logger.debug("  * ${it.name} (${it.beanClass})")
                         }
-                        logger.debug("Bean ${it.name} (${it.beanClass}) inited")
-                        strongImpl.beans[it.name] = BeanEntity(bean = it.bean, primary = it.primary)
-                        continue@LOOP
-                    }
-                    if (!it.linked) {
-                        if (it.bean is Strong.LinkingBean) {
-                            val notInitedBeans = it.nodes.filter { !it.linked || !it.inited }
-                            if (notInitedBeans.isNotEmpty()) {
-                                listForStart.removeAll(notInitedBeans)
-                                listForStart.addAll(0, notInitedBeans)
-                                continue@LOOP
+
+                        deps.forEach { bean ->
+                            bean.nodes.forEach {
+                                if (!it.inited) {
+                                    throw RuntimeException("Can't init ${bean.name} (${bean.beanClass}). Bean ${it.name} (${it.beanClass}) not inited!")
+                                }
                             }
-                            logger.debug("Linking ${it.name} (${it.beanClass})")
-                            it.bean.link(strongImpl)
-                            it.linked = true
-                        } else {
-                            it.linked = true
+                            bean.inited = true
                         }
-                        logger.debug("Bean ${it.name} (${it.beanClass}) linked")
-                        listForStart.remove(it)
-                        continue@LOOP
-                    }
-                }
-                if (listForStart.isEmpty()) {
-                    break
-                }
-                logger.debug("Init list size: ${listForStart.size}")
-            } while (listForStart.isNotEmpty())
-            */
+
+                        deps.forEach { bean ->
+                            bean.nodes.forEach {
+                                if (!it.linked) {
+                                    throw RuntimeException("Can't init ${bean.name} (${bean.beanClass}). Bean ${it.name} (${it.beanClass}) not linked!")
+                                }
+                            }
+                            bean.linked = true
+                        }
+                        deps.forEach { bean ->
+                            bean.inited = false
+                            bean.linked = false
+                        }
+
+                        var listForStart = ArrayList(createdBeans)
+                        LOOP@ do {
+                            for (it in listForStart) {
+                                logger.debug("#1 ${listForStart.map { "${it.name} ${it.inited} ${it.linked}" }}")
+                                if (!it.inited) {
+                                    if (it.bean is Strong.InitializingBean) {
+                                        val notInitedBeans = it.nodes.filter { !it.inited }
+                                        if (notInitedBeans.isNotEmpty()) {
+                                            listForStart.removeAll(notInitedBeans)
+                                            listForStart.addAll(0, notInitedBeans)
+                                            continue@LOOP
+                                        }
+                                        logger.debug("Bean ${it.name} (${it.beanClass}) initing")
+                                        it.bean.init(strongImpl)
+                                        it.inited = true
+                                    } else {
+                                        it.inited = true
+                                    }
+                                    logger.debug("Bean ${it.name} (${it.beanClass}) inited")
+                                    strongImpl.beans[it.name] = BeanEntity(bean = it.bean, primary = it.primary)
+                                    continue@LOOP
+                                }
+                                if (!it.linked) {
+                                    if (it.bean is Strong.LinkingBean) {
+                                        val notInitedBeans = it.nodes.filter { !it.linked || !it.inited }
+                                        if (notInitedBeans.isNotEmpty()) {
+                                            listForStart.removeAll(notInitedBeans)
+                                            listForStart.addAll(0, notInitedBeans)
+                                            continue@LOOP
+                                        }
+                                        logger.debug("Linking ${it.name} (${it.beanClass})")
+                                        it.bean.link(strongImpl)
+                                        it.linked = true
+                                    } else {
+                                        it.linked = true
+                                    }
+                                    logger.debug("Bean ${it.name} (${it.beanClass}) linked")
+                                    listForStart.remove(it)
+                                    continue@LOOP
+                                }
+                            }
+                            if (listForStart.isEmpty()) {
+                                break
+                            }
+                            logger.debug("Init list size: ${listForStart.size}")
+                        } while (listForStart.isNotEmpty())
+                        */
             logger.debug("Strong bean initialized successful")
         } catch (e: Throwable) {
             logger.debug("Strong bean initialized fail", e)

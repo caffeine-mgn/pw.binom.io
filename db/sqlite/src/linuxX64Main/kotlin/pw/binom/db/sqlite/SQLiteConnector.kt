@@ -153,8 +153,6 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
             if (r != SQLITE_OK) {
                 checkSqlCode(r)
             }
-        } catch (e: Throwable) {
-            e.printStackTrace()
         } finally {
             nativeHeap.free(ctx)
         }

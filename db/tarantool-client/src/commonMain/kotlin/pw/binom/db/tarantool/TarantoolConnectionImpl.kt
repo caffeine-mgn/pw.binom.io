@@ -177,23 +177,18 @@ class TarantoolConnectionImpl internal constructor(
                         requests.remove(serial)?.resume(pkg)
                     }
                 } catch (e: SocketClosedException) {
-                    e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)
                     }
                 } catch (e: CancellationException) {
-                    e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)
                     }
                 } catch (e: ClosedException) {
-                    e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)
                     }
                 } catch (e: Throwable) {
-                    e.printStackTrace()
-                    e.printStackTrace()
                     requests.forEach {
                         it.value.resumeWithException(e)
                     }

@@ -129,6 +129,7 @@ interface Strong {
         }
     }
 
+    fun <T : Any, R : T> overrideBean(oldBean: T, newBean: R): Boolean
     fun <T : Any> service(beanClass: KClass<T>, name: String? = null): ServiceProvider<T>
     fun <T : Any> serviceMap(beanClass: KClass<T>): ServiceProvider<Map<String, T>>
     fun <T : Any> serviceList(beanClass: KClass<T>): ServiceProvider<List<T>>
