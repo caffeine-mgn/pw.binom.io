@@ -31,20 +31,7 @@ kotlin {
 
     mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86 {
-//            binaries {
-//                compilations["main"].cinterops {
-//                    create("wepoll") {
-//                        defFile = project.file("src/cinterop/wepoll.def")
-//                        packageName = "platform.linux"
-//                    }
-//                    create("native") {
-//                        defFile = project.file("src/cinterop/native.def")
-//                        packageName = "platform.linux"
-//                    }
-//                }
-//            }
-        }
+        mingwX86()
     }
 
     macosX64()

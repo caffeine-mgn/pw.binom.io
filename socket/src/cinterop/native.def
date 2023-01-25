@@ -2,4 +2,3 @@ linkerOpts.mingwX32= -lws2_32 -lwsock32 -lws2_64 -lwsock64
 headers = Selector.h SelectedList.h wepoll.h Event.h
 headerFilter = *
 ---
-#include "Selector.h"
