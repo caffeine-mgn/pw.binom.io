@@ -23,12 +23,18 @@ internal fun commonFlagsToString(flags: Int): String {
     if (flags and KeyListenFlags.ERROR != 0) {
         sb.append("ERROR ")
     }
+    if (flags and KeyListenFlags.ONCE != 0) {
+        sb.append("ONCE ")
+    }
     return sb.toString().trim()
 }
 
 internal fun Event.buildToString(): String {
-    val sb = StringBuilder("Event(flags: ${flags.toString(2).padStart(4, '0')} ")
-    sb.append(commonFlagsToString(flags))
-    sb.append("key: ").append(key).append(")")
+    val sb = StringBuilder("Event(flags: ")
+        .append(flags.toString(2).padStart(4, '0'))
+        .append(commonFlagsToString(flags))
+        .append(", key: ")
+        .append(key)
+        .append(")")
     return sb.toString()
 }

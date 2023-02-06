@@ -8,7 +8,7 @@ import pw.binom.fromBytes
 class AsyncBufferedAsciiInputReader private constructor(
     val stream: AsyncInput,
     private val pool: ByteBufferPool?,
-    private val buffer: ByteBuffer,
+    val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
     val closeParent: Boolean = true,
 ) : AsyncReader, AsyncInput {

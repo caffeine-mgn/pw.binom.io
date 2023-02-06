@@ -1,0 +1,42 @@
+package pw.binom.thread
+
+import pw.binom.atomic.AtomicBoolean
+import pw.binom.concurrency.ConcurrentQueue
+import pw.binom.io.ClosedException
+
+private val maker: () -> Unit = {}
+
+abstract class AbstractThreadExecutorService : ExecutorService {
+    protected val queue = ConcurrentQueue<() -> Unit>()
+
+    protected val closed = AtomicBoolean(false)
+
+    override val isShutdown
+        get() = closed.getValue()
+
+    override fun submit(f: () -> Unit) {
+        if (closed.getValue()) {
+            throw ClosedException()
+        }
+        queue.push(f)
+    }
+
+    protected abstract fun joinAllThread()
+
+    override fun shutdownNow(): Collection<() -> Unit> {
+        if (!closed.compareAndSet(false, true)) {
+            throw ClosedException()
+        }
+        val list = ArrayList<() -> Unit>(queue.size)
+        queue.push(maker)
+        joinAllThread()
+        while (!queue.isEmpty) {
+            val func = queue.pop()
+            if (func === maker) {
+                continue
+            }
+            list += func
+        }
+        return list
+    }
+}

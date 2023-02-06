@@ -7,6 +7,7 @@ interface Queue<T> {
     fun pop(dist: PopResult<T>)
 
     fun peek(): T
+//    fun peek(dest: PopResult<T>): Boolean
 
     fun popOrNull(): T? {
         val result = PopResult<T>()

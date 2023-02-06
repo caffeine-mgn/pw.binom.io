@@ -4,6 +4,16 @@
 #include "../include/definition.h"
 #include "../include/wepoll.h"
 
+#ifdef LINUX_TARGET
+    #include <sys/epoll.h>
+#include <errno.h>
+
+#endif
+
+#ifndef EINTR
+    #define EINTR 4
+#endif
+
 struct Selector *createSelector(int size) {
     struct Selector *selector = malloc(sizeof(struct Selector));
 #ifdef USE_EPOLL
@@ -25,12 +35,18 @@ void closeSelector(struct Selector *selector) {
 
 int selectKeys(struct Selector *selector, struct SelectedList *selectedList, int timeout) {
 #ifdef USE_EPOLL
-    return epoll_wait(
+    int result = epoll_wait(
             selector->epoll,
             selectedList->events,
             selectedList->size,
             timeout
     );
+    #ifdef LINUX_LIKE_TARGET
+        if (result == -1 && errno == EINTR){
+            return 0;
+        }
+    #endif
+    return result;
 #endif
 }
 

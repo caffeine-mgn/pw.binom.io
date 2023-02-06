@@ -56,7 +56,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         wakeup()
     }
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = Thread.currentThread.id == networkThread.id
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = Thread.currentThread.id != networkThread.id
 
     override fun close() {
         if (closed.compareAndSet(false, true)) {

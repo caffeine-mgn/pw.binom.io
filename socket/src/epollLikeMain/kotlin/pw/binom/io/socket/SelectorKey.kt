@@ -3,15 +3,22 @@ package pw.binom.io.socket
 import platform.common.setEventDataFd
 import platform.common.setEventDataPtr
 import platform.common.setEventFlags
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 
 actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket) : AbstractNativeKey(), Closeable {
     actual var attachment: Any? = null
-    internal var closed = false
-    private var free = false
+    private var closed = AtomicBoolean(false)
+    private var free = AtomicBoolean(false)
+
+    //    @OptIn(ExperimentalTime::class)
+//    var lastActiveTime: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
     actual val readFlags: Int
         get() = internalReadFlags
     internal var internalReadFlags = 0
+        set(value) {
+            field = value
+        }
     internal var serverFlag = false
 
     internal var internalListenFlags = 0
@@ -21,9 +28,9 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
         NetworkMetrics.incSelectorKeyAlloc()
     }
 
-    internal fun resetListenFlags(commonFlags: Int) {
-        if (!closed) {
-            if (free) {
+    private fun resetListenFlags(commonFlags: Int) {
+        if (!closed.getValue()) {
+            if (free.getValue()) {
                 setEventDataPtr(selector.eventMem, null)
             } else {
                 setEventDataFd(selector.eventMem, rawSocket)
@@ -49,26 +56,24 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
     }
 
     internal fun internalClose() {
-        if (free) {
+        if (!free.compareAndSet(false, true)) {
             return
         }
         NetworkMetrics.decSelectorKeyAlloc()
-        free = true
 //        nativeHeap.free(event)
         freeSelfClose()
     }
 
     override fun close() {
-        if (closed) {
+        if (!closed.compareAndSet(false, true)) {
             return
         }
         NetworkMetrics.decSelectorKey()
-        closed = true
         selector.removeKey(this)
     }
 
-    override fun toString(): String = buildToString()
+    override fun toString(): String = buildToString() + ", closed: $closed"
 
     actual val isClosed: Boolean
-        get() = closed
+        get() = closed.getValue()
 }

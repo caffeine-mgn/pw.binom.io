@@ -4,7 +4,7 @@ import pw.binom.BinomMetrics
 import pw.binom.metric.MutableLongGauge
 
 internal object NetworkMetrics {
-    private val selectorKeyCountMetric =
+    internal val selectorKeyCountMetric =
         MutableLongGauge("binom_selector_key_count", description = "SelectorKey Count")
     internal val selectorKeyAllocCountMetric =
         MutableLongGauge("binom_selector_key_alloc_count", description = "SelectorKey Alloc Count")

@@ -3,11 +3,11 @@ package pw.binom
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.synchronize
-import pw.binom.collections.defaultMutableList
+import pw.binom.collections.LinkedList
 
 class BatchExchange<T> {
-    private var read = defaultMutableList<T>()
-    private var read2 = defaultMutableList<T>()
+    private var read = LinkedList<T>() // defaultMutableList<T>()
+    private var read2 = LinkedList<T>() // defaultMutableList<T>()
 
     private var internalSize = AtomicInt(0)
     val size

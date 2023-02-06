@@ -19,4 +19,6 @@ actual value class AtomicBoolean actual constructor(val native: InternalAtomicBo
     actual inline fun setValue(value: Boolean) {
         native.set(value)
     }
+
+    override fun toString(): String = "AtomicBoolean(value=${getValue()})"
 }

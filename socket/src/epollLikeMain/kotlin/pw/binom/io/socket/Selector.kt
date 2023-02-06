@@ -18,13 +18,14 @@ import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import kotlin.collections.set
 import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 internal val STUB_BYTE = byteArrayOf(1).pin()
 private const val MAX_ELEMENTS = 1042
 
 actual class Selector : Closeable {
     private val selectLock = ReentrantLock()
-    private val keyForRemove = LinkedList<SelectorKey>()
+    internal val keyForRemove = LinkedList<SelectorKey>()
     private val errorsRemove = defaultMutableSet<SelectorKey>()
     private val errorsRemoveLock = SpinLock()
     private val addKeyLock = SpinLock()
@@ -36,7 +37,6 @@ actual class Selector : Closeable {
 
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
-    private val keys = defaultMutableMap<Socket, SelectorKey>()
     private val nativeKeys = defaultMutableMap<RawSocket, SelectorKey>()
     private val keys2 = defaultMutableMap<SelectorKey, Socket>()
 
@@ -58,12 +58,23 @@ actual class Selector : Closeable {
         }
     }
 
+    private val eventImpl = object : pw.binom.io.socket.Event {
+        var internalKey: SelectorKey? = null
+        var internalFlag: Int = 0
+        override val key: SelectorKey
+            get() = internalKey ?: throw IllegalStateException("key not set")
+        override val flags: Int
+            get() = internalFlag
+
+        override fun toString(): String = this.buildToString()
+    }
+
     actual fun attach(socket: Socket): SelectorKey {
         if (socket.blocking) {
             throw IllegalArgumentException("Socket in blocking mode")
         }
         return addKeyLock.synchronize {
-            val existKey = keys[socket]
+            val existKey = nativeKeys[socket.native]
             if (existKey != null) {
                 existKey
             } else {
@@ -72,7 +83,6 @@ actual class Selector : Closeable {
                 setEventDataFd(eventMem, socket.native)
                 setEventFlags(eventMem, 0, 0)
                 epoll.add(socket.native, eventMem)
-                keys[socket] = key
                 keys2[key] = socket
                 nativeKeys[socket.native] = key
                 key
@@ -84,7 +94,7 @@ actual class Selector : Closeable {
         if (!epoll.update(key.rawSocket, event)) {
             epoll.delete(key.rawSocket, false)
             errorsRemoveLock.synchronize {
-                key.closed = true
+                removeKey(key)
                 errorsRemove.add(key)
             }
         }
@@ -94,19 +104,20 @@ actual class Selector : Closeable {
         if (selectLock.tryLock()) {
             try {
 //                println("Selector:: removeKeyNow ${key.rawSocket}")
-                epoll.delete(key.rawSocket, true)
+                val removeResult = epoll.delete(key.rawSocket, failOnError = false)
                 addKeyLock.synchronize {
                     val existKey = keys2.remove(key)
                     if (existKey != null) {
                         nativeKeys.remove(existKey.native)
-                        keys.remove(existKey)
                     }
+//                    println("Remove new $key ${key.identityHashCode()} fd=${key.rawSocket}! $removeResult!")
                 }
                 key.internalClose()
             } finally {
                 selectLock.unlock()
             }
         } else {
+//            println("Add for remove later $key ${key.identityHashCode()} fd=${key.rawSocket}!")
             keyForRemoveLock.synchronize {
 //                println("Selector:: removeKeyLater ${key.event.data.ptr}")
                 keyForRemove.add(key)
@@ -117,25 +128,22 @@ actual class Selector : Closeable {
     private fun deferredRemoveKeys() {
         addKeyLock.synchronize {
             keyForRemoveLock.synchronize {
+//                println("removing key for close. keyForRemove: ${keyForRemove.size}")
                 keyForRemove.forEachLinked { key ->
-                    epoll.delete(key.rawSocket, false)
+                    val deleteResult = epoll.delete(key.rawSocket, false)
                     val existKey = keys2.remove(key)
                     if (existKey != null) {
                         nativeKeys.remove(existKey.native)
-                        keys.remove(existKey)
                     }
                     key.internalClose()
+//                    println("Remove key from list $key ${key.identityHashCode()} fd=${key.rawSocket}! deleteResult: $deleteResult")
                 }
                 keyForRemove.clear()
             }
         }
     }
 
-    private fun cleanupPostProcessing(
-        selectedKeys: MutableList<SelectorKey>,
-        count: Int
-    ) {
-        selectedKeys.clear()
+    private fun prepareList(selectedKeys: MutableList<SelectorKey>, count: Int) {
         when (selectedKeys) {
             is ArrayList -> {
                 selectedKeys.clear()
@@ -145,13 +153,32 @@ actual class Selector : Closeable {
             is ArrayList2 -> selectedKeys.prepareCapacity(count + errorsRemove.size)
             else -> selectedKeys.clear()
         }
+    }
+
+    private fun cleanupPostProcessing(
+        selectedKeys: MutableList<SelectorKey>,
+        count: Int
+    ) {
+        prepareList(selectedKeys = selectedKeys, count = count)
+        cleanupPostProcessing(
+            count = count,
+        ) { key ->
+            selectedKeys.add(key)
+        }
+    }
+
+    private fun cleanupPostProcessing(
+        count: Int,
+        func: (SelectorKey) -> Unit,
+    ) {
         var currentNum = 0
         errorsRemoveLock.synchronize {
             errorsRemove.forEach { key ->
                 key.internalReadFlags = KeyListenFlags.ERROR
-                selectedKeys.add(key)
+                func(key)
                 key.internalClose()
             }
+            keyForRemove.addAll(errorsRemove)
             errorsRemove.clear()
         }
         while (currentNum < count) {
@@ -159,10 +186,17 @@ actual class Selector : Closeable {
             val ptr = getEventDataPtr(event)
             if (ptr == null) {
                 interruptWakeup()
+//                println("Alarm! Event for interopted!")
                 continue
             }
-            val key = nativeKeys[getEventDataFd(event)] ?: continue
-            if (key.closed) {
+            val key = nativeKeys[getEventDataFd(event)]
+//            if (key == null) {
+//                println("Alarm! Event without kotlin-key! fd=${getEventDataFd(event)}!")
+//                continue
+//            }
+            key ?: continue
+            if (key.isClosed) {
+//                println("Alarm! Event for closed key! $key ${key.identityHashCode()} fd=${getEventDataFd(event)}!")
                 key.internalClose()
                 continue
             }
@@ -170,7 +204,6 @@ actual class Selector : Closeable {
             val listenFlags = getEventFlags(event)
             if (listenFlags and FLAG_ERROR != 0) {
                 keyForRemove.add(key)
-                key.closed = true
                 e = e or KeyListenFlags.ERROR
             }
 
@@ -183,11 +216,21 @@ actual class Selector : Closeable {
             if (listenFlags and FLAG_READ != 0) {
                 e = e or KeyListenFlags.READ
             }
+            if (listenFlags and FLAG_ONCE != 0) {
+                e = e or KeyListenFlags.ONCE
+            }
             key.internalReadFlags = e
-            selectedKeys.add(key)
-            key.internalListenFlags = 0
+            func(key)
+            if (key.internalListenFlags and KeyListenFlags.ONCE != 0) {
+                key.internalListenFlags = 0
+            }
         }
     }
+
+    private fun select(timeout: Duration) = epoll.select(
+        events = native,
+        timeout = if (timeout.isInfinite()) -1 else timeout.inWholeMilliseconds.toInt(),
+    )
 
     actual fun select(timeout: Duration, selectedKeys: SelectedKeys) {
         selectLock.synchronize {
@@ -195,10 +238,7 @@ actual class Selector : Closeable {
             deferredRemoveKeys()
             selectedKeys.lock.synchronize {
 //                selectedKeys.errors.clear()
-                val eventCount = epoll.select(
-                    events = native,
-                    timeout = if (timeout.isInfinite()) -1 else timeout.inWholeMilliseconds.toInt(),
-                )
+                val eventCount = select(timeout = timeout)
                 cleanupPostProcessing(
                     selectedKeys = selectedKeys.selectedKeys,
 //                    native = selectedKeys.native,
@@ -208,6 +248,34 @@ actual class Selector : Closeable {
                 selectedKeys.selected(eventCount)
             }
 //            deferredRemoveKeys()
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    actual fun select(timeout: Duration, eventFunc: (pw.binom.io.socket.Event) -> Unit) {
+        selectLock.synchronize {
+            interruptWakeup()
+            deferredRemoveKeys()
+            val eventCount = select(timeout = timeout)
+//            keyForRemoveLock.synchronize {
+//                println("STATUS: nativeKeys.size=${nativeKeys.size} keys2.size=${keys2.size}, keyForRemove: ${keyForRemove.size}, errorsRemove: ${errorsRemove.size} keyForRemove: ${keyForRemove.size} NetworkMetrics: ${NetworkMetrics.selectorKeyCountMetric.value} selectorKeyAllocCountMetric: ${NetworkMetrics.selectorKeyAllocCountMetric.value}")
+//            }
+            cleanupPostProcessing(
+                count = eventCount,
+            ) { key ->
+//                key.lastActiveTime = TimeSource.Monotonic.markNow()
+                eventImpl.internalFlag = key.readFlags
+                eventImpl.internalKey = key
+                eventFunc(eventImpl)
+            }
+//            addKeyLock.synchronize {
+//                keys2.forEach {
+//                    val lastActive = it.key.lastActiveTime.elapsedNow()
+//                    if (lastActive > 30.seconds) {
+//                        println("->key ${it.key} ${it.key.identityHashCode()} fd=${it.value.native}!, lastActive=$lastActive")
+//                    }
+//                }
+//            }
         }
     }
 
@@ -229,8 +297,7 @@ actual class Selector : Closeable {
     }
 
     internal fun interruptWakeup() {
-        if (wakeupFlag.compareAndSet(true, false)) {
-            platform.posix.read(pipeRead, STUB_BYTE.addressOf(0), 1.convert())
-        }
+        platform.posix.read(pipeRead, STUB_BYTE.addressOf(0), 1.convert())
+        wakeupFlag.setValue(false)
     }
 }

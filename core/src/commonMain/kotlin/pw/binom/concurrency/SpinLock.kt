@@ -23,7 +23,6 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
             if (now.elapsedNow() > timeout) {
                 return false
             }
-            sleep(1)
         }
         return true
     }
@@ -33,7 +32,6 @@ value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : L
             if (tryLock()) {
                 break
             }
-            sleep(1)
         }
     }
 

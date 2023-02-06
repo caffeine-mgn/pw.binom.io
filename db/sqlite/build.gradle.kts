@@ -33,6 +33,7 @@ kotlin {
     eachNative {
         val headersPath = file("${buildFile.parentFile}/src/native")
         val sqliteStaticTask = clangBuildStatic(name = "sqlite3", target = this.konanTarget) {
+            this.konanVersion.set(pw.binom.Versions.KOTLIN_VERSION)
             include(headersPath)
             compileArgs(
                 "-DSQLITE_ENABLE_FTS3",

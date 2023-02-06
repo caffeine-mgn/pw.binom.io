@@ -3,6 +3,12 @@
 #include "../include/Event.h"
 #include "../include/definition.h"
 
+#ifdef LINUX_TARGET
+
+#include <sys/epoll.h>
+
+#endif
+
 struct Event *mallocEvent() {
 #ifdef USE_EPOLL
     return (struct Event *) malloc(sizeof(struct epoll_event));
@@ -18,12 +24,15 @@ void freeEvent(struct Event *event) {
 int getEventFlags(struct Event *event) {
 #ifdef USE_EPOLL
     int output = 0;
-    int events = (int)((struct epoll_event *) event)->events;
+    int events = (int) ((struct epoll_event *) event)->events;
     if (events & EPOLLIN) {
         output = output | FLAG_READ;
     }
     if (events & EPOLLOUT) {
         output = output | FLAG_WRITE;
+    }
+    if (events & EPOLLONESHOT) {
+        output = output | FLAG_ONCE;
     }
     if (events & EPOLLERR || events & EPOLLHUP) {
         output = output | FLAG_ERROR;
@@ -50,7 +59,7 @@ void setEventFlags(struct Event *event, int flags, int isServerFlag) {
             events = events | EPOLLHUP;
         }
     }
-    if (events) {
+    if (flags & FLAG_ONCE) {
         events = events | EPOLLONESHOT;
     }
     ((struct epoll_event *) event)->events = events;

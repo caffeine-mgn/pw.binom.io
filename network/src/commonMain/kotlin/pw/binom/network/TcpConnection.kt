@@ -4,8 +4,8 @@ import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
+import pw.binom.io.holdState
 import pw.binom.io.socket.*
-import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class TcpConnection(
@@ -94,6 +94,7 @@ class TcpConnection(
             return
         }
         data ?: error("readData.data is not set")
+        val p = data!!.position
         val readed = channel.receive(data)
         if (readed == -1) {
             readData.reset()
@@ -101,16 +102,23 @@ class TcpConnection(
             continuation.resumeWithException(SocketClosedException())
             return
         }
+        if (readed > 0) {
+            data!!.holdState {
+                data.position = p
+                data.limit = p + readed
+                println("TcpClient: Read lazy: ${data.toByteArray().decodeToString()}")
+            }
+        }
         if (readData.full) {
             if (data.remaining == 0) {
                 readData.reset()
-                continuation.resume(readed)
+                continuation.resume(value = readed, onCancellation = null)
             } else {
                 currentKey.addListen(KeyListenFlags.READ)
             }
         } else {
             readData.reset()
-            continuation.resume(readed)
+            continuation.resume(value = readed, onCancellation = null)
         }
     }
 
@@ -168,7 +176,7 @@ class TcpConnection(
         val connect = this.connect
         if (connect != null) {
             this.connect = null
-            connect.resume(Unit)
+            connect.resume(value = Unit, onCancellation = null)
             return true
         }
         return false
@@ -206,6 +214,7 @@ class TcpConnection(
             close()
             throw SocketClosedException()
         }
+        println("wait write event...")
         sendData.data = data
         return suspendCancellableCoroutine<Int> {
             sendData.continuation = it
@@ -268,12 +277,18 @@ class TcpConnection(
         }
         check(readData.continuation == null) { "Connection already have read listener" }
 
+        val p = dest.position
         val read = try {
             channel.receive(dest)
         } catch (e: Throwable) {
             throw e
         }
         if (read > 0) {
+            dest.holdState {
+                dest.position = p
+                dest.limit = p + read
+                println("TcpClient: Read now: ${dest.toByteArray().decodeToString()}")
+            }
             return read
         }
         if (read == -1) {

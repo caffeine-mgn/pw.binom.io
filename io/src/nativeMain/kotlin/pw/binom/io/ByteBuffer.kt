@@ -1,7 +1,9 @@
 package pw.binom.io
 
 import kotlinx.cinterop.*
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
+import pw.binom.atomic.synchronize
 
 sealed interface MemAccess : Closeable {
     val capacity: Int
@@ -87,6 +89,7 @@ actual open class ByteBuffer private constructor(
         get() = 1
 
     private var closed = false
+    private val lock = AtomicBoolean(false)
 
     private var _position = AtomicInt(0)
     private var _limit = AtomicInt(data.capacity)
@@ -154,7 +157,9 @@ actual open class ByteBuffer private constructor(
             throw IllegalArgumentException("position ($position) should be less than capacity ($capacity)")
         }
         return data.access {
-            func((it + position)!!)
+            lock.synchronize {
+                func((it + position)!!)
+            }
         }
     }
 
@@ -167,39 +172,62 @@ actual open class ByteBuffer private constructor(
     }
 
     override fun flip() {
-        ensureOpen()
-        limit = position
-        position = 0
+        lock.synchronize {
+            ensureOpen()
+            limit = position
+            position = 0
+        }
     }
 
     actual fun skip(length: Long): Long {
-        ensureOpen()
-        require(length > 0) { "Length must be grade than 0" }
+        lock.synchronize {
+            ensureOpen()
+            require(length > 0) { "Length must be grade than 0" }
 
-        val pos = minOf((position + length).toInt(), limit)
-        val len = pos - position
-        position = pos
-        return len.toLong()
+            val pos = minOf((position + length).toInt(), limit)
+            val len = pos - position
+            position = pos
+            return len.toLong()
+        }
     }
 
     override fun read(dest: ByteBuffer): Int {
         ensureOpen()
-        return ref { sourceCPointer, remaining ->
+        return ref { sourceCPointer, remaining2 ->
             dest.ref { destCPointer, destRemaining ->
-                val len = minOf(destRemaining, remaining)
-                sourceCPointer.copyInto(
-                    dest = destCPointer,
-                    size = len.convert(),
-                )
-                position += len
-                dest.position += len
-                len
+                val p = position
+                val p2 = dest.position
+                val len = minOf(destRemaining, remaining2)
+                try {
+                    sourceCPointer.copyInto(
+                        dest = destCPointer,
+                        size = len.convert(),
+                    )
+                    position += len
+                    dest.position += len
+                    len
+                } catch (e: Throwable) {
+                    position = p
+                    dest.position = p2
+
+                    println("len: $len")
+                    println("remaining2: $remaining2")
+                    println("destRemaining: $destRemaining")
+                    println("position: $position")
+                    println("dest.position: ${dest.position}")
+                    println("limit: $limit")
+                    println("dest.limit: ${dest.limit}")
+                    println("this.remaining: ${this.remaining}")
+                    println("dest.remaining: ${dest.remaining}")
+
+                    println("Error happend!")
+                    throw e
+                }
             }
         } ?: 0
     }
 
     override fun write(data: ByteBuffer): Int {
-        ensureOpen()
         return data.read(this)
     }
 

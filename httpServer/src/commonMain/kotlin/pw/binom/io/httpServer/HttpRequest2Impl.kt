@@ -39,7 +39,11 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             readStartTimeout: Duration,
             idleJob: Job?
         ): Result<HttpRequest2Impl?> = runCatching {
-            val request = withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
+            val request = if (readStartTimeout.isInfinite() || readStartTimeout == Duration.ZERO) {
+                channel.reader.readln()
+            } else {
+                withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
+            }
 //            val request = channel.reader.readln()
             if (idleJob != null) {
                 server.idleJobsLock.synchronize {
@@ -66,7 +70,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                     val p = s.indexOf(':')
                     if (p < 0) {
                         channel.asyncCloseAnyway()
-                        throw IOException("Invalid HTTP Header: \"$s\"")
+                        throw IOException("Invalid HTTP Header: \"$s\". channel.reader.buffer.hashCode=${channel.reader.buffer.hashCode()}")
                     }
                     val headerKey = s.substring(0, p)
                     val headerValue = s.substring(p + 2)
@@ -97,25 +101,23 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
 
     override val headers: Headers
         get() = internalHeaders
-    override val path: Path
-        get() {
-            val p = request.indexOf('?')
-            return if (p >= 0) {
-                request.substring(0, p).toPath
-            } else {
-                request.toPath
-            }
+    override val path: Path by lazy {
+        val p = request.indexOf('?')
+        if (p >= 0) {
+            request.substring(0, p).toPath
+        } else {
+            request.toPath
         }
+    }
 
-    override val query: Query?
-        get() {
-            val p = request.indexOf('?')
-            return if (p < 0) {
-                null
-            } else {
-                request.substring(p + 1).toQuery
-            }
+    override val query: Query? by lazy {
+        val p = request.indexOf('?')
+        if (p < 0) {
+            null
+        } else {
+            request.substring(p + 1).toQuery
         }
+    }
     private var startedResponse: HttpResponse2Impl? = null
     override suspend fun <T> response(func: suspend (HttpResponse) -> T): T {
         return super.response(func)

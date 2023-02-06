@@ -9,6 +9,10 @@
 #include "wepoll.h"
 #include "definition.h"
 
+#ifdef LINUX_TARGET
+    #include <sys/epoll.h>
+#endif
+
 struct SelectedList {
     int size;
 #ifdef USE_EPOLL

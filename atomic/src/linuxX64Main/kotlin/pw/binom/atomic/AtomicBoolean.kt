@@ -14,4 +14,6 @@ actual value class AtomicBoolean(val native: InternalAtomicBoolean) {
     actual inline fun setValue(value: Boolean) {
         native.value = if (value) 1 else 0
     }
+
+    override fun toString(): String = "AtomicBoolean(value=${getValue()})"
 }

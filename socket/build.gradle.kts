@@ -15,13 +15,14 @@ plugins {
 }
 
 fun KotlinNativeTarget.useNativeNet() {
-    val headersPath = project.buildFile.parentFile.resolve("src/native/include")
+    val headersPath = project.buildFile.parentFile.resolve("src/nativeCommonMain/include")
     val staticBuildTask = clangBuildStatic(name = "binom-socket", target = konanTarget) {
+        this.konanVersion.set(pw.binom.Versions.KOTLIN_VERSION)
         include(headersPath)
-        compileFile(file("${buildFile.parentFile}/src/native/src/Event.c"))
-        compileFile(file("${buildFile.parentFile}/src/native/src/SelectedList.c"))
-        compileFile(file("${buildFile.parentFile}/src/native/src/Selector.c"))
-        compileFile(file("${buildFile.parentFile}/src/native/src/wepoll.c"))
+        compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/Event.c"))
+        compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/SelectedList.c"))
+        compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/Selector.c"))
+        compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/wepoll.c"))
     }
     tasks.findByName(compileTaskName)?.dependsOn(staticBuildTask)
     val args = listOf("-include-binary", staticBuildTask.staticFile.asFile.get().absolutePath)
@@ -95,16 +96,16 @@ kotlin {
 //        useNativeWepoll()
         useNativeNet()
     }
-    linuxMips32 {
-        useNativeUtils()
-//        useNativeWepoll()
-        useNativeNet()
-    }
-    linuxMipsel32 {
-        useNativeUtils()
-//        useNativeWepoll()
-        useNativeNet()
-    }
+//    linuxMips32 {
+//        useNativeUtils()
+// //        useNativeWepoll()
+//        useNativeNet()
+//    }
+//    linuxMipsel32 {
+//        useNativeUtils()
+// //        useNativeWepoll()
+//        useNativeNet()
+//    }
     mingwX64 {
         useNativeUtils()
         useNativeMingw()

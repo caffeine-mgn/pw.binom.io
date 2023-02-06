@@ -1,7 +1,7 @@
 package pw.binom.thread
 
 import kotlinx.cinterop.*
-import platform.posix.pthread_setname_np
+import platform.common.internal_setThreadName
 import platform.posix.usleep
 import platform.windows.*
 import kotlin.time.Duration
@@ -27,7 +27,7 @@ actual abstract class Thread(var _id: HANDLE?, name: String) {
     actual var name: String = name
         set(value) {
             if (_id != null) {
-                pthread_setname_np(id.convert(), value)
+                internal_setThreadName(id.convert(), value)
             }
             field = value
         }
@@ -92,6 +92,7 @@ actual abstract class Thread(var _id: HANDLE?, name: String) {
 }
 
 private val func: CPointer<CFunction<(COpaquePointer?) -> DWORD>> = staticCFunction { ptr ->
+    initRuntimeIfNeeded()
     val thread = ptr!!.asStableRef<Thread>()
     try {
         thread.get().nativeExecute()

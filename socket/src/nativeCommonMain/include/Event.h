@@ -7,6 +7,7 @@ struct Event {
 #define FLAG_READ 0b0001
 #define FLAG_WRITE 0b0010
 #define FLAG_ERROR 0b0100
+#define FLAG_ONCE 0b1000
 
 struct Event *mallocEvent();
 

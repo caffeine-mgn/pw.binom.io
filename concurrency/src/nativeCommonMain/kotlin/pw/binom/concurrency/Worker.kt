@@ -19,6 +19,8 @@ actual class Worker actual constructor(name: String?) {
         get() = _taskCount.getValue()
 
     actual fun <DATA, RESULT> execute(input: DATA, func: (DATA) -> RESULT): Future<RESULT> {
+        nativeWorker.executeAfter {
+        }
         val r = FreezableFuture<RESULT>()
         val nativeFeature = nativeWorker.execute(TransferMode.SAFE, getFunc(this, input, func, r)) {
             initRuntimeIfNeeded()

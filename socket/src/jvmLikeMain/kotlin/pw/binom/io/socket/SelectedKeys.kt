@@ -41,16 +41,9 @@ actual class SelectedKeys {
 //                if (it.isConnectable) {
 //                    return@forEach
 //                }
-                var r = 0
-                if (it.isAcceptable || it.isReadable || it.isConnectable) {
-                    r = r or KeyListenFlags.READ
-                }
-                if (it.isWritable || it.isConnectable) {
-                    r = r or KeyListenFlags.WRITE
-                }
 
                 keyImpl.internalKey = key
-                keyImpl.internalFlags = r
+                keyImpl.internalFlags = it.toCommonReadFlag()
                 func(keyImpl)
             }
         }

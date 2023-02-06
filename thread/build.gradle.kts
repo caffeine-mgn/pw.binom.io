@@ -1,4 +1,5 @@
 import pw.binom.publish.dependsOn
+import pw.binom.useDefault
 
 dependencies {
     implementation(project(mapOf("path" to ":io")))
@@ -10,6 +11,16 @@ plugins {
         id("com.android.library")
     }
 }
+
+fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useNative() {
+    compilations["main"].cinterops {
+        create("native") {
+            defFile = project.file("src/cinterop/native.def")
+            packageName = "platform.common"
+        }
+    }
+}
+
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
@@ -18,30 +29,51 @@ kotlin {
         }
     }
     jvm()
-    linuxX64()
-    linuxArm64()
-    linuxArm32Hfp()
-    linuxMips32()
-    linuxMipsel32()
-    mingwX64()
-    mingwX86()
-    macosX64()
-    macosArm64()
+    linuxX64 {
+        useNative()
+    }
+    linuxArm64 {
+        useNative()
+    }
+    linuxArm32Hfp {
+        useNative()
+    }
+    linuxMips32 {
+        useNative()
+    }
+    linuxMipsel32 {
+        useNative()
+    }
+    mingwX64 {
+        useNative()
+    }
+    mingwX86 {
+        useNative()
+    }
+    macosX64 {
+        useNative()
+    }
+    macosArm64 {
+        useNative()
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
                 api(project(":collections"))
+                api(project(":concurrency"))
                 api(project(":metric"))
                 api(project(":io"))
             }
         }
+        /*
         val nativeMain by creating {
             dependsOn(commonMain)
         }
         val posixMain by creating {
             dependsOn(nativeMain)
         }
+
         val jvmMain by getting {
             dependsOn(commonMain)
         }
@@ -63,7 +95,11 @@ kotlin {
             dependsOn(posixMain)
         }
         dependsOn("macos*Main", macosX64Main)
-
+*/
+        useDefault()
+        val jvmMain by getting {
+        }
+        dependsOn("androidMain", jvmMain)
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))

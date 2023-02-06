@@ -43,8 +43,8 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         if (!opensslDirection.isDirectory) {
             throw GradleException("OpenSSL direction \"$opensslDirection\" not found")
         }
-        Konan.checkKonanInstalled()
-        Konan.checkSysrootInstalled(target.get())
+        Konan.checkKonanInstalled(pw.binom.Versions.KOTLIN_VERSION)
+        Konan.checkSysrootInstalled(pw.binom.Versions.KOTLIN_VERSION, target.get())
         val info = targetInfoMap[target.get()] ?: TODO()
         val llvmPath = "${info.llvmDir}${File.separator}clang".executable.replace("\\", "/")
         val llvmArPath = "${info.llvmDir}${File.separator}llvm-ar".executable.replace("\\", "/")

@@ -54,8 +54,14 @@ class TcpServerConnection constructor(
     }
 
     override fun readyForRead(key: SelectorKey) {
-        val acceptListener = acceptListener ?: return
-        val newChannel = channel.accept(null) ?: return
+        val acceptListener = acceptListener
+        if (acceptListener == null) {
+            return
+        }
+        val newChannel = channel.accept(null)
+        if (newChannel == null) {
+            return
+        }
         this.acceptListener = null
         acceptListener.resume(newChannel)
     }
@@ -89,9 +95,13 @@ class TcpServerConnection constructor(
         }
 
         val newChannel = suspendCancellableCoroutine<TcpClientSocket> { con ->
-            acceptListener = con
-            currentKey.listenFlags = KeyListenFlags.READ // or KeyListenFlags.ERROR
-            currentKey.selector.wakeup()
+            try {
+                acceptListener = con
+                currentKey.listenFlags = KeyListenFlags.READ or KeyListenFlags.ONCE
+                currentKey.selector.wakeup()
+            } catch (e: Throwable) {
+                con.resumeWithException(e)
+            }
             con.invokeOnCancellation {
                 acceptListener = null
                 currentKey.listenFlags = 0

@@ -1,7 +1,3 @@
-//
-// Created by subochev on 21.01.23.
-//
-
 #ifndef NATIVE_DEFINITION_H
 #define NATIVE_DEFINITION_H
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)

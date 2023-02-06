@@ -1,5 +1,6 @@
 package pw.binom.concurrency
 
+/*
 import pw.binom.FreezableFuture
 import pw.binom.Future
 import pw.binom.atomic.AtomicBoolean
@@ -161,3 +162,4 @@ class WorkerPool(size: Int = Worker.availableProcessors) {
 //        submit { block.run() }
 //    }
 }
+*/
