@@ -2,7 +2,6 @@ package pw.binom.network
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runTest
-import pw.binom.concurrency.WorkerPool
 import pw.binom.io.ByteBuffer
 import pw.binom.io.clean
 import pw.binom.io.nextBytes
@@ -160,7 +159,6 @@ class NetworkDispatcherTest {
         val nd = NetworkCoroutineDispatcherImpl()
         val server = nd.bindTcp(address)
         val port = server.port
-        val executeWorker = WorkerPool(10)
         val serverFuture = GlobalScope.launch(nd) {
             val client = server.accept()
             launch {

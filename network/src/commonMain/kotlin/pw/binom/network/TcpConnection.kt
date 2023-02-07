@@ -49,9 +49,9 @@ class TcpConnection(
 
     private fun calcListenFlags() =
         when {
-            readData.continuation != null && (sendData.continuation != null) -> KeyListenFlags.READ or KeyListenFlags.WRITE
-            readData.continuation != null -> KeyListenFlags.READ
-            sendData.continuation != null -> KeyListenFlags.WRITE
+            readData.continuation != null && (sendData.continuation != null) -> KeyListenFlags.READ or KeyListenFlags.WRITE or KeyListenFlags.ONCE
+            readData.continuation != null -> KeyListenFlags.READ or KeyListenFlags.ONCE
+            sendData.continuation != null -> KeyListenFlags.WRITE or KeyListenFlags.ONCE
             else -> 0
         }
 
@@ -72,7 +72,7 @@ class TcpConnection(
 //                key.removeListen(KeyListenFlags.WRITE)
                 con.resumeWith(result)
             } else {
-                key.addListen(KeyListenFlags.WRITE)
+                key.addListen(KeyListenFlags.WRITE or KeyListenFlags.ONCE)
             }
             if (sendData.continuation == null) {
                 currentKey.listenFlags = calcListenFlags()
@@ -106,7 +106,7 @@ class TcpConnection(
             data!!.holdState {
                 data.position = p
                 data.limit = p + readed
-                println("TcpClient: Read lazy: ${data.toByteArray().decodeToString()}")
+//                println("TcpClient: Read lazy: ${data.toByteArray().decodeToString()}")
             }
         }
         if (readData.full) {
@@ -114,7 +114,7 @@ class TcpConnection(
                 readData.reset()
                 continuation.resume(value = readed, onCancellation = null)
             } else {
-                currentKey.addListen(KeyListenFlags.READ)
+                currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE)
             }
         } else {
             readData.reset()
@@ -157,7 +157,7 @@ class TcpConnection(
 
                 try {
                     this.connect = it
-                    this.currentKey.listenFlags = KeyListenFlags.WRITE or KeyListenFlags.ERROR
+                    this.currentKey.listenFlags = KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE
                     this.currentKey.selector.wakeup()
                 } catch (e: Throwable) {
                     this.connect = null
@@ -214,11 +214,11 @@ class TcpConnection(
             close()
             throw SocketClosedException()
         }
-        println("wait write event...")
+//        println("wait write event...")
         sendData.data = data
         return suspendCancellableCoroutine<Int> {
             sendData.continuation = it
-            this.currentKey.addListen(KeyListenFlags.WRITE)
+            this.currentKey.addListen(KeyListenFlags.WRITE or KeyListenFlags.ONCE)
             this.currentKey.selector.wakeup()
             it.invokeOnCancellation {
                 this.currentKey.removeListen(KeyListenFlags.WRITE)
@@ -261,7 +261,7 @@ class TcpConnection(
                 continuation = continuation,
                 data = dest
             )
-            currentKey.addListen(KeyListenFlags.READ)
+            currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE)
             currentKey.selector.wakeup()
         }
         if (readed == 0) {
@@ -284,11 +284,11 @@ class TcpConnection(
             throw e
         }
         if (read > 0) {
-            dest.holdState {
-                dest.position = p
-                dest.limit = p + read
-                println("TcpClient: Read now: ${dest.toByteArray().decodeToString()}")
-            }
+//            dest.holdState {
+//                dest.position = p
+//                dest.limit = p + read
+//                println("TcpClient: Read now: ${dest.toByteArray().decodeToString()}")
+//            }
             return read
         }
         if (read == -1) {
@@ -306,7 +306,7 @@ class TcpConnection(
                 continuation = it,
                 data = dest
             )
-            currentKey.addListen(KeyListenFlags.READ)
+            currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE)
             currentKey.selector.wakeup()
         }
     }

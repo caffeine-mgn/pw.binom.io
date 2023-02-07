@@ -28,7 +28,7 @@ class tt {
             }
         )
         server.listenHttp(NetworkAddress.create("0.0.0.0", 50051))
-        manager.networkThread.join()
+        manager.close()
     }
 }
 

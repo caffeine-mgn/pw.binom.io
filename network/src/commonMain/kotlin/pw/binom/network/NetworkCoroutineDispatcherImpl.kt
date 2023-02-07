@@ -4,11 +4,11 @@ package pw.binom.network
 // import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
-import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.io.socket.Selector
+import pw.binom.thread.SingleThreadExecutorService
 import pw.binom.thread.Thread
 import kotlin.coroutines.CoroutineContext
 
@@ -24,9 +24,9 @@ abstract class NetworkCoroutineDispatcher : AbstractNetworkManager(), NetworkMan
 //    abstract suspend fun tcpConnect(address: NetworkAddress): TcpConnection
 }
 
-private var counter = 0
-
 class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
+
+    private val executor = SingleThreadExecutorService()
 
     private var closed = AtomicBoolean(false)
     override val selector = Selector()
@@ -36,33 +36,37 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
         }
     }
 
+    private val selectThread = Thread {
+        SelectExecutor.startSelecting(
+            selector = selector,
+            isSelectorClosed = { closed.getValue() },
+            submitTask = executor::submit,
+        )
+    }
+
+    init {
+        selectThread.start()
+    }
+
     override fun toString(): String = "Dispatchers.Network"
 
     //    private val exchange = Exchange<Runnable>()
-    private val exchange = BatchExchange<Runnable>()
-    val networkThread = NetworkThread(
-        selector = selector,
-        exchange = this.exchange,
-        name = "NetworkThread-${counter++}"
-    )
-
-    init {
-        networkThread.start()
-    }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        check(!networkThread.isClosed) { "Network thread already closed" }
-        this.exchange.push(block)
+        if (closed.getValue()) {
+            return // skip any tasks after closed
+        }
+        executor.submit { block.run() }
         wakeup()
     }
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = Thread.currentThread.id != networkThread.id
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !executor.isThreadFromPool(Thread.currentThread)
 
     override fun close() {
         if (closed.compareAndSet(false, true)) {
-            networkThread.close()
+            executor.shutdownNow()
             selector.wakeup()
-            networkThread.join()
+            selectThread.join()
             selector.close()
         }
     }

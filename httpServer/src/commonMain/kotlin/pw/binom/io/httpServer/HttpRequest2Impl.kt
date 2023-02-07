@@ -293,7 +293,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         val resp = response() as HttpResponse2Impl
         resp.status = 101
         resp.headers[Headers.CONNECTION] = Headers.UPGRADE
-        resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
+        resp.headers[Headers.UPGRADE] = Headers.TCP
         resp.sendHeadersAndFree()
         isReadyForResponse = false
         return channel.channel

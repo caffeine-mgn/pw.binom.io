@@ -85,27 +85,38 @@ actual class Selector : Closeable {
             native.selectedKeys().forEach { nativeKey ->
                 val binomKey = nativeKey.attachment() as SelectorKey
                 eventImpl.internalKey = binomKey
-                if (nativeKey.isConnectable) {
-                    val channel = nativeKey.channel() as? SocketChannel
-                    if (channel?.isConnectionPending == true) {
-                        try {
-                            channel.finishConnect()
-                            binomKey.isErrorHappened = false
-                            eventImpl.internalFlag = KeyListenFlags.WRITE or nativeKey.toCommonReadFlag()
-                            eventFunc(eventImpl)
-                        } catch (e: java.net.ConnectException) {
-                            binomKey.isErrorHappened = true
-                            if (binomKey.listenFlags and KeyListenFlags.ONCE != 0) {
-                                binomKey.listenFlags = 0
+                when {
+                    !nativeKey.isValid -> {
+                        binomKey.isErrorHappened = false
+                        eventImpl.internalFlag = KeyListenFlags.ERROR or KeyListenFlags.READ or KeyListenFlags.WRITE
+                        eventFunc(eventImpl)
+                        return@forEach
+                    }
+
+                    nativeKey.isConnectable -> {
+                        val channel = nativeKey.channel() as? SocketChannel
+                        if (channel?.isConnectionPending == true) {
+                            try {
+                                channel.finishConnect()
+                                binomKey.isErrorHappened = false
+                                eventImpl.internalFlag = KeyListenFlags.WRITE or nativeKey.toCommonReadFlag()
+                                eventFunc(eventImpl)
+                            } catch (e: java.net.ConnectException) {
+                                binomKey.isErrorHappened = true
+                                if (binomKey.listenFlags and KeyListenFlags.ONCE != 0) {
+                                    binomKey.listenFlags = 0
+                                }
+                                eventImpl.internalFlag = KeyListenFlags.ERROR or KeyListenFlags.READ
+                                eventFunc(eventImpl)
+                                return@forEach
                             }
-                            eventImpl.internalFlag = KeyListenFlags.ERROR or KeyListenFlags.READ
-                            eventFunc(eventImpl)
-                            return@forEach
                         }
                     }
-                } else {
-                    eventImpl.internalFlag = nativeKey.toCommonReadFlag()
-                    eventFunc(eventImpl)
+
+                    else -> {
+                        eventImpl.internalFlag = nativeKey.toCommonReadFlag()
+                        eventFunc(eventImpl)
+                    }
                 }
                 binomKey.isErrorHappened = false
                 if (binomKey.listenFlags and KeyListenFlags.ONCE != 0) {

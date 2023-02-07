@@ -59,7 +59,7 @@ class HttpServerTest {
                     maxIdleTime = 2.seconds,
                     manager = nd
                 ).use { httpServer ->
-                    httpServer.listenHttp(NetworkAddress.create(host = "127.0.0.1", port = port))
+                    httpServer.listenHttp(NetworkAddress.create(host = "127.0.0.1", port = port), networkManager = nd)
 
                     makeHttpQuery(
                         networkManager = nd,

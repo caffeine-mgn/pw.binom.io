@@ -59,8 +59,6 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
-                api(project(":concurrency"))
-                api(project(":date"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
@@ -69,9 +67,6 @@ kotlin {
             dependencies {
                 api(kotlin("test-junit"))
             }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
         }
     }
 }

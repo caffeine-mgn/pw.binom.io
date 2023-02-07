@@ -3,7 +3,6 @@ package pw.binom.network
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.WorkerPool
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
 import kotlin.test.Test
@@ -33,7 +32,6 @@ class MultithreadingTest {
     fun test() = runTest(dispatchTimeoutMs = 10_000) {
         val flag1 = AtomicBoolean(false)
         val nd = NetworkCoroutineDispatcherImpl()
-        val executor = WorkerPool(10)
         val addr = NetworkAddress.create("127.0.0.1", 8765)
         val server = launch {
             nd.bindTcp(addr).use { server ->

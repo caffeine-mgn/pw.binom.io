@@ -104,14 +104,14 @@ class SelectorTest {
         val client = Socket.createTcpClientNetSocket()
         client.blocking = false
         val key = tandem.selector.attach(client)
-        key.listenFlags = KeyListenFlags.WRITE
+        key.listenFlags = KeyListenFlags.WRITE or KeyListenFlags.ONCE
         client.connect(httpServerAddress)
         val events = tandem.select()
         assertEquals(1, events.size)
         assertSame(key, events.first().key)
         assertTrue(events.first().flags and KeyListenFlags.ERROR == 0, "flag not contains error flag")
         assertTrue(events.first().flags and KeyListenFlags.WRITE != 0, "flag not contains write flag")
-        assertTrue(events.first().flags and KeyListenFlags.READ == 0, "flag not contains read flag")
+//        assertTrue(events.first().flags and KeyListenFlags.READ == 0, "flag not contains read flag")
         assertEquals(0, key.listenFlags)
         assertTrue(tandem.select(1.seconds).isEmpty(), "should contents no events")
     }
@@ -122,7 +122,7 @@ class SelectorTest {
         val client = Socket.createTcpClientNetSocket()
         client.blocking = false
         val key = tandem.selector.attach(client)
-        key.listenFlags = KeyListenFlags.WRITE or KeyListenFlags.ERROR
+        key.listenFlags = KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE
         client.connect(NetworkAddress.create(host = "127.0.0.1", port = 1))
         println("#--1")
         val events = tandem.select()

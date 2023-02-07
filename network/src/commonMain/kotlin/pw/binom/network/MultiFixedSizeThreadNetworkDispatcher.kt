@@ -1,23 +1,28 @@
 package pw.binom.network
 
 import kotlinx.coroutines.Runnable
-import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.collections.defaultMutableList
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.io.socket.Selector
+import pw.binom.thread.FixedThreadExecutorService
 import pw.binom.thread.Thread
 import kotlin.coroutines.CoroutineContext
 
 class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkManager(), Closeable {
     override val selector = Selector()
 
-    private val exchange = BatchExchange<Runnable>()
-//    private val exchange = Exchange<Runnable>()
-
     init {
         require(threadSize > 0) { "threadSize should be more than 0" }
+    }
+
+    private val threads = FixedThreadExecutorService(threadSize)
+    private val selectThread = Thread {
+        SelectExecutor.startSelecting(
+            selector = selector,
+            isSelectorClosed = { closed.getValue() },
+            submitTask = threads::submit,
+        )
     }
 
     private val closed = AtomicBoolean(false)
@@ -27,24 +32,9 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkMa
         }
     }
 
-    private val threads = defaultMutableList<NetworkThread>(threadSize)
-
-    init {
-        repeat(threadSize) {
-            val thread = NetworkThread(
-                selector = selector,
-                exchange = exchange,
-                name = "NetworkDispatcher-$it"
-            )
-            thread.start()
-            threads += thread
-        }
-    }
-
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         ensureOpen()
-        val currentId = Thread.currentThread.id
-        return !threads.any { it.id == currentId }
+        return !threads.isThreadFromPool(Thread.currentThread)
     }
 
 //    override val key: CoroutineContext.Key<*>
@@ -52,22 +42,21 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkMa
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         ensureOpen()
-        exchange.push(block)
+        threads.submit { block.run() }
         selector.wakeup()
     }
 
     override fun close() {
-        if (closed.getValue()) {
+        if (!closed.compareAndSet(false, true)) {
             return
         }
-        threads.forEach {
-            it.close()
-        }
-        while (threads.isNotEmpty()) {
-            threads.removeIf { !it.isActive }
-            selector.wakeup()
-            Thread.sleep(10)
-        }
+        threads.shutdownNow()
+        selector.wakeup()
+        selectThread.join()
         selector.close()
+    }
+
+    init {
+        selectThread.start()
     }
 }

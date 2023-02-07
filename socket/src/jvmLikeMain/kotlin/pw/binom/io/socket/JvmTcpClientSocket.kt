@@ -71,7 +71,11 @@ class JvmTcpClientSocket(
     }
 
     override fun receive(data: ByteBuffer): Int {
-        return native.read(data.native) ?: throw IllegalStateException()
+        try {
+            return native.read(data.native)
+        } catch (e: java.net.SocketException) {
+            return -1
+        }
     }
 
     override fun connect(path: String): ConnectStatus {

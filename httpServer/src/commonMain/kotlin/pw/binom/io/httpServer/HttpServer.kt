@@ -205,16 +205,16 @@ class HttpServer(
         }
     }
 
-    fun listenHttp(address: NetworkAddress, dispatcher: NetworkManager = Dispatchers.Network): Job {
+    fun listenHttp(address: NetworkAddress, networkManager: NetworkManager = Dispatchers.Network): Job {
         val serverChannel = Socket.createTcpServerNetSocket()
         serverChannel.bind(address)
         serverChannel.blocking = false
-        val server = dispatcher.attach(serverChannel)
+        val server = networkManager.attach(serverChannel)
         server.description = address.toString()
         binds += server
 
         val closed = AtomicBoolean(false)
-        val listenJob = manager.launch(dispatcher)/*(start = CoroutineStart.UNDISPATCHED)*/ {
+        val listenJob = manager.launch(networkManager)/*(start = CoroutineStart.UNDISPATCHED)*/ {
 //            withContext(dispatcher) {
             try {
                 while (!closed.getValue()) {
