@@ -1,8 +1,9 @@
 package pw.binom.io.http
 
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
-import pw.binom.io.StreamClosedException
+import pw.binom.io.ClosedException
 import pw.binom.skipAll
 
 open class AsyncContentLengthInput(
@@ -15,16 +16,16 @@ open class AsyncContentLengthInput(
         get() = eof
 
     private val eof
-        get() = closed || readed >= contentLength
+        get() = closed.getValue() || readed >= contentLength
 
     override val available: Int
         get() = minOf(contentLength - readed, Int.MAX_VALUE.toULong()).toInt()
 
     private var readed = 0uL
-    private var closed = false
+    private var closed = AtomicBoolean(false)
 
     override suspend fun read(dest: ByteBuffer): Int {
-        checkClosed()
+        ensureOpen()
         if (dest.remaining == 0) {
             return 0
         }
@@ -47,19 +48,27 @@ open class AsyncContentLengthInput(
     }
 
     override suspend fun asyncClose() {
-        checkClosed()
+        if (!closed.compareAndSet(false, true)) {
+            return
+        }
         if (!isEof) {
             skipAll()
         }
-        closed = true
         if (closeStream) {
             stream.asyncClose()
         }
     }
 
-    protected fun checkClosed() {
-        if (closed) {
-            throw StreamClosedException()
+    override suspend fun skipAll(buffer: ByteBuffer) {
+        if (closed.getValue()) {
+            return
+        }
+        super.skipAll(buffer)
+    }
+
+    protected fun ensureOpen() {
+        if (closed.getValue()) {
+            throw ClosedException()
         }
     }
 }

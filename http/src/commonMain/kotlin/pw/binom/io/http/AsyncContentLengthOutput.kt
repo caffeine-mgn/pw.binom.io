@@ -1,8 +1,9 @@
 package pw.binom.io.http
 
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
-import pw.binom.io.StreamClosedException
+import pw.binom.io.ClosedException
 
 open class AsyncContentLengthOutput(
     val stream: AsyncOutput,
@@ -11,7 +12,7 @@ open class AsyncContentLengthOutput(
 ) : AsyncOutput {
 
     override suspend fun write(data: ByteBuffer): Int {
-        checkClosed()
+        ensureOpen()
         if (wrote >= contentLength) {
             return 0
 //            throw IllegalStateException("All Content already send. ContentLength: [$contentLength], data.remaining: [${data.remaining}]")
@@ -39,9 +40,10 @@ open class AsyncContentLengthOutput(
     }
 
     override suspend fun asyncClose() {
-        checkClosed()
+        if (!closed.compareAndSet(false, true)) {
+            return
+        }
         flush()
-        closed = true
         if (closeStream) {
             stream.asyncClose()
         }
@@ -53,11 +55,11 @@ open class AsyncContentLengthOutput(
     val isFull
         get() = wrote == contentLength
 
-    private var closed = false
+    private var closed = AtomicBoolean(false)
 
-    protected fun checkClosed() {
-        if (closed) {
-            throw StreamClosedException()
+    protected fun ensureOpen() {
+        if (closed.getValue()) {
+            throw ClosedException()
         }
     }
 }

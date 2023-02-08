@@ -52,6 +52,7 @@ class HttpServer(
 
     //    internal val textBufferPool = ByteBufferPool(capacity = 16)
     internal val textBufferPool = GenericObjectPool(initCapacity = 0, factory = ByteBufferFactory(size = 50))
+
     internal val httpRequest2Impl = GenericObjectPool(initCapacity = 0, factory = HttpRequest2Impl.Manager)
     internal val httpResponse2Impl = GenericObjectPool(initCapacity = 0, factory = HttpResponse2Impl.Manager)
     internal val reusableAsyncChunkedOutputPool = GenericObjectPool(
@@ -122,6 +123,8 @@ class HttpServer(
 //        clientProcessing(channel = channel, isNewConnect = false)
     }
 
+    private val idlePool = IdlePool { channel -> clientReProcessing(channel) }
+
     internal fun clientProcessing(
         channel: ServerAsyncAsciiChannel,
         isNewConnect: Boolean,
@@ -131,14 +134,15 @@ class HttpServer(
             idleJobsLock.synchronize {
                 idleJobs += coroutineContext.job
             }
-            var req: HttpRequest2Impl? = null
+            var req: HttpRequest3Impl? = null
             try {
-                req = HttpRequest2Impl.read(
+                req = HttpRequest3Impl.read(
                     channel = channel,
                     server = this@HttpServer,
                     isNewConnect = isNewConnect,
                     readStartTimeout = timeout,
                     idleJob = this.coroutineContext.job,
+                    returnToIdle = idlePool,
                 ).getOrThrow()
 
 //                req = HttpRequest2Impl.read(
@@ -177,10 +181,10 @@ class HttpServer(
                     // Do nothing
                 }
             } finally {
-                if (req != null) {
-                    req.free()
-                    httpRequest2Impl.recycle(req)
-                }
+//                if (req != null) {
+//                    req.free()
+//                    httpRequest2Impl.recycle(req)
+//                }
             }
         }
     }

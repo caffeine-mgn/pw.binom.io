@@ -2,7 +2,6 @@ package pw.binom.io.httpServer
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withTimeoutOrNull
-import pw.binom.charset.Charsets
 import pw.binom.compression.zlib.AsyncGZIPInput
 import pw.binom.compression.zlib.AsyncInflateInput
 import pw.binom.concurrency.synchronize
@@ -47,7 +46,9 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
 //            val request = channel.reader.readln()
             if (idleJob != null) {
                 server.idleJobsLock.synchronize {
-                    server.idleJobs -= idleJob
+                    if (!server.idleJobs.remove(idleJob)) {
+                        return@runCatching null
+                    }
                 }
             }
             if (!isNewConnect) {
@@ -62,20 +63,13 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             server.httpRequest2Impl.tryBorrow { requestObject ->
                 val headers = requestObject.internalHeaders
                 headers.clear()
-                while (true) {
-                    val s = channel.reader.readln() ?: break
-                    if (s.isEmpty()) {
-                        break
-                    }
-                    val p = s.indexOf(':')
-                    if (p < 0) {
-                        channel.asyncCloseAnyway()
-                        throw IOException("Invalid HTTP Header: \"$s\". channel.reader.buffer.hashCode=${channel.reader.buffer.hashCode()}")
-                    }
-                    val headerKey = s.substring(0, p)
-                    val headerValue = s.substring(p + 2)
-                    headers.add(headerKey, headerValue)
+                try {
+                    HttpUtils.readHeaders(dest = headers, reader = channel.reader)
+                } catch (e: Throwable) {
+                    channel.asyncCloseAnyway()
+                    throw e
                 }
+
                 requestObject.reset(
                     request = (items.getOrNull(1) ?: ""),
                     method = items[0],
@@ -206,35 +200,33 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         return stream
     }
 
-    override fun readText(): AsyncReader {
-        val charset = headers.charset ?: "utf-8"
-        return readBinary().bufferedReader(charset = Charsets.get(charset))
-    }
-
     private suspend fun checkTcp() {
-        if (!headers[Headers.CONNECTION]?.singleOrNull().equals(Headers.UPGRADE, true)) {
-            rejectWebsocket()
-            throw IllegalStateException("Invalid Client Headers: Invalid Header \"${Headers.CONNECTION}\"")
+        if (!hasUpgrade()) {
+            sendReject()
+            throw IllegalStateException("Invalid Client Headers: Header \"${Headers.CONNECTION}: ${Headers.UPGRADE}\" not found")
         }
+
         if (!headers[Headers.UPGRADE]?.singleOrNull().equals(Headers.TCP, true)) {
-            rejectWebsocket()
+            sendReject()
             throw IllegalStateException("Invalid Client Headers: Invalid Header \"${Headers.UPGRADE}\"")
         }
     }
 
+    private fun hasUpgrade() = headers[Headers.CONNECTION]
+        ?.asSequence()
+        ?.flatMap { it.splitToSequence(',') }
+        ?.map { it.trim() }
+        ?.any { it.equals(Headers.UPGRADE, true) }
+        ?: false
+
     private suspend fun checkWebSocket() {
         val connection = headers[Headers.CONNECTION]
         if (connection == null) {
-            rejectWebsocket()
+            sendReject()
             throw IllegalStateException("Invalid Client Headers: Missing Header \"${Headers.CONNECTION}\"")
         }
-        val hasUpgrade = connection
-            .asSequence()
-            .flatMap { it.splitToSequence(',') }
-            .map { it.trim() }
-            .any { it.equals(Headers.UPGRADE, true) }
-        if (!hasUpgrade) {
-            rejectWebsocket()
+        if (!hasUpgrade()) {
+            sendReject()
             throw IllegalStateException("Invalid Client Headers: Header \"${Headers.CONNECTION}: ${Headers.UPGRADE}\" not found")
         }
 //        if (connection.size > 1) {
@@ -248,7 +240,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
 //            throw IllegalStateException("Invalid Client Headers: Header \"${Headers.CONNECTION}\" has value \"$connectionValue\". Excepted \"${Headers.UPGRADE}\"")
 //        }
         if (!headers[Headers.UPGRADE]?.singleOrNull().equals(Headers.WEBSOCKET, true)) {
-            rejectWebsocket()
+            sendReject()
             throw IllegalStateException("Invalid Client Headers: Invalid Header \"${Headers.UPGRADE}\"")
         }
     }
@@ -260,7 +252,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         checkWebSocket()
         val key = headers.getSingleOrNull(Headers.SEC_WEBSOCKET_KEY)
         if (key == null) {
-            rejectWebsocket()
+            sendReject()
             throw IllegalStateException("Invalid Client Headers: Missing Header \"${Headers.SEC_WEBSOCKET_KEY}\"")
         }
         val sha1 = Sha1MessageDigest()
@@ -278,14 +270,6 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         )
     }
 
-    override suspend fun rejectWebsocket() {
-        checkClosed()
-        response().use {
-            it.headers.keepAlive = false
-            it.status = 403
-        }
-    }
-
     override suspend fun acceptTcp(): AsyncChannel {
         checkClosed()
         checkTcp()
@@ -297,14 +281,6 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         resp.sendHeadersAndFree()
         isReadyForResponse = false
         return channel.channel
-    }
-
-    override suspend fun rejectTcp() {
-        checkClosed()
-        response().use {
-            it.headers.keepAlive = false
-            it.status = 403
-        }
     }
 
     override suspend fun response(): HttpResponse {

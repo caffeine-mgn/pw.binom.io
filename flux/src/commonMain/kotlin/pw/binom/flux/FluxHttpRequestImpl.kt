@@ -94,11 +94,9 @@ internal class FluxHttpRequestImpl : FluxHttpRequest, HttpRequest,
 
     override suspend fun acceptWebsocket(masking: Boolean): WebSocketConnection = original!!.acceptWebsocket(masking)
 
-    override suspend fun rejectWebsocket() = original!!.rejectWebsocket()
+    override suspend fun sendReject() = original!!.sendReject()
 
     override suspend fun acceptTcp(): AsyncChannel = original!!.acceptTcp()
-
-    override suspend fun rejectTcp() = original!!.rejectTcp()
 
     override suspend fun response(): HttpResponse = original!!.response()
 

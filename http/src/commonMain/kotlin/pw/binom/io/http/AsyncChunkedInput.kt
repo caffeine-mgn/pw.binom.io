@@ -1,9 +1,10 @@
 package pw.binom.io.http
 
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
+import pw.binom.io.ClosedException
 import pw.binom.io.IOException
-import pw.binom.io.StreamClosedException
 import pw.binom.skipAll
 
 internal const val CR = 0x0D.toByte()
@@ -43,7 +44,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
 
     private val staticData = ByteBuffer(2)
     override val isEof: Boolean
-        get() = closed || eof
+        get() = closed.getValue() || eof
 
     override val available: Int
         get() = if (eof) 0 else -1
@@ -51,7 +52,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     private var chunkedSize: ULong? = null
     private var readed = 0uL
     private var eof = false
-    private var closed = false
+    private var closed = AtomicBoolean(false)
 
     private suspend fun readChankSize() {
         if (eof) {
@@ -80,7 +81,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     }
 
     override suspend fun read(dest: ByteBuffer): Int {
-        checkClosed()
+        ensureOpen()
         if (eof) {
             return 0
         }
@@ -126,20 +127,28 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     }
 
     override suspend fun asyncClose() {
-        checkClosed()
+        if (!closed.compareAndSet(false, true)) {
+            return
+        }
         if (!eof) {
             skipAll()
         }
-        closed = true
         staticData.close()
         if (closeStream) {
             stream.asyncClose()
         }
     }
 
-    protected fun checkClosed() {
-        if (closed) {
-            throw StreamClosedException()
+    protected fun ensureOpen() {
+        if (closed.getValue()) {
+            throw ClosedException()
         }
+    }
+
+    override suspend fun skipAll(buffer: ByteBuffer) {
+        if (closed.getValue()) {
+            return
+        }
+        super.skipAll(buffer)
     }
 }

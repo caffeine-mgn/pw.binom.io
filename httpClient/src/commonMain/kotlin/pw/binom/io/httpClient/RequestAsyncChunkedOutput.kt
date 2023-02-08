@@ -18,7 +18,7 @@ class RequestAsyncChunkedOutput constructor(
 ) {
 
     override suspend fun getResponse(): HttpResponse {
-        checkClosed()
+        ensureOpen()
         super.asyncClose()
         return DefaultHttpResponse.read(
             uri = URI,

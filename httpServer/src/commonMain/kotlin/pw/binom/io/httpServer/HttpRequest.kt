@@ -1,5 +1,6 @@
 package pw.binom.io.httpServer
 
+import pw.binom.charset.Charsets
 import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
@@ -15,7 +16,10 @@ interface HttpRequest : AsyncCloseable {
     val query: Query?
     val request: String
     fun readBinary(): AsyncInput
-    fun readText(): AsyncReader
+    fun readText(): AsyncReader {
+        val charset = headers.charset ?: "utf-8"
+        return readBinary().bufferedReader(charset = Charsets.get(charset))
+    }
 
     /**
      * Allow upgrade this connection to web-socket connection
@@ -25,7 +29,12 @@ interface HttpRequest : AsyncCloseable {
     /**
      * Reject upgrade this connection to web-socket connection
      */
-    suspend fun rejectWebsocket()
+    suspend fun sendReject() {
+        response {
+            it.headers.keepAlive = false
+            it.status = 403
+        }
+    }
 
     /**
      * Allow upgrade this connection to tcp connection
@@ -35,7 +44,6 @@ interface HttpRequest : AsyncCloseable {
     /**
      * Reject upgrade this connection to tcp connection
      */
-    suspend fun rejectTcp()
     suspend fun response(): HttpResponse
     suspend fun <T> response(func: suspend (HttpResponse) -> T): T =
         response().use {

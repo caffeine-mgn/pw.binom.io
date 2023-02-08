@@ -38,8 +38,8 @@ open class ReusableAsyncChunkedOutput(
     fun reset(stream: AsyncOutput, closeStream: Boolean) {
         this.stream = stream
         this.closeStream = closeStream
-        closed = false
-        finished = false
+        closed.setValue(false)
+        finished.setValue(false)
         buffer.clear()
     }
 

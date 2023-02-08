@@ -229,7 +229,7 @@ internal class HttpResponse2Impl(
     }
 }
 
-private class HttpResponseOutput(
+internal class HttpResponseOutput(
     val server: HttpServer,
     val channel: ServerAsyncAsciiChannel,
     val keepAlive: Boolean,
@@ -241,6 +241,30 @@ private class HttpResponseOutput(
         flush()
         if (keepAlive) {
             server.clientReProcessing(channel)
+        } else {
+            channel.asyncClose()
+        }
+    }
+
+    override suspend fun writeFully(data: ByteBuffer) = channel.writer.writeFully(data)
+
+    override suspend fun flush() {
+        channel.writer.flush()
+    }
+}
+
+internal class HttpResponseOutput2(
+    val channel: ServerAsyncAsciiChannel,
+    val keepAlive: Boolean,
+    val returnToIdle: IdlePool?,
+) : AsyncOutput {
+    override suspend fun write(data: ByteBuffer): Int =
+        channel.writer.write(data)
+
+    override suspend fun asyncClose() {
+        flush()
+        if (keepAlive && returnToIdle != null) {
+            returnToIdle.returnToPool(channel)
         } else {
             channel.asyncClose()
         }

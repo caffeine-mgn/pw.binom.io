@@ -36,7 +36,7 @@ class AbstractRouteTest {
             TODO("Not yet implemented")
         }
 
-        override suspend fun rejectWebsocket() {
+        override suspend fun sendReject() {
             TODO("Not yet implemented")
         }
 

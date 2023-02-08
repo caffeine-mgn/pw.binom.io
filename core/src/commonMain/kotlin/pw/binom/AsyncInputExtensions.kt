@@ -235,15 +235,6 @@ suspend fun AsyncInput.skipAll(bufferSkipSize: Int = DEFAULT_BUFFER_SIZE) {
     }
 }
 
-suspend fun AsyncInput.skipAll(buffer: ByteBuffer) {
-    while (true) {
-        buffer.clear()
-        if (read(buffer) == 0) {
-            break
-        }
-    }
-}
-
 object EmptyAsyncInput : AsyncInput {
     override val available: Int
         get() = 0

@@ -7,6 +7,15 @@ interface AsyncInput : AsyncCloseable {
      */
     val available: Int
 
+    suspend fun skipAll(buffer: ByteBuffer) {
+        while (true) {
+            buffer.clear()
+            if (read(buffer) == 0) {
+                break
+            }
+        }
+    }
+
     suspend fun read(dest: ByteBuffer): Int
     suspend fun readFully(dest: ByteBuffer): Int {
         val length = dest.remaining

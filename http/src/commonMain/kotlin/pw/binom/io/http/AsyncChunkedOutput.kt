@@ -1,6 +1,7 @@
 package pw.binom.io.http
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
@@ -22,13 +23,13 @@ open class AsyncChunkedOutput(
         protected set
     var closeStream: Boolean = closeStream
         protected set
-    protected var closed = false
-    protected var finished = false
+    protected val closed = AtomicBoolean(false)
+    protected val finished = AtomicBoolean(false)
     protected val buffer = ByteBuffer(autoFlushBuffer)
 
     private val tmp = ByteBuffer(50)
     override suspend fun write(data: ByteBuffer): Int {
-        checkClosed()
+        ensureOpen()
         val len = data.remaining
         while (true) {
             if (data.remaining == 0) {
@@ -60,8 +61,7 @@ open class AsyncChunkedOutput(
         buffer.clear()
     }
 
-    override suspend fun flush() {
-        checkClosed()
+    private suspend fun internalFlush() {
         if (buffer.position == 0) {
             return
         }
@@ -69,12 +69,16 @@ open class AsyncChunkedOutput(
         sendBuffer()
     }
 
+    override suspend fun flush() {
+        ensureOpen()
+        internalFlush()
+    }
+
     private suspend fun finish() {
-        checkClosed()
-        if (finished) {
+        if (!finished.compareAndSet(false, true)) {
             return
         }
-        flush()
+        internalFlush()
         tmp.clear()
         tmp.put('0'.code.toByte())
         tmp.put(CR)
@@ -85,7 +89,6 @@ open class AsyncChunkedOutput(
         stream.write(tmp)
 
         stream.flush()
-        finished = true
     }
 
     protected open fun closeInternalBuffers() {
@@ -94,13 +97,11 @@ open class AsyncChunkedOutput(
     }
 
     override suspend fun asyncClose() {
-        checkClosed()
-        if (finished) {
-            error("Stream already finished")
+        if (!closed.compareAndSet(false, true)) {
+            return
         }
         try {
             finish()
-            closed = true
             if (closeStream) {
                 stream.asyncClose()
             }
@@ -109,8 +110,8 @@ open class AsyncChunkedOutput(
         }
     }
 
-    protected fun checkClosed() {
-        if (closed) {
+    protected fun ensureOpen() {
+        if (closed.getValue()) {
             throw StreamClosedException()
         }
     }

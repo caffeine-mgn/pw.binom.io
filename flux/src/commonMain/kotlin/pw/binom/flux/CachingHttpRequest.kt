@@ -81,10 +81,8 @@ class CachingHttpRequest(
 
     override fun readText(): AsyncReader = original!!.readText()
 
-    override suspend fun rejectTcp() = original!!.rejectTcp()
-
-    override suspend fun rejectWebsocket() {
-        original!!.rejectWebsocket()
+    override suspend fun sendReject() {
+        original!!.sendReject()
 
         needClose = false
     }
