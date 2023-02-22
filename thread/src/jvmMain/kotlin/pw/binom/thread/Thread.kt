@@ -19,7 +19,7 @@ actual abstract class Thread constructor(val native: JvmThread) {
     private val jvmUncaughtExceptionHandler = JvmUncaughtExceptionHandler { _, throwable ->
         this@Thread.uncaughtExceptionHandler.uncaughtException(
             thread = this,
-            throwable = throwable
+            throwable = throwable,
         )
     }
 
@@ -91,6 +91,10 @@ actual abstract class Thread constructor(val native: JvmThread) {
 
         actual fun sleep(duration: Duration) {
             JvmThread.sleep(duration.inWholeMilliseconds)
+        }
+
+        actual fun yield() {
+            JvmThread.yield()
         }
     }
 

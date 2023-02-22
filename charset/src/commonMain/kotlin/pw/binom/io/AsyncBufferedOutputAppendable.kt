@@ -143,8 +143,8 @@ open class AsyncBufferedOutputAppendable protected constructor(
                 throw RuntimeException("Malformed String")
             }
             buffer.flip()
-            if (buffer.remaining != buffer.capacity) {
-                output.write(buffer)
+            if (buffer.remaining > 0) {
+                output.writeFully(buffer)
                 buffer.clear()
             }
             if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining == 0) {
@@ -178,37 +178,37 @@ fun AsyncOutput.bufferedWriter(
     pool: ByteBufferPool,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = 512,
-    closeParent: Boolean = true
+    closeParent: Boolean = true,
 ) = AsyncBufferedOutputAppendable(
     charset = charset,
     output = this,
     pool = pool,
     charBufferSize = charBufferSize,
-    closeParent = closeParent
+    closeParent = closeParent,
 )
 
 fun AsyncOutput.bufferedWriter(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = bufferSize / 2,
-    closeParent: Boolean = true
+    closeParent: Boolean = true,
 ) = AsyncBufferedOutputAppendable(
     charset = charset,
     output = this,
     bufferSize = bufferSize,
     charBufferSize = charBufferSize,
-    closeParent = closeParent
+    closeParent = closeParent,
 )
 
 fun AsyncOutput.bufferedWriter(
     buffer: ByteBuffer,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = buffer.capacity / 2,
-    closeParent: Boolean = true
+    closeParent: Boolean = true,
 ) = AsyncBufferedOutputAppendable(
     charset = charset,
     output = this,
     buffer = buffer,
     charBufferSize = charBufferSize,
-    closeParent = closeParent
+    closeParent = closeParent,
 )

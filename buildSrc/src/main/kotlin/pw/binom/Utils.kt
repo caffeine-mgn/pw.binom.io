@@ -30,24 +30,26 @@ fun NamedDomainObjectContainer<KotlinSourceSet>.useDefault() {
         return this
     }
 
-    fun dependsOn(target: String, vararg other: Pair<KotlinSourceSet?, KotlinSourceSet?>) {
+    fun dependsOn(target: String, vararg other: Pair<KotlinSourceSet?, KotlinSourceSet?>): List<KotlinSourceSet> {
+        val result = ArrayList<KotlinSourceSet>()
         other.forEach { other ->
             other.first?.let {
-                dependsOn("${target}Main", it)
+                result += dependsOn("${target}Main", it)
             }
             other.second?.let {
-                dependsOn("${target}Test", it)
+                result += dependsOn("${target}Test", it)
             }
         }
+        return result
     }
 
     fun findTarget(name: String) = findByName("${name}Main") to findByName("${name}Test")
     fun createTarget(name: String) = create("${name}Main") to create("${name}Test")
-
+    val js = findTarget("js")
     val common = findTarget("common")
     val jvmLike = createTarget("jvmLike").dp(common)
-    val nativeCommonMain = createTarget("nativeCommon").dp(common)
-    val nativeRunnableMain = createTarget("nativeRunnable").dp(nativeCommonMain)
+    val nativeCommon = createTarget("nativeCommon").dp(common)
+    val nativeRunnableMain = createTarget("nativeRunnable").dp(nativeCommon)
     val posixDesktop = createTarget("posixDesktop").dp(nativeRunnableMain)
     val mingwMain = createTarget("mingw").dp(nativeRunnableMain)
     val posixMain = createTarget("posix").dp(nativeRunnableMain)
@@ -64,7 +66,7 @@ fun NamedDomainObjectContainer<KotlinSourceSet>.useDefault() {
     dependsOn("ios*", darwinMain)
     dependsOn("tvos*", darwinMain)
     dependsOn("androidNative*", androidNativeMain)
-    dependsOn("wasm*Main", nativeCommonMain)
+    dependsOn("wasm*", nativeCommon)
 
     dependsOn("androidMain", jvmLike)
 
@@ -78,6 +80,11 @@ fun NamedDomainObjectContainer<KotlinSourceSet>.useDefault() {
     jvmLike.second.let {
         it.dependencies {
             api(kotlin("test"))
+        }
+    }
+    js.second?.apply {
+        dependencies {
+            api(kotlin("test-js"))
         }
     }
 }

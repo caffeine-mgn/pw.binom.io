@@ -1,17 +1,17 @@
 package pw.binom.io.socket
 
+import platform.common.internal_create_socket
 import platform.posix.AF_INET6
 import platform.posix.AF_UNIX
 import platform.posix.SOCK_DGRAM
 import platform.posix.SOCK_STREAM
-import platform.posix.*
 import pw.binom.io.Closeable
-import platform.common.internal_create_socket
 
 actual interface Socket : Closeable {
     actual var blocking: Boolean
     val native: RawSocket
     val server: Boolean
+    var keyHash: Int
 
     actual companion object {
         actual fun createTcpClientNetSocket(): TcpClientNetSocket {

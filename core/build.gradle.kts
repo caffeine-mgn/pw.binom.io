@@ -9,6 +9,15 @@ plugins {
     }
 }
 
+fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useNative() {
+    compilations["main"].cinterops {
+        create("native") {
+            defFile = project.file("src/cinterop/native.def")
+            packageName = "platform.common"
+        }
+    }
+}
+
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
@@ -17,28 +26,72 @@ kotlin {
         }
     }
     jvm()
-    linuxX64()
-    linuxArm64()
-    linuxArm32Hfp()
-    linuxMips32()
-    linuxMipsel32()
-    mingwX64()
-    mingwX86()
-    macosX64()
-    macosArm64()
-    iosX64()
-    iosArm32()
-    iosArm64()
-    iosSimulatorArm64()
-    watchosX64()
-    watchosX86()
-    watchosArm32()
-    watchosArm64()
-    watchosSimulatorArm64()
-    androidNativeX64()
-    androidNativeX86()
-    androidNativeArm32()
-    androidNativeArm64()
+    linuxX64 {
+        useNative()
+    }
+    linuxArm64 {
+        useNative()
+    }
+    linuxArm32Hfp {
+        useNative()
+    }
+    linuxMips32 {
+        useNative()
+    }
+    linuxMipsel32 {
+        useNative()
+    }
+    mingwX64 {
+        useNative()
+    }
+    mingwX86 {
+        useNative()
+    }
+    macosX64 {
+        useNative()
+    }
+    macosArm64 {
+        useNative()
+    }
+    iosX64 {
+        useNative()
+    }
+    iosArm32 {
+        useNative()
+    }
+    iosArm64 {
+        useNative()
+    }
+    iosSimulatorArm64 {
+        useNative()
+    }
+    watchosX64 {
+        useNative()
+    }
+    watchosX86 {
+        useNative()
+    }
+    watchosArm32 {
+        useNative()
+    }
+    watchosArm64 {
+        useNative()
+    }
+    watchosSimulatorArm64 {
+        useNative()
+    }
+    androidNativeX64 {
+        useNative()
+    }
+    androidNativeX86 {
+        useNative()
+    }
+    androidNativeArm32 {
+        useNative()
+    }
+    androidNativeArm64 {
+        useNative()
+    }
     wasm32()
     js(pw.binom.Target.JS_TARGET) {
         browser()

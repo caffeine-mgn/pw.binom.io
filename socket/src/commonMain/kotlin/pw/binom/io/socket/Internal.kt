@@ -7,7 +7,7 @@ internal fun throwUnixSocketNotSupported(): Nothing =
     throw RuntimeException("Mingw Target not supports Unix Domain Socket")
 
 internal fun SelectorKey.buildToString() =
-    "Selector(flags: ${commonFlagsToString(listenFlags)}, attachment: $attachment)"
+    "SelectorKey(flags: ${commonFlagsToString(listenFlags)}, readFlags: ${commonFlagsToString(readFlags)}, isClosed: $isClosed)"
 
 internal fun commonFlagsToString(flags: Int): String {
     if (flags == 0) {

@@ -36,6 +36,7 @@ expect abstract class Thread {
         val currentThread: Thread
         fun sleep(millis: Long)
         fun sleep(duration: Duration)
+        fun yield()
     }
 
     constructor()

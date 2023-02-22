@@ -21,7 +21,7 @@ value class KeyCollection(private val set: MutableSet<SelectorKey>) {
             if (it.isClosed) {
                 true
             } else {
-                it.listenFlags = flags
+                it.updateListenFlags(flags)
                 false
             }
         }
@@ -75,7 +75,7 @@ value class KeyCollection(private val set: MutableSet<SelectorKey>) {
     fun close() {
         set.forEach { key ->
             if (!key.isClosed) {
-                key.listenFlags = 0
+                key.updateListenFlags(0)
                 key.close()
             }
         }

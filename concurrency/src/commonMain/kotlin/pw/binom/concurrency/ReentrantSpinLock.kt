@@ -14,7 +14,7 @@ class ReentrantSpinLock : LockWithTimeout {
     private val threadId = AtomicLong(0)
     private val count = AtomicInt(0)
 
-    override fun lock() {
+    override fun lock(name: String?) {
         if (threadId.getValue() == (Worker.current?.id ?: 0)) {
             count.increment()
         } else {
@@ -28,7 +28,7 @@ class ReentrantSpinLock : LockWithTimeout {
         }
     }
 
-    override fun tryLock(): Boolean {
+    override fun tryLock(name: String?): Boolean {
         if (threadId.getValue() == (Worker.current?.id ?: 0)) {
             count.increment()
             return true

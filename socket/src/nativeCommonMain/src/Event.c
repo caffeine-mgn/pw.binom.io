@@ -51,7 +51,7 @@ void setEventFlags(struct Event *event, int flags, int isServerFlag) {
         }
     }
     if (flags & FLAG_WRITE) {
-        events = events | EPOLLOUT;
+        events = events | EPOLLOUT | EPOLLERR;
     }
     if (flags & FLAG_ERROR) {
         events = events | EPOLLERR;

@@ -11,7 +11,7 @@ import pw.binom.io.IOException
 
 class PosixSocket(
     native: RawSocket,
-    server: Boolean
+    server: Boolean,
 ) : AbstractSocket(native = native, server = server) {
 
     override fun bind(address: NetworkAddress): BindStatus {
@@ -222,4 +222,6 @@ class PosixSocket(
     override fun accept(address: ((String) -> Unit)?): TcpClientNetSocket? {
         TODO("Not yet implemented")
     }
+
+    override var keyHash: Int = 0
 }

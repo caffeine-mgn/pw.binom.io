@@ -22,7 +22,7 @@ private class AsyncReentrantLocksElement : CoroutineContext.Element {
     override val key: CoroutineContext.Key<*>
         get() = AsyncReentrantLocksKey
     private val locks = defaultMutableSet<AsyncReentrantLock>()
-    private val locksLock = SpinLock()
+    private val locksLock = SpinLock("AsyncReentrantLocksElement")
     fun add(lock: AsyncReentrantLock) {
         locksLock.synchronize {
             locks += lock
@@ -58,7 +58,7 @@ class AsyncReentrantLock : AsyncLock {
     private val waiters by lazy {
         defaultMutableSet<CancellableContinuation<Unit>>()
     }
-    private val waiterLock = SpinLock()
+    private val waiterLock = SpinLock("AsyncReentrantLock")
     private val locked = AtomicBoolean(false)
     private fun releaseLock() {
         val waiter = waiterLock.synchronize {

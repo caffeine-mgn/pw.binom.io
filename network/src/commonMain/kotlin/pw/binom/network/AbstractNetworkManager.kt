@@ -15,7 +15,9 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
         channel.blocking = false
         val key = selector.attach(socket = channel)
         val con = TcpConnection(channel = channel, currentKey = key)
-        key.listenFlags = mode
+        if (!key.updateListenFlags(mode)) {
+            throw IllegalStateException()
+        }
         key.attachment = con
         if (mode != 0) {
             selector.wakeup()
@@ -28,7 +30,9 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
         channel.blocking = false
         val key = selector.attach(socket = channel)
         val con = TcpServerConnection(channel = channel, dispatcher = this, currentKey = key)
-        key.listenFlags = 0
+        if (!key.updateListenFlags(0)) {
+            throw IllegalStateException()
+        }
         key.attachment = con
         return con
     }
@@ -38,7 +42,9 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
         val con = UdpConnection(channel)
         channel.blocking = false
         val key = selector.attach(socket = channel)
-        key.listenFlags = 0
+        if (!key.updateListenFlags(0)) {
+            throw IllegalStateException()
+        }
         key.attachment = con
         con.keys.addKey(key)
         return con

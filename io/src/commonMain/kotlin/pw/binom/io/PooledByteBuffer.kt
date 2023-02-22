@@ -5,7 +5,7 @@ import pw.binom.pool.ObjectPool
 
 class PooledByteBuffer(val pool: ObjectPool<PooledByteBuffer>, size: Int) : ByteBuffer(size) {
     val inPool = AtomicBoolean(true)
-    val deallocation = AtomicBoolean(false)
+    private val deallocation = AtomicBoolean(false)
 
     private fun checkPoolState() {
         if (super.isClosed) {

@@ -17,7 +17,7 @@ import pw.binom.io.UTF8
 open class AsyncChunkedOutput(
     stream: AsyncOutput,
     private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
-    closeStream: Boolean = false
+    closeStream: Boolean = false,
 ) : AsyncOutput {
     var stream: AsyncOutput = stream
         protected set

@@ -6,12 +6,12 @@ import kotlin.contracts.contract
 import kotlin.time.Duration
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T> Lock.synchronize(func: () -> T): T {
+inline fun <T> Lock.synchronize(name: String? = null, func: () -> T): T {
     contract {
         callsInPlace(func, InvocationKind.EXACTLY_ONCE)
     }
     try {
-        lock()
+        lock(name = name)
         return func()
     } finally {
         unlock()

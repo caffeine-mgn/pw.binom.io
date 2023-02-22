@@ -9,7 +9,7 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 actual object Charsets {
-    private val lock = SpinLock()
+    private val lock = SpinLock("Charsets")
     private val charsets = defaultMutableMap<String, IconvCharset>().useName("Charsets") // TODO implement clean on idle
 
     actual fun get(name: String): Charset {

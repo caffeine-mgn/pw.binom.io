@@ -2,6 +2,11 @@ package pw.binom
 
 import kotlin.native.Platform as KPlatform
 
+@Suppress("OPT_IN_IS_NOT_ENABLED")
+@OptIn(ExperimentalStdlibApi::class)
+actual val Environment.availableProcessors: Int
+    get() = KPlatform.getAvailableProcessors()
+
 actual val Environment.os: OS
     get() = internalOs
 
@@ -30,6 +35,7 @@ private val internalPlatform = when (KPlatform.cpuArchitecture) {
         OsFamily.TVOS -> Platform.TVOS_ARM_32
         OsFamily.WATCHOS -> Platform.WATCHOS_ARM_32
     }
+
     CpuArchitecture.ARM64 -> when (KPlatform.osFamily) {
         OsFamily.WINDOWS -> Platform.MINGW_ARM_64
         OsFamily.LINUX -> Platform.LINUX_ARM_64
@@ -41,6 +47,7 @@ private val internalPlatform = when (KPlatform.cpuArchitecture) {
         OsFamily.TVOS -> Platform.TVOS_ARM_64
         OsFamily.WATCHOS -> Platform.WATCHOS_ARM_64
     }
+
     CpuArchitecture.X64 -> when (KPlatform.osFamily) {
         OsFamily.WINDOWS -> Platform.MINGW_X64
         OsFamily.LINUX -> Platform.LINUX_64
@@ -52,6 +59,7 @@ private val internalPlatform = when (KPlatform.cpuArchitecture) {
         OsFamily.TVOS -> Platform.TVOS_X86
         OsFamily.WATCHOS -> Platform.WATCHOS_X86
     }
+
     CpuArchitecture.X86 -> when (KPlatform.osFamily) {
         OsFamily.WINDOWS -> Platform.MINGW_X86
         OsFamily.LINUX -> Platform.LINUX_X86
@@ -63,6 +71,7 @@ private val internalPlatform = when (KPlatform.cpuArchitecture) {
         OsFamily.TVOS -> Platform.TVOS_X86
         OsFamily.WATCHOS -> Platform.WATCHOS_X86
     }
+
     CpuArchitecture.MIPS32 -> Platform.LINUX_MIPS_32
     CpuArchitecture.MIPSEL32 -> Platform.LINUX_MIPSEL_32
     CpuArchitecture.UNKNOWN -> Platform.UNKNOWN

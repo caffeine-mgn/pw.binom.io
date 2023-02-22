@@ -11,6 +11,9 @@ abstract class AbstractThreadExecutorService : ExecutorService {
 
     protected val closed = AtomicBoolean(false)
 
+    override val taskCount: Int
+        get() = queue.size
+
     override val isShutdown
         get() = closed.getValue()
 

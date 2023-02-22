@@ -12,6 +12,9 @@ import kotlin.coroutines.CoroutineContext
 class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkManager(), Closeable {
     override val selector = Selector()
 
+    val taskCount: Int
+        get() = threads.taskCount
+
     init {
         require(threadSize > 0) { "threadSize should be more than 0" }
     }

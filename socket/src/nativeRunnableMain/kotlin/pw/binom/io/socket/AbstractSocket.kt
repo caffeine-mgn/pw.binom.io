@@ -4,10 +4,11 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.reinterpret
 import platform.common.internal_close_socket
 import platform.common.internal_getSocketPort
-import platform.common.internal_tcp_nodelay
 import platform.common.internal_send_to_socket_udp
+import platform.common.internal_tcp_nodelay
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
+import kotlin.native.identityHashCode
 
 abstract class AbstractSocket(override val native: RawSocket, override val server: Boolean) :
     TcpClientUnixSocket,
@@ -18,6 +19,9 @@ abstract class AbstractSocket(override val native: RawSocket, override val serve
     UdpNetSocket {
 
     protected var closed = false
+
+    override fun toString(): String =
+        "Socket(id:${this.identityHashCode().toUInt().toString(16)}, fd: $native)"
 
     private var internalTcpNoDelay = false
     override val tcpNoDelay: Boolean
@@ -40,7 +44,7 @@ abstract class AbstractSocket(override val native: RawSocket, override val serve
         val received = internalReceive(
             native = native,
             data = data,
-            address = address
+            address = address,
         )
         if (received > 0) {
             data.position += received

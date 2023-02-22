@@ -2,6 +2,7 @@ package pw.binom.thread
 
 import kotlinx.cinterop.*
 import platform.common.internal_setThreadName
+import platform.common.internal_thread_yield
 import platform.posix.*
 import kotlin.native.concurrent.Worker
 import kotlin.time.Duration
@@ -102,6 +103,10 @@ actual abstract class Thread(var _id: pthread_t, name: String) {
 
         actual fun sleep(duration: Duration) {
             sleep(duration.inWholeMilliseconds)
+        }
+
+        actual fun yield() {
+            internal_thread_yield()
         }
     }
 

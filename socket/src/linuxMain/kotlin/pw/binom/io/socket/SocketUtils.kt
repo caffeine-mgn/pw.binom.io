@@ -1,3 +1,6 @@
+@file:Suppress("OPT_IN_IS_NOT_ENABLED")
+@file:OptIn(UnsafeNumber::class)
+
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
@@ -17,7 +20,7 @@ actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
         val bindResult = bind(
             native,
             addr.ptr.getPointer(this).reinterpret(),
-            sizeOf<sockaddr_un>().convert()
+            sizeOf<sockaddr_un>().convert(),
         )
 
         if (bindResult < 0) {
@@ -62,7 +65,7 @@ actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): R
         val rr = accept(
             native,
             out.data.refTo(0).getPointer(this).reinterpret(),
-            len
+            len,
         )
         out.size = len[0].convert()
         rr

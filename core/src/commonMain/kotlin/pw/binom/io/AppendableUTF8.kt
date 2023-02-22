@@ -1,28 +1,38 @@
 package pw.binom.io
 
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
+
 class AppendableUTF8(private val stream: Output) : Writer {
     private val data = ByteBuffer(4)
+    private val spinLock = SpinLock("AppendableUTF8")
     override fun append(value: Char): AppendableUTF8 {
-        data.clear()
-        UTF8.unicodeToUtf8(value, data)
-        data.flip()
-        stream.write(data)
+        spinLock.synchronize {
+            data.clear()
+            UTF8.unicodeToUtf8(value, data)
+            data.flip()
+            stream.write(data)
+        }
         return this
     }
 
     override fun append(value: CharSequence?): AppendableUTF8 {
-        value?.forEach {
-            append(it)
+        spinLock.synchronize {
+            value?.forEach {
+                append(it)
+            }
         }
         return this
     }
 
     override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AppendableUTF8 {
-        value ?: return this
-        (startIndex..endIndex).forEach {
-            append(value[it])
+        spinLock.synchronize {
+            value ?: return this
+            (startIndex..endIndex).forEach {
+                append(value[it])
+            }
+            return this
         }
-        return this
     }
 
     override fun flush() {
@@ -30,8 +40,10 @@ class AppendableUTF8(private val stream: Output) : Writer {
     }
 
     override fun close() {
-        data.close()
-        stream.close()
+        spinLock.synchronize {
+            data.close()
+            stream.close()
+        }
     }
 }
 

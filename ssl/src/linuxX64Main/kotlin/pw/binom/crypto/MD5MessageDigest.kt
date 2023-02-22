@@ -7,6 +7,8 @@ import pw.binom.security.MessageDigest
 
 actual class MD5MessageDigest : MessageDigest, OpenSSLMessageDigest() {
 
+    actual companion object;
+
     override fun createEvp(): CPointer<EVP_MD> = EVP_md5()!!
 
     override val finalByteArraySize: Int

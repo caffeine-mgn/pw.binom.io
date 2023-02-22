@@ -1,15 +1,18 @@
 package pw.binom.io.socket
 
 import platform.common.setEventDataFd
-import platform.common.setEventDataPtr
 import platform.common.setEventFlags
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 
-actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket) : AbstractNativeKey(), Closeable {
+actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
+    AbstractNativeKey(), Closeable {
+    val rawSocket: RawSocket
+        get() = socket.native
     actual var attachment: Any? = null
     private var closed = AtomicBoolean(false)
     private var free = AtomicBoolean(false)
+//    internal val event = mallocEvent() ?: TODO("Can't allocate event")
 
     //    @OptIn(ExperimentalTime::class)
 //    var lastActiveTime: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
@@ -28,24 +31,24 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
         NetworkMetrics.incSelectorKeyAlloc()
     }
 
-    private fun resetListenFlags(commonFlags: Int) {
-        if (!closed.getValue()) {
-            if (free.getValue()) {
-                setEventDataPtr(selector.eventMem, null)
-            } else {
-                setEventDataFd(selector.eventMem, rawSocket)
-            }
-            setEventFlags(selector.eventMem, commonFlags, if (serverFlag) 1 else 0)
-            selector.updateKey(this, selector.eventMem!!)
+    private fun resetListenFlags(commonFlags: Int): Boolean {
+        if (closed.getValue()) {
+            return false
+        }
+        return selector.usingEventPtr { eventMem ->
+            setEventDataFd(eventMem, rawSocket)
+            setEventFlags(eventMem, commonFlags, if (serverFlag) 1 else 0)
+            selector.updateKey(this, eventMem)
         }
     }
 
-    actual var listenFlags: Int
+    actual fun updateListenFlags(listenFlags: Int): Boolean {
+        internalListenFlags = listenFlags
+        return resetListenFlags(listenFlags)
+    }
+
+    actual val listenFlags: Int
         get() = internalListenFlags
-        set(value) {
-            internalListenFlags = value
-            resetListenFlags(value)
-        }
 
 //    internal val event = nativeHeap.alloc<epoll_event>()
 
@@ -61,6 +64,7 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
         }
         NetworkMetrics.decSelectorKeyAlloc()
 //        nativeHeap.free(event)
+//        freeEvent(event)
         freeSelfClose()
     }
 
@@ -68,11 +72,21 @@ actual class SelectorKey(actual val selector: Selector, val rawSocket: RawSocket
         if (!closed.compareAndSet(false, true)) {
             return
         }
+//        val stack = Throwable().getStackTrace()
+//            .map {
+//                it.replace('\t', ' ')
+//                    .split(' ')
+//                    .map { it.trim() }.filter { it.isNotBlank() }
+//                    .joinToString(" ")
+//            }
+//            .joinToString("<-")
+//        println("SelectorKey::close attachment: $attachment, stack: $stack")
+
         NetworkMetrics.decSelectorKey()
         selector.removeKey(this)
     }
 
-    override fun toString(): String = buildToString() + ", closed: $closed"
+    override fun toString(): String = buildToString()
 
     actual val isClosed: Boolean
         get() = closed.getValue()

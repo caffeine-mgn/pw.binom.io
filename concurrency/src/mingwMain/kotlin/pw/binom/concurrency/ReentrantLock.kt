@@ -25,9 +25,9 @@ actual class ReentrantLock : Lock {
         nativeHeap.free(native)
     }
 
-    override fun tryLock(): Boolean = TryEnterCriticalSection(native.ptr) != 0
+    override fun tryLock(name: String?): Boolean = TryEnterCriticalSection(native.ptr) != 0
 
-    override fun lock() {
+    override fun lock(name: String?) {
         EnterCriticalSection(native.ptr)
     }
 
@@ -61,7 +61,9 @@ actual class ReentrantLock : Lock {
                     if (e != ERROR_TIMEOUT.convert<DWORD>() && e != 0.convert<DWORD>()) {
                         throw RuntimeException("Error in wait lock. Error: #$e")
                     }
-                } else break
+                } else {
+                    break
+                }
             }
         }
 

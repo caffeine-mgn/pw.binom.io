@@ -4,7 +4,7 @@ interface Lock {
     /**
      * Trying lock. Infinity time
      */
-    fun lock()
-    fun tryLock(): Boolean
+    fun lock(name: String? = null)
+    fun tryLock(name: String? = null): Boolean
     fun unlock()
 }

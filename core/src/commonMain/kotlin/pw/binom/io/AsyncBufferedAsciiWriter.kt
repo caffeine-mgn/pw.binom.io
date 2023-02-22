@@ -3,14 +3,16 @@ package pw.binom.io
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 abstract class AbstractAsyncBufferedAsciiWriter(
-    val closeParent: Boolean
+    val closeParent: Boolean,
 ) : AsyncWriter, AsyncOutput {
     protected abstract val output: AsyncOutput
     protected abstract val buffer: ByteBuffer
     private var closed = AtomicBoolean(false)
-    private fun checkClosed() {
+    private fun ensureOpen() {
         if (closed.getValue()) {
             throw StreamClosedException()
         }
@@ -22,8 +24,21 @@ abstract class AbstractAsyncBufferedAsciiWriter(
         }
     }
 
+    suspend fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int {
+        ensureOpen()
+        var r = 0
+        var remaining = length
+        while (remaining > 0) {
+            checkFlush()
+            val wrote = buffer.write(data, offset = offset, length = length)
+            r += wrote
+            remaining -= wrote
+        }
+        return r
+    }
+
     override suspend fun write(data: ByteBuffer): Int {
-        checkClosed()
+        ensureOpen()
         var r = 0
         while (data.remaining > 0) {
             checkFlush()
@@ -33,7 +48,7 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
 
     override suspend fun append(value: Char): AsyncAppendable {
-        checkClosed()
+        ensureOpen()
         checkFlush()
         buffer.put(value.code.toByte())
         return this
@@ -46,7 +61,7 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
 
     override suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable {
-        checkClosed()
+        ensureOpen()
         value ?: return this
         if (value.isEmpty()) {
             return this
@@ -79,12 +94,12 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
 
     override suspend fun flush() {
-        checkClosed()
+        ensureOpen()
         internalFlush()
     }
 
     override suspend fun asyncClose() {
-        if (!closed.compareAndSwap(false, true)) {
+        if (!closed.compareAndSet(false, true)) {
             return
         }
         internalFlush()
@@ -99,7 +114,7 @@ class AsyncBufferedAsciiWriter private constructor(
     private val pool: ByteBufferPool?,
     override val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
-    closeParent: Boolean = true
+    closeParent: Boolean = true,
 ) :
     AbstractAsyncBufferedAsciiWriter(closeParent = closeParent) {
     override fun toString(): String = "AsyncBufferedAsciiWriter(closeBuffer=$closeBuffer, output=$output)"
@@ -138,12 +153,12 @@ fun AsyncOutput.bufferedAsciiWriter(pool: ByteBufferPool, closeParent: Boolean =
     AsyncBufferedAsciiWriter(
         output = this,
         pool = pool,
-        closeParent = closeParent
+        closeParent = closeParent,
     )
 
 fun AsyncOutput.bufferedAsciiWriter(bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) =
     AsyncBufferedAsciiWriter(
         output = this,
         bufferSize = bufferSize,
-        closeParent = closeParent
+        closeParent = closeParent,
     )

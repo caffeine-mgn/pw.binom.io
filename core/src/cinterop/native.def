@@ -1,0 +1,4 @@
+---
+void internal_core_thread_yield(){
+    pthread_yield();
+}

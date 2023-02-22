@@ -2,6 +2,9 @@ package pw.binom
 
 import java.io.File
 
+actual val Environment.availableProcessors: Int
+    get() = Runtime.getRuntime().availableProcessors()
+
 actual val Environment.os: OS
     get() {
         val os = System.getProperty("os.name").lowercase()

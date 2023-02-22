@@ -46,12 +46,14 @@ class HttpServer(
     websocketMessagePoolSize: Int = 16,
     outputBufferPoolSize: Int = 16,
     chanckedAutoFlushBufferSize: Int = DEFAULT_BUFFER_SIZE,
+    textBufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : AsyncCloseable {
     internal val messagePool = MessagePool(initCapacity = 0)
     internal val webSocketConnectionPool = WebSocketConnectionPool(initCapacity = websocketMessagePoolSize)
 
     //    internal val textBufferPool = ByteBufferPool(capacity = 16)
-    internal val textBufferPool = GenericObjectPool(initCapacity = 0, factory = ByteBufferFactory(size = 50))
+    internal val textBufferPool =
+        GenericObjectPool(initCapacity = 0, factory = ByteBufferFactory(size = textBufferSize))
 
     internal val httpRequest2Impl = GenericObjectPool(initCapacity = 0, factory = HttpRequest2Impl.Manager)
     internal val httpResponse2Impl = GenericObjectPool(initCapacity = 0, factory = HttpResponse2Impl.Manager)
@@ -238,7 +240,7 @@ class HttpServer(
                         }
                         channel = ServerAsyncAsciiChannel(
                             channel = client,
-                            pool = textBufferPool
+                            pool = textBufferPool,
                         )
                         clientProcessing(
                             channel = channel,

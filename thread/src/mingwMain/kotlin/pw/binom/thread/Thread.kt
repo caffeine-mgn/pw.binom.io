@@ -2,6 +2,7 @@ package pw.binom.thread
 
 import kotlinx.cinterop.*
 import platform.common.internal_setThreadName
+import platform.common.internal_thread_yield
 import platform.posix.usleep
 import platform.windows.*
 import kotlin.time.Duration
@@ -83,6 +84,10 @@ actual abstract class Thread(var _id: HANDLE?, name: String) {
         actual fun sleep(duration: Duration) {
             sleep(duration.inWholeMilliseconds)
         }
+
+        actual fun yield() {
+            internal_thread_yield()
+        }
     }
 
     actual var uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler
@@ -99,7 +104,7 @@ private val func: CPointer<CFunction<(COpaquePointer?) -> DWORD>> = staticCFunct
     } catch (e: Throwable) {
         thread.get().uncaughtExceptionHandler.uncaughtException(
             thread = thread.get(),
-            throwable = e
+            throwable = e,
         )
     } finally {
         thread.dispose()

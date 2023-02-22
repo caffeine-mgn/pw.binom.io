@@ -58,7 +58,7 @@ val File.parent: File?
                 return@let null
             } else {
                 path.substring(0, it)
-            }
+            },
         )
     }
 

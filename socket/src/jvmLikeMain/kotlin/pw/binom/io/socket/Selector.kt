@@ -62,7 +62,7 @@ actual class Selector : Closeable {
                             } catch (e: java.net.ConnectException) {
                                 binomKey.isErrorHappened = true
                                 if (binomKey.listenFlags and KeyListenFlags.ONCE != 0) {
-                                    binomKey.listenFlags = 0
+                                    binomKey.updateListenFlags(0)
                                 }
                                 selectedKeys.errors += binomKey
                                 return@forEach
@@ -71,7 +71,7 @@ actual class Selector : Closeable {
                     }
                     binomKey.isErrorHappened = false
                     if (binomKey.listenFlags and KeyListenFlags.ONCE != 0) {
-                        binomKey.listenFlags = 0
+                        binomKey.updateListenFlags(0)
                     }
                 }
                 selectedKeys.selectedKeys = list
@@ -104,7 +104,7 @@ actual class Selector : Closeable {
                             } catch (e: java.net.ConnectException) {
                                 binomKey.isErrorHappened = true
                                 if (binomKey.listenFlags and KeyListenFlags.ONCE != 0) {
-                                    binomKey.listenFlags = 0
+                                    binomKey.updateListenFlags(0)
                                 }
                                 eventImpl.internalFlag = KeyListenFlags.ERROR or KeyListenFlags.READ
                                 eventFunc(eventImpl)
@@ -120,7 +120,7 @@ actual class Selector : Closeable {
                 }
                 binomKey.isErrorHappened = false
                 if (binomKey.listenFlags and KeyListenFlags.ONCE != 0) {
-                    binomKey.listenFlags = 0
+                    binomKey.updateListenFlags(0)
                 }
             }
         }

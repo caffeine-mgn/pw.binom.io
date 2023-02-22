@@ -17,7 +17,7 @@ open class GenericObjectPool<T : Any>(
     val minSize: Int = 0,
     val growFactor: Float = 1.5f,
     val shrinkFactor: Float = 0.5f,
-    val delayBeforeResize: Duration = 2.minutes
+    val delayBeforeResize: Duration = 2.minutes,
 ) : ObjectPool<T> {
 
     private var lastDate = TimeSource.Monotonic.markNow()
@@ -85,10 +85,13 @@ open class GenericObjectPool<T : Any>(
     }
 
     fun checkTrim() {
-        if (lastDate.elapsedNow() < this.delayBeforeResize) {
+        val timeToTrim = lastDate.elapsedNow()
+        if (timeToTrim < this.delayBeforeResize) {
+            println("GenericObjectPool::checkTrim. early to trim. time to trim: $timeToTrim, nextCapacity: $nextCapacity")
             return
         }
         synchronize {
+            println("GenericObjectPool::checkTrim. try trim... nextCapacity: $nextCapacity, pool.size: ${pool.size}")
             if (nextCapacity > pool.size) {
                 internalCheckGrow()
             } else {

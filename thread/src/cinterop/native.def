@@ -54,3 +54,7 @@
 int internal_setThreadName(pthread_t thread, const char *name){
     return pthread_setname_np(thread, name);
 }
+
+void internal_thread_yield(){
+    pthread_yield();
+}

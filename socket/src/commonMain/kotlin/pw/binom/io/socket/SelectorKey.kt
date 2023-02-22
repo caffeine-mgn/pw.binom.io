@@ -4,16 +4,13 @@ import pw.binom.io.Closeable
 
 expect class SelectorKey : Closeable {
     var attachment: Any?
-    var listenFlags: Int
+    val listenFlags: Int
     val readFlags: Int
     val isClosed: Boolean
     val selector: Selector
+    fun updateListenFlags(listenFlags: Int): Boolean
 }
 
-fun SelectorKey.addListen(code: Int) {
-    listenFlags = listenFlags or code
-}
+fun SelectorKey.addListen(code: Int) = updateListenFlags(listenFlags or code)
 
-fun SelectorKey.removeListen(code: Int) {
-    listenFlags = (listenFlags.inv() or code).inv()
-}
+fun SelectorKey.removeListen(code: Int) = updateListenFlags((listenFlags.inv() or code).inv())

@@ -1,5 +1,7 @@
 package pw.binom.thread
 
+import pw.binom.atomic.AtomicLong
+
 class FixedThreadExecutorService(
     threadCount: Int,
     val threadFactory: ((Thread) -> Unit) -> Thread = { func -> Thread(func = func) },
@@ -8,9 +10,17 @@ class FixedThreadExecutorService(
         require(threadCount >= 1) { "threadCount should be more or equals 1" }
     }
 
-    private val threadFunc: (Thread) -> Unit = { _ ->
+    private val taskCounter = AtomicLong(0)
+    private val threadFunc: (Thread) -> Unit = { thread ->
         while (!closed.getValue()) {
-            queue.popBlocked().invoke()
+            val id = taskCounter.addAndGet(1)
+            try {
+                val func = queue.popBlocked()
+                func.invoke()
+            } catch (e: Throwable) {
+                thread.uncaughtExceptionHandler.uncaughtException(thread = thread, throwable = e)
+            } finally {
+            }
         }
     }
 

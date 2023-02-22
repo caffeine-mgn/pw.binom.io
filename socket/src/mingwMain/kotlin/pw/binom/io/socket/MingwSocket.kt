@@ -11,6 +11,9 @@ class MingwSocket(
     native: RawSocket,
     server: Boolean,
 ) : AbstractSocket(native = native, server = server) {
+
+    override var keyHash: Int = 0
+
     override fun connect(address: NetworkAddress): ConnectStatus {
         val netaddress = if (address is CommonMutableNetworkAddress) {
             address
@@ -101,7 +104,7 @@ class MingwSocket(
                 platform.posix.bind(
                     native.convert(),
                     data.reinterpret(),
-                    networkAddress.size.convert()
+                    networkAddress.size.convert(),
                 )
             }
 
@@ -142,7 +145,7 @@ class MingwSocket(
                     remaining.convert(),
                     0,
                     null,
-                    null
+                    null,
                 )
             } ?: 0
             if (rr == SOCKET_ERROR) {
@@ -175,7 +178,7 @@ class MingwSocket(
                             remaining.convert(),
                             0,
                             addressPtr.reinterpret(),
-                            len
+                            len,
                         )
                     }
                 } ?: 0

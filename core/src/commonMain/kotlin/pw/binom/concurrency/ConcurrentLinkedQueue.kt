@@ -8,7 +8,7 @@ class ConcurrentLinkedQueue<T> {
         var previous: Item<T>? = null
     }
 
-    private val lock = SpinLock()
+    private val lock = SpinLock("ConcurrentLinkedQueue")
     private var first: Item<T>? = null
     private var last: Item<T>? = null
     private var _size = 0L

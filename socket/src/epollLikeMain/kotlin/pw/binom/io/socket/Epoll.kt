@@ -53,28 +53,46 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
         return EpollResult.OK
     }
 
-    fun delete(socket: RawSocket, failOnError: Boolean): EpollResult {
-//        val ret = epoll_ctl(raw, sEPOLL_CTL_DEL, socket.convert(), null)
-        val ret = removeKey(raw, socket)
+    fun delete(fd: RawSocket, operation: String): EpollResult {
+        val ret = removeKey(raw, fd)
         if (ret != 0) {
+            println("Can't remove event. fd: $fd, errno: $errno, operation: $operation")
+            when (errno) {
+                EPERM, EBADF, ENOENT -> return EpollResult.INVALID
+                EEXIST -> return EpollResult.ALREADY_EXIST
+            }
+        } else {
+//            println("Epoll:: removed success. fd: $fd, operation: $operation")
+        }
+        return EpollResult.OK
+    }
+
+    fun delete(socket: Socket, failOnError: Boolean, operation: String): EpollResult {
+        val ret = removeKey(raw, socket.native)
+        if (ret != 0) {
+            println("Can't remove event. socket: $socket, errno: $errno, operation: $operation")
             when (errno) {
                 EPERM, EBADF, ENOENT -> return EpollResult.INVALID
                 EEXIST -> return EpollResult.ALREADY_EXIST
             }
             if (failOnError) {
-                throw IOException("Can't remove key from selector. socket: $socket, list: $raw. errno: $errno")
+                throw IOException("Can't remove key from selector. socket: $socket, list: $raw. errno: $errno, operation: $operation")
             }
+        } else {
+//            println("Epoll:: removed success. socket: $socket, operation: $operation")
         }
         return EpollResult.OK
     }
 
-    fun update(socket: RawSocket, data: CValuesRef<NativeEvent>?): Boolean {
+    fun update(socket: Socket, data: CValuesRef<NativeEvent>?): Boolean {
         // ENOENT - socket closed
 //        val ret = epoll_ctl(raw, sEPOLL_CTL_MOD, socket.convert(), data)
-        val ret = updateKey(raw, socket, data)
-//        if (ret != 0) {
-//            println("Epoll update error: $errno")
-//        }
+        val ret = updateKey(raw, socket.native, data)
+        if (ret != 0) {
+//            println("Epoll update error: $errno, socket: $socket, flags: ${commonFlagsToString(getEventFlags(data))}")
+        } else {
+//            println("Epoll update success, socket: $socket, flags: ${commonFlagsToString(getEventFlags(data))}")
+        }
         return ret == 0
     }
 

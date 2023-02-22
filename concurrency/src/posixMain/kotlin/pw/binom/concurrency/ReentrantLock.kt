@@ -30,7 +30,7 @@ actual class ReentrantLock : Lock {
         free(native)
     }
 
-    override fun tryLock(): Boolean {
+    override fun tryLock(name: String?): Boolean {
         val r = pthread_mutex_trylock(native)
         if (r == EBUSY) {
             return false
@@ -41,7 +41,7 @@ actual class ReentrantLock : Lock {
         return true
     }
 
-    override fun lock() {
+    override fun lock(name: String?) {
         if (pthread_mutex_lock(native) != 0) {
             error("Can't lock mutex")
         }

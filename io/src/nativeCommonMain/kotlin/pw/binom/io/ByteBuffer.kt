@@ -1,13 +1,12 @@
 package pw.binom.io
 
 import kotlinx.cinterop.*
-import pw.binom.atomic.AtomicBoolean
-import pw.binom.atomic.AtomicInt
-import pw.binom.atomic.synchronize
+import kotlin.time.ExperimentalTime
 
 sealed interface MemAccess : Closeable {
     val capacity: Int
 
+    val pointer: CArrayPointer<ByteVar>
     fun <T> access(func: (CPointer<ByteVar>) -> T): T
     fun <T> access2(func: (COpaquePointer) -> T): T
 
@@ -18,6 +17,8 @@ sealed interface MemAccess : Closeable {
             ptr = Memory.alloc(size.convert()),
             capacity = size,
         )
+
+        override val pointer: CPointer<ByteVar> = ptr.reinterpret()
 
         override fun <T> access(func: (CPointer<ByteVar>) -> T): T {
             if (closed) {
@@ -45,6 +46,8 @@ sealed interface MemAccess : Closeable {
     class HeapMemory(val ptr: CArrayPointer<ByteVar>, override val capacity: Int) : MemAccess {
         constructor(size: Int) : this(ptr = nativeHeap.allocArray<ByteVar>(size), capacity = size)
 
+        override val pointer: CPointer<ByteVar> = ptr
+
         override fun <T> access(func: (CPointer<ByteVar>) -> T): T = func(ptr)
         override fun <T> access2(func: (COpaquePointer) -> T): T = func(ptr)
 
@@ -56,6 +59,7 @@ sealed interface MemAccess : Closeable {
     class ArrayMemory(array: ByteArray) : MemAccess {
         override val capacity: Int = array.size
         private val pin = array.pin()
+        override val pointer: CPointer<ByteVar> = pin.addressOf(0)
         override fun <T> access(func: (CPointer<ByteVar>) -> T): T = func(pin.addressOf(0))
         override fun <T> access2(func: (COpaquePointer) -> T): T = func(pin.addressOf(0))
 
@@ -89,33 +93,30 @@ actual open class ByteBuffer private constructor(
         get() = 1
 
     private var closed = false
-    private val lock = AtomicBoolean(false)
 
-    private var _position = AtomicInt(0)
-    private var _limit = AtomicInt(data.capacity)
+    private var _position = 0 // = AtomicInt(0)
+    private var _limit = data.capacity // = AtomicInt(data.capacity)
 
     override val remaining: Int
-        get() = _limit.getValue() - _position.getValue()
+        get() = _limit - _position
 
     override var position: Int
-        get() {
-            return _position.getValue()
-        }
+        get() = _position
         set(value) {
-            require(value >= 0) { "position ($value) should be more or equal 0" }
-            require(value <= limit) { "position ($value) should be less or equal limit ($limit)" }
-//            println("ByteBuffer@${hashCode()}->limit=${_position.getValue()}->$value")
-            _position.setValue(value)
+            if (value > limit || value < 0) {
+                throw IllegalArgumentException("Position should be in range between 0 and limit. limit: $limit, new position: $value")
+            }
+            _position = value
         }
 
     override var limit: Int
         get() {
-            return _limit.getValue()
+            return _limit
         }
         set(value) {
             if (value > capacity || value < 0) throw createLimitException(value)
 //            println("ByteBuffer@${hashCode()}->limit=${_limit.getValue()}->$value")
-            _limit.setValue(value)
+            _limit = value
             if (position > value) {
                 position = value
             }
@@ -156,12 +157,22 @@ actual open class ByteBuffer private constructor(
         if (position > capacity) {
             throw IllegalArgumentException("position ($position) should be less than capacity ($capacity)")
         }
-        return data.access {
-            lock.synchronize {
-                func((it + position)!!)
-            }
-        }
+        return func((data.pointer + position)!!)
+//        return data.access {
+//            func((it + position)!!)
+//        }
     }
+
+//    fun <T> ref(func: (CPointer<ByteVar>, Int) -> T): T? {
+//        if (capacity == 0 || position == capacity) {
+//            return null
+//        }
+//        refTo(position) {
+//            func(it, remaining)
+//        }
+//
+//        return func((data.pointer + position)!!, remaining)
+//    }
 
     fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
         func(it, remaining)
@@ -172,64 +183,83 @@ actual open class ByteBuffer private constructor(
     }
 
     override fun flip() {
-        lock.synchronize {
-            ensureOpen()
-            limit = position
-            position = 0
-        }
+        ensureOpen()
+        limit = position
+        position = 0
     }
 
     actual fun skip(length: Long): Long {
-        lock.synchronize {
-            ensureOpen()
-            require(length > 0) { "Length must be grade than 0" }
+        ensureOpen()
+        require(length > 0) { "Length must be grade than 0" }
 
-            val pos = minOf((position + length).toInt(), limit)
-            val len = pos - position
-            position = pos
-            return len.toLong()
-        }
+        val pos = minOf((position + length).toInt(), limit)
+        val len = pos - position
+        position = pos
+        return len.toLong()
     }
 
-    override fun read(dest: ByteBuffer): Int {
+    @OptIn(ExperimentalTime::class)
+    fun readInto(dest: ByteBuffer): Int {
         ensureOpen()
-        return ref { sourceCPointer, remaining2 ->
-            dest.ref { destCPointer, destRemaining ->
+        val r = run {
+            val remaining2 = remaining
+            val destRemaining = dest.remaining
+            val len = minOf(destRemaining, remaining2)
+            if (len <= 0) {
+                0
+            } else {
+                val sourceCPointer = (data.pointer + position)!!
+                val destCPointer = (dest.data.pointer + dest.position)!!
                 val p = position
                 val p2 = dest.position
-                val len = minOf(destRemaining, remaining2)
                 try {
+                    position += len
+                    dest.position += len
                     sourceCPointer.copyInto(
                         dest = destCPointer,
                         size = len.convert(),
                     )
-                    position += len
-                    dest.position += len
                     len
                 } catch (e: Throwable) {
                     position = p
                     dest.position = p2
-
-                    println("len: $len")
-                    println("remaining2: $remaining2")
-                    println("destRemaining: $destRemaining")
-                    println("position: $position")
-                    println("dest.position: ${dest.position}")
-                    println("limit: $limit")
-                    println("dest.limit: ${dest.limit}")
-                    println("this.remaining: ${this.remaining}")
-                    println("dest.remaining: ${dest.remaining}")
-
-                    println("Error happend!")
                     throw e
                 }
             }
-        } ?: 0
+//            ref { sourceCPointer, remaining2 ->
+//                dest.ref { destCPointer, destRemaining ->
+//                    val p = position
+//                    val p2 = dest.position
+//                    val len = minOf(destRemaining, remaining2)
+//                    try {
+//                        val copyTime = measureTime {
+//                            sourceCPointer.copyInto(
+//                                dest = destCPointer,
+//                                size = len.convert(),
+//                            )
+//                            position += len
+//                            dest.position += len
+//                        }
+//
+//                        println("ByteBuffer::readInto copyTime: $copyTime")
+//
+//                        len
+//                    } catch (e: Throwable) {
+//                        position = p
+//                        dest.position = p2
+//                        throw e
+//                    }
+//                }
+//            } ?: 0
+        }
+//        println("ByteBuffer::readInto total: ${r.duration}")
+        return r
     }
 
-    override fun write(data: ByteBuffer): Int {
-        return data.read(this)
-    }
+    override fun read(dest: ByteBuffer): Int = readInto(dest)
+
+    @OptIn(ExperimentalTime::class)
+    override fun write(data: ByteBuffer): Int = data.readInto(this)
 
     override fun flush() {
         ensureOpen()
@@ -246,7 +276,8 @@ actual open class ByteBuffer private constructor(
 
     actual operator fun get(index: Int): Byte {
         ensureOpen()
-        return data.access { it[index] }
+        return data.pointer[index]
+//        return data.access { it[index] }
     }
 
     actual operator fun set(index: Int, value: Byte) {
@@ -261,7 +292,8 @@ actual open class ByteBuffer private constructor(
         val p = position
         if (p >= limit) throw IndexOutOfBoundsException()
         position = p + 1
-        return data.access { it[p] }
+        return data.pointer[p]
+//        return data.access { it[p] }
 //        return data[p]
     }
 
@@ -443,8 +475,8 @@ actual open class ByteBuffer private constructor(
     }
 }
 
-private operator fun <T : CPointed> CPointer<T>.plus(offset: Long) =
-    (this.toLong() + offset).toCPointer<T>()
+// private operator fun <T : CPointed> CPointer<T>.plus(offset: Long) =
+//    (this.toLong() + offset).toCPointer<T>()
 
-private operator fun <T : CPointed> CPointer<T>.plus(offset: Int) =
-    (this.toLong() + offset).toCPointer<T>()
+// private operator fun <T : CPointed> CPointer<T>.plus(offset: Int) =
+//    (this.toLong() + offset).toCPointer<T>()
