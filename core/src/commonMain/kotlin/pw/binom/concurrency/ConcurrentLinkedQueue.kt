@@ -8,7 +8,7 @@ class ConcurrentLinkedQueue<T> {
         var previous: Item<T>? = null
     }
 
-    private val lock = SpinLock("ConcurrentLinkedQueue")
+    private val lock = SpinLock()
     private var first: Item<T>? = null
     private var last: Item<T>? = null
     private var _size = 0L
@@ -54,7 +54,7 @@ class ConcurrentLinkedQueue<T> {
                 first = item.next
                 first?.previous = null
             }
-            size.dec()
+            _size--
             return item.value as T
         } finally {
             lock.unlock()

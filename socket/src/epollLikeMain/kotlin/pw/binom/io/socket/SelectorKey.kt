@@ -1,5 +1,7 @@
 package pw.binom.io.socket
 
+import platform.common.freeEvent
+import platform.common.mallocEvent
 import platform.common.setEventDataFd
 import platform.common.setEventFlags
 import pw.binom.atomic.AtomicBoolean
@@ -12,6 +14,7 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
     actual var attachment: Any? = null
     private var closed = AtomicBoolean(false)
     private var free = AtomicBoolean(false)
+    internal val eventMem = mallocEvent()!!
 //    internal val event = mallocEvent() ?: TODO("Can't allocate event")
 
     //    @OptIn(ExperimentalTime::class)
@@ -27,6 +30,8 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
     internal var internalListenFlags = 0
 
     init {
+        setEventDataFd(eventMem, socket.native)
+        setEventFlags(eventMem, 0, 0)
         NetworkMetrics.incSelectorKey()
         NetworkMetrics.incSelectorKeyAlloc()
     }
@@ -35,11 +40,9 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
         if (closed.getValue()) {
             return false
         }
-        return selector.usingEventPtr { eventMem ->
-            setEventDataFd(eventMem, rawSocket)
-            setEventFlags(eventMem, commonFlags, if (serverFlag) 1 else 0)
-            selector.updateKey(this, eventMem)
-        }
+        setEventDataFd(eventMem, rawSocket)
+        setEventFlags(eventMem, commonFlags, if (serverFlag) 1 else 0)
+        return selector.updateKey(this, eventMem)
     }
 
     actual fun updateListenFlags(listenFlags: Int): Boolean {
@@ -62,6 +65,7 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
         if (!free.compareAndSet(false, true)) {
             return
         }
+        freeEvent(eventMem)
         NetworkMetrics.decSelectorKeyAlloc()
 //        nativeHeap.free(event)
 //        freeEvent(event)

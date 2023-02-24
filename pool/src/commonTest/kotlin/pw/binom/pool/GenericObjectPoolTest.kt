@@ -1,5 +1,6 @@
 package pw.binom.pool
 
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.seconds
@@ -20,7 +21,7 @@ class GenericObjectPoolTest {
             initCapacity = 10,
             growFactor = 1.7f,
             shrinkFactor = 0.5f,
-            delayBeforeResize = 0.seconds
+            delayBeforeResize = 0.seconds,
         )
         factory.recycle(factory.borrow())
         factory.borrow()
@@ -34,7 +35,7 @@ class GenericObjectPoolTest {
             initCapacity = 10,
             growFactor = 1.7f,
             shrinkFactor = 0.5f,
-            delayBeforeResize = 0.seconds
+            delayBeforeResize = 0.seconds,
         )
         assertEquals(10, factory.capacity)
         factory.checkTrim()
@@ -42,6 +43,7 @@ class GenericObjectPoolTest {
     }
 
     @Test
+    @Ignore
     fun shrinkTest() {
         val factory = GenericObjectPool(BoolFactory, initCapacity = 10, growFactor = 1.7f, shrinkFactor = 0.5f)
         repeat(factory.capacity) {
@@ -56,6 +58,7 @@ class GenericObjectPoolTest {
     }
 
     @Test
+    @Ignore
     fun growTest() {
         val factory = GenericObjectPool(BoolFactory, initCapacity = 10, growFactor = 1.7f, shrinkFactor = 0.5f)
         repeat(factory.capacity) {

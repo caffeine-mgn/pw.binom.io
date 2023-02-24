@@ -1,12 +1,11 @@
 package pw.binom.io.http
 
+import pw.binom.ByteBufferPool
 import pw.binom.NullAsyncOutput
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.copyTo
 import pw.binom.io.*
-import pw.binom.pool.ObjectPool
-import pw.binom.skipAll
 
 class EndState {
     enum class Type {
@@ -120,12 +119,16 @@ internal fun findEnd(separator: String, buffer: ByteBuffer, endState: EndState):
 open class AsyncMultipartInput(
     private val separator: String,
     override val stream: AsyncInput,
-    private val bufferPool: ObjectPool<ByteBuffer>
+    val bufferPool: ByteBufferPool,
 ) : AbstractAsyncBufferedInput() {
     override val buffer = bufferPool.borrow().empty()
 
     init {
-        require(buffer.capacity > 2 + 2 + separator.length + 2 + 2) { "BufferSize must be grate than separator.length + 8" }
+        val minLen = 2 + 2 + 2 + 2
+        if (buffer.capacity <= minLen + separator.length) {
+            buffer.close()
+            throw IllegalArgumentException("BufferSize must be grate than separator.length + $minLen")
+        }
     }
 
     private val endState = EndState()
@@ -191,7 +194,7 @@ open class AsyncMultipartInput(
             val headItems = l.split(':', limit = 2)
             _headers.add(
                 key = headItems[0].trim(),
-                value = headItems[1].trim()
+                value = headItems[1].trim(),
             )
         }
         return true

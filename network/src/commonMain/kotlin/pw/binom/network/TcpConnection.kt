@@ -17,11 +17,8 @@ class TcpConnection(
     private var connect: CancellableContinuation<Unit>? = null
     var description: String? = null
 
-    var readState: ConnectionState = ConnectionState.IDLE
-        private set
-
     override fun toString(): String =
-        "TcpConnection(description: $description, readState: $readState, channel: $channel, key: $currentKey)"
+        "TcpConnection(description: $description, channel: $channel, key: $currentKey)"
 
     private class IOState {
         var continuation: CancellableContinuation<Int>? = null
@@ -99,16 +96,13 @@ class TcpConnection(
         val continuation = readData.continuation
         val data = readData.data
         if (continuation == null) {
-            readState = ConnectionState.SUSPENDED
             currentKey.removeListen(KeyListenFlags.READ)
 //            println("TcpConnection::readyForRead suspend!. continuation=null. channel: $channel")
             return
         }
         data ?: error("readData.data is not set")
-        readState = ConnectionState.PROCESS
         val readed = channel.receive(data)
         if (readed == -1) {
-            readState = ConnectionState.CLOSED
             readData.reset()
             close()
             continuation.resumeWithException(SocketClosedException())
@@ -117,7 +111,6 @@ class TcpConnection(
         if (readed == 0) {
 //            println("TcpConnection::readyForRead readed 0. Try ready again later")
             currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR)
-            readState = ConnectionState.SUSPENDED
 //            println("TcpConnection::readyForRead suspend. read 0. channel: $channel")
             return
         }
@@ -131,14 +124,11 @@ class TcpConnection(
         if (readData.full) {
             if (data.remaining == 0) {
                 readData.reset()
-                readState = ConnectionState.IDLE
                 continuation.resume(value = readed, onCancellation = null)
             } else {
-                readState = ConnectionState.SUSPENDED
                 currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR)
             }
         } else {
-            readState = ConnectionState.IDLE
             readData.reset()
 //            println("TcpConnection::readyForRead readed. $readed bytes. channel: $channel")
             continuation.resume(value = readed, onCancellation = null)
@@ -156,7 +146,6 @@ class TcpConnection(
         error = true
 
         if (readData.continuation != null) {
-            readState = ConnectionState.IDLE
             val c = readData.continuation
             readData.reset()
             c?.resumeWith(Result.failure(SocketClosedException()))
@@ -183,7 +172,7 @@ class TcpConnection(
 
 //            try {
             this.connect = it
-            if (!this.currentKey.updateListenFlags(KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE)) {
+            if (this.currentKey.updateListenFlags(KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE)) {
                 it.resumeOnException {
                     this.currentKey.selector.wakeup()
                 }
@@ -223,7 +212,6 @@ class TcpConnection(
         connect?.resumeWithException(SocketClosedException())
         readData.exception(SocketClosedException())
         sendData.exception(SocketClosedException())
-        readState = ConnectionState.CLOSED
         currentKey.close()
         channel.close()
     }
@@ -277,22 +265,17 @@ class TcpConnection(
         if (readData.continuation != null) {
             error("Connection already have read listener")
         }
-        readState = ConnectionState.PROCESS
         val r = channel.receive(dest)
         if (r > 0 && dest.remaining == 0) {
-            readState = ConnectionState.IDLE
             return r
         }
         if (r == -1) {
-            readState = ConnectionState.CLOSED
             channel.close()
             throw SocketClosedException()
         }
         readData.full = true
-        readState = ConnectionState.SUSPENDED
         val readed = suspendCancellableCoroutine<Int> { continuation ->
             continuation.invokeOnCancellation {
-                readState = ConnectionState.IDLE
                 currentKey.removeListen(KeyListenFlags.READ)
                 readData.reset()
                 currentKey.selector.wakeup()
@@ -319,29 +302,23 @@ class TcpConnection(
         check(readData.continuation == null) { "Connection already have read listener" }
 
         val read = try {
-            readState = ConnectionState.PROCESS
             channel.receive(dest)
         } catch (e: Throwable) {
-            readState = ConnectionState.IDLE
             throw e
         }
         if (read > 0) {
 //            println("TcpConnection::read success. $read bytes. channel: $channel")
-            readState = ConnectionState.IDLE
             return read
         }
         if (read == -1) {
 //            println("TcpConnection::read reading with error. channel: $channel")
-            readState = ConnectionState.CLOSED
             channel.close()
             throw SocketClosedException()
         }
         readData.full = false
-        readState = ConnectionState.SUSPENDED
 //        println("TcpConnection::read suspend reading. channel: $channel")
         return suspendCancellableCoroutine {
             it.invokeOnCancellation {
-                readState = ConnectionState.IDLE
                 currentKey.removeListen(KeyListenFlags.READ)
                 readData.reset()
                 currentKey.selector.wakeup()

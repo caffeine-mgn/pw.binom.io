@@ -23,13 +23,13 @@ class WebdavEntity(
     override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
         val allPathUrl = fileSystem.url.addPath(path)
         val r = fileSystem.client.connect(HTTPMethod.GET.code, allPathUrl)
-        if (offset != 0uL) {
-            if (length == null) {
-                r.addHeader("Range", "bytes=$offset-")
-            } else {
-                r.addHeader("Range", "bytes=$offset-${offset + length - 1u}")
-            }
+//        if (offset != 0uL) {
+        if (length == null) {
+            r.addHeader("Range", "bytes=$offset-")
+        } else {
+            r.addHeader("Range", "bytes=$offset-${offset + length - 1u}")
         }
+//        }
         user?.apply(r)
         val resp = r.getResponse()
         if (resp.responseCode == 404) {

@@ -10,10 +10,16 @@ open class LinkedList<T>() : MutableList<T> {
         addAll(elements)
     }
 
-    class Node<T>(var prev: Node<T>?, var item: T?, var next: Node<T>?)
+    class Node<T>(prev: Node<T>?, var item: T?, next: Node<T>?) {
+        var prev: Node<T>? = prev
+            internal set
+        var next: Node<T>? = next
+            internal set
+    }
 
     var first: Node<T>? = null
         private set
+
     var last: Node<T>? = null
         private set
 

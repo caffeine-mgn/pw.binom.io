@@ -1,19 +1,23 @@
 package pw.binom.io.http.websocket
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.forEachIndexed
+import pw.binom.io.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@Suppress("OPT_IN_IS_NOT_ENABLED")
+@OptIn(ExperimentalUnsignedTypes::class, ExperimentalCoroutinesApi::class)
 class WebSocketHeaderTest {
 
     @Test
     fun readTest() = runTest {
-        val data = ByteBuffer.wrap(ubyteArrayOf(0x82u, 0xfeu, 0x0u, 0x82u, 0x88u, 0x4du, 0x1du, 0x84u).toByteArray())
+        val data = ubyteArrayOf(0x82u, 0xfeu, 0x0u, 0x82u, 0x88u, 0x4du, 0x1du, 0x84u).toByteArray().wrap()
         val header = WebSocketHeader()
         WebSocketHeader.read(data.asyncInput(), header)
         header.apply {

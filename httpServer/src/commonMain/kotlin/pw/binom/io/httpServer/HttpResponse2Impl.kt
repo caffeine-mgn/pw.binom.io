@@ -39,7 +39,7 @@ internal class HttpResponse2Impl(
         channel: ServerAsyncAsciiChannel,
         acceptEncoding: List<String>,
         server: HttpServer,
-        onclosed: (() -> Unit)
+        onclosed: (() -> Unit),
     ) {
         headers.clear()
         headers.keepAlive = keepAliveEnabled
@@ -71,7 +71,7 @@ internal class HttpResponse2Impl(
         val contentEncoding = headers.contentEncoding
         val isCompressed = contentEncoding.equals(other = "gzip", ignoreCase = true) || contentEncoding.equals(
             other = "deflate",
-            ignoreCase = true
+            ignoreCase = true,
         )
         if (server!!.zlibBufferSize <= 0 && isCompressed) {
             throw IllegalStateException("Response doesn't support compress. Make sure you set HttpServer::zlibBufferSize more than 0")
@@ -166,7 +166,7 @@ internal class HttpResponse2Impl(
             resultOutput = AsyncContentLengthOutput(
                 stream = resultOutput,
                 contentLength = contentLength,
-                closeStream = true
+                closeStream = true,
             )
         }
         for (i in transferEncoding.lastIndex downTo 0) {
@@ -192,7 +192,7 @@ internal class HttpResponse2Impl(
             return server.bufferWriterPool.borrow().also {
                 it.reset(
                     output = output,
-                    charset = charset
+                    charset = charset,
                 )
             }
         } catch (e: Throwable) {
@@ -262,6 +262,7 @@ internal class HttpResponseOutput2(
         channel.writer.write(data)
 
     override suspend fun asyncClose() {
+        println("HttpResponseOutput2::Closed!")
         flush()
         if (keepAlive && returnToIdle != null) {
             returnToIdle.returnToPool(channel)

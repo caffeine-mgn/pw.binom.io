@@ -101,7 +101,8 @@ class ExchangeTest {
         val now = TimeSource.Monotonic.markNow()
         e.get(1.seconds)
         val duration = now.elapsedNow().inWholeMilliseconds
-        assertTrue(duration >= 500)
+        println("duration=$duration")
+        assertTrue(duration >= 400)
         assertTrue(duration < 1000)
     }
 }

@@ -1,6 +1,7 @@
 package pw.binom.compression.zlib
 
 import pw.binom.ByteBufferPool
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.crc.CRC32
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
@@ -28,29 +29,29 @@ open class AsyncGZIPOutput protected constructor(
     constructor(
         stream: AsyncOutput,
         level: Int = 6,
-        bufferSize: Int,
-        closeStream: Boolean = true
+        bufferSize: Int = DEFAULT_BUFFER_SIZE,
+        closeStream: Boolean = true,
     ) : this(
         stream = stream,
         level = level,
         buffer = ByteBuffer(bufferSize),
         closeStream = closeStream,
         pool = null,
-        closeBuffer = true
+        closeBuffer = true,
     )
 
     constructor(
         stream: AsyncOutput,
         level: Int = 6,
         bufferPool: ByteBufferPool,
-        closeStream: Boolean = true
+        closeStream: Boolean = true,
     ) : this(
         stream = stream,
         level = level,
         buffer = bufferPool.borrow(),
         closeStream = closeStream,
         pool = bufferPool,
-        closeBuffer = false
+        closeBuffer = false,
     )
 
     private val crcCalc = CRC32()

@@ -3,9 +3,9 @@ package pw.binom.db.tarantool
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.IOException
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
-import pw.binom.network.NetworkAddressOld
-import pw.binom.network.NetworkCoroutineDispatcherImpl
+import pw.binom.network.MultiFixedSizeThreadNetworkDispatcher
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
@@ -26,11 +26,12 @@ abstract class BaseTest {
     @OptIn(ExperimentalTime::class)
     fun tarantool(func: suspend (TarantoolConnectionImpl) -> Unit) = runTest(dispatchTimeoutMs = 10 * 1000) {
         val now = TimeSource.Monotonic.markNow()
-        val manager = NetworkCoroutineDispatcherImpl()
+        val manager = MultiFixedSizeThreadNetworkDispatcher(1)
 //        TarantoolContainer {
         delay(1.seconds)
         do {
-            val address = NetworkAddressOld.Immutable(
+            println("Connection...")
+            val address = NetworkAddress.create(
                 host = "127.0.0.1",
                 port = 7040,
             )
@@ -49,6 +50,7 @@ abstract class BaseTest {
                 continue
             }
             try {
+                println("Connected! Try to test")
                 connection.use { con ->
                     func(con)
                 }

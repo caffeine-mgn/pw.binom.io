@@ -89,9 +89,8 @@ class AsyncBufferedAsciiInputReader private constructor(
 //                println("AsyncBufferedAsciiInputReader::full #3. position: ${buffer.position}, limit: ${buffer.limit}, len: $len, byteBuffer: ByteBuffer@${buffer.hashCode()}")
             if (len == 0) {
                 eof = true
-            } else {
-                buffer.flip()
             }
+            buffer.flip()
 //                println("AsyncBufferedAsciiInputReader::full #4. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
         } catch (e: Throwable) {
 //                println("AsyncBufferedAsciiInputReader::full #5. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")

@@ -5,13 +5,18 @@ import pw.binom.concurrency.synchronize
 
 class AppendableUTF8(private val stream: Output) : Writer {
     private val data = ByteBuffer(4)
-    private val spinLock = SpinLock("AppendableUTF8")
+    private val spinLock = SpinLock()
+
+    private fun internalAppend(value: Char) {
+        data.clear()
+        UTF8.unicodeToUtf8(value, data)
+        data.flip()
+        stream.writeFully(data)
+    }
+
     override fun append(value: Char): AppendableUTF8 {
         spinLock.synchronize {
-            data.clear()
-            UTF8.unicodeToUtf8(value, data)
-            data.flip()
-            stream.write(data)
+            internalAppend(value)
         }
         return this
     }
@@ -19,7 +24,7 @@ class AppendableUTF8(private val stream: Output) : Writer {
     override fun append(value: CharSequence?): AppendableUTF8 {
         spinLock.synchronize {
             value?.forEach {
-                append(it)
+                internalAppend(it)
             }
         }
         return this

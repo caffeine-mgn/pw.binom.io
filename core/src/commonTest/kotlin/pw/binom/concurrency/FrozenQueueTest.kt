@@ -27,3 +27,5 @@ class FrozenQueueTest {
         assertEquals(0, q.size)
     }
 }
+
+val aaa = listOf(1, 2, 3, "")

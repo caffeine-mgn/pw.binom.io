@@ -31,7 +31,7 @@ class TcpConnectionTest {
         selector.attach(
             socket = server,
         ).also {
-            it.listenFlags = KeyListenFlags.READ
+            it.updateListenFlags(KeyListenFlags.READ)
         }
 //        serverKey.listensFlag =
 //            Selector.INPUT_READY or Selector.OUTPUT_READY or Selector.EVENT_CONNECTED or Selector.EVENT_ERROR
@@ -62,7 +62,7 @@ class TcpConnectionTest {
         val clientKey = selector.attach(
             channel,
         )
-        clientKey.listenFlags = KeyListenFlags.ERROR or KeyListenFlags.READ or KeyListenFlags.WRITE
+        clientKey.updateListenFlags(KeyListenFlags.ERROR or KeyListenFlags.READ or KeyListenFlags.WRITE)
         println("Connect...")
         channel.connect(NetworkAddress.create(host = "127.0.0.1", serverConnection.port))
         println("Connect started!")
@@ -82,7 +82,7 @@ class TcpConnectionTest {
 //            Selector.EVENT_ERROR or Selector.EVENT_CONNECTED or Selector.INPUT_READY or Selector.OUTPUT_READY
 //        assertEquals(1, selector.getAttachedKeys().size)
         lock.unlock()
-        clientKey.listenFlags = KeyListenFlags.READ or KeyListenFlags.ERROR
+        clientKey.updateListenFlags(KeyListenFlags.READ or KeyListenFlags.ERROR)
         val list = SelectedKeys()
         var c = 0
         val buffer = ByteBuffer(512)

@@ -72,45 +72,46 @@ class CancellationTest {
     @OptIn(ExperimentalTime::class)
     @Test
     fun cancellationRead() = runTest(dispatchTimeoutMs = 10_000) {
-        val nd = NetworkCoroutineDispatcherImpl()
-        withContext(nd) {
-            var firstReadCanceled = false
+        MultiFixedSizeThreadNetworkDispatcher(1).use { nd ->
+            withContext(nd) {
+                var firstReadCanceled = false
 //            val server = nd.bindTcp(NetworkAddress.create("0.0.0.0", 0))
-            var serverShouldSendResponse = false
+                var serverShouldSendResponse = false
 //            launch(nd) {
 //                println("Wating client...")
 //                server.accept()
 //                println("Client connected to server!!!")
 //            }
 
-            delay(1.seconds)
-            println("Try connect")
-            val con = nd.tcpConnect(HTTP_SERVER_ADDRESS)
-            println("Connected!  $con")
-            val readJob = launch(nd) {
-                println("Task executed!")
-                ByteBuffer(10).use { buf ->
-                    try {
-                        println("Try read data...")
-                        val bb = con.read(buf)
-                        println("done! $bb")
-                    } catch (e: CancellationException) {
-                        firstReadCanceled = true
-                    } catch (e: Throwable) {
-                        println("Exception happened: $e")
+                delay(1.seconds)
+                println("Try connect")
+                val con = nd.tcpConnect(HTTP_SERVER_ADDRESS)
+                println("Connected!  $con")
+                val readJob = launch(nd) {
+                    println("Task executed!")
+                    ByteBuffer(10).use { buf ->
+                        try {
+                            println("Try read data...")
+                            val bb = con.read(buf)
+                            println("done! $bb")
+                        } catch (e: CancellationException) {
+                            firstReadCanceled = true
+                        } catch (e: Throwable) {
+                            println("Exception happened: $e")
 //                        throw e
-                    } finally {
-                        println("read try is finished")
+                        } finally {
+                            println("read try is finished")
+                        }
                     }
                 }
+                val mm = TimeSource.Monotonic.markNow()
+                println("wait one second")
+                delay(2.seconds)
+                println("Try cancel read   ${mm.elapsedNow()}")
+                readJob.cancelAndJoin()
+                serverShouldSendResponse = true
+                assertTrue(firstReadCanceled, "firstReadCanceled fails")
             }
-            val mm = TimeSource.Monotonic.markNow()
-            println("wait one second")
-            delay(2.seconds)
-            println("Try cancel read   ${mm.elapsedNow()}")
-            readJob.cancelAndJoin()
-            serverShouldSendResponse = true
-            assertTrue(firstReadCanceled, "firstReadCanceled fails")
         }
     }
 }

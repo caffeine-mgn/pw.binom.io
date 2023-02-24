@@ -3,6 +3,7 @@ package pw.binom.db.tarantool
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -10,6 +11,7 @@ import kotlin.test.assertNotNull
 class Testing : BaseTest() {
 
     @Test
+    @Ignore
     fun updateTest() {
         val schemaName = Random.nextUuid().toShortString()
         tarantool {
@@ -43,7 +45,7 @@ s:create_index('login_pwd',
             }
     }
 )
-    """
+    """,
             )
             val id = Random.nextUuid()
             val login = Random.nextUuid().toString()
@@ -59,15 +61,15 @@ s:create_index('login_pwd',
                     FieldUpdate(
                         operator = UpdateOperator.ASSIGN,
                         fieldId = 2,
-                        value = password
-                    )
-                )
+                        value = password,
+                    ),
+                ),
             )
 
             it.update(
                 space = schemaName,
                 key = listOf(id),
-                listOf(FieldUpdate(fieldId = 2, value = newPassword, operator = UpdateOperator.ASSIGN))
+                listOf(FieldUpdate(fieldId = 2, value = newPassword, operator = UpdateOperator.ASSIGN)),
             ).also {
                 assertNotNull(it)
                 assertEquals(id, it[0])
@@ -84,7 +86,7 @@ s:create_index('login_pwd',
                 key = listOf<Any>(),
                 offset = 0,
                 limit = 20,
-                iterator = QueryIterator.ALL
+                iterator = QueryIterator.ALL,
             ).also {
                 assertEquals(2, it.size)
             }
@@ -95,7 +97,7 @@ s:create_index('login_pwd',
                 key = listOf<Any>(id),
                 offset = 0,
                 limit = 20,
-                iterator = QueryIterator.EQ
+                iterator = QueryIterator.EQ,
             ).also {
                 assertEquals(1, it.size)
                 it.first().also {

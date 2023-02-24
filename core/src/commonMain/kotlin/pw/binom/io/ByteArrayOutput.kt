@@ -1,6 +1,9 @@
 package pw.binom.io
 
 import pw.binom.dump
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.math.ceil
 
 open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
@@ -90,7 +93,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         if (needWrite > 0) {
             val newSize = maxOf(
                 ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
-                this.data.capacity + _wrote + needWrite
+                this.data.capacity + _wrote + needWrite,
             )
             val old = this.data
             val new = this.data.realloc(newSize)
@@ -155,7 +158,12 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
         return data
     }
 
+    @Suppress("OPT_IN_IS_NOT_ENABLED")
+    @OptIn(ExperimentalContracts::class)
     inline fun <T> locked(func: (ByteBuffer) -> T): T {
+        contract {
+            callsInPlace(func, InvocationKind.EXACTLY_ONCE)
+        }
         val oldPosition = data.position
         try {
             return func(lock())

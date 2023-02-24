@@ -1,9 +1,9 @@
 package pw.binom.smtp
 
 import kotlinx.coroutines.runBlocking
-import pw.binom.io.ByteBuffer
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
+import pw.binom.io.wrap
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.ssl.EmptyKeyManager
 import pw.binom.ssl.TrustManager
@@ -20,21 +20,21 @@ class ClientTest {
             address = NetworkAddress.create("127.0.0.1", 1025),
             fromEmail = "test@test.org",
             login = "test@test.org",
-            password = "test_password"
+            password = "test_password",
         )
         client.multipart(
             from = "test@test.org",
             fromAlias = "Test Binom Client",
             to = "test2@test.org",
             toAlias = "Anton",
-            subject = "Test Message"
+            subject = "Test Message",
         ) {
             it.appendText("text/html").use {
                 it.append("<html>Hello from <b>Kotln</b><br><br><i>This</i> is an example HTML with attachment!<br><s>Зачёрктнутый</s>")
             }
 
             it.attach(name = "my_text.txt").use {
-                it.write(ByteBuffer.wrap("MyData in TXT file".encodeToByteArray()))
+                it.write("MyData in TXT file".encodeToByteArray().wrap())
             }
         }
 
@@ -43,7 +43,7 @@ class ClientTest {
             fromAlias = "TradeLine GIT",
             to = "caffeine.mgn@gmail.com",
             toAlias = "Anton",
-            subject = "Test Message"
+            subject = "Test Message",
         ) {
             it.appendText("text/html").use {
                 it.append("<html><s>Second email! Without attachment!</s>")
@@ -62,21 +62,21 @@ class ClientTest {
             trustManager = TrustManager.TRUST_ALL,
             fromEmail = "test@test.org",
             login = "test@test.org",
-            password = "test_password"
+            password = "test_password",
         )
         client.multipart(
             from = "test@test.org",
             fromAlias = "Test Binom Client",
             to = "test2@test.org",
             toAlias = "Anton",
-            subject = "Test Message"
+            subject = "Test Message",
         ) {
             it.appendText("text/html").use {
                 it.append("<html>Hello from <b>Kotln</b><br><br><i>This</i> is an example HTML with attachment!<br><s>Зачёрктнутый</s>")
             }
 
             it.attach(name = "my_text.txt").use {
-                it.write(ByteBuffer.wrap("MyData in TXT file".encodeToByteArray()))
+                it.write("MyData in TXT file".encodeToByteArray().wrap())
             }
         }
 
@@ -85,7 +85,7 @@ class ClientTest {
             fromAlias = "TradeLine GIT",
             to = "caffeine.mgn@gmail.com",
             toAlias = "Anton",
-            subject = "Test Message"
+            subject = "Test Message",
         ) {
             it.appendText("text/html").use {
                 it.append("<html><s>Second email! Without attachment!</s>")

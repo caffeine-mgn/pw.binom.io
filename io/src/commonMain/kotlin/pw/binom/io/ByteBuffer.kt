@@ -43,8 +43,8 @@ expect open class ByteBuffer :
         length: Int = calcLength(
             self = this,
             data = data,
-            offset = offset
-        )
+            offset = offset,
+        ),
     ): Int
 
     operator fun set(index: Int, value: Byte)

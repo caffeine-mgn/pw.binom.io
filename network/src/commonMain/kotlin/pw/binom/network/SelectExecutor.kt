@@ -19,7 +19,6 @@ object SelectExecutor {
                 try {
                     val attachment = event.key.attachment
                     if (attachment == null) {
-                        println("Event: $event. attachment is null")
                         return@select
                     }
                     attachment ?: return@select // ?: error("Attachment is null")

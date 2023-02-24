@@ -2,13 +2,12 @@ package pw.binom.io.http
 
 import kotlinx.coroutines.runBlocking
 import pw.binom.ByteBufferPool
-import pw.binom.UUID
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
 import pw.binom.io.ByteArrayOutput
-import pw.binom.io.readText
 import pw.binom.io.utf8Appendable
 import pw.binom.io.utf8Reader
+import pw.binom.uuid.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -23,7 +22,7 @@ class AsyncMultipartOutputTest {
         var exception: Throwable? = null
         val userName = UUID.random().toString()
         val userPassword = UUID.random().toString()
-        val bufferPool = ByteBufferPool(10, 100u)
+        val bufferPool = ByteBufferPool(50, 100)
         runBlocking {
             try {
                 mulipart.formData("userName")
@@ -46,7 +45,8 @@ class AsyncMultipartOutputTest {
             }
         }
 
-        if (exception != null)
+        if (exception != null) {
             throw exception!!
+        }
     }
 }

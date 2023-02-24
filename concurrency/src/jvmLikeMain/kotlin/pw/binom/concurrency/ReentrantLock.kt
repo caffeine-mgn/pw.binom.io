@@ -9,11 +9,11 @@ actual class ReentrantLock : Lock {
 
     private val native = ReentrantLock(false)
 
-    override fun lock(name: String?) {
+    override fun lock() {
         native.lock()
     }
 
-    override fun tryLock(name: String?): Boolean = native.tryLock()
+    override fun tryLock(): Boolean = native.tryLock()
 
     override fun unlock() {
         native.unlock()

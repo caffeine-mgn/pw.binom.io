@@ -7,9 +7,9 @@ import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.io.httpServer.HttpResponse
-import pw.binom.net.Path
-import pw.binom.net.Query
-import pw.binom.net.toPath
+import pw.binom.url.Path
+import pw.binom.url.Query
+import pw.binom.url.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -41,10 +41,6 @@ class AbstractRouteTest {
         }
 
         override suspend fun acceptTcp(): AsyncChannel {
-            TODO("Not yet implemented")
-        }
-
-        override suspend fun rejectTcp() {
             TODO("Not yet implemented")
         }
 

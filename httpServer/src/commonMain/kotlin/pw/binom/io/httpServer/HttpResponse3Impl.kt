@@ -86,7 +86,7 @@ internal class HttpResponse3Impl(
             Encoding.IDENTITY -> stream
             Encoding.CHUNKED -> AsyncChunkedOutput(
                 stream = stream,
-                closeStream = stream !== channel.writer,
+                closeStream = true,
             )
 
             Encoding.GZIP -> AsyncGZIPOutput(
@@ -112,7 +112,7 @@ internal class HttpResponse3Impl(
             resultOutput = AsyncContentLengthOutput(
                 stream = resultOutput,
                 contentLength = contentLength,
-                closeStream = true
+                closeStream = true,
             )
         }
         for (i in transferEncoding.lastIndex downTo 0) {

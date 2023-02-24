@@ -20,11 +20,11 @@ import pw.binom.io.http.Headers
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
+import pw.binom.s3.S3ClientApi
 import pw.binom.url.URI
+import pw.binom.url.UrlEncoder
 import pw.binom.url.toURI
 import pw.binom.url.toURL
-import pw.binom.s3.S3ClientApi
-import pw.binom.url.UrlEncoder
 import pw.binom.xml.serialization.annotations.XmlName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 import pw.binom.xml.serialization.annotations.XmlNode
@@ -38,7 +38,7 @@ class Signer private constructor(
     val region: String,
     val accessKey: String,
     val secretKey: String,
-    val prevSignature: String?
+    val prevSignature: String?,
 ) {
     companion object {
         fun signV4(
@@ -74,7 +74,7 @@ class Signer private constructor(
         val dateKey =
             sumHmac(
                 aws4SecretKey.encodeToByteArray(),
-                SIGNER_DATE_FORMAT.toString(this.date.calendar(0)).encodeToByteArray()
+                SIGNER_DATE_FORMAT.toString(this.date.calendar(0)).encodeToByteArray(),
             )
 
         val dateRegionKey = sumHmac(dateKey, this.region.encodeToByteArray())
@@ -288,11 +288,15 @@ data class ListBucketResult(
     @XmlNode
     val maxKeys: Long,
     @XmlNamespace([AWS_NS])
-    @XmlName("Delimiter") @XmlNode
+    @XmlName("Delimiter")
+    @XmlNode
     val delimiter: String,
-    @XmlNamespace([AWS_NS]) @XmlName("IsTruncated") @XmlNode
+    @XmlNamespace([AWS_NS])
+    @XmlName("IsTruncated")
+    @XmlNode
     val isTruncated: Boolean,
-    @XmlNamespace([AWS_NS]) @XmlName("Contents")
+    @XmlNamespace([AWS_NS])
+    @XmlName("Contents")
     val contents: List<Content>,
 )
 
@@ -361,7 +365,7 @@ class OOOO {
                 regin = regin,
                 bucket = bucket,
                 key = "test",
-                range = listOf(Range.Last("bytes", 7))
+                range = listOf(Range.Last("bytes", 7)),
             ) { it ->
                 it ?: return@getObject null
                 it.input.bufferedReader().readText()

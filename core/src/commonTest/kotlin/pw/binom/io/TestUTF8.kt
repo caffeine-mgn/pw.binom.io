@@ -92,7 +92,7 @@ class TestUTF8 {
 
     @Test
     fun testEncode() {
-        assertEquals("Anton%d0%90%d0%91%20%d0%b2%d0%b3", UrlEncoder.encode("AntonАБ вг"))
+        assertEquals("Anton%D0%90%D0%91%20%D0%B2%D0%B3", UrlEncoder.encode("AntonАБ вг"))
     }
 
     @Test
@@ -103,17 +103,22 @@ class TestUTF8 {
     @Test
     fun testEndLine() {
         val txt = "H\r\nE"
-
+        println("#1")
         assertEquals(txt, txt.toByteBufferUTF8().utf8Reader().readText())
-
+        println("#2")
         assertEquals(
             txt,
             ByteBuffer(50).also {
+                println("#2-1")
                 it.utf8Appendable().append(txt)
+                println("#2-2")
                 it.flush()
+                println("#2-3")
                 it.flip()
-            }.toByteArray().decodeToString()
+                println("#2-4")
+            }.toByteArray().decodeToString(),
         )
+        println("#3")
     }
 
     private val test_string = "donďż˘ďľ€ďľ™t"

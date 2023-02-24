@@ -2,6 +2,7 @@ package pw.binom.network
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
+import pw.binom.executeAndResumeWithException
 import pw.binom.io.ClosedException
 import pw.binom.io.socket.*
 import pw.binom.io.use
@@ -14,9 +15,6 @@ class TcpServerConnection constructor(
     private var currentKey: SelectorKey,
 ) : AbstractConnection() {
     var description: String? = null
-
-    var state: ConnectionState = ConnectionState.IDLE
-        private set
 
     companion object {
         fun randomPort() = Socket.createTcpServerNetSocket().use {
@@ -52,7 +50,6 @@ class TcpServerConnection constructor(
         if (acceptListener != null) {
             this.acceptListener = null
             acceptListener.resumeWithException(SocketClosedException())
-            state = ConnectionState.IDLE
         }
         // ignore error
 //        close()
@@ -60,21 +57,14 @@ class TcpServerConnection constructor(
 
     override fun readyForRead(key: SelectorKey) {
 //        println("TcpServerConnection::readyForRead")
-        val acceptListener = acceptListener
-        if (acceptListener == null) {
-//            println("TcpServerConnection::readyForRead acceptListener == null")
-            return
-        }
-        state = ConnectionState.PROCESS
+        val acceptListener = acceptListener ?: return
         val newChannel = channel.accept(null)
         if (newChannel == null) {
+            safeUpdate(acceptListener, KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
 //            println("TcpServerConnection::readyForRead newChannel == null")
-            ConnectionState.SUSPENDED
             return
         }
         this.acceptListener = null
-//        println("TcpServerConnection::readyForRead resume...")
-        state = ConnectionState.IDLE
         acceptListener.resume(newChannel)
     }
 
@@ -85,14 +75,24 @@ class TcpServerConnection constructor(
             }
             acceptListener = null
         }
-        state = ConnectionState.CLOSED
         if (!currentKey.isClosed) {
             currentKey.close()
         }
         channel.close()
     }
 
-    private var acceptListener: CancellableContinuation<TcpClientNetSocket>? = null
+    private var acceptListener: CancellableContinuation<TcpClientSocket>? = null
+
+    private fun safeUpdate(con: CancellableContinuation<TcpClientSocket>, flags: Int) =
+        if (currentKey.updateListenFlags(flags)) {
+            currentKey.selector.wakeup()
+            true
+        } else {
+            con.executeAndResumeWithException(ClosedException()) {
+                close()
+            }
+            false
+        }
 
     suspend fun accept(address: MutableNetworkAddress? = null): TcpConnection {
         if (closed) {
@@ -101,11 +101,9 @@ class TcpServerConnection constructor(
         }
         check(acceptListener == null) { "Connection already have read listener" }
 
-        state = ConnectionState.PROCESS
         val newClient = channel.accept(address)
         if (newClient != null) {
 //            println("TcpServerConnection::accept accepted!!!")
-            state = ConnectionState.IDLE
             return dispatcher.attach(newClient).also {
                 it.description = "Server of $description"
             }
@@ -113,21 +111,8 @@ class TcpServerConnection constructor(
         val newChannel = suspendCancellableCoroutine<TcpClientSocket> { con ->
             try {
 //                println("TcpServerConnection::accept newClient==null. Wait event...")
-                state = ConnectionState.SUSPENDED
                 acceptListener = con
-                if (currentKey.updateListenFlags(KeyListenFlags.READ or KeyListenFlags.ONCE)) {
-                    currentKey.selector.wakeup()
-                } else {
-                    try {
-                        close()
-                        con.resumeWithException(ClosedException())
-                    } catch (e: Throwable) {
-                        val ex = ClosedException()
-                        ex.addSuppressed(e)
-                        con.resumeWithException(ex)
-                    }
-                    return@suspendCancellableCoroutine
-                }
+                safeUpdate(con, KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
             } catch (e: Throwable) {
                 con.resumeWithException(e)
             }
@@ -136,7 +121,6 @@ class TcpServerConnection constructor(
                 acceptListener = null
                 if (currentKey.updateListenFlags(0)) {
                     currentKey.selector.wakeup()
-                    state = ConnectionState.IDLE
                 } else {
                     close()
                 }

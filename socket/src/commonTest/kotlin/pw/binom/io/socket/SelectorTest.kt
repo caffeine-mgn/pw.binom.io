@@ -20,7 +20,7 @@ class Tandem {
     fun select(duration: Duration = INFINITE): List<Event> {
         selector.select(
             timeout = duration,
-            selectedKeys = selected
+            selectedKeys = selected,
         )
         return selected.toList()
     }
@@ -67,7 +67,7 @@ class SelectorTest {
         client.connect(server).assertInProgress()
         val serverClient = server.accept(null)
         Thread.sleep(0.5.seconds)
-        clientKey.listenFlags = KeyListenFlags.READ or KeyListenFlags.ERROR
+        clientKey.updateListenFlags(KeyListenFlags.READ or KeyListenFlags.ERROR)
         Thread {
             sleep(1.seconds)
             println("Sleep finished!")
@@ -104,7 +104,7 @@ class SelectorTest {
         val client = Socket.createTcpClientNetSocket()
         client.blocking = false
         val key = tandem.selector.attach(client)
-        key.listenFlags = KeyListenFlags.WRITE or KeyListenFlags.ONCE
+        key.updateListenFlags(KeyListenFlags.WRITE or KeyListenFlags.ONCE)
         client.connect(httpServerAddress)
         val events = tandem.select()
         assertEquals(1, events.size)
@@ -122,7 +122,7 @@ class SelectorTest {
         val client = Socket.createTcpClientNetSocket()
         client.blocking = false
         val key = tandem.selector.attach(client)
-        key.listenFlags = KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE
+        key.updateListenFlags(KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE)
         client.connect(NetworkAddress.create(host = "127.0.0.1", port = 1))
         println("#--1")
         val events = tandem.select()

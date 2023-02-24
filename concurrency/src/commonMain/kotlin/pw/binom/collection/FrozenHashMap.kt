@@ -245,7 +245,7 @@ class FrozenKeysSet<K, V>(val map: FrozenHashMap<K, V>) : MutableSet<K> {
 }
 
 class FrozenBucket<K, V> {
-    val lock = SpinLock("FrozenBucket")
+    val lock = SpinLock()
     var root = AtomicReference<FrozenMutableEntry<K, V>?>(null)
     internal var changeCounter = AtomicInt(0)
 

@@ -220,7 +220,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
         ensureOpen()
         val l = minOf(remaining, length)
-        native.put(data, offset, length)
+        native.put(data, offset, l)
         return l
     }
 

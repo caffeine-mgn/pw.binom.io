@@ -54,7 +54,7 @@ class SingleThreadNetworkManager : AbstractNetworkManager(), Closeable {
                     val currentThread = Thread.currentThread
                     currentThread.uncaughtExceptionHandler.uncaughtException(
                         thread = currentThread,
-                        throwable = RuntimeException("Error on network queue", e)
+                        throwable = RuntimeException("Error on network queue", e),
                     )
                 }
             }
@@ -66,7 +66,7 @@ class SingleThreadNetworkManager : AbstractNetworkManager(), Closeable {
     @Suppress("OPT_IN_IS_NOT_ENABLED")
     @OptIn(DelicateCoroutinesApi::class)
     fun start(func: suspend CoroutineScope.() -> Unit) {
-        val b = GlobalScope.launch(start = CoroutineStart.LAZY) {
+        val b = GlobalScope.launch(start = CoroutineStart.LAZY, context = this@SingleThreadNetworkManager) {
             try {
                 withContext(this@SingleThreadNetworkManager) {
                     func(this)
@@ -81,7 +81,7 @@ class SingleThreadNetworkManager : AbstractNetworkManager(), Closeable {
         this.exchange.push(
             Runnable {
                 b.start()
-            }
+            },
         )
         start()
     }
@@ -95,10 +95,7 @@ class SingleThreadNetworkManager : AbstractNetworkManager(), Closeable {
         try {
             while (!closed.getValue()) {
                 executeLazyTasks()
-                var v = 0
-                this.selector.select(timeout = Duration.INFINITE, selectedKeys = selectedKeys)
-                selectedKeys.forEach { event ->
-                    v++
+                this.selector.select(timeout = Duration.INFINITE) { event ->
                     try {
                         val attachment = event.key.attachment
                         attachment ?: error("Attachment is null")
@@ -119,6 +116,8 @@ class SingleThreadNetworkManager : AbstractNetworkManager(), Closeable {
                 }
                 executeLazyTasks()
             }
+        } catch (e: ClosedException) {
+            // Do nothing
         } catch (e: Throwable) {
             val currentThread = Thread.currentThread
             currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, e)
@@ -132,7 +131,8 @@ class SingleThreadNetworkManager : AbstractNetworkManager(), Closeable {
 
     override fun close() {
         if (closed.compareAndSet(false, true)) {
-            wakeup()
+            internalWakeup()
         }
+        selector.close()
     }
 }

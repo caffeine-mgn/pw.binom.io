@@ -12,17 +12,31 @@ interface AsyncReader : AsyncCloseable {
         try {
             while (true) {
                 val r = readChar() ?: break
-                if (r == 10.toChar())
+                if (r == 10.toChar()) {
                     break
+                }
                 sb.append(r)
             }
         } catch (e: EOFException) {
             // NOP
         }
-        if (sb.isEmpty())
+        if (sb.isEmpty()) {
             return null
+        }
         if (sb.lastOrNull() == '\r') {
             sb.deleteAt(sb.lastIndex)
+        }
+        return sb.toString()
+    }
+
+    suspend fun readText(): String {
+        val sb = StringBuilder()
+        while (true) {
+            try {
+                sb.append(readChar() ?: break)
+            } catch (e: EOFException) {
+                break
+            }
         }
         return sb.toString()
     }
@@ -30,8 +44,9 @@ interface AsyncReader : AsyncCloseable {
 
 abstract class AbstractAsyncReader : AsyncReader {
     override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
-        if (offset + length > dest.size)
+        if (offset + length > dest.size) {
             throw IndexOutOfBoundsException()
+        }
         var i = 0
         while (i < length) {
             try {

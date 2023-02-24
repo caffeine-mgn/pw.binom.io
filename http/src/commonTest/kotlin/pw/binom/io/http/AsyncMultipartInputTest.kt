@@ -3,6 +3,7 @@ package pw.binom.io.http
 import kotlinx.coroutines.runBlocking
 import pw.binom.*
 import pw.binom.io.*
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -58,7 +59,7 @@ class AsyncMultipartInputTest {
                 val input = AsyncMultipartInput(
                     separator = mulipart.boundary,
                     stream = testData.asyncInput(),
-                    bufferPool = bufferPool
+                    bufferPool = bufferPool,
                 )
 
                 t.clear()

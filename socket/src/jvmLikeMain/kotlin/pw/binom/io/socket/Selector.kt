@@ -1,6 +1,7 @@
 package pw.binom.io.socket
 
 import pw.binom.io.Closeable
+import pw.binom.io.ClosedException
 import java.nio.channels.SocketChannel
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -81,7 +82,11 @@ actual class Selector : Closeable {
 
     actual fun select(timeout: Duration, eventFunc: (pw.binom.io.socket.Event) -> Unit) {
         lock.withLock {
-            select(timeout = timeout)
+            try {
+                select(timeout = timeout)
+            } catch (e: java.nio.channels.ClosedSelectorException) {
+                throw ClosedException()
+            }
             native.selectedKeys().forEach { nativeKey ->
                 val binomKey = nativeKey.attachment() as SelectorKey
                 eventImpl.internalKey = binomKey

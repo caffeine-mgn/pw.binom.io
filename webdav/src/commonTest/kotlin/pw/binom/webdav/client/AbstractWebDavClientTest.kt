@@ -1,13 +1,16 @@
 package pw.binom.webdav.client
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestResult
 import pw.binom.charset.Charsets
 import pw.binom.io.*
-import pw.binom.net.toPath
-import pw.binom.nextUuid
+import pw.binom.url.toPath
+import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.*
 
+@Suppress("OPT_IN_IS_NOT_ENABLED")
+@OptIn(ExperimentalCoroutinesApi::class)
 abstract class AbstractWebDavClientTest {
     protected abstract fun clientWithUser(func: suspend (WebDavClient) -> Unit): TestResult
 
@@ -75,14 +78,15 @@ abstract class AbstractWebDavClientTest {
     @Test
     fun getRangeTest() {
         clientWithUser { client ->
-            val tmpContent = Random.nextUuid().toString()
+            val tmpContent = "start---986-43ad-9238-fb9683---end" // Random.nextUuid().toString()
             client.new("/new.txt".toPath).bufferedAsciiWriter().use {
                 it.append(tmpContent)
             }
             val newTxt = client.get("/new.txt".toPath)!!
+            val bytesFromFile = newTxt.read()!!.readBytes()
+            println("Data[${bytesFromFile.size}]: ${bytesFromFile.toList()}")
             val contentWithOffset = newTxt.read(offset = 2u)!!.bufferedAsciiReader().use { it.readText() }
-            val contentWithLimit =
-                newTxt.read(offset = 2u, length = 5u)!!.bufferedAsciiReader().use { it.readText() }
+            val contentWithLimit = newTxt.read(offset = 2u, length = 5u)!!.bufferedAsciiReader().use { it.readText() }
             newTxt.delete()
             assertEquals(tmpContent.substring(2), contentWithOffset)
             assertEquals(tmpContent.substring(2, endIndex = 5 + 2), contentWithLimit)
@@ -115,8 +119,7 @@ abstract class AbstractWebDavClientTest {
         clientWithUser { client ->
             assertNull(client.get("/привет 2.txt".toPath))
             val txt = "Привет мир"
-            client.new("/привет .txt".toPath).bufferedWriter(charset = Charsets.get("windows-1251"))
-                .use { it.append(txt) }
+            client.new("/привет .txt".toPath).bufferedWriter(charset = Charsets.get("windows-1251")).use { it.append(txt) }
             val helloTxt = client.get("/привет .txt".toPath)
             assertNotNull(helloTxt)
             assertEquals(txt.length.toLong(), helloTxt.length)

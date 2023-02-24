@@ -53,10 +53,10 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
         return EpollResult.OK
     }
 
-    fun delete(fd: RawSocket, operation: String): EpollResult {
+    fun delete(fd: RawSocket): EpollResult {
         val ret = removeKey(raw, fd)
         if (ret != 0) {
-            println("Can't remove event. fd: $fd, errno: $errno, operation: $operation")
+//            println("Can't remove event. fd: $fd, errno: $errno, operation: $operation")
             when (errno) {
                 EPERM, EBADF, ENOENT -> return EpollResult.INVALID
                 EEXIST -> return EpollResult.ALREADY_EXIST
@@ -67,16 +67,15 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
         return EpollResult.OK
     }
 
-    fun delete(socket: Socket, failOnError: Boolean, operation: String): EpollResult {
+    fun delete(socket: Socket, failOnError: Boolean): EpollResult {
         val ret = removeKey(raw, socket.native)
         if (ret != 0) {
-            println("Can't remove event. socket: $socket, errno: $errno, operation: $operation")
             when (errno) {
                 EPERM, EBADF, ENOENT -> return EpollResult.INVALID
                 EEXIST -> return EpollResult.ALREADY_EXIST
             }
             if (failOnError) {
-                throw IOException("Can't remove key from selector. socket: $socket, list: $raw. errno: $errno, operation: $operation")
+                throw IOException("Can't remove key from selector. socket: $socket, list: $raw. errno: $errno")
             }
         } else {
 //            println("Epoll:: removed success. socket: $socket, operation: $operation")

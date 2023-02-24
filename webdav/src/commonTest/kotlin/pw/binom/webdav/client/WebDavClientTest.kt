@@ -4,7 +4,7 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.concurrency.sleep
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
-import pw.binom.net.toURL
+import pw.binom.url.toURL
 import pw.binom.webdav.BasicAuthorization
 import kotlin.test.Test
 

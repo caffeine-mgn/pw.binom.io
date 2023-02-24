@@ -28,13 +28,16 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
     override fun attach(channel: TcpNetServerSocket): TcpServerConnection {
         ensureOpen()
         channel.blocking = false
-        val key = selector.attach(socket = channel)
-        val con = TcpServerConnection(channel = channel, dispatcher = this, currentKey = key)
-        if (!key.updateListenFlags(0)) {
-            throw IllegalStateException()
+        while (true) {
+            val key = selector.attach(socket = channel)
+            val con = TcpServerConnection(channel = channel, dispatcher = this, currentKey = key)
+            if (!key.updateListenFlags(0)) {
+                key.closeAnyway()
+                continue
+            }
+            key.attachment = con
+            return con
         }
-        key.attachment = con
-        return con
     }
 
     override fun attach(channel: UdpNetSocket): UdpConnection {
@@ -50,8 +53,12 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
         return con
     }
 
+    protected fun internalWakeup() {
+        selector.wakeup()
+    }
+
     override fun wakeup() {
         ensureOpen()
-        selector.wakeup()
+        internalWakeup()
     }
 }

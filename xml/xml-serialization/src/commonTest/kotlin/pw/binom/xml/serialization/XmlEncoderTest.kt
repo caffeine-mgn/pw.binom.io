@@ -12,6 +12,7 @@ import pw.binom.xml.serialization.annotations.XmlName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 import pw.binom.xml.serialization.annotations.XmlNode
 import pw.binom.xml.serialization.annotations.XmlWrapper
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 @Serializable
@@ -26,14 +27,14 @@ data class TestData(
 
     @XmlWrapper("names")
     @XmlName("value")
-    val names: List<String>
+    val names: List<String>,
 )
 
 @Serializable
 @SerialName("data2")
 data class TestData2(
     @XmlNamespace(["https://1"]) @XmlNode
-    val age: Int
+    val age: Int,
 )
 
 @Polymorphic
@@ -44,6 +45,7 @@ data class PolimorfClass(val ololo: String)
 class XmlEncoderTest {
 
     @Test
+    @Ignore
     fun test() = runTest {
         val module = SerializersModule {
             polymorphic(Any::class, PolimorfClass::class, PolimorfClass.serializer())

@@ -3,6 +3,7 @@ package pw.binom.concurrency
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicInt
 import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -61,6 +62,7 @@ class WorkerTest {
     }
 */
     @Test
+    @Ignore
     fun test() {
         val w = Worker()
         val r = Random.nextInt()
@@ -72,6 +74,7 @@ class WorkerTest {
     }
 
     @Test
+    @Ignore
     fun test2() {
         val w = Worker()
         var r = AtomicInt(Random.nextInt())

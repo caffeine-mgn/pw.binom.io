@@ -10,11 +10,7 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
-import kotlin.time.measureTimedValue
+import kotlin.time.*
 
 internal val STUB_BYTE = byteArrayOf(1).pin()
 private const val MAX_ELEMENTS = 1042
@@ -26,22 +22,21 @@ actual class Selector : Closeable {
 
     //    internal val keyForRemove = LinkedList<SelectorKey>()
     private val errorsRemove = HashSet<SelectorKey>()
-    private val errorsRemoveLock = SpinLock("Selector::errorsRemoveLock")
-    private val keysLock = SpinLock("Selector::keysLock")
+    private val errorsRemoveLock = SpinLock()
+    private val keysLock = SpinLock()
 
     //    private val keyForRemoveLock = SpinLock("Selector::keyForRemoveLock")
     internal val epoll = Epoll.create(1024)
     private val wakeupFlag = AtomicBoolean(false)
     private val native = createSelectedList(MAX_ELEMENTS)!!
     internal val eventMem = mallocEvent()!!
-    internal val eventMemLock = SpinLock("Selector::eventMemLock")
-    private val selectingLock = SpinLock("Selector::selectingLock")
+    internal val eventMemLock = SpinLock()
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
     private val fdToKey = HashMap<RawSocket, SelectorKey>()
 
     internal inline fun <T> usingEventPtr(func: (CPointer<Event>) -> T): T =
-        eventMemLock.synchronize("usingEventPtr") { func(eventMem) }
+        eventMemLock.synchronize { func(eventMem) }
 
     private val eventImpl = object : pw.binom.io.socket.Event {
         var internalKey: SelectorKey? = null
@@ -83,17 +78,24 @@ actual class Selector : Closeable {
         if (socket.blocking) {
             throw IllegalArgumentException("Socket in blocking mode")
         }
+        val previous = keysLock.synchronize {
+            fdToKey[socket.native]
+        }
+        if (previous != null) {
+            return previous
+        }
         val key = SelectorKey(selector = this, socket = socket)
         key.serverFlag = socket.server
-        usingEventPtr { eventMem ->
-            setEventDataFd(eventMem, socket.native)
-            setEventFlags(eventMem, 0, 0)
-            epoll.add(socket.native, eventMem)
-        }
-        keysLock.synchronize("attach") {
+        epoll.add(socket.native, key.eventMem)
+//        usingEventPtr { eventMem ->
+//            setEventDataFd(eventMem, socket.native)
+//            setEventFlags(eventMem, 0, 0)
+//            epoll.add(socket.native, eventMem)
+//        }
+        keysLock.synchronize {
             val previousValue = fdToKey.put(socket.native, key)
             if (previousValue != null) {
-                errorsRemoveLock.synchronize("attach") {
+                errorsRemoveLock.synchronize {
                     errorsRemove += previousValue
                 }
             }
@@ -143,14 +145,13 @@ actual class Selector : Closeable {
     }
 
     internal fun removeKey(key: SelectorKey) {
-        epoll.delete(key.socket, failOnError = false, operation = "removeKey")
+        epoll.delete(key.socket, failOnError = false)
 
-        val removeTime = keysLock.synchronize("removeKey") {
+        val removeTime = keysLock.synchronize() {
             measureTime {
                 fdToKey.remove(key.rawSocket)
             }
         }
-        println("Selector::removeKey removeKey time $removeTime")
         key.internalClose()
 //        return
 //        if (selectingLock.tryLock()) {
@@ -174,25 +175,6 @@ actual class Selector : Closeable {
 //                println("Selector::removeKey. Add to keyForRemove. #4. fd: ${key.socket}")
 //                keyForRemove.add(key)
 //            }
-//        }
-    }
-
-    private fun deferredRemoveKeys(iteration: String) {
-//        keyForRemoveLock.synchronize {
-// //                println("removing key for close. keyForRemove: ${keyForRemove.size}")
-//            keysLock.synchronize {
-//                keyForRemove.forEachLinked { key ->
-//                    val deleteResult =
-//                        epoll.delete(key.socket, failOnError = false, operation = "deferredRemoveKeys-$iteration")
-//
-//                    val removed = fdToKey.remove(key.rawSocket)
-//                    println("Selector::deferredRemoveKeys remove fd: ${key.socket}, removed: $removed, iteration: $iteration")
-//
-//                    key.internalClose()
-// //                    println("Remove key from list $key ${key.identityHashCode()} fd=${key.rawSocket}! deleteResult: $deleteResult")
-//                }
-//            }
-//            keyForRemove.clear()
 //        }
     }
 
@@ -230,7 +212,7 @@ actual class Selector : Closeable {
         func: (SelectorKey) -> Unit,
     ) {
         var currentNum = 0
-        errorsRemoveLock.synchronize("cleanupPostProcessing") {
+        errorsRemoveLock.synchronize {
             errorsRemove.forEach { key ->
                 key.internalReadFlags = KeyListenFlags.ERROR
                 func(key)
@@ -255,15 +237,15 @@ actual class Selector : Closeable {
             val socketFd = getEventDataFd(event)
             val key = fdToKey[socketFd]
             if (key == null) {
-                val r = epoll.delete(socketFd, operation = "cleanupPostProcessing-1")
-                val flagsStr = commonFlagsToString(getEventFlags(event))
+                val r = epoll.delete(socketFd)
+//                val flagsStr = commonFlagsToString(getEventFlags(event))
 //                println("Selector::cleanupPostProcessing Got event with key null. fd: $socketFd. result: $r, flagsStr: $flagsStr, pipeRead: $pipeRead, pipeWrite: $pipeWrite")
                 continue
             }
             key ?: continue
             val flags = getEventFlags(event)
             if (key.isClosed) {
-                val r = epoll.delete(key.socket, failOnError = false, operation = "cleanupPostProcessing-2")
+                val r = epoll.delete(key.socket, failOnError = false)
 //                println("Alarm! Event for closed key! $key ${key.identityHashCode()} fd=${getEventDataFd(event)}!")
                 val flagsStr = commonFlagsToString(flags)
 //                val removed = keysLock.synchronize {
@@ -318,12 +300,9 @@ actual class Selector : Closeable {
     )
 
     actual fun select(timeout: Duration, selectedKeys: SelectedKeys) {
-        selectLock.synchronize("select") {
-            interruptWakeup()
-            deferredRemoveKeys("Before select")
-            selectedKeys.lock.synchronize("select") {
-//                selectedKeys.errors.clear()
-                val eventCount = selectingLock.synchronize("select") { select(timeout = timeout) }
+        selectLock.synchronize {
+            selectedKeys.lock.synchronize {
+                val eventCount = select(timeout = timeout)
                 cleanupPostProcessing(
                     selectedKeys = selectedKeys.selectedKeys,
 //                    native = selectedKeys.native,
@@ -332,51 +311,25 @@ actual class Selector : Closeable {
                 )
                 selectedKeys.selected(eventCount)
             }
-            deferredRemoveKeys("After select")
         }
     }
 
-    @OptIn(ExperimentalTime::class)
-    private inline fun <T> timeTest(name: String, func: () -> T): T {
-        val result = measureTimedValue {
-            func()
-        }
-        if (result.duration > 2.seconds) {
-            println("Selector::timeTest long operation: $name, ${result.duration}")
-        }
-        return result.value
-    }
-
-    @OptIn(ExperimentalTime::class)
     actual fun select(timeout: Duration, eventFunc: (pw.binom.io.socket.Event) -> Unit) {
-//        println("Selector:: select #1")
-        timeTest("select-total") {
-            selectLock.synchronize("select") {
-//                println("Selector:: select #2 keyForRemove: ${keyForRemove.size}, errorsRemove: ${errorsRemove.size}, fdToKey: ${fdToKey.size}, selectorKeyCountMetric: ${NetworkMetrics.selectorKeyCountMetric.value}, selectorKeyAllocCountMetric: ${NetworkMetrics.selectorKeyAllocCountMetric.value}, BYTEBUFFER_COUNT_METRIC: ${ByteBufferMetric.BYTEBUFFER_COUNT_METRIC.value}, BYTEBUFFER_MEMORY_METRIC: ${ByteBufferMetric.BYTEBUFFER_MEMORY_METRIC.value}")
-                timeTest("interruptWakeup") { interruptWakeup() }
-                timeTest("deferredRemoveKeys-1") { deferredRemoveKeys("before-select") }
-                val eventCount =
-                    timeTest("Selecting") { selectingLock.synchronize("select") { select(timeout = timeout) } }
-//            keyForRemoveLock.synchronize {
-//                println("STATUS: nativeKeys.size=${nativeKeys.size} keys2.size=${keys2.size}, keyForRemove: ${keyForRemove.size}, errorsRemove: ${errorsRemove.size} keyForRemove: ${keyForRemove.size} NetworkMetrics: ${NetworkMetrics.selectorKeyCountMetric.value} selectorKeyAllocCountMetric: ${NetworkMetrics.selectorKeyAllocCountMetric.value}")
-//            }
-                timeTest("deferredRemoveKeys-2") { deferredRemoveKeys("after-select") }
-                timeTest("cleanupPostProcessing") {
-                    cleanupPostProcessing(
-                        count = eventCount,
-                    ) { key ->
-                        eventImpl.internalFlag = key.readFlags
-                        eventImpl.internalKey = key
-                        eventFunc(eventImpl)
-                    }
-                }
+        selectLock.synchronize {
+            val eventCount = select(timeout = timeout)
+            cleanupPostProcessing(
+                count = eventCount,
+            ) { key ->
+                eventImpl.internalFlag = key.readFlags
+                eventImpl.internalKey = key
+                eventFunc(eventImpl)
             }
         }
     }
 
     override fun close() {
-        selectLock.synchronize("close") {
-            epoll.delete(pipeRead, operation = "close")
+        selectLock.synchronize {
+            epoll.delete(pipeRead)
             usingEventPtr { eventMem ->
                 freeEvent(eventMem)
             }

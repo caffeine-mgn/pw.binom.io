@@ -66,7 +66,7 @@ class SelectorTest {
         client.blocking = false
         val key = selector.attach(client)
         try {
-            key.listenFlags = 0
+            key.updateListenFlags(0)
             client.connect(NetworkAddress.create(host = "google.com", port = 443))
             selector.select(timeout = 2.seconds, selectedKeys = selectKeys)
             assertTrue(selectKeys.toList().isEmpty())
@@ -85,7 +85,7 @@ class SelectorTest {
         val client = Socket.createTcpClientNetSocket()
         client.blocking = false
         val key = selector.attach(client)
-        key.listenFlags = KeyListenFlags.WRITE
+        key.updateListenFlags(KeyListenFlags.WRITE)
         client.connect(NetworkAddress.create(host = "google.com", port = 443))
         selector.select(timeout = 5.seconds, selectedKeys = selectKeys)
         val it = selectKeys.toList()
@@ -145,13 +145,13 @@ class SelectorTest {
         println("#1")
         val key1 = selector1.attach(server)
         println("#2")
-        key1.listenFlags = KeyListenFlags.READ
+        key1.updateListenFlags(KeyListenFlags.READ)
         val selectKeys2 = SelectedKeys()
         val selector2 = Selector()
         println("#3")
         val key2 = selector2.attach(server)
         println("#4")
-        key2.listenFlags = KeyListenFlags.READ
+        key2.updateListenFlags(KeyListenFlags.READ)
         Socket.createTcpClientNetSocket().connect(NetworkAddress.create(host = "127.0.0.1", port = server.port!!))
 
         val v1 = selector1.select(selectedKeys = selectKeys1, timeout = 10.milliseconds)
@@ -193,7 +193,7 @@ class SelectorTest {
         server.bind(NetworkAddress.create(host = "0.0.0.0", port = 0))
         val addr = NetworkAddress.create(host = "127.0.0.1", port = server.port!!)
         val s1Key = selector.attach(server)
-        s1Key.listenFlags = KeyListenFlags.READ
+        s1Key.updateListenFlags(KeyListenFlags.READ)
 //        val s2Key = selector.attach(server, mode = Selector.INPUT_READY)
 
         s1.trySelect()
@@ -231,7 +231,7 @@ class SelectorTest {
         b.blocking = false
         b.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
         val udpChannel = selector1.attach(b)
-        udpChannel.listenFlags = KeyListenFlags.READ
+        udpChannel.updateListenFlags(KeyListenFlags.READ)
         sendUdp(b.port)
         selector1.select(selectedKeys = selectKeys1, timeout = INFINITE)
         val event = selectKeys1.toList().first()
@@ -248,7 +248,7 @@ class SelectorTest {
         b.blocking = false
         b.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
         val udpChannel = selector1.attach(b)
-        udpChannel.listenFlags = KeyListenFlags.READ
+        udpChannel.updateListenFlags(KeyListenFlags.READ)
         val c = Socket.createUdpNetSocket()
         c.blocking = true
         ByteBuffer(42).use { buffer ->
@@ -296,9 +296,9 @@ class SelectorTest {
         var k1: SelectorKey? = null
         var k2: SelectorKey? = null
         k1 = selector1.attach(server)
-        k1.listenFlags = KeyListenFlags.READ
+        k1.updateListenFlags(KeyListenFlags.READ)
         k2 = selector2.attach(server)
-        k2.listenFlags = KeyListenFlags.READ
+        k2.updateListenFlags(KeyListenFlags.READ)
         server.bind(NetworkAddress.create(host = "127.0.0.1", port = port))
         sendDataWithDelay(port = port, delay = 300.milliseconds)
         val vv1 = measureTimedValue { selector1.select(selectedKeys = selectKeys1, timeout = 1.seconds) }

@@ -11,7 +11,8 @@ class JvmCharsetEncoder(val native: java.nio.charset.CharsetEncoder) : CharsetEn
     }
 
     override fun encode(input: CharBuffer, output: ByteBuffer): CharsetTransformResult {
-        val r = native.encode(input.native, output.native, true)
+        val nativeOutput = output.native
+        val r = native.encode(input.native, nativeOutput, true)
         return when {
             r.isUnderflow -> CharsetTransformResult.SUCCESS
             r.isOverflow -> CharsetTransformResult.OUTPUT_OVER

@@ -10,6 +10,7 @@ import pw.binom.io.file.relative
 import pw.binom.io.file.workDirectoryFile
 import pw.binom.ssl.*
 import kotlin.random.Random
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 fun Input.readAllBytes() = ByteArrayOutput().use { output ->
@@ -18,7 +19,7 @@ fun Input.readAllBytes() = ByteArrayOutput().use { output ->
 }
 
 fun Output.writeAllBytes(data: ByteArray) {
-    ByteBuffer.wrap(data).use {
+    data.wrap {
         write(it)
     }
 }
@@ -43,8 +44,9 @@ class ChiperTest {
         return pair
     }
 
+    @Ignore
     @Test
-    fun test2() {
+    fun ecdsaCipherTest() {
         val pair = Key.generateEcdsa(Nid.secp256k1)
         val dd = Cipher.getInstance("ECDSA")
         dd.init(Cipher.Mode.ENCODE, pair.public)

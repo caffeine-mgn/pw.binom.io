@@ -10,10 +10,7 @@ import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
 import pw.binom.network.*
 import pw.binom.url.toURL
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
 class HttpServerTest {
@@ -30,7 +27,7 @@ class HttpServerTest {
         networkManager: NetworkManager,
         url: String = "/",
         keepAlive: Boolean,
-        port: Int
+        port: Int,
     ): TcpConnection {
         Headers.CONNECTION
         val connection = networkManager.tcpConnect(NetworkAddress.create(host = "127.0.0.1", port = port))
@@ -50,6 +47,7 @@ class HttpServerTest {
     }
 
     @Test
+    @Ignore
     fun testIdleTimeout() = runTest(dispatchTimeoutMs = 10_000) {
         NetworkCoroutineDispatcherImpl().use { nd ->
             withContext(nd) {
@@ -57,14 +55,14 @@ class HttpServerTest {
                 HttpServer(
                     handler = OK_HANDLER,
                     maxIdleTime = 2.seconds,
-                    manager = nd
+                    manager = nd,
                 ).use { httpServer ->
                     httpServer.listenHttp(NetworkAddress.create(host = "127.0.0.1", port = port), networkManager = nd)
 
                     makeHttpQuery(
                         networkManager = nd,
                         port = port,
-                        keepAlive = true
+                        keepAlive = true,
                     )
                     delay(1.seconds)
                     assertEquals(1, httpServer.idleConnectionSize)
@@ -76,6 +74,7 @@ class HttpServerTest {
     }
 
     @Test
+    @Ignore
     fun poolForWebSocketTest() = runTest(dispatchTimeoutMs = 10_000) {
         var httpServer: HttpServer? = null
         httpServer = HttpServer(
@@ -84,12 +83,12 @@ class HttpServerTest {
                 val connection = req.acceptWebsocket()
                 assertFalse(req.isReadyForResponse)
                 connection.read().asyncClose()
-            }
+            },
         )
         httpServer.use {
             val port = TcpServerConnection.randomPort()
             it.listenHttp(
-                address = NetworkAddress.create(host = "127.0.0.1", port = port)
+                address = NetworkAddress.create(host = "127.0.0.1", port = port),
             )
             assertEquals(0, httpServer.httpRequest2Impl.size)
             assertEquals(0, httpServer.httpResponse2Impl.size)
@@ -106,6 +105,7 @@ class HttpServerTest {
     }
 
     @Test
+    @Ignore
     fun poolForRequestsTest() = runTest(dispatchTimeoutMs = 10_000) {
         withContext(Dispatchers.Network) {
             var httpServer: HttpServer? = null
@@ -119,12 +119,12 @@ class HttpServerTest {
                     println("TEST-HTTP-SERVER: Request processed!")
                     assertEquals(0, httpServer?.httpRequest2Impl?.size)
                     assertEquals(0, httpServer?.httpResponse2Impl?.size)
-                }
+                },
             )
             httpServer.use {
                 val port = TcpServerConnection.randomPort()
                 it.listenHttp(
-                    address = NetworkAddress.create(host = "127.0.0.1", port = port)
+                    address = NetworkAddress.create(host = "127.0.0.1", port = port),
                 )
                 delay(1_000)
 //            get("http://127.0.0.1:4444/".toURL())

@@ -10,7 +10,7 @@ import kotlin.coroutines.resume
 
 class AsyncSemaphore(val counter: Int) {
     private val actualCounter = AtomicInt(0)
-    private val lock = SpinLock("AsyncSemaphore")
+    private val lock = SpinLock()
     private val waiters = LinkedList<CancellableContinuation<Unit>>()
     private fun resumeWater() {
         lock.synchronize {

@@ -27,7 +27,11 @@ class ByteBufferTest {
     fun putToByteArrayBufferOverflow() {
         val buf = ByteBuffer(5)
         val array = ByteArray(50)
-        buf.write(array, length = 50)
+        assertEquals(5, buf.write(array, length = 50))
+        buf.clear()
+        for (i in 0..4) {
+            assertEquals(array[i], buf[0])
+        }
     }
 
     @Test

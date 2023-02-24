@@ -5,7 +5,7 @@ import kotlinx.coroutines.runBlocking
 import pw.binom.date.DateTime
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
-import pw.binom.io.socket.*
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.tcpConnect
 import pw.binom.readLong
@@ -37,12 +37,12 @@ class SSLTest {
     fun test() = runBlocking {
         val pairRoot = KeyGenerator.generate(
             KeyAlgorithm.RSA,
-            2048
+            2048,
         )
 
         val pair1 = KeyGenerator.generate(
             KeyAlgorithm.RSA,
-            2048
+            2048,
         )
         val private1 = pair1.createPrivateKey()
         val public2 = X509Builder(
@@ -52,7 +52,7 @@ class SSLTest {
             serialNumber = 10,
             issuer = "DC=localhost",
             subject = "CN=localhost",
-            sign = pairRoot.createPrivateKey()
+            sign = pairRoot.createPrivateKey(),
         ).generate()
 
         val context = SSLContext.getInstance(
@@ -73,9 +73,9 @@ class SSLTest {
             val client = server.accept()
             val clientSsl = AsyncSSLChannel(
                 context2.serverSession(),
-                client
+                client,
             )
-            clientSsl.writeLong(buf, 100500)
+            clientSsl.writeLong(value = 100500, buf)
             clientSsl.flush()
         }
 
@@ -83,7 +83,7 @@ class SSLTest {
             val client = nd.tcpConnect(addr)
             val clientSsl = AsyncSSLChannel(
                 context.clientSession(addr.host, addr.port),
-                client
+                client,
             )
             assertEquals(100500L, clientSsl.readLong(buf))
         }

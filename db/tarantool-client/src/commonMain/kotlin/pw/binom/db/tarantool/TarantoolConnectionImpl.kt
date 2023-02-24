@@ -97,20 +97,26 @@ class TarantoolConnectionImpl internal constructor(
         InternalProtocolUtils.buildMessagePackage(
             header = headers,
             data = body,
-            out = out
+            out = out,
         )
         out.data.position = 0
         out.data.limit = out.size
         return let { _ ->
             try {
-                withContext(networkDispatcher) {
-                    connectionReference.writeFully(out.data)
-                }
+//                withContext(networkDispatcher) {
+//                    connectionReference.writeFully(out.data)
+//                }
                 val response = suspendCancellableCoroutine<Package> {
                     requests[sync] = it
                     it.invokeOnCancellation {
                         requests.remove(sync)
                     }
+
+                    GlobalScope.launch(networkDispatcher) {
+                        println("Sending data. $sync. id=$id")
+                        connectionReference.writeFully(out.data)
+                    }
+                    println("Suspend and wait response. $sync. id=$id")
                 }
                 if (!metaUpdating) {
                     response.header[Key.SCHEMA_ID.id]?.let {
@@ -148,18 +154,26 @@ class TarantoolConnectionImpl internal constructor(
         connectionReference.close()
     }
 
+    private val id
+        get() = this@TarantoolConnectionImpl.hashCode().toUInt().toString(16)
+
     internal suspend fun startMainLoop() {
         withContext(networkDispatcher) {
             ByteBuffer(8).use { buf ->
                 try {
                     val packageReader = AsyncInputWithCounter(connectionReference)
+                    println("TarantoolConnectionImpl:: started main thread")
                     while (mainLoopJob?.isActive != false && !closed) {
+                        println("TarantoolConnectionImpl:: main thread step...")
                         val f = connectionReference.readByte(buf)
                         val vv = f.toUByte()
                         if (vv != 0xce.toUByte()) {
+                            println("TarantoolConnectionImpl:: Invalid first byte")
                             throw IOException("Invalid Protocol Header Response")
                         }
+                        println("TarantoolConnectionImpl:: try read package size")
                         val size = connectionReference.readInt(buf)
+                        println("TarantoolConnectionImpl:: reading data $size")
                         buf.clear()
                         packageReader.limit = size
                         val msg = InternalProtocolUtils.unpack(buf, packageReader)
@@ -172,9 +186,19 @@ class TarantoolConnectionImpl internal constructor(
                         val serial = headers[Key.SYNC.id] as Long? ?: throw IOException("Can't find serial of message")
                         val pkg = Package(
                             header = headers,
-                            body = body
+                            body = body,
                         )
-                        requests.remove(serial)?.resume(pkg)
+                        val con = requests.remove(serial)
+                        if (con == null) {
+                            println(
+                                "TarantoolConnectionImpl:: can't find continuation $serial. id=$id",
+                            )
+                        } else {
+                            println(
+                                "TarantoolConnectionImpl:: continuation found!. $serial. id=$id",
+                            )
+                        }
+                        con?.resume(pkg)
                     }
                 } catch (e: SocketClosedException) {
                     requests.forEach {
@@ -194,6 +218,7 @@ class TarantoolConnectionImpl internal constructor(
                     }
                     asyncClose()
                 } finally {
+                    println("TarantoolConnectionImpl:: stopped main thread")
                     requests.clear()
                     connected = false
                 }
@@ -205,8 +230,8 @@ class TarantoolConnectionImpl internal constructor(
         val d = sendReceive(
             code = Code.PREPARE,
             body = mapOf(
-                Key.SQL_TEXT.id to sql
-            )
+                Key.SQL_TEXT.id to sql,
+            ),
         )
 
         d.assertException()
@@ -219,9 +244,9 @@ class TarantoolConnectionImpl internal constructor(
             code = Code.EXECUTE,
             body = mapOf(
                 Key.STMT_ID.id to stm.id,
-                Key.SQL_BIND.id to args
+                Key.SQL_BIND.id to args,
             ),
-            schemaId = schemaVersion
+            schemaId = schemaVersion,
         )
 
         result.assertException()
@@ -234,9 +259,9 @@ class TarantoolConnectionImpl internal constructor(
             code = Code.EXECUTE,
             body = mapOf(
                 Key.SQL_TEXT.id to sql,
-                Key.SQL_BIND.id to args
+                Key.SQL_BIND.id to args,
             ),
-            schemaId = schemaVersion
+            schemaId = schemaVersion,
         )
 
         result.assertException()
@@ -249,9 +274,9 @@ class TarantoolConnectionImpl internal constructor(
             code = Code.EVAL,
             body = mapOf(
                 Key.EXPRESSION.id to lua,
-                Key.TUPLE.id to args
+                Key.TUPLE.id to args,
             ),
-            schemaId = schemaVersion
+            schemaId = schemaVersion,
         )
         if (result.isError) {
             throw TarantoolEvalException(script = lua, errorMessage = result.errorMessage)
@@ -265,9 +290,9 @@ class TarantoolConnectionImpl internal constructor(
             code = Code.EVAL,
             body = mapOf(
                 Key.EXPRESSION.id to lua,
-                Key.TUPLE.id to args
+                Key.TUPLE.id to args,
             ),
-            schemaId = schemaVersion
+            schemaId = schemaVersion,
         )
         if (result.isError) {
             throw TarantoolEvalException(script = lua, errorMessage = result.errorMessage)
@@ -280,8 +305,8 @@ class TarantoolConnectionImpl internal constructor(
             code = Code.CALL,
             body = mapOf(
                 Key.FUNCTION.id to function,
-                Key.TUPLE.id to args
-            )
+                Key.TUPLE.id to args,
+            ),
         )
         result.assertException()
         return result.data
@@ -292,8 +317,8 @@ class TarantoolConnectionImpl internal constructor(
             code = Code.CALL,
             body = mapOf(
                 Key.FUNCTION.id to function,
-                Key.TUPLE.id to args
-            )
+                Key.TUPLE.id to args,
+            ),
         )
         result.assertException()
         return result.data
@@ -305,7 +330,7 @@ class TarantoolConnectionImpl internal constructor(
         key: Any?,
         offset: Int?,
         limit: Int,
-        iterator: QueryIterator?
+        iterator: QueryIterator?,
     ): ResultSet {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
@@ -316,7 +341,7 @@ class TarantoolConnectionImpl internal constructor(
             key = key,
             offset = offset,
             limit = limit,
-            iterator = iterator
+            iterator = iterator,
         )
     }
 
@@ -326,7 +351,7 @@ class TarantoolConnectionImpl internal constructor(
         key: Any?,
         offset: Int?,
         limit: Int,
-        iterator: QueryIterator?
+        iterator: QueryIterator?,
     ): ResultSet {
         val body = defaultMutableMap<Any, Any?>()
         body[Key.SPACE.id] = space
@@ -341,7 +366,7 @@ class TarantoolConnectionImpl internal constructor(
         }
         val result = sendReceive(
             code = Code.SELECT,
-            body = body
+            body = body,
         )
         result.assertException()
         return ResultSet(result.body)
@@ -349,38 +374,38 @@ class TarantoolConnectionImpl internal constructor(
 
     override suspend fun delete(
         space: String,
-        keys: List<Any?>
+        keys: List<Any?>,
     ): Row? {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
         return delete(
             space = spaceObj.id,
-            keys = keys
+            keys = keys,
         )
     }
 
     override suspend fun replace(
         space: String,
-        values: List<Any?>
+        values: List<Any?>,
     ) {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
         replace(
             space = spaceObj.id,
-            values = values
+            values = values,
         )
     }
 
     override suspend fun replace(
         space: Int,
-        values: List<Any?>
+        values: List<Any?>,
     ) {
         val result = this.sendReceive(
             code = Code.REPLACE,
             body = mapOf(
                 Key.SPACE.id to space,
-                Key.TUPLE.id to values
-            )
+                Key.TUPLE.id to values,
+            ),
         )
         result.assertException()
     }
@@ -388,7 +413,7 @@ class TarantoolConnectionImpl internal constructor(
     override suspend fun update(
         space: String,
         key: List<Any?>,
-        values: List<FieldUpdate>
+        values: List<FieldUpdate>,
     ): Row? {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
@@ -402,7 +427,7 @@ class TarantoolConnectionImpl internal constructor(
     override suspend fun update(
         space: Int,
         key: List<Any?>,
-        values: List<FieldUpdate>
+        values: List<FieldUpdate>,
     ): Row? {
         val result = this.sendReceive(
             code = Code.UPDATE,
@@ -412,7 +437,7 @@ class TarantoolConnectionImpl internal constructor(
                 Key.TUPLE.id to values.map {
                     listOf(it.operator.code, it.fieldId, it.value)
                 },
-            )
+            ),
         )
         result.assertException()
         return ResultSet(result.body).firstOrNull()
@@ -445,21 +470,21 @@ class TarantoolConnectionImpl internal constructor(
                     listOf(it.operator.code, it.fieldId, it.value)
                 },
                 Key.TUPLE.id to indexValues,
-            )
+            ),
         )
         result.assertException()
     }
 
     override suspend fun delete(
         space: Int,
-        keys: List<Any?>
+        keys: List<Any?>,
     ): Row? {
         val result = this.sendReceive(
             code = Code.DELETE,
             body = mapOf(
                 Key.SPACE.id to space,
-                Key.KEY.id to keys
-            )
+                Key.KEY.id to keys,
+            ),
         )
         result.assertException()
         return ResultSet(result.body).firstOrNull()
@@ -467,7 +492,7 @@ class TarantoolConnectionImpl internal constructor(
 
     override suspend fun insert(
         space: String,
-        values: List<Any?>
+        values: List<Any?>,
     ) {
         val meta = getMeta()
         val spaceObj = meta.find { it.name == space } ?: throw TarantoolException("Can't find Space \"$space\"")
@@ -479,14 +504,14 @@ class TarantoolConnectionImpl internal constructor(
 
     override suspend fun insert(
         space: Int,
-        values: List<Any?>
+        values: List<Any?>,
     ) {
         val result = this.sendReceive(
             code = Code.INSERT,
             body = mapOf(
                 Key.SPACE.id to space,
-                Key.TUPLE.id to values
-            )
+                Key.TUPLE.id to values,
+            ),
         )
         result.assertException()
     }
@@ -494,7 +519,7 @@ class TarantoolConnectionImpl internal constructor(
     override suspend fun ping() {
         sendReceive(
             code = Code.PING,
-            body = emptyMap()
+            body = emptyMap(),
         ).assertException()
     }
 }

@@ -136,11 +136,11 @@ class BufferedOutputAppendable private constructor(
         charBuffer.flip()
         while (true) {
             buffer.clear()
+            val sourcePosition = buffer.position
             val r = encoder.encode(charBuffer, buffer)
-            buffer.flip()
-            if (buffer.remaining != buffer.capacity) {
-                output.write(buffer)
-                buffer.clear()
+            if (buffer.position > sourcePosition) {
+                buffer.flip()
+                output.writeFully(buffer)
             }
             if (r == CharsetTransformResult.SUCCESS || charBuffer.remaining == 0) {
                 break
@@ -172,37 +172,37 @@ fun Output.bufferedWriter(
     pool: ByteBufferPool,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = 512,
-    closeParent: Boolean = true
+    closeParent: Boolean = true,
 ) = BufferedOutputAppendable(
     charset = charset,
     output = this,
     pool = pool,
     charBufferSize = charBufferSize,
-    closeParent = closeParent
+    closeParent = closeParent,
 )
 
 fun Output.bufferedWriter(
     bufferSize: Int = DEFAULT_BUFFER_SIZE,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = bufferSize / 2,
-    closeParent: Boolean = true
+    closeParent: Boolean = true,
 ) = BufferedOutputAppendable(
     charset = charset,
     output = this,
     bufferSize = bufferSize,
     charBufferSize = charBufferSize,
-    closeParent = closeParent
+    closeParent = closeParent,
 )
 
 fun Output.bufferedWriter(
     buffer: ByteBuffer,
     charset: Charset = Charsets.UTF8,
     charBufferSize: Int = buffer.capacity / 2,
-    closeParent: Boolean = true
+    closeParent: Boolean = true,
 ) = BufferedOutputAppendable(
     charset = charset,
     output = this,
     buffer = buffer,
     charBufferSize = charBufferSize,
-    closeParent = closeParent
+    closeParent = closeParent,
 )

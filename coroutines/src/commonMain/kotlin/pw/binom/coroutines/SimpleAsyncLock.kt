@@ -14,7 +14,7 @@ class SimpleAsyncLock : AsyncLock {
         defaultMutableSet<CancellableContinuation<Unit>>()
     }
     private val locked = AtomicBoolean(false)
-    private val stateLock = SpinLock("SimpleAsyncLock")
+    private val stateLock = SpinLock()
 
     override val isLocked: Boolean
         get() = locked.getValue()

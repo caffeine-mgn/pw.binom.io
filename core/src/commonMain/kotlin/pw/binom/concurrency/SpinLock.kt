@@ -1,29 +1,17 @@
 package pw.binom.concurrency
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.atomic.AtomicInt
-import pw.binom.atomic.AtomicReference
 import pw.binom.threadYield
+import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-// @JvmInline
+@JvmInline
 @OptIn(ExperimentalTime::class)
-class SpinLock(private val name: String? = null, private val lock: AtomicBoolean = AtomicBoolean(false)) :
-    LockWithTimeout {
-    private val currentLockName = AtomicReference<String?>(null)
-    private val nowWaits = AtomicInt(0)
-    private val id
-        get() = hashCode().toUInt().toString(16)
+value class SpinLock(private val lock: AtomicBoolean = AtomicBoolean(false)) : LockWithTimeout {
 
-    override fun tryLock(name: String?): Boolean = if (lock.compareAndSet(expected = false, new = true)) {
-        println("SpinLock:: ${this.name} $id locked by $name")
-        currentLockName.setValue(name)
-        true
-    } else {
-        false
-    }
+    override fun tryLock(): Boolean = lock.compareAndSet(expected = false, new = true)
 
     val isLocked
         get() = lock.getValue()
@@ -31,7 +19,7 @@ class SpinLock(private val name: String? = null, private val lock: AtomicBoolean
     override fun lock(timeout: Duration): Boolean {
         val now = TimeSource.Monotonic.markNow()
         while (true) {
-            if (tryLock("timeout")) {
+            if (tryLock()) {
                 break
             }
             if (now.elapsedNow() > timeout) {
@@ -42,21 +30,16 @@ class SpinLock(private val name: String? = null, private val lock: AtomicBoolean
         return true
     }
 
-    override fun lock(name: String?) {
-        nowWaits.inc()
+    override fun lock() {
         while (true) {
-            if (tryLock(name = name)) {
-                nowWaits.dec()
+            if (tryLock()) {
                 break
             }
-            println("SpinLock:: ${this.name} $id. Can't lock :( wait of $name. Locked by ${this.currentLockName.getValue()}. now waits: ${nowWaits.getValue()}....")
-//            threadYield()
+            threadYield()
         }
     }
 
     override fun unlock() {
-        println("SpinLock:: ${this.name} $id unlocked by ${currentLockName.getValue()}")
-        currentLockName.setValue(null)
         lock.setValue(false)
     }
 }
