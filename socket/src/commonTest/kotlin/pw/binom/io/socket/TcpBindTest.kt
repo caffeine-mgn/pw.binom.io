@@ -27,7 +27,7 @@ class TcpBindTest {
         val socket2 = Socket.createTcpServerNetSocket()
         assertEquals(
             BindStatus.ADDRESS_ALREADY_IN_USE,
-            socket2.bind(NetworkAddress.create("127.0.0.1", socket1.port!!))
+            socket2.bind(NetworkAddress.create("127.0.0.1", socket1.port!!)),
         )
     }
 
