@@ -5,6 +5,7 @@ import platform.common.*
 import platform.common.Event
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.ArrayList2
+import pw.binom.collections.defaultMutableMap
 import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
@@ -33,7 +34,7 @@ actual class Selector : Closeable {
     internal val eventMemLock = SpinLock()
     internal var pipeRead: Int = 0
     internal var pipeWrite: Int = 0
-    private val fdToKey = HashMap<RawSocket, SelectorKey>()
+    private val fdToKey = defaultMutableMap<RawSocket, SelectorKey>()
 
     internal inline fun <T> usingEventPtr(func: (CPointer<Event>) -> T): T =
         eventMemLock.synchronize { func(eventMem) }
