@@ -78,7 +78,7 @@ abstract class AbstractSocket(override val native: RawSocket, override val serve
             CommonMutableNetworkAddress(address)
         }
         val sendResult = netAddress.getAsIpV6 { ipv6Addr ->
-            data.ref { ptr, remaining ->
+            data.ref(0) { ptr, remaining ->
                 internal_send_to_socket_udp(
                     native,
                     ptr,
@@ -87,7 +87,7 @@ abstract class AbstractSocket(override val native: RawSocket, override val serve
                     ipv6Addr.reinterpret(),
                 )
             }
-        }!!.toInt()
+        }.toInt()
         return processAfterSendUdp(data, sendResult)
     }
 

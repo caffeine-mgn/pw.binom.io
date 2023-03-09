@@ -10,7 +10,7 @@ import kotlin.native.internal.createCleaner
 abstract class OpenSSLMessageDigest : MessageDigest {
 
     private class Resource(
-        var ptr: CPointer<EVP_MD_CTX>? = null
+        var ptr: CPointer<EVP_MD_CTX>? = null,
     ) {
         fun init(): Boolean {
             return if (ptr == null) {
@@ -79,7 +79,7 @@ abstract class OpenSSLMessageDigest : MessageDigest {
     override fun update(buffer: ByteBuffer) {
         checkInit()
         if (buffer.remaining > 0) {
-            buffer.ref { bufferPtr, remaining ->
+            buffer.ref(0) { bufferPtr, remaining ->
                 EVP_DigestUpdate(resource.ptr, bufferPtr, remaining.convert())
             }
             buffer.position = buffer.limit

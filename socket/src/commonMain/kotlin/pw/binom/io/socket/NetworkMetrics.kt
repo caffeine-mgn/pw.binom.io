@@ -3,10 +3,10 @@ package pw.binom.io.socket
 import pw.binom.BinomMetrics
 import pw.binom.metric.MutableLongGauge
 
-internal object NetworkMetrics {
-    internal val selectorKeyCountMetric =
+object NetworkMetrics {
+    val selectorKeyCountMetric =
         MutableLongGauge("binom_selector_key_count", description = "SelectorKey Count")
-    internal val selectorKeyAllocCountMetric =
+    val selectorKeyAllocCountMetric =
         MutableLongGauge("binom_selector_key_alloc_count", description = "SelectorKey Alloc Count")
 
     fun incSelectorKey() {

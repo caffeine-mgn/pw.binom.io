@@ -11,7 +11,7 @@ open class AsyncDeflaterOutput protected constructor(
     syncFlush: Boolean = true,
     private val pool: ByteBufferPool?,
     private var closeBuffer: Boolean,
-    val closeStream: Boolean = false
+    val closeStream: Boolean = false,
 ) : AsyncOutput {
 
     constructor(
@@ -20,7 +20,7 @@ open class AsyncDeflaterOutput protected constructor(
         bufferSize: Int = 512,
         wrap: Boolean = false,
         syncFlush: Boolean = true,
-        closeStream: Boolean = false
+        closeStream: Boolean = false,
     ) : this(
         stream = stream,
         level = level,
@@ -38,7 +38,7 @@ open class AsyncDeflaterOutput protected constructor(
         bufferPool: ByteBufferPool,
         wrap: Boolean = false,
         syncFlush: Boolean = true,
-        closeStream: Boolean = false
+        closeStream: Boolean = false,
     ) : this(
         stream = stream,
         level = level,
@@ -136,7 +136,9 @@ open class AsyncDeflaterOutput protected constructor(
     }
 
     override suspend fun asyncClose() {
-        checkClosed()
+        if (closed) {
+            return
+        }
         checkBusy()
         finish()
         closed = true

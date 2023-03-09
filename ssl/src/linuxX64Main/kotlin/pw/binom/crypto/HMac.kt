@@ -67,7 +67,7 @@ actual class HMac actual constructor(val algorithm: Algorithm, val key: ByteArra
     override fun update(buffer: ByteBuffer) {
         checkInit()
         memScoped {
-            buffer.ref { bufferPtr, remaining ->
+            buffer.ref(0) { bufferPtr, remaining ->
                 HMAC_Update(ctx, bufferPtr.getPointer(this).reinterpret(), remaining.convert())
             }
         }

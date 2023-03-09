@@ -19,7 +19,7 @@ interface NetworkManager : CoroutineContext, CoroutineScope {
         when (channel.bind(address)) {
             BindStatus.ADDRESS_ALREADY_IN_USE -> {
                 channel.close()
-                throw BindException()
+                throw BindException(address.toString())
             }
 
             BindStatus.ALREADY_BINDED -> {

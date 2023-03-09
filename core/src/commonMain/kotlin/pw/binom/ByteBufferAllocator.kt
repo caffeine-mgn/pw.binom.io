@@ -6,7 +6,7 @@ import pw.binom.pool.ObjectPool
 interface ByteBufferAllocator : ObjectPool<ByteBuffer>
 
 open class AlwaysNewAllocator(val size: Int = DEFAULT_BUFFER_SIZE) : ByteBufferAllocator {
-    override fun borrow(): ByteBuffer = ByteBuffer(size)
+    override fun borrow(owner: Any?): ByteBuffer = ByteBuffer(size)
     override fun recycle(value: ByteBuffer) {
         value.close()
     }
@@ -17,7 +17,7 @@ open class AlwaysNewAllocator(val size: Int = DEFAULT_BUFFER_SIZE) : ByteBufferA
 }
 
 object DEFAULT_BYTEBUFFER_ALLOCATOR : ByteBufferAllocator {
-    override fun borrow(): ByteBuffer {
+    override fun borrow(owner: Any?): ByteBuffer {
         val obj = ByteBuffer(DEFAULT_BUFFER_SIZE)
         return obj
     }

@@ -1,11 +1,13 @@
 package pw.binom.metric.prometheus
 
 import pw.binom.io.AsyncAppendable
-import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpRequest
+import pw.binom.io.bufferedAsciiWriter
+import pw.binom.io.httpServer.HttpHandler
+import pw.binom.io.httpServer.HttpServerExchange
+import pw.binom.io.use
 import pw.binom.metric.MetricProvider
 
-abstract class AbstractPrometheusHandler : Handler {
+abstract class AbstractPrometheusHandler : HttpHandler {
     protected abstract suspend fun getMetrics(): List<MetricProvider>
 
     protected open suspend fun getDefaultFields(): Map<String, String> = emptyMap()
@@ -25,12 +27,10 @@ abstract class AbstractPrometheusHandler : Handler {
         }
     }
 
-    override suspend fun request(req: HttpRequest) {
-        req.response {
-            it.status = 200
-            it.sendText {
-                makeResponse(it)
-            }
+    override suspend fun handle(exchange: HttpServerExchange) {
+        exchange.startResponse(200)
+        exchange.output.bufferedAsciiWriter().use {
+            makeResponse(it)
         }
     }
 }

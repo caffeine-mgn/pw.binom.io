@@ -1,7 +1,7 @@
 package pw.binom.atomic
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-expect value class AtomicInt(val native: InternalAtomicInt) {
+expect value class AtomicInt(@PublishedApi internal val native: InternalAtomicInt) {
     constructor(value: Int)
 
     inline fun compareAndSet(expected: Int, new: Int): Boolean

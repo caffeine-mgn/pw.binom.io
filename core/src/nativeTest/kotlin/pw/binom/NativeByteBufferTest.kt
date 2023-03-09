@@ -10,10 +10,10 @@ class NativeByteBufferTest {
     fun refTest() {
         val buf = ByteBuffer(50)
         buf.clear()
-        buf.ref { cPointer, i ->
+        buf.ref(0) { cPointer, i ->
         }
         buf.empty()
-        buf.ref { cPointer, i ->
+        buf.ref(0) { cPointer, i ->
         }
     }
 }

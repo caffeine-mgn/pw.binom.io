@@ -16,8 +16,9 @@ class PipeOutput : Pipe(), Output {
         get() = writePipe.pointed.value!!
 
     init {
-        if (SetHandleInformation(writePipe.pointed.value, HANDLE_FLAG_INHERIT, 0) <= 0)
+        if (SetHandleInformation(writePipe.pointed.value, HANDLE_FLAG_INHERIT, 0) <= 0) {
             TODO("#4")
+        }
     }
 
     override fun write(data: ByteBuffer): Int {
@@ -27,12 +28,15 @@ class PipeOutput : Pipe(), Output {
         memScoped {
             val dwWritten = alloc<UIntVar>()
 
-            val r = data.ref { dataPtr, _ ->
+            val r = data.ref(0) { dataPtr, _ ->
                 WriteFile(
-                    writePipe.pointed.value, dataPtr.getPointer(this).reinterpret(),
-                    data.remaining.convert(), dwWritten.ptr, null
+                    writePipe.pointed.value,
+                    dataPtr.getPointer(this).reinterpret(),
+                    data.remaining.convert(),
+                    dwWritten.ptr,
+                    null,
                 )
-            } ?: 0
+            }
             if (r <= 0) {
                 TODO("WriteFile returned $r")
             }

@@ -9,7 +9,7 @@ private fun memcpy(
     distOffset: Int,
     src: NativeMem,
     srcOffset: Int = 0,
-    srcLength: Int = src.size - srcOffset
+    srcLength: Int = src.size - srcOffset,
 ) {
 //    println("memcpy #1 dist=${dist::class} src=${src::class}, distOffset=$distOffset, srcOffset=$srcOffset, srcLength=$srcLength, src.size=${src.size}, dist.size=${dist.size}")
     if (dist is NativeMem.ArrayNativeMem && src is NativeMem.ArrayNativeMem) {
@@ -38,7 +38,7 @@ private fun memcpy(
     distOffset: Int,
     src: NativeMem,
     srcOffset: Int = 0,
-    srcLength: Int = src.size - srcOffset
+    srcLength: Int = src.size - srcOffset,
 ) {
     (srcOffset until (srcOffset + srcLength)).forEachIndexed { index, it ->
         dist[index + distOffset] = src[it]
@@ -366,7 +366,7 @@ actual open class ByteBuffer(val native: NativeMem) :
     actual open val isClosed: Boolean
         get() = closed
 
-    protected actual open fun ensureOpen() {
+    internal actual open fun ensureOpen() {
         if (closed) {
             throw ClosedException()
         }

@@ -1,6 +1,7 @@
 package pw.binom.thread
 
 import pw.binom.atomic.AtomicLong
+import pw.binom.collections.defaultMutableSet
 
 class FixedThreadExecutorService(
     threadCount: Int,
@@ -28,7 +29,7 @@ class FixedThreadExecutorService(
         threadFactory(threadFunc)
     }
 
-    private val allThreadIds = HashSet<Long>()
+    private val allThreadIds = defaultMutableSet<Long>()
 
     init {
         threads.forEach {
@@ -38,6 +39,9 @@ class FixedThreadExecutorService(
     }
 
     override fun joinAllThread() {
+        repeat(threads.size) {
+            pushBreakMessage()
+        }
         threads.forEach {
             it.join()
         }

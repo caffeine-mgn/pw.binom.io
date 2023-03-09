@@ -58,7 +58,7 @@ expect open class ByteBuffer :
     fun subBuffer(index: Int, length: Int): ByteBuffer
     fun free()
     protected open fun preClose()
-    protected open fun ensureOpen()
+    internal open fun ensureOpen()
 }
 
 internal fun calcLength(self: ByteBuffer, data: ByteArray, offset: Int) =
@@ -125,7 +125,7 @@ inline fun <T> ByteBuffer.length(length: Int, func: (ByteBuffer) -> T): T {
 }
 
 /**
- * Makes new ByteBuffer from current [ByteArray]. Also later you must don't forgot to close created ByteBuffer
+ * Makes new ByteBuffer from current [ByteArray]. Also, later you must don't forgot to close created ByteBuffer
  */
 fun ByteArray.wrap() = ByteBuffer(this)
 
@@ -149,8 +149,9 @@ inline fun ByteBuffer.forEach(range: IntRange, func: (Byte) -> Unit) {
 inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
     val pos = position
     val lim = limit
-    for (it in pos until lim)
+    for (it in pos until lim) {
         func(this[it])
+    }
 }
 
 inline fun ByteBuffer.forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
@@ -160,6 +161,7 @@ inline fun ByteBuffer.forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
         func(it, this[it])
 }
 
+@Suppress("OPT_IN_IS_NOT_ENABLED")
 @OptIn(ExperimentalContracts::class)
 inline fun <T> ByteBuffer.holdState(func: (ByteBuffer) -> T): T {
     contract {

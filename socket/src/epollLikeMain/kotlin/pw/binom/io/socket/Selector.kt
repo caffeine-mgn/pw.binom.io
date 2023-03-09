@@ -6,6 +6,7 @@ import platform.common.Event
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.ArrayList2
 import pw.binom.collections.defaultMutableMap
+import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
@@ -22,7 +23,7 @@ actual class Selector : Closeable {
     private val selectLock = ReentrantLock()
 
     //    internal val keyForRemove = LinkedList<SelectorKey>()
-    private val errorsRemove = HashSet<SelectorKey>()
+    private val errorsRemove = defaultMutableSet<SelectorKey>()
     private val errorsRemoveLock = SpinLock()
     private val keysLock = SpinLock()
 
@@ -248,7 +249,7 @@ actual class Selector : Closeable {
             if (key.isClosed) {
                 val r = epoll.delete(key.socket, failOnError = false)
 //                println("Alarm! Event for closed key! $key ${key.identityHashCode()} fd=${getEventDataFd(event)}!")
-                val flagsStr = commonFlagsToString(flags)
+//                val flagsStr = commonFlagsToString(flags)
 //                val removed = keysLock.synchronize {
 //                    fdToKey.remove(socketFd)
 //                }
@@ -264,7 +265,7 @@ actual class Selector : Closeable {
             }
             var e = 0
             val listenFlags = flags
-            val flagsStr = commonFlagsToString(flags)
+//            val flagsStr = commonFlagsToString(flags)
             if (listenFlags and FLAG_ERROR != 0) {
 //                errorsRemoveLock.synchronize("cleanupPostProcessing") {
 //                    println("Selector::cleanupPostProcessing. Add to keyForRemove. #1. socket: ${key.socket}")

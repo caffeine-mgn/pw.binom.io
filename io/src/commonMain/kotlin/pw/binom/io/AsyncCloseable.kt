@@ -1,6 +1,7 @@
 package pw.binom.io
 
 fun interface AsyncCloseable {
+    @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
     suspend fun asyncClose()
     suspend fun asyncCloseAnyway() = try {
         asyncClose()

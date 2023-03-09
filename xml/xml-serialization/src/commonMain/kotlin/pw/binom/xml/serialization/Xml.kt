@@ -15,16 +15,19 @@ import pw.binom.xml.serialization.annotations.XmlName
 
 class Xml(
     val serializersModule: SerializersModule = EmptySerializersModule(),
-    val classDiscriminator: String = "type"
+    val classDiscriminator: String = "type",
 ) {
-    fun <T : Any> encodeToXmlElement(serializer: KSerializer<T>, value: T): XmlElement {
-        val encoder =
-            XmlEncoder(root = null, serializersModule = serializersModule, classDiscriminator = classDiscriminator)
+    fun <T> encodeToXmlElement(serializer: KSerializer<T>, value: T): XmlElement {
+        val encoder = XmlEncoder(
+            root = null,
+            serializersModule = serializersModule,
+            classDiscriminator = classDiscriminator,
+        )
         serializer.serialize(encoder, value)
         return encoder.root!!
     }
 
-    fun <T : Any> encodeToString(serializer: KSerializer<T>, value: T, withHeader: Boolean = false): String {
+    fun <T> encodeToString(serializer: KSerializer<T>, value: T, withHeader: Boolean = false): String {
         val sb = StringBuilder()
         val tagName = serializer.descriptor.annotations.find { it is XmlName }?.let { it as XmlName }?.name
             ?: serializer.descriptor.serialName
@@ -45,7 +48,7 @@ class Xml(
         return sb.toString()
     }
 
-    fun <T : Any> decodeFromXmlElement(serializer: KSerializer<T>, xmlElement: XmlElement): T {
+    fun <T> decodeFromXmlElement(serializer: KSerializer<T>, xmlElement: XmlElement): T {
         if (xmlElement.tag != serializer.descriptor.xmlName()) {
             throw SerializationException("Can't decode to ${serializer.descriptor.serialName}: invalid xml tag \"${xmlElement.tag}\"")
         }
@@ -58,13 +61,12 @@ class Xml(
                 expected.size == 1 -> "\"${expected[0]}\""
                 else -> "one of ${expected.map { if (it.isEmpty()) "empty" else "\"$it\"" }.joinToString(", ")}"
             }
-            throw SerializationException(
-                "Can't decode to ${serializer.descriptor.serialName}: Expected $expectedStr, actual $actual"
-            )
+            val errorMsg = "Can't decode to ${serializer.descriptor.serialName}: Expected $expectedStr, actual $actual"
+            throw SerializationException(errorMsg)
         }
         return serializer.deserialize(XmlDecoder(xmlElement, serializersModule))
     }
 
-    fun <T : Any> decodeFromString(serializer: KSerializer<T>, xml: String): T =
+    fun <T> decodeFromString(serializer: KSerializer<T>, xml: String): T =
         decodeFromXmlElement(serializer, xml.xmlTree())
 }

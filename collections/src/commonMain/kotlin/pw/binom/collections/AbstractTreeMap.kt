@@ -17,7 +17,8 @@ private val COMPARATOR: Comparator<Any> = Comparator<Any> { a, b ->
 
 @Suppress("UNCHECKED_CAST")
 abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNavigableMap<K, V> {
-    private var root: Node<K, V>? = null
+    var root: Node<K, V>? = null
+        private set
     private var modCount = 0
     private var _size = 0
 
@@ -90,9 +91,11 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
         }
 
     private fun <K, V> predecessor(t: Node<K, V>?): Node<K, V>? {
-        return if (t == null) null else if (t.left != null) {
+        return if (t == null) {
+            null
+        } else if (t.left != null) {
             var p: Node<K, V>? = t.left
-            while (p?.right != null) p = p?.right
+            while (p?.right != null) p = p.right
             p
         } else {
             var p: Node<K, V>? = t.parent
@@ -118,7 +121,7 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
             throw UnsupportedOperationException()
         }
 
-        override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> = EntryIterator(getFirstNode())
+        override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> = EntryIterator(getFirstNode(), true)
 
         fun contains(o: Any?): Boolean {
             val entry = (o as? Map.Entry<K, V>) ?: return false
@@ -627,6 +630,12 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
         return null
     }
 
+    fun iteratorNext(node: Node<K, V>): MutableIterator<Node<K, V>> =
+        EntryIterator(first = node, goNext = true)
+
+    fun iteratorPrevious(node: Node<K, V>): MutableIterator<MutableMap.MutableEntry<K, V>> =
+        EntryIterator(first = node, goNext = false)
+
     fun getCeilingEntry(key: K): Node<K, V>? {
         var p = this.root
 
@@ -711,21 +720,30 @@ abstract class AbstractTreeMap<K, V>(var comparator: Comparator<K>) : MutableNav
         }
     }
 
-    private inner class EntryIterator(first: Node<K, V>?) : PrivateEntryIterator<MutableMap.MutableEntry<K, V>>(first) {
-        override operator fun next(): MutableMap.MutableEntry<K, V> {
-            return nextEntry()
-        }
+    private inner class EntryIterator(first: Node<K, V>?, val goNext: Boolean) :
+        PrivateEntryIterator<Node<K, V>>(first) {
+        override operator fun next(): Node<K, V> =
+            if (goNext) {
+                nextEntry()
+            } else {
+                prevEntry()
+            }
     }
 
-    private inner class ValueIterator(first: Node<K, V>?) : PrivateEntryIterator<V>(first) {
-        override operator fun next(): V {
-            return nextEntry().value
-        }
+    private inner class ValueIterator(first: Node<K, V>?, val goNext: Boolean) : PrivateEntryIterator<V>(first) {
+        override operator fun next(): V =
+            if (goNext) {
+                nextEntry().value
+            } else {
+                prevEntry().value
+            }
     }
 
-    private inner class KeyIterator(first: Node<K, V>?) : PrivateEntryIterator<K?>(first) {
-        override operator fun next(): K {
-            return nextEntry().key
+    private inner class KeyIterator(first: Node<K, V>?, val goNext: Boolean) : PrivateEntryIterator<K?>(first) {
+        override operator fun next(): K = if (goNext) {
+            nextEntry().key
+        } else {
+            prevEntry().key
         }
     }
 }

@@ -43,7 +43,7 @@ abstract class AbstractKeccakMessageDigest : MessageDigest {
             return
         }
         ctx.usePinned { b ->
-            buffer.ref { cPointer, size ->
+            buffer.ref(0) { cPointer, size ->
                 sha3_Update(b.addressOf(0), cPointer, size.convert())
             }
         }

@@ -1,6 +1,6 @@
 package pw.binom.atomic
 
-actual value class AtomicInt(val native: InternalAtomicInt) {
+actual value class AtomicInt(@PublishedApi internal val native: InternalAtomicInt) {
     actual constructor(value: Int) : this(InternalAtomicInt(value))
 
     actual inline fun compareAndSet(expected: Int, new: Int): Boolean =

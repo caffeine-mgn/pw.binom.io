@@ -81,11 +81,12 @@ actual class FileChannel actual constructor(
 
     override fun write(data: ByteBuffer): Int {
         checkClosed()
-        if (feof(handler) != 0)
+        if (feof(handler) != 0) {
             return 0
-        val wroted = data.ref { dataPtr, remaining ->
+        }
+        val wroted = data.ref(0) { dataPtr, remaining ->
             fwrite(dataPtr, 1.convert(), remaining.convert(), handler).convert()
-        } ?: 0
+        }
         if (wroted > 0) {
             data.position += wroted
         }

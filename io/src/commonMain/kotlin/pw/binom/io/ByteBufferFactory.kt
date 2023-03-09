@@ -12,20 +12,23 @@ class ByteBufferFactory(val size: Int) : ObjectFactory<PooledByteBuffer> {
         check(value.pool === pool) { "ByteBuffer allocate for other pool" }
     }
 
-    override fun prepare(value: PooledByteBuffer, pool: ObjectPool<PooledByteBuffer>) {
+    override fun prepare(value: PooledByteBuffer, pool: ObjectPool<PooledByteBuffer>, owner: Any?) {
         checkPool(value = value, pool = pool)
         if (!value.inPool.compareAndSet(true, false)) {
             throw IllegalStateException("ByteBuffer not in pool")
         }
-        super.prepare(value, pool)
+        super.prepare(value = value, pool = pool, owner = owner)
         value.clear()
+        value.owner.setValue(owner)
     }
 
     override fun reset(value: PooledByteBuffer, pool: ObjectPool<PooledByteBuffer>) {
         checkPool(value = value, pool = pool)
         if (!value.inPool.compareAndSet(false, true)) {
-            throw IllegalStateException("ByteBuffer already in borrow")
+            val e = value.owner.getValue()?.hashCode()
+            throw IllegalStateException("ByteBuffer already in borrow. owner=$e buffer=${value.hashCode()}")
         }
+        value.owner.setValue(null)
         super.reset(value, pool)
     }
 

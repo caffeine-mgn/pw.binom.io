@@ -13,6 +13,7 @@ class SingleThreadExecutorService : AbstractThreadExecutorService() {
     }
 
     override fun joinAllThread() {
+        pushBreakMessage()
         thread.join()
     }
 

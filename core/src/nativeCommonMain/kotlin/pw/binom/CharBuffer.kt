@@ -14,7 +14,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
         actual fun wrap(chars: CharArray): CharBuffer {
             val buf = ByteBuffer(chars.size * Char.SIZE_BYTES)
             chars.usePinned { pinnedChars ->
-                buf.ref { buf, _ ->
+                buf.ref(0) { buf, _ ->
                     pinnedChars.addressOf(0).reinterpret<ByteVar>().copyInto(
                         dest = buf,
                         size = (pinnedChars.get().size * Char.SIZE_BYTES).convert(),

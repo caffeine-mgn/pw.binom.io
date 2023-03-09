@@ -5,10 +5,12 @@ import kotlinx.coroutines.channels.Channel
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.defaultMutableList
+import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.coroutines.onCancel
+import pw.binom.date.DateTime
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBufferFactory
 import pw.binom.io.ClosedException
@@ -26,8 +28,11 @@ import pw.binom.pool.GenericObjectPool
 import pw.binom.thread.DefaultUncaughtExceptionHandler
 import pw.binom.thread.Thread
 import pw.binom.thread.UncaughtExceptionHandler
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 /**
  * Base Http Server
@@ -36,6 +41,7 @@ import kotlin.time.Duration.Companion.seconds
  * @param zlibBufferSize size of zlib buffer. 0 - disable zlib
  * @param errorHandler handler for error during request processing
  */
+@OptIn(ExperimentalTime::class)
 class HttpServer(
     val manager: NetworkManager = Dispatchers.Network,
     val handler: Handler,
@@ -47,9 +53,52 @@ class HttpServer(
     outputBufferPoolSize: Int = 16,
     chanckedAutoFlushBufferSize: Int = DEFAULT_BUFFER_SIZE,
     textBufferSize: Int = DEFAULT_BUFFER_SIZE,
+    timeoutCheckInterval: Duration = 30.seconds,
 ) : AsyncCloseable {
+    init {
+        require((timeoutCheckInterval.isPositive() || timeoutCheckInterval == ZERO) && timeoutCheckInterval.isFinite())
+    }
+
     internal val messagePool = MessagePool(initCapacity = 0)
     internal val webSocketConnectionPool = WebSocketConnectionPool(initCapacity = websocketMessagePoolSize)
+
+    private val timeoutThreads = defaultMutableMap<Job, Long>()
+    private val timeoutThreadsLock = SpinLock()
+
+    internal suspend fun waitTimeout(time: Duration) {
+        val currentJob = coroutineContext[Job] ?: return
+        timeoutThreadsLock.synchronize {
+            timeoutThreads[currentJob] = DateTime.nowTime + time.inWholeMilliseconds
+        }
+    }
+
+    internal suspend fun timeoutFinished() {
+        val currentJob = coroutineContext[Job] ?: return
+        timeoutThreadsLock.synchronize {
+            timeoutThreads.remove(currentJob)
+        }
+    }
+
+    private val timeoutThread: Thread? = timeoutCheckInterval
+        .takeIf { it.isPositive() }
+        ?.let { timeCheck ->
+            Thread { self ->
+                while (!closed.getValue()) {
+                    Thread.sleep(timeCheck)
+                    val now = DateTime.nowTime
+                    timeoutThreadsLock.synchronize {
+                        val it = timeoutThreads.iterator()
+                        while (it.hasNext()) {
+                            val e = it.next()
+                            if (e.value < now) {
+                                e.key.cancel(CancellationException(null, HttpReadTimeoutException()))
+                                it.remove()
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
     //    internal val textBufferPool = ByteBufferPool(capacity = 16)
     internal val textBufferPool =
@@ -68,9 +117,9 @@ class HttpServer(
     )
     val idleConnectionSize: Int
         get() = idleJobsLock.synchronize { idleJobs.size }
-    private var closed = false
+    private var closed = AtomicBoolean(false)
     private fun checkClosed() {
-        if (closed) {
+        if (closed.getValue()) {
             throw IllegalStateException("Already closed")
         }
     }
@@ -87,35 +136,6 @@ class HttpServer(
 //        idleConnections -= channel
         HttpServerMetrics.idleHttpServerConnection.dec()
     }
-
-//    suspend fun forceIdleCheck(): Int {
-//        var count = 0
-//        val now = DateTime.nowTime
-//        lastIdleCheckTime = now
-//
-//        val it = idleConnections.iterator()
-//        while (it.hasNext()) {
-//            val e = it.next()
-//            if (now - e.lastActive > maxIdleTime.inWholeMilliseconds) {
-//                count++
-//                it.remove()
-//                runCatching { e.asyncClose() }
-//                HttpServerMetrics.idleHttpServerConnection.dec()
-//            }
-//        }
-//        if (count > 0) {
-//            System.gc()
-//        }
-//        return count
-//    }
-
-//    private suspend fun idleCheck() {
-//        val now = DateTime.nowTime
-//        if (now - lastIdleCheckTime < idleCheckInterval.inWholeMilliseconds) {
-//            return
-//        }
-//        forceIdleCheck()
-//    }
 
     internal suspend fun clientReProcessing(channel: ServerAsyncAsciiChannel) {
         channel.activeUpdate()
@@ -141,9 +161,9 @@ class HttpServer(
                 req = HttpRequest3Impl.read(
                     channel = channel,
                     server = this@HttpServer,
-                    isNewConnect = isNewConnect,
+//                    isNewConnect = isNewConnect,
                     readStartTimeout = timeout,
-                    idleJob = this.coroutineContext.job,
+//                    idleJob = this.coroutineContext.job,
                     returnToIdle = idlePool,
                 ).getOrThrow()
 
@@ -192,7 +212,7 @@ class HttpServer(
     }
 
     private val idleProcessing = manager.launch {
-        while (isActive && !closed) {
+        while (isActive && !closed.getValue()) {
             val networkChannel = try {
                 idleChannel.receive()
             } catch (e: CancellationException) {
@@ -220,7 +240,7 @@ class HttpServer(
         binds += server
 
         val closed = AtomicBoolean(false)
-        val listenJob = manager.launch(networkManager)/*(start = CoroutineStart.UNDISPATCHED)*/ {
+        val listenJob = GlobalScope.launch(networkManager)/*(start = CoroutineStart.UNDISPATCHED)*/ {
 //            withContext(dispatcher) {
             try {
                 while (!closed.getValue()) {
@@ -267,7 +287,10 @@ class HttpServer(
 
     override suspend fun asyncClose() {
         checkClosed()
-        closed = true
+        if (!closed.compareAndSet(false, true)) {
+            return
+        }
+        timeoutThread?.join()
         idleProcessing.cancelAndJoin()
         textBufferPool.close()
         httpRequest2Impl.close()

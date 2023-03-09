@@ -15,7 +15,6 @@ import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 import pw.binom.pool.tryBorrow
 import pw.binom.pool.using
-import pw.binom.skipAll
 import pw.binom.url.Path
 import pw.binom.url.Query
 import pw.binom.url.toPath
@@ -36,7 +35,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             server: HttpServer,
             isNewConnect: Boolean,
             readStartTimeout: Duration,
-            idleJob: Job?
+            idleJob: Job?,
         ): Result<HttpRequest2Impl?> = runCatching {
             val request = if (readStartTimeout.isInfinite() || readStartTimeout == Duration.ZERO) {
                 channel.reader.readln()
@@ -64,7 +63,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                 val headers = requestObject.internalHeaders
                 headers.clear()
                 try {
-                    HttpUtils.readHeaders(dest = headers, reader = channel.reader)
+                    HttpServerUtils.readHeaders(dest = headers, reader = channel.reader)
                 } catch (e: Throwable) {
                     channel.asyncCloseAnyway()
                     throw e
@@ -167,7 +166,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             stream = AsyncContentLengthInput(
                 stream = stream,
                 contentLength = contentLength,
-                closeStream = false
+                closeStream = false,
             )
         }
 
@@ -186,7 +185,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
             Encoding.DEFLATE -> AsyncInflateInput(
                 stream = stream,
                 wrap = true,
-                closeStream = false
+                closeStream = false,
             )
 
             else -> null
@@ -302,7 +301,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
                 channel = channel!!,
                 acceptEncoding = headers.acceptEncoding,
                 server = server,
-                onclosed = { }
+                onclosed = { },
             )
         }
         startedResponse = r

@@ -25,14 +25,20 @@ abstract class AbstractThreadExecutorService : ExecutorService {
     }
 
     protected abstract fun joinAllThread()
+    protected fun pushBreakMessage() {
+        queue.push(maker)
+    }
 
     override fun shutdownNow(): Collection<() -> Unit> {
         if (!closed.compareAndSet(false, true)) {
             throw ClosedException()
         }
+        println("AbstractThreadExecutorService::shutdownNow #1")
         val list = ArrayList<() -> Unit>(queue.size)
-        queue.push(maker)
+
+        println("AbstractThreadExecutorService::shutdownNow #2")
         joinAllThread()
+        println("AbstractThreadExecutorService::shutdownNow #3")
         while (!queue.isEmpty) {
             val func = queue.pop()
             if (func === maker) {

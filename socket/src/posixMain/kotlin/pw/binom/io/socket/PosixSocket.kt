@@ -86,7 +86,7 @@ class PosixSocket(
             CommonMutableNetworkAddress(address)
         }
         val sendResult = netAddress.getAsIpV6 { ipv6Addr ->
-            data.ref { ptr, remaining ->
+            data.ref(0) { ptr, remaining ->
                 sendto(
                     native,
                     ptr,
@@ -96,7 +96,7 @@ class PosixSocket(
                     sizeOf<sockaddr_in6>().convert(),
                 )
             }
-        }!!.toInt()
+        }.toInt()
         if (sendResult == -1) {
             if (errno == EPIPE) {
                 return -1
@@ -152,9 +152,9 @@ class PosixSocket(
             return 0
         }
         memScoped {
-            val r: Int = data.ref { dataPtr, remaining ->
+            val r: Int = data.ref(0) { dataPtr, remaining ->
                 send(native, dataPtr, remaining.convert(), MSG_NOSIGNAL).convert()
-            } ?: 0
+            }
             if (r < 0) {
                 val error = errno.toInt()
                 if (errno == EPIPE) {
@@ -185,9 +185,9 @@ class PosixSocket(
         if (!data.isReferenceAccessAvailable()) {
             return 0
         }
-        val r = data.ref { dataPtr, remaining ->
+        val r = data.ref(0) { dataPtr, remaining ->
             recv(native, dataPtr, remaining.convert(), 0).convert()
-        } ?: 0
+        }
         if (r == 0) {
             return -1
         }

@@ -60,7 +60,7 @@ internal class Starter(
         override val bean: Any,
         override val name: String,
         val primary: Boolean,
-        val deps: List<ClassDependency>
+        val deps: List<ClassDependency>,
     ) : BeanDescription {
 
         var inited = false
@@ -154,7 +154,16 @@ internal class Starter(
                 val foundBean = if (dep.name != null) {
                     val bean = createdBeans.find { it.name == dep.name }
                     if (bean != null && !bean.isMatch(dep.clazz)) {
-                        throw StrongException("Can't cast \"${bean.name}\" (${bean.beanClass::class.getClassName()}) to ${dep.clazz.getClassName()}")
+                        val cause = BeanCastException(
+                            from = bean.beanClass,
+                            to = dep.clazz,
+                            beanName = bean.name,
+                        )
+                        throw BeanCreateException(
+                            clazz = node.beanClass,
+                            name = node.name,
+                            cause = cause,
+                        )
                     }
                     bean
                 } else {
@@ -166,7 +175,13 @@ internal class Starter(
                             val primary = beans.filter { it.primary }
                             when {
                                 primary.size == 1 -> primary.first()
-                                else -> throw SeveralBeanException(klazz = dep.clazz, name = null)
+                                else -> {
+                                    throw BeanCreateException(
+                                        clazz = node.beanClass,
+                                        name = node.name,
+                                        cause = SeveralBeanException(klazz = dep.clazz, name = null),
+                                    )
+                                }
                             }
                         }
                     }

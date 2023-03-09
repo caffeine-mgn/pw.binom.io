@@ -17,13 +17,13 @@ actual class PipeOutput private constructor(fd: IntArray) : Output {
     actual constructor(input: PipeInput) : this(intArrayOf(input.writeFd, input.readFd))
 
     override fun write(data: ByteBuffer): Int {
-        val wrote = data.ref { dataPtr, remaining ->
+        val wrote = data.ref(0) { dataPtr, remaining ->
             if (remaining > 0) {
                 platform.posix.write(writeFd, dataPtr, remaining.convert()).convert<Int>()
             } else {
                 0
             }
-        } ?: 0
+        }
         data.position += wrote
         return wrote
     }

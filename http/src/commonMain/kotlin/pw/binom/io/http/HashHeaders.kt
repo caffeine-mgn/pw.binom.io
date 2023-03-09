@@ -12,11 +12,12 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
             remove(key)
             return this
         }
-        val v = ref[key.lowercase()]
+        val lowercase = key.lowercase()
+        val v = ref[lowercase]
         if (v == null) {
             val list = defaultMutableList(value)
             body[key] = list
-            ref[key.lowercase()] = key
+            ref[lowercase] = key
         } else {
             body[v]!!.clear()
             body[v]!!.addAll(value)

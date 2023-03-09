@@ -1,6 +1,5 @@
 package pw.binom.collections
 
-import pw.binom.atomic.AtomicInt
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -26,13 +25,13 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
 
     private var threshold = (bucketSize * loadFactor).toInt()
 
-    private var internalSize = AtomicInt(0)
+    private var internalSize = 0
     override val size: Int
-        get() = internalSize.getValue()
+        get() = internalSize
 
-    private val entitySet by lazy { EntitySet(this) }
-    private val keySet by lazy { KeysSet(this) }
-    private val valueSet by lazy { ValueSet(this) }
+    private val entitySet = EntitySet(this)
+    private val keySet = KeysSet(this)
+    private val valueSet = ValueSet(this)
 
     internal var buckets = Array(bucketSize) {
         Bucket<K, V>()
@@ -79,7 +78,7 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
         buckets.forEach {
             it.clear()
         }
-        internalSize.setValue(0)
+        internalSize = 0
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -90,7 +89,7 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
             key = notNullKey,
             value = value,
             modify = modify,
-            new = { internalSize.increment() },
+            new = { internalSize++ },
         )
     }
 
@@ -110,7 +109,7 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
     internal fun internalRemove(key: K, modify: (() -> Unit)?): V? {
         val notNullKey = key ?: (NullKey as K)
         return buckets[hash(notNullKey)].remove(notNullKey) {
-            internalSize.decrement()
+            internalSize--
             modify?.invoke()
         }
     }
@@ -133,7 +132,7 @@ class HashMap2<K, V>(bucketSize: Int = DEFAULT_CAPACITY, val loadFactor: Float =
 class EntityIterator<K, V>(val map: HashMap2<K, V>) : MutableIterator<MutableMap.MutableEntry<K, V>> {
     private var bucketIndex = 0
     private var currentBucket = map.buckets[bucketIndex]
-    private var currentChangeCount = currentBucket.changeCounter.getValue()
+    private var currentChangeCount = currentBucket.changeCounter
     private var frozenMutableEntry: MutableEntry<K, V>? = map.buckets[0].root
     private var ready = frozenMutableEntry != null
 
@@ -141,7 +140,7 @@ class EntityIterator<K, V>(val map: HashMap2<K, V>) : MutableIterator<MutableMap
         if (skipChangeCountCheck) {
             return
         }
-        if (currentChangeCount != currentBucket.changeCounter.getValue()) {
+        if (currentChangeCount != currentBucket.changeCounter) {
             throw ConcurrentModificationException()
         }
     }
@@ -153,7 +152,7 @@ class EntityIterator<K, V>(val map: HashMap2<K, V>) : MutableIterator<MutableMap
         }
         frozenMutableEntry = frozenMutableEntry?.nextValue
         if (frozenMutableEntry != null) {
-            if (!skipChangeCountCheck && currentChangeCount != currentBucket.changeCounter.getValue()) {
+            if (!skipChangeCountCheck && currentChangeCount != currentBucket.changeCounter) {
                 throw ConcurrentModificationException()
             }
             ready = true
@@ -165,7 +164,7 @@ class EntityIterator<K, V>(val map: HashMap2<K, V>) : MutableIterator<MutableMap
             }
             bucketIndex++
             currentBucket = map.buckets[bucketIndex]
-            currentChangeCount = currentBucket.changeCounter.getValue()
+            currentChangeCount = currentBucket.changeCounter
             frozenMutableEntry = currentBucket.root
             if (frozenMutableEntry != null) {
                 ready = true
@@ -357,7 +356,7 @@ class Bucket<K, V> {
     var root: MutableEntry<K, V>? = null
     var size: Int = 0
         private set
-    internal var changeCounter = AtomicInt(0)
+    internal var changeCounter = 0
 
     fun forEach(func: (MutableEntry<K, V>) -> Boolean) {
         var c = root
@@ -417,13 +416,13 @@ class Bucket<K, V> {
             val v = old.setValue(value)
             if (v != value) {
                 modify?.invoke()
-                changeCounter.increment()
+                changeCounter++
             }
             v
         } else {
             modify?.invoke()
             new?.invoke()
-            changeCounter.increment()
+            changeCounter++
             val e = MutableEntry(key, value)
             e.nextValue = root
             root = e
@@ -435,7 +434,7 @@ class Bucket<K, V> {
     fun removeValue(value: V, modify: (() -> Unit)?): Boolean {
         val en = findValue(value) ?: return false
         en.first?.nextValue = en.second.nextValue
-        changeCounter.increment()
+        changeCounter++
         modify?.invoke()
         size--
         return true // en.second.key
@@ -447,14 +446,14 @@ class Bucket<K, V> {
         if (en.first == null) {
             root = en.second.nextValue
         }
-        changeCounter.increment()
+        changeCounter++
         modify?.invoke()
         size--
         return en.second.value
     }
 
     fun clear() {
-        changeCounter.increment()
+        changeCounter++
         root = null
         size = 0
     }

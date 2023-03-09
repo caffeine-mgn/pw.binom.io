@@ -24,13 +24,13 @@ actual class PipeInput private constructor(fd: IntArray) : Input {
             return 0
         }
 
-        val r = dest.ref { destPtr, remaining ->
+        val r = dest.ref(0) { destPtr, remaining ->
             if (remaining > 0) {
                 platform.posix.read(readFd, destPtr, remaining.convert()).convert<Int>()
             } else {
                 0
             }
-        } ?: 0
+        }
         if (r <= 0) {
             endded.setValue(true)
         } else {

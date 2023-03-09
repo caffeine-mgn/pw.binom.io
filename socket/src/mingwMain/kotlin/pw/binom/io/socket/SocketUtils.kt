@@ -13,7 +13,6 @@ actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): R
     val native = if (address == null) {
         platform.windows.accept(native.convert(), null, null)
     } else {
-
         val out = if (address is CommonMutableNetworkAddress) {
             address
         } else {
@@ -27,7 +26,7 @@ actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): R
                 accept(
                     native.convert(),
                     addr.reinterpret(),
-                    len
+                    len,
                 )
             }
             out.size = len[0]
@@ -85,13 +84,13 @@ actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
 }
 
 actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableNetworkAddress?): Int {
-    if (data.remaining == 0) {
-        return 0
-    }
+//    if (data.remaining == 0) {
+//        return 0
+//    }
     return if (address == null) {
-        data.ref { dataPtr, remaining ->
+        data.ref(0) { dataPtr, remaining ->
             recvfrom(native.convert(), dataPtr, remaining.convert(), 0, null, null)
-        }!!.toInt()
+        }.toInt()
     } else {
         val netAddress = if (address is CommonMutableNetworkAddress) {
             address
@@ -99,7 +98,7 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
             CommonMutableNetworkAddress(address)
         }
         val readSize = netAddress.addr { addrPtr ->
-            data.ref { dataPtr, remaining ->
+            data.ref(0) { dataPtr, remaining ->
                 memScoped {
                     val len = allocArray<socklen_tVar>(1)
                     len[0] = sizeOf<sockaddr_in6>().convert()
@@ -116,8 +115,8 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
                     }
                     r
                 }
-            }!!.toInt()
-        }!!
+            }.toInt()
+        }
         if (readSize >= 0 && netAddress !== address) {
             address.update(netAddress.host, netAddress.port)
         }

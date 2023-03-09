@@ -10,13 +10,16 @@ open class AsyncAsciiChannel(
     pool: ByteBufferPool,
     val channel: AsyncChannel,
 ) : AsyncCloseable {
-//    var reader = channel.bufferedAsciiReader(closeParent = false, bufferSize = 50)
+    //    var reader = channel.bufferedAsciiReader(closeParent = false, bufferSize = 50)
 //    var writer = channel.bufferedAsciiWriter(closeParent = false, bufferSize = 50)
     var reader = channel.bufferedAsciiReader(closeParent = false, pool = pool)
     var writer = channel.bufferedAsciiWriter(closeParent = false, pool = pool)
     override suspend fun asyncClose() {
-        reader.asyncCloseAnyway()
-        writer.asyncCloseAnyway()
-        channel.asyncCloseAnyway()
+        try {
+            reader.asyncCloseAnyway()
+            writer.asyncCloseAnyway()
+        } finally {
+            channel.asyncCloseAnyway()
+        }
     }
 }

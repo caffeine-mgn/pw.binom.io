@@ -76,7 +76,8 @@ internal class HttpResponse2Impl(
         if (server!!.zlibBufferSize <= 0 && isCompressed) {
             throw IllegalStateException("Response doesn't support compress. Make sure you set HttpServer::zlibBufferSize more than 0")
         }
-        channel!!.writer.append("HTTP/1.1 ").append(statusInt(status)).append(" ").append(statusToText(status))
+        channel!!.writer.append("HTTP/1.1 ").append(statusInt(status)).append(" ")
+            .append(HttpServerUtils.statusCodeToDescription(status))
             .append(Utils.CRLF)
         headers.forEachHeader { key, value ->
             channel!!.writer.append(key).append(": ").append(value).append(Utils.CRLF)

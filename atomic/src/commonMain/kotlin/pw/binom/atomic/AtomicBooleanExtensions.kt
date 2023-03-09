@@ -42,7 +42,7 @@ inline fun AtomicBoolean.lock() {
         if (compareAndSet(false, true)) {
             break
         }
-        println("AtomicBoolean::lock wait unlocking...")
+//        println("AtomicBoolean::lock wait unlocking...")
     }
 }
 

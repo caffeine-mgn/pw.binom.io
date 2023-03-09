@@ -48,9 +48,9 @@ class MingwSocket(
             return -1
         }
         memScoped {
-            val r: Int = data.ref { dataPtr, remaining ->
+            val r: Int = data.ref(0) { dataPtr, remaining ->
                 platform.posix.send(native.convert(), dataPtr, remaining.convert(), 0).convert()
-            } ?: 0
+            }
             if (r < 0) {
                 val error = GetLastError()
                 if (error == WSAEWOULDBLOCK.convert<DWORD>()) {
@@ -71,9 +71,9 @@ class MingwSocket(
         if (closed) {
             return -1
         }
-        val r: Int = data.ref { dataPtr, remaining ->
+        val r: Int = data.ref(0) { dataPtr, remaining ->
             platform.windows.recv(native.convert(), dataPtr, remaining.convert(), 0).convert()
-        } ?: 0
+        }
         if (r == 0) {
             closed = true
             nativeClose()
@@ -138,7 +138,7 @@ class MingwSocket(
 
     override fun receive(data: ByteBuffer, address: MutableNetworkAddress?): Int {
         val gotBytes = if (address == null) {
-            val rr = data.ref { dataPtr, remaining ->
+            val rr = data.ref(0) { dataPtr, remaining ->
                 platform.windows.recvfrom(
                     native.convert(),
                     dataPtr,
@@ -147,7 +147,7 @@ class MingwSocket(
                     null,
                     null,
                 )
-            } ?: 0
+            }
             if (rr == SOCKET_ERROR) {
                 if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {
                     return 0
@@ -170,7 +170,7 @@ class MingwSocket(
                 val len = allocArray<IntVar>(1)
                 len[0] = 28
 
-                val rr = data.ref { dataPtr, remaining ->
+                val rr = data.ref(0) { dataPtr, remaining ->
                     netaddress.addr { addressPtr ->
                         platform.windows.recvfrom(
                             native.convert(),
@@ -181,7 +181,7 @@ class MingwSocket(
                             len,
                         )
                     }
-                } ?: 0
+                }
 
                 if (rr == SOCKET_ERROR) {
                     if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {

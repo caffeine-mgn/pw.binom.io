@@ -113,10 +113,8 @@ class TarantoolConnectionImpl internal constructor(
                     }
 
                     GlobalScope.launch(networkDispatcher) {
-                        println("Sending data. $sync. id=$id")
                         connectionReference.writeFully(out.data)
                     }
-                    println("Suspend and wait response. $sync. id=$id")
                 }
                 if (!metaUpdating) {
                     response.header[Key.SCHEMA_ID.id]?.let {
@@ -162,18 +160,13 @@ class TarantoolConnectionImpl internal constructor(
             ByteBuffer(8).use { buf ->
                 try {
                     val packageReader = AsyncInputWithCounter(connectionReference)
-                    println("TarantoolConnectionImpl:: started main thread")
                     while (mainLoopJob?.isActive != false && !closed) {
-                        println("TarantoolConnectionImpl:: main thread step...")
                         val f = connectionReference.readByte(buf)
                         val vv = f.toUByte()
                         if (vv != 0xce.toUByte()) {
-                            println("TarantoolConnectionImpl:: Invalid first byte")
                             throw IOException("Invalid Protocol Header Response")
                         }
-                        println("TarantoolConnectionImpl:: try read package size")
                         val size = connectionReference.readInt(buf)
-                        println("TarantoolConnectionImpl:: reading data $size")
                         buf.clear()
                         packageReader.limit = size
                         val msg = InternalProtocolUtils.unpack(buf, packageReader)
@@ -189,15 +182,6 @@ class TarantoolConnectionImpl internal constructor(
                             body = body,
                         )
                         val con = requests.remove(serial)
-                        if (con == null) {
-                            println(
-                                "TarantoolConnectionImpl:: can't find continuation $serial. id=$id",
-                            )
-                        } else {
-                            println(
-                                "TarantoolConnectionImpl:: continuation found!. $serial. id=$id",
-                            )
-                        }
                         con?.resume(pkg)
                     }
                 } catch (e: SocketClosedException) {
@@ -218,7 +202,6 @@ class TarantoolConnectionImpl internal constructor(
                     }
                     asyncClose()
                 } finally {
-                    println("TarantoolConnectionImpl:: stopped main thread")
                     requests.clear()
                     connected = false
                 }

@@ -5,7 +5,7 @@ import pw.binom.io.*
 import pw.binom.pool.using
 import pw.binom.uuid.UUID
 
-fun Output.asyncOutput() = object : AsyncOutput {
+fun Output.asyncOutput(callClose: Boolean = true) = object : AsyncOutput {
 //    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
 //            this@asyncOutput.write(data, offset, length)
 
@@ -17,7 +17,9 @@ fun Output.asyncOutput() = object : AsyncOutput {
     }
 
     override suspend fun asyncClose() {
-        this@asyncOutput.close()
+        if (callClose) {
+            this@asyncOutput.close()
+        }
     }
 }
 

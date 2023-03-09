@@ -192,7 +192,7 @@ interface Headers : Map<String, List<String>> {
 /**
  * Calls [func] for each head. If [Headers] contains several values in one key [func] will called for each values
  */
-inline fun Headers.forEachHeader(func: (String, String) -> Unit) {
+inline fun Headers.forEachHeader(func: (key: String, value: String) -> Unit) {
     forEach { e ->
         e.value.forEach {
             func(e.key, it)

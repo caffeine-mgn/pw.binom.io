@@ -1,12 +1,7 @@
 package pw.binom.io.httpServer
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.withTimeoutOrNull
 import pw.binom.ByteBufferPool
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.compression.zlib.AsyncGZIPInput
-import pw.binom.compression.zlib.AsyncInflateInput
-import pw.binom.concurrency.synchronize
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
 import pw.binom.io.http.*
@@ -14,11 +9,7 @@ import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.http.websocket.WebSocketConnectionImpl3
 import pw.binom.pool.using
-import pw.binom.skipAll
-import pw.binom.url.Path
-import pw.binom.url.Query
-import pw.binom.url.toPath
-import pw.binom.url.toQuery
+import pw.binom.url.*
 import kotlin.time.Duration
 
 internal class HttpRequest3Impl(
@@ -37,39 +28,54 @@ internal class HttpRequest3Impl(
         suspend fun read(
             channel: ServerAsyncAsciiChannel,
             server: HttpServer,
-            isNewConnect: Boolean,
+//            isNewConnect: Boolean,
             readStartTimeout: Duration,
-            idleJob: Job?,
+//            idleJob: Job?,
             returnToIdle: IdlePool?,
         ): Result<HttpRequest3Impl?> = runCatching {
-            val request = if (readStartTimeout.isInfinite() || readStartTimeout == Duration.ZERO) {
-                channel.reader.readln()
+            val request = if (readStartTimeout.isPositive() && readStartTimeout.isFinite()) {
+                server.waitTimeout(readStartTimeout)
+                try {
+                    val line = channel.reader.readln()
+                    server.timeoutFinished()
+                    line
+                } catch (e: Throwable) {
+                    if (e.cause != null && e.cause !is HttpReadTimeoutException) {
+                        server.timeoutFinished()
+                    }
+                    throw e
+                }
             } else {
-                withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
+                channel.reader.readln()
             }
 
-            server.idleJobsLock.synchronize {
-                if (!server.idleJobs.remove(idleJob)) {
-                    return@runCatching null
-                }
-            }
+//            val request = if (readStartTimeout.isInfinite() || readStartTimeout == Duration.ZERO) {
+//                channel.reader.readln()
+//            } else {
+//                withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
+//            }
+
+//            server.idleJobsLock.synchronize {
+//                if (!server.idleJobs.remove(idleJob)) {
+//                    return@runCatching null
+//                }
+//            }
             if (request == null) {
                 return@runCatching null
             }
 
-            val items = request.split(' ', limit = 3)
-
-            val headers = HashHeaders()
-            try {
-                HttpUtils.readHeaders(dest = headers, reader = channel.reader)
-            } catch (e: Throwable) {
-                channel.asyncCloseAnyway()
-                throw e
+            val method: String
+            val path: String
+            HttpServerUtils.parseHttpRequest(request) { m, p ->
+                method = m
+                path = p
             }
 
+            val headers = HttpServerUtils.readHeaders(channel = channel)
+
             HttpRequest3Impl(
-                request = items.getOrNull(1) ?: "",
-                method = items[0],
+                request = path,
+                method = method,
                 headers = headers,
                 channel = channel,
                 textBufferPool = server.textBufferPool,
@@ -83,22 +89,8 @@ internal class HttpRequest3Impl(
 
     private val closed = AtomicBoolean(false)
 
-    override val path: Path by lazy {
-        val p = request.indexOf('?')
-        if (p >= 0) {
-            request.substring(0, p).toPath
-        } else {
-            request.toPath
-        }
-    }
-    override val query: Query? by lazy {
-        val p = request.indexOf('?')
-        if (p < 0) {
-            null
-        } else {
-            request.substring(p + 1).toQuery
-        }
-    }
+    override val path: Path = HttpServerUtils.extractPathFromRequest(request)
+    override val query: Query? = HttpServerUtils.extractQueryFromRequest(request)
 
     private fun checkClosed() {
         if (closed.getValue()) {
@@ -125,34 +117,14 @@ internal class HttpRequest3Impl(
             stream = AsyncContentLengthInput(
                 stream = stream,
                 contentLength = contentLength,
-                closeStream = false
-            )
-        }
-
-        fun wrap(name: String, stream: AsyncInput) = when (name) {
-            Encoding.IDENTITY -> stream
-            Encoding.CHUNKED -> AsyncChunkedInput(
-                stream = stream,
                 closeStream = false,
             )
-
-            Encoding.GZIP -> AsyncGZIPInput(
-                stream = stream,
-                closeStream = false,
-            )
-
-            Encoding.DEFLATE -> AsyncInflateInput(
-                stream = stream,
-                wrap = true,
-                closeStream = false
-            )
-
-            else -> null
         }
 
         for (i in transferEncoding.lastIndex downTo 0) {
-            val newStream = wrap(name = transferEncoding[i], stream = stream)
-                ?: throw IOException("Not supported encoding \"${transferEncoding[i]}\"")
+            val newStream =
+                HttpServerUtils.wrapStream(encoding = transferEncoding[i], stream = stream, closeStream = false)
+                    ?: throw IOException("Not supported encoding \"${transferEncoding[i]}\"")
             stream = newStream
         }
         bodyReading = true
@@ -268,6 +240,10 @@ internal class HttpRequest3Impl(
         startedResponse = r
         closed.setValue(true)
         return r
+    }
+
+    override suspend fun <T> response(func: suspend (HttpResponse) -> T): T {
+        return super.response(func)
     }
 
     private var startedResponse: HttpResponse? = null

@@ -15,7 +15,7 @@ abstract class AbstractFixedSizePool<T : Any>(capacity: Int) : ObjectPool<T>, Cl
     protected abstract fun new(): T
 
     @Suppress("UNCHECKED_CAST")
-    override fun borrow(): T {
+    override fun borrow(owner: Any?): T {
         lock.synchronize {
             if (size == 0) {
                 val buffer = new()

@@ -69,11 +69,12 @@ class TcpServerConnection constructor(
     }
 
     override fun close() {
+        val acceptListener = acceptListener
+        this.acceptListener = null
         acceptListener?.also {
             if (it.isActive) {
                 it.resumeWithException(SocketClosedException())
             }
-            acceptListener = null
         }
         if (!currentKey.isClosed) {
             currentKey.close()

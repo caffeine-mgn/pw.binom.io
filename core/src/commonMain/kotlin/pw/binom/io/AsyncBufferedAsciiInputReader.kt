@@ -7,11 +7,9 @@ import pw.binom.fromBytes
 
 class AsyncBufferedAsciiInputReader private constructor(
     val stream: AsyncInput,
-    private val pool: ByteBufferPool?,
-    val buffer: ByteBuffer,
-    private var closeBuffer: Boolean,
     val closeParent: Boolean = true,
 ) : AsyncReader, AsyncInput {
+    private var buffer: ByteBuffer = ByteBuffer(0)
 
     constructor(
         stream: AsyncInput,
@@ -19,23 +17,11 @@ class AsyncBufferedAsciiInputReader private constructor(
         closeParent: Boolean = true,
     ) : this(
         stream = stream,
-        pool = pool,
-        buffer = pool.borrow().empty(),
-        closeBuffer = false,
         closeParent = closeParent,
-    )
-
-    constructor(
-        stream: AsyncInput,
-        buffer: ByteBuffer,
-        closeParent: Boolean = true,
-    ) : this(
-        stream = stream,
-        pool = null,
-        buffer = buffer.empty(),
-        closeBuffer = false,
-        closeParent = closeParent,
-    )
+    ) {
+        buffer.close()
+        buffer = pool.borrow(this).empty()
+    }
 
     constructor(
         stream: AsyncInput,
@@ -43,11 +29,16 @@ class AsyncBufferedAsciiInputReader private constructor(
         closeParent: Boolean = true,
     ) : this(
         stream = stream,
-        pool = null,
-        buffer = ByteBuffer(bufferSize).empty(),
-        closeBuffer = true,
+
         closeParent = closeParent,
-    )
+    ) {
+        buffer.close()
+        buffer = ByteBuffer(bufferSize).empty()
+    }
+
+    init {
+        buffer.empty()
+    }
 
     private var eof = false
     private var closed = AtomicBoolean(false)
@@ -84,18 +75,13 @@ class AsyncBufferedAsciiInputReader private constructor(
 //            println("AsyncBufferedAsciiInputReader::full #1. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
         try {
             buffer.compact()
-//                println("AsyncBufferedAsciiInputReader::full #2. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
             val len = stream.read(buffer)
-//                println("AsyncBufferedAsciiInputReader::full #3. position: ${buffer.position}, limit: ${buffer.limit}, len: $len, byteBuffer: ByteBuffer@${buffer.hashCode()}")
             if (len == 0) {
                 eof = true
             }
             buffer.flip()
-//                println("AsyncBufferedAsciiInputReader::full #4. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
         } catch (e: Throwable) {
-//                println("AsyncBufferedAsciiInputReader::full #5. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
             buffer.empty()
-//                println("AsyncBufferedAsciiInputReader::full #6. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
             throw e
         }
     }
@@ -103,20 +89,14 @@ class AsyncBufferedAsciiInputReader private constructor(
     override suspend fun read(dest: ByteBuffer): Int {
         ensureOpen()
         full()
-        val rem = buffer.remaining
-        val read = buffer.read(dest)
-        return read
+        return buffer.read(dest)
     }
 
     override suspend fun asyncClose() {
         if (!closed.compareAndSet(false, true)) {
             return
         }
-        if (closeBuffer) {
-            buffer.close()
-        } else {
-            pool?.recycle(buffer as PooledByteBuffer)
-        }
+        buffer.close()
         if (closeParent) {
             stream.asyncClose()
         }
@@ -258,8 +238,13 @@ class AsyncBufferedAsciiInputReader private constructor(
 //            throw e
 //        }
 //    }
-    suspend fun readUntil(char: Char): String? {
+    suspend fun readUntil(char: Char): String {
         ensureOpen()
+        val vv = AsyncOutputAsciStringAppender()
+        readUntil(char.code.toByte(), true, vv)
+        return vv.toString().trimEnd()
+
+        /*
         val out = StringBuilder()
         var exist = false
         val charValue = char.code.toByte()
@@ -280,12 +265,11 @@ class AsyncBufferedAsciiInputReader private constructor(
             return null
         }
         return out.toString()
+        */
     }
 
     override suspend fun readln(): String? {
-//        println("AsyncBufferedAsciiInputReader::readln before read line. position: ${this.buffer.position}, limit: ${this.buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
-        val result = readUntil(10.toChar())?.removeSuffix("\r")
-//        println("AsyncBufferedAsciiInputReader::readln after read line. position: ${this.buffer.position}, limit: ${this.buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
+        val result = readUntil(10.toChar()).removeSuffix("\r")
         return result
     }
 }

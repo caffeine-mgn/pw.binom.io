@@ -44,9 +44,9 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
             return 0
         }
         return memScoped {
-            val r = data.ref { dataPtr, remaining ->
+            val r = data.ref(0) { dataPtr, remaining ->
                 BIO_read(self, dataPtr, remaining.convert())
-            } ?: 0
+            }
             if (r < 0) {
                 TODO()
             }

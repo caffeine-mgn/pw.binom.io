@@ -7,6 +7,7 @@ import pw.binom.collections.useName
 import pw.binom.io.Closeable
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
+import pw.binom.network.SocketClosedException
 
 abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
     private val routers = defaultMutableMap<String, MutableList<Route>>().useName("AbstractRoute.routers")
@@ -112,6 +113,8 @@ abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
                                 action.response != null
                             }
                         }
+                    } catch (e: SocketClosedException) {
+                        throw e
                     } catch (e: Throwable) {
                         println("AbstractRouter BinomError: ${e.stackTraceToString()}")
                         throw e

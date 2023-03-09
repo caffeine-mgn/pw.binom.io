@@ -18,6 +18,7 @@ open class GenericObjectPool<T : Any>(
     val growFactor: Float = 1.5f,
     val shrinkFactor: Float = 0.5f,
     val delayBeforeResize: Duration = 2.minutes,
+    val idleInterval: Duration = 2.minutes,
 ) : ObjectPool<T> {
 
     private var lastDate = TimeSource.Monotonic.markNow()
@@ -87,11 +88,11 @@ open class GenericObjectPool<T : Any>(
     fun checkTrim() {
         val timeToTrim = lastDate.elapsedNow()
         if (timeToTrim < this.delayBeforeResize) {
-            println("GenericObjectPool::checkTrim. early to trim. time to trim: $timeToTrim, nextCapacity: $nextCapacity")
+//            println("GenericObjectPool::checkTrim. early to trim. time to trim: $timeToTrim, nextCapacity: $nextCapacity")
             return
         }
         synchronize {
-            println("GenericObjectPool::checkTrim. try trim... nextCapacity: $nextCapacity, pool.size: ${pool.size}")
+//            println("GenericObjectPool::checkTrim. try trim... nextCapacity: $nextCapacity, pool.size: ${pool.size}")
             if (nextCapacity > pool.size) {
                 internalCheckGrow()
             } else {
@@ -169,10 +170,10 @@ open class GenericObjectPool<T : Any>(
         }
     }
 
-    override fun borrow(): T = synchronize {
+    override fun borrow(owner: Any?): T = synchronize {
         if (size == 0) {
-            val obj = factory.allocate(this)
-            factory.prepare(obj, this)
+            val obj = factory.allocate(pool = this)
+            factory.prepare(value = obj, pool = this, owner = owner)
             obj
         } else {
             val index = --size
@@ -180,7 +181,7 @@ open class GenericObjectPool<T : Any>(
             val obj = pool[index] as T
             pool[index] = null
             internalCheckShrink()
-            factory.prepare(obj, this)
+            factory.prepare(value = obj, pool = this, owner = owner)
             obj
         }
     }
@@ -209,3 +210,6 @@ open class GenericObjectPool<T : Any>(
         }
     }
 }
+
+private fun getStack() = Throwable().stackTraceToString().split('\n')
+    .map { it.split(' ', '\t').filter { it.isNotBlank() }.joinToString(" ") }.joinToString("->")

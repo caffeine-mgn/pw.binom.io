@@ -57,7 +57,7 @@ abstract class AbstractSignature(val messageDigest: CPointer<EVP_MD>) : Signatur
 
     override fun update(data: ByteBuffer) {
         val ctx = checkCtx()
-        data.ref { cPointer, i ->
+        data.ref(0) { cPointer, i ->
             if (EVP_DigestUpdate(ctx, cPointer, i.convert()) != 1) {
                 throw SignatureException("EVP_DigestUpdate failed")
             }

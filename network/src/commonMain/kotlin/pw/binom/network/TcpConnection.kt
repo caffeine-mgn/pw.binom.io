@@ -105,12 +105,12 @@ class TcpConnection(
         if (readed == -1) {
             readData.reset()
             close()
-            continuation.resumeWithException(SocketClosedException())
+            continuation.resumeWithException(SocketClosedException("Read -1"))
             return
         }
         if (readed == 0) {
 //            println("TcpConnection::readyForRead readed 0. Try ready again later")
-            currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR)
+            currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
 //            println("TcpConnection::readyForRead suspend. read 0. channel: $channel")
             return
         }
@@ -126,7 +126,7 @@ class TcpConnection(
                 readData.reset()
                 continuation.resume(value = readed, onCancellation = null)
             } else {
-                currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR)
+                currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
             }
         } else {
             readData.reset()
@@ -327,7 +327,7 @@ class TcpConnection(
                 continuation = it,
                 data = dest,
             )
-            currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR)
+            currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
             currentKey.selector.wakeup()
         }
     }

@@ -74,7 +74,7 @@ actual open class ByteBuffer private constructor(
 ) : Channel, Buffer, ByteBufferProvider {
     actual companion object;
 
-    actual constructor(size: Int) : this(MemAccess.NativeMemory(size))
+    actual constructor(size: Int) : this(MemAccess.HeapMemory(size))
     actual constructor(array: ByteArray) : this(MemAccess.ArrayMemory(array))
 
 //    actual companion object {
@@ -130,7 +130,8 @@ actual open class ByteBuffer private constructor(
         ByteBufferAllocationCallback.onCreate(this)
     }
 
-    protected actual open fun ensureOpen() {
+    @PublishedApi
+    internal actual open fun ensureOpen() {
         if (closed) {
             throw ClosedException()
         }
@@ -158,29 +159,29 @@ actual open class ByteBuffer private constructor(
             throw IllegalArgumentException("position ($position) should be less than capacity ($capacity)")
         }
         return func((data.pointer + position)!!)
-//        return data.access {
-//            func((it + position)!!)
-//        }
     }
 
-//    fun <T> ref(func: (CPointer<ByteVar>, Int) -> T): T? {
-//        if (capacity == 0 || position == capacity) {
-//            return null
-//        }
-//        refTo(position) {
-//            func(it, remaining)
-//        }
-//
-//        return func((data.pointer + position)!!, remaining)
-//    }
-
-    fun <T> ref(func: (CPointer<ByteVar>, Int) -> T) = refTo(position) {
-        func(it, remaining)
+    inline fun <T : Any> refTo2(defaultValue: T, position: Int, func: (ptr: CPointer<ByteVar>) -> T): T {
+        ensureOpen()
+        require(position >= 0) { "position ($position) should be more or equals 0" }
+        if (capacity == 0 || position == capacity) {
+            return defaultValue
+        }
+        if (position > capacity) {
+            throw IllegalArgumentException("position ($position) should be less than capacity ($capacity)")
+        }
+        return func((data.pointer + position)!!)
     }
 
-    fun <T> ref0(func: (CPointer<ByteVar>, Int) -> T) = refTo(0) { ptr ->
-        func(ptr, capacity)
-    }
+    inline fun <T : Any> ref(defaultValue: T, func: (ptr: CPointer<ByteVar>, remaining: Int) -> T) =
+        refTo2(defaultValue, position) {
+            func(it, remaining)
+        }
+
+    inline fun <T : Any> ref0(defaultValue: T, func: (ptr: CPointer<ByteVar>, remaining: Int) -> T) =
+        refTo2(defaultValue, 0) { ptr ->
+            func(ptr, capacity)
+        }
 
     override fun flip() {
         ensureOpen()
@@ -282,7 +283,7 @@ actual open class ByteBuffer private constructor(
 
     actual operator fun set(index: Int, value: Byte) {
         ensureOpen()
-        ref0 { array, dataSize ->
+        ref0(0) { array, dataSize ->
             array[index] = value
         }
     }
@@ -307,7 +308,7 @@ actual open class ByteBuffer private constructor(
     actual fun put(value: Byte) {
         ensureOpen()
         if (position >= limit) throw IndexOutOfBoundsException("Position: [$position], limit: [$limit]")
-        ref0 { array, dataSize ->
+        ref0(0) { array, dataSize ->
             array[position++] = value
         }
     }
@@ -328,8 +329,8 @@ actual open class ByteBuffer private constructor(
         }
         val new = ByteBuffer(newSize)
         val len = minOf(capacity, newSize)
-        ref0 { oldCPointer, oldDataSize ->
-            new.ref0 { newCPointer, newDataSize ->
+        ref0(0) { oldCPointer, oldDataSize ->
+            new.ref0(0) { newCPointer, newDataSize ->
                 oldCPointer.copyInto(
                     dest = newCPointer,
                     size = len.convert(),
@@ -347,7 +348,7 @@ actual open class ByteBuffer private constructor(
         val size = minOf(remaining, limit)
         val r = ByteArray(size)
         if (size > 0) {
-            ref { ptr, remaining ->
+            ref(0) { ptr, remaining ->
                 r.usePinned {
                     ptr.copyInto(
                         dest = it.addressOf(0),
@@ -374,7 +375,7 @@ actual open class ByteBuffer private constructor(
             return 0
         }
         data.usePinned { data ->
-            ref0 { cPointer, dataSize ->
+            ref0(0) { cPointer, dataSize ->
                 data.addressOf(offset).copyInto(
                     dest = (cPointer + position)!!.reinterpret(),
                     size = len.convert(),
@@ -390,7 +391,7 @@ actual open class ByteBuffer private constructor(
         ensureOpen()
         if (remaining > 0) {
             val size = remaining
-            ref0 { cPointer, dataSize ->
+            ref0(0) { cPointer, dataSize ->
                 (cPointer + position)!!.copyInto(
                     dest = cPointer,
                     size = size.convert(),
@@ -414,8 +415,8 @@ actual open class ByteBuffer private constructor(
     actual fun subBuffer(index: Int, length: Int): ByteBuffer {
         ensureOpen()
         val newBytes = ByteBuffer(length)
-        ref0 { oldCPointer, oldDataSize ->
-            newBytes.ref0 { newCPointer, newDataSize ->
+        ref0(0) { oldCPointer, oldDataSize ->
+            newBytes.ref0(0) { newCPointer, newDataSize ->
                 (oldCPointer + index)!!.copyInto(
                     dest = newCPointer,
                     size = length.convert(),
@@ -429,7 +430,7 @@ actual open class ByteBuffer private constructor(
     actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
         ensureOpen()
         require(dest.size - offset >= length) { "length more then available space" }
-        return ref0 { cPointer, dataSize ->
+        return ref0(0) { cPointer, dataSize ->
             val l = minOf(remaining, length)
             dest.usePinned { dest ->
                 (cPointer + position)!!.copyInto(
@@ -438,14 +439,14 @@ actual open class ByteBuffer private constructor(
                 )
             }
             l
-        } ?: 0
+        }
     }
 
     actual fun free() {
         ensureOpen()
         val size = remaining
         if (size > 0) {
-            ref0 { native, _ ->
+            ref0(0) { native, _ ->
                 (native + position)!!.copyInto(
                     dest = native,
                     size = size.convert(),

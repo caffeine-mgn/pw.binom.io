@@ -53,10 +53,15 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkMa
         if (!closed.compareAndSet(false, true)) {
             return
         }
+        println("MultiFixedSizeThreadNetworkDispatcher::close #1")
         threads.shutdownNow()
+        println("MultiFixedSizeThreadNetworkDispatcher::close #2")
         selector.wakeup()
+        println("MultiFixedSizeThreadNetworkDispatcher::close #3")
         selectThread.join()
+        println("MultiFixedSizeThreadNetworkDispatcher::close #4")
         selector.close()
+        println("MultiFixedSizeThreadNetworkDispatcher::close #5")
     }
 
     init {

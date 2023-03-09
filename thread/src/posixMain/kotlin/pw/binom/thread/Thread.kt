@@ -4,7 +4,6 @@ import kotlinx.cinterop.*
 import platform.common.internal_setThreadName
 import platform.common.internal_thread_yield
 import platform.posix.*
-import kotlin.native.concurrent.Worker
 import kotlin.time.Duration
 
 private var createCount = 0
@@ -15,13 +14,15 @@ private var localThread: Thread? = null
 private fun genName() = "Thread-${createCount++}"
 
 @Suppress("OPT_IN_IS_NOT_ENABLED")
-@OptIn(ExperimentalStdlibApi::class)
+@OptIn(UnsafeNumber::class)
 actual abstract class Thread(var _id: pthread_t, name: String) {
 
-    private var initName = name
+    //    private var initName = name
     actual var name: String = name
         set(value) {
-            internal_setThreadName(_id, value)
+            if (_id.convert<Long>() != 0L) {
+                internal_setThreadName(_id, value)
+            }
             field = value
         }
 
@@ -49,26 +50,32 @@ actual abstract class Thread(var _id: pthread_t, name: String) {
             throw IllegalStateException("Thread already started")
         }
 
-        val worker = Worker.start(name = name)
-        _id = worker.platformThreadId.convert()
-        worker.executeAfter {
-            try {
-                nativeExecute()
-            } finally {
-                worker.requestTermination()
-            }
-        }
-
-//        memScoped {
-//            val id = alloc<pthread_tVar>()
-//            val ptr = StableRef.create(this@Thread)
-//            if (pthread_create(id.ptr, null, func, ptr.asCPointer()) != 0) {
-//                ptr.dispose()
-//                throw IllegalArgumentException("Can't start thread")
+//        val worker = Worker.start(name = name)
+//        val currentId = worker.platformThreadId
+//        _id = currentId.convert()
+//        worker.executeAfter {
+//            try {
+//                nativeExecute()
+//            } finally {
+//                println("Try to free thread. self=${pthread_self()}...")
+//                threadCleanup.executeAfter(1.seconds.inWholeMicroseconds) {
+// //                    val nn = pthread_kill(currentId.convert(), SIGUSR1)
+//                    val bb = worker.requestTermination().result
+//                    println("--Thread finished! self=${pthread_self()} ${Worker.activeWorkers.size}")
+//                }
 //            }
-//            this@Thread._id = id.value
-//            this@Thread.name = this@Thread.name
 //        }
+
+        memScoped {
+            val id = alloc<pthread_tVar>()
+            val ptr = StableRef.create(this@Thread)
+            if (pthread_create(id.ptr, null, func, ptr.asCPointer()) != 0) {
+                ptr.dispose()
+                throw IllegalArgumentException("Can't start thread $errno")
+            }
+            this@Thread._id = id.value
+            this@Thread.name = this@Thread.name
+        }
     }
 
     actual val id: Long

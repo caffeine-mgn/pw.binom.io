@@ -3,8 +3,6 @@ package pw.binom.io.httpServer
 import pw.binom.ByteBufferPool
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.charset.Charsets
-import pw.binom.compression.zlib.AsyncDeflaterOutput
-import pw.binom.compression.zlib.AsyncGZIPOutput
 import pw.binom.io.*
 import pw.binom.io.http.*
 
@@ -36,7 +34,8 @@ internal class HttpResponse3Impl(
 //        if (server!!.zlibBufferSize <= 0 && isCompressed) {
 //            throw IllegalStateException("Response doesn't support compress. Make sure you set HttpServer::zlibBufferSize more than 0")
 //        }
-        channel.writer.append("HTTP/1.1 ").append(statusInt(status)).append(" ").append(statusToText(status))
+        channel.writer.append("HTTP/1.1 ").append(statusInt(status)).append(" ")
+            .append(HttpServerUtils.statusCodeToDescription(status))
             .append(Utils.CRLF)
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
@@ -82,29 +81,6 @@ internal class HttpResponse3Impl(
                 throw IOException("Not supported Transfer Encoding \"$it\"")
             }
         }
-        fun wrap(name: String, stream: AsyncOutput) = when (name) {
-            Encoding.IDENTITY -> stream
-            Encoding.CHUNKED -> AsyncChunkedOutput(
-                stream = stream,
-                closeStream = true,
-            )
-
-            Encoding.GZIP -> AsyncGZIPOutput(
-                stream = stream,
-                level = 6,
-                closeStream = true,
-                bufferPool = compressBufferPool,
-            )
-
-            Encoding.DEFLATE -> AsyncDeflaterOutput(
-                stream = stream,
-                level = 6,
-                closeStream = true,
-                bufferPool = compressBufferPool,
-            )
-
-            else -> null
-        }
 
         var resultOutput: AsyncOutput = baseResponse
         val contentLength = headers.contentLength
@@ -117,12 +93,26 @@ internal class HttpResponse3Impl(
         }
         for (i in transferEncoding.lastIndex downTo 0) {
             val it = transferEncoding[i]
-            resultOutput = wrap(it, resultOutput) ?: throw IOException("Not supported encoding \"$it\"")
+            resultOutput = HttpServerUtils.wrapStream(
+                encoding = it,
+                stream = resultOutput,
+                closeStream = true,
+                compressBufferPool = compressBufferPool,
+                compressLevel = 6,
+            )
+                ?: throw IOException("Not supported encoding \"$it\"")
         }
 
         for (i in contentEncoding.lastIndex downTo 0) {
             val it = contentEncoding[i]
-            resultOutput = wrap(it, resultOutput) ?: throw IOException("Not supported encoding \"$it\"")
+            resultOutput = HttpServerUtils.wrapStream(
+                encoding = it,
+                stream = resultOutput,
+                closeStream = true,
+                compressBufferPool = compressBufferPool,
+                compressLevel = 6,
+            )
+                ?: throw IOException("Not supported encoding \"$it\"")
         }
 
         sendRequest()

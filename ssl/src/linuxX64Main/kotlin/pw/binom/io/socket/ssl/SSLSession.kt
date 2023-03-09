@@ -22,7 +22,7 @@ actual class SSLSession(
     ssl: CPointer<SSL>,
     val client: Boolean,
     val trustManager: TrustManager,
-    val keyManager: KeyManager
+    val keyManager: KeyManager,
 ) : Closeable {
     actual enum class State {
         OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
@@ -39,7 +39,7 @@ actual class SSLSession(
             SSL_CTX_callback_ctrl(
                 ctx,
                 SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,
-                sslHostCheck.reinterpret()
+                sslHostCheck.reinterpret(),
             ).convert<Int>().checkTrue("SSL_CTRL_SET_TLSEXT_SERVERNAME_CB error")
             SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG, 0, self.asCPointer()).convert<Int>()
                 .checkTrue("SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG error")
@@ -146,14 +146,14 @@ actual class SSLSession(
         if (r != null) {
             return Status(
                 r,
-                0
+                0,
             )
         }
         val n = SSL_write(resource.ssl, src.refTo(offset), length)
         if (n > 0) {
             return Status(
                 State.OK,
-                n
+                n,
             )
         }
         val state = when (val e = SSL_get_error(resource.ssl, n)) {
@@ -164,14 +164,14 @@ actual class SSLSession(
         }
         return Status(
             state,
-            0
+            0,
         )
     }
 
     actual fun readNet(dst: ByteBuffer): Int {
-        val n = dst.ref { dstPtr, remaining ->
+        val n = dst.ref(0) { dstPtr, remaining ->
             BIO_read(resource.wbio, dstPtr, remaining)
-        } ?: 0
+        }
         if (n < 0) {
             return 0
         }
@@ -205,7 +205,7 @@ actual class SSLSession(
         if (r != null) {
             return Status(
                 state = r,
-                bytes = 0
+                bytes = 0,
             )
         }
         if (!dst.isReferenceAccessAvailable()) {
@@ -214,14 +214,14 @@ actual class SSLSession(
                 bytes = 0,
             )
         }
-        val n = dst.ref { dstPtr, remaining ->
+        val n = dst.ref(0) { dstPtr, remaining ->
             SSL_read(resource.ssl, dstPtr, dst.remaining)
-        } ?: 0
+        }
         if (n > 0) {
             dst.position += n
             return Status(
                 State.OK,
-                n
+                n,
             )
         }
         val state = when (val e = SSL_get_error(resource.ssl, n)) {
@@ -233,7 +233,7 @@ actual class SSLSession(
         }
         return Status(
             state,
-            0
+            0,
         )
     }
 
@@ -242,23 +242,23 @@ actual class SSLSession(
         if (r != null) {
             return Status(
                 r,
-                0
+                0,
             )
         }
         if (!src.isReferenceAccessAvailable()) {
             return Status(
                 State.WANT_WRITE,
-                0
+                0,
             )
         }
-        val n = src.ref { srcPtr, remaining ->
+        val n = src.ref(0) { srcPtr, remaining ->
             SSL_write(resource.ssl, srcPtr, remaining)
-        } ?: 0
+        }
         if (n > 0) {
             src.position += n
             return Status(
                 State.OK,
-                n
+                n,
             )
         }
         assertError(resource.ssl, n)

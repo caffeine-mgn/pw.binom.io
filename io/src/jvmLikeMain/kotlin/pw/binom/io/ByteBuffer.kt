@@ -278,7 +278,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
         // Do nothing
     }
 
-    protected actual open fun ensureOpen() {
+    internal actual open fun ensureOpen() {
         if (closed) {
             throw ClosedException()
         }

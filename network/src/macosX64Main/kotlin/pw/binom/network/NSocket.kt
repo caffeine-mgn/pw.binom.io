@@ -61,20 +61,21 @@ actual class NSocket(val native: Int) : Closeable {
                 val rr = accept(
                     native,
                     address.data.refTo(0).getPointer(this).reinterpret(),
-                    len
+                    len,
                 )
                 address.size = len[0].convert()
                 rr
             }
         }
-        if (native == -1)
+        if (native == -1) {
             return null // throw IOException("Can't accept new client")
+        }
         return NSocket(native)
     }
 
     actual fun send(data: ByteBuffer): Int {
         memScoped {
-            val r: Int = data.ref { dataPtr, remaining ->
+            val r: Int = data.ref(0) { dataPtr, remaining ->
                 send(native, dataPtr, remaining.convert(), MSG_NOSIGNAL).convert()
             }
 //            val r: Int = send(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
@@ -94,7 +95,7 @@ actual class NSocket(val native: Int) : Closeable {
     }
 
     actual fun recv(data: ByteBuffer): Int {
-        val r: Int = data.ref { dataPtr, remaining ->
+        val r: Int = data.ref(0) { dataPtr, remaining ->
             recv(native, dataPtr, remaining.convert(), 0).convert()
         }
 //        val r: Int = recv(native, data.refTo(data.position), data.remaining.convert(), 0).convert()
@@ -158,7 +159,7 @@ actual class NSocket(val native: Int) : Closeable {
             val r = connect(
                 native,
                 address.data.refTo(0).getPointer(this).reinterpret(),
-                address.size.convert()
+                address.size.convert(),
             )
             if (r < 0 && errno != EINPROGRESS) {
                 throw IOException("Can't connect. errno = $errno")
@@ -172,7 +173,7 @@ actual class NSocket(val native: Int) : Closeable {
             val bindResult = bind(
                 native,
                 address.data.refTo(0).getPointer(this).reinterpret(),
-                address.size.convert()
+                address.size.convert(),
             )
             if (bindResult < 0) {
                 if (errno == 48) {
@@ -200,11 +201,14 @@ actual class NSocket(val native: Int) : Closeable {
     actual fun send(data: ByteBuffer, address: NetworkAddressOld): Int =
         memScoped {
             checkClosed()
-            val rr = data.ref { dataPtr, remaining ->
+            val rr = data.ref(0) { dataPtr, remaining ->
                 sendto(
-                    native, dataPtr.getPointer(this), remaining.convert(),
+                    native,
+                    dataPtr.getPointer(this),
+                    remaining.convert(),
                     MSG_NOSIGNAL,
-                    address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(), address.size.convert()
+                    address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
+                    address.size.convert(),
                 )
             }
 //            val rr = sendto(
@@ -222,10 +226,10 @@ actual class NSocket(val native: Int) : Closeable {
 
     actual fun recv(
         data: ByteBuffer,
-        address: NetworkAddressOld.Mutable?
+        address: NetworkAddressOld.Mutable?,
     ): Int {
         val gotBytes = if (address == null) {
-            val rr = data.ref { dataPtr, remaining ->
+            val rr = data.ref(0) { dataPtr, remaining ->
                 recvfrom(native, dataPtr, remaining.convert(), 0, null, null)
             }
 //            val rr = recvfrom(native, data.refTo(data.position), data.remaining.convert(), 0, null, null)
@@ -237,11 +241,14 @@ actual class NSocket(val native: Int) : Closeable {
             memScoped {
                 val len = allocArray<socklen_tVar>(1)
                 len[0] = 28.convert()
-                val rr = data.ref { dataPtr, remaining ->
+                val rr = data.ref(0) { dataPtr, remaining ->
                     recvfrom(
-                        native, dataPtr.getPointer(this), remaining.convert(), 0,
+                        native,
+                        dataPtr.getPointer(this),
+                        remaining.convert(),
+                        0,
                         address.data.refTo(0).getPointer(this).reinterpret<sockaddr>(),
-                        len
+                        len,
                     )
                 }
 //                val rr = recvfrom(

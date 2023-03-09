@@ -11,10 +11,10 @@ class ArrayList2<E> private constructor(
     private var length: Int,
     private var isReadOnly: Boolean,
     private val backingList: ArrayList2<E>?,
-    private val root: ArrayList2<E>?
+    private val root: ArrayList2<E>?,
 ) : MutableList<E>, RandomAccess, AbstractMutableList<E>(), BinomCollection {
 
-    private fun log(txt: String) {
+    private inline fun log(txt: () -> String) {
 //        println("ArrayList2: $txt")
     }
 
@@ -26,7 +26,7 @@ class ArrayList2<E> private constructor(
         0,
         false,
         null,
-        null
+        null,
     )
 
     constructor(elements: Collection<E>) : this(elements.size) {
@@ -56,7 +56,7 @@ class ArrayList2<E> private constructor(
         get() = backingArray.size
 
     override fun get(index: Int): E {
-        log("get($index)")
+        log { "get($index)" }
         checkElementIndex(index)
         return backingArray[offset + index]
     }
@@ -78,7 +78,7 @@ class ArrayList2<E> private constructor(
     }
 
     override operator fun set(index: Int, element: E): E {
-        log("set($index, $element)")
+        log { "set($index, $element)" }
         checkIsMutable()
         checkElementIndex(index)
         val old = backingArray[offset + index]
@@ -87,7 +87,7 @@ class ArrayList2<E> private constructor(
     }
 
     override fun indexOf(element: E): Int {
-        log("indexOf($element)")
+        log { "indexOf($element)" }
         var i = 0
         while (i < length) {
             if (backingArray[offset + i] == element) return i
@@ -97,7 +97,7 @@ class ArrayList2<E> private constructor(
     }
 
     override fun lastIndexOf(element: E): Int {
-        log("lastIndexOf($element)")
+        log { "lastIndexOf($element)" }
         var i = length - 1
         while (i >= 0) {
             if (backingArray[offset + i] == element) return i
@@ -115,21 +115,21 @@ class ArrayList2<E> private constructor(
     }
 
     override fun add(element: E): Boolean {
-        log("add($element)")
+        log { "add($element)" }
         checkIsMutable()
         addAtInternal(offset + length, element)
         return true
     }
 
     override fun add(index: Int, element: E) {
-        log("add($index, $element)")
+        log { "add($index, $element)" }
         checkIsMutable()
         checkPositionIndex(index)
         addAtInternal(offset + index, element)
     }
 
     override fun addAll(elements: Collection<E>): Boolean {
-        log("addAll($elements)")
+        log { "addAll($elements)" }
         checkIsMutable()
         val n = elements.size
         addAllInternal(offset + length, elements, n)
@@ -137,7 +137,7 @@ class ArrayList2<E> private constructor(
     }
 
     override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        log("addAll($index, $elements)")
+        log { "addAll($index, $elements)" }
         checkIsMutable()
         checkPositionIndex(index)
         val n = elements.size
@@ -146,20 +146,20 @@ class ArrayList2<E> private constructor(
     }
 
     override fun clear() {
-        log("clear()")
+        log { "clear()" }
         checkIsMutable()
         removeRangeInternal(offset, length)
     }
 
     override fun removeAt(index: Int): E {
-        log("removeAt($index)")
+        log { "removeAt($index)" }
         checkIsMutable()
         checkElementIndex(index)
         return removeAtInternal(offset + index)
     }
 
     override fun remove(element: E): Boolean {
-        log("remove($element)")
+        log { "remove($element)" }
         checkIsMutable()
         val i = indexOf(element)
         if (i >= 0) removeAt(i)
@@ -167,25 +167,25 @@ class ArrayList2<E> private constructor(
     }
 
     override fun removeAll(elements: Collection<E>): Boolean {
-        log("removeAll($elements)")
+        log { "removeAll($elements)" }
         checkIsMutable()
         return retainOrRemoveAllInternal(offset, length, elements, false) > 0
     }
 
     override fun retainAll(elements: Collection<E>): Boolean {
-        log("retainAll($elements)")
+        log { "retainAll($elements)" }
         checkIsMutable()
         return retainOrRemoveAllInternal(offset, length, elements, true) > 0
     }
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
-        log("subList($fromIndex, $toIndex)")
+        log { "subList($fromIndex, $toIndex)" }
         checkRangeIndexes(fromIndex, toIndex)
         return ArrayList2(backingArray, offset + fromIndex, toIndex - fromIndex, isReadOnly, this, root ?: this)
     }
 
     fun trimToSize() {
-        log("trimToSize()")
+        log { "trimToSize()" }
         if (backingList != null) throw IllegalStateException() // just in case somebody casts subList to ArrayList
         if (length < backingArray.size) {
             backingArray = backingArray.copyOfUninitializedElements(length)
@@ -350,7 +350,7 @@ class ArrayList2<E> private constructor(
                 backingArray,
                 startIndex = rangeOffset + rangeLength,
                 endIndex = length,
-                destinationOffset = rangeOffset
+                destinationOffset = rangeOffset,
             )
             backingArray.resetRange(fromIndex = length - rangeLength, toIndex = length)
         }
@@ -362,7 +362,7 @@ class ArrayList2<E> private constructor(
         rangeOffset: Int,
         rangeLength: Int,
         elements: Collection<E>,
-        retain: Boolean
+        retain: Boolean,
     ): Int {
         if (backingList != null) {
             val removed = backingList.retainOrRemoveAllInternal(rangeOffset, rangeLength, elements, retain)
@@ -383,7 +383,7 @@ class ArrayList2<E> private constructor(
                 backingArray,
                 startIndex = rangeOffset + rangeLength,
                 endIndex = length,
-                destinationOffset = rangeOffset + j
+                destinationOffset = rangeOffset + j,
             )
             backingArray.resetRange(fromIndex = length - removed, toIndex = length)
             length -= removed

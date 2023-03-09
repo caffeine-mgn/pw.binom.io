@@ -39,7 +39,7 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
                 read -> "rb"
                 else -> throw IllegalArgumentException("Invalid mode")
             }
-        }
+        },
     ) ?: throw FileNotFoundException(file.path)
 
     actual fun skip(length: Long): Long {
@@ -66,9 +66,9 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
             return 0
         }
 
-        val r = dest.ref { destPtr, destRemaining ->
+        val r = dest.ref(0) { destPtr, destRemaining ->
             fread(destPtr, 1.convert(), destRemaining.convert(), handler).convert<Int>()
-        } ?: 0
+        }
         dest.position += r
         return r
     }
@@ -100,9 +100,9 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
             return 0
         }
 
-        val r = data.ref { dataPtr, dataRemaining ->
+        val r = data.ref(0) { dataPtr, dataRemaining ->
             fwrite(dataPtr, 1.convert(), dataRemaining.convert(), handler).convert<Int>()
-        } ?: 0
+        }
         data.position += r
         return r
     }

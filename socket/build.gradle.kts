@@ -244,11 +244,11 @@ tasks {
             "USERNAME" to "root",
             "PASSWORD" to "root",
             "TZ" to "GMT",
-        )
+        ),
     )
 
     eachKotlinTest {
-        httpStorage.dependsOn(it)
+//        httpStorage.dependsOn(it)
     }
 }
 

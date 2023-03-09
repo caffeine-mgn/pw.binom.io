@@ -82,9 +82,9 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
         return 0
     }
     return if (address == null) {
-        data.ref { dataPtr, remaining ->
+        data.ref(0) { dataPtr, remaining ->
             recvfrom(native, dataPtr, remaining.convert(), 0, null, null)
-        }!!.toInt()
+        }.toInt()
     } else {
         val netAddress = if (address is CommonMutableNetworkAddress) {
             address
@@ -92,7 +92,7 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
             CommonMutableNetworkAddress(address)
         }
         val readSize = netAddress.addr { addrPtr ->
-            data.ref { dataPtr, remaining ->
+            data.ref(0) { dataPtr, remaining ->
                 memScoped {
                     val len = allocArray<socklen_tVar>(1)
                     len[0] = sizeOf<sockaddr_in6>().convert()
@@ -109,8 +109,8 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
                     }
                     r
                 }
-            }!!.toInt()
-        }!!
+            }.toInt()
+        }
         if (readSize >= 0 && netAddress !== address) {
             address.update(netAddress.host, netAddress.port)
         }

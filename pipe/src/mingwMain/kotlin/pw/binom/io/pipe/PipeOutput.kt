@@ -26,13 +26,13 @@ actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output
         memScoped {
             val dwWritten = alloc<UIntVar>()
 
-            val r = data.ref { dataPtr, _ ->
+            val r = data.ref(0) { dataPtr, _ ->
                 WriteFile(
                     writeFd,
                     dataPtr.getPointer(this).reinterpret(),
                     data.remaining.convert(),
                     dwWritten.ptr,
-                    null
+                    null,
                 )
             } ?: 0
             if (r <= 0) {

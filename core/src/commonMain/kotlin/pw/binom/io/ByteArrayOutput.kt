@@ -120,9 +120,7 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
 
     private fun ensureUnlocked() {
-        if (locked) {
-            throw IllegalStateException("ByteBuffer finished")
-        }
+        check(!locked) { "ByteBuffer locked" }
     }
 
     override fun flush() {
@@ -131,16 +129,18 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
 
     override fun close() {
         ensureUnlocked()
-        ensureOpen()
-        data.close()
+        if (closed) {
+            return
+        }
         closed = true
+        data.close()
     }
 
     val size: Int
         get() = _wrote
 
     fun unlock(position: Int) {
-        clear()
+        clear() // also set locked = false
         _wrote = position
         data.limit = data.capacity
         data.position = position

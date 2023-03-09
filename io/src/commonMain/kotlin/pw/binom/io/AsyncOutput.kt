@@ -60,3 +60,40 @@ suspend fun AsyncOutput.writeByteArray(value: ByteArray, pool: ObjectPool<Pooled
         writeByteArray(value = value, buffer = buffer)
     }
 }
+
+class AsyncOutputAsciStringAppender : AsyncOutput {
+    private val sb = StringBuilder()
+
+    fun clear() {
+        sb.clear()
+    }
+
+    fun trimToSize() {
+        sb.trimToSize()
+    }
+
+    val length
+        get() = sb.length
+
+    fun ensureCapacity(minimumCapacity: Int) {
+        sb.ensureCapacity(minimumCapacity)
+    }
+
+    override suspend fun write(data: ByteBuffer): Int {
+        val len = data.remaining
+        sb.ensureCapacity(sb.length + len)
+        data.forEach { byte ->
+            sb.append(byte.toInt().toChar())
+        }
+        data.position = data.limit
+        return len
+    }
+
+    override suspend fun asyncClose() {
+    }
+
+    override suspend fun flush() {
+    }
+
+    override fun toString(): String = sb.toString()
+}
