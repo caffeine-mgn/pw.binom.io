@@ -45,6 +45,17 @@ data class PolimorfClass(val ololo: String)
 class XmlEncoderTest {
 
     @Test
+    fun ggg() {
+        val number = 144
+        val signed = number.toByte()
+        val unsigned = number.toUByte()
+        println("signed=$signed ${signed.toString(2)}")
+        println("unsigned=$unsigned ${unsigned.toString(2)}")
+        println("signed->unsigned=${signed.toUByte()} ${signed.toUByte().toString(2)}")
+        println("unsigned->signed=${unsigned.toByte()} ${unsigned.toByte().toString(2)}")
+    }
+
+    @Test
     @Ignore
     fun test() = runTest {
         val module = SerializersModule {

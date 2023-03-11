@@ -9,6 +9,7 @@ fun <T : Buffer> T.clean(): T {
 }
 
 expect interface Buffer {
+    companion object;
     var position: Int
     var limit: Int
     val capacity: Int

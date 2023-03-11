@@ -4,6 +4,7 @@ import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointer
 
 actual interface Buffer {
+    actual companion object;
     fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T?
     actual val remaining: Int
     actual var position: Int

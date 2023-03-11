@@ -71,7 +71,7 @@ fun Double.dump(dest: ByteBuffer) {
 }
 
 fun Double.toByteArray(dest: ByteArray, offset: Int = 0): ByteArray {
-    if (dest.size - offset < Float.SIZE_BYTES) {
+    if (dest.size - offset < Double.SIZE_BYTES) {
         throw IllegalArgumentException("Not enough space for place Double")
     }
     return toRawBits().toByteArray(dest = dest, offset = offset)
@@ -185,7 +185,7 @@ fun Short.Companion.fromBytes(source: ByteBuffer): Short {
 fun Short.Companion.fromBytes(readBuffer: ByteArray, offset: Int = 0) =
     fromBytes(
         readBuffer[0 + offset],
-        readBuffer[1 + offset]
+        readBuffer[1 + offset],
     )
 
 @JvmName("Int_fromBytes3")
@@ -231,7 +231,7 @@ fun Long.Companion.fromBytes(
     byte4: Byte,
     byte5: Byte,
     byte6: Byte,
-    byte7: Byte
+    byte7: Byte,
 ) =
     (byte0.toLong() and 0xFFL shl 56) +
         ((byte1).toLong() and 0xFFL shl 48) +

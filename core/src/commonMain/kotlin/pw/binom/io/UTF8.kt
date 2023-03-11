@@ -162,6 +162,8 @@ object UTF8 {
         }
     }
 
+    fun getUtfCharCount(data: ByteArray) = data.sumOf { getUtf8CharSize(it) }
+
     /**
      * Converts utf8 character to unicode
      * @param firstByte first byte of utf8 character

@@ -1,4 +1,5 @@
 import pw.binom.publish.dependsOn
+import pw.binom.useDefault
 import java.util.*
 
 plugins {
@@ -111,44 +112,13 @@ kotlin {
                 api(project(":uuid"))
             }
         }
-        val jvmLikeMain by creating {
-            dependsOn(commonMain)
-        }
-        dependsOn("androidMain", jvmLikeMain)
-        val jvmMain by getting {
-            dependsOn(jvmLikeMain)
-        }
-//        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//            val androidMain by getting {
-//                dependsOn(jvmMain)
-//            }
-//        }
-        val nativeCommonMain by creating {
-            dependsOn(commonMain)
-        }
-        val nativeHostedMain by creating {
-            dependsOn(nativeCommonMain)
-        }
-
-        dependsOn("linux*Main", nativeHostedMain)
-        dependsOn("mingw*Main", nativeHostedMain)
-        dependsOn("watchos*Main", nativeHostedMain)
-        dependsOn("macos*Main", nativeHostedMain)
-        dependsOn("ios*Main", nativeHostedMain)
-        dependsOn("androidNative*Main", nativeHostedMain)
-        dependsOn("wasm*Main", nativeCommonMain)
-
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
-                api(project(":charset"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
-        }
-        val nativeTest by creating {
-            dependsOn(commonTest)
         }
         val jvmTest by getting {
             dependsOn(commonTest)
@@ -156,19 +126,14 @@ kotlin {
                 api(kotlin("test"))
             }
         }
-        val linuxX64Test by getting {
-            dependsOn(nativeTest)
-        }
-
-        val mingwX64Test by getting {
-            dependsOn(nativeTest)
-        }
 
         val jsTest by getting {
             dependencies {
                 api(kotlin("test-js"))
             }
         }
+
+        useDefault()
     }
 }
 

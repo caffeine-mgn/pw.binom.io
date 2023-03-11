@@ -1,6 +1,7 @@
 package pw.binom.io
 
 actual interface Buffer {
+    actual companion object;
     actual var position: Int
     actual var limit: Int
     actual val remaining: Int

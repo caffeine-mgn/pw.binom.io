@@ -10,7 +10,6 @@ import pw.binom.io.http.websocket.WebSocketConnectionImpl3
 
 suspend fun HttpServerExchange.acceptWebsocket(masking: Boolean = false): WebSocketConnection {
     val upgrade = requestHeaders[Headers.UPGRADE]?.lastOrNull()
-    println("requestHeaders: $requestHeaders")
     if (!upgrade.equals(Headers.WEBSOCKET, true)) {
         throw HttpException(
             code = 403,
