@@ -43,12 +43,12 @@ open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
             when (val family = internal_addr_get_family(dataAddr)) {
                 4 -> {
                     val out = alloc<internal_sockaddr_in6>()
-                    internal_addr_ipv4_to_ipv6(dataAddr, out.ptr)
+                    val convertResult = internal_addr_ipv4_to_ipv6(dataAddr, out.ptr)
+                    check(convertResult == 1 || convertResult == 0) { "Can't convert address to ipv6" }
                     func(out.ptr)
                 }
-                6 -> {
-                    func(dataAddr.reinterpret())
-                }
+
+                6 -> func(dataAddr.reinterpret())
 
                 else -> throw IllegalStateException("Invalid address family $family")
             }

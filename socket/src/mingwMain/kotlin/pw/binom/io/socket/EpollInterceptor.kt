@@ -17,9 +17,9 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
     private val epoll = selector.epoll
 
     init {
+        val b = udpReadSocket.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
         udpReadSocket.blocking = false
         udpWriteSocket.blocking = false
-        val b = udpReadSocket.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
         check(b == BindStatus.OK) { "Can't bind port" }
         val r = selector.usingEventPtr { eventMem ->
             setEventDataPtr(eventMem, null)

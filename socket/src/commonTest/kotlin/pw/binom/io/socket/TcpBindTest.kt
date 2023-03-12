@@ -1,5 +1,8 @@
 package pw.binom.io.socket
 
+import pw.binom.Environment
+import pw.binom.Platform
+import pw.binom.platform
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -33,6 +36,9 @@ class TcpBindTest {
 
     @Test
     fun bindUnixSocket() {
+        if (Environment.platform == Platform.MINGW_X86 || Environment.platform == Platform.MINGW_X64) {
+            return
+        }
         val socket = Socket.createTcpServerUnixSocket()
         assertEquals(BindStatus.OK, socket.bind("test_sock1"))
         assertEquals(BindStatus.ALREADY_BINDED, socket.bind("test_sock1"))

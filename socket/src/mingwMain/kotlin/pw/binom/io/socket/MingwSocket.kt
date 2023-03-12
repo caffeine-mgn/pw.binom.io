@@ -104,13 +104,12 @@ class MingwSocket(
                 platform.posix.bind(
                     native.convert(),
                     data.reinterpret(),
-                    networkAddress.size.convert(),
+                    sizeOf<sockaddr_in6>().convert(),
                 )
             }
-
             if (bindResult < 0) {
                 if (GetLastError().toInt() == platform.windows.WSAEADDRINUSE) { // 10048
-                    throw BindException("Address already in use: $address")
+                    return BindStatus.ADDRESS_ALREADY_IN_USE
                 }
                 if (GetLastError().toInt() == platform.windows.WSAEACCES) { // 10013
                     throw BindException("Can't bind $address: An attempt was made to access a socket in a way forbidden by its access permissions.")
@@ -121,6 +120,9 @@ class MingwSocket(
                 }
                 if (GetLastError().toInt() == platform.windows.WSAEFAULT) { // 10014
                     throw BindException("Can't bind to $address: Bad address")
+                }
+                if (GetLastError().toInt() == WSAEINVAL) {
+                    return BindStatus.ALREADY_BINDED
                 }
 
                 throw IOException("Bind error. errno: [$errno], GetLastError: [${GetLastError()}]")
