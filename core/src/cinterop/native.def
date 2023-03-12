@@ -1,4 +1,12 @@
 ---
+#ifdef _WIN32
+#include <Processthreadsapi.h>
+#endif
+
 void internal_core_thread_yield(){
+#ifdef _WIN32
+    SwitchToThread();
+#else
     pthread_yield();
+#endif
 }

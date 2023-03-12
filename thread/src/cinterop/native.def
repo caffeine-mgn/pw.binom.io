@@ -56,5 +56,9 @@ int internal_setThreadName(pthread_t thread, const char *name){
 }
 
 void internal_thread_yield(){
+#ifdef WINDOWS_TARGET
+    SwitchToThread();
+#else
     pthread_yield();
+#endif
 }
