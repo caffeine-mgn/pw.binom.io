@@ -53,7 +53,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
                     override fun resumeWith(result: Result<T>) {
                         con.resumeWith(result)
                     }
-                }
+                },
             )
         }
     }
@@ -96,7 +96,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
         user: WebAuthAccess?,
         path: Path,
         depth: Int,
-        excludeCurrent: Boolean
+        excludeCurrent: Boolean,
     ): List<WebdavEntity>? {
         val allPathUrl = url.addPath(path)
         val r = try {
@@ -159,7 +159,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
             user = WebAuthAccess.getCurrentUser(),
             path = path,
             depth = 0,
-            excludeCurrent = false
+            excludeCurrent = false,
         )?.find { it.name == folderName }
     }
 

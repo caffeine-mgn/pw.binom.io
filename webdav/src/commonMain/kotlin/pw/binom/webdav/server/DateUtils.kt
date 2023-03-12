@@ -50,7 +50,7 @@ fun String.parseDate(): DateTime {
         month = month,
         seconds = ss,
         timeZoneOffset = 0,
-        millis = 0
+        millis = 0,
     )
     return r
 }

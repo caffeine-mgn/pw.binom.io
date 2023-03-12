@@ -9,6 +9,7 @@ import pw.binom.io.httpServer.HttpRequest
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
+@Deprecated(message = "Use HttpServer2")
 interface FluxHttpRequest : HttpRequest, CoroutineContext {
     companion object {
         suspend fun getActiveRequestOrNull(): FluxHttpRequest? = coroutineContext[FluxHttpRequestImplKey]
@@ -23,7 +24,7 @@ interface FluxHttpRequest : HttpRequest, CoroutineContext {
         serializer: KSerializer<T>,
         value: T,
         headers: Headers = EmptyHeaders,
-        statusCode: Int? = null
+        statusCode: Int? = null,
     )
 }
 
@@ -31,5 +32,5 @@ interface FluxHttpRequest : HttpRequest, CoroutineContext {
 suspend inline fun <reified T : Any> FluxHttpRequest.finishResponse(
     value: T,
     headers: Headers = EmptyHeaders,
-    statusCode: Int? = null
+    statusCode: Int? = null,
 ) = finishResponse(value = value, headers = headers, statusCode = statusCode, serializer = T::class.serializer())

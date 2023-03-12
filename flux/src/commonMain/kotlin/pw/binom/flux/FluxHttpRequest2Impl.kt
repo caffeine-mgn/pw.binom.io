@@ -12,6 +12,7 @@ import pw.binom.url.Path
 import pw.binom.url.Query
 import kotlin.coroutines.AbstractCoroutineContextElement
 
+@Deprecated(message = "Use HttpServer2")
 class FluxHttpRequest2Impl(val original: HttpRequest, val mask: String, val serialization: FluxServerSerialization) :
     FluxHttpRequest, HttpRequest,
     AbstractCoroutineContextElement(FluxHttpRequestImplKey) {
@@ -44,7 +45,7 @@ class FluxHttpRequest2Impl(val original: HttpRequest, val mask: String, val seri
     override suspend fun <T : Any> readRequest(serializer: KSerializer<T>): T =
         serialization.decode(
             request = this,
-            serializer = serializer
+            serializer = serializer,
         )
 
     override suspend fun <T : Any> finishResponse(

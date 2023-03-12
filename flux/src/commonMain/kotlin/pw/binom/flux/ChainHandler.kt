@@ -3,9 +3,10 @@ package pw.binom.flux
 import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 
+@Deprecated(message = "Use HttpRouting")
 class ChainHandler(
     private val nextChain: Handler,
-    private val func: suspend (req: HttpRequest) -> Boolean
+    private val func: suspend (req: HttpRequest) -> Boolean,
 ) : Handler {
     override suspend fun request(req: HttpRequest) {
         if (func(req)) {
@@ -17,5 +18,5 @@ class ChainHandler(
 fun Handler.chain(func: suspend (req: HttpRequest) -> Boolean) =
     ChainHandler(
         this,
-        func
+        func,
     )

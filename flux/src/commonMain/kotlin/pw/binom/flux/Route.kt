@@ -6,6 +6,7 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.url.PathMask
 
+@Deprecated(message = "Use HttpRouting")
 interface Route {
     val serialization: FluxServerSerialization
     fun route(path: String, route: Route)
@@ -16,7 +17,7 @@ interface Route {
         endpoint(
             method = method.code,
             path = path,
-            func = func
+            func = func,
         )
 
     fun forward(handler: Handler?)

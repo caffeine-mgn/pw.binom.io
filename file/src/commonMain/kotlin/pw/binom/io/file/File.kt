@@ -158,9 +158,7 @@ fun File.relative(path: String): File {
         return File(path)
     }
 
-    if (path.startsWith("/") || path.startsWith("\\")) {
-        throw IllegalArgumentException("Invalid Relative Path")
-    }
+    require(!path.startsWith("/") && !path.startsWith("\\")) { "Invalid Relative Path" }
     val currentPath = this.path.split(File.SEPARATOR).toMutableList()
     val newPath = path.split('/', '\\')
     newPath.forEach {
@@ -169,9 +167,7 @@ fun File.relative(path: String): File {
             }
 
             ".." -> {
-                if (currentPath.isEmpty()) {
-                    throw IllegalArgumentException("Can't find relative from \"${this.path}\" to \"$path\"")
-                }
+                require(currentPath.isNotEmpty()) { "Can't find relative from \"${this.path}\" to \"$path\"" }
                 currentPath.removeLast()
             }
 
@@ -187,11 +183,15 @@ fun File.append(text: String, charset: Charset = Charsets.UTF8) {
     }
 }
 
+fun File.append(data: ByteBuffer) {
+    openWrite(append = true).use {
+        it.write(data)
+    }
+}
+
 fun File.append(data: ByteArray) {
-    openWrite(true).use {
-        data.wrap { buf ->
-            it.write(buf)
-        }
+    data.wrap { buf ->
+        append(buf)
     }
 }
 
@@ -245,11 +245,15 @@ fun File.readBinary(
     }
 }
 
-fun File.writeBinary(data: ByteArray) {
+fun File.writeBinary(data: ByteBuffer) {
     openWrite().use {
-        data.wrap { buf ->
-            it.write(buf)
-        }
+        it.write(data)
+    }
+}
+
+fun File.writeBinary(data: ByteArray) {
+    data.wrap { buf ->
+        writeBinary(buf)
     }
 }
 

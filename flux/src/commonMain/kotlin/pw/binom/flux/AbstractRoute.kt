@@ -9,6 +9,7 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpRequest
 import pw.binom.network.SocketClosedException
 
+@Deprecated(message = "Use HttpRouting")
 abstract class AbstractRoute(wrapperPoolCapacity: Int = 16) : Route, Handler {
     private val routers = defaultMutableMap<String, MutableList<Route>>().useName("AbstractRoute.routers")
     private val methods =

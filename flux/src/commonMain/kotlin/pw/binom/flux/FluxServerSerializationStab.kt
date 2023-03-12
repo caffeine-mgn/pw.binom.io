@@ -3,13 +3,14 @@ package pw.binom.flux
 import kotlinx.serialization.KSerializer
 import pw.binom.io.http.Headers
 
+@Deprecated(message = "Use HttpRouting")
 object FluxServerSerializationStab : FluxServerSerialization {
     override suspend fun <T : Any> encode(
         request: FluxHttpRequest,
         value: T,
         serializer: KSerializer<T>,
         headers: Headers,
-        statusCode: Int?
+        statusCode: Int?,
     ) {
         throw IllegalStateException("Serialization not supported")
     }

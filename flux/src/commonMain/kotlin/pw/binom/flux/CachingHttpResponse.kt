@@ -11,6 +11,7 @@ import pw.binom.io.httpServer.HttpResponse
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 
+@Deprecated(message = "Use HttpServer2")
 class CachingHttpResponse(val onClose: ((CachingHttpResponse) -> Unit)?) : HttpResponse {
 
     companion object {

@@ -15,8 +15,10 @@ import pw.binom.url.Query
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
+@Deprecated(message = "Use HttpRouting")
 internal object FluxHttpRequestImplKey : CoroutineContext.Key<FluxHttpRequestImpl>
 
+@Deprecated(message = "Use HttpRouting")
 internal class FluxHttpRequestImpl : FluxHttpRequest, HttpRequest,
     AbstractCoroutineContextElement(FluxHttpRequestImplKey) {
 
@@ -107,7 +109,7 @@ internal class FluxHttpRequestImpl : FluxHttpRequest, HttpRequest,
     override suspend fun <T : Any> readRequest(serializer: KSerializer<T>): T =
         serialization.decode(
             request = this,
-            serializer = serializer
+            serializer = serializer,
         )
 
     override suspend fun <T : Any> finishResponse(

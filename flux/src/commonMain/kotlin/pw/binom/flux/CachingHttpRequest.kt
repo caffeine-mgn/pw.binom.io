@@ -13,9 +13,10 @@ import pw.binom.pool.ObjectPool
 import pw.binom.url.Path
 import pw.binom.url.Query
 
+@Deprecated(message = "Use HttpServer2")
 class CachingHttpRequest(
     val responsePool: ObjectPool<CachingHttpResponse>,
-    val onClose: (CachingHttpRequest) -> Unit
+    val onClose: (CachingHttpRequest) -> Unit,
 ) : HttpRequest {
     companion object {
         fun factory(responsePool: ObjectPool<CachingHttpResponse>) = object : ObjectFactory<CachingHttpRequest> {

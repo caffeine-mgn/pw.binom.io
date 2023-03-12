@@ -3,11 +3,12 @@ package pw.binom.webdav.server
 import pw.binom.ByteBufferPool
 import pw.binom.copyTo
 import pw.binom.date.DateTime
-import pw.binom.io.FileSystem
-import pw.binom.io.FileSystemAccess
-import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpRequest
-import pw.binom.io.use
+import pw.binom.io.*
+import pw.binom.io.http.HashHeaders2
+import pw.binom.io.http.Headers
+import pw.binom.io.http.headersOf
+import pw.binom.io.httpServer.HttpHandler
+import pw.binom.io.httpServer.HttpServerExchange
 import pw.binom.url.Path
 import pw.binom.url.UrlEncoder
 import pw.binom.url.toPath
@@ -42,27 +43,26 @@ suspend fun FileSystem.getEntitiesWithDepth(path: Path, depth: Int): List<FileSy
     return out
 }
 
-abstract class AbstractWebDavHandler<U> : Handler {
+abstract class AbstractWebDavHandler<U> : HttpHandler {
 
     protected abstract val bufferPool: ByteBufferPool
 
-    protected abstract fun getFS(req: HttpRequest): FileSystem
-    protected abstract fun getUser(req: HttpRequest): U
+    protected abstract fun getFS(req: HttpServerExchange): FileSystem
+    protected abstract fun getUser(req: HttpServerExchange): U
 
-    protected abstract fun getGlobalURI(req: HttpRequest): Path
-    protected abstract fun getLocalURI(req: HttpRequest, globalURI: Path): String
+    protected abstract fun getGlobalURI(req: HttpServerExchange): Path
+    protected abstract fun getLocalURI(req: HttpServerExchange, globalURI: Path): String
 
-    private suspend fun buildRropFind(req: HttpRequest) {
+    private suspend fun buildRropFind(req: HttpServerExchange) {
         val fs = getFS(req)
         val user = getUser(req)
-        val currentEntry = fs.get(UrlEncoder.pathDecode(req.path.raw).toPath)
+        val currentEntry = fs.get(UrlEncoder.pathDecode(req.requestURI.path.raw).toPath)
 
         if (currentEntry == null) {
-            req.response().use { it.status = 404 }
+            req.startResponse(404)
             return
         }
-        val node = req.readText().use { it.xmlTree() }
-        val resp = req.response()
+        val node = req.input.bufferedReader().use { it.xmlTree() }
 
         val properties =
             node.findElements { it.tag.endsWith("prop") }.first().childs
@@ -70,14 +70,13 @@ abstract class AbstractWebDavHandler<U> : Handler {
                 .map {
                     it.nameSpace to it.tag
                 }.toMutableSet()
-        val depth = req.headers["Depth"]?.firstOrNull()?.toInt() ?: 0
+        val depth = req.requestHeaders["Depth"]?.firstOrNull()?.toInt() ?: 0
         val entities = fs.getEntitiesWithDepth(
-            UrlEncoder.pathDecode(req.path.raw).toPath,
-            depth
+            UrlEncoder.pathDecode(req.requestURI.path.raw).toPath,
+            depth,
         )!! // if (depth <= 0) listOf(currentEntry) else fs.getEntities(user, req.contextUri)!! + currentEntry
-        resp.status = 207
-        resp.headers.contentType = "application/xml; charset=UTF-8"
-        resp.startWriteText().use {
+        req.startResponse(207, headersOf(Headers.CONTENT_TYPE to "application/xml; charset=UTF-8"))
+        req.output.bufferedWriter().use {
             it.writeXml("UTF-8") {
                 node(MULTISTATUS_TAG, DAV_NS) {
                     entities.forEach { e ->
@@ -95,7 +94,7 @@ abstract class AbstractWebDavHandler<U> : Handler {
                                         when {
                                             prop.first == DAV_NS && prop.second == "displayname" -> node(
                                                 "displayname",
-                                                DAV_NS
+                                                DAV_NS,
                                             ) {
                                                 // value(e.name)
                                             }
@@ -144,175 +143,135 @@ abstract class AbstractWebDavHandler<U> : Handler {
         }
     }
 
-    override suspend fun request(req: HttpRequest) {
-        val user = getUser(req)
+    override suspend fun handle(exchange: HttpServerExchange) {
+        val user = getUser(exchange)
 
-        val fs = getFS(req)
+        val fs = getFS(exchange)
         try {
             // resp.resetHeader("Connection", "close")
-            if (req.method == "OPTIONS") {
+            if (exchange.requestMethod == "OPTIONS") {
                 fs.useUser2(user) {
-                    fs.get(UrlEncoder.pathDecode(req.path.raw).toPath)
-                    req.response().use {
-                        it.headers["Allow"] =
-                            "GET, POST, OPTIONS, HEAD, MKCOL, PUT, PROPFIND, PROPPATCH, ORDERPATCH, DELETE, MOVE, COPY, GETLIB, LOCK, UNLOCK"
-                        it.headers["DAV"] = "1, 2, ordered-collections"
-                        it.status = 200
-                    }
+                    fs.get(UrlEncoder.pathDecode(exchange.requestURI.path.raw).toPath)
+                    val headers = HashHeaders2()
+                    headers["Allow"] =
+                        "GET, POST, OPTIONS, HEAD, MKCOL, PUT, PROPFIND, PROPPATCH, ORDERPATCH, DELETE, MOVE, COPY, GETLIB, LOCK, UNLOCK"
+                    headers["DAV"] = "1, 2, ordered-collections"
+                    exchange.startResponse(200, headers)
                 }
                 return
             }
-            if (req.method == "MKCOL") {
+            if (exchange.requestMethod == "MKCOL") {
                 fs.useUser2(user) {
-                    fs.mkdir(UrlEncoder.pathDecode(req.path.raw).toPath)
-                    req.response().use {
-                        it.status = 201
-                    }
+                    fs.mkdir(UrlEncoder.pathDecode(exchange.requestURI.path.raw).toPath)
+                    exchange.startResponse(201)
                 }
                 return
             }
-            if (req.method == "MOVE") {
+            if (exchange.requestMethod == "MOVE") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURL() }
+                    val destination = exchange.requestHeaders["Destination"]?.firstOrNull()?.let { it.toURL() }
 
                     if (destination == null) {
-                        req.response().use {
-                            it.status = 406
-                        }
+                        exchange.startResponse(406)
                         return@useUser2
                     }
-                    val destinationPath = getLocalURI(req, destination.path).let { UrlEncoder.pathDecode(it) }
-                    val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
-                    val source = fs.get(UrlEncoder.pathDecode(req.path.raw).toPath)
+                    val destinationPath = getLocalURI(exchange, destination.path).let { UrlEncoder.pathDecode(it) }
+                    val overwrite = exchange.requestHeaders["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
+                    val source = fs.get(UrlEncoder.pathDecode(exchange.requestURI.path.raw).toPath)
                     if (source == null) {
-                        req.response().use {
-                            it.status = 404
-                        }
+                        exchange.startResponse(404)
                         return@useUser2
                     }
 
                     source.move(destinationPath.toPath, overwrite)
-                    req.response().use {
-                        it.status = 201
-                    }
+                    exchange.startResponse(201)
                 }
                 return
             }
-            if (req.method == "COPY") {
+            if (exchange.requestMethod == "COPY") {
                 fs.useUser2(user) {
-                    val destination = req.headers["Destination"]?.firstOrNull()?.let { it.toURL() }
+                    val destination = exchange.requestHeaders["Destination"]?.firstOrNull()?.let { it.toURL() }
 
                     if (destination == null) {
-                        req.response().use {
-                            it.status = 406
-                        }
+                        exchange.startResponse(406)
                         return@useUser2
                     }
-                    val destinationPath = getLocalURI(req, destination.path).let { UrlEncoder.pathDecode(it) }
-                    val overwrite = req.headers["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
-                    val source = fs.get(UrlEncoder.pathDecode(req.path.raw).toPath)
+                    val destinationPath = getLocalURI(exchange, destination.path).let { UrlEncoder.pathDecode(it) }
+                    val overwrite = exchange.requestHeaders["Overwrite"]?.firstOrNull()?.let { it == "T" } ?: true
+                    val source = fs.get(UrlEncoder.pathDecode(exchange.requestURI.path.raw).toPath)
                     if (source == null) {
-                        req.response().use {
-                            it.status = 404
-                        }
+                        exchange.startResponse(404)
                         return@useUser2
                     }
 
                     source.copy(destinationPath.toPath, overwrite)
-                    req.response().use {
-                        it.status = 201
-                    }
+                    exchange.startResponse(201)
                 }
                 return
             }
-            if (req.method == "DELETE") {
+            if (exchange.requestMethod == "DELETE") {
                 fs.useUser2(user) {
-                    val e = fs.get(UrlEncoder.pathDecode(req.path.raw).toPath)
+                    val e = fs.get(UrlEncoder.pathDecode(exchange.requestURI.path.raw).toPath)
                     if (e == null) {
-                        req.response().use {
-                            it.status = 404
-                        }
+                        exchange.startResponse(404)
                         return@useUser2
                     }
                     e.delete()
-                    req.response().use {
-                        it.status = 200
-                    }
+                    exchange.startResponse(200)
                 }
                 return
             }
-            if (req.method == "PUT") {
+            if (exchange.requestMethod == "PUT") {
                 fs.useUser2(user) {
-                    val path = UrlEncoder.pathDecode(req.path.raw).toPath
+                    val path = UrlEncoder.pathDecode(exchange.requestURI.path.raw).toPath
                     val e = fs.get(path)?.rewrite() ?: fs.new(path)
 
                     e.use {
-                        req.readBinary().use { b ->
+                        exchange.input.use { b ->
                             b.copyTo(dest = it, pool = bufferPool)
                         }
                     }
-                    req.response().use {
-                        it.status = 201
-                    }
+                    exchange.startResponse(201)
                 }
                 return
             }
-            if (req.method == "GET") {
+            if (exchange.requestMethod == "GET") {
                 fs.useUser2(user) {
-                    val e = fs.get(UrlEncoder.pathDecode(req.path.raw).removeSuffix("/").toPath)
+                    val e = fs.get(UrlEncoder.pathDecode(exchange.requestURI.path.raw).removeSuffix("/").toPath)
 
                     if (e == null) {
-                        req.response().use {
-                            it.status = 404
-                        }
+                        exchange.startResponse(404)
                         return@useUser2
                     }
                     val stream = e.read()!!
-                    req.response().use {
-                        it.status = 200
-                        it.headers.contentLength = e.length.toULong()
-                        it.startWriteBinary().use { b ->
-                            stream.use {
-                                it.copyTo(b, bufferPool)
-                            }
+                    exchange.startResponse(200, headersOf(Headers.CONTENT_LENGTH to e.length.toULong().toString()))
+                    exchange.output.use { b ->
+                        stream.use {
+                            it.copyTo(b, bufferPool)
                         }
                     }
                 }
                 return
             }
-            if (req.method == "PROPFIND") {
-                buildRropFind(req)
+            if (exchange.requestMethod == "PROPFIND") {
+                buildRropFind(exchange)
                 return
             }
 
-            if (req.method == "HEAD") {
-                req.response().use {
-                    it.status = 405
-                }
+            if (exchange.requestMethod == "HEAD") {
+                exchange.startResponse(405)
                 return
             }
-            req.response().use {
-                it.status = 404
-            }
+            exchange.startResponse(404)
         } catch (e: FileSystemAccess.AccessException.ForbiddenException) {
-            req.response().use {
-                it.status = 403
-            }
+            exchange.startResponse(403)
         } catch (e: FileSystemAccess.AccessException.UnauthorizedException) {
-            req.response().use {
-                it.headers["WWW-Authenticate"] = "Basic realm=\"ownCloud\""
-                it.status = 401
-            }
-
+            exchange.startResponse(401, headersOf("WWW-Authenticate" to "Basic realm=\"ownCloud\""))
             return
         } catch (e: FileSystem.EntityExistException) {
-            req.response().use {
-                it.status = 409
-            }
+            exchange.startResponse(409)
         } catch (e: FileSystem.FileNotFoundException) {
-            req.response().use {
-                it.status = 404
-            }
+            exchange.startResponse(404)
         }
     }
 }

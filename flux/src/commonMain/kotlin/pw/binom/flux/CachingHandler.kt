@@ -8,6 +8,7 @@ import pw.binom.pool.GenericObjectPool
 /**
  * Handler for wrap each request to [CachingHttpRequest] and [CachingHttpRequest]
  */
+@Deprecated(message = "Use HttpRouting")
 open class CachingHandler(val forward: Handler) : Handler, Closeable {
     private val cachingHttpResponsePool = GenericObjectPool(factory = CachingHttpResponse.FACTORY)
     private val cachingHttpRequestPool =
