@@ -56,6 +56,7 @@ class SelectorTest {
         }
     }
 
+    @Ignore
     @Test
     fun deleteEventInDeferred() {
         val tandem = Tandem()

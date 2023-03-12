@@ -3,7 +3,6 @@ package pw.binom.io.socket
 import kotlinx.cinterop.*
 import platform.common.*
 import platform.common.Event
-import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.ArrayList2
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.defaultMutableSet
@@ -11,7 +10,6 @@ import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
-import pw.binom.io.IOException
 import kotlin.time.*
 
 internal val STUB_BYTE = byteArrayOf(1).pin()
@@ -29,12 +27,12 @@ actual class Selector : Closeable {
 
     //    private val keyForRemoveLock = SpinLock("Selector::keyForRemoveLock")
     internal val epoll = Epoll.create(1024)
-    private val wakeupFlag = AtomicBoolean(false)
     private val native = createSelectedList(MAX_ELEMENTS)!!
     internal val eventMem = mallocEvent()!!
     internal val eventMemLock = SpinLock()
-    internal var pipeRead: Int = 0
-    internal var pipeWrite: Int = 0
+
+    //    internal var pipeRead: Int = 0
+//    internal var pipeWrite: Int = 0
     private val fdToKey = defaultMutableMap<RawSocket, SelectorKey>()
 
     internal inline fun <T> usingEventPtr(func: (CPointer<Event>) -> T): T =
@@ -51,28 +49,25 @@ actual class Selector : Closeable {
         override fun toString(): String = this.buildToString()
     }
 
-    init {
-        val fds = createPipe()
-        pipeRead = fds.first
-        pipeWrite = fds.second
+    private val epollInterceptor = EpollInterceptor(this)
 
-//        val eventMem = mallocEvent()
-//        try {
-        val r = usingEventPtr { eventMem ->
-            setEventDataPtr(eventMem, null)
-            setEventFlags(eventMem, FLAG_READ, 0)
-            epoll.add(pipeRead, eventMem)
-        }
-        if (r != Epoll.EpollResult.OK) {
-            platform.posix.close(pipeRead)
-            platform.posix.close(pipeWrite)
-            epoll.close()
-            throw IOException("Can't init epoll. Can't add default pipe. Status: $r")
-        }
-//        } finally {
-//            freeEvent(eventMem)
+//    init {
+//        val fds = createPipe()
+//        pipeRead = fds.first
+//        pipeWrite = fds.second
+//
+//        val r = usingEventPtr { eventMem ->
+//            setEventDataPtr(eventMem, null)
+//            setEventFlags(eventMem, FLAG_READ, 0)
+//            epoll.add(pipeRead, eventMem)
 //        }
-    }
+//        if (r != Epoll.EpollResult.OK) {
+//            platform.posix.close(pipeRead)
+//            platform.posix.close(pipeWrite)
+//            epoll.close()
+//            throw IOException("Can't init epoll. Can't add default pipe. Status: $r")
+//        }
+//    }
 
     actual fun attach(socket: Socket): SelectorKey {
         if (socket.blocking) {
@@ -329,25 +324,20 @@ actual class Selector : Closeable {
 
     override fun close() {
         selectLock.synchronize {
-            epoll.delete(pipeRead)
+            epollInterceptor.close()
             usingEventPtr { eventMem ->
                 freeEvent(eventMem)
             }
             closeSelectedList(native)
-            platform.posix.close(pipeRead)
-            platform.posix.close(pipeWrite)
             epoll.close()
         }
     }
 
     actual fun wakeup() {
-        if (wakeupFlag.compareAndSet(false, true)) {
-            platform.posix.write(pipeWrite, STUB_BYTE.addressOf(0), 1.convert()).convert<Int>()
-        }
+        epollInterceptor.wakeup()
     }
 
     internal fun interruptWakeup() {
-        platform.posix.read(pipeRead, STUB_BYTE.addressOf(0), 1.convert())
-        wakeupFlag.setValue(false)
+        epollInterceptor.interruptWakeup()
     }
 }
