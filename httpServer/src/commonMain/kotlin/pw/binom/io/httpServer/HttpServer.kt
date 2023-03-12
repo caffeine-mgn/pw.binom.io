@@ -32,7 +32,6 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 
 /**
  * Base Http Server
@@ -41,7 +40,7 @@ import kotlin.time.ExperimentalTime
  * @param zlibBufferSize size of zlib buffer. 0 - disable zlib
  * @param errorHandler handler for error during request processing
  */
-@OptIn(ExperimentalTime::class)
+@Deprecated(message = "Use HttpServer2")
 class HttpServer(
     val manager: NetworkManager = Dispatchers.Network,
     val handler: Handler,

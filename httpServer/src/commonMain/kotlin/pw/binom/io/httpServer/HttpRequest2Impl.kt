@@ -21,6 +21,7 @@ import pw.binom.url.toPath
 import pw.binom.url.toQuery
 import kotlin.time.Duration
 
+@Deprecated(message = "Use HttpServer2")
 internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : HttpRequest {
     object Manager : ObjectFactory<HttpRequest2Impl> {
         override fun deallocate(value: HttpRequest2Impl, pool: ObjectPool<HttpRequest2Impl>) {

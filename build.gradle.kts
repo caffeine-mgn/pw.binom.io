@@ -1,4 +1,4 @@
-import pw.binom.publish.propertyOrNull
+import pw.binom.publish.getExternalVersion
 
 buildscript {
 
@@ -22,10 +22,7 @@ buildscript {
 }
 
 allprojects {
-    version = System.getenv("GITHUB_REF_NAME")
-        ?: propertyOrNull("version")
-            ?.takeIf { it != "unspecified" }
-                ?: "1.0.0-SNAPSHOT"
+    version = getExternalVersion()
     group = "pw.binom.io"
 
     repositories {

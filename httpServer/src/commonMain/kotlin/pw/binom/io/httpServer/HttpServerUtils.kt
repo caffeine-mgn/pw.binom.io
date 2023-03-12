@@ -18,6 +18,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
+@Deprecated(message = "Use HttpServer2")
 internal fun interface IdlePool {
     @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
     suspend fun returnToPool(channel: ServerAsyncAsciiChannel)

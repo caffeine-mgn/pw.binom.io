@@ -4,14 +4,18 @@ import pw.binom.ByteBufferPool
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.*
-import pw.binom.io.http.*
+import pw.binom.io.http.AsyncContentLengthInput
+import pw.binom.io.http.AsyncEmptyHttpInput
+import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.http.websocket.WebSocketConnectionImpl3
 import pw.binom.pool.using
-import pw.binom.url.*
+import pw.binom.url.Path
+import pw.binom.url.Query
 import kotlin.time.Duration
 
+@Deprecated(message = "Use HttpServer2")
 internal class HttpRequest3Impl(
     override val request: String,
     override val method: String,

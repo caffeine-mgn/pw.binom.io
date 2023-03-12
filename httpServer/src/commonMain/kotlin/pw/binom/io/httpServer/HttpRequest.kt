@@ -9,6 +9,7 @@ import pw.binom.url.Path
 import pw.binom.url.Query
 import kotlin.js.JsName
 
+@Deprecated(message = "Use HttpServer2")
 interface HttpRequest : AsyncCloseable {
     val method: String
     val headers: Headers
@@ -55,6 +56,7 @@ interface HttpRequest : AsyncCloseable {
     val isReadyForResponse: Boolean
 }
 
+@Deprecated(message = "Use HttpServer2")
 interface HttpResponse : AsyncCloseable {
     var status: Int
     val headers: MutableHeaders

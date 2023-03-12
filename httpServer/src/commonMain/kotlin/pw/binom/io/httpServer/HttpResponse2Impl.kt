@@ -11,6 +11,7 @@ import pw.binom.io.http.*
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 
+@Deprecated(message = "Use HttpServer2")
 internal class HttpResponse2Impl(
     val onClose: (HttpResponse2Impl) -> Unit,
 ) : HttpResponse {

@@ -4,7 +4,7 @@ import pw.binom.io.AsyncOutput
 import pw.binom.io.AsyncWriter
 import pw.binom.io.http.EmptyReadOnlyMutableHeaders
 import pw.binom.io.http.MutableHeaders
-
+@Deprecated(message = "Use HttpServer2")
 object StubHttpResponse : HttpResponse {
     private fun throwError(): Nothing = throw IllegalStateException("Can't update stub response")
     override var status: Int

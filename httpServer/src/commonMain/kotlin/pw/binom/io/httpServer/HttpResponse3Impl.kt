@@ -6,6 +6,7 @@ import pw.binom.charset.Charsets
 import pw.binom.io.*
 import pw.binom.io.http.*
 
+@Deprecated(message = "Use HttpServer2")
 internal class HttpResponse3Impl(
     val keepAliveEnabled: Boolean,
     val channel: ServerAsyncAsciiChannel,

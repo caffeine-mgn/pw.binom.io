@@ -45,7 +45,7 @@ dependencies {
 //    api("pw.binom:kn-clang:0.1.4")
     api("pw.binom:kn-clang:1.0.0-SNAPSHOT")
     api("com.bmuschko:gradle-docker-plugin:7.3.0")
-    api("pw.binom:binom-publish:1.0.0-SNAPSHOT")
+    api("pw.binom:binom-publish:0.1.5")
 //    api("com.android.library:com.android.library.gradle.plugin:7.2.0")
     api("com.android.tools.build:gradle:4.2.1")
     api("com.google.gms:google-services:4.3.5")
