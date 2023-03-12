@@ -55,8 +55,6 @@ actual class Selector : Closeable {
         val fds = createPipe()
         pipeRead = fds.first
         pipeWrite = fds.second
-        setBlocking(pipeRead, false)
-        setBlocking(pipeWrite, false)
 
 //        val eventMem = mallocEvent()
 //        try {

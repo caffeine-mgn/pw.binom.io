@@ -1,19 +1,43 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
+import platform.common.*
 import platform.posix.*
 import platform.windows.*
+import platform.windows.HANDLEVar
 import pw.binom.io.Closeable
 
 internal actual fun createPipe(): Pair<Int, Int> {
 //    val name = "ololo"
     return memScoped {
+//        val readPipeHandle = alloc<HANDLEVar>()
+//        val writePipeHandle = alloc<HANDLEVar>()
+//        val saAttr = alloc<SECURITY_ATTRIBUTES>()
+//        memset(saAttr.ptr, 0, sizeOf<SECURITY_ATTRIBUTES>().convert())
+//
+//        saAttr.nLength = sizeOf<SECURITY_ATTRIBUTES>().convert()
+//        saAttr.bInheritHandle = TRUE
+//        saAttr.lpSecurityDescriptor = null
+//        if (internal_create_pipe_ex(
+//                readPipeHandle.ptr,
+//                writePipeHandle.ptr,
+//                saAttr.ptr,
+//                5.convert(),
+//                (FILE_FLAG_OVERLAPPED or O_BINARY).convert(),
+//                (FILE_FLAG_OVERLAPPED or O_BINARY).convert(),
+//            ) == 0
+//        ) {
+//            throw RuntimeException("Can't create pipe")
+//        }
+//
+//        return internal_handle_to_descriptor(readPipeHandle.value!!) to internal_handle_to_descriptor(writePipeHandle.value!!)
+
         val fds = allocArray<IntVar>(2)
         val pipeResult = _pipe(fds, 2.convert(), O_BINARY)
         if (pipeResult != 0) {
             throw RuntimeException("Can't create pipe")
         }
-        fds[0] to fds[1]
+        return fds[0] to fds[1]
     }
 //    memScoped {
 //        val namedPipe = CreateNamedPipe!!(

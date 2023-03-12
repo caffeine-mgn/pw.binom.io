@@ -11,6 +11,9 @@ internal actual fun createPipe(): Pair<Int, Int> = memScoped {
     pipe(fds)
     val pipeRead = fds[0]
     val pipeWrite = fds[1]
+
+    setBlocking(pipeRead, false)
+    setBlocking(pipeWrite, false)
     pipeRead to pipeWrite
 }
 
