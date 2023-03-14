@@ -11,6 +11,7 @@ interface AsyncReader : AsyncCloseable {
         val sb = StringBuilder()
         try {
             while (true) {
+                println("AsyncReader::readln reading")
                 val r = readChar() ?: break
                 if (r == 10.toChar()) {
                     break

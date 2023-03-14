@@ -1,6 +1,8 @@
 package pw.binom.metric.prometheus
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncAppendable
+import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedAsciiWriter
 import pw.binom.io.httpServer.HttpHandler
 import pw.binom.io.httpServer.HttpServerExchange
@@ -27,10 +29,18 @@ abstract class AbstractPrometheusHandler : HttpHandler {
         }
     }
 
+    protected open suspend fun usingBuffer(func: suspend (ByteBuffer) -> Unit) {
+        ByteBuffer(DEFAULT_BUFFER_SIZE).use { buffer ->
+            func(buffer)
+        }
+    }
+
     override suspend fun handle(exchange: HttpServerExchange) {
         exchange.startResponse(200)
-        exchange.output.bufferedAsciiWriter().use {
-            makeResponse(it)
+        usingBuffer { buffer ->
+            exchange.output.bufferedAsciiWriter().use {
+                makeResponse(it)
+            }
         }
     }
 }

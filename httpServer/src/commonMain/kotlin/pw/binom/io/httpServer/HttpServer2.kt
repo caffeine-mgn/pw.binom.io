@@ -110,6 +110,7 @@ class HttpServer2(
             pool = byteBufferPool,
             channel = channel,
         ).use { stream ->
+            var first = true
             try {
                 while (true) {
                     val exchange = try {
@@ -158,6 +159,7 @@ class HttpServer2(
                     if (!exchange.keepAlive) {
                         break
                     }
+                    first = false
                 }
             } finally {
                 channel.asyncCloseAnyway()
