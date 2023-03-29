@@ -14,6 +14,26 @@ fun Input.asyncInput() = object : AsyncInput {
     override suspend fun asyncClose() {
         this@asyncInput.close()
     }
+
+    override suspend fun skipAll(bufferSize: Int) {
+        this@asyncInput.skipAll(bufferSize)
+    }
+
+    override suspend fun skipAll(buffer: ByteBuffer) {
+        this@asyncInput.skipAll(buffer)
+    }
+
+    override suspend fun skip(bytes: Long, bufferSize: Int) {
+        this@asyncInput.skip(bytes, bufferSize)
+    }
+
+    override suspend fun skip(bytes: Long, buffer: ByteBuffer) {
+        this@asyncInput.skip(bytes, buffer)
+    }
+
+    override suspend fun readFully(dest: ByteBuffer): Int {
+        return this@asyncInput.readFully(dest)
+    }
 }
 
 suspend fun AsyncInput.readUtf8Char(pool: ByteBufferProvider): Char? {
@@ -62,12 +82,12 @@ suspend fun AsyncInput.readByte(buffer: ByteBuffer): Byte {
 
 suspend fun AsyncInput.readUUID(pool: ByteBufferPool) = UUID.create(
     mostSigBits = readLong(pool),
-    leastSigBits = readLong(pool)
+    leastSigBits = readLong(pool),
 )
 
 suspend fun AsyncInput.readUUID(buffer: ByteBuffer) = UUID.create(
     mostSigBits = readLong(buffer),
-    leastSigBits = readLong(buffer)
+    leastSigBits = readLong(buffer),
 )
 
 suspend fun AsyncInput.readInt(pool: ByteBufferPool): Int {

@@ -1,0 +1,5 @@
+[*.{kt,kts}]
+ktlint_code_style = official
+no-wildcard-imports = off
+filename = off
+ktlint_standard_import-ordering = disabled

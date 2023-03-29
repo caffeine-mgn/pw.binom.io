@@ -24,7 +24,7 @@ fun config(config: KotlinNativeTarget) {
     val libFile = File("${buildFile.parent}/src/${config.targetName}Main/cinterop/lib/libopenssl.a")
     val args = listOf(
         "-include-binary",
-        libFile.toString()
+        libFile.toString(),
     )
     config.compilations["main"].compileKotlinTask.doFirst {
         if (!libFile.isFile) {
@@ -64,7 +64,7 @@ kotlin {
             include(headersPath.resolve("keccak"))
             compileArgs.addAll(listOf("-std=c99", "-O3", "-g"))
             compileFile(
-                file("${buildFile.parentFile}/src/cinterop/include/keccak/sha3.c")
+                file("${buildFile.parentFile}/src/cinterop/include/keccak/sha3.c"),
             )
         }
         tasks.findByName(compileTaskName)?.dependsOn(keccakStaticTask)
@@ -82,7 +82,7 @@ kotlin {
                 libFile.absolutePath,
                 "-include-binary",
                 keccakStaticTask.staticFile.asFile.get().absolutePath,
-                "-opt-in=kotlin.RequiresOptIn"
+                "-opt-in=kotlin.RequiresOptIn",
             )
             compilations["main"].kotlinOptions.freeCompilerArgs = args
             compilations["test"].kotlinOptions.freeCompilerArgs = args
@@ -178,9 +178,9 @@ if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
     apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()
-extensions.getByType(org.jmailen.gradle.kotlinter.KotlinterExtension::class.java).also {
-    it.disabledRules = it.disabledRules + arrayOf("import-ordering")
-}
+// extensions.getByType(org.jmailen.gradle.kotlinter.KotlinterExtension::class.java).also {
+//    it.disabledRules = it.disabledRules + arrayOf("import-ordering")
+// }
 // lintKotlin {
 // }
 tasks {

@@ -1,8 +1,8 @@
 package pw.binom.io
 
-import org.khronos.webgl.Int8Array
-import org.khronos.webgl.get
-import org.khronos.webgl.set
+import org.khronos.webgl.*
+import org.w3c.files.Blob
+import pw.binom.toArrayBuffer
 
 private fun memcpy(
     dist: NativeMem,
@@ -20,6 +20,11 @@ private fun memcpy(
             startIndex = srcOffset,
             endIndex = srcOffset + srcLength,
         )
+        return
+    }
+
+    if (dist is NativeMem.ByteNativeMem && src is NativeMem.ByteNativeMem && srcOffset == 0 && srcLength == src.size) {
+        dist.mem.set(src.mem, distOffset)
         return
     }
 //    println("memcpy #3 srcOffset=$srcOffset, srcLength=$srcLength")
@@ -61,8 +66,12 @@ sealed interface NativeMem {
             mem[index] = value
         }
 
-        override fun toInt8Array(startIndex: Int, endIndex: Int): Int8Array =
-            Int8Array(buffer = mem.buffer, byteOffset = startIndex, length = endIndex - startIndex)
+        override fun toInt8Array(startIndex: Int, endIndex: Int): Int8Array {
+            if (startIndex == 0 && mem.length == endIndex) {
+                return mem
+            }
+            return Int8Array(buffer = mem.buffer, byteOffset = startIndex, length = endIndex - startIndex)
+        }
     }
 
     class ArrayNativeMem(val mem: ByteArray) : NativeMem {
@@ -90,9 +99,13 @@ actual open class ByteBuffer(val native: NativeMem) :
     Buffer,
     ByteBufferProvider {
 
-    actual companion object;
+    actual companion object {
+        suspend fun fromBlob(blob: Blob) = ByteBuffer(blob.toArrayBuffer())
+    }
 
     constructor(array: Int8Array) : this(NativeMem.ByteNativeMem(array))
+    constructor(array: ArrayBuffer) : this(Int8Array(array))
+    constructor(array: Uint8Array) : this(array.buffer)
     actual constructor(size: Int) : this(NativeMem.ByteNativeMem(Int8Array(size)))
     actual constructor(array: ByteArray) : this(NativeMem.ArrayNativeMem(array))
 
@@ -205,6 +218,7 @@ actual open class ByteBuffer(val native: NativeMem) :
         ensureOpen()
         val l = minOf(remaining, length)
         memcpy(dist = dest, distOffset = 0, src = native, srcOffset = position, srcLength = l)
+        position += l
         return l
     }
 
@@ -243,6 +257,9 @@ actual open class ByteBuffer(val native: NativeMem) :
 
     actual fun getByte(): Byte {
         ensureOpen()
+        if (position == limit) {
+            throw EOFException()
+        }
         return native[position++]
     }
 
@@ -275,7 +292,7 @@ actual open class ByteBuffer(val native: NativeMem) :
     actual fun toByteArray(limit: Int): ByteArray {
         ensureOpen()
         val size = minOf(limit, remaining)
-        val r = ByteArray(remaining)
+        val r = ByteArray(size)
         val endPosition = position + size
         (position until endPosition).forEach {
             r[it - position] = native[it]
@@ -370,5 +387,21 @@ actual open class ByteBuffer(val native: NativeMem) :
         if (closed) {
             throw ClosedException()
         }
+    }
+
+    override fun skipAll(bufferSize: Int) {
+        position = limit
+    }
+
+    override fun skipAll(buffer: ByteBuffer) {
+        position = limit
+    }
+
+    override fun skip(bytes: Long, buffer: ByteBuffer) {
+        internalSkip(bytes)
+    }
+
+    override fun skip(bytes: Long, bufferSize: Int) {
+        internalSkip(bytes)
     }
 }

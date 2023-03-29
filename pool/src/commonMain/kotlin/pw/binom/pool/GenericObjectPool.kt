@@ -22,6 +22,7 @@ open class GenericObjectPool<T : Any>(
 ) : ObjectPool<T> {
 
     private var lastDate = TimeSource.Monotonic.markNow()
+    private var lastIdle = TimeSource.Monotonic.markNow()
 
     init {
         require(growFactor > 1f) { "factor should be more than 1" }
@@ -85,13 +86,13 @@ open class GenericObjectPool<T : Any>(
         }
     }
 
-    fun checkTrim() {
+    fun checkTrim(): Int {
         val timeToTrim = lastDate.elapsedNow()
         if (timeToTrim < this.delayBeforeResize) {
 //            println("GenericObjectPool::checkTrim. early to trim. time to trim: $timeToTrim, nextCapacity: $nextCapacity")
-            return
+            return 0
         }
-        synchronize {
+        return synchronize {
 //            println("GenericObjectPool::checkTrim. try trim... nextCapacity: $nextCapacity, pool.size: ${pool.size}")
             if (nextCapacity > pool.size) {
                 internalCheckGrow()
@@ -145,29 +146,33 @@ open class GenericObjectPool<T : Any>(
     var size = 0
         private set
 
-    private fun internalCheckGrow() {
+    private fun internalCheckGrow(): Int {
         if (lastDate.elapsedNow() < this.delayBeforeResize) {
-            return
+            return 0
         }
         val isTimeToGrow = (size * growFactor).roundToInt() <= nextCapacity
         if (isTimeToGrow) {
             internalResizePool(nextCapacity)
             lastDate = TimeSource.Monotonic.markNow()
         }
+        return nextCapacity - size
     }
 
-    private fun internalCheckShrink() {
-        if (pool.size == 1) {
-            return
+    private fun internalCheckShrink(): Int {
+        if (pool.size <= minSize) {
+            return 0
         }
         if (lastDate.elapsedNow() < this.delayBeforeResize) {
-            return
+            return 0
         }
         val isTimeToShrink = (pool.size * shrinkFactor).roundToInt() >= size
         if (isTimeToShrink) {
+            val cleared = pool.size - size
             internalResizePool(size)
             lastDate = TimeSource.Monotonic.markNow()
+            return cleared
         }
+        return 0
     }
 
     override fun borrow(owner: Any?): T = synchronize {

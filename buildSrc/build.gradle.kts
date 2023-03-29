@@ -44,8 +44,9 @@ dependencies {
     api("org.jetbrains.dokka:dokka-gradle-plugin:1.6.10")
     api("pw.binom:kn-clang:0.1.5")
     api("com.bmuschko:gradle-docker-plugin:7.3.0")
-    api("pw.binom:binom-publish:0.1.5")
+    api("pw.binom:binom-publish:0.1.6")
 //    api("com.android.library:com.android.library.gradle.plugin:7.2.0")
     api("com.android.tools.build:gradle:4.2.1")
     api("com.google.gms:google-services:4.3.5")
+    api("org.jmailen.gradle:kotlinter-gradle:3.14.0")
 }

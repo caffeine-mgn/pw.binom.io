@@ -291,7 +291,7 @@ actual open class ByteBuffer private constructor(
     actual fun getByte(): Byte {
         ensureOpen()
         val p = position
-        if (p >= limit) throw IndexOutOfBoundsException()
+        if (p >= limit) throw EOFException()
         position = p + 1
         return data.pointer[p]
 //        return data.access { it[p] }
@@ -473,6 +473,22 @@ actual open class ByteBuffer private constructor(
 
     protected actual open fun preClose() {
         // Do nothing
+    }
+
+    override fun skipAll(bufferSize: Int) {
+        position = limit
+    }
+
+    override fun skipAll(buffer: ByteBuffer) {
+        position = limit
+    }
+
+    override fun skip(bytes: Long, buffer: ByteBuffer) {
+        internalSkip(bytes)
+    }
+
+    override fun skip(bytes: Long, bufferSize: Int) {
+        internalSkip(bytes)
     }
 }
 

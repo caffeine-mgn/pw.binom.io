@@ -31,7 +31,8 @@ abstract class AbstractCommonFluxSerialization : FluxSerialization {
 
     open fun findSupportedSerializer(mimeType: String) = getSerializationList().find { it.isBodySupported(mimeType) }
     open fun getSupportedSerializer(mimeType: String) =
-        findSupportedSerializer(mimeType) ?: throw FluxSerialization.SerializationNotSupported()
+        findSupportedSerializer(mimeType)
+            ?: throw FluxSerialization.SerializationNotSupported("Unknown type \"$mimeType\"")
 
     override fun <T> encodeMap(value: T, serializer: KSerializer<T>, output: MutableMap<String, String>) {
         getSerializationList().forEach { flexSerializer ->

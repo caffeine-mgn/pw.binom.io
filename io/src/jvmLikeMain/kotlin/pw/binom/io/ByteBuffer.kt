@@ -1,5 +1,6 @@
 package pw.binom.io
 
+import java.nio.BufferUnderflowException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -152,7 +153,11 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 
     actual fun getByte(): Byte {
         ensureOpen()
-        return native.get()
+        try {
+            return native.get()
+        } catch (e: BufferUnderflowException) {
+            throw EOFException()
+        }
     }
 
     actual fun reset(position: Int, length: Int): ByteBuffer {
@@ -282,6 +287,22 @@ actual open class ByteBuffer(var native: JByteBuffer) :
         if (closed) {
             throw ClosedException()
         }
+    }
+
+    override fun skipAll(bufferSize: Int) {
+        position = limit
+    }
+
+    override fun skipAll(buffer: ByteBuffer) {
+        position = limit
+    }
+
+    override fun skip(bytes: Long, buffer: ByteBuffer) {
+        internalSkip(bytes)
+    }
+
+    override fun skip(bytes: Long, bufferSize: Int) {
+        internalSkip(bytes)
     }
 }
 

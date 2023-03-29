@@ -1,7 +1,7 @@
 package pw.binom
 
-actual val Environment.availableProcessors: Int
-    get() = 1
+// actual val Environment.availableProcessors: Int
+//    get() = 1
 
 actual fun Environment.getEnv(name: String): String? = null
 actual fun Environment.getEnvs(): Map<String, String> = emptyMap()

@@ -198,6 +198,13 @@ val ByteBuffer.indices: IntRange
 
 fun ByteBuffer.clone() = realloc(capacity)
 
+internal fun ByteBuffer.internalSkip(bytes: Long) {
+    if (position + bytes.toInt() > limit) {
+        position = limit
+        throw EOFException()
+    }
+}
+
 /**
  * Puts random bytes to free space of [data]
  */
