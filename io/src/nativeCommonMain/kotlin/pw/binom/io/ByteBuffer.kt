@@ -200,7 +200,7 @@ actual open class ByteBuffer private constructor(
     }
 
     @OptIn(ExperimentalTime::class)
-    fun readInto(dest: ByteBuffer): Int {
+    actual fun readInto(dest: ByteBuffer): Int {
         ensureOpen()
         val r = run {
             val remaining2 = remaining
@@ -427,7 +427,7 @@ actual open class ByteBuffer private constructor(
         return newBytes
     }
 
-    actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
+    actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
         ensureOpen()
         require(dest.size - offset >= length) { "length more then available space" }
         return ref0(0) { cPointer, dataSize ->

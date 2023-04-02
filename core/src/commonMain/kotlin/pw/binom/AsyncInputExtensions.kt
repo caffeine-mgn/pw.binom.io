@@ -298,7 +298,7 @@ suspend fun AsyncInput.readByteArray(dest: ByteArray, buffer: ByteBuffer) {
             throw EOFException("Read $cursor/${dest.size}, can't read ${dest.size - cursor}")
         }
         buffer.flip()
-        val cp = buffer.read(dest = dest, offset = cursor)
+        val cp = buffer.readInto(dest = dest, offset = cursor)
         cursor += len
     }
 }

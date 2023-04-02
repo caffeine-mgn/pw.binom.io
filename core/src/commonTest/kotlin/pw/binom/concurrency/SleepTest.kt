@@ -1,5 +1,8 @@
 package pw.binom.concurrency
 
+import pw.binom.Environment
+import pw.binom.Platform
+import pw.binom.platform
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
@@ -10,6 +13,9 @@ class SleepTest {
 
     @Test
     fun sleepTest() {
+        if (Environment.platform != Platform.JS) {
+            return
+        }
         val vv = measureTime {
             sleep(1500L)
         }

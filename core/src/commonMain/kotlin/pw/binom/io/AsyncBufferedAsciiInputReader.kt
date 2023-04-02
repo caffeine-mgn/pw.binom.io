@@ -157,7 +157,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         ensureOpen()
         full()
         val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
-        buffer.read(
+        buffer.readInto(
             dest = dest,
             offset = offset,
             length = len,

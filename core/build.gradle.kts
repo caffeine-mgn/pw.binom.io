@@ -1,4 +1,3 @@
-import pw.binom.publish.dependsOn
 import pw.binom.useDefault
 import java.util.*
 
@@ -118,6 +117,7 @@ kotlin {
                 api(kotlin("test-annotations-common"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+                api(project(":charset"))
             }
         }
         val jvmTest by getting {

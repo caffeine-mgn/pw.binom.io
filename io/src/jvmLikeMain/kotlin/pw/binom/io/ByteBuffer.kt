@@ -127,23 +127,25 @@ actual open class ByteBuffer(var native: JByteBuffer) :
         native.put(index, value)
     }
 
-    override fun read(dest: ByteBuffer): Int {
+    actual fun readInto(dest: ByteBuffer): Int {
         ensureOpen()
-        val l = minOf(remaining, dest.remaining)
-        if (l == 0) {
-            return l
+        val len = minOf(remaining, dest.remaining)
+        if (len == 0) {
+            return len
         }
         val selfLimit = native.limit()
         val destLimit = dest.native.limit()
-        native.limit(native.position() + l)
-        dest.native.limit(dest.native.position() + l)
+        native.limit(native.position() + len)
+        dest.native.limit(dest.native.position() + len)
         dest.native.put(native)
         native.limit(selfLimit)
         dest.native.limit(destLimit)
-        return l
+        return len
     }
 
-    actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
+    override fun read(dest: ByteBuffer): Int = readInto(dest)
+
+    actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
         require(dest.size - offset >= length)
         ensureOpen()
         val l = minOf(remaining, length)

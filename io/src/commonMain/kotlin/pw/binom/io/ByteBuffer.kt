@@ -30,7 +30,8 @@ expect open class ByteBuffer :
     fun put(value: Byte)
     fun getByte(): Byte
     operator fun get(index: Int): Byte
-    fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
+    fun readInto(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
+    fun readInto(dest: ByteBuffer): Int
 
     /**
      * Returns last byte. Work as [getByte] but don't move position when he reads
@@ -132,7 +133,11 @@ fun ByteArray.wrap() = ByteBuffer(this)
 /**
  * Makes [ByteBuffer] from current [ByteArray]. Then call [func]. And after that close created [ByteBuffer]
  */
+@OptIn(ExperimentalContracts::class)
 inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
+    contract {
+        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
+    }
     val buf = ByteBuffer(this)
     return try {
         func(buf)
@@ -193,7 +198,7 @@ fun ByteBuffer.getOrNull(index: Int) =
         get(index)
     }
 
-val ByteBuffer.indices: IntRange
+inline val ByteBuffer.indices: IntRange
     get() = IntRange(position, limit - 1)
 
 fun ByteBuffer.clone() = realloc(capacity)

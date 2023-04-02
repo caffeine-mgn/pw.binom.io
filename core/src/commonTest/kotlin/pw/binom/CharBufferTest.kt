@@ -1,8 +1,7 @@
 package pw.binom
 
 import kotlinx.coroutines.test.runTest
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.bufferedWriter
+import pw.binom.io.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -55,7 +54,7 @@ class CharBufferTest {
         out.data.flip()
         assertEquals(
             "Привет\uD83E\uDC08userpostgresdatabasetestclient_encodingutf-8DateStyleISO",
-            out.data.toByteArray().decodeToString()
+            out.data.toByteArray().decodeToString(),
         )
 //        val txt = "HelloWorld"
 //        assertEquals(txt.substring(1, 9), txt.toCharArray().toCharBuffer().subString(1, 9))

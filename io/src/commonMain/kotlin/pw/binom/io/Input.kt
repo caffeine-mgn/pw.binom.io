@@ -74,7 +74,7 @@ fun Input.readByteArray(dest: ByteArray, bufferProvider: ByteBufferProvider) {
                 throw EOFException("Read $cursor/${dest.size}, can't read ${dest.size - cursor}")
             }
             buffer.flip()
-            buffer.read(dest, offset = cursor)
+            buffer.readInto(dest, offset = cursor)
             cursor += len
         }
     }

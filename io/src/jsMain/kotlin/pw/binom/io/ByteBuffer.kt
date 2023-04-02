@@ -213,11 +213,13 @@ actual open class ByteBuffer(val native: NativeMem) :
         native[position++] = value
     }
 
-    actual fun read(dest: ByteArray, offset: Int, length: Int): Int {
+    actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
         require(dest.size - offset >= length)
         ensureOpen()
         val l = minOf(remaining, length)
-        memcpy(dist = dest, distOffset = 0, src = native, srcOffset = position, srcLength = l)
+        val destNative = NativeMem.ArrayNativeMem(dest) // TODO убрать лишнее создание объекта
+        memcpy(dist = destNative, distOffset = offset, src = native, srcOffset = position, srcLength = l)
+//        memcpy(dist = dest, distOffset = 0, src = native, srcOffset = position, srcLength = l)
         position += l
         return l
     }
@@ -246,14 +248,7 @@ actual open class ByteBuffer(val native: NativeMem) :
         return this
     }
 
-    override fun write(data: ByteBuffer): Int {
-        ensureOpen()
-        val l = minOf(remaining, data.remaining)
-        memcpy(dist = native, distOffset = position, src = data.native, srcOffset = data.position, srcLength = l)
-        data.position += l
-        position += l
-        return l
-    }
+    override fun write(data: ByteBuffer): Int = data.readInto(this)
 
     actual fun getByte(): Byte {
         ensureOpen()
@@ -343,7 +338,7 @@ actual open class ByteBuffer(val native: NativeMem) :
         return IllegalArgumentException(msg)
     }
 
-    override fun read(dest: ByteBuffer): Int {
+    actual fun readInto(dest: ByteBuffer): Int {
         ensureOpen()
         val l = minOf(remaining, dest.remaining)
         if (l == 0) {
@@ -354,6 +349,8 @@ actual open class ByteBuffer(val native: NativeMem) :
         position += l
         return l
     }
+
+    override fun read(dest: ByteBuffer): Int = readInto(dest)
 
     actual fun write(data: ByteArray, offset: Int, length: Int): Int {
         ensureOpen()

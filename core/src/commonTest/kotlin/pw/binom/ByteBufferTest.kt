@@ -1,9 +1,6 @@
 package pw.binom
 
-import pw.binom.io.ByteBuffer
-import pw.binom.io.empty
-import pw.binom.io.forEachIndexed
-import pw.binom.io.use
+import pw.binom.io.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -214,5 +211,48 @@ class ByteBufferTest {
             self.put(it.toByte())
         }
         assertEquals(10, self.position)
+    }
+
+    @Test
+    fun wrapTest() {
+        val array = ByteArray(50) { it.toByte() }
+        val buffer = ByteBuffer(array)
+        assertEquals(0, buffer.position)
+        assertEquals(array.size, buffer.limit)
+        assertEquals(array.size, buffer.remaining)
+
+        repeat(array.size) { index ->
+            assertEquals(array[index], buffer[index])
+        }
+    }
+
+    @Test
+    fun readIntoArrayTest() {
+        val c = ByteArray(50) { it.toByte() }
+        val b = c.wrap()
+        b.position += 10
+        val bytes = ByteArray(20)
+        b.readInto(bytes)
+
+        assertEquals(10 + 20, b.position)
+        repeat(bytes.size) { index ->
+            assertEquals(b[10 + index], bytes[index])
+        }
+    }
+
+    @Test
+    fun readIntoByteBufferTest() {
+        val c = ByteArray(50) { it.toByte() }
+        val b = c.wrap()
+        b.position += 10
+        val bytes = ByteBuffer(20)
+        b.readInto(bytes)
+        assertEquals(0, bytes.remaining)
+        assertEquals(bytes.limit, bytes.position)
+
+        assertEquals(10 + 20, b.position)
+        repeat(bytes.capacity) { index ->
+            assertEquals(b[10 + index], bytes[index])
+        }
     }
 }

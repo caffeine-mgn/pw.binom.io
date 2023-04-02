@@ -10,17 +10,28 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
     Channel,
     RandomAccess {
 
-    private val native = FileChannel.open(
-        file.native.toPath(),
-        mode.asSequence().map {
-            when (it) {
+    private val native: FileChannel
+
+    init {
+        val nativeMode = HashSet<StandardOpenOption>()
+        mode.forEach {
+            nativeMode += when (it) {
                 AccessType.APPEND -> StandardOpenOption.APPEND
                 AccessType.CREATE -> StandardOpenOption.CREATE
                 AccessType.READ -> StandardOpenOption.READ
                 AccessType.WRITE -> StandardOpenOption.WRITE
             }
-        }.toSet(),
-    )
+        }
+
+        if (StandardOpenOption.APPEND !in nativeMode) {
+            nativeMode += StandardOpenOption.TRUNCATE_EXISTING
+        }
+
+        native = FileChannel.open(
+            file.native.toPath(),
+            nativeMode,
+        )
+    }
 
     private var closed = false
     private fun checkClosed() {

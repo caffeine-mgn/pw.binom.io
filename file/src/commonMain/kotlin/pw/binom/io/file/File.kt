@@ -212,7 +212,7 @@ fun File.rewrite(
 fun File.rewrite(
     data: ByteArray,
 ) {
-    openWrite(false).use {
+    openWrite(append = false).use {
         data.wrap { buf ->
             it.write(buf)
         }

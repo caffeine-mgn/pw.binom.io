@@ -110,7 +110,7 @@ sealed class AuthenticationMessage : KindedMessage {
                             }
                         }
                         tmp2.flip()
-                        tmp2.read(buf2)
+                        tmp2.readInto(buf2)
                     }
                     val msg = ctx.authenticationChallengeMessage
                     msg.challengeType = AuthenticationChallengeMessage.AuthenticationResponseType.MD5

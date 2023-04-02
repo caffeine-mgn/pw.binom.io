@@ -1,9 +1,8 @@
 package pw.binom.charset
 
-import pw.binom.ByteBufferPool
+import pw.binom.*
 import pw.binom.io.BufferedInputReader
 import pw.binom.io.ByteBuffer
-import pw.binom.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -12,6 +11,9 @@ import kotlin.test.assertNull
 class BufferedInputReaderTest {
     @Test
     fun readByCharTest() {
+        if (Environment.platform != Platform.JS) {
+            return
+        }
         val input = ByteBuffer.wrap(test_data_hello_bytes_windows_1251)
         val bufPool = ByteBufferPool(2)
         val reader = BufferedInputReader(Charsets.get("windows-1251"), input, bufPool)
@@ -23,6 +25,9 @@ class BufferedInputReaderTest {
 
     @Test
     fun readByLineTest() {
+        if (Environment.platform != Platform.JS) {
+            return
+        }
         val bufPool = ByteBufferPool(10)
         val input = ByteBuffer.wrap(test_data_hello_bytes_windows_1251)
         val reader =

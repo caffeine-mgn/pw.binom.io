@@ -92,13 +92,14 @@ kotlin {
             }
         }
         val jvmTest by getting {
-            dependsOn(commonTest)
             dependencies {
                 api(kotlin("test-junit"))
             }
         }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
+        val jsTest by getting {
+            dependencies {
+                implementation(kotlin("test-js"))
+            }
         }
     }
 }
