@@ -44,7 +44,7 @@ class BaseHttpClient(
         defaultMutableMap<String, MutableList<AsyncAsciiChannel>>().useName("BaseHttpClient.connections")
     internal val textBufferPool = FixedSizePool(
         capacity = bufferCapacity,
-        manager = ByteBufferFactory(bufferSize)
+        manager = ByteBufferFactory(bufferSize),
     ) // ByteBufferPool(capacity = bufferCapacity, bufferSize = bufferSize.toUInt())
 
     val idleSize
@@ -117,10 +117,15 @@ class BaseHttpClient(
         var connect: AsyncAsciiChannel? = null
         try {
             val schema = uri.schema
-            if (schema != "http" && schema != "https" && schema != "ws" && schema != "wss") {
-                throw IllegalArgumentException("Schema ${uri.schema} is not supported")
+            connect = when (schema) {
+                "http",
+                "https",
+                "ws",
+                "wss",
+                -> borrowConnection(uri)
+
+                else -> throw IllegalArgumentException("Schema \"${uri.schema}\" is not supported")
             }
-            connect = borrowConnection(uri)
             return DefaultHttpRequest(
                 uri = uri,
                 client = this,

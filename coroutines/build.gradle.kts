@@ -20,6 +20,10 @@ kotlin {
     mingwX64()
     macosX64()
     macosArm64()
+    js(pw.binom.Target.JS_TARGET) {
+        browser()
+        nodejs()
+    }
 
     sourceSets {
         val commonMain by getting {
@@ -64,7 +68,7 @@ kotlin {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
-                api(project(":network"))
+//                api(project(":network"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
