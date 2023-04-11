@@ -37,16 +37,22 @@ fun Long.dump(data: ByteBuffer) {
 }
 
 fun Long.dump(): ByteArray {
-    val output = ByteArray(Long.SIZE_BYTES)
-    output[0] = ((this ushr (56 - 8 * 0)) and 0xFF).toByte()
-    output[1] = ((this ushr (56 - 8 * 1)) and 0xFF).toByte()
-    output[2] = ((this ushr (56 - 8 * 2)) and 0xFF).toByte()
-    output[3] = ((this ushr (56 - 8 * 3)) and 0xFF).toByte()
-    output[4] = ((this ushr (56 - 8 * 4)) and 0xFF).toByte()
-    output[5] = ((this ushr (56 - 8 * 5)) and 0xFF).toByte()
-    output[6] = ((this ushr (56 - 8 * 6)) and 0xFF).toByte()
-    output[7] = ((this ushr (56 - 8 * 7)) and 0xFF).toByte()
-    return output
+    val result = ByteArray(Long.SIZE_BYTES)
+    dump(dest = result)
+    return result
+}
+
+fun Long.dump(dest: ByteArray, destOffset: Int = 0): ByteArray {
+    require(dest.size - destOffset >= Long.SIZE_BYTES) { "Not available space for storage long" }
+    dest[0 + destOffset] = ((this ushr (56 - 8 * 0)) and 0xFF).toByte()
+    dest[1 + destOffset] = ((this ushr (56 - 8 * 1)) and 0xFF).toByte()
+    dest[2 + destOffset] = ((this ushr (56 - 8 * 2)) and 0xFF).toByte()
+    dest[3 + destOffset] = ((this ushr (56 - 8 * 3)) and 0xFF).toByte()
+    dest[4 + destOffset] = ((this ushr (56 - 8 * 4)) and 0xFF).toByte()
+    dest[5 + destOffset] = ((this ushr (56 - 8 * 5)) and 0xFF).toByte()
+    dest[6 + destOffset] = ((this ushr (56 - 8 * 6)) and 0xFF).toByte()
+    dest[7 + destOffset] = ((this ushr (56 - 8 * 7)) and 0xFF).toByte()
+    return dest
 }
 
 fun Float.dump(dest: ByteBuffer) {

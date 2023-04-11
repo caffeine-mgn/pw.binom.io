@@ -118,8 +118,10 @@ class HttpServer2(
                     } catch (e: CancellationException) {
                         break
                     } catch (e: SocketClosedException) {
+                        println("Socket closed! ${e::class} 1")
                         break
                     } catch (e: Throwable) {
+                        println("Unknown error ${e::class} 1")
                         uncaughtExceptionHandler.uncaughtException(
                             thread = Thread.currentThread,
                             throwable = e,
@@ -129,8 +131,10 @@ class HttpServer2(
                     try {
                         handler.handle(exchange)
                     } catch (e: SocketClosedException) {
+                        println("Socket closed! ${e::class} 2")
                         break
                     } catch (e: Throwable) {
+                        println("Unknown error ${e::class} 2")
                         if (!exchange.headersSent) {
                             when (e) {
                                 is HttpException -> exchange.startResponse(e.code)
