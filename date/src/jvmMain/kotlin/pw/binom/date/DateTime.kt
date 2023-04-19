@@ -3,6 +3,7 @@ package pw.binom.date
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.*
+import kotlin.time.Duration
 
 @JvmInline
 actual value class DateTime(val time: Long = nowTime) {
@@ -21,7 +22,7 @@ actual value class DateTime(val time: Long = nowTime) {
             minutes: Int,
             seconds: Int,
             millis: Int,
-            timeZoneOffset: Int
+            timeZoneOffset: Int,
         ): DateTime {
             return DateTime(
                 ZonedDateTime.of(
@@ -32,8 +33,8 @@ actual value class DateTime(val time: Long = nowTime) {
                     minutes,
                     seconds,
                     millis * 1_000_000,
-                    ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - (timeZoneOffset / 60 * 60))
-                ).toInstant().toEpochMilli()
+                    ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - (timeZoneOffset / 60 * 60)),
+                ).toInstant().toEpochMilli(),
             )
         }
 
@@ -43,4 +44,12 @@ actual value class DateTime(val time: Long = nowTime) {
 
     actual fun calendar(timeZoneOffset: Int): Calendar =
         Calendar(utcTime = time, timeZoneOffset = timeZoneOffset)
+
+    actual operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
+    actual operator fun plus(duration: Duration) = dateTimePlus(date = this, duration = duration)
+    actual operator fun minus(duration: Duration) = dateTimeMinus(date = this, duration = duration)
+    actual operator fun minus(other: DateTime) = dateTimeMinus(
+        date = this,
+        other = other,
+    )
 }

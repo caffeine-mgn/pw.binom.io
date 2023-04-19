@@ -1,5 +1,8 @@
 package pw.binom.date
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+
 const val DAYS_PER_CYCLE = 146097
 const val DAYS_0000_TO_1970 = DAYS_PER_CYCLE * 5 - (30 * 365 + 7)
 const val MILLISECONDS_IN_SECOND = 1000L
@@ -31,6 +34,19 @@ internal fun toEpochDay(year: Int, monthNumber: Int, dayOfMonth: Int): Long {
 private fun isLeapYear(year: Int): Boolean {
     if (year % 400 == 0) return true
     if (year % 100 == 0) return false
-    if (year % 4 == 0) return true
-    return false
+    return year % 4 == 0
 }
+
+internal fun dateTimeCompareTo(first: DateTime, second: DateTime) = when {
+    first.time > second.time -> 1
+    first.time < second.time -> -1
+    else -> 0
+}
+
+internal fun dateTimePlus(date: DateTime, duration: Duration) =
+    DateTime(date.time + duration.inWholeMilliseconds)
+
+internal fun dateTimeMinus(date: DateTime, duration: Duration) =
+    DateTime(date.time - duration.inWholeMilliseconds)
+
+internal fun dateTimeMinus(date: DateTime, other: DateTime): Duration = (date.time - other.time).milliseconds

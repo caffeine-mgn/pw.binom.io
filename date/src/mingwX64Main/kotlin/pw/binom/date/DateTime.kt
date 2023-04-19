@@ -5,6 +5,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import platform.posix.*
 import kotlin.native.concurrent.SharedImmutable
+import kotlin.time.Duration
 
 actual value class DateTime(val time: Long = nowTime) {
     actual companion object {
@@ -31,7 +32,7 @@ actual value class DateTime(val time: Long = nowTime) {
             minutes: Int,
             seconds: Int,
             millis: Int,
-            timeZoneOffset: Int
+            timeZoneOffset: Int,
         ) = DateTime(
             DateMath.toMilisecodns(
                 year = year,
@@ -41,7 +42,7 @@ actual value class DateTime(val time: Long = nowTime) {
                 minutes = minutes,
                 seconds = seconds,
                 milliseconds = millis,
-            ) - timeZoneOffset * MILLISECONDS_IN_MINUTE
+            ) - timeZoneOffset * MILLISECONDS_IN_MINUTE,
         )
 
         actual val now: DateTime
@@ -50,6 +51,14 @@ actual value class DateTime(val time: Long = nowTime) {
 
     actual fun calendar(timeZoneOffset: Int): Calendar =
         Calendar(utcTime = time, offset = timeZoneOffset)
+
+    actual operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
+    actual operator fun plus(duration: Duration) = dateTimePlus(date = this, duration = duration)
+    actual operator fun minus(duration: Duration) = dateTimeMinus(date = this, duration = duration)
+    actual operator fun minus(other: DateTime) = dateTimeMinus(
+        date = this,
+        other = other,
+    )
 }
 
 @SharedImmutable

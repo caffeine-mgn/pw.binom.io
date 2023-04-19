@@ -4,6 +4,7 @@ package pw.binom.date
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import kotlin.time.Duration
 
 actual value class DateTime(val time: Long = nowTime) {
     actual companion object {
@@ -48,7 +49,7 @@ actual value class DateTime(val time: Long = nowTime) {
             minutes: Int,
             seconds: Int,
             millis: Int,
-            timeZoneOffset: Int
+            timeZoneOffset: Int,
         ): DateTime =
             memScoped {
                 val t = alloc<tm>()
@@ -69,4 +70,13 @@ actual value class DateTime(val time: Long = nowTime) {
 
     actual fun calendar(timeZoneOffset: Int): Calendar =
         Calendar(utcTime = time, offset = timeZoneOffset)
+
+    actual operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
+
+    actual operator fun plus(duration: Duration) = dateTimePlus(date = this, duration = duration)
+    actual operator fun minus(duration: Duration) = dateTimeMinus(date = this, duration = duration)
+    actual operator fun minus(other: DateTime) = dateTimeMinus(
+        date = this,
+        other = other,
+    )
 }
