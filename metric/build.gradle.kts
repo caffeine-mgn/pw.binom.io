@@ -1,4 +1,4 @@
-import pw.binom.publish.dependsOn
+import pw.binom.publish.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -9,6 +9,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+    /*
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
             publishAllLibraryVariants()
@@ -53,26 +54,28 @@ kotlin {
         }
         nodejs()
     }
+    */
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(project(":atomic"))
             }
         }
-        val commonRunnableMain by creating {
-            dependsOn(commonMain)
-        }
-
-        val linuxX64Main by getting {
-            dependsOn(commonRunnableMain)
-        }
-
-        dependsOn("linux*Main", commonRunnableMain)
-        dependsOn("mingw*Main", commonRunnableMain)
-        dependsOn("watchos*Main", commonRunnableMain)
-        dependsOn("macos*Main", commonRunnableMain)
-        dependsOn("ios*Main", commonRunnableMain)
-        dependsOn("androidNative*Main", commonRunnableMain)
+//        val commonRunnableMain by creating {
+//            dependsOn(commonMain)
+//        }
+//
+//        val linuxX64Main by getting {
+//            dependsOn(commonRunnableMain)
+//        }
+//
+//        dependsOn("linux*Main", commonRunnableMain)
+//        dependsOn("mingw*Main", commonRunnableMain)
+//        dependsOn("watchos*Main", commonRunnableMain)
+//        dependsOn("macos*Main", commonRunnableMain)
+//        dependsOn("ios*Main", commonRunnableMain)
+//        dependsOn("androidNative*Main", commonRunnableMain)
 
         val commonTest by getting {
             dependencies {
@@ -80,14 +83,14 @@ kotlin {
                 api(kotlin("test-annotations-common"))
             }
         }
-        val jvmMain by getting {
-            dependsOn(commonRunnableMain)
-        }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-            }
-        }
-        dependsOn("androidMain", jvmMain)
+//        val jvmMain by getting {
+//            dependsOn(commonRunnableMain)
+//        }
+//        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//            val androidMain by getting {
+//            }
+//        }
+//        dependsOn("androidMain", jvmMain)
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
@@ -100,6 +103,7 @@ kotlin {
                 implementation(kotlin("test-js"))
             }
         }
+        useDefault()
     }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

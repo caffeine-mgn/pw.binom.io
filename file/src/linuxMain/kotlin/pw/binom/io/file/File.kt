@@ -4,7 +4,7 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
-import platform.linux.statvfs
+import platform.common.*
 import platform.posix.*
 import pw.binom.collections.defaultMutableList
 import pw.binom.io.IOException
@@ -110,27 +110,13 @@ actual class File actual constructor(path: String) {
     }
 
     actual val freeSpace: Long
-        get() =
-            memScoped {
-                val stat = alloc<statvfs>()
-                statvfs(path, stat.ptr)
-                (stat.f_bfree.toULong() * stat.f_bsize.toULong()).toLong()
-            }
+        get() = internal_get_free_space(path)
 
     actual val availableSpace: Long
-        get() =
-            memScoped {
-                val stat = alloc<statvfs>()
-                statvfs(path, stat.ptr)
-                (stat.f_bavail.toULong() * stat.f_bsize.toULong()).toLong()
-            }
+        get() = internal_get_available_space(path)
 
     actual val totalSpace: Long
-        get() = memScoped {
-            val stat = alloc<statvfs>()
-            statvfs(path, stat.ptr)
-            (stat.f_blocks.toULong() * stat.f_frsize.toULong()).toLong()
-        }
+        get() = internal_get_total_space(path)
 
     actual fun getPosixMode(): PosixPermissions =
         memScoped {
@@ -142,7 +128,7 @@ actual class File actual constructor(path: String) {
         }
 
     actual fun setPosixMode(mode: PosixPermissions): Boolean {
-        if (chmod(path, mode.mode.toUInt()) != 0) {
+        if (chmod(path, mode.mode.convert()) != 0) {
             throw IOException("Can't change mode of file \"$path\"")
         }
         return true

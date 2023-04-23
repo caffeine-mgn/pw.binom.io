@@ -1,8 +1,10 @@
 package pw.binom.io.file
 
 import kotlinx.cinterop.*
+import platform.common.internal_get_available_space
+import platform.common.internal_get_free_space
+import platform.common.internal_get_total_space
 import platform.posix.*
-import platform.windows.GetDiskFreeSpaceEx
 import pw.binom.Environment
 import pw.binom.collections.defaultMutableList
 import pw.binom.getEnv
@@ -11,8 +13,8 @@ import kotlin.native.concurrent.freeze
 actual class File actual constructor(path: String) {
     actual constructor(parent: File, name: String) : this(
         "${
-        parent.path.removeSuffix("/").removeSuffix("\\")
-        }$SEPARATOR${name.removePrefix("/").removePrefix("\\")}"
+            parent.path.removeSuffix("/").removeSuffix("\\")
+        }$SEPARATOR${name.removePrefix("/").removePrefix("\\")}",
     )
 
     actual val path: String = replacePath(path)
@@ -102,51 +104,12 @@ actual class File actual constructor(path: String) {
     }
 
     actual val freeSpace: Long
-        get() = memScoped {
-            val value = alloc<ULongVar>()
-            val fResult = GetDiskFreeSpaceEx!!(
-                path.wcstr.ptr,
-                null,
-                null,
-                value.ptr.reinterpret(),
-            )
-            if (fResult != 0) {
-                value.value.toLong()
-            } else {
-                0L
-            }
-        }
+        get() = internal_get_free_space(path)
     actual val availableSpace: Long
-        get() = memScoped {
-            val value = alloc<ULongVar>()
-            val fResult = GetDiskFreeSpaceEx!!(
-                path.wcstr.ptr,
-                value.ptr.reinterpret(),
-                null,
-                null,
-            )
-            if (fResult != 0) {
-                value.value.toLong()
-            } else {
-                0L
-            }
-        }
+        get() = internal_get_available_space(path)
 
     actual val totalSpace: Long
-        get() = memScoped {
-            val value = alloc<ULongVar>()
-            val fResult = GetDiskFreeSpaceEx!!(
-                path.wcstr.ptr,
-                null,
-                null,
-                value.ptr.reinterpret(),
-            )
-            if (fResult != 0) {
-                value.value.toLong()
-            } else {
-                0L
-            }
-        }
+        get() = internal_get_total_space(path)
 
     actual fun getPosixMode(): PosixPermissions = PosixPermissions(0u)
 

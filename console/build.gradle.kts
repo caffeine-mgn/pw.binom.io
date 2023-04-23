@@ -1,13 +1,14 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import pw.binom.kotlin.clang.eachNative
 import pw.binom.useDefault
 import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
-//    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//        id("com.android.library")
-//    }
+    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+        id("com.android.library")
+    }
 }
 
 fun KotlinNativeTarget.useNativeUtils() {
@@ -21,56 +22,12 @@ fun KotlinNativeTarget.useNativeUtils() {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-//    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//        android {
-//            publishAllLibraryVariants()
-//        }
-//    }
-    jvm()
-    linuxX64 {
+    allTargets {
+        -"wasm32"
+    }
+    eachNative {
         useNativeUtils()
     }
-    linuxArm64 {
-        useNativeUtils()
-    }
-    linuxArm32Hfp {
-        useNativeUtils()
-    }
-    linuxMips32 {
-        useNativeUtils()
-    }
-    linuxMipsel32 {
-        useNativeUtils()
-    }
-    mingwX64 {
-        useNativeUtils()
-    }
-    mingwX86 {
-        useNativeUtils()
-    }
-    macosX64 {
-        useNativeUtils()
-    }
-    macosArm64 {
-        useNativeUtils()
-    }
-    androidNativeX64 {
-        useNativeUtils()
-    }
-    androidNativeX86 {
-        useNativeUtils()
-    }
-    androidNativeArm32 {
-        useNativeUtils()
-    }
-    androidNativeArm64 {
-        useNativeUtils()
-    }
-    js(pw.binom.Target.JS_TARGET) {
-        browser()
-        nodejs()
-    }
-
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -106,7 +63,7 @@ tasks.withType<Test> {
         this.showStandardStreams = true
     }
 }
-// if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//    apply<pw.binom.plugins.AndroidSupportPlugin>()
-// }
+if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    apply<pw.binom.plugins.AndroidSupportPlugin>()
+}
 apply<pw.binom.plugins.ConfigPublishPlugin>()

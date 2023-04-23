@@ -1,5 +1,6 @@
 import pw.binom.eachKotlinTest
 import pw.binom.publish.dependsOn
+import pw.binom.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -39,15 +40,6 @@ kotlin {
                 api(project(":xml:xml-serialization"))
             }
         }
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        dependsOn("linux*Main", linuxX64Main)
-        dependsOn("mingw*Main", linuxX64Main)
-        dependsOn("watchos*Main", linuxX64Main)
-        dependsOn("macos*Main", linuxX64Main)
-        dependsOn("ios*Main", linuxX64Main)
-        dependsOn("androidNative*Main", linuxX64Main)
 
         val commonTest by getting {
             dependencies {
@@ -64,9 +56,7 @@ kotlin {
                 api(kotlin("test-junit"))
             }
         }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
+        useDefault()
     }
 }
 
@@ -94,7 +84,7 @@ tasks {
 //            "MINIO_SCHEME" to "http",
 //            "MINIO_REGION" to "ru-central1",
 //            "S3BACKEND" to "mem"
-        )
+        ),
     )
 
     eachKotlinTest {

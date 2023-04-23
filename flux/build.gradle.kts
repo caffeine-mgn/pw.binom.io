@@ -1,3 +1,5 @@
+import pw.binom.useDefault
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -28,6 +30,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
             }
         }
+        /*
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
@@ -54,7 +57,7 @@ kotlin {
         val macosX64Main by getting {
             dependsOn(commonMain)
         }
-
+*/
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -62,6 +65,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
+        /*
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
@@ -71,6 +75,8 @@ kotlin {
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
+        */
+        useDefault()
     }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

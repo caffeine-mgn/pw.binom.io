@@ -1,4 +1,4 @@
-import pw.binom.publish.dependsOn
+import pw.binom.publish.useDefault
 import java.util.*
 
 plugins {
@@ -11,96 +11,20 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
-        }
-    }
-    jvm()
-    linuxX64()
-    linuxArm64()
-    linuxArm32Hfp()
-    linuxMips32()
-    linuxMipsel32()
-    mingwX64()
-    mingwX86()
-    macosX64()
-    macosArm64()
-    iosX64()
-    iosArm32()
-    iosArm64()
-    iosSimulatorArm64()
-    watchosX64()
-    watchosX86()
-    watchosArm32()
-    watchosArm64()
-    watchosSimulatorArm64()
-    androidNativeX64()
-    androidNativeX86()
-    androidNativeArm32()
-    androidNativeArm64()
-    wasm32()
-    js("js", pw.binom.Target.JS_TARGET) {
-        browser()
-        nodejs()
-    }
-
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
             }
         }
-        val jvmLikeMain by creating {
-            dependsOn(commonMain)
-        }
-        val jvmMain by getting {
-            dependsOn(jvmLikeMain)
-        }
-        val nativeCommonMain by creating {
-            dependsOn(commonMain)
-        }
-        val nativeHostedMain by creating {
-            dependsOn(nativeCommonMain)
-        }
-
-        dependsOn("androidMain", jvmLikeMain)
-        dependsOn("linux*Main", nativeHostedMain)
-        dependsOn("mingw*Main", nativeHostedMain)
-        dependsOn("watchos*Main", nativeHostedMain)
-        dependsOn("macos*Main", nativeHostedMain)
-        dependsOn("ios*Main", nativeHostedMain)
-        dependsOn("androidNative*Main", nativeHostedMain)
-        dependsOn("wasm*Main", nativeCommonMain)
-
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
             }
         }
-        val nativeTest by creating {
-            dependsOn(commonTest)
-        }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test"))
-            }
-        }
-        val linuxX64Test by getting {
-            dependsOn(nativeTest)
-        }
-
-        val mingwX64Test by getting {
-            dependsOn(nativeTest)
-        }
-
-        val jsTest by getting {
-            dependencies {
-                api(kotlin("test-js"))
-            }
-        }
+        useDefault()
     }
 }
 

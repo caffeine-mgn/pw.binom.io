@@ -1,5 +1,5 @@
-import pw.binom.*
-import java.util.*
+import org.jetbrains.kotlin.konan.target.KonanTarget
+import pw.binom.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -39,6 +39,10 @@ kotlin {
     androidNativeX86()
     androidNativeArm32()
     androidNativeArm64()
+    allTargets {
+        -"js"
+        -KonanTarget.WASM32
+    }
 
     sourceSets {
         val commonMain by getting {
@@ -52,21 +56,21 @@ kotlin {
     }
 }
 
-//fun makeTimeFile() {
+// fun makeTimeFile() {
 //    val dateDir = file("$buildDir/tmp-date")
 //    dateDir.mkdirs()
 //    val tzFile = file("$dateDir/currentTZ")
 //    tzFile.delete()
 //    tzFile.writeText((TimeZone.getDefault().rawOffset / 1000 / 60).toString())
-//}
+// }
 //
-//tasks {
+// tasks {
 //    withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest::class).forEach {
 //        it.doFirst {
 //            makeTimeFile()
 //        }
 //    }
-//}
+// }
 
 tasks.withType<Test> {
     this.testLogging {

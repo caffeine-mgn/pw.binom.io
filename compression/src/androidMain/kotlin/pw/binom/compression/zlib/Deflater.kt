@@ -5,11 +5,28 @@ import pw.binom.io.Closeable
 import java.util.zip.Deflater as JDeflater
 
 actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlush: Boolean) : Closeable {
+    init {
+        DeflaterMetrics.incDeflaterCount()
+    }
+
     private val native = JDeflater(level, !wrap)
+    private var closed = AtomicBoolean(false)
+
+    private fun checkClosed() {
+        if (closed.get()) {
+            throw ClosedException()
+        }
+    }
+
     override fun close() {
+        if (!closed.compareAndSet(false, true)) {
+            throw ClosedException()
+        }
+        DeflaterMetrics.decDeflaterCount()
     }
 
     actual fun end() {
+        checkClosed()
         native.end()
     }
 
@@ -19,6 +36,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         get() = native.finished()
 
     actual fun finish() {
+        checkClosed()
         finishCalled = true
         native.finish()
     }
@@ -32,6 +50,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
         get() = _totalOut
 
     actual fun deflate(input: ByteBuffer, output: ByteBuffer): Int {
+        checkClosed()
         native.setInput(input.toByteArray())
         val readedBefore = native.bytesRead
         val writedBefore = native.bytesWritten
@@ -51,6 +70,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
 
     actual fun flush(output: ByteBuffer): Boolean {
+        checkClosed()
         if (!finishCalled) {
             return false
         }

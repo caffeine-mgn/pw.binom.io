@@ -1,4 +1,4 @@
-import pw.binom.publish.dependsOn
+import pw.binom.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -9,64 +9,13 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
-        }
-    }
-    jvm()
-    linuxX64()
-    linuxArm64()
-    linuxArm32Hfp()
-    linuxMips32()
-    linuxMipsel32()
-    mingwX64()
-    mingwX86()
-    macosX64()
-    macosX64()
-    macosArm64()
-    iosX64()
-    iosArm32()
-    iosArm64()
-    iosSimulatorArm64()
-    tvos()
-    tvosArm64()
-    tvosSimulatorArm64()
-    tvosX64()
-    watchosX64()
-    watchosX86()
-    watchosArm32()
-    watchosArm64()
-    watchosSimulatorArm64()
-    androidNativeX64()
-    androidNativeX86()
-    androidNativeArm32()
-    androidNativeArm64()
-    wasm32()
-    js(pw.binom.Target.JS_TARGET) {
-        browser {
-            testTask {
-                useKarma {
-                    useFirefoxHeadless()
-                }
-            }
-        }
-        nodejs()
-    }
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib"))
             }
         }
-
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        dependsOn("linux*Main", linuxX64Main)
-        dependsOn("mingw*Main", linuxX64Main)
-        dependsOn("androidNative*Main", linuxX64Main)
-        dependsOn("wasm32*Main", linuxX64Main)
 
         val commonTest by getting {
             dependencies {
@@ -75,32 +24,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-        val jvmLikeMain by creating {
-            dependsOn(commonMain)
-        }
-        val jvmMain by getting {
-            dependsOn(jvmLikeMain)
-        }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-                dependsOn(jvmLikeMain)
-            }
-        }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test-junit"))
-            }
-        }
-        val jsTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test-js"))
-            }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
+        useDefault()
     }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

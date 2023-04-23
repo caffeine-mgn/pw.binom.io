@@ -1,3 +1,5 @@
+import pw.binom.publish.useDefault
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("kotlinx-serialization")
@@ -33,6 +35,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
             }
         }
+        /*
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
@@ -53,6 +56,7 @@ kotlin {
         val macosX64Main by getting {
             dependsOn(commonMain)
         }
+        */
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -60,6 +64,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
+        /*
         val jvmMain by getting {
             dependsOn(commonMain)
             dependencies {}
@@ -79,6 +84,8 @@ kotlin {
                 implementation(kotlin("test-js"))
             }
         }
+        */
+        useDefault()
     }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

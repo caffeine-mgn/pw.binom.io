@@ -1,5 +1,5 @@
 import pw.binom.eachKotlinCompile
-import pw.binom.publish.dependsOn
+import pw.binom.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -64,6 +64,7 @@ kotlin {
         androidCInterop(this)
     }
     wasm32()
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -72,6 +73,7 @@ kotlin {
             }
             kotlin.srcDir("build/gen")
         }
+        /*
         val nativeMain by creating {
             dependsOn(commonMain)
         }
@@ -94,13 +96,14 @@ kotlin {
             dependsOn(nativeMain)
         }
         dependsOn("macos*Main", macosX64Main)
-
+*/
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
             }
         }
+        /*
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
@@ -110,6 +113,8 @@ kotlin {
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
+        */
+        useDefault()
     }
 }
 
@@ -125,7 +130,7 @@ tasks {
             """package pw.binom
 
 const val BINOM_VERSION = "${project.version}"
-"""
+""",
         )
     }
     eachKotlinCompile {

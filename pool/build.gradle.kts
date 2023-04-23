@@ -1,4 +1,4 @@
-import pw.binom.publish.dependsOn
+
 import pw.binom.useDefault
 import java.util.*
 
@@ -12,6 +12,7 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+    /*
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
             publishAllLibraryVariants()
@@ -45,7 +46,8 @@ kotlin {
         browser()
         nodejs()
     }
-
+    */
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {

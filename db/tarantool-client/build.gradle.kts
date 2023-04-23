@@ -1,4 +1,5 @@
 import pw.binom.eachKotlinTest
+import pw.binom.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -40,41 +41,6 @@ kotlin {
             }
         }
 
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(commonMain)
-            }
-        }
-
-        val mingwX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-
-        val macosX64Main by getting {
-            dependsOn(commonMain)
-        }
-
-        val jvmMain by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-                dependsOn(jvmMain)
-            }
-        }
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -88,9 +54,7 @@ kotlin {
                 api(kotlin("test"))
             }
         }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
+        useDefault()
     }
 }
 
@@ -104,7 +68,7 @@ tasks {
         envs = mapOf(
             "TARANTOOL_USER_NAME" to "server",
             "TARANTOOL_USER_PASSWORD" to "server",
-        )
+        ),
     )
 
     eachKotlinTest {

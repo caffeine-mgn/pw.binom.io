@@ -1,3 +1,5 @@
+import pw.binom.useDefault
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -7,6 +9,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+    /*
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
             publishAllLibraryVariants()
@@ -25,36 +28,38 @@ kotlin {
         nodejs()
     }
     macosX64()
+    */
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(project(":core"))
             }
         }
+        /*
+                val linuxX64Main by getting {
+                    dependsOn(commonMain)
+                }
+                val linuxArm64Main by getting {
+                    dependsOn(commonMain)
+                }
+                val linuxArm32HfpMain by getting {
+                    dependsOn(commonMain)
+                }
 
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        val linuxArm64Main by getting {
-            dependsOn(commonMain)
-        }
-        val linuxArm32HfpMain by getting {
-            dependsOn(commonMain)
-        }
+                val mingwX64Main by getting {
+                    dependsOn(commonMain)
+                }
+                if (pw.binom.Target.MINGW_X86_SUPPORT) {
+                    val mingwX86Main by getting {
+                        dependsOn(commonMain)
+                    }
+                }
 
-        val mingwX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-
-        val macosX64Main by getting {
-            dependsOn(commonMain)
-        }
-
+                val macosX64Main by getting {
+                    dependsOn(commonMain)
+                }
+        */
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -62,6 +67,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
+        /*
         val jvmMain by getting {
             dependsOn(commonMain)
             dependencies {}
@@ -82,6 +88,8 @@ kotlin {
                 implementation(kotlin("test-js"))
             }
         }
+        */
+        useDefault()
     }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

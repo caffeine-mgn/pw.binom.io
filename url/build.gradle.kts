@@ -1,4 +1,4 @@
-import pw.binom.publish.dependsOn
+import pw.binom.publish.useDefault
 import java.util.*
 
 plugins {
@@ -11,6 +11,7 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+    /*
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
             publishAllLibraryVariants()
@@ -44,40 +45,41 @@ kotlin {
         browser()
         nodejs()
     }
-
+    */
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(kotlin("stdlib-common"))
             }
         }
+        useDefault()
         val runnableMain by creating {
             dependsOn(commonMain)
         }
 
-        val jvmLikeMain by creating {
+        val jvmLikeMain by getting {
             dependsOn(commonMain)
             dependsOn(runnableMain)
         }
         val jvmMain by getting {
             dependsOn(jvmLikeMain)
         }
-        val nativeCommonMain by creating {
+        val nativeCommonMain by getting {
             dependsOn(commonMain)
             dependsOn(runnableMain)
         }
-        val nativeHostedMain by creating {
-            dependsOn(nativeCommonMain)
-        }
-
-        dependsOn("androidMain", jvmLikeMain)
-        dependsOn("linux*Main", nativeHostedMain)
-        dependsOn("mingw*Main", nativeHostedMain)
-        dependsOn("watchos*Main", nativeHostedMain)
-        dependsOn("macos*Main", nativeHostedMain)
-        dependsOn("ios*Main", nativeHostedMain)
-        dependsOn("androidNative*Main", nativeHostedMain)
-        dependsOn("wasm*Main", nativeCommonMain)
+//        val nativeHostedMain by creating {
+//            dependsOn(nativeCommonMain)
+//        }
+//        dependsOn("androidMain", jvmLikeMain)
+//        dependsOn("linux*Main", nativeHostedMain)
+//        dependsOn("mingw*Main", nativeHostedMain)
+//        dependsOn("watchos*Main", nativeHostedMain)
+//        dependsOn("macos*Main", nativeHostedMain)
+//        dependsOn("ios*Main", nativeHostedMain)
+//        dependsOn("androidNative*Main", nativeHostedMain)
+//        dependsOn("wasm*Main", nativeCommonMain)
 
         val commonTest by getting {
             dependencies {
@@ -85,6 +87,7 @@ kotlin {
                 api(kotlin("test-annotations-common"))
             }
         }
+        /*
         val nativeTest by creating {
             dependsOn(commonTest)
         }
@@ -107,6 +110,7 @@ kotlin {
                 api(kotlin("test-js"))
             }
         }
+        */
     }
 }
 

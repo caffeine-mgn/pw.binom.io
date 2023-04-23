@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.konan.target.KonanTarget
+import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.useDefault
 
 plugins {
@@ -8,7 +10,18 @@ plugins {
     }
 }
 apply<pw.binom.KotlinConfigPlugin>()
+
+fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useNative() {
+    compilations["main"].cinterops {
+        create("native") {
+            defFile = project.file("src/cinterop/native.def")
+            packageName = "platform.common"
+        }
+    }
+}
+
 kotlin {
+    /*
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
             publishAllLibraryVariants()
@@ -27,6 +40,15 @@ kotlin {
         mingwX86()
     }
     macosX64()
+
+    */
+    allTargets {
+        -"js"
+        -KonanTarget.WASM32
+    }
+    eachNative {
+        useNative()
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {

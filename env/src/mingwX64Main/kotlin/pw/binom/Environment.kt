@@ -1,5 +1,5 @@
 package pw.binom
-
+/*
 import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.*
@@ -58,3 +58,4 @@ actual val Environment.currentExecutionPath: String
             }
             result.toKString()
         }
+*/

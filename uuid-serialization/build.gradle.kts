@@ -1,4 +1,5 @@
-import pw.binom.publish.dependsOn
+
+import pw.binom.publish.useDefault
 import java.util.*
 
 plugins {
@@ -44,7 +45,6 @@ kotlin {
         browser()
         nodejs()
     }
-
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -53,6 +53,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
             }
         }
+        /*
         val jvmLikeMain by creating {
             dependsOn(commonMain)
         }
@@ -74,13 +75,14 @@ kotlin {
         dependsOn("ios*Main", nativeHostedMain)
         dependsOn("androidNative*Main", nativeHostedMain)
         dependsOn("wasm*Main", nativeCommonMain)
-
+*/
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
             }
         }
+        /*
         val nativeTest by creating {
             dependsOn(commonTest)
         }
@@ -103,6 +105,8 @@ kotlin {
                 api(kotlin("test-js"))
             }
         }
+        */
+        useDefault()
     }
 }
 

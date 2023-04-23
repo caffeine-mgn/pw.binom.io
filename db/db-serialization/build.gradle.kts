@@ -1,4 +1,4 @@
-
+import pw.binom.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -39,38 +39,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxX64Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(commonMain)
-            }
-        }
 
-        val mingwX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-
-        val macosX64Main by getting {
-            dependsOn(commonMain)
-        }
-
-        val jvmMain by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-                dependsOn(jvmMain)
-            }
-        }
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -81,15 +50,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test-junit"))
-            }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
+        useDefault()
     }
 }
 
@@ -103,18 +64,15 @@ tasks {
         envs = mapOf(
             "POSTGRES_USER" to "postgres",
             "POSTGRES_PASSWORD" to "postgres",
-            "POSTGRES_DB" to "test"
+            "POSTGRES_DB" to "test",
         ),
-        healthCheck = "/usr/bin/pg_isready -U postgres"
+        healthCheck = "/usr/bin/pg_isready -U postgres",
     )
     postgresServer.create.configure {
         this.attachStdin.set(true)
         this.attachStdout.set(true)
         this.attachStderr.set(true)
     }
-//    eachKotlinTest {
-//        postgresServer.dependsOn(it)
-//    }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
     apply<pw.binom.plugins.AndroidSupportPlugin>()

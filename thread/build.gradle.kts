@@ -1,3 +1,5 @@
+
+import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.dependsOn
 import pw.binom.useDefault
 
@@ -26,31 +28,20 @@ kotlin {
         }
     }
     jvm()
-    linuxX64 {
-        useNative()
-    }
-    linuxArm64 {
-        useNative()
-    }
-    linuxArm32Hfp {
-        useNative()
-    }
-    linuxMips32 {
-        useNative()
-    }
-    linuxMipsel32 {
-        useNative()
-    }
-    mingwX64 {
-        useNative()
-    }
-    mingwX86 {
-        useNative()
-    }
-    macosX64 {
-        useNative()
-    }
-    macosArm64 {
+    linuxX64()
+    linuxArm64()
+    linuxArm32Hfp()
+    linuxMips32()
+    linuxMipsel32()
+    mingwX64()
+    mingwX86()
+    macosX64()
+    macosArm64()
+//    allTargets {
+//        -"js"
+//        -KonanTarget.WASM32
+//    }
+    eachNative {
         useNative()
     }
     sourceSets {
@@ -109,9 +100,6 @@ kotlin {
             dependencies {
                 api(kotlin("test"))
             }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
         }
     }
 }
