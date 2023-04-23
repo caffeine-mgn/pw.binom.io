@@ -1,4 +1,5 @@
 import pw.binom.eachKotlinTest
+import pw.binom.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -31,33 +32,6 @@ kotlin {
             }
         }
 
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(commonMain)
-            }
-        }
-
-        val mingwX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-
-        val macosX64Main by getting {
-            dependsOn(commonMain)
-        }
-
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -72,9 +46,7 @@ kotlin {
                 api(kotlin("test-junit"))
             }
         }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
+        useDefault()
     }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()
@@ -85,7 +57,7 @@ tasks {
         image = "jmalloc/echo-server",
         tcpPorts = listOf(8080 to 7142),
         args = listOf(),
-        suffix = "WS-EchoServer"
+        suffix = "WS-EchoServer",
     )
 
     val httpStorage = pw.binom.plugins.DockerUtils.dockerContanier(
@@ -98,7 +70,7 @@ tasks {
             "USERNAME" to "root",
             "PASSWORD" to "root",
             "TZ" to "GMT",
-        )
+        ),
     )
 
     eachKotlinTest {

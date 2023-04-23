@@ -83,17 +83,14 @@ kotlin {
     jvm()
     linuxX64 {
         useNativeUtils()
-//        useNativeWepoll()
         useNativeNet()
     }
     linuxArm64 {
         useNativeUtils()
-//        useNativeWepoll()
         useNativeNet()
     }
     linuxArm32Hfp {
         useNativeUtils()
-//        useNativeWepoll()
         useNativeNet()
     }
 //    linuxMips32 {
@@ -106,84 +103,29 @@ kotlin {
 // //        useNativeWepoll()
 //        useNativeNet()
 //    }
-    mingwX64 {
+    mingw {
         useNativeUtils()
         useNativeMingw()
-//        useNativeWepoll()
         useNativeNet()
     }
-    mingwX86 {
-        useNativeUtils()
-        useNativeMingw()
-//        useNativeWepoll()
-        useNativeNet()
-    }
-    macosX64 {
+    macos {
         useNativeUtils()
         useNativeMacos()
         useNativeNet()
     }
-    macosArm64 {
+    ios {
         useNativeUtils()
         useNativeMacos()
         useNativeNet()
     }
-    iosX64 {
+    watchos {
         useNativeUtils()
         useNativeMacos()
         useNativeNet()
     }
-    iosArm32 {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    iosArm64 {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    iosSimulatorArm64 {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    watchosX64 {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    watchosX86 {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    watchosArm32 {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    watchosArm64 {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    watchosSimulatorArm64 {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-//    androidNativeX64 {
+//    androidNative {
 //        useNativeUtils()
-//    }
-//    androidNativeX86 {
-//        useNativeUtils()
-//    }
-//    androidNativeArm32 {
-//        useNativeUtils()
-//    }
-//    androidNativeArm64 {
-//        useNativeUtils()
+//        useNativeNet()
 //    }
 
     sourceSets {

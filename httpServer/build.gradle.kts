@@ -1,3 +1,5 @@
+import pw.binom.useDefault
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -30,31 +32,6 @@ kotlin {
             }
         }
 
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(commonMain)
-            }
-        }
-
-        val mingwX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-        val macosX64Main by getting {
-            dependsOn(commonMain)
-        }
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -68,6 +45,7 @@ kotlin {
                 api(kotlin("test-junit"))
             }
         }
+        useDefault()
     }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

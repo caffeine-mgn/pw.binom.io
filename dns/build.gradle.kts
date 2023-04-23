@@ -27,34 +27,6 @@ kotlin {
                 api("pw.binom:bitarray:0.1.0")
             }
         }
-        /*
-                val linuxX64Main by getting {
-                    dependsOn(commonMain)
-                }
-                if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-                    val linuxArm64Main by getting {
-                        dependsOn(commonMain)
-                    }
-                }
-                if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-                    val linuxArm32HfpMain by getting {
-                        dependsOn(commonMain)
-                    }
-                }
-
-                val mingwX64Main by getting {
-                    dependsOn(commonMain)
-                }
-                if (pw.binom.Target.MINGW_X86_SUPPORT) {
-                    val mingwX86Main by getting {
-                        dependsOn(commonMain)
-                    }
-                }
-
-                val macosX64Main by getting {
-                    dependsOn(commonMain)
-                }
-        */
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -62,17 +34,6 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-        /*
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test"))
-            }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
-        */
         useDefault()
     }
 }
