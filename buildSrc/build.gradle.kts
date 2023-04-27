@@ -7,13 +7,13 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
         classpath("com.android.tools.build:gradle:7.0.0")
     }
 }
 
 plugins {
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "1.8.21"
     id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 val kotlinVersion = project.property("kotlin.version") as String
@@ -41,8 +41,8 @@ dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     api("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     api("org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion")
-    api("org.jetbrains.dokka:dokka-gradle-plugin:1.6.10")
-    api("pw.binom:kn-clang:0.1.5")
+    api("org.jetbrains.dokka:dokka-gradle-plugin:1.8.10")
+    api("pw.binom:kn-clang:0.1.7")
     api("com.bmuschko:gradle-docker-plugin:7.3.0")
     api("pw.binom:binom-publish:0.1.8")
 //    api("com.android.library:com.android.library.gradle.plugin:7.2.0")

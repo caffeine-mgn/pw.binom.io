@@ -112,7 +112,7 @@ fun TaskContainer.eachKotlinTest(func: (Task) -> Unit) {
 fun TaskContainer.eachKotlinCompile(func: (Task) -> Unit) {
     this.mapNotNull { it as? org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile<*> }
         .forEach(func)
-    this.mapNotNull { it as? org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile<*, *, *> }
+    this.mapNotNull { it as? org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile<*, *> }
         .forEach(func)
 }
 

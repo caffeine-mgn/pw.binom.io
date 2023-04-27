@@ -71,6 +71,7 @@ fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
     }
     c.nativeTargets += "jvm"
     c.nativeTargets += "js"
+//    c.nativeTargets += "wasm"
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         c.nativeTargets += "android"
     }
@@ -89,6 +90,7 @@ fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
                 nodejs()
             }
 
+            "wasm" -> wasm()
             "android" -> android {
                 publishAllLibraryVariants()
             }
