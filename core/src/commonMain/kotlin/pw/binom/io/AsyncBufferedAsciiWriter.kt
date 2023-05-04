@@ -3,9 +3,7 @@ package pw.binom.io
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 abstract class AbstractAsyncBufferedAsciiWriter(
     val closeParent: Boolean,
 ) : AsyncWriter, AsyncOutput {

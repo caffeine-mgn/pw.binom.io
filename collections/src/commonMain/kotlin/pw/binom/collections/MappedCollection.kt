@@ -19,5 +19,12 @@ class MappedIterator<R, E>(val iterator: Iterator<E>, val mapper: (E) -> R) : It
     override fun next(): R = mapper(iterator.next())
 }
 
+class MutableMappedIterator<R, E>(val iterator: MutableIterator<E>, val mapper: (E) -> R) : MutableIterator<R> {
+    override fun hasNext(): Boolean = iterator.hasNext()
+    override fun next(): R = mapper(iterator.next())
+    override fun remove() = iterator.remove()
+}
+
 fun <E, R> Iterator<E>.mapped(mapper: (E) -> R) = MappedIterator(iterator = this, mapper = mapper)
+fun <E, R> MutableIterator<E>.mapped(mapper: (E) -> R) = MutableMappedIterator(iterator = this, mapper = mapper)
 fun <E, R> Collection<E>.mapped(mapper: (E) -> R) = MappedCollection(this, mapper)
