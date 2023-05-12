@@ -22,12 +22,5 @@ interface Process : Closeable {
 
     fun join()
 
-    class ProcessStillActive : RuntimeException()
+    class ProcessStillActive : ProcessException()
 }
-
-expect fun Process.Companion.execute(
-    path: String,
-    args: List<String>,
-    env: Map<String, String>,
-    workDir: String?
-): Process

@@ -9,6 +9,11 @@ class QueryPackage {
     var type: UShort = 0u
     var clazz: UShort = 0u
 
+    val sizeBytes
+        get() = name.length + 1 +
+            Short.SIZE_BYTES +
+            Short.SIZE_BYTES
+
     fun read(buf: ByteBuffer): QueryPackage {
         name = buf.readDns().fromDns()
         type = buf.readShort().toUShort()
@@ -25,7 +30,7 @@ class QueryPackage {
     fun toImmutable() = pw.binom.dns.Query(
         name = name,
         type = type,
-        clazz = clazz
+        clazz = clazz,
     )
 
     override fun toString(): String {

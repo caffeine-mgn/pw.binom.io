@@ -27,6 +27,7 @@ kotlin {
         linuxArm64()
     }
     macosX64()
+//    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {

@@ -7,6 +7,12 @@ data class Query(
     var type: UShort,
     var clazz: UShort,
 ) {
+
+    val sizeBytes
+        get() = name.length + 1 +
+            Short.SIZE_BYTES +
+            Short.SIZE_BYTES
+
     fun toMutable(query: QueryPackage): QueryPackage {
         query.name = name
         query.type = type

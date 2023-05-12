@@ -9,6 +9,15 @@ data class Resource(
     val ttl: UInt,
     val rdata: ByteArray,
 ) {
+
+    val sizeBytes
+        get() = name.length + 1 +
+            Short.SIZE_BYTES +
+            Short.SIZE_BYTES +
+            Int.SIZE_BYTES +
+            Short.SIZE_BYTES +
+            rdata.size
+
     fun toMutable(resource: ResourcePackage): ResourcePackage {
         resource.name = name
         resource.type = type

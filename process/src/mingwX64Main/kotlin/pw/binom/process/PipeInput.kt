@@ -6,7 +6,20 @@ import pw.binom.concurrency.sleep
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Input
 
-class PipeInput(val process: WinProcess) : Pipe(), Input {
+class PipeInput : Pipe(), Input {
+    internal var processHandle: HANDLE? = null
+
+    val isActive: Boolean
+        get() {
+            val processHandle = processHandle ?: return false
+            memScoped {
+                val ex = alloc<UIntVar>()
+                ex.value = 0u
+                GetExitCodeProcess(processHandle, ex.ptr)
+                return ex.value == STILL_ACTIVE
+            }
+        }
+
     override val handler: HANDLE
         get() = writePipe.pointed.value!!
 
@@ -23,7 +36,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
                         0.convert(),
                         null,
                         totalAvailableBytes.ptr,
-                        null
+                        null,
                     ) == 0
                 ) {
                     return -2
@@ -33,7 +46,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
                     return totalAvailableBytes.value.toInt()
                 }
 
-                return if (process.isActive) -1 else 0
+                return if (isActive) -1 else 0
             }
         }
 
@@ -76,7 +89,7 @@ class PipeInput(val process: WinProcess) : Pipe(), Input {
                     (destPtr).getPointer(this).reinterpret(),
                     dest.remaining.convert(),
                     dwWritten.ptr,
-                    null
+                    null,
                 )
             } ?: 0
             if (r <= 0) {

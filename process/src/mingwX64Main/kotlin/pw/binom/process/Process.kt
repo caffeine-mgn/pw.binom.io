@@ -4,7 +4,6 @@ import kotlinx.cinterop.*
 import platform.posix.memcpy
 import platform.posix.memset
 import platform.windows.*
-import kotlin.native.concurrent.freeze
 
 private inline fun CreateProcess(
     lpApplicationName: LPCWSTR?,
@@ -16,7 +15,7 @@ private inline fun CreateProcess(
     lpEnvironment: LPVOID?,
     lpCurrentDirectory: LPCWSTR?,
     lpStartupInfo: LPSTARTUPINFOW?,
-    lpProcessInformation: LPPROCESS_INFORMATION?
+    lpProcessInformation: LPPROCESS_INFORMATION?,
 ) = CreateProcess!!(
     lpApplicationName,
     lpCommandLine,
@@ -27,7 +26,7 @@ private inline fun CreateProcess(
     lpEnvironment,
     lpCurrentDirectory,
     lpStartupInfo,
-    lpProcessInformation
+    lpProcessInformation,
 )
 
 inline fun <R> processHandler(pid: Long, func: (HANDLE?) -> R): R {
@@ -39,13 +38,16 @@ inline fun <R> processHandler(pid: Long, func: (HANDLE?) -> R): R {
     }
 }
 
-class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<String, String>) : Process {
+class WinProcess(val processStarter: MingwProcessStarter) : Process {
 
     override var pid: Long = 0
 
-    override val stdout = PipeInput(this)
-    override val stderr = PipeInput(this)
-    override val stdin = PipeOutput()
+    override val stdout
+        get() = processStarter.io.stdout
+    override val stderr
+        get() = processStarter.io.stderr
+    override val stdin
+        get() = processStarter.io.stdin
     private lateinit var processHandle: HANDLE
 
     init {
@@ -55,12 +57,12 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
 
             val vv = alloc<STARTUPINFO>()
             vv.cb = sizeOf<STARTUPINFO>().convert()
-            vv.hStdError = stderr.handler
-            vv.hStdOutput = stdout.handler
-            vv.hStdInput = stdin.handler
+            vv.hStdError = processStarter.io.stderr.handler
+            vv.hStdOutput = processStarter.io.stdout.handler
+            vv.hStdInput = processStarter.io.stdin.handler
 
             vv.dwFlags = STARTF_USESTDHANDLES.convert()
-            val envList = env.map { "${it.key}=${it.value}" }
+            val envList = processStarter.env.map { "${it.key}=${it.value}" }
 
             val memCount = envList.sumOf { it.length + 1 } + 1
             val mem = allocArray<UShortVar>(memCount)
@@ -74,29 +76,35 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
 
             val bSuccess = CreateProcess(
                 null,
-                "\"$exe\" ${args.map { "\"$it\"" }.joinToString(" ")}".wcstr.ptr, // command line
+                "\"${processStarter.exe}\" ${
+                    processStarter.args.map { "\"$it\"" }.joinToString(" ")
+                }".wcstr.ptr, // command line
                 null, // process security attributes
                 null, // primary thread security attributes
                 TRUE, // handles are inherited
                 CREATE_UNICODE_ENVIRONMENT.convert(), // creation flags
                 mem, // use parent's environment
-                workDir?.wcstr?.ptr, // use parent's current directory
+                processStarter.workDir?.wcstr?.ptr, // use parent's current directory
                 vv.ptr, // STARTUPINFO pointer
-                piProcInfo.ptr
+                piProcInfo.ptr,
             ) > 0
 
-            if (!bSuccess)
+            if (!bSuccess) {
                 TODO("CreateProcessA error: ${GetLastError()}")
+            }
 
             pid = piProcInfo.dwProcessId.toLong()
             processHandle = piProcInfo.hProcess!!
+            stdout.processHandle = processHandle
+            stderr.processHandle = processHandle
             CloseHandle(piProcInfo.hThread)
         }
     }
 
     override fun join() {
-        if (!isActive)
+        if (!isActive) {
             return
+        }
         WaitForSingleObject(processHandle, INFINITE)
     }
 
@@ -114,10 +122,12 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
             memScoped {
                 val ex = alloc<UIntVar>()
                 val r = GetExitCodeProcess(processHandle, ex.ptr)
-                if (r == FALSE)
+                if (r == FALSE) {
                     TODO("GetExitCodeProcess error ${GetLastError()}")
-                if (ex.value == STILL_ACTIVE)
+                }
+                if (ex.value == STILL_ACTIVE) {
                     throw Process.ProcessStillActive()
+                }
                 return ex.value.toInt()
             }
         }
@@ -131,16 +141,4 @@ class WinProcess(exe: String, args: List<String>, workDir: String?, env: Map<Str
 
         CloseHandle(processHandle)
     }
-
-    init {
-        freeze()
-    }
 }
-
-actual fun Process.Companion.execute(
-    path: String,
-    args: List<String>,
-    env: Map<String, String>,
-    workDir: String?
-): Process =
-    WinProcess(exe = path, args = args, workDir = workDir, env = env)

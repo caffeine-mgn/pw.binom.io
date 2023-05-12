@@ -1,118 +1,117 @@
 package pw.binom.dns.protocol
 
 import pw.binom.BitArray32
+import pw.binom.dns.Header
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
 import pw.binom.readShort
-import pw.binom.toBitset
 import pw.binom.writeShort
 
 class DnsHeader {
+    val header = Header()
+
     /**
      * identification number
      */
-    var id: Short = 0
+    val id: Short
+        get() = header.id
 
     /**
      * recursion desired
      */
-    var rd: Boolean = false
+    val rd: Boolean
+        get() = header.rd
 
     /**
      * truncated message
      */
-    var tc: Boolean = false
+    val tc: Boolean
+        get() = header.tc
 
     /**
      * authoritive answer
      */
-    var aa: Boolean = false
+    val aa: Boolean
+        get() = header.aa
 
     /**
      * purpose of message
      */
-    var opcode: Byte = 0
+    val opcode: Byte
+        get() = header.opcode
 
     /**
      * query/response flag
      */
-    var qr: Boolean = false
+    val qr: Boolean
+        get() = header.qr
 
     /**
      * recursion available
      */
-    var ra: Boolean = false
+    val ra: Boolean
+        get() = header.ra
 
     /**
      * its z! reserved
      */
-    var z: Boolean = false
+    val z: Boolean
+        get() = header.z
 
     /**
      * authenticated data
      */
-    var ad: Boolean = false
+    val ad: Boolean
+        get() = header.ad
 
     /**
      * checking disabled
      */
-    var cd: Boolean = false
+    val cd: Boolean
+        get() = header.cd
 
     /**
      * response code
      */
-    var rcode: Byte = 0
+    val rcode: Byte
+        get() = header.rcode
 
     /**
      * number of question entries
      */
-    var q_count: UShort = 0u
+    var qCount: UShort = 0u
 
     /**
      * number of answer entries
      */
-    var ans_count: UShort = 0u
+    var ansCount: UShort = 0u
 
     /**
      * number of authority entries
      */
-    var auth_count: UShort = 0u
+    var authCount: UShort = 0u
 
     /**
      * number of resource entries
      */
-    var add_count: UShort = 0u
+    var addCount: UShort = 0u
 
     suspend fun read(input: AsyncInput, buf: ByteBuffer) {
         val len = input.readShort(buf)
-        if (buf.capacity < len) {
-            throw IllegalArgumentException("Buffer Capacity must be more than $len")
-        }
+        require(buf.capacity >= len) { "Buffer Capacity must be more than $len" }
         buf.clear()
         buf.reset(0, len.toInt())
         input.readFully(buf)
         buf.flip()
-
         readPackage(buf)
     }
 
     fun readPackage(buf: ByteBuffer) {
-        id = buf.readShort()
-        val flags = (buf.readShort().toInt() and 0xFFFF).toBitset()
-        qr = flags[0 + Short.SIZE_BITS]
-        opcode = flags.getByte4(1 + Short.SIZE_BITS)
-        aa = flags[5 + Short.SIZE_BITS]
-        tc = flags[6 + Short.SIZE_BITS]
-        rd = flags[7 + Short.SIZE_BITS]
-        ra = flags[8 + Short.SIZE_BITS]
-        z = flags[9 + Short.SIZE_BITS]
-        ad = flags[10 + Short.SIZE_BITS]
-        cd = flags[11 + Short.SIZE_BITS]
-        rcode = flags.getByte4(12 + Short.SIZE_BITS)
-        q_count = buf.readShort().toUShort()
-        ans_count = buf.readShort().toUShort()
-        auth_count = buf.readShort().toUShort()
-        add_count = buf.readShort().toUShort()
+        header.read(buf)
+        qCount = buf.readShort().toUShort()
+        ansCount = buf.readShort().toUShort()
+        authCount = buf.readShort().toUShort()
+        addCount = buf.readShort().toUShort()
     }
 
     fun writeStart(dest: ByteBuffer): Int {
@@ -139,10 +138,10 @@ class DnsHeader {
             .let { it and 0xFFF }
             .toShort()
         dest.writeShort(flags)
-        dest.writeShort(q_count.toShort())
-        dest.writeShort(ans_count.toShort())
-        dest.writeShort(auth_count.toShort())
-        dest.writeShort(add_count.toShort())
+        dest.writeShort(qCount.toShort())
+        dest.writeShort(ansCount.toShort())
+        dest.writeShort(authCount.toShort())
+        dest.writeShort(addCount.toShort())
     }
 
     fun writeEnd(packageStartPosition: Int, dest: ByteBuffer) {
@@ -154,6 +153,6 @@ class DnsHeader {
 
     override fun toString(): String {
         val id = id.toUShort().toString(16)
-        return "DnsHeader(id=0x$id, qr=$qr, opcode=$opcode, aa=$aa, tc=$tc, rd=$rd, ra=$ra, z=$z, ad=$ad, cd=$cd, rcode=$rcode, q_count=$q_count, ans_count=$ans_count, auth_count=$auth_count, add_count=$add_count)"
+        return "DnsHeader(id=0x$id, qr=$qr, opcode=$opcode, aa=$aa, tc=$tc, rd=$rd, ra=$ra, z=$z, ad=$ad, cd=$cd, rcode=$rcode, q_count=$qCount, ans_count=$ansCount, auth_count=$authCount, add_count=$addCount)"
     }
 }

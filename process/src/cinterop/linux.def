@@ -1,9 +1,13 @@
 
 ---
 #include <signal.h>
+#include <errno.h>
 
 #ifndef SIGBREAK
     #define SIGBREAK 21
 #endif
 
 const int internal_SIGBREAK = SIGBREAK;
+int internal_get_ERRNO(){
+    return errno;
+}

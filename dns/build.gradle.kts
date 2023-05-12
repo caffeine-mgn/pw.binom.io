@@ -24,7 +24,7 @@ kotlin {
             dependencies {
                 api(project(":core"))
                 api(project(":network"))
-                api("pw.binom:bitarray:0.1.0")
+                api("pw.binom:bitarray:0.2.2")
             }
         }
         val commonTest by getting {

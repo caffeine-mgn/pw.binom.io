@@ -3,20 +3,36 @@ plugins {
     id("maven-publish")
 }
 apply<pw.binom.KotlinConfigPlugin>()
+fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useLinux() {
+    compilations["main"].cinterops {
+        create("linux") {
+            defFile = project.file("src/cinterop/linux.def")
+            packageName = "platform.common"
+        }
+    }
+}
 kotlin {
     jvm()
-    linuxX64()
+    linuxX64 {
+        useLinux()
+    }
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp()
+        linuxArm32Hfp {
+            useLinux()
+        }
     }
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64()
+        linuxArm64 {
+            useLinux()
+        }
     }
     mingwX64()
     if (pw.binom.Target.MINGW_X86_SUPPORT) {
         mingwX86()
     }
-    macosX64()
+    macosX64 {
+        useLinux()
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {

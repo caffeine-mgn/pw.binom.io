@@ -19,7 +19,7 @@ import kotlin.time.ExperimentalTime
 
 class ClientTest {
 
-    @Ignore
+//    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() = runTest {
@@ -37,10 +37,10 @@ class ClientTest {
             ad = true
             cd = false
             rcode = 0
-            q_count = 1u
-            ans_count = 0u
-            auth_count = 0u
-            add_count = 1u
+            qCount = 1u
+            ansCount = 0u
+            authCount = 0u
+            addCount = 1u
         }
         val query = QueryPackage().apply {
             name = "google.com"
@@ -64,7 +64,7 @@ class ClientTest {
                 0xa3u,
                 0x4bu,
                 0xc8u,
-                0xfeu
+                0xfeu,
             ).toByteArray()
         }
         val record = DnsRecord(
@@ -84,7 +84,7 @@ class ClientTest {
                     name = "google.com",
                     type = 1u,
                     clazz = 1u,
-                )
+                ),
             ),
             add = listOf(
                 Resource(
@@ -104,12 +104,12 @@ class ClientTest {
                         0xa3u,
                         0x4bu,
                         0xc8u,
-                        0xfeu
-                    ).toByteArray()
-                )
+                        0xfeu,
+                    ).toByteArray(),
+                ),
             ),
             ans = emptyList(),
-            auth = emptyList()
+            auth = emptyList(),
         )
         val buf = ByteBuffer(512)
         try {
@@ -129,19 +129,19 @@ class ClientTest {
 //                output.flush()
             header.read(input, buf)
 
-            repeat(header.q_count.toInt()) {
+            repeat(header.qCount.toInt()) {
                 query.read(buf)
                 println("Q->$query")
             }
-            repeat(header.ans_count.toInt()) {
+            repeat(header.ansCount.toInt()) {
                 r.read(buf)
                 println("ANS->$r")
             }
-            repeat(header.auth_count.toInt()) {
+            repeat(header.authCount.toInt()) {
                 r.read(buf)
                 println("AUTH->$r")
             }
-            repeat(header.add_count.toInt()) {
+            repeat(header.addCount.toInt()) {
                 r.read(buf)
                 println("ADD->$r")
             }
@@ -173,12 +173,12 @@ class ClientTest {
                         println("Header: $header")
 //                            header.read(client, buf)
 // //                            println("Header [${header.q_count}]: $header")
-                        repeat(header.q_count.toInt()) {
+                        repeat(header.qCount.toInt()) {
                             println("Reading Q...")
                             q.read(buf)
                             println("->$q")
                         }
-                        repeat(header.add_count.toInt()) {
+                        repeat(header.addCount.toInt()) {
                             println("Read Add...")
                             r.read(buf)
                             println("Add $r")

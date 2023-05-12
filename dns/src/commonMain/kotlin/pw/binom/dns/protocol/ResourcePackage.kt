@@ -26,6 +26,14 @@ class ResourcePackage {
         return this
     }
 
+    val sizeBytes
+        get() = name.length + 1 +
+            Short.SIZE_BYTES +
+            Short.SIZE_BYTES +
+            Int.SIZE_BYTES +
+            Short.SIZE_BYTES +
+            rdata.size
+
     fun write(buf: ByteBuffer) {
         buf.writeDns(name.toDnsString())
         buf.writeShort(type.toShort())
@@ -46,9 +54,9 @@ class ResourcePackage {
 
     override fun toString(): String {
         return "Resource(name='$name', type=$type, clazz=$clazz, ttl=$ttl, rdata=${
-        rdata.map {
-            it.toUByte().toString(16)
-        }
+            rdata.map {
+                it.toUByte().toString(16)
+            }
         })"
     }
 }
