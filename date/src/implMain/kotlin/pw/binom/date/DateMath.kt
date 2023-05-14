@@ -9,7 +9,7 @@ internal object DateMath {
         hours: Int,
         minutes: Int,
         seconds: Int,
-        milliseconds: Int
+        milliseconds: Int,
     ): Long {
         val days = toEpochDay(
             year = year,

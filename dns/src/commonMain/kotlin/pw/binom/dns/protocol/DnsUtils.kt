@@ -4,6 +4,9 @@ import pw.binom.fromBytes
 import pw.binom.io.ByteBuffer
 
 internal fun String.toDnsString(): CharArray {
+    if (isEmpty()) {
+        return CharArray(0)
+    }
     var lock = 0
     val host = "$this."
     val out = CharArray(host.length)

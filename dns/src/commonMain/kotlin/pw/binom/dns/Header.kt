@@ -6,71 +6,71 @@ import pw.binom.readShort
 import pw.binom.toBitset
 import pw.binom.writeShort
 
-class Header {
+data class Header(
+    /**
+     * identification number
+     */
+    var id: Short = 0,
+
+    /**
+     * recursion desired
+     */
+    var rd: Boolean = false,
+
+    /**
+     * truncated message
+     */
+    var tc: Boolean = false,
+
+    /**
+     * authoritive answer
+     */
+    var aa: Boolean = false,
+
+    /**
+     * purpose of message
+     */
+    var opcode: Opcode = Opcode.QUERY,
+
+    /**
+     * query/response flag
+     */
+    var qr: Boolean = false,
+
+    /**
+     * recursion available
+     */
+    var ra: Boolean = false,
+
+    /**
+     * its z! reserved
+     */
+    var z: Boolean = false,
+
+    /**
+     * authenticated data
+     */
+    var ad: Boolean = false,
+
+    /**
+     * checking disabled
+     */
+    var cd: Boolean = false,
+
+    /**
+     * response code
+     */
+    var rcode: Rcode = Rcode.NOERROR,
+) {
 
     companion object {
         const val SIZE_BYTES = Short.SIZE_BYTES * 2
     }
 
-    /**
-     * identification number
-     */
-    var id: Short = 0
-
-    /**
-     * recursion desired
-     */
-    var rd: Boolean = false
-
-    /**
-     * truncated message
-     */
-    var tc: Boolean = false
-
-    /**
-     * authoritive answer
-     */
-    var aa: Boolean = false
-
-    /**
-     * purpose of message
-     */
-    var opcode: Byte = 0
-
-    /**
-     * query/response flag
-     */
-    var qr: Boolean = false
-
-    /**
-     * recursion available
-     */
-    var ra: Boolean = false
-
-    /**
-     * its z! reserved
-     */
-    var z: Boolean = false
-
-    /**
-     * authenticated data
-     */
-    var ad: Boolean = false
-
-    /**
-     * checking disabled
-     */
-    var cd: Boolean = false
-
-    /**
-     * response code
-     */
-    var rcode: Byte = 0
-
     private fun setFlags(value: Short) {
         val flags = (value.toInt() and 0xFFFF).toBitset()
         qr = flags[0 + Short.SIZE_BITS]
-        opcode = flags.getByte4(1 + Short.SIZE_BITS)
+        opcode = Opcode(flags.getByte4(1 + Short.SIZE_BITS))
         aa = flags[5 + Short.SIZE_BITS]
         tc = flags[6 + Short.SIZE_BITS]
         rd = flags[7 + Short.SIZE_BITS]
@@ -78,7 +78,7 @@ class Header {
         z = flags[9 + Short.SIZE_BITS]
         ad = flags[10 + Short.SIZE_BITS]
         cd = flags[11 + Short.SIZE_BITS]
-        rcode = flags.getByte4(12 + Short.SIZE_BITS)
+        rcode = Rcode(flags.getByte4(12 + Short.SIZE_BITS))
     }
 
     fun read(buffer: ByteBuffer) {
@@ -96,10 +96,10 @@ class Header {
         setFlags(input.readShort(buffer))
     }
 
-    private fun getFlags() = BitArray32().update(0 + Short.SIZE_BITS, qr).updateByte4(1 + Short.SIZE_BITS, opcode)
+    private fun getFlags() = BitArray32().update(0 + Short.SIZE_BITS, qr).updateByte4(1 + Short.SIZE_BITS, opcode.raw)
         .update(5 + Short.SIZE_BITS, aa).update(6 + Short.SIZE_BITS, tc).update(7 + Short.SIZE_BITS, rd)
         .update(8 + Short.SIZE_BITS, ra).update(9 + Short.SIZE_BITS, z).update(10 + Short.SIZE_BITS, ad)
-        .update(11 + Short.SIZE_BITS, cd).updateByte4(12 + Short.SIZE_BITS, rcode).toInt().let { it and 0xFFF }
+        .update(11 + Short.SIZE_BITS, cd).updateByte4(12 + Short.SIZE_BITS, rcode.raw).toInt().let { it and 0xFFF }
         .toShort()
 
     suspend fun write(output: AsyncOutput, buffer: ByteBuffer) {

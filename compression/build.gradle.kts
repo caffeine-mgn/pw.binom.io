@@ -26,10 +26,11 @@ kotlin {
     macosX64()
     */
     allTargets {
+        withoutDeprecated()
         -"js"
-        -"linuxMips32"
-        -"linuxMipsel32"
-        -"wasm32"
+//        -"linuxMips32"
+//        -"linuxMipsel32"
+//        -"wasm"
     }
     sourceSets {
         useDefault()

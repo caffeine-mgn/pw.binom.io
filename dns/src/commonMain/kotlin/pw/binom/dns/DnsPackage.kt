@@ -2,8 +2,7 @@ package pw.binom.dns
 
 import pw.binom.dns.protocol.QueryPackage
 import pw.binom.dns.protocol.ResourcePackage
-import pw.binom.io.AsyncInput
-import pw.binom.io.ByteBuffer
+import pw.binom.io.*
 import pw.binom.readShort
 import pw.binom.writeShort
 
@@ -21,7 +20,7 @@ import pw.binom.writeShort
  *    +---------------------+
  */
 
-class DnsPackage(
+data class DnsPackage(
     val header: Header,
     val question: List<QueryPackage>,
     val answer: List<ResourcePackage>,
@@ -37,11 +36,7 @@ class DnsPackage(
             additional.sumOf { it.sizeBytes }
 
     companion object {
-        suspend fun read(input: AsyncInput, buffer: ByteBuffer): DnsPackage {
-            val len = input.readShort(buffer).toInt()
-            buffer.reset(0, len)
-            input.readFully(buffer)
-            buffer.flip()
+        fun readWithoutSize(buffer: ByteBuffer): DnsPackage {
             val header = Header()
             header.read(buffer)
             val question = ArrayList<QueryPackage>()
@@ -88,11 +83,59 @@ class DnsPackage(
                 additional = additional,
             )
         }
+
+        suspend fun read(input: AsyncInput, buffer: ByteBuffer): DnsPackage {
+            val len = input.readShort(buffer).toInt()
+            buffer.reset(0, len)
+            input.readFully(buffer)
+            buffer.flip()
+            return readWithoutSize(buffer)
+        }
+
+        fun read(input: Input, buffer: ByteBuffer): DnsPackage {
+            val len = input.readShort(buffer).toInt()
+            buffer.reset(0, len)
+            input.readFully(buffer)
+            buffer.flip()
+            return readWithoutSize(buffer)
+        }
+    }
+
+    suspend fun write(output: AsyncOutput, buffer: ByteBuffer) {
+        buffer.clear()
+        buffer.writeShort(sizeBytes.toShort())
+        createBuffer(buffer)
+        buffer.flip()
+        output.writeFully(buffer)
+    }
+
+    suspend fun write(output: AsyncOutput) =
+        ByteBuffer(sizeBytes + Short.SIZE_BYTES).use { buffer ->
+            write(output = output, buffer = buffer)
+        }
+
+    fun write(output: Output) =
+        ByteBuffer(sizeBytes + Short.SIZE_BYTES).use { buffer ->
+            write(output = output, buffer = buffer)
+        }
+
+    fun write(output: Output, buffer: ByteBuffer) {
+        buffer.clear()
+        buffer.writeShort(sizeBytes.toShort())
+        createBuffer(buffer)
+        buffer.flip()
+        output.writeFully(buffer)
     }
 
     fun createBuffer(buffer: ByteBuffer) {
-        buffer.writeShort(sizeBytes.toShort())
         header.write(buffer)
+        PayloadCounters.write(
+            buffer = buffer,
+            qCount = question.size,
+            ansCount = answer.size,
+            authCount = authority.size,
+            addCount = additional.size,
+        )
         question.forEach {
             it.write(buffer)
         }

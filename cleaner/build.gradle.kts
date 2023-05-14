@@ -1,3 +1,4 @@
+
 import pw.binom.publish.useDefault
 import java.util.*
 
@@ -11,7 +12,9 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    allTargets()
+    allTargets {
+//        -"wasm"
+    }
 
     sourceSets {
         val commonMain by getting {

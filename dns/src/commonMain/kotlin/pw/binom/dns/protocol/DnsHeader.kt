@@ -2,6 +2,8 @@ package pw.binom.dns.protocol
 
 import pw.binom.BitArray32
 import pw.binom.dns.Header
+import pw.binom.dns.Opcode
+import pw.binom.dns.Rcode
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
 import pw.binom.readShort
@@ -37,7 +39,7 @@ class DnsHeader {
     /**
      * purpose of message
      */
-    val opcode: Byte
+    val opcode: Opcode
         get() = header.opcode
 
     /**
@@ -73,7 +75,7 @@ class DnsHeader {
     /**
      * response code
      */
-    val rcode: Byte
+    val rcode: Rcode
         get() = header.rcode
 
     /**
@@ -125,7 +127,7 @@ class DnsHeader {
         dest.writeShort(id)
         val flags = BitArray32()
             .update(0 + Short.SIZE_BITS, qr)
-            .updateByte4(1 + Short.SIZE_BITS, opcode)
+            .updateByte4(1 + Short.SIZE_BITS, opcode.raw)
             .update(5 + Short.SIZE_BITS, aa)
             .update(6 + Short.SIZE_BITS, tc)
             .update(7 + Short.SIZE_BITS, rd)
@@ -133,7 +135,7 @@ class DnsHeader {
             .update(9 + Short.SIZE_BITS, z)
             .update(10 + Short.SIZE_BITS, ad)
             .update(11 + Short.SIZE_BITS, cd)
-            .updateByte4(12 + Short.SIZE_BITS, rcode)
+            .updateByte4(12 + Short.SIZE_BITS, rcode.raw)
             .toInt()
             .let { it and 0xFFF }
             .toShort()

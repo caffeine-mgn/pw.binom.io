@@ -10,7 +10,7 @@ actual class Calendar(private val utcTime: Long, timeZoneOffset: Int) {
 
     private val tm = ZonedDateTime.ofInstant(
         Instant.ofEpochMilli(utcTime),
-        ZoneOffset.ofTotalSeconds(0)
+        ZoneOffset.ofTotalSeconds(0),
     ).withZoneSameInstant(ZoneOffset.ofHoursMinutes(timeZoneOffset / 60, timeZoneOffset - timeZoneOffset / 60 * 60))
 
     actual val year

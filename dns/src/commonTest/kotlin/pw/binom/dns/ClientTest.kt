@@ -19,24 +19,24 @@ import kotlin.time.ExperimentalTime
 
 class ClientTest {
 
-//    @Ignore
+    //    @Ignore
     @OptIn(ExperimentalTime::class)
     @Test
     fun test() = runTest {
         val n = NetworkCoroutineDispatcherImpl()
 
         val header = DnsHeader().apply {
-            id = Random.nextInt().toShort()
-            qr = false
-            opcode = 0
-            aa = false
-            tc = false
-            rd = true
-            ra = false
-            z = false
-            ad = true
-            cd = false
-            rcode = 0
+            header.id = Random.nextInt().toShort()
+            header.qr = false
+            header.opcode = Opcode.QUERY
+            header.aa = false
+            header.tc = false
+            header.rd = true
+            header.ra = false
+            header.z = false
+            header.ad = true
+            header.cd = false
+            header.rcode = Rcode.NOERROR
             qCount = 1u
             ansCount = 0u
             authCount = 0u
@@ -44,13 +44,13 @@ class ClientTest {
         }
         val query = QueryPackage().apply {
             name = "google.com"
-            type = 1u
-            clazz = 1u
+            type = Type.A
+            clazz = Class.IN
         }
         val r = ResourcePackage().apply {
             name = ""
-            type = 41u
-            clazz = 4096u
+            type = Type.OPT
+            clazz = Class(4096u)
             ttl = 0u
             rdata = ubyteArrayOf(
                 0x0u,
@@ -68,29 +68,31 @@ class ClientTest {
             ).toByteArray()
         }
         val record = DnsRecord(
-            id = Random.nextInt().toShort(),
-            qr = false,
-            opcode = 0,
-            aa = false,
-            tc = false,
-            rd = true,
-            ra = false,
-            z = false,
-            ad = true,
-            cd = false,
-            rcode = 0,
+            header = Header(
+                id = Random.nextInt().toShort(),
+                qr = false,
+                opcode = Opcode.QUERY,
+                aa = false,
+                tc = false,
+                rd = true,
+                ra = false,
+                z = false,
+                ad = true,
+                cd = false,
+                rcode = Rcode.NOERROR,
+            ),
             queries = listOf(
                 Query(
                     name = "google.com",
-                    type = 1u,
-                    clazz = 1u,
+                    type = Type.A,
+                    clazz = Class.IN,
                 ),
             ),
             add = listOf(
                 Resource(
                     name = "",
-                    type = 41u,
-                    clazz = 4096u,
+                    type = Type.OPT,
+                    clazz = Class(4096u),
                     ttl = 0u,
                     rdata = ubyteArrayOf(
                         0x0u,

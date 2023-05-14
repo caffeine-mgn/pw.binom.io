@@ -4,8 +4,8 @@ import pw.binom.dns.protocol.ResourcePackage
 
 data class Resource(
     val name: String,
-    val type: UShort,
-    val clazz: UShort,
+    val type: Type,
+    val clazz: Class,
     val ttl: UInt,
     val rdata: ByteArray,
 ) {

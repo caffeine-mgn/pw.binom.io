@@ -5,15 +5,24 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinNativeTargetPreset
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
+internal class BuildTarget(val name: String, val preset: String)
 class TargetConfig {
-    val nativeTargets = ArrayList<String>()
+    internal val nativeTargets = ArrayList<BuildTarget>()
 
     operator fun String.unaryMinus() {
-        nativeTargets -= this
+        val target = nativeTargets.find { it.name == this }
+            ?: throw GradleException("Target \"$this\" not found. Available targets: ${nativeTargets.map { it.name }}")
+        nativeTargets.remove(target)
     }
 
     operator fun KonanTarget.unaryMinus() {
         -this.name
+    }
+
+    fun withoutDeprecated() {
+        KonanTarget.deprecatedTargets.forEach {
+            -it
+        }
     }
 }
 
@@ -66,18 +75,19 @@ fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
     val c = TargetConfig()
     presets.forEach {
         if (it is AbstractKotlinNativeTargetPreset<*>) {
-            c.nativeTargets += it.name
+            c.nativeTargets += BuildTarget(it.konanTarget.name, it.name)
         }
     }
-    c.nativeTargets += "jvm"
-    c.nativeTargets += "js"
+    c.nativeTargets += BuildTarget("jvm", "jvm")
+    c.nativeTargets += BuildTarget("js", "js")
+//    c.nativeTargets += BuildTarget("wasm", "wasm")
 //    c.nativeTargets += "wasm"
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        c.nativeTargets += "android"
+        c.nativeTargets += BuildTarget("android", "android")
     }
     func(c)
     c.nativeTargets.forEach {
-        when (it) {
+        when (it.name) {
             "jvm" -> jvm()
             "js" -> js(KotlinJsCompilerType.IR) {
                 browser {
@@ -90,12 +100,17 @@ fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
                 nodejs()
             }
 
-            "wasm" -> wasm()
+            "wasm" -> wasm {
+                browser()
+                nodejs()
+                d8()
+            }
+
             "android" -> android {
                 publishAllLibraryVariants()
             }
 
-            else -> targetFromPreset(presets.findByName(it) ?: throw GradleException("target $it not found"))
+            else -> targetFromPreset(presets.findByName(it.preset) ?: throw GradleException("target $it not found"))
         }
     }
 }

@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import pw.binom.publish.useDefault
 
 plugins {
@@ -10,31 +11,16 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
+    targets.all {
+        compilations.findByName("main")?.compileTaskProvider?.configure {
+            this.compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
         }
     }
-    jvm()
-    linuxX64()
-    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp()
-    }
-    mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
-    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64()
-    }
-    macosX64()
-//    js(pw.binom.Target.JS_TARGET) {
-//        browser()
-//        nodejs()
-//    }
-    targets.all {
-        compilations.findByName("main")?.compileKotlinTask?.kotlinOptions?.freeCompilerArgs =
-            listOf("-opt-in=kotlin.RequiresOptIn")
+    allTargets {
+//        -"wasm"
+        -"js"
+        -KonanTarget.ANDROID_ARM32
+        withoutDeprecated()
     }
     sourceSets {
         val commonMain by getting {

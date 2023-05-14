@@ -4,8 +4,8 @@ import pw.binom.dns.protocol.QueryPackage
 
 data class Query(
     var name: String,
-    var type: UShort,
-    var clazz: UShort,
+    var type: Type,
+    var clazz: Class,
 ) {
 
     val sizeBytes

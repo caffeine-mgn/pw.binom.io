@@ -1,5 +1,5 @@
 import pw.binom.eachKotlinCompile
-import pw.binom.publish.dependsOn
+import pw.binom.useDefault
 import java.util.*
 
 plugins {
@@ -11,43 +11,9 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
-        }
-    }
-    jvm()
-    linuxX64()
-    linuxArm64()
-    linuxArm32Hfp()
-    linuxMips32()
-    linuxMipsel32()
-    mingwX64()
-    mingwX86()
-    macosX64()
-    macosArm64()
-    iosX64()
-    iosArm32()
-    iosArm64()
-    iosSimulatorArm64()
-    watchosX64()
-    watchosX86()
-    watchosArm32()
-    watchosArm64()
-    watchosSimulatorArm64()
-    androidNativeX64()
-    androidNativeX86()
-    androidNativeArm32()
-    androidNativeArm64()
-    js(pw.binom.Target.JS_TARGET) {
-        browser {
-            testTask {
-                useKarma {
-                    useFirefoxHeadless()
-                }
-            }
-        }
-        nodejs()
+    allTargets {
+        -"wasm32"
+//        -"wasm"
     }
     sourceSets {
         val commonMain by getting {
@@ -55,29 +21,18 @@ kotlin {
                 api(kotlin("stdlib-common"))
             }
         }
+        useDefault()
 
         val implMain by creating {
             dependsOn(commonMain)
+        }
+        val nativeCommonMain by getting {
+            dependsOn(implMain)
         }
 
         val jsMain by getting {
             dependsOn(implMain)
         }
-        val linuxX64Main by getting {
-            dependsOn(implMain)
-        }
-        val macosX64Main by getting {
-            dependsOn(implMain)
-        }
-        val mingwX64Main by getting {
-            dependsOn(implMain)
-        }
-        dependsOn("linux*Main", linuxX64Main)
-        dependsOn("mingw*Main", mingwX64Main)
-        dependsOn("macos*Main", mingwX64Main)
-        dependsOn("watchos*Main", macosX64Main)
-        dependsOn("ios*Main", macosX64Main)
-        dependsOn("androidNative*Main", linuxX64Main)
 
         val commonTest by getting {
             dependencies {
@@ -86,23 +41,6 @@ kotlin {
                 api(project(":env"))
             }
             kotlin.srcDir("build/gen")
-        }
-        val jvmMain by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-                dependsOn(jvmMain)
-            }
-        }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test"))
-            }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
         }
 
         val jsTest by getting {
@@ -123,7 +61,7 @@ tasks {
 
 val test_data_currentTZ get() = ${TimeZone.getDefault().rawOffset.let { it / 1000 / 60 }}
 val test_data_now get() = ${Date().time}
-"""
+""",
         )
     }
 
