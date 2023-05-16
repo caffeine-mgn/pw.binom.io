@@ -33,12 +33,8 @@ abstract class AbstractThreadExecutorService : ExecutorService {
         if (!closed.compareAndSet(false, true)) {
             throw ClosedException()
         }
-        println("AbstractThreadExecutorService::shutdownNow #1")
         val list = ArrayList<() -> Unit>(queue.size)
-
-        println("AbstractThreadExecutorService::shutdownNow #2")
         joinAllThread()
-        println("AbstractThreadExecutorService::shutdownNow #3")
         while (!queue.isEmpty) {
             val func = queue.pop()
             if (func === maker) {
