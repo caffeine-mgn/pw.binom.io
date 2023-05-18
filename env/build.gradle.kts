@@ -29,7 +29,7 @@ kotlin {
                 api(kotlin("stdlib"))
                 api(project(":collections"))
             }
-            kotlin.srcDir("build/gen")
+//            kotlin.srcDir("build/gen")
         }
         val commonTest by getting {
             dependencies {
@@ -42,23 +42,23 @@ kotlin {
 }
 
 tasks {
-    val generateVersion = create("generateVersion") {
-        val sourceDir = project.buildDir.resolve("gen/pw/binom")
-        sourceDir.mkdirs()
-        val versionSource = sourceDir.resolve("version.kt")
-        outputs.files(versionSource)
-        inputs.property("version", project.version)
-
-        versionSource.writeText(
-            """package pw.binom
-
-const val BINOM_VERSION = "${project.version}"
-""",
-        )
-    }
-    eachKotlinCompile {
-        it.dependsOn(generateVersion)
-    }
+//    val generateVersion = create("generateVersion") {
+//        val sourceDir = project.buildDir.resolve("gen/pw/binom")
+//        sourceDir.mkdirs()
+//        val versionSource = sourceDir.resolve("version.kt")
+//        outputs.files(versionSource)
+//        inputs.property("version", project.version)
+//
+//        versionSource.writeText(
+//            """package pw.binom
+//
+//const val BINOM_VERSION = "${project.version}"
+//""",
+//        )
+//    }
+//    eachKotlinCompile {
+//        it.dependsOn(generateVersion)
+//    }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
     apply<pw.binom.plugins.AndroidSupportPlugin>()

@@ -1,6 +1,6 @@
 package pw.binom.io.httpClient
 
-import pw.binom.BINOM_VERSION
+//import pw.binom.BINOM_VERSION
 import pw.binom.Environment
 import pw.binom.charset.Charsets
 import pw.binom.crypto.Sha1MessageDigest
@@ -14,7 +14,7 @@ import pw.binom.os
 import pw.binom.url.URL
 
 private val defaultUserAgent =
-    "binom-$BINOM_VERSION/kotlin-${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
+    "binom-kotlin-${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
 
 class DefaultHttpRequest constructor(
     override var method: String,

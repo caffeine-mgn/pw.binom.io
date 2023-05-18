@@ -1,7 +1,7 @@
 package pw.binom.mq.nats.client
 
 import kotlinx.serialization.json.*
-import pw.binom.BINOM_VERSION
+//import pw.binom.BINOM_VERSION
 import pw.binom.io.*
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.SocketClosedException
@@ -46,7 +46,7 @@ class NatsRawConnection(
         lang: String = "kotlin",
         echo: Boolean = true,
         tlsRequired: Boolean = false,
-        version: String = BINOM_VERSION,
+        version: String = "0.1.x",
         user: String? = null,
         pass: String? = null,
     ): ConnectInfo {

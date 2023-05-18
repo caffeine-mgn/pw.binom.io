@@ -5,6 +5,7 @@ import java.util.*
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
+    id("com.github.ManifestClasspath") version "0.1.0-RELEASE"
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         id("com.android.library")
     }
