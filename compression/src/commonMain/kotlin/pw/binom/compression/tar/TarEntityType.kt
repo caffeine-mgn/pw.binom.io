@@ -9,7 +9,8 @@ enum class TarEntityType(internal val num: Byte) {
     BLOCK(52),
     DIRECTORY(53),
     FIFO(54),
-    CONTIGUOUS(55);
+    CONTIGUOUS(55),
+    ;
 
     companion object {
         private val byCode = values().associateBy { it.num }

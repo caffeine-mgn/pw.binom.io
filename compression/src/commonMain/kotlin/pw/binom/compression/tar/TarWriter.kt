@@ -4,8 +4,9 @@ import pw.binom.io.*
 import pw.binom.set
 
 private val ZERO_BYTE = ByteBuffer(100).also {
-    while (it.remaining > 0)
+    while (it.remaining > 0) {
         it.put(0)
+    }
 }
 
 fun ByteBuffer.writeZero() {
@@ -80,11 +81,11 @@ private val magic = byteArrayOf(
     't'.code.toByte(),
     'a'.code.toByte(),
     'r'.code.toByte(),
-    0
+    0,
 )
 private val version = byteArrayOf(
     '0'.code.toByte(),
-    '0'.code.toByte()
+    '0'.code.toByte(),
 )
 
 private val longLink = "././@LongLink".encodeToByteArray()
@@ -93,15 +94,117 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
 
     private var entityWriting = false
 
-    fun newEntity(name: String, mode: UShort, uid: UShort, gid: UShort, time: Long, type: TarEntityType): Output {
-        checkFinished()
-        if (entityWriting) {
-            throw IllegalStateException("You mast close previous Entity")
+    private abstract class AbstractOutput(
+        val block: ByteBuffer,
+        val stream: Output,
+        val closeListener: () -> Unit,
+    ) : Output {
+        protected abstract val dateSize: Long
+        protected open fun closeCheck() {
         }
+
+        protected open fun beforeZeros() {
+        }
+
+        protected open fun beforeClose() {
+        }
+
+        override fun close() {
+            closeCheck()
+            dateSize.toOct(block, 124, 12)
+
+            block.calcCheckSum().toOct(block, 148, 7)
+            block[155] = ' '.code.toByte()
+            stream.writeFully(block)
+            block.close()
+            beforeZeros()
+
+            val mod = (dateSize % BLOCK_SIZE).toInt()
+            if (mod > 0) {
+                val emptyBytes = BLOCK_SIZE - mod
+                stream.writeZero(emptyBytes)
+            }
+            closeListener()
+            beforeClose()
+        }
+    }
+
+    private class KnownSizeOutput(
+        block: ByteBuffer,
+        stream: Output,
+        val size: Long,
+        closeListener: () -> Unit,
+    ) : AbstractOutput(closeListener = closeListener, block = block, stream = stream) {
+        private var wrote = 0L
+
+        override val dateSize: Long
+            get() = size
+
+        override fun write(data: ByteBuffer): Int {
+            require(wrote + data.remaining <= size) { "Real data size should be equals defined size before" }
+            val l = stream.write(data)
+            if (l > 0) {
+                wrote += l
+            }
+            return l
+        }
+
+        override fun flush() {
+            stream.flush()
+        }
+
+        override fun closeCheck() {
+            check(wrote == size) { "Real data size should be equals defined size before" }
+        }
+    }
+
+    private class UnknownSizeOutput(
+        block: ByteBuffer,
+        stream: Output,
+        closeListener: () -> Unit,
+    ) : AbstractOutput(closeListener = closeListener, block = block, stream = stream) {
+        private val data = ByteArrayOutput()
+
+        override fun write(data: ByteBuffer): Int = this.data.write(data)
+
+        override fun flush() {
+            data.flush()
+        }
+
+        override val dateSize: Long
+            get() = data.size.toLong()
+
+        override fun beforeZeros() {
+            data.flush()
+            data.locked {
+                stream.writeFully(it)
+            }
+        }
+
+        override fun beforeClose() {
+            data.close()
+        }
+    }
+
+    private fun finishEntityWrite() {
+        entityWriting = false
+    }
+
+    fun newEntity(
+        name: String,
+        mode: UShort,
+        uid: UShort,
+        gid: UShort,
+        time: Long,
+        type: TarEntityType,
+        dataSize: Long?,
+    ): Output {
+        checkFinished()
+        check(!entityWriting) { "You mast close previous Entity" }
         entityWriting = true
         val block = ByteBuffer(BLOCK_SIZE)
 
-        name.encodeToByteArray().wrap().use { nameBytes ->
+        name.encodeToByteArray().wrap { nameBytes ->
             if (nameBytes.capacity > 100) {
                 longLink.copyInto(block)
                 mode.toOct(block, 100, 8)
@@ -118,7 +221,7 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
                 block[155] = ' '.code.toByte()
                 stream.write(block)
                 stream.write(nameBytes)
-                var fullSize = (nameBytes.capacity + 1).forPart(BLOCK_SIZE.toInt())
+                val fullSize = (nameBytes.capacity + 1).forPart(BLOCK_SIZE.toInt())
                 val needAddZero = fullSize - nameBytes.capacity
                 stream.writeZero(needAddZero)
                 block.clear()
@@ -140,37 +243,19 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
         block[156] = type.num
         magic.copyInto(block, 257)
         version.copyInto(block, 263)
-
-        return object : Output {
-            val data = ByteArrayOutput()
-
-            override fun write(data: ByteBuffer): Int =
-                this.data.write(data)
-
-            override fun flush() {
-                data.flush()
-            }
-
-            override fun close() {
-                data.size.toUInt().toOct(block, 124, 12)
-
-                block.calcCheckSum().toOct(block, 148, 7)
-                block[155] = ' '.code.toByte()
-                stream.writeFully(block)
-                block.close()
-                data.flush()
-                data.locked {
-                    stream.writeFully(it)
-                }
-
-                val mod = data.size % BLOCK_SIZE
-                if (mod > 0) {
-                    val emptyBytes = BLOCK_SIZE - mod
-                    stream.writeZero(emptyBytes)
-                }
-                entityWriting = false
-                data.close()
-            }
+        return if (dataSize == null) {
+            UnknownSizeOutput(
+                block = block,
+                stream = stream,
+                closeListener = this::finishEntityWrite,
+            )
+        } else {
+            KnownSizeOutput(
+                block = block,
+                stream = stream,
+                size = dataSize,
+                closeListener = this::finishEntityWrite,
+            )
         }
     }
 
@@ -178,18 +263,14 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
         private set
 
     private inline fun checkFinished() {
-        if (isFinished) {
-            throw IllegalStateException("TarWrite already finished")
-        }
+        check(!isFinished) { "TarWrite already finished" }
     }
 
     override fun close() {
         checkFinished()
-        if (entityWriting) {
-            throw IllegalStateException("You mast close previous Entity")
-        }
-        stream.writeZero(BLOCK_SIZE.toInt())
-        stream.writeZero(BLOCK_SIZE.toInt())
+        check(!entityWriting) { "You mast close previous Entity" }
+        stream.writeZero(BLOCK_SIZE)
+        stream.writeZero(BLOCK_SIZE)
         isFinished = true
         stream.flush()
         if (closeStream) {
@@ -226,7 +307,7 @@ internal fun ByteArray.copyInto(
     destination: ByteBuffer,
     destinationOffset: Int = 0,
     startIndex: Int = 0,
-    endIndex: Int = size
+    endIndex: Int = size,
 ): ByteBuffer {
     destination.set(destinationOffset, endIndex - startIndex) {
         it.write(this, startIndex, endIndex - startIndex)
