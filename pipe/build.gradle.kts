@@ -49,7 +49,6 @@ kotlin {
             dependencies {
                 api(kotlin("stdlib-common"))
                 api(project(":io"))
-//                api(project(":atomic"))
             }
         }
         useDefault()

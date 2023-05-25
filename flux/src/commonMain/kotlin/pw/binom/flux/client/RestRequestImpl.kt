@@ -9,7 +9,11 @@ import pw.binom.io.httpClient.AsyncHttpRequestWriter
 import pw.binom.io.httpClient.HttpRequest
 import pw.binom.url.URL
 
-internal class RestRequestImpl(val request: HttpRequest, val serialization: RestClientSerialization) : RestRequest {
+internal class RestRequestImpl(
+    val request1: HttpRequest,
+    val serialization: RestClientSerialization,
+    override var request: String = request1.request,
+) : RestRequest {
     override suspend fun <T : Any> writeObject(serializer: KSerializer<T>, obj: T) {
         serialization.encode(
             request = this,
@@ -19,31 +23,31 @@ internal class RestRequestImpl(val request: HttpRequest, val serialization: Rest
     }
 
     override val headers: MutableHeaders
-        get() = request.headers
+        get() = request1.headers
     override val method: String
-        get() = request.method
+        get() = request1.method
     override val uri: URL
-        get() = request.uri
+        get() = request1.uri
 
     override suspend fun asyncClose() {
-        request.asyncClose()
+        request1.asyncClose()
     }
 
     override suspend fun getResponse(): RestResponse =
-        RestResponseImpl(resp = request.getResponse(), serialization = serialization)
+        RestResponseImpl(resp = request1.getResponse(), serialization = serialization)
 
-    override suspend fun startTcp(): AsyncChannel = request.startTcp()
+    override suspend fun startTcp(): AsyncChannel = request1.startTcp()
 
     override suspend fun startWebSocket(origin: String?, masking: Boolean): WebSocketConnection =
-        request.startWebSocket(origin = origin, masking = masking)
+        request1.startWebSocket(origin = origin, masking = masking)
 
-    override suspend fun writeData(): AsyncHttpRequestOutput = request.writeData()
+    override suspend fun writeData(): AsyncHttpRequestOutput = request1.writeData()
 
     override suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): RestResponse =
-        RestResponseImpl(resp = request.writeData(func), serialization = serialization)
+        RestResponseImpl(resp = request1.writeData(func), serialization = serialization)
 
-    override suspend fun writeText(): AsyncHttpRequestWriter = request.writeText()
+    override suspend fun writeText(): AsyncHttpRequestWriter = request1.writeText()
 
     override suspend fun writeText(func: suspend (AsyncHttpRequestWriter) -> Unit): RestResponse =
-        RestResponseImpl(resp = request.writeText(func), serialization = serialization)
+        RestResponseImpl(resp = request1.writeText(func), serialization = serialization)
 }

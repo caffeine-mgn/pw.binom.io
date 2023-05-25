@@ -11,11 +11,12 @@ fun interface ConnectionFactory {
             networkManager.tcpConnect(
                 NetworkAddress.create(
                     host = host,
-                    port = port
-                )
+                    port = port,
+                ),
             )
         }
     }
 
+    @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
     suspend fun connect(networkManager: NetworkManager, schema: String, host: String, port: Int): AsyncChannel
 }

@@ -27,6 +27,7 @@ kotlin {
                 api(project(":ssl"))
                 api(project(":http"))
                 api(project(":httpClient"))
+                api(project(":compression"))
                 api(project(":binom-coroutines"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }

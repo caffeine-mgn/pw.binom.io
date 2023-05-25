@@ -149,10 +149,13 @@ fun File.deleteRecursive(): Boolean {
 fun File.relative(path: Path): File = relative(path.raw)
 
 fun File.relative(path: String): File {
-    val s1 = path.indexOf('/')
-    val s2 = path.indexOf('\\')
-    val s3 = path.indexOf(":\\")
-    val s4 = path.indexOf(":/")
+    if (path.isEmpty()) {
+        return this
+    }
+//    val s1 = path.indexOf('/')
+//    val s2 = path.indexOf('\\')
+//    val s3 = path.indexOf(":\\")
+//    val s4 = path.indexOf(":/")
     val isAbsolute = path.startsWith("/") || path.startsWith("\\") || ":\\" in path || ":/" in path
     if (isAbsolute) {
         return File(path)

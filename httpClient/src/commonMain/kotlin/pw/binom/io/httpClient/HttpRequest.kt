@@ -11,6 +11,7 @@ interface HttpRequest : AsyncCloseable {
     val headers: MutableHeaders
     val method: String
     val uri: URL
+    var request: String
 
     /**
      * Starts write binary request

@@ -1,6 +1,6 @@
 package pw.binom.io.httpClient
 
-//import pw.binom.BINOM_VERSION
+// import pw.binom.BINOM_VERSION
 import pw.binom.Environment
 import pw.binom.charset.Charsets
 import pw.binom.crypto.Sha1MessageDigest
@@ -19,6 +19,7 @@ private val defaultUserAgent =
 class DefaultHttpRequest constructor(
     override var method: String,
     override val uri: URL,
+    override var request: String = uri.request.ifEmpty { "/" },
     val client: BaseHttpClient,
     val channel: AsyncAsciiChannel,
 ) : HttpRequest {
@@ -52,7 +53,6 @@ class DefaultHttpRequest constructor(
     }
 
     private suspend fun sendHeaders() {
-        val request = uri.request.ifEmpty { "/" }
         channel.writer.append(method).append(" ").append(request).append(" ").append("HTTP/1.1").append(Utils.CRLF)
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
@@ -123,7 +123,7 @@ class DefaultHttpRequest constructor(
         return RequestAsyncHttpRequestWriter(
             output = dataChannel,
             bufferSize = client.bufferSize,
-            charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8
+            charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8,
         )
     }
 

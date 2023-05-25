@@ -10,6 +10,6 @@ internal class RestClientImpl(val client: HttpClient, val serialization: RestCli
 
     override suspend fun connect(method: String, uri: URL): RestRequest {
         val req = client.connect(method = method, uri = uri)
-        return RestRequestImpl(request = req, serialization = serialization)
+        return RestRequestImpl(request1 = req, serialization = serialization)
     }
 }
