@@ -1,5 +1,4 @@
 import pw.binom.publish.useDefault
-import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")

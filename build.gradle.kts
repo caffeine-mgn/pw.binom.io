@@ -9,8 +9,9 @@ buildscript {
     }
 
     repositories {
-        mavenCentral()
         mavenLocal()
+        maven(url = "https://repo.binom.pw")
+        mavenCentral()
         maven(url = "https://plugins.gradle.org/m2/")
         maven(url = "https://maven.google.com")
     }
@@ -27,8 +28,8 @@ allprojects {
 
     repositories {
         mavenLocal()
-        mavenCentral()
         maven(url = "https://repo.binom.pw")
+        mavenCentral()
         maven(url = "https://plugins.gradle.org/m2/")
         maven(url = "https://maven.google.com")
     }

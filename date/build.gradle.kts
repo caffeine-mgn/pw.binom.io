@@ -12,7 +12,7 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     allTargets {
-        -"wasm32"
+//        -"wasm32"
 //        -"wasm"
     }
     sourceSets {

@@ -1,7 +1,10 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.konan.target.Family
+import org.jetbrains.kotlin.konan.target.HostManager
 import pw.binom.eachKotlinTest
 import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
+import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.dependsOn
 import pw.binom.useDefault
 
@@ -82,17 +85,13 @@ kotlin {
     }
     jvm()
     linuxX64 {
-        useNativeUtils()
-        useNativeNet()
     }
     linuxArm64 {
-        useNativeUtils()
-        useNativeNet()
     }
-    linuxArm32Hfp {
-        useNativeUtils()
-        useNativeNet()
-    }
+//    linuxArm32Hfp {
+//        useNativeUtils()
+//        useNativeNet()
+//    }
 //    linuxMips32 {
 //        useNativeUtils()
 // //        useNativeWepoll()
@@ -104,30 +103,34 @@ kotlin {
 //        useNativeNet()
 //    }
     mingw {
-        useNativeUtils()
-        useNativeMingw()
-        useNativeNet()
     }
-    macos {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    ios {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
-    }
-    watchos {
-        useNativeUtils()
-        useNativeMacos()
-        useNativeNet()
+    if (HostManager.hostIsMac) {
+        macos {
+        }
+        ios {
+        }
+        watchos {
+        }
     }
 //    androidNative {
 //        useNativeUtils()
 //        useNativeNet()
 //    }
 
+//    allTargets {
+//        -"js"
+//    }
+
+    eachNative {
+        if (konanTarget.family.isAppleFamily) {
+            useNativeMacos()
+        }
+        if (konanTarget.family == Family.MINGW) {
+            useNativeMingw()
+        }
+        useNativeUtils()
+        useNativeNet()
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -152,7 +155,9 @@ kotlin {
         val epollLikeTest by creating {
             dependsOn(nativeRunnableTest)
         }
+        val linuxMain by getting
         dependsOn("linuxMain", epollLikeMain)
+        dependsOn("androidNativeMain", linuxMain)
         dependsOn("mingwMain", epollLikeMain)
         dependsOn("linuxTest", epollLikeTest)
         dependsOn("mingwTest", epollLikeTest)

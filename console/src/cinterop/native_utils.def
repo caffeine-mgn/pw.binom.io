@@ -1,11 +1,14 @@
 ---
 #ifdef _WIN32
     #include <windows.h>
+//    #include <cstdio>
 #else
     #include <sys/ioctl.h>
     #include <stdio.h>
     #include <unistd.h>
+    #include <termios.h>
 #endif
+
 
 int internal_terminal_get_size(int* width, int* height)
 {
@@ -62,5 +65,85 @@ int internal_terminal_get_cursor_position(int* x, int* y){
 }
 
 int internal_terminal_clear_screen(){
+#ifdef _WIN32
     clrscr();
+#else
+    write(1,"\E[H\E[2J",7);
+#endif
+}
+
+#ifdef _WIN32
+#else
+static struct termios current_terminal_mode;
+static int terminalConfigInited = 0;
+#endif
+
+void private_terminal_full_state(){
+    #ifdef _WIN32
+    #else
+    if (!terminalConfigInited){
+        tcgetattr(0, &current_terminal_mode);
+        terminalConfigInited = 1;
+    }
+    #endif
+}
+
+void internal_terminal_set_io_buffer(int value){
+    private_terminal_full_state();
+    #ifdef _WIN32
+    #else
+    if (value) {
+        current_terminal_mode.c_lflag |= ICANON;
+    } else {
+        current_terminal_mode.c_lflag &= ~ICANON;
+    }
+    tcsetattr(0, TCSANOW, &current_terminal_mode);
+    #endif
+}
+
+int internal_terminal_get_io_buffer(){
+    #ifdef _WIN32
+    #else
+    private_terminal_full_state();
+    return current_terminal_mode.c_lflag & ICANON;
+    #endif
+}
+
+void internal_terminal_set_echo(int value){
+    private_terminal_full_state();
+    #ifdef _WIN32
+    #else
+    if (value) {
+        current_terminal_mode.c_lflag |= ECHO;
+    } else {
+        current_terminal_mode.c_lflag &= ~ECHO;
+    }
+    tcsetattr(0, TCSANOW, &current_terminal_mode);
+    #endif
+}
+
+int internal_terminal_get_echo(){
+    #ifdef _WIN32
+    #else
+    private_terminal_full_state();
+    return current_terminal_mode.c_lflag & ECHO;
+    #endif
+}
+
+int internal_get_char(){
+#ifdef _WIN32
+    return getchar();
+#else
+    int bufferIsEnabled = internal_terminal_get_io_buffer();
+    if (bufferIsEnabled){
+        internal_terminal_set_io_buffer(0);
+    }
+    int result = (int)getc(stdin);
+
+    if (bufferIsEnabled){
+        internal_terminal_set_io_buffer(1);
+    }
+
+    return result;
+#endif
 }

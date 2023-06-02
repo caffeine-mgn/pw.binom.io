@@ -17,10 +17,11 @@ kotlin {
         }
     }
     allTargets {
-//        -"wasm"
         -"js"
         -KonanTarget.ANDROID_ARM32
-        withoutDeprecated()
+        -KonanTarget.ANDROID_ARM64
+        -KonanTarget.ANDROID_X64
+        -KonanTarget.ANDROID_X86
     }
     sourceSets {
         val commonMain by getting {

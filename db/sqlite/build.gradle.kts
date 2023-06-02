@@ -1,6 +1,8 @@
+import org.jetbrains.kotlin.konan.target.HostManager
 import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
+import pw.binom.publish.dependsOn
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -19,17 +21,19 @@ kotlin {
     }
     jvm()
     linuxX64()
-    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp()
-    }
+//    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+//        linuxArm32Hfp()
+//    }
     mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
+//    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+//        mingwX86()
+//    }
     if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
         linuxArm64()
     }
-    macosX64()
+    if (HostManager.hostIsMac) {
+        macosX64()
+    }
     eachNative {
         val headersPath = file("${buildFile.parentFile}/src/native")
         val sqliteStaticTask = clangBuildStatic(name = "sqlite3", target = this.konanTarget) {
@@ -45,10 +49,10 @@ kotlin {
                 "-DSQLITE_ENABLE_RBU",
                 "-DSQLITE_THREADSAFE=1",
                 "-DSQLITE_ENABLE_EXPLAIN_COMMENTS",
-                "-DSQLITE_ENABLE_COLUMN_METADATA=1"
+                "-DSQLITE_ENABLE_COLUMN_METADATA=1",
             )
             compileFile(
-                file("${buildFile.parentFile}/src/native/sqlite3.c")
+                file("${buildFile.parentFile}/src/native/sqlite3.c"),
             )
         }
         tasks.findByName(compileTaskName)?.dependsOn(sqliteStaticTask)
@@ -100,15 +104,16 @@ kotlin {
         val mingwX64Main by getting {
             dependsOn(linuxX64Main)
         }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
+//        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+//            val mingwX86Main by getting {
+//                dependsOn(linuxX64Main)
+//            }
+//        }
 
-        val macosX64Main by getting {
-            dependsOn(linuxX64Main)
-        }
+        dependsOn("macos", linuxX64Main)
+//        val macosX64Main by getting {
+//            dependsOn(linuxX64Main)
+//        }
 
         val commonTest by getting {
             dependencies {

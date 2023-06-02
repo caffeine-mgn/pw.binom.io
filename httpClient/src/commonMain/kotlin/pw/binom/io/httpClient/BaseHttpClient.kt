@@ -149,7 +149,7 @@ class BaseHttpClient(
 private val URL.asKey
     get() = "$schema://$host:$port"
 
-private fun URL.getPort() =
+internal fun URL.getPort() =
     port ?: when (schema) {
         "ws", "http" -> 80
         "wss", "https" -> 443

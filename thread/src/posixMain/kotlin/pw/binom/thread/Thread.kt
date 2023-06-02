@@ -1,9 +1,9 @@
 package pw.binom.thread
 
 import kotlinx.cinterop.*
-import platform.common.internal_setThreadName
-import platform.common.internal_thread_yield
+import platform.common.*
 import platform.posix.*
+import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
 
 private var createCount = 0
@@ -15,14 +15,28 @@ private fun genName() = "Thread-${createCount++}"
 
 @Suppress("OPT_IN_IS_NOT_ENABLED")
 @OptIn(UnsafeNumber::class)
-actual abstract class Thread(var _id: pthread_t, name: String) {
+actual abstract class Thread(_id: Long, name: String) {
+    private val e = internal_createThreadData()
+    var _id: Long
+        get() = internal_get_thread_id(e)
+        set(value) {
+            internal_set_thread_id(e, value)
+        }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private val cleaner = createCleaner(e) {
+        internal_freeThreadData(it)
+    }
 
     //    private var initName = name
     actual var name: String = name
         set(value) {
-            if (_id.convert<Long>() != 0L) {
-                internal_setThreadName(_id, value)
+            if (_id != 0L) {
+                internal_setThreadName2(e, value)
             }
+//            if (internal_thread_id_to_long(_id.reinterpret()) != 0L) {
+//                internal_setThreadName(_id.reinterpret(), value)
+//            }
             field = value
         }
 
@@ -46,7 +60,7 @@ actual abstract class Thread(var _id: pthread_t, name: String) {
     }
 
     actual fun start() {
-        if (_id != 0.convert<pthread_t>()) {
+        if (_id != 0L) {
             throw IllegalStateException("Thread already started")
         }
 
@@ -67,22 +81,28 @@ actual abstract class Thread(var _id: pthread_t, name: String) {
 //        }
 
         memScoped {
-            val id = alloc<pthread_tVar>()
+//            val id = alloc<pthread_tVar>()
             val ptr = StableRef.create(this@Thread)
-            if (pthread_create(id.ptr, null, func, ptr.asCPointer()) != 0) {
+            if (internal_pthread_create(e, null, func, ptr.asCPointer()) != 0) {
                 ptr.dispose()
                 throw IllegalArgumentException("Can't start thread $errno")
             }
-            this@Thread._id = id.value
+//            this@Thread._id = id.value
             this@Thread.name = this@Thread.name
         }
     }
 
     actual val id: Long
-        get() = _id.toLong()
+        get() = _id
 
     actual fun join() {
-        pthread_join(_id, null)
+        internal_pthread_join(e)
+//        pthread_join(_id.reinterpret(), null)
+    }
+
+    init {
+        this._id = _id
+        this.name = name
     }
 
     actual companion object {
@@ -93,7 +113,7 @@ actual abstract class Thread(var _id: pthread_t, name: String) {
                     return thread
                 }
                 val wrapper = object : Thread(
-                    _id = pthread_self(),
+                    _id = internal_pthread_self(), // pthread_self().reinterpret<internal_pthread_t>(),
                     name = genName(),
                 ) {
                     override fun execute() {

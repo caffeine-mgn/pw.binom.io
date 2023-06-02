@@ -26,7 +26,7 @@ kotlin {
     macosX64()
     */
     allTargets {
-        withoutDeprecated()
+//        withoutDeprecated()
         -"js"
 //        -"linuxMips32"
 //        -"linuxMipsel32"

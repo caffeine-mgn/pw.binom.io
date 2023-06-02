@@ -1,0 +1,4 @@
+---
+int internal_inotify_rm_watch(int fd, int wd){
+    return inotify_rm_watch(fd, wd);
+}

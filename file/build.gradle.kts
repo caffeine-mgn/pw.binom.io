@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.konan.target.KonanTarget
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.useDefault
 
@@ -44,7 +43,7 @@ kotlin {
     */
     allTargets {
         -"js"
-        -KonanTarget.WASM32
+//        -KonanTarget.WASM32
     }
     eachNative {
         useNative()

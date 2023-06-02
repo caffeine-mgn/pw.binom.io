@@ -13,15 +13,15 @@ import kotlin.coroutines.CoroutineContext
 class ThreadCoroutineDispatcher : CoroutineDispatcher(), Closeable {
     private val readyForWriteListener = BatchExchange<Runnable>()
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = Thread.currentThread !== thread
-    private val r = ReentrantLock()
-    private val c = r.newCondition()
+    private val lock = ReentrantLock()
+    private val lockCondition = lock.newCondition()
     private val closed = AtomicBoolean(false)
 
     private val thread = Thread { thread ->
         while (!closed.getValue()) {
-            r.synchronize {
+            lock.synchronize {
                 if (readyForWriteListener.isEmpty()) {
-                    c.await()
+                    lockCondition.await()
                 }
                 readyForWriteListener.popAll {
                     it.forEach {
@@ -45,33 +45,15 @@ class ThreadCoroutineDispatcher : CoroutineDispatcher(), Closeable {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         readyForWriteListener.push(block)
-        r.synchronize {
-            c.signalAll()
+        lock.synchronize {
+            lockCondition.signalAll()
         }
     }
 
-//    fun <T> execute(func: () -> T): T {
-//        var result: T? = null
-//        val lock = ReentrantLock()
-//        val con = lock.newCondition()
-//        r.synchronize {
-//            readyForWriteListener.push(
-//                Runnable {
-//                    lock.synchronize {
-//                        result = func()
-//                        con.signalAll()
-//                    }
-//                }
-//            )
-//            c.await()
-//        }
-//        return result as T
-//    }
-
     override fun close() {
-        r.synchronize {
+        lock.synchronize {
             closed.setValue(true)
-            c.signalAll()
+            lockCondition.signalAll()
         }
         thread.join()
     }

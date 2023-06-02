@@ -50,6 +50,9 @@
 #endif //NATIVE_DEFINITION_H
 
 #include <pthread.h>
+#ifdef WINDOWS_TARGET
+    #include <windows.h>
+#endif
 
 int internal_setThreadName(pthread_t thread, const char *name){
     return pthread_setname_np(thread, name);
@@ -62,3 +65,114 @@ void internal_thread_yield(){
     pthread_yield();
 #endif
 }
+
+
+
+struct ThreadData {
+    #ifdef WINDOWS_TARGET
+    HANDLE id;
+    #else
+    pthread_t id;
+    #endif
+};
+
+#ifdef WINDOWS_TARGET
+#define CAST_THREAD_ID(id) ((HANDLE)id)
+#else
+#define CAST_THREAD_ID(id) ((pthread_t)id)
+#endif
+
+struct ThreadData* internal_createThreadData() {
+    auto result = (struct ThreadData*) malloc(sizeof(struct ThreadData));
+//    result->id = CAST_THREAD_ID(0);
+    return result;
+}
+
+void internal_freeThreadData(struct ThreadData* threadData) {
+    free(threadData);
+}
+
+int internal_setThreadName2(struct ThreadData* threadData, const char *name){
+    return pthread_setname_np(threadData->id, name);
+}
+
+long long internal_get_thread_id(struct ThreadData* threadData){
+    return (long long)threadData->id;
+}
+
+void internal_set_thread_id(struct ThreadData* threadData, long long thread_id){
+    #ifdef WINDOWS_TARGET
+    threadData->id = (HANDLE)thread_id;
+    #else
+    threadData->id = (pthread_t)thread_id;
+    #endif
+}
+
+int internal_pthread_create(struct ThreadData* threadData,
+                          const pthread_attr_t *restrict attr,
+                          void *(*start_routine)(void *),
+                          void *restrict arg){
+#ifdef WINDOWS_TARGET
+    threadData->id = CreateThread(NULL, 0, start_routine, arg, 0, NULL);
+#else
+    return pthread_create(
+        &threadData->id,
+        attr,
+        start_routine,
+        arg
+    );
+#endif
+    return 0;
+}
+
+void internal_pthread_join(struct ThreadData* threadData){
+#ifdef WINDOWS_TARGET
+    WaitForSingleObject(threadData->id, INFINITE);
+#else
+    pthread_join(threadData->id, NULL);
+#endif
+}
+
+long long internal_pthread_self(){
+#ifdef WINDOWS_TARGET
+    return (long long)GetCurrentThread();
+#else
+    return (long long)pthread_self();
+#endif
+}
+
+/*
+#ifdef LINUX_LIKE_TARGET
+typedef struct pthread_t internal_pthread_t;
+
+
+#ifdef ANDROID_TARGET
+#define PTHREAD_T internal_pthread_t
+#else
+#define PTHREAD_T internal_pthread_t
+#endif
+
+long long internal_thread_id_to_long(pthread_t thread_id){
+    return (long) thread_id;
+}
+
+
+
+int internal_pthread_create(internal_pthread_t *restrict thread,
+                          const pthread_attr_t *restrict attr,
+                          void *(*start_routine)(void *),
+                          void *restrict arg){
+    return pthread_create(
+        (pthread_t)thread,
+        attr,
+        start_routine,
+        arg
+    );
+}
+
+struct internal_pthread_t internal_pthread_self(){
+    return (internal_pthread_t)pthread_self();
+}
+
+#endif
+*/

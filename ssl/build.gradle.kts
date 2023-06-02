@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.konan.target.HostManager
 import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
@@ -45,16 +46,16 @@ kotlin {
     jvm()
     linuxX64()
 
-    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp()
-    }
-
+//    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+//        linuxArm32Hfp()
+//    }
     mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
+//    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+//        mingwX86()
+//    }
+    if (HostManager.hostIsMac) {
+        macosX64()
     }
-
-    macosX64()
     eachNative {
 
         val headersPath = file("${buildFile.parent}/src/cinterop/include")

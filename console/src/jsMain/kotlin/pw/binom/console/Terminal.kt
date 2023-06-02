@@ -1,6 +1,6 @@
 package pw.binom.console
 
-actual class Console {
+actual object Terminal {
     actual fun getSize(dest: ConsoleSize): Boolean = false
     actual fun setCursorPosition(column: Int, row: Int): Boolean = false
     actual fun getCursorPosition(dest: ConsoleSize): Boolean = false
@@ -17,4 +17,9 @@ actual class Console {
             false
         }
     }
+
+    actual fun readChar(): Int = 0
+    actual var echo: Boolean
+        get() = false
+        set(value) {}
 }

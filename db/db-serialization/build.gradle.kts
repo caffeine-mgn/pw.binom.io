@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import pw.binom.useDefault
 
 plugins {
@@ -11,24 +12,31 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
-        }
+//    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//        android {
+//            publishAllLibraryVariants()
+//        }
+//    }
+//    jvm()
+//    linuxX64()
+//    mingwX64()
+//    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+//        linuxArm32Hfp()
+//    }
+//    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+//        mingwX86()
+//    }
+//    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+//        linuxArm64()
+//    }
+//    macosX64()
+    allTargets {
+        -"js"
+        -KonanTarget.ANDROID_ARM32
+        -KonanTarget.ANDROID_ARM64
+        -KonanTarget.ANDROID_X64
+        -KonanTarget.ANDROID_X86
     }
-    jvm()
-    linuxX64()
-    mingwX64()
-    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp()
-    }
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
-    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64()
-    }
-    macosX64()
     sourceSets {
         val commonMain by getting {
             dependencies {

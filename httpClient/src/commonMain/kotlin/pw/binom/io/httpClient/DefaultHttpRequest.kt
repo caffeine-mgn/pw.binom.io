@@ -53,11 +53,18 @@ class DefaultHttpRequest constructor(
     }
 
     private suspend fun sendHeaders() {
-        channel.writer.append(method).append(" ").append(request).append(" ").append("HTTP/1.1").append(Utils.CRLF)
-        headers.forEachHeader { key, value ->
-            channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
-        }
-        channel.writer.append(Utils.CRLF)
+        client.connectionFactory.writeRequest(
+            output = channel.writer,
+            method = method,
+            request = request,
+            headers = headers,
+            url = uri,
+        )
+//        channel.writer.append(method).append(" ").append(request).append(" ").append("HTTP/1.1").append(Utils.CRLF)
+//        headers.forEachHeader { key, value ->
+//            channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
+//        }
+//        channel.writer.append(Utils.CRLF)
     }
 
     private val keepAlive

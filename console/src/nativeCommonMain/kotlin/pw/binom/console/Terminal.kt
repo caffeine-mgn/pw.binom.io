@@ -1,12 +1,9 @@
 package pw.binom.console
 
 import kotlinx.cinterop.*
-import platform.common.internal_terminal_clear_screen
-import platform.common.internal_terminal_get_cursor_position
-import platform.common.internal_terminal_get_size
-import platform.common.internal_terminal_set_cursor_position
+import platform.common.*
 
-actual class Console {
+actual object Terminal {
     actual fun getSize(dest: ConsoleSize): Boolean = memScoped {
         val width = alloc<IntVar>()
         val height = alloc<IntVar>()
@@ -33,4 +30,10 @@ actual class Console {
     }
 
     actual fun clear(): Boolean = internal_terminal_clear_screen() != 0
+    actual fun readChar(): Int = internal_get_char()
+    actual var echo: Boolean
+        get() = internal_terminal_get_echo() > 0
+        set(value) {
+            internal_terminal_set_echo(if (value) 1 else 0)
+        }
 }

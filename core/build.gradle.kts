@@ -36,7 +36,7 @@ kotlin {
                 api(project(":collections"))
                 api(project(":pool"))
                 api(project(":url"))
-                api(project(":uuid"))
+                api("pw.binom:uuid:${pw.binom.Versions.BINOM_UUID_VERSION}")
             }
         }
         val commonTest by getting {

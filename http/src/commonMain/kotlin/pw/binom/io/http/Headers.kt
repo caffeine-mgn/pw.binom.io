@@ -37,6 +37,7 @@ interface Headers : Map<String, List<String>> {
         const val SERVER = "Server"
         const val LOCATION = "Location"
         const val AUTHORIZATION = "Authorization"
+        const val PROXY_AUTHORIZATION = "Proxy-Authorization"
     }
 
     override operator fun get(key: String): List<String>?

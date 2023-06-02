@@ -3,7 +3,7 @@ package pw.binom.console
 import org.jline.terminal.TerminalBuilder
 import org.jline.utils.InfoCmp
 
-actual class Console {
+actual object Terminal {
     private val terminal = TerminalBuilder.terminal()
     actual fun getSize(dest: ConsoleSize): Boolean {
         dest.width = terminal.width
@@ -28,4 +28,11 @@ actual class Console {
         terminal.flush()
         return true
     }
+
+    actual fun readChar() = terminal.reader().read()
+    actual var echo: Boolean
+        get() = terminal.echo()
+        set(value) {
+            terminal.echo(value)
+        }
 }

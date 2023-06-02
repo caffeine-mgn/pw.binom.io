@@ -2,6 +2,7 @@ package pw.binom.io.file
 
 import kotlinx.cinterop.*
 import platform.linux.*
+import platform.common.*
 import platform.posix.read
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
@@ -35,7 +36,7 @@ class InotifyFileWatcher : FileWatcher {
         override fun close() {
             parent?.childs?.remove(name)
             watchers -= fd
-            inotify_rm_watch(notifyFd, fd.convert())
+            internal_inotify_rm_watch(notifyFd, fd.convert())
         }
     }
 

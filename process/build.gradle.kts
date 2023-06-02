@@ -1,3 +1,7 @@
+import org.jetbrains.kotlin.konan.target.Family
+import pw.binom.kotlin.clang.eachNative
+import pw.binom.useDefault
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -12,26 +16,35 @@ fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useLinux() {
     }
 }
 kotlin {
-    jvm()
-    linuxX64 {
-        useLinux()
+//    jvm()
+//    linuxX64 {
+//        useLinux()
+//    }
+//    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+//        linuxArm32Hfp {
+//            useLinux()
+//        }
+//    }
+//    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+//        linuxArm64 {
+//            useLinux()
+//        }
+//    }
+//    mingwX64()
+//    if (pw.binom.Target.MINGW_X86_SUPPORT) {
+//        mingwX86()
+//    }
+//    macosX64 {
+//        useLinux()
+//    }
+    allTargets {
+        -"js"
     }
-    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-        linuxArm32Hfp {
+    eachNative {
+        if (konanTarget.family != Family.MINGW) {
+            println("Apply CPP file for ${this.konanTarget} !-!!!")
             useLinux()
         }
-    }
-    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64 {
-            useLinux()
-        }
-    }
-    mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
-    macosX64 {
-        useLinux()
     }
     sourceSets {
         val commonMain by getting {
@@ -42,31 +55,31 @@ kotlin {
             }
         }
 
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
-        val mingwX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(mingwX64Main)
-            }
-        }
-
-        val macosX64Main by getting {
-            dependsOn(linuxX64Main)
-        }
+//        val linuxX64Main by getting {
+//            dependsOn(commonMain)
+//        }
+//        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+//            val linuxArm32HfpMain by getting {
+//                dependsOn(linuxX64Main)
+//            }
+//        }
+//        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+//            val linuxArm64Main by getting {
+//                dependsOn(linuxX64Main)
+//            }
+//        }
+//        val mingwX64Main by getting {
+//            dependsOn(commonMain)
+//        }
+//        if (pw.binom.Target.MINGW_X86_SUPPORT) {
+//            val mingwX86Main by getting {
+//                dependsOn(mingwX64Main)
+//            }
+//        }
+//
+//        val macosX64Main by getting {
+//            dependsOn(linuxX64Main)
+//        }
 
         val commonTest by getting {
             dependencies {
@@ -74,15 +87,16 @@ kotlin {
                 api(kotlin("test-annotations-common"))
             }
         }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test"))
-            }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
+//        val jvmTest by getting {
+//            dependsOn(commonTest)
+//            dependencies {
+//                api(kotlin("test"))
+//            }
+//        }
+//        val linuxX64Test by getting {
+//            dependsOn(commonTest)
+//        }
+        useDefault()
     }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

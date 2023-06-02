@@ -2,6 +2,7 @@ buildscript {
 
     repositories {
         mavenLocal()
+        maven(url = "https://repo.binom.pw")
         mavenCentral()
         maven(url = "https://maven.google.com")
     }
@@ -20,6 +21,7 @@ val kotlinVersion = project.property("kotlin.version") as String
 val ionspinBignumVersion = project.property("ionspin_bignum.version") as String
 val kotlinxCoroutinesVersion = project.property("kotlinx_coroutines.version") as String
 val kotlinxSerializationVersion = project.property("kotlinx_serialization.version") as String
+val binomUuidVersion = project.property("binom_uuid.version") as String
 
 buildConfig {
     packageName(project.group.toString())
@@ -27,6 +29,7 @@ buildConfig {
     buildConfigField("String", "IONSPIN_BIGNUM_VERSION", "\"$ionspinBignumVersion\"")
     buildConfigField("String", "KOTLINX_COROUTINES_VERSION", "\"$kotlinxCoroutinesVersion\"")
     buildConfigField("String", "KOTLINX_SERIALIZATION_VERSION", "\"$kotlinxSerializationVersion\"")
+    buildConfigField("String", "BINOM_UUID_VERSION", "\"$binomUuidVersion\"")
 }
 
 repositories {

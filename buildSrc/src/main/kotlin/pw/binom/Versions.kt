@@ -9,5 +9,6 @@ object Versions {
 
     //    val KOTLINX_COROUTINES_VERSION = "1.5.1-new-mm-dev2"
     val KOTLINX_COROUTINES_VERSION = BuildConfig.KOTLINX_COROUTINES_VERSION
+    val BINOM_UUID_VERSION = BuildConfig.BINOM_UUID_VERSION
 //    val KOTLINX_COROUTINES_VERSION = "1.5.2"
 }

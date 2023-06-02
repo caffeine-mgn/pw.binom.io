@@ -1,8 +1,11 @@
 import org.gradle.api.GradleException
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
+import org.jetbrains.kotlin.gradle.kpm.external.project
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinNativeTargetPreset
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
 internal class BuildTarget(val name: String, val preset: String)
@@ -31,16 +34,16 @@ fun KotlinMultiplatformExtension.allTargets() {
 }
 
 fun KotlinMultiplatformExtension.linux(func: KotlinNativeTarget.() -> Unit = {}) {
-    linuxArm32Hfp(func)
+//    linuxArm32Hfp(func)
     linuxX64(func)
     linuxArm64(func)
-    linuxMips32(func)
-    linuxMipsel32(func)
+//    linuxMips32(func)
+//    linuxMipsel32(func)
 }
 
 fun KotlinMultiplatformExtension.watchos(func: KotlinNativeTarget.() -> Unit = {}) {
     watchosX64(func)
-    watchosX86(func)
+//    watchosX86(func)
     watchosArm32(func)
     watchosArm64(func)
     watchosSimulatorArm64(func)
@@ -49,7 +52,7 @@ fun KotlinMultiplatformExtension.watchos(func: KotlinNativeTarget.() -> Unit = {
 
 fun KotlinMultiplatformExtension.mingw(func: KotlinNativeTarget.() -> Unit = {}) {
     mingwX64(func)
-    mingwX86(func)
+//    mingwX86(func)
 }
 
 fun KotlinMultiplatformExtension.macos(func: KotlinNativeTarget.() -> Unit = {}) {
@@ -59,7 +62,7 @@ fun KotlinMultiplatformExtension.macos(func: KotlinNativeTarget.() -> Unit = {})
 
 fun KotlinMultiplatformExtension.ios(func: KotlinNativeTarget.() -> Unit = {}) {
     iosX64(func)
-    iosArm32(func)
+//    iosArm32(func)
     iosArm64(func)
     iosSimulatorArm64(func)
 }
@@ -71,10 +74,20 @@ fun KotlinMultiplatformExtension.androidNative(func: KotlinNativeTarget.() -> Un
     androidNativeArm64(func)
 }
 
+@OptIn(ExternalVariantApi::class)
 fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
+    val kotlinTargetPropertyName = "kotlin.jvm.target"
+    val kotlinJvmTarget = if (project.hasProperty(kotlinTargetPropertyName)) {
+        project.property(kotlinTargetPropertyName) as String
+    } else {
+        "1.8"
+    }
     val c = TargetConfig()
     presets.forEach {
-        if (it is AbstractKotlinNativeTargetPreset<*>) {
+        if (it is AbstractKotlinNativeTargetPreset<*> && it.konanTarget !in KonanTarget.deprecatedTargets) {
+            if (it.konanTarget.family.isAppleFamily && !HostManager.hostIsMac) {
+                return@forEach
+            }
             c.nativeTargets += BuildTarget(it.konanTarget.name, it.name)
         }
     }
@@ -88,7 +101,12 @@ fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
     func(c)
     c.nativeTargets.forEach {
         when (it.name) {
-            "jvm" -> jvm()
+            "jvm" -> jvm {
+                this.compilations.all {
+                    it.kotlinOptions.jvmTarget = kotlinJvmTarget
+                }
+            }
+
             "js" -> js(KotlinJsCompilerType.IR) {
                 browser {
                     testTask {

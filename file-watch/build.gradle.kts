@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.konan.target.Family
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.useDefault
 
@@ -44,10 +44,18 @@ kotlin {
     */
     allTargets {
         -"js"
-        -KonanTarget.WASM32
+//        -KonanTarget.WASM32
     }
     eachNative {
         useNative()
+        if (konanTarget.family == Family.ANDROID || konanTarget.family == Family.LINUX) {
+            compilations["main"].cinterops {
+                create("native") {
+                    defFile = project.file("src/cinterop/linux.def")
+                    packageName = "platform.common"
+                }
+            }
+        }
     }
     sourceSets {
         val commonMain by getting {

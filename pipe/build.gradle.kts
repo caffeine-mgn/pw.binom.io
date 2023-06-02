@@ -11,37 +11,37 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
-        }
-    }
-    jvm()
-    linuxX64()
-    linuxArm64()
-    linuxArm32Hfp()
-    linuxMips32()
-    linuxMipsel32()
-    mingwX64()
-    mingwX86()
-    macosX64()
-    macosArm64()
-    iosX64()
-    iosArm32()
-    iosArm64()
-    iosSimulatorArm64()
-    watchosX64()
-    watchosX86()
-    watchosArm32()
-    watchosArm64()
-    watchosSimulatorArm64()
-    androidNativeX64()
-    androidNativeX86()
-    androidNativeArm32()
-    androidNativeArm64()
+//    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//        android {
+//            publishAllLibraryVariants()
+//        }
+//    }
+//    jvm()
+//    linuxX64()
+//    linuxArm64()
+//    linuxArm32Hfp()
+//    linuxMips32()
+//    linuxMipsel32()
+//    mingwX64()
+//    mingwX86()
+//    macosX64()
+//    macosArm64()
+//    iosX64()
+//    iosArm32()
+//    iosArm64()
+//    iosSimulatorArm64()
+//    watchosX64()
+//    watchosX86()
+//    watchosArm32()
+//    watchosArm64()
+//    watchosSimulatorArm64()
+//    androidNativeX64()
+//    androidNativeX86()
+//    androidNativeArm32()
+//    androidNativeArm64()
     allTargets {
         -"js"
-        -KonanTarget.WASM32
+//        -KonanTarget.WASM32
     }
 
     sourceSets {

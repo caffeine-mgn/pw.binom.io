@@ -202,7 +202,7 @@ interface DataProvider {
     fun getByte(key: String): Byte = getString(key).toByte()
     fun getByteArray(key: String): ByteArray = getString(key).encodeToByteArray()
     fun getChar(key: String): Char = getString(key).let { it[0] }
-    fun getUUID(key: String): UUID = getString(key).toUUID()
+    fun getUUID(key: String): UUID = UUID.fromString(getString(key))
     fun getDateTime(key: String): DateTime {
         val str = getString(key)
         return str.parseIso8601Date() ?: throw SerializationException("Can't parse $str to DateTime")
