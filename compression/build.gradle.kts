@@ -9,28 +9,8 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    /*
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
-        }
-    }
-    jvm()
-    linuxX64()
-    linuxArm32Hfp()
-    linuxArm64()
-    mingwX64()
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        mingwX86()
-    }
-    macosX64()
-    */
     allTargets {
-//        withoutDeprecated()
         -"js"
-//        -"linuxMips32"
-//        -"linuxMipsel32"
-//        -"wasm"
     }
     sourceSets {
         useDefault()

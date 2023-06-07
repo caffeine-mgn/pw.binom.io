@@ -1,6 +1,5 @@
 
 import pw.binom.kotlin.clang.eachNative
-import pw.binom.publish.dependsOn
 import pw.binom.useDefault
 
 plugins {
@@ -39,20 +38,11 @@ kotlin {
             }
         }
         useDefault()
-        val jvmMain by getting {
-        }
-        dependsOn("androidMain", jvmMain)
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-            }
-        }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test"))
             }
         }
     }

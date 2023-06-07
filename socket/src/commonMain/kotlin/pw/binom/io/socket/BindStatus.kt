@@ -4,4 +4,5 @@ enum class BindStatus {
     OK,
     ALREADY_BINDED,
     ADDRESS_ALREADY_IN_USE,
+    UNKNOWN,
 }

@@ -102,7 +102,7 @@ fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
     c.nativeTargets.forEach {
         when (it.name) {
             "jvm" -> jvm {
-                this.compilations.all {
+                compilations.all {
                     it.kotlinOptions.jvmTarget = kotlinJvmTarget
                 }
             }

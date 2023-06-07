@@ -7,3 +7,4 @@ build
 buildSrc/.gradle/**
 /kotlin-js-store/**
 /desktop.files.json
+compile_commands.json

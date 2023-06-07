@@ -1,3 +1,6 @@
+import pw.binom.publish.dependsOn
+import pw.binom.useDefault
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -7,6 +10,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+    /*
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
             publishAllLibraryVariants()
@@ -35,6 +39,8 @@ kotlin {
         }
         nodejs()
     }
+    */
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -48,49 +54,52 @@ kotlin {
                 api(project(":concurrency"))
             }
         }
+        dependsOn("jvmLike*", commonRunnableMain)
+        dependsOn("nativeCommon*", commonRunnableMain)
+        /*
+                val linuxX64Main by getting {
+                    dependsOn(commonRunnableMain)
+                }
+                if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+                    val linuxArm64Main by getting {
+                        dependsOn(commonRunnableMain)
+                    }
+                }
+                if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+                    val linuxArm32HfpMain by getting {
+                        dependsOn(commonRunnableMain)
+                    }
+                }
 
-        val linuxX64Main by getting {
-            dependsOn(commonRunnableMain)
-        }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(commonRunnableMain)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(commonRunnableMain)
-            }
-        }
+                val mingwX64Main by getting {
+                    dependsOn(commonRunnableMain)
+                }
+                if (pw.binom.Target.MINGW_X86_SUPPORT) {
+                    val mingwX86Main by getting {
+                        dependsOn(commonRunnableMain)
+                    }
+                }
 
-        val mingwX64Main by getting {
-            dependsOn(commonRunnableMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonRunnableMain)
-            }
-        }
+                val macosX64Main by getting {
+                    dependsOn(commonRunnableMain)
+                }
 
-        val macosX64Main by getting {
-            dependsOn(commonRunnableMain)
-        }
-
-        val jvmMain by getting {
-            dependsOn(commonRunnableMain)
-        }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidMain by getting {
-                dependsOn(jvmMain)
-            }
-        }
-
+                val jvmMain by getting {
+                    dependsOn(commonRunnableMain)
+                }
+                if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+                    val androidMain by getting {
+                        dependsOn(jvmMain)
+                    }
+                }
+        */
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
             }
         }
+        /*
         val jvmTest by getting {
             dependencies {
                 api(kotlin("test-junit"))
@@ -101,6 +110,8 @@ kotlin {
                 implementation(kotlin("test-js"))
             }
         }
+        */
+        useDefault()
     }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

@@ -1,12 +1,19 @@
 package pw.binom.io.socket
 
-import platform.common.internal_set_allow_ipv6
-import platform.common.internal_set_socket_blocked_mode
-import platform.common.internal_unbind
+import platform.common.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 
-expect fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus
+fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus =
+    when (Socket_bindUnix(native, fileName)) {
+        BIND_RESULT_OK -> BindStatus.OK
+        BIND_RESULT_ALREADY_BINDED -> BindStatus.ALREADY_BINDED
+        BIND_RESULT_ADDRESS_ALREADY_IN_USE -> BindStatus.ADDRESS_ALREADY_IN_USE
+        BIND_RESULT_UNKNOWN_ERROR -> BindStatus.UNKNOWN
+        BIND_RESULT_NOT_SUPPORTED -> throwUnixSocketNotSupported()
+        else -> BindStatus.UNKNOWN
+    }
+
 fun unbind(native: RawSocket) {
     internal_unbind(native)
 }

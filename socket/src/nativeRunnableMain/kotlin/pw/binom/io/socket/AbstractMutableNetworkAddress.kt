@@ -1,11 +1,27 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
+import platform.common.NativeNetworkAddress
+import pw.binom.io.InHeap
 
 abstract class AbstractMutableNetworkAddress : MutableNetworkAddress {
-    val data = ByteArray(28)
-    var size = 0
-        set
+    val nativeData = InHeap.create<NativeNetworkAddress>()
+
+    //    @OptIn(ExperimentalStdlibApi::class)
+//    private val clearer = createCleaner(nativeData) {
+//        nativeHeap.free(it)
+//    }
+//    val data
+//        get() = nativeData.data
+
+    //    val data = ByteArray(28)
+    var size
+        set(value) {
+            nativeData.use {
+                it.pointed.size = value
+            }
+        }
+        get() = nativeData.use { it.pointed.size }
 
     protected var hashCode = 0
 
@@ -17,9 +33,9 @@ abstract class AbstractMutableNetworkAddress : MutableNetworkAddress {
         this.hashCode = hashCode
     }
 
-    internal inline fun <T> addr(f: MemScope.(CPointer<ByteVar>) -> T): T =
-        memScoped {
-            this.f(data.refTo(0).getPointer(this))
+    internal inline fun <T> addr(func: (CPointer<ByteVar>) -> T): T =
+        nativeData.use {
+            func(it.pointed.data)
         }
 
     override fun toMutable(): MutableNetworkAddress = this

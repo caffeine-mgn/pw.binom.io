@@ -6,6 +6,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+    /*
     jvm()
     linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
@@ -19,8 +20,12 @@ kotlin {
         linuxArm64()
     }
     macosX64()
+    */
     targets.all {
         compilations["main"].compileKotlinTask.kotlinOptions.freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+    }
+    allTargets {
+        -"js"
     }
     sourceSets {
         val commonMain by getting {

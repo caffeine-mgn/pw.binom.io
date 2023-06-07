@@ -1,5 +1,5 @@
 package pw.binom.network
-
+/*
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.get
@@ -147,3 +147,4 @@ actual class NetworkInterface private constructor(
         return "NetworkInterface(name='$name', isLoopback=$isLoopback, isPointToPoint=$isPointToPoint, isUp=$isUp, isSupportsMulticast=$isSupportsMulticast, hardwareAddress=${hardwareAddress?.contentToString()}, addresses=$addresses)"
     }
 }
+*/

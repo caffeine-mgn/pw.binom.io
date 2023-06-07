@@ -11,10 +11,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    allTargets {
-//        -"wasm32"
-//        -"wasm"
-    }
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {

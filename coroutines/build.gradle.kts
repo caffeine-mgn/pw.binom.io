@@ -9,22 +9,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
-        }
-    }
-
-    jvm()
-    linuxX64()
-    mingwX64()
-    macosX64()
-    macosArm64()
-    js(pw.binom.Target.JS_TARGET) {
-        browser()
-        nodejs()
-    }
-
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {

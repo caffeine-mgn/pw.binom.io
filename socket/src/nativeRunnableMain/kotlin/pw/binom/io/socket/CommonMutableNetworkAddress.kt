@@ -3,6 +3,7 @@ package pw.binom.io.socket
 import kotlinx.cinterop.*
 import platform.common.*
 import platform.posix.*
+import pw.binom.io.copyInto
 
 open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
     constructor(address: NetworkAddress) : this(
@@ -21,12 +22,12 @@ open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
         init_sockets()
         val ptr = internal_find_network_address(host, port.toString()) ?: throw UnknownHostException(host)
         try {
-            memScoped {
-                val sizePtr = alloc<IntVar>()
-                data.usePinned { dataPinned ->
-                    internal_copy_addrinfo(ptr.reinterpret(), dataPinned.addressOf(0), sizePtr.ptr)
+            addr { data ->
+                memScoped {
+                    val sizePtr = alloc<IntVar>()
+                    internal_copy_addrinfo(ptr.reinterpret(), data, sizePtr.ptr)
+                    size = sizePtr.value
                 }
-                size = sizePtr.value
             }
         } finally {
             internal_free_network_addresses(ptr)
@@ -38,17 +39,16 @@ open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
     }
 
     open fun <T> getAsIpV6(func: (CPointer<internal_sockaddr_in6>) -> T): T = memScoped {
-        data.usePinned { dataPinned ->
-            val dataAddr = dataPinned.addressOf(0) // .getPointer(this)
-            when (val family = internal_addr_get_family(dataAddr)) {
-                4 -> {
+        nativeData.use { dataAddr ->
+            when (val family = NativeNetworkAddress_getFamily(dataAddr)) {
+                NET_TYPE_INET4 -> {
                     val out = alloc<internal_sockaddr_in6>()
-                    val convertResult = internal_addr_ipv4_to_ipv6(dataAddr, out.ptr)
+                    val convertResult = internal_addr_ipv4_to_ipv6(dataAddr.pointed.data, out.ptr)
                     check(convertResult == 1 || convertResult == 0) { "Can't convert address to ipv6" }
                     func(out.ptr)
                 }
 
-                6 -> func(dataAddr.reinterpret())
+                NET_TYPE_INET6 -> func(dataAddr.reinterpret())
 
                 else -> throw IllegalStateException("Invalid address family $family")
             }
@@ -57,15 +57,17 @@ open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
 
     override fun clone(): MutableNetworkAddress {
         val ret = CommonMutableNetworkAddress()
-        data.copyInto(ret.data)
+        nativeData.copyInto(ret.nativeData)
         return ret
     }
 
     override val host: String
         get() = addr {
-            val str = allocArray<ByteVar>(50)
-            internal_address_host_to_string(it, str, 50)
-            str.toKString()
+            memScoped {
+                val str = allocArray<ByteVar>(50)
+                internal_address_host_to_string(it, str, 50)
+                str.toKString()
+            }
         }
     override val port: Int
         get() = addr {
@@ -81,4 +83,27 @@ open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
     }
 
     override fun toImmutable(): NetworkAddress = CommonMutableNetworkAddress(this)
+}
+
+internal inline fun <T> MutableNetworkAddress?.useNativeAddress(func: (CPointer<NativeNetworkAddress>?) -> T): T {
+    val nn = when (this) {
+        null -> null
+        is CommonMutableNetworkAddress -> this
+        else -> CommonMutableNetworkAddress()
+    }
+
+    val result = if (nn == null) {
+        func(null)
+    } else {
+        nn.nativeData.use {
+            func(it)
+        }
+    }
+    if (nn !== this && nn != null && this != null) {
+        this.update(
+            host = nn.host,
+            port = nn.port,
+        )
+    }
+    return result
 }

@@ -2,11 +2,8 @@
 #include "../include/wepoll.h"
 #include "../include/Event.h"
 #include "../include/definition.h"
-
-#ifdef LINUX_TARGET
-
-#include <sys/epoll.h>
-
+#if defined(LINUX_TARGET) || defined(ANDROID_TARGET)
+    #include <sys/epoll.h>
 #endif
 
 struct Event *mallocEvent() {

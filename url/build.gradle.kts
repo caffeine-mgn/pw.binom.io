@@ -1,5 +1,4 @@
 import pw.binom.publish.useDefault
-import java.util.*
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -44,21 +43,6 @@ kotlin {
     }
 }
 
-fun makeTimeFile() {
-    val dateDir = file("$buildDir/tmp-date")
-    dateDir.mkdirs()
-    val tzFile = file("$dateDir/currentTZ")
-    tzFile.delete()
-    tzFile.writeText((TimeZone.getDefault().rawOffset / 1000 / 60).toString())
-}
-
-tasks {
-    withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest::class).forEach {
-        it.doFirst {
-            makeTimeFile()
-        }
-    }
-}
 tasks.withType<Test> {
     this.testLogging {
         this.showStandardStreams = true

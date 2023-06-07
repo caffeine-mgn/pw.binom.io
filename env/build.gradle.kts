@@ -1,4 +1,3 @@
-import pw.binom.eachKotlinCompile
 import pw.binom.useDefault
 
 plugins {
@@ -9,18 +8,7 @@ plugins {
     }
 }
 apply<pw.binom.KotlinConfigPlugin>()
-fun androidCInterop(target: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) {
-//    target.run {
-//        binaries {
-//            compilations["main"].cinterops {
-//                create("android") {
-//                    defFile = project.file("src/androidNativeMain/cinterop/android.def")
-//                    packageName = "platform.android"
-//                }
-//            }
-//        }
-//    }
-}
+
 kotlin {
     allTargets()
     sourceSets {
@@ -29,7 +17,6 @@ kotlin {
                 api(kotlin("stdlib"))
                 api(project(":collections"))
             }
-//            kotlin.srcDir("build/gen")
         }
         val commonTest by getting {
             dependencies {

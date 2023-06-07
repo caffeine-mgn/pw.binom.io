@@ -12,9 +12,7 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    allTargets {
-//        -"wasm"
-    }
+    allTargets()
 
     sourceSets {
         val commonMain by getting {

@@ -1,4 +1,5 @@
 package pw.binom.network
+/*
 
 import kotlinx.cinterop.*
 import platform.common.internal_copy_address
@@ -102,24 +103,32 @@ actual class NetworkInterface private constructor(
                             continue
                         }
 
-                        /**
+                        */
+/**
                          * Interface is running.
-                         */
+                         *//*
+
                         val isUp = (addressPtr.pointed.ifa_flags and IFF_UP.convert()).toInt() != 0
 
-                        /**
+                        */
+/**
                          * Interface is a loopback interface
-                         */
+                         *//*
+
                         val isLoopback = (addressPtr.pointed.ifa_flags and IFF_LOOPBACK.convert()).toInt() != 0
 
-                        /**
+                        */
+/**
                          * Interface is a point-to-point link
-                         */
+                         *//*
+
                         val isPointToPoint = (addressPtr.pointed.ifa_flags and IFF_POINTOPOINT.convert()).toInt() != 0
 
-                        /**
+                        */
+/**
                          * Supports multicast
-                         */
+                         *//*
+
                         val isSupportsMulticast =
                             (addressPtr.pointed.ifa_flags and IFF_MULTICAST.convert()).toInt() != 0
                         val name = addressPtr.pointed.ifa_name!!.toKString()
@@ -155,3 +164,4 @@ actual class NetworkInterface private constructor(
         return "NetworkInterface(name='$name', isLoopback=$isLoopback, isPointToPoint=$isPointToPoint, isUp=$isUp, isSupportsMulticast=$isSupportsMulticast, hardwareAddress=${hardwareAddress?.contentToString()}, addresses=$addresses)"
     }
 }
+*/

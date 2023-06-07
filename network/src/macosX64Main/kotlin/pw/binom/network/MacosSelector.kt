@@ -1,4 +1,5 @@
 package pw.binom.network
+/*
 
 import kotlinx.cinterop.*
 import platform.darwin.*
@@ -379,3 +380,4 @@ fun flagsToString(mode: Int): String {
 
     return sb.toString()
 }
+*/

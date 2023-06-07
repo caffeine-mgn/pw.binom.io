@@ -3,6 +3,7 @@ import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.dependsOn
+import pw.binom.publish.useDefault
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -14,25 +15,8 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 val sqlitePackageName = "platform.internal_sqlite"
 kotlin {
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        android {
-            publishAllLibraryVariants()
-        }
-    }
-    jvm()
-    linuxX64()
-//    if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-//        linuxArm32Hfp()
-//    }
-    mingwX64()
-//    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-//        mingwX86()
-//    }
-    if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-        linuxArm64()
-    }
-    if (HostManager.hostIsMac) {
-        macosX64()
+    allTargets {
+        -"js"
     }
     eachNative {
         val headersPath = file("${buildFile.parentFile}/src/native")
@@ -82,39 +66,12 @@ kotlin {
             }
         }
 
-        val commonNative by creating {
+        val jvmMain by getting {
             dependencies {
+                api("org.xerial:sqlite-jdbc:3.36.0.3")
             }
         }
-
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(linuxX64Main)
-            }
-        }
-
-        val mingwX64Main by getting {
-            dependsOn(linuxX64Main)
-        }
-//        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-//            val mingwX86Main by getting {
-//                dependsOn(linuxX64Main)
-//            }
-//        }
-
-        dependsOn("macos", linuxX64Main)
-//        val macosX64Main by getting {
-//            dependsOn(linuxX64Main)
-//        }
-
+/*
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -123,29 +80,8 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
-        val jvmMain by getting {
-            dependencies {
-                api("org.xerial:sqlite-jdbc:3.36.0.3")
-            }
-        }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test"))
-            }
-        }
-        if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-            val androidTest by getting {
-                dependsOn(jvmTest)
-                dependencies {
-                    api("com.android.support.test:runner:0.5")
-                }
-            }
-        }
-//        dependsOn("androidNative*Test", linuxX64Main)
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
-        }
+        */
+        useDefault()
     }
 }
 

@@ -4,10 +4,9 @@
 #include "../include/definition.h"
 #include "../include/wepoll.h"
 
-#ifdef LINUX_TARGET
+#if defined(LINUX_TARGET) || defined(ANDROID_TARGET)
     #include <sys/epoll.h>
-#include <errno.h>
-
+    #include <errno.h>
 #endif
 
 #ifndef EINTR
@@ -50,19 +49,19 @@ int selectKeys(struct Selector *selector, struct SelectedList *selectedList, int
 #endif
 }
 
-int registryKey(struct Selector *selector, SOCKET key, struct Event *event) {
+int registryKey(struct Selector *selector, int key, struct Event *event) {
 #ifdef USE_EPOLL
     return epoll_ctl(selector->epoll, EPOLL_CTL_ADD, key, (struct epoll_event *) event);
 #endif
 }
 
-int updateKey(struct Selector *selector, SOCKET key, struct Event *event) {
+int updateKey(struct Selector *selector, int key, struct Event *event) {
 #ifdef USE_EPOLL
     return epoll_ctl(selector->epoll, EPOLL_CTL_MOD, key, (struct epoll_event *) event);
 #endif
 }
 
-int removeKey(struct Selector *selector, SOCKET key) {
+int removeKey(struct Selector *selector, int key) {
 #ifdef USE_EPOLL
     return epoll_ctl(selector->epoll, EPOLL_CTL_DEL, key, NULL);
 #endif

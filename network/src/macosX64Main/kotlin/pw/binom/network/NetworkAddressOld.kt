@@ -1,4 +1,5 @@
 package pw.binom.network
+/*
 
 import kotlinx.cinterop.*
 import platform.darwin.inet_ntop
@@ -167,3 +168,4 @@ actual sealed class NetworkAddressOld {
     actual abstract fun toMutable(): Mutable
     actual abstract fun toMutable(dest: Mutable)
 }
+*/

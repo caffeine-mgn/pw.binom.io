@@ -4,10 +4,7 @@
 #include "definition.h"
 #include "SelectedList.h"
 #include "Event.h"
-
-#ifndef SOCKET
-#define SOCKET int
-#endif
+#include "Socket.h"
 
 struct Selector {
 #ifdef USE_EPOLL
@@ -21,10 +18,10 @@ void closeSelector(struct Selector *selector);
 
 int selectKeys(struct Selector *selector, struct SelectedList *selectedList, int timeout);
 
-int registryKey(struct Selector *selector, SOCKET key, struct Event *event);
+int registryKey(struct Selector *selector, int key, struct Event *event);
 
-int updateKey(struct Selector *selector, SOCKET key, struct Event *event);
+int updateKey(struct Selector *selector, int key, struct Event *event);
 
-int removeKey(struct Selector *selector, SOCKET key);
+int removeKey(struct Selector *selector, int key);
 
 #endif

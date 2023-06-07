@@ -1,4 +1,5 @@
 package pw.binom.network
+/*
 
 import pw.binom.io.socket.NetworkAddress
 import java.net.NetworkInterface as JvmNetworkInterface
@@ -33,3 +34,4 @@ actual class NetworkInterface private constructor(
             }
     }
 }
+*/

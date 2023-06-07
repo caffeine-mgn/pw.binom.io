@@ -1,5 +1,4 @@
 import pw.binom.eachKotlinTest
-import pw.binom.publish.dependsOn
 import pw.binom.useDefault
 
 plugins {
@@ -14,21 +13,9 @@ apply {
 }
 
 kotlin {
-    jvm()
-
-    linuxX64()
-
-//    linuxArm32Hfp()
-//    linuxArm64 {
-//        binaries {
-//            staticLib()
-//        }
-//    }
-
-    mingwX64()
-//    mingwX86()
-    macosX64()
-
+    allTargets {
+        -"js"
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -48,12 +35,6 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
                 api(project(":httpClient"))
                 api(project(":core"))
-            }
-        }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test-junit"))
             }
         }
         useDefault()

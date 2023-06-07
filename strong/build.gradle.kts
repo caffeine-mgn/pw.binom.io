@@ -1,3 +1,5 @@
+import pw.binom.useDefault
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
@@ -7,6 +9,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+    /*
     if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
         android {
             publishAllLibraryVariants()
@@ -35,6 +38,8 @@ kotlin {
         }
         nodejs()
     }
+    */
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -43,7 +48,7 @@ kotlin {
                 api(project(":collections"))
             }
         }
-
+/*
         val linuxX64Main by getting {
             dependsOn(commonMain)
         }
@@ -70,7 +75,7 @@ kotlin {
         val macosX64Main by getting {
             dependsOn(linuxX64Main)
         }
-
+*/
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
@@ -79,6 +84,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
             }
         }
+        /*
         val jvmMain by getting {
             dependsOn(commonMain)
         }
@@ -101,6 +107,8 @@ kotlin {
                 api(kotlin("test-js"))
             }
         }
+        */
+        useDefault()
     }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

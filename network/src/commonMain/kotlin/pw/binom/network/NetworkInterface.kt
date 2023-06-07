@@ -1,4 +1,5 @@
 package pw.binom.network
+/*
 
 import pw.binom.io.socket.NetworkAddress
 
@@ -20,3 +21,4 @@ expect class NetworkInterface {
         val interfaces: List<NetworkInterface>
     }
 }
+*/

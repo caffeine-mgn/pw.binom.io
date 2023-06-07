@@ -1,5 +1,5 @@
 package pw.binom.io.socket
-
+/*
 import kotlinx.cinterop.*
 import platform.common.internal_copy_addrinfo
 import platform.common.internal_ipv4_to_ipv6
@@ -115,3 +115,4 @@ class MingwMutableNetworkAddress() : AbstractMutableNetworkAddress() {
 
     override fun toImmutable(): NetworkAddress = MingwMutableNetworkAddress(this)
 }
+*/

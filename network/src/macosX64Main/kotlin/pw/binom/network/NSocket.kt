@@ -1,4 +1,5 @@
 package pw.binom.network
+/*
 
 import kotlinx.cinterop.*
 import platform.linux.internal_ntohs
@@ -281,3 +282,4 @@ fun isConnected(native: Int): Boolean {
     }
     return false
 }
+*/

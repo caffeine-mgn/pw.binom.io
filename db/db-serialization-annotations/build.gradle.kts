@@ -16,13 +16,7 @@ kotlin {
             this.compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
         }
     }
-    allTargets {
-        -"js"
-        -KonanTarget.ANDROID_ARM32
-        -KonanTarget.ANDROID_ARM64
-        -KonanTarget.ANDROID_X64
-        -KonanTarget.ANDROID_X86
-    }
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {

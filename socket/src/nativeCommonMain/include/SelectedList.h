@@ -9,7 +9,7 @@
 #include "wepoll.h"
 #include "definition.h"
 
-#ifdef LINUX_TARGET
+#if defined(LINUX_TARGET) || defined(ANDROID_TARGET)
     #include <sys/epoll.h>
 #endif
 

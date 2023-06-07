@@ -1,5 +1,5 @@
 package pw.binom.io.socket
-
+/*
 @Deprecated(message = "Replaced by CommonMutableNetworkAddress", level = DeprecationLevel.ERROR)
 class PosixMutableNetworkAddress() : CommonMutableNetworkAddress() {
     constructor(address: NetworkAddress) : this(
@@ -106,3 +106,4 @@ class PosixMutableNetworkAddress() : CommonMutableNetworkAddress() {
 
     override fun toImmutable(): NetworkAddress = CommonMutableNetworkAddress(this)
 }
+*/

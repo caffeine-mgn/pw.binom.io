@@ -1,4 +1,4 @@
-import pw.binom.publish.dependsOn
+
 import pw.binom.useDefault
 
 plugins {
@@ -23,6 +23,9 @@ kotlin {
         linuxArm64()
     }
     macosX64()
+    allTargets {
+        -"js"
+    }
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -37,12 +40,6 @@ kotlin {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-            }
-        }
-        val jvmTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                api(kotlin("test-junit"))
             }
         }
     }

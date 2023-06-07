@@ -4,7 +4,7 @@ import pw.binom.atomic.AtomicReference
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 
-internal expect fun createGlobalMap(): MutableMap<String, Logger>
+internal fun createGlobalMap(): MutableMap<String, Logger> = HashMap()
 
 /**
  * Logger class

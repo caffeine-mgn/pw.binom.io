@@ -12,7 +12,6 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
     allTargets {
         -"js"
-//        -"wasm32"
     }
     sourceSets {
         val commonMain by getting {

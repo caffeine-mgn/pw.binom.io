@@ -1,9 +1,12 @@
+import pw.binom.publish.useDefault
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("maven-publish")
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+    /*
     jvm()
     linuxX64()
     if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
@@ -17,6 +20,8 @@ kotlin {
         mingwX86()
     }
     macosX64()
+    */
+    allTargets()
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -26,41 +31,42 @@ kotlin {
                 api(project(":network"))
             }
         }
+        /*
+                val linuxX64Main by getting {
+                    dependsOn(commonMain)
+                }
+                if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
+                    val linuxArm32HfpMain by getting {
+                        dependsOn(commonMain)
+                    }
+                }
 
-        val linuxX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.LINUX_ARM32HFP_SUPPORT) {
-            val linuxArm32HfpMain by getting {
-                dependsOn(commonMain)
-            }
-        }
+                if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
+                    val linuxArm64Main by getting {
+                        dependsOn(commonMain)
+                    }
+                }
 
-        if (pw.binom.Target.LINUX_ARM64_SUPPORT) {
-            val linuxArm64Main by getting {
-                dependsOn(commonMain)
-            }
-        }
+                val mingwX64Main by getting {
+                    dependsOn(commonMain)
+                }
+                if (pw.binom.Target.MINGW_X86_SUPPORT) {
+                    val mingwX86Main by getting {
+                        dependsOn(commonMain)
+                    }
+                }
 
-        val mingwX64Main by getting {
-            dependsOn(commonMain)
-        }
-        if (pw.binom.Target.MINGW_X86_SUPPORT) {
-            val mingwX86Main by getting {
-                dependsOn(commonMain)
-            }
-        }
-
-        val macosX64Main by getting {
-            dependsOn(commonMain)
-        }
-
+                val macosX64Main by getting {
+                    dependsOn(commonMain)
+                }
+        */
         val commonTest by getting {
             dependencies {
                 api(kotlin("test-common"))
                 api(kotlin("test-annotations-common"))
             }
         }
+        /*
         val jvmTest by getting {
             dependsOn(commonTest)
             dependencies {
@@ -70,6 +76,8 @@ kotlin {
         val linuxX64Test by getting {
             dependsOn(commonTest)
         }
+        */
+        useDefault()
     }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

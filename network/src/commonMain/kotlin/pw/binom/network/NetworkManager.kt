@@ -1,6 +1,7 @@
 package pw.binom.network
 
 import kotlinx.coroutines.CoroutineScope
+import pw.binom.io.IOException
 import pw.binom.io.socket.*
 import kotlin.coroutines.CoroutineContext
 
@@ -32,6 +33,10 @@ interface NetworkManager : CoroutineContext, CoroutineScope {
                 val connection = attach(channel)
                 connection.description = "Server ${address.host}:${channel.port}"
                 return connection
+            }
+
+            BindStatus.UNKNOWN -> {
+                throw IOException("Can't bind ${address.host}:${channel.port}: unknown error")
             }
         }
     }

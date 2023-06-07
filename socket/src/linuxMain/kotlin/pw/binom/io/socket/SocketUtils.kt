@@ -4,12 +4,21 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
-import platform.linux.sockaddr_un
+import platform.common.*
 import platform.posix.*
 import pw.binom.io.ByteBuffer
-import pw.binom.io.IOException
 
+/*
 actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
+    return when (Socket_bindUnix(native, fileName)) {
+        BIND_RESULT_OK -> BindStatus.OK
+        BIND_RESULT_ALREADY_BINDED -> BindStatus.ALREADY_BINDED
+        BIND_RESULT_ADDRESS_ALREADY_IN_USE -> BindStatus.ADDRESS_ALREADY_IN_USE
+        BIND_RESULT_UNKNOWN_ERROR -> BindStatus.UNKNOWN
+        BIND_RESULT_NOT_SUPPORTED -> throwUnixSocketNotSupported()
+        else -> BindStatus.UNKNOWN
+    }
+    /*
 //    unbind(native)
     return memScoped<BindStatus> {
         val addr = alloc<sockaddr_un>()
@@ -48,9 +57,15 @@ actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
         }
         BindStatus.OK
     }
+    */
 }
+*/
 
 actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): RawSocket? {
+    return address.useNativeAddress { addr ->
+        Socket_accept(native, addr)
+    }
+    /*
     if (address == null) {
         return accept(native, null, null).takeIf { it != -1 }
     }
@@ -75,9 +90,19 @@ actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): R
         address.update(host = out.host, port = out.port)
     }
     return newClientRaw
+    */
 }
 
 actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableNetworkAddress?): Int {
+    if (data.remaining <= 0) {
+        return 0
+    }
+    return address.useNativeAddress { addr ->
+        data.ref(0) { ptr, rem ->
+            Socket_receive(native, ptr, rem, addr)
+        }
+    }
+    /*
     if (data.remaining == 0) {
         return 0
     }
@@ -115,7 +140,8 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
             address.update(netAddress.host, netAddress.port)
         }
         readSize
-    }
+        */
 }
+
 
 actual fun createSocket(socket: RawSocket, server: Boolean): Socket = PosixSocket(native = socket, server = server)
