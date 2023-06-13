@@ -2,7 +2,6 @@ package pw.binom.io.httpClient
 
 import pw.binom.io.*
 import pw.binom.io.http.*
-import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.url.URL
 
 interface HttpRequest : AsyncCloseable {
@@ -44,17 +43,6 @@ interface HttpRequest : AsyncCloseable {
     suspend fun getResponse(): HttpResponse
     suspend fun <T> useResponse(func: suspend (HttpResponse) -> T): T =
         getResponse().use { func(it) }
-
-    /**
-     * Starts WebSocket Session.
-     * Closes this [DefaultHttpRequest] and delegate control to returned [WebSocketConnection].
-     */
-//    suspend fun startWebSocket(
-//        masking: Boolean = true,
-//        headers: Headers = generateWebSocketHeaders(this),
-//    ): WebSocketConnection
-
-    suspend fun startTcp(): AsyncChannel
 }
 
 internal fun generateWebSocketHeaders(self: HttpRequest): Headers {

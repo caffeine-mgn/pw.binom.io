@@ -37,11 +37,6 @@ internal class RestRequestImpl(
     override suspend fun getResponse(): RestResponse =
         RestResponseImpl(resp = request1.getResponse(), serialization = serialization)
 
-    override suspend fun startTcp(): AsyncChannel = request1.startTcp()
-
-//    override suspend fun startWebSocket(masking: Boolean, headers: Headers): WebSocketConnection =
-//        request1.startWebSocket(masking = masking, headers = headers)
-
     override suspend fun writeData(): AsyncHttpRequestOutput = request1.writeData()
 
     override suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): RestResponse =

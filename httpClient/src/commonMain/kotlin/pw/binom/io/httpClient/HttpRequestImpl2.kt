@@ -1,10 +1,11 @@
 package pw.binom.io.httpClient
 
 import pw.binom.charset.Charsets
-import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
-import pw.binom.io.http.*
+import pw.binom.io.http.Encoding
+import pw.binom.io.http.HashHeaders2
+import pw.binom.io.http.MutableHeaders
 import pw.binom.url.URL
 
 class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, override val uri: URL) : HttpRequest {
@@ -98,18 +99,6 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
         val req = makeRequest()
         return req.flush()
     }
-
-//    override suspend fun startWebSocket(masking: Boolean, headers: Headers): WebSocketConnection =
-//        client.connectWebSocket(
-//            uri = uri,
-//            headers = headers,
-//            masking = masking,
-//        ).start()
-
-    override suspend fun startTcp(): AsyncChannel = client.connectTcp(
-        uri = uri,
-        headers = emptyHeaders(),
-    )
 
     override suspend fun asyncClose() {
         httpRequestBody?.asyncClose()
