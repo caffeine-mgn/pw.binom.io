@@ -1,5 +1,5 @@
 package pw.binom.io.httpClient
-
+/*
 import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncWriter
 import pw.binom.io.http.BasicAuth
@@ -28,7 +28,7 @@ class HttpProxyConnectionFactory(
             ),
         )
     }
-
+/*
     override suspend fun writeRequest(
         output: AsyncWriter,
         method: String,
@@ -45,4 +45,6 @@ class HttpProxyConnectionFactory(
         }
         output.append(Utils.CRLF)
     }
+    */
 }
+*/

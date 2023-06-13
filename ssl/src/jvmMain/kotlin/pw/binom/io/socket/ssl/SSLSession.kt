@@ -13,7 +13,11 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         OK, WANT_WRITE, WANT_READ, ERROR, CLOSED
     }
 
-    actual class Status(actual val state: State, actual val bytes: Int)
+    actual class Status(actual val state: State, actual val bytes: Int){
+        override fun toString(): String {
+            return "Status(state: [$state], bytes: [$bytes])"
+        }
+    }
 
     private var rbio = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize * 2)
     private var wbio = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize * 2)

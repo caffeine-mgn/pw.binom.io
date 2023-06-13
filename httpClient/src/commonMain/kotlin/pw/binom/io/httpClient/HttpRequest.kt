@@ -1,9 +1,7 @@
 package pw.binom.io.httpClient
 
 import pw.binom.io.*
-import pw.binom.io.http.BasicAuth
-import pw.binom.io.http.MutableHeaders
-import pw.binom.io.http.useBasicAuth
+import pw.binom.io.http.*
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.url.URL
 
@@ -22,14 +20,22 @@ interface HttpRequest : AsyncCloseable {
         it.writeFully(data)
     }
 
-    suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): HttpResponse
+    suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): HttpResponse {
+        val resp = writeData()
+        func(resp)
+        return resp.getResponse()
+    }
 
     /**
      * Starts write text request
      * Closes this [DefaultHttpRequest] and delegate control to returned [AsyncHttpRequestWriter].
      */
     suspend fun writeText(): AsyncHttpRequestWriter
-    suspend fun writeText(func: suspend (AsyncHttpRequestWriter) -> Unit): HttpResponse
+    suspend fun writeText(func: suspend (AsyncHttpRequestWriter) -> Unit): HttpResponse {
+        val e = writeText()
+        func(e)
+        return e.getResponse()
+    }
 
     /**
      * Starts to get HTTP response
@@ -43,8 +49,20 @@ interface HttpRequest : AsyncCloseable {
      * Starts WebSocket Session.
      * Closes this [DefaultHttpRequest] and delegate control to returned [WebSocketConnection].
      */
-    suspend fun startWebSocket(origin: String? = null, masking: Boolean = true): WebSocketConnection
+//    suspend fun startWebSocket(
+//        masking: Boolean = true,
+//        headers: Headers = generateWebSocketHeaders(this),
+//    ): WebSocketConnection
+
     suspend fun startTcp(): AsyncChannel
+}
+
+internal fun generateWebSocketHeaders(self: HttpRequest): Headers {
+    val host = self.uri.host + (self.uri.port?.let { ":$it" } ?: "")
+    return headersOf(
+        Headers.ORIGIN to host,
+        Headers.HOST to host,
+    )
 }
 
 fun <T : HttpRequest> T.setHeader(key: String, value: String): T {

@@ -52,7 +52,7 @@ internal class HttpResponse3Impl(
 
     override suspend fun startWriteBinary(): AsyncOutput {
         checkClosed()
-        if (!keepAliveEnabled && headers.keepAlive) {
+        if (!keepAliveEnabled && (headers.keepAlive ?: true)) {
             throw IllegalStateException("Client not support Keep-Alive mode")
         }
         if (headers.contentEncoding == null &&
@@ -72,7 +72,7 @@ internal class HttpResponse3Impl(
         val contentEncoding = headers.getContentEncodingList()
 
         val baseResponse = HttpResponseOutput2(
-            keepAlive = headers.keepAlive,
+            keepAlive = headers.keepAlive ?: true,
             returnToIdle = returnToIdle,
             channel = channel,
         )
@@ -162,7 +162,7 @@ internal class HttpResponse3Impl(
         headers.contentLength = 0uL
         sendRequest()
         channel.writer.flush()
-        if (keepAliveEnabled && headers.keepAlive && returnToIdle != null) {
+        if (keepAliveEnabled && (headers.keepAlive ?: true) && returnToIdle != null) {
             returnToIdle.returnToPool(channel)
         } else {
             channel.asyncCloseAnyway()

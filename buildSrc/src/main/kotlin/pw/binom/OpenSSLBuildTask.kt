@@ -7,6 +7,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.konan.target.Architecture
@@ -27,19 +28,23 @@ abstract class OpenSSLBuildTask : DefaultTask() {
     @get:OutputFile
     abstract val staticLib: RegularFileProperty
 
-    private val dirForBuildStaticLib = RegularFile {
-        project.buildDir.resolve("openssl/${target.get().name}/static")
-    }
+    @get:OutputDirectory
+    abstract val tempDirForObjectFiles: RegularFileProperty
+//    = RegularFile {
+//        project.buildDir.resolve("openssl/${target.get().name}/static")
+//    }
 
     init {
         this.group = "openssl"
 //        outputs.file(opensslDirection.map { it.asFile.resolve("Makefile") })
         staticLib.set(
-            RegularFile {
-                project.buildDir.resolve("openssl/${target.get().name}/libopenssl.a")
-            },
+            target.map { t ->
+                RegularFile {
+                    project.buildDir.resolve("openssl/${t.name}/libopenssl.a")
+                }
+            }
         )
-        outputs.dirs(dirForBuildStaticLib)
+        tempDirForObjectFiles.set(target.map { t -> RegularFile { project.buildDir.resolve("openssl/${t.name}/static") } })
     }
 
     @TaskAction
@@ -134,7 +139,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
             directory = opensslDirection,
             envs = envs1,
         )
-        val temparalFile = dirForBuildStaticLib.asFile
+        val temparalFile = tempDirForObjectFiles.get().asFile
         temparalFile.mkdirs()
         try {
             linker.extract(

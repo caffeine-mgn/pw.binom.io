@@ -4,7 +4,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncChunkedOutput
 import pw.binom.url.URL
-
+/*
 class RequestAsyncChunkedOutput constructor(
     val URI: URL,
     val client: BaseHttpClient,
@@ -22,9 +22,10 @@ class RequestAsyncChunkedOutput constructor(
         super.asyncClose()
         return DefaultHttpResponse.read(
             uri = URI,
-            client = client,
             keepAlive = keepAlive,
             channel = channel,
+            connectionPoolReceiver = client.connectionPoolReceiver,
+            textBufferPool = client.textBufferPool,
         )
     }
 
@@ -32,3 +33,4 @@ class RequestAsyncChunkedOutput constructor(
         getResponse().asyncClose()
     }
 }
+*/

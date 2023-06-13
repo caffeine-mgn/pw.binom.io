@@ -104,7 +104,7 @@ internal class HttpResponse2Impl(
     override suspend fun startWriteBinary(): AsyncOutput {
         checkClosed()
         responseStarted = true
-        if (!keepAliveEnabled && headers.keepAlive) {
+        if (!keepAliveEnabled && (headers.keepAlive ?: true)) {
             throw IllegalStateException("Client not support Keep-Alive mode")
         }
         if (headers.contentEncoding == null &&
@@ -125,7 +125,7 @@ internal class HttpResponse2Impl(
         val contentEncoding = headers.getContentEncodingList()
 
         val baseResponse = HttpResponseOutput(
-            keepAlive = headers.keepAlive,
+            keepAlive = headers.keepAlive ?: true,
             server = server!!,
             channel = channel!!,
         )
@@ -220,7 +220,7 @@ internal class HttpResponse2Impl(
             headers.contentLength = 0uL
             sendRequest()
             channel!!.writer.flush()
-            if (keepAliveEnabled && headers.keepAlive) {
+            if (keepAliveEnabled && (headers.keepAlive ?: true)) {
                 server!!.clientReProcessing(channel!!)
             } else {
                 channel!!.asyncCloseAnyway()

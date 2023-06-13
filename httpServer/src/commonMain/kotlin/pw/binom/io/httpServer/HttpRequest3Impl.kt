@@ -223,7 +223,7 @@ internal class HttpRequest3Impl(
             }
         }
         val r = HttpResponse3Impl(
-            keepAliveEnabled = keepAliveEnabled && headers.keepAlive,
+            keepAliveEnabled = keepAliveEnabled && (headers.keepAlive ?: true),
             channel = channel,
             acceptEncoding = headers.acceptEncoding,
             returnToIdle = returnToIdle,

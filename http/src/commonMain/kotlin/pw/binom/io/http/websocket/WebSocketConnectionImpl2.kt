@@ -11,7 +11,7 @@ import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
 import pw.binom.writeShort
 
-class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) :
+class WebSocketConnectionImpl2(val onClose: suspend (WebSocketConnectionImpl2) -> Unit) :
     WebSocketConnection {
 
     companion object {
@@ -95,7 +95,7 @@ class WebSocketConnectionImpl2(val onClose: (WebSocketConnectionImpl2) -> Unit) 
                         mask = header.mask,
                         maskFlag = header.maskFlag,
                         lastFrame = header.finishFlag,
-                        input = _input
+                        input = _input,
                     )
                 }
                 return message

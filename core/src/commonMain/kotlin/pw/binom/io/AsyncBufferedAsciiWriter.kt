@@ -6,7 +6,7 @@ import pw.binom.atomic.AtomicBoolean
 
 abstract class AbstractAsyncBufferedAsciiWriter(
     val closeParent: Boolean,
-) : AsyncWriter, AsyncOutput {
+) : AsyncWriter, BufferedAsyncOutput {
     protected abstract val output: AsyncOutput
     protected abstract val buffer: ByteBuffer
     private var closed = AtomicBoolean(false)
@@ -26,6 +26,9 @@ abstract class AbstractAsyncBufferedAsciiWriter(
             flush()
         }
     }
+
+    override val outputBufferSize: Int
+        get() = buffer.capacity
 
     suspend fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int {
         ensureOpen()

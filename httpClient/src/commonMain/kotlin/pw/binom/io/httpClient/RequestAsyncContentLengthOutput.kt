@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient
-
+/*
+import pw.binom.ByteBufferPool
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthOutput
 import pw.binom.url.URL
@@ -10,6 +11,8 @@ class RequestAsyncContentLengthOutput constructor(
     var keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     contentLength: ULong,
+    val connectionPoolReceiver: ConnectionPoolReceiver?,
+    val textBufferPool: ByteBufferPool,
 ) : AsyncHttpRequestOutput, AsyncContentLengthOutput(
     stream = channel.writer,
     contentLength = contentLength,
@@ -23,9 +26,11 @@ class RequestAsyncContentLengthOutput constructor(
         super.asyncClose()
         return DefaultHttpResponse.read(
             uri = URI,
-            client = client,
+            
             keepAlive = keepAlive,
             channel = channel,
+            connectionPoolReceiver = connectionPoolReceiver,
+            textBufferPool = textBufferPool,
         )
     }
 
@@ -33,3 +38,4 @@ class RequestAsyncContentLengthOutput constructor(
         getResponse().asyncClose()
     }
 }
+*/

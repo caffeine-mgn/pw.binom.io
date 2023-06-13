@@ -24,6 +24,7 @@ interface Headers : Map<String, List<String>> {
         const val CONTENT_RANGE = "Content-Range"
         const val WEBSOCKET = "websocket"
         const val TCP = "tcp"
+        const val VIA = "via"
         const val KEEP_ALIVE = "keep-alive"
         const val SET_COOKIE = "Set-Cookie"
         const val COOKIE = "Cookie"
@@ -38,6 +39,7 @@ interface Headers : Map<String, List<String>> {
         const val LOCATION = "Location"
         const val AUTHORIZATION = "Authorization"
         const val PROXY_AUTHORIZATION = "Proxy-Authorization"
+        const val PROXY_CONNECTION = "Proxy-Connection"
     }
 
     override operator fun get(key: String): List<String>?
@@ -74,7 +76,7 @@ interface Headers : Map<String, List<String>> {
         get() = getList(CONTENT_ENCODING)
 
     val keepAlive
-        get() = getList(CONNECTION).equals(KEEP_ALIVE, ignoreCase = true)
+        get() = getList(CONNECTION)?.equals(KEEP_ALIVE, ignoreCase = true)
 
     val mimeType: String?
         get() {

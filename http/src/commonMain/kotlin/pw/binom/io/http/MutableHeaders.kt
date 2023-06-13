@@ -82,13 +82,13 @@ interface MutableHeaders : Headers {
             }
             this[Headers.RANGE] = sb.toString()
         }
-    override var keepAlive: Boolean
+    override var keepAlive: Boolean?
         get() = super.keepAlive
         set(value) {
-            if (value) {
-                this[Headers.CONNECTION] = Headers.KEEP_ALIVE
-            } else {
-                this[Headers.CONNECTION] = Headers.CLOSE
+            when (value) {
+                true -> this[Headers.CONNECTION] = Headers.KEEP_ALIVE
+                false -> this[Headers.CONNECTION] = Headers.CLOSE
+                else -> remove(Headers.CONNECTION)
             }
         }
 }
@@ -106,7 +106,7 @@ fun <T : MutableHeaders> T.useBasicAuth(login: String, password: String): T =
         BasicAuth(
             login = login,
             password = password,
-        )
+        ),
     )
 
 fun <T : MutableHeaders> T.useBasicAuth(basicAuth: BasicAuth): T {

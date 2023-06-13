@@ -8,7 +8,7 @@ import pw.binom.fromBytes
 class AsyncBufferedAsciiInputReader private constructor(
     val stream: AsyncInput,
     val closeParent: Boolean = true,
-) : AsyncReader, AsyncInput {
+) : AsyncReader, BufferedAsyncInput {
     private var buffer: ByteBuffer = ByteBuffer(0)
 
     constructor(
@@ -62,6 +62,9 @@ class AsyncBufferedAsciiInputReader private constructor(
     init {
 //        println("AsyncBufferedAsciiInputReader:: after construct. ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
     }
+
+    override val inputBufferSize: Int
+        get() = buffer.capacity
 
     override fun toString(): String = "AsyncBufferedAsciiInputReader(stream=$stream)"
 
@@ -121,7 +124,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         return len
     }
 
-    suspend fun readByte(): Byte {
+    override suspend fun readByte(): Byte {
         full(Byte.SIZE_BYTES)
         if (buffer.remaining < Byte.SIZE_BYTES) {
             throw EOFException()
@@ -129,7 +132,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         return buffer.getByte()
     }
 
-    suspend fun readShort(): Short {
+    override suspend fun readShort(): Short {
         full(Short.SIZE_BYTES)
         if (buffer.remaining < Short.SIZE_BYTES) {
             throw EOFException()
@@ -137,7 +140,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         return Short.fromBytes(buffer)
     }
 
-    suspend fun readInt(): Int {
+    override suspend fun readInt(): Int {
         full(Int.SIZE_BYTES)
         if (buffer.remaining < Int.SIZE_BYTES) {
             throw EOFException()
@@ -145,7 +148,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         return Int.fromBytes(buffer)
     }
 
-    suspend fun readLong(): Long {
+    override suspend fun readLong(): Long {
         full(Long.SIZE_BYTES)
         if (buffer.remaining < Long.SIZE_BYTES) {
             throw EOFException()
@@ -153,7 +156,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         return Long.fromBytes(buffer)
     }
 
-    suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {
+    override suspend fun read(dest: ByteArray, offset: Int, length: Int): Int {
         ensureOpen()
         full()
         val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
@@ -165,7 +168,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         return len
     }
 
-    suspend fun readFully(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int {
+    override suspend fun readFully(dest: ByteArray, offset: Int, length: Int): Int {
         ensureOpen()
         var readed = 0
         while (true) {

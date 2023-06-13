@@ -83,13 +83,12 @@ class TestWS {
 //    }
 
     @Test
-    fun test() = runTest(dispatchTimeoutMs = 10_000) {
+    fun test() = runTest {
         val message = "Hello world"
         val client = HttpClient.create()
-        val wsClient = client.connect(
-            method = "GET",
+        val wsClient = client.connectWebSocket(
             uri = "ws://127.0.0.1:7142/".toURL(),
-        ).startWebSocket()
+        ).start()
 
         val msg = wsClient.read().use { message ->
             message.bufferedReader().readText()
@@ -107,11 +106,11 @@ class TestWS {
 
     @Ignore
     @Test
-    fun serverTest() = runTest(dispatchTimeoutMs = 10_000) {
+    fun serverTest() = runTest {
         try {
             val client = HttpClient.create()
-            val wsClient = client.connect("GET", "ws://127.0.0.1:8080/".toURL())
-                .startWebSocket("http://127.0.0.1:8080")
+            val wsClient = client.connectWebSocket("ws://127.0.0.1:8080/".toURL())
+                .start()
 
             while (true) {
                 val msg = wsClient.read().use {

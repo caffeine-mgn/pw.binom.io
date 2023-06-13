@@ -298,7 +298,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
         }
         val r = server.httpResponse2Impl.borrow().also {
             it.reset(
-                keepAliveEnabled = server.maxIdleTime.isPositive() && headers.keepAlive,
+                keepAliveEnabled = server.maxIdleTime.isPositive() && (headers.keepAlive ?: true),
                 channel = channel!!,
                 acceptEncoding = headers.acceptEncoding,
                 server = server,

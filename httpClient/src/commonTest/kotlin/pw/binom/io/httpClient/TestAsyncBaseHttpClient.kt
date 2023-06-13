@@ -81,7 +81,6 @@ class TestAsyncBaseHttpClient {
             val client = HttpClient.create(
                 networkDispatcher = Dispatchers.Network,
                 useKeepAlive = false,
-                connectTimeout = 10.seconds,
 //            connectTimeout = Duration.INFINITE,
             )
             repeat(3) {

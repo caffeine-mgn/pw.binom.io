@@ -27,5 +27,5 @@ internal class RestResponseImpl(val resp: HttpResponse, val serialization: RestC
 
     override suspend fun readText(): AsyncReader = resp.readText()
 
-    override suspend fun startTcp(): AsyncChannel = resp.startTcp()
+//    override suspend fun startTcp(): AsyncChannel = resp.startTcp()
 }

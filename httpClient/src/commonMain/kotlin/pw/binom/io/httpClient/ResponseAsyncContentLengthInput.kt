@@ -3,20 +3,19 @@ package pw.binom.io.httpClient
 import pw.binom.io.AsyncInput
 import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.http.AsyncContentLengthInput
-import pw.binom.skipAll
 import pw.binom.url.URL
-
+/*
 class ResponseAsyncContentLengthInput(
     val URI: URL,
-    val client: BaseHttpClient,
     val keepAlive: Boolean,
     val channel: AsyncAsciiChannel,
     stream: AsyncInput,
     contentLength: ULong,
+    val connectionPoolReceiver: ConnectionPoolReceiver?,
 ) : AsyncContentLengthInput(
     stream = stream,
     contentLength = contentLength,
-    closeStream = false
+    closeStream = false,
 ) {
 
     override suspend fun asyncClose() {
@@ -25,12 +24,21 @@ class ResponseAsyncContentLengthInput(
         }
         super.asyncClose()
         if (keepAlive) {
-            client.recycleConnection(
-                URI = URI,
-                channel = channel,
-            )
+            if (connectionPoolReceiver != null) {
+                connectionPoolReceiver.recycle(
+                    url = URI,
+                    connection = channel,
+                )
+            } else {
+                channel.asyncClose()
+            }
         } else {
-            channel.asyncClose()
+            if (connectionPoolReceiver != null) {
+                connectionPoolReceiver.close(channel)
+            } else {
+                channel.asyncClose()
+            }
         }
     }
 }
+*/

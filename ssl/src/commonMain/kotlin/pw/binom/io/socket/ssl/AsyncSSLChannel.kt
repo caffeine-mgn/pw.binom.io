@@ -107,8 +107,9 @@ class AsyncSSLChannel private constructor(
                 break
             }
             buffer.flip()
-            channel.write(buffer)
+            channel.writeFully(buffer)
         }
+        channel.flush()
     }
 
     private suspend fun readAll() {

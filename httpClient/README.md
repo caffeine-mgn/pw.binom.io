@@ -15,3 +15,10 @@ dependencies {
 * Can be attach to common Connection Manager
 * Supports `Connection: keep-alive`
 * Supports `Transfer-Encoding: chunked`
+
+Что нужно поддержать:
+* https, wss
+* переиспользование соединения
+* * на http 1.1 это пул
+* * на http 2 это мультиплексирование
+* http/https proxy

@@ -16,6 +16,7 @@ import pw.binom.url.URL
 private val defaultUserAgent =
     "binom-kotlin-${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
 
+/*
 class DefaultHttpRequest constructor(
     override var method: String,
     override val uri: URL,
@@ -48,23 +49,17 @@ class DefaultHttpRequest constructor(
         }
         headers[Headers.HOST] = host
         headers[Headers.ACCEPT_ENCODING] = "gzip, deflate, identity"
-        headers[Headers.ACCEPT] = "*/*"
+        headers[Headers.ACCEPT] = "*${'/'}*"
         headers[Headers.USER_AGENT] = defaultUserAgent
     }
 
     private suspend fun sendHeaders() {
-        client.connectionFactory.writeRequest(
-            output = channel.writer,
-            method = method,
-            request = request,
-            headers = headers,
-            url = uri,
-        )
-//        channel.writer.append(method).append(" ").append(request).append(" ").append("HTTP/1.1").append(Utils.CRLF)
-//        headers.forEachHeader { key, value ->
-//            channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
-//        }
-//        channel.writer.append(Utils.CRLF)
+        val output = channel.writer
+        output.append(method).append(" ").append(request).append(" ").append("HTTP/1.1").append(Utils.CRLF)
+        headers.forEachHeader { key, value ->
+            output.append(key).append(": ").append(value).append(Utils.CRLF)
+        }
+        output.append(Utils.CRLF)
     }
 
     private val keepAlive
@@ -103,6 +98,8 @@ class DefaultHttpRequest constructor(
                 keepAlive = keepAlive,
                 channel = channel,
                 contentLength = len,
+                connectionPoolReceiver = client.connectionPoolReceiver,
+                textBufferPool = client.textBufferPool,
             )
         }
         throw IllegalStateException("Unknown type of Transfer Encoding")
@@ -162,9 +159,10 @@ class DefaultHttpRequest constructor(
         HttpMetrics.defaultHttpRequestCountMetric.dec()
         val v = DefaultHttpResponse.read(
             uri = uri,
-            client = client,
             keepAlive = keepAlive,
-            channel = channel,
+            channel = channel.channel,
+            connectionPoolReceiver = client.connectionPoolReceiver,
+            textBufferPool = client.textBufferPool,
         )
         return v
     }
@@ -193,12 +191,6 @@ class DefaultHttpRequest constructor(
             output = channel.writer,
             masking = masking,
         )
-//        return WebSocketConnectionImpl(
-//            input = channel.reader,
-//            output = channel.writer,
-//            masking = masking,
-//            messagePool = client.messagePool,
-//        )
     }
 
     override suspend fun startTcp(): AsyncChannel {
@@ -224,3 +216,4 @@ class DefaultHttpRequest constructor(
         }
     }
 }
+*/

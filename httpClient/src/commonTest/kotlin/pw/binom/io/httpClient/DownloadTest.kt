@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 class DownloadTest {
 
     @Test
-    fun getPostTest() = runTest(dispatchTimeoutMs = 10_000) {
+    fun getPostTest() = runTest {
         Thread.sleep(1000)
         val filePath = HTTP_STORAGE_URL.appendPath(Random.nextUuid().toString())
         ByteBuffer(512).use { stubData ->
@@ -38,7 +38,7 @@ class DownloadTest {
                         assertEquals(200, resp.responseCode)
                         assertContentEquals(
                             expected = stubData.toByteArray(),
-                            actual = resp.readDataToByteArray()
+                            actual = resp.readDataToByteArray(),
                         )
                     }
                 }
@@ -47,28 +47,28 @@ class DownloadTest {
     }
 
     @Test
-    fun test() = runTest(dispatchTimeoutMs = 10_000) {
-        HttpClient.create().use { client ->
+    fun test() = runTest {
+        HttpClient.create(proxyURL = "http://127.0.0.1:8888".toURL()).use { client ->
             client.connect(
                 method = "GET",
                 uri = "https://www.ntv.ru/".toURL(),
+//                uri = "http://www.ntv.ru/".toURL(),
+//                uri = "http://127.0.0.1:4444/".toURL(),
             ).use { query ->
                 val txt = query.getResponse().readText().use { it.readText() }
-                println("txt: $txt")
             }
         }
     }
 
     @Ignore
     @Test
-    fun test2() = runTest(dispatchTimeoutMs = 10_000) {
+    fun test2() = runTest {
         HttpClient.create().use { client ->
             client.connect(
                 method = "GET",
                 uri = "http://127.0.0.1:2375/".toURL(),
             ).use { query ->
                 val txt = query.getResponse().readText().use { it.readText() }
-                println("txt: $txt")
             }
         }
     }

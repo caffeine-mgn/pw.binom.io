@@ -2,6 +2,7 @@ package pw.binom.flux.client
 
 import kotlinx.serialization.KSerializer
 import pw.binom.io.AsyncChannel
+import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.AsyncHttpRequestOutput
@@ -38,8 +39,8 @@ internal class RestRequestImpl(
 
     override suspend fun startTcp(): AsyncChannel = request1.startTcp()
 
-    override suspend fun startWebSocket(origin: String?, masking: Boolean): WebSocketConnection =
-        request1.startWebSocket(origin = origin, masking = masking)
+//    override suspend fun startWebSocket(masking: Boolean, headers: Headers): WebSocketConnection =
+//        request1.startWebSocket(masking = masking, headers = headers)
 
     override suspend fun writeData(): AsyncHttpRequestOutput = request1.writeData()
 

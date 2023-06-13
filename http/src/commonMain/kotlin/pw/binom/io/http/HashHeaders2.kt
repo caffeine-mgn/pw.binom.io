@@ -4,6 +4,9 @@ import pw.binom.collections.defaultMutableMap
 
 class HashHeaders2(val map: MutableMap<String, MutableList<String>>) : MutableHeaders {
     constructor() : this(map = defaultMutableMap<String, MutableList<String>>())
+    constructor(headers: Headers) : this() {
+        add(headers)
+    }
 
     override val entries: Set<Map.Entry<String, List<String>>>
         get() = map.entries
@@ -25,7 +28,7 @@ class HashHeaders2(val map: MutableMap<String, MutableList<String>>) : MutableHe
     }
 
     override fun add(headers: Headers): MutableHeaders {
-        map.forEach { e ->
+        headers.forEach { e ->
             add(e.key.lowercase(), e.value)
         }
         return this
