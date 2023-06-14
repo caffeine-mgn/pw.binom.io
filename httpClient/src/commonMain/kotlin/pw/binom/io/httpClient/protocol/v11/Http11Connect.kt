@@ -19,7 +19,7 @@ import kotlin.time.TimeSource
 class Http11Connect(
     private val networkManager: NetworkManager,
     private var tcp: AsyncChannel?,
-    private val defaultKeepAliveTimeout: Duration,
+    defaultKeepAliveTimeout: Duration,
 ) : HttpConnect {
     private var created = TimeSource.Monotonic.markNow()
     private var closed = false
