@@ -27,8 +27,6 @@ class BaseHttpClient(
         HttpMetrics.baseHttpClientCountMetric.inc()
     }
 
-    internal val webSocketConnectionPool by lazy { WebSocketConnectionPool(websocketMessagePoolSize) }
-
     internal val textBufferPool = FixedSizePool(
         capacity = bufferCapacity,
         manager = ByteBufferFactory(bufferSize),

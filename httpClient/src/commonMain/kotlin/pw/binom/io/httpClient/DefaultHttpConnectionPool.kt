@@ -54,6 +54,11 @@ class DefaultHttpConnectionPool : HttpConnectionPool {
     }
 
     override suspend fun recycle(url: URL, channel: HttpConnect) {
+        if (!channel.isAlive) {
+            channel.asyncCloseAnyway()
+            return
+        }
+        cleanup()
         val key = url.asKey
         lock.synchronize {
             connections.getOrPut(key) { defaultMutableList() }.add(channel)
