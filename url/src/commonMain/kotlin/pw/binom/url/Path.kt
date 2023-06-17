@@ -33,6 +33,11 @@ value class Path internal constructor(val raw: String) {
         return str
     }
 
+    fun getVariable(name: String, mask: PathMask): String? = getVariable(
+        name = name,
+        mask = mask.raw
+    )
+
     /**
      * Parse current path with [mask]. In [dest] will put all variable values.
      * You can define your variable using `{` and `}`. Like this `/users/{id}/info`.

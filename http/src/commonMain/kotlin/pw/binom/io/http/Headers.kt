@@ -182,9 +182,29 @@ interface Headers : Map<String, List<String>> {
             return BasicAuth(login = items[0], password = items[1])
         }
 
+    val proxyBasicAuth: BasicAuth?
+        get() {
+            val authorization = getSingleOrNull(PROXY_AUTHORIZATION) ?: return null
+            if (!authorization.startsWith("Basic ")) {
+                return null
+            }
+            val sec = Base64.decode(authorization.removePrefix("Basic ")).decodeToString()
+            val items = sec.split(':', limit = 2)
+            return BasicAuth(login = items[0], password = items[1])
+        }
+
     val bearerAuth: String?
         get() {
             val authorization = getSingleOrNull(AUTHORIZATION) ?: return null
+            if (!authorization.startsWith("Bearer ")) {
+                return null
+            }
+            return authorization.removePrefix("Bearer ")
+        }
+
+    val proxyBearerAuth: String?
+        get() {
+            val authorization = getSingleOrNull(PROXY_AUTHORIZATION) ?: return null
             if (!authorization.startsWith("Bearer ")) {
                 return null
             }

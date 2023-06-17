@@ -114,6 +114,19 @@ fun <T : MutableHeaders> T.useBasicAuth(basicAuth: BasicAuth): T {
     return this
 }
 
+fun <T : MutableHeaders> T.useProxyBasicAuth(login: String, password: String): T =
+    useProxyBasicAuth(
+        BasicAuth(
+            login = login,
+            password = password,
+        ),
+    )
+
+fun <T : MutableHeaders> T.useProxyBasicAuth(basicAuth: BasicAuth): T {
+    this[Headers.PROXY_AUTHORIZATION] = basicAuth.headerValue
+    return this
+}
+
 /**
  * Applies header `Authorization: Bearer [token]`
  *
@@ -123,5 +136,10 @@ fun <T : MutableHeaders> T.useBasicAuth(basicAuth: BasicAuth): T {
  */
 fun <T : MutableHeaders> T.useBearerAuth(token: String): T {
     this[Headers.AUTHORIZATION] = "Bearer $token"
+    return this
+}
+
+fun <T : MutableHeaders> T.useProxyBearerAuth(token: String): T {
+    this[Headers.PROXY_AUTHORIZATION] = "Bearer $token"
     return this
 }
