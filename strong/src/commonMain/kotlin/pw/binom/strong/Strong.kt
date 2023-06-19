@@ -37,10 +37,12 @@ private class AfterInit<T>(val fieldName: String, val init: suspend () -> T) : R
     }
 }
 
+@PublishedApi
+internal fun getStrong() = STRONG_LOCAL ?: throw IllegalStateException("Bean should be created during strong starts")
+
 interface Strong {
     abstract class Bean : InitializingBean, LinkingBean {
-        protected val strong: Strong =
-            STRONG_LOCAL ?: throw IllegalStateException("Bean should be created during strong starts")
+        protected val strong: Strong = getStrong()
 
         protected inline fun <reified T : Any> inject(name: String? = null) = strong.inject<T>(name = name)
         protected inline fun <reified T : Any> injectServiceMap() = strong.injectServiceMap<T>()
@@ -103,6 +105,9 @@ interface Strong {
     }
 
     companion object {
+        val CURRENT
+            get() = STRONG_LOCAL
+
         fun config(func: suspend (Definer) -> Unit) = object : Config {
             override suspend fun apply(strong: Definer) {
                 func(strong)

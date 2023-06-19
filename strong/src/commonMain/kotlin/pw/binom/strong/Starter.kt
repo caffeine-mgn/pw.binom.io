@@ -4,6 +4,7 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableSet
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
+import pw.binom.logger.debugSync
 import pw.binom.strong.exceptions.*
 import kotlin.reflect.KClass
 
@@ -188,6 +189,14 @@ internal class Starter(
                 }
                 if (foundBean == null) {
                     if (dep.require) {
+                        if (createdBeans.isEmpty()) {
+                            logger.debugSync(text = "No any bean in context")
+                        } else {
+                            logger.debugSync(text = "All bean in context:")
+                            createdBeans.forEach {
+                                logger.debugSync(text = "${it.beanClass.getClassName()} (${it.name})")
+                            }
+                        }
                         throw BeanCreateException(
                             clazz = node.bean::class,
                             name = node.name,

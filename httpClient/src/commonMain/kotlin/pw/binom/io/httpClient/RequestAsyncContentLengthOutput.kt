@@ -26,7 +26,8 @@ class RequestAsyncContentLengthOutput constructor(
         super.asyncClose()
         return DefaultHttpResponse.read(
             uri = URI,
-            
+
+
             keepAlive = keepAlive,
             channel = channel,
             connectionPoolReceiver = connectionPoolReceiver,
