@@ -19,7 +19,7 @@ class BaseHttpClient(
     val bufferSize: Int = DEFAULT_BUFFER_SIZE,
     bufferCapacity: Int = 16,
     websocketMessagePoolSize: Int = 16,
-    val requestHook: RequestHook,
+    val requestHook: RequestHook = RequestHook.Default,
     val protocolSelector: ProtocolSelector,
 ) : AbstractHttpClient() {
 

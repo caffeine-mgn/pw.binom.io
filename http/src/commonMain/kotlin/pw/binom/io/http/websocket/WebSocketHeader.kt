@@ -17,41 +17,41 @@ class WebSocketHeader {
 
     companion object {
         suspend fun read(input: AsyncInput, dest: WebSocketHeader) {
-            val buf = ByteBuffer(8)
-            val first = input.readByte(buf)
-            val second = input.readByte(buf)
+            ByteBuffer(8).use { buf ->
+                val first = input.readByte(buf)
+                val second = input.readByte(buf)
 
-            dest.finishFlag = first.toInt() and 0b10000000 != 0
-            dest.opcode = first and 0b1111
+                dest.finishFlag = first.toInt() and 0b10000000 != 0
+                dest.opcode = first and 0b1111
 
-            dest.length = (second and 0b1111111.toByte()).let {
-                when (it) {
-                    126.toByte() -> {
-                        val s = input.readShort(buf)
+                dest.length = (second and 0b1111111.toByte()).let {
+                    when (it) {
+                        126.toByte() -> {
+                            val s = input.readShort(buf)
 //                        println(
 //                            "WebSocketHeader:: return size as Short. $s, ${s.toUShort()} ${
 //                            s.toUShort().toLong()
 //                            } ${s.toLong()}"
 //                        )
-                        s.toUShort().toLong()
-                    }
+                            s.toUShort().toLong()
+                        }
 
-                    127.toByte() -> {
-                        /*println("WebSocketHeader:: return size as Long"); */input.readLong(buf)
-                    }
+                        127.toByte() -> {
+                            /*println("WebSocketHeader:: return size as Long"); */input.readLong(buf)
+                        }
 
-                    else -> {
-                        /*println("WebSocketHeader:: return size as is $it ${it.toLong()}"); */it.toLong()
+                        else -> {
+                            /*println("WebSocketHeader:: return size as is $it ${it.toLong()}"); */it.toLong()
+                        }
                     }
                 }
-            }
 //            println("WebSocketHeader::read dest.length=${dest.length}")
-            dest.maskFlag = second and 0b10000000.toByte() != 0.toByte()
+                dest.maskFlag = second and 0b10000000.toByte() != 0.toByte()
 
-            if (dest.maskFlag) {
-                dest.mask = input.readInt(buf)
+                if (dest.maskFlag) {
+                    dest.mask = input.readInt(buf)
+                }
             }
-            buf.close()
         }
 
         suspend fun write(output: AsyncOutput, src: WebSocketHeader) {
@@ -89,6 +89,6 @@ class WebSocketHeader {
 
     override fun toString(): String =
         "WebSocketHeader(opcode=$opcode, length=$length, maskFlag=$maskFlag, mask=${
-        mask.toUInt().toString(2)
+            mask.toUInt().toString(2)
         }, finishFlag=$finishFlag)"
 }

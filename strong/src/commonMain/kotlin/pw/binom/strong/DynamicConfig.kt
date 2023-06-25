@@ -45,6 +45,7 @@ open class DynamicConfig : Strong.Config {
     }
 
     open fun define(
+        className:String,
         clazz: KClass<out Any>,
         primary: Boolean,
         name: String?,

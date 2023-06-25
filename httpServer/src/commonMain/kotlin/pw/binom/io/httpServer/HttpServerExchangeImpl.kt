@@ -35,14 +35,34 @@ class HttpServerExchangeImpl(
             .append(HttpServerUtils.statusCodeToDescription(statusCode))
             .append(Utils.CRLF)
 
+        if (requestMethod == "CONNECT" && statusCode >= 200 && statusCode < 300) {
+            require(!hasUpgrade) { "Connect method doesn't allow to use Upgrade" }
+            require(contentLength == null) { "Connect method doesn't allow to ${Headers.CONTENT_LENGTH}" }
+            require(contentEncoding.isEmpty()) { "Connect method doesn't allow to ContentEncoding" }
+            require(transferEncoding.isEmpty()) { "Connect method doesn't allow to TransferEncoding" }
+            channel.writer.append(Utils.CRLF)
+            channel.writer.flush()
+            this.outputStream = channel.channel
+            this.inputStream = channel.channel
+            return
+        }
+
         headers.forEachHeader { key, value ->
             channel.writer.append(key).append(": ").append(value).append(Utils.CRLF)
         }
         val clientSupportKeepAlive = requestHeaders[Headers.CONNECTION]?.any { it == Headers.KEEP_ALIVE } == true
-        if (connection == null && !hasUpgrade && clientSupportKeepAlive) {
+        val proxyClientSupportKeepAlive =
+            requestHeaders[Headers.PROXY_CONNECTION]?.any { it == Headers.KEEP_ALIVE } == true
+        if (connection == null && !hasUpgrade && (clientSupportKeepAlive || proxyClientSupportKeepAlive)) {
             if (keepAliveEnabled) {
                 keepAlive = true
-                channel.writer.append(Headers.CONNECTION).append(": ").append(Headers.KEEP_ALIVE).append(Utils.CRLF)
+                if (clientSupportKeepAlive) {
+                    channel.writer.append(Headers.CONNECTION).append(": ").append(Headers.KEEP_ALIVE).append(Utils.CRLF)
+                }
+                if (proxyClientSupportKeepAlive) {
+                    channel.writer.append(Headers.PROXY_CONNECTION).append(": ").append(Headers.KEEP_ALIVE)
+                        .append(Utils.CRLF)
+                }
             } else {
                 channel.writer.append(Headers.CONNECTION).append(": ").append(Headers.CLOSE).append(Utils.CRLF)
             }
@@ -54,7 +74,7 @@ class HttpServerExchangeImpl(
         }
         channel.writer.append(Utils.CRLF)
         channel.writer.flush()
-        var output: AsyncOutput = channel.writer
+        var output: AsyncOutput = channel.channel
         if (contentLength != null) {
             output = AsyncContentLengthOutput(
                 stream = output,
@@ -103,7 +123,7 @@ class HttpServerExchangeImpl(
 
             val contentLength = requestHeaders.contentLength
             val transferEncoding = requestHeaders.getTransferEncodingList()
-            var stream: AsyncInput = channel.reader
+            var stream: AsyncInput = channel.channel
             if (contentLength != null) {
                 stream = AsyncContentLengthInput(
                     stream = stream,

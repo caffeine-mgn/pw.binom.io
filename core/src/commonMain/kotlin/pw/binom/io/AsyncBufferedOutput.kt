@@ -83,9 +83,7 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     override suspend fun flush() {
         checkClosed()
         buffer.flip()
-        while (buffer.remaining > 0) {
-            stream.write(buffer)
-        }
+        stream.writeFully(buffer)
         stream.flush()
         buffer.clear()
     }

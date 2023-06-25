@@ -228,7 +228,10 @@ class TcpConnection(
         if (sendData.continuation != null) {
             error("Connection already has write operation")
         }
-        check(!currentKey.isClosed) { "Key already closed. channel: $channel" }
+        if (currentKey.isClosed){
+            throw SocketClosedException()
+        }
+//        check(!currentKey.isClosed) { "Key already closed. channel: $channel" }
         val wrote = channel.send(data)
         if (wrote > 0) {
             return wrote

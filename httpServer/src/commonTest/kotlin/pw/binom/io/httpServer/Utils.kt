@@ -2,6 +2,7 @@ package pw.binom.io.httpServer
 
 import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.connectWebSocket
 import pw.binom.io.httpClient.create
 import pw.binom.io.readText
 import pw.binom.io.use
@@ -26,9 +27,9 @@ suspend fun get(url: URL): String {
 }
 
 suspend inline fun <T> ws(url: URL, func: (WebSocketConnection) -> T): T = HttpClient.create().use {
-    val resp = it.connect(
+    val resp = it.connectWebSocket(
         method = "GET",
         uri = url,
     )
-    resp.startWebSocket().use(func)
+    resp.start().use(func)
 }

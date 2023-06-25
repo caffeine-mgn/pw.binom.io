@@ -11,6 +11,7 @@ import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.socket.Socket
 import pw.binom.io.use
 import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.test.Ignore
@@ -21,9 +22,10 @@ suspend fun getDispatcher(): CoroutineDispatcher? =
         it.resume(it.context[ContinuationInterceptor] as CoroutineDispatcher?)
     }
 
-@Ignore
+
 class Ololo {
 
+    @Ignore
     @Test
     fun test() = runTest {
         val network = NetworkCoroutineDispatcherImpl()

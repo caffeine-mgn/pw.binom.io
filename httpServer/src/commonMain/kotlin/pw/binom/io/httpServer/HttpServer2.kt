@@ -46,6 +46,10 @@ class HttpServer2(
     private val timeoutWaiters = ArrayList<TimeoutRecord>()
     private val timeoutRecordPool = GenericObjectPool(factory = TimeoutRecord)
     private val timeoutLock = SpinLock()
+    private val scope = HttpServerScope(
+        coroutineContext = dispatcher,
+        server = this,
+    )
 
     private suspend fun prepareTimeout(timeout: Duration): TimeoutRecord? {
         if (timeout.isInfinite()) {
@@ -110,7 +114,6 @@ class HttpServer2(
             pool = byteBufferPool,
             channel = channel,
         ).use { stream ->
-            var first = true
             try {
                 while (true) {
                     val exchange = try {
@@ -118,10 +121,8 @@ class HttpServer2(
                     } catch (e: CancellationException) {
                         break
                     } catch (e: SocketClosedException) {
-                        println("Socket closed! ${e::class} 1")
                         break
                     } catch (e: Throwable) {
-                        println("Unknown error ${e::class} 1")
                         uncaughtExceptionHandler.uncaughtException(
                             thread = Thread.currentThread,
                             throwable = e,
@@ -131,10 +132,8 @@ class HttpServer2(
                     try {
                         handler.handle(exchange)
                     } catch (e: SocketClosedException) {
-                        println("Socket closed! ${e::class} 2")
                         break
                     } catch (e: Throwable) {
-                        println("Unknown error ${e::class} 2")
                         if (!exchange.headersSent) {
                             when (e) {
                                 is HttpException -> exchange.startResponse(e.code)
@@ -163,7 +162,6 @@ class HttpServer2(
                     if (!exchange.keepAlive) {
                         break
                     }
-                    first = false
                 }
             } finally {
                 channel.asyncCloseAnyway()
@@ -221,7 +219,7 @@ class HttpServer2(
                         )
                         continue
                     }
-                    GlobalScope.launch(dispatcher) { clientProcessing(newClient) }
+                    scope.launch { clientProcessing(newClient) }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Do nothing

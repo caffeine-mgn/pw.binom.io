@@ -4,17 +4,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
-import pw.binom.io.bufferedReader
+import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.io.*
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpClient.HttpClient
+import pw.binom.io.httpClient.connectWebSocket
 import pw.binom.io.httpClient.create
-import pw.binom.io.httpServer.Handler
-import pw.binom.io.httpServer.HttpServer
-import pw.binom.io.readText
+import pw.binom.io.httpServer.*
 import pw.binom.io.socket.NetworkAddress
-import pw.binom.io.use
-import pw.binom.io.wrap
+import pw.binom.network.Network
 import pw.binom.network.TcpServerConnection
+import pw.binom.pool.GenericObjectPool
 import pw.binom.url.URL
 import pw.binom.url.toURL
 import pw.binom.uuid.nextUuid
@@ -40,16 +40,21 @@ class WebSocketTest {
         val port = TcpServerConnection.randomPort()
         var ok = false
         var ok2 = false
-        val handler = handler {
-            assertEquals(message, it)
+        val handler = HttpHandler {
+            val income = it.acceptWebsocket().use { it.read().bufferedReader().use { it.readText() } }
+            assertEquals(message, income)
             ok = true
         }
-        val handlerWrapper = Handler { req ->
-            handler.request(req)
+        val handlerWrapper = HttpHandler { req ->
+            handler.handle(req)
             ok2 = true
         }
-        HttpServer(handler = handlerWrapper).use { httpServer ->
-            httpServer.listenHttp(address = NetworkAddress.create(host = "127.0.0.1", port = port))
+        HttpServer2(
+            handler = handlerWrapper,
+            dispatcher = Dispatchers.Network,
+            byteBufferPool = GenericObjectPool(ByteBufferFactory(DEFAULT_BUFFER_SIZE)),
+        ).use { httpServer ->
+            httpServer.listen(address = NetworkAddress.create(host = "127.0.0.1", port = port))
             HttpClient.create().use { client ->
                 connectAndSendText(
                     url = "ws://127.0.0.1:$port/".toURL(),
@@ -66,8 +71,8 @@ class WebSocketTest {
 
     private suspend fun connectAndSendText(url: URL, text: String) {
         HttpClient.create().use { client ->
-            client.connect("GET", url)
-                .startWebSocket().use { wsConnect ->
+            client.connectWebSocket(url)
+                .start().use { wsConnect ->
                     wsConnect.write(MessageType.BINARY).use {
                         text.encodeToByteArray().wrap().use { b -> it.write(b) }
                     }

@@ -66,6 +66,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
         this.chunkedSize = chunkedSize.toULongOrNull(16)
             ?: throw IOException("Invalid Chunk Size: \"$chunkedSize\"")
         readed = 0uL
+        println("AsyncChunkedInput.chunkedSize: ${this.chunkedSize}")
 
         if (this.chunkedSize!! == 0uL) {
             staticData.clear()

@@ -1,10 +1,7 @@
 package pw.binom.io.httpClient.protocol.httpproxy
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.io.AsyncChannel
-import pw.binom.io.IOException
-import pw.binom.io.bufferedAsciiReader
-import pw.binom.io.bufferedAsciiWriter
+import pw.binom.io.*
 import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.Headers
 import pw.binom.io.http.headersOf
@@ -62,8 +59,8 @@ class HttpProxyConnect(
     ): HttpRequestBody {
         val newKey = "${proxyUrl.schema}://${proxyUrl.host}:${proxyUrl.port}"
         val tcp = getTcpConnect()
-        val output = tcp.bufferedAsciiWriter(closeParent = false)
-        val input = tcp.bufferedAsciiReader(closeParent = false)
+        val output = tcp//.bufferedAsciiWriter(closeParent = false)
+        val input = tcp//.bufferedAsciiReader(closeParent = false)
         val headersWithoutKeepAlive = if (headers.containsKey(Headers.CONNECTION)) {
             val newHeaders = HashHeaders2(headers)
             newHeaders.remove(Headers.CONNECTION)
@@ -71,12 +68,14 @@ class HttpProxyConnect(
         } else {
             headers
         }
-        Http11ConnectFactory2.sendRequest(
-            output = output,
-            method = method,
-            request = url.toString(),
-            headers = headersWithoutKeepAlive,
-        )
+        output.bufferedAsciiWriter(closeParent = false).use { writer ->
+            Http11ConnectFactory2.sendRequest(
+                output = writer,
+                method = method,
+                request = url.toString(),
+                headers = headersWithoutKeepAlive,
+            )
+        }
         output.flush()
 
         return Http11RequestBody(
@@ -98,20 +97,22 @@ class HttpProxyConnect(
     ): HttpRequestBody {
         val newKey = "${url.schema}://${url.host}${url.port?.let { ":$it" } ?: ""}"
         val tcp = getTcpConnect()
-        val output = tcp.bufferedAsciiWriter(closeParent = false)
+        val output = tcp//.bufferedAsciiWriter(closeParent = false)
         val input = tcp.bufferedAsciiReader(closeParent = false)
         val host = "${url.host}:${url.port ?: url.getPort()}"
         var transparentChannel = transparentChannel
         if (transparentChannel == null) {
-            Http11ConnectFactory2.sendRequest(
-                output = output,
-                method = "CONNECT",
-                request = host,
-                headers = headersOf(
-                    Headers.PROXY_CONNECTION to Headers.KEEP_ALIVE,
-                    Headers.HOST to host,
-                ),
-            )
+            output.bufferedAsciiWriter(closeParent = false).use { bufOutput ->
+                Http11ConnectFactory2.sendRequest(
+                    output = bufOutput,
+                    method = "CONNECT",
+                    request = host,
+                    headers = headersOf(
+                        Headers.PROXY_CONNECTION to Headers.KEEP_ALIVE,
+                        Headers.HOST to host,
+                    ),
+                )
+            }
             output.flush()
             val resp = Http11ConnectFactory2.readResponse(input)
             if (resp.responseCode != 200) {

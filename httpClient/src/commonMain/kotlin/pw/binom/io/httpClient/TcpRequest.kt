@@ -4,6 +4,7 @@ import pw.binom.io.AsyncChannel
 import pw.binom.io.IOException
 import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.Headers
+import pw.binom.io.http.emptyHeaders
 import pw.binom.url.URL
 
 class TcpRequest(val url: URL, val method: String, val client: HttpClient) {
@@ -27,7 +28,7 @@ class TcpRequest(val url: URL, val method: String, val client: HttpClient) {
 
 fun HttpClient.connectTcp(
     uri: URL,
-    headers: Headers,
+    headers: Headers = emptyHeaders(),
     method: String = "GET",
 ): TcpRequest {
     val req = TcpRequest(
