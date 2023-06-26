@@ -124,7 +124,7 @@ class SelectorTest {
         client.blocking = false
         val key = tandem.selector.attach(client)
         key.updateListenFlags(KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE)
-        client.connect(NetworkAddress.create(host = "127.0.0.1", port = 1))
+        client.connect(InetNetworkAddress.create(host = "127.0.0.1", port = 1))
         println("#--1")
         val events = tandem.select()
         println("#--2")

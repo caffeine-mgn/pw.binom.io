@@ -12,7 +12,7 @@ import pw.binom.io.AsyncCloseable
 import pw.binom.io.EOFException
 import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.HttpException
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.use
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
@@ -200,7 +200,7 @@ class HttpServer2(
 
     @Suppress("OPT_IN_IS_NOT_ENABLED")
     @OptIn(DelicateCoroutinesApi::class)
-    fun listen(address: NetworkAddress): Job {
+    fun listen(address: InetNetworkAddress): Job {
         val server = dispatcher.bindTcp(address)
         val job = GlobalScope.launch(dispatcher) {
             val currentJob = this.coroutineContext.job

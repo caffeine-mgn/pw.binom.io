@@ -5,6 +5,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.collections.defaultMutableMap
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketConnectException
@@ -110,7 +111,7 @@ internal class NatsConnectorImpl(
                 }
                 val addr = serverList[serverIndex]
                 val tcpConnection = try {
-                    val connection = networkDispatcher.tcpConnect(addr)
+                    val connection = networkDispatcher.tcpConnect(addr.resolve())
                     connection
                 } catch (e: SocketConnectException) {
                     serverIndex++

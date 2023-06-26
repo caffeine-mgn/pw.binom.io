@@ -26,7 +26,7 @@ class TcpConnectionTest {
         val selectKeys = SelectedKeys()
         val selector = Selector()
         val server = Socket.createTcpServerNetSocket()
-        server.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
+        server.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
         server.blocking = false
         selector.attach(
             socket = server,
@@ -36,7 +36,7 @@ class TcpConnectionTest {
 //        serverKey.listensFlag =
 //            Selector.INPUT_READY or Selector.OUTPUT_READY or Selector.EVENT_CONNECTED or Selector.EVENT_ERROR
         val client = Socket.createTcpClientNetSocket()
-        client.connect(NetworkAddress.create(host = "127.0.0.1", port = server.port!!))
+        client.connect(InetNetworkAddress.create(host = "127.0.0.1", port = server.port!!))
         Thread.sleep(500)
         selector.select(selectedKeys = selectKeys, timeout = 1.seconds)
         assertTrue(selectKeys.toList().isNotEmpty(), "No event for select. Socket selector should be read for input")
@@ -46,7 +46,7 @@ class TcpConnectionTest {
     @Ignore
     fun autoCloseKey() = runTest(dispatchTimeoutMs = 10_000) {
         val nd = NetworkCoroutineDispatcherImpl()
-        val serverConnection = nd.bindTcp(NetworkAddress.create("127.0.0.1", 0))
+        val serverConnection = nd.bindTcp(InetNetworkAddress.create("127.0.0.1", 0))
         val lock = SpinLock()
         lock.lock()
         launch(nd) {
@@ -64,7 +64,7 @@ class TcpConnectionTest {
         )
         clientKey.updateListenFlags(KeyListenFlags.ERROR or KeyListenFlags.READ or KeyListenFlags.WRITE)
         println("Connect...")
-        channel.connect(NetworkAddress.create(host = "127.0.0.1", serverConnection.port))
+        channel.connect(InetNetworkAddress.create(host = "127.0.0.1", serverConnection.port))
         println("Connect started!")
         val selectKeys = SelectedKeys()
 //        LOOP_CONNECT@ while (true) {
@@ -128,7 +128,7 @@ class TcpConnectionTest {
     fun writeErrorTest() = runTest {
         val nd = NetworkCoroutineDispatcherImpl()
         val port = TcpServerConnection.randomPort()
-        val address = NetworkAddress.create("127.0.0.1", port)
+        val address = InetNetworkAddress.create("127.0.0.1", port)
         val worker = Worker()
         val spinLock = SpinLock()
         val server = nd.bindTcp(address)
@@ -178,7 +178,7 @@ class TcpConnectionTest {
     @Test
     fun waitWriteTest() = runTest(dispatchTimeoutMs = 10_000) {
         val nd = NetworkCoroutineDispatcherImpl()
-        val server = nd.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = 0))
+        val server = nd.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
         val port = server.port
 
         val worker = Worker()
@@ -197,7 +197,7 @@ class TcpConnectionTest {
         }
 
         val r2 = launch {
-            val client = nd.tcpConnect(NetworkAddress.create(host = "127.0.0.1", port = port))
+            val client = nd.tcpConnect(InetNetworkAddress.create(host = "127.0.0.1", port = port))
             ByteBuffer(10).use { b ->
                 println("Reading...")
                 assertEquals(42, client.readByte(b))
@@ -222,7 +222,7 @@ class TcpConnectionTest {
     fun aaa() = runTest(dispatchTimeoutMs = 10_000) {
         NetworkCoroutineDispatcherImpl().use { nd ->
             withContext(nd) {
-                val c = nd.bindTcp(NetworkAddress.create("127.0.0.1", 8030))
+                val c = nd.bindTcp(InetNetworkAddress.create("127.0.0.1", 8030))
                 val vv = c.accept()
                 val writer = vv.bufferedAsciiWriter()
                 writer.append("HTTP/1.0 200 OK\r\n")
@@ -235,8 +235,8 @@ class TcpConnectionTest {
     fun tryToWriteBreakConnection() = runTest(dispatchTimeoutMs = 5_000) {
         NetworkCoroutineDispatcherImpl().use { nd ->
             withContext(nd) {
-                val server = nd.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = 0))
-                val client = nd.tcpConnect(NetworkAddress.create(host = "127.0.0.1", port = server.port))
+                val server = nd.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
+                val client = nd.tcpConnect(InetNetworkAddress.create(host = "127.0.0.1", port = server.port))
                 val connectedClient = server.accept()
                 val lock = SimpleAsyncLock()
                 lock.lock()

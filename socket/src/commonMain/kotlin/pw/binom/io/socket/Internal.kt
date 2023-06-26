@@ -1,7 +1,7 @@
 package pw.binom.io.socket
 
-internal expect fun createNetworkAddress(host: String, port: Int): NetworkAddress
-internal expect fun createMutableNetworkAddress(): MutableNetworkAddress
+internal expect fun createNetworkAddress(host: String, port: Int): InetNetworkAddress
+internal expect fun createMutableNetworkAddress(): MutableInetNetworkAddress
 
 internal fun throwUnixSocketNotSupported(): Nothing =
     throw RuntimeException("Mingw Target not supports Unix Domain Socket")

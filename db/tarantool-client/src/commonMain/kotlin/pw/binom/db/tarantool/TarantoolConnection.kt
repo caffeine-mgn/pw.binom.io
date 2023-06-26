@@ -9,7 +9,7 @@ import pw.binom.db.tarantool.protocol.InternalProtocolUtils
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.use
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
@@ -19,7 +19,7 @@ interface TarantoolConnection : AsyncCloseable {
     companion object {
         suspend fun connect(
             manager: NetworkManager = Dispatchers.Network,
-            address: NetworkAddress,
+            address: InetNetworkAddress,
             userName: String?,
             password: String?
         ): TarantoolConnectionImpl {

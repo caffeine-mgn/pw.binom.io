@@ -8,7 +8,7 @@ import pw.binom.io.httpClient.getPort
 import pw.binom.io.httpClient.protocol.ConnectionPoll
 import pw.binom.io.httpClient.protocol.HttpConnect
 import pw.binom.io.httpClient.protocol.ProtocolSelector
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
@@ -46,7 +46,7 @@ class HttpSSLConnect(
         var channel = channel
         if (channel == null) {
             channel = networkManager.tcpConnect(
-                NetworkAddress.create(
+                InetNetworkAddress.create(
                     host = url.host,
                     port = url.port ?: url.getPort(),
                 ),

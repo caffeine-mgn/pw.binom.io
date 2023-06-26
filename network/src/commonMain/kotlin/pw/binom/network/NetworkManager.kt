@@ -14,7 +14,7 @@ interface NetworkManager : CoroutineContext, CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = this
 
-    fun bindTcp(address: NetworkAddress): TcpServerConnection {
+    fun bindTcp(address: InetNetworkAddress): TcpServerConnection {
         val channel = Socket.createTcpServerNetSocket()
 
         when (channel.bind(address)) {
@@ -42,7 +42,7 @@ interface NetworkManager : CoroutineContext, CoroutineScope {
     }
 }
 
-suspend fun NetworkManager.tcpConnect(address: NetworkAddress): TcpConnection {
+suspend fun NetworkManager.tcpConnect(address: InetNetworkAddress): TcpConnection {
     val channel = Socket.createTcpClientNetSocket()
     val connectStatus = channel.connect(address)
     if (connectStatus != ConnectStatus.IN_PROGRESS && connectStatus != ConnectStatus.OK) {
@@ -92,7 +92,7 @@ suspend fun NetworkManager.tcpConnectUnixSocket(fileName: String): TcpConnection
 //        return connection
 //    }
 
-fun NetworkManager.bindUdp(address: NetworkAddress): UdpConnection {
+fun NetworkManager.bindUdp(address: InetNetworkAddress): UdpConnection {
     val channel = Socket.createUdpNetSocket()
     channel.blocking = false
     channel.bind(address)

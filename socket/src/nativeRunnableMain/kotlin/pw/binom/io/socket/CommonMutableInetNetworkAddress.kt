@@ -3,10 +3,9 @@ package pw.binom.io.socket
 import kotlinx.cinterop.*
 import platform.common.*
 import platform.posix.*
-import pw.binom.io.copyInto
 
-open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
-    constructor(address: NetworkAddress) : this(
+open class CommonMutableInetNetworkAddress() : AbstractMutableInetNetworkAddress() {
+    constructor(address: InetNetworkAddress) : this(
         host = address.host,
         port = address.port,
     )
@@ -55,8 +54,8 @@ open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
         }
     }
 
-    override fun clone(): MutableNetworkAddress {
-        val ret = CommonMutableNetworkAddress()
+    override fun clone(): MutableInetNetworkAddress {
+        val ret = CommonMutableInetNetworkAddress()
         nativeData.copyInto(ret.nativeData)
         return ret
     }
@@ -74,7 +73,7 @@ open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
             internal_ntohs(it.reinterpret<sockaddr_in>().pointed.sin_port).convert()
         }
 
-    override fun toMutable(dest: MutableNetworkAddress): MutableNetworkAddress {
+    override fun toMutable(dest: MutableInetNetworkAddress): MutableInetNetworkAddress {
         dest.update(
             host = host,
             port = port,
@@ -82,14 +81,14 @@ open class CommonMutableNetworkAddress() : AbstractMutableNetworkAddress() {
         return dest
     }
 
-    override fun toImmutable(): NetworkAddress = CommonMutableNetworkAddress(this)
+    override fun toImmutable(): InetNetworkAddress = CommonMutableInetNetworkAddress(this)
 }
 
-internal inline fun <T> MutableNetworkAddress?.useNativeAddress(func: (CPointer<NativeNetworkAddress>?) -> T): T {
+internal inline fun <T> MutableInetNetworkAddress?.useNativeAddress(func: (CPointer<NativeNetworkAddress>?) -> T): T {
     val nn = when (this) {
         null -> null
-        is CommonMutableNetworkAddress -> this
-        else -> CommonMutableNetworkAddress()
+        is CommonMutableInetNetworkAddress -> this
+        else -> CommonMutableInetNetworkAddress()
     }
 
     val result = if (nn == null) {

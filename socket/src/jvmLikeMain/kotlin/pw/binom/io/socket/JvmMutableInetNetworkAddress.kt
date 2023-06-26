@@ -3,9 +3,9 @@ package pw.binom.io.socket
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
-class JvmMutableNetworkAddress() : MutableNetworkAddress {
+class JvmMutableInetNetworkAddress() : MutableInetNetworkAddress {
 
-    constructor(address: NetworkAddress) : this() {
+    constructor(address: InetNetworkAddress) : this() {
         update(
             host = address.host,
             port = address.port,
@@ -24,8 +24,8 @@ class JvmMutableNetworkAddress() : MutableNetworkAddress {
 
     override fun toString(): String = "$host:$port"
 
-    override fun clone(): MutableNetworkAddress {
-        val ret = JvmMutableNetworkAddress()
+    override fun clone(): MutableInetNetworkAddress {
+        val ret = JvmMutableInetNetworkAddress()
         ret.update(
             host = host,
             port = port,
@@ -46,7 +46,7 @@ class JvmMutableNetworkAddress() : MutableNetworkAddress {
             return native.port
         }
 
-    override fun toMutable(dest: MutableNetworkAddress): MutableNetworkAddress {
+    override fun toMutable(dest: MutableInetNetworkAddress): MutableInetNetworkAddress {
         dest.update(
             host = host,
             port = port
@@ -54,6 +54,6 @@ class JvmMutableNetworkAddress() : MutableNetworkAddress {
         return dest
     }
 
-    override fun toMutable(): MutableNetworkAddress = this
-    override fun toImmutable(): NetworkAddress = JvmMutableNetworkAddress(this)
+    override fun toMutable(): MutableInetNetworkAddress = this
+    override fun toImmutable(): InetNetworkAddress = JvmMutableInetNetworkAddress(this)
 }

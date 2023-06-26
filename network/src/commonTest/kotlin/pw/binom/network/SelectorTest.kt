@@ -67,7 +67,7 @@ class SelectorTest {
         val key = selector.attach(client)
         try {
             key.updateListenFlags(0)
-            client.connect(NetworkAddress.create(host = "google.com", port = 443))
+            client.connect(InetNetworkAddress.create(host = "google.com", port = 443))
             selector.select(timeout = 2.seconds, selectedKeys = selectKeys)
             assertTrue(selectKeys.toList().isEmpty())
         } finally {
@@ -86,7 +86,7 @@ class SelectorTest {
         client.blocking = false
         val key = selector.attach(client)
         key.updateListenFlags(KeyListenFlags.WRITE)
-        client.connect(NetworkAddress.create(host = "google.com", port = 443))
+        client.connect(InetNetworkAddress.create(host = "google.com", port = 443))
         selector.select(timeout = 5.seconds, selectedKeys = selectKeys)
         val it = selectKeys.toList()
         assertTrue(it.isNotEmpty())
@@ -107,7 +107,7 @@ class SelectorTest {
         val client = Socket.createTcpClientNetSocket()
         client.blocking = false
         selector.attach(client)
-        client.connect(NetworkAddress.create("127.0.0.1", 12))
+        client.connect(InetNetworkAddress.create("127.0.0.1", 12))
 
         selector.select(timeout = 5.seconds, selectedKeys = selectKeys)
         selectKeys.forEach {
@@ -126,7 +126,7 @@ class SelectorTest {
         val selectKeys = SelectedKeys()
         val selector = Selector()
         val server = Socket.createTcpServerNetSocket()
-        val addr = NetworkAddress.create(host = "0.0.0.0", Random.nextInt(1000, 5999))
+        val addr = InetNetworkAddress.create(host = "0.0.0.0", Random.nextInt(1000, 5999))
         server.bind(addr)
         server.blocking = false
         selector.attach(server)
@@ -139,7 +139,7 @@ class SelectorTest {
     fun testSeveralKeyOfOneSocket() {
         val server = Socket.createTcpServerNetSocket()
         server.blocking = false
-        server.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
+        server.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
         val selectKeys1 = SelectedKeys()
         val selector1 = Selector()
         println("#1")
@@ -152,7 +152,7 @@ class SelectorTest {
         val key2 = selector2.attach(server)
         println("#4")
         key2.updateListenFlags(KeyListenFlags.READ)
-        Socket.createTcpClientNetSocket().connect(NetworkAddress.create(host = "127.0.0.1", port = server.port!!))
+        Socket.createTcpClientNetSocket().connect(InetNetworkAddress.create(host = "127.0.0.1", port = server.port!!))
 
         val v1 = selector1.select(selectedKeys = selectKeys1, timeout = 10.milliseconds)
         val v2 = selector2.select(selectedKeys = selectKeys2, timeout = 10.milliseconds)
@@ -190,8 +190,8 @@ class SelectorTest {
         val s2 = NThread()
         val server = Socket.createUdpNetSocket()
         server.blocking = false
-        server.bind(NetworkAddress.create(host = "0.0.0.0", port = 0))
-        val addr = NetworkAddress.create(host = "127.0.0.1", port = server.port!!)
+        server.bind(InetNetworkAddress.create(host = "0.0.0.0", port = 0))
+        val addr = InetNetworkAddress.create(host = "127.0.0.1", port = server.port!!)
         val s1Key = selector.attach(server)
         s1Key.updateListenFlags(KeyListenFlags.READ)
 //        val s2Key = selector.attach(server, mode = Selector.INPUT_READY)
@@ -211,9 +211,9 @@ class SelectorTest {
         assertEquals(1, threads.count { it.lastSelectCount == 1 })
     }
 
-    private fun sendUdp(port: Int?) = sendUdp(NetworkAddress.create(host = "127.0.0.1", port = port!!))
+    private fun sendUdp(port: Int?) = sendUdp(InetNetworkAddress.create(host = "127.0.0.1", port = port!!))
 
-    fun sendUdp(address: NetworkAddress) {
+    fun sendUdp(address: InetNetworkAddress) {
         Socket.createUdpNetSocket().use { c ->
             c.blocking = true
             ByteBuffer(42).use { buffer ->
@@ -229,7 +229,7 @@ class SelectorTest {
         val selector1 = Selector()
         val b = Socket.createUdpNetSocket()
         b.blocking = false
-        b.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
+        b.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
         val udpChannel = selector1.attach(b)
         udpChannel.updateListenFlags(KeyListenFlags.READ)
         sendUdp(b.port)
@@ -246,13 +246,13 @@ class SelectorTest {
         val selector1 = Selector()
         val b = Socket.createUdpNetSocket()
         b.blocking = false
-        b.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
+        b.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
         val udpChannel = selector1.attach(b)
         udpChannel.updateListenFlags(KeyListenFlags.READ)
         val c = Socket.createUdpNetSocket()
         c.blocking = true
         ByteBuffer(42).use { buffer ->
-            c.send(buffer, NetworkAddress.create(host = "127.0.0.1", port = b.port!!))
+            c.send(buffer, InetNetworkAddress.create(host = "127.0.0.1", port = b.port!!))
         }
         selector1.select(selectedKeys = selectKeys1, timeout = 1.seconds)
         assertEquals(1, selectKeys1.toList().count())
@@ -272,7 +272,7 @@ class SelectorTest {
                 Socket.createUdpNetSocket().use { channel ->
                     ByteBuffer(30).use { buffer ->
                         println("send tmp data")
-                        channel.send(buffer, NetworkAddress.create(host = "127.0.0.1", port = port))
+                        channel.send(buffer, InetNetworkAddress.create(host = "127.0.0.1", port = port))
                     }
                 }
             }.start()
@@ -299,7 +299,7 @@ class SelectorTest {
         k1.updateListenFlags(KeyListenFlags.READ)
         k2 = selector2.attach(server)
         k2.updateListenFlags(KeyListenFlags.READ)
-        server.bind(NetworkAddress.create(host = "127.0.0.1", port = port))
+        server.bind(InetNetworkAddress.create(host = "127.0.0.1", port = port))
         sendDataWithDelay(port = port, delay = 300.milliseconds)
         val vv1 = measureTimedValue { selector1.select(selectedKeys = selectKeys1, timeout = 1.seconds) }
 //        val vv2 = measureTimedValue { selector2.select(selectedEvents = selectKeys2, timeout = 1000) }

@@ -14,11 +14,11 @@ class MingwSocket(
 
     override var keyHash: Int = 0
 
-    override fun connect(address: NetworkAddress): ConnectStatus {
-        val netaddress = if (address is CommonMutableNetworkAddress) {
+    override fun connect(address: InetNetworkAddress): ConnectStatus {
+        val netaddress = if (address is CommonMutableInetNetworkAddress) {
             address
         } else {
-            CommonMutableNetworkAddress(address)
+            CommonMutableInetNetworkAddress(address)
         }
         return memScoped {
             netaddress.getAsIpV6 { netdata ->
@@ -93,11 +93,11 @@ class MingwSocket(
         return r
     }
 
-    override fun bind(address: NetworkAddress): BindStatus {
-        val networkAddress = if (address is CommonMutableNetworkAddress) {
+    override fun bind(address: InetNetworkAddress): BindStatus {
+        val networkAddress = if (address is CommonMutableInetNetworkAddress) {
             address
         } else {
-            CommonMutableNetworkAddress(address)
+            CommonMutableInetNetworkAddress(address)
         }
         memScoped {
             val bindResult = networkAddress.getAsIpV6 { data ->
@@ -138,7 +138,7 @@ class MingwSocket(
         return BindStatus.OK
     }
 
-    override fun receive(data: ByteBuffer, address: MutableNetworkAddress?): Int {
+    override fun receive(data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
         val gotBytes = if (address == null) {
             val rr = data.ref(0) { dataPtr, remaining ->
                 platform.windows.recvfrom(
@@ -163,10 +163,10 @@ class MingwSocket(
             rr
         } else {
             memScoped {
-                val netaddress = if (address is CommonMutableNetworkAddress) {
+                val netaddress = if (address is CommonMutableInetNetworkAddress) {
                     address
                 } else {
-                    CommonMutableNetworkAddress(address)
+                    CommonMutableInetNetworkAddress(address)
                 }
                 SetLastError(0)
                 val len = allocArray<IntVar>(1)

@@ -44,11 +44,11 @@ class JvmTcpClientSocket(
 //        return BindStatus.OK
 //    }
 
-    override fun connect(address: NetworkAddress): ConnectStatus {
-        val netAddress = if (address is JvmMutableNetworkAddress) {
+    override fun connect(address: InetNetworkAddress): ConnectStatus {
+        val netAddress = if (address is JvmMutableInetNetworkAddress) {
             address
         } else {
-            JvmMutableNetworkAddress(address)
+            JvmMutableInetNetworkAddress(address)
         }
         return try {
             if (native.connect(netAddress.native)) {

@@ -6,11 +6,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import pw.binom.io.http.HTTPMethod
-import pw.binom.io.readText
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.use
 import pw.binom.network.*
-import pw.binom.skipAll
 import pw.binom.url.toURL
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -25,7 +23,7 @@ class TestAsyncBaseHttpClient {
 
     @Test
     fun timeoutTest2() = runTest(dispatchTimeoutMs = 10_000) {
-        Dispatchers.Network.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = 0))
+        Dispatchers.Network.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
             .use { server ->
                 val serverPort = server.port
                 println("server binded port: ${server.port}")
@@ -60,7 +58,7 @@ class TestAsyncBaseHttpClient {
     fun timeoutTest() = runTest(dispatchTimeoutMs = 10_000) {
         val manager = NetworkCoroutineDispatcherImpl()
         val client = HttpClient.create(networkDispatcher = Dispatchers.Network)
-        val server = manager.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = TcpServerConnection.randomPort()))
+        val server = manager.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = TcpServerConnection.randomPort()))
         val now = TimeSource.Monotonic.markNow()
         try {
             realWithTimeout(3.seconds) {

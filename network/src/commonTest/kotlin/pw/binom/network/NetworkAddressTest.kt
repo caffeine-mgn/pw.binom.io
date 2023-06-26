@@ -1,7 +1,7 @@
 package pw.binom.network
 
-import pw.binom.io.socket.MutableNetworkAddress
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.MutableInetNetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.UnknownHostException
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
@@ -14,7 +14,7 @@ class NetworkAddressTest {
 
     @Test
     fun dataTest() {
-        val addr = NetworkAddress.create("127.0.0.1", 123)
+        val addr = InetNetworkAddress.create("127.0.0.1", 123)
         assertEquals("127.0.0.1", addr.host)
         assertEquals(123, addr.port)
         assertTrue(addr.equals(addr.toMutable()))
@@ -25,7 +25,7 @@ class NetworkAddressTest {
         assertEquals("127.0.0.1", addr.toMutable().toImmutable().host)
         assertEquals(123, addr.toMutable().toImmutable().port)
 
-        val addr2 = MutableNetworkAddress.create()
+        val addr2 = MutableInetNetworkAddress.create()
         addr2.update(host = "127.0.0.1", port = 123)
         assertEquals("127.0.0.1", addr2.host)
         assertEquals(123, addr2.port)
@@ -33,7 +33,7 @@ class NetworkAddressTest {
 
     @Test
     fun hashCodeEqualsTest() {
-        val v = MutableNetworkAddress.create().also {
+        val v = MutableInetNetworkAddress.create().also {
             it.update(host = "127.0.0.1", port = 123)
         }
         assertTrue(v.hashCode() != 0, "#1")
@@ -43,7 +43,7 @@ class NetworkAddressTest {
     @Test
     fun unknownHost() {
         try {
-            NetworkAddress.create(host = Random.nextUuid().toString(), port = 9999)
+            InetNetworkAddress.create(host = Random.nextUuid().toString(), port = 9999)
             fail()
         } catch (e: UnknownHostException) {
             // Do nothing
@@ -52,7 +52,7 @@ class NetworkAddressTest {
 
     @Test
     fun knownHost() {
-        NetworkAddress.create(host = "google.com", port = 9999)
-        MutableNetworkAddress.create(host = "google.com", port = 9999)
+        InetNetworkAddress.create(host = "google.com", port = 9999)
+        MutableInetNetworkAddress.create(host = "google.com", port = 9999)
     }
 }

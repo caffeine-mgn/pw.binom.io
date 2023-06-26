@@ -3,6 +3,7 @@ package pw.binom.mq.nats.client
 import kotlinx.coroutines.Dispatchers
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager

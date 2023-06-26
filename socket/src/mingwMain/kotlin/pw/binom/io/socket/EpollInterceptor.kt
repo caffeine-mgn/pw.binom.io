@@ -12,12 +12,12 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
     private val udpReadSocket = Socket.createUdpNetSocket()
     private val udpWriteSocket = Socket.createUdpNetSocket()
     private val wakeupFlag = AtomicBoolean(false)
-    private val addr: NetworkAddress
+    private val addr: InetNetworkAddress
     private val stubByte = ByteBuffer(1)
     private val epoll = selector.epoll
 
     init {
-        val b = udpReadSocket.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
+        val b = udpReadSocket.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
         udpReadSocket.blocking = false
         udpWriteSocket.blocking = false
         check(b == BindStatus.OK) { "Can't bind port" }
@@ -30,7 +30,7 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
             udpReadSocket.close()
             udpWriteSocket.close()
         }
-        addr = NetworkAddress.create(host = "127.0.0.1", port = udpReadSocket.port!!)
+        addr = InetNetworkAddress.create(host = "127.0.0.1", port = udpReadSocket.port!!)
     }
 
     actual fun wakeup() {

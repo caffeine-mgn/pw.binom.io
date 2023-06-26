@@ -12,7 +12,7 @@ import pw.binom.io.httpClient.protocol.HttpConnect
 import pw.binom.io.httpClient.protocol.ProtocolSelector
 import pw.binom.io.httpClient.protocol.v11.Http11ConnectFactory2
 import pw.binom.io.httpClient.protocol.v11.Http11RequestBody
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
 import pw.binom.url.URL
@@ -41,7 +41,7 @@ class HttpProxyConnect(
         var tcp = tcp
         if (tcp == null) {
             tcp = networkManager.tcpConnect(
-                NetworkAddress.create(
+                InetNetworkAddress.create(
                     host = proxyUrl.host,
                     port = proxyUrl.port ?: proxyUrl.getPort(),
                 ),

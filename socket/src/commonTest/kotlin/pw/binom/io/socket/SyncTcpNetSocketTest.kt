@@ -20,6 +20,6 @@ class SyncTcpNetSocketTest {
     @Test
     fun connectRefusedTest() {
         val socket = Socket.createTcpClientNetSocket()
-        assertEquals(ConnectStatus.CONNECTION_REFUSED, socket.connect(NetworkAddress.create("127.0.0.1", 1)))
+        assertEquals(ConnectStatus.CONNECTION_REFUSED, socket.connect(InetNetworkAddress.create("127.0.0.1", 1)))
     }
 }

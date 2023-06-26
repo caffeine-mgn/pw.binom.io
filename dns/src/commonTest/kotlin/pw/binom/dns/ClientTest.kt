@@ -9,7 +9,7 @@ import pw.binom.dns.protocol.ResourcePackage
 import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedInput
 import pw.binom.io.bufferedOutput
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.tcpConnect
 import kotlin.random.Random
@@ -115,7 +115,7 @@ class ClientTest {
         )
         val buf = ByteBuffer(512)
         try {
-            val con = n.tcpConnect(NetworkAddress.create("8.8.8.8", 53))
+            val con = n.tcpConnect(InetNetworkAddress.create("8.8.8.8", 53))
             val output = con.bufferedOutput()
             val input = con.bufferedInput()
 
@@ -163,7 +163,7 @@ class ClientTest {
         val q = QueryPackage()
         val r = ResourcePackage()
         try {
-            val server = n.bindTcp(NetworkAddress.create("0.0.0.0", 53))
+            val server = n.bindTcp(InetNetworkAddress.create("0.0.0.0", 53))
             while (true) {
                 val client = server.accept()
 

@@ -174,10 +174,10 @@ interface Headers : Map<String, List<String>> {
     val basicAuth: BasicAuth?
         get() {
             val authorization = getSingleOrNull(AUTHORIZATION) ?: return null
-            if (!authorization.startsWith("Basic ")) {
+            if (!authorization.startsWith("${BasicAuth.PREFIX} ")) {
                 return null
             }
-            val sec = Base64.decode(authorization.removePrefix("Basic ")).decodeToString()
+            val sec = Base64.decode(authorization.removePrefix("${BasicAuth.PREFIX} ")).decodeToString()
             val items = sec.split(':', limit = 2)
             return BasicAuth(login = items[0], password = items[1])
         }
@@ -185,30 +185,30 @@ interface Headers : Map<String, List<String>> {
     val proxyBasicAuth: BasicAuth?
         get() {
             val authorization = getSingleOrNull(PROXY_AUTHORIZATION) ?: return null
-            if (!authorization.startsWith("Basic ")) {
+            if (!authorization.startsWith("${BasicAuth.PREFIX} ")) {
                 return null
             }
-            val sec = Base64.decode(authorization.removePrefix("Basic ")).decodeToString()
+            val sec = Base64.decode(authorization.removePrefix("${BasicAuth.PREFIX} ")).decodeToString()
             val items = sec.split(':', limit = 2)
             return BasicAuth(login = items[0], password = items[1])
         }
 
-    val bearerAuth: String?
+    val bearerAuth: BearerAuth?
         get() {
             val authorization = getSingleOrNull(AUTHORIZATION) ?: return null
-            if (!authorization.startsWith("Bearer ")) {
+            if (!authorization.startsWith("${BearerAuth.PREFIX} ")) {
                 return null
             }
-            return authorization.removePrefix("Bearer ")
+            return BearerAuth(authorization.removePrefix("${BearerAuth.PREFIX} "))
         }
 
-    val proxyBearerAuth: String?
+    val proxyBearerAuth: BearerAuth?
         get() {
             val authorization = getSingleOrNull(PROXY_AUTHORIZATION) ?: return null
-            if (!authorization.startsWith("Bearer ")) {
+            if (!authorization.startsWith("${BearerAuth.PREFIX} ")) {
                 return null
             }
-            return authorization.removePrefix("Bearer ")
+            return BearerAuth(authorization.removePrefix("${BearerAuth.PREFIX} "))
         }
 }
 

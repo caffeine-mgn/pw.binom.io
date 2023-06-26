@@ -4,7 +4,7 @@ import kotlinx.cinterop.*
 import platform.common.NativeNetworkAddress
 import pw.binom.io.InHeap
 
-abstract class AbstractMutableNetworkAddress : MutableNetworkAddress {
+abstract class AbstractMutableInetNetworkAddress : MutableInetNetworkAddress {
     val nativeData = InHeap.create<NativeNetworkAddress>()
 
     //    @OptIn(ExperimentalStdlibApi::class)
@@ -38,7 +38,7 @@ abstract class AbstractMutableNetworkAddress : MutableNetworkAddress {
             func(it.pointed.data)
         }
 
-    override fun toMutable(): MutableNetworkAddress = this
+    override fun toMutable(): MutableInetNetworkAddress = this
 
     override fun toString(): String = "$host:$port"
 }

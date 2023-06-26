@@ -18,7 +18,7 @@ import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
 import pw.binom.io.http.ReusableAsyncChunkedOutput
 import pw.binom.io.http.websocket.MessagePool
 import pw.binom.io.http.websocket.WebSocketConnectionPool
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.Socket
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
@@ -230,7 +230,7 @@ class HttpServer(
         }
     }
 
-    fun listenHttp(address: NetworkAddress, networkManager: NetworkManager = Dispatchers.Network): Job {
+    fun listenHttp(address: InetNetworkAddress, networkManager: NetworkManager = Dispatchers.Network): Job {
         val serverChannel = Socket.createTcpServerNetSocket()
         serverChannel.bind(address)
         serverChannel.blocking = false

@@ -7,11 +7,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import pw.binom.io.bufferedReader
 import pw.binom.io.bufferedWriter
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.Socket
 import pw.binom.io.use
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.test.Ignore
@@ -31,7 +30,7 @@ class Ololo {
         val network = NetworkCoroutineDispatcherImpl()
         val ccc = Socket.createTcpServerNetSocket()
         println("Bind on 8335")
-        ccc.bind(NetworkAddress.create(port = 8335, host = "0.0.0.0"))
+        ccc.bind(InetNetworkAddress.create(port = 8335, host = "0.0.0.0"))
         println("Wait clients...")
         ccc.use {
             val server = network.attach(ccc)

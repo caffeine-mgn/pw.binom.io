@@ -12,7 +12,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
 
     companion object {
         fun randomPort() = Socket.createUdpNetSocket().use {
-            it.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
+            it.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
             it.port!!
         }
     }
@@ -31,7 +31,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     private class ReadData {
         var continuation: CancellableContinuation<Int>? = null
         var data: ByteBuffer? = null
-        var address: MutableNetworkAddress? = null
+        var address: MutableInetNetworkAddress? = null
         var full = false
 
         fun reset() {
@@ -44,7 +44,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     private class SendData {
         var continuation: CancellableContinuation<Int>? = null
         var data: ByteBuffer? = null
-        var address: NetworkAddress? = null
+        var address: InetNetworkAddress? = null
         fun reset() {
             continuation = null
             data = null
@@ -55,7 +55,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     private val readData = ReadData()
     private val sendData = SendData()
 
-    fun bind(address: NetworkAddress) {
+    fun bind(address: InetNetworkAddress) {
         channel.bind(address)
     }
 
@@ -128,7 +128,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
         channel.close()
     }
 
-    suspend fun read(dest: ByteBuffer, address: MutableNetworkAddress?): Int {
+    suspend fun read(dest: ByteBuffer, address: MutableInetNetworkAddress?): Int {
         keys.checkEmpty()
         if (readData.continuation != null) {
             throw IllegalStateException("Connection already have read listener")
@@ -160,7 +160,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
         return readed
     }
 
-    suspend fun write(data: ByteBuffer, address: NetworkAddress): Int {
+    suspend fun write(data: ByteBuffer, address: InetNetworkAddress): Int {
         keys.checkEmpty()
         val l = data.remaining
         if (l == 0) {

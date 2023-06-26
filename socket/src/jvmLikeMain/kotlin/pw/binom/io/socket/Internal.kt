@@ -2,7 +2,7 @@
 
 package pw.binom.io.socket
 
-internal actual fun createNetworkAddress(host: String, port: Int): NetworkAddress {
+internal actual fun createNetworkAddress(host: String, port: Int): InetNetworkAddress {
     val ret = createMutableNetworkAddress()
     ret.update(
         host = host,
@@ -11,4 +11,4 @@ internal actual fun createNetworkAddress(host: String, port: Int): NetworkAddres
     return ret
 }
 
-internal actual fun createMutableNetworkAddress(): MutableNetworkAddress = JvmMutableNetworkAddress()
+internal actual fun createMutableNetworkAddress(): MutableInetNetworkAddress = JvmMutableInetNetworkAddress()

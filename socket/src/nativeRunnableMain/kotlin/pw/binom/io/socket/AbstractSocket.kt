@@ -40,7 +40,7 @@ abstract class AbstractSocket(override val native: RawSocket, override val serve
         internal_close_socket(native)
     }
 
-    override fun receive(data: ByteBuffer, address: MutableNetworkAddress?): Int {
+    override fun receive(data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
         val received = internalReceive(
             native = native,
             data = data,
@@ -68,14 +68,14 @@ abstract class AbstractSocket(override val native: RawSocket, override val serve
 
     protected abstract fun processAfterSendUdp(data: ByteBuffer, code: Int): Int
 
-    override fun send(data: ByteBuffer, address: NetworkAddress): Int {
+    override fun send(data: ByteBuffer, address: InetNetworkAddress): Int {
         if (data.remaining == 0) {
             return 0
         }
-        val netAddress = if (address is CommonMutableNetworkAddress) {
+        val netAddress = if (address is CommonMutableInetNetworkAddress) {
             address
         } else {
-            CommonMutableNetworkAddress(address)
+            CommonMutableInetNetworkAddress(address)
         }
         val sendResult = netAddress.getAsIpV6 { ipv6Addr ->
             data.ref(0) { ptr, remaining ->
@@ -91,7 +91,7 @@ abstract class AbstractSocket(override val native: RawSocket, override val serve
         return processAfterSendUdp(data, sendResult)
     }
 
-    override fun accept(address: MutableNetworkAddress?): TcpClientNetSocket? {
+    override fun accept(address: MutableInetNetworkAddress?): TcpClientNetSocket? {
         val clientRaw = internalAccept(native, address) ?: return null
         return createSocket(socket = clientRaw, server = false) as TcpClientNetSocket
     }

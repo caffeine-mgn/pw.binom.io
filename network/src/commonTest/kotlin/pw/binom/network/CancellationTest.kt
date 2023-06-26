@@ -3,7 +3,7 @@ package pw.binom.network
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.ByteBuffer
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.use
 import pw.binom.thread.Thread
 import kotlin.coroutines.ContinuationInterceptor
@@ -48,7 +48,7 @@ class CancellationTest {
 
             var firstReadCanceled = false
             val server =
-                Dispatchers.Network.bindTcp(NetworkAddress.create(host = "127.0.0.1", port = 0))
+                Dispatchers.Network.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
             println("Server start on port ${server.port}")
             val job = launch {
                 println("Try accept")

@@ -2,17 +2,10 @@ package pw.binom.io.socket
 
 interface MutableNetworkAddress : NetworkAddress {
     companion object {
-        fun create() = createMutableNetworkAddress()
-        fun create(host: String, port: Int): MutableNetworkAddress {
-            val ret = create()
-            ret.update(
-                host = host,
-                port = port
-            )
-            return ret
-        }
+        fun create(host: String, port: Int): MutableNetworkAddress = MutableNetworkAddressImpl(host = host, port = port)
     }
 
-    fun update(host: String, port: Int)
-    override fun clone(): MutableNetworkAddress
+    override fun clone() = create(host = host, port = port)
+    override var host: String
+    override var port: Int
 }

@@ -9,14 +9,14 @@ import platform.windows.accept
 import platform.windows.sockaddr_in6
 import pw.binom.io.ByteBuffer
 
-actual fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): RawSocket? {
+actual fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?): RawSocket? {
     val native = if (address == null) {
         platform.windows.accept(native.convert(), null, null)
     } else {
-        val out = if (address is CommonMutableNetworkAddress) {
+        val out = if (address is CommonMutableInetNetworkAddress) {
             address
         } else {
-            CommonMutableNetworkAddress()
+            CommonMutableInetNetworkAddress()
         }
         val rr2 = memScoped {
             SetLastError(0)
@@ -83,7 +83,7 @@ internal actual fun createSocket(socket: RawSocket, server: Boolean): Socket =
 //    throwUnixSocketNotSupported()
 //}
 
-actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableNetworkAddress?): Int {
+actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
 //    if (data.remaining == 0) {
 //        return 0
 //    }
@@ -92,10 +92,10 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
             recvfrom(native.convert(), dataPtr, remaining.convert(), 0, null, null)
         }.toInt()
     } else {
-        val netAddress = if (address is CommonMutableNetworkAddress) {
+        val netAddress = if (address is CommonMutableInetNetworkAddress) {
             address
         } else {
-            CommonMutableNetworkAddress(address)
+            CommonMutableInetNetworkAddress(address)
         }
         val readSize = netAddress.addr { addrPtr ->
             data.ref(0) { dataPtr, remaining ->

@@ -11,7 +11,7 @@ class TcpBindTest {
     @Test
     fun bindRandomPortTest() {
         val socket = Socket.createTcpServerNetSocket()
-        assertEquals(BindStatus.OK, socket.bind(NetworkAddress.create("127.0.0.1", 0)))
+        assertEquals(BindStatus.OK, socket.bind(InetNetworkAddress.create("127.0.0.1", 0)))
         assertNotEquals(null, socket.port)
         assertNotEquals(0, socket.port)
     }
@@ -19,18 +19,18 @@ class TcpBindTest {
     @Test
     fun alreadyBindTest() {
         val socket = Socket.createTcpServerNetSocket()
-        socket.bind(NetworkAddress.create("127.0.0.1", 0))
-        assertEquals(BindStatus.ALREADY_BINDED, socket.bind(NetworkAddress.create("127.0.0.1", 0)))
+        socket.bind(InetNetworkAddress.create("127.0.0.1", 0))
+        assertEquals(BindStatus.ALREADY_BINDED, socket.bind(InetNetworkAddress.create("127.0.0.1", 0)))
     }
 
     @Test
     fun bindBindedTest() {
         val socket1 = Socket.createTcpServerNetSocket()
-        socket1.bind(NetworkAddress.create("127.0.0.1", 0))
+        socket1.bind(InetNetworkAddress.create("127.0.0.1", 0))
         val socket2 = Socket.createTcpServerNetSocket()
         assertEquals(
             BindStatus.ADDRESS_ALREADY_IN_USE,
-            socket2.bind(NetworkAddress.create("127.0.0.1", socket1.port!!)),
+            socket2.bind(InetNetworkAddress.create("127.0.0.1", socket1.port!!)),
         )
     }
 

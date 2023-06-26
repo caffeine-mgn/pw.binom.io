@@ -3,7 +3,7 @@ package pw.binom.db.postgresql.async
 import kotlinx.coroutines.test.runTest
 import pw.binom.charset.Charsets
 import pw.binom.date.iso8601
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.use
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -15,7 +15,7 @@ class NumericTest {
     @Test
     fun test3() = runTest {
         val connection = PGConnection.connect(
-            address = NetworkAddress.create(
+            address = InetNetworkAddress.create(
                 host = "localhost",
                 port = 5432,
             ),

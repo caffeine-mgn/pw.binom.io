@@ -7,7 +7,7 @@ import pw.binom.io.httpClient.*
 import pw.binom.io.httpClient.getPort
 import pw.binom.io.httpClient.protocol.ConnectionPoll
 import pw.binom.io.httpClient.protocol.HttpConnect
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
 import pw.binom.url.URL
@@ -40,7 +40,7 @@ class Http11Connect(
         var tcp = tcp
         if (tcp == null) {
             tcp = networkManager.tcpConnect(
-                NetworkAddress.create(
+                InetNetworkAddress.create(
                     host = url.host,
                     port = url.port ?: url.getPort(),
                 ),

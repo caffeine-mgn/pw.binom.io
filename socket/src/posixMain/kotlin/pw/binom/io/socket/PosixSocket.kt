@@ -14,12 +14,12 @@ class PosixSocket(
     server: Boolean,
 ) : AbstractSocket(native = native, server = server) {
 
-    override fun bind(address: NetworkAddress): BindStatus {
+    override fun bind(address: InetNetworkAddress): BindStatus {
         memScoped {
-            val netAddress = if (address is CommonMutableNetworkAddress) {
+            val netAddress = if (address is CommonMutableInetNetworkAddress) {
                 address
             } else {
-                CommonMutableNetworkAddress(address)
+                CommonMutableInetNetworkAddress(address)
             }
             internal_unbind(native)
             val bindResult = netAddress.getAsIpV6 { ipv6Addr ->
@@ -51,11 +51,11 @@ class PosixSocket(
         return BindStatus.OK
     }
 
-    override fun connect(address: NetworkAddress): ConnectStatus {
-        val netAddress = if (address is CommonMutableNetworkAddress) {
+    override fun connect(address: InetNetworkAddress): ConnectStatus {
+        val netAddress = if (address is CommonMutableInetNetworkAddress) {
             address
         } else {
-            CommonMutableNetworkAddress(address)
+            CommonMutableInetNetworkAddress(address)
         }
         val connectResponse = netAddress.getAsIpV6 { addr ->
             connect(
@@ -76,14 +76,14 @@ class PosixSocket(
         return ConnectStatus.OK
     }
 
-    override fun send(data: ByteBuffer, address: NetworkAddress): Int {
+    override fun send(data: ByteBuffer, address: InetNetworkAddress): Int {
         if (data.remaining == 0) {
             return 0
         }
-        val netAddress = if (address is CommonMutableNetworkAddress) {
+        val netAddress = if (address is CommonMutableInetNetworkAddress) {
             address
         } else {
-            CommonMutableNetworkAddress(address)
+            CommonMutableInetNetworkAddress(address)
         }
         val sendResult = netAddress.getAsIpV6 { ipv6Addr ->
             data.ref(0) { ptr, remaining ->
@@ -214,7 +214,7 @@ class PosixSocket(
         return r
     }
 
-    override fun accept(address: MutableNetworkAddress?): TcpClientNetSocket? {
+    override fun accept(address: MutableInetNetworkAddress?): TcpClientNetSocket? {
         val clientRaw = internalAccept(native, address) ?: return null
         return PosixSocket(native = clientRaw, server = false)
     }

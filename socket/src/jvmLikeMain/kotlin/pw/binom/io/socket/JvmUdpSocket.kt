@@ -20,7 +20,7 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
     override val port: Int?
         get() = internalPort.takeIf { it != 0 }
 
-    override fun bind(address: NetworkAddress): BindStatus {
+    override fun bind(address: InetNetworkAddress): BindStatus {
         try {
             native.bind(address.toJvmAddress().native)
             internalPort = native.socket().localPort
@@ -30,11 +30,11 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
         }
     }
 
-    override fun send(data: ByteBuffer, address: NetworkAddress): Int {
+    override fun send(data: ByteBuffer, address: InetNetworkAddress): Int {
         return native.send(data.native, address.toJvmAddress().native)
     }
 
-    override fun receive(data: ByteBuffer, address: MutableNetworkAddress?): Int {
+    override fun receive(data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
         val before = data.position
         if (before == data.remaining) {
             return 0
@@ -42,7 +42,7 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
         val remoteAddress = native.receive(data.native)
         if (remoteAddress != null && address != null) {
             remoteAddress as InetSocketAddress
-            if (address is JvmMutableNetworkAddress) {
+            if (address is JvmMutableInetNetworkAddress) {
                 address.native = remoteAddress
             } else {
                 address.update(

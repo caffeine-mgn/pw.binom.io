@@ -18,7 +18,7 @@ class TcpServerConnection constructor(
 
     companion object {
         fun randomPort() = Socket.createTcpServerNetSocket().use {
-            it.bind(NetworkAddress.create(host = "127.0.0.1", port = 0))
+            it.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
             it.port!!
         }
     }
@@ -95,7 +95,7 @@ class TcpServerConnection constructor(
             false
         }
 
-    suspend fun accept(address: MutableNetworkAddress? = null): TcpConnection {
+    suspend fun accept(address: MutableInetNetworkAddress? = null): TcpConnection {
         if (closed) {
 //            println("TcpServerConnection::accept closed==true")
             throw SocketClosedException()

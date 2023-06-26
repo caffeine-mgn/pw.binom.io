@@ -9,11 +9,11 @@ class JvmTcpServerSocket(override val native: ServerSocketChannel) : TcpNetServe
         native.close()
     }
 
-    override fun accept(address: MutableNetworkAddress?): TcpClientNetSocket? {
+    override fun accept(address: MutableInetNetworkAddress?): TcpClientNetSocket? {
         val client = native.accept() ?: return null
         if (address != null) {
             val addr = client.socket().localAddress as InetSocketAddress
-            if (address is JvmMutableNetworkAddress) {
+            if (address is JvmMutableInetNetworkAddress) {
                 address.native = addr
             } else {
                 address.update(
@@ -25,7 +25,7 @@ class JvmTcpServerSocket(override val native: ServerSocketChannel) : TcpNetServe
         return JvmTcpClientSocket(client)
     }
 
-    override fun bind(address: NetworkAddress): BindStatus {
+    override fun bind(address: InetNetworkAddress): BindStatus {
         try {
             native.socket().reuseAddress = true
             native.bind(address.toJvmAddress().native)

@@ -30,13 +30,13 @@ fun allowIpv4(native: RawSocket) {
     }
 }
 
-expect fun internalAccept(native: RawSocket, address: MutableNetworkAddress?): RawSocket?
+expect fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?): RawSocket?
 
-expect fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableNetworkAddress?): Int
+expect fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetNetworkAddress?): Int
 
 internal expect fun createSocket(socket: RawSocket, server: Boolean): Socket
 
-internal actual fun createNetworkAddress(host: String, port: Int): NetworkAddress {
+internal actual fun createNetworkAddress(host: String, port: Int): InetNetworkAddress {
     val ret = createMutableNetworkAddress()
     ret.update(
         host = host,
@@ -45,4 +45,4 @@ internal actual fun createNetworkAddress(host: String, port: Int): NetworkAddres
     return ret
 }
 
-internal actual fun createMutableNetworkAddress(): MutableNetworkAddress = CommonMutableNetworkAddress()
+internal actual fun createMutableNetworkAddress(): MutableInetNetworkAddress = CommonMutableInetNetworkAddress()
