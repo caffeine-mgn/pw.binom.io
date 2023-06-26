@@ -145,14 +145,13 @@ class HttpProxyConnect(
         headers: Headers,
     ): HttpRequestBody {
         created = TimeSource.Monotonic.markNow()
-        return when (url.schema) {
-            "http" -> makeHttpPostRequest(
+        return when {
+            url.schema == "http" && headers[Headers.UPGRADE] == null -> makeHttpPostRequest(
                 pool = pool,
                 method = method,
                 url = url,
                 headers = headers,
             )
-
             else -> makeConnect(
                 pool = pool,
                 method = method,
