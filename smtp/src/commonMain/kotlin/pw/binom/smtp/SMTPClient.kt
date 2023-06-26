@@ -2,7 +2,6 @@ package pw.binom.smtp
 
 import kotlinx.coroutines.Dispatchers
 import pw.binom.io.AsyncCloseable
-import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.network.Network
@@ -23,7 +22,7 @@ interface SMTPClient : AsyncCloseable {
             login: String,
             password: String,
             fromEmail: String,
-            address: NetworkAddress
+            address: NetworkAddress,
         ): SMTPClient {
             val connect = dispatcher.tcpConnect(address.resolve())
             val client = BaseSMTPClient(connect)
@@ -44,13 +43,13 @@ interface SMTPClient : AsyncCloseable {
             login: String,
             password: String,
             fromEmail: String,
-            address: InetNetworkAddress,
+            address: NetworkAddress,
             keyManager: KeyManager,
             trustManager: TrustManager,
             tlsHost: String = address.host,
             tlsPort: Int = address.port,
         ): SMTPClient {
-            val connect = dispatcher.tcpConnect(address)
+            val connect = dispatcher.tcpConnect(address.resolve())
             val sslContext = SSLContext.getInstance(SSLMethod.TLSv1_2, keyManager, trustManager)
             val clientSession = sslContext.clientSession(tlsHost, tlsPort)
             val sslConnect = clientSession.asyncChannel(connect)
@@ -71,6 +70,6 @@ interface SMTPClient : AsyncCloseable {
         to: String,
         toAlias: String?,
         subject: String?,
-        msg: suspend (HtmlMultipartMessage) -> Unit
+        msg: suspend (HtmlMultipartMessage) -> Unit,
     )
 }

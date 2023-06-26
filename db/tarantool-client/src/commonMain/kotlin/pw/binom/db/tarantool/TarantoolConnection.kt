@@ -9,7 +9,7 @@ import pw.binom.db.tarantool.protocol.InternalProtocolUtils
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.io.use
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
@@ -19,11 +19,11 @@ interface TarantoolConnection : AsyncCloseable {
     companion object {
         suspend fun connect(
             manager: NetworkManager = Dispatchers.Network,
-            address: InetNetworkAddress,
+            address: NetworkAddress,
             userName: String?,
-            password: String?
+            password: String?,
         ): TarantoolConnectionImpl {
-            val con = manager.tcpConnect(address)
+            val con = manager.tcpConnect(address.resolve())
             ByteBuffer(64).use { buf ->
                 var connection: TarantoolConnectionImpl? = null
                 try {
@@ -38,7 +38,7 @@ interface TarantoolConnection : AsyncCloseable {
 //                        networkThread = ThreadRef(),
                         networkDispatcher = manager,
                         connection = con,
-                        serverVersion = version
+                        serverVersion = version,
                     )
                     connection.mainLoopJob = GlobalScope.launch(manager) { connection.startMainLoop() }
                     if ((userName == null && password != null) || userName != null && password == null) {
@@ -48,7 +48,7 @@ interface TarantoolConnection : AsyncCloseable {
                         connection.sendReceive(
                             code = Code.AUTH,
                             schemaId = null,
-                            body = InternalProtocolUtils.buildAuthPacketData(userName, password, salt)
+                            body = InternalProtocolUtils.buildAuthPacketData(userName, password, salt),
                         ).assertException()
                     }
 
@@ -66,17 +66,17 @@ interface TarantoolConnection : AsyncCloseable {
     suspend fun ping()
     suspend fun insert(
         space: Int,
-        values: List<Any?>
+        values: List<Any?>,
     )
 
     suspend fun insert(
         space: String,
-        values: List<Any?>
+        values: List<Any?>,
     )
 
     suspend fun delete(
         space: Int,
-        keys: List<Any?>
+        keys: List<Any?>,
     ): Row?
 
     suspend fun upsert(
@@ -94,28 +94,28 @@ interface TarantoolConnection : AsyncCloseable {
     suspend fun update(
         space: Int,
         key: List<Any?>,
-        values: List<FieldUpdate>
+        values: List<FieldUpdate>,
     ): Row?
 
     suspend fun update(
         space: String,
         key: List<Any?>,
-        values: List<FieldUpdate>
+        values: List<FieldUpdate>,
     ): Row?
 
     suspend fun replace(
         space: Int,
-        values: List<Any?>
+        values: List<Any?>,
     )
 
     suspend fun replace(
         space: String,
-        values: List<Any?>
+        values: List<Any?>,
     )
 
     suspend fun delete(
         space: String,
-        keys: List<Any?>
+        keys: List<Any?>,
     ): Row?
 
     suspend fun select(
@@ -124,7 +124,7 @@ interface TarantoolConnection : AsyncCloseable {
         key: Any?,
         offset: Int?,
         limit: Int,
-        iterator: QueryIterator?
+        iterator: QueryIterator?,
     ): ResultSet
 
     suspend fun select(
@@ -133,7 +133,7 @@ interface TarantoolConnection : AsyncCloseable {
         key: Any?,
         offset: Int?,
         limit: Int,
-        iterator: QueryIterator?
+        iterator: QueryIterator?,
     ): ResultSet
 
     suspend fun call(function: String, vararg args: Any?): Any?

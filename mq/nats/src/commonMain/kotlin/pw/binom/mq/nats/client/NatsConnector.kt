@@ -3,7 +3,6 @@ package pw.binom.mq.nats.client
 import kotlinx.coroutines.Dispatchers
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
@@ -25,7 +24,7 @@ interface NatsConnector : AsyncCloseable {
             defaultGroup: String? = null,
             attemptCount: Int = 3,
             networkDispatcher: NetworkManager = Dispatchers.Network,
-            serverList: List<NetworkAddress>
+            serverList: List<NetworkAddress>,
         ): NatsConnector =
             NatsConnectorImpl(
                 clientName = clientName,
@@ -44,7 +43,7 @@ interface NatsConnector : AsyncCloseable {
     suspend fun subscribe(
         subject: String,
         group: String?,
-        subscribeId: String = Random.nextUuid().toString()
+        subscribeId: String = Random.nextUuid().toString(),
     ): AsyncCloseable
 
     suspend fun readMessage(): NatsMessage
