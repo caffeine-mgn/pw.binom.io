@@ -20,6 +20,7 @@ import pw.binom.db.postgresql.async.messages.frontend.SASLResponse
 import pw.binom.db.postgresql.async.messages.frontend.Terminate
 import pw.binom.io.*
 import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.*
 import pw.binom.scram.ScramSaslClient
 import pw.binom.writeByte
@@ -45,7 +46,7 @@ class PGConnection private constructor(
     companion object {
         const val TYPE = "PostgreSQL"
         suspend fun connect(
-            address: InetNetworkAddress,
+            address: NetworkAddress,
             applicationName: String? = "Binom Async Client",
             networkDispatcher: NetworkManager = Dispatchers.Network,
             userName: String,
@@ -54,7 +55,7 @@ class PGConnection private constructor(
             charset: Charset = Charsets.UTF8,
             readBufferSize: Int = DEFAULT_BUFFER_SIZE,
         ): PGConnection {
-            val connection = networkDispatcher.tcpConnect(address)
+            val connection = networkDispatcher.tcpConnect(address.resolve())
             try {
                 val pgConnection = PGConnection(
                     connection = connection,
