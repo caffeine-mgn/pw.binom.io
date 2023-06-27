@@ -123,7 +123,7 @@ class HttpServerExchangeImpl(
 
             val contentLength = requestHeaders.contentLength
             val transferEncoding = requestHeaders.getTransferEncodingList()
-            var stream: AsyncInput = channel.channel
+            var stream: AsyncInput = channel.reader
             if (contentLength != null) {
                 stream = AsyncContentLengthInput(
                     stream = stream,

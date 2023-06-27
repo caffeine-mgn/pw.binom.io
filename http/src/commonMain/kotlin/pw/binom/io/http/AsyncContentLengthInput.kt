@@ -36,15 +36,12 @@ open class AsyncContentLengthInput(
             val oldLimit = dest.limit
             val limit = contentLength - readed
             dest.limit = limit.toInt()
-            println("Reading ${dest.remaining}...1")
             val read = stream.read(dest)
             dest.limit = oldLimit
             read
         } else {
-            println("Reading ${dest.remaining}...2")
             stream.read(dest)
         }
-        println("Was read $read bytes")
         readed += read.toULong()
         return read
     }

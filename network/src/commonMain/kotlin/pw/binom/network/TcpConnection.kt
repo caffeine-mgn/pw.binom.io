@@ -228,7 +228,7 @@ class TcpConnection(
         if (sendData.continuation != null) {
             error("Connection already has write operation")
         }
-        if (currentKey.isClosed){
+        if (currentKey.isClosed) {
             throw SocketClosedException()
         }
 //        check(!currentKey.isClosed) { "Key already closed. channel: $channel" }
@@ -326,12 +326,16 @@ class TcpConnection(
                 readData.reset()
                 currentKey.selector.wakeup()
             }
-            readData.set(
-                continuation = it,
-                data = dest,
-            )
-            currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
-            currentKey.selector.wakeup()
+            try {
+                readData.set(
+                    continuation = it,
+                    data = dest,
+                )
+                currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
+                currentKey.selector.wakeup()
+            } catch (e: Throwable) {
+                it.resumeWithException(e)
+            }
         }
     }
 }
