@@ -3,8 +3,8 @@ package pw.binom.io.http
 import pw.binom.base64.Base64
 
 data class BasicAuth(val login: String, val password: String) : HttpAuth {
-    companion object{
-        const val PREFIX="Basic"
+    companion object {
+        const val PREFIX = "Basic"
     }
 
     val base64

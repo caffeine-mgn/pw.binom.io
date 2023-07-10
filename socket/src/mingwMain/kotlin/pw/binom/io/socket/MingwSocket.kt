@@ -71,7 +71,11 @@ class MingwSocket(
         if (closed) {
             return -1
         }
-        val r: Int = data.ref(0) { dataPtr, remaining ->
+        var rem: Int = -10
+        val lim = data.limit
+        val pos = data.position
+        val r = data.ref(0) { dataPtr, remaining ->
+            rem = remaining
             platform.windows.recv(native.convert(), dataPtr, remaining.convert(), 0).convert()
         }
         if (r == 0) {
@@ -88,7 +92,15 @@ class MingwSocket(
 //            throw IOException("Error on reading data from network. read: [$r], error: [${GetLastError()}, $errno]")
         }
         if (r > 0) {
-            data.position += r
+            try {
+                data.position += r
+            } catch (e: Throwable) {
+                println("Error on ByteBuffer position update.")
+                println("new: pos: ${data.position}, rem: ${data.remaining}, lim: ${data.limit}")
+                println("old: pos: $pos, rem: $rem, lim: $lim")
+                println("was read: $r")
+                throw e
+            }
         }
         return r
     }
@@ -139,8 +151,12 @@ class MingwSocket(
     }
 
     override fun receive(data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
+        var rem: Int = -10
+        val lim = data.limit
+        val pos = data.position
         val gotBytes = if (address == null) {
             val rr = data.ref(0) { dataPtr, remaining ->
+                rem = remaining
                 platform.windows.recvfrom(
                     native.convert(),
                     dataPtr,
@@ -204,7 +220,17 @@ class MingwSocket(
                 rr
             }
         }
-        data.position += gotBytes.toInt()
+        if (gotBytes > 0) {
+            try {
+                data.position += gotBytes
+            } catch (e: Throwable) {
+                println("Error on ByteBuffer position update.")
+                println("new: pos: ${data.position}, rem: ${data.remaining}, lim: ${data.limit}")
+                println("old: pos: $pos, rem: $rem, lim: $lim")
+                println("was read: $gotBytes")
+                throw e
+            }
+        }
         return gotBytes
     }
 

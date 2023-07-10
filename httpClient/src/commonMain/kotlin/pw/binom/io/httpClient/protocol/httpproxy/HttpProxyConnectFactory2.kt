@@ -1,16 +1,18 @@
 package pw.binom.io.httpClient.protocol.httpproxy
 
 import pw.binom.io.AsyncChannel
+import pw.binom.io.http.HttpAuth
 import pw.binom.io.httpClient.protocol.ConnectFactory2
 import pw.binom.io.httpClient.protocol.HttpConnect
 import pw.binom.io.httpClient.protocol.ProtocolSelector
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.network.NetworkManager
-import pw.binom.url.URL
 
 class HttpProxyConnectFactory2(
-    val proxyUrl: URL,
+    val proxyUrl: NetworkAddress,
     val networkManager: NetworkManager,
     val protocolSelector: ProtocolSelector,
+    val auth: HttpAuth?,
 ) : ConnectFactory2 {
     override fun createConnect(): HttpConnect =
         HttpProxyConnect(
@@ -18,6 +20,7 @@ class HttpProxyConnectFactory2(
             networkManager = networkManager,
             tcp = null,
             protocolSelector = protocolSelector,
+            auth = auth,
         )
 
     override fun createConnect(channel: AsyncChannel): HttpConnect =
@@ -26,7 +29,7 @@ class HttpProxyConnectFactory2(
             networkManager = networkManager,
             tcp = channel,
             protocolSelector = protocolSelector,
-
+            auth = auth,
         )
 
     override val supportOverConnection: Boolean

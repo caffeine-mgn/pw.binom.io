@@ -45,13 +45,13 @@ class PathTest {
         assertNull("/11/22/33".toPath.getVariables("/{a}/{b}"))
         val bb =
             "/api/catalog/0x0cfe3017334bd65c70978153ae5e1cf7777cba92/0ae676c8-c1a3-4023-9ae9-90ef96d693af".toPath.getVariables(
-                "/api/catalog/{address}/"
+                "/api/catalog/{address}/",
             )
         assertNull(bb)
 
         val nn =
             "/api/catalog/0x0cfe3017334bd65c70978153ae5e1cf7777cba92/0ae676c8-c1a3-4023-9ae9-90ef96d693af/7423d4f9-f183-4670-afc4-b303ee1cb200".toPath.isMatch(
-                "/api/catalog/{address}/"
+                "/api/catalog/{address}/",
             )
         assertFalse(nn)
     }
@@ -64,5 +64,13 @@ class PathTest {
 //        assertFalse(path.isMatch(mask))
 
         assertTrue("/ab/cd/ef".toPath.isMatch("*/ef"))
+    }
+
+    @Test
+    fun removePrefixTest() {
+        assertEquals(
+            "/10".toPath,
+            "/users/10".toPath.removePrefix("/users".toPath),
+        )
     }
 }

@@ -1,13 +1,18 @@
 kind: pipeline
-name: Test
+name: Test LinuxX64
 type: docker
 steps:
-  - name: "Test"
+  - name: "Test Linux"
     image: "gradle:7.3.1-jdk11"
     environment:
       DOCKER_HOST: "unix:///var/run/docker.sock"
     commands:
       - ./gradlew linuxX64Test
+volumes:
+  - name: dockersock
+    temp: {}
+image_pull_secrets:
+  - dockerconfig
 services:
   - name: docker
     image: docker:dind
@@ -15,3 +20,19 @@ services:
     volumes:
       - name: dockersock
         path: /var/run
+trigger:
+  event:
+    - push
+---
+kind: pipeline
+type: exec
+name: Test MingwX64
+
+platform:
+  os: windows
+  arch: amd64
+
+steps:
+  - name: Testing mingw
+    commands:
+      - gradlew.bat mingwX64Test

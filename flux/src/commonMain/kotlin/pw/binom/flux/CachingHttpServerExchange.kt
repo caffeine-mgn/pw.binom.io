@@ -9,6 +9,7 @@ import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.httpServer.HttpServerExchange
+import pw.binom.url.Path
 import pw.binom.url.URI
 
 class CachingHttpServerExchange(val source: HttpServerExchange) : HttpServerExchange {
@@ -35,8 +36,10 @@ class CachingHttpServerExchange(val source: HttpServerExchange) : HttpServerExch
         get() = source.requestMethod
     override val responseStarted: Boolean
         get() = headersSent
+  override val requestContext: Path
+    get() = source.requestContext
 
-    var bufferedOutput: ByteArrayOutput? = null
+  var bufferedOutput: ByteArrayOutput? = null
         private set
     private var outputStream: AsyncOutput? = null
 

@@ -15,37 +15,37 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalUnsignedTypes::class, ExperimentalCoroutinesApi::class)
 class WebSocketHeaderTest {
 
-    @Test
-    fun readTest() = runTest {
-        val data = ubyteArrayOf(0x82u, 0xfeu, 0x0u, 0x82u, 0x88u, 0x4du, 0x1du, 0x84u).toByteArray().wrap()
-        val header = WebSocketHeader()
-        WebSocketHeader.read(data.asyncInput(), header)
-        header.apply {
-            assertEquals(2, opcode)
-            assertEquals(130L, length)
-            assertTrue(header.maskFlag)
-            assertEquals(-2008212092, mask)
-            assertTrue(finishFlag)
-        }
+  @Test
+  fun readTest() = runTest {
+    val data = ubyteArrayOf(0x82u, 0xfeu, 0x0u, 0x82u, 0x88u, 0x4du, 0x1du, 0x84u).toByteArray().wrap()
+    val header = WebSocketHeader()
+    WebSocketHeader.read(data.asyncInput(), header)
+    header.apply {
+      assertEquals(2, opcode.raw)
+      assertEquals(130L, length)
+      assertTrue(header.maskFlag)
+      assertEquals(-2008212092, mask)
+      assertTrue(finishFlag)
     }
+  }
 
-    @Test
-    fun readWrite() = runTest {
-        val rightData = ubyteArrayOf(0x82u, 0xfeu, 0x0u, 0x82u, 0x88u, 0x4du, 0x1du, 0x84u)
-        val header = WebSocketHeader()
-        header.apply {
-            opcode = 2
-            length = 130L
-            maskFlag = true
-            mask = -2008212092
-            finishFlag = true
-        }
-        val output = ByteBuffer(10)
-        WebSocketHeader.write(output.asyncOutput(), header)
-        output.flip()
-        assertEquals(8, output.remaining)
-        output.forEachIndexed { i, byte ->
-            assertEquals(rightData[i].toByte(), byte)
-        }
+  @Test
+  fun readWrite() = runTest {
+    val rightData = ubyteArrayOf(0x82u, 0xfeu, 0x0u, 0x82u, 0x88u, 0x4du, 0x1du, 0x84u)
+    val header = WebSocketHeader()
+    header.apply {
+      opcode = Opcode.BINARY
+      length = 130L
+      maskFlag = true
+      mask = -2008212092
+      finishFlag = true
     }
+    val output = ByteBuffer(10)
+    WebSocketHeader.write(output.asyncOutput(), header)
+    output.flip()
+    assertEquals(8, output.remaining)
+    output.forEachIndexed { i, byte ->
+      assertEquals(rightData[i].toByte(), byte)
+    }
+  }
 }

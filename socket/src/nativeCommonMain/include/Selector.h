@@ -12,6 +12,18 @@ struct Selector {
 #endif
 };
 
+#ifdef WINDOWS_TARGET
+#include <windows.h>
+#endif
+
+int getInternalError() {
+#ifdef WINDOWS_TARGET
+  return GetLastError();
+#else
+  return 0;
+#endif
+}
+
 struct Selector *createSelector(int size);
 
 void closeSelector(struct Selector *selector);

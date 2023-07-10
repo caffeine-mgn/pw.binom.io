@@ -1,4 +1,13 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+
 [*.{kt,kts}]
+indent_style = space
+indent_size = 2
+ij_kotlin_allow_trailing_comma = true
 ktlint_code_style = official
 no-wildcard-imports = off
 filename = off

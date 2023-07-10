@@ -1,100 +1,128 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.EmptyAsyncInput
 import pw.binom.NullAsyncOutput
 import pw.binom.copyTo
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
 
-internal class MessageImpl3 : Message {
-    private var inputReady = 0L
-    private var closed = false
-    private var lastFrame: Boolean = false
-    private var maskFlag: Boolean = false
-    private var mask: Int = 0
-    private var input: AsyncInput = EmptyAsyncInput
+internal class MessageImpl3(val input: AsyncInput) : Message {
+  private var inputReady = 0L
+  private var closed = false
+  private val lastFrame: Boolean
+    get() = header.finishFlag
+  private val maskFlag: Boolean
+    get() = header.maskFlag
+  private val mask: Int
+    get() = header.mask
 
-    override val available: Int
-        get() =
-            when {
-                inputReady == 0L && lastFrame -> 0
-                inputReady > 0L -> inputReady.toInt()
-                else -> -1
-            }
+  override val available: Int
+    get() =
+      when {
+        inputReady == 0L && lastFrame -> 0
+        inputReady > 0L -> inputReady.toInt()
+        else -> -1
+      }
 
-    override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): Int {
+    checkClosed()
+    if (dest.remaining <= 0) {
+      return 0
+    }
+    var wasRead = 0
+    while (true) {
+      if (inputReady == 0L) {
+        if (lastFrame) {
+          return 0
+        }
+        WebSocketHeader.read(input, header)
+        cursor = 0L
+        inputReady = header.length
+        continue
+      }
+      val startLimit = dest.limit
+      val startPosition = dest.position
+      dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
+
+      val n = input.read(dest)
+      if (n <= 0) {
+        return wasRead
+      }
+
+      wasRead += n
+      inputReady -= n
+
+      if (maskFlag) {
+        dest.reset(
+          position = startPosition,
+          length = n,
+        )
+        cursor = Message.encode(cursor, mask, dest)
+      }
+
+      dest.limit = startLimit
+      dest.position = startPosition + n
+      return n
+    }
+
+    /*
         checkClosed()
         if (inputReady == 0L && lastFrame) {
-            return 0
+          return 0
         }
+        val lim1 = dest.limit
+        dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
         val read = if (maskFlag) {
-            val pos1 = dest.position
-            val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
-            val n = input.read(dest)
+          val pos1 = dest.position
+          val n = input.read(dest)
 
+          if (n > 0) {
             dest.position = pos1
             dest.limit = n
             cursor = Message.encode(cursor, mask, dest)
             dest.limit = lim1
-            n
+          }
+          n
         } else {
-            val lim1 = dest.limit
-            dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
-            val n = input.read(dest)
-            dest.limit = lim1
-            n
+          val n = input.read(dest)
+          dest.limit = lim1
+          n
         }
         inputReady -= read.toLong()
 
         if (inputReady == 0L && !lastFrame) {
-            val v = WebSocketHeader()
-            WebSocketHeader.read(input, v)
-            lastFrame = v.finishFlag
-            cursor = 0L
-            mask = v.mask
-            maskFlag = v.maskFlag
-            inputReady = v.length
+          WebSocketHeader.read(input, header)
+          cursor = 0L
+          inputReady = header.length
         }
         return read
+        */
+  }
+
+  private fun checkClosed() {
+    if (closed) {
+      throw StreamClosedException()
     }
+  }
 
-    private fun checkClosed() {
-        if (closed) {
-            throw StreamClosedException()
-        }
+  override suspend fun asyncClose() {
+    checkClosed()
+
+    if (inputReady > 0L) {
+      copyTo(NullAsyncOutput)
     }
+    closed = true
+  }
 
-    override suspend fun asyncClose() {
-        checkClosed()
+  override var type: MessageType = MessageType.CLOSE
+  private var cursor = 0L
+  private val header = WebSocketHeader()
 
-        if (inputReady > 0L) {
-            copyTo(NullAsyncOutput)
-        }
-        input = EmptyAsyncInput
-        closed = true
-    }
-
-    override var type: MessageType = MessageType.CLOSE
-    private var cursor = 0L
-
-    fun reset(
-        initLength: Long,
-        type: MessageType,
-        lastFrame: Boolean,
-        maskFlag: Boolean,
-        mask: Int,
-        input: AsyncInput
-    ) {
-        require(initLength >= 0) { "initLength less than zero: $initLength " }
-        inputReady = initLength
-        this.type = type
-        this.lastFrame = lastFrame
-        this.maskFlag = maskFlag
-        this.mask = mask
-        this.input = input
-        closed = false
-        cursor = 0L
-    }
+  suspend fun startMessage() {
+    WebSocketHeader.read(input = input, dest = header)
+    type = header.opcode.toMessageType()
+    inputReady = header.length
+    closed = false
+    cursor = 0L
+  }
 }

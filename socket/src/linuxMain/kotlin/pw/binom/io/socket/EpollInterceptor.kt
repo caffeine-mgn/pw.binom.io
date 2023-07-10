@@ -28,7 +28,6 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
         if (r != Epoll.EpollResult.OK) {
             platform.posix.close(pipeRead)
             platform.posix.close(pipeWrite)
-            epoll.close()
             throw IOException("Can't init epoll. Can't add default pipe. Status: $r")
         }
     }

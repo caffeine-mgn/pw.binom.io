@@ -23,468 +23,468 @@ import pw.binom.xml.dom.xmlTree
 import pw.binom.xml.serialization.Xml
 
 private val dd = SerializersModule {
-    contextual(DateTime::class, DateSerialization)
+  contextual(DateTime::class, DateSerialization)
 }
 private val xml = Xml(serializersModule = dd)
 
 object S3ClientApi {
 
-    private suspend fun HttpResponse.throwErrorText(code: Int): Nothing {
-        val resp = readText().use { it.readText() }
-        val element by lazy { resp.xmlTree(true) }
-        if (resp.isEmpty()) {
-            throw S3Exception("Unknown response $code")
-        } else {
-            val error = xml.decodeFromXmlElement(Error.serializer(), element)
-            throw S3ErrorException(
-                code = error.key,
-                description = error.message,
-            )
-        }
+  private suspend fun HttpResponse.throwErrorText(code: Int): Nothing {
+    val resp = readText().use { it.readText() }
+    val element by lazy { resp.xmlTree(true) }
+    if (resp.isEmpty()) {
+      throw S3Exception("Unknown response $code")
+    } else {
+      val error = xml.decodeFromXmlElement(Error.serializer(), element)
+      throw S3ErrorException(
+        code = error.key,
+        description = error.message,
+      )
     }
+  }
 
-    suspend fun createBucket(
-        client: HttpClient,
-        locationConstraint: String?,
-        regin: String,
-        name: String,
-        url: URL,
-        accessKey: String,
-        secretAccessKey: String,
-    ) {
-        val payload = xml.encodeToString(
-            serializer = CreateBucketConfiguration.serializer(),
-            value = CreateBucketConfiguration(locationConstraint = locationConstraint),
-            withHeader = true
-        )
-        s3Call(
-            client = client,
-            method = "PUT",
-            url = url.copy(path = url.path.append(name)),
-            regin = regin,
-            accessKey = accessKey,
-            secretAccessKey = secretAccessKey,
-        ) { output ->
-            output.bufferedWriter(closeParent = false).use {
-                it.append(payload)
-            }
-        }.use {
-            when (val code = it.responseCode) {
-                200 -> null
-                else -> it.throwErrorText(code)
-            }
-        }
+  suspend fun createBucket(
+    client: HttpClient,
+    locationConstraint: String?,
+    regin: String,
+    name: String,
+    url: URL,
+    accessKey: String,
+    secretAccessKey: String,
+  ) {
+    val payload = xml.encodeToString(
+      serializer = CreateBucketConfiguration.serializer(),
+      value = CreateBucketConfiguration(locationConstraint = locationConstraint),
+      withHeader = true,
+    )
+    s3Call(
+      client = client,
+      method = "PUT",
+      url = url.copy(path = url.path.append(name)),
+      regin = regin,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
+    ) { output ->
+      output.bufferedWriter(closeParent = false).use {
+        it.append(payload)
+      }
+    }.use {
+      when (val code = it.responseCode) {
+        200 -> null
+        else -> it.throwErrorText(code)
+      }
     }
+  }
 
-    suspend fun deleteObject(
-        client: HttpClient,
-        regin: String,
-        bucket: String,
-        key: String,
-        url: URL,
-        accessKey: String,
-        secretAccessKey: String,
-    ) = s3Call(
+  suspend fun deleteObject(
+    client: HttpClient,
+    regin: String,
+    bucket: String,
+    key: String,
+    url: URL,
+    accessKey: String,
+    secretAccessKey: String,
+  ) = s3Call(
+    client = client,
+    method = "DELETE",
+    url = url.copy(path = url.path.append(bucket).append(key)),
+    regin = regin,
+    accessKey = accessKey,
+    secretAccessKey = secretAccessKey,
+    payloadContentLength = 0,
+  ).use {
+    when (val code = it.responseCode) {
+      200, 204 -> true
+      404 -> false
+      else -> it.throwErrorText(code)
+    }
+  }
+
+  suspend fun putObject(
+    client: HttpClient,
+    regin: String,
+    bucket: String,
+    key: String,
+    url: URL,
+    partNumber: Int? = null,
+    uploadId: String? = null,
+    accessKey: String,
+    secretAccessKey: String,
+    payloadContentLength: Long?,
+    payloadSha256: ByteArray? = null,
+    payload: suspend (AsyncOutput) -> Unit,
+  ) {
+    val query = Query.build {
+      if (partNumber != null) {
+        add("partNumber", partNumber.toString())
+      }
+      if (uploadId != null) {
+        add("uploadId", uploadId)
+      }
+    }
+    s3Call(
+      client = client,
+      method = "PUT",
+      url = url.copy(path = url.path.append(bucket).append(key), query = query),
+      regin = regin,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
+      payloadContentLength = payloadContentLength,
+      payloadSha256 = payloadSha256,
+    ) { output ->
+      payload(output)
+    }.use {
+      when (val code = it.responseCode) {
+        200 -> null
+        else -> it.throwErrorText(code)
+      }
+    }
+  }
+
+  suspend fun copyObject(
+    client: HttpClient,
+    regin: String,
+    sourceBucket: String,
+    sourceKey: String,
+    destinationBucket: String,
+    destinationKey: String,
+    url: URL,
+    accessKey: String,
+    secretAccessKey: String,
+  ) {
+    s3Call(
+      client = client,
+      method = "PUT",
+      url = url.copy(path = url.path.append(destinationBucket).append(destinationKey)),
+      regin = regin,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
+      xAmzCopySource = "$sourceBucket/$sourceKey",
+    ).use {
+      when (val code = it.responseCode) {
+        200 -> null
+        else -> it.throwErrorText(code)
+      }
+    }
+  }
+
+  suspend fun listObject2(
+    client: HttpClient,
+    url: URL,
+    continuationToken: String? = null,
+    delimiter: String? = null,
+    fetchOwner: Boolean? = null,
+    maxKeys: Int,
+    prefix: String? = null,
+    startAfter: String? = null,
+    xAmzExpectedBucketOwner: String? = null,
+    xAmzRequestPayer: String? = null,
+    regin: String,
+    bucket: String,
+    accessKey: String,
+    secretAccessKey: String,
+  ): ListBucketResultV2 {
+    val query = Query.build {
+      if (continuationToken != null) {
+        add("continuation-token", continuationToken)
+      }
+      if (delimiter != null) {
+        add("delimiter", delimiter)
+      }
+      if (fetchOwner != null) {
+        add("fetch-owner", fetchOwner.toString())
+      }
+      add("list-type", "2")
+      add("max-keys", maxKeys.toString())
+      if (prefix != null) {
+        add("prefix", prefix)
+      }
+      if (startAfter != null) {
+        add("start-after", startAfter)
+      }
+      if (xAmzExpectedBucketOwner != null) {
+        add("x-amz-expected-bucket-owner", xAmzExpectedBucketOwner)
+      }
+      if (xAmzRequestPayer != null) {
+        add("x-amz-request-payer", xAmzRequestPayer)
+      }
+    }
+    val result = s3Call(
+      client = client,
+      method = "GET",
+      url = url.copy(query = query, path = url.path.append(bucket)),
+      regin = regin,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
+    ).use {
+      it.readText().use { it.readText() }
+    }
+    val element = result.xmlTree(true)
+    if (element.tag == "Error") {
+      val error = xml.decodeFromXmlElement(Error.serializer(), element)
+      throw S3ErrorException(
+        code = error.key,
+        description = error.message,
+      )
+    }
+    return xml.decodeFromXmlElement(ListBucketResultV2.serializer(), element)
+  }
+
+  fun listObjectFlow(
+    client: HttpClient,
+    url: URL,
+    blockSize: Int = 500,
+    fetchOwner: Boolean? = null,
+    prefix: String? = null,
+    startAfter: String? = null,
+    xAmzExpectedBucketOwner: String? = null,
+    xAmzRequestPayer: String? = null,
+    regin: String,
+    bucket: String,
+    accessKey: String,
+    secretAccessKey: String,
+  ) = flow {
+    var token: String? = null
+    while (true) {
+      val result = listObject2(
         client = client,
-        method = "DELETE",
-        url = url.copy(path = url.path.append(bucket).append(key)),
+        url = url,
+        continuationToken = token,
+        fetchOwner = fetchOwner,
+        maxKeys = blockSize,
+        startAfter = startAfter,
+        prefix = prefix,
+        xAmzExpectedBucketOwner = xAmzExpectedBucketOwner,
+        xAmzRequestPayer = xAmzRequestPayer,
         regin = regin,
+        bucket = bucket,
         accessKey = accessKey,
         secretAccessKey = secretAccessKey,
-        payloadContentLength = 0
+      )
+      result.contents.forEach {
+        emit(it)
+      }
+      token = result.nextContinuationToken ?: break
+    }
+  }
+
+  suspend fun headObject(
+    client: HttpClient,
+    url: URL,
+    regin: String,
+    bucket: String,
+    key: String,
+    partNumber: Int? = null,
+    versionId: String? = null,
+    accessKey: String,
+    secretAccessKey: String,
+  ): ContentHead? {
+    val query = Query.build {
+      if (partNumber != null) {
+        add("partNumber", partNumber.toString())
+      }
+      if (versionId != null) {
+        add("versionId", versionId.toString())
+      }
+    }
+    return s3Call(
+      client = client,
+      method = "HEAD",
+      url = url.copy(query = query, path = url.path.append(bucket).append(key)),
+      regin = regin,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
     ).use {
-        when (val code = it.responseCode) {
-            200, 204 -> true
-            404 -> false
-            else -> it.throwErrorText(code)
-        }
-    }
-
-    suspend fun putObject(
-        client: HttpClient,
-        regin: String,
-        bucket: String,
-        key: String,
-        url: URL,
-        partNumber: Int? = null,
-        uploadId: String? = null,
-        accessKey: String,
-        secretAccessKey: String,
-        payloadContentLength: Long?,
-        payloadSha256: ByteArray? = null,
-        payload: suspend (AsyncOutput) -> Unit,
-    ) {
-        val query = Query.build {
-            if (partNumber != null) {
-                add("partNumber", partNumber.toString())
-            }
-            if (uploadId != null) {
-                add("uploadId", uploadId)
-            }
-        }
-        s3Call(
-            client = client,
-            method = "PUT",
-            url = url.copy(path = url.path.append(bucket).append(key), query = query),
-            regin = regin,
-            accessKey = accessKey,
-            secretAccessKey = secretAccessKey,
-            payloadContentLength = payloadContentLength,
-            payloadSha256 = payloadSha256
-        ) { output ->
-            payload(output)
-        }.use {
-            when (val code = it.responseCode) {
-                200 -> null
-                else -> it.throwErrorText(code)
-            }
-        }
-    }
-
-    suspend fun copyObject(
-        client: HttpClient,
-        regin: String,
-        sourceBucket: String,
-        sourceKey: String,
-        destinationBucket: String,
-        destinationKey: String,
-        url: URL,
-        accessKey: String,
-        secretAccessKey: String,
-    ) {
-        s3Call(
-            client = client,
-            method = "PUT",
-            url = url.copy(path = url.path.append(destinationBucket).append(destinationKey)),
-            regin = regin,
-            accessKey = accessKey,
-            secretAccessKey = secretAccessKey,
-            xAmzCopySource = "$sourceBucket/$sourceKey"
-        ).use {
-            when (val code = it.responseCode) {
-                200 -> null
-                else -> it.throwErrorText(code)
-            }
-        }
-    }
-
-    suspend fun listObject2(
-        client: HttpClient,
-        url: URL,
-        continuationToken: String? = null,
-        delimiter: String? = null,
-        fetchOwner: Boolean? = null,
-        maxKeys: Int,
-        prefix: String? = null,
-        startAfter: String? = null,
-        xAmzExpectedBucketOwner: String? = null,
-        xAmzRequestPayer: String? = null,
-        regin: String,
-        bucket: String,
-        accessKey: String,
-        secretAccessKey: String,
-    ): ListBucketResultV2 {
-        val query = Query.build {
-            if (continuationToken != null) {
-                add("continuation-token", continuationToken)
-            }
-            if (delimiter != null) {
-                add("delimiter", delimiter)
-            }
-            if (fetchOwner != null) {
-                add("fetch-owner", fetchOwner.toString())
-            }
-            add("list-type", "2")
-            add("max-keys", maxKeys.toString())
-            if (prefix != null) {
-                add("prefix", prefix)
-            }
-            if (startAfter != null) {
-                add("start-after", startAfter)
-            }
-            if (xAmzExpectedBucketOwner != null) {
-                add("x-amz-expected-bucket-owner", xAmzExpectedBucketOwner)
-            }
-            if (xAmzRequestPayer != null) {
-                add("x-amz-request-payer", xAmzRequestPayer)
-            }
-        }
-        val result = s3Call(
-            client = client,
-            method = "GET",
-            url = url.copy(query = query, path = url.path.append(bucket)),
-            regin = regin,
-            accessKey = accessKey,
-            secretAccessKey = secretAccessKey,
-        ).use {
-            it.readText().use { it.readText() }
-        }
-        val element = result.xmlTree(true)
-        if (element.tag == "Error") {
-            val error = xml.decodeFromXmlElement(Error.serializer(), element)
-            throw S3ErrorException(
-                code = error.key,
-                description = error.message,
-            )
-        }
-        return xml.decodeFromXmlElement(ListBucketResultV2.serializer(), element)
-    }
-
-    fun listObjectFlow(
-        client: HttpClient,
-        url: URL,
-        blockSize: Int = 500,
-        fetchOwner: Boolean? = null,
-        prefix: String? = null,
-        startAfter: String? = null,
-        xAmzExpectedBucketOwner: String? = null,
-        xAmzRequestPayer: String? = null,
-        regin: String,
-        bucket: String,
-        accessKey: String,
-        secretAccessKey: String,
-    ) = flow {
-        var token: String? = null
-        while (true) {
-            val result = listObject2(
-                client = client,
-                url = url,
-                continuationToken = token,
-                fetchOwner = fetchOwner,
-                maxKeys = blockSize,
-                startAfter = startAfter,
-                prefix = prefix,
-                xAmzExpectedBucketOwner = xAmzExpectedBucketOwner,
-                xAmzRequestPayer = xAmzRequestPayer,
-                regin = regin,
-                bucket = bucket,
-                accessKey = accessKey,
-                secretAccessKey = secretAccessKey,
-            )
-            result.contents.forEach {
-                emit(it)
-            }
-            token = result.nextContinuationToken ?: break
-        }
-    }
-
-    suspend fun headObject(
-        client: HttpClient,
-        url: URL,
-        regin: String,
-        bucket: String,
-        key: String,
-        partNumber: Int? = null,
-        versionId: String? = null,
-        accessKey: String,
-        secretAccessKey: String,
-    ): ContentHead? {
-        val query = Query.build {
-            if (partNumber != null) {
-                add("partNumber", partNumber.toString())
-            }
-            if (versionId != null) {
-                add("versionId", versionId.toString())
-            }
-        }
-        return s3Call(
-            client = client,
-            method = "HEAD",
-            url = url.copy(query = query, path = url.path.append(bucket).append(key)),
-            regin = regin,
-            accessKey = accessKey,
-            secretAccessKey = secretAccessKey,
-        ).use {
-            val region = it.headers["X-Amz-Bucket-Region"]?.firstOrNull()
-            val length = it.headers.contentLength?.toLong()
-            val type = it.headers.contentType
-            val eTag = it.headers["ETag"]?.firstOrNull()
-            val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
-            when (val code = it.responseCode) {
-                200 -> ContentHead(
-                    region = region,
-                    length = length,
-                    contentType = type,
-                    eTag = eTag,
-                    lastModify = lastModify,
-                )
-
-                404 -> null
-                else -> it.throwErrorText(code)
-            }
-        }
-    }
-
-    suspend fun <T> getObject(
-        client: HttpClient,
-        url: URL,
-        regin: String,
-        bucket: String,
-        key: String,
-        partNumber: Int? = null,
-        versionId: String? = null,
-        accessKey: String,
-        range: List<Range> = emptyList(),
-        secretAccessKey: String,
-        consumer: suspend (InputFile?) -> T
-    ): T {
-        val query = Query.build {
-            if (partNumber != null) {
-                add("partNumber", partNumber.toString())
-            }
-            if (versionId != null) {
-                add("versionId", versionId.toString())
-            }
-        }
-        return s3Call(
-            client = client,
-            method = "GET",
-            url = url.copy(query = query, path = url.path.append(bucket).append(key)),
-            regin = regin,
-            accessKey = accessKey,
-            range = range,
-            secretAccessKey = secretAccessKey,
-        ).use {
-            when (val code = it.responseCode) {
-                200, 206 -> {
-                    val region = it.headers["X-Amz-Bucket-Region"]?.firstOrNull()
-                    val length = it.headers.contentLength?.toLong()
-                    val type = it.headers.contentType
-                    val eTag = it.headers["ETag"]?.firstOrNull()
-                    val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
-                    val data = ContentHead(
-                        region = region,
-                        length = length,
-                        contentType = type,
-                        eTag = eTag,
-                        lastModify = lastModify,
-                    )
-                    it.readData().use { input ->
-                        consumer(
-                            InputFile(
-                                data = data,
-                                input = input
-                            )
-                        )
-                    }
-                }
-
-                404 -> consumer(null)
-                else -> it.throwErrorText(code)
-            }
-        }
-    }
-
-    suspend fun createMultipartUpload(
-        client: HttpClient,
-        regin: String,
-        url: URL,
-        bucket: String,
-        key: String,
-        contentType: String?,
-        accessKey: String,
-        secretAccessKey: String
-    ): String {
-        val query = Query.build {
-            add("uploads")
-        }
-        return s3Call(
-            client = client,
-            method = "POST",
-            url = url.copy(query = query, path = url.path.append(bucket).append(key)),
-            contentType = contentType,
-            regin = regin,
-            accessKey = accessKey,
-            secretAccessKey = secretAccessKey,
-            payloadSha256 = emptySha256,
-            payloadContentLength = 0,
-        ).use {
-            when (val code = it.responseCode) {
-                200 -> {
-                    val responseText = it.readText().use { it.readText() }
-                    val element = responseText.xmlTree(true)
-                    xml.decodeFromXmlElement(InitiateMultipartUploadResult.serializer(), element)?.uploadId
-                }
-
-                else -> it.throwErrorText(code)
-            }
-        }
-    }
-
-    suspend fun completeMultipartUpload(
-        client: HttpClient,
-        regin: String,
-        url: URL,
-        bucket: String,
-        key: String,
-        uploadId: String,
-        accessKey: String,
-        secretAccessKey: String,
-        parts: List<Part>
-    ): CompleteMultipartUploadResult {
-        val payloadStr = xml.encodeToString(
-            serializer = CompleteMultipartUpload.serializer(),
-            value = CompleteMultipartUpload(parts),
-            withHeader = true,
+      val region = it.headers["X-Amz-Bucket-Region"]?.firstOrNull()
+      val length = it.headers.contentLength?.toLong()
+      val type = it.headers.contentType
+      val eTag = it.headers["ETag"]?.firstOrNull()
+      val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
+      when (val code = it.responseCode) {
+        200 -> ContentHead(
+          region = region,
+          length = length,
+          contentType = type,
+          eTag = eTag,
+          lastModify = lastModify,
         )
-        val payload = payloadStr.encodeToByteArray()
-        val query = Query.build {
-            add("uploadId", uploadId)
+
+        404 -> null
+        else -> it.throwErrorText(code)
+      }
+    }
+  }
+
+  suspend fun <T> getObject(
+    client: HttpClient,
+    url: URL,
+    regin: String,
+    bucket: String,
+    key: String,
+    partNumber: Int? = null,
+    versionId: String? = null,
+    accessKey: String,
+    range: List<Range> = emptyList(),
+    secretAccessKey: String,
+    consumer: suspend (InputFile?) -> T,
+  ): T {
+    val query = Query.build {
+      if (partNumber != null) {
+        add("partNumber", partNumber.toString())
+      }
+      if (versionId != null) {
+        add("versionId", versionId.toString())
+      }
+    }
+    return s3Call(
+      client = client,
+      method = "GET",
+      url = url.copy(query = query, path = url.path.append(bucket).append(key)),
+      regin = regin,
+      accessKey = accessKey,
+      range = range,
+      secretAccessKey = secretAccessKey,
+    ).use {
+      when (val code = it.responseCode) {
+        200, 206 -> {
+          val region = it.headers["X-Amz-Bucket-Region"]?.firstOrNull()
+          val length = it.headers.contentLength?.toLong()
+          val type = it.headers.contentType
+          val eTag = it.headers["ETag"]?.firstOrNull()
+          val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
+          val data = ContentHead(
+            region = region,
+            length = length,
+            contentType = type,
+            eTag = eTag,
+            lastModify = lastModify,
+          )
+          it.readData().use { input ->
+            consumer(
+              InputFile(
+                data = data,
+                input = input,
+              ),
+            )
+          }
         }
-        val b = Sha256MessageDigest()
-        b.update(payload)
-        val requestHash = b.finish()
-        s3Call(
-            client = client,
-            method = "POST",
-            url = url.copy(query = query, path = url.path.append(bucket).append(key)),
-            regin = regin,
-            accessKey = accessKey,
-            secretAccessKey = secretAccessKey,
-            payloadContentLength = payload.size.toLong(),
-            payloadSha256 = requestHash,
-        ) { output ->
-            output.bufferedWriter(closeParent = false).use {
-                it.append(payloadStr)
-            }
+
+        404 -> consumer(null)
+        else -> it.throwErrorText(code)
+      }
+    }
+  }
+
+  suspend fun createMultipartUpload(
+    client: HttpClient,
+    regin: String,
+    url: URL,
+    bucket: String,
+    key: String,
+    contentType: String?,
+    accessKey: String,
+    secretAccessKey: String,
+  ): String {
+    val query = Query.build {
+      add("uploads")
+    }
+    return s3Call(
+      client = client,
+      method = "POST",
+      url = url.copy(query = query, path = url.path.append(bucket).append(key)),
+      contentType = contentType,
+      regin = regin,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
+      payloadSha256 = emptySha256,
+      payloadContentLength = 0,
+    ).use {
+      when (val code = it.responseCode) {
+        200 -> {
+          val responseText = it.readText().use { it.readText() }
+          val element = responseText.xmlTree(true)
+          xml.decodeFromXmlElement(InitiateMultipartUploadResult.serializer(), element).uploadId
+        }
+
+        else -> it.throwErrorText(code)
+      }
+    }
+  }
+
+  suspend fun completeMultipartUpload(
+    client: HttpClient,
+    regin: String,
+    url: URL,
+    bucket: String,
+    key: String,
+    uploadId: String,
+    accessKey: String,
+    secretAccessKey: String,
+    parts: List<Part>,
+  ): CompleteMultipartUploadResult {
+    val payloadStr = xml.encodeToString(
+      serializer = CompleteMultipartUpload.serializer(),
+      value = CompleteMultipartUpload(parts),
+      withHeader = true,
+    )
+    val payload = payloadStr.encodeToByteArray()
+    val query = Query.build {
+      add("uploadId", uploadId)
+    }
+    val b = Sha256MessageDigest()
+    b.update(payload)
+    val requestHash = b.finish()
+    s3Call(
+      client = client,
+      method = "POST",
+      url = url.copy(query = query, path = url.path.append(bucket).append(key)),
+      regin = regin,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
+      payloadContentLength = payload.size.toLong(),
+      payloadSha256 = requestHash,
+    ) { output ->
+      output.bufferedWriter(closeParent = false).use {
+        it.append(payloadStr)
+      }
 //            output.bufferedOutput(closeStream = false).use {
 //                it.writeFully(payload)
 //            }
-        }.use {
-            val txt = when (val code = it.responseCode) {
-                200 -> it.readText().use { it.readText() }
-                else -> it.throwErrorText(code)
-            }
-            val element = txt.xmlTree(true)
-            return xml.decodeFromXmlElement(CompleteMultipartUploadResult.serializer(), element)
-        }
+    }.use {
+      val txt = when (val code = it.responseCode) {
+        200 -> it.readText().use { it.readText() }
+        else -> it.throwErrorText(code)
+      }
+      val element = txt.xmlTree(true)
+      return xml.decodeFromXmlElement(CompleteMultipartUploadResult.serializer(), element)
     }
+  }
 
-    suspend fun listBuckets(client: HttpClient, regin: String, url: URL, accessKey: String, secretAccessKey: String) =
-        s3Call(
-            client = client,
-            method = "GET",
-            url = url,
-            regin = regin,
-            accessKey = accessKey,
-            secretAccessKey = secretAccessKey,
-        ).use {
-            when (val code = it.responseCode) {
-                200 -> {
-                    val txt = it.readText().use {
-                        it.readText()
-                    }
-                    val result = xml.decodeFromXmlElement(
-                        serializer = ListAllMyBucketsResult.serializer(),
-                        xmlElement = txt.xmlTree(true),
-                    )
-                    Buckets(
-                        owner = result.owner,
-                        list = result.buckets
-                    )
-                }
-
-                else -> it.throwErrorText(code)
-            }
+  suspend fun listBuckets(client: HttpClient, regin: String, url: URL, accessKey: String, secretAccessKey: String) =
+    s3Call(
+      client = client,
+      method = "GET",
+      url = url,
+      regin = regin,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
+    ).use {
+      when (val code = it.responseCode) {
+        200 -> {
+          val txt = it.readText().use {
+            it.readText()
+          }
+          val result = xml.decodeFromXmlElement(
+            serializer = ListAllMyBucketsResult.serializer(),
+            xmlElement = txt.xmlTree(true),
+          )
+          Buckets(
+            owner = result.owner,
+            list = result.buckets,
+          )
         }
+
+        else -> it.throwErrorText(code)
+      }
+    }
 }

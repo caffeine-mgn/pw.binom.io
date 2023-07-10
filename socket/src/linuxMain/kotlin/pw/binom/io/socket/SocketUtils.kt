@@ -6,7 +6,6 @@ package pw.binom.io.socket
 import kotlinx.cinterop.*
 import platform.common.*
 
-
 import pw.binom.io.ByteBuffer
 
 /*
@@ -64,9 +63,9 @@ actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
 
 actual fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?): RawSocket? {
     return address.useNativeAddress { addr ->
-        Socket_accept(native, addr)
+        Socket_accept(native, addr).takeIf { it > 0 }
     }
-    /*
+    /*+
     if (address == null) {
         return accept(native, null, null).takeIf { it != -1 }
     }
@@ -143,6 +142,5 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
         readSize
         */
 }
-
 
 actual fun createSocket(socket: RawSocket, server: Boolean): Socket = PosixSocket(native = socket, server = server)

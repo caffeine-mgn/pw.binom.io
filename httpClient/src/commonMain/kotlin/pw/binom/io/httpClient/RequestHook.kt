@@ -1,6 +1,8 @@
 package pw.binom.io.httpClient
 
+import pw.binom.io.socket.NetworkAddress
 import pw.binom.url.URL
+import pw.binom.url.toURL
 
 interface RequestHook {
 //    suspend fun buildRequest(
@@ -48,7 +50,7 @@ interface RequestHook {
         override suspend fun connectAddress(url: URL) = url
     }
 
-    class HttpProxy(val url: URL/*, val fallback: RequestHook*/) : RequestHook {
+    class HttpProxy(val url: NetworkAddress/*, val fallback: RequestHook*/) : RequestHook {
 
 //        private suspend fun buildRaw(
 //            method: String,
@@ -129,10 +131,7 @@ interface RequestHook {
 //        }
 
         override suspend fun connectAddress(url: URL) =
-            when (url.schema) {
-                "http" -> this.url
-                else -> url
-            }
+            "http://${url.host}:${url.port ?: 80}".toURL()
 //            NetworkAddress.create(
 //                host = this.url.host,
 //                port = this.url.port ?: url.getDefaultPort()

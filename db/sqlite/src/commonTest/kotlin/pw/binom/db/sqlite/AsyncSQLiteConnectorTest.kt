@@ -9,19 +9,19 @@ import kotlin.test.assertFalse
 
 class AsyncSQLiteConnectorTest {
 
-    @Test
-    fun test() = runTest {
-        withContext(Dispatchers.Default) {
-            val mem = AsyncSQLiteConnector.memory()
-            mem.createStatement().use {
-                it.executeUpdate(SQLiteConnectorTest.SIMPLE_COMPANY_TABLE)
-            }
-            mem.prepareStatement("select * from company").use {
-                it.executeQuery().use {
-                    assertFalse(it.next())
-                    println("OK")
-                }
-            }
+  @Test
+  fun test() = runTest {
+    withContext(Dispatchers.Default) {
+      val mem = AsyncSQLiteConnector.memory()
+      mem.createStatement().use {
+        it.executeUpdate(SQLiteConnectorTest.SIMPLE_COMPANY_TABLE)
+      }
+      mem.prepareStatement("select * from company").use {
+        it.executeQuery().use {
+          assertFalse(it.next())
+          println("OK")
         }
+      }
     }
+  }
 }

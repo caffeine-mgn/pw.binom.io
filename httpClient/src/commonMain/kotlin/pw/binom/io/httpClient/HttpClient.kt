@@ -5,7 +5,6 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.Closeable
 import pw.binom.io.http.HTTPMethod
 import pw.binom.io.http.Headers
-import pw.binom.io.httpClient.protocol.ConnectFactory2
 import pw.binom.io.httpClient.protocol.ProtocolSelector
 import pw.binom.io.httpClient.protocol.ProtocolSelectorBySchema
 import pw.binom.io.httpClient.protocol.httpproxy.HttpProxyConnectFactory2
@@ -17,19 +16,19 @@ import pw.binom.url.URL
 
 interface HttpClient : Closeable {
 
-    suspend fun startConnect(
-        method: String,
-        uri: URL,
-        headers: Headers,
-        requestLength: OutputLength = OutputLength.Chunked,
-        keepAlive: Boolean? = true,
-    ): HttpRequestBody
+  suspend fun startConnect(
+    method: String,
+    uri: URL,
+    headers: Headers,
+    requestLength: OutputLength = OutputLength.Chunked,
+    keepAlive: Boolean? = true,
+  ): HttpRequestBody
 
-    suspend fun connect(method: String, uri: URL): HttpRequest
-    suspend fun connect(method: HTTPMethod, uri: URL) =
-        connect(method.code, uri)
+  suspend fun connect(method: String, uri: URL): HttpRequest
+  suspend fun connect(method: HTTPMethod, uri: URL) =
+    connect(method.code, uri)
 
-    companion object {
+  companion object {
 //        fun create(
 //            networkDispatcher: NetworkCoroutineDispatcher,
 //            useKeepAlive: Boolean = true,
@@ -46,50 +45,51 @@ interface HttpClient : Closeable {
 //                bufferSize = bufferSize,
 //                bufferCapacity = bufferCapacity,
 //            )
-    }
+  }
 }
 
 fun HttpClient.Companion.create(
-    networkDispatcher: NetworkManager = Dispatchers.Network,
-    useKeepAlive: Boolean = true,
-    bufferSize: Int = DEFAULT_BUFFER_SIZE,
-    bufferCapacity: Int = 16,
-    proxyURL: URL? = null,
+  networkDispatcher: NetworkManager = Dispatchers.Network,
+  useKeepAlive: Boolean = true,
+  bufferSize: Int = DEFAULT_BUFFER_SIZE,
+  bufferCapacity: Int = 16,
+  proxy: HttpProxyConfig? = null,
 ): BaseHttpClient {
-    val baseProtocolSelector = ProtocolSelectorBySchema()
-    val http = Http11ConnectFactory2(networkManager = networkDispatcher)
-    baseProtocolSelector.set(
-        http,
-        "http",
-        "ws",
+  val baseProtocolSelector = ProtocolSelectorBySchema()
+  val http = Http11ConnectFactory2(networkManager = networkDispatcher)
+  baseProtocolSelector.set(
+    http,
+    "http",
+    "ws",
+  )
+  val protocolSelector = ProtocolSelectorBySchema()
+  protocolSelector.set(
+    HttpSSLConnectFactory2(networkManager = networkDispatcher, protocolSelector = baseProtocolSelector),
+    "https",
+    "wss",
+  )
+  protocolSelector.set(
+    http,
+    "http",
+    "ws",
+  )
+  var pp: ProtocolSelector = protocolSelector
+  if (proxy != null) {
+    val proxyFactory = HttpProxyConnectFactory2(
+      proxyUrl = proxy.address,
+      networkManager = networkDispatcher,
+      protocolSelector = protocolSelector,
+      auth = proxy.auth,
     )
-    val protocolSelector = ProtocolSelectorBySchema()
-    protocolSelector.set(
-        HttpSSLConnectFactory2(networkManager = networkDispatcher, protocolSelector = baseProtocolSelector),
-        "https",
-        "wss",
-    )
-    protocolSelector.set(
-        http,
-        "http",
-        "ws",
-    )
-    var pp: ProtocolSelector = protocolSelector
-    if (proxyURL != null) {
-        val proxyFactory = HttpProxyConnectFactory2(
-            proxyUrl = proxyURL,
-            networkManager = networkDispatcher,
-            protocolSelector = protocolSelector,
-        )
-        pp = object : ProtocolSelector {
-            override fun find(url: URL): ConnectFactory2? = proxyFactory
-        }
+    pp = object : ProtocolSelector {
+      override fun find(url: URL) = proxyFactory
     }
-    return BaseHttpClient(
-        useKeepAlive = useKeepAlive,
-        bufferSize = bufferSize,
-        bufferCapacity = bufferCapacity,
-        requestHook = proxyURL?.let { RequestHook.HttpProxy(it) } ?: RequestHook.Default,
-        protocolSelector = pp,
-    )
+  }
+  return BaseHttpClient(
+    useKeepAlive = useKeepAlive,
+    bufferSize = bufferSize,
+    bufferCapacity = bufferCapacity,
+    requestHook = proxy?.let { RequestHook.HttpProxy(it.address) } ?: RequestHook.Default,
+    protocolSelector = pp,
+  )
 }

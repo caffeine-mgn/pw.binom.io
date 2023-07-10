@@ -38,22 +38,22 @@ class MessageTest {
 //        }
 //    }
 
-    @Test
-    fun encodeTest() {
-        val data = ByteArray(100)
-        Random.nextBytes(data)
-        val buf = ByteBuffer(data.size)
-        data.forEach {
-            buf.put(it)
-        }
-        buf.clear()
-        val mask = Random.nextInt()
-        Message.encode(0L, mask, buf)
-        buf.clear()
-        Message.encode(0L, mask, buf)
-        buf.clear()
-        buf.forEachIndexed { i, byte ->
-            assertEquals(data[i], byte)
-        }
+  @Test
+  fun encodeTest() {
+    val data = ByteArray(100)
+    Random.nextBytes(data)
+    val buf = ByteBuffer(data.size)
+    data.forEach {
+      buf.put(it)
     }
+    buf.clear()
+    val mask = Random.nextInt()
+    Message.encode(0L, mask, buf)
+    buf.clear()
+    Message.encode(0L, mask, buf)
+    buf.clear()
+    buf.forEachIndexed { i, byte ->
+      assertEquals(data[i], byte)
+    }
+  }
 }

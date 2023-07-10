@@ -1,6 +1,7 @@
 package pw.binom.io.socket
 
 import platform.common.*
+import platform.posix.errno
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 
@@ -20,13 +21,13 @@ fun unbind(native: RawSocket) {
 
 fun setBlocking(native: Int, value: Boolean) {
     if (internal_set_socket_blocked_mode(native, if (value) 1 else 0) <= 0) {
-        throw IOException("Can't change blocking mode")
+        throw IOException("Can't change blocking mode. error: #${getInternalError()}")
     }
 }
 
 fun allowIpv4(native: RawSocket) {
     if (internal_set_allow_ipv6(native) <= 0) {
-        throw IOException("Can't allow ipv6 connection socket.")
+        throw IOException("Can't allow ipv6 connection socket. error: #$errno")
     }
 }
 

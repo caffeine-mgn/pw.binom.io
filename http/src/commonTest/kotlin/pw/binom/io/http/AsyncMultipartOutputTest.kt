@@ -15,38 +15,38 @@ import kotlin.test.assertTrue
 
 class AsyncMultipartOutputTest {
 
-    @Test
-    fun test() {
-        val stream = ByteArrayOutput()
-        val mulipart = AsyncMultipartOutput(stream.asyncOutput(), closeParent = false)
-        var exception: Throwable? = null
-        val userName = UUID.random().toString()
-        val userPassword = UUID.random().toString()
-        val bufferPool = ByteBufferPool(50, 100)
-        runBlocking {
-            try {
-                mulipart.formData("userName")
-                mulipart.utf8Appendable().append(userName)
-                mulipart.formData("userPassword")
-                mulipart.utf8Appendable().append(userPassword)
-                mulipart.asyncClose()
+  @Test
+  fun test() {
+    val stream = ByteArrayOutput()
+    val mulipart = AsyncMultipartOutput(stream.asyncOutput(), closeParent = false)
+    var exception: Throwable? = null
+    val userName = UUID.random().toString()
+    val userPassword = UUID.random().toString()
+    val bufferPool = ByteBufferPool(50, 100)
+    runBlocking {
+      try {
+        mulipart.formData("userName")
+        mulipart.utf8Appendable().append(userName)
+        mulipart.formData("userPassword")
+        mulipart.utf8Appendable().append(userPassword)
+        mulipart.asyncClose()
 
-                stream.data.flip()
-                val input = AsyncMultipartInput(mulipart.boundary, stream.data.asyncInput(), bufferPool)
-                assertTrue(input.next())
-                assertEquals("userName", input.formName)
-                assertEquals(userName, input.utf8Reader().readText())
-                assertTrue(input.next())
-                assertEquals("userPassword", input.formName)
-                assertEquals(userPassword, input.utf8Reader().readText())
-                assertFalse(input.next())
-            } catch (e: Throwable) {
-                exception = e
-            }
-        }
-
-        if (exception != null) {
-            throw exception!!
-        }
+        stream.data.flip()
+        val input = AsyncMultipartInput(mulipart.boundary, stream.data.asyncInput(), bufferPool)
+        assertTrue(input.next())
+        assertEquals("userName", input.formName)
+        assertEquals(userName, input.utf8Reader().readText())
+        assertTrue(input.next())
+        assertEquals("userPassword", input.formName)
+        assertEquals(userPassword, input.utf8Reader().readText())
+        assertFalse(input.next())
+      } catch (e: Throwable) {
+        exception = e
+      }
     }
+
+    if (exception != null) {
+      throw exception!!
+    }
+  }
 }
