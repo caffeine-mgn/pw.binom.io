@@ -23,7 +23,7 @@
 #trigger:
 #  event:
 #    - push
----
+#---
 kind: pipeline
 type: exec
 name: Test MingwX64
