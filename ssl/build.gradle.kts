@@ -55,7 +55,7 @@ apply<pw.binom.plugins.ConfigPublishPlugin>()
 tasks {
 
     val downloadSsl by creating(OpenSSLDownloadTask::class) {
-        enabled = false
+
     }
     val extractSsl by creating(OpenSSLUnpackTask::class) {
         dependsOn(downloadSsl)
