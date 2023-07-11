@@ -35,4 +35,4 @@ platform:
 steps:
   - name: Testing mingw
     commands:
-      - gradlew.bat mingwX64Test
+      - ./gradlew.bat mingwX64Test
