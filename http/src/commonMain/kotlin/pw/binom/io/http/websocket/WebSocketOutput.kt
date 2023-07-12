@@ -47,7 +47,7 @@ class WebSocketOutput(
       WebSocketHeader.write(
         output = stream,
         opcode = if (!first) {
-          Opcode.ZERO
+          Opcode.CONTINUATION
         } else {
           messageType.opcode
         },
@@ -83,7 +83,7 @@ class WebSocketOutput(
 //        WebSocketHeader.write(stream, v)
         WebSocketHeader.write(
           output = stream,
-          opcode = Opcode.ZERO,
+          opcode = Opcode.CONTINUATION,
           length = 0,
           maskFlag = masked,
           mask = mask,
