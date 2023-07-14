@@ -386,3 +386,13 @@ int internal_get_last_error(){
     return errno;
 #endif
 }
+
+int internal_get_socket_error(SOCKET sock) {
+    int error = -1;
+    int len = sizeof(error);
+    int result = getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&error, &len);
+    if (result != 0){
+        return -2;
+    }
+    return error;
+}

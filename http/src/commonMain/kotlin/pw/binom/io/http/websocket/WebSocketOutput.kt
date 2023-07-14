@@ -23,6 +23,13 @@ class WebSocketOutput(
     }
   }
 
+  private val opcode
+    get() = if (first) {
+      messageType.opcode
+    } else {
+      Opcode.CONTINUATION
+    }
+
   override suspend fun flush() {
     checkClosed()
     if (buffer.remaining < buffer.capacity) {
@@ -44,13 +51,10 @@ class WebSocketOutput(
 //        messageType.opcode
 //      }
 //      WebSocketHeader.write(stream, v)
+
       WebSocketHeader.write(
         output = stream,
-        opcode = if (!first) {
-          Opcode.CONTINUATION
-        } else {
-          messageType.opcode
-        },
+        opcode = opcode,
         length = length.toLong(),
         maskFlag = masked,
         mask = mask,
@@ -83,7 +87,7 @@ class WebSocketOutput(
 //        WebSocketHeader.write(stream, v)
         WebSocketHeader.write(
           output = stream,
-          opcode = Opcode.CONTINUATION,
+          opcode = opcode,
           length = 0,
           maskFlag = masked,
           mask = mask,

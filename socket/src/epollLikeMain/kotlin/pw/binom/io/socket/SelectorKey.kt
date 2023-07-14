@@ -1,6 +1,7 @@
 package pw.binom.io.socket
 
 import platform.common.*
+import platform.posix.errno
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 
@@ -41,7 +42,8 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
     setEventFlags(eventMem, commonFlags, if (serverFlag) 1 else 0)
     val success = selector.updateKey(this, eventMem)
     if (!success) {
-      println("Can't update epoll flags. error #${internal_get_last_error()}")
+      val socketError = internal_get_socket_error(rawSocket)
+      println("Can't update epoll flags. error #${internal_get_last_error()}, errno #$errno, socketError #$socketError")
     }
     return success
   }
