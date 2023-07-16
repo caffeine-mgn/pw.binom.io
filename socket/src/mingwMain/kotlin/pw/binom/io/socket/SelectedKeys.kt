@@ -1,4 +1,22 @@
 package pw.binom.io.socket
+
+actual class SelectedKeys {
+  actual constructor() {
+  }
+
+  actual fun forEach(func: (Event) -> Unit) {
+    TODO()
+  }
+
+  actual fun collect(collection: MutableCollection<Event>) {
+    TODO()
+  }
+
+  actual fun toList(): List<Event> {
+    TODO()
+  }
+}
+
 /*
 import kotlinx.cinterop.*
 import platform.common.*

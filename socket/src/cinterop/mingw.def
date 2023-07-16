@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <windows.h>
 #include <stdio.h>
+#include <mswsock.h>
 
 int internal_O_BINARY(){
     return _O_BINARY;
@@ -124,4 +125,24 @@ Return Value:
 
 int internal_handle_to_descriptor(HANDLE lpReadPipe){
     return _open_osfhandle((int)lpReadPipe, 0);
+}
+
+HANDLE internal_socket_to_HANDLE(SOCKET socket){
+    return (HANDLE) socket;
+}
+
+HANDLE internal_HANDLE_to_socket(HANDLE socket){
+    return (SOCKET) socket;
+}
+
+LPFN_CONNECTEX internal_get_connect_function(SOCKET socket){
+    DWORD dwBytes = 0;
+    GUID guid = WSAID_CONNECTEX;
+    LPFN_CONNECTEX lpfnConnectEx = NULL;
+    auto iResult = WSAIoctl(socket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+        &guid, sizeof(guid), &lpfnConnectEx, sizeof(lpfnConnectEx),&dwBytes, NULL, NULL);
+    if (iResult == SOCKET_ERROR){
+        return NULL;
+    }
+    return lpfnConnectEx;
 }

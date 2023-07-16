@@ -112,9 +112,9 @@ kotlin {
         val linuxMain by getting
         dependsOn("linuxMain", epollLikeMain)
         dependsOn("androidNativeMain", linuxMain)
-        dependsOn("mingwMain", epollLikeMain)
+//        dependsOn("mingwMain", epollLikeMain)
         dependsOn("linuxTest", epollLikeTest)
-        dependsOn("mingwTest", epollLikeTest)
+//        dependsOn("mingwTest", epollLikeTest)
     }
 }
 

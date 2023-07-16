@@ -1,4 +1,29 @@
 package pw.binom.io.socket
+
+import pw.binom.io.Closeable
+
+actual class SelectorKey : Closeable {
+  actual var attachment: Any?
+    get() = TODO()
+    set(value) = TODO()
+  actual val listenFlags: Int
+    get() = TODO()
+  actual val readFlags: Int
+    get() = TODO()
+  actual val isClosed: Boolean
+    get() = TODO()
+  actual val selector: Selector
+    get() = TODO()
+
+  actual fun updateListenFlags(listenFlags: Int): Boolean {
+    TODO()
+  }
+
+  override fun close() {
+    TODO("Not yet implemented")
+  }
+}
+
 /*
 import kotlinx.cinterop.*
 import platform.common.*

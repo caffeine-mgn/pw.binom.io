@@ -1,4 +1,5 @@
 package pw.binom.io.socket
+/*
 
 import kotlinx.cinterop.*
 import platform.common.*
@@ -85,3 +86,4 @@ class Pipe : Closeable {
         free(writePipe)
     }
 }
+*/

@@ -1,8 +1,10 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
+import platform.common.internal_get_connect_function
 import platform.posix.SOCKET_ERROR
 import platform.posix.errno
+import platform.posix.memset
 import platform.windows.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
@@ -14,6 +16,14 @@ class MingwSocket(
 
   override var keyHash: Int = 0
 
+  companion object {
+    val CONNECT_OVERLAPPED = nativeHeap.alloc<_OVERLAPPED>()
+    val READ_OVERLAPPED = nativeHeap.alloc<_OVERLAPPED>()
+    val WRITE_OVERLAPPED = nativeHeap.alloc<_OVERLAPPED>()
+  }
+
+  private fun getAsyncConnectFunction() = internal_get_connect_function(native.convert())
+
   override fun connect(address: InetNetworkAddress): ConnectStatus {
     val netaddress = if (address is CommonMutableInetNetworkAddress) {
       address
@@ -22,11 +32,64 @@ class MingwSocket(
     }
     return memScoped {
       netaddress.getAsIpV6 { netdata ->
-        val con = platform.windows.connect(
-          native.convert(),
-          netdata.reinterpret(),
-          sizeOf<sockaddr_in6>().convert(),
-        )
+        val con = if (blocking) {
+          connect(
+            native.convert(),
+            netdata.reinterpret(),
+            sizeOf<sockaddr_in6>().convert(),
+          )
+        } else {
+          val ConnectEx = getAsyncConnectFunction()
+            ?: throw RuntimeException("Can't get ConnectEx from socket. Error #${GetLastError()}")
+
+//          val address = alloc<sockaddr_in6>()
+//          println("copy in6")
+//          address.sin6_family = AF_INET6.convert()
+//          address.sin6_port = 0.convert()
+//          println("in6addr_any.ptr=${in6addr_any.ptr} ${in6addr_any.ptr.toLong().toString(10)}")
+//          println("address.sin6_addr.ptr=${address.sin6_addr.ptr}")
+//          println("address.ptr=${address.ptr}")
+//          memcpy(address.sin6_addr.ptr, in6addr_any.ptr, sizeOf<in6_addr>().convert())
+//          println("copped")
+          InetNetworkAddress.anyIpv6(0).let {
+            it as CommonMutableInetNetworkAddress
+            it.getAsIpV6 { data ->
+              val e = platform.posix.bind(
+                native.convert(),
+                data.reinterpret(),
+                sizeOf<sockaddr_in6>().convert(),
+              )
+              println("Bind result: $e, error: ${GetLastError()}")
+              e
+            }
+          }
+
+          val ol = alloc<_OVERLAPPED>()
+          memset(ol.ptr, 0, sizeOf<_OVERLAPPED>().convert())
+          val result = ConnectEx(
+            native.convert(),
+            netdata.reinterpret(),
+            sizeOf<sockaddr_in6>().convert(),
+            null,
+            0.convert(),
+            null,
+            CONNECT_OVERLAPPED.ptr,
+          )
+          if (result <= 0) {
+            val error = GetLastError().toInt()
+            when (error) {
+              87 -> throw IllegalArgumentException("Can't connect to $address")
+              WSAEINVAL -> throw IllegalArgumentException("Can't connect to $address: WSAEINVAL")
+              WSAENOTSOCK -> throw IllegalArgumentException("Can't connect to $address: WSAENOTSOCK")
+              997 -> return@getAsIpV6 ConnectStatus.IN_PROGRESS // WSA_IO_PENDING
+            }
+            throw IOException("Connect error: ${GetLastError()}")
+          }
+          result
+        }
+
+        println("con: $con. blocking: $blocking")
+
         if (con != 0) {
           val error = GetLastError()
           if (error == platform.windows.WSAEWOULDBLOCK.toUInt()) {

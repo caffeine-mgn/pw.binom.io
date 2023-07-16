@@ -396,3 +396,15 @@ int internal_get_socket_error(SOCKET sock) {
     }
     return error;
 }
+
+int internval_get_socket_type(SOCKET sock) {
+    int optVal, optLen = sizeof(optVal);
+    int result = getsockopt(sock, SOL_SOCKET, SO_ACCEPTCONN, (char *)&optVal, &optLen);
+    if (result == SOCKET_ERROR) {
+        return 0;
+    }
+    if (optVal){
+        return 1;
+    }
+    return 2;
+}

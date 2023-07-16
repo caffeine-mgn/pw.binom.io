@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+/*
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.convert
 import platform.common.FLAG_READ
@@ -50,3 +51,4 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
     udpWriteSocket.close()
   }
 }
+*/
