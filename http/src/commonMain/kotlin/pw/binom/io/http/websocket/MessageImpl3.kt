@@ -107,7 +107,6 @@ internal class MessageImpl3(val input: AsyncInput) : Message {
 
   override suspend fun asyncClose() {
     checkClosed()
-
     if (inputReady > 0L) {
       copyTo(NullAsyncOutput)
     }

@@ -36,10 +36,8 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
   }
 
   private suspend fun AsyncInput.read(): Byte {
-    println("AsyncChunkedInput:: read byte")
     staticData.reset(0, 1)
     readFully(staticData)
-    println("AsyncChunkedInput:: byte readed")
     return staticData[0]
   }
 
@@ -68,9 +66,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     readed = 0uL
 
     if (this.chunkedSize == 0uL) {
-      println("Was read finished chunk! Try read CRLF")
       readCRLF()
-      println("Chunked Stream was finished!")
       eof = true
       return
     }
@@ -94,7 +90,6 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
       }
       // check chunk not exist
       if (chunkedSize == 0uL) {
-        println("AsyncChunkedInput:: reading chunk size")
         readChunkSize()
         if (eof) {
           return 0
@@ -104,9 +99,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
       // check chunk is finished
       val remainingChunk = chunkedSize - readed
       if (remainingChunk == 0uL) {
-        println("AsyncChunkedInput:: block is ended. Try read CR LF of ended block")
         chunkedSize = 0uL
-        println("AsyncChunkedInput:: CR+LF was read. Block is finished!")
         readCRLF()
         continue
       }
@@ -114,9 +107,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
       val r = minOf(remainingChunk, dest.remaining.toULong())
 //            val oldLimit = dest.limit
       dest.limit = dest.position + r.toInt()
-      println("AsyncChunkedInput:: try read data ${dest.remaining}")
       val b = stream.read(dest)
-      println("AsyncChunkedInput:: was read $b")
 //            dest.limit = oldLimit
       readed += b.toULong()
 //      if (chunkedSize!! - readed == 0uL) {

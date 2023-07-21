@@ -5,14 +5,21 @@ import pw.binom.io.IOException
 import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.Headers
 import pw.binom.io.http.emptyHeaders
-import pw.binom.io.http.websocket.*
+import pw.binom.io.http.websocket.HandshakeSecret
+import pw.binom.io.http.websocket.InvalidSecurityKeyException
+import pw.binom.io.http.websocket.WebSocketConnectionImpl3
 import pw.binom.url.URL
 
-class WebSocketRequest(val url: URL, val method: String, val masking: Boolean, val client: HttpClient) {
-  val headers = HashHeaders2()
+class WebSocketRequest(
+  override val url: URL,
+  override val method: String,
+  val masking: Boolean,
+  val client: HttpClient,
+) : RequestConfig {
+  override val headers = HashHeaders2()
   private var started = false
 
-  suspend fun start(): WebSocketConnection {
+  suspend fun start(): SuccessWebSocketConnection {
     check(!started) { "Connection already started" }
     started = true
     val requestKey = HandshakeSecret.generateRequestKey()
@@ -29,10 +36,10 @@ class WebSocketRequest(val url: URL, val method: String, val masking: Boolean, v
     if (respKey != responseKey) {
       throw InvalidSecurityKeyException()
     }
-
-    val connection = WebSocketConnectionImpl3(_input = request.input, _output = request.output, masking = masking)
-//    connection.reset(input = request.input, output = request.output, masking = masking)
-    return connection
+    return SuccessWebSocketConnection(
+      connection = WebSocketConnectionImpl3(_input = request.input, _output = request.output, masking = masking),
+      headers = HashHeaders2(resp.headers),
+    )
   }
 }
 

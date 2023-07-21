@@ -61,7 +61,6 @@ open class AsyncChunkedOutput(
     stream.writeFully(tmp) // send CR + LF
     stream.flush()
     buffer.clear()
-    println("AsyncChunkedOutput:: sendBuffer was sent $wasSent (<data.size>+CR+LF+<data>+CR+LF)")
   }
 
   private suspend fun internalFlush() {

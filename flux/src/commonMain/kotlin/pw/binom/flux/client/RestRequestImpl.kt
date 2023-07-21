@@ -1,10 +1,7 @@
 package pw.binom.flux.client
 
 import kotlinx.serialization.KSerializer
-import pw.binom.io.AsyncChannel
-import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
-import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.io.httpClient.AsyncHttpRequestOutput
 import pw.binom.io.httpClient.AsyncHttpRequestWriter
 import pw.binom.io.httpClient.HttpRequest
@@ -27,8 +24,8 @@ internal class RestRequestImpl(
         get() = request1.headers
     override val method: String
         get() = request1.method
-    override val uri: URL
-        get() = request1.uri
+    override val url: URL
+        get() = request1.url
 
     override suspend fun asyncClose() {
         request1.asyncClose()

@@ -1,6 +1,7 @@
 package pw.binom.io
 
 import kotlinx.cinterop.*
+import platform.posix.NULL
 import kotlin.time.ExperimentalTime
 
 sealed interface MemAccess : Closeable {
@@ -67,6 +68,16 @@ sealed interface MemAccess : Closeable {
       pin.unpin()
     }
   }
+
+  object EmptyMemory : MemAccess {
+    override val capacity: Int = 0
+    override val pointer: CPointer<ByteVar> = 1L.toCPointer()!!
+    override fun <T> access(func: (CPointer<ByteVar>) -> T): T = TODO()
+    override fun <T> access2(func: (COpaquePointer) -> T): T = TODO()
+
+    override fun close() {
+    }
+  }
 }
 
 actual open class ByteBuffer private constructor(
@@ -75,7 +86,7 @@ actual open class ByteBuffer private constructor(
   actual companion object;
 
   actual constructor(size: Int) : this(MemAccess.HeapMemory(size))
-  actual constructor(array: ByteArray) : this(MemAccess.ArrayMemory(array))
+  actual constructor(array: ByteArray) : this(if (array.isEmpty()) MemAccess.EmptyMemory else MemAccess.ArrayMemory(array))
 
 //    actual companion object {
 //        actual fun alloc(size: Int): AbstractByteBuffer = AbstractByteBuffer(MemAccess.NativeMemory(size), null)

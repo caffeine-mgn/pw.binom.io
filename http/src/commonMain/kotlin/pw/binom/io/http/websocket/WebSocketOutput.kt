@@ -14,7 +14,6 @@ class WebSocketOutput(
   override val buffer: ByteBuffer = ByteBuffer(bufferSize).empty()
 
   private var first = true
-  private var eof = false
   private var closed = false
 
   private fun checkClosed() {
@@ -31,6 +30,12 @@ class WebSocketOutput(
     }
 
   override suspend fun flush() {
+    if (flush(eof = false)) {
+      first = false
+    }
+  }
+
+  private suspend fun flush(eof: Boolean): Boolean {
     checkClosed()
     if (buffer.remaining < buffer.capacity) {
 //      val v = WebSocketHeader()
@@ -60,31 +65,23 @@ class WebSocketOutput(
         mask = mask,
         finishFlag = eof,
       )
-      first = false
+      super.flush()
+      return true
     }
-    super.flush()
+    return false
   }
 
   override suspend fun asyncClose() {
     checkClosed()
     try {
-      flush()
-      val needSendEnd = buffer.remaining < buffer.capacity && !first
-      eof = true
-      super.asyncClose()
-
+      val finishSent = flush(eof = true)
+      val needSendEnd = !finishSent
       if (needSendEnd) {
-//        val v = WebSocketHeader()
-//        v.opcode = Opcode.ZERO
-//        v.length = 0L
-//        v.maskFlag = masked
         val mask = if (masked) {
           Random.nextInt()
         } else {
           0
         }
-//        v.finishFlag = true
-//        WebSocketHeader.write(stream, v)
         WebSocketHeader.write(
           output = stream,
           opcode = opcode,
@@ -96,6 +93,7 @@ class WebSocketOutput(
         stream.flush()
       }
     } finally {
+      super.asyncClose()
       writeLock?.unlock()
       buffer.close()
       closed = true

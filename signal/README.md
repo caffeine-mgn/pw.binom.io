@@ -21,26 +21,22 @@ dependencies {
 ```kotlin
 import pw.binom.process.Signal
 
-private fun start() {
-    // Starts your service
-}
+val flag = true
 
 private fun stop() {
-    //Stops your service
+    flag = false
 }
 
 fun main() {
-    start() //staring service
-
     // Adding terminate hook
-    Signal.handler { signalType: Signal.Type -> //this lambda will call when you press Ctrl+C in console 
+    Signal.handler { signalType: Signal.Type -> // this lambda will call when you press Ctrl+C in console 
         if (signalType.isInterrupted) {
-            stop() //stopping service
+            stop() // stopping service
         }
     }
 
-    while (true) {
-        Thread.sleep(1000)
+    while (flag) {
+        Thread.sleep(1000) // wait until flag is true
     }
 }
 ```

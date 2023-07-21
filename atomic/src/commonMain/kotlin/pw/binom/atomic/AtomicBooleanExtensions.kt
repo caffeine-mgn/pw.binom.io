@@ -15,37 +15,37 @@ inline fun <T> AtomicBoolean.synchronize(func: () -> T): T {
 //            println("SpinLock->Lock timeout!!!\n${Throwable().stackTraceToString()}")
 //        }
 //    }
-    lock()
-    try {
-        return func()
-    } finally {
-        unlock()
+  lock()
+  try {
+    return func()
+  } finally {
+    unlock()
 //        setValue(false)
-    }
+  }
 }
 
 @OptIn(ExperimentalTime::class)
 inline fun AtomicBoolean.lock(timeout: Duration) {
-    val bb = TimeSource.Monotonic.markNow()
-    while (true) {
-        if (compareAndSet(false, true)) {
-            break
-        }
-        if (bb.elapsedNow() > timeout) {
-            throw RuntimeException("Timeout $timeout")
-        }
+  val bb = TimeSource.Monotonic.markNow()
+  while (true) {
+    if (compareAndSet(false, true)) {
+      break
     }
+    if (bb.elapsedNow() > timeout) {
+      throw RuntimeException("Timeout $timeout")
+    }
+  }
 }
 
 inline fun AtomicBoolean.lock() {
-    while (true) {
-        if (compareAndSet(false, true)) {
-            break
-        }
-//        println("AtomicBoolean::lock wait unlocking...")
+  while (true) {
+    if (compareAndSet(false, true)) {
+      break
     }
+//        println("AtomicBoolean::lock wait unlocking...")
+  }
 }
 
 inline fun AtomicBoolean.unlock() {
-    setValue(false)
+  setValue(false)
 }

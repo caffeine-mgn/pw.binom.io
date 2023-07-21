@@ -8,9 +8,9 @@ import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.MutableHeaders
 import pw.binom.url.URL
 
-class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, override val uri: URL) : HttpRequest {
+class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, override val url: URL) : HttpRequest {
   override val headers: MutableHeaders = HashHeaders2()
-  override var request: String = uri.request.ifEmpty { "/" }
+  override var request: String = url.request.ifEmpty { "/" }
   private var hasBodyExist: Boolean = false
 
   private var httpRequestBody: HttpRequestBody? = null
@@ -19,7 +19,7 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
     check(httpRequestBody == null)
     val req = client.startConnect(
       method = method,
-      uri = uri,
+      uri = url,
       headers = headers,
       requestLength = if (headers.contentLength != null || headers.transferEncoding != Encoding.CHUNKED) OutputLength.None else OutputLength.Chunked,
     )
@@ -40,9 +40,7 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
           headers.transferEncoding = Encoding.CHUNKED
         }
 
-        println("HttpRequestImpl2:: sending headers...")
         q = makeRequest()
-        println("HttpRequestImpl2:: was sent!")
         req = q
         q
       } else {

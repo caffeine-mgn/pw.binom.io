@@ -79,7 +79,7 @@ class BaseHttpClient(
     val req = HttpRequestImpl2(
       client = this,
       method = method,
-      uri = uri,
+      url = uri,
     )
     req.headers[Headers.USER_AGENT] = "binom-kotlin-${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
     req.headers[Headers.HOST] = uri.host + (uri.port?.let { ":$it" } ?: "")

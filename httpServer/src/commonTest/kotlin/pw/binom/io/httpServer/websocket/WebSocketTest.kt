@@ -5,13 +5,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.io.*
+import pw.binom.io.ByteBufferFactory
+import pw.binom.io.bufferedReader
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.connectWebSocket
 import pw.binom.io.httpClient.create
-import pw.binom.io.httpServer.*
+import pw.binom.io.httpServer.Handler
+import pw.binom.io.httpServer.HttpHandler
+import pw.binom.io.httpServer.HttpServer2
+import pw.binom.io.httpServer.acceptWebsocket
 import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.use
+import pw.binom.io.wrap
 import pw.binom.network.Network
 import pw.binom.network.TcpServerConnection
 import pw.binom.pool.GenericObjectPool
@@ -26,64 +32,60 @@ import kotlin.time.Duration.Companion.seconds
 
 class WebSocketTest {
 
-    private fun handler(responseCallback: (String) -> Unit) = Handler { req ->
-        val con = req.acceptWebsocket()
-        val input = con.read().use {
-            it.bufferedReader().readText()
-        }
-        responseCallback(input)
+  private fun handler(responseCallback: (String) -> Unit) = Handler { req ->
+    val con = req.acceptWebsocket()
+    val input = con.read().use {
+      it.bufferedReader().readText()
     }
+    responseCallback(input)
+  }
 
-    @Test
-    fun test() = runTest(dispatchTimeoutMs = 10_000) {
-        val message = Random.nextUuid().toString()
-        val port = TcpServerConnection.randomPort()
-        var ok = false
-        var ok2 = false
-        val handler = HttpHandler {
-            val income = it.acceptWebsocket().use { it.read().bufferedReader().use { it.readText() } }
-            assertEquals(message, income)
-            ok = true
-        }
-        val handlerWrapper = HttpHandler { req ->
-            handler.handle(req)
-            ok2 = true
-        }
-        HttpServer2(
-
-
-
-
-            
-            handler = handlerWrapper,
-            dispatcher = Dispatchers.Network,
-            byteBufferPool = GenericObjectPool(ByteBufferFactory(DEFAULT_BUFFER_SIZE)),
-        ).use { httpServer ->
-            httpServer.listen(address = InetNetworkAddress.create(host = "127.0.0.1", port = port))
-            HttpClient.create().use { client ->
-                connectAndSendText(
-                    url = "ws://127.0.0.1:$port/".toURL(),
-                    text = message
-                )
-            }
-        }
-        withContext(Dispatchers.Default) {
-            delay(1.seconds)
-        }
-        assertTrue(ok)
-        assertTrue(ok2, "Request looks like unhandled")
+  @Test
+  fun test() = runTest(dispatchTimeoutMs = 10_000) {
+    val message = Random.nextUuid().toString()
+    val port = TcpServerConnection.randomPort()
+    var ok = false
+    var ok2 = false
+    val handler = HttpHandler {
+      val income = it.acceptWebsocket().use { it.read().bufferedReader().use { it.readText() } }
+      assertEquals(message, income)
+      ok = true
     }
+    val handlerWrapper = HttpHandler { req ->
+      handler.handle(req)
+      ok2 = true
+    }
+    HttpServer2(
 
-    private suspend fun connectAndSendText(url: URL, text: String) {
-        HttpClient.create().use { client ->
-            client.connectWebSocket(url)
-                .start().use { wsConnect ->
-                    wsConnect.write(MessageType.BINARY).use {
-                        text.encodeToByteArray().wrap().use { b -> it.write(b) }
-                    }
-                }
+      handler = handlerWrapper,
+      dispatcher = Dispatchers.Network,
+      byteBufferPool = GenericObjectPool(ByteBufferFactory(DEFAULT_BUFFER_SIZE)),
+    ).use { httpServer ->
+      httpServer.listen(address = InetNetworkAddress.create(host = "127.0.0.1", port = port))
+      HttpClient.create().use { client ->
+        connectAndSendText(
+          url = "ws://127.0.0.1:$port/".toURL(),
+          text = message,
+        )
+      }
+    }
+    withContext(Dispatchers.Default) {
+      delay(1.seconds)
+    }
+    assertTrue(ok)
+    assertTrue(ok2, "Request looks like unhandled")
+  }
+
+  private suspend fun connectAndSendText(url: URL, text: String) {
+    HttpClient.create().use { client ->
+      client.connectWebSocket(url)
+        .start().use { wsConnect ->
+          wsConnect.write(MessageType.BINARY).use {
+            text.encodeToByteArray().wrap().use { b -> it.write(b) }
+          }
         }
     }
+  }
 }
 
 // class WebSocketTest {
