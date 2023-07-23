@@ -14,4 +14,6 @@ actual value class AtomicReference<T>(val native: InternalAtomicReference<T>) {
   actual inline fun setValue(value: T) {
     native.value = value
   }
+
+  override fun toString(): String = "AtomicReference(value=${getValue()})"
 }

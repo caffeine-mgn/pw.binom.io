@@ -130,7 +130,6 @@ class TcpConnection(
       }
     } else {
       readData.reset()
-//            println("TcpConnection::readyForRead readed. $readed bytes. channel: $channel")
       continuation.resume(value = readed, onCancellation = null)
     }
   }
@@ -240,7 +239,6 @@ class TcpConnection(
       close()
       throw SocketClosedException()
     }
-//        println("wait write event...")
     sendData.data = data
     return suspendCancellableCoroutine<Int> {
       sendData.continuation = it
@@ -319,16 +317,13 @@ class TcpConnection(
       throw e
     }
     if (read > 0) {
-//            println("TcpConnection::read success. $read bytes. channel: $channel")
       return read
     }
     if (read == -1) {
-//            println("TcpConnection::read reading with error. channel: $channel")
       channel.close()
       throw SocketClosedException()
     }
     readData.full = false
-//        println("TcpConnection::read suspend reading. channel: $channel")
     return suspendCancellableCoroutine {
       it.invokeOnCancellation {
         currentKey.removeListen(KeyListenFlags.READ)

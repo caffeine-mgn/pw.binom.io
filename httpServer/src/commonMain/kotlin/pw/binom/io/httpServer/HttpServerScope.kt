@@ -4,6 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
 
 class HttpServerScope(
-    override val coroutineContext: CoroutineContext,
-    val server: HttpServer2,
+  override val coroutineContext: CoroutineContext,
+  val server: HttpServer2,
 ) : CoroutineScope

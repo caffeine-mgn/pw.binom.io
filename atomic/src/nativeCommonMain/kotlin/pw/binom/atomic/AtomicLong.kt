@@ -35,4 +35,6 @@ actual value class AtomicLong(val native: InternalAtomicLong) {
   actual inline fun setValue(value: Long) {
     native.value = value
   }
+
+  override fun toString(): String = "AtomicLong(value=${getValue()})"
 }

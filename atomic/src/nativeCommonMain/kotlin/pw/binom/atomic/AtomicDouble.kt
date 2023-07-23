@@ -16,4 +16,6 @@ actual value class AtomicDouble(val native: InternalAtomicLong) {
   actual inline fun setValue(value: Double) {
     native.value = value.toBits()
   }
+
+  override fun toString(): String = "AtomicDouble(value=${getValue()})"
 }

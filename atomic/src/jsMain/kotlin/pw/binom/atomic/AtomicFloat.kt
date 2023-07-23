@@ -11,9 +11,13 @@ actual value class AtomicFloat(val native: InternalAtomicInt) {
     return true
   }
 
+  @Suppress("NOTHING_TO_INLINE")
   actual inline fun getValue(): Float = Float.fromBits(native.value)
 
+  @Suppress("NOTHING_TO_INLINE")
   actual inline fun setValue(value: Float) {
     native.value = value.toBits()
   }
+
+  override fun toString(): String = "AtomicFloat(value=${getValue()})"
 }

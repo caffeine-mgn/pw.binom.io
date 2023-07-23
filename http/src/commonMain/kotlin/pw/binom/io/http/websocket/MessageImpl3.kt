@@ -1,14 +1,14 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.NullAsyncOutput
-import pw.binom.copyTo
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.StreamClosedException
+import pw.binom.io.use
 
 internal class MessageImpl3(val input: AsyncInput) : Message {
   private var inputReady = 0L
-  private var closed = false
+  private val closed = AtomicBoolean(false)
   private val lastFrame: Boolean
     get() = header.finishFlag
   private val maskFlag: Boolean
@@ -26,6 +26,10 @@ internal class MessageImpl3(val input: AsyncInput) : Message {
 
   override suspend fun read(dest: ByteBuffer): Int {
     checkClosed()
+    return readInternal(dest)
+  }
+
+  private suspend fun readInternal(dest: ByteBuffer): Int {
     if (dest.remaining <= 0) {
       return 0
     }
@@ -98,19 +102,28 @@ internal class MessageImpl3(val input: AsyncInput) : Message {
         return read
         */
   }
-
   private fun checkClosed() {
-    if (closed) {
+    if (closed.getValue()) {
       throw StreamClosedException()
     }
   }
 
   override suspend fun asyncClose() {
-    checkClosed()
-    if (inputReady > 0L) {
-      copyTo(NullAsyncOutput)
+    if (!closed.compareAndSet(false, true)) {
+      return
     }
-    closed = true
+
+    if (inputReady > 0L || !lastFrame) {
+      // reading also data in message if exist
+      ByteBuffer(1024).use { buffer ->
+        while (true) {
+          buffer.clear()
+          if (readInternal(buffer) <= 0) {
+            break
+          }
+        }
+      }
+    }
   }
 
   override var type: MessageType = MessageType.CLOSE
@@ -121,7 +134,7 @@ internal class MessageImpl3(val input: AsyncInput) : Message {
     WebSocketHeader.read(input = input, dest = header)
     type = header.opcode.toMessageType()
     inputReady = header.length
-    closed = false
+    closed.setValue(false)
     cursor = 0L
   }
 }

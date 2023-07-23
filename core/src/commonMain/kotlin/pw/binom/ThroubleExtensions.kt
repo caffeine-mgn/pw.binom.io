@@ -9,19 +9,19 @@ import kotlin.coroutines.resumeWithException
 @Suppress("OPT_IN_IS_NOT_ENABLED")
 @OptIn(ExperimentalContracts::class)
 inline fun Continuation<*>.resumeOnException(afterCall: (Throwable?) -> Unit = {}, func: () -> Unit): Boolean {
-    contract {
-        callsInPlace(afterCall, InvocationKind.EXACTLY_ONCE)
-        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
-    }
-    return try {
-        func()
-        afterCall(null)
-        false
-    } catch (e: Throwable) {
-        resumeWithException(e)
-        afterCall(e)
-        true
-    }
+  contract {
+    callsInPlace(afterCall, InvocationKind.EXACTLY_ONCE)
+    callsInPlace(func, InvocationKind.EXACTLY_ONCE)
+  }
+  return try {
+    func()
+    afterCall(null)
+    false
+  } catch (e: Throwable) {
+    resumeWithException(e)
+    afterCall(e)
+    true
+  }
 }
 
 /**
@@ -29,12 +29,12 @@ inline fun Continuation<*>.resumeOnException(afterCall: (Throwable?) -> Unit = {
  * exception to [exception] using [Throwable.addSuppressed] and after that call [resumeWithException] with [exception]
  */
 inline fun Continuation<*>.executeAndResumeWithException(exception: Throwable, func: () -> Unit) {
-    try {
-        func()
-        resumeWithException(exception)
-    } catch (e: Throwable) {
-        exception.addSuppressed(e)
-        resumeWithException(exception)
-    }
-    return
+  try {
+    func()
+    resumeWithException(exception)
+  } catch (e: Throwable) {
+    exception.addSuppressed(e)
+    resumeWithException(exception)
+  }
+  return
 }

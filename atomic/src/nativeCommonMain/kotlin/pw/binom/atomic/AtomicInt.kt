@@ -35,4 +35,6 @@ actual value class AtomicInt(@PublishedApi internal val native: InternalAtomicIn
   actual inline fun setValue(value: Int) {
     native.value = value
   }
+
+  override fun toString(): String = "AtomicInt(value=${getValue()})"
 }
