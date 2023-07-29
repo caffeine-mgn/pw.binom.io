@@ -4,44 +4,45 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.ConcurrentQueue
 import pw.binom.io.ClosedException
 
-private val maker: () -> Unit = {}
+internal val maker: () -> Unit = {}
 
 abstract class AbstractThreadExecutorService : ExecutorService {
-    protected val queue = ConcurrentQueue<() -> Unit>()
+  protected val queue = ConcurrentQueue<() -> Unit>()
 
-    protected val closed = AtomicBoolean(false)
+  protected val closed = AtomicBoolean(false)
 
-    override val taskCount: Int
-        get() = queue.size
+  override val taskCount: Int
+    get() = queue.size
 
-    override val isShutdown
-        get() = closed.getValue()
+  override val isShutdown
+    get() = closed.getValue()
 
-    override fun submit(f: () -> Unit) {
-        if (closed.getValue()) {
-            throw ClosedException()
-        }
-        queue.push(f)
+
+  override fun submit(f: () -> Unit) {
+    if (closed.getValue()) {
+      throw ClosedException()
     }
+    queue.push(f)
+  }
 
-    protected abstract fun joinAllThread()
-    protected fun pushBreakMessage() {
-        queue.push(maker)
-    }
+  protected abstract fun joinAllThread()
+  protected fun pushBreakMessage() {
+    queue.push(maker)
+  }
 
-    override fun shutdownNow(): Collection<() -> Unit> {
-        if (!closed.compareAndSet(false, true)) {
-            throw ClosedException()
-        }
-        val list = ArrayList<() -> Unit>(queue.size)
-        joinAllThread()
-        while (!queue.isEmpty) {
-            val func = queue.pop()
-            if (func === maker) {
-                continue
-            }
-            list += func
-        }
-        return list
+  override fun shutdownNow(): Collection<() -> Unit> {
+    if (!closed.compareAndSet(false, true)) {
+      throw ClosedException()
     }
+    val list = ArrayList<() -> Unit>(queue.size)
+    joinAllThread()
+    while (!queue.isEmpty) {
+      val func = queue.pop()
+      if (func === maker) {
+        continue
+      }
+      list += func
+    }
+    return list
+  }
 }

@@ -49,8 +49,8 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkMa
     if (!closed.compareAndSet(false, true)) {
       return
     }
-    threads.shutdownNow()
     selector.wakeup()
+    threads.shutdownNow()
     selectThread.join()
     selector.close()
   }

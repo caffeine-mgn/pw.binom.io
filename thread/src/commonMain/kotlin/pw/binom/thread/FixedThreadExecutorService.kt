@@ -19,6 +19,7 @@ class FixedThreadExecutorService(
 //      val id = taskCounter.addAndGet(1)
       try {
         val func = queue.popBlocked()
+        val marker = func === maker
         func.invoke()
       } catch (e: Throwable) {
         thread.uncaughtExceptionHandler.uncaughtException(thread = thread, throwable = e)
@@ -45,7 +46,9 @@ class FixedThreadExecutorService(
       pushBreakMessage()
     }
     threads.forEach {
-      it.join()
+      if (it.id != Thread.currentThread.id) {
+        it.join()
+      }
     }
   }
 
