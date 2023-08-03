@@ -97,15 +97,24 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
   }
 
   suspend fun write(input: AsyncInput, blockSize: Int = DEFAULT_BUFFER_SIZE) {
+    var w = 0
     while (true) {
       if (input.available == 0) {
         break
       }
-      alloc(if (input.available > 0) input.available else blockSize)
+      val tmpBlockSize = if (input.available > 0) input.available else blockSize
+      alloc(tmpBlockSize)
+      val p = data.position
       val wasRead = input.read(this.data)
+      data.limit = data.capacity
+      if (wasRead > 0) {
+        w += wasRead
+      }
       if (wasRead <= 0) {
         break
       }
+      data.position = p + wasRead
+
       _wrote += wasRead
     }
   }

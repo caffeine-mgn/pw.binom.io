@@ -16,6 +16,7 @@ class AsyncSQLiteConnectorTest {
       mem.createStatement().use {
         it.executeUpdate(SQLiteConnectorTest.SIMPLE_COMPANY_TABLE)
       }
+      mem.prepareStatement("insert into COMPANY")
       mem.prepareStatement("select * from company").use {
         it.executeQuery().use {
           assertFalse(it.next())

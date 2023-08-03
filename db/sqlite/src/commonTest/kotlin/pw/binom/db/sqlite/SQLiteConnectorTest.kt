@@ -1,5 +1,6 @@
 package pw.binom.db.sqlite
 
+import pw.binom.io.file.File
 import pw.binom.io.use
 import pw.binom.uuid.UUID
 import pw.binom.uuid.nextUuid
@@ -20,7 +21,8 @@ class SQLiteConnectorTest {
         it.executeUpdate(SIMPLE_COMPANY_TABLE)
       }
 
-      repeat(5000) { num ->
+      val data = HashMap<Int, String>()
+      repeat(1000) { num ->
         it.prepareStatement("insert into company (id,name,uid) values(?,?,?)").use {
           it.set(0, num)
           val s = UUID.random()
@@ -29,8 +31,17 @@ class SQLiteConnectorTest {
           s.toByteArray(buf)
           it.set(2, buf)
           it.executeUpdate()
+          data[num] = s.toString()
         }
-//                    it.commit()
+      }
+      it.createStatement().use {
+        it.executeQuery("select * from company").use {
+          while (it.next()) {
+            val id = it.getInt(0)
+            val name = it.getString(1)
+            assertEquals(data[id], name)
+          }
+        }
       }
     }
   }

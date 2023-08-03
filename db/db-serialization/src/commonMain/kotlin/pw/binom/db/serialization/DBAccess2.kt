@@ -8,41 +8,58 @@ import pw.binom.db.async.AsyncResultSet
 import kotlin.jvm.JvmInline
 
 interface DBAccess2 {
-    val serializersModule: SerializersModule
-    suspend fun <T : Any> insert(k: KSerializer<T>, value: T, excludeGenerated: Boolean = true)
-    suspend fun <T : Any> insertAndReturn(k: KSerializer<T>, value: T, excludeGenerated: Boolean = true): T
-    suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T>
-    suspend fun selectRaw(func: suspend QueryContext.() -> String): AsyncResultSet
-    suspend fun update(func: suspend QueryContext.() -> String): Long
 
-    suspend fun <T : Any> selectAll(k: KSerializer<T>, condition: (suspend QueryContext.() -> String)? = null): Flow<T>
+  enum class ActionOnConflict {
+    DO_NOTHING, UPDATE, THROW,
+  }
+
+  val serializersModule: SerializersModule
+  suspend fun <T : Any> insert(
+    k: KSerializer<T>,
+    value: T,
+    excludeGenerated: Boolean = true,
+    onConflict: ActionOnConflict = ActionOnConflict.THROW,
+  ): Long
+
+  suspend fun <T : Any> insertAndReturn(
+    k: KSerializer<T>,
+    value: T,
+    excludeGenerated: Boolean = true,
+    onConflict: ActionOnConflict = ActionOnConflict.THROW,
+  ): T
+
+  suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T>
+  suspend fun selectRaw(func: suspend QueryContext.() -> String): AsyncResultSet
+  suspend fun update(func: suspend QueryContext.() -> String): Long
+
+  suspend fun <T : Any> selectAll(k: KSerializer<T>, condition: (suspend QueryContext.() -> String)? = null): Flow<T>
 }
 
 @OptIn(InternalSerializationApi::class)
 suspend inline fun <reified T : Any> DBAccess2.insert(value: T, excludeGenerated: Boolean = false) =
-    insert(k = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
+  insert(k = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
 
 @OptIn(InternalSerializationApi::class)
 suspend inline fun <reified T : Any> DBAccess2.insertAndReturn(value: T, excludeGenerated: Boolean = false) =
-    insertAndReturn(k = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
+  insertAndReturn(k = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
 
 interface QueryContext {
-    val serializersModule: SerializersModule
-    fun <T : Any> param(k: KSerializer<T>, value: T?): String
-    operator fun String.unaryPlus(): String
+  val serializersModule: SerializersModule
+  fun <T : Any> param(k: KSerializer<T>, value: T?): String
+  operator fun String.unaryPlus(): String
 }
 
 interface UpdateContext : QueryContext {
-    fun <T : Any> returning(k: KSerializer<T>, func: suspend (T) -> Unit)
+  fun <T : Any> returning(k: KSerializer<T>, func: suspend (T) -> Unit)
 }
 
 @OptIn(InternalSerializationApi::class)
 inline fun <reified T : Any> UpdateContext.returning(noinline func: suspend (T) -> Unit) =
-    returning(k = T::class.serializer(), func = func)
+  returning(k = T::class.serializer(), func = func)
 
 @JvmInline
 value class EntityColumns(val columns: String) {
-    override fun toString(): String = columns
+  override fun toString(): String = columns
 }
 
 /*
@@ -85,21 +102,21 @@ private fun generateColumnNames(
 */
 
 internal fun getTableName(descriptor: SerialDescriptor): String {
-    val useQuotes = descriptor.isUseQuotes()
-    descriptor.annotations.forEach {
-        if (it is TableName) {
-            return if (useQuotes) {
-                "\"${it.tableName}\""
-            } else {
-                it.tableName
-            }
-        }
+  val useQuotes = descriptor.isUseQuotes()
+  descriptor.annotations.forEach {
+    if (it is TableName) {
+      return if (useQuotes) {
+        "\"${it.tableName}\""
+      } else {
+        it.tableName
+      }
     }
-    return if (useQuotes) {
-        "\"${descriptor.serialName}\""
-    } else {
-        descriptor.serialName
-    }
+  }
+  return if (useQuotes) {
+    "\"${descriptor.serialName}\""
+  } else {
+    descriptor.serialName
+  }
 }
 
 fun QueryContext.tableName(descriptor: SerialDescriptor): String = getTableName(descriptor)
@@ -108,105 +125,177 @@ fun QueryContext.tableName(descriptor: SerialDescriptor): String = getTableName(
 inline fun <reified T : Any> QueryContext.tableName(): String = tableName(T::class.serializer().descriptor)
 
 internal fun internalGenerateSelectColumns(
-    tableName: String,
-    descriptor: SerialDescriptor,
-    prefix: String,
+  tableName: String,
+  descriptor: SerialDescriptor,
+  prefix: String,
+  onlyIndexed: Boolean,
 ): String {
-    val sb = StringBuilder()
-    internalGenerateSelectColumns(
-        tableName = tableName,
-        descriptor = descriptor,
-        prefix = prefix,
-        prefix2 = "$tableName.",
-        useQuotes = false,
-        output = sb
-    )
-    return sb.toString()
+  val sb = StringBuilder()
+  internalGenerateSelectColumns(
+    descriptor = descriptor,
+    prefix = prefix,
+    prefix2 = "$tableName.",
+    useQuotes = false,
+    output = sb,
+    onlyIndexed = onlyIndexed,
+  )
+  return sb.toString()
 }
 
 fun QueryContext.columns(
-    descriptor: SerialDescriptor,
-    tableName: String = tableName(descriptor),
-    prefix: String = descriptor.getTableName() ?: descriptor.serialName
+  descriptor: SerialDescriptor,
+  tableName: String = tableName(descriptor),
+  prefix: String = descriptor.getTableName() ?: descriptor.serialName,
 ) = internalGenerateSelectColumns(
-    tableName = tableName,
-    descriptor = descriptor,
-    prefix = prefix,
+  tableName = tableName,
+  descriptor = descriptor,
+  prefix = prefix,
+  onlyIndexed = false,
 )
 
 fun QueryContext.columns(
-    serializer: KSerializer<out Any>,
-    tableName: String = tableName(serializer.descriptor),
-    prefix: String = serializer.descriptor.getTableName() ?: serializer.descriptor.serialName
+  serializer: KSerializer<out Any>,
+  tableName: String = tableName(serializer.descriptor),
+  prefix: String = serializer.descriptor.getTableName() ?: serializer.descriptor.serialName,
 ) = columns(
-    descriptor = serializer.descriptor,
-    tableName = tableName,
-    prefix = prefix,
+  descriptor = serializer.descriptor,
+  tableName = tableName,
+  prefix = prefix,
 )
 
 @OptIn(InternalSerializationApi::class)
 inline fun <reified T : Any> QueryContext.columns(
-    tableName: String = tableName(T::class.serializer().descriptor),
-    prefix: String = T::class.serializer().descriptor.getTableName() ?: T::class.serializer().descriptor.serialName
+  tableName: String = tableName(T::class.serializer().descriptor),
+  prefix: String = T::class.serializer().descriptor.getTableName() ?: T::class.serializer().descriptor.serialName,
 ) = columns(
-    serializer = T::class.serializer(),
-    tableName = tableName,
-    prefix = prefix,
+  serializer = T::class.serializer(),
+  tableName = tableName,
+  prefix = prefix,
 )
 
-private fun internalGenerateSelectColumns(
-    tableName: String,
+interface EntityVisitor {
+  fun entity(descriptor: SerialDescriptor): EntityVisitor = this
+  fun end() {}
+  fun column(
     descriptor: SerialDescriptor,
-    prefix: String,
-    prefix2: String,
+    elementIndex: Int,
+    index: Boolean,
+    name: String,
+    autoGenerated: Boolean,
+    id: Boolean,
     useQuotes: Boolean,
-    output: StringBuilder
-) {
-    val tableNameUseQuotes = useQuotes || descriptor.isUseQuotes()
-    repeat(descriptor.elementsCount) { index ->
-        val elementName = descriptor.getElementName(index)
-        val isEmbedded = descriptor.getElementAnnotation<Embedded>(index) != null
-        val isUseQuotes = useQuotes || descriptor.isUseQuotes(index)
-        if (isEmbedded) {
-            val embeddedSpliter = descriptor.getElementAnnotation<EmbeddedSplitter>(index)?.splitter ?: "_"
-            internalGenerateSelectColumns(
-                tableName = tableName,
-                descriptor = descriptor.getElementDescriptor(index),
-                prefix = "$prefix$elementName$embeddedSpliter",
-                useQuotes = useQuotes || isUseQuotes,
-                output = output,
-                prefix2 = "$prefix2$elementName$embeddedSpliter",
-            )
-            return@repeat
-        }
-        if (output.isNotEmpty()) {
-            output.append(",")
-        }
+  ) {
+  }
 
-        output.append(prefix2)
-        if (isUseQuotes) {
-            output.append("\"")
-        }
-        output.append(elementName)
-        if (isUseQuotes) {
-            output.append("\"")
-        }
-        output.append(" as ")
+  fun embedded(
+    descriptor: SerialDescriptor,
+    elementIndex: Int,
+    index: Boolean,
+    name: String,
+    useQuotes: Boolean,
+    id: Boolean,
+    splitter: String,
+    autoGenerated: Boolean,
+  ): EntityVisitor = this
+}
 
-        if (isUseQuotes) {
-            output.append("\"")
-        }
-        output.append(prefix).append(elementName)
-        if (isUseQuotes) {
-            output.append("\"")
-        }
+fun SerialDescriptor.accept(visitor: EntityVisitor) {
+  val descriptor = this
+  val v = visitor.entity(this)
+  val useQuotes = descriptor.isUseQuotes()
+  repeat(descriptor.elementsCount) { index ->
+    val isId = descriptor.getElementAnnotation<Id>(index) != null
+    val isIndex = descriptor.getElementAnnotation<IndexColumn>(index) != null
+    val autoGenerated = descriptor.getElementAnnotation<AutoGenerated>(index) != null
+    val elementDescriptor = descriptor.getElementDescriptor(index)
+    val elementName = descriptor.getElementName(index)
+    val isEmbedded = descriptor.getElementAnnotation<Embedded>(index) != null
+    val isUseQuotes = useQuotes || descriptor.isUseQuotes(index)
+    if (isEmbedded) {
+      val embeddedVisitor = v.embedded(
+        descriptor = elementDescriptor,
+        elementIndex = index,
+        index = isIndex,
+        name = elementName,
+        useQuotes = isUseQuotes,
+        splitter = descriptor.getElementAnnotation<EmbeddedSplitter>(index)?.splitter ?: "_",
+        autoGenerated = autoGenerated,
+        id = isId,
+      )
+      val columnVisitor = embeddedVisitor.entity(elementDescriptor)
+      elementDescriptor.accept(columnVisitor)
+      return@repeat
+    } else {
+      v.column(
+        descriptor = elementDescriptor,
+        elementIndex = index,
+        index = isIndex,
+        name = elementName,
+        useQuotes = isUseQuotes,
+        autoGenerated = autoGenerated,
+        id = isId,
+      )
     }
+    v.end()
+  }
+}
+
+internal fun internalGenerateSelectColumns(
+  descriptor: SerialDescriptor,
+  prefix: String,
+  prefix2: String,
+  useQuotes: Boolean,
+  output: StringBuilder,
+  onlyIndexed: Boolean,
+) {
+  repeat(descriptor.elementsCount) { index ->
+    if (onlyIndexed && descriptor.getElementAnnotation<IndexColumn>(index) == null) {
+      return@repeat
+    }
+    val elementName = descriptor.getElementName(index)
+    val isEmbedded = descriptor.getElementAnnotation<Embedded>(index) != null
+    val isUseQuotes = useQuotes || descriptor.isUseQuotes(index)
+    var first = true
+    if (isEmbedded) {
+      val embeddedSpliter = descriptor.getElementAnnotation<EmbeddedSplitter>(index)?.splitter ?: "_"
+      internalGenerateSelectColumns(
+        descriptor = descriptor.getElementDescriptor(index),
+        prefix = "$prefix$elementName$embeddedSpliter",
+        useQuotes = useQuotes || isUseQuotes,
+        output = output,
+        prefix2 = "$prefix2$elementName$embeddedSpliter",
+        onlyIndexed = onlyIndexed,
+      )
+      return@repeat
+    }
+    if (!first) {
+      output.append(",")
+    }
+
+    first = false
+    output.append(prefix2)
+    if (isUseQuotes) {
+      output.append("\"")
+    }
+    output.append(elementName)
+    if (isUseQuotes) {
+      output.append("\"")
+    }
+    output.append(" as ")
+
+    if (isUseQuotes) {
+      output.append("\"")
+    }
+    output.append(prefix).append(elementName)
+    if (isUseQuotes) {
+      output.append("\"")
+    }
+  }
 }
 
 @OptIn(InternalSerializationApi::class)
 inline fun <reified T : Any> QueryContext.param(value: T?) = param(
-    k = this.serializersModule.getContextual(T::class)
-        ?: T::class.serializerOrNull()
-        ?: throw SerializationException("Can't find serializer for ${T::class}"),
-    value = value
+  k = this.serializersModule.getContextual(T::class) ?: T::class.serializerOrNull()
+    ?: throw SerializationException("Can't find serializer for ${T::class}"),
+  value = value,
 )
