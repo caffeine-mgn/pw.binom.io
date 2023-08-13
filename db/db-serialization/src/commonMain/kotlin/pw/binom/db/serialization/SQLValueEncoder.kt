@@ -75,34 +75,11 @@ class SQLValueEncoder(
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {
-        val code = enumDescriptor.getElementAnnotation<EnumCodeValue>(index)?.code
-//        val alias = enumDescriptor.getElementAnnotation<EnumAliasValue>(index)?.alias
-        val byOrder = enumDescriptor.annotations.any { it is EnumOrderValue }
-//        val byName = enumDescriptor.annotations.any { it is EnumNameValue }
-//        if (code != null && alias != null) {
-//            throw SerializationException(
-//                "Invalid configuration of ${enumDescriptor.serialName}.${
-//                enumDescriptor.getElementName(
-//                    index
-//                )
-//                } Enum should use only one of @EnumCodeValue or @EnumAliasValue"
-//            )
-//        }
-        if (byOrder && code != null) {
-            throw IllegalArgumentException("Invalid ${enumDescriptor.serialName} enum config: used both @EnumCodeValue and @EnumOrderValue")
-        }
-        map[columnName] = if (byOrder) {
-            index
-        } else {
-            code ?: enumDescriptor.getElementName(index)
-        }
-//        val value: Any = when {
-//            code != null -> code
-//            alias != null -> alias
-//            enumDescriptor.annotations.any { it is EnumOrderValue } -> index
-//            else -> enumDescriptor.getElementName(index)
-//        }
-//        map[columnName] = value
+      val type = enumDescriptor.getElementAnnotation<Enumerate>()?.type ?: Enumerate.Type.BY_NAME
+      map[columnName] = when (type) {
+        Enumerate.Type.BY_NAME -> enumDescriptor.getElementName(index)
+        Enumerate.Type.BY_ORDER -> index
+      }
     }
 
     override fun encodeFloat(value: Float) {

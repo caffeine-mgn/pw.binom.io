@@ -125,10 +125,10 @@ class SQLitePrepareStatement(
       stringBinds.forEach {
         val len = strlen(it.value)
         connection.checkSqlCode(
-          internal_sqlite3_bind_text(
+          sqlite3_bind_text(
             stmt,
             it.key + 1,
-            it.value.utf8.ptr,
+            it.value,
             len.convert(),
             SQLITE_STATIC,
           ),

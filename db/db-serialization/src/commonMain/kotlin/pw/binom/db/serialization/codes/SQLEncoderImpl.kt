@@ -106,8 +106,14 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
     }
 
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {
+      val type = enumDescriptor.getElementAnnotation<Enumerate>()?.type?:Enumerate.Type.BY_NAME
+      when (type){
+        Enumerate.Type.BY_NAME->encodeString(enumDescriptor.getElementName(index))
+        Enumerate.Type.BY_ORDER->encodeInt(index)
+      }
+      /*
         val code = enumDescriptor.getElementAnnotation<EnumCodeValue>(index)?.code
-        val byOrder = enumDescriptor.annotations.any { it is EnumOrderValue }
+        val byOrder = enumDescriptor.annotations.any { it is Enumerate }
         if (byOrder && code != null) {
             onClose()
             throw IllegalArgumentException("Invalid enum config: used both @EnumCodeValue and @EnumOrderValue")
@@ -121,6 +127,7 @@ class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEnco
                 encodeString(enumDescriptor.getElementName(index))
             }
         }
+      */
     }
 
     override fun encodeFloat(value: Float) {

@@ -3,7 +3,7 @@ package pw.binom.db.serialization.codes
 import kotlinx.serialization.Serializable
 import pw.binom.db.serialization.DefaultSQLSerializePool
 import pw.binom.db.serialization.EnumCodeValue
-import pw.binom.db.serialization.EnumOrderValue
+import pw.binom.db.serialization.Enumerate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -24,7 +24,7 @@ class EnumTest {
     }
 
     @Serializable
-    @EnumOrderValue
+    @Enumerate
     enum class EnumByOrder {
         A, B
     }

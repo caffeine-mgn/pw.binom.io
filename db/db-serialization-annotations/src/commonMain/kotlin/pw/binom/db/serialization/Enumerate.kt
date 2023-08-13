@@ -7,4 +7,13 @@ import kotlinx.serialization.SerialInfo
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.BINARY)
 @SerialInfo
-annotation class EnumOrderValue
+annotation class Enumerate(val type: Type = Type.BY_NAME) {
+  enum class Type {
+    BY_ORDER,
+    BY_NAME,
+  }
+
+  @Target(AnnotationTarget.PROPERTY)
+  @Retention(AnnotationRetention.BINARY)
+  annotation class Alias(vararg val name:String)
+}

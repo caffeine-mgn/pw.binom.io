@@ -15,7 +15,7 @@ class SQLSerializationTest {
   @Serializable
   data class EntityWithArray(val array: ByteArray)
 
-  @EnumOrderValue
+  @Enumerate
   @Serializable
   enum class MyEnumOrder {
     VALUE1, VALUE2

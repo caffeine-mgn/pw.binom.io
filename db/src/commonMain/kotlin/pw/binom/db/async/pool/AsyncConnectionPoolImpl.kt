@@ -32,9 +32,9 @@ class AsyncConnectionPoolImpl constructor(
     }
 
     private val connections = defaultMutableSet<PooledAsyncConnectionImpl>()
-    private val idleConnection = defaultMutableList<PooledAsyncConnectionImpl>(maxConnections)
+    private val idleConnection = ArrayList<PooledAsyncConnectionImpl>(maxConnections)
 
-    private val waiters = defaultMutableList<Continuation<PooledAsyncConnectionImpl>>()
+    private val waiters = ArrayList<Continuation<PooledAsyncConnectionImpl>>()
     private val idleConnectionLock = SpinLock()
     private val connectionsLock = SpinLock()
     private val avalibles = WeakReferenceMap<PooledAsyncConnection, Boolean>()
