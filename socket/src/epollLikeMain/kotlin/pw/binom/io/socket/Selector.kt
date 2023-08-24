@@ -282,10 +282,10 @@ actual class Selector : Closeable {
       }
       key.internalReadFlags = e
 //            println("Selector::cleanupPostProcessing Event. socket: ${key.socket}, flags: $flagsStr")
-      func(key)
       if (key.internalListenFlags and KeyListenFlags.ONCE != 0) {
         key.internalListenFlags = 0
       }
+      func(key)
     }
   }
 

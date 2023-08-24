@@ -207,7 +207,8 @@ class HttpServer2(
       try {
         while (isActive) {
           val newClient = try {
-            server.accept()
+            val client = server.accept()
+            client
           } catch (e: SocketClosedException) {
             break
           } catch (e: kotlinx.coroutines.CancellationException) {
