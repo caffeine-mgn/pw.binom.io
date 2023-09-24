@@ -5,7 +5,7 @@ import pw.binom.io.Closeable
 expect class SelectorKey : Closeable {
     var attachment: Any?
     val listenFlags: Int
-    val readFlags: Int
+    val readFlags: ListenFlags
     val isClosed: Boolean
     val selector: Selector
     fun updateListenFlags(listenFlags: Int): Boolean

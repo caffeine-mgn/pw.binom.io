@@ -3,30 +3,27 @@ package pw.binom.io.httpClient
 import pw.binom.io.*
 import pw.binom.io.http.*
 
-interface HttpRequest : AsyncCloseable, RequestConfig {
+interface HttpRequest : AsyncCloseable, RequestConfig, HttpOutput {
   var request: String
 
   /**
    * Starts write binary request
-   * Closes this [DefaultHttpRequest] and delegate control to returned [AsyncHttpRequestOutput].
+   * Closes this [HttpRequest] and delegate control to returned [AsyncHttpRequestOutput].
    */
-  suspend fun writeData(): AsyncHttpRequestOutput
-  suspend fun writeData(data: ByteBuffer) = writeData {
-    it.writeFully(data)
-  }
+  override suspend fun writeBinary(): AsyncHttpRequestOutput
 
-  suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): HttpResponse {
-    val resp = writeData()
+  suspend fun writeBinaryAndGetResponse(func: suspend (AsyncHttpRequestOutput) -> Unit): HttpResponse {
+    val resp = writeBinary()
     func(resp)
     return resp.getResponse()
   }
 
   /**
    * Starts write text request
-   * Closes this [DefaultHttpRequest] and delegate control to returned [AsyncHttpRequestWriter].
+   * Closes this [HttpRequest] and delegate control to returned [AsyncHttpRequestWriter].
    */
-  suspend fun writeText(): AsyncHttpRequestWriter
-  suspend fun writeText(func: suspend (AsyncHttpRequestWriter) -> Unit): HttpResponse {
+  override suspend fun writeText(): AsyncHttpRequestWriter
+  suspend fun writeTextAndGetResponse(func: suspend (AsyncHttpRequestWriter) -> Unit): HttpResponse {
     val e = writeText()
     func(e)
     return e.getResponse()
@@ -49,10 +46,12 @@ internal fun generateWebSocketHeaders(self: HttpRequest): Headers {
   )
 }
 
-interface AsyncHttpRequestOutput : AsyncOutput {
-  suspend fun getResponse(): HttpResponse
+interface AsyncHttpRequestOutput : HttpAsyncOutput {
+  override suspend fun getInput(): HttpResponse
+  suspend fun getResponse(): HttpResponse = getInput()
 }
 
-interface AsyncHttpRequestWriter : AsyncWriter {
-  suspend fun getResponse(): HttpResponse
+interface AsyncHttpRequestWriter : HttpAsyncWriter {
+  override suspend fun getInput(): HttpResponse
+  suspend fun getResponse() = getInput()
 }

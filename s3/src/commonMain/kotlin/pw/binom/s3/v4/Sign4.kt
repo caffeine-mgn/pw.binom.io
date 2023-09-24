@@ -88,7 +88,7 @@ internal suspend fun s3Call(
       connection.headers.range = range
     }
     return if (payload != null) {
-      connection.writeData {
+      connection.writeBinaryAndGetResponse {
         payload(it)
       }
     } else {

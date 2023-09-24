@@ -89,11 +89,12 @@ class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> U
 
   override fun beginStructure(descriptor: SerialDescriptor): SQLCompositeDecoder {
     if (descriptor === ByteArraySerializer().descriptor) {
+      val value = input.getByteArray(name)
       val result = ctx.decodeByteArray(
         prefix = name,
         input = input,
         serializersModule = serializersModule,
-        data = input[name] as ByteArray
+        data = value
       )
       onClose(this)
       return result

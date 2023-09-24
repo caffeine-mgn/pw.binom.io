@@ -14,10 +14,10 @@ actual class Selector : Closeable {
 
   private val eventImpl = object : pw.binom.io.socket.Event {
     var internalKey: SelectorKey? = null
-    var internalFlag: Int = 0
+    var internalFlag: ListenFlags = ListenFlags()
     override val key: SelectorKey
       get() = internalKey ?: throw IllegalStateException("key not set")
-    override val flags: Int
+    override val flags: ListenFlags
       get() = internalFlag
 
     override fun toString(): String = this.buildToString()
@@ -89,7 +89,7 @@ actual class Selector : Closeable {
         when {
           !nativeKey.isValid -> {
             binomKey.isErrorHappened = false
-            eventImpl.internalFlag = KeyListenFlags.ERROR or KeyListenFlags.READ or KeyListenFlags.WRITE
+            eventImpl.internalFlag = ListenFlags().withError.withRead.withWrite
             binomKey.clearFlagsIfNeed()
             eventFunc(eventImpl)
             return@forEach
@@ -101,12 +101,12 @@ actual class Selector : Closeable {
               try {
                 channel.finishConnect()
                 binomKey.isErrorHappened = false
-                eventImpl.internalFlag = KeyListenFlags.WRITE or nativeKey.toCommonReadFlag()
+                eventImpl.internalFlag = ListenFlags.WRITE + nativeKey.toCommonReadFlag()
                 binomKey.clearFlagsIfNeed()
                 eventFunc(eventImpl)
               } catch (e: java.net.ConnectException) {
                 binomKey.isErrorHappened = true
-                eventImpl.internalFlag = KeyListenFlags.ERROR or KeyListenFlags.READ
+                eventImpl.internalFlag = ListenFlags.ERROR.withRead
                 binomKey.clearFlagsIfNeed()
                 eventFunc(eventImpl)
                 return@forEach

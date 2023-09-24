@@ -42,7 +42,7 @@ actual abstract class Thread(var _id: HANDLE?, name: String) {
             throw IllegalStateException("Thread already started")
         }
         val ptr = StableRef.create(this@Thread)
-        val id2 = CreateThread(null, 0, func, ptr.asCPointer(), 0, null)
+        val id2 = CreateThread(null, 0.convert(), func, ptr.asCPointer(), 0.convert(), null)
         if (id2 == null) {
             ptr.dispose()
             throw IllegalArgumentException("Can't start thread")

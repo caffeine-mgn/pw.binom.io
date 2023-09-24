@@ -1,6 +1,7 @@
 package pw.binom.io.httpClient
 
 import pw.binom.io.*
+import kotlin.use
 
 interface HttpRequestBody : AsyncCloseable {
   val isFlushed: Boolean

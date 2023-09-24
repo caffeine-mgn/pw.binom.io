@@ -9,6 +9,7 @@ import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 
 class StringDecoder(override val serializersModule: SerializersModule = EmptySerializersModule()) : Decoder {
+
   var value: String = ""
   override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
     throw SerializationException("Can't parse \"$value\" to ${descriptor.serialName}. Struct decoding not supported")

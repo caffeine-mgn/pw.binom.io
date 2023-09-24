@@ -22,6 +22,8 @@ val ionspinBignumVersion = project.property("ionspin_bignum.version") as String
 val kotlinxCoroutinesVersion = project.property("kotlinx_coroutines.version") as String
 val kotlinxSerializationVersion = project.property("kotlinx_serialization.version") as String
 val binomUuidVersion = project.property("binom_uuid.version") as String
+val binomBitArrayVersion = project.property("binom_bitarray.version") as String
+val httpKotlinPluginGradle = project.property("http-kotlin-plugin-gradle") as String
 
 buildConfig {
     packageName(project.group.toString())
@@ -30,6 +32,8 @@ buildConfig {
     buildConfigField("String", "KOTLINX_COROUTINES_VERSION", "\"$kotlinxCoroutinesVersion\"")
     buildConfigField("String", "KOTLINX_SERIALIZATION_VERSION", "\"$kotlinxSerializationVersion\"")
     buildConfigField("String", "BINOM_UUID_VERSION", "\"$binomUuidVersion\"")
+    buildConfigField("String", "BINOM_HTTP_PLUGIN", "\"$httpKotlinPluginGradle\"")
+    buildConfigField("String", "BITARRAY_VERSION", "\"$binomBitArrayVersion\"")
 }
 
 repositories {

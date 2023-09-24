@@ -11,20 +11,20 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
 
   actual var attachment: Any? = null
   internal var isErrorHappened = false
-  actual val readFlags: Int
+  actual val readFlags: ListenFlags
     get() {
       if (closed) {
-        return 0
+        return ListenFlags.ZERO
       }
-      var r = 0
+      var r = ListenFlags.ZERO
       if (isErrorHappened) {
-        r = r or KeyListenFlags.READ or KeyListenFlags.ERROR
+        r = r.withRead.withError
       }
       if (native.isAcceptable || native.isReadable || native.isConnectable) {
-        r = r or KeyListenFlags.READ
+        r = r.withRead
       }
       if (native.isWritable || native.isConnectable) {
-        r = r or KeyListenFlags.WRITE
+        r = r.withWrite
       }
       return r
     }

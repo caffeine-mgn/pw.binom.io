@@ -195,8 +195,8 @@ class EntityDescription private constructor(
                 .mapNotNull { it as? AIndex }
                 .map { index ->
                     val indexColumns = index.columns
-                        .split(',', ':')
-                        .map { it.trim() }
+//                        .split(',', ':')
+//                        .map { it.trim() }
                     val columns = indexColumns.map { indexName ->
                         columns[indexName]
                             ?: throw IllegalArgumentException("Can't create index ${index.name}: column \"$indexName\" not found")

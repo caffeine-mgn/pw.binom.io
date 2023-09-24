@@ -4,6 +4,15 @@ import kotlin.jvm.JvmInline
 
 @JvmInline
 value class PathMask(val raw: String) {
+
+  inline fun splitOnElements(crossinline const: (String) -> Unit, crossinline variable: (String) -> Unit) {
+    raw.parsePathMask(
+      variable = { text, position -> variable(text) },
+      wildcard = { text, position -> variable(text) },
+      text = { text, position -> const(text) },
+    )
+  }
+
   fun toPath(): Path = toPath {
     throw IllegalArgumentException("Can't convert mask \"$raw\" to path: can't replace variable \"$it\"")
   }

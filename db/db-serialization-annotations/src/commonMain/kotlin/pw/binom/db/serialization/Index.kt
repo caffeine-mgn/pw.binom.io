@@ -7,9 +7,8 @@ import kotlinx.serialization.SerialInfo
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.BINARY)
 @SerialInfo
-@Repeatable
 annotation class Index(
-    val name: String,
-    val unique: Boolean,
-    val columns: String,
+  val name: String = "",
+  val unique: Boolean = false,
+  val columns: Array<String>,
 )

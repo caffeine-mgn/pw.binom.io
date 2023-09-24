@@ -35,7 +35,7 @@ class WebdavEntity(
         if (resp.responseCode == 404) {
             return null
         }
-        val body = resp.readData()
+        val body = resp.readBinary()
 
         return object : AsyncInput {
             override val available: Int
@@ -97,7 +97,7 @@ class WebdavEntity(
         }
         val responseCode = r.getResponse().use {
             val ret = it.responseCode
-            it.readData().use { it.skipAll() }
+            it.readBinary().use { it.skipAll() }
             ret
         }
         if (responseCode == 401) {
@@ -155,7 +155,7 @@ class WebdavEntity(
         val r = fileSystem.client.connect(HTTPMethod.PUT.code, allPathUrl)
 //            r.addHeader("Overwrite", "T")
         user?.apply(r)
-        val upload = r.writeData()
+        val upload = r.writeBinary()
         return object : AsyncOutput {
             override suspend fun write(data: ByteBuffer): Int = upload.write(data)
 

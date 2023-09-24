@@ -9,8 +9,25 @@ import kotlin.jvm.JvmInline
 
 interface DBAccess2 {
 
-  enum class ActionOnConflict {
-    DO_NOTHING, UPDATE, THROW,
+  sealed interface ActionOnConflict {
+    @Deprecated(message = "For internal use", level = DeprecationLevel.HIDDEN)
+    interface OnColumns {
+      val columns: Array<String>
+    }
+
+    object DoNothing : ActionOnConflict
+
+    @Suppress("UNCHECKED_CAST", "DEPRECATION_ERROR")
+    class DoNothingOnColumns(vararg columns: String) : ActionOnConflict, OnColumns {
+      override val columns: Array<String> = columns as Array<String>
+    }
+
+    @Suppress("UNCHECKED_CAST", "DEPRECATION_ERROR")
+    class DoUpdateOnColumns(vararg columns: String) : ActionOnConflict, OnColumns {
+      override val columns: Array<String> = columns as Array<String>
+    }
+    object DoUpdate : ActionOnConflict
+    object DoThrow : ActionOnConflict
   }
 
   val serializersModule: SerializersModule
@@ -18,14 +35,14 @@ interface DBAccess2 {
     k: KSerializer<T>,
     value: T,
     excludeGenerated: Boolean = true,
-    onConflict: ActionOnConflict = ActionOnConflict.THROW,
-  ): Long
+    onConflict: ActionOnConflict = ActionOnConflict.DoThrow,
+  ): Boolean
 
   suspend fun <T : Any> insertAndReturn(
     k: KSerializer<T>,
     value: T,
     excludeGenerated: Boolean = true,
-    onConflict: ActionOnConflict = ActionOnConflict.THROW,
+    onConflict: ActionOnConflict = ActionOnConflict.DoThrow,
   ): T
 
   suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T>

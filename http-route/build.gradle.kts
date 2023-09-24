@@ -7,13 +7,12 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets {
-    -"js"
-  }
+  allTargets()
   sourceSets {
     val commonMain by getting {
       dependencies {
-        api(project(":httpServer"))
+        api(project(":http"))
+        api(project(":httpClient"))
         api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
       }
     }

@@ -62,6 +62,17 @@ value class Query internal constructor(val raw: String) {
         return this + queryForAppend
     }
 
+  fun append(values: Map<String, String?>): Query {
+    if (values.isEmpty()) {
+      return this
+    }
+    val queryForAppend = new(values)
+    if (isEmpty) {
+      return queryForAppend
+    }
+    return this + queryForAppend
+  }
+
     /**
      * Calls [func] for each variable. Keep in mind [func] can call for same variable several times. In this case
      * you should take last value of this variable

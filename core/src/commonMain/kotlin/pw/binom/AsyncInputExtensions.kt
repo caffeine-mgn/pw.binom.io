@@ -4,7 +4,7 @@ import pw.binom.io.*
 import pw.binom.pool.using
 import pw.binom.uuid.UUID
 
-fun Input.asyncInput() = object : AsyncInput {
+fun Input.asyncInput(callClose: Boolean = true) = object : AsyncInput {
   override val available: Int
     get() = -1
 
@@ -12,7 +12,9 @@ fun Input.asyncInput() = object : AsyncInput {
     this@asyncInput.read(dest)
 
   override suspend fun asyncClose() {
-    this@asyncInput.close()
+    if (callClose) {
+      this@asyncInput.close()
+    }
   }
 
   override suspend fun skipAll(bufferSize: Int) {

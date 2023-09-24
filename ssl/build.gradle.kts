@@ -85,6 +85,7 @@ tasks {
                 mustRunAfter(lastBuildTask)
             }
             lastBuildTask = this
+          tempDirForObjectFiles.set(target.map { t -> RegularFile { project.buildDir.resolve("openssl/${t.name}/static") } })
             dependsOn(extractSsl)
             opensslDirection.set(extractSsl.output)
             target.set(konanTarget)

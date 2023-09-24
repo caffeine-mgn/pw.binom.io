@@ -5,7 +5,9 @@ package pw.binom.url
 import kotlin.jvm.JvmName
 
 fun String.isWildcardMatch(wildcard: String): Boolean = wildcardMatch(this, wildcard)
-fun String.parsePathMask(
+
+@PublishedApi
+internal fun String.parsePathMask(
   variable: ((variable: String, position: Int) -> Unit)? = null,
   wildcard: ((variable: String, position: Int) -> Unit)? = null,
   text: ((variable: String, position: Int) -> Unit)? = null,
@@ -61,6 +63,7 @@ internal fun wildcardMatch(string: String, wildcard: String): Boolean {
   return wildcard.length == wild
 }
 
+@PublishedApi
 internal fun internalParsePathMask(
   mask: String,
   variable: ((variable: String, position: Int) -> Unit)? = null,

@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.collections.defaultMutableList
-import pw.binom.collections.defaultMutableMap
 import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
@@ -14,7 +13,6 @@ import pw.binom.db.async.pool.PooledAsyncConnection
 import pw.binom.io.use
 import pw.binom.uuid.UUID
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 private class SingleValueDateContainer : DateContainer {
@@ -110,14 +108,18 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
 }
 
 @OptIn(ExperimentalTime::class)
-class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModule: SerializersModule) : DBAccess2 {
+class DBAccess2Impl internal constructor(
+  val con: PooledAsyncConnection,
+  internal val ctx: DBContextImpl,
+  override val serializersModule: SerializersModule,
+) : DBAccess2 {
 
   override suspend fun <T : Any> insert(
     k: KSerializer<T>,
     value: T,
     excludeGenerated: Boolean,
     onConflict: DBAccess2.ActionOnConflict,
-  ): Long {
+  ): Boolean {
     var changed = 0L
     insert2(
       k = k,
@@ -129,7 +131,7 @@ class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModu
         changed = it
       },
     )
-    return changed
+    return changed>0
   }
 
   override suspend fun <T : Any> insertAndReturn(
@@ -137,16 +139,14 @@ class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModu
     value: T,
     excludeGenerated: Boolean,
     onConflict: DBAccess2.ActionOnConflict,
-  ): T =
-    insert2(
-      k = k,
-      value = value,
-      returning = true,
-      excludeGenerated = excludeGenerated,
-      onConflict = onConflict,
-      changedRow = {},
-    )
-      ?: error("Can't extract returned inserted value")
+  ): T = insert2(
+    k = k,
+    value = value,
+    returning = true,
+    excludeGenerated = excludeGenerated,
+    onConflict = onConflict,
+    changedRow = {},
+  ) ?: error("Can't extract returned inserted value")
 
   private suspend inline fun <T : Any> insert2(
     k: KSerializer<T>,
@@ -156,113 +156,43 @@ class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModu
     onConflict: DBAccess2.ActionOnConflict,
     changedRow: ((Long) -> Unit),
   ): T? {
-    val params = defaultMutableMap<String, Pair<Boolean, Any?>>()
-    val output = object : DataBinder {
-      override fun get(key: String): Any? = params[key]
-      override fun contains(key: String): Boolean = params.containsKey(key)
-      override fun set(key: String, value: Any?, useQuotes: Boolean) {
-        params[key] = useQuotes to value
-      }
-    }
-    val encodeTime = measureTime {
-      DefaultSQLSerializePool.encode(
-        serializer = k,
-        value = value,
-        name = "",
-        output = output,
-        serializersModule = serializersModule,
-        useQuotes = k.descriptor.isUseQuotes(),
-        excludeGenerated = excludeGenerated,
-      )
-    }
-    SerializationMetrics.encodeAvrTime.put(encodeTime)
-    val sb = StringBuilder()
-    sb.append("insert into ")
-      .append(getTableName(k.descriptor))
-      .append("(")
-//        var i = 0
+    val dsc = ctx.getDescription2(k)
+    val params = HashMap<String, Pair<Boolean, Any?>>()
+//    val output = object : DataBinder {
+//      override fun get(key: String): Any? = params[key]
+//      override fun contains(key: String): Boolean = params.containsKey(key)
+//      override fun set(key: String, value: Any?, useQuotes: Boolean) {
+//        params[key] = useQuotes to value
+//      }
+//    }
+    DefaultSQLSerializePool.encode(
+      serializer = k,
+      value = value,
+      name = "",
+      output = dsc.getBinder(params),
+      serializersModule = serializersModule,
+      useQuotes = k.descriptor.isUseQuotes(),
+      excludeGenerated = excludeGenerated,
+    )
 
+    val args =
+      ArrayList<Any?>(params.size + if (onConflict == DBAccess2.ActionOnConflict.DoUpdate) params.size else 0)
     params.entries.forEachIndexed { index, param ->
-      if (index > 0) {
-        sb.append(",")
-      }
-      val useQuotes = param.value.first
-      if (useQuotes) {
-        sb.append("\"")
-      }
-      sb.append(param.key)
-      if (useQuotes) {
-        sb.append("\"")
-      }
-    }
-    sb.append(") values(")
-    val args = defaultMutableList<Any?>(params.size)
-    params.entries.forEachIndexed { index, param ->
-      if (index > 0) {
-        sb.append(",")
-      }
-      sb.append("?")
       args += param.value.second
     }
-    sb.append(")")
 
-    if (onConflict != DBAccess2.ActionOnConflict.THROW) {
-      sb.append(" ON CONFLICT (")
-      var first = true
-      ColumnNamesVisitor.forEachFields(k.descriptor) {
-          name: String,
-          useQuotes: Boolean,
-          id: Boolean,
-          index: Boolean,
-          autoGenerated: Boolean,
-        ->
-        if (index || id) {
-          if (!first) {
-            sb.append(",")
-          }
-          first = false
-          if (useQuotes) {
-            sb.append("\"")
-          }
-          sb.append(name)
-          if (useQuotes) {
-            sb.append("\"")
-          }
-        }
-      }
-      sb.append(")")
-      if (onConflict == DBAccess2.ActionOnConflict.UPDATE) {
-        sb.append(" DO UPDATE SET")
-        params.entries.forEachIndexed { index, param ->
-          if (index > 0) {
-            sb.append(",")
-          }
-          sb.append("?")
-          args += param.value.second
-        }
-      }
-      if (onConflict == DBAccess2.ActionOnConflict.DO_NOTHING) {
-        sb.append(" DO NOTHING")
-      }
-    }
-
-    if (returning) {
-      sb.append(" returning ")
+    if (onConflict == DBAccess2.ActionOnConflict.DoUpdate) {
       params.entries.forEachIndexed { index, param ->
-        if (index > 0) {
-          sb.append(",")
-        }
-        val useQuotes = param.value.first
-        if (useQuotes) {
-          sb.append("\"")
-        }
-        sb.append(param.key)
-        if (useQuotes) {
-          sb.append("\"")
-        }
+        args += param.value.second
       }
     }
-    val ps = con.usePreparedStatement(sb.toString())
+    val ps = con.usePreparedStatement(
+      dsc.getInsertStatement(
+        params = params,
+        onConflict = onConflict,
+        returning = returning,
+      )
+    )
     return if (returning) {
       return ps.executeQuery(args).use { result ->
         val r = ResultSetDataProvider(result)
@@ -326,12 +256,11 @@ class DBAccess2Impl(val con: PooledAsyncConnection, override val serializersModu
   override suspend fun <T : Any> selectAll(
     k: KSerializer<T>,
     condition: (suspend QueryContext.() -> String)?,
-  ): Flow<T> =
-    select(k = k) {
-      if (condition != null) {
-        "select * from ${tableName(k.descriptor)} where ${condition(this)}"
-      } else {
-        "select * from ${tableName(k.descriptor)}"
-      }
+  ): Flow<T> = select(k = k) {
+    if (condition != null) {
+      "select * from ${tableName(k.descriptor)} where ${condition(this)}"
+    } else {
+      "select * from ${tableName(k.descriptor)}"
     }
+  }
 }

@@ -6,9 +6,10 @@ import pw.binom.io.http.*
 import pw.binom.io.httpServer.exceptions.MissingQueryArgumentException
 import pw.binom.url.Path
 import pw.binom.url.PathMask
+import pw.binom.url.Query
 import pw.binom.url.URI
 
-interface HttpServerExchange {
+interface HttpServerExchange : HttpInput {
   val requestURI: URI
   val input: AsyncInput
   val output: AsyncOutput
@@ -16,6 +17,18 @@ interface HttpServerExchange {
   val requestMethod: String
   val responseStarted: Boolean
   val requestContext: Path
+
+  override val inputHeaders: Headers
+    get() = requestHeaders
+  override val path: Path
+    get() = requestURI.path
+  override val query: Query?
+    get() = requestURI.query
+
+  override suspend fun readBinary(): AsyncInput {
+    check(!responseStarted){"Response already started"}
+    return input
+  }
 
   fun getQueryParams() = requestURI.query?.toMap() ?: emptyMap()
   fun getPathVariables(mask: PathMask): Map<String, String> = requestURI.path.getVariables(mask) ?: emptyMap()

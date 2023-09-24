@@ -11,10 +11,10 @@ actual class SelectedKeys {
     internal val lock = ReentrantLock()
     private val keyImpl = object : Event {
         var internalKey: SelectorKey? = null
-        var internalFlags: Int = 0
+        var internalFlags: ListenFlags = ListenFlags()
         override val key: SelectorKey
             get() = internalKey ?: throw IllegalStateException()
-        override val flags: Int
+        override val flags: ListenFlags
             get() = internalFlags
 
         override fun toString(): String = buildToString()
@@ -31,7 +31,7 @@ actual class SelectedKeys {
                 val key = it.attachment() as SelectorKey
                 if (key in errors) {
                     keyImpl.internalKey = key
-                    keyImpl.internalFlags = KeyListenFlags.ERROR or KeyListenFlags.READ
+                    keyImpl.internalFlags = ListenFlags.ERROR.withRead
                     func(keyImpl)
                     return@forEach
                 }
@@ -49,7 +49,7 @@ actual class SelectedKeys {
         }
     }
 
-    private class EventImpl(override val key: SelectorKey, override val flags: Int) : Event {
+    private class EventImpl(override val key: SelectorKey, override val flags: ListenFlags) : Event {
         override fun toString(): String = buildToString()
     }
 

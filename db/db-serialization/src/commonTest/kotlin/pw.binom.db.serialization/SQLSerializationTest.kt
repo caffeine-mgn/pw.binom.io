@@ -28,10 +28,7 @@ class SQLSerializationTest {
 
   @Serializable
   enum class MyEnumCode2 {
-    @EnumCodeValue(10)
     VALUE1,
-
-    @EnumCodeValue(20)
     VALUE2,
   }
 

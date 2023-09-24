@@ -10,13 +10,13 @@ fun InetNetworkAddress.toJvmAddress() = if (this is JvmMutableInetNetworkAddress
     JvmMutableInetNetworkAddress(this)
 }
 
-internal fun SelectionKey.toCommonReadFlag(): Int {
-    var r = 0
+internal fun SelectionKey.toCommonReadFlag(): ListenFlags {
+    var r = ListenFlags()
     if (isAcceptable || isReadable || isConnectable) {
-        r = r or KeyListenFlags.READ
+        r = r.withRead
     }
     if (isWritable || isConnectable) {
-        r = r or KeyListenFlags.WRITE
+        r = r.withWrite
     }
     return r
 }

@@ -6,7 +6,6 @@ import pw.binom.io.http.HTTPMethod
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.addHeader
 import pw.binom.network.SocketClosedException
-import pw.binom.skipAll
 import pw.binom.url.Path
 import pw.binom.url.URL
 import pw.binom.url.toPath
@@ -167,7 +166,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
         val allPathUrl = url.addPath(path)
         val r = client.connect(HTTPMethod.PUT.code, allPathUrl)
         WebAuthAccess.getCurrentUser()?.apply(r)
-        val upload = r.writeData()
+        val upload = r.writeBinary()
         return object : AsyncOutput {
             override suspend fun write(data: ByteBuffer): Int = upload.write(data)
 
@@ -178,7 +177,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
             override suspend fun asyncClose() {
                 upload.flush()
                 val response = upload.getResponse()
-                response.readData().use {
+                response.readBinary().use {
                     it.skipAll()
                 }
                 response.asyncClose()

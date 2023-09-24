@@ -19,11 +19,11 @@ actual class SelectedKeys actual constructor() {
     private val eventImpl = object : Event {
 
         var internalKey: SelectorKey? = null
-        var internalFlags = 0
+        var internalFlags = ListenFlags()
 
         override val key: SelectorKey
             get() = internalKey ?: throw IllegalStateException()
-        override val flags: Int
+        override val flags: ListenFlags
             get() = internalFlags
 
         override fun toString(): String = buildToString()
@@ -82,7 +82,7 @@ actual class SelectedKeys actual constructor() {
         }
     }
 
-    private class EventImpl(override val key: SelectorKey, override val flags: Int) : Event {
+    private class EventImpl(override val key: SelectorKey, override val flags: ListenFlags) : Event {
         override fun toString(): String = buildToString()
     }
 

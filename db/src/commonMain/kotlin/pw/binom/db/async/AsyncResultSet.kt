@@ -32,6 +32,14 @@ suspend inline fun AsyncResultSet.forEach(func: (AsyncResultSet) -> Unit) {
     }
 }
 
+suspend fun AsyncResultSet.count(): Int {
+  var count = 0
+  forEach {
+    count++
+  }
+  return count
+}
+
 /**
  * Returns result of call [mapper] for single value from this [AsyncResultSet]. If this [AsyncResultSet] contains row more than one
  * will throw [SQLException]. If this [AsyncResultSet] is empty will return null.

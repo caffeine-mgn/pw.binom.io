@@ -17,9 +17,9 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
 
   //    @OptIn(ExperimentalTime::class)
 //    var lastActiveTime: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
-  actual val readFlags: Int
+  actual val readFlags
     get() = internalReadFlags
-  internal var internalReadFlags = 0
+  internal var internalReadFlags = ListenFlags()
     set(value) {
       field = value
     }

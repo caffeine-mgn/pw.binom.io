@@ -70,20 +70,6 @@ class WebSocketConnectionImpl3(
             throw e
           }
           val type = message.type
-//          val type = when (header.opcode) {
-//            1.toByte() -> MessageType.TEXT
-//            2.toByte() -> MessageType.BINARY
-//            8.toByte() -> MessageType.CLOSE
-//            else -> {
-//              runCatching {
-//                closeTcp()
-//              }
-//              throw WebSocketClosedException(
-//                connection = this,
-//                code = WebSocketClosedException.ABNORMALLY_CLOSE,
-//              )
-//            }
-//          }
           if (type == MessageType.CLOSE) {
             this.receivedCloseMessage.setValue(true)
           }

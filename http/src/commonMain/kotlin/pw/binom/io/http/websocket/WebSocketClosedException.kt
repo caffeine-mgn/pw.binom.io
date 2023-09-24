@@ -1,8 +1,8 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.network.SocketClosedException
+import pw.binom.io.ClosedException
 
-class WebSocketClosedException(val connection: WebSocketConnection, val code: Short) : SocketClosedException() {
+class WebSocketClosedException(val connection: WebSocketConnection, val code: Short) : ClosedException() {
     override val message: String
         get() = "Code #$code"
 

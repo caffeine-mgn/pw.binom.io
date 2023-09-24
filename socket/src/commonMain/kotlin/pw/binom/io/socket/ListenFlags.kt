@@ -4,6 +4,15 @@ import kotlin.jvm.JvmInline
 
 @JvmInline
 value class ListenFlags(val raw: Int) {
+  companion object {
+    val ZERO = ListenFlags()
+    val WRITE = ListenFlags().withWrite
+    val READ = ListenFlags().withRead
+    val ONCE = ListenFlags().withOnce
+    val ERROR = ListenFlags().withError
+  }
+
+  constructor() : this(0)
   inline val isRead
     get() = raw and KeyListenFlags.READ != 0
   inline val isError
@@ -14,23 +23,25 @@ value class ListenFlags(val raw: Int) {
     get() = raw and KeyListenFlags.ONCE != 0
 
   inline val withRead
-    get() = ListenFlags(raw or KeyListenFlags.READ)
+    get() = this with KeyListenFlags.READ
   inline val withError
-    get() = ListenFlags(raw or KeyListenFlags.ERROR)
+    get() = this with KeyListenFlags.ERROR
   inline val withWrite
-    get() = ListenFlags(raw or KeyListenFlags.WRITE)
+    get() = this with KeyListenFlags.WRITE
   inline val withOnce
-    get() = ListenFlags(raw or KeyListenFlags.ONCE)
+    get() = this with KeyListenFlags.ONCE
 
   inline val withoutRead
-    get() = ListenFlags((raw.inv() or KeyListenFlags.READ).inv())
+    get() = this without KeyListenFlags.READ
   inline val withoutWrite
-    get() = ListenFlags((raw.inv() or KeyListenFlags.WRITE).inv())
+    get() = this without KeyListenFlags.WRITE
   inline val withoutError
-    get() = ListenFlags((raw.inv() or KeyListenFlags.ERROR).inv())
+    get() = this without KeyListenFlags.ERROR
   inline val withoutOnce
-    get() = ListenFlags((raw.inv() or KeyListenFlags.ONCE).inv())
+    get() = this without KeyListenFlags.ONCE
 
+  inline operator fun plus(flags: ListenFlags) = this with flags.raw
+  inline operator fun minus(flags: ListenFlags) = this without flags.raw
   inline operator fun plus(raw: Int) = this with raw
   inline operator fun minus(raw: Int) = this without raw
   inline infix fun with(raw: Int) = ListenFlags(this.raw or raw)

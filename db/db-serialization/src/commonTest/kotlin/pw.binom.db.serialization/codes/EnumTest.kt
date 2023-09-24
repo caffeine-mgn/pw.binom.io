@@ -2,7 +2,6 @@ package pw.binom.db.serialization.codes
 
 import kotlinx.serialization.Serializable
 import pw.binom.db.serialization.DefaultSQLSerializePool
-import pw.binom.db.serialization.EnumCodeValue
 import pw.binom.db.serialization.Enumerate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -16,10 +15,8 @@ class EnumTest {
 
     @Serializable
     enum class EnumByCodes {
-        @EnumCodeValue(10)
         A,
 
-        @EnumCodeValue(20)
         B
     }
 

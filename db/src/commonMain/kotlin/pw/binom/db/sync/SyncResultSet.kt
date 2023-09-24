@@ -4,6 +4,7 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
+import pw.binom.db.async.forEach
 import pw.binom.io.Closeable
 import pw.binom.io.use
 
@@ -18,7 +19,7 @@ interface SyncResultSet : ResultSet, Closeable {
  * Calls [mapper] for each rows of this [AsyncResultSet]. Makes list of result [mapper] and returns it.
  * Closes this [AsyncResultSet] after call [mapper] for each values of this [AsyncResultSet]
  */
-suspend inline fun <T> SyncResultSet.map(mapper: (SyncResultSet) -> T): List<T> {
+inline fun <T> SyncResultSet.map(mapper: (SyncResultSet) -> T): List<T> {
     val out = defaultMutableList<T>()
     use {
         while (next()) {
@@ -32,6 +33,14 @@ inline fun SyncResultSet.forEach(func: (SyncResultSet) -> Unit) {
     while (next()) {
         func(this)
     }
+}
+
+fun SyncResultSet.count(): Int {
+  var count = 0
+  forEach {
+    count++
+  }
+  return count
 }
 
 inline fun SyncResultSet.read(func: (SyncResultSet) -> Unit) {

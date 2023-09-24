@@ -10,8 +10,6 @@ import pw.binom.io.httpClient.HttpRequest
 interface RestRequest : HttpRequest {
     suspend fun <T : Any> writeObject(serializer: KSerializer<T>, obj: T)
     override suspend fun getResponse(): RestResponse
-    override suspend fun writeText(func: suspend (AsyncHttpRequestWriter) -> Unit): RestResponse
-    override suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): RestResponse
 }
 
 @OptIn(InternalSerializationApi::class)

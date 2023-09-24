@@ -127,7 +127,7 @@ open class AsyncBufferedInputReader protected constructor(
     suspend fun readUntil(func: (Char, Int) -> Boolean): String? {
         val out = StringBuilder()
         var exist = false
-        LOOP@ while (true) {
+        LOOP@ while (!eof) {
             prepareBuffer()
             if (charBuffer.remaining <= 0) {
                 break

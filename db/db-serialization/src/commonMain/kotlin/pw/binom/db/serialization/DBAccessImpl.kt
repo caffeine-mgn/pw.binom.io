@@ -109,7 +109,7 @@ internal class DBAccessImpl(
             if (it !is Index || !it.unique) {
                 return@forEach
             }
-            it.columns.split(',', '|', ':').map { it.trim() }.filter { it.isNotEmpty() }.forEach { column ->
+            it.columns./*split(',', '|', ':').map { it.trim() }.filter { it.isNotEmpty() }.*/forEach { column ->
                 val index = descriptor.getElementIndex(column)
                 if (index == CompositeDecoder.UNKNOWN_NAME) {
                     throw SQLException("Column with name \"$column\" not found in ${descriptor.serialName}")

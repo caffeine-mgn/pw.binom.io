@@ -34,13 +34,13 @@ internal class RestRequestImpl(
     override suspend fun getResponse(): RestResponse =
         RestResponseImpl(resp = request1.getResponse(), serialization = serialization)
 
-    override suspend fun writeData(): AsyncHttpRequestOutput = request1.writeData()
+    override suspend fun writeBinary(): AsyncHttpRequestOutput = request1.writeBinary()
 
-    override suspend fun writeData(func: suspend (AsyncHttpRequestOutput) -> Unit): RestResponse =
-        RestResponseImpl(resp = request1.writeData(func), serialization = serialization)
+//    override suspend fun writeBinary(func: suspend (AsyncHttpRequestOutput) -> Unit): RestResponse =
+//        RestResponseImpl(resp = request1.writeBinaryAndGetResponse(func), serialization = serialization)
 
     override suspend fun writeText(): AsyncHttpRequestWriter = request1.writeText()
 
-    override suspend fun writeText(func: suspend (AsyncHttpRequestWriter) -> Unit): RestResponse =
-        RestResponseImpl(resp = request1.writeText(func), serialization = serialization)
+//    override suspend fun<T> writeText(func: suspend (AsyncHttpRequestWriter) -> T): T =
+//        RestResponseImpl(resp = request1.writeTextAndGetResponse(func), serialization = serialization)
 }

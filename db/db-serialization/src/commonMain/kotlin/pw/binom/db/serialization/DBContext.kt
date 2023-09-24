@@ -49,7 +49,7 @@ interface DBContext : DescriptorContext, AsyncCloseable {
         serializer: KSerializer<out Any>,
         ifNotExist: Boolean = true,
         tableName: String? = null
-    ): String
+    ): List<String>
 
     companion object {
         fun create(pool: AsyncConnectionPool, sql: SQLSerialization = SQLSerialization.DEFAULT): DBContext =

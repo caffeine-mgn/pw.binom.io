@@ -40,10 +40,10 @@ actual class Selector : Closeable {
 
   private val eventImpl = object : pw.binom.io.socket.Event {
     var internalKey: SelectorKey? = null
-    var internalFlag: Int = 0
+    var internalFlag=ListenFlags()
     override val key: SelectorKey
       get() = internalKey ?: throw IllegalStateException("key not set")
-    override val flags: Int
+    override val flags
       get() = internalFlag
 
     override fun toString(): String = this.buildToString()
@@ -209,7 +209,7 @@ actual class Selector : Closeable {
     var currentNum = 0
     errorsRemoveLock.synchronize {
       errorsRemove.forEach { key ->
-        key.internalReadFlags = KeyListenFlags.ERROR
+        key.internalReadFlags = ListenFlags.ERROR
         func(key)
 //                key.internalClose()
       }
@@ -251,12 +251,12 @@ actual class Selector : Closeable {
         removeKey(key)
 //                    keyForRemove.add(key)
 //                }
-        key.internalReadFlags = KeyListenFlags.ERROR
+        key.internalReadFlags = ListenFlags.ERROR
         func(key)
 //                key.internalClose()
         continue
       }
-      var e = 0
+      var e = ListenFlags()
       val listenFlags = flags
 //            val flagsStr = commonFlagsToString(flags)
       if (listenFlags and FLAG_ERROR != 0) {
@@ -265,20 +265,20 @@ actual class Selector : Closeable {
         removeKey(key)
 //                    keyForRemove.add(key)
 //                }
-        e = e or KeyListenFlags.ERROR
+        e = e.withError
       }
 
 //            if (event.events.toInt() and EPOLLERR.toInt() != 0 || event.events.toInt() and EPOLLHUP.toInt() != 0) {
 //                e = e or KeyListenFlags.ERROR
 //            }
       if (listenFlags and FLAG_WRITE != 0) {
-        e = e or KeyListenFlags.WRITE
+        e = e.withWrite
       }
       if (listenFlags and FLAG_READ != 0) {
-        e = e or KeyListenFlags.READ
+        e = e.withRead
       }
       if (listenFlags and FLAG_ONCE != 0) {
-        e = e or KeyListenFlags.ONCE
+        e = e.withOnce
       }
       key.internalReadFlags = e
 //            println("Selector::cleanupPostProcessing Event. socket: ${key.socket}, flags: $flagsStr")

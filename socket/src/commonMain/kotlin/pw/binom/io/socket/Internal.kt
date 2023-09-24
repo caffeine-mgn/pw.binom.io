@@ -7,7 +7,7 @@ internal fun throwUnixSocketNotSupported(): Nothing =
     throw RuntimeException("Mingw Target not supports Unix Domain Socket")
 
 internal fun SelectorKey.buildToString() =
-    "SelectorKey(flags: ${commonFlagsToString(listenFlags)}, readFlags: ${commonFlagsToString(readFlags)}, isClosed: $isClosed)"
+    "SelectorKey(flags: ${commonFlagsToString(listenFlags)}, readFlags: $readFlags, isClosed: $isClosed)"
 
 internal fun commonFlagsToString(flags: Int): String {
     if (flags == 0) {
@@ -31,8 +31,7 @@ internal fun commonFlagsToString(flags: Int): String {
 
 internal fun Event.buildToString(): String {
     val sb = StringBuilder("Event(flags: ")
-        .append(flags.toString(2).padStart(4, '0'))
-        .append(commonFlagsToString(flags))
+        .append(flags.toString())
         .append(", key: ")
         .append(key)
         .append(")")

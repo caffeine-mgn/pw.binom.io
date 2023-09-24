@@ -16,7 +16,6 @@ import pw.binom.io.ByteBufferFactory
 import pw.binom.io.ClosedException
 import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
 import pw.binom.io.http.ReusableAsyncChunkedOutput
-import pw.binom.io.http.websocket.MessagePool
 import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.Socket
 import pw.binom.network.Network

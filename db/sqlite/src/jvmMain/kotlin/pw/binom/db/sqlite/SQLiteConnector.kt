@@ -39,9 +39,6 @@ actual class SQLiteConnector(internal val native: JDBC4Connection) : SyncConnect
     init {
         native.autoCommit = false
         commitPt.executeUpdate()
-//        native.createStatement().use{
-//            it.executeUpdate("commit;")
-//        }
     }
 
     override fun createStatement(): SyncStatement =

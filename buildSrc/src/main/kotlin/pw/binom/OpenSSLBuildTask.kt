@@ -44,7 +44,6 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         }
       },
     )
-    tempDirForObjectFiles.set(target.map { t -> RegularFile { project.buildDir.resolve("openssl/${t.name}/static") } })
   }
 
   @TaskAction

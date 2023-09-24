@@ -225,6 +225,7 @@ class HttpServer2(
       } catch (e: kotlinx.coroutines.CancellationException) {
         // Do nothing
       } finally {
+        server.closeAnyway()
         listeners -= currentJob
       }
     }
@@ -244,5 +245,6 @@ class HttpServer2(
         // Do nothing
       }
     }
+    jobs.joinAll()
   }
 }

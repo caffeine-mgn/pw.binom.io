@@ -87,7 +87,7 @@ class TestAsyncBaseHttpClient {
                         client.connect(HTTPMethod.GET, "https://google.com/".toURL())
                             .getResponse()
                             .also {
-                                println("headers:${it.headers}")
+                                println("headers:${it.inputHeaders}")
                             }.readData().use {
                                 it.skipAll()
                             }

@@ -10,7 +10,6 @@ import pw.binom.io.bufferedWriter
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.HttpResponse
-import pw.binom.io.readText
 import pw.binom.io.use
 import pw.binom.s3.dto.*
 import pw.binom.s3.exceptions.S3ErrorException
@@ -295,11 +294,11 @@ object S3ClientApi {
       accessKey = accessKey,
       secretAccessKey = secretAccessKey,
     ).use {
-      val region = it.headers["X-Amz-Bucket-Region"]?.firstOrNull()
-      val length = it.headers.contentLength?.toLong()
-      val type = it.headers.contentType
-      val eTag = it.headers["ETag"]?.firstOrNull()
-      val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
+      val region = it.inputHeaders["X-Amz-Bucket-Region"]?.firstOrNull()
+      val length = it.inputHeaders.contentLength?.toLong()
+      val type = it.inputHeaders.contentType
+      val eTag = it.inputHeaders["ETag"]?.firstOrNull()
+      val lastModify = it.inputHeaders["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
       when (val code = it.responseCode) {
         200 -> ContentHead(
           region = region,
@@ -347,11 +346,11 @@ object S3ClientApi {
     ).use {
       when (val code = it.responseCode) {
         200, 206 -> {
-          val region = it.headers["X-Amz-Bucket-Region"]?.firstOrNull()
-          val length = it.headers.contentLength?.toLong()
-          val type = it.headers.contentType
-          val eTag = it.headers["ETag"]?.firstOrNull()
-          val lastModify = it.headers["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
+          val region = it.inputHeaders["X-Amz-Bucket-Region"]?.firstOrNull()
+          val length = it.inputHeaders.contentLength?.toLong()
+          val type = it.inputHeaders.contentType
+          val eTag = it.inputHeaders["ETag"]?.firstOrNull()
+          val lastModify = it.inputHeaders["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
           val data = ContentHead(
             region = region,
             length = length,
@@ -359,7 +358,7 @@ object S3ClientApi {
             eTag = eTag,
             lastModify = lastModify,
           )
-          it.readData().use { input ->
+          it.readBinary().use { input ->
             consumer(
               InputFile(
                 data = data,
