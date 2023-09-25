@@ -47,5 +47,5 @@ interface ConnectionFactory {
         )
     }
 
-    suspend fun connect(channel: AsyncChannel, schema: String, host: String, port: Int): AsyncChannel
+    suspend fun connect(channel: AsyncChannel, schema: String, host: String, port: Int): AsyncChannel = channel
 }

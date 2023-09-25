@@ -5,6 +5,7 @@ import pw.binom.io.AsyncChannel
 import pw.binom.io.bufferedAsciiReader
 import pw.binom.io.bufferedAsciiWriter
 import pw.binom.io.http.Headers
+import pw.binom.io.httpClient.ConnectionFactory
 import pw.binom.io.httpClient.HttpRequestBody
 import pw.binom.io.httpClient.getPort
 import pw.binom.io.httpClient.protocol.ConnectionPoll
@@ -21,6 +22,7 @@ import kotlin.time.TimeSource
 class Http11Connect(
   private val networkManager: NetworkManager,
   private var tcp: AsyncChannel?,
+  val connectFactory: ConnectionFactory,
   defaultKeepAliveTimeout: Duration,
 ) : HttpConnect {
   private var created = TimeSource.Monotonic.markNow()
@@ -41,12 +43,18 @@ class Http11Connect(
     val newKey = "${url.schema}://${url.host}${url.port?.let { ":$it" } ?: ""}"
     var tcp = tcp
     if (tcp == null) {
-      tcp = networkManager.tcpConnect(
-        InetNetworkAddress.create(
-          host = url.host,
-          port = url.port ?: url.getPort(),
-        ),
+      tcp = connectFactory.connect(
+        networkManager = networkManager,
+        schema = url.schema,
+        host = url.host,
+        port = url.port ?: url.getPort(),
       )
+//      tcp = networkManager.tcpConnect(
+//        InetNetworkAddress.create(
+//          host = url.host,
+//          port = url.port ?: url.getPort(),
+//        ),
+//      )
       this.tcp = tcp
     }
     val output = tcp.bufferedAsciiWriter(closeParent = false)

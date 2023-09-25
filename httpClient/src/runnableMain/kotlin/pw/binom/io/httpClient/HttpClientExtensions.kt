@@ -19,9 +19,10 @@ fun HttpClient.Companion.create(
   bufferSize: Int = DEFAULT_BUFFER_SIZE,
   bufferCapacity: Int = 16,
   proxy: HttpProxyConfig? = null,
+  connectFactory: ConnectionFactory = ConnectionFactory.DEFAULT,
 ): BaseHttpClient {
   val baseProtocolSelector = ProtocolSelectorBySchema()
-  val http = Http11ConnectFactory2(networkManager = networkDispatcher)
+  val http = Http11ConnectFactory2(networkManager = networkDispatcher, connectFactory = connectFactory)
   baseProtocolSelector.set(
     http,
     "http",

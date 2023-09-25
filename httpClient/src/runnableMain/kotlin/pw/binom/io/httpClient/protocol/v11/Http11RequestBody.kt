@@ -22,10 +22,10 @@ class Http11RequestBody(
   override suspend fun flush(): HttpResponse {
     check(!flushed) { "Already flushed" }
     flushed = true
-    val bufferidInput = input.bufferedAsciiReader(closeParent = false)
-    val resp = Http11ConnectFactory2.readResponse(bufferidInput)
+    val bufferedInput = input.bufferedAsciiReader(closeParent = false)
+    val resp = Http11ConnectFactory2.readResponse(bufferedInput)
     val resultInput = Http11ConnectFactory2.prepareHttpResponse(
-      stream = bufferidInput,
+      stream = bufferedInput,
       contentLength = resp.headers.contentLength?.toLong(),
       contentEncoding = resp.headers.getContentEncodingList(),
       transferEncoding = resp.headers.getTransferEncodingList(),
