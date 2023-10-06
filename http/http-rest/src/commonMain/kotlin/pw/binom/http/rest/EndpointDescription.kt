@@ -4,7 +4,6 @@ package pw.binom.http.rest
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.SerialKind
 
 import pw.binom.bitarray.BitArray64
 import pw.binom.http.rest.annotations.*
@@ -29,7 +28,7 @@ class EndpointDescription<T> private constructor(
 
   companion object {
     @Suppress("UNCHECKED_CAST")
-    fun<T> create(serializer: KSerializer<T>): EndpointDescription<T> {
+    fun <T> create(serializer: KSerializer<T>): EndpointDescription<T> {
       val endpoint = serializer.descriptor.annotations.find { it is EndpointMapping } as EndpointMapping?
         ?: TODO("${serializer.descriptor.serialName} is not endpoint")
       val nameByIndex = HashMap<Int, String>()
@@ -58,12 +57,14 @@ class EndpointDescription<T> private constructor(
           if (responseCodeIndex != -1) {
             throw IllegalArgumentException("Only one field can be marked as @ResponseCode")
           }
-          when (serializer.descriptor.kind){
+          when (serializer.descriptor.kind) {
             PrimitiveKind.STRING,
             PrimitiveKind.INT,
             PrimitiveKind.LONG,
-            PrimitiveKind.SHORT->responseCodeIndex = i
-            else->throw IllegalArgumentException("Can't use ${serializer.descriptor.kind} is ResponseCode")
+            PrimitiveKind.SHORT,
+            -> responseCodeIndex = i
+
+            else -> throw IllegalArgumentException("Can't use ${serializer.descriptor.kind} is ResponseCode")
           }
         }
         if (path != null) {

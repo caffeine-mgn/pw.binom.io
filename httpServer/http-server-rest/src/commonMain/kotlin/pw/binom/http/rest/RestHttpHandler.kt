@@ -1,6 +1,5 @@
 package pw.binom.http.rest
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
@@ -13,8 +12,10 @@ import pw.binom.io.httpServer.HttpServerExchange
 
 @Suppress("UNCHECKED_CAST")
 abstract class RestHttpHandler : HttpHandler {
-  open protected val serializersModule: SerializersModule
+  protected open val serializersModule: SerializersModule
     get() = EmptySerializersModule()
+
+  private val handlers = ArrayList<EndpointHandler<out Any, out Any>>()
 
   abstract suspend fun <TYPE, DATA> encodeBody(
     descriptor: SerialDescriptor,
@@ -26,20 +27,32 @@ abstract class RestHttpHandler : HttpHandler {
     exchange: HttpServerExchange,
   ): DecodeFunc<TYPE, DATA>
 
-  inner class EndpointHandler<REQUEST,RESPONSE>(
+  override suspend fun handle(exchange: HttpServerExchange) {
+    handlers.forEach { handler ->
+      if (!exchange.path.isMatch(handler.requestDescription.path)) {
+        return@forEach
+      }
+      handler.handle(exchange)
+      if (exchange.responseStarted) {
+        return
+      }
+    }
+  }
+
+  inner class EndpointHandler<REQUEST : Any, RESPONSE : Any>(
     val requestDescription: EndpointDescription<REQUEST>,
     val responseDescription: EndpointDescription<RESPONSE>,
-    val func: (REQUEST) -> RESPONSE,
+    val func: suspend (REQUEST) -> RESPONSE,
   ) : HttpHandler {
     override suspend fun handle(exchange: HttpServerExchange) {
       val d = HttpInputDecoder()
       d.serializersModule = serializersModule
-      if (requestDescription.bodyIndex!=-1) {
+      if (requestDescription.bodyIndex != -1) {
         val decoder = decodeBody<REQUEST, Any?>(requestDescription.bodyDescription, exchange)
         val inputData = decoder.read(exchange)
         d.reset(exchange, requestDescription, inputData, decoder)
       } else {
-        d.reset(exchange, requestDescription, null, DecodeFunc.notSupported<REQUEST,RESPONSE>())
+        d.reset(exchange, requestDescription, null, DecodeFunc.notSupported<REQUEST, RESPONSE>())
       }
 
       val response = func(requestDescription.serializer.deserialize(d))
@@ -65,9 +78,12 @@ abstract class RestHttpHandler : HttpHandler {
     }
   }
 
-  protected fun <INPUT : Any, OUTPUT : Any> endpoint(endpoint: Endpoint2<INPUT, OUTPUT>, func: (INPUT) -> OUTPUT) {
-    val inputDesc = EndpointDescription.create(endpoint.request as KSerializer<Any>)
-    val outputDesc = EndpointDescription.create(endpoint.response as KSerializer<Any>)
+  protected fun <REQUEST : Any, RESPONSE : Any> endpoint(
+    endpoint: Endpoint2<REQUEST, RESPONSE>,
+    func: suspend (REQUEST) -> RESPONSE,
+  ) {
+    val inputDesc = EndpointDescription.create(endpoint.request)
+    val outputDesc = EndpointDescription.create(endpoint.response)
 
     if (inputDesc.bodyDescription != null && endpoint.request !is BodyContext<*>) {
       throw IllegalArgumentException("Invalid input ${endpoint.request.descriptor.serialName}: with @BodyParam you should implement BodyContext")
@@ -75,5 +91,10 @@ abstract class RestHttpHandler : HttpHandler {
     if (outputDesc.bodyDescription != null && endpoint.response !is BodyContext<*>) {
       throw IllegalArgumentException("Invalid output ${endpoint.response.descriptor.serialName}: with @BodyParam you should implement BodyContext")
     }
+    handlers += EndpointHandler(
+      requestDescription = inputDesc,
+      responseDescription = outputDesc,
+      func = func,
+    )
   }
 }

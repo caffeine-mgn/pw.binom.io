@@ -15,7 +15,6 @@ interface Endpoint2<REQUEST : Any, RESPONSE : Any> {
           get() = output
       }
 
-
     inline fun <reified INPUT : Any, reified OUTPUT : Any> of() = of(
       input = INPUT::class.serializer(),
       output = OUTPUT::class.serializer(),

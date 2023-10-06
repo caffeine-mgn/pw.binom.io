@@ -16,7 +16,7 @@ abstract class RestHttpClient {
   abstract val client: HttpClient
   abstract val baseUrl: URL
 
-  open protected val serializersModule: SerializersModule
+  protected open val serializersModule: SerializersModule
     get() = EmptySerializersModule()
 
   abstract suspend fun <TYPE, DATA> getBodyEncode(
