@@ -10,6 +10,7 @@ import kotlinx.serialization.modules.SerializersModule
 import pw.binom.http.rest.DecodeFunc
 import pw.binom.http.rest.EndpointDescription
 import pw.binom.io.http.HttpInput
+import pw.binom.url.PathMask
 
 @Suppress("UNCHECKED_CAST")
 class HttpInputDecoder : Decoder, CompositeDecoder {
@@ -20,19 +21,23 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
   private var queryVariables: Map<String, String?> = emptyMap()
   private var body: DecodeFunc<Any?, Any?>? = null
   private var data: Any? = null
+  private var responseCode = 0
 
   fun <INPUT, DATA> reset(
     input: HttpInput,
     description: EndpointDescription<INPUT>,
+    responseCode: Int,
     data: DATA?,
     body: DecodeFunc<INPUT, DATA>?,
+    path: PathMask,
   ) {
     this.input = input
     this.body = body as DecodeFunc<Any?, Any?>?
     this.data = data
     this.description = description as EndpointDescription<Any?>
     queryVariables = input.query?.toMap() ?: emptyMap()
-    pathVariables = input.path.getVariables(description.path) ?: emptyMap()
+    pathVariables = input.path.getVariables(path) ?: emptyMap()
+    this.responseCode = responseCode
   }
 
   override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean =
@@ -103,7 +108,7 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
   ): T {
     val description = description!!
     if (description.bodyIndex == index) {
-      return body?.decode(ser = deserializer, data = data, input = input!!) as T
+      return body?.decode(serializer = deserializer, data = data, input = input!!) as T
     }
     val decoder = StringDecoder(serializersModule)
     decoder.value = readString(index)
@@ -124,7 +129,10 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
     if (description.pathParam[index]) {
       return pathVariables[description.nameByIndex[index]]!!
     }
-    TODO()
+    if (description.responseCodeIndex == index) {
+      return responseCode.toString()
+    }
+    TODO("Unknown type. Index: $index: description.bodyIndex=${description.bodyIndex}, name: ${description.serializer.descriptor.serialName}")
   }
 
   override fun decodeStringElement(descriptor: SerialDescriptor, index: Int): String {

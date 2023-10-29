@@ -6,18 +6,18 @@ import pw.binom.security.NoSuchAlgorithmException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-actual class HMac actual constructor(algorithm: Algorithm, key: ByteArray) : MessageDigest {
+actual class HMac actual constructor(algorithm: AlgorithmType, key: ByteArray) : MessageDigest {
     val native = Mac.getInstance(algorithm.code)
 
     init {
         native.init(SecretKeySpec(key, algorithm.code))
     }
 
-    actual enum class Algorithm(val code: String) {
+    actual enum class AlgorithmType(val code: String) {
         SHA512("HmacSHA512"), SHA256("HmacSHA256"), SHA1("HmacSHA1"), MD5("HmacMD5");
 
         actual companion object {
-            private val content = HashMap<String, Algorithm>()
+            private val content = HashMap<String, AlgorithmType>()
 
             init {
                 values().forEach {
@@ -26,12 +26,12 @@ actual class HMac actual constructor(algorithm: Algorithm, key: ByteArray) : Mes
                 }
             }
 
-            actual fun find(name: String): Algorithm? = content[name.lowercase()]
+            actual fun find(name: String): AlgorithmType? = content[name.lowercase()]
 
             /**
              * @throws NoSuchAlgorithmException throws when algorithm [name] not found
              */
-            actual fun get(name: String): Algorithm = find(name = name) ?: throw NoSuchAlgorithmException(name)
+            actual fun get(name: String): AlgorithmType = find(name = name) ?: throw NoSuchAlgorithmException(name)
         }
     }
 

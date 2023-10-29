@@ -6,7 +6,7 @@ import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -22,7 +22,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
   @get:Input
   abstract val target: Property<KonanTarget>
 
-  @get:InputDirectory
+  @get:Internal
   abstract val opensslDirection: RegularFileProperty
 
   @get:OutputFile
@@ -33,6 +33,15 @@ abstract class OpenSSLBuildTask : DefaultTask() {
 //    = RegularFile {
 //        project.buildDir.resolve("openssl/${target.get().name}/static")
 //    }
+
+  fun afterConfig() {
+    project.fileTree(opensslDirection.get().asFile)
+      .forEach {
+        if (it.endsWith(".h") || it.endsWith(".cpp")) {
+          inputs.file(it)
+        }
+      }
+  }
 
   init {
     this.group = "openssl"

@@ -18,8 +18,13 @@ class Http11RequestBody(
 ) : AbstractHttpRequestBody() {
 
   private var flushed = false
+  private var resp: Http11Response? = null
 
   override suspend fun flush(): HttpResponse {
+    val resp2 = resp
+    if (resp2 != null) {
+      return resp2
+    }
     check(!flushed) { "Already flushed" }
     flushed = true
     val bufferedInput = input.bufferedAsciiReader(closeParent = false)
@@ -31,13 +36,15 @@ class Http11RequestBody(
       transferEncoding = resp.headers.getTransferEncodingList(),
     )
 
-    return Http11Response(
+    val resp3 = Http11Response(
       resp = resp,
       inputStream = resultInput,
       requestFinishedListener = requestFinishedListener,
       defaultKeepAlive = resp.version == Http11ConnectFactory2.Http1Version.V1_1,
       url = url,
     )
+    this.resp = resp3
+    return resp3
   }
 
   override suspend fun asyncClose() {

@@ -1,8 +1,12 @@
 package pw.binom.http.rest
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
+import pw.binom.http.rest.endpoints.Endpoint2
 import pw.binom.http.rest.serialization.HttpInputDecoder
 import pw.binom.http.rest.serialization.HttpOutputEncoder
 import pw.binom.io.httpClient.HttpClient
@@ -13,24 +17,60 @@ import pw.binom.url.PathMask
 import pw.binom.url.URL
 
 abstract class RestHttpClient {
-  abstract val client: HttpClient
-  abstract val baseUrl: URL
+  protected abstract val client: HttpClient
+  protected abstract val baseUrl: URL
 
   protected open val serializersModule: SerializersModule
     get() = EmptySerializersModule()
 
-  abstract suspend fun <TYPE, DATA> getBodyEncode(
+  protected open suspend fun <TYPE, DATA> getBodyEncode(
     descriptor: SerialDescriptor,
     request: HttpRequest,
-  ): EncodeFunc<TYPE, DATA>
+  ): EncodeFunc<TYPE, DATA> = EncodeFunc.notSupported()
 
-  abstract suspend fun <TYPE, DATA> getBodyDecoder(
+  protected open suspend fun <TYPE, DATA> getBodyDecoder(
     descriptor: SerialDescriptor?,
     response: HttpResponse,
-  ): DecodeFunc<TYPE, DATA>
+  ): DecodeFunc<TYPE, DATA> = DecodeFunc.notSupported()
+
+  private val endpointCache = HashMap<KSerializer<*>, EndpointDescription<*>>()
+  private val endpointCacheLock = SpinLock()
 
   @Suppress("UNCHECKED_CAST")
-  private suspend fun <REQUEST, RESPONSE> call(
+  private fun <T> getDescription(serializer: KSerializer<T>): EndpointDescription<T> = endpointCacheLock.synchronize {
+    endpointCache.getOrPut(serializer) { EndpointDescription.create(serializer) } as EndpointDescription<T>
+  }
+
+  interface RemoteEndpoint<REQUEST : Any, RESPONSE : Any> {
+    suspend operator fun invoke(request: REQUEST): RESPONSE
+  }
+
+  inner class EndpointImpl<REQUEST : Any, RESPONSE : Any>(val endpoint: Endpoint2<REQUEST, RESPONSE>) :
+    RemoteEndpoint<REQUEST, RESPONSE> {
+    override suspend operator fun invoke(request: REQUEST): RESPONSE = execute(endpoint, request)
+  }
+
+  open fun <REQUEST : Any, RESPONSE : Any> create(
+    endpoint: Endpoint2<REQUEST, RESPONSE>,
+  ): RemoteEndpoint<REQUEST, RESPONSE> = EndpointImpl(endpoint)
+
+  open suspend fun <REQUEST : Any, RESPONSE : Any> execute(
+    endpoint2: Endpoint2<REQUEST, RESPONSE>,
+    request: REQUEST,
+  ): RESPONSE = call(
+    method = endpoint2.method,
+    prefix = endpoint2.path,
+    requestDescription = getDescription(endpoint2.request),
+    responseDescription = getDescription(endpoint2.response),
+    value = request,
+  )
+
+  protected open fun preBodyRead(resp: HttpResponse) {
+    // Do nothing
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  protected open suspend fun <REQUEST, RESPONSE> call(
     method: String,
     prefix: PathMask,
     requestDescription: EndpointDescription<REQUEST>,
@@ -41,19 +81,21 @@ abstract class RestHttpClient {
       serializersModule = serializersModule,
       endpointDescription = requestDescription as EndpointDescription<Any?>,
     )
-    val url = baseUrl.addPath(prefix.toPath(encoder.pathParams)).appendQuery(encoder.getParams)
     requestDescription.serializer.serialize(encoder, value)
+    val url = baseUrl.addPath(prefix.toPath(encoder.pathParams)).appendQuery(encoder.getParams)
     return client.connect(
       method = method,
       uri = url,
     ).use { request ->
       request.headers.add(encoder.headerParams)
-      if (requestDescription.bodyIndex != -1) {
-        val encoder = getBodyEncode<REQUEST, Any?>(descriptor = requestDescription.bodyDescription!!, request = request)
-        val data = encoder.encode(requestDescription.serializer, value, request)
-        encoder.send(data, request)
+      val bodyDesc = encoder.body
+      if (bodyDesc != null) {
+        val bodyEncoder = getBodyEncode<Any, Any?>(descriptor = requestDescription.bodyDescription!!, request = request)
+        val data = bodyEncoder.encode(bodyDesc.serializer, bodyDesc.body, request)
+        bodyEncoder.send(data, request)
       }
       request.getResponse().use { resp ->
+        preBodyRead(resp)
         val httpDecoder = HttpInputDecoder()
         httpDecoder.serializersModule = serializersModule
         if (responseDescription.bodyIndex != -1) {
@@ -66,6 +108,8 @@ abstract class RestHttpClient {
             description = responseDescription,
             data = decoder.read(resp),
             body = decoder,
+            path = prefix,
+            responseCode = resp.responseCode,
           )
         } else {
           httpDecoder.reset<RESPONSE, Any?>(
@@ -73,6 +117,8 @@ abstract class RestHttpClient {
             description = responseDescription,
             data = null,
             body = DecodeFunc.notSupported(),
+            path = prefix,
+            responseCode = resp.responseCode,
           )
         }
         responseDescription.serializer.deserialize(httpDecoder)

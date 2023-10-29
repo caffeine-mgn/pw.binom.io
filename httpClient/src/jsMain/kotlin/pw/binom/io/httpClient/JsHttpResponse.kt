@@ -17,9 +17,12 @@ class JsHttpResponse internal constructor(val url: URL, val xhr: XMLHttpRequest)
   override val query
     get() = url.query
 
-  override val inputHeaders: Headers = run {
+  override val inputHeaders: Headers by lazy {
     val r = HashHeaders2()
     xhr.getAllResponseHeaders().split("\r\n").forEach {
+      if (it.isEmpty()) {
+        return@forEach
+      }
       val items = it.split(": ")
       r.add(items[0], items[1])
     }

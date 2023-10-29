@@ -86,7 +86,7 @@ class Signer private constructor(
     }
 
     public fun sumHmac(key: ByteArray, data: ByteArray): ByteArray {
-        val mac = HMac(HMac.Algorithm.SHA256, key)
+        val mac = HMac(HMac.AlgorithmType.SHA256, key)
         mac.update(data)
 
         return mac.finish()

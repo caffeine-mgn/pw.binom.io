@@ -9,6 +9,7 @@ import pw.binom.io.*
 import pw.binom.io.http.Headers
 import pw.binom.io.http.forEachHeader
 import pw.binom.url.URL
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -47,21 +48,45 @@ class JsHttpRequestBody internal constructor(
     return text
   }
 
+  private var resp: HttpResponse? = null
+  private val flashWaters = arrayOf<Continuation<HttpResponse>>()
+
   override suspend fun flush(): HttpResponse {
-    check(!isFlushed) { "Request already flushed" }
+    val rr = resp
+    if (rr != null) {
+      return rr
+    }
+    if (isFlushed) {
+      return suspendCoroutine {
+        flashWaters.asDynamic().push(it)
+      }
+    }
     isFlushed = true
-    return suspendCoroutine { con ->
+    val resp = suspendCoroutine { con ->
       val xhr = XMLHttpRequest()
       xhr.responseType = XMLHttpRequestResponseType.TEXT
       xhr.onreadystatechange = {
         if (xhr.readyState == 4.toShort()) {
-          con.resume(JsHttpResponse(url = url, xhr = xhr))
+          val resp = JsHttpResponse(url = url, xhr = xhr)
+          flashWaters.forEach {
+            it.resume(resp)
+          }
+          flashWaters.asDynamic().length = 0
+          con.resume(resp)
         }
       }
       xhr.onerror = {
+        flashWaters.forEach {
+          it.resumeWithException(IOException("Can't get $url"))
+        }
+        flashWaters.asDynamic().length = 0
         con.resumeWithException(IOException("Can't get $url"))
       }
       xhr.onabort = {
+        flashWaters.forEach {
+          it.resumeWithException(CancellationException("Fetching $url was aborted"))
+        }
+        flashWaters.asDynamic().length = 0
         con.resumeWithException(CancellationException("Fetching $url was aborted"))
       }
       val text = text
@@ -79,6 +104,8 @@ class JsHttpRequestBody internal constructor(
         else -> xhr.send()
       }
     }
+    this.resp = resp
+    return resp
   }
 
   override suspend fun asyncClose() {

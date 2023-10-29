@@ -17,7 +17,7 @@ object ScramUtils {
      */
     fun createHmac(keyBytes: ByteArray, hmacName: String): HMac {
         return HMac(
-            algorithm = HMac.Algorithm.get(hmacName),
+            algorithm = HMac.AlgorithmType.get(hmacName),
             key = keyBytes,
         )
 //        val key: javax.crypto.spec.SecretKeySpec = javax.crypto.spec.SecretKeySpec(keyBytes, hmacName)

@@ -352,6 +352,18 @@ actual open class ByteBuffer(val native: NativeMem) :
 
   override fun read(dest: ByteBuffer): Int = readInto(dest)
 
+  fun write(data: Int8Array): Int {
+    ensureOpen()
+    val offset = 0
+    val length: Int = data.length
+    if (offset + length > data.length) throw IndexOutOfBoundsException()
+    val l = minOf(remaining, length)
+    (offset until (offset + l)).forEach {
+      native[position++] = data[it]
+    }
+    return l
+  }
+
   actual fun write(data: ByteArray, offset: Int, length: Int): Int {
     ensureOpen()
     if (offset + length > data.size) throw IndexOutOfBoundsException()

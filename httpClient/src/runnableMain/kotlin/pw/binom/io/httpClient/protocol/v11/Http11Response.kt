@@ -27,7 +27,7 @@ class Http11Response(
     override suspend fun asyncClose() {
         requestFinishedListener?.requestFinished(
             success = inputStream is AsyncHttpInput && inputStream.isEof,
-            responseKeepAlive = inputHeaders.keepAlive ?: defaultKeepAlive,
+            responseKeepAlive = inputHeaders.keepAlive ?: false,
         )
     }
 }

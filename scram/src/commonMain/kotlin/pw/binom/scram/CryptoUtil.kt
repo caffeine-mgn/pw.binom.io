@@ -104,7 +104,7 @@ object CryptoUtil {
      * @param message The message to compute the HMAC
      * @return The bytes of the computed HMAC value
      */
-    fun hmac(secretKeySpec: ByteArray, algorithm: HMac.Algorithm, message: ByteArray): ByteArray? {
+    fun hmac(secretKeySpec: ByteArray, algorithm: HMac.AlgorithmType, message: ByteArray): ByteArray? {
         val mac = HMac(
             algorithm = algorithm,
             key = secretKeySpec

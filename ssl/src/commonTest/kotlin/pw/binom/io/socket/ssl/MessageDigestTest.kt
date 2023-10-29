@@ -52,7 +52,7 @@ class MessageDigestTest {
     @Test
     fun hmac() {
         val key = ByteArray(16) { it.toByte() }
-        val m = HMac(HMac.Algorithm.SHA1, key)
+        val m = HMac(HMac.AlgorithmType.SHA1, key)
         m.update("123".encodeToByteArray())
         val result = m.finish()
         assertEquals("685E1FBDF866764979DAE46D15A62CCCDAFC307F", result.toHex().uppercase())

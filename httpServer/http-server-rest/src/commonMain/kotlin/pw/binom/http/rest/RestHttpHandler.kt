@@ -9,6 +9,7 @@ import pw.binom.http.rest.serialization.HttpInputDecoder
 import pw.binom.http.rest.serialization.HttpOutputEncoder
 import pw.binom.io.httpServer.HttpHandler
 import pw.binom.io.httpServer.HttpServerExchange
+import pw.binom.url.PathMask
 
 @Suppress("UNCHECKED_CAST")
 abstract class RestHttpHandler : HttpHandler {
@@ -17,19 +18,19 @@ abstract class RestHttpHandler : HttpHandler {
 
   private val handlers = ArrayList<EndpointHandler<out Any, out Any>>()
 
-  abstract suspend fun <TYPE, DATA> encodeBody(
+  protected open suspend fun <TYPE, DATA> encodeBody(
     descriptor: SerialDescriptor,
     exchange: HttpServerExchange,
-  ): EncodeFunc<TYPE, DATA>
+  ): EncodeFunc<TYPE, DATA> = EncodeFunc.notSupported()
 
-  abstract suspend fun <TYPE, DATA> decodeBody(
+  protected open suspend fun <TYPE, DATA> decodeBody(
     descriptor: SerialDescriptor?,
     exchange: HttpServerExchange,
-  ): DecodeFunc<TYPE, DATA>
+  ): DecodeFunc<TYPE, DATA> = DecodeFunc.notSupported()
 
   override suspend fun handle(exchange: HttpServerExchange) {
     handlers.forEach { handler ->
-      if (!exchange.path.isMatch(handler.requestDescription.path)) {
+      if (exchange.requestMethod != handler.method || !exchange.path.isMatch(handler.path)) {
         return@forEach
       }
       handler.handle(exchange)
@@ -40,6 +41,8 @@ abstract class RestHttpHandler : HttpHandler {
   }
 
   inner class EndpointHandler<REQUEST : Any, RESPONSE : Any>(
+    val path: PathMask,
+    val method: String,
     val requestDescription: EndpointDescription<REQUEST>,
     val responseDescription: EndpointDescription<RESPONSE>,
     val func: suspend (REQUEST) -> RESPONSE,
@@ -50,9 +53,23 @@ abstract class RestHttpHandler : HttpHandler {
       if (requestDescription.bodyIndex != -1) {
         val decoder = decodeBody<REQUEST, Any?>(requestDescription.bodyDescription, exchange)
         val inputData = decoder.read(exchange)
-        d.reset(exchange, requestDescription, inputData, decoder)
+        d.reset(
+          input = exchange,
+          description = requestDescription,
+          data = inputData,
+          body = decoder,
+          path = path,
+          responseCode = 0,
+        )
       } else {
-        d.reset(exchange, requestDescription, null, DecodeFunc.notSupported<REQUEST, RESPONSE>())
+        d.reset(
+          input = exchange,
+          description = requestDescription,
+          data = null,
+          body = DecodeFunc.notSupported<REQUEST, RESPONSE>(),
+          path = path,
+          responseCode = 0,
+        )
       }
 
       val response = func(requestDescription.serializer.deserialize(d))
@@ -85,13 +102,15 @@ abstract class RestHttpHandler : HttpHandler {
     val inputDesc = EndpointDescription.create(endpoint.request)
     val outputDesc = EndpointDescription.create(endpoint.response)
 
-    if (inputDesc.bodyDescription != null && endpoint.request !is BodyContext<*>) {
-      throw IllegalArgumentException("Invalid input ${endpoint.request.descriptor.serialName}: with @BodyParam you should implement BodyContext")
-    }
-    if (outputDesc.bodyDescription != null && endpoint.response !is BodyContext<*>) {
-      throw IllegalArgumentException("Invalid output ${endpoint.response.descriptor.serialName}: with @BodyParam you should implement BodyContext")
-    }
+//    if (inputDesc.bodyDescription != null && endpoint.request !is BodyContext<*>) {
+//      throw IllegalArgumentException("Invalid input ${endpoint.request.descriptor.serialName}: with @BodyParam you should implement BodyContext")
+//    }
+//    if (outputDesc.bodyDescription != null && endpoint.response !is BodyContext<*>) {
+//      throw IllegalArgumentException("Invalid output ${endpoint.response.descriptor.serialName}: with @BodyParam you should implement BodyContext")
+//    }
     handlers += EndpointHandler(
+      path = endpoint.path,
+      method = endpoint.method,
       requestDescription = inputDesc,
       responseDescription = outputDesc,
       func = func,

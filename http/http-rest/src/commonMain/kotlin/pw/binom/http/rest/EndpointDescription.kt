@@ -7,12 +7,10 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 
 import pw.binom.bitarray.BitArray64
 import pw.binom.http.rest.annotations.*
-import pw.binom.url.PathMask
-import pw.binom.url.toPathMask
 
 class EndpointDescription<T> private constructor(
-  val method: String,
-  val path: PathMask,
+//  val method: String,
+//  val path: PathMask,
   val nameByIndex: Map<Int, String>,
   val pathParamNames: Map<String, Int>,
   val headerParamNames: Map<String, Int>,
@@ -29,8 +27,8 @@ class EndpointDescription<T> private constructor(
   companion object {
     @Suppress("UNCHECKED_CAST")
     fun <T> create(serializer: KSerializer<T>): EndpointDescription<T> {
-      val endpoint = serializer.descriptor.annotations.find { it is EndpointMapping } as EndpointMapping?
-        ?: TODO("${serializer.descriptor.serialName} is not endpoint")
+//      val endpoint = serializer.descriptor.annotations.find { it is EndpointMapping } as EndpointMapping?
+//        ?: TODO("${serializer.descriptor.serialName} is not endpoint")
       val nameByIndex = HashMap<Int, String>()
       val pathParamNames = HashMap<String, Int>()
       val headerParamNames = HashMap<String, Int>()
@@ -57,14 +55,15 @@ class EndpointDescription<T> private constructor(
           if (responseCodeIndex != -1) {
             throw IllegalArgumentException("Only one field can be marked as @ResponseCode")
           }
-          when (serializer.descriptor.kind) {
+          val responseDesc = serializer.descriptor.getElementDescriptor(i)
+          when (responseDesc.kind) {
             PrimitiveKind.STRING,
             PrimitiveKind.INT,
             PrimitiveKind.LONG,
             PrimitiveKind.SHORT,
             -> responseCodeIndex = i
 
-            else -> throw IllegalArgumentException("Can't use ${serializer.descriptor.kind} is ResponseCode")
+            else -> throw IllegalArgumentException("Can't use ${responseDesc.serialName} (${responseDesc.kind}) as ResponseCode")
           }
         }
         if (path != null) {
@@ -87,8 +86,8 @@ class EndpointDescription<T> private constructor(
         }
       }
       return EndpointDescription(
-        method = endpoint.method,
-        path = endpoint.path.toPathMask(),
+//        method = endpoint.method,
+//        path = endpoint.path.toPathMask(),
         nameByIndex = nameByIndex,
         pathParamNames = pathParamNames,
         headerParamNames = headerParamNames,

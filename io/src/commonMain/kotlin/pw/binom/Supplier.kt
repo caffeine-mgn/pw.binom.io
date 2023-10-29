@@ -1,32 +1,32 @@
 package pw.binom
 
 fun interface Supplier<T> {
-    fun get(): T
+  fun get(): T
 }
 
 fun <T, R> Supplier<T>.map(func: (T) -> R) = Supplier {
-    func(get())
+  func(get())
 }
 
 fun <T> Supplier<T>.takeIf(func: (T) -> Boolean): T? {
-    val r = get()
-    return if (func(r)) {
-        r
-    } else {
-        null
-    }
+  val r = get()
+  return if (func(r)) {
+    r
+  } else {
+    null
+  }
 }
 
 @Suppress("UNCHECKED_CAST")
 fun <T> Supplier<T>.oneShot() = object : Supplier<T> {
-    private var result: T? = null
-    private var done = false
+  private var result: T? = null
+  private var done = false
 
-    override fun get(): T {
-        if (!done) {
-            result = this@oneShot.get()
-            done = true
-        }
-        return result as T
+  override fun get(): T {
+    if (!done) {
+      result = this@oneShot.get()
+      done = true
     }
+    return result as T
+  }
 }

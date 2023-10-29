@@ -11,7 +11,7 @@ import kotlinx.serialization.modules.SerializersModule
 class StringEncoder(override val serializersModule: SerializersModule = EmptySerializersModule()) : Encoder {
     var value = ""
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
-        throw SerializationException("Can't encode ${descriptor.serialName}. Struct decoding not supported")
+        throw SerializationException("Can't encode ${descriptor.serialName}. Struct encoding not supported")
     }
 
     override fun encodeBoolean(value: Boolean) {

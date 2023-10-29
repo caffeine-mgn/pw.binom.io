@@ -31,8 +31,8 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
     var req: HttpRequestBody? = null
     var output: AsyncOutput? = null
     suspend fun req(): HttpRequestBody {
-      var q = req
-      return if (q == null) {
+      var reqInternal = req
+      return if (reqInternal == null) {
         val bodyDefined = headers.contentLength != null &&
           headers.transferEncoding?.let { Encoding.CHUNKED in it } ?: false
 
@@ -40,11 +40,11 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
           headers.transferEncoding = Encoding.CHUNKED
         }
 
-        q = makeRequest()
-        req = q
-        q
+        reqInternal = makeRequest()
+        req = reqInternal
+        reqInternal
       } else {
-        q
+        reqInternal
       }
     }
 
@@ -97,6 +97,10 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
   }
 
   override suspend fun getResponse(): HttpResponse {
+    val httpRequestBody = httpRequestBody
+    if (httpRequestBody != null) {
+      return httpRequestBody.flush()
+    }
     val req = makeRequest()
     return req.flush()
   }
