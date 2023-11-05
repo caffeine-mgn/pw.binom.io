@@ -9,7 +9,7 @@ plugins {
   if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
     id("com.android.library")
   }
-  id("org.jetbrains.kotlin.plugin.allopen") version "1.8.21"
+  id("org.jetbrains.kotlin.plugin.allopen") version "1.9.20"
 }
 apply<pw.binom.KotlinConfigPlugin>()
 

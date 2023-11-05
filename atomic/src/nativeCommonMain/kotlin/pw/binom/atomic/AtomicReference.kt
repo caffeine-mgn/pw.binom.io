@@ -7,7 +7,7 @@ actual value class AtomicReference<T>(val native: InternalAtomicReference<T>) {
     native.compareAndSet(expected, new)
 
   actual inline fun compareAndSwap(expected: T, new: T): T =
-    native.compareAndSwap(expected, new)
+    native.compareAndExchange(expected, new)
 
   actual inline fun getValue(): T = native.value
 

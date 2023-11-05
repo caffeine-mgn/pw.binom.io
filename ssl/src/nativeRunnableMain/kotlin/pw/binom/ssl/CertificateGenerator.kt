@@ -6,18 +6,20 @@ import platform.openssl.X509_NAME
 import platform.openssl.X509_NAME_add_entry_by_txt
 import platform.posix.memcpy
 
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 fun CPointer<X509_NAME>.addEntry(name: String, value: String) {
-    memScoped {
-        val value1 = allocArray<UByteVar>(value.length + 1)
-        memcpy(value1, value.cstr, (value.length + 1).convert())
-        value1[value.length] = 0.toUByte()
-        X509_NAME_add_entry_by_txt(this@addEntry, name, MBSTRING_ASC, value1, -1, -1, 0)
-    }
+  memScoped {
+    val value1 = allocArray<UByteVar>(value.length + 1)
+    memcpy(value1, value.cstr, (value.length + 1).convert())
+    value1[value.length] = 0.toUByte()
+    X509_NAME_add_entry_by_txt(this@addEntry, name, MBSTRING_ASC, value1, -1, -1, 0)
+  }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 fun CPointer<X509_NAME>.addEntry(text: String) {
-    val items = text.split("=", limit = 2)
-    addEntry(items[0], items[1])
+  val items = text.split("=", limit = 2)
+  addEntry(items[0], items[1])
 }
 
 /*

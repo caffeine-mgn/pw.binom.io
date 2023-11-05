@@ -1,7 +1,10 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
 package pw.binom.io
 
 import kotlinx.cinterop.*
-import platform.posix.NULL
+import pw.binom.memory.Memory
+import pw.binom.memory.copyInto
 import kotlin.time.ExperimentalTime
 
 sealed interface MemAccess : Closeable {
@@ -80,13 +83,22 @@ sealed interface MemAccess : Closeable {
   }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 actual open class ByteBuffer private constructor(
   val data: MemAccess,
 ) : Channel, Buffer, ByteBufferProvider {
   actual companion object;
 
   actual constructor(size: Int) : this(MemAccess.HeapMemory(size))
-  actual constructor(array: ByteArray) : this(if (array.isEmpty()) MemAccess.EmptyMemory else MemAccess.ArrayMemory(array))
+  actual constructor(array: ByteArray) : this(
+    if (array.isEmpty()) {
+      MemAccess.EmptyMemory
+    } else {
+      MemAccess.ArrayMemory(
+        array,
+      )
+    },
+  )
 
 //    actual companion object {
 //        actual fun alloc(size: Int): AbstractByteBuffer = AbstractByteBuffer(MemAccess.NativeMemory(size), null)

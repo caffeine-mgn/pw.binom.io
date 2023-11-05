@@ -14,10 +14,11 @@ private var localThread: Thread? = null
 private fun genName() = "Thread-${createCount++}"
 
 @Suppress("OPT_IN_IS_NOT_ENABLED")
-@OptIn(UnsafeNumber::class)
+@OptIn(UnsafeNumber::class, ExperimentalForeignApi::class)
 actual abstract class Thread(_id: Long, name: String) {
-  private val e = nativeHeap.alloc<ThreadData>().ptr//malloc(sizeOf<ThreadData>().convert())!!.reinterpret<ThreadData>()
-//  private val e = internal_createThreadData()!!
+  private val e = nativeHeap.alloc<ThreadData>().ptr // malloc(sizeOf<ThreadData>().convert())!!.reinterpret<ThreadData>()
+
+  //  private val e = internal_createThreadData()!!
   var _id: Long
     get() = internal_get_thread_id(e)
     set(value) {
@@ -98,6 +99,7 @@ actual abstract class Thread(_id: Long, name: String) {
     internal_pthread_join(e)
 //        pthread_join(_id.reinterpret(), null)
   }
+
   init {
     this._id = _id
     this.name = name
@@ -141,8 +143,8 @@ actual abstract class Thread(_id: Long, name: String) {
     get() = internalIsActive
 }
 
+@OptIn(ExperimentalForeignApi::class)
 private val func: CPointer<CFunction<(COpaquePointer?) -> COpaquePointer?>> = staticCFunction { ptr ->
-  initRuntimeIfNeeded()
   val thread = ptr!!.asStableRef<Thread>()
   try {
     thread.get().nativeExecute()

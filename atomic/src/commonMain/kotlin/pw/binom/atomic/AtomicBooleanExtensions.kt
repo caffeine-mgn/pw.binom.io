@@ -24,7 +24,7 @@ inline fun <T> AtomicBoolean.synchronize(func: () -> T): T {
   }
 }
 
-@OptIn(ExperimentalTime::class)
+@Suppress("NOTHING_TO_INLINE")
 inline fun AtomicBoolean.lock(timeout: Duration) {
   val bb = TimeSource.Monotonic.markNow()
   while (true) {
@@ -37,6 +37,7 @@ inline fun AtomicBoolean.lock(timeout: Duration) {
   }
 }
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun AtomicBoolean.lock() {
   while (true) {
     if (compareAndSet(false, true)) {
@@ -46,6 +47,7 @@ inline fun AtomicBoolean.lock() {
   }
 }
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun AtomicBoolean.unlock() {
   setValue(false)
 }

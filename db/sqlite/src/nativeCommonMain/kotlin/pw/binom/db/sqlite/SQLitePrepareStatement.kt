@@ -11,6 +11,7 @@ import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.sync.SyncResultSet
 import pw.binom.io.ClosedException
 
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 class SQLitePrepareStatement(
   override val connection: SQLiteConnector,
   internal val native: CPointer<CPointerVar<sqlite3_stmt>>,
@@ -36,7 +37,7 @@ class SQLitePrepareStatement(
 
   private inline fun checkRange(index: Int) {
     if (index < 0 || index >= maxParams) {
-      throw ArrayIndexOutOfBoundsException()
+      throw IndexOutOfBoundsException()
     }
   }
 

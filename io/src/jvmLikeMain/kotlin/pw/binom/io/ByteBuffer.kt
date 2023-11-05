@@ -7,13 +7,13 @@ import kotlin.contracts.contract
 import java.nio.ByteBuffer as JByteBuffer
 
 actual open class ByteBuffer(var native: JByteBuffer) :
-    Channel,
-    Buffer,
-    ByteBufferProvider {
-    actual companion object;
+  Channel,
+  Buffer,
+  ByteBufferProvider {
+  actual companion object;
 
-    actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
-    actual constructor(array: ByteArray) : this(JByteBuffer.wrap(array))
+  actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
+  actual constructor(array: ByteArray) : this(JByteBuffer.wrap(array))
 
 //    actual companion object {
 //        actual fun alloc(size: Int): AbstractByteBuffer = AbstractByteBuffer(JByteBuffer.allocateDirect(size), null)
@@ -30,28 +30,28 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 //        println("create ${rr++}   $stack")
 //    }
 
-    private var closed = false
+  private var closed = false
 
-    actual open val isClosed: Boolean
-        get() = closed
+  actual open val isClosed: Boolean
+    get() = closed
 
-    override fun flip() {
-        ensureOpen()
-        native.flip()
+  override fun flip() {
+    ensureOpen()
+    native.flip()
+  }
+
+  override val remaining: Int
+    get() {
+      return native.remaining()
     }
 
-    override val remaining: Int
-        get() {
-            return native.remaining()
-        }
-
-    actual fun skip(length: Long): Long {
-        ensureOpen()
-        val pos = minOf((native.position() + length).toInt(), native.limit())
-        val len = pos - native.position()
-        native.position(pos)
-        return len.toLong()
-    }
+  actual fun skip(length: Long): Long {
+    ensureOpen()
+    val pos = minOf((native.position() + length).toInt(), native.limit())
+    val len = pos - native.position()
+    native.position(pos)
+    return len.toLong()
+  }
 
 //    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
 //        checkClosed()
@@ -67,289 +67,289 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 //        }
 //    }
 
-    override fun write(data: ByteBuffer): Int {
-        ensureOpen()
-        if (data === this) {
-            throw IllegalArgumentException()
+  override fun write(data: ByteBuffer): Int {
+    ensureOpen()
+    if (data === this) {
+      throw IllegalArgumentException()
+    }
+    val l = minOf(remaining, data.remaining)
+    length(l) { self ->
+      data.length(l) { src ->
+        self.native.put(src.native)
+      }
+    }
+    return l
+  }
+
+  override fun flush() {
+    ensureOpen()
+  }
+
+  override fun close() {
+    ensureOpen()
+    preClose()
+    ByteBufferMetric.dec(this)
+    native = JByteBuffer.allocate(0)
+    closed = true
+  }
+
+  override var position: Int
+    get() {
+      return native.position()
+    }
+    set(value) {
+      native.position(value)
+    }
+  override var limit: Int
+    get() {
+      return native.limit()
+    }
+    set(value) {
+      native.limit(value)
+    }
+
+  override val capacity: Int
+    get() {
+      return native.capacity()
+    }
+
+  init {
+    ByteBufferMetric.inc(this)
+  }
+
+  actual operator fun get(index: Int): Byte {
+    ensureOpen()
+    return native.get(index)
+  }
+
+  actual operator fun set(index: Int, value: Byte) {
+    ensureOpen()
+    native.put(index, value)
+  }
+
+  actual fun readInto(dest: ByteBuffer): Int {
+    ensureOpen()
+    val len = minOf(remaining, dest.remaining)
+    if (len == 0) {
+      return len
+    }
+    val selfLimit = native.limit()
+    val destLimit = dest.native.limit()
+    native.limit(native.position() + len)
+    dest.native.limit(dest.native.position() + len)
+    dest.native.put(native)
+    native.limit(selfLimit)
+    dest.native.limit(destLimit)
+    return len
+  }
+
+  override fun read(dest: ByteBuffer): Int = readInto(dest)
+
+  actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
+    require(dest.size - offset >= length)
+    ensureOpen()
+    val l = minOf(remaining, length)
+    native.get(dest, offset, l)
+    return l
+  }
+
+  actual fun getByte(): Byte {
+    ensureOpen()
+    try {
+      return native.get()
+    } catch (e: BufferUnderflowException) {
+      throw EOFException()
+    }
+  }
+
+  actual fun reset(position: Int, length: Int): ByteBuffer {
+    ensureOpen()
+    native.position(position)
+    native.limit(position + length)
+    return this
+  }
+
+  actual fun put(value: Byte) {
+    ensureOpen()
+    native.put(value)
+  }
+
+  override fun clear() {
+    ensureOpen()
+    native.clear()
+  }
+
+  override val elementSizeInBytes: Int
+    get() = 1
+
+  actual fun realloc(newSize: Int): ByteBuffer {
+    ensureOpen()
+    val new = ByteBuffer(newSize)
+    if (newSize > capacity) {
+      native.hold(0, capacity) { self ->
+        new.native.update(0, native.capacity()) { new ->
+          new.put(self)
         }
-        val l = minOf(remaining, data.remaining)
-        length(l) { self ->
-            data.length(l) { src ->
-                self.native.put(src.native)
-            }
+      }
+      new.position = position
+      new.limit = limit
+    } else {
+      native.hold(0, newSize) { self ->
+        new.native.update(0, newSize) { new ->
+          new.put(self)
         }
-        return l
+      }
+      new.position = minOf(position, newSize)
+      new.limit = minOf(limit, newSize)
     }
+    return new
+  }
 
-    override fun flush() {
-        ensureOpen()
+  actual fun toByteArray(): ByteArray {
+    ensureOpen()
+    return toByteArray(remaining)
+  }
+
+  actual fun toByteArray(limit: Int): ByteArray {
+    ensureOpen()
+    val r = ByteArray(minOf(remaining, limit))
+    val p = native.position()
+    val l = native.limit()
+    try {
+      native.get(r)
+    } finally {
+      native.position(p)
+      native.limit(l)
     }
+    return r
+  }
 
-    override fun close() {
-        ensureOpen()
-        preClose()
-        ByteBufferMetric.dec(this)
-        native = JByteBuffer.allocate(0)
-        closed = true
+  actual fun write(data: ByteArray, offset: Int, length: Int): Int {
+    ensureOpen()
+    val l = minOf(remaining, length)
+    native.put(data, offset, l)
+    return l
+  }
+
+  override fun compact() {
+    ensureOpen()
+    if (position == 0) {
+      native.clear()
+    } else {
+      native.compact()
     }
+  }
 
-    override var position: Int
-        get() {
-            return native.position()
-        }
-        set(value) {
-            native.position(value)
-        }
-    override var limit: Int
-        get() {
-            return native.limit()
-        }
-        set(value) {
-            native.limit(value)
-        }
-
-    override val capacity: Int
-        get() {
-            return native.capacity()
-        }
-
-    init {
-        ByteBufferMetric.inc(this)
+  actual fun peek(): Byte {
+    ensureOpen()
+    if (position == limit) {
+      throw NoSuchElementException()
     }
+    return get(position)
+  }
 
-    actual operator fun get(index: Int): Byte {
-        ensureOpen()
-        return native.get(index)
+  actual fun subBuffer(index: Int, length: Int): ByteBuffer {
+    ensureOpen()
+    val p = position
+    val l = limit
+    try {
+      position = 0
+      limit = capacity
+      position = index
+      limit = index + length
+      val newBytes = ByteBuffer(length)
+      newBytes.write(this)
+      return newBytes
+    } finally {
+      position = p
+      limit = l
     }
+  }
 
-    actual operator fun set(index: Int, value: Byte) {
-        ensureOpen()
-        native.put(index, value)
+  actual fun free() {
+    ensureOpen()
+    val newLimit = remaining
+    native.compact()
+    native.position(0)
+    native.limit(newLimit)
+  }
+
+  override fun get(): ByteBuffer = this
+
+  override fun reestablish(buffer: ByteBuffer) {
+    require(buffer === this) { "Buffer should equals this buffer" }
+    check(!closed) { "Buffer closed" }
+  }
+
+  protected actual open fun preClose() {
+    // Do nothing
+  }
+
+  internal actual open fun ensureOpen() {
+    if (closed) {
+      throw ClosedException()
     }
+  }
 
-    actual fun readInto(dest: ByteBuffer): Int {
-        ensureOpen()
-        val len = minOf(remaining, dest.remaining)
-        if (len == 0) {
-            return len
-        }
-        val selfLimit = native.limit()
-        val destLimit = dest.native.limit()
-        native.limit(native.position() + len)
-        dest.native.limit(dest.native.position() + len)
-        dest.native.put(native)
-        native.limit(selfLimit)
-        dest.native.limit(destLimit)
-        return len
-    }
+  override fun skipAll(bufferSize: Int) {
+    position = limit
+  }
 
-    override fun read(dest: ByteBuffer): Int = readInto(dest)
+  override fun skipAll(buffer: ByteBuffer) {
+    position = limit
+  }
 
-    actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
-        require(dest.size - offset >= length)
-        ensureOpen()
-        val l = minOf(remaining, length)
-        native.get(dest, offset, l)
-        return l
-    }
+  override fun skip(bytes: Long, buffer: ByteBuffer) {
+    internalSkip(bytes)
+  }
 
-    actual fun getByte(): Byte {
-        ensureOpen()
-        try {
-            return native.get()
-        } catch (e: BufferUnderflowException) {
-            throw EOFException()
-        }
-    }
-
-    actual fun reset(position: Int, length: Int): ByteBuffer {
-        ensureOpen()
-        native.position(position)
-        native.limit(position + length)
-        return this
-    }
-
-    actual fun put(value: Byte) {
-        ensureOpen()
-        native.put(value)
-    }
-
-    override fun clear() {
-        ensureOpen()
-        native.clear()
-    }
-
-    override val elementSizeInBytes: Int
-        get() = 1
-
-    actual fun realloc(newSize: Int): ByteBuffer {
-        ensureOpen()
-        val new = ByteBuffer(newSize)
-        if (newSize > capacity) {
-            native.hold(0, capacity) { self ->
-                new.native.update(0, native.capacity()) { new ->
-                    new.put(self)
-                }
-            }
-            new.position = position
-            new.limit = limit
-        } else {
-            native.hold(0, newSize) { self ->
-                new.native.update(0, newSize) { new ->
-                    new.put(self)
-                }
-            }
-            new.position = minOf(position, newSize)
-            new.limit = minOf(limit, newSize)
-        }
-        return new
-    }
-
-    actual fun toByteArray(): ByteArray {
-        ensureOpen()
-        return toByteArray(remaining)
-    }
-
-    actual fun toByteArray(limit: Int): ByteArray {
-        ensureOpen()
-        val r = ByteArray(minOf(remaining, limit))
-        val p = native.position()
-        val l = native.limit()
-        try {
-            native.get(r)
-        } finally {
-            native.position(p)
-            native.limit(l)
-        }
-        return r
-    }
-
-    actual fun write(data: ByteArray, offset: Int, length: Int): Int {
-        ensureOpen()
-        val l = minOf(remaining, length)
-        native.put(data, offset, l)
-        return l
-    }
-
-    override fun compact() {
-        ensureOpen()
-        if (position == 0) {
-            native.clear()
-        } else {
-            native.compact()
-        }
-    }
-
-    actual fun peek(): Byte {
-        ensureOpen()
-        if (position == limit) {
-            throw NoSuchElementException()
-        }
-        return get(position)
-    }
-
-    actual fun subBuffer(index: Int, length: Int): ByteBuffer {
-        ensureOpen()
-        val p = position
-        val l = limit
-        try {
-            position = 0
-            limit = capacity
-            position = index
-            limit = index + length
-            val newBytes = ByteBuffer(length)
-            newBytes.write(this)
-            return newBytes
-        } finally {
-            position = p
-            limit = l
-        }
-    }
-
-    actual fun free() {
-        ensureOpen()
-        val newLimit = remaining
-        native.compact()
-        native.position(0)
-        native.limit(newLimit)
-    }
-
-    override fun get(): ByteBuffer = this
-
-    override fun reestablish(buffer: ByteBuffer) {
-        require(buffer === this) { "Buffer should equals this buffer" }
-        check(!closed) { "Buffer closed" }
-    }
-
-    protected actual open fun preClose() {
-        // Do nothing
-    }
-
-    internal actual open fun ensureOpen() {
-        if (closed) {
-            throw ClosedException()
-        }
-    }
-
-    override fun skipAll(bufferSize: Int) {
-        position = limit
-    }
-
-    override fun skipAll(buffer: ByteBuffer) {
-        position = limit
-    }
-
-    override fun skip(bytes: Long, buffer: ByteBuffer) {
-        internalSkip(bytes)
-    }
-
-    override fun skip(bytes: Long, bufferSize: Int) {
-        internalSkip(bytes)
-    }
+  override fun skip(bytes: Long, bufferSize: Int) {
+    internalSkip(bytes)
+  }
 }
 
 private inline fun JByteBuffer.copyTo(buffer: JByteBuffer): Int {
-    val l = minOf(buffer.remaining(), remaining())
-    buffer.put(buffer)
-    return l
+  val l = minOf(buffer.remaining(), remaining())
+  buffer.put(buffer)
+  return l
 }
 
 @OptIn(ExperimentalContracts::class)
 private inline fun <T> JByteBuffer.hold(offset: Int, length: Int, func: (JByteBuffer) -> T): T {
-    contract {
-        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
-    }
-    val p = position()
-    val l = limit()
-    try {
-        position(offset)
-        limit(offset + length)
-        return func(this)
-    } finally {
-        limit(l)
-        position(p)
-    }
+  contract {
+    callsInPlace(func, InvocationKind.EXACTLY_ONCE)
+  }
+  val p = position()
+  val l = limit()
+  try {
+    position(offset)
+    limit(offset + length)
+    return func(this)
+  } finally {
+    limit(l)
+    position(p)
+  }
 }
 
 @OptIn(ExperimentalContracts::class)
 private inline fun <T> JByteBuffer.update(offset: Int, length: Int, func: (JByteBuffer) -> T): T {
-    contract {
-        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
-    }
-    try {
-        position(offset)
-        limit(offset + length)
-        return func(this)
-    } finally {
-        clear()
-    }
+  contract {
+    callsInPlace(func, InvocationKind.EXACTLY_ONCE)
+  }
+  try {
+    position(offset)
+    limit(offset + length)
+    return func(this)
+  } finally {
+    clear()
+  }
 }
 
 fun JByteBuffer.putSafeInto(buffer: JByteBuffer): Int {
-    val l = limit()
-    val r = buffer.remaining()
-    this.limit(position() + minOf(buffer.remaining(), remaining()))
-    buffer.put(this)
-    limit(l)
-    return r - buffer.remaining()
+  val l = limit()
+  val r = buffer.remaining()
+  this.limit(position() + minOf(buffer.remaining(), remaining()))
+  buffer.put(this)
+  limit(l)
+  return r - buffer.remaining()
 }

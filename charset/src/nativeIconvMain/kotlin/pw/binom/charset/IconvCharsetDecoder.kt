@@ -3,27 +3,29 @@ package pw.binom.charset
 import pw.binom.CharBuffer
 import pw.binom.io.ByteBuffer
 import pw.binom.isBigEndian
+import kotlin.experimental.ExperimentalNativeApi
 
 // val NATIVE_CHARSET = if (pw.binom.Environment.isBigEndian) "UCS-2BE" else "UCS-2LE"
 // const val NATIVE_CHARSET = "WCHAR_T"
+@OptIn(ExperimentalNativeApi::class)
 val NATIVE_CHARSET =
-    if (Platform.osFamily == OsFamily.WINDOWS) "WCHAR_T" else if (pw.binom.Environment.isBigEndian) "UTF-16BE" else "UTF-16LE"
+  if (Platform.osFamily == OsFamily.WINDOWS) "WCHAR_T" else if (pw.binom.Environment.isBigEndian) "UTF-16BE" else "UTF-16LE"
 
 class IconvCharsetDecoder(name: String, onClose: ((AbstractIconv) -> Unit)?) : CharsetDecoder,
-    AbstractIconv(fromCharset = name, toCharset = NATIVE_CHARSET, onClose = onClose) {
+  AbstractIconv(fromCharset = name, toCharset = NATIVE_CHARSET, onClose = onClose) {
 
-    init {
-        CharsetMetrics.incDecoder()
-    }
+  init {
+    CharsetMetrics.incDecoder()
+  }
 
-    override fun decode(input: ByteBuffer, output: CharBuffer): CharsetTransformResult =
-        iconv(
-            input,
-            output
-        )
+  override fun decode(input: ByteBuffer, output: CharBuffer): CharsetTransformResult =
+    iconv(
+      input,
+      output,
+    )
 
-    override fun free() {
-        super.free()
-        CharsetMetrics.decDecoder()
-    }
+  override fun free() {
+    super.free()
+    CharsetMetrics.decDecoder()
+  }
 }

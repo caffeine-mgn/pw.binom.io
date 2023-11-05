@@ -1,6 +1,7 @@
 package pw.binom.security
 
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.openssl.*
 import pw.binom.crypto.AlgorithmInstance
 import pw.binom.crypto.ECPrivateKey
@@ -10,6 +11,7 @@ import pw.binom.ssl.KeyAlgorithm
 import pw.binom.ssl.createEcdsaFromPublicKey
 import pw.binom.throwError
 
+@OptIn(ExperimentalForeignApi::class)
 class SignatureEcdsa(messageDigest: AlgorithmInstance) : AbstractSignature(messageDigest) {
   override fun isAlgorithmSupport(algorithm: KeyAlgorithm) = algorithm == KeyAlgorithm.ECDSA
 
@@ -39,4 +41,5 @@ class SignatureEcdsa(messageDigest: AlgorithmInstance) : AbstractSignature(messa
   }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 private fun CPointer<EVP_PKEY>.setKey(key: CPointer<EC_KEY>) = EVP_PKEY_set1_EC_KEY(this, key) == 1

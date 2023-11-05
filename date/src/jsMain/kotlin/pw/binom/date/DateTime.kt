@@ -2,7 +2,7 @@ package pw.binom.date
 
 import kotlin.time.Duration
 
-actual value class DateTime(val time: Long = nowTime) {
+actual value class DateTime(val time: Long) {
     actual companion object {
         actual val systemZoneOffset: Int
             get() = -js("new Date().getTimezoneOffset()").unsafeCast<Int>()

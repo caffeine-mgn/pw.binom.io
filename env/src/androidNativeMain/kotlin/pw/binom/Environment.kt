@@ -1,4 +1,4 @@
 package pw.binom
 
 actual val Environment.userDirectory: String
-    get() = getEnv("HOME") ?: ""
+  get() = getEnv("HOME") ?: ""

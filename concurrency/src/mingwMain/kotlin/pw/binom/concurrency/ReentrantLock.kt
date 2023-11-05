@@ -2,15 +2,16 @@ package pw.binom.concurrency
 
 import kotlinx.cinterop.*
 import platform.windows.*
-import kotlin.native.internal.Cleaner
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.Cleaner
+import kotlin.native.ref.createCleaner
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
 private const val checkTime = 50
 
-@OptIn(ExperimentalStdlibApi::class)
+@OptIn(ExperimentalStdlibApi::class, ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 actual class ReentrantLock : Lock {
 
   private val native = nativeHeap.alloc<CRITICAL_SECTION>()
@@ -19,7 +20,7 @@ actual class ReentrantLock : Lock {
     InitializeCriticalSection(native.ptr)
   }
 
-  private val cleaner = createCleaner(native) { native ->
+  private val cleaner = kotlin.native.ref.createCleaner(native) { native ->
     LeaveCriticalSection(native.ptr)
     DeleteCriticalSection(native.ptr)
     nativeHeap.free(native)

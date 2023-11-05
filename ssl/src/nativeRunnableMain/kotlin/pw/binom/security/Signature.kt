@@ -1,6 +1,7 @@
 package pw.binom.security
 
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.openssl.*
 import pw.binom.crypto.AlgorithmInstance
 import pw.binom.io.ByteBuffer
@@ -52,4 +53,5 @@ actual interface Signature {
   actual fun verify(signature: ByteArray): Boolean
 }
 
+@OptIn(ExperimentalForeignApi::class)
 fun CPointer<EVP_PKEY>.setKey(key: CPointer<RSA>) = EVP_PKEY_set1_RSA(this, key) == 1

@@ -7,7 +7,7 @@ actual value class AtomicBoolean(val native: InternalAtomicBoolean) {
     native.compareAndSet(if (expected) 1 else 0, if (new) 1 else 0)
 
   actual inline fun compareAndSwap(expected: Boolean, new: Boolean): Boolean =
-    native.compareAndSwap(if (expected) 1 else 0, if (new) 1 else 0) > 0
+    native.compareAndExchange(if (expected) 1 else 0, if (new) 1 else 0) > 0
 
   actual inline fun getValue(): Boolean = native.value > 0
 

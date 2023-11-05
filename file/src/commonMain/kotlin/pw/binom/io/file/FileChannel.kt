@@ -10,7 +10,7 @@ expect class FileChannel(
   file: File,
   vararg mode: AccessType,
 ) : Channel, RandomAccess {
-  actual fun skip(length: Long): Long
+  fun skip(length: Long): Long
 }
 
 fun File.channel(vararg mode: AccessType): FileChannel {

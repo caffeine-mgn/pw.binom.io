@@ -7,6 +7,7 @@ import platform.windows.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 
+@OptIn(ExperimentalForeignApi::class)
 class MingwSocket(
   native: RawSocket,
   server: Boolean,

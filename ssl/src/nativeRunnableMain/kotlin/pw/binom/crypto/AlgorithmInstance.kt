@@ -1,8 +1,10 @@
 package pw.binom.crypto
 
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.openssl.*
 
+@OptIn(ExperimentalForeignApi::class)
 value class AlgorithmInstance(val ptr: CPointer<EVP_MD>) {
   companion object {
     fun sm3() = AlgorithmInstance(EVP_sm3()!!)

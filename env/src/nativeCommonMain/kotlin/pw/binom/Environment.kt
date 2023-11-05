@@ -1,15 +1,19 @@
+@file:OptIn(ExperimentalNativeApi::class)
+
 package pw.binom
 
+import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.Platform as KPlatform
 
 @Suppress("OPT_IN_IS_NOT_ENABLED")
-@OptIn(ExperimentalStdlibApi::class)
+@OptIn(ExperimentalNativeApi::class)
 actual val Environment.availableProcessors: Int
     get() = KPlatform.getAvailableProcessors()
 
 actual val Environment.os: OS
     get() = internalOs
 
+@OptIn(ExperimentalNativeApi::class)
 private val internalOs = when (KPlatform.osFamily) {
     OsFamily.ANDROID -> OS.ANDROID
     OsFamily.IOS -> OS.IOS

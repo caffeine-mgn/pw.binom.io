@@ -5,50 +5,52 @@ import platform.windows.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Output
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+@OptIn(ExperimentalForeignApi::class)
 actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output {
-    internal var writeFd = fd.first
-    internal var readFd = fd.second
+  internal var writeFd = fd.first
+  internal var readFd = fd.second
 
-    init {
-        if (SetHandleInformation(writeFd, HANDLE_FLAG_INHERIT, 0) <= 0) {
-            TODO("#4")
-        }
+  init {
+    if (SetHandleInformation(writeFd, HANDLE_FLAG_INHERIT.convert(), 0.convert()) <= 0) {
+      TODO("#4")
     }
+  }
 
-    actual constructor() : this(createPipe())
+  actual constructor() : this(createPipe())
 
-    actual constructor(input: PipeInput) : this(input.writeFd to input.readFd)
+  actual constructor(input: PipeInput) : this(input.writeFd to input.readFd)
 
-    override fun write(data: ByteBuffer): Int {
-        if (!data.isReferenceAccessAvailable()) {
-            return 0
-        }
-        memScoped {
-            val dwWritten = alloc<UIntVar>()
-
-            val r = data.ref(0) { dataPtr, _ ->
-                WriteFile(
-                    writeFd,
-                    dataPtr.getPointer(this).reinterpret(),
-                    data.remaining.convert(),
-                    dwWritten.ptr,
-                    null,
-                )
-            } ?: 0
-            if (r <= 0) {
-                TODO("WriteFile returned $r")
-            }
-            val wrote = dwWritten.value.toInt()
-            data.position += wrote
-            return wrote
-        }
+  override fun write(data: ByteBuffer): Int {
+    if (!data.isReferenceAccessAvailable()) {
+      return 0
     }
+    memScoped {
+      val dwWritten = alloc<UIntVar>()
 
-    override fun flush() {
-        // Do nonthing
+      val r = data.ref(0) { dataPtr, _ ->
+        WriteFile(
+          writeFd,
+          dataPtr.getPointer(this).reinterpret(),
+          data.remaining.convert(),
+          dwWritten.ptr,
+          null,
+        )
+      } ?: 0
+      if (r <= 0) {
+        TODO("WriteFile returned $r")
+      }
+      val wrote = dwWritten.value.toInt()
+      data.position += wrote
+      return wrote
     }
+  }
 
-    override fun close() {
-        CloseHandle(writeFd)
-    }
+  override fun flush() {
+    // Do nonthing
+  }
+
+  override fun close() {
+    CloseHandle(writeFd)
+  }
 }

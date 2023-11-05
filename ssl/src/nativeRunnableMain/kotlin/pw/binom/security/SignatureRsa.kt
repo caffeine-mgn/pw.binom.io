@@ -1,6 +1,7 @@
 package pw.binom.security
 
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.openssl.EVP_PKEY
 import platform.openssl.EVP_PKEY_free
 import platform.openssl.EVP_PKEY_new
@@ -11,6 +12,7 @@ import pw.binom.ssl.KeyAlgorithm
 import pw.binom.ssl.createRsaFromPrivateKey
 import pw.binom.ssl.createRsaFromPublicKey
 
+@OptIn(ExperimentalForeignApi::class)
 class SignatureRsa(messageDigest: AlgorithmInstance) : AbstractSignature(messageDigest) {
   override fun isAlgorithmSupport(algorithm: KeyAlgorithm) = algorithm == KeyAlgorithm.RSA
 

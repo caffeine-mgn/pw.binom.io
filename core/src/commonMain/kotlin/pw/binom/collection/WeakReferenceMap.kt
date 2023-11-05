@@ -1,22 +1,23 @@
 package pw.binom.collection
 
 fun <K : Any, V : Any> WeakReferenceMap<K, V>.getOrDefault(key: K, default: () -> V): V =
-    this[key] ?: default()
+  this[key] ?: default()
 
 fun <K : Any, V : Any> WeakReferenceMap<K, V>.getOrPut(key: K, put: () -> V): V {
-    val value = this[key]
-    if (value == null) {
-        val newValue = put()
-        this[key] = newValue
-        return newValue
-    }
-    return value
+  val value = this[key]
+  if (value == null) {
+    val newValue = put()
+    this[key] = newValue
+    return newValue
+  }
+  return value
 }
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class WeakReferenceMap<K : Any, V : Any>() {
-    operator fun set(key: K, value: V)
-    operator fun get(key: K): V?
-    actual operator fun contains(key: K): Boolean
-    fun delete(key: K)
-    fun cleanUp(): Int
+  operator fun set(key: K, value: V)
+  operator fun get(key: K): V?
+  operator fun contains(key: K): Boolean
+  fun delete(key: K)
+  fun cleanUp(): Int
 }

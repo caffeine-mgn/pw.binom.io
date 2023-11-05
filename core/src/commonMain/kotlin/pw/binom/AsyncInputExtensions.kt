@@ -168,7 +168,7 @@ suspend inline fun AsyncInput.readDouble(pool: ByteBufferPool) = pool.using { bu
  *
  * @receiver input
  * @param dest output
- * @param pool buffer for coping data from [this] to [dest]. Buffer will not close after data coped
+ * @param buffer buffer for coping data from [this] to [dest]
  * @return size of copied data
  */
 suspend fun AsyncInput.copyTo(dest: AsyncOutput, buffer: ByteBuffer): Long {
@@ -250,12 +250,6 @@ suspend fun AsyncInput.copyTo(output: Output, bufferSize: Int = DEFAULT_BUFFER_S
   ByteBuffer(bufferSize).use { buffer ->
     copyTo(dest = output, buffer = buffer)
   }
-
-suspend fun AsyncInput.skipAll(bufferSkipSize: Int = DEFAULT_BUFFER_SIZE) {
-  ByteBuffer(bufferSkipSize).use {
-    skipAll(it)
-  }
-}
 
 object EmptyAsyncInput : AsyncInput {
   override val available: Int

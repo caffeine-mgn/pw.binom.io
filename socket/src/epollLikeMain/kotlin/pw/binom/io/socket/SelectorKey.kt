@@ -1,10 +1,12 @@
 package pw.binom.io.socket
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.common.*
 import platform.posix.errno
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 
+@OptIn(ExperimentalForeignApi::class)
 actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
   AbstractNativeKey(), Closeable {
   val rawSocket: RawSocket

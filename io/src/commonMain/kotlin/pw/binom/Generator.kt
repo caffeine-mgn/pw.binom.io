@@ -46,6 +46,36 @@ interface Generator<T> : Closeable {
   suspend fun next(): GeneratorResult<T>
   val eof: Boolean
 
+  suspend fun toList(): List<T> {
+    val result = ArrayList<T>()
+    while (!eof) {
+      val e = next()
+      if (e.isEmpty) {
+        break
+      }
+      result += e.get()
+    }
+    return result
+  }
+
+  fun filter(func: (T) -> Boolean): Generator<T> = object : Generator<T> {
+    override suspend fun next(): GeneratorResult<T> {
+      while (true) {
+        val e = this@Generator.next()
+        if (e.isEmpty || func(e.get())) {
+          return e
+        }
+      }
+    }
+
+    override val eof: Boolean
+      get() = this@Generator.eof
+
+    override fun close() {
+      this@Generator.close()
+    }
+  }
+
   fun <R> map(mapping: suspend (T) -> R): Generator<R> = object : Generator<R> {
     override val eof: Boolean
       get() = this@Generator.eof

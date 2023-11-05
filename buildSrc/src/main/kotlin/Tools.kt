@@ -110,9 +110,9 @@ fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
       "js" -> js(KotlinJsCompilerType.IR) {
         browser {
           testTask {
-            useKarma {
-              useFirefoxHeadless()
-            }
+//            useKarma {
+//              useFirefoxHeadless()
+//            }
           }
         }
         nodejs()

@@ -61,86 +61,88 @@ actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
 }
 */
 
+@OptIn(ExperimentalForeignApi::class)
 actual fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?): RawSocket? {
-    return address.useNativeAddress { addr ->
-        Socket_accept(native, addr).takeIf { it > 0 }
-    }
-    /*+
-    if (address == null) {
-        return accept(native, null, null).takeIf { it != -1 }
-    }
-    val out = if (address is CommonMutableNetworkAddress) {
-        address
-    } else {
-        CommonMutableNetworkAddress()
-    }
-    val newClientRaw = memScoped {
-        val len = allocArray<socklen_tVar>(1)
-        len[0] = 28.convert()
-        val rr = accept(
-            native,
-            out.data.refTo(0).getPointer(this).reinterpret(),
-            len,
-        )
-        out.size = len[0].convert()
-        rr
-    }
+  return address.useNativeAddress { addr ->
+    Socket_accept(native, addr).takeIf { it > 0 }
+  }
+  /*+
+  if (address == null) {
+      return accept(native, null, null).takeIf { it != -1 }
+  }
+  val out = if (address is CommonMutableNetworkAddress) {
+      address
+  } else {
+      CommonMutableNetworkAddress()
+  }
+  val newClientRaw = memScoped {
+      val len = allocArray<socklen_tVar>(1)
+      len[0] = 28.convert()
+      val rr = accept(
+          native,
+          out.data.refTo(0).getPointer(this).reinterpret(),
+          len,
+      )
+      out.size = len[0].convert()
+      rr
+  }
 
-    if (out !== address) {
-        address.update(host = out.host, port = out.port)
-    }
-    return newClientRaw
-    */
+  if (out !== address) {
+      address.update(host = out.host, port = out.port)
+  }
+  return newClientRaw
+  */
 }
 
+@OptIn(ExperimentalForeignApi::class)
 actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
-    if (data.remaining <= 0) {
-        return 0
+  if (data.remaining <= 0) {
+    return 0
+  }
+  return address.useNativeAddress { addr ->
+    data.ref(0) { ptr, rem ->
+      Socket_receive(native, ptr, rem, addr)
     }
-    return address.useNativeAddress { addr ->
-        data.ref(0) { ptr, rem ->
-            Socket_receive(native, ptr, rem, addr)
-        }
-    }
-    /*
-    if (data.remaining == 0) {
-        return 0
-    }
-    return if (address == null) {
-        data.ref(0) { dataPtr, remaining ->
-            recvfrom(native, dataPtr, remaining.convert(), 0, null, null)
-        }.toInt()
-    } else {
-        val netAddress = if (address is CommonMutableNetworkAddress) {
-            address
-        } else {
-            CommonMutableNetworkAddress(address)
-        }
-        val readSize = netAddress.addr { addrPtr ->
-            data.ref(0) { dataPtr, remaining ->
-                memScoped {
-                    val len = allocArray<socklen_tVar>(1)
-                    len[0] = sizeOf<sockaddr_in6>().convert()
-                    val r = recvfrom(
-                        native,
-                        dataPtr,
-                        remaining.convert(),
-                        0,
-                        addrPtr.reinterpret(),
-                        len,
-                    )
-                    if (r >= 0) {
-                        netAddress.size = len[0].convert()
-                    }
-                    r
-                }
-            }.toInt()
-        }
-        if (readSize >= 0 && netAddress !== address) {
-            address.update(netAddress.host, netAddress.port)
-        }
-        readSize
-        */
+  }
+  /*
+  if (data.remaining == 0) {
+      return 0
+  }
+  return if (address == null) {
+      data.ref(0) { dataPtr, remaining ->
+          recvfrom(native, dataPtr, remaining.convert(), 0, null, null)
+      }.toInt()
+  } else {
+      val netAddress = if (address is CommonMutableNetworkAddress) {
+          address
+      } else {
+          CommonMutableNetworkAddress(address)
+      }
+      val readSize = netAddress.addr { addrPtr ->
+          data.ref(0) { dataPtr, remaining ->
+              memScoped {
+                  val len = allocArray<socklen_tVar>(1)
+                  len[0] = sizeOf<sockaddr_in6>().convert()
+                  val r = recvfrom(
+                      native,
+                      dataPtr,
+                      remaining.convert(),
+                      0,
+                      addrPtr.reinterpret(),
+                      len,
+                  )
+                  if (r >= 0) {
+                      netAddress.size = len[0].convert()
+                  }
+                  r
+              }
+          }.toInt()
+      }
+      if (readSize >= 0 && netAddress !== address) {
+          address.update(netAddress.host, netAddress.port)
+      }
+      readSize
+      */
 }
 
 actual fun createSocket(socket: RawSocket, server: Boolean): Socket = PosixSocket(native = socket, server = server)

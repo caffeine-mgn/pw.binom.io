@@ -6,6 +6,7 @@ import pw.binom.io.ByteBuffer
 import pw.binom.security.MessageDigest
 import pw.binom.security.NoSuchAlgorithmException
 
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 actual class HMac actual constructor(val algorithm: AlgorithmType, val key: ByteArray) : MessageDigest {
   private var ctx: CPointer<HMAC_CTX>? = null
 

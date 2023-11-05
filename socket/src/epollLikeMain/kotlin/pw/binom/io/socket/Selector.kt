@@ -12,11 +12,12 @@ import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
 import kotlin.time.*
 
+@OptIn(ExperimentalForeignApi::class)
 internal val STUB_BYTE = byteArrayOf(1).pin()
 private const val MAX_ELEMENTS = 1042
 
 @Suppress("OPT_IN_IS_NOT_ENABLED")
-@OptIn(UnsafeNumber::class, ExperimentalTime::class)
+@OptIn(UnsafeNumber::class, ExperimentalTime::class, ExperimentalForeignApi::class)
 actual class Selector : Closeable {
   private val selectLock = ReentrantLock()
 
@@ -40,7 +41,7 @@ actual class Selector : Closeable {
 
   private val eventImpl = object : pw.binom.io.socket.Event {
     var internalKey: SelectorKey? = null
-    var internalFlag=ListenFlags()
+    var internalFlag = ListenFlags()
     override val key: SelectorKey
       get() = internalKey ?: throw IllegalStateException("key not set")
     override val flags

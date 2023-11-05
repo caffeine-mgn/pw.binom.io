@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.common.internal_create_socket
 import platform.common.internal_get_last_error
 import platform.posix.AF_INET6
@@ -15,6 +16,7 @@ actual interface Socket : Closeable {
   val server: Boolean
   var keyHash: Int
 
+  @OptIn(ExperimentalForeignApi::class)
   actual companion object {
     actual fun createTcpClientNetSocket(): TcpClientNetSocket {
       val native = internal_create_socket(AF_INET6, SOCK_STREAM, 0)

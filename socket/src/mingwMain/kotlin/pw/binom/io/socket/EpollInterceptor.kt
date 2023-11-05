@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.convert
 import platform.common.FLAG_READ
@@ -8,6 +9,7 @@ import platform.common.setEventFlags
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 
+@OptIn(ExperimentalForeignApi::class)
 actual class EpollInterceptor actual constructor(selector: Selector) : Closeable {
 
   private val udpReadSocket = Socket.createUdpNetSocket()

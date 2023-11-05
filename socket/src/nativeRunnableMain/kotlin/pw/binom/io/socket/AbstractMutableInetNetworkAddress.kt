@@ -4,41 +4,42 @@ import kotlinx.cinterop.*
 import platform.common.NativeNetworkAddress
 import pw.binom.io.InHeap
 
+@OptIn(ExperimentalForeignApi::class)
 abstract class AbstractMutableInetNetworkAddress : MutableInetNetworkAddress {
-    val nativeData = InHeap.create<NativeNetworkAddress>()
+  val nativeData = InHeap.create<NativeNetworkAddress>()
 
-    //    @OptIn(ExperimentalStdlibApi::class)
+  //    @OptIn(ExperimentalStdlibApi::class)
 //    private val clearer = createCleaner(nativeData) {
 //        nativeHeap.free(it)
 //    }
 //    val data
 //        get() = nativeData.data
 
-    //    val data = ByteArray(28)
-    var size
-        set(value) {
-            nativeData.use {
-                it.pointed.size = value
-            }
-        }
-        get() = nativeData.use { it.pointed.size }
+  //    val data = ByteArray(28)
+  var size
+    set(value) {
+      nativeData.use {
+        it.pointed.size = value
+      }
+    }
+    get() = nativeData.use { it.pointed.size }
 
-    protected var hashCode = 0
+  protected var hashCode = 0
 
-    override fun hashCode(): Int = hashCode
+  override fun hashCode(): Int = hashCode
 
-    protected fun refreshHashCode(host: String, port: Int) {
-        var hashCode = host.hashCode()
-        hashCode = 31 * hashCode + port.hashCode()
-        this.hashCode = hashCode
+  protected fun refreshHashCode(host: String, port: Int) {
+    var hashCode = host.hashCode()
+    hashCode = 31 * hashCode + port.hashCode()
+    this.hashCode = hashCode
+  }
+
+  internal inline fun <T> addr(func: (CPointer<ByteVar>) -> T): T =
+    nativeData.use {
+      func(it.pointed.data)
     }
 
-    internal inline fun <T> addr(func: (CPointer<ByteVar>) -> T): T =
-        nativeData.use {
-            func(it.pointed.data)
-        }
+  override fun toMutable(): MutableInetNetworkAddress = this
 
-    override fun toMutable(): MutableInetNetworkAddress = this
-
-    override fun toString(): String = "$host:$port"
+  override fun toString(): String = "$host:$port"
 }

@@ -7,26 +7,26 @@ actual value class AtomicLong(val native: InternalAtomicLong) {
     native.compareAndSet(expected, new)
 
   actual inline fun compareAndSwap(expected: Long, new: Long): Long =
-    native.compareAndSwap(expected, new)
+    native.compareAndExchange(expected, new)
 
   actual inline fun addAndGet(delta: Long): Long =
     native.addAndGet(delta)
 
   actual inline fun increment() {
-    native.increment()
+    native.incrementAndGet()
   }
 
   actual inline fun decrement() {
-    native.decrement()
+    native.decrementAndGet()
   }
 
   actual inline operator fun inc(): AtomicLong {
-    native.increment()
+    native.incrementAndGet()
     return this
   }
 
   actual inline operator fun dec(): AtomicLong {
-    native.decrement()
+    native.decrementAndGet()
     return this
   }
 

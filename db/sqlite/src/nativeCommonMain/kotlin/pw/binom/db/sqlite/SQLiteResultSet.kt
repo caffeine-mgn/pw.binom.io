@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
 package pw.binom.db.sqlite
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
@@ -81,7 +83,7 @@ class SQLiteResultSet(
 
   private inline fun checkRange(index: Int) {
     if (index < 0 || index >= columnCount) {
-      throw ArrayIndexOutOfBoundsException()
+      throw IndexOutOfBoundsException()
     }
   }
 

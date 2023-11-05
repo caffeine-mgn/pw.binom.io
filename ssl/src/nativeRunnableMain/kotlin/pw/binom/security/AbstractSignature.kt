@@ -10,6 +10,7 @@ import pw.binom.io.ByteBuffer
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 abstract class AbstractSignature(val messageDigest: AlgorithmInstance) : Signature {
   protected var ctx: CPointer<EVP_MD_CTX>? = null
   protected var signMode = false

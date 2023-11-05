@@ -9,38 +9,39 @@ import platform.windows.accept
 import platform.windows.sockaddr_in6
 import pw.binom.io.ByteBuffer
 
+@OptIn(ExperimentalForeignApi::class)
 actual fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?): RawSocket? {
-    val native = if (address == null) {
-        platform.windows.accept(native.convert(), null, null)
+  val native = if (address == null) {
+    platform.windows.accept(native.convert(), null, null)
+  } else {
+    val out = if (address is CommonMutableInetNetworkAddress) {
+      address
     } else {
-        val out = if (address is CommonMutableInetNetworkAddress) {
-            address
-        } else {
-            CommonMutableInetNetworkAddress()
-        }
-        val rr2 = memScoped {
-            SetLastError(0)
-            val len = allocArray<IntVar>(1)
-            len[0] = 28
-            val rr = out.addr { addr ->
-                accept(
-                    native.convert(),
-                    addr.reinterpret(),
-                    len,
-                )
-            }
-            out.size = len[0]
-            rr
-        }
-        if (out !== address) {
-            address.update(out.host, out.port)
-        }
-        rr2
+      CommonMutableInetNetworkAddress()
     }
-    if (native == INVALID_SOCKET) {
-        return null // throw IOException("Can't accept new client")
+    val rr2 = memScoped {
+      SetLastError(0.convert())
+      val len = allocArray<IntVar>(1)
+      len[0] = 28
+      val rr = out.addr { addr ->
+        accept(
+          native.convert(),
+          addr.reinterpret(),
+          len,
+        )
+      }
+      out.size = len[0]
+      rr
     }
-    return native.convert()
+    if (out !== address) {
+      address.update(out.host, out.port)
+    }
+    rr2
+  }
+  if (native == INVALID_SOCKET) {
+    return null // throw IOException("Can't accept new client")
+  }
+  return native.convert()
 }
 
 // actual fun allowIpv4(native: RawSocket) {
@@ -77,49 +78,50 @@ actual fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?
 // }
 
 internal actual fun createSocket(socket: RawSocket, server: Boolean): Socket =
-    MingwSocket(native = socket, server = server)
+  MingwSocket(native = socket, server = server)
 
-//actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
+// actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
 //    throwUnixSocketNotSupported()
-//}
+// }
 
+@OptIn(ExperimentalForeignApi::class)
 actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
 //    if (data.remaining == 0) {
 //        return 0
 //    }
-    return if (address == null) {
-        data.ref(0) { dataPtr, remaining ->
-            recvfrom(native.convert(), dataPtr, remaining.convert(), 0, null, null)
-        }.toInt()
+  return if (address == null) {
+    data.ref(0) { dataPtr, remaining ->
+      recvfrom(native.convert(), dataPtr, remaining.convert(), 0, null, null)
+    }.toInt()
+  } else {
+    val netAddress = if (address is CommonMutableInetNetworkAddress) {
+      address
     } else {
-        val netAddress = if (address is CommonMutableInetNetworkAddress) {
-            address
-        } else {
-            CommonMutableInetNetworkAddress(address)
-        }
-        val readSize = netAddress.addr { addrPtr ->
-            data.ref(0) { dataPtr, remaining ->
-                memScoped {
-                    val len = allocArray<socklen_tVar>(1)
-                    len[0] = sizeOf<sockaddr_in6>().convert()
-                    val r = recvfrom(
-                        native.convert(),
-                        dataPtr,
-                        remaining.convert(),
-                        0,
-                        addrPtr.reinterpret(),
-                        len,
-                    )
-                    if (r >= 0) {
-                        netAddress.size = len[0].convert()
-                    }
-                    r
-                }
-            }.toInt()
-        }
-        if (readSize >= 0 && netAddress !== address) {
-            address.update(netAddress.host, netAddress.port)
-        }
-        readSize
+      CommonMutableInetNetworkAddress(address)
     }
+    val readSize = netAddress.addr { addrPtr ->
+      data.ref(0) { dataPtr, remaining ->
+        memScoped {
+          val len = allocArray<socklen_tVar>(1)
+          len[0] = sizeOf<sockaddr_in6>().convert()
+          val r = recvfrom(
+            native.convert(),
+            dataPtr,
+            remaining.convert(),
+            0,
+            addrPtr.reinterpret(),
+            len,
+          )
+          if (r >= 0) {
+            netAddress.size = len[0].convert()
+          }
+          r
+        }
+      }.toInt()
+    }
+    if (readSize >= 0 && netAddress !== address) {
+      address.update(netAddress.host, netAddress.port)
+    }
+    readSize
+  }
 }

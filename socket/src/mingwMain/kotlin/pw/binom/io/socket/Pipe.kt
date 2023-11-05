@@ -7,9 +7,10 @@ import platform.windows.*
 import platform.windows.HANDLEVar
 import pw.binom.io.Closeable
 
+@OptIn(ExperimentalForeignApi::class)
 internal actual fun createPipe(): Pair<Int, Int> {
 //    val name = "ololo"
-    return memScoped {
+  return memScoped {
 //        val readPipeHandle = alloc<HANDLEVar>()
 //        val writePipeHandle = alloc<HANDLEVar>()
 //        val saAttr = alloc<SECURITY_ATTRIBUTES>()
@@ -32,13 +33,13 @@ internal actual fun createPipe(): Pair<Int, Int> {
 //
 //        return internal_handle_to_descriptor(readPipeHandle.value!!) to internal_handle_to_descriptor(writePipeHandle.value!!)
 
-        val fds = allocArray<IntVar>(2)
-        val pipeResult = _pipe(fds, 2.convert(), O_BINARY)
-        if (pipeResult != 0) {
-            throw RuntimeException("Can't create pipe")
-        }
-        return fds[0] to fds[1]
+    val fds = allocArray<IntVar>(2)
+    val pipeResult = _pipe(fds, 2.convert(), O_BINARY)
+    if (pipeResult != 0) {
+      throw RuntimeException("Can't create pipe")
     }
+    return fds[0] to fds[1]
+  }
 //    memScoped {
 //        val namedPipe = CreateNamedPipe!!(
 //            name.wcstr.ptr,             // имя создаваемого канала
@@ -55,33 +56,34 @@ internal actual fun createPipe(): Pair<Int, Int> {
 }
 
 internal actual fun closePipe(value: Int) {
-    close(value)
+  close(value)
 }
 
+@OptIn(ExperimentalForeignApi::class)
 class Pipe : Closeable {
 
-    val readPipe = platform.posix.malloc(sizeOf<HANDLEVar>().convert())!!.reinterpret<HANDLEVar>()
-    val writePipe = platform.posix.malloc(sizeOf<HANDLEVar>().convert())!!.reinterpret<HANDLEVar>()
+  val readPipe = platform.posix.malloc(sizeOf<HANDLEVar>().convert())!!.reinterpret<HANDLEVar>()
+  val writePipe = platform.posix.malloc(sizeOf<HANDLEVar>().convert())!!.reinterpret<HANDLEVar>()
 
-    init {
-        memScoped {
-            val saAttr = alloc<SECURITY_ATTRIBUTES>()
-            memset(saAttr.ptr, 0, sizeOf<SECURITY_ATTRIBUTES>().convert())
+  init {
+    memScoped {
+      val saAttr = alloc<SECURITY_ATTRIBUTES>()
+      memset(saAttr.ptr, 0, sizeOf<SECURITY_ATTRIBUTES>().convert())
 
-            saAttr.nLength = sizeOf<SECURITY_ATTRIBUTES>().convert()
-            saAttr.bInheritHandle = TRUE
-            saAttr.lpSecurityDescriptor = null
-            if (CreatePipe(readPipe, writePipe, saAttr.ptr, 0) <= 0) {
-                TODO("#3")
-            }
-        }
+      saAttr.nLength = sizeOf<SECURITY_ATTRIBUTES>().convert()
+      saAttr.bInheritHandle = TRUE
+      saAttr.lpSecurityDescriptor = null
+      if (CreatePipe(readPipe, writePipe, saAttr.ptr, 0.convert()) <= 0) {
+        TODO("#3")
+      }
     }
+  }
 
-    override fun close() {
-        CloseHandle(readPipe.pointed.value)
-        CloseHandle(writePipe.pointed.value)
+  override fun close() {
+    CloseHandle(readPipe.pointed.value)
+    CloseHandle(writePipe.pointed.value)
 
-        free(readPipe)
-        free(writePipe)
-    }
+    free(readPipe)
+    free(writePipe)
+  }
 }

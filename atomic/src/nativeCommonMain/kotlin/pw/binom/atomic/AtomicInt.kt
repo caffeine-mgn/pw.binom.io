@@ -7,26 +7,26 @@ actual value class AtomicInt(@PublishedApi internal val native: InternalAtomicIn
     native.compareAndSet(expected, new)
 
   actual inline fun compareAndSwap(expected: Int, new: Int): Int =
-    native.compareAndSwap(expected, new)
+    native.compareAndExchange(expected, new)
 
   actual inline fun addAndGet(delta: Int): Int =
     native.addAndGet(delta)
 
   actual inline fun increment() {
-    native.increment()
+    native.incrementAndGet()
   }
 
   actual inline fun decrement() {
-    native.decrement()
+    native.decrementAndGet()
   }
 
   actual inline operator fun inc(): AtomicInt {
-    native.increment()
+    native.incrementAndGet()
     return this
   }
 
   actual inline operator fun dec(): AtomicInt {
-    native.decrement()
+    native.decrementAndGet()
     return this
   }
 

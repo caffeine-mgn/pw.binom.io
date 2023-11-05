@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.reinterpret
 import platform.common.internal_close_socket
@@ -8,8 +9,10 @@ import platform.common.internal_send_to_socket_udp
 import platform.common.internal_tcp_nodelay
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
+import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.identityHashCode
 
+@OptIn(ExperimentalNativeApi::class, ExperimentalForeignApi::class)
 abstract class AbstractSocket(override val native: RawSocket, override val server: Boolean) :
   TcpClientUnixSocket,
   TcpClientNetSocket,
