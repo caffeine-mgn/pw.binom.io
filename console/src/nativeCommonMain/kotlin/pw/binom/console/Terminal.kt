@@ -37,4 +37,14 @@ actual object Terminal {
     set(value) {
       internal_terminal_set_echo(if (value) 1 else 0)
     }
+  actual val isConsoleExist: Boolean
+    get() = internal_is_console() > 0
+
+  actual fun readEvent(): Event = pw.binom.console.readEvent()
+
+  actual var mouseTracking: MouseTracking = MouseTracking.OFF
+    set(value) {
+      field = value
+      pw.binom.console.setMouseTracking(value)
+    }
 }

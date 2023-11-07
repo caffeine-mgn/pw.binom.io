@@ -5,22 +5,22 @@ import pw.binom.io.Input
 import pw.binom.io.Output
 
 interface Process : Closeable {
-    companion object
+  companion object
 
-    val pid: Long
-    val stdin: Output
-    val stdout: Input
-    val stderr: Input
+  val pid: Long
+  val stdin: Output
+  val stdout: Input
+  val stderr: Input
 
-    /**
-     * Returns process exit statis
-     *
-     * @throws ProcessStillActive throw when process still running
-     */
-    val exitStatus: Int
-    val isActive: Boolean
+  /**
+   * Returns process exit statis
+   *
+   * @throws ProcessStillActive throw when process still running
+   */
+  val exitStatus: Int
+  val isActive: Boolean
 
-    fun join()
+  fun join()
 
-    class ProcessStillActive : ProcessException()
+  class ProcessStillActive : ProcessException()
 }

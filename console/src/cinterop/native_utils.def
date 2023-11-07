@@ -155,7 +155,17 @@ int internal_get_char(){
     if (bufferIsEnabled){
         internal_terminal_set_io_buffer(1);
     }
-
     return result;
+#endif
+}
+
+int internal_is_console(){
+#ifdef _WIN32
+    HWND consoleWnd = GetConsoleWindow();
+    DWORD dwProcessId;
+    GetWindowThreadProcessId(consoleWnd, &dwProcessId);
+    return GetCurrentProcessId() == dwProcessId;
+#else
+    return isatty(STDOUT_FILENO);
 #endif
 }

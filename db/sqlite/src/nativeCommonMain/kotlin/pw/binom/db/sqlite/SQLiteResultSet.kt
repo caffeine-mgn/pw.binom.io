@@ -12,11 +12,12 @@ import pw.binom.db.ColumnType
 import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncResultSet
 
+@OptIn(ExperimentalForeignApi::class)
 class SQLiteResultSet(
   val prepareStatement: SQLitePrepareStatement,
   var empty: Boolean,
 ) : SyncResultSet {
-  private var columnCount = 0
+  private var columnCount = 0u
   private val columnsMap = defaultMutableMap<String, Int>()
 
   override lateinit var columns: List<String>
@@ -33,9 +34,9 @@ class SQLiteResultSet(
   override fun columnType(column: String): ColumnType = columnType(columnIndex(column))
 
   init {
-    columnCount = sqlite3_column_count(stmt)
-    val out = defaultMutableList<String>(columnCount)
-    (0 until columnCount).forEach {
+    columnCount = sqlite3_column_count(stmt).toUInt()
+    val out = defaultMutableList<String>(columnCount.toInt())
+    (0 until columnCount.toInt()).forEach {
       val name = sqlite3_column_origin_name(stmt, it)
         ?.reinterpret<ByteVar>()
         ?.toKStringFromUtf8()
@@ -66,7 +67,7 @@ class SQLiteResultSet(
       }
 
       SQLITE_ROW -> {
-        columnCount = sqlite3_column_count(stmt)
+        columnCount = sqlite3_column_count(stmt).toUInt()
         true
       }
 
@@ -82,7 +83,7 @@ class SQLiteResultSet(
   }
 
   private inline fun checkRange(index: Int) {
-    if (index < 0 || index >= columnCount) {
+    if (index.toUInt() >= columnCount) {
       throw IndexOutOfBoundsException()
     }
   }
