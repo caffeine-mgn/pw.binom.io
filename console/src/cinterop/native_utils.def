@@ -7,6 +7,7 @@
     #include <stdio.h>
     #include <unistd.h>
     #include <termios.h>
+    #include <sys/select.h>
 #endif
 
 
@@ -87,6 +88,7 @@ int internal_terminal_clear_screen(){
 #ifdef _WIN32
 #else
 static struct termios current_terminal_mode;
+static struct termios default_current_terminal_mode;
 static int terminalConfigInited = 0;
 #endif
 
@@ -94,9 +96,21 @@ void private_terminal_full_state(){
     #ifdef _WIN32
     #else
     if (!terminalConfigInited){
-        tcgetattr(0, &current_terminal_mode);
+        int res;
+        res=tcgetattr(STDIN_FILENO, &current_terminal_mode);
+//        assert(res==0);
+        res=tcgetattr(STDIN_FILENO, &default_current_terminal_mode);
+//        assert(res==0);
         terminalConfigInited = 1;
     }
+    #endif
+}
+
+void internal_terminal_restore(){
+    private_terminal_full_state();
+    #ifdef _WIN32
+    #else
+    tcsetattr(STDIN_FILENO, TCSANOW, &default_current_terminal_mode);
     #endif
 }
 
@@ -109,6 +123,24 @@ void internal_terminal_set_io_buffer(int value){
     } else {
         current_terminal_mode.c_lflag &= ~ICANON;
     }
+    tcsetattr(0, TCSANOW, &current_terminal_mode);
+    #endif
+}
+
+int internal_set_raw_mode(){
+    private_terminal_full_state();
+    #ifdef _WIN32
+    #else
+    current_terminal_mode.c_lflag &= ~ICANON;
+    current_terminal_mode.c_lflag &= ~ECHO;
+    current_terminal_mode.c_lflag &= ~IEXTEN;
+
+    current_terminal_mode.c_iflag &= ~IXON;
+    current_terminal_mode.c_iflag &= ~ICRNL;
+    current_terminal_mode.c_iflag &= ~INLCR;
+
+    current_terminal_mode.c_cc[VMIN] = 0;
+    current_terminal_mode.c_cc[VTIME] = 1;
     tcsetattr(0, TCSANOW, &current_terminal_mode);
     #endif
 }
@@ -141,20 +173,37 @@ int internal_terminal_get_echo(){
     return current_terminal_mode.c_lflag & ECHO;
     #endif
 }
+#ifdef _WIN32
+#else
+fd_set terminal_fds;
+struct timeval terminal_tv = { .tv_sec = 0, .tv_usec = 0 };
+int fd_stdin = -1;
+
+int internal_wait_input(int tv_sec, int tv_usec){
+    if (fd_stdin == -1) {
+        fd_stdin = fileno(stdin);
+    }
+    FD_ZERO(&terminal_fds);
+    FD_SET(fileno(stdin), &terminal_fds);
+    terminal_tv.tv_sec = tv_sec;
+    terminal_tv.tv_usec = tv_usec;
+    return select(1, &terminal_fds, NULL, NULL, &terminal_tv);
+}
+#endif
 
 int internal_get_char(){
 #ifdef _WIN32
     return getchar();
 #else
-    int bufferIsEnabled = internal_terminal_get_io_buffer();
-    if (bufferIsEnabled){
-        internal_terminal_set_io_buffer(0);
-    }
+//    int bufferIsEnabled = internal_terminal_get_io_buffer();
+//    if (bufferIsEnabled){
+//        internal_terminal_set_io_buffer(0);
+//    }
     int result = (int)getc(stdin);
 
-    if (bufferIsEnabled){
-        internal_terminal_set_io_buffer(1);
-    }
+//    if (bufferIsEnabled){
+//        internal_terminal_set_io_buffer(1);
+//    }
     return result;
 #endif
 }

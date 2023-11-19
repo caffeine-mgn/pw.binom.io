@@ -10,10 +10,10 @@ class ParseTest {
 //
 //        XsdSchema.parse(StringReader(txt).asAsync())
 //
-////        val dom = StringReader(txt).asAsync().xmlTree()
-////        dom.childs.forEach {
-////            println("-->$it")
-////        }
-////        println("dom: $dom")
+// //        val dom = StringReader(txt).asAsync().xmlTree()
+// //        dom.childs.forEach {
+// //            println("-->$it")
+// //        }
+// //        println("dom: $dom")
 //    }
 }

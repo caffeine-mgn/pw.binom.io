@@ -32,4 +32,10 @@ actual object Terminal {
   actual var mouseTracking: MouseTracking
     get() = MouseTracking.OFF
     set(value) {}
+
+  actual fun restoreState() {
+  }
+
+  actual fun enterRawMode() {
+  }
 }

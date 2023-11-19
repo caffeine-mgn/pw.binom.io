@@ -47,4 +47,12 @@ actual object Terminal {
       field = value
       pw.binom.console.setMouseTracking(value)
     }
+
+  actual fun restoreState() {
+    internal_terminal_restore()
+  }
+
+  actual fun enterRawMode() {
+    internal_set_raw_mode()
+  }
 }

@@ -6,6 +6,7 @@ import org.jline.utils.InfoCmp
 actual object Terminal {
   private val terminal = TerminalBuilder.terminal()
   actual fun getSize(dest: ConsoleSize): Boolean {
+    terminal.enterRawMode()
     dest.width = terminal.width
     dest.height = terminal.height
     return true
@@ -45,4 +46,11 @@ actual object Terminal {
   actual var mouseTracking: MouseTracking
     get() = TODO("Not yet implemented")
     set(value) {}
+
+  actual fun restoreState() {
+  }
+
+  actual fun enterRawMode() {
+    terminal.enterRawMode()
+  }
 }

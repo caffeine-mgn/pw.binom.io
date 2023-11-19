@@ -1,15 +1,22 @@
 package pw.binom.console
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.convert
+import platform.common.internal_wait_input
 import platform.posix.fprintf
 import platform.posix.stdout
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalForeignApi::class)
 internal actual fun readEvent(): Event {
   val control = Terminal.readChar()
   if (control != 27) {
+    println("control->${control}")
     KeyEventImpl.char = control.toChar()
     return KeyEventImpl
   }
+  val bytes = internal_wait_input(0, 1000.milliseconds.inWholeMicroseconds.convert())
+  println("bytes=$bytes")
 
   val m1 = Terminal.readChar() // 0b1011011 // 91 // [
   val m2 = Terminal.readChar() // 0b1001101 // 77 // M

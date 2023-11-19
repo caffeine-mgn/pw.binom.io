@@ -12,4 +12,6 @@ expect object Terminal {
   fun clear(): Boolean
   fun readChar(): Int
   fun readEvent(): Event
+  fun enterRawMode()
+  fun restoreState()
 }

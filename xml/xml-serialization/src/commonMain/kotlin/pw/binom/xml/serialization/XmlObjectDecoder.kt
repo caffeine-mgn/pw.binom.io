@@ -17,9 +17,9 @@ import pw.binom.xml.serialization.annotations.XmlWrapper
 import pw.binom.xml.serialization.annotations.XmlWrapperNamespace
 
 class XmlObjectDecoder(
-    val root: XmlElement,
-    val descriptor: SerialDescriptor,
-    override val serializersModule: SerializersModule
+  val root: XmlElement,
+  val descriptor: SerialDescriptor,
+  override val serializersModule: SerializersModule,
 ) : AbstractDecoder() {
 
 //    override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean {
@@ -49,85 +49,85 @@ class XmlObjectDecoder(
 //        return str.toDoubleOrNull() ?: throw SerializationException("Can't convert \"$str\" to Double")
 //    }
 
-    var cursor = -1
-    override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
-        if (cursor + 1 == descriptor.elementsCount) {
-            return CompositeDecoder.DECODE_DONE
+  var cursor = -1
+  override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
+    if (cursor + 1 == descriptor.elementsCount) {
+      return CompositeDecoder.DECODE_DONE
+    }
+    while (true) {
+      ++cursor
+      if (cursor >= descriptor.elementsCount) {
+        return CompositeDecoder.DECODE_DONE
+      }
+      if (descriptor.isElementOptional(cursor)) {
+        val tag = descriptor.xmlName(cursor)
+        val ns = descriptor.xmlNamespace(cursor)
+        val optionalElement =
+          root.childs.find { it.tag == tag && it.nameSpace.inArray(ns) }
+        if (optionalElement == null) {
+          continue
+        } else {
+          break
         }
-        while (true) {
-            ++cursor
-            if (cursor >= descriptor.elementsCount) {
-                return CompositeDecoder.DECODE_DONE
-            }
-            if (descriptor.isElementOptional(cursor)) {
-                val tag = descriptor.xmlName(cursor)
-                val ns = descriptor.xmlNamespace(cursor)
-                val optionalElement =
-                    root.childs.find { it.tag == tag && it.nameSpace.inArray(ns) }
-                if (optionalElement == null) {
-                    continue
-                } else {
-                    break
-                }
-            }
-            break
-        }
-        return cursor
+      }
+      break
     }
+    return cursor
+  }
 
-    override fun decodeBoolean(): Boolean = when (val str = decodeString()) {
-        "true" -> true
-        "false" -> false
-        else -> throw SerializationException("Can't convert \"$str\" to Boolean")
-    }
+  override fun decodeBoolean(): Boolean = when (val str = decodeString()) {
+    "true" -> true
+    "false" -> false
+    else -> throw SerializationException("Can't convert \"$str\" to Boolean")
+  }
 
-    override fun decodeByte(): Byte {
-        val str = decodeString()
-        return str.toByteOrNull() ?: throw SerializationException("Can't convert \"$str\" to Byte")
-    }
+  override fun decodeByte(): Byte {
+    val str = decodeString()
+    return str.toByteOrNull() ?: throw SerializationException("Can't convert \"$str\" to Byte")
+  }
 
-    override fun decodeChar(): Char {
-        val str = decodeString()
-        if (str.length != 1) {
-            throw SerializationException("Can't convert \"$str\" to Char")
-        }
-        return str[0]
+  override fun decodeChar(): Char {
+    val str = decodeString()
+    if (str.length != 1) {
+      throw SerializationException("Can't convert \"$str\" to Char")
     }
+    return str[0]
+  }
 
-    override fun decodeDouble(): Double {
-        val str = decodeString()
-        return str.toDoubleOrNull() ?: throw SerializationException("Can't convert \"$str\" to Double")
-    }
+  override fun decodeDouble(): Double {
+    val str = decodeString()
+    return str.toDoubleOrNull() ?: throw SerializationException("Can't convert \"$str\" to Double")
+  }
 
-    override fun decodeFloat(): Float {
-        val str = decodeString()
-        return str.toFloatOrNull() ?: throw SerializationException("Can't convert \"$str\" to Float")
-    }
+  override fun decodeFloat(): Float {
+    val str = decodeString()
+    return str.toFloatOrNull() ?: throw SerializationException("Can't convert \"$str\" to Float")
+  }
 
-    override fun decodeInt(): Int {
-        val str = decodeString()
-        return str.toIntOrNull() ?: throw SerializationException("Can't convert \"$str\" to Int")
-    }
+  override fun decodeInt(): Int {
+    val str = decodeString()
+    return str.toIntOrNull() ?: throw SerializationException("Can't convert \"$str\" to Int")
+  }
 
-    override fun decodeLong(): Long {
-        val str = decodeString()
-        return str.toLongOrNull() ?: throw SerializationException("Can't convert \"$str\" to Long")
-    }
+  override fun decodeLong(): Long {
+    val str = decodeString()
+    return str.toLongOrNull() ?: throw SerializationException("Can't convert \"$str\" to Long")
+  }
 
-    override fun decodeShort(): Short {
-        val str = decodeString()
-        return str.toShortOrNull() ?: throw SerializationException("Can't convert \"$str\" to Short")
-    }
+  override fun decodeShort(): Short {
+    val str = decodeString()
+    return str.toShortOrNull() ?: throw SerializationException("Can't convert \"$str\" to Short")
+  }
 
 //    override fun decodeFloatElement(descriptor: SerialDescriptor, index: Int): Float {
 //        val str = decodeStringElement(descriptor, index)
 //        return str.toFloatOrNull() ?: throw SerializationException("Can't convert \"$str\" to Float")
 //    }
 
-    @ExperimentalSerializationApi
-    override fun decodeInlineElement(descriptor: SerialDescriptor, index: Int): Decoder {
-        TODO("Not yet implemented")
-    }
+  @ExperimentalSerializationApi
+  override fun decodeInlineElement(descriptor: SerialDescriptor, index: Int): Decoder {
+    TODO("Not yet implemented")
+  }
 
 //    override fun decodeIntElement(descriptor: SerialDescriptor, index: Int): Int {
 //        val str = decodeStringElement(descriptor, index)
@@ -139,34 +139,34 @@ class XmlObjectDecoder(
 //        return str.toLongOrNull() ?: throw SerializationException("Can't convert \"$str\" to Long")
 //    }
 
-    override fun <T> decodeSerializableValue(deserializer: DeserializationStrategy<T>, previousValue: T?): T {
-        val name = descriptor.xmlName(cursor)
-        val namespace = descriptor.xmlNamespace(cursor)
-        var from = root
-        if (deserializer.descriptor.kind is StructureKind.LIST) {
-            val wrapper = descriptor.getElementAnnotation<XmlWrapper>(cursor)?.tag
-            val wrapperNs = descriptor.getElementAnnotation<XmlWrapperNamespace>(cursor)?.ns
-            if (wrapper != null) {
-                from = from.childs.find { it.tag == wrapper && it.nameSpace.inArray(wrapperNs) }
-                    ?: throw SerializationException(
-                        "Wrapper not found"
-                    )
-            }
-            val elementDescription = deserializer.descriptor.getElementDescriptor(0)
-            return deserializer.deserialize(
-                XmlListDecoder(
-                    storage = from,
-                    serializersModule = serializersModule,
-                    tagName = elementDescription.xmlName(),
-                    nameSpace = elementDescription.xmlNamespace(),
-                )
-            )
-        }
-        val el =
-            root.childs.find { it.tag == name && it.nameSpace.inArray(namespace) }
-                ?: throw SerializationException("Not found ${descriptor.serialName}::${descriptor.getElementName(cursor)} (tag $name, ${root.childs.map { it.tag }})")
-        return deserializer.deserialize(XmlDecoder(el, serializersModule))
+  override fun <T> decodeSerializableValue(deserializer: DeserializationStrategy<T>, previousValue: T?): T {
+    val name = descriptor.xmlName(cursor)
+    val namespace = descriptor.xmlNamespace(cursor)
+    var from = root
+    if (deserializer.descriptor.kind is StructureKind.LIST) {
+      val wrapper = descriptor.getElementAnnotation<XmlWrapper>(cursor)?.tag
+      val wrapperNs = descriptor.getElementAnnotation<XmlWrapperNamespace>(cursor)?.ns
+      if (wrapper != null) {
+        from = from.childs.find { it.tag == wrapper && it.nameSpace.inArray(wrapperNs) }
+          ?: throw SerializationException(
+            "Wrapper not found",
+          )
+      }
+      val elementDescription = deserializer.descriptor.getElementDescriptor(0)
+      return deserializer.deserialize(
+        XmlListDecoder(
+          storage = from,
+          serializersModule = serializersModule,
+          tagName = elementDescription.xmlName(),
+          nameSpace = elementDescription.xmlNamespace(),
+        ),
+      )
     }
+    val el =
+      root.childs.find { it.tag == name && it.nameSpace.inArray(namespace) }
+        ?: throw SerializationException("Not found ${descriptor.serialName}::${descriptor.getElementName(cursor)} (tag $name, ${root.childs.map { it.tag }})")
+    return deserializer.deserialize(XmlDecoder(el, serializersModule))
+  }
 
 //    override fun <T> decodeSerializableElement(
 //        descriptor: SerialDescriptor,
@@ -205,34 +205,34 @@ class XmlObjectDecoder(
 //        return str.toShortOrNull() ?: throw SerializationException("Can't convert \"$str\" to Short")
 //    }
 
-    override fun decodeString(): String {
-        val name = descriptor.xmlName(cursor)
-        val ns = descriptor.xmlNamespace(cursor)
-        val isWrapped = descriptor.getElementAnnotation<XmlNode>(cursor) != null
-        fun genErr(): Nothing =
-            throw SerializationException(
-                "Can't find element ${descriptor.serialName}::${descriptor.getElementName(cursor)}"
-            )
-        return if (isWrapped) {
-            val result = root.childs.find { it.tag == name && it.nameSpace.inArray(ns) }?.body
-            if (result == null) {
-                val emptyValue = descriptor.xmlEmptyValue(cursor)
-                if (emptyValue != null) {
-                    return emptyValue
-                }
-            }
-            result ?: genErr()
-        } else {
-            val result = root.attributes.entries.find { it.key.name == name && it.key.nameSpace.inArray(ns) }?.value
-            if (result == null) {
-                val emptyValue = descriptor.xmlEmptyValue(cursor)
-                if (emptyValue != null) {
-                    return emptyValue
-                }
-            }
-            result ?: genErr()
+  override fun decodeString(): String {
+    val name = descriptor.xmlName(cursor)
+    val ns = descriptor.xmlNamespace(cursor)
+    val isWrapped = descriptor.getElementAnnotation<XmlNode>(cursor) != null
+    fun genErr(): Nothing =
+      throw SerializationException(
+        "Can't find element ${descriptor.serialName}::${descriptor.getElementName(cursor)}",
+      )
+    return if (isWrapped) {
+      val result = root.childs.find { it.tag == name && it.nameSpace.inArray(ns) }?.body
+      if (result == null) {
+        val emptyValue = descriptor.xmlEmptyValue(cursor)
+        if (emptyValue != null) {
+          return emptyValue
         }
+      }
+      result ?: genErr()
+    } else {
+      val result = root.attributes.entries.find { it.key.name == name && it.key.nameSpace.inArray(ns) }?.value
+      if (result == null) {
+        val emptyValue = descriptor.xmlEmptyValue(cursor)
+        if (emptyValue != null) {
+          return emptyValue
+        }
+      }
+      result ?: genErr()
     }
+  }
 
 //    override fun decodeStringElement(descriptor: SerialDescriptor, index: Int): String {
 //        val name = descriptor.xmlName(index)
