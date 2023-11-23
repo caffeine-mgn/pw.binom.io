@@ -74,6 +74,12 @@ class SQLitePrepareStatement(
     connection.checkSqlCode(sqlite3_bind_int(stmt, index + 1, value))
   }
 
+  override fun set(index: Int, value: Short) {
+    checkClosed()
+    checkRange(index)
+    set(index = index, value = value.toInt())
+  }
+
   override fun set(index: Int, value: Long) {
     checkClosed()
     checkRange(index)
