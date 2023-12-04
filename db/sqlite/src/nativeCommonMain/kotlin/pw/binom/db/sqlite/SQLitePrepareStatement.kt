@@ -33,8 +33,6 @@ class SQLitePrepareStatement(
   private inline val maxParams
     get() = sqlite3_limit(connection.ctx.pointed.value, SQLITE_LIMIT_VARIABLE_NUMBER, -1)
 
-  private val stringBinds = HashMap<Int, String>()
-
   private inline fun checkRange(index: Int) {
     if (index < 0 || index >= maxParams) {
       throw IndexOutOfBoundsException()
@@ -56,21 +54,18 @@ class SQLitePrepareStatement(
   override fun set(index: Int, value: Double) {
     checkClosed()
     checkRange(index)
-    stringBinds.remove(index)
     connection.checkSqlCode(sqlite3_bind_double(stmt, index + 1, value))
   }
 
   override fun set(index: Int, value: Float) {
     checkClosed()
     checkRange(index)
-    stringBinds.remove(index)
     connection.checkSqlCode(sqlite3_bind_double(stmt, index + 1, value.toDouble()))
   }
 
   override fun set(index: Int, value: Int) {
     checkClosed()
     checkRange(index)
-    stringBinds.remove(index)
     connection.checkSqlCode(sqlite3_bind_int(stmt, index + 1, value))
   }
 
@@ -83,40 +78,44 @@ class SQLitePrepareStatement(
   override fun set(index: Int, value: Long) {
     checkClosed()
     checkRange(index)
-    stringBinds.remove(index)
     connection.checkSqlCode(sqlite3_bind_int64(stmt, index + 1, value))
   }
 
   override fun set(index: Int, value: String) {
     checkClosed()
     checkRange(index)
-    stringBinds[index] = value
+    val len = strlen(value)
+    connection.checkSqlCode(
+      sqlite3_bind_text(
+        stmt,
+        index + 1,
+        value,
+        len.convert(),
+        SQLITE_TRANSIENT,
+      ),
+    )
   }
 
   override fun set(index: Int, value: Boolean) {
     checkClosed()
-    stringBinds.remove(index)
     set(index, if (value) 1 else 0)
   }
 
   override fun set(index: Int, value: ByteArray) {
     checkClosed()
     checkRange(index)
-    stringBinds.remove(index)
-    connection.checkSqlCode(sqlite3_bind_blob(stmt, index + 1, value.refTo(0), value.size, SQLITE_STATIC))
+    connection.checkSqlCode(sqlite3_bind_blob(stmt, index + 1, value.refTo(0), value.size, SQLITE_TRANSIENT))
   }
 
   override fun set(index: Int, value: DateTime) {
     checkClosed()
-    stringBinds.remove(index)
     set(index, value.time)
   }
 
   override fun executeQuery(): SyncResultSet {
     checkClosed()
-    val code = prepareParams {
-      sqlite3_step(stmt)
-    }
+    val code = sqlite3_step(stmt)
+
     connection.checkSqlCode(code)
     val result = when (code) {
       SQLITE_DONE -> SQLiteResultSet(this, true)
@@ -127,39 +126,19 @@ class SQLitePrepareStatement(
     return result
   }
 
-  private inline fun <T> prepareParams(func: () -> T): T =
-    memScoped {
-      stringBinds.forEach {
-        val len = strlen(it.value)
-        connection.checkSqlCode(
-          sqlite3_bind_text(
-            stmt,
-            it.key + 1,
-            it.value,
-            len.convert(),
-            SQLITE_STATIC,
-          ),
-        )
-      }
-      func()
-    }
-
   override fun executeUpdate(): Long {
     checkClosed()
     val before = sqlite3_total_changes(connection.ctx.pointed.value)
-    prepareParams {
-      val code = sqlite3_step(stmt)
+    val code = sqlite3_step(stmt)
 
-      connection.checkSqlCode(code)
-      val rownum = sqlite3_column_int64(stmt, 0)
-      sqlite3_reset(stmt)
-    }
+    connection.checkSqlCode(code)
+    val rownum = sqlite3_column_int64(stmt, 0)
+    sqlite3_reset(stmt)
     return (sqlite3_total_changes(connection.ctx.pointed.value) - before).toLong()
   }
 
   override fun setNull(index: Int) {
     checkClosed()
-    stringBinds.remove(index)
     connection.checkSqlCode(sqlite3_bind_null(stmt, index + 1))
   }
 
@@ -170,7 +149,6 @@ class SQLitePrepareStatement(
     if (!closed.compareAndSet(false, true)) {
       return
     }
-    stringBinds.clear()
     connection.delete(this)
     sqlite3_clear_bindings(stmt)
     sqlite3_finalize(stmt)

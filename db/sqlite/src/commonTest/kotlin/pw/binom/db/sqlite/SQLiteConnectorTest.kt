@@ -1,12 +1,13 @@
 package pw.binom.db.sqlite
 
-import pw.binom.io.file.File
 import pw.binom.io.use
 import pw.binom.uuid.UUID
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class SQLiteConnectorTest {
   companion object {
@@ -78,6 +79,9 @@ class SQLiteConnectorTest {
 
   @Test
   fun test() {
+    val id = 1L
+    val name = "Привет"
+    val uuid = Random.nextUuid()
     SQLiteConnector.memory().use {
       it.createStatement().use {
         it.executeUpdate(SIMPLE_COMPANY_TABLE)
@@ -90,19 +94,20 @@ class SQLiteConnectorTest {
       }
 
       it.prepareStatement("insert into company (id,name,uid) values(?,?,?)").use {
-        val s =
-          it.set(0, 1)
-        it.set(1, s.toString())
-        it.set(2, UUID.random())
+        it.set(0, id)
+        it.set(1, name)
+        it.set(2, uuid)
         it.executeUpdate()
       }
 
       it.prepareStatement("select * from company where id=?").use {
         it.set(0, 1)
         it.executeQuery().use {
-          while (it.next()) {
-            println("--->${it.getInt(0)}")
-          }
+          assertTrue(it.next())
+          assertEquals(id, it.getLong(0))
+          assertEquals(name, it.getString(1))
+          assertEquals(uuid, it.getUUID(2))
+          assertFalse(it.next())
         }
       }
     }
