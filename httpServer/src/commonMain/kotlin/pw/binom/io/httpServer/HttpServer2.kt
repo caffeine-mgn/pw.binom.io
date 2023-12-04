@@ -13,6 +13,7 @@ import pw.binom.io.EOFException
 import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.HttpException
 import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.MutableInetNetworkAddress
 import pw.binom.io.use
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
@@ -109,10 +110,11 @@ class HttpServer2(
     )
   }
 
-  private suspend fun clientProcessingWithMemoryLeaks(channel: AsyncChannel) {
+  private suspend fun clientProcessingWithMemoryLeaks(channel: AsyncChannel, address: InetNetworkAddress) {
     ServerAsyncAsciiChannel(
       pool = byteBufferPool,
       channel = channel,
+      address = address,
     ).use { stream ->
       try {
         while (true) {
@@ -169,8 +171,8 @@ class HttpServer2(
     }
   }
 
-  private suspend fun clientProcessing(channel: AsyncChannel) {
-    clientProcessingWithMemoryLeaks(channel)
+  private suspend fun clientProcessing(channel: AsyncChannel, address: InetNetworkAddress) {
+    clientProcessingWithMemoryLeaks(channel, address)
 //        clientProcessingNoMemoryLeaks(channel)
   }
 
@@ -198,6 +200,8 @@ class HttpServer2(
     }
   }.also { it.start() }
 
+  private val incomeAddress = MutableInetNetworkAddress.create(host = "127.0.0.1", port = 8080)
+
   @Suppress("OPT_IN_IS_NOT_ENABLED")
   @OptIn(DelicateCoroutinesApi::class)
   fun listen(address: InetNetworkAddress): Job {
@@ -207,7 +211,7 @@ class HttpServer2(
       try {
         while (isActive) {
           val newClient = try {
-            val client = server.accept()
+            val client = server.accept(incomeAddress)
             client
           } catch (e: SocketClosedException) {
             break
@@ -220,7 +224,7 @@ class HttpServer2(
             )
             continue
           }
-          scope.launch { clientProcessing(newClient) }
+          scope.launch { clientProcessing(channel = newClient, address = incomeAddress.clone()) }
         }
       } catch (e: kotlinx.coroutines.CancellationException) {
         // Do nothing

@@ -149,4 +149,9 @@ actual class File actual constructor(path: String) {
         }
         return true
     }
+
+  actual fun createSymbolicLink(to: File) {
+    TODO()
+    symlink(path, to.path)
+  }
 }

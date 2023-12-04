@@ -74,14 +74,6 @@ open class CommonMutableInetNetworkAddress() : AbstractMutableInetNetworkAddress
       internal_ntohs(it.reinterpret<sockaddr_in>().pointed.sin_port).convert()
     }
 
-  override fun toMutable(dest: MutableInetNetworkAddress): MutableInetNetworkAddress {
-    dest.update(
-      host = host,
-      port = port,
-    )
-    return dest
-  }
-
   override fun toImmutable(): InetNetworkAddress = CommonMutableInetNetworkAddress(this)
 }
 

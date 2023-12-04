@@ -17,6 +17,8 @@ struct NativeNetworkAddress {
 
 struct NativeNetworkAddress *mallocNativeNetworkAddress();
 
+void NativeNetworkAddress_copy(struct NativeNetworkAddress *from, struct NativeNetworkAddress *to);
+
 void NativeNetworkAddress_free(struct NativeNetworkAddress *ptr);
 
 int NativeNetworkAddress_getFamily(struct NativeNetworkAddress *ptr);

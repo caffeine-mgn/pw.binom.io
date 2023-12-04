@@ -7,7 +7,7 @@ import kotlin.jvm.JvmInline
 
 interface GeneratorScope<T> {
   val isClosed: Boolean
-  suspend fun yaid(value: T)
+  suspend fun yield(value: T)
 }
 
 @JvmInline
@@ -21,7 +21,10 @@ value class GeneratorResult<out T> private constructor(val value: Any?) {
   val isEmpty
     get() = value === Eof
 
+  @Suppress("UNCHECKED_CAST")
   fun get() = if (isEmpty) throw ClosedException() else value as T
+
+  @Suppress("UNCHECKED_CAST")
   fun getOrNull() = if (isEmpty) null else value as T
 }
 
@@ -42,18 +45,46 @@ suspend fun <T> Generator<T>.collect(func: suspend (T) -> Unit) {
   }
 }
 
+interface ForEachContext {
+  fun stop()
+}
+
+private class ForEachContextImpl : ForEachContext {
+  var stoped = false
+  override fun stop() {
+    stoped = true
+  }
+}
+
 interface Generator<T> : Closeable {
   suspend fun next(): GeneratorResult<T>
   val eof: Boolean
 
-  suspend fun toList(): List<T> {
-    val result = ArrayList<T>()
+  suspend fun forEachIndexed(func: ForEachContext.(value: T, index: Int) -> Unit) {
+    var index = 0
+    forEach { value ->
+      func(this, value, index++)
+    }
+  }
+
+  suspend fun forEach(func: ForEachContext.(T) -> Unit) {
+    val ctx = ForEachContextImpl()
     while (!eof) {
       val e = next()
       if (e.isEmpty) {
         break
       }
-      result += e.get()
+      func(ctx, e.get())
+      if (ctx.stoped) {
+        break
+      }
+    }
+  }
+
+  suspend fun toList(): List<T> {
+    val result = ArrayList<T>()
+    forEach {
+      result += it
     }
     return result
   }
@@ -76,6 +107,10 @@ interface Generator<T> : Closeable {
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
+  fun filterNotNull(): Generator<T & Any> = filter { it != null } as Generator<T & Any>
+  fun <R> mapNotNull(mapping: suspend (T) -> R) = map(mapping).filterNotNull()
+
   fun <R> map(mapping: suspend (T) -> R): Generator<R> = object : Generator<R> {
     override val eof: Boolean
       get() = this@Generator.eof
@@ -95,6 +130,21 @@ interface Generator<T> : Closeable {
   }
 }
 
+private class GeneratorOnIterator<T>(val iterator: Iterator<T>) : Generator<T> {
+  override suspend fun next(): GeneratorResult<T> = if (iterator.hasNext()) {
+    GeneratorResult.success(iterator.next())
+  } else {
+    GeneratorResult.end()
+  }
+
+  override val eof: Boolean
+    get() = !iterator.hasNext()
+
+  override fun close() {
+    // Do nothing
+  }
+}
+
 private class GeneratorImpl<T>(val context: CoroutineContext, val func: suspend GeneratorScope<T>.() -> Unit) :
   Generator<T> {
   private var isClosed = false
@@ -109,7 +159,7 @@ private class GeneratorImpl<T>(val context: CoroutineContext, val func: suspend 
     override val isClosed: Boolean
       get() = this@GeneratorImpl.isClosed
 
-    override suspend fun yaid(value: T) {
+    override suspend fun yield(value: T) {
       if (isClosed) {
         throw ClosedException()
       }
@@ -123,6 +173,7 @@ private class GeneratorImpl<T>(val context: CoroutineContext, val func: suspend 
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   override suspend fun next(): GeneratorResult<T> {
     if (isClosed) {
       return GeneratorResult.end()
@@ -150,13 +201,13 @@ private class GeneratorImpl<T>(val context: CoroutineContext, val func: suspend 
           },
         )
       }
-      if (dataProviderContinuation == null) {
+      return if (dataProviderContinuation == null) {
         isClosed = true
-        return GeneratorResult.end()
+        GeneratorResult.end()
       } else {
         val ret = GeneratorResult.success(value as T)
         value = null
-        return ret
+        ret
       }
     } else {
       suspendCoroutine {
@@ -224,7 +275,9 @@ fun <CURSOR : Any, VALUE> generatorFlow(
       if (isClosed) {
         return@generator
       }
-      yaid(it)
+      yield(it)
     }
   }
 }
+
+fun <T> generatorOf(vararg values: T): Generator<T> = GeneratorOnIterator(values.iterator())

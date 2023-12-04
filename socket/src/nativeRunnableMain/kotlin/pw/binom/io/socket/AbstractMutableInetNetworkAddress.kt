@@ -42,4 +42,16 @@ abstract class AbstractMutableInetNetworkAddress : MutableInetNetworkAddress {
   override fun toMutable(): MutableInetNetworkAddress = this
 
   override fun toString(): String = "$host:$port"
+
+  override fun toMutable(dest: MutableInetNetworkAddress): MutableInetNetworkAddress {
+    if (dest is AbstractMutableInetNetworkAddress) {
+      this.nativeData.copyInto(dest.nativeData)
+    } else {
+      dest.update(
+        host = host,
+        port = port,
+      )
+    }
+    return dest
+  }
 }

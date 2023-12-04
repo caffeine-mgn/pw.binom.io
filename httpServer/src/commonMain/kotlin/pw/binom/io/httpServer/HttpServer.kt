@@ -17,6 +17,7 @@ import pw.binom.io.ClosedException
 import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
 import pw.binom.io.http.ReusableAsyncChunkedOutput
 import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.MutableInetNetworkAddress
 import pw.binom.io.socket.Socket
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
@@ -235,6 +236,7 @@ class HttpServer(
     val server = networkManager.attach(serverChannel)
     server.description = address.toString()
     binds += server
+    val address = MutableInetNetworkAddress.create()
 
     val closed = AtomicBoolean(false)
     val listenJob = GlobalScope.launch(networkManager)/*(start = CoroutineStart.UNDISPATCHED)*/ {
@@ -245,7 +247,7 @@ class HttpServer(
           try {
 //                            idleCheck()
             val client = try {
-              val client = server.accept(null)
+              val client = server.accept(address)
               client
             } catch (e: ClosedException) {
               null
@@ -258,6 +260,7 @@ class HttpServer(
             channel = ServerAsyncAsciiChannel(
               channel = client,
               pool = textBufferPool,
+              address = address.clone(),
             )
             clientProcessing(
               channel = channel,

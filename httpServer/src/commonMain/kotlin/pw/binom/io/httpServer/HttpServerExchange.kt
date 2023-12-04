@@ -4,6 +4,7 @@ import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
 import pw.binom.io.http.*
 import pw.binom.io.httpServer.exceptions.MissingQueryArgumentException
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.url.Path
 import pw.binom.url.PathMask
 import pw.binom.url.Query
@@ -17,6 +18,7 @@ interface HttpServerExchange : HttpInput {
   val requestMethod: String
   val responseStarted: Boolean
   val requestContext: Path
+  val address: InetNetworkAddress
 
   override val inputHeaders: Headers
     get() = requestHeaders
@@ -26,7 +28,7 @@ interface HttpServerExchange : HttpInput {
     get() = requestURI.query
 
   override suspend fun readBinary(): AsyncInput {
-    check(!responseStarted){"Response already started"}
+    check(!responseStarted) { "Response already started" }
     return input
   }
 

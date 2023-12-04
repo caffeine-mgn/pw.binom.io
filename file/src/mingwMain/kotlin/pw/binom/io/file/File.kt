@@ -5,9 +5,13 @@ import platform.common.internal_get_available_space
 import platform.common.internal_get_free_space
 import platform.common.internal_get_total_space
 import platform.posix.*
+import platform.windows.CreateSymbolicLinkA
+import platform.windows.GetLastError
+import platform.windows.SYMBOLIC_LINK_FLAG_DIRECTORY
 import pw.binom.Environment
 import pw.binom.collections.defaultMutableList
 import pw.binom.getEnv
+import pw.binom.io.IOException
 import kotlin.native.concurrent.freeze
 
 @OptIn(ExperimentalForeignApi::class)
@@ -115,4 +119,14 @@ actual class File actual constructor(path: String) {
   actual fun getPosixMode(): PosixPermissions = PosixPermissions(0u)
 
   actual fun setPosixMode(mode: PosixPermissions): Boolean = false
+
+  actual fun createSymbolicLink(to: File) {
+    if (!isExist) {
+      throw FileNotFoundException("$path not found")
+    }
+    val flags = if (isDirectory) SYMBOLIC_LINK_FLAG_DIRECTORY else 0
+    if (CreateSymbolicLinkA(path, to.path, flags.convert()) == 0.toUByte()) {
+      throw IOException("Can't create symbolic from $path to ${to.path}. Error: ${GetLastError()}")
+    }
+  }
 }

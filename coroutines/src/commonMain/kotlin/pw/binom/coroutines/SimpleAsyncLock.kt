@@ -10,61 +10,61 @@ import kotlin.coroutines.resume
 import kotlin.time.Duration
 
 class SimpleAsyncLock : AsyncLock {
-    internal val waiters by lazy {
-        defaultMutableSet<CancellableContinuation<Unit>>()
-    }
-    private val locked = AtomicBoolean(false)
-    private val stateLock = SpinLock()
+  internal val waiters by lazy {
+    defaultMutableSet<CancellableContinuation<Unit>>()
+  }
+  private val locked = AtomicBoolean(false)
+  private val stateLock = SpinLock()
 
-    override val isLocked: Boolean
-        get() = locked.getValue()
+  override val isLocked: Boolean
+    get() = locked.getValue()
 
-    private suspend fun internalLock(lockingTimeout: Duration?) {
-        val unlockStatus = stateLock.synchronize { locked.compareAndSet(false, true) }
-        if (!unlockStatus) {
-            withTimeout2(lockingTimeout) {
-                suspendCancellableCoroutine {
-                    it.invokeOnCancellation { _ ->
-                        waiters -= it
-                    }
-                    waiters += it
-                }
-            }
+  private suspend fun internalLock(lockingTimeout: Duration?) {
+    val unlockStatus = stateLock.synchronize { locked.compareAndSet(false, true) }
+    if (!unlockStatus) {
+      withTimeout2(lockingTimeout) {
+        suspendCancellableCoroutine {
+          it.invokeOnCancellation { _ ->
+            waiters -= it
+          }
+          waiters += it
         }
+      }
     }
+  }
 
-    suspend fun lock() = internalLock(null)
-    suspend fun lock(lockingTimeout: Duration) = internalLock(lockingTimeout)
+  suspend fun lock() = internalLock(null)
+  suspend fun lock(lockingTimeout: Duration) = internalLock(lockingTimeout)
 
-    fun unlock() {
-        val waiter = stateLock.synchronize {
-            val waiter = waiters.firstOrNull()
-            if (waiter != null) {
-                waiters.remove(waiter)
-            }
-            if (waiter == null) {
-                locked.setValue(false)
-            }
-            waiter
-        }
-        waiter?.resume(Unit)
+  fun unlock() {
+    val waiter = stateLock.synchronize {
+      val waiter = waiters.firstOrNull()
+      if (waiter != null) {
+        waiters.remove(waiter)
+      }
+      if (waiter == null) {
+        locked.setValue(false)
+      }
+      waiter
     }
+    waiter?.resume(Unit)
+  }
 
-    override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T {
-        internalLock(lockingTimeout)
-        return try {
-            func()
-        } finally {
-            unlock()
-        }
+  override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T {
+    internalLock(lockingTimeout)
+    return try {
+      func()
+    } finally {
+      unlock()
     }
+  }
 
-    override suspend fun <T> synchronize(func: suspend () -> T): T {
-        internalLock(null)
-        return try {
-            func()
-        } finally {
-            unlock()
-        }
+  override suspend fun <T> synchronize(func: suspend () -> T): T {
+    internalLock(null)
+    return try {
+      func()
+    } finally {
+      unlock()
     }
+  }
 }

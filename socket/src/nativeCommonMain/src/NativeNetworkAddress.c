@@ -28,6 +28,11 @@ struct NativeNetworkAddress *mallocNativeNetworkAddress() {
   return result;
 }
 
+void NativeNetworkAddress_copy(struct NativeNetworkAddress *from,
+                               struct NativeNetworkAddress *to) {
+  memcpy(to, from, sizeof(struct NativeNetworkAddress));
+};
+
 void NativeNetworkAddress_free(struct NativeNetworkAddress *ptr) { free(ptr); }
 
 int NativeNetworkAddress_getFamily(struct NativeNetworkAddress *ptr) {

@@ -1,7 +1,9 @@
 package pw.binom.io.file
 
 import kotlinx.cinterop.*
-import platform.common.*
+import platform.common.internal_get_available_space
+import platform.common.internal_get_free_space
+import platform.common.internal_get_total_space
 import platform.posix.*
 import pw.binom.collections.defaultMutableList
 import pw.binom.io.IOException
@@ -130,5 +132,14 @@ actual class File actual constructor(path: String) {
       throw IOException("Can't change mode of file \"$path\"")
     }
     return true
+  }
+
+  actual fun createSymbolicLink(to: File) {
+    if (!isExist) {
+      throw FileNotFoundException("$path not found")
+    }
+    if (symlink(path, to.path) != 0) {
+      throw IOException("Can't create symbolic from $path to ${to.path}. Error: $errno")
+    }
   }
 }

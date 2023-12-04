@@ -49,7 +49,7 @@ dependencies {
   api("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
   api("org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion")
   api("org.jetbrains.dokka:dokka-gradle-plugin:1.8.10")
-  api("pw.binom:kn-clang:0.1.11")
+  api("pw.binom:kn-clang:0.1.12")
   api("com.bmuschko:gradle-docker-plugin:7.3.0")
   api("pw.binom:binom-publish:0.1.8")
 //    api("com.android.library:com.android.library.gradle.plugin:7.2.0")

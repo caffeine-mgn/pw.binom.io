@@ -5,6 +5,7 @@ import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
 import pw.binom.io.IOException
 import pw.binom.io.http.*
+import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.url.URI
 import pw.binom.url.toPath
 
@@ -18,6 +19,8 @@ class HttpServerExchangeImpl(
   val compressLevel: Int,
 ) : HttpServerExchange {
   internal var keepAlive = false
+  override val address: InetNetworkAddress
+    get() = channel.address
 
   override suspend fun startResponse(statusCode: Int, headers: Headers) {
     check(!headersSent) { "Headers already sent" }

@@ -9,43 +9,43 @@ import pw.binom.concurrency.synchronize
 import kotlin.coroutines.resume
 
 class AsyncSemaphore(val counter: Int) {
-    private val actualCounter = AtomicInt(0)
-    private val lock = SpinLock()
-    private val waiters = LinkedList<CancellableContinuation<Unit>>()
-    private fun resumeWater() {
+  private val actualCounter = AtomicInt(0)
+  private val lock = SpinLock()
+  private val waiters = LinkedList<CancellableContinuation<Unit>>()
+  private fun resumeWater() {
+    lock.synchronize {
+      waiters.removeLastOrNull()
+    }?.resume(Unit)
+  }
+
+  suspend fun lock() {
+    val needAwait = lock.synchronize {
+      actualCounter.getValue() < counter
+    }
+
+    if (needAwait) {
+      suspendCancellableCoroutine { con ->
         lock.synchronize {
-            waiters.removeLastOrNull()
-        }?.resume(Unit)
-    }
-
-    suspend fun lock() {
-        val needAwait = lock.synchronize {
-            actualCounter.getValue() < counter
+          waiters.addLast(con)
         }
-
-        if (needAwait) {
-            suspendCancellableCoroutine { con ->
-                lock.synchronize {
-                    waiters.addLast(con)
-                }
-            }
-        }
-        lock.synchronize {
-            actualCounter.inc()
-        }
+      }
     }
-
-    fun unlock() {
-        actualCounter.dec()
-        resumeWater()
+    lock.synchronize {
+      actualCounter.inc()
     }
+  }
 
-    suspend inline fun <T> synchronize(func: () -> T): T {
-        lock()
-        try {
-            return func()
-        } finally {
-            unlock()
-        }
+  fun unlock() {
+    actualCounter.dec()
+    resumeWater()
+  }
+
+  suspend inline fun <T> synchronize(func: () -> T): T {
+    lock()
+    try {
+      return func()
+    } finally {
+      unlock()
     }
+  }
 }
