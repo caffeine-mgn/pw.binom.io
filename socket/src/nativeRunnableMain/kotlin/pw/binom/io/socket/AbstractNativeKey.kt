@@ -5,7 +5,7 @@ import pw.binom.io.Closeable
 abstract class AbstractNativeKey : Closeable {
 //    protected val self = StableRef.create(this)
 
-    protected fun freeSelfClose() {
+  protected fun freeSelfClose() {
 //        self.dispose()
-    }
+  }
 }

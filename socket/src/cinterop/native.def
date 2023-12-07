@@ -1,4 +1,12 @@
-linkerOpts.mingwX32= -lws2_32 -lwsock32 -lws2_64 -lwsock64
-headers = Selector.h SelectedList.h wepoll.h Event.h Socket.h NativeNetworkAddress.h
+#linkerOpts.mingwX32= -lws2_32 -lwsock32 -lws2_64 -lwsock64
+headers = Selector.h SelectedList.h wepoll.h Event.h Socket.h NativeNetworkAddress.h err.h NetworkInterface.h
 headerFilter = *
 ---
+
+int getInternalError() {
+#ifdef WINDOWS_TARGET
+    return GetLastError();
+#else
+    return 0;
+#endif
+}

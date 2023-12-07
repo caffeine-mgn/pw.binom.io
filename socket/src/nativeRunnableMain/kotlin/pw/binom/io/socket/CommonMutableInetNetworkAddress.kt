@@ -2,7 +2,8 @@ package pw.binom.io.socket
 
 import kotlinx.cinterop.*
 import platform.common.*
-import platform.posix.*
+import platform.posix.init_sockets
+import platform.posix.sockaddr_in
 
 @OptIn(ExperimentalForeignApi::class)
 open class CommonMutableInetNetworkAddress() : AbstractMutableInetNetworkAddress() {
@@ -32,6 +33,8 @@ open class CommonMutableInetNetworkAddress() : AbstractMutableInetNetworkAddress
     } finally {
       internal_free_network_addresses(ptr)
     }
+    val actualSize = this.nativeData.use { it.pointed.size }
+    println("$host->$actualSize")
     refreshHashCode(
       host = host,
       port = port,

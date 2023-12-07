@@ -1,8 +1,8 @@
 package pw.binom.io.socket
 
 enum class BindStatus {
-    OK,
-    ALREADY_BINDED,
-    ADDRESS_ALREADY_IN_USE,
-    UNKNOWN,
+  OK,
+  ALREADY_BINDED,
+  ADDRESS_ALREADY_IN_USE,
+  UNKNOWN,
 }

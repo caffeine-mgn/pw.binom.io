@@ -13,6 +13,7 @@ value class ListenFlags(val raw: Int) {
   }
 
   constructor() : this(0)
+
   inline val isRead
     get() = raw and KeyListenFlags.READ != 0
   inline val isError
@@ -47,6 +48,7 @@ value class ListenFlags(val raw: Int) {
   inline infix fun with(raw: Int) = ListenFlags(this.raw or raw)
   inline infix fun without(raw: Int) = ListenFlags((this.raw.inv() or raw).inv())
 
+  operator fun contains(other: ListenFlags) = this.raw and other.raw != 0
 
   override fun toString(): String {
     val sb = StringBuilder()

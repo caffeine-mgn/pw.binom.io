@@ -1,6 +1,9 @@
 package pw.binom.io.socket
 
-import kotlinx.cinterop.*
+import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.pointed
 import platform.common.NativeNetworkAddress
 import pw.binom.io.InHeap
 

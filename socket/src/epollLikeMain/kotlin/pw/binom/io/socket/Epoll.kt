@@ -50,7 +50,7 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
       when (errno) {
         EPERM, EBADF, ENOENT -> return EpollResult.INVALID
         EEXIST -> return EpollResult.ALREADY_EXIST
-        else -> throw IOException("Can't add key to selector. socket: $socket, list: $raw. errno: $errno, error2: ${getInternalError()}")
+        else -> throw IOException("Can't add key to selector. socket: $socket, list: $raw. errno: $errno")
       }
     }
     return EpollResult.OK

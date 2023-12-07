@@ -5,10 +5,10 @@ import kotlin.time.Duration
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 expect class Selector : Closeable {
-    constructor()
+  constructor()
 
-    fun attach(socket: Socket): SelectorKey
-    fun select(timeout: Duration, selectedKeys: SelectedKeys)
-    fun select(timeout: Duration, eventFunc: (Event) -> Unit)
-    fun wakeup()
+  fun attach(socket: Socket): SelectorKey
+  fun select(timeout: Duration, selectedKeys: SelectedKeys)
+  fun select(timeout: Duration, eventFunc: (Event) -> Unit)
+  fun wakeup()
 }
