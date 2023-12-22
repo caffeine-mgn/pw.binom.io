@@ -119,7 +119,6 @@ int addressToNetworkPrefixLength(struct sockaddr* sockAddr) {
         }
     }
     */
-    printf("not found!\n");
     return 0;
 }
 #endif

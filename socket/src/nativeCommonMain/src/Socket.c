@@ -91,7 +91,7 @@ int Socket_receive(int socket, void* dest, int max, struct NativeNetworkAddress*
     #else
     void* dest2 = dest;
     #endif
-
+    printf("Socket_receive!!!!\n");
     if (addr == NULL){
         return recvfrom(socket, dest2, max, 0, NULL, NULL);
     } else {
@@ -100,7 +100,10 @@ int Socket_receive(int socket, void* dest, int max, struct NativeNetworkAddress*
         #else
         auto size1 = (socklen_t)addr->size;
         #endif
-        return recvfrom(socket, dest2, max, 0, (struct sockaddr*)&addr->data, &size1);
+        size1 = 28;
+        auto ret= recvfrom(socket, dest2, max, 0, (struct sockaddr*)&addr->data, &size1);
+        addr->size=size1;
+        return ret;
     }
 }
 /**

@@ -119,7 +119,7 @@ fun Short.dump(data: ByteBuffer) {
 }
 
 fun Short.toByteArray(dest: ByteArray, offset: Int = 0): ByteArray {
-  if (dest.size - offset < Long.SIZE_BYTES) {
+  if (dest.size - offset < Short.SIZE_BYTES) {
     throw IllegalArgumentException("Not enough space for place Short")
   }
   dest[0 + offset] = ((this.toInt() ushr (8 - 8 * 0)) and 0xFF).toByte()

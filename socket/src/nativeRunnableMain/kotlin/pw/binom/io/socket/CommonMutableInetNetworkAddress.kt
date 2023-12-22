@@ -34,7 +34,6 @@ open class CommonMutableInetNetworkAddress() : AbstractMutableInetNetworkAddress
       internal_free_network_addresses(ptr)
     }
     val actualSize = this.nativeData.use { it.pointed.size }
-    println("$host->$actualSize")
     refreshHashCode(
       host = host,
       port = port,

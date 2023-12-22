@@ -193,14 +193,18 @@ actual open class ByteBuffer(val native: NativeMem) :
     return new
   }
 
-  actual fun skip(length: Long): Long {
-    ensureOpen()
-    require(length > 0) { "Length must be grade than 0" }
+  actual fun skip(length: Long): Long = skip(length.toInt()).toLong()
 
-    val pos = minOf((position + length).toInt(), limit)
+  actual fun skip(length: Int): Int {
+    ensureOpen()
+    if (length <= 0) {
+      return 0
+    }
+
+    val pos = minOf(position + length, limit)
     val len = pos - position
     position = pos
-    return len.toLong()
+    return len
   }
 
   actual operator fun get(index: Int): Byte {

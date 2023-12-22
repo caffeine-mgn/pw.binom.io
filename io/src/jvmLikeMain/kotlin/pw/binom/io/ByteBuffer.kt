@@ -45,12 +45,17 @@ actual open class ByteBuffer(var native: JByteBuffer) :
       return native.remaining()
     }
 
-  actual fun skip(length: Long): Long {
+  actual fun skip(length: Long): Long = skip(length.toInt()).toLong()
+
+  actual fun skip(length: Int): Int {
     ensureOpen()
-    val pos = minOf((native.position() + length).toInt(), native.limit())
+    if (length <= 0) {
+      return 0
+    }
+    val pos = minOf(native.position() + length, native.limit())
     val len = pos - native.position()
     native.position(pos)
-    return len.toLong()
+    return len
   }
 
 //    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
