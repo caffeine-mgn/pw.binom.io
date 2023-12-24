@@ -3,7 +3,7 @@ package pw.binom.db.serialization
 import kotlinx.serialization.KSerializer
 import pw.binom.collections.defaultMutableList
 
-internal class EntityDescription2(val k: KSerializer<*>) {
+internal class EntityDescription2(val serializer: KSerializer<*>) {
 
   private var onConflictTHROWNotReturning: String? = null
 
@@ -20,7 +20,7 @@ internal class EntityDescription2(val k: KSerializer<*>) {
   private val fields = HashMap<String, Field>()
 
   init {
-    ColumnNamesVisitor.forEachFields(k.descriptor) {
+    ColumnNamesVisitor.forEachFields(serializer.descriptor) {
         name: String,
         useQuotes: Boolean,
         id: Boolean,
@@ -58,7 +58,7 @@ internal class EntityDescription2(val k: KSerializer<*>) {
       }
     }
     val sb = StringBuilder()
-    sb.append("insert into ").append(getTableName(k.descriptor)).append("(")
+    sb.append("insert into ").append(getTableName(serializer.descriptor)).append("(")
 
     params.entries.forEachIndexed { index, param ->
       if (index > 0) {
@@ -89,7 +89,7 @@ internal class EntityDescription2(val k: KSerializer<*>) {
       if (onConflict is DBAccess2.ActionOnConflict.OnColumns) {
         var first = true
         onConflict.columns.forEach {
-          val column = fields[it]?:throw IllegalArgumentException("Column \"$it\" not found in ${k.descriptor.serialName}")
+          val column = fields[it]?:throw IllegalArgumentException("Column \"$it\" not found in ${serializer.descriptor.serialName}")
           if (!first) {
             sb.append(",")
           }

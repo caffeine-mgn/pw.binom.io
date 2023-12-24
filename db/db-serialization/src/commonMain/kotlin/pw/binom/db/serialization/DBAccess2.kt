@@ -32,47 +32,47 @@ interface DBAccess2 {
 
   val serializersModule: SerializersModule
   suspend fun <T : Any> insert(
-    k: KSerializer<T>,
+    serializer: KSerializer<T>,
     value: T,
     excludeGenerated: Boolean = true,
     onConflict: ActionOnConflict = ActionOnConflict.DoThrow,
   ): Boolean
 
   suspend fun <T : Any> insertAndReturn(
-    k: KSerializer<T>,
+    serializer: KSerializer<T>,
     value: T,
     excludeGenerated: Boolean = true,
     onConflict: ActionOnConflict = ActionOnConflict.DoThrow,
   ): T
 
-  suspend fun <T : Any> select(k: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T>
+  suspend fun <T : Any> select(serializer: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T>
   suspend fun selectRaw(func: suspend QueryContext.() -> String): AsyncResultSet
   suspend fun update(func: suspend QueryContext.() -> String): Long
 
-  suspend fun <T : Any> selectAll(k: KSerializer<T>, condition: (suspend QueryContext.() -> String)? = null): Flow<T>
+  suspend fun <T : Any> selectAll(serializer: KSerializer<T>, condition: (suspend QueryContext.() -> String)? = null): Flow<T>
 }
 
 @OptIn(InternalSerializationApi::class)
 suspend inline fun <reified T : Any> DBAccess2.insert(value: T, excludeGenerated: Boolean = false) =
-  insert(k = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
+  insert(serializer = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
 
 @OptIn(InternalSerializationApi::class)
 suspend inline fun <reified T : Any> DBAccess2.insertAndReturn(value: T, excludeGenerated: Boolean = false) =
-  insertAndReturn(k = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
+  insertAndReturn(serializer = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
 
 interface QueryContext {
   val serializersModule: SerializersModule
-  fun <T : Any> param(k: KSerializer<T>, value: T?): String
+  fun <T : Any> param(serializer: KSerializer<T>, value: T?): String
   operator fun String.unaryPlus(): String
 }
 
 interface UpdateContext : QueryContext {
-  fun <T : Any> returning(k: KSerializer<T>, func: suspend (T) -> Unit)
+  fun <T : Any> returning(serializer: KSerializer<T>, func: suspend (T) -> Unit)
 }
 
 @OptIn(InternalSerializationApi::class)
 inline fun <reified T : Any> UpdateContext.returning(noinline func: suspend (T) -> Unit) =
-  returning(k = T::class.serializer(), func = func)
+  returning(serializer = T::class.serializer(), func = func)
 
 @JvmInline
 value class EntityColumns(val columns: String) {
@@ -312,7 +312,7 @@ internal fun internalGenerateSelectColumns(
 
 @OptIn(InternalSerializationApi::class)
 inline fun <reified T : Any> QueryContext.param(value: T?) = param(
-  k = this.serializersModule.getContextual(T::class) ?: T::class.serializerOrNull()
+  serializer = this.serializersModule.getContextual(T::class) ?: T::class.serializerOrNull()
     ?: throw SerializationException("Can't find serializer for ${T::class}"),
   value = value,
 )
