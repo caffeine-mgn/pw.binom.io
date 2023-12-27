@@ -28,21 +28,15 @@ class WebSocketHeader {
         dest.length = (second and 0b1111111.toByte()).let {
           when (it) {
             126.toByte() -> {
-              val s = input.readShort(buf)
-//                        println(
-//                            "WebSocketHeader:: return size as Short. $s, ${s.toUShort()} ${
-//                            s.toUShort().toLong()
-//                            } ${s.toLong()}"
-//                        )
-              s.toUShort().toLong()
+              input.readShort(buf).toUShort().toLong()
             }
 
             127.toByte() -> {
-              /*println("WebSocketHeader:: return size as Long"); */input.readLong(buf)
+              input.readLong(buf)
             }
 
             else -> {
-              /*println("WebSocketHeader:: return size as is $it ${it.toLong()}"); */it.toLong()
+              it.toLong()
             }
           }
         }
@@ -64,7 +58,7 @@ class WebSocketHeader {
       finishFlag: Boolean = false,
     ) {
       ByteBuffer(8).use { buf ->
-        var value = opcode.raw and 0b111
+        var value = opcode.raw and 0b1111
         if (finishFlag) {
           value = value or 0b10000000.toByte()
         }
