@@ -40,7 +40,6 @@ class WebSocketHeader {
             }
           }
         }
-//            println("WebSocketHeader::read dest.length=${dest.length}")
         dest.maskFlag = second and 0b10000000.toByte() != 0.toByte()
 
         if (dest.maskFlag) {

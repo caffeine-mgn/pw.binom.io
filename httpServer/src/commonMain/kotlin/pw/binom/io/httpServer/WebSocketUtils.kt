@@ -1,5 +1,6 @@
 package pw.binom.io.httpServer
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.Headers
@@ -12,6 +13,7 @@ import pw.binom.io.http.websocket.WebSocketConnectionImpl3
 suspend fun HttpServerExchange.acceptWebsocket(
   masking: Boolean = false,
   headers: Headers = emptyHeaders(),
+  bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ): WebSocketConnection {
   val upgrade = requestHeaders[Headers.UPGRADE]?.lastOrNull()
   if (!upgrade.equals(Headers.WEBSOCKET, true)) {
@@ -33,5 +35,7 @@ suspend fun HttpServerExchange.acceptWebsocket(
     _output = output,
     _input = input,
     masking = masking,
+    bufferSize = bufferSize,
+    mainChannel = mainChannel,
   )
 }

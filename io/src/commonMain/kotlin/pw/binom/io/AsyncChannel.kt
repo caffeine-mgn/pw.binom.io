@@ -3,6 +3,11 @@ package pw.binom.io
 interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
   companion object {
 
+    val EMPTY = create(
+      input = AsyncInput.EMPTY,
+      output = AsyncOutput.NULL,
+    )
+
     fun create(input: AsyncInput, output: AsyncOutput): AsyncChannel {
       if (input === output && input is AsyncChannel) {
         return input

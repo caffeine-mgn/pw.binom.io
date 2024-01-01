@@ -1,7 +1,7 @@
 package pw.binom.io
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.dump
+import pw.binom.toByteBuffer
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -67,21 +67,21 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
   fun writeInt(value: Int) {
     ensureUnlocked()
     alloc(Int.SIZE_BYTES)
-    value.dump(data)
+    value.toByteBuffer(data)
     _wrote += Int.SIZE_BYTES
   }
 
   fun writeLong(value: Long) {
     ensureUnlocked()
     alloc(Long.SIZE_BYTES)
-    value.dump(data)
+    value.toByteBuffer(data)
     _wrote += Long.SIZE_BYTES
   }
 
   fun writeShort(value: Short) {
     ensureUnlocked()
     alloc(Short.SIZE_BYTES)
-    value.dump(data)
+    value.toByteBuffer(data)
     _wrote += Short.SIZE_BYTES
   }
 

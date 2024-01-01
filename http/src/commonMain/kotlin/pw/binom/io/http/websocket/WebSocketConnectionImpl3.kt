@@ -11,15 +11,17 @@ class WebSocketConnectionImpl3(
   private var _output: AsyncOutput,
   private var _input: AsyncInput,
   private var masking: Boolean,
+  private val mainChannel: AsyncCloseable,
+  private val bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : WebSocketConnection {
 
-  private var closed = AtomicBoolean(false)
+  private val closed = AtomicBoolean(false)
 
   val receivedCloseMessage = AtomicBoolean(false)
   val sentCloseMessage = AtomicBoolean(false)
   private val readChannelLock = SimpleAsyncLock()
   private val writeChannelLock = SimpleAsyncLock()
-  private val header = WebSocketHeader()
+//  private val header = WebSocketHeader()
   private val message = MessageImpl3(input = _input)
 
   private fun checkClosed() {
@@ -101,7 +103,7 @@ class WebSocketConnectionImpl3(
     writeChannelLock.lock()
     return WebSocketOutput(
       messageType = type,
-      bufferSize = DEFAULT_BUFFER_SIZE,
+      bufferSize = bufferSize,
       stream = _output,
       masked = masking,
       writeLock = writeChannelLock,
@@ -109,12 +111,12 @@ class WebSocketConnectionImpl3(
   }
 
   private suspend fun closeTcp() {
-    if (closed.getValue()) {
+    if (!closed.compareAndSet(false, true)) {
       return
     }
-    closed.setValue(true)
     _input.asyncCloseAnyway()
     _output.asyncCloseAnyway()
+    mainChannel.asyncCloseAnyway()
   }
 
   suspend fun asyncClose(code: Short, body: ByteBuffer? = null) {

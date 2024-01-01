@@ -268,6 +268,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
       _output = channel.writer,
       _input = channel.reader,
       masking = masking,
+      mainChannel = channel,
     )
 //    return server.webSocketConnectionPool.new(
 //      input = channel.reader,

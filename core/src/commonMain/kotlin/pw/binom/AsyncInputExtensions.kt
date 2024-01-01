@@ -251,17 +251,6 @@ suspend fun AsyncInput.copyTo(output: Output, bufferSize: Int = DEFAULT_BUFFER_S
     copyTo(dest = output, buffer = buffer)
   }
 
-object EmptyAsyncInput : AsyncInput {
-  override val available: Int
-    get() = 0
-
-  override suspend fun read(dest: ByteBuffer): Int = 0
-
-  override suspend fun asyncClose() {
-    // Do nothing
-  }
-}
-
 suspend fun AsyncInput.readByteArray(size: Int, pool: ByteBufferPool): ByteArray = pool.using { buffer ->
   readByteArray(size = size, buffer = buffer)
 }

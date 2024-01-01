@@ -1,13 +1,10 @@
 package pw.binom
 
-import pw.binom.NullAsyncOutput.write
 import pw.binom.io.*
 import pw.binom.pool.using
 import pw.binom.uuid.UUID
 
 fun Output.asyncOutput(callClose: Boolean = true) = object : AsyncOutput {
-//    override suspend fun write(data: ByteDataBuffer, offset: Int, length: Int): Int =
-//            this@asyncOutput.write(data, offset, length)
 
   override suspend fun write(data: ByteBuffer): Int =
     this@asyncOutput.write(data)
@@ -75,7 +72,7 @@ suspend fun AsyncOutput.writeByte(value: Byte, pool: ByteBufferPool) {
 
 suspend fun AsyncOutput.writeInt(value: Int, buffer: ByteBuffer) {
   buffer.clear()
-  value.dump(buffer)
+  value.toByteBuffer(buffer)
   buffer.flip()
   write(buffer)
 }
@@ -104,7 +101,7 @@ suspend fun AsyncOutput.writeDouble(value: Double, pool: ByteBufferPool) {
 
 suspend fun AsyncOutput.writeShort(value: Short, buffer: ByteBuffer) {
   buffer.clear()
-  value.dump(buffer)
+  value.toByteBuffer(buffer)
   buffer.flip()
   write(buffer)
 }
@@ -117,7 +114,7 @@ suspend fun AsyncOutput.writeShort(value: Short, pool: ByteBufferPool) {
 
 suspend fun AsyncOutput.writeLong(value: Long, buffer: ByteBuffer) {
   buffer.clear()
-  value.dump(buffer)
+  value.toByteBuffer(buffer)
   buffer.flip()
   write(buffer)
 }
@@ -128,21 +125,3 @@ suspend fun AsyncOutput.writeLong(value: Long, pool: ByteBufferPool) {
   }
 }
 
-/**
- * Special AsyncOutput for drop all output passed to [write]
- */
-object NullAsyncOutput : AsyncOutput {
-  override suspend fun write(data: ByteBuffer): Int {
-    val remaining = data.remaining
-    data.empty()
-    return remaining
-  }
-
-  override suspend fun asyncClose() {
-    // Do nothing
-  }
-
-  override suspend fun flush() {
-    // Do nothing
-  }
-}

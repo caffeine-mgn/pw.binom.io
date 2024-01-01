@@ -4,6 +4,21 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import kotlin.coroutines.cancellation.CancellationException
 
 interface AsyncInput : AsyncCloseable {
+  companion object {
+    private object EmptyAsyncInput : AsyncInput {
+      override val available: Int
+        get() = 0
+
+      override suspend fun read(dest: ByteBuffer): Int = 0
+
+      override suspend fun asyncClose() {
+        // Do nothing
+      }
+    }
+
+    val EMPTY: AsyncInput = EmptyAsyncInput
+  }
+
   /**
    * Available Data size in bytes
    * @return Available data in bytes. If returns value less 0 it's mean that size of available data is unknown

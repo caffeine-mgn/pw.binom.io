@@ -12,17 +12,17 @@ import kotlin.contracts.contract
 import kotlin.jvm.JvmName
 
 fun ByteBuffer.writeShort(value: Short): ByteBuffer {
-    value.dump(this)
+    value.toByteBuffer(this)
     return this
 }
 
 fun ByteBuffer.writeInt(value: Int): ByteBuffer {
-    value.dump(this)
+    value.toByteBuffer(this)
     return this
 }
 
 fun ByteBuffer.writeLong(value: Long): ByteBuffer {
-    value.dump(this)
+    value.toByteBuffer(this)
     return this
 }
 

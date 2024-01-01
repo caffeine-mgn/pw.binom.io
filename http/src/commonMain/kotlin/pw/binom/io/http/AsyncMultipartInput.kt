@@ -1,7 +1,6 @@
 package pw.binom.io.http
 
 import pw.binom.ByteBufferPool
-import pw.binom.NullAsyncOutput
 import pw.binom.charset.Charset
 import pw.binom.charset.Charsets
 import pw.binom.copyTo
@@ -264,10 +263,10 @@ open class AsyncMultipartInput(
         }
         try {
             if (!isBlockEof) {
-                copyTo(NullAsyncOutput)
+                copyTo(AsyncOutput.NULL)
             }
             while (next()) {
-                copyTo(NullAsyncOutput)
+                copyTo(AsyncOutput.NULL)
             }
         } finally {
             super.asyncClose()

@@ -1,12 +1,11 @@
 package pw.binom.io.http.websocket
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.AsyncInput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.StreamClosedException
-import pw.binom.io.use
+import pw.binom.io.*
 
-internal class MessageImpl3(val input: AsyncInput) : Message {
+internal class MessageImpl3(
+  val input: AsyncInput,
+) : Message {
   private var inputReady = 0L
   private val closed = AtomicBoolean(false)
   private val lastFrame: Boolean
@@ -40,6 +39,9 @@ internal class MessageImpl3(val input: AsyncInput) : Message {
           return 0
         }
         WebSocketHeader.read(input, header)
+        if (header.opcode != Opcode.CONTINUATION) {
+          throw IOException("Invalid opcode ${header.opcode} (${header.opcode.raw})")
+        }
         cursor = 0L
         inputReady = header.length
         continue
@@ -102,6 +104,7 @@ internal class MessageImpl3(val input: AsyncInput) : Message {
         return read
         */
   }
+
   private fun checkClosed() {
     if (closed.getValue()) {
       throw StreamClosedException()

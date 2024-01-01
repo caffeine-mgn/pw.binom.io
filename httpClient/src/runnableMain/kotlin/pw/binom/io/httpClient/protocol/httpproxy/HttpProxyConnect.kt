@@ -95,6 +95,7 @@ class HttpProxyConnect(
       requestFinishedListener = { responseKeepAlive, success ->
         pool.recycle(key = newKey, connect = this)
       },
+      mainChannel = tcp,
     )
   }
 

@@ -1,5 +1,6 @@
 package pw.binom.io.httpServer
 
+import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
 import pw.binom.io.http.*
@@ -19,6 +20,7 @@ interface HttpServerExchange : HttpInput {
   val responseStarted: Boolean
   val requestContext: Path
   val address: InetNetworkAddress
+  val mainChannel: AsyncCloseable
 
   override val inputHeaders: Headers
     get() = requestHeaders

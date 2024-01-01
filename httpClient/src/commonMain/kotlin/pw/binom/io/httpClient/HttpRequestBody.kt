@@ -1,13 +1,13 @@
 package pw.binom.io.httpClient
 
 import pw.binom.io.*
-import kotlin.use
 
 interface HttpRequestBody : AsyncCloseable {
   val isFlushed: Boolean
   val isOutputStarted: Boolean
   val input: AsyncInput
   val output: AsyncOutput
+  val mainChannel: AsyncChannel
 
   suspend fun startWriteBinary(): AsyncOutput
 

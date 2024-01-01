@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient.protocol.v11
 
+import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
 import pw.binom.io.bufferedAsciiReader
@@ -15,6 +16,7 @@ class Http11RequestBody(
   override val input: AsyncInput,
   override val output: AsyncOutput,
   private val requestFinishedListener: RequestFinishedListener? = null,
+  override val mainChannel: AsyncChannel,
 ) : AbstractHttpRequestBody() {
 
   private var flushed = false

@@ -5,16 +5,21 @@ import kotlin.reflect.KProperty
 
 @Suppress("UNCHECKED_CAST")
 internal class ServiceListInjector<T : Any>(
-    val strong: StrongImpl,
-    val beanClass: KClass<T>
+  val strong: StrongImpl,
+  val beanClass: KClass<T>,
 ) : ServiceProvider<List<T>> {
-    private val list by lazy {
-        strong.findBean(beanClass as KClass<Any>, null).map { it.value.bean as T }.toList()
-    }
+  private val list = lazy {
+    strong.findBean(beanClass as KClass<Any>, null).map { it.value.bean as T }.toList()
+  }
 
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>): List<T> =
-        list
+  override operator fun getValue(thisRef: Any?, property: KProperty<*>): List<T> =
+    list.value
 
-    override val service: List<T>
-        get() = list
+  override val service: List<T>
+    get() = list.value
+
+  override fun isInitialized(): Boolean = list.isInitialized()
+
+  override val value: List<T>
+    get() = list.value
 }

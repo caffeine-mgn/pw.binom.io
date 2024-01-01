@@ -1,9 +1,33 @@
 package pw.binom.io
 
+import pw.binom.io.AsyncOutput.Companion.NullAsyncOutput.write
 import pw.binom.pool.ObjectPool
 import pw.binom.pool.using
 
 interface AsyncOutput : AsyncCloseable, AsyncFlushable {
+  companion object {
+    /**
+     * Special AsyncOutput for drop all output passed to [write]
+     */
+    private object NullAsyncOutput : AsyncOutput {
+      override suspend fun write(data: ByteBuffer): Int {
+        val remaining = data.remaining
+        data.empty()
+        return remaining
+      }
+
+      override suspend fun asyncClose() {
+        // Do nothing
+      }
+
+      override suspend fun flush() {
+        // Do nothing
+      }
+    }
+
+    val NULL: AsyncOutput = NullAsyncOutput
+  }
+
   //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
   suspend fun write(data: ByteBuffer): Int
 

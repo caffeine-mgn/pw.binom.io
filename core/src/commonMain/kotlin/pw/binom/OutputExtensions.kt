@@ -59,21 +59,21 @@ fun Output.writeUUID(buffer: ByteBuffer, value: UUID) {
 
 fun Output.writeInt(buffer: ByteBuffer, value: Int) {
     buffer.clear()
-    value.dump(buffer)
+    value.toByteBuffer(buffer)
     buffer.flip()
     write(buffer)
 }
 
 fun Output.writeShort(buffer: ByteBuffer, value: Short) {
     buffer.clear()
-    value.dump(buffer)
+    value.toByteBuffer(buffer)
     buffer.flip()
     write(buffer)
 }
 
 fun Output.writeLong(buffer: ByteBuffer, value: Long) {
     buffer.clear()
-    value.dump(buffer)
+    value.toByteBuffer(buffer)
     buffer.flip()
     write(buffer)
 }

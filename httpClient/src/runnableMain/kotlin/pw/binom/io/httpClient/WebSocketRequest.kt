@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.crypto.Sha1MessageDigest
 import pw.binom.io.IOException
 import pw.binom.io.http.HashHeaders2
@@ -19,7 +20,7 @@ class WebSocketRequest(
   override val headers = HashHeaders2()
   private var started = false
 
-  suspend fun start(): SuccessWebSocketConnection {
+  suspend fun start(bufferSize: Int = DEFAULT_BUFFER_SIZE): SuccessWebSocketConnection {
     check(!started) { "Connection already started" }
     started = true
     val requestKey = HandshakeSecret.generateRequestKey()
@@ -37,7 +38,13 @@ class WebSocketRequest(
       throw InvalidSecurityKeyException()
     }
     return SuccessWebSocketConnection(
-      connection = WebSocketConnectionImpl3(_input = request.input, _output = request.output, masking = masking),
+      connection = WebSocketConnectionImpl3(
+        _input = request.input,
+        _output = request.output,
+        masking = masking,
+        bufferSize = bufferSize,
+        mainChannel = request.mainChannel,
+      ),
       headers = HashHeaders2(resp.inputHeaders),
     )
   }

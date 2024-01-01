@@ -1,6 +1,7 @@
 package pw.binom.io.httpServer
 
 import pw.binom.ByteBufferPool
+import pw.binom.io.AsyncCloseable
 import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
 import pw.binom.io.IOException
@@ -18,6 +19,9 @@ class HttpServerExchangeImpl(
   val compressByteBufferPool: ByteBufferPool?,
   val compressLevel: Int,
 ) : HttpServerExchange {
+  override val mainChannel: AsyncCloseable = AsyncCloseable {
+    channel.asyncCloseAnyway()
+  }
   internal var keepAlive = false
   override val address: InetNetworkAddress
     get() = channel.address

@@ -108,6 +108,9 @@ class JsHttpRequestBody internal constructor(
     return resp
   }
 
+  override val mainChannel: AsyncChannel
+    get() = AsyncChannel.EMPTY
+
   override suspend fun asyncClose() {
   }
 
@@ -134,11 +137,9 @@ class JsHttpRequestBody internal constructor(
     }
 
     override suspend fun flush() {
-
     }
 
     override suspend fun asyncClose() {
-
     }
 
     override fun toString(): String = sb.toString()

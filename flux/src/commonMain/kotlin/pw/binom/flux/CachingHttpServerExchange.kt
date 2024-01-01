@@ -41,6 +41,8 @@ class CachingHttpServerExchange(val source: HttpServerExchange) : HttpServerExch
     get() = source.requestContext
   override val address: InetNetworkAddress
     get() = source.address
+  override val mainChannel: AsyncCloseable
+    get() = source.mainChannel
 
   var bufferedOutput: ByteArrayOutput? = null
     private set

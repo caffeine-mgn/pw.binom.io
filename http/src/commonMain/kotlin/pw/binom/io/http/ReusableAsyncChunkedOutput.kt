@@ -1,7 +1,6 @@
 package pw.binom.io.http
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.NullAsyncOutput
 import pw.binom.io.AsyncOutput
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
@@ -10,7 +9,7 @@ open class ReusableAsyncChunkedOutput(
     autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
     var onRevert: ((ReusableAsyncChunkedOutput) -> Unit)? = null
 ) : AsyncChunkedOutput(
-    stream = NullAsyncOutput,
+    stream = AsyncOutput.NULL,
     closeStream = false,
     autoFlushBuffer = autoFlushBuffer,
 ) {
@@ -44,13 +43,13 @@ open class ReusableAsyncChunkedOutput(
     }
 
     override suspend fun asyncClose() {
-        if (stream === NullAsyncOutput) {
+        if (stream === AsyncOutput.NULL) {
             error("Output stream not set")
         }
         try {
             super.asyncClose()
         } finally {
-            stream = NullAsyncOutput
+            stream = AsyncOutput.NULL
             onRevert?.invoke(this)
         }
     }
