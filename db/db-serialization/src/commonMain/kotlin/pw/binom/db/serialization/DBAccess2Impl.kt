@@ -18,7 +18,12 @@ import kotlin.time.measureTimedValue
 private class SingleValueDateContainer : DateContainer {
   var value: Any? = null
   var useQuotes: Boolean = false
-  override fun set(key: String, value: Any?, useQuotes: Boolean) {
+
+  override fun set(
+    key: String,
+    value: Any?,
+    useQuotes: Boolean,
+  ) {
     this.value = value
     this.useQuotes = useQuotes
   }
@@ -26,7 +31,9 @@ private class SingleValueDateContainer : DateContainer {
 
 class ResultSetDataProvider(val rs: ResultSet) : DataProvider {
   override fun get(key: String): Any? = rs.getString(key)
+
   private fun columnNotDefined(key: String): Nothing = throw SQLException("Column \"$key\" is null")
+
   override fun getString(key: String): String = rs.getString(key) ?: columnNotDefined(key)
 
   override fun getBoolean(key: String): Boolean = rs.getBoolean(key) ?: columnNotDefined(key)
@@ -72,17 +79,24 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
 
   class Returning<T : Any>(val serializer: KSerializer<T>, val func: suspend (T) -> Unit)
 
-  override fun <T : Any> returning(serializer: KSerializer<T>, func: suspend (T) -> Unit) {
+  override fun <T : Any> returning(
+    serializer: KSerializer<T>,
+    func: suspend (T) -> Unit,
+  ) {
     if (returning != null) {
       throw IllegalStateException("Returning function already defined")
     }
-    returning = Returning(
-      serializer = serializer,
-      func = func,
-    )
+    returning =
+      Returning(
+        serializer = serializer,
+        func = func,
+      )
   }
 
-  override fun <T : Any> param(serializer: KSerializer<T>, value: T?): String {
+  override fun <T : Any> param(
+    serializer: KSerializer<T>,
+    value: T?,
+  ): String {
     if (value == null) {
       args += null
     } else {
@@ -113,7 +127,6 @@ class DBAccess2Impl internal constructor(
   internal val ctx: DBContextImpl,
   override val serializersModule: SerializersModule,
 ) : DBAccess2 {
-
   override suspend fun <T : Any> insert(
     serializer: KSerializer<T>,
     value: T,
@@ -131,7 +144,7 @@ class DBAccess2Impl internal constructor(
         changed = it
       },
     )
-    return changed>0
+    return changed > 0
   }
 
   override suspend fun <T : Any> insertAndReturn(
@@ -139,14 +152,15 @@ class DBAccess2Impl internal constructor(
     value: T,
     excludeGenerated: Boolean,
     onConflict: DBAccess2.ActionOnConflict,
-  ): T = insert2(
-    serializer = serializer,
-    value = value,
-    returning = true,
-    excludeGenerated = excludeGenerated,
-    onConflict = onConflict,
-    changedRow = {},
-  ) ?: error("Can't extract returned inserted value")
+  ): T? =
+    insert2(
+      serializer = serializer,
+      value = value,
+      returning = true,
+      excludeGenerated = excludeGenerated,
+      onConflict = onConflict,
+      changedRow = {},
+    )
 
   private suspend inline fun <T : Any> insert2(
     serializer: KSerializer<T>,
@@ -186,13 +200,14 @@ class DBAccess2Impl internal constructor(
         args += param.value.second
       }
     }
-    val ps = con.usePreparedStatement(
-      dsc.getInsertStatement(
-        params = params,
-        onConflict = onConflict,
-        returning = returning,
+    val ps =
+      con.usePreparedStatement(
+        dsc.getInsertStatement(
+          params = params,
+          onConflict = onConflict,
+          returning = returning,
+        ),
       )
-    )
     return if (returning) {
       return ps.executeQuery(args).use { result ->
         val r = ResultSetDataProvider(result)
@@ -222,20 +237,24 @@ class DBAccess2Impl internal constructor(
     return ps.executeQuery(params.args)
   }
 
-  override suspend fun <T : Any> select(serializer: KSerializer<T>, func: suspend QueryContext.() -> String): Flow<T> {
+  override suspend fun <T : Any> select(
+    serializer: KSerializer<T>,
+    func: suspend QueryContext.() -> String,
+  ): Flow<T> {
     val result = selectRaw(func)
     val r = ResultSetDataProvider(result)
     return flow {
       try {
         while (result.next()) {
-          val obj = measureTimedValue {
-            DefaultSQLSerializePool.decode(
-              serializer = serializer,
-              name = "",
-              input = r,
-              serializersModule = serializersModule,
-            )
-          }
+          val obj =
+            measureTimedValue {
+              DefaultSQLSerializePool.decode(
+                serializer = serializer,
+                name = "",
+                input = r,
+                serializersModule = serializersModule,
+              )
+            }
           SerializationMetrics.decodeAvrTime.put(obj.duration)
           emit(obj.value)
         }
@@ -256,11 +275,12 @@ class DBAccess2Impl internal constructor(
   override suspend fun <T : Any> selectAll(
     serializer: KSerializer<T>,
     condition: (suspend QueryContext.() -> String)?,
-  ): Flow<T> = select(serializer = serializer) {
-    if (condition != null) {
-      "select * from ${tableName(serializer.descriptor)} where ${condition(this)}"
-    } else {
-      "select * from ${tableName(serializer.descriptor)}"
+  ): Flow<T> =
+    select(serializer = serializer) {
+      if (condition != null) {
+        "select * from ${tableName(serializer.descriptor)} where ${condition(this)}"
+      } else {
+        "select * from ${tableName(serializer.descriptor)}"
+      }
     }
-  }
 }

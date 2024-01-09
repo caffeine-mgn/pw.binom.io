@@ -1,5 +1,6 @@
 package pw.binom.collections
 
+@OptIn(InternalApi::class)
 @Suppress("UNCHECKED_CAST")
 open class LinkedList<T>() : MutableList<T> {
   constructor(elements: Iterable<T>) : this() {
@@ -10,25 +11,38 @@ open class LinkedList<T>() : MutableList<T> {
     addAll(elements)
   }
 
-  class Node<T>(prev: Node<T>?, var item: T?, next: Node<T>?) {
-    var prev: Node<T>? = prev
+  interface Node<T> {
+    val value: T
+    val next: Node<T>?
+    val prev: Node<T>?
+  }
+
+  class NodeImpl<T> internal constructor(prev: NodeImpl<T>?, var item: T?, next: NodeImpl<T>?) : Node<T> {
+    override val value: T
+      get() = item as T
+    override var prev: NodeImpl<T>? = prev
       internal set
-    var next: Node<T>? = next
+    override var next: NodeImpl<T>? = next
       internal set
   }
 
-  var first: Node<T>? = null
-    private set
+  protected var first: NodeImpl<T>? = null
 
-  var last: Node<T>? = null
-    private set
+  val firstNode: Node<T>?
+    get() = first
+
+  val lastNode: Node<T>?
+    get() = last
+
+  protected var last: NodeImpl<T>? = null
 
   private var _size = 0
 
   override val size: Int
     get() = _size
 
-  private var modCount = 0
+  @PublishedApi
+  internal var modCount = 0
 
   override fun contains(element: T): Boolean = indexOf(element) >= 0
 
@@ -41,24 +55,29 @@ open class LinkedList<T>() : MutableList<T> {
     return true
   }
 
-  override fun toString(): String = "[${joinToString(", ")}]"
+  override fun toString(): String {
+    val sb = StringBuilder("[")
+    joinTo(separator = ", ", buffer = sb)
+    sb.append("]")
+    return sb.toString()
+  }
 
   override fun get(index: Int): T {
     checkElementIndex(index)
-    return node(index)!!.item as T
+    return nodeInternal(index)!!.item as T
   }
 
   override fun indexOf(element: T): Int {
     var index = 0
     if (element == null) {
-      var x: Node<T>? = first
+      var x: NodeImpl<T>? = first
       while (x != null) {
         if (x.item == null) return index
         index++
         x = x.next
       }
     } else {
-      var x: Node<T>? = first
+      var x: NodeImpl<T>? = first
       while (x != null) {
         if (element == x.item) return index
         index++
@@ -75,14 +94,14 @@ open class LinkedList<T>() : MutableList<T> {
   override fun lastIndexOf(element: T): Int {
     var index = size
     if (element == null) {
-      var x: Node<T>? = last
+      var x: NodeImpl<T>? = last
       while (x != null) {
         index--
         if (x.item == null) return index
         x = x.prev
       }
     } else {
-      var x: Node<T>? = last
+      var x: NodeImpl<T>? = last
       while (x != null) {
         index--
         if (element == x.item) return index
@@ -94,7 +113,7 @@ open class LinkedList<T>() : MutableList<T> {
 
   protected fun linkLast(e: T) {
     val l = last
-    val newNode = Node(l, e, null)
+    val newNode = NodeImpl(l, e, null)
     last = newNode
     if (l == null) {
       first = newNode
@@ -123,10 +142,14 @@ open class LinkedList<T>() : MutableList<T> {
   /**
    * Inserts element e before non-null Node succ.
    */
-  protected fun linkBefore(e: T?, succ: Node<T>) {
+  protected fun linkBefore(
+    e: T?,
+    succ: Node<T>,
+  ) {
+    succ as NodeImpl
     // assert succ != null;
     val pred = succ.prev
-    val newNode = Node(pred, e, succ)
+    val newNode = NodeImpl(pred, e, succ)
     succ.prev = newNode
     if (pred == null) {
       first = newNode
@@ -137,19 +160,21 @@ open class LinkedList<T>() : MutableList<T> {
     modCount++
   }
 
+  fun node(index: Int): Node<T>? = nodeInternal(index)
+
   /**
    * Returns the (non-null) Node at the specified element index.
    */
-  protected fun node(index: Int): Node<T>? {
+  protected fun nodeInternal(index: Int): NodeImpl<T>? {
     // assert isElementIndex(index);
     return if (index < size shr 1) {
-      var x: Node<T>? = first
+      var x: NodeImpl<T>? = first
       for (i in 0 until index) {
         x = x?.next
       }
       x
     } else {
-      var x: Node<T>? = last
+      var x: NodeImpl<T>? = last
       for (i in size - 1 downTo index + 1) {
         x = x?.prev
       }
@@ -157,34 +182,40 @@ open class LinkedList<T>() : MutableList<T> {
     }
   }
 
-  override fun add(index: Int, element: T) {
+  override fun add(
+    index: Int,
+    element: T,
+  ) {
     checkPositionIndex(index)
 
     if (index == size) {
       linkLast(element)
     } else {
-      linkBefore(element, node(index)!!)
+      linkBefore(element, nodeInternal(index)!!)
     }
   }
 
-  override fun addAll(index: Int, elements: Collection<T>): Boolean {
+  override fun addAll(
+    index: Int,
+    elements: Collection<T>,
+  ): Boolean {
     checkPositionIndex(index)
 //        val a: Array<Any> = elements.toTypedArray() as Array<Any>
     val numNew = elements.size
     if (numNew == 0) return false
 
-    var pred: Node<T>?
-    val succ: Node<T>?
+    var pred: NodeImpl<T>?
+    val succ: NodeImpl<T>?
     if (index == size) {
       succ = null
       pred = last
     } else {
-      succ = node(index)
+      succ = nodeInternal(index)
       pred = succ!!.prev
     }
 
     for (o in elements) {
-      val newNode = Node(pred, o, null)
+      val newNode = NodeImpl(pred, o, null)
       if (pred == null) first = newNode else pred.next = newNode
       pred = newNode
     }
@@ -219,7 +250,7 @@ open class LinkedList<T>() : MutableList<T> {
 
   override fun remove(element: T): Boolean {
     if (element == null) {
-      var x: Node<T>? = first
+      var x: NodeImpl<T>? = first
       while (x != null) {
         if (x.item == null) {
           unlink(x)
@@ -228,7 +259,7 @@ open class LinkedList<T>() : MutableList<T> {
         x = x.next
       }
     } else {
-      var x: Node<T>? = first
+      var x: NodeImpl<T>? = first
       while (x != null) {
         if (element == x.item) {
           unlink(x)
@@ -263,7 +294,9 @@ open class LinkedList<T>() : MutableList<T> {
     }
   }
 
-  protected fun unlink(x: Node<T>): T {
+  @InternalApi
+  fun unlink(x: Node<T>): T {
+    x as NodeImpl
     // assert x != null;
     val element = x.item
     val next = x.next
@@ -291,23 +324,47 @@ open class LinkedList<T>() : MutableList<T> {
 
   override fun removeAt(index: Int): T {
     checkElementIndex(index)
-    return unlink(node(index)!!)
+    return unlink(nodeInternal(index)!!)
   }
 
   override fun retainAll(elements: Collection<T>): Boolean {
     TODO("Not yet implemented")
   }
 
-  override fun set(index: Int, element: T): T {
+  override fun set(
+    index: Int,
+    element: T,
+  ): T {
     checkElementIndex(index)
-    val x = node(index)!!
+    val x = nodeInternal(index)!!
     val oldVal = x.item
     x.item = element
     return oldVal as T
   }
 
-  override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
-    TODO("Not yet implemented")
+  override fun subList(
+    fromIndex: Int,
+    toIndex: Int,
+  ): MutableList<T> {
+    checkElementIndex(fromIndex)
+    checkElementIndex(toIndex)
+    if (fromIndex == toIndex) {
+      return ArrayList()
+    }
+    var skip = fromIndex
+    var node = firstNode
+    while (skip > 0 && node != null) {
+      skip--
+      node = node.next
+    }
+    var count = toIndex - fromIndex + 1
+    val result = ArrayList<T>(count)
+    while (node != null && count > 0) {
+      result += node.value
+      node = node.next
+      count--
+    }
+    return result
   }
 
   /**
@@ -340,7 +397,7 @@ open class LinkedList<T>() : MutableList<T> {
   /**
    * Unlinks non-null first node f.
    */
-  private fun unlinkFirst(f: Node<T>): T {
+  private fun unlinkFirst(f: NodeImpl<T>): T {
     // assert f == first && f != null;
     val element = f.item
     val next = f.next
@@ -357,7 +414,7 @@ open class LinkedList<T>() : MutableList<T> {
     return element as T
   }
 
-  private fun unlinkLast(l: Node<T>): T {
+  private fun unlinkLast(l: NodeImpl<T>): T {
     // assert l == last && l != null;
     val element = l.item
     val prev = l.prev
@@ -388,7 +445,7 @@ open class LinkedList<T>() : MutableList<T> {
    */
   private fun linkFirst(e: T) {
     val f = first
-    val newNode = Node(null, e, f)
+    val newNode = NodeImpl(null, e, f)
     first = newNode
     if (f == null) {
       last = newNode
@@ -462,8 +519,9 @@ open class LinkedList<T>() : MutableList<T> {
   private inner class ListItr(index: Int) : MutableListIterator<T> {
     private var nextIndex = index
     private var expectedModCount = modCount
-    private var next = if (index == size) null else node(index)
-    private var lastReturned: Node<T>? = null
+    private var next = if (index == size) null else nodeInternal(index)
+    private var lastReturned: NodeImpl<T>? = null
+
     override fun hasPrevious(): Boolean = nextIndex > 0
 
     override fun nextIndex(): Int = nextIndex
@@ -530,49 +588,45 @@ open class LinkedList<T>() : MutableList<T> {
       lastReturned!!.item = element
     }
 
-    fun checkForComodification() {
+    private fun checkForComodification() {
       checkForComodification(expectedModCount)
     }
   }
 
-  private fun checkForComodification(expectedModCount: Int) {
+  @PublishedApi
+  internal fun checkForComodification(expectedModCount: Int) {
     if (modCount != expectedModCount) {
       throw ConcurrentModificationException()
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  fun forEachLinked(func: (T) -> Unit) {
-    var node = first
+  inline fun forEachLinked(func: (T) -> Unit) {
+    var node = firstNode
     val expectedModCount = modCount
     while (node != null) {
       checkForComodification(expectedModCount)
-      func(node.item as T)
+      func(node.value)
       node = node.next
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  fun forEachFromEnd(func: (T) -> Unit) {
-    var node = last
+  inline fun forEachFromEnd(func: (T) -> Unit) {
+    var node = lastNode
     val expectedModCount = modCount
     while (node != null) {
       checkForComodification(expectedModCount)
-      func(node.item as T)
+      func(node.value)
       node = node.prev
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  fun findFromEnd(func: (T) -> Boolean): T? {
-    var node = last
-    val startModCount = modCount
+  inline fun findFromEnd(func: (T) -> Boolean): T? {
+    var node = lastNode
+    val expectedModCount = modCount
     while (node != null) {
-      if (modCount != startModCount) {
-        throw ConcurrentModificationException()
-      }
-      if (func(node.item as T)) {
-        return node.item
+      checkForComodification(expectedModCount)
+      if (func(node.value)) {
+        return node.value
       }
       node = node.prev
     }
@@ -581,4 +635,5 @@ open class LinkedList<T>() : MutableList<T> {
 }
 
 fun <T> linkedListOf(): LinkedList<T> = LinkedList()
+
 fun <T> linkedListOf(vararg elements: T): LinkedList<T> = if (elements.isEmpty()) LinkedList() else LinkedList(elements)

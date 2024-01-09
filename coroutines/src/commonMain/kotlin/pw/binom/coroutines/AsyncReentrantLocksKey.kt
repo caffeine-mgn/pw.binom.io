@@ -19,120 +19,120 @@ import kotlin.time.Duration
 
 private object AsyncReentrantLocksKey : CoroutineContext.Key<AsyncReentrantLocksElement>
 private class AsyncReentrantLocksElement : CoroutineContext.Element {
-    override val key: CoroutineContext.Key<*>
-        get() = AsyncReentrantLocksKey
-    private val locks = defaultMutableSet<AsyncReentrantLock>()
-    private val locksLock = SpinLock()
-    fun add(lock: AsyncReentrantLock) {
-        locksLock.synchronize {
-            locks += lock
-        }
+  override val key: CoroutineContext.Key<*>
+    get() = AsyncReentrantLocksKey
+  private val locks = defaultMutableSet<AsyncReentrantLock>()
+  private val locksLock = SpinLock()
+  fun add(lock: AsyncReentrantLock) {
+    locksLock.synchronize {
+      locks += lock
     }
+  }
 
-    fun remove(lock: AsyncReentrantLock) {
-        locksLock.synchronize {
-            locks -= lock
-        }
+  fun remove(lock: AsyncReentrantLock) {
+    locksLock.synchronize {
+      locks -= lock
     }
+  }
 
-    fun isExist(lock: AsyncReentrantLock) =
-        locksLock.synchronize {
-            lock in locks
-        }
+  fun isExist(lock: AsyncReentrantLock) =
+    locksLock.synchronize {
+      lock in locks
+    }
 }
 
 @OptIn(ExperimentalContracts::class)
 internal suspend fun <T> withTimeout2(timeout: Duration?, block: suspend () -> T): T {
-    contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
-    }
+  contract {
+    callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+  }
 
-    return if (timeout == null || timeout == Duration.INFINITE) {
-        block()
-    } else {
-        withTimeout(timeout) { block() }
-    }
+  return if (timeout == null || timeout == Duration.INFINITE) {
+    block()
+  } else {
+    withTimeout(timeout) { block() }
+  }
 }
 
 class AsyncReentrantLock : AsyncLock {
-    private val waiters by lazy {
-        defaultMutableSet<CancellableContinuation<Unit>>()
+  private val waiters by lazy {
+    defaultMutableSet<CancellableContinuation<Unit>>()
+  }
+  private val waiterLock = SpinLock()
+  private val locked = AtomicBoolean(false)
+  private fun releaseLock() {
+    val waiter = waiterLock.synchronize {
+      val waiter = waiters.firstOrNull()
+      if (waiter != null) {
+        waiters.remove(waiter)
+      }
+      waiter
     }
-    private val waiterLock = SpinLock()
-    private val locked = AtomicBoolean(false)
-    private fun releaseLock() {
-        val waiter = waiterLock.synchronize {
-            val waiter = waiters.firstOrNull()
-            if (waiter != null) {
-                waiters.remove(waiter)
-            }
-            waiter
-        }
-        if (waiter == null) {
-            locked.setValue(false)
-        } else {
-            waiter.resume(Unit)
-        }
+    if (waiter == null) {
+      locked.setValue(false)
+    } else {
+      waiter.resume(Unit)
     }
+  }
 
-    /**
-     * Resumes all waiting coroutines with [exception]
-     */
-    fun resumeAllWithException(exception: Throwable) = waiterLock.synchronize {
-        waiters.forEach {
-            it.resumeWithException(exception)
-        }
-        val size = waiters.size
-        waiters.clear()
-        size
+  /**
+   * Resumes all waiting coroutines with [exception]
+   */
+  fun resumeAllWithException(exception: Throwable) = waiterLock.synchronize {
+    waiters.forEach {
+      it.resumeWithException(exception)
     }
+    val size = waiters.size
+    waiters.clear()
+    size
+  }
 
-    override val isLocked: Boolean
-        get() = locked.getValue()
+  override val isLocked: Boolean
+    get() = locked.getValue()
 
-    override suspend fun <T> synchronize(func: suspend () -> T): T = synchronize(Duration.INFINITE, func)
+  override suspend fun <T> synchronize(func: suspend () -> T): T = synchronize(Duration.INFINITE, func)
 
-    override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T {
-        val locks = coroutineContext[AsyncReentrantLocksKey]
-        val isCurrentLockActive = locks?.isExist(this) == true // is this lock already locked in this coroutine
-        if (isCurrentLockActive) {
-            return func()
+  override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T {
+    val locks = coroutineContext[AsyncReentrantLocksKey]
+    val isCurrentLockActive = locks?.isExist(this) == true // is this lock already locked in this coroutine
+    if (isCurrentLockActive) {
+      return func()
+    }
+    // Try lock
+    if (!locked.compareAndSet(expected = false, new = true)) {
+      // if lock failed wait until is free
+      suspendCancellableCoroutine<Unit> {
+        waiterLock.synchronize {
+          waiters += it
         }
-        // Try lock
-        if (!locked.compareAndSet(expected = false, new = true)) {
-            // if lock failed wait until is free
-            suspendCancellableCoroutine<Unit> {
-                waiterLock.synchronize {
-                    waiters += it
-                }
-                it.invokeOnCancellation { _ ->
-                    waiterLock.synchronize {
-                        waiters -= it
-                    }
-                }
-            }
+        it.invokeOnCancellation { _ ->
+          waiterLock.synchronize {
+            waiters -= it
+          }
         }
+      }
+    }
+    try {
+      return if (locks == null) {
+        val newLocks = AsyncReentrantLocksElement()
+        newLocks.add(this)
+        withContext(coroutineContext + newLocks) {
+          withTimeout2(lockingTimeout) {
+            func()
+          }
+        }
+      } else {
+        locks.add(this)
         try {
-            return if (locks == null) {
-                val newLocks = AsyncReentrantLocksElement()
-                newLocks.add(this)
-                withContext(coroutineContext + newLocks) {
-                    withTimeout2(lockingTimeout) {
-                        func()
-                    }
-                }
-            } else {
-                locks.add(this)
-                try {
-                    withTimeout2(lockingTimeout) {
-                        func()
-                    }
-                } finally {
-                    locks.remove(this)
-                }
-            }
+          withTimeout2(lockingTimeout) {
+            func()
+          }
         } finally {
-            releaseLock()
+          locks.remove(this)
         }
+      }
+    } finally {
+      releaseLock()
     }
+  }
 }

@@ -57,10 +57,10 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
   }
 
-  fun writeByte(byte: Byte) {
+  fun writeByte(value: Byte) {
     ensureUnlocked()
     alloc(1)
-    data.put(byte)
+    data.put(value)
     _wrote++
   }
 
@@ -70,6 +70,10 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     value.toByteBuffer(data)
     _wrote += Int.SIZE_BYTES
   }
+
+  fun writeFloat(value: Float) = writeInt(value.toBits())
+
+  fun writeDouble(value: Double) = writeLong(value.toBits())
 
   fun writeLong(value: Long) {
     ensureUnlocked()
@@ -85,7 +89,10 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     _wrote += Short.SIZE_BYTES
   }
 
-  fun write(input: Input, blockSize: Int = DEFAULT_BUFFER_SIZE) {
+  fun write(
+    input: Input,
+    blockSize: Int = DEFAULT_BUFFER_SIZE,
+  ) {
     while (true) {
       alloc(blockSize)
       val wasRead = input.read(this.data)
@@ -96,7 +103,10 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
   }
 
-  suspend fun write(input: AsyncInput, blockSize: Int = DEFAULT_BUFFER_SIZE) {
+  suspend fun write(
+    input: AsyncInput,
+    blockSize: Int = DEFAULT_BUFFER_SIZE,
+  ) {
     var w = 0
     while (true) {
       if (input.available == 0) {
@@ -126,10 +136,11 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     val needWrite = size - (this.data.remaining)
 
     if (needWrite > 0) {
-      val newSize = maxOf(
-        ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
-        this.data.capacity + _wrote + needWrite,
-      )
+      val newSize =
+        maxOf(
+          ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
+          this.data.capacity + _wrote + needWrite,
+        )
       val old = this.data
       val new = this.data.realloc(newSize)
       new.limit = new.capacity
@@ -146,7 +157,11 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     return l
   }
 
-  fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int {
+  fun write(
+    data: ByteArray,
+    offset: Int = 0,
+    length: Int = data.size - offset,
+  ): Int {
     ensureUnlocked()
     alloc(data.size)
     val l = this.data.write(data, offset = offset, length = length)
@@ -208,12 +223,14 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
   }
 }
 
-fun Input.readBytes() = ByteArrayOutput().use { out ->
-  out.write(this)
-  out.toByteArray()
-}
+fun Input.readBytes() =
+  ByteArrayOutput().use { out ->
+    out.write(this)
+    out.toByteArray()
+  }
 
-suspend fun AsyncInput.readBytes() = ByteArrayOutput().use { out ->
-  out.write(this)
-  out.toByteArray()
-}
+suspend fun AsyncInput.readBytes() =
+  ByteArrayOutput().use { out ->
+    out.write(this)
+    out.toByteArray()
+  }

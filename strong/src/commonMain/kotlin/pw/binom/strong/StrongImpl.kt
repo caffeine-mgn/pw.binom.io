@@ -8,6 +8,7 @@ import pw.binom.concurrency.synchronize
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
 import pw.binom.logger.severe
+import pw.binom.strong.exceptions.DestroyingException
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -22,6 +23,7 @@ internal class StrongImpl : Strong {
 
   sealed class Dependency {
     class ClassDependency(val clazz: KClass<Any>, val name: String?, val require: Boolean) : Dependency()
+
     class ClassSetDependency(val clazz: KClass<Any>) : Dependency()
   }
 
@@ -33,7 +35,11 @@ internal class StrongImpl : Strong {
     internalDependencies.clear()
   }
 
-  override fun <T : Any, R : T> overrideBean(oldBean: T, newBean: R): Boolean {
+  override fun <T : Any, R : T> overrideBean(
+    oldBean: T,
+    newBean: R,
+  ): Boolean {
+    destroyTest()
     val it = beans.iterator()
     while (it.hasNext()) {
       val e = it.next()
@@ -45,19 +51,35 @@ internal class StrongImpl : Strong {
     return false
   }
 
-  fun findBean(clazz: KClass<Any>, name: String?) =
+  fun findBean(
+    clazz: KClass<Any>,
+    name: String?,
+  ) = run {
+    destroyTest()
     beans.asSequence().filter {
       clazz.isInstance(it.value.bean) && (name == null || it.key == name)
     }
+  }
 
-  override fun <T : Any> service(beanClass: KClass<T>, name: String?): ServiceProvider<T> {
+  override fun <T : Any> service(
+    beanClass: KClass<T>,
+    name: String?,
+  ): ServiceProvider<T> {
+    destroyTest()
     internalDependencies += Dependency.ClassDependency(beanClass as KClass<Any>, name, true)
     return ServiceInjector(this, beanClass, name)
   }
 
   override fun <T : Any> serviceMap(beanClass: KClass<T>): ServiceProvider<Map<String, T>> {
+    destroyTest()
     internalDependencies += Dependency.ClassSetDependency(beanClass as KClass<Any>)
     return ServiceMapInjector(this, beanClass)
+  }
+
+  private fun destroyTest() {
+    if (isDestroying) {
+      throw DestroyingException()
+    }
   }
 
   override fun <T : Any> serviceList(beanClass: KClass<T>): ServiceProvider<List<T>> {
@@ -65,7 +87,10 @@ internal class StrongImpl : Strong {
     return ServiceListInjector(this, beanClass)
   }
 
-  override fun <T : Any> serviceOrNull(beanClass: KClass<T>, name: String?): ServiceProvider<T?> {
+  override fun <T : Any> serviceOrNull(
+    beanClass: KClass<T>,
+    name: String?,
+  ): ServiceProvider<T?> {
     internalDependencies += Dependency.ClassDependency(beanClass as KClass<Any>, name, true)
     return NullableServiceInjector(this, beanClass, name)
   }

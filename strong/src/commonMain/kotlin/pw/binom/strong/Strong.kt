@@ -10,7 +10,11 @@ import kotlin.reflect.KProperty
 private class LazyInitPropertyDelegateProvider<T>(val init: suspend () -> T) :
   PropertyDelegateProvider<Strong.Bean, AfterInit<T>> {
   lateinit var delegator: AfterInit<T>
-  override fun provideDelegate(thisRef: Strong.Bean, property: KProperty<*>): AfterInit<T> {
+
+  override fun provideDelegate(
+    thisRef: Strong.Bean,
+    property: KProperty<*>,
+  ): AfterInit<T> {
     delegator = AfterInit(fieldName = property.name, init = init)
     return delegator
   }
@@ -21,7 +25,10 @@ private class AfterInit<T>(val fieldName: String, val init: suspend () -> T) : R
   private var value: T? = null
 
   @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: Strong.Bean, property: KProperty<*>): T {
+  override fun getValue(
+    thisRef: Strong.Bean,
+    property: KProperty<*>,
+  ): T {
     if (!inited) {
       throw StrongException("Value not inited yet. Make sure Strong.Bean.init or Strong.Bean.link called")
     }
@@ -45,14 +52,18 @@ interface Strong {
     protected val strong: Strong = getStrong()
 
     protected inline fun <reified T : Any> inject(name: String? = null) = strong.inject<T>(name = name)
+
     protected inline fun <reified T : Any> injectServiceMap() = strong.injectServiceMap<T>()
+
     protected inline fun <reified T : Any> injectServiceList() = strong.injectServiceList<T>()
+
     protected inline fun <reified T : Any> injectOrNull(name: String? = null) = strong.injectOrNull<T>(name = name)
 
     private var inits: MutableList<LazyInitPropertyDelegateProvider<*>>? = null
     private var links: MutableList<LazyInitPropertyDelegateProvider<*>>? = null
     private var inited = false
     private var linked = false
+
     protected fun <T> onInit(func: suspend () -> T): PropertyDelegateProvider<Bean, ReadOnlyProperty<Bean, T>> {
       if (inited) {
         throw IllegalStateException("Can't create onInit property. Init phase already finished")
@@ -108,11 +119,12 @@ interface Strong {
     val CURRENT
       get() = STRONG_LOCAL
 
-    fun config(func: suspend (Definer) -> Unit) = object : Config {
-      override suspend fun apply(strong: Definer) {
-        func(strong)
+    fun config(func: suspend (Definer) -> Unit) =
+      object : Config {
+        override suspend fun apply(strong: Definer) {
+          func(strong)
+        }
       }
-    }
 
 //        fun serviceProvider(func: suspend (Definer) -> Unit) = object : ServiceProvider {
 //            override suspend fun provide(definer: Definer) {
@@ -134,12 +146,27 @@ interface Strong {
     }
   }
 
-  fun <T : Any, R : T> overrideBean(oldBean: T, newBean: R): Boolean
-  fun <T : Any> service(beanClass: KClass<T>, name: String? = null): ServiceProvider<T>
+  fun <T : Any, R : T> overrideBean(
+    oldBean: T,
+    newBean: R,
+  ): Boolean
+
+  fun <T : Any> service(
+    beanClass: KClass<T>,
+    name: String? = null,
+  ): ServiceProvider<T>
+
   fun <T : Any> serviceMap(beanClass: KClass<T>): ServiceProvider<Map<String, T>>
+
   fun <T : Any> serviceList(beanClass: KClass<T>): ServiceProvider<List<T>>
-  fun <T : Any> serviceOrNull(beanClass: KClass<T>, name: String? = null): ServiceProvider<T?>
+
+  fun <T : Any> serviceOrNull(
+    beanClass: KClass<T>,
+    name: String? = null,
+  ): ServiceProvider<T?>
+
   suspend fun destroy()
+
   val isDestroying: Boolean
   val isDestroyed: Boolean
 
@@ -191,8 +218,11 @@ interface Strong {
 }
 
 inline fun <reified T : Any> Strong.inject(name: String? = null) = service(T::class, name)
+
 inline fun <reified T : Any> Strong.injectServiceMap() = serviceMap(T::class)
+
 inline fun <reified T : Any> Strong.injectServiceList() = serviceList(T::class)
+
 inline fun <reified T : Any> Strong.injectOrNull(name: String? = null) = serviceOrNull(T::class, name)
 
 /**
@@ -202,10 +232,14 @@ inline fun <reified T : Any> Strong.injectOrNull(name: String? = null) = service
  */
 inline fun <reified T : Any> Strong.exist() = contains(T::class)
 
-suspend fun Strong.Companion.launch(vararg config: Strong.Config, afterInit: ((Strong) -> Unit)? = null) {
-  val strong = create(
-    *config,
-  )
+suspend fun Strong.Companion.launch(
+  vararg config: Strong.Config,
+  afterInit: ((Strong) -> Unit)? = null,
+) {
+  val strong =
+    create(
+      *config,
+    )
   if (afterInit != null) {
     afterInit(strong)
   }
