@@ -14,23 +14,25 @@ plugins {
   if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
     id("com.android.library")
   }
+  id("com.jakewharton.cite")
 }
 
 fun KotlinNativeTarget.useNativeNet() {
   val headersPath = project.buildFile.parentFile.resolve("src/nativeCommonMain/include")
-  val staticBuildTask = clangBuildStatic(name = "binom-socket", target = konanTarget) {
-    group = "clang"
-    konanVersion.set(pw.binom.Versions.KOTLIN_VERSION)
-    include(headersPath)
-    compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/Event.c"))
-    compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/SelectedList.c"))
-    compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/Selector.c"))
-    compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/Socket.c"))
-    compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/NativeNetworkAddress.c"))
-    compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/NetworkInterface.c"))
-    compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/wepoll.c"))
-    compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/err.c"))
-  }
+  val staticBuildTask =
+    clangBuildStatic(name = "binom-socket", target = konanTarget) {
+      group = "clang"
+      konanVersion.set(pw.binom.Versions.KOTLIN_VERSION)
+      include(headersPath)
+      compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/Event.c"))
+      compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/SelectedList.c"))
+      compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/Selector.c"))
+      compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/Socket.c"))
+      compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/NativeNetworkAddress.c"))
+      compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/NetworkInterface.c"))
+      compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/wepoll.c"))
+      compileFile(file("${buildFile.parentFile}/src/nativeCommonMain/src/err.c"))
+    }
   tasks.findByName(compileTaskName)?.dependsOn(staticBuildTask)
   val args = listOf("-include-binary", staticBuildTask.staticFile.asFile.get().absolutePath)
   compilations["main"].kotlinOptions.freeCompilerArgs = args
@@ -121,18 +123,20 @@ kotlin {
 }
 
 tasks {
-  val httpStorage = pw.binom.plugins.DockerUtils.dockerContanier(
-    project = project,
-    image = "ugeek/webdav:amd64",
-    tcpPorts = listOf(80 to 7143),
-    args = listOf(),
-    suffix = "WebDav",
-    envs = mapOf(
-      "USERNAME" to "root",
-      "PASSWORD" to "root",
-      "TZ" to "GMT",
-    ),
-  )
+  val httpStorage =
+    pw.binom.plugins.DockerUtils.dockerContanier(
+      project = project,
+      image = "ugeek/webdav:amd64",
+      tcpPorts = listOf(80 to 7143),
+      args = listOf(),
+      suffix = "WebDav",
+      envs =
+        mapOf(
+          "USERNAME" to "root",
+          "PASSWORD" to "root",
+          "TZ" to "GMT",
+        ),
+    )
 
   eachKotlinTest {
     httpStorage.dependsOn(it)

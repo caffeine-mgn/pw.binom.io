@@ -8,6 +8,7 @@ plugins {
   if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
     id("com.android.library")
   }
+  id("com.jakewharton.cite")
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
@@ -54,18 +55,20 @@ tasks {
     testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
   }
 
-  val httpStorage = pw.binom.plugins.DockerUtils.dockerContanier(
-    project = project,
-    image = "ugeek/webdav:amd64",
-    tcpPorts = listOf(80 to 7141),
-    args = listOf(),
-    suffix = "WebDav",
-    envs = mapOf(
-      "USERNAME" to "root",
-      "PASSWORD" to "root",
-      "TZ" to "GMT",
-    ),
-  )
+  val httpStorage =
+    pw.binom.plugins.DockerUtils.dockerContanier(
+      project = project,
+      image = "ugeek/webdav:amd64",
+      tcpPorts = listOf(80 to 7141),
+      args = listOf(),
+      suffix = "WebDav",
+      envs =
+        mapOf(
+          "USERNAME" to "root",
+          "PASSWORD" to "root",
+          "TZ" to "GMT",
+        ),
+    )
 
   eachKotlinTest {
     httpStorage.dependsOn(it)

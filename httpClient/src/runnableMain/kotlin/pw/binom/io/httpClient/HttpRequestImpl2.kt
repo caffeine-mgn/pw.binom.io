@@ -1,5 +1,6 @@
 package pw.binom.io.httpClient
 
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.charset.Charsets
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
@@ -17,12 +18,13 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
 
   private suspend fun makeRequest(): HttpRequestBody {
     check(httpRequestBody == null) { "Request already sent" }
-    val req = client.startConnect(
-      method = method,
-      uri = url,
-      headers = headers,
-      requestLength = if (headers.contentLength != null || headers.transferEncoding != Encoding.CHUNKED) OutputLength.None else OutputLength.Chunked,
-    )
+    val req =
+      client.startConnect(
+        method = method,
+        uri = url,
+        headers = headers,
+        requestLength = if (headers.contentLength != null || headers.transferEncoding != Encoding.CHUNKED) OutputLength.None else OutputLength.Chunked,
+      )
     httpRequestBody = req
     return req
   }
@@ -30,11 +32,13 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
   override suspend fun writeBinary(): AsyncHttpRequestOutput {
     var req: HttpRequestBody? = null
     var output: AsyncOutput? = null
+
     suspend fun req(): HttpRequestBody {
       var reqInternal = req
       return if (reqInternal == null) {
-        val bodyDefined = headers.contentLength != null &&
-          headers.transferEncoding?.let { Encoding.CHUNKED in it } ?: false
+        val bodyDefined =
+          headers.contentLength != null &&
+            headers.transferEncoding?.let { Encoding.CHUNKED in it } ?: false
 
         if (!bodyDefined) {
           headers.transferEncoding = Encoding.CHUNKED
@@ -59,6 +63,8 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
     }
     req()
     return object : AsyncHttpRequestOutput {
+      private val closed = AtomicBoolean(false)
+
       override suspend fun getInput(): HttpResponse {
         if (hasBodyExist) {
           output().asyncClose()
@@ -75,8 +81,10 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
       }
 
       override suspend fun asyncClose() {
-        flush()
-        req().asyncClose()
+        if (closed.compareAndSet(false, true)) {
+          flush()
+          req().asyncClose()
+        }
       }
 
       override suspend fun flush() {

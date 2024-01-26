@@ -10,6 +10,9 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
     native.close()
   }
 
+  override val id: String
+    get() = System.identityHashCode(native).toString()
+
   override var blocking: Boolean = false
     set(value) {
       field = value
@@ -31,7 +34,10 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
     }
   }
 
-  override fun send(data: ByteBuffer, address: InetNetworkAddress): Int {
+  override fun send(
+    data: ByteBuffer,
+    address: InetNetworkAddress,
+  ): Int {
     try {
       return native.send(data.native, address.toJvmAddress().native)
     } catch (e: java.net.SocketException) {
@@ -39,7 +45,10 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
     }
   }
 
-  override fun receive(data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
+  override fun receive(
+    data: ByteBuffer,
+    address: MutableInetNetworkAddress?,
+  ): Int {
     val before = data.position
     if (before == data.remaining) {
       return 0
@@ -65,9 +74,15 @@ class JvmUdpSocket(override val native: DatagramChannel) : UdpSocket, UdpUnixSoc
     return BindStatus.OK
   }
 
-  override fun send(data: ByteBuffer, address: String): Int = native.sendUnix(address, data)
+  override fun send(
+    data: ByteBuffer,
+    address: String,
+  ): Int = native.sendUnix(address, data)
 
-  override fun receive(data: ByteBuffer, address: (String) -> Unit?): Int {
+  override fun receive(
+    data: ByteBuffer,
+    address: (String) -> Unit?,
+  ): Int {
     val before = data.position
     native.receive(data.native)
     return data.position - before

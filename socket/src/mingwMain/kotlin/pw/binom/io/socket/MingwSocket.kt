@@ -12,22 +12,26 @@ class MingwSocket(
   native: RawSocket,
   server: Boolean,
 ) : AbstractSocket(native = native, server = server) {
+  override val id: String
+    get() = native.toString()
 
   override var keyHash: Int = 0
 
   override fun connect(address: InetNetworkAddress): ConnectStatus {
-    val netaddress = if (address is CommonMutableInetNetworkAddress) {
-      address
-    } else {
-      CommonMutableInetNetworkAddress(address)
-    }
+    val netaddress =
+      if (address is CommonMutableInetNetworkAddress) {
+        address
+      } else {
+        CommonMutableInetNetworkAddress(address)
+      }
     return memScoped {
       netaddress.getAsIpV6 { netdata ->
-        val con = platform.windows.connect(
-          native.convert(),
-          netdata.reinterpret(),
-          sizeOf<sockaddr_in6>().convert(),
-        )
+        val con =
+          platform.windows.connect(
+            native.convert(),
+            netdata.reinterpret(),
+            sizeOf<sockaddr_in6>().convert(),
+          )
         if (con != 0) {
           val error = GetLastError()
           if (error == platform.windows.WSAEWOULDBLOCK.toUInt()) {
@@ -37,7 +41,9 @@ class MingwSocket(
             throw IOException("Can't connect to $address. Error: $error An address incompatible with the requested protocol was used.")
           }
           if (error == platform.windows.WSAETIMEDOUT.toUInt()) {
-            throw IOException("Can't connect to $address. Error: $error A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.")
+            throw IOException(
+              "Can't connect to $address. Error: $error A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.",
+            )
           }
           throw IOException("Can't connect to $address: return $con, error $error")
         }
@@ -51,9 +57,10 @@ class MingwSocket(
       return -1
     }
     memScoped {
-      val r: Int = data.ref(0) { dataPtr, remaining ->
-        platform.posix.send(native.convert(), dataPtr, remaining.convert(), 0).convert()
-      }
+      val r: Int =
+        data.ref(0) { dataPtr, remaining ->
+          platform.posix.send(native.convert(), dataPtr, remaining.convert(), 0).convert()
+        }
       if (r < 0) {
         val error = GetLastError()
         if (error == WSAEWOULDBLOCK.convert<DWORD>()) {
@@ -77,10 +84,11 @@ class MingwSocket(
     var rem: Int = -10
     val lim = data.limit
     val pos = data.position
-    val r = data.ref(0) { dataPtr, remaining ->
-      rem = remaining
-      platform.windows.recv(native.convert(), dataPtr, remaining.convert(), 0).convert()
-    }
+    val r =
+      data.ref(0) { dataPtr, remaining ->
+        rem = remaining
+        platform.windows.recv(native.convert(), dataPtr, remaining.convert(), 0).convert()
+      }
     if (r == 0) {
       closed = true
       nativeClose()
@@ -109,19 +117,21 @@ class MingwSocket(
   }
 
   override fun bind(address: InetNetworkAddress): BindStatus {
-    val networkAddress = if (address is CommonMutableInetNetworkAddress) {
-      address
-    } else {
-      CommonMutableInetNetworkAddress(address)
-    }
-    memScoped {
-      val bindResult = networkAddress.getAsIpV6 { data ->
-        platform.posix.bind(
-          native.convert(),
-          data.reinterpret(),
-          sizeOf<sockaddr_in6>().convert(),
-        )
+    val networkAddress =
+      if (address is CommonMutableInetNetworkAddress) {
+        address
+      } else {
+        CommonMutableInetNetworkAddress(address)
       }
+    memScoped {
+      val bindResult =
+        networkAddress.getAsIpV6 { data ->
+          platform.posix.bind(
+            native.convert(),
+            data.reinterpret(),
+            sizeOf<sockaddr_in6>().convert(),
+          )
+        }
       if (bindResult < 0) {
         if (GetLastError().toInt() == platform.windows.WSAEADDRINUSE) { // 10048
           return BindStatus.ADDRESS_ALREADY_IN_USE
@@ -153,57 +163,27 @@ class MingwSocket(
     return BindStatus.OK
   }
 
-  override fun receive(data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
+  override fun receive(
+    data: ByteBuffer,
+    address: MutableInetNetworkAddress?,
+  ): Int {
     var rem: Int = -10
     val lim = data.limit
     val pos = data.position
-    val gotBytes = if (address == null) {
-      val rr = data.ref(0) { dataPtr, remaining ->
-        rem = remaining
-        platform.windows.recvfrom(
-          native.convert(),
-          dataPtr,
-          remaining.convert(),
-          0,
-          null,
-          null,
-        )
-      }
-      if (rr == SOCKET_ERROR) {
-        if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {
-          return 0
-        }
-        if (GetLastError().convert<UInt>() == platform.windows.WSAECONNRESET.convert<UInt>()) { // 10054
-          throw IOException("Connection reset by peer.")
-        }
-
-        throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
-      }
-      rr
-    } else {
-      memScoped {
-        val netaddress = if (address is CommonMutableInetNetworkAddress) {
-          address
-        } else {
-          CommonMutableInetNetworkAddress(address)
-        }
-        SetLastError(0.convert())
-        val len = allocArray<IntVar>(1)
-        len[0] = 28
-
-        val rr = data.ref(0) { dataPtr, remaining ->
-          netaddress.addr { addressPtr ->
+    val gotBytes =
+      if (address == null) {
+        val rr =
+          data.ref(0) { dataPtr, remaining ->
+            rem = remaining
             platform.windows.recvfrom(
               native.convert(),
-              dataPtr.getPointer(this),
+              dataPtr,
               remaining.convert(),
               0,
-              addressPtr.reinterpret(),
-              len,
+              null,
+              null,
             )
           }
-        }
-
         if (rr == SOCKET_ERROR) {
           if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {
             return 0
@@ -211,18 +191,55 @@ class MingwSocket(
           if (GetLastError().convert<UInt>() == platform.windows.WSAECONNRESET.convert<UInt>()) { // 10054
             throw IOException("Connection reset by peer.")
           }
+
           throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
         }
-        netaddress.size = len[0]
-        if (address !== netaddress) {
-          address.update(
-            host = netaddress.host,
-            port = netaddress.port,
-          )
-        }
         rr
+      } else {
+        memScoped {
+          val netaddress =
+            if (address is CommonMutableInetNetworkAddress) {
+              address
+            } else {
+              CommonMutableInetNetworkAddress(address)
+            }
+          SetLastError(0.convert())
+          val len = allocArray<IntVar>(1)
+          len[0] = 28
+
+          val rr =
+            data.ref(0) { dataPtr, remaining ->
+              netaddress.addr { addressPtr ->
+                platform.windows.recvfrom(
+                  native.convert(),
+                  dataPtr.getPointer(this),
+                  remaining.convert(),
+                  0,
+                  addressPtr.reinterpret(),
+                  len,
+                )
+              }
+            }
+
+          if (rr == SOCKET_ERROR) {
+            if (GetLastError().convert<UInt>() == platform.windows.WSAEWOULDBLOCK.convert<UInt>()) {
+              return 0
+            }
+            if (GetLastError().convert<UInt>() == platform.windows.WSAECONNRESET.convert<UInt>()) { // 10054
+              throw IOException("Connection reset by peer.")
+            }
+            throw IOException("Can't read data. Error: $errno  ${GetLastError()}")
+          }
+          netaddress.size = len[0]
+          if (address !== netaddress) {
+            address.update(
+              host = netaddress.host,
+              port = netaddress.port,
+            )
+          }
+          rr
+        }
       }
-    }
     if (gotBytes > 0) {
       try {
         data.position += gotBytes
@@ -237,7 +254,10 @@ class MingwSocket(
     return gotBytes
   }
 
-  override fun processAfterSendUdp(data: ByteBuffer, code: Int): Int {
+  override fun processAfterSendUdp(
+    data: ByteBuffer,
+    code: Int,
+  ): Int {
     if (code == SOCKET_ERROR) {
       if (GetLastError().toInt() == platform.windows.WSAEFAULT) { // 10014
         throw IOException("The system detected an invalid pointer address in attempting to use a pointer argument in a call.")
@@ -264,11 +284,17 @@ class MingwSocket(
     throw RuntimeException("Not supported")
   }
 
-  override fun send(data: ByteBuffer, address: String): Int {
+  override fun send(
+    data: ByteBuffer,
+    address: String,
+  ): Int {
     throw RuntimeException("Not supported")
   }
 
-  override fun receive(data: ByteBuffer, address: (String) -> Unit?): Int {
+  override fun receive(
+    data: ByteBuffer,
+    address: (String) -> Unit?,
+  ): Int {
     throw RuntimeException("Not supported")
   }
 }

@@ -91,7 +91,6 @@ int Socket_receive(int socket, void* dest, int max, struct NativeNetworkAddress*
     #else
     void* dest2 = dest;
     #endif
-    printf("Socket_receive!!!!\n");
     if (addr == NULL){
         return recvfrom(socket, dest2, max, 0, NULL, NULL);
     } else {

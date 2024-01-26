@@ -1,6 +1,7 @@
 package pw.binom.atomic
 
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -15,7 +16,16 @@ inline fun <T> AtomicBoolean.synchronize(func: () -> T): T {
 //            println("SpinLock->Lock timeout!!!\n${Throwable().stackTraceToString()}")
 //        }
 //    }
-  lock()
+  val now = TimeSource.Monotonic.markNow()
+  while (true) {
+    if (tryLock()) {
+      break
+    }
+    if (now.elapsedNow() > 5.seconds) {
+      Throwable().printStackTrace()
+      throw RuntimeException("TIMEOUT!!!!")
+    }
+  }
   try {
     return func()
   } finally {
@@ -37,13 +47,14 @@ inline fun AtomicBoolean.lock(timeout: Duration) {
   }
 }
 
+fun AtomicBoolean.tryLock() = compareAndSet(false, true)
+
 @Suppress("NOTHING_TO_INLINE")
 inline fun AtomicBoolean.lock() {
   while (true) {
-    if (compareAndSet(false, true)) {
+    if (tryLock()) {
       break
     }
-//        println("AtomicBoolean::lock wait unlocking...")
   }
 }
 

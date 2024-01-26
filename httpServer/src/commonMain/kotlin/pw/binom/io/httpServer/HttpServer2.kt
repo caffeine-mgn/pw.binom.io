@@ -47,10 +47,11 @@ class HttpServer2(
   private val timeoutWaiters = ArrayList<TimeoutRecord>()
   private val timeoutRecordPool = GenericObjectPool(factory = TimeoutRecord)
   private val timeoutLock = SpinLock()
-  private val scope = HttpServerScope(
-    coroutineContext = dispatcher,
-    server = this,
-  )
+  private val scope =
+    HttpServerScope(
+      coroutineContext = dispatcher,
+      server = this,
+    )
 
   private suspend fun prepareTimeout(timeout: Duration): TimeoutRecord? {
     if (timeout.isInfinite()) {
@@ -74,16 +75,20 @@ class HttpServer2(
 
   @Suppress("OPT_IN_IS_NOT_ENABLED")
   @OptIn(ExperimentalContracts::class)
-  private suspend inline fun <T> withTimeout(timeout: Duration, func: () -> T): T {
+  private suspend inline fun <T> withTimeout(
+    timeout: Duration,
+    func: () -> T,
+  ): T {
     contract {
       callsInPlace(func, InvocationKind.EXACTLY_ONCE)
     }
     val record = prepareTimeout(timeout)
-    val result = try {
-      func()
-    } finally {
-      finishTimeout(record)
-    }
+    val result =
+      try {
+        func()
+      } finally {
+        finishTimeout(record)
+      }
     return result
   }
 
@@ -110,7 +115,10 @@ class HttpServer2(
     )
   }
 
-  private suspend fun clientProcessingWithMemoryLeaks(channel: AsyncChannel, address: InetNetworkAddress) {
+  private suspend fun clientProcessingWithMemoryLeaks(
+    channel: AsyncChannel,
+    address: InetNetworkAddress,
+  ) {
     ServerAsyncAsciiChannel(
       pool = byteBufferPool,
       channel = channel,
@@ -118,24 +126,29 @@ class HttpServer2(
     ).use { stream ->
       try {
         while (true) {
-          val exchange = try {
-            prepareExchange(stream)
-          } catch (e: CancellationException) {
-            break
-          } catch (e: SocketClosedException) {
-            break
-          } catch (e: Throwable) {
-            uncaughtExceptionHandler.uncaughtException(
-              thread = Thread.currentThread,
-              throwable = e,
-            )
-            break
-          }
+          val exchange =
+            try {
+              val b = prepareExchange(stream)
+              b
+            } catch (e: CancellationException) {
+              break
+            } catch (e: SocketClosedException) {
+              break
+            } catch (e: Throwable) {
+              e.printStackTrace()
+              uncaughtExceptionHandler.uncaughtException(
+                thread = Thread.currentThread,
+                throwable = e,
+              )
+              break
+            }
           try {
             handler.handle(exchange)
           } catch (e: SocketClosedException) {
+            e.printStackTrace()
             break
           } catch (e: Throwable) {
+            e.printStackTrace()
             if (!exchange.headersSent) {
               when (e) {
                 is HttpException -> exchange.startResponse(e.code)
@@ -171,34 +184,38 @@ class HttpServer2(
     }
   }
 
-  private suspend fun clientProcessing(channel: AsyncChannel, address: InetNetworkAddress) {
+  private suspend fun clientProcessing(
+    channel: AsyncChannel,
+    address: InetNetworkAddress,
+  ) {
     clientProcessingWithMemoryLeaks(channel, address)
 //        clientProcessingNoMemoryLeaks(channel)
   }
 
-  private val timeoutThread = Thread { _ ->
-    val d = idleCheckInterval.inWholeMilliseconds
-    while (!closed.getValue()) {
-      Thread.sleep(d)
-      timeoutLock.synchronize {
-        var index = 0
-        while (index < timeoutWaiters.size) {
-          val e = timeoutWaiters[index]
-          val s = e.live - d
-          if (s < 0) {
-            val job = e.job
-            e.job = null
-            timeoutRecordPool.recycle(e)
-            timeoutWaiters.removeAtUsingReplace(index)
-            job?.cancel()
-          } else {
-            e.live = s
-            index++
+  private val timeoutThread =
+    Thread { _ ->
+      val d = idleCheckInterval.inWholeMilliseconds
+      while (!closed.getValue()) {
+        Thread.sleep(d)
+        timeoutLock.synchronize {
+          var index = 0
+          while (index < timeoutWaiters.size) {
+            val e = timeoutWaiters[index]
+            val s = e.live - d
+            if (s < 0) {
+              val job = e.job
+              e.job = null
+              timeoutRecordPool.recycle(e)
+              timeoutWaiters.removeAtUsingReplace(index)
+              job?.cancel()
+            } else {
+              e.live = s
+              index++
+            }
           }
         }
       }
-    }
-  }.also { it.start() }
+    }.also { it.start() }
 
   private val incomeAddress = MutableInetNetworkAddress.create(host = "127.0.0.1", port = 8080)
 
@@ -206,33 +223,35 @@ class HttpServer2(
   @OptIn(DelicateCoroutinesApi::class)
   fun listen(address: InetNetworkAddress): Job {
     val server = dispatcher.bindTcp(address)
-    val job = GlobalScope.launch(dispatcher) {
-      val currentJob = this.coroutineContext.job
-      try {
-        while (isActive) {
-          val newClient = try {
-            val client = server.accept(incomeAddress)
-            client
-          } catch (e: SocketClosedException) {
-            break
-          } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-          } catch (e: Throwable) {
-            uncaughtExceptionHandler.uncaughtException(
-              thread = Thread.currentThread,
-              throwable = e,
-            )
-            continue
+    val job =
+      GlobalScope.launch(dispatcher) {
+        val currentJob = this.coroutineContext.job
+        try {
+          while (isActive) {
+            val newClient =
+              try {
+                val client = server.accept(incomeAddress)
+                client
+              } catch (e: SocketClosedException) {
+                break
+              } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+              } catch (e: Throwable) {
+                uncaughtExceptionHandler.uncaughtException(
+                  thread = Thread.currentThread,
+                  throwable = e,
+                )
+                continue
+              }
+            scope.launch { clientProcessing(channel = newClient, address = incomeAddress.clone()) }
           }
-          scope.launch { clientProcessing(channel = newClient, address = incomeAddress.clone()) }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+          // Do nothing
+        } finally {
+          server.closeAnyway()
+          listeners -= currentJob
         }
-      } catch (e: kotlinx.coroutines.CancellationException) {
-        // Do nothing
-      } finally {
-        server.closeAnyway()
-        listeners -= currentJob
       }
-    }
     listeners += job
     return job
   }

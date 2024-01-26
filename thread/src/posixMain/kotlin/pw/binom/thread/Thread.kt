@@ -1,9 +1,12 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package pw.binom.thread
 
 import kotlinx.cinterop.*
 import platform.common.*
 import platform.posix.*
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 import kotlin.time.Duration
 
 private var createCount = 0
@@ -16,26 +19,27 @@ private fun genName() = "Thread-${createCount++}"
 @Suppress("OPT_IN_IS_NOT_ENABLED")
 @OptIn(UnsafeNumber::class, ExperimentalForeignApi::class)
 actual abstract class Thread(_id: Long, name: String) {
-  private val e = nativeHeap.alloc<ThreadData>().ptr // malloc(sizeOf<ThreadData>().convert())!!.reinterpret<ThreadData>()
+  private var threadDataPtr = nativeHeap.alloc<ThreadData>().ptr // malloc(sizeOf<ThreadData>().convert())!!.reinterpret<ThreadData>()
 
   //  private val e = internal_createThreadData()!!
   var _id: Long
-    get() = internal_get_thread_id(e)
+    get() = internal_get_thread_id(threadDataPtr)
     set(value) {
-      internal_set_thread_id(e, value)
+      internal_set_thread_id(threadDataPtr, value)
     }
 
-  @OptIn(ExperimentalStdlibApi::class)
-  private val cleaner = createCleaner(e) {
-    nativeHeap.free(it)
-  }
+  @OptIn(ExperimentalNativeApi::class)
+  private val cleaner =
+    createCleaner(threadDataPtr) {
+      nativeHeap.free(it)
+    }
 
   //    private var initName = name
   actual var name: String = name
     set(value) {
       val f = _id
       if (f != 0L) {
-        internal_setThreadName2(e, value)
+        internal_setThreadName2(threadDataPtr, value)
       }
       field = value
     }
@@ -83,7 +87,7 @@ actual abstract class Thread(_id: Long, name: String) {
     memScoped {
 //            val id = alloc<pthread_tVar>()
       val ptr = StableRef.create(this@Thread)
-      if (internal_pthread_create(e, null, func, ptr.asCPointer()) != 0) {
+      if (internal_pthread_create(threadDataPtr, null, func, ptr.asCPointer()) != 0) {
         ptr.dispose()
         throw IllegalArgumentException("Can't start thread $errno")
       }
@@ -96,7 +100,9 @@ actual abstract class Thread(_id: Long, name: String) {
     get() = _id
 
   actual fun join() {
-    internal_pthread_join(e)
+    if (internalIsActive) {
+      internal_pthread_join(threadDataPtr)
+    }
 //        pthread_join(_id.reinterpret(), null)
   }
 
@@ -112,14 +118,15 @@ actual abstract class Thread(_id: Long, name: String) {
         if (thread != null) {
           return thread
         }
-        val wrapper = object : Thread(
-          _id = internal_pthread_self(), // pthread_self().reinterpret<internal_pthread_t>(),
-          name = genName(),
-        ) {
-          override fun execute() {
-            throw IllegalStateException()
+        val wrapper =
+          object : Thread(
+            _id = internal_pthread_self(), // pthread_self().reinterpret<internal_pthread_t>(),
+            name = genName(),
+          ) {
+            override fun execute() {
+              throw IllegalStateException()
+            }
           }
-        }
         localThread = wrapper
         return wrapper
       }
@@ -144,20 +151,21 @@ actual abstract class Thread(_id: Long, name: String) {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private val func: CPointer<CFunction<(COpaquePointer?) -> COpaquePointer?>> = staticCFunction { ptr ->
-  val thread = ptr!!.asStableRef<Thread>()
-  try {
-    thread.get().nativeExecute()
-  } catch (e: Throwable) {
-    thread.get().uncaughtExceptionHandler.uncaughtException(
-      thread = thread.get(),
-      throwable = e,
-    )
-  } finally {
-    thread.dispose()
+private val func: CPointer<CFunction<(COpaquePointer?) -> COpaquePointer?>> =
+  staticCFunction { ptr ->
+    val thread = ptr!!.asStableRef<Thread>()
+    try {
+      thread.get().nativeExecute()
+    } catch (e: Throwable) {
+      thread.get().uncaughtExceptionHandler.uncaughtException(
+        thread = thread.get(),
+        throwable = e,
+      )
+    } finally {
+      thread.dispose()
+    }
+    null
   }
-  null
-}
 
 /*
 actual abstract class Thread(var _id: pthread_t, name: String) {

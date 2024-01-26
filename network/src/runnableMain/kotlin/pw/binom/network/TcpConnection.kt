@@ -1,7 +1,9 @@
 package pw.binom.network
 
+import com.jakewharton.cite.__LINE__
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
+import pw.binom.InternalLog
 import pw.binom.executeAndResumeWithException
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
@@ -17,8 +19,9 @@ class TcpConnection(
   private var connect: CancellableContinuation<Unit>? = null
   var description: String? = null
 
-  override fun toString(): String =
-    "TcpConnection(description: $description, channel: $channel, key: $currentKey)"
+  private val logger = InternalLog.file(currentKey.toString())
+
+  override fun toString(): String = "TcpConnection(description: $description, channel: $channel, key: $currentKey)"
 
   private class IOState {
     var continuation: CancellableContinuation<Int>? = null
@@ -30,7 +33,10 @@ class TcpConnection(
       data = null
     }
 
-    fun set(continuation: CancellableContinuation<Int>, data: ByteBuffer) {
+    fun set(
+      continuation: CancellableContinuation<Int>,
+      data: ByteBuffer,
+    ) {
       this.continuation = continuation
       this.data = data
     }
@@ -52,12 +58,13 @@ class TcpConnection(
   private val readData = IOState()
   private val sendData = IOState()
 
-  private fun calcListenFlags() = when {
-    readData.continuation != null && (sendData.continuation != null) -> KeyListenFlags.READ or KeyListenFlags.ERROR or KeyListenFlags.WRITE
-    readData.continuation != null -> KeyListenFlags.READ or KeyListenFlags.ERROR
-    sendData.continuation != null -> KeyListenFlags.WRITE or KeyListenFlags.ERROR
-    else -> 0
-  }
+  private fun calcListenFlags() =
+    when {
+      readData.continuation != null && (sendData.continuation != null) -> KeyListenFlags.READ or KeyListenFlags.ERROR or KeyListenFlags.WRITE
+      readData.continuation != null -> KeyListenFlags.READ or KeyListenFlags.ERROR
+      sendData.continuation != null -> KeyListenFlags.WRITE or KeyListenFlags.ERROR
+      else -> 0
+    }
 
   override fun readyForWrite(key: SelectorKey) {
     if (checkConnect()) {
@@ -89,26 +96,31 @@ class TcpConnection(
   }
 
   override fun readyForRead(key: SelectorKey) {
+    logger.info(line = __LINE__) { "readyForRead:: Started" }
     if (checkConnect()) {
+      logger.info(line = __LINE__) { "readyForRead:: not connected" }
       return
     }
 
     val continuation = readData.continuation
     val data = readData.data
     if (continuation == null) {
-      currentKey.removeListen(KeyListenFlags.READ)
+      logger.info(line = __LINE__) { "readyForRead:: no any continuation set. Cleaning keys" }
+//      currentKey.removeListen(KeyListenFlags.READ)
 //            println("TcpConnection::readyForRead suspend!. continuation=null. channel: $channel")
       return
     }
     data ?: error("readData.data is not set")
     val readed = channel.receive(data)
     if (readed == -1) {
+      logger.info(line = __LINE__) { "readyForRead:: during reading find that connection lost" }
       readData.reset()
       close()
       continuation.resumeWithException(SocketClosedException("Read -1"))
       return
     }
     if (readed == 0) {
+      logger.info(line = __LINE__) { "readyForRead:: no data for read. Try to wait a data" }
 //            println("TcpConnection::readyForRead readed 0. Try ready again later")
       currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
 //            println("TcpConnection::readyForRead suspend. read 0. channel: $channel")
@@ -129,6 +141,7 @@ class TcpConnection(
         currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
       }
     } else {
+      logger.info(line = __LINE__) { "readyForRead:: data was read success. $readed bytes" }
       readData.reset()
       continuation.resume(value = readed, onCancellation = null)
     }
@@ -136,7 +149,9 @@ class TcpConnection(
 
   override fun error() {
     val connect = this.connect
+    logger.info(line = __LINE__) { "error:: Happened!" }
     if (connect != null) {
+      logger.info(line = __LINE__) { "error:: Connect error" }
       this.connect = null
       close()
       connect.resumeWithException(SocketConnectException())
@@ -145,11 +160,13 @@ class TcpConnection(
     error = true
 
     if (readData.continuation != null) {
+      logger.info(line = __LINE__) { "error:: stopped reading" }
       val c = readData.continuation
       readData.reset()
       c?.resumeWith(Result.failure(SocketClosedException()))
     }
     if (sendData.continuation != null) {
+      logger.info(line = __LINE__) { "error:: stopped sending" }
       val c = sendData.continuation
       sendData.reset()
       c?.resumeWith(Result.failure(SocketClosedException()))
@@ -157,6 +174,7 @@ class TcpConnection(
   }
 
   override suspend fun connection() {
+    logger.info(line = __LINE__) { "connection:: start connect process" }
     val connect = this.connect
     check(connect == null) { "Connection already try connect" }
     suspendCancellableCoroutine<Unit> {
@@ -203,6 +221,7 @@ class TcpConnection(
   }
 
   override fun close() {
+    logger.info(line = __LINE__) { "close:: closing" }
     if (currentKey.isClosed) {
       return
     }
@@ -245,8 +264,8 @@ class TcpConnection(
       this.currentKey.addListen(KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE)
       this.currentKey.selector.wakeup()
       it.invokeOnCancellation {
-        this.currentKey.removeListen(KeyListenFlags.WRITE)
-        this.currentKey.selector.wakeup()
+//        this.currentKey.removeListen(KeyListenFlags.WRITE)
+//        this.currentKey.selector.wakeup()
         sendData.reset()
       }
     }
@@ -278,19 +297,20 @@ class TcpConnection(
       throw SocketClosedException()
     }
     readData.full = true
-    val readed = suspendCancellableCoroutine<Int> { continuation ->
-      continuation.invokeOnCancellation {
-        currentKey.removeListen(KeyListenFlags.READ)
-        readData.reset()
+    val readed =
+      suspendCancellableCoroutine<Int> { continuation ->
+        continuation.invokeOnCancellation {
+//          currentKey.removeListen(KeyListenFlags.READ)
+          readData.reset()
+//          currentKey.selector.wakeup()
+        }
+        readData.set(
+          continuation = continuation,
+          data = dest,
+        )
+        currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR or KeyListenFlags.ONCE)
         currentKey.selector.wakeup()
       }
-      readData.set(
-        continuation = continuation,
-        data = dest,
-      )
-      currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR or KeyListenFlags.ONCE)
-      currentKey.selector.wakeup()
-    }
     if (readed == 0) {
       channel.closeAnyway()
       throw SocketClosedException()
@@ -311,11 +331,12 @@ class TcpConnection(
       throw IllegalStateException("Connection already have read listener")
     }
 
-    val read = try {
-      channel.receive(dest)
-    } catch (e: Throwable) {
-      throw e
-    }
+    val read =
+      try {
+        channel.receive(dest)
+      } catch (e: Throwable) {
+        throw e
+      }
     if (read > 0) {
       return read
     }
@@ -326,9 +347,9 @@ class TcpConnection(
     readData.full = false
     return suspendCancellableCoroutine {
       it.invokeOnCancellation {
-        currentKey.removeListen(KeyListenFlags.READ)
+//        currentKey.removeListen(KeyListenFlags.READ)
         readData.reset()
-        currentKey.selector.wakeup()
+//        currentKey.selector.wakeup()
       }
       try {
         readData.set(

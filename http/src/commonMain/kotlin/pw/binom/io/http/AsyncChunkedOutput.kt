@@ -19,7 +19,6 @@ open class AsyncChunkedOutput(
   private val autoFlushBuffer: Int = DEFAULT_BUFFER_SIZE,
   closeStream: Boolean = false,
 ) : AsyncOutput {
-
   var stream: AsyncOutput = stream
     protected set
   var closeStream: Boolean = closeStream
@@ -29,6 +28,7 @@ open class AsyncChunkedOutput(
   protected val buffer = ByteBuffer(autoFlushBuffer)
 
   private val tmp = ByteBuffer(50)
+
   override suspend fun write(data: ByteBuffer): Int {
     ensureOpen()
     val len = data.remaining

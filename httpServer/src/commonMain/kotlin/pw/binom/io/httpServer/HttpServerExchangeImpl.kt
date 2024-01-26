@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package pw.binom.io.httpServer
 
 import pw.binom.ByteBufferPool
@@ -19,14 +21,18 @@ class HttpServerExchangeImpl(
   val compressByteBufferPool: ByteBufferPool?,
   val compressLevel: Int,
 ) : HttpServerExchange {
-  override val mainChannel: AsyncCloseable = AsyncCloseable {
-    channel.asyncCloseAnyway()
-  }
+  override val mainChannel: AsyncCloseable =
+    AsyncCloseable {
+      channel.asyncCloseAnyway()
+    }
   internal var keepAlive = false
   override val address: InetNetworkAddress
     get() = channel.address
 
-  override suspend fun startResponse(statusCode: Int, headers: Headers) {
+  override suspend fun startResponse(
+    statusCode: Int,
+    headers: Headers,
+  ) {
     check(!headersSent) { "Headers already sent" }
     val connection = headers.getLast(Headers.CONNECTION)
     if (connection == Headers.KEEP_ALIVE && !keepAliveEnabled) {
@@ -84,11 +90,12 @@ class HttpServerExchangeImpl(
     channel.writer.flush()
     var output: AsyncOutput = channel.channel
     if (contentLength != null) {
-      output = AsyncContentLengthOutput(
-        stream = output,
-        contentLength = contentLength,
-        closeStream = false,
-      )
+      output =
+        AsyncContentLengthOutput(
+          stream = output,
+          contentLength = contentLength,
+          closeStream = false,
+        )
     }
 
     for (i in transferEncoding.lastIndex downTo 0) {
@@ -133,11 +140,12 @@ class HttpServerExchangeImpl(
       val transferEncoding = requestHeaders.getTransferEncodingList()
       var stream: AsyncInput = channel.reader
       if (contentLength != null) {
-        stream = AsyncContentLengthInput(
-          stream = stream,
-          contentLength = contentLength,
-          closeStream = false,
-        )
+        stream =
+          AsyncContentLengthInput(
+            stream = stream,
+            contentLength = contentLength,
+            closeStream = false,
+          )
       }
       for (i in transferEncoding.lastIndex downTo 0) {
         val newStream =

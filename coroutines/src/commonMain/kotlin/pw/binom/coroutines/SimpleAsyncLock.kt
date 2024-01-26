@@ -33,24 +33,31 @@ class SimpleAsyncLock : AsyncLock {
     }
   }
 
+  fun tryLock(): Boolean = stateLock.synchronize { locked.compareAndSet(false, true) }
+
   suspend fun lock() = internalLock(null)
+
   suspend fun lock(lockingTimeout: Duration) = internalLock(lockingTimeout)
 
   fun unlock() {
-    val waiter = stateLock.synchronize {
-      val waiter = waiters.firstOrNull()
-      if (waiter != null) {
-        waiters.remove(waiter)
+    val waiter =
+      stateLock.synchronize {
+        val waiter = waiters.firstOrNull()
+        if (waiter != null) {
+          waiters.remove(waiter)
+        }
+        if (waiter == null) {
+          locked.setValue(false)
+        }
+        waiter
       }
-      if (waiter == null) {
-        locked.setValue(false)
-      }
-      waiter
-    }
     waiter?.resume(Unit)
   }
 
-  override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T {
+  override suspend fun <T> synchronize(
+    lockingTimeout: Duration,
+    func: suspend () -> T,
+  ): T {
     internalLock(lockingTimeout)
     return try {
       func()

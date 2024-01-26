@@ -11,18 +11,22 @@ class PosixSocket(
   native: RawSocket,
   server: Boolean,
 ) : AbstractSocket(native = native, server = server) {
+  override val id: String
+    get() = native.toString()
 
   override fun bind(address: InetNetworkAddress): BindStatus {
     memScoped {
-      val netAddress = if (address is CommonMutableInetNetworkAddress) {
-        address
-      } else {
-        CommonMutableInetNetworkAddress(address)
-      }
+      val netAddress =
+        if (address is CommonMutableInetNetworkAddress) {
+          address
+        } else {
+          CommonMutableInetNetworkAddress(address)
+        }
       internal_unbind(native)
-      val bindResult = netAddress.getAsIpV6 { ipv6Addr ->
-        bind(native, ipv6Addr.reinterpret(), sizeOf<sockaddr_in6>().convert())
-      }
+      val bindResult =
+        netAddress.getAsIpV6 { ipv6Addr ->
+          bind(native, ipv6Addr.reinterpret(), sizeOf<sockaddr_in6>().convert())
+        }
 
       if (bindResult < 0) {
         val error = errno
@@ -51,18 +55,20 @@ class PosixSocket(
   }
 
   override fun connect(address: InetNetworkAddress): ConnectStatus {
-    val netAddress = if (address is CommonMutableInetNetworkAddress) {
-      address
-    } else {
-      CommonMutableInetNetworkAddress(address)
-    }
-    val connectResponse = netAddress.getAsIpV6 { addr ->
-      connect(
-        native,
-        addr.reinterpret(),
-        sizeOf<sockaddr_in6>().convert(),
-      )
-    }
+    val netAddress =
+      if (address is CommonMutableInetNetworkAddress) {
+        address
+      } else {
+        CommonMutableInetNetworkAddress(address)
+      }
+    val connectResponse =
+      netAddress.getAsIpV6 { addr ->
+        connect(
+          native,
+          addr.reinterpret(),
+          sizeOf<sockaddr_in6>().convert(),
+        )
+      }
     if (connectResponse < 0) {
       val errno = errno
       return when (errno) {
@@ -75,27 +81,32 @@ class PosixSocket(
     return ConnectStatus.OK
   }
 
-  override fun send(data: ByteBuffer, address: InetNetworkAddress): Int {
+  override fun send(
+    data: ByteBuffer,
+    address: InetNetworkAddress,
+  ): Int {
     if (data.remaining == 0) {
       return 0
     }
-    val netAddress = if (address is CommonMutableInetNetworkAddress) {
-      address
-    } else {
-      CommonMutableInetNetworkAddress(address)
-    }
-    val sendResult = netAddress.getAsIpV6 { ipv6Addr ->
-      data.ref(0) { ptr, remaining ->
-        sendto(
-          native,
-          ptr,
-          remaining.convert(),
-          0,
-          ipv6Addr.reinterpret(),
-          sizeOf<sockaddr_in6>().convert(),
-        )
+    val netAddress =
+      if (address is CommonMutableInetNetworkAddress) {
+        address
+      } else {
+        CommonMutableInetNetworkAddress(address)
       }
-    }.toInt()
+    val sendResult =
+      netAddress.getAsIpV6 { ipv6Addr ->
+        data.ref(0) { ptr, remaining ->
+          sendto(
+            native,
+            ptr,
+            remaining.convert(),
+            0,
+            ipv6Addr.reinterpret(),
+            sizeOf<sockaddr_in6>().convert(),
+          )
+        }
+      }.toInt()
     if (sendResult == -1) {
       if (errno == EPIPE) {
         return -1
@@ -112,7 +123,10 @@ class PosixSocket(
     return sendResult
   }
 
-  override fun processAfterSendUdp(data: ByteBuffer, code: Int): Int {
+  override fun processAfterSendUdp(
+    data: ByteBuffer,
+    code: Int,
+  ): Int {
     if (code == -1) {
       if (errno == EPIPE) {
         return -1
@@ -133,11 +147,17 @@ class PosixSocket(
     TODO("Not yet implemented")
   }
 
-  override fun send(data: ByteBuffer, address: String): Int {
+  override fun send(
+    data: ByteBuffer,
+    address: String,
+  ): Int {
     TODO("Not yet implemented")
   }
 
-  override fun receive(data: ByteBuffer, address: (String) -> Unit?): Int {
+  override fun receive(
+    data: ByteBuffer,
+    address: (String) -> Unit?,
+  ): Int {
     TODO("Not yet implemented")
   }
 
@@ -151,9 +171,10 @@ class PosixSocket(
       return 0
     }
     memScoped {
-      val r: Int = data.ref(0) { dataPtr, remaining ->
-        send(native, dataPtr, remaining.convert(), MSG_NOSIGNAL).convert()
-      }
+      val r: Int =
+        data.ref(0) { dataPtr, remaining ->
+          send(native, dataPtr, remaining.convert(), MSG_NOSIGNAL).convert()
+        }
       if (r < 0) {
         val error = errno.toInt()
         if (errno == EPIPE) {
@@ -184,9 +205,10 @@ class PosixSocket(
     if (!data.isReferenceAccessAvailable()) {
       return 0
     }
-    val r = data.ref(0) { dataPtr, remaining ->
-      recv(native, dataPtr, remaining.convert(), 0).convert()
-    }
+    val r =
+      data.ref(0) { dataPtr, remaining ->
+        recv(native, dataPtr, remaining.convert(), 0).convert()
+      }
     if (r == 0) {
       return -1
     }

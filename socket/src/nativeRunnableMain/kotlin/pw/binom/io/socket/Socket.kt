@@ -15,6 +15,7 @@ actual interface Socket : Closeable {
   val native: RawSocket
   val server: Boolean
   var keyHash: Int
+  actual val id: String
 
   @OptIn(ExperimentalForeignApi::class)
   actual companion object {
@@ -71,5 +72,6 @@ actual interface Socket : Closeable {
   }
 
   actual val tcpNoDelay: Boolean
+
   actual fun setTcpNoDelay(value: Boolean): Boolean
 }

@@ -1,5 +1,7 @@
 package pw.binom.io.socket
 
+import com.jakewharton.cite.__LINE__
+import pw.binom.InternalLog
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import java.nio.channels.SocketChannel
@@ -8,20 +10,23 @@ import kotlin.concurrent.withLock
 import kotlin.time.Duration
 import java.nio.channels.Selector as JvmSelector
 
+private val SELECTOR_LOGGER = InternalLog.file("Selector")
+
 actual class Selector : Closeable {
   private val native = JvmSelector.open()
   private val lock = ReentrantLock()
 
-  private val eventImpl = object : pw.binom.io.socket.Event {
-    var internalKey: SelectorKey? = null
-    var internalFlag: ListenFlags = ListenFlags()
-    override val key: SelectorKey
-      get() = internalKey ?: throw IllegalStateException("key not set")
-    override val flags: ListenFlags
-      get() = internalFlag
+  private val eventImpl =
+    object : pw.binom.io.socket.Event {
+      var internalKey: SelectorKey? = null
+      var internalFlag: ListenFlags = ListenFlags()
+      override val key: SelectorKey
+        get() = internalKey ?: throw IllegalStateException("key not set")
+      override val flags: ListenFlags
+        get() = internalFlag
 
-    override fun toString(): String = this.buildToString()
-  }
+      override fun toString(): String = this.buildToString()
+    }
 
   actual fun attach(socket: Socket): SelectorKey {
     if (socket.blocking) {
@@ -29,11 +34,13 @@ actual class Selector : Closeable {
     }
     val existKey = socket.native.keyFor(native)
     if (existKey != null) {
+      SELECTOR_LOGGER.info(line = __LINE__) { "Socket ${System.identityHashCode(socket.native)} already attached" }
       return existKey.attachment() as SelectorKey
     }
     val jvmKey = socket.native.register(native, 0, null)
     val binomKey = SelectorKey(native = jvmKey, selector = this)
     jvmKey.attach(binomKey)
+    SELECTOR_LOGGER.info(line = __LINE__) { "Socket ${System.identityHashCode(socket.native)} attached success" }
     return binomKey
   }
 
@@ -46,11 +53,14 @@ actual class Selector : Closeable {
     }
   }
 
-  actual fun select(timeout: Duration, selectedKeys: SelectedKeys) {
+  actual fun select(
+    timeout: Duration,
+    selectedKeys: SelectedKeys,
+  ) {
     lock.withLock {
       selectedKeys.lock.withLock {
         selectedKeys.errors.clear()
-        select(timeout = timeout)
+        val l = select(timeout = timeout)
         val list = ArrayList(native.selectedKeys())
         list.forEach { nativeKey ->
           val binomKey = nativeKey.attachment() as SelectorKey
@@ -76,18 +86,26 @@ actual class Selector : Closeable {
     }
   }
 
-  actual fun select(timeout: Duration, eventFunc: (pw.binom.io.socket.Event) -> Unit) {
+  actual fun select(
+    timeout: Duration,
+    eventFunc: (pw.binom.io.socket.Event) -> Unit,
+  ) {
     lock.withLock {
-      try {
-        select(timeout = timeout)
-      } catch (e: java.nio.channels.ClosedSelectorException) {
-        throw ClosedException()
-      }
+      SELECTOR_LOGGER.info(line = __LINE__) { "Selecting...." }
+      val selected =
+        try {
+          select(timeout = timeout)
+        } catch (e: java.nio.channels.ClosedSelectorException) {
+          SELECTOR_LOGGER.info(line = __LINE__) { "Can't select. Selector closed" }
+          throw ClosedException()
+        }
+      SELECTOR_LOGGER.info(line = __LINE__) { "Selecting completed. Events count: $selected" }
       native.selectedKeys().forEach { nativeKey ->
         val binomKey = nativeKey.attachment() as SelectorKey
         eventImpl.internalKey = binomKey
         when {
           !nativeKey.isValid -> {
+            SELECTOR_LOGGER.info(line = __LINE__) { "Error happened on ${System.identityHashCode(binomKey.native.channel())}" }
             binomKey.isErrorHappened = false
             eventImpl.internalFlag = ListenFlags().withError.withRead.withWrite
             binomKey.clearFlagsIfNeed()
@@ -103,8 +121,14 @@ actual class Selector : Closeable {
                 binomKey.isErrorHappened = false
                 eventImpl.internalFlag = ListenFlags.WRITE + nativeKey.toCommonReadFlag()
                 binomKey.clearFlagsIfNeed()
+                SELECTOR_LOGGER.info(
+                  line = __LINE__,
+                ) { "Connecting ${System.identityHashCode(binomKey.native.channel())} finished success" }
                 eventFunc(eventImpl)
               } catch (e: java.net.ConnectException) {
+                SELECTOR_LOGGER.info(
+                  line = __LINE__,
+                ) { "Connecting ${System.identityHashCode(binomKey.native.channel())} finished with error" }
                 binomKey.isErrorHappened = true
                 eventImpl.internalFlag = ListenFlags.ERROR.withRead
                 binomKey.clearFlagsIfNeed()
@@ -116,6 +140,13 @@ actual class Selector : Closeable {
 
           else -> {
             eventImpl.internalFlag = nativeKey.toCommonReadFlag()
+            SELECTOR_LOGGER.info(line = __LINE__) {
+              "Income event on ${System.identityHashCode(binomKey.native.channel())}: ${
+                commonFlagsToString(
+                  eventImpl.internalFlag.raw,
+                )
+              }"
+            }
             binomKey.clearFlagsIfNeed()
             eventFunc(eventImpl)
           }
@@ -126,6 +157,7 @@ actual class Selector : Closeable {
   }
 
   actual fun wakeup() {
+    SELECTOR_LOGGER.info(line = __LINE__) { "wakeup\n${Throwable().stackTraceToString()}" }
     native.wakeup()
   }
 

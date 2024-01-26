@@ -1,10 +1,15 @@
 package pw.binom.io.socket
 
+import com.jakewharton.cite.__LINE__
+import pw.binom.InternalLog
 import pw.binom.io.Closeable
 import java.nio.channels.SelectionKey
 
 actual class SelectorKey(val native: SelectionKey, actual val selector: Selector) : Closeable {
+  private val logger = InternalLog.file("SelectorKey_${System.identityHashCode(native.selector())}")
+
   override fun close() {
+    logger.info(line = __LINE__) { "Closing" }
     closed = true
     native.cancel()
   }
@@ -35,15 +40,19 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     internalListenFlags = 0
     try {
       native.interestOps(0)
+      logger.info(line = __LINE__) { "Cleared listener flags" }
     } catch (e: java.nio.channels.CancelledKeyException) {
+      logger.info(line = __LINE__) { "Can't clear listener flags" }
       closed = true
     }
   }
 
   actual fun updateListenFlags(listenFlags: Int): Boolean {
     if (closed) {
+      logger.info(line = __LINE__) { "Can't update flags to ${commonFlagsToString(listenFlags)}: socket closed" }
       return false
     }
+    val old = internalListenFlags
     internalListenFlags = listenFlags
 
     var r = 0
@@ -56,8 +65,14 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     }
     return try {
       native.interestOps(r and native.channel().validOps())
+      logger.info(line = __LINE__) {
+        "Update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}: ${Throwable().stackTraceToString()}"
+      }
       true
     } catch (e: java.nio.channels.CancelledKeyException) {
+      logger.info(line = __LINE__) {
+        "Can't update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}: Locks like socket closed. Set state to close"
+      }
       closed = true
       false
     }
@@ -68,7 +83,18 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
   actual val listenFlags: Int
     get() = internalListenFlags
   actual val isClosed: Boolean
-    get() = closed || !native.isValid
+    get() =
+      when {
+        closed -> true
+        else -> {
+          if (native.isValid) {
+            false
+          } else {
+            closed = true
+            true
+          }
+        }
+      }
 
-  override fun toString(): String = buildToString()
+  override fun toString(): String = "SelectorKey(${System.identityHashCode(native.selector())})"
 }

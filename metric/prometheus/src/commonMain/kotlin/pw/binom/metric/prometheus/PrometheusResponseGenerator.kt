@@ -1,10 +1,11 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package pw.binom.metric.prometheus
 
 import pw.binom.io.AsyncAppendable
 import pw.binom.metric.*
 
 object PrometheusResponseGenerator {
-
   private suspend fun generatePrometheus(
     appendable: AsyncAppendable,
     name: String,
@@ -28,11 +29,19 @@ object PrometheusResponseGenerator {
     appendable.append(" ").append(value.toString())
   }
 
-  suspend fun generate(metric: MetricProvider, dest: AsyncAppendable, defaultFields: Map<String, String>) {
+  suspend fun generate(
+    metric: MetricProvider,
+    dest: AsyncAppendable,
+    defaultFields: Map<String, String>,
+  ) {
     generate(metric = metric.metrics, dest = dest, defaultFields = defaultFields)
   }
 
-  suspend fun generate(metric: Iterable<MetricUnit>, dest: AsyncAppendable, defaultFields: Map<String, String>) {
+  suspend fun generate(
+    metric: Iterable<MetricUnit>,
+    dest: AsyncAppendable,
+    defaultFields: Map<String, String>,
+  ) {
     var first = true
     metric.forEach { group ->
       if (!first) {
@@ -43,44 +52,53 @@ object PrometheusResponseGenerator {
     }
   }
 
-  suspend fun generate(metric: MetricUnit, dest: AsyncAppendable, defaultFields: Map<String, String>) {
+  suspend fun generate(
+    metric: MetricUnit,
+    dest: AsyncAppendable,
+    defaultFields: Map<String, String>,
+  ) {
     if (metric.description != null) {
       dest.append("# HELP ").append(metric.name).append(" ").append(metric.description).append("\n")
     }
-    val type = when (metric) {
-      is Counter -> "counter"
-      is Gauge -> "gauge"
-      else -> TODO()
-    }
+    val type =
+      when (metric) {
+        is Counter -> "counter"
+        is Gauge -> "gauge"
+        else -> TODO()
+      }
     dest.append("# TYPE ").append(metric.name).append(" ").append(type).append("\n")
     when (metric) {
-      is CounterDouble -> generatePrometheus(
-        appendable = dest,
-        name = metric.name,
-        value = metric.value,
-        fields = metric.fields + defaultFields,
-      )
+      is CounterDouble ->
+        generatePrometheus(
+          appendable = dest,
+          name = metric.name,
+          value = metric.value,
+          fields = metric.fields + defaultFields,
+        )
 
-      is GaugeDouble -> generatePrometheus(
-        appendable = dest,
-        name = metric.name,
-        value = metric.value,
-        fields = metric.fields + defaultFields,
-      )
+      is GaugeDouble ->
+        generatePrometheus(
+          appendable = dest,
+          name = metric.name,
+          value = metric.value,
+          fields = metric.fields + defaultFields,
+        )
 
-      is CounterLong -> generatePrometheus(
-        appendable = dest,
-        name = metric.name,
-        value = metric.value,
-        fields = metric.fields + defaultFields,
-      )
+      is CounterLong ->
+        generatePrometheus(
+          appendable = dest,
+          name = metric.name,
+          value = metric.value,
+          fields = metric.fields + defaultFields,
+        )
 
-      is GaugeLong -> generatePrometheus(
-        appendable = dest,
-        name = metric.name,
-        value = metric.value,
-        fields = metric.fields + defaultFields,
-      )
+      is GaugeLong ->
+        generatePrometheus(
+          appendable = dest,
+          name = metric.name,
+          value = metric.value,
+          fields = metric.fields + defaultFields,
+        )
     }
   }
 

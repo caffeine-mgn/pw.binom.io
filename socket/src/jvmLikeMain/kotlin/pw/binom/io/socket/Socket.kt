@@ -7,24 +7,25 @@ import java.nio.channels.SocketChannel
 import java.nio.channels.spi.AbstractSelectableChannel
 
 actual interface Socket : Closeable {
-    actual var blocking: Boolean
-    val native: AbstractSelectableChannel
+  actual var blocking: Boolean
+  val native: AbstractSelectableChannel
+  actual val id: String
 
-    actual companion object {
-        actual fun createTcpClientNetSocket(): TcpClientNetSocket = JvmTcpClientSocket(SocketChannel.open())
+  actual companion object {
+    actual fun createTcpClientNetSocket(): TcpClientNetSocket = JvmTcpClientSocket(SocketChannel.open())
 
-        actual fun createTcpClientUnixSocket(): TcpClientUnixSocket =
-            JvmTcpClientSocket(pw.binom.io.socket.createTcpClientUnixSocket())
+    actual fun createTcpClientUnixSocket(): TcpClientUnixSocket = JvmTcpClientSocket(pw.binom.io.socket.createTcpClientUnixSocket())
 
-        actual fun createUdpNetSocket(): UdpNetSocket = JvmUdpSocket(DatagramChannel.open())
+    actual fun createUdpNetSocket(): UdpNetSocket = JvmUdpSocket(DatagramChannel.open())
 
-        actual fun createUdpUnixSocket(): UdpUnixSocket = JvmUdpSocket(pw.binom.io.socket.createUdpUnixSocket())
-        actual fun createTcpServerNetSocket(): TcpNetServerSocket = JvmTcpServerSocket(ServerSocketChannel.open())
+    actual fun createUdpUnixSocket(): UdpUnixSocket = JvmUdpSocket(pw.binom.io.socket.createUdpUnixSocket())
 
-        actual fun createTcpServerUnixSocket(): TcpUnixServerSocket =
-            JvmTcpServerSocket(pw.binom.io.socket.createTcpServerUnixSocket())
-    }
+    actual fun createTcpServerNetSocket(): TcpNetServerSocket = JvmTcpServerSocket(ServerSocketChannel.open())
 
-    actual val tcpNoDelay: Boolean
-    actual fun setTcpNoDelay(value: Boolean): Boolean
+    actual fun createTcpServerUnixSocket(): TcpUnixServerSocket = JvmTcpServerSocket(pw.binom.io.socket.createTcpServerUnixSocket())
+  }
+
+  actual val tcpNoDelay: Boolean
+
+  actual fun setTcpNoDelay(value: Boolean): Boolean
 }
