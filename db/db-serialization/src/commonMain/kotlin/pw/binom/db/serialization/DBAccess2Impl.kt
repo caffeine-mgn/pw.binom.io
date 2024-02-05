@@ -195,19 +195,18 @@ class DBAccess2Impl internal constructor(
       args += param.value.second
     }
 
-    if (onConflict == DBAccess2.ActionOnConflict.DoUpdate) {
+    if (onConflict == DBAccess2.ActionOnConflict.DoUpdate || onConflict is DBAccess2.ActionOnConflict.DoUpdateOnColumns) {
       params.entries.forEachIndexed { index, param ->
         args += param.value.second
       }
     }
-    val ps =
-      con.usePreparedStatement(
-        dsc.getInsertStatement(
-          params = params,
-          onConflict = onConflict,
-          returning = returning,
-        ),
+    val sql =
+      dsc.getInsertStatement(
+        params = params,
+        onConflict = onConflict,
+        returning = returning,
       )
+    val ps = con.usePreparedStatement(sql)
     return if (returning) {
       return ps.executeQuery(args).use { result ->
         val r = ResultSetDataProvider(result)

@@ -4,7 +4,6 @@ import kotlinx.serialization.KSerializer
 import pw.binom.collections.defaultMutableList
 
 internal class EntityDescription2(val serializer: KSerializer<*>) {
-
   private var onConflictTHROWNotReturning: String? = null
 
   private var params: MutableMap<String, Pair<Boolean, Any?>>? = null
@@ -31,13 +30,20 @@ internal class EntityDescription2(val serializer: KSerializer<*>) {
     }
   }
 
-  private val binder = object : DataBinder {
-    override fun get(key: String): Any? = params!![key]
-    override fun contains(key: String): Boolean = params!!.containsKey(key)
-    override fun set(key: String, value: Any?, useQuotes: Boolean) {
-      params!![key] = useQuotes to value
+  private val binder =
+    object : DataBinder {
+      override fun get(key: String): Any? = params!![key]
+
+      override fun contains(key: String): Boolean = params!!.containsKey(key)
+
+      override fun set(
+        key: String,
+        value: Any?,
+        useQuotes: Boolean,
+      ) {
+        params!![key] = useQuotes to value
+      }
     }
-  }
 
   fun getBinder(params: MutableMap<String, Pair<Boolean, Any?>>): DataBinder {
     this.params = params
@@ -89,7 +95,9 @@ internal class EntityDescription2(val serializer: KSerializer<*>) {
       if (onConflict is DBAccess2.ActionOnConflict.OnColumns) {
         var first = true
         onConflict.columns.forEach {
-          val column = fields[it]?:throw IllegalArgumentException("Column \"$it\" not found in ${serializer.descriptor.serialName}")
+          val column =
+            fields[it]
+              ?: throw IllegalArgumentException("Column \"$it\" not found in ${serializer.descriptor.serialName}")
           if (!first) {
             sb.append(",")
           }
@@ -105,8 +113,8 @@ internal class EntityDescription2(val serializer: KSerializer<*>) {
       } else {
         var first = true
         fields.values.forEach {
-          val id=it.id
-          val index=it.index
+          val id = it.id
+          val index = it.index
 
           if (!index && !id) {
             return@forEach
@@ -126,11 +134,24 @@ internal class EntityDescription2(val serializer: KSerializer<*>) {
       }
       sb.append(")")
       if (onConflict == DBAccess2.ActionOnConflict.DoUpdate || onConflict is DBAccess2.ActionOnConflict.DoUpdateOnColumns) {
-        sb.append(" DO UPDATE SET")
+        sb.append(" DO UPDATE SET ")
+//        println("Update SET:")
+//        params.entries.forEachIndexed { index, param ->
+//          println("$index -> ${param.key}=${param.value.second ?: "---null---"}")
+//        }
         params.entries.forEachIndexed { index, param ->
           if (index > 0) {
             sb.append(",")
           }
+          val useQuotes = param.value.first
+          if (useQuotes) {
+            sb.append("\"")
+          }
+          sb.append(param.key)
+          if (useQuotes) {
+            sb.append("\"")
+          }
+          sb.append("=")
           sb.append("?")
           args += param.value.second
         }
@@ -142,15 +163,15 @@ internal class EntityDescription2(val serializer: KSerializer<*>) {
 
     if (returning) {
       sb.append(" returning ")
-      params.entries.forEachIndexed { index, param ->
+      fields.values.forEachIndexed { index, param ->
         if (index > 0) {
           sb.append(",")
         }
-        val useQuotes = param.value.first
+        val useQuotes = param.useQuotes
         if (useQuotes) {
           sb.append("\"")
         }
-        sb.append(param.key)
+        sb.append(param.name)
         if (useQuotes) {
           sb.append("\"")
         }

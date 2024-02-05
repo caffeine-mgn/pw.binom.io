@@ -1,9 +1,8 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package pw.binom.db.sqlite
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import pw.binom.BatchExchange
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.ReentrantLock
@@ -22,44 +21,49 @@ import kotlin.time.Duration.Companion.minutes
 
 internal val ASYNC_TIMEOUT = 1.minutes
 
-class MyWorker : CoroutineDispatcher(), Closeable {
-
+class SqlLiteAsyncWorker : CoroutineDispatcher(), Closeable {
   private val readyForWriteListener = BatchExchange<Runnable>()
+
   override fun isDispatchNeeded(context: CoroutineContext): Boolean = Thread.currentThread !== thread
+
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
   private val closed = AtomicBoolean(false)
 
-  private val thread = Thread { thread: Thread ->
-    while (!closed.getValue()) {
-      lock.synchronize {
-        if (readyForWriteListener.isEmpty()) {
-          condition.await()
-        }
-        if (closed.getValue()) {
-          return@synchronize
-        }
-        readyForWriteListener.popAll {
-          it.forEach {
-            try {
-              it.run()
-            } catch (e: Throwable) {
-              thread.uncaughtExceptionHandler.uncaughtException(
-                thread = thread,
-                throwable = e,
-              )
+  private val thread =
+    Thread { thread: Thread ->
+      while (!closed.getValue()) {
+        lock.synchronize {
+          if (readyForWriteListener.isEmpty()) {
+            condition.await()
+          }
+          if (closed.getValue()) {
+            return@synchronize
+          }
+          readyForWriteListener.popAll {
+            it.forEach {
+              try {
+                it.run()
+              } catch (e: Throwable) {
+                thread.uncaughtExceptionHandler.uncaughtException(
+                  thread = thread,
+                  throwable = e,
+                )
+              }
             }
           }
         }
       }
     }
-  }
 
   init {
     thread.start()
   }
 
-  override fun dispatch(context: CoroutineContext, block: Runnable) {
+  override fun dispatch(
+    context: CoroutineContext,
+    block: Runnable,
+  ) {
     readyForWriteListener.push(block)
     lock.synchronize {
       condition.signalAll()
@@ -99,147 +103,146 @@ class MyWorker : CoroutineDispatcher(), Closeable {
 
 class AsyncConnectionAdapter private constructor(/*val worker: Worker, */val connection: SyncConnection) :
   AsyncConnection {
-  companion object {
-    suspend fun create(creator: () -> SyncConnection): AsyncConnectionAdapter {
-//            val w = Worker()
-      return AsyncConnectionAdapter(
-//                worker = w,
-        connection = creator(),
-      )
+    companion object {
+      fun create(creator: () -> SyncConnection): AsyncConnectionAdapter =
+        AsyncConnectionAdapter(
+          connection = creator(),
+        )
     }
-  }
 
-  private val b = MyWorker()
+    private val worker = SqlLiteAsyncWorker()
+    private val ctx = worker + CoroutineName("SQLite")
 
-  internal val busy = AtomicBoolean(false)
+    internal val busy = AtomicBoolean(false)
 
-  override val isConnected: Boolean
-    get() = connection.isConnected
+    override val isConnected: Boolean
+      get() = connection.isConnected
 
-  override val dbInfo: DatabaseInfo
-    get() = SQLiteSQLDatabaseInfo
+    override val dbInfo: DatabaseInfo
+      get() = SQLiteSQLDatabaseInfo
 
-  override suspend fun setTransactionMode(mode: TransactionMode) {
-    val connection = connection
-    when (mode) {
-      TransactionMode.SERIALIZABLE -> {
-        withTimeout(ASYNC_TIMEOUT) {
-          withContext(b) {
-            connection.createStatement().use {
-              it.executeQuery("PRAGMA read_uncommitted = false;")
+    override suspend fun setTransactionMode(mode: TransactionMode) {
+      val connection = connection
+      when (mode) {
+        TransactionMode.SERIALIZABLE -> {
+          withTimeout(ASYNC_TIMEOUT) {
+            withContext(ctx) {
+              connection.createStatement().use {
+                it.executeQuery("PRAGMA read_uncommitted = false;")
+              }
             }
           }
         }
-      }
 
-      TransactionMode.READ_UNCOMMITTED -> {
-        withTimeout(ASYNC_TIMEOUT) {
-          withContext(b) {
-            connection.createStatement().use {
-              it.executeQuery("PRAGMA read_uncommitted = true;")
+        TransactionMode.READ_UNCOMMITTED -> {
+          withTimeout(ASYNC_TIMEOUT) {
+            withContext(ctx) {
+              connection.createStatement().use {
+                it.executeQuery("PRAGMA read_uncommitted = true;")
+              }
             }
           }
         }
+
+        else -> throw IllegalArgumentException("SQLite not support transaction isolation mode $mode")
       }
-
-      else -> throw IllegalArgumentException("SQLite not support transaction isolation mode $mode")
+      _transactionMode = mode
     }
-    _transactionMode = mode
-  }
 
-  private var _transactionMode: TransactionMode = TransactionMode.SERIALIZABLE
+    private var _transactionMode: TransactionMode = TransactionMode.SERIALIZABLE
 
-  override val transactionMode: TransactionMode
-    get() = _transactionMode
+    override val transactionMode: TransactionMode
+      get() = _transactionMode
 
-  override val type: String
-    get() = connection.type
+    override val type: String
+      get() = connection.type
 
-  override suspend fun asyncClose() {
-    withTimeout(ASYNC_TIMEOUT) {
-      withContext(b) {
-        connection.close()
+    override suspend fun asyncClose() {
+      withTimeout(ASYNC_TIMEOUT) {
+        withContext(ctx) {
+          connection.close()
+        }
       }
-    }
 //        val connection = connection
 //        worker.execute {
 //            connection.close()
 //        }
 //        connection.close()
-  }
-
-  override suspend fun commit() {
-    if (!transactionStarted) {
-      throw IllegalStateException("Transaction not started")
     }
-    val connection = connection
-    withTimeout(ASYNC_TIMEOUT) {
-      withContext(b) {
-        connection.commit()
+
+    override suspend fun commit() {
+      if (!transactionStarted) {
+        throw IllegalStateException("Transaction not started")
       }
-    }
-    transactionStarted = false
-  }
-
-  override suspend fun createStatement(): AsyncStatement {
-    val connection = connection
-    val result = withTimeout(ASYNC_TIMEOUT) {
-      withContext(b) {
-        connection.createStatement()
-      }
-    }
-    return AsyncStatementAdapter(
-      ref = result,
-      worker = b,
-      connection = this,
-    )
-  }
-
-  override fun isReadyForQuery(): Boolean =
-    !busy.getValue()
-
-  private var transactionStarted = false
-
-  override suspend fun beginTransaction() {
-    if (transactionStarted) {
-      throw IllegalStateException("Transaction already started")
-    }
-    val connection = connection
-    withTimeout(ASYNC_TIMEOUT) {
-      withContext(b) {
-        connection.createStatement().use {
-          it.connection.beginTransaction()
-//                it.executeUpdate("begin")
+      val connection = connection
+      withTimeout(ASYNC_TIMEOUT) {
+        withContext(ctx) {
+          connection.commit()
         }
       }
+      transactionStarted = false
     }
-    transactionStarted = true
-  }
 
-  override suspend fun prepareStatement(query: String): AsyncPreparedStatement {
-    val connection = connection
-    val ref = withTimeout(ASYNC_TIMEOUT) {
-      withContext(b) {
-        connection.prepareStatement(query)
-      }
+    override suspend fun createStatement(): AsyncStatement {
+      val connection = connection
+      val result =
+        withTimeout(ASYNC_TIMEOUT) {
+          withContext(ctx) {
+            connection.createStatement()
+          }
+        }
+      return AsyncStatementAdapter(
+        ref = result,
+        context = ctx,
+        connection = this,
+      )
     }
-    return AsyncPreparedStatementAdapter(
-      ref = ref,
-      worker = b,
-      connection = this,
-    )
-  }
 
-  override suspend fun rollback() {
-    if (!transactionStarted) {
-      throw IllegalStateException("Transaction not started")
-    }
-    val connection = connection
-    withTimeout(ASYNC_TIMEOUT) {
-      withContext(b) {
-        connection.rollback()
+    override fun isReadyForQuery(): Boolean = !busy.getValue()
+
+    private var transactionStarted = false
+
+    override suspend fun beginTransaction() {
+      if (transactionStarted) {
+        throw IllegalStateException("Transaction already started")
       }
+      val connection = connection
+      withTimeout(ASYNC_TIMEOUT) {
+        withContext(ctx) {
+          connection.createStatement().use {
+            it.connection.beginTransaction()
+//                it.executeUpdate("begin")
+          }
+        }
+      }
+      transactionStarted = true
     }
-    transactionStarted = false
+
+    override suspend fun prepareStatement(query: String): AsyncPreparedStatement {
+      val connection = connection
+      val ref =
+        withTimeout(ASYNC_TIMEOUT) {
+          withContext(ctx) {
+            connection.prepareStatement(query)
+          }
+        }
+      return AsyncPreparedStatementAdapter(
+        ref = ref,
+        ctx = ctx,
+        connection = this,
+      )
+    }
+
+    override suspend fun rollback() {
+      if (!transactionStarted) {
+        throw IllegalStateException("Transaction not started")
+      }
+      val connection = connection
+      withTimeout(ASYNC_TIMEOUT) {
+        withContext(ctx) {
+          connection.rollback()
+        }
+      }
+      transactionStarted = false
+    }
   }
-}

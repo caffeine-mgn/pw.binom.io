@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
 internal class StrongImpl : Strong {
   private val logger = Logger.getLogger("Strong.Starter")
   internal var beans = defaultMutableMap<String, BeanEntity>().useName("StrongImpl.beans")
-  internal lateinit var destroyOrder: List<Strong.DestroyableBean>
+  internal lateinit var destroyOrder: List<Starter.BeanConfig>
 
   sealed class Dependency {
     class ClassDependency(val clazz: KClass<Any>, val name: String?, val require: Boolean) : Dependency()
@@ -102,9 +102,12 @@ internal class StrongImpl : Strong {
     isDestroying = true
     try {
       destroyOrder.forEach {
+        logger.debug("Destroying $it")
         try {
-          logger.debug("Destroying $it")
-          it.destroy(this)
+          it.preDestroy.forEach {
+            it.invoke()
+          }
+          (it.bean as? Strong.DestroyableBean)?.destroy(this)
           logger.debug("Destroyed $it success")
         } catch (e: Throwable) {
           logger.severe("Fail to destroy $it bean", e)

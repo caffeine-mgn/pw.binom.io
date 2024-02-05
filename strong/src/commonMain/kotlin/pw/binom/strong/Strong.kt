@@ -48,7 +48,7 @@ private class AfterInit<T>(val fieldName: String, val init: suspend () -> T) : R
 internal fun getStrong() = STRONG_LOCAL ?: throw IllegalStateException("Bean should be created during strong starts")
 
 interface Strong {
-  abstract class Bean : InitializingBean, LinkingBean {
+  abstract class Bean : InitializingBean, LinkingBean, DestroyableBean {
     protected val strong: Strong = getStrong()
 
     protected inline fun <reified T : Any> inject(name: String? = null) = strong.inject<T>(name = name)
@@ -61,8 +61,33 @@ interface Strong {
 
     private var inits: MutableList<LazyInitPropertyDelegateProvider<*>>? = null
     private var links: MutableList<LazyInitPropertyDelegateProvider<*>>? = null
+    private var destroys: MutableList<suspend () -> Unit>? = null
     private var inited = false
     private var linked = false
+    private var destroyed = false
+
+    protected fun callOnDestroy(func: suspend () -> Unit) {
+      if (destroyed) {
+        throw IllegalStateException("Can't create onDestroy property. Destroy phase already finished")
+      }
+      if (destroys == null) {
+        destroys = defaultMutableList()
+      }
+      destroys!!.add(func)
+    }
+
+    override suspend fun destroy(strong: Strong) {
+      destroyed = true
+      destroys?.forEach {
+        try {
+          it()
+        } catch (e: Throwable) {
+          throw StrongException("Can't call destroy ${this::class}", e)
+        }
+      }
+      destroys?.clear()
+      destroys = null
+    }
 
     protected fun <T> onInit(func: suspend () -> T): PropertyDelegateProvider<Bean, ReadOnlyProperty<Bean, T>> {
       if (inited) {

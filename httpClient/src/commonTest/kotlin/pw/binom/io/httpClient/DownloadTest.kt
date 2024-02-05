@@ -16,60 +16,67 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class DownloadTest {
-
   @Test
-  fun getPostTest() = runTest {
-    Thread.sleep(1000)
-    val filePath = HTTP_STORAGE_URL.appendPath(Random.nextUuid().toString())
-    ByteBuffer(512).use { stubData ->
-      Random.nextBytes(stubData)
-      stubData.clear()
-      HttpClient.create().use { client ->
-        client.connect(method = "PUT", uri = filePath).use { req ->
-          req.headers.useBasicAuth(login = "root", password = "root")
-          req.writeData(stubData).use {
-            assertEquals(201, it.responseCode)
+  fun getPostTest() =
+    runTest {
+      Thread.sleep(1000)
+      val filePath = HTTP_STORAGE_URL.appendPath(Random.nextUuid().toString())
+      ByteBuffer(512).use { stubData ->
+        Random.nextBytes(stubData)
+        stubData.clear()
+        HttpClient.createDefault().use { client ->
+          client.connect(method = "PUT", uri = filePath).use { req ->
+            req.headers.useBasicAuth(login = "root", password = "root")
+            req.writeBinaryAndGetResponse {
+              it.write(stubData)
+            }.use {
+              assertEquals(201, it.responseCode)
+            }
+//          req.writeData(stubData).use {
+//            assertEquals(201, it.responseCode)
+//          }
           }
-        }
-        client.connect(method = "GET", uri = filePath).use { req ->
-          req.headers.useBasicAuth(login = "root", password = "root")
-          req.getResponse().use { resp ->
-            stubData.clear()
-            assertEquals(200, resp.responseCode)
-            assertContentEquals(
-              expected = stubData.toByteArray(),
-              actual = resp.readDataToByteArray(),
-            )
+          client.connect(method = "GET", uri = filePath).use { req ->
+            req.headers.useBasicAuth(login = "root", password = "root")
+            req.getResponse().use { resp ->
+              stubData.clear()
+              assertEquals(200, resp.responseCode)
+              assertContentEquals(
+                expected = stubData.toByteArray(),
+                actual = resp.readBinaryToByteArray(),
+              )
+            }
           }
         }
       }
     }
-  }
 
   @Test
-  fun test() = runTest {
-    HttpClient.create().use { client ->
-      client.connect(
-        method = "GET",
-        uri = "https://www.ntv.ru/".toURL(),
+  fun test() =
+    runTest {
+      HttpClient.createDefault().use { client ->
+        client.connect(
+          method = "GET",
+          uri = "https://www.ntv.ru/".toURL(),
 //                uri = "http://www.ntv.ru/".toURL(),
 //                uri = "http://127.0.0.1:4444/".toURL(),
-      ).use { query ->
-        val txt = query.getResponse().readText().use { it.readText() }
+        ).use { query ->
+          val txt = query.getResponse().readText().use { it.readText() }
+        }
       }
     }
-  }
 
   @Ignore
   @Test
-  fun test2() = runTest {
-    HttpClient.create().use { client ->
-      client.connect(
-        method = "GET",
-        uri = "http://127.0.0.1:2375/".toURL(),
-      ).use { query ->
-        val txt = query.getResponse().readText().use { it.readText() }
+  fun test2() =
+    runTest {
+      HttpClient.createDefault().use { client ->
+        client.connect(
+          method = "GET",
+          uri = "http://127.0.0.1:2375/".toURL(),
+        ).use { query ->
+          val txt = query.getResponse().readText().use { it.readText() }
+        }
       }
     }
-  }
 }

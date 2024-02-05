@@ -6,38 +6,41 @@ import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.AsyncStatement
 import pw.binom.db.sync.SyncStatement
+import kotlin.coroutines.CoroutineContext
 
 class AsyncStatementAdapter(
-    val ref: SyncStatement,
-    val worker: MyWorker,
-    override val connection: AsyncConnection,
+  val ref: SyncStatement,
+  val context: CoroutineContext,
+  override val connection: AsyncConnection,
 ) : AsyncStatement {
-    override suspend fun executeQuery(query: String): AsyncResultSet {
-        val v = withTimeout(ASYNC_TIMEOUT) {
-            withContext(worker) {
-                val r = ref.executeQuery(query)
-                r to r.columns
-            }
+  override suspend fun executeQuery(query: String): AsyncResultSet {
+    val v =
+      withTimeout(ASYNC_TIMEOUT) {
+        withContext(context) {
+          val r = ref.executeQuery(query)
+          r to r.columns
         }
+      }
 
-        return AsyncResultSetAdapter(
-            ref = v.first,
-            worker = worker,
-            columns = v.second
-        )
+    return AsyncResultSetAdapter(
+      ref = v.first,
+      context = context,
+      columns = v.second,
+    )
+  }
+
+  override suspend fun executeUpdate(query: String): Long =
+    withTimeout(ASYNC_TIMEOUT) {
+      withContext(context) {
+        ref.executeUpdate(query)
+      }
     }
 
-    override suspend fun executeUpdate(query: String): Long = withTimeout(ASYNC_TIMEOUT) {
-        withContext(worker) {
-            ref.executeUpdate(query)
-        }
+  override suspend fun asyncClose() {
+    withTimeout(ASYNC_TIMEOUT) {
+      withContext(context) {
+        ref.close()
+      }
     }
-
-    override suspend fun asyncClose() {
-        withTimeout(ASYNC_TIMEOUT) {
-            withContext(worker) {
-                ref.close()
-            }
-        }
-    }
+  }
 }

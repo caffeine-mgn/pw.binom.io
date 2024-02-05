@@ -65,13 +65,13 @@ interface DBAccess2 {
 @OptIn(InternalSerializationApi::class)
 suspend inline fun <reified T : Any> DBAccess2.insert(
   value: T,
-  excludeGenerated: Boolean = false,
+  excludeGenerated: Boolean = true,
 ) = insert(serializer = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
 
 @OptIn(InternalSerializationApi::class)
 suspend inline fun <reified T : Any> DBAccess2.insertAndReturn(
   value: T,
-  excludeGenerated: Boolean = false,
+  excludeGenerated: Boolean = true,
 ) = insertAndReturn(serializer = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
 
 interface QueryContext {
