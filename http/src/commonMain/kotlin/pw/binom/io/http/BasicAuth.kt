@@ -1,7 +1,9 @@
 package pw.binom.io.http
 
-import pw.binom.base64.Base64
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
+@OptIn(ExperimentalEncodingApi::class)
 data class BasicAuth(val login: String, val password: String) : HttpAuth {
     companion object {
         const val PREFIX = "Basic"

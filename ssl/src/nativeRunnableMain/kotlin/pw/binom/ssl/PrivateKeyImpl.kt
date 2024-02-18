@@ -40,7 +40,7 @@ class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: 
       BN_free(bigNum)
 
       return b.toByteArray()
-      */
+       */
     }
 
   override fun close() {
@@ -49,7 +49,7 @@ class PrivateKeyImpl(override val algorithm: KeyAlgorithm, override val native: 
 }
 
 @OptIn(ExperimentalForeignApi::class)
-actual fun PrivateKey.Companion.loadRSA(data: ByteArray): PrivateKey {
+actual fun PrivateKey.Companion.loadRSAFromPem(data: ByteArray): PrivateKey {
   val b = Bio.mem(data)
   val rsa = d2i_RSAPrivateKey_bio(b.self, null)
   val k = EVP_PKEY_new()!!

@@ -13,6 +13,7 @@ actual class HMac actual constructor(val algorithm: AlgorithmType, val key: Byte
   actual enum class AlgorithmType(val code: String, val size: Int, val make: () -> AlgorithmInstance) {
     SHA512(code = "HmacSHA512", 64, { AlgorithmInstance.sha512() }),
     SHA256(code = "HmacSHA256", 32, { AlgorithmInstance.sha256() }),
+    SHA384(code = "HmacSHA384", 32, { AlgorithmInstance.sha384() }),
     SHA1(code = "HmacSHA1", 20, { AlgorithmInstance.sha1() }),
     MD5(code = "HmacMD5", 16, { AlgorithmInstance.md5() }),
     ;

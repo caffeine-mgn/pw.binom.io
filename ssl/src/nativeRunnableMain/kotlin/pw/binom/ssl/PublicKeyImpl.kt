@@ -33,7 +33,16 @@ class PublicKeyImpl(override val algorithm: KeyAlgorithm, override val native: C
 }
 
 @OptIn(ExperimentalForeignApi::class)
-actual fun PublicKey.Companion.loadRSA(data: ByteArray): PublicKey {
+actual fun PublicKey.Companion.loadRSAFromContent(data: ByteArray): PublicKey {
+  val b = Bio.mem(data)
+  val rsa = d2i_RSAPublicKey_bio(b.self, null)
+  val k = EVP_PKEY_new()!!
+  EVP_PKEY_set1_RSA(k, rsa)
+  return PublicKeyImpl(algorithm = KeyAlgorithm.RSA, native = k)
+}
+
+@OptIn(ExperimentalForeignApi::class)
+actual fun PublicKey.Companion.loadRSAFromPem(data: ByteArray): PublicKey {
   val b = Bio.mem(data)
   val rsa = d2i_RSAPublicKey_bio(b.self, null)
   val k = EVP_PKEY_new()!!

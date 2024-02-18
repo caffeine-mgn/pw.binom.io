@@ -148,20 +148,24 @@ class HttpServer2(
             e.printStackTrace()
             break
           } catch (e: Throwable) {
-            e.printStackTrace()
-            if (!exchange.headersSent) {
+            if (!exchange.responseStarted) {
+              uncaughtExceptionHandler.uncaughtException(
+                thread = Thread.currentThread,
+                throwable = e,
+              )
               when (e) {
                 is HttpException -> exchange.startResponse(e.code)
                 else -> exchange.startResponse(500)
               }
+            } else {
+              uncaughtExceptionHandler.uncaughtException(
+                thread = Thread.currentThread,
+                throwable = e,
+              )
+              break
             }
-            uncaughtExceptionHandler.uncaughtException(
-              thread = Thread.currentThread,
-              throwable = e,
-            )
-            break
           }
-          if (!exchange.headersSent) {
+          if (!exchange.responseStarted) {
             try {
               exchange.startResponse(404)
             } catch (e: SocketClosedException) {

@@ -6,14 +6,18 @@ import kotlin.jvm.JvmInline
 value class Query constructor(val raw: String) {
   companion object {
     val EMPTY = Query("")
-    fun new(key: String, value: String? = null): Query {
+
+    fun new(
+      key: String,
+      value: String? = null,
+    ): Query {
       if (key.isEmpty()) {
         throw IllegalArgumentException("Key can't be empty")
       }
       return if (value == null) {
-        Query(UrlEncoder.encode(key))
+        Query(encode(key))
       } else {
-        Query("${UrlEncoder.encode(key)}=${UrlEncoder.encode(value)}")
+        Query("${encode(key)}=${encode(value)}")
       }
     }
 
@@ -38,9 +42,9 @@ value class Query constructor(val raw: String) {
         val value = it.value
         sb.append(
           if (value == null) {
-            UrlEncoder.encode(it.key)
+            encode(it.key)
           } else {
-            "${UrlEncoder.encode(it.key)}=${UrlEncoder.encode(value)}"
+            "${encode(it.key)}=${encode(value)}"
           },
         )
       }
@@ -54,7 +58,10 @@ value class Query constructor(val raw: String) {
   val isNotEmpty
     get() = raw.isNotEmpty()
 
-  fun append(key: String, value: String?): Query {
+  fun append(
+    key: String,
+    value: String?,
+  ): Query {
     val queryForAppend = new(key = key, value = value)
     if (isEmpty) {
       return queryForAppend
@@ -87,7 +94,9 @@ value class Query constructor(val raw: String) {
           return@forEach
         }
         val items = it.split('=', limit = 2)
-        if (func(UrlEncoder.decode(items[0]), items.getOrNull(1)?.let { UrlEncoder.decode(it) })) {
+        val key = decode(items[0])
+        val value = items.getOrNull(1)?.let { decode(it) }
+        if (func(key, value)) {
           return
         }
       }
@@ -112,15 +121,15 @@ value class Query constructor(val raw: String) {
   /**
    * Search all values and keys and store them in to [dst]. Default value of [dst] is new [HashMap]
    */
-  fun toMap(dst: MutableMap<String, String?>): MutableMap<String, String?> {
+  fun toMap(dst: MutableMap<String, MutableList<String?>>): MutableMap<String, MutableList<String?>> {
     search { key, value ->
-      dst[key] = value
+      dst.getOrPut(key) { ArrayList() }.add(value)
       false
     }
     return dst
   }
 
-  fun toMap(): Map<String, String?> = toMap(HashMap())
+  fun toMap(): Map<String, List<String?>> = toMap(HashMap())
 
   fun toList(dst: MutableList<Pair<String, String?>>): MutableList<Pair<String, String?>> {
     search { key, value ->
@@ -130,11 +139,28 @@ value class Query constructor(val raw: String) {
     return dst
   }
 
+  fun asSequence(): Sequence<Pair<String, String?>> {
+    if (raw.isEmpty()) {
+      return emptySequence()
+    }
+    return raw.splitToSequence("&")
+      .mapNotNull {
+        if (it.isEmpty()) {
+          return@mapNotNull null
+        }
+        val items = it.split('=', limit = 2)
+        val key = decode(items[0])
+        val value = items.getOrNull(1)?.let { decode(it) }
+        key to value
+      }
+  }
+
   fun toList(): List<Pair<String, String?>> = toList(ArrayList())
 
-  fun find(key: String) = toMap()[key]
+  fun find(key: String) = toMap()[key] ?: emptyList()
 
   override fun toString(): String = raw
+
   operator fun plus(new: Query): Query {
     if (isEmpty) {
       return new
@@ -145,3 +171,7 @@ value class Query constructor(val raw: String) {
     return Query("$raw&${new.raw}")
   }
 }
+
+private fun decode(it: String) = UrlEncoder.decode(it.replace("+", "%20"))
+
+private fun encode(it: String) = UrlEncoder.encode(it).replace("%20", "+")

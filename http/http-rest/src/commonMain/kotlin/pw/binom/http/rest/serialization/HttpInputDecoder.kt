@@ -18,7 +18,7 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
   private var input: HttpInput? = null
   private var description: EndpointDescription<Any?>? = null
   private var pathVariables: Map<String, String> = emptyMap()
-  private var queryVariables: Map<String, String?> = emptyMap()
+  private var queryVariables: Map<String, List<String?>> = emptyMap()
   private var body: DecodeFunc<Any?, Any?>? = null
   private var data: Any? = null
   private var responseCode = 0
@@ -40,20 +40,29 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
     this.responseCode = responseCode
   }
 
-  override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int): Boolean =
-    readString(index).toBoolean()
+  override fun decodeBooleanElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Boolean = readString(index).toBoolean()
 
-  override fun decodeByteElement(descriptor: SerialDescriptor, index: Int): Byte =
-    readString(index).toByte()
+  override fun decodeByteElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Byte = readString(index).toByte()
 
-  override fun decodeCharElement(descriptor: SerialDescriptor, index: Int): Char {
+  override fun decodeCharElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Char {
     val str = readString(index)
     require(str.length == 1) { "Can't cast \"$str\" to char" }
     return str[0]
   }
 
-  override fun decodeDoubleElement(descriptor: SerialDescriptor, index: Int): Double =
-    readString(index).toDouble()
+  override fun decodeDoubleElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Double = readString(index).toDouble()
 
   private var cursor = -1
 
@@ -74,18 +83,27 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
     }
   }
 
-  override fun decodeFloatElement(descriptor: SerialDescriptor, index: Int): Float =
-    readString(index).toFloat()
+  override fun decodeFloatElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Float = readString(index).toFloat()
 
-  override fun decodeInlineElement(descriptor: SerialDescriptor, index: Int): Decoder {
+  override fun decodeInlineElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Decoder {
     TODO("Not yet implemented")
   }
 
-  override fun decodeIntElement(descriptor: SerialDescriptor, index: Int): Int =
-    readString(index).toInt()
+  override fun decodeIntElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Int = readString(index).toInt()
 
-  override fun decodeLongElement(descriptor: SerialDescriptor, index: Int): Long =
-    readString(index).toLong()
+  override fun decodeLongElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Long = readString(index).toLong()
 
   @ExperimentalSerializationApi
   override fun <T : Any> decodeNullableSerializableElement(
@@ -93,12 +111,13 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
     index: Int,
     deserializer: DeserializationStrategy<T?>,
     previousValue: T?,
-  ): T? = decodeSerializableElement(
-    descriptor = descriptor,
-    index = index,
-    deserializer = deserializer,
-    previousValue = previousValue,
-  )
+  ): T? =
+    decodeSerializableElement(
+      descriptor = descriptor,
+      index = index,
+      deserializer = deserializer,
+      previousValue = previousValue,
+    )
 
   override fun <T> decodeSerializableElement(
     descriptor: SerialDescriptor,
@@ -115,13 +134,15 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
     return deserializer.deserialize(decoder)
   }
 
-  override fun decodeShortElement(descriptor: SerialDescriptor, index: Int): Short =
-    readString(index).toShort()
+  override fun decodeShortElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): Short = readString(index).toShort()
 
   private fun readString(index: Int): String {
     val description = description!!
     if (description.getParam[index]) {
-      return queryVariables[description.nameByIndex[index]]!!
+      return queryVariables[description.nameByIndex[index]]!!.single()!!
     }
     if (description.headerParam[index]) {
       return input!!.inputHeaders[description.nameByIndex[index]]!!.first()
@@ -132,10 +153,15 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
     if (description.responseCodeIndex == index) {
       return responseCode.toString()
     }
-    TODO("Unknown type. Index: $index: description.bodyIndex=${description.bodyIndex}, name: ${description.serializer.descriptor.serialName}")
+    TODO(
+      "Unknown type. Index: $index: description.bodyIndex=${description.bodyIndex}, name: ${description.serializer.descriptor.serialName}",
+    )
   }
 
-  override fun decodeStringElement(descriptor: SerialDescriptor, index: Int): String {
+  override fun decodeStringElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): String {
     val description = description!!
     if (description.bodyIndex == index) {
       return body as String

@@ -1,11 +1,13 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.base64.Base64
 import pw.binom.io.use
 import pw.binom.security.MessageDigest
 import pw.binom.toByteBufferUTF8
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.random.Random
 
+@OptIn(ExperimentalEncodingApi::class)
 object HandshakeSecret {
     fun generateResponse(sha1: MessageDigest, request: String): String {
         sha1.init()

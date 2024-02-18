@@ -11,26 +11,28 @@ import kotlin.coroutines.coroutineContext
 
 @Deprecated(message = "Use HttpServer2")
 interface FluxHttpRequest : HttpRequest, CoroutineContext {
-    companion object {
-        suspend fun getActiveRequestOrNull(): FluxHttpRequest? = coroutineContext[FluxHttpRequestImplKey]
-        suspend fun getActiveRequest() =
-            getActiveRequestOrNull() ?: throw IllegalStateException("No active FluxHttpRequest")
-    }
+  companion object {
+    suspend fun getActiveRequestOrNull(): FluxHttpRequest? = coroutineContext[FluxHttpRequestImplKey]
 
-    val pathVariables: Map<String, String>
-    val queryVariables: Map<String, String?>
-    suspend fun <T : Any> readRequest(serializer: KSerializer<T>): T
-    suspend fun <T : Any> finishResponse(
-        serializer: KSerializer<T>,
-        value: T,
-        headers: Headers = EmptyHeaders,
-        statusCode: Int? = null,
-    )
+    suspend fun getActiveRequest() = getActiveRequestOrNull() ?: throw IllegalStateException("No active FluxHttpRequest")
+  }
+
+  val pathVariables: Map<String, String>
+  val queryVariables: Map<String, List<String?>>
+
+  suspend fun <T : Any> readRequest(serializer: KSerializer<T>): T
+
+  suspend fun <T : Any> finishResponse(
+    serializer: KSerializer<T>,
+    value: T,
+    headers: Headers = EmptyHeaders,
+    statusCode: Int? = null,
+  )
 }
 
 @OptIn(InternalSerializationApi::class)
 suspend inline fun <reified T : Any> FluxHttpRequest.finishResponse(
-    value: T,
-    headers: Headers = EmptyHeaders,
-    statusCode: Int? = null,
+  value: T,
+  headers: Headers = EmptyHeaders,
+  statusCode: Int? = null,
 ) = finishResponse(value = value, headers = headers, statusCode = statusCode, serializer = T::class.serializer())

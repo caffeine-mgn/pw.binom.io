@@ -29,51 +29,62 @@ internal suspend fun s3Call(
   client.connect(method = method, uri = url).use { connection ->
     val host = overrideHost ?: url.host
     val date = DateTime.now
-    val specialHeaders: List<Pair<String, String>> = buildList {
-      add("host" to host)
-      val contentSha256 = when (payloadSha256) {
+    val specialHeaders: List<Pair<String, String>> =
+      buildList {
+        add("host" to host)
+        val contentSha256 =
+          when (payloadSha256) {
 //                null -> if (method == "PUT") STREAMING_AWS4_HMAC_SHA256_PAYLOAD else UNSIGNED_PAYLOAD
-        null -> UNSIGNED_PAYLOAD
-        else -> payloadSha256.toHex()
+            null -> UNSIGNED_PAYLOAD
+            else -> payloadSha256.toHex()
+          }
+        add("x-amz-content-sha256" to contentSha256)
+        if (xAmzCopySource != null) {
+          add("x-amz-copy-source" to UrlEncoder.pathEncode(xAmzCopySource))
+        }
+        add("x-amz-date" to date.awsDateTime())
+      }.sortedBy { it.first }
+    val query =
+      url.query?.let {
+        it.toMap().entries.sortedBy { it.key }
+          .flatMap {
+            it.value.map { k ->
+              "${UrlEncoder.encode(it.key)}=${k?.let { UrlEncoder.encode(it) } ?: ""}"
+            }
+          }
+          .joinToString("&")
       }
-      add("x-amz-content-sha256" to contentSha256)
-      if (xAmzCopySource != null) {
-        add("x-amz-copy-source" to UrlEncoder.pathEncode(xAmzCopySource))
-      }
-      add("x-amz-date" to date.awsDateTime())
-    }.sortedBy { it.first }
-    val query = url.query?.let {
-      it.toMap().entries.sortedBy { it.key }
-        .map { "${UrlEncoder.encode(it.key)}=${it.value?.let { UrlEncoder.encode(it) } ?: ""}" }
-        .joinToString("&")
-    }
-    val canonicalRequest = buildCanonicalRequest(
-      method = method,
-      uri = url.path.toString(),
-      query = query ?: "",
-      headers = specialHeaders,
-      contentSha256 = payloadSha256,
-    )
-    val stringToSign = buildStringToSign(
-      date = date,
-      regin = regin,
-      service = service,
-      canonicalRequestHashed = canonicalRequest.sha256(),
-    )
-    val signingKey = buildSignature(
-      secretAccessKey = secretAccessKey,
-      date = date,
-      region = regin,
-      service = service,
-    )
-    val authHeader = buildAuthorizationHeader(
-      accessKey = accessKey,
-      date = date,
-      regin = regin,
-      service = service,
-      headers = specialHeaders.map { it.first },
-      signature = sumHmac(signingKey, stringToSign.encodeToByteArray()),
-    )
+    val canonicalRequest =
+      buildCanonicalRequest(
+        method = method,
+        uri = url.path.toString(),
+        query = query ?: "",
+        headers = specialHeaders,
+        contentSha256 = payloadSha256,
+      )
+    val stringToSign =
+      buildStringToSign(
+        date = date,
+        regin = regin,
+        service = service,
+        canonicalRequestHashed = canonicalRequest.sha256(),
+      )
+    val signingKey =
+      buildSignature(
+        secretAccessKey = secretAccessKey,
+        date = date,
+        region = regin,
+        service = service,
+      )
+    val authHeader =
+      buildAuthorizationHeader(
+        accessKey = accessKey,
+        date = date,
+        regin = regin,
+        service = service,
+        headers = specialHeaders.map { it.first },
+        signature = sumHmac(signingKey, stringToSign.encodeToByteArray()),
+      )
     connection.headers[Headers.AUTHORIZATION] = authHeader
     if (contentType != null) {
       connection.headers.contentType = contentType
