@@ -67,21 +67,24 @@ fun createEcdsaFromPrivateKey(data: ByteArray): CPointer<EC_KEY> {
   }
 }
 
-fun Key.Private.load() = when (algorithm) {
-  KeyAlgorithm.RSA -> createRsaFromPrivateKey(data)
-  KeyAlgorithm.ECDSA -> createEcdsaFromPrivateKey(data)
-}
+fun Key.Private.load() =
+  when (algorithm) {
+    KeyAlgorithm.RSA -> createRsaFromPrivateKey(data)
+    KeyAlgorithm.ECDSA -> createEcdsaFromPrivateKey(data)
+  }
 
-fun Key.Public.load() = when (algorithm) {
-  KeyAlgorithm.RSA -> createRsaFromPublicKey(data)
-  KeyAlgorithm.ECDSA -> createEcdsaFromPublicKey(data)
-}
+fun Key.Public.load() =
+  when (algorithm) {
+    KeyAlgorithm.RSA -> createRsaFromPublicKey(data)
+    KeyAlgorithm.ECDSA -> createEcdsaFromPublicKey(data)
+  }
 
 var CPointer<RSA>.publicKey: ByteArray
-  get() = Bio.mem().use { b ->
-    PEM_write_bio_RSAPublicKey(b.self, this)
-    b.toByteArray()
-  }
+  get() =
+    Bio.mem().use { b ->
+      PEM_write_bio_RSAPublicKey(b.self, this)
+      b.toByteArray()
+    }
   set(value) {
     Bio.mem(value).use { priv ->
       PEM_read_bio_RSAPublicKey(priv.self, reinterpret(), null, null)
@@ -90,10 +93,11 @@ var CPointer<RSA>.publicKey: ByteArray
   }
 
 var CPointer<RSA>.privateKey: ByteArray
-  get() = Bio.mem().use { b ->
-    PEM_write_bio_RSAPrivateKey(b.self, this, null, null, 0, null, null)
-    b.toByteArray()
-  }
+  get() =
+    Bio.mem().use { b ->
+      PEM_write_bio_RSAPrivateKey(b.self, this, null, null, 0, null, null)
+      b.toByteArray()
+    }
   set(value) {
     Bio.mem(value).use { priv ->
       PEM_read_bio_RSAPrivateKey(priv.self, reinterpret(), null, null)
@@ -111,7 +115,6 @@ var CPointer<EVP_PKEY>.rsa: CPointer<RSA>?
   }
 
 object KeyUtils {
-
   fun CPointer<RSA>.loadPublic(data: ByteArray): CPointer<RSA> {
     Bio.mem(data).use { priv ->
       d2i_RSAPublicKey_bio(priv.self, reinterpret())
@@ -126,7 +129,10 @@ object KeyUtils {
     return this
   }
 
-  fun createKeyPair(publicKey: ByteArray, privateKey: ByteArray): KeyGenerator.KeyPair {
+  fun createKeyPair(
+    publicKey: ByteArray,
+    privateKey: ByteArray,
+  ): KeyGenerator.KeyPair {
     val rsa = RSA_new()!!
     Bio.mem(privateKey).use { priv ->
       d2i_RSAPrivateKey_bio(priv.self, rsa.reinterpret())
@@ -139,7 +145,10 @@ object KeyUtils {
     return KeyGenerator.KeyPair(pair)
   }
 
-  fun getPublicKey(native: CPointer<EVP_PKEY>, algorithm: KeyAlgorithm): ByteArray {
+  fun getPublicKey(
+    native: CPointer<EVP_PKEY>,
+    algorithm: KeyAlgorithm,
+  ): ByteArray {
     when (algorithm) {
       KeyAlgorithm.RSA -> {
         val rsa = EVP_PKEY_get1_RSA(native) ?: TODO("EVP_PKEY_get1_RSA returns null")
@@ -158,7 +167,10 @@ object KeyUtils {
     }
   }
 
-  fun getPrivateKey(native: CPointer<EVP_PKEY>, algorithm: KeyAlgorithm): ByteArray {
+  fun getPrivateKey(
+    native: CPointer<EVP_PKEY>,
+    algorithm: KeyAlgorithm,
+  ): ByteArray {
     when (algorithm) {
       KeyAlgorithm.RSA -> {
         val rsa = EVP_PKEY_get1_RSA(native) ?: TODO("EVP_PKEY_get1_RSA returns null")

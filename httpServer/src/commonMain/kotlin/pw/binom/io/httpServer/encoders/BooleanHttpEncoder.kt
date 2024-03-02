@@ -6,7 +6,7 @@ import pw.binom.io.bufferedWriter
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.httpServer.HttpEncoder
 import pw.binom.io.httpServer.HttpServerExchange
-import pw.binom.io.use
+import pw.binom.io.useAsync
 import kotlin.reflect.KClass
 
 object BooleanHttpEncoder : HttpEncoder<Boolean> {
@@ -30,11 +30,15 @@ object BooleanHttpEncoder : HttpEncoder<Boolean> {
     throw IllegalArgumentException("Can't parse \"$value\" to boolean")
   }
 
-  override suspend fun decodeRequestBody(exchange: HttpServerExchange, type: KClass<Boolean>): Boolean {
+  override suspend fun decodeRequestBody(
+    exchange: HttpServerExchange,
+    type: KClass<Boolean>,
+  ): Boolean {
     val charset = exchange.requestHeaders.charset?.let { Charsets.get(it) } ?: Charsets.UTF8
-    val value = exchange.input.bufferedReader(charset = charset).use {
-      it.readText()
-    }
+    val value =
+      exchange.input.bufferedReader(charset = charset).useAsync {
+        it.readText()
+      }
     val int = value.toIntOrNull()
     if (int != null) {
       return int > 0
@@ -55,7 +59,7 @@ object BooleanHttpEncoder : HttpEncoder<Boolean> {
     exchange: HttpServerExchange,
   ) {
     val charset = headers.charset?.let { Charsets.get(it) } ?: Charsets.UTF8
-    exchange.output.bufferedWriter(charset = charset).use {
+    exchange.output.bufferedWriter(charset = charset).useAsync {
       it.append(value)
     }
   }

@@ -10,7 +10,7 @@ import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.db.async.pool.PooledAsyncConnection
-import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.uuid.UUID
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -208,7 +208,7 @@ class DBAccess2Impl internal constructor(
       )
     val ps = con.usePreparedStatement(sql)
     return if (returning) {
-      return ps.executeQuery(args).use { result ->
+      return ps.executeQuery(args).useAsync { result ->
         val r = ResultSetDataProvider(result)
         if (result.next()) {
           DefaultSQLSerializePool.decode(

@@ -27,7 +27,6 @@ internal class HttpRequest3Impl(
   val keepAliveEnabled: Boolean,
   val charBufferSize: Int,
 ) : HttpRequest {
-
   companion object {
     suspend fun read(
       channel: ServerAsyncAsciiChannel,
@@ -36,22 +35,24 @@ internal class HttpRequest3Impl(
       readStartTimeout: Duration,
 //            idleJob: Job?,
       returnToIdle: IdlePool?,
-    ): Result<HttpRequest3Impl?> = runCatching {
-      val request = if (readStartTimeout.isPositive() && readStartTimeout.isFinite()) {
-        server.waitTimeout(readStartTimeout)
-        try {
-          val line = channel.reader.readln()
-          server.timeoutFinished()
-          line
-        } catch (e: Throwable) {
-          if (e.cause != null && e.cause !is HttpReadTimeoutException) {
-            server.timeoutFinished()
+    ): Result<HttpRequest3Impl?> =
+      runCatching {
+        val request =
+          if (readStartTimeout.isPositive() && readStartTimeout.isFinite()) {
+            server.waitTimeout(readStartTimeout)
+            try {
+              val line = channel.reader.readln()
+              server.timeoutFinished()
+              line
+            } catch (e: Throwable) {
+              if (e.cause != null && e.cause !is HttpReadTimeoutException) {
+                server.timeoutFinished()
+              }
+              throw e
+            }
+          } else {
+            channel.reader.readln()
           }
-          throw e
-        }
-      } else {
-        channel.reader.readln()
-      }
 
 //            val request = if (readStartTimeout.isInfinite() || readStartTimeout == Duration.ZERO) {
 //                channel.reader.readln()
@@ -64,31 +65,31 @@ internal class HttpRequest3Impl(
 //                    return@runCatching null
 //                }
 //            }
-      if (request == null) {
-        return@runCatching null
+        if (request == null) {
+          return@runCatching null
+        }
+
+        val method: String
+        val path: String
+        HttpServerUtils.parseHttpRequest(request) { m, p ->
+          method = m
+          path = p
+        }
+
+        val headers = HttpServerUtils.readHeaders(channel = channel)
+
+        HttpRequest3Impl(
+          request = path,
+          method = method,
+          headers = headers,
+          channel = channel,
+          textBufferPool = server.textBufferPool,
+          returnToIdle = returnToIdle,
+          keepAliveEnabled = server.maxIdleTime.isPositive(),
+          compressBufferPool = server.compressBufferPool,
+          charBufferSize = 512,
+        )
       }
-
-      val method: String
-      val path: String
-      HttpServerUtils.parseHttpRequest(request) { m, p ->
-        method = m
-        path = p
-      }
-
-      val headers = HttpServerUtils.readHeaders(channel = channel)
-
-      HttpRequest3Impl(
-        request = path,
-        method = method,
-        headers = headers,
-        channel = channel,
-        textBufferPool = server.textBufferPool,
-        returnToIdle = returnToIdle,
-        keepAliveEnabled = server.maxIdleTime.isPositive(),
-        compressBufferPool = server.compressBufferPool,
-        charBufferSize = 512,
-      )
-    }
   }
 
   private val closed = AtomicBoolean(false)
@@ -104,6 +105,7 @@ internal class HttpRequest3Impl(
 
   private var bodyReading = false
   private var readInput: AsyncInput? = null
+
   override fun readBinary(): AsyncInput {
     checkClosed()
     if (bodyReading) {
@@ -118,11 +120,12 @@ internal class HttpRequest3Impl(
     val transferEncoding = headers.getTransferEncodingList()
     var stream: AsyncInput = channel.reader
     if (contentLength != null) {
-      stream = AsyncContentLengthInput(
-        stream = stream,
-        contentLength = contentLength,
-        closeStream = false,
-      )
+      stream =
+        AsyncContentLengthInput(
+          stream = stream,
+          contentLength = contentLength,
+          closeStream = false,
+        )
     }
 
     for (i in transferEncoding.lastIndex downTo 0) {
@@ -192,12 +195,13 @@ internal class HttpRequest3Impl(
     return channel.channel
   }
 
-  private fun hasUpgrade() = headers[Headers.CONNECTION]
-    ?.asSequence()
-    ?.flatMap { it.splitToSequence(',') }
-    ?.map { it.trim() }
-    ?.any { it.equals(Headers.UPGRADE, true) }
-    ?: false
+  private fun hasUpgrade() =
+    headers[Headers.CONNECTION]
+      ?.asSequence()
+      ?.flatMap { it.splitToSequence(',') }
+      ?.map { it.trim() }
+      ?.any { it.equals(Headers.UPGRADE, true) }
+      ?: false
 
   private suspend fun checkTcp() {
     if (!hasUpgrade()) {
@@ -219,20 +223,20 @@ internal class HttpRequest3Impl(
 //        val server = server ?: throw SocketClosedException()
     val inputForSkip = readInput ?: readBinary()
     textBufferPool.using { buf ->
-      inputForSkip.use {
+      inputForSkip.useAsync {
         it.skipAll(buf)
       }
     }
-    val r = HttpResponse3Impl(
-      keepAliveEnabled = keepAliveEnabled && (headers.keepAlive ?: true),
-      channel = channel,
-      acceptEncoding = headers.acceptEncoding,
-      returnToIdle = returnToIdle,
-      textBufferPool = textBufferPool,
-      compressBufferPool = compressBufferPool,
-      charBufferSize = charBufferSize,
-
-    )
+    val r =
+      HttpResponse3Impl(
+        keepAliveEnabled = keepAliveEnabled && (headers.keepAlive ?: true),
+        channel = channel,
+        acceptEncoding = headers.acceptEncoding,
+        returnToIdle = returnToIdle,
+        textBufferPool = textBufferPool,
+        compressBufferPool = compressBufferPool,
+        charBufferSize = charBufferSize,
+      )
 //        val r = server.httpResponse2Impl.borrow().also {
 //            it.reset(
 //                keepAliveEnabled = server.maxIdleTime.isPositive() && headers.keepAlive,

@@ -4,8 +4,8 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.io.ByteBuffer
 import pw.binom.io.http.useBasicAuth
 import pw.binom.io.nextBytes
-import pw.binom.io.readText
 import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.thread.Thread
 import pw.binom.url.toURL
 import pw.binom.uuid.nextUuid
@@ -25,20 +25,20 @@ class DownloadTest {
         Random.nextBytes(stubData)
         stubData.clear()
         HttpClient.createDefault().use { client ->
-          client.connect(method = "PUT", uri = filePath).use { req ->
+          client.connect(method = "PUT", uri = filePath).useAsync { req ->
             req.headers.useBasicAuth(login = "root", password = "root")
             req.writeBinaryAndGetResponse {
               it.write(stubData)
-            }.use {
+            }.useAsync {
               assertEquals(201, it.responseCode)
             }
 //          req.writeData(stubData).use {
 //            assertEquals(201, it.responseCode)
 //          }
           }
-          client.connect(method = "GET", uri = filePath).use { req ->
+          client.connect(method = "GET", uri = filePath).useAsync { req ->
             req.headers.useBasicAuth(login = "root", password = "root")
-            req.getResponse().use { resp ->
+            req.getResponse().useAsync { resp ->
               stubData.clear()
               assertEquals(200, resp.responseCode)
               assertContentEquals(
@@ -60,8 +60,8 @@ class DownloadTest {
           uri = "https://www.ntv.ru/".toURL(),
 //                uri = "http://www.ntv.ru/".toURL(),
 //                uri = "http://127.0.0.1:4444/".toURL(),
-        ).use { query ->
-          val txt = query.getResponse().readText().use { it.readText() }
+        ).useAsync { query ->
+          val txt = query.getResponse().readText().useAsync { it.readText() }
         }
       }
     }
@@ -74,8 +74,8 @@ class DownloadTest {
         client.connect(
           method = "GET",
           uri = "http://127.0.0.1:2375/".toURL(),
-        ).use { query ->
-          val txt = query.getResponse().readText().use { it.readText() }
+        ).useAsync { query ->
+          val txt = query.getResponse().readText().useAsync { it.readText() }
         }
       }
     }

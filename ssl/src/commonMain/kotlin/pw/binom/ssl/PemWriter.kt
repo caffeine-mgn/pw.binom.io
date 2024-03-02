@@ -6,34 +6,43 @@ import pw.binom.io.use
 import pw.binom.writeByte
 
 class PemWriter(val appendable: Appendable) {
-  fun write(type: String, data: ByteArray) {
-    val ap = object : Appendable {
-      var lineCount = 0
-      override fun append(value: Char): Appendable {
-        if (lineCount >= 64) {
-          appendable.append("\n")
-          lineCount = 0
-        }
-        lineCount++
-        appendable.append(value)
-        return this
-      }
+  fun write(
+    type: String,
+    data: ByteArray,
+  ) {
+    val ap =
+      object : Appendable {
+        var lineCount = 0
 
-      override fun append(value: CharSequence?): Appendable {
-        value?.forEach {
-          append(it)
+        override fun append(value: Char): Appendable {
+          if (lineCount >= 64) {
+            appendable.append("\n")
+            lineCount = 0
+          }
+          lineCount++
+          appendable.append(value)
+          return this
         }
-        return this
-      }
 
-      override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): Appendable {
-        value ?: return this
-        for (i in startIndex..endIndex) {
-          append(value[i])
+        override fun append(value: CharSequence?): Appendable {
+          value?.forEach {
+            append(it)
+          }
+          return this
         }
-        return this
+
+        override fun append(
+          value: CharSequence?,
+          startIndex: Int,
+          endIndex: Int,
+        ): Appendable {
+          value ?: return this
+          for (i in startIndex..endIndex) {
+            append(value[i])
+          }
+          return this
+        }
       }
-    }
     val o = Base64EncodeOutput(ap, padding = true)
     ByteBuffer(1).use { buf ->
       appendable.append("-----BEGIN ").append(type).append("-----\n")

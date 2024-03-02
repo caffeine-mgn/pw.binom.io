@@ -5,13 +5,13 @@ import pw.binom.asyncOutput
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.ByteBufferFactory
 import pw.binom.io.bufferedWriter
-import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.pool.GenericObjectPool
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AsyncBufferedOutputAppendableTest {
-    val txt = """# HELP binom_byte_buffer_count ByteBuffer Count
+  val txt = """# HELP binom_byte_buffer_count ByteBuffer Count
 # TYPE binom_byte_buffer_count gauge
 binom_byte_buffer_count 4
 # HELP binom_byte_buffer_memory ByteBuffer Memory
@@ -39,22 +39,24 @@ binom_selector_key_count 3
 # TYPE binom_selector_key_alloc_count gauge
 binom_selector_key_alloc_count 3"""
 
-    @Test
-    fun withPool() = runTest {
-        val pool = GenericObjectPool(initCapacity = 0, factory = ByteBufferFactory(size = 50))
-        val data = ByteArrayOutput()
-        val out = data.asyncOutput()
-        val buffer = out.bufferedWriter(closeParent = false, pool = pool)
-        buffer.use { it.append(txt) }
-        assertEquals(txt, data.toByteArray().decodeToString())
+  @Test
+  fun withPool() =
+    runTest {
+      val pool = GenericObjectPool(initCapacity = 0, factory = ByteBufferFactory(size = 50))
+      val data = ByteArrayOutput()
+      val out = data.asyncOutput()
+      val buffer = out.bufferedWriter(closeParent = false, pool = pool)
+      buffer.useAsync { it.append(txt) }
+      assertEquals(txt, data.toByteArray().decodeToString())
     }
 
-    @Test
-    fun withoutPool() = runTest {
-        val data = ByteArrayOutput()
-        val out = data.asyncOutput()
-        val buffer = out.bufferedWriter(closeParent = false, bufferSize = 50)
-        buffer.use { it.append(txt) }
-        assertEquals(txt, data.toByteArray().decodeToString())
+  @Test
+  fun withoutPool() =
+    runTest {
+      val data = ByteArrayOutput()
+      val out = data.asyncOutput()
+      val buffer = out.bufferedWriter(closeParent = false, bufferSize = 50)
+      buffer.useAsync { it.append(txt) }
+      assertEquals(txt, data.toByteArray().decodeToString())
     }
 }

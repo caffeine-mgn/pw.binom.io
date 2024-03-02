@@ -4,7 +4,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.IOException
 import pw.binom.io.socket.InetNetworkAddress
-import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.network.MultiFixedSizeThreadNetworkDispatcher
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -23,41 +23,44 @@ abstract class BaseTest {
 //        reuse = true,
 //    )
 
-    @OptIn(ExperimentalTime::class)
-    fun tarantool(func: suspend (TarantoolConnectionImpl) -> Unit) = runTest(dispatchTimeoutMs = 10 * 1000) {
-        val now = TimeSource.Monotonic.markNow()
-        val manager = MultiFixedSizeThreadNetworkDispatcher(1)
+  @OptIn(ExperimentalTime::class)
+  fun tarantool(func: suspend (TarantoolConnectionImpl) -> Unit) =
+    runTest(dispatchTimeoutMs = 10 * 1000) {
+      val now = TimeSource.Monotonic.markNow()
+      val manager = MultiFixedSizeThreadNetworkDispatcher(1)
 //        TarantoolContainer {
-        delay(1.seconds)
-        do {
-            println("Connection...")
-            val address = InetNetworkAddress.create(
-                host = "127.0.0.1",
-                port = 7040,
+      delay(1.seconds)
+      do {
+        println("Connection...")
+        val address =
+          InetNetworkAddress.create(
+            host = "127.0.0.1",
+            port = 7040,
+          )
+        val connection =
+          try {
+            TarantoolConnection.connect(
+              address = address,
+              manager = manager,
+              userName = "server",
+              password = "server",
             )
-            val connection = try {
-                TarantoolConnection.connect(
-                    address = address,
-                    manager = manager,
-                    userName = "server",
-                    password = "server",
-                )
-            } catch (e: IOException) {
-                if (now.elapsedNow() > 10.seconds) {
-                    throw RuntimeException("Startup Timeout", e)
-                }
-                delay(1.seconds)
-                continue
+          } catch (e: IOException) {
+            if (now.elapsedNow() > 10.seconds) {
+              throw RuntimeException("Startup Timeout", e)
             }
-            try {
-                println("Connected! Try to test")
-                connection.use { con ->
-                    func(con)
-                }
-            } finally {
-                break
-            }
-        } while (true)
+            delay(1.seconds)
+            continue
+          }
+        try {
+          println("Connected! Try to test")
+          connection.useAsync { con ->
+            func(con)
+          }
+        } finally {
+          break
+        }
+      } while (true)
     }
 //    }
 }

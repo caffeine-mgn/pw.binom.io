@@ -19,14 +19,14 @@ interface HttpRequestBody : AsyncCloseable {
   suspend fun flush(): HttpResponse
 
   suspend fun send(text: String): HttpResponse {
-    startWriteText().use {
+    startWriteText().useAsync {
       it.append(text)
     }
     return flush()
   }
 
   suspend fun send(data: ByteBuffer): HttpResponse {
-    startWriteBinary().use {
+    startWriteBinary().useAsync {
       it.write(data)
     }
     return flush()

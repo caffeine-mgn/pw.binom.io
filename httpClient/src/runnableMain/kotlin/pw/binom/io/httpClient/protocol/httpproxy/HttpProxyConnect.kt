@@ -43,12 +43,13 @@ class HttpProxyConnect(
   private suspend fun getTcpConnect(): AsyncChannel {
     var tcp = tcp
     if (tcp == null) {
-      tcp = networkManager.tcpConnect(
-        InetNetworkAddress.create(
-          host = proxyUrl.host,
-          port = proxyUrl.port,
-        ),
-      )
+      tcp =
+        networkManager.tcpConnect(
+          InetNetworkAddress.create(
+            host = proxyUrl.host,
+            port = proxyUrl.port,
+          ),
+        )
       this.tcp = tcp
     }
     return tcp
@@ -76,7 +77,7 @@ class HttpProxyConnect(
 //        } else {
 //            headers
 //        }
-    output.bufferedAsciiWriter(closeParent = false).use { writer ->
+    output.bufferedAsciiWriter(closeParent = false).useAsync { writer ->
       Http11ConnectFactory2.sendRequest(
         output = writer,
         method = method,
@@ -118,7 +119,7 @@ class HttpProxyConnect(
       }
       newHeaders[Headers.PROXY_CONNECTION] = Headers.KEEP_ALIVE
       newHeaders[Headers.HOST] = host
-      output.bufferedAsciiWriter(closeParent = false).use { bufOutput ->
+      output.bufferedAsciiWriter(closeParent = false).useAsync { bufOutput ->
         Http11ConnectFactory2.sendRequest(
           output = bufOutput,
           method = "CONNECT",
@@ -134,10 +135,11 @@ class HttpProxyConnect(
       if (resp.responseCode != 200) {
         throw IOException("Invalid response code: ${resp.responseCode}")
       }
-      val channel = AsyncChannel.create(
-        input = input,
-        output = output,
-      )
+      val channel =
+        AsyncChannel.create(
+          input = input,
+          output = output,
+        )
       val factory = protocolSelector.select(url = url)
       transparentChannel = factory.createConnect(channel)
       this.transparentChannel = transparentChannel
@@ -162,19 +164,21 @@ class HttpProxyConnect(
   ): HttpRequestBody {
     created = TimeSource.Monotonic.markNow()
     return when {
-      url.schema == "http" && headers[Headers.UPGRADE] == null -> makeHttpPostRequest(
-        pool = pool,
-        method = method,
-        url = url,
-        headers = headers,
-      )
+      url.schema == "http" && headers[Headers.UPGRADE] == null ->
+        makeHttpPostRequest(
+          pool = pool,
+          method = method,
+          url = url,
+          headers = headers,
+        )
 
-      else -> makeConnect(
-        pool = pool,
-        method = method,
-        url = url,
-        headers = headers,
-      )
+      else ->
+        makeConnect(
+          pool = pool,
+          method = method,
+          url = url,
+          headers = headers,
+        )
     }
   }
 

@@ -6,7 +6,7 @@ import pw.binom.io.http.Headers
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.HttpResponse
-import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.url.URL
 import pw.binom.url.UrlEncoder
 
@@ -26,7 +26,7 @@ internal suspend fun s3Call(
   range: List<Range> = emptyList(),
   payload: (suspend (AsyncOutput) -> Unit)? = null,
 ): HttpResponse {
-  client.connect(method = method, uri = url).use { connection ->
+  client.connect(method = method, uri = url).useAsync { connection ->
     val host = overrideHost ?: url.host
     val date = DateTime.now
     val specialHeaders: List<Pair<String, String>> =

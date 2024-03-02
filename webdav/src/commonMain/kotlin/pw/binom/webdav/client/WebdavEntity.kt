@@ -19,7 +19,10 @@ class WebdavEntity(
   override var path: Path = path
     private set
 
-  override suspend fun read(offset: ULong, length: ULong?): AsyncInput? {
+  override suspend fun read(
+    offset: ULong,
+    length: ULong?,
+  ): AsyncInput? {
     val allPathUrl = fileSystem.url.addPath(path)
     val r = fileSystem.client.connect(HTTPMethod.GET.code, allPathUrl)
 //        if (offset != 0uL) {
@@ -48,22 +51,27 @@ class WebdavEntity(
     }
   }
 
-  override suspend fun copy(path: Path, overwrite: Boolean): FileSystem.Entity {
+  override suspend fun copy(
+    path: Path,
+    overwrite: Boolean,
+  ): FileSystem.Entity {
     val destinationUrl = fileSystem.url.addPath(path)
-    val r = fileSystem.client.connect(
-      method = HTTPMethod.COPY.code,
-      uri = fileSystem.url.addPath(this.path),
-    )
+    val r =
+      fileSystem.client.connect(
+        method = HTTPMethod.COPY.code,
+        uri = fileSystem.url.addPath(this.path),
+      )
     user?.apply(r)
     r.addHeader("Destination", destinationUrl.toString())
     if (overwrite) {
       r.addHeader("Overwrite", "T")
     }
-    val responseCode = r.getResponse().use {
-      val responseCode = it.responseCode
-      it.readText().use { it.readText() }
-      responseCode
-    }
+    val responseCode =
+      r.getResponse().useAsync {
+        val responseCode = it.responseCode
+        it.readText().useAsync { it.readText() }
+        responseCode
+      }
     if (responseCode == 404) {
       throw FileSystem.FileNotFoundException(this.path)
     }
@@ -83,22 +91,27 @@ class WebdavEntity(
     )
   }
 
-  override suspend fun move(path: Path, overwrite: Boolean): FileSystem.Entity {
+  override suspend fun move(
+    path: Path,
+    overwrite: Boolean,
+  ): FileSystem.Entity {
     val destinationUrl = fileSystem.url.addPath(path)
-    val r = fileSystem.client.connect(
-      HTTPMethod.MOVE.code,
-      fileSystem.url.addPath(this.path),
-    )
+    val r =
+      fileSystem.client.connect(
+        HTTPMethod.MOVE.code,
+        fileSystem.url.addPath(this.path),
+      )
     user?.apply(r)
     r.addHeader("Destination", destinationUrl.toString())
     if (overwrite) {
       r.addHeader("Overwrite", "T")
     }
-    val responseCode = r.getResponse().use {
-      val ret = it.responseCode
-      it.readBinary().use { it.skipAll() }
-      ret
-    }
+    val responseCode =
+      r.getResponse().useAsync {
+        val ret = it.responseCode
+        it.readBinary().useAsync { it.skipAll() }
+        ret
+      }
     if (responseCode == 401) {
       throw FileSystemAccess.AccessException.UnauthorizedException()
     }
@@ -126,14 +139,16 @@ class WebdavEntity(
   }
 
   override suspend fun delete() {
-    val r = fileSystem.client.connect(
-      HTTPMethod.DELETE.code,
-      fileSystem.url.addPath(this.path),
-    )
+    val r =
+      fileSystem.client.connect(
+        HTTPMethod.DELETE.code,
+        fileSystem.url.addPath(this.path),
+      )
     user?.apply(r)
-    val responseCode = r.getResponse().use {
-      it.responseCode
-    }
+    val responseCode =
+      r.getResponse().useAsync {
+        it.responseCode
+      }
 
     if (responseCode == 404) {
       throw FileSystem.FileNotFoundException(path)

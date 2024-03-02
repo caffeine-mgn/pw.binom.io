@@ -17,7 +17,10 @@ class WebSocketHeader {
   var finishFlag = false
 
   companion object {
-    suspend fun read(input: AsyncInput, dest: WebSocketHeader) {
+    suspend fun read(
+      input: AsyncInput,
+      dest: WebSocketHeader,
+    ) {
       ByteBuffer(8).use { buf ->
         val first = input.readByte(buf)
         val second = input.readByte(buf)
@@ -25,21 +28,22 @@ class WebSocketHeader {
         dest.finishFlag = first.toInt() and 0b10000000 != 0
         dest.opcode = Opcode(first and 0b1111)
 
-        dest.length = (second and 0b1111111.toByte()).let {
-          when (it) {
-            126.toByte() -> {
-              input.readShort(buf).toUShort().toLong()
-            }
+        dest.length =
+          (second and 0b1111111.toByte()).let {
+            when (it) {
+              126.toByte() -> {
+                input.readShort(buf).toUShort().toLong()
+              }
 
-            127.toByte() -> {
-              input.readLong(buf)
-            }
+              127.toByte() -> {
+                input.readLong(buf)
+              }
 
-            else -> {
-              it.toLong()
+              else -> {
+                it.toLong()
+              }
             }
           }
-        }
         dest.maskFlag = second and 0b10000000.toByte() != 0.toByte()
 
         if (dest.maskFlag) {
@@ -63,11 +67,12 @@ class WebSocketHeader {
         }
         output.writeByte(value = value, buffer = buf)
 
-        value = if (maskFlag) {
-          0b10000000.toByte()
-        } else {
-          0b00000000.toByte()
-        }
+        value =
+          if (maskFlag) {
+            0b10000000.toByte()
+          } else {
+            0b00000000.toByte()
+          }
         when {
           length > Short.MAX_VALUE -> {
             output.writeByte(value = 127.toByte() or value, buffer = buf)
@@ -87,7 +92,10 @@ class WebSocketHeader {
       }
     }
 
-    suspend fun write(output: AsyncOutput, src: WebSocketHeader) {
+    suspend fun write(
+      output: AsyncOutput,
+      src: WebSocketHeader,
+    ) {
       write(
         output = output,
         opcode = src.opcode,

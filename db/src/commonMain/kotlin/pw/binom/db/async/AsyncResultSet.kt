@@ -4,10 +4,10 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.db.ResultSet
 import pw.binom.db.SQLException
 import pw.binom.io.AsyncCloseable
-import pw.binom.io.use
+import pw.binom.io.useAsync
 
 interface AsyncResultSet : ResultSet, AsyncCloseable {
-    suspend fun next(): Boolean
+  suspend fun next(): Boolean
 }
 
 /**
@@ -15,21 +15,21 @@ interface AsyncResultSet : ResultSet, AsyncCloseable {
  * Closes this [AsyncResultSet] after call [mapper] for each values of this [AsyncResultSet]
  */
 suspend inline fun <T> AsyncResultSet.map(mapper: (AsyncResultSet) -> T): List<T> {
-    val out = defaultMutableList<T>()
-    use {
-        while (next()) {
-            out += mapper(this)
-        }
+  val out = defaultMutableList<T>()
+  useAsync {
+    while (next()) {
+      out += mapper(this)
     }
-    return out
+  }
+  return out
 }
 
 suspend inline fun AsyncResultSet.forEach(func: (AsyncResultSet) -> Unit) {
-    use {
-        while (next()) {
-            func(this)
-        }
+  useAsync {
+    while (next()) {
+      func(this)
     }
+  }
 }
 
 suspend fun AsyncResultSet.count(): Int {
@@ -46,16 +46,16 @@ suspend fun AsyncResultSet.count(): Int {
  * Closes this [AsyncResultSet] after call [mapper]
  */
 suspend fun <T> AsyncResultSet.singleOrNull(mapper: (ResultSet) -> T): T? =
-    use {
-        if (!next()) {
-            return@use null
-        }
-        val result = mapper(this)
-        if (next()) {
-            throw SQLException("Found more than one results")
-        }
-        result
+  useAsync {
+    if (!next()) {
+      return@useAsync null
     }
+    val result = mapper(this)
+    if (next()) {
+      throw SQLException("Found more than one results")
+    }
+    result
+  }
 
 /**
  * Returns result of call [mapper] for single value from this [AsyncResultSet]. If this [AsyncResultSet] contains row more than one
@@ -63,16 +63,16 @@ suspend fun <T> AsyncResultSet.singleOrNull(mapper: (ResultSet) -> T): T? =
  * Closes this [AsyncResultSet] after call [mapper]
  */
 suspend fun <T> AsyncResultSet.single(mapper: (ResultSet) -> T): T =
-    use {
-        if (!next()) {
-            throw SQLException("Can't find any value")
-        }
-        val result = mapper(this)
-        if (next()) {
-            throw SQLException("Found more than one results")
-        }
-        result
+  useAsync {
+    if (!next()) {
+      throw SQLException("Can't find any value")
     }
+    val result = mapper(this)
+    if (next()) {
+      throw SQLException("Found more than one results")
+    }
+    result
+  }
 
 /**
  * Returns result of call [mapper] for first value from this [AsyncResultSet]. If this [AsyncResultSet] is empty will
@@ -80,12 +80,12 @@ suspend fun <T> AsyncResultSet.single(mapper: (ResultSet) -> T): T =
  * Closes this [AsyncResultSet] after call [mapper]
  */
 suspend fun <T> AsyncResultSet.firstOrNull(mapper: (ResultSet) -> T): T? =
-    use {
-        if (!next()) {
-            return@use null
-        }
-        mapper(this)
+  useAsync {
+    if (!next()) {
+      return@useAsync null
     }
+    mapper(this)
+  }
 
 /**
  * Returns result of call [mapper] for first value from this [AsyncResultSet]. If this [AsyncResultSet] is empty will
@@ -93,9 +93,9 @@ suspend fun <T> AsyncResultSet.firstOrNull(mapper: (ResultSet) -> T): T? =
  * Closes this [AsyncResultSet] after call [mapper]
  */
 suspend fun <T> AsyncResultSet.first(mapper: (ResultSet) -> T): T? =
-    use {
-        if (!next()) {
-            throw SQLException("Can't find any value")
-        }
-        mapper(this)
+  useAsync {
+    if (!next()) {
+      throw SQLException("Can't find any value")
     }
+    mapper(this)
+  }

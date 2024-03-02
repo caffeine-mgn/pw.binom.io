@@ -14,7 +14,7 @@ import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.HttpException
 import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.socket.MutableInetNetworkAddress
-import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
 import pw.binom.pool.GenericObjectPool
@@ -123,7 +123,7 @@ class HttpServer2(
       pool = byteBufferPool,
       channel = channel,
       address = address,
-    ).use { stream ->
+    ).useAsync { stream ->
       try {
         while (true) {
           val exchange =

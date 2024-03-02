@@ -44,8 +44,9 @@ actual class RSAPublicKey(
         }
         RSA_free(rsa)
         val data = b.toByteArray()
-        val str = data.decodeToString().replace("\n", "").removePrefix("-----BEGIN PUBLIC KEY-----")
-          .removeSuffix("-----END PUBLIC KEY-----")
+        val str =
+          data.decodeToString().replace("\n", "").removePrefix("-----BEGIN PUBLIC KEY-----")
+            .removeSuffix("-----END PUBLIC KEY-----")
         Base64.decode(str)
       }
     }

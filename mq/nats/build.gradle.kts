@@ -3,53 +3,65 @@ import pw.binom.plugins.DockerUtils
 import pw.binom.useDefault
 
 plugins {
-    id("org.jetbrains.kotlin.multiplatform")
-    id("com.bmuschko.docker-remote-api")
-    id("maven-publish")
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        id("com.android.library")
-    }
+  id("org.jetbrains.kotlin.multiplatform")
+  id("com.bmuschko.docker-remote-api")
+  id("maven-publish")
+  id("kotlinx-serialization")
+  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    id("com.android.library")
+  }
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-    allTargets {
-        -"js"
+  allTargets {
+    -"js"
+  }
+  sourceSets {
+    val commonMain by getting {
+      dependencies {
+        api(project(":core"))
+        api(project(":mq"))
+        api(project(":date"))
+        api(project(":network"))
+        api("org.jetbrains.kotlinx:kotlinx-serialization-json:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
+      }
     }
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                api(project(":core"))
-                api(project(":network"))
-                api("org.jetbrains.kotlinx:kotlinx-serialization-json:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
-            }
-        }
 
-        useDefault()
+    val commonTest by getting {
+      dependencies {
+        api(kotlin("test-common"))
+        api(kotlin("test-annotations-common"))
+        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      }
     }
+
+    useDefault()
+  }
 }
 
 tasks {
-    val nats = DockerUtils.dockerContanier(
-        project = project,
-        image = "nats:2.1.9",
-        tcpPorts = listOf(4222 to 8122),
-        args = listOf(),
-        suffix = "Nats"
+  val nats =
+    DockerUtils.dockerContanier(
+      project = project,
+      image = "nats:2.10.11",
+      tcpPorts = listOf(4222 to 8122),
+      args = listOf("-js"),
+      suffix = "Nats",
     )
 
-    eachKotlinTest {
-        nats.dependsOn(it)
-    }
+  eachKotlinTest {
+    nats.dependsOn(it)
+  }
 }
 
 tasks {
-    withType(Test::class) {
-        useJUnitPlatform()
-        testLogging.showStandardStreams = true
-        testLogging.showCauses = true
-        testLogging.showExceptions = true
-        testLogging.showStackTraces
-    }
+  withType(Test::class) {
+    useJUnitPlatform()
+    testLogging.showStandardStreams = true
+    testLogging.showCauses = true
+    testLogging.showExceptions = true
+    testLogging.showStackTraces
+  }
 }
 /*
 val natsContainerId1 = UUID.randomUUID().toString()
@@ -197,6 +209,6 @@ tasks {
 }
 */
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    apply<pw.binom.plugins.AndroidSupportPlugin>()
+  apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

@@ -10,8 +10,7 @@ import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
 
 class MultithreadingTest {
-
-//    @Test
+  //    @Test
 //    fun test2() {
 //        val nd = NetworkCoroutineDispatcherImpl()
 //        val w = Worker.create()
@@ -27,23 +26,26 @@ class MultithreadingTest {
 //        assertEquals(2, counter)
 //    }
 
-    @OptIn(ExperimentalTime::class)
-    @Test
-    fun test() = runTest(dispatchTimeoutMs = 10_000) {
-        val flag1 = AtomicBoolean(false)
-        val nd = NetworkCoroutineDispatcherImpl()
-        val addr = InetNetworkAddress.create("127.0.0.1", 8765)
-        val server = launch {
-            nd.bindTcp(addr).use { server ->
-                val client = server.accept()
-                flag1.setValue(true)
-            }
+  @OptIn(ExperimentalTime::class)
+  @Test
+  fun test() =
+    runTest(dispatchTimeoutMs = 10_000) {
+      val flag1 = AtomicBoolean(false)
+      val nd = NetworkCoroutineDispatcherImpl()
+      val addr = InetNetworkAddress.create("127.0.0.1", 8765)
+      val server =
+        launch {
+          nd.bindTcp(addr).use { server ->
+            val client = server.accept()
+            flag1.setValue(true)
+          }
         }
-        val client = launch {
-            nd.tcpConnect(addr)
-            Unit
+      val client =
+        launch {
+          nd.tcpConnect(addr)
+          Unit
         }
-        server.join()
-        assertTrue(flag1.getValue(), "flag1 invalid")
+      server.join()
+      assertTrue(flag1.getValue(), "flag1 invalid")
     }
 }

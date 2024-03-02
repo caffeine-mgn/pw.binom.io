@@ -7,7 +7,6 @@ import kotlin.random.Random
 import kotlin.test.Test
 
 class UdpTest {
-
   @Test
   fun test() {
     val socket1 = Socket.createUdpNetSocket()

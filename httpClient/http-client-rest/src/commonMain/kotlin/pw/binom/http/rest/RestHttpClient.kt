@@ -12,7 +12,7 @@ import pw.binom.http.rest.serialization.HttpOutputEncoder
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.HttpRequest
 import pw.binom.io.httpClient.HttpResponse
-import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.url.PathMask
 import pw.binom.url.URL
 
@@ -37,9 +37,10 @@ abstract class RestHttpClient {
   private val endpointCacheLock = SpinLock()
 
   @Suppress("UNCHECKED_CAST")
-  private fun <T> getDescription(serializer: KSerializer<T>): EndpointDescription<T> = endpointCacheLock.synchronize {
-    endpointCache.getOrPut(serializer) { EndpointDescription.create(serializer) } as EndpointDescription<T>
-  }
+  private fun <T> getDescription(serializer: KSerializer<T>): EndpointDescription<T> =
+    endpointCacheLock.synchronize {
+      endpointCache.getOrPut(serializer) { EndpointDescription.create(serializer) } as EndpointDescription<T>
+    }
 
   interface RemoteEndpoint<REQUEST : Any, RESPONSE : Any> {
     suspend operator fun invoke(request: REQUEST): RESPONSE
@@ -50,20 +51,20 @@ abstract class RestHttpClient {
     override suspend operator fun invoke(request: REQUEST): RESPONSE = execute(endpoint, request)
   }
 
-  open fun <REQUEST : Any, RESPONSE : Any> create(
-    endpoint: Endpoint2<REQUEST, RESPONSE>,
-  ): RemoteEndpoint<REQUEST, RESPONSE> = EndpointImpl(endpoint)
+  open fun <REQUEST : Any, RESPONSE : Any> create(endpoint: Endpoint2<REQUEST, RESPONSE>): RemoteEndpoint<REQUEST, RESPONSE> =
+    EndpointImpl(endpoint)
 
   open suspend fun <REQUEST : Any, RESPONSE : Any> execute(
     endpoint2: Endpoint2<REQUEST, RESPONSE>,
     request: REQUEST,
-  ): RESPONSE = call(
-    method = endpoint2.method,
-    prefix = endpoint2.path,
-    requestDescription = getDescription(endpoint2.request),
-    responseDescription = getDescription(endpoint2.response),
-    value = request,
-  )
+  ): RESPONSE =
+    call(
+      method = endpoint2.method,
+      prefix = endpoint2.path,
+      requestDescription = getDescription(endpoint2.request),
+      responseDescription = getDescription(endpoint2.response),
+      value = request,
+    )
 
   protected open fun preBodyRead(resp: HttpResponse) {
     // Do nothing
@@ -77,16 +78,17 @@ abstract class RestHttpClient {
     responseDescription: EndpointDescription<RESPONSE>,
     value: REQUEST,
   ): RESPONSE {
-    val encoder = HttpOutputEncoder(
-      serializersModule = serializersModule,
-      endpointDescription = requestDescription as EndpointDescription<Any?>,
-    )
+    val encoder =
+      HttpOutputEncoder(
+        serializersModule = serializersModule,
+        endpointDescription = requestDescription as EndpointDescription<Any?>,
+      )
     requestDescription.serializer.serialize(encoder, value)
     val url = baseUrl.addPath(prefix.toPath(encoder.pathParams)).appendQuery(encoder.getParams)
     return client.connect(
       method = method,
       uri = url,
-    ).use { request ->
+    ).useAsync { request ->
       request.headers.add(encoder.headerParams)
       val bodyDesc = encoder.body
       if (bodyDesc != null) {
@@ -94,15 +96,16 @@ abstract class RestHttpClient {
         val data = bodyEncoder.encode(bodyDesc.serializer, bodyDesc.body, request)
         bodyEncoder.send(data, request)
       }
-      request.getResponse().use { resp ->
+      request.getResponse().useAsync { resp ->
         preBodyRead(resp)
         val httpDecoder = HttpInputDecoder()
         httpDecoder.serializersModule = serializersModule
         if (responseDescription.bodyIndex != -1) {
-          val decoder = getBodyDecoder<RESPONSE, Any?>(
-            descriptor = responseDescription.bodyDescription,
-            response = resp,
-          )
+          val decoder =
+            getBodyDecoder<RESPONSE, Any?>(
+              descriptor = responseDescription.bodyDescription,
+              response = resp,
+            )
           httpDecoder.reset(
             input = resp,
             description = responseDescription,

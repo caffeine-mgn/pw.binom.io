@@ -9,6 +9,7 @@ import pw.binom.charset.Charsets
 import pw.binom.concurrency.sleep
 import pw.binom.io.socket.InetNetworkAddress
 import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.NetworkManager
 import kotlin.time.Duration.Companion.seconds
@@ -30,70 +31,76 @@ abstract class BaseTest {
 //        reuse = reuse,
 //    )
 
-    @OptIn(ExperimentalTime::class)
-    private suspend fun connect(address: InetNetworkAddress, nd: NetworkManager): PGConnection {
-        return withContext(nd) {
-            PGConnection.connect(
+  @OptIn(ExperimentalTime::class)
+  private suspend fun connect(
+    address: InetNetworkAddress,
+    nd: NetworkManager,
+  ): PGConnection {
+    return withContext(nd) {
+      PGConnection.connect(
+        address = address,
+        charset = Charsets.UTF8,
+        userName = "postgres",
+        password = "postgres",
+        dataBase = "test",
+        networkDispatcher = nd,
+      )
+    }
+
+    return withContext(Dispatchers.Default) {
+      val start = TimeSource.Monotonic.markNow()
+      withTimeout(10.seconds) {
+        while (true) {
+          try {
+            println("Connection...")
+            val con =
+              PGConnection.connect(
                 address = address,
                 charset = Charsets.UTF8,
                 userName = "postgres",
                 password = "postgres",
                 dataBase = "test",
-                networkDispatcher = nd
-            )
-        }
-
-        return withContext(Dispatchers.Default) {
-            val start = TimeSource.Monotonic.markNow()
-            withTimeout(10.seconds) {
-                while (true) {
-                    try {
-                        println("Connection...")
-                        val con = PGConnection.connect(
-                            address = address,
-                            charset = Charsets.UTF8,
-                            userName = "postgres",
-                            password = "postgres",
-                            dataBase = "test",
-                            networkDispatcher = nd
-                        )
-                        println("Connected after ${start.elapsedNow()}")
-                        return@withTimeout con
-                    } catch (e: Throwable) {
-                        if (e is TimeoutCancellationException) {
-                            throw e
-                        }
-                        sleep(1000)
-                        println("Error on connect: ${e.stackTraceToString()}")
-                        continue
-                    }
-                }
-                TODO()
+                networkDispatcher = nd,
+              )
+            println("Connected after ${start.elapsedNow()}")
+            return@withTimeout con
+          } catch (e: Throwable) {
+            if (e is TimeoutCancellationException) {
+              throw e
             }
+            sleep(1000)
+            println("Error on connect: ${e.stackTraceToString()}")
+            continue
+          }
         }
+        TODO()
+      }
     }
+  }
 
-    @OptIn(ExperimentalTime::class)
-    fun pg(func: suspend (PGConnection) -> Unit) = runTest(dispatchTimeoutMs = 10_000) {
-        withContext(Dispatchers.Default) {
-            val address = InetNetworkAddress.create(host = "127.0.0.1", port = 6122)
+  @OptIn(ExperimentalTime::class)
+  fun pg(func: suspend (PGConnection) -> Unit) =
+    runTest(dispatchTimeoutMs = 10_000) {
+      withContext(Dispatchers.Default) {
+        val address = InetNetworkAddress.create(host = "127.0.0.1", port = 6122)
 
 //            val nd = MultiFixedSizeThreadNetworkDispatcher(10)
-            val nd = NetworkCoroutineDispatcherImpl()
-            nd.use { nd ->
+        val nd = NetworkCoroutineDispatcherImpl()
+        nd.use { nd ->
 //                withContext(nd) {
-                val tm = connect(address, nd = nd)
-                withTimeout(10.seconds) {
-                    val duration = measureTime {
-                        tm.use {
-                            func(it)
-                        }
-                    }
-                    println("Test duration: $duration")
+          val tm = connect(address, nd = nd)
+          withTimeout(10.seconds) {
+            val duration =
+              measureTime {
+                tm.useAsync {
+                  func(it)
                 }
-            }
-//                }
+              }
+            println("Test duration: $duration")
+          }
         }
+//                }
+      }
 
 //        val now = TimeSource.Monotonic.markNow()
 //        pgContainer {

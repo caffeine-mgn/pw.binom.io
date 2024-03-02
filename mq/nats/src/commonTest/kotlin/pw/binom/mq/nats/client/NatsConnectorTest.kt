@@ -9,29 +9,38 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class NatsConnectorTest {
+  @Test
+  fun test3() {
+    val connector1 =
+      NatsConnection.create(
+        clientName = "Binom Client",
+        user = null,
+        pass = null,
+        tlsRequired = false,
+        echo = true,
+        serverList =
+          listOf(
+            InetNetworkAddress.create("127.0.0.1", TestUtils.NATS_PORT),
+          ),
+      )
 
-    @Test
-    fun test3() {
-        val connector1 = NatsConnector.create(
-            clientName = "Binom Client",
-            user = null,
-            pass = null,
-            tlsRequired = false,
-            echo = true,
-            serverList = listOf(
-                InetNetworkAddress.create("127.0.0.1", TestUtils.NATS_PORT),
-            )
-        )
-
-        runBlocking {
-            val msgText = Random.nextUuid().toString()
-            connector1.subscribe("S1", null)
-            connector1.publish(subject = "S1", replyTo = null, data = msgText.encodeToByteArray())
-            val msg = connector1.readMessage()
-            assertNull(msg.replyTo)
-            assertEquals(msgText, msg.data.decodeToString())
-        }
+    runBlocking {
+      val msgText = Random.nextUuid().toString()
+//      connector1.jetStreamManagement()!!.create(
+//        config =
+//          StreamConfig(
+//            name = "test",
+//            storageType = StorageType.Memory,
+//            subjects = listOf("context-subject"),
+//          ),
+//      )
+//      connector1.subscribe("S1", null)
+      connector1.publish(subject = "S1", replyTo = null, data = msgText.encodeToByteArray())
+      val msg = connector1.readMessage()
+      assertNull(msg.replyTo)
+      assertEquals(msgText, msg.data.decodeToString())
     }
+  }
 //
 //    @Test
 //    fun test2() {

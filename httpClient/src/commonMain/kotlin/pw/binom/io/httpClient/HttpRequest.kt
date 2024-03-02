@@ -23,6 +23,7 @@ interface HttpRequest : AsyncCloseable, RequestConfig, HttpOutput {
    * Closes this [HttpRequest] and delegate control to returned [AsyncHttpRequestWriter].
    */
   override suspend fun writeText(): AsyncHttpRequestWriter
+
   suspend fun writeTextAndGetResponse(func: suspend (AsyncHttpRequestWriter) -> Unit): HttpResponse {
     val e = writeText()
     func(e)
@@ -34,8 +35,8 @@ interface HttpRequest : AsyncCloseable, RequestConfig, HttpOutput {
    * Closes this [DefaultHttpRequest] and delegate control to returned [HttpResponse].
    */
   suspend fun getResponse(): HttpResponse
-  suspend fun <T> useResponse(func: suspend (HttpResponse) -> T): T =
-    getResponse().use { func(it) }
+
+  suspend fun <T> useResponse(func: suspend (HttpResponse) -> T): T = getResponse().useAsync { func(it) }
 }
 
 internal fun generateWebSocketHeaders(self: HttpRequest): Headers {
@@ -48,10 +49,12 @@ internal fun generateWebSocketHeaders(self: HttpRequest): Headers {
 
 interface AsyncHttpRequestOutput : HttpAsyncOutput {
   override suspend fun getInput(): HttpResponse
+
   suspend fun getResponse(): HttpResponse = getInput()
 }
 
 interface AsyncHttpRequestWriter : HttpAsyncWriter {
   override suspend fun getInput(): HttpResponse
+
   suspend fun getResponse() = getInput()
 }

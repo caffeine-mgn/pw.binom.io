@@ -25,7 +25,10 @@ import kotlin.time.Duration
 @Deprecated(message = "Use HttpServer2")
 internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : HttpRequest {
   object Manager : ObjectFactory<HttpRequest2Impl> {
-    override fun deallocate(value: HttpRequest2Impl, pool: ObjectPool<HttpRequest2Impl>) {
+    override fun deallocate(
+      value: HttpRequest2Impl,
+      pool: ObjectPool<HttpRequest2Impl>,
+    ) {
     }
 
     override fun allocate(pool: ObjectPool<HttpRequest2Impl>): HttpRequest2Impl = HttpRequest2Impl()
@@ -38,48 +41,50 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
       isNewConnect: Boolean,
       readStartTimeout: Duration,
       idleJob: Job?,
-    ): Result<HttpRequest2Impl?> = runCatching {
-      val request = if (readStartTimeout.isInfinite() || readStartTimeout == Duration.ZERO) {
-        channel.reader.readln()
-      } else {
-        withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
-      }
+    ): Result<HttpRequest2Impl?> =
+      runCatching {
+        val request =
+          if (readStartTimeout.isInfinite() || readStartTimeout == Duration.ZERO) {
+            channel.reader.readln()
+          } else {
+            withTimeoutOrNull(readStartTimeout) { channel.reader.readln() }
+          }
 //            val request = channel.reader.readln()
-      if (idleJob != null) {
-        server.idleJobsLock.synchronize {
-          if (!server.idleJobs.remove(idleJob)) {
-            return@runCatching null
+        if (idleJob != null) {
+          server.idleJobsLock.synchronize {
+            if (!server.idleJobs.remove(idleJob)) {
+              return@runCatching null
+            }
           }
         }
-      }
-      if (!isNewConnect) {
-        server.browConnection(channel)
-      }
-      if (request == null) {
-        channel.asyncCloseAnyway()
-        return@runCatching null
-      }
-      HttpServerMetrics.httpRequestCounter.inc()
-      val items = request.split(' ', limit = 3)
-      server.httpRequest2Impl.tryBorrow { requestObject ->
-        val headers = requestObject.internalHeaders
-        headers.clear()
-        try {
-          HttpServerUtils.readHeaders(dest = headers, reader = channel.reader)
-        } catch (e: Throwable) {
-          channel.asyncCloseAnyway()
-          throw e
+        if (!isNewConnect) {
+          server.browConnection(channel)
         }
+        if (request == null) {
+          channel.asyncCloseAnyway()
+          return@runCatching null
+        }
+        HttpServerMetrics.httpRequestCounter.inc()
+        val items = request.split(' ', limit = 3)
+        server.httpRequest2Impl.tryBorrow { requestObject ->
+          val headers = requestObject.internalHeaders
+          headers.clear()
+          try {
+            HttpServerUtils.readHeaders(dest = headers, reader = channel.reader)
+          } catch (e: Throwable) {
+            channel.asyncCloseAnyway()
+            throw e
+          }
 
-        requestObject.reset(
-          request = (items.getOrNull(1) ?: ""),
-          method = items[0],
-          channel = channel,
-          server = server,
-        )
-        return@runCatching requestObject
+          requestObject.reset(
+            request = (items.getOrNull(1) ?: ""),
+            method = items[0],
+            channel = channel,
+            server = server,
+          )
+          return@runCatching requestObject
+        }
       }
-    }
   }
 
   var channel: ServerAsyncAsciiChannel? = null
@@ -114,6 +119,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
     }
   }
   private var startedResponse: HttpResponse2Impl? = null
+
   override suspend fun <T> response(func: suspend (HttpResponse) -> T): T {
     return super.response(func)
   }
@@ -165,30 +171,37 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
     val transferEncoding = headers.getTransferEncodingList()
     var stream: AsyncInput = channel!!.reader
     if (contentLength != null) {
-      stream = AsyncContentLengthInput(
-        stream = stream,
-        contentLength = contentLength,
-        closeStream = false,
-      )
+      stream =
+        AsyncContentLengthInput(
+          stream = stream,
+          contentLength = contentLength,
+          closeStream = false,
+        )
     }
 
-    fun wrap(name: String, stream: AsyncInput) = when (name) {
+    fun wrap(
+      name: String,
+      stream: AsyncInput,
+    ) = when (name) {
       Encoding.IDENTITY -> stream
-      Encoding.CHUNKED -> AsyncChunkedInput(
-        stream = stream,
-        closeStream = false,
-      )
+      Encoding.CHUNKED ->
+        AsyncChunkedInput(
+          stream = stream,
+          closeStream = false,
+        )
 
-      Encoding.GZIP -> AsyncGZIPInput(
-        stream = stream,
-        closeStream = false,
-      )
+      Encoding.GZIP ->
+        AsyncGZIPInput(
+          stream = stream,
+          closeStream = false,
+        )
 
-      Encoding.DEFLATE -> AsyncInflateInput(
-        stream = stream,
-        wrap = true,
-        closeStream = false,
-      )
+      Encoding.DEFLATE ->
+        AsyncInflateInput(
+          stream = stream,
+          wrap = true,
+          closeStream = false,
+        )
 
       else -> null
     }
@@ -213,12 +226,13 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
     }
   }
 
-  private fun hasUpgrade() = headers[Headers.CONNECTION]
-    ?.asSequence()
-    ?.flatMap { it.splitToSequence(',') }
-    ?.map { it.trim() }
-    ?.any { it.equals(Headers.UPGRADE, true) }
-    ?: false
+  private fun hasUpgrade() =
+    headers[Headers.CONNECTION]
+      ?.asSequence()
+      ?.flatMap { it.splitToSequence(',') }
+      ?.map { it.trim() }
+      ?.any { it.equals(Headers.UPGRADE, true) }
+      ?: false
 
   private suspend fun checkWebSocket() {
     val connection = headers[Headers.CONNECTION]
@@ -298,20 +312,21 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
     val server = server ?: throw SocketClosedException()
     if (readInput == null) {
       server.textBufferPool.using { buf ->
-        readBinary().use {
+        readBinary().useAsync {
           it.skipAll(buf)
         }
       }
     }
-    val r = server.httpResponse2Impl.borrow().also {
-      it.reset(
-        keepAliveEnabled = server.maxIdleTime.isPositive() && (headers.keepAlive ?: true),
-        channel = channel!!,
-        acceptEncoding = headers.acceptEncoding,
-        server = server,
-        onclosed = { },
-      )
-    }
+    val r =
+      server.httpResponse2Impl.borrow().also {
+        it.reset(
+          keepAliveEnabled = server.maxIdleTime.isPositive() && (headers.keepAlive ?: true),
+          channel = channel!!,
+          acceptEncoding = headers.acceptEncoding,
+          server = server,
+          onclosed = { },
+        )
+      }
     startedResponse = r
     closed = true
     isReadyForResponse = false

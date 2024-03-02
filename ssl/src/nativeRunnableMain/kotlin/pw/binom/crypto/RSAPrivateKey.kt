@@ -13,17 +13,17 @@ import pw.binom.ssl.KeyAlgorithm
 
 @OptIn(ExperimentalForeignApi::class)
 actual class RSAPrivateKey(actual val n: BigInteger, actual val e: BigInteger, actual val d: BigInteger) : Key.Private {
-
   actual companion object {
     actual fun load(encodedKeySpec: KeySpec): RSAPrivateKey =
       when (encodedKeySpec) {
         is PKCS8EncodedKeySpec -> {
           val pem =
             "-----BEGIN RSA PRIVATE KEY-----\n${Base64.encode(encodedKeySpec.data)}\n-----END RSA PRIVATE KEY-----\n"
-          val rsa = Bio.mem(pem.encodeToByteArray()).use { priv ->
-            PEM_read_bio_RSAPrivateKey(priv.self, null, null, null)
-              ?: throwError("PEM_read_bio_RSAPrivateKey fail")
-          }
+          val rsa =
+            Bio.mem(pem.encodeToByteArray()).use { priv ->
+              PEM_read_bio_RSAPrivateKey(priv.self, null, null, null)
+                ?: throwError("PEM_read_bio_RSAPrivateKey fail")
+            }
           val e = BigNum(RSA_get0_e(rsa) ?: throwError("RSA_get0_e fail"))
           val n = BigNum(RSA_get0_n(rsa) ?: throwError("RSA_get0_n fail"))
           val d = BigNum(RSA_get0_d(rsa) ?: throwError("RSA_get0_d fail"))
@@ -88,8 +88,9 @@ actual class RSAPrivateKey(actual val n: BigInteger, actual val e: BigInteger, a
           }
         RSA_free(rsa)
         val data = b.toByteArray()
-        val str = data.decodeToString().replace("\n", "").removePrefix("-----BEGIN RSA PRIVATE-----")
-          .removeSuffix("-----END RSA PRIVATE-----")
+        val str =
+          data.decodeToString().replace("\n", "").removePrefix("-----BEGIN RSA PRIVATE-----")
+            .removeSuffix("-----END RSA PRIVATE-----")
         Base64.decode(str)
       }
     }

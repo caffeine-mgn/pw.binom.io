@@ -6,23 +6,25 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class BufferedAsciiWriterTest {
-    @Test
-    fun test() = runTest {
-        val out = ByteArrayOutput()
+  @Test
+  fun test() =
+    runTest {
+      val out = ByteArrayOutput()
 
-        out.asyncOutput().bufferedAsciiWriter(closeParent = false).use {
-            it.append("Anton")
-        }
-        assertEquals("Anton", out.toByteArray().decodeToString())
+      out.asyncOutput().bufferedAsciiWriter(closeParent = false).useAsync {
+        it.append("Anton")
+      }
+      assertEquals("Anton", out.toByteArray().decodeToString())
     }
 
-    @Test
-    fun test2() = runTest {
-        val out = ByteArrayOutput()
+  @Test
+  fun test2() =
+    runTest {
+      val out = ByteArrayOutput()
 
-        out.asyncOutput().bufferedAsciiWriter(closeParent = false).use {
-            it.append("A")
-        }
-        assertEquals("A", out.toByteArray().decodeToString())
+      out.asyncOutput().bufferedAsciiWriter(closeParent = false).useAsync {
+        it.append("A")
+      }
+      assertEquals("A", out.toByteArray().decodeToString())
     }
 }

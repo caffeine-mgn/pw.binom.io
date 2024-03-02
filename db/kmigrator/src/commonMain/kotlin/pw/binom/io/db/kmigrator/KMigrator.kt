@@ -7,7 +7,7 @@ import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.async.pool.PooledAsyncConnection
 import pw.binom.db.async.pool.SelectQuery
 import pw.binom.db.async.pool.execute
-import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
 
@@ -39,7 +39,9 @@ class KMigrator(
 
   sealed class Step {
     abstract val id: String
+
     abstract suspend fun execute(connection: PooledAsyncConnection)
+
     class StepSQL(override val id: String, val sql: String) : Step() {
       override suspend fun execute(connection: PooledAsyncConnection) {
         connection.executeUpdate(sql)
@@ -64,7 +66,7 @@ create table if not exists $table (
 );
             """,
       )
-      prepareStatement("insert into $table (id, create_date) values (?, ?)").use { insertRecord ->
+      prepareStatement("insert into $table (id, create_date) values (?, ?)").useAsync { insertRecord ->
         execute(getExecutedMigrations) {
           it.forEach {
             executedMigrations += it.getString(0)!!

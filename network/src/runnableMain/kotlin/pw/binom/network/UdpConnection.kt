@@ -11,12 +11,12 @@ import pw.binom.io.use
 import kotlin.coroutines.resumeWithException
 
 class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
-
   companion object {
-    fun randomPort() = Socket.createUdpNetSocket().use {
-      it.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
-      it.port!!
-    }
+    fun randomPort() =
+      Socket.createUdpNetSocket().use {
+        it.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
+        it.port!!
+      }
   }
 
   var description: String? = null
@@ -36,8 +36,11 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     var address: MutableInetNetworkAddress? = null
     var full = false
     private val lock = SpinLock()
+
     fun lock() = lock.lock()
+
     fun unlock() = lock.unlock()
+
     inline fun <T> synchronize(func: () -> T): T = lock.synchronize(func)
 
     fun reset() {
@@ -52,9 +55,13 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     var data: ByteBuffer? = null
     var address: InetNetworkAddress? = null
     private val lock = SpinLock()
+
     fun lock() = lock.lock()
+
     fun unlock() = lock.unlock()
+
     inline fun <T> synchronize(func: () -> T): T = lock.synchronize(func)
+
     fun reset() {
       continuation = null
       data = null
@@ -150,7 +157,10 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     channel.close()
   }
 
-  suspend fun read(dest: ByteBuffer, address: MutableInetNetworkAddress?): Int {
+  suspend fun read(
+    dest: ByteBuffer,
+    address: MutableInetNetworkAddress?,
+  ): Int {
     keys.checkEmpty()
     readData.lock()
     if (readData.continuation != null) {
@@ -168,28 +178,32 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     }
     readData.full = false
     readData.unlock()
-    val readed = suspendCancellableCoroutine<Int> {
-      readData.synchronize {
-        readData.continuation = it
-        readData.data = dest
-        readData.address = address
+    val readed =
+      suspendCancellableCoroutine<Int> {
+        readData.synchronize {
+          readData.continuation = it
+          readData.data = dest
+          readData.address = address
+        }
+        keys.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR)
+        keys.wakeup()
+        it.invokeOnCancellation {
+          readData.continuation = null
+          readData.data = null
+          readData.address = null
+          keys.removeListen(KeyListenFlags.READ)
+        }
       }
-      keys.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR)
-      keys.wakeup()
-      it.invokeOnCancellation {
-        readData.continuation = null
-        readData.data = null
-        readData.address = null
-        keys.removeListen(KeyListenFlags.READ)
-      }
-    }
     if (readed < 0) {
       throw SocketClosedException()
     }
     return readed
   }
 
-  suspend fun write(data: ByteBuffer, address: InetNetworkAddress): Int {
+  suspend fun write(
+    data: ByteBuffer,
+    address: InetNetworkAddress,
+  ): Int {
     keys.checkEmpty()
     val l = data.remaining
     if (l == 0) {

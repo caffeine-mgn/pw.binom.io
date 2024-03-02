@@ -1,7 +1,9 @@
 package pw.binom.mq.nats.client
 
+import pw.binom.mq.nats.BaseTest
+
 object TestUtils {
-    const val NATS_PORT = 8122
+  const val NATS_PORT = BaseTest.NATS_PORT
 }
 
 // @OptIn(ExperimentalTime::class)

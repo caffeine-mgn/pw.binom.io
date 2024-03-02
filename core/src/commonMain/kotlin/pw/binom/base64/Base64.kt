@@ -8,8 +8,12 @@ import kotlin.experimental.or
 import kotlin.math.roundToInt
 
 object Base64 {
-
-  internal inline fun encodeByte(counter: Int, old: Byte, data: Byte, newOld: (Byte) -> Unit): String =
+  internal inline fun encodeByte(
+    counter: Int,
+    old: Byte,
+    data: Byte,
+    newOld: (Byte) -> Unit,
+  ): String =
     when (counter) {
       0 -> {
         val ff = data shr 2
@@ -32,7 +36,12 @@ object Base64 {
       else -> throw IllegalArgumentException("Argument counter should be between 0 and 2. Got $counter")
     }
 
-  fun encode(data: ByteArray, offset: Int = 0, length: Int = data.size - offset, padding: Boolean = true): String {
+  fun encode(
+    data: ByteArray,
+    offset: Int = 0,
+    length: Int = data.size - offset,
+    padding: Boolean = true,
+  ): String {
     val sb = StringBuilder((length * 1.5).roundToInt())
     var counter = 0
     var old = 0.toByte()
@@ -52,7 +61,10 @@ object Base64 {
     return sb.toString()
   }
 
-  fun encode(data: ByteBuffer, padding: Boolean = true): String {
+  fun encode(
+    data: ByteBuffer,
+    padding: Boolean = true,
+  ): String {
     val sb = StringBuilder()
     Base64EncodeOutput(appendable = sb, padding = padding).use {
       it.write(data = data)
@@ -60,7 +72,11 @@ object Base64 {
     return sb.toString()
   }
 
-  fun decode(data: String, offset: Int = 0, length: Int = data.length - offset): ByteArray {
+  fun decode(
+    data: String,
+    offset: Int = 0,
+    length: Int = data.length - offset,
+  ): ByteArray {
 //        var buffer = ByteArray(Base64Decoder.calcSize(length))
 //        var cursor = 0
 //        val decoder = Base64Decoder {
@@ -87,5 +103,7 @@ object Base64 {
 }
 
 internal infix fun Byte.shl(count: Int) = ((toInt() and 0xFF) shl count).toByte()
+
 internal infix fun Byte.ushr(count: Int) = ((toInt() and 0xFF) ushr count).toByte()
+
 internal infix fun Byte.shr(count: Int) = ((toInt() and 0xFF) shr count).toByte()

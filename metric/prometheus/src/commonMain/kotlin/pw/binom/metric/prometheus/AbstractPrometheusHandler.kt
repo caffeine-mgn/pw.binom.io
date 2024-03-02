@@ -7,6 +7,7 @@ import pw.binom.io.bufferedAsciiWriter
 import pw.binom.io.httpServer.HttpHandler
 import pw.binom.io.httpServer.HttpServerExchange
 import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.metric.MetricProvider
 
 abstract class AbstractPrometheusHandler : HttpHandler {
@@ -38,7 +39,7 @@ abstract class AbstractPrometheusHandler : HttpHandler {
   override suspend fun handle(exchange: HttpServerExchange) {
     exchange.startResponse(200)
     usingBuffer { buffer ->
-      exchange.output.bufferedAsciiWriter().use {
+      exchange.output.bufferedAsciiWriter().useAsync {
         makeResponse(it)
       }
     }

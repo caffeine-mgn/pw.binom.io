@@ -17,46 +17,45 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 
 suspend fun getDispatcher(): CoroutineDispatcher? =
-    suspendCoroutine {
-        it.resume(it.context[ContinuationInterceptor] as CoroutineDispatcher?)
-    }
-
+  suspendCoroutine {
+    it.resume(it.context[ContinuationInterceptor] as CoroutineDispatcher?)
+  }
 
 class Ololo {
-
-    @Ignore
-    @Test
-    fun test() = runTest {
-        val network = NetworkCoroutineDispatcherImpl()
-        val ccc = Socket.createTcpServerNetSocket()
-        println("Bind on 8335")
-        ccc.bind(InetNetworkAddress.create(port = 8335, host = "0.0.0.0"))
-        println("Wait clients...")
-        ccc.use {
-            val server = network.attach(ccc)
-            while (true) {
-                val newClient = server.accept()
-                launch {
-                    val line = newClient.bufferedReader(closeParent = false).use { it.readln() }
-                    newClient.bufferedWriter(closeParent = false).use { it.append("Echo $line") }
-                    newClient.asyncClose()
-                }
-            }
+  @Ignore
+  @Test
+  fun test() =
+    runTest {
+      val network = NetworkCoroutineDispatcherImpl()
+      val ccc = Socket.createTcpServerNetSocket()
+      println("Bind on 8335")
+      ccc.bind(InetNetworkAddress.create(port = 8335, host = "0.0.0.0"))
+      println("Wait clients...")
+      ccc.use {
+        val server = network.attach(ccc)
+        while (true) {
+          val newClient = server.accept()
+          launch {
+            val line = newClient.bufferedReader(closeParent = false).use { it.readln() }
+            newClient.bufferedWriter(closeParent = false).use { it.append("Echo $line") }
+            newClient.asyncClose()
+          }
         }
+      }
 
-        println("Execute in default ${getDispatcher()}")
-        val c = getDispatcher()!!
+      println("Execute in default ${getDispatcher()}")
+      val c = getDispatcher()!!
 
-        withContext(network) {
-            println("Execute in network ${getDispatcher()} 1")
-            withContext(Dispatchers.Default) {
-                println("Execute in default inside network ${getDispatcher()}")
-//                network.sss(c)
-            }
-            println("Execute in network ${getDispatcher()} 2")
+      withContext(network) {
+        println("Execute in network ${getDispatcher()} 1")
+        withContext(Dispatchers.Default) {
+          println("Execute in default inside network ${getDispatcher()}")
 //                network.sss(c)
         }
-        println("Execute in default ${getDispatcher()}")
+        println("Execute in network ${getDispatcher()} 2")
+//                network.sss(c)
+      }
+      println("Execute in default ${getDispatcher()}")
 //
 //            Network().invoke {
 //                println("1 ololo!  -> ${getDispatcher()}")

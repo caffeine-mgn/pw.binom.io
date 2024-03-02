@@ -20,81 +20,85 @@ import kotlin.time.measureTime
 
 @ExperimentalTime
 class TestAsyncBaseHttpClient {
-
-    @Test
-    fun timeoutTest2() = runTest(dispatchTimeoutMs = 10_000) {
-        Dispatchers.Network.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
-            .use { server ->
-                val serverPort = server.port
-                println("server binded port: ${server.port}")
-                launch {
-                    println("wait client")
-                    try {
-                        server.accept()
-                        println("client connected")
-                    } catch (e: Throwable) {
-                        // Do nothing
-                    }
-                }
-                HttpClient.create().use { client ->
-                    try {
-                        realWithTimeout(5.seconds) {
-                            client.connect(
-                                method = "GET",
-                                uri = "http://127.0.0.1:$serverPort/".toURL(),
+  @Test
+  fun timeoutTest2() =
+    runTest(dispatchTimeoutMs = 10_000) {
+      Dispatchers.Network.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
+        .use { server ->
+          val serverPort = server.port
+          println("server binded port: ${server.port}")
+          launch {
+            println("wait client")
+            try {
+              server.accept()
+              println("client connected")
+            } catch (e: Throwable) {
+              // Do nothing
+            }
+          }
+          HttpClient.create().use { client ->
+            try {
+              realWithTimeout(5.seconds) {
+                client.connect(
+                  method = "GET",
+                  uri = "http://127.0.0.1:$serverPort/".toURL(),
 //                                        uri = "http://example.com/".toURI(),
-                            ).getResponse().readText().use { it.readText() }
-                        }
+                ).getResponse().readText().use { it.readText() }
+              }
 //                                }
-                    } catch (e: CancellationException) {
-                        // Do nothing
-                    }
-                }
+            } catch (e: CancellationException) {
+              // Do nothing
             }
-    }
-
-    @OptIn(ExperimentalTime::class)
-    @Test
-    fun timeoutTest() = runTest(dispatchTimeoutMs = 10_000) {
-        val manager = NetworkCoroutineDispatcherImpl()
-        val client = HttpClient.create(networkDispatcher = Dispatchers.Network)
-        val server = manager.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = TcpServerConnection.randomPort()))
-        val now = TimeSource.Monotonic.markNow()
-        try {
-            realWithTimeout(3.seconds) {
-                client.connect(HTTPMethod.GET, "http://127.0.0.1:${server.port}".toURL()).getResponse().responseCode
-            }
-            fail()
-        } catch (e: CancellationException) {
-            val time = now.elapsedNow()
-            println("Real timeout: $time")
-            assertTrue(time >= 3.seconds && time < 4.seconds)
+          }
         }
     }
 
-    @Test
-    @OptIn(ExperimentalTime::class)
-    fun test() = runTest(dispatchTimeoutMs = 10_000) {
-        withContext(Dispatchers.Network) {
-            val client = HttpClient.create(
-                networkDispatcher = Dispatchers.Network,
-                useKeepAlive = false,
+  @OptIn(ExperimentalTime::class)
+  @Test
+  fun timeoutTest() =
+    runTest(dispatchTimeoutMs = 10_000) {
+      val manager = NetworkCoroutineDispatcherImpl()
+      val client = HttpClient.create(networkDispatcher = Dispatchers.Network)
+      val server = manager.bindTcp(InetNetworkAddress.create(host = "127.0.0.1", port = TcpServerConnection.randomPort()))
+      val now = TimeSource.Monotonic.markNow()
+      try {
+        realWithTimeout(3.seconds) {
+          client.connect(HTTPMethod.GET, "http://127.0.0.1:${server.port}".toURL()).getResponse().responseCode
+        }
+        fail()
+      } catch (e: CancellationException) {
+        val time = now.elapsedNow()
+        println("Real timeout: $time")
+        assertTrue(time >= 3.seconds && time < 4.seconds)
+      }
+    }
+
+  @Test
+  @OptIn(ExperimentalTime::class)
+  fun test() =
+    runTest(dispatchTimeoutMs = 10_000) {
+      withContext(Dispatchers.Network) {
+        val client =
+          HttpClient.create(
+            networkDispatcher = Dispatchers.Network,
+            useKeepAlive = false,
 //            connectTimeout = Duration.INFINITE,
-            )
-            repeat(3) {
-                val testTime = measureTime {
-                    val responseData =
-                        client.connect(HTTPMethod.GET, "https://google.com/".toURL())
-                            .getResponse()
-                            .also {
-                                println("headers:${it.inputHeaders}")
-                            }.readData().use {
-                                it.skipAll()
-                            }
-                }
-                println("testTime=$testTime")
+          )
+        repeat(3) {
+          val testTime =
+            measureTime {
+              val responseData =
+                client.connect(HTTPMethod.GET, "https://google.com/".toURL())
+                  .getResponse()
+                  .also {
+                    println("headers:${it.inputHeaders}")
+                  }.readData().use {
+                    it.skipAll()
+                  }
             }
+          println("testTime=$testTime")
         }
+      }
     }
 }
 

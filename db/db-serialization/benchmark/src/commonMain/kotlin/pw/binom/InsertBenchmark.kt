@@ -6,14 +6,13 @@ import kotlinx.serialization.Serializable
 import pw.binom.db.async.pool.AsyncConnectionPoolImpl
 import pw.binom.db.serialization.*
 import pw.binom.db.sqlite.AsyncSQLiteConnector
-import pw.binom.io.use
+import pw.binom.io.useAsync
 
 @State(Scope.Benchmark)
 @Measurement(iterations = 3, time = 1, timeUnit = BenchmarkTimeUnit.SECONDS)
 @OutputTimeUnit(BenchmarkTimeUnit.MILLISECONDS)
 @BenchmarkMode(Mode.AverageTime)
 class InsertBenchmark {
-
   @Serializable
   @TableName("users")
   class User(
@@ -28,8 +27,8 @@ class InsertBenchmark {
     runBlocking {
       AsyncConnectionPoolImpl(1) {
         AsyncSQLiteConnector.memory()
-      }.use { pool ->
-        DBContext.create(sql = SQLSerialization.DEFAULT, pool = pool).use { db ->
+      }.useAsync { pool ->
+        DBContext.create(sql = SQLSerialization.DEFAULT, pool = pool).useAsync { db ->
           db.createSchema(User.serializer())
           db.re2 {
             repeat(30000) { _ ->

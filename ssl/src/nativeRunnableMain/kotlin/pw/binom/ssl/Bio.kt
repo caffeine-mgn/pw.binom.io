@@ -10,11 +10,16 @@ import pw.binom.io.use
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 value class Bio(val self: CPointer<BIO>) : Closeable {
-  fun read(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
+  fun read(
+    data: ByteArray,
+    offset: Int = 0,
+    length: Int = data.size - offset,
+  ): Int =
     memScoped {
-      val r = data.usePinned { data ->
-        BIO_read(self, data.addressOf(offset), length.convert())
-      }
+      val r =
+        data.usePinned { data ->
+          BIO_read(self, data.addressOf(offset), length.convert())
+        }
       if (r < 0) {
         TODO()
       }
@@ -22,11 +27,12 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     }
 
   val ptr
-    get() = memScoped {
-      val ptr = allocPointerTo<ByteVar>()
-      BIO_ctrl(self, BIO_C_GET_BUF_MEM_PTR, 0, ptr.reinterpret())
-      ptr.value!!
-    }
+    get() =
+      memScoped {
+        val ptr = allocPointerTo<ByteVar>()
+        BIO_ctrl(self, BIO_C_GET_BUF_MEM_PTR, 0, ptr.reinterpret())
+        ptr.value!!
+      }
 
   fun toByteArray(): ByteArray {
     val c = cursor
@@ -45,9 +51,10 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
       return 0
     }
     return memScoped {
-      val r = data.ref(0) { dataPtr, remaining ->
-        BIO_read(self, dataPtr, remaining.convert())
-      }
+      val r =
+        data.ref(0) { dataPtr, remaining ->
+          BIO_read(self, dataPtr, remaining.convert())
+        }
       if (r < 0) {
         TODO()
       }
@@ -56,11 +63,16 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     }
   }
 
-  fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): Int =
+  fun write(
+    data: ByteArray,
+    offset: Int = 0,
+    length: Int = data.size - offset,
+  ): Int =
     memScoped {
-      val r = data.usePinned { data ->
-        BIO_write(self, data.addressOf(offset), length.convert())
-      }
+      val r =
+        data.usePinned { data ->
+          BIO_write(self, data.addressOf(offset), length.convert())
+        }
       if (r < 0) {
         TODO()
       }
@@ -96,7 +108,10 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     }
   }
 
-  fun copyTo(stream: Bio, bufferLength: Int = DEFAULT_BUFFER_SIZE) {
+  fun copyTo(
+    stream: Bio,
+    bufferLength: Int = DEFAULT_BUFFER_SIZE,
+  ) {
     val buf = ByteArray(bufferLength)
     while (!eof) {
       val len = read(buf)
@@ -106,7 +121,10 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     }
   }
 
-  fun copyTo(stream: Output, bufferLength: Int = DEFAULT_BUFFER_SIZE) {
+  fun copyTo(
+    stream: Output,
+    bufferLength: Int = DEFAULT_BUFFER_SIZE,
+  ) {
     ByteBuffer(bufferLength).use { buf ->
       while (!eof) {
         buf.clear()
@@ -119,6 +137,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
 
   companion object {
     fun mem() = Bio(BIO_new(BIO_s_mem())!!)
+
     fun mem(size: Int): Bio {
       val ptr = platform.posix.malloc(size.convert())
       val bio = BIO_new_mem_buf(ptr, size)!!
@@ -129,9 +148,10 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     }
 
     fun mem(data: ByteArray): Bio {
-      val bio = data.usePinned { pinnedData ->
-        BIO_new_mem_buf(pinnedData.addressOf(0), data.size)!!
-      }
+      val bio =
+        data.usePinned { pinnedData ->
+          BIO_new_mem_buf(pinnedData.addressOf(0), data.size)!!
+        }
       if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_NOCLOSE.convert(), null) < 0) {
         TODO()
       }

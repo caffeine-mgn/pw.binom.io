@@ -23,21 +23,22 @@ actual fun Key.Companion.generateRsa(size: Int): Key.Pair<RSAPublicKey, RSAPriva
 //    val p = BigNum(RSA_get0_p(rsa)!!).toBigInt()
 //    val q = BigNum(RSA_get0_q(rsa)!!).toBigInt()
 
-  val privateKeyBytes = Bio.mem().use { b ->
-    PEM_write_bio_RSAPrivateKey(
-      b.self,
-      rsa,
-      null,
-      null,
-      0,
-      null,
-      null,
-    ).checkTrue("PEM_write_bio_RSAPrivateKey fail")
-    b.toByteArray().decodeToString()
-      .replace("\n", "").removePrefix("-----BEGIN RSA PRIVATE KEY-----")
-      .removeSuffix("-----END RSA PRIVATE KEY-----")
-      .let { Base64.decode(it) }
-  }
+  val privateKeyBytes =
+    Bio.mem().use { b ->
+      PEM_write_bio_RSAPrivateKey(
+        b.self,
+        rsa,
+        null,
+        null,
+        0,
+        null,
+        null,
+      ).checkTrue("PEM_write_bio_RSAPrivateKey fail")
+      b.toByteArray().decodeToString()
+        .replace("\n", "").removePrefix("-----BEGIN RSA PRIVATE KEY-----")
+        .removeSuffix("-----END RSA PRIVATE KEY-----")
+        .let { Base64.decode(it) }
+    }
 
   val privateKeyReaded = createRsaFromPrivateKey(privateKeyBytes)
   println("e=${RSA_get0_e(privateKeyReaded)}")
@@ -47,15 +48,17 @@ actual fun Key.Companion.generateRsa(size: Int): Key.Pair<RSAPublicKey, RSAPriva
 
   RSA_free(rsa)
   return Key.Pair(
-    public = RSAPublicKey(
-      e = e,
-      n = n,
-    ),
-    private = RSAPrivateKey(
-      e = e,
-      d = d,
-      n = n,
-    ),
+    public =
+      RSAPublicKey(
+        e = e,
+        n = n,
+      ),
+    private =
+      RSAPrivateKey(
+        e = e,
+        d = d,
+        n = n,
+      ),
   )
 
 //    val publicKey = Bio.mem().use { b ->
@@ -114,14 +117,15 @@ actual fun Key.Companion.generateEcdsa(nid: Nid): Key.Pair<ECPublicKey, ECPrivat
 //    EC_KEY_free(eckey)
   val publicEc = EC_KEY_dup(eckey) ?: throwError("EC_KEY_dup fails")
   return Key.Pair(
-    public = ECPublicKey(
-      native = publicEc,
+    public =
+      ECPublicKey(
+        native = publicEc,
 //            curve = curve,
 //            q = EcPoint(
 //                curve = curve,
 //                ptr = EC_POINT_dup(publicKey2, curve.native) ?: throwError("EC_POINT_dup fails")
 //            )
-    ),
+      ),
     private = ECPrivateKey(native = eckey),
   )
 
