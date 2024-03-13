@@ -1,5 +1,3 @@
-import pw.binom.useDefault
-
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
@@ -13,7 +11,7 @@ kotlin {
   allTargets {
     -"js"
   }
-
+  applyDefaultHierarchyTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
@@ -22,7 +20,6 @@ kotlin {
         api(project(":ssl"))
       }
     }
-    useDefault()
   }
 }
 

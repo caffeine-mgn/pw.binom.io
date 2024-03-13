@@ -1,5 +1,3 @@
-import pw.binom.useDefault
-
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
@@ -7,7 +5,11 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets()
+  allTargets {
+//    -"jvm"
+//    -"js"
+  }
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
@@ -19,7 +21,6 @@ kotlin {
       dependencies {
       }
     }
-    useDefault()
   }
 }
 

@@ -1,6 +1,5 @@
 import pw.binom.eachKotlinTest
 import pw.binom.plugins.DockerUtils
-import pw.binom.useDefault
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -16,26 +15,23 @@ kotlin {
   allTargets {
     -"js"
   }
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(project(":core"))
-        api(project(":mq"))
-        api(project(":date"))
-        api(project(":network"))
-        api("org.jetbrains.kotlinx:kotlinx-serialization-json:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
-      }
+    commonMain.dependencies {
+      api(project(":core"))
+      api(project(":mq"))
+      api(project(":date"))
+      api(project(":network"))
+      api(project(":socket"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api("org.jetbrains.kotlinx:kotlinx-serialization-json:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
     }
 
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
-
-    useDefault()
   }
 }
 

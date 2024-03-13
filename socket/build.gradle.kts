@@ -5,7 +5,6 @@ import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.dependsOn
-import pw.binom.useDefault
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -89,23 +88,31 @@ kotlin {
     useNativeUtils()
     useNativeNet()
   }
+  applyDefaultHierarchyTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(kotlin("stdlib-common"))
-        api(project(":io"))
-        api(project(":concurrency"))
-      }
+    commonMain.dependencies {
+      api(kotlin("stdlib-common"))
+      api(project(":io"))
+      api(project(":concurrency"))
     }
-    val commonTest by getting {
-      dependencies {
-        api(project(":thread"))
-      }
+    commonTest.dependencies {
+      api(project(":thread"))
     }
-    useDefault()
-    val nativeRunnableMain by getting {
+    val jvmLikeMain by creating {
+      dependsOn(commonMain.get())
     }
-    val nativeRunnableTest by getting {
+    jvmMain {
+      dependsOn(jvmLikeMain)
+    }
+    val nativeRunnableMain by creating {
+      dependsOn(commonMain.get())
+    }
+    val posixMain by creating {
+      dependsOn(nativeRunnableMain)
+    }
+
+    val nativeRunnableTest by creating {
+      dependsOn(commonTest.get())
     }
     val epollLikeMain by creating {
       dependsOn(nativeRunnableMain)
@@ -114,11 +121,22 @@ kotlin {
       dependsOn(nativeRunnableTest)
     }
     val linuxMain by getting
-    dependsOn("linuxMain", epollLikeMain)
-    dependsOn("androidNativeMain", linuxMain)
-    dependsOn("mingwMain", epollLikeMain)
-    dependsOn("linuxTest", epollLikeTest)
-    dependsOn("mingwTest", epollLikeTest)
+    linuxMain {
+      dependsOn(epollLikeMain)
+      dependsOn(posixMain)
+    }
+    androidNativeMain {
+      dependsOn(linuxMain)
+      dependsOn(posixMain)
+    }
+    appleMain {
+      dependsOn(posixMain)
+    }
+    mingwMain {
+      dependsOn(epollLikeMain)
+    }
+//    dependsOn("linuxTest", epollLikeTest)
+//    dependsOn("mingwTest", epollLikeTest)
   }
 }
 

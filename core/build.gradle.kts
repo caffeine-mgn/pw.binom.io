@@ -1,5 +1,4 @@
 import pw.binom.kotlin.clang.eachNative
-import pw.binom.useDefault
 import java.util.*
 
 plugins {
@@ -26,42 +25,45 @@ kotlin {
   eachNative {
     useNative()
   }
+  applyDefaultHierarchyTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(kotlin("stdlib-common"))
-        api(project(":io"))
-        api(project(":env"))
-        api(project(":atomic"))
-        api(project(":collections"))
-        api(project(":pool"))
-        api(project(":url"))
-        api("pw.binom:uuid:${pw.binom.Versions.BINOM_UUID_VERSION}")
-      }
+    commonMain.dependencies {
+      api(kotlin("stdlib-common"))
+      api(project(":io"))
+      api(project(":env"))
+      api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
+      api(project(":collections"))
+      api(project(":pool"))
+      api(project(":url"))
+      api("pw.binom:uuid:${pw.binom.Versions.BINOM_UUID_VERSION}")
     }
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-        api(project(":charset"))
-      }
+    val nativeRunnableMain by creating {
+      dependsOn(commonMain.get())
     }
-    val jvmTest by getting {
-      dependsOn(commonTest)
-      dependencies {
-        api(kotlin("test"))
-      }
+    nativeMain {
+      dependsOn(nativeRunnableMain)
+    }
+    val jvmLikeMain by creating {
+      dependsOn(commonMain.get())
+    }
+    jvmMain {
+      dependsOn(jvmLikeMain)
     }
 
-    val jsTest by getting {
-      dependencies {
-        api(kotlin("test-js"))
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(project(":charset"))
+    }
+    jvmTest.dependencies {
+      api(kotlin("test"))
     }
 
-    useDefault()
+    jsTest.dependencies {
+      api(kotlin("test-js"))
+    }
   }
 }
 

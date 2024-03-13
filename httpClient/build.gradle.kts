@@ -13,8 +13,6 @@ kotlin {
     useDefault()
     val commonMain by getting {
       dependencies {
-        api(project(":core"))
-        api(project(":network"))
         api(project(":http"))
       }
     }
@@ -25,7 +23,6 @@ kotlin {
         api(project(":compression"))
       }
     }
-
 
     val commonTest by getting {
       dependencies {
@@ -40,26 +37,29 @@ kotlin {
 apply<pw.binom.plugins.ConfigPublishPlugin>()
 
 tasks {
-  val httpWsEcho = pw.binom.plugins.DockerUtils.dockerContanier(
-    project = project,
-    image = "jmalloc/echo-server",
-    tcpPorts = listOf(8080 to 7142),
-    args = listOf(),
-    suffix = "WS-EchoServer",
-  )
+  val httpWsEcho =
+    pw.binom.plugins.DockerUtils.dockerContanier(
+      project = project,
+      image = "jmalloc/echo-server",
+      tcpPorts = listOf(8080 to 7142),
+      args = listOf(),
+      suffix = "WS-EchoServer",
+    )
 
-  val httpStorage = pw.binom.plugins.DockerUtils.dockerContanier(
-    project = project,
-    image = "ugeek/webdav:amd64",
-    tcpPorts = listOf(80 to 7143),
-    args = listOf(),
-    suffix = "WebDav",
-    envs = mapOf(
-      "USERNAME" to "root",
-      "PASSWORD" to "root",
-      "TZ" to "GMT",
-    ),
-  )
+  val httpStorage =
+    pw.binom.plugins.DockerUtils.dockerContanier(
+      project = project,
+      image = "ugeek/webdav:amd64",
+      tcpPorts = listOf(80 to 7143),
+      args = listOf(),
+      suffix = "WebDav",
+      envs =
+        mapOf(
+          "USERNAME" to "root",
+          "PASSWORD" to "root",
+          "TZ" to "GMT",
+        ),
+    )
 
   eachKotlinTest {
     httpWsEcho.dependsOn(it)

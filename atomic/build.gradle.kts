@@ -13,7 +13,7 @@ kotlin {
   sourceSets {
     val commonMain by getting {
       dependencies {
-        api(kotlin("stdlib"))
+        api(kotlin("stdlib-common"))
       }
     }
 

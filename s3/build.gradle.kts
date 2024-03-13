@@ -1,44 +1,43 @@
 import pw.binom.eachKotlinTest
-import pw.binom.useDefault
 
 plugins {
-    id("org.jetbrains.kotlin.multiplatform")
-    id("kotlinx-serialization")
-    id("com.bmuschko.docker-remote-api")
-    id("maven-publish")
+  id("org.jetbrains.kotlin.multiplatform")
+  id("kotlinx-serialization")
+  id("com.bmuschko.docker-remote-api")
+  id("maven-publish")
 }
 
 apply {
-    plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
+  plugin(pw.binom.plugins.BinomPublishPlugin::class.java)
 }
 
 kotlin {
-    allTargets {
-        -"js"
+  allTargets {
+    -"js"
+  }
+  applyDefaultHierarchyTemplate()
+  sourceSets {
+    val commonMain by getting {
+      dependencies {
+        api(project(":core"))
+        api(project(":httpServer"))
+        api(project(":xml"))
+        api(project(":date"))
+        api(project(":collections"))
+        api(project(":xml:xml-serialization"))
+      }
     }
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                api(project(":core"))
-                api(project(":httpServer"))
-                api(project(":xml"))
-                api(project(":date"))
-                api(project(":collections"))
-                api(project(":xml:xml-serialization"))
-            }
-        }
 
-        val commonTest by getting {
-            dependencies {
-                api(kotlin("test-common"))
-                api(kotlin("test-annotations-common"))
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-                api(project(":httpClient"))
-                api(project(":core"))
-            }
-        }
-        useDefault()
+    val commonTest by getting {
+      dependencies {
+        api(kotlin("test-common"))
+        api(kotlin("test-annotations-common"))
+        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+        api(project(":httpClient"))
+        api(project(":core"))
+      }
     }
+  }
 }
 
 tasks {
@@ -50,13 +49,15 @@ tasks {
 //        suffix = "S3",
 //    )
 
-    val s3Server = pw.binom.plugins.DockerUtils.dockerContanier(
-        project = project,
+  val s3Server =
+    pw.binom.plugins.DockerUtils.dockerContanier(
+      project = project,
 //        image = "bitnami/minio:latest",
-        image = "zenko/cloudserver:latest-7.70.7",
-        tcpPorts = listOf(8000 to 7122),
-        suffix = "S3",
-        envs = mapOf(
+      image = "zenko/cloudserver:latest-7.70.7",
+      tcpPorts = listOf(8000 to 7122),
+      suffix = "S3",
+      envs =
+        mapOf(
 //            "MINIO_ROOT_USER" to "minio",
 //            "MINIO_ROOT_PASSWORD" to "minio123",
 //            "MINIO_SERVER_ACCESS_KEY" to "rGIU8vPsmnOx4Prv",
@@ -68,9 +69,9 @@ tasks {
         ),
     )
 
-    eachKotlinTest {
-        s3Server.dependsOn(it)
-    }
+  eachKotlinTest {
+    s3Server.dependsOn(it)
+  }
 }
 
 apply<pw.binom.plugins.DocsPlugin>()

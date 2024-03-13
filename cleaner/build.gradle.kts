@@ -1,5 +1,3 @@
-import pw.binom.publish.useDefault
-
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
@@ -11,11 +9,10 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets()
-
+  applyDefaultHierarchyTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
-        api(kotlin("stdlib-common"))
       }
     }
 
@@ -25,7 +22,7 @@ kotlin {
         api(kotlin("test-annotations-common"))
       }
     }
-    useDefault()
+//    useDefault()
   }
 }
 

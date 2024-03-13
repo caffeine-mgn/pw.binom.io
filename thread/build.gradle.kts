@@ -1,5 +1,4 @@
 import pw.binom.kotlin.clang.eachNative
-import pw.binom.useDefault
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -26,23 +25,42 @@ kotlin {
   eachNative {
     useNative()
   }
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(kotlin("stdlib-common"))
-        api(project(":collections"))
-        api(project(":concurrency"))
-        api(project(":metric"))
-        api(project(":io"))
-      }
+    commonMain.dependencies {
+      api(kotlin("stdlib-common"))
+      api(project(":collections"))
+      api(project(":concurrency"))
+      api(project(":metric"))
+      api(project(":io"))
     }
-    useDefault()
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-      }
+    /*
+    nativeMain {
+      dependsOn(commonMain.get())
+    }
+    val posixMain by creating {
+      dependsOn(nativeMain.get())
+    }
+    val jvmLikeMain by creating {
+      dependsOn(commonMain.get())
+    }
+    jvmMain {
+      dependsOn(jvmLikeMain)
+    }
+    linuxMain {
+      dependsOn(posixMain)
+    }
+    appleMain {
+      dependsOn(posixMain)
+    }
+    androidNativeMain {
+      dependsOn(posixMain)
+    }
+     */
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
   }
 }

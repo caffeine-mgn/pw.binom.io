@@ -1,31 +1,29 @@
-import pw.binom.useDefault
-
 plugins {
-    id("org.jetbrains.kotlin.multiplatform")
-    id("maven-publish")
-    if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-        id("com.android.library")
-    }
+  id("org.jetbrains.kotlin.multiplatform")
+  id("maven-publish")
+  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+    id("com.android.library")
+  }
 }
 apply<pw.binom.KotlinConfigPlugin>()
 
 kotlin {
-    allTargets()
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                api(kotlin("stdlib"))
-                api(project(":collections"))
-            }
-        }
-        val commonTest by getting {
-            dependencies {
-                api(kotlin("test-common"))
-                api(kotlin("test-annotations-common"))
-            }
-        }
-        useDefault()
+  allTargets()
+  applyDefaultHierarchyBinomTemplate()
+  sourceSets {
+    val commonMain by getting {
+      dependencies {
+//        api(kotlin("stdlib"))
+        api(project(":collections"))
+      }
     }
+    val commonTest by getting {
+      dependencies {
+        api(kotlin("test-common"))
+        api(kotlin("test-annotations-common"))
+      }
+    }
+  }
 }
 
 tasks {
@@ -39,8 +37,8 @@ tasks {
 //        versionSource.writeText(
 //            """package pw.binom
 //
-//const val BINOM_VERSION = "${project.version}"
-//""",
+// const val BINOM_VERSION = "${project.version}"
+// """,
 //        )
 //    }
 //    eachKotlinCompile {
@@ -48,7 +46,7 @@ tasks {
 //    }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    apply<pw.binom.plugins.AndroidSupportPlugin>()
+  apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 
 apply<pw.binom.plugins.ConfigPublishPlugin>()

@@ -6,10 +6,12 @@ import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.Incremental
+import org.gradle.work.InputChanges
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -22,7 +24,8 @@ abstract class OpenSSLBuildTask : DefaultTask() {
   @get:Input
   abstract val target: Property<KonanTarget>
 
-  @get:Internal
+  @get:Incremental
+  @get:InputDirectory
   abstract val opensslDirection: RegularFileProperty
 
   @get:OutputFile
@@ -34,14 +37,14 @@ abstract class OpenSSLBuildTask : DefaultTask() {
 //        project.buildDir.resolve("openssl/${target.get().name}/static")
 //    }
 
-  fun afterConfig() {
-    project.fileTree(opensslDirection.get().asFile)
-      .forEach {
-        if (it.endsWith(".h") || it.endsWith(".cpp")) {
-          inputs.file(it)
-        }
-      }
-  }
+//  fun afterConfig() {
+//    project.fileTree(opensslDirection.get().asFile)
+//      .forEach {
+//        if (it.endsWith(".h") || it.endsWith(".cpp")) {
+//          inputs.file(it)
+//        }
+//      }
+//  }
 
   init {
     this.group = "openssl"
@@ -56,12 +59,17 @@ abstract class OpenSSLBuildTask : DefaultTask() {
   }
 
   @TaskAction
-  fun execute() {
-    val opensslDirection = if (opensslDirection.isPresent) {
-      opensslDirection.get().asFile
-    } else {
-      project.propertyOrNull("pw.binom.openssl-dir")?.let { File(it) }
+  fun execute(inputChanges: InputChanges) {
+    println("inputChanges.isIncremental===>${inputChanges.isIncremental}")
+    inputChanges.getFileChanges(opensslDirection).forEach {
+      println("CHANGED--->$it")
     }
+    val opensslDirection =
+      if (opensslDirection.isPresent) {
+        opensslDirection.get().asFile
+      } else {
+        project.propertyOrNull("pw.binom.openssl-dir")?.let { File(it) }
+      }
 
     val config = KonanVersion.findVersion(Versions.KOTLIN_VERSION)!!
     val compiler = config.getCppCompiler(target.get()) as CLang
@@ -73,19 +81,20 @@ abstract class OpenSSLBuildTask : DefaultTask() {
     if (!opensslDirection.isDirectory) {
       throw GradleException("OpenSSL direction \"$opensslDirection\" not found")
     }
-    val configName = when (target.get()) {
-      KonanTarget.MINGW_X64 -> "mingw64"
-      KonanTarget.MINGW_X86 -> "mingw"
-      KonanTarget.ANDROID_ARM32 -> "linux-armv4"
-      KonanTarget.ANDROID_ARM64,
-      KonanTarget.ANDROID_X86,
-      KonanTarget.ANDROID_X64,
-      KonanTarget.LINUX_X64,
-      KonanTarget.LINUX_ARM64,
-      -> "linux-x86_64-clang"
+    val configName =
+      when (target.get()) {
+        KonanTarget.MINGW_X64 -> "mingw64"
+        KonanTarget.MINGW_X86 -> "mingw"
+        KonanTarget.ANDROID_ARM32 -> "linux-armv4"
+        KonanTarget.ANDROID_ARM64,
+        KonanTarget.ANDROID_X86,
+        KonanTarget.ANDROID_X64,
+        KonanTarget.LINUX_X64,
+        KonanTarget.LINUX_ARM64,
+        -> "linux-x86_64-clang"
 
-      else -> TODO("Not supported yet")
-    }
+        else -> TODO("Not supported yet")
+      }
     val exe = if (HostManager.hostIsMingw) ".exe" else ""
     val envs1 = HashMap(System.getenv())
     envs1["CC"] = compiler.file.path
@@ -183,121 +192,140 @@ abstract class OpenSSLBuildTask : DefaultTask() {
       System.getenv("PATH").removeFromPathExecute("clang").removeFromPathExecute("llvm-ar").addPath(info.llvmDir)
     if (target.get().family == Family.ANDROID) {
       val androidSdk = System.getenv("ANDROID_NDK_ROOT")
-      val prebuildName = when (HostManager.host.family) {
-        Family.MINGW -> "windows-x86_64"
-        Family.LINUX -> "linux-x86_64"
-        Family.OSX -> "darwin-x86_64"
-        else -> TODO()
-      }
+      val prebuildName =
+        when (HostManager.host.family) {
+          Family.MINGW -> "windows-x86_64"
+          Family.LINUX -> "linux-x86_64"
+          Family.OSX -> "darwin-x86_64"
+          else -> TODO()
+        }
       path =
-        path.addPath(File("$androidSdk${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuildName${File.separator}bin"))
+        path.addPath(
+          File(
+            "$androidSdk${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuildName${File.separator}bin",
+          ),
+        )
     }
-    val envs = mutableMapOf(
-      "CC" to "clang".executable,
-      "CXX" to "clang".executable,
-      "AR" to "llvm-ar".executable,
-      "ARFLAGS" to "rc",
-      "PATH" to path,
-    )
+    val envs =
+      mutableMapOf(
+        "CC" to "clang".executable,
+        "CXX" to "clang".executable,
+        "AR" to "llvm-ar".executable,
+        "ARFLAGS" to "rc",
+        "PATH" to path,
+      )
     if (target.get().family == Family.ANDROID) {
       envs["LDFLAGS"] = "-pie"
       envs["CFLAGS"] = "-fPIE"
     }
 
-    val target1 = when (target.get()) {
-      KonanTarget.MINGW_X64 -> "mingw64"
-      KonanTarget.MINGW_X86 -> "mingw"
-      KonanTarget.LINUX_X64 -> "linux-x86_64"
-      KonanTarget.LINUX_ARM64 -> "linux-aarch64"
-      KonanTarget.ANDROID_ARM32 -> "linux-generic32"
-      KonanTarget.ANDROID_ARM64 -> "linux-generic64"
-      KonanTarget.ANDROID_X86 -> "linux-generic32"
-      KonanTarget.ANDROID_X64 -> "linux-generic64"
-      else -> TODO()
-    }
+    val target1 =
+      when (target.get()) {
+        KonanTarget.MINGW_X64 -> "mingw64"
+        KonanTarget.MINGW_X86 -> "mingw"
+        KonanTarget.LINUX_X64 -> "linux-x86_64"
+        KonanTarget.LINUX_ARM64 -> "linux-aarch64"
+        KonanTarget.ANDROID_ARM32 -> "linux-generic32"
+        KonanTarget.ANDROID_ARM64 -> "linux-generic64"
+        KonanTarget.ANDROID_X86 -> "linux-generic32"
+        KonanTarget.ANDROID_X64 -> "linux-generic64"
+        else -> TODO()
+      }
     execute(
-      args = listOf(
-        "perl".executable,
-        "Configure",
-        target1,
-        "no-zlib",
-        "no-zlib-dynamic",
-        "no-shared",
-        "no-threads",
-        "--target=${info.targetName} -O3 ${
-          info.sysRoot.map { "\"--sysroot=${it.toString().replace("\\", "/")}\"" }.joinToString(" ")
-        }",
-      ),
+      args =
+        listOf(
+          "perl".executable,
+          "Configure",
+          target1,
+          "no-zlib",
+          "no-zlib-dynamic",
+          "no-shared",
+          "no-threads",
+          "--target=${info.targetName} -O3 ${
+            info.sysRoot.map { "\"--sysroot=${it.toString().replace("\\", "/")}\"" }.joinToString(" ")
+          }",
+        ),
       envs = envs,
       directory = opensslDirection,
     )
     execute(
-      args = listOf(
-        "make".executable,
-        "clean",
-      ),
+      args =
+        listOf(
+          "make".executable,
+          "clean",
+        ),
       envs = envs,
       directory = opensslDirection,
     )
     execute(
       directory = opensslDirection,
-      args = listOf(
-        "make".executable,
-        "build_libs",
-        "-j",
-        Runtime.getRuntime().availableProcessors().toString(),
-        "-d",
-      ),
+      args =
+        listOf(
+          "make".executable,
+          "build_libs",
+          "-j",
+          Runtime.getRuntime().availableProcessors().toString(),
+          "-d",
+        ),
       envs = envs,
     )
     val targetOutputDir = project.buildDir.resolve("openssl/${target.get().name}")
     val objectDir = targetOutputDir.resolve("o")
     objectDir.mkdirs()
     execute(
-      args = listOf(
-        "ar".executable,
-        "-x",
-        "$opensslDirection${File.separator}libssl.a",
-      ),
+      args =
+        listOf(
+          "ar".executable,
+          "-x",
+          "$opensslDirection${File.separator}libssl.a",
+        ),
       directory = objectDir,
       envs = envs,
     )
     execute(
-      args = listOf(
-        "ar".executable,
-        "-x",
-        "$opensslDirection${File.separator}libcrypto.a",
-      ),
+      args =
+        listOf(
+          "ar".executable,
+          "-x",
+          "$opensslDirection${File.separator}libcrypto.a",
+        ),
       directory = objectDir,
       envs = envs,
     )
 
-    val objFileExt = when (target.get().family) {
-      Family.MINGW -> "*.o"
-      else -> "*.o"
-    }
+    val objFileExt =
+      when (target.get().family) {
+        Family.MINGW -> "*.o"
+        else -> "*.o"
+      }
     if (target.get() == KonanTarget.MINGW_X64) {
       objectDir.listFiles().forEach {
         it.renameTo(it.parentFile.resolve("${it.nameWithoutExtension}.o"))
       }
     }
     execute(
-      args = listOf(
-        "ar".executable,
-        "-rv",
-        "$targetOutputDir${File.separator}libopenssl.a",
-        objFileExt,
-      ),
+      args =
+        listOf(
+          "ar".executable,
+          "-rv",
+          "$targetOutputDir${File.separator}libopenssl.a",
+          objFileExt,
+        ),
       directory = objectDir,
       envs = envs,
     )
   }
 }
 
-fun execute(args: List<String>, directory: File, envs: Map<String, String>): Int {
-  val builder = ProcessBuilder(
-    args,
-  )
+fun execute(
+  args: List<String>,
+  directory: File,
+  envs: Map<String, String>,
+): Int {
+  val builder =
+    ProcessBuilder(
+      args,
+    )
   val cmd = args.map { it.replace("\"", "\\\"") }.map { "\"$it\"" }.joinToString(" ")
   println("Executing $cmd in $directory")
   println("Env: $envs")
@@ -321,26 +349,30 @@ fun execute(args: List<String>, directory: File, envs: Map<String, String>): Int
 }
 
 internal val String.executable
-  get() = when (HostManager.host.family) {
-    Family.MINGW -> "$this.exe"
-    else -> this
-  }
+  get() =
+    when (HostManager.host.family) {
+      Family.MINGW -> "$this.exe"
+      else -> this
+    }
 
 internal val String.cmd
-  get() = when (HostManager.host.family) {
-    Family.MINGW -> "$this.cmd"
-    else -> "$this.sh"
-  }
+  get() =
+    when (HostManager.host.family) {
+      Family.MINGW -> "$this.cmd"
+      else -> "$this.sh"
+    }
 
 val pathSeparator
-  get() = when (HostManager.host.family) {
-    Family.MINGW -> ";"
-    else -> ":"
-  }
+  get() =
+    when (HostManager.host.family) {
+      Family.MINGW -> ";"
+      else -> ":"
+    }
 
-fun String.removeFromPathExecute(execute: String) = split(pathSeparator).filter {
-  !File(it).resolve(execute.executable).isFile
-}.joinToString(separator = pathSeparator)
+fun String.removeFromPathExecute(execute: String) =
+  split(pathSeparator).filter {
+    !File(it).resolve(execute.executable).isFile
+  }.joinToString(separator = pathSeparator)
 
 fun String.addPath(path: File): String {
   val r = split(pathSeparator).toMutableSet()

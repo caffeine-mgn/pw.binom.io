@@ -1,6 +1,5 @@
 import org.jetbrains.kotlin.konan.target.Family
 import pw.binom.kotlin.clang.eachNative
-import pw.binom.publish.useDefault
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -25,28 +24,42 @@ kotlin {
       }
     }
   }
+  applyDefaultHierarchyTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(project(":io"))
-        api(project(":file"))
-        api(project(":env"))
-      }
+    commonMain.dependencies {
+      api(project(":io"))
+      api(project(":file"))
+      api(project(":env"))
     }
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-        api(project(":concurrency"))
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api(project(":concurrency"))
+    }
+    val jvmLikeMain by creating {
+      dependsOn(commonMain.get())
+    }
+    jvmMain {
+      dependsOn(jvmLikeMain)
+    }
+    val linuxLikeMain by creating {
+      dependsOn(commonMain.get())
+    }
+    appleMain {
+      dependsOn(linuxLikeMain)
+    }
+    linuxMain {
+      dependsOn(linuxLikeMain)
+    }
+    androidNativeMain {
+      dependsOn(linuxLikeMain)
     }
     val jvmTest by getting {
-      dependsOn(commonTest)
+      dependsOn(commonTest.get())
       dependencies {
         api(kotlin("test-junit"))
       }
     }
-    useDefault()
   }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {

@@ -5,7 +5,6 @@ import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.dependsOn
-import pw.binom.useDefault
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -19,6 +18,7 @@ kotlin {
   allTargets {
     -"js"
   }
+  applyDefaultHierarchyTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
@@ -44,7 +44,7 @@ kotlin {
         api("org.bouncycastle:bcpkix-jdk15on:1.68")
       }
     }
-    useDefault()
+//    useDefault()
   }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
@@ -65,14 +65,15 @@ tasks {
 
   kotlin.eachNative {
     val headersPath = file("${buildFile.parent}/src/cinterop/include")
-    val keccakStaticTask = clangBuildStatic(name = "keccak", target = this.konanTarget) {
-      konanVersion.set(pw.binom.Versions.KOTLIN_VERSION)
-      include(headersPath.resolve("keccak"))
-      compileArgs.addAll(listOf("-std=c99", "-O3", "-g"))
-      compileFile(
-        file("${buildFile.parentFile}/src/cinterop/include/keccak/sha3.c"),
-      )
-    }
+    val keccakStaticTask =
+      clangBuildStatic(name = "keccak", target = this.konanTarget) {
+        konanVersion.set(pw.binom.Versions.KOTLIN_VERSION)
+        include(headersPath.resolve("keccak"))
+        compileArgs.addAll(listOf("-std=c99", "-O3", "-g"))
+        compileFile(
+          file("${buildFile.parentFile}/src/cinterop/include/keccak/sha3.c"),
+        )
+      }
     val buildOpensslTask = register("buildOpenSSL$targetName", OpenSSLBuildTask::class.java)
     findByName(compileTaskName)?.let {
       it.dependsOn(keccakStaticTask)
@@ -87,7 +88,7 @@ tasks {
       tempDirForObjectFiles.set(target.map { t -> RegularFile { project.buildDir.resolve("openssl/${t.name}/static") } })
       dependsOn(extractSsl)
       opensslDirection.set(extractSsl.output)
-      afterConfig()
+//      afterConfig()
       target.set(konanTarget)
     }
 
@@ -99,13 +100,14 @@ tasks {
       }
     }
     val libFile = buildOpensslTask.get().staticLib.get().asFile
-    val args = listOf(
-      "-include-binary",
-      libFile.absolutePath,
-      "-include-binary",
-      keccakStaticTask.staticFile.asFile.get().absolutePath,
-      "-opt-in=kotlin.RequiresOptIn",
-    )
+    val args =
+      listOf(
+        "-include-binary",
+        libFile.absolutePath,
+        "-include-binary",
+        keccakStaticTask.staticFile.asFile.get().absolutePath,
+        "-opt-in=kotlin.RequiresOptIn",
+      )
     compilations["main"].kotlinOptions.freeCompilerArgs = args
     compilations["test"].kotlinOptions.freeCompilerArgs = args
   }

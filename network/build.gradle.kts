@@ -1,5 +1,4 @@
 import pw.binom.eachKotlinTest
-import pw.binom.useDefault
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -12,37 +11,47 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets()
+  allTargets {
+    -"js"
+  }
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(project(":core"))
-      }
+    commonMain.dependencies {
+      api(project(":network-common"))
+      api(project(":env"))
+      api(project(":concurrency"))
+      api(project(":thread"))
+      api(project(":collections"))
+      api(project(":socket"))
+      api(kotlin("stdlib-common"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
 
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-        api(project(":date"))
-        api(project(":charset"))
-        api(project(":coroutines"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api(project(":date"))
+      api(project(":charset"))
+      api(project(":coroutines"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
-    useDefault()
+    /*
+    val jvmLikeMain by creating {
+      dependsOn(commonMain)
+    }
+    jvmMain {
+      dependsOn(jvmLikeMain)
+    }
+    val runnableMain by creating {
+      dependsOn(commonMain)
+      dependencies {
 
-    val runnableMain by getting {
-      dependencies {
-        api(project(":env"))
-        api(project(":concurrency"))
-        api(project(":thread"))
-        api(project(":collections"))
-        api(project(":socket"))
-        api(kotlin("stdlib-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
       }
     }
+    nativeMain {
+      dependsOn(runnableMain)
+    }
+     */
   }
 }
 tasks {

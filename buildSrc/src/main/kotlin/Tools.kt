@@ -2,19 +2,22 @@ import org.gradle.api.GradleException
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.project
+import org.jetbrains.kotlin.gradle.plugin.KotlinHierarchyTemplate
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
-import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinNativeTargetPreset
+import org.jetbrains.kotlin.gradle.plugin.extend
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
 internal class BuildTarget(val name: String, val preset: String)
+
 class TargetConfig {
   internal val nativeTargets = ArrayList<BuildTarget>()
 
   operator fun String.unaryMinus() {
-    val target = nativeTargets.find { it.name == this }
-      ?: throw GradleException("Target \"$this\" not found. Available targets: ${nativeTargets.map { it.name }}")
+    val target =
+      nativeTargets.find { it.name == this }
+        ?: throw GradleException("Target \"$this\" not found. Available targets: ${nativeTargets.map { it.name }}")
     nativeTargets.remove(target)
   }
 
@@ -74,61 +77,140 @@ fun KotlinMultiplatformExtension.androidNative(func: KotlinNativeTarget.() -> Un
   androidNativeArm64(func)
 }
 
+fun KotlinMultiplatformExtension.applyDefaultHierarchyBinomTemplate() {
+  val template =
+    KotlinHierarchyTemplate.default.extend {
+      common {
+        group("jvmLike") {
+          withAndroidTarget()
+          withJvm()
+        }
+        group("posix") {
+          withApple()
+          withLinux()
+          withAndroidNative()
+        }
+        group("runnable") {
+          withJvm()
+          withAndroidTarget()
+          withApple()
+          withLinux()
+          withMingw()
+          withAndroidNative()
+        }
+      }
+    }
+  applyHierarchyTemplate(template)
+}
+
 @OptIn(ExternalVariantApi::class)
 fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
   val kotlinTargetPropertyName = "kotlin.jvm.target"
-  val kotlinJvmTarget = if (project.hasProperty(kotlinTargetPropertyName)) {
-    project.property(kotlinTargetPropertyName) as String
-  } else {
-    "1.8"
-  }
-  val c = TargetConfig()
+  val kotlinJvmTarget =
+    if (project.hasProperty(kotlinTargetPropertyName)) {
+      project.property(kotlinTargetPropertyName) as String
+    } else {
+      "1.8"
+    }
+  jvm()
+  val targetConfig = TargetConfig()
+  /*
   presets.forEach {
     if (it is AbstractKotlinNativeTargetPreset<*> && it.konanTarget !in KonanTarget.deprecatedTargets) {
-      if (it.konanTarget.family.isAppleFamily && !HostManager.hostIsMac) {
-        return@forEach
-      }
-      c.nativeTargets += BuildTarget(it.konanTarget.name, it.name)
+//      if (it.konanTarget.family.isAppleFamily && !HostManager.hostIsMac) {
+//        return@forEach
+//      }
+      targetConfig.nativeTargets += BuildTarget(it.konanTarget.name, it.name)
     }
   }
-  c.nativeTargets += BuildTarget("jvm", "jvm")
-  c.nativeTargets += BuildTarget("js", "js")
+   */
+  targetConfig.nativeTargets += BuildTarget("jvm", "jvm")
+  targetConfig.nativeTargets += BuildTarget("js", "js")
+  targetConfig.nativeTargets += BuildTarget("androidNativeArm32", "androidNativeArm32")
+  targetConfig.nativeTargets += BuildTarget("androidNativeArm64", "androidNativeArm64")
+  targetConfig.nativeTargets += BuildTarget("androidNativeX64", "androidNativeX64")
+  targetConfig.nativeTargets += BuildTarget("androidNativeX86", "androidNativeX86")
+  targetConfig.nativeTargets += BuildTarget("linuxArm64", "linuxArm64")
+  targetConfig.nativeTargets += BuildTarget("linuxX64", "linuxX64")
+  targetConfig.nativeTargets += BuildTarget("mingwX64", "mingwX64")
+  if (HostManager.hostIsMac) {
+    targetConfig.nativeTargets += BuildTarget("iosArm64", "iosArm64")
+    targetConfig.nativeTargets += BuildTarget("iosSimulatorArm64", "iosSimulatorArm64")
+    targetConfig.nativeTargets += BuildTarget("iosX64", "iosX64")
+    targetConfig.nativeTargets += BuildTarget("macosArm64", "macosArm64")
+    targetConfig.nativeTargets += BuildTarget("macosX64", "macosX64")
+    targetConfig.nativeTargets += BuildTarget("tvosArm64", "tvosArm64")
+    targetConfig.nativeTargets += BuildTarget("tvosSimulatorArm64", "tvosSimulatorArm64")
+    targetConfig.nativeTargets += BuildTarget("watchosArm32", "watchosArm32")
+    targetConfig.nativeTargets += BuildTarget("watchosArm64", "watchosArm64")
+    targetConfig.nativeTargets += BuildTarget("watchosDeviceArm64", "watchosDeviceArm64")
+    targetConfig.nativeTargets += BuildTarget("watchosSimulatorArm64", "watchosSimulatorArm64")
+    targetConfig.nativeTargets += BuildTarget("watchosX64", "watchosX64")
+  }
 //    c.nativeTargets += BuildTarget("wasm", "wasm")
 //    c.nativeTargets += "wasm"
   if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    c.nativeTargets += BuildTarget("android", "android")
+    targetConfig.nativeTargets += BuildTarget("android", "android")
   }
-  func(c)
-  c.nativeTargets.forEach {
+  func(targetConfig)
+  targetConfig.nativeTargets.forEach {
     when (it.name) {
-      "jvm" -> jvm {
-        compilations.all {
-          it.kotlinOptions.jvmTarget = kotlinJvmTarget
+      "jvm" ->
+        jvm {
+          compilations.all {
+//            it.kotlinOptions.jvmTarget = kotlinJvmTarget
+          }
         }
-      }
 
-      "js" -> js(KotlinJsCompilerType.IR) {
-        browser {
-          testTask {
+      "js" ->
+        js(KotlinJsCompilerType.IR) {
+          browser {
+            testTask {
 //            useKarma {
 //              useFirefoxHeadless()
 //            }
+            }
           }
+          nodejs()
         }
-        nodejs()
-      }
 
-      "wasm" -> wasm {
-        browser()
-        nodejs()
-        d8()
-      }
+      "wasm" ->
+        wasmJs {
+          browser()
+          nodejs()
+          d8()
+        }
 
-      "android" -> android {
-        publishAllLibraryVariants()
-      }
+      "android" ->
+        androidTarget {
+          publishAllLibraryVariants()
+        }
 
-      else -> targetFromPreset(presets.findByName(it.preset) ?: throw GradleException("target $it not found"))
+      "androidNativeArm32" -> androidNativeArm32()
+      "androidNativeArm64" -> androidNativeArm64()
+      "androidNativeX64" -> androidNativeX64()
+      "androidNativeX86" -> androidNativeX86()
+      "linuxArm64" -> linuxArm64()
+      "linuxX64" -> linuxX64()
+      "mingwX64" -> mingwX64()
+      "iosArm64" -> iosArm64()
+      "iosSimulatorArm64" -> iosSimulatorArm64()
+      "iosX64" -> iosX64()
+      "macosArm64" -> macosArm64()
+      "macosX64" -> macosX64()
+      "tvosArm64" -> tvosArm64()
+      "tvosSimulatorArm64" -> tvosSimulatorArm64()
+      "tvosX64" -> tvosX64()
+      "watchosArm32" -> watchosArm32()
+      "watchosArm64" -> watchosArm64()
+      "watchosDeviceArm64" -> watchosDeviceArm64()
+      "watchosSimulatorArm64" -> watchosSimulatorArm64()
+      "watchosX64" -> watchosX64()
+
+      else -> {
+        println("it.preset====>${it.preset}")
+        targetFromPreset(presets.findByName(it.preset) ?: throw GradleException("target $it not found"))
+      }
     }
   }
 }

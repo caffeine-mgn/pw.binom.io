@@ -1,5 +1,3 @@
-import pw.binom.useDefault
-
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
@@ -11,13 +9,14 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets()
+  applyDefaultHierarchyTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
         api(project(":core"))
         api(project(":charset"))
         api(project(":coroutines"))
-        api(project(":network"))
+        api(project(":network-common"))
       }
     }
 
@@ -29,7 +28,6 @@ kotlin {
         api(project(":httpServer"))
       }
     }
-    useDefault()
   }
 }
 if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
