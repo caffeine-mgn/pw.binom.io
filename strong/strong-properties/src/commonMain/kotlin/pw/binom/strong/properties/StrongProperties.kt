@@ -26,7 +26,7 @@ class StrongProperties(
   }
 
   fun addEnvironment(
-    prefix: String = "strong_",
+    prefix: String = "",
     caseSensitive: Boolean = false,
   ): StrongProperties {
     properties +=

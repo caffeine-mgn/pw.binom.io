@@ -1,6 +1,3 @@
-
-import pw.binom.useDefault
-
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("org.jmailen.kotlinter")
@@ -9,6 +6,7 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets()
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
@@ -23,7 +21,6 @@ kotlin {
         api(kotlin("test-annotations-common"))
       }
     }
-    useDefault()
   }
 }
 

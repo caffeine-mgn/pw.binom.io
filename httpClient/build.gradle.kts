@@ -1,5 +1,4 @@
 import pw.binom.eachKotlinTest
-import pw.binom.useDefault
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -9,15 +8,14 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets()
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    useDefault()
     val commonMain by getting {
       dependencies {
         api(project(":http"))
       }
     }
     val runnableMain by getting {
-      dependsOn(commonMain)
       dependencies {
         api(project(":ssl"))
         api(project(":compression"))

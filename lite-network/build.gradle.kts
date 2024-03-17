@@ -155,7 +155,4 @@ tasks {
         httpStorage.dependsOn(it)
     }
 }
-if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    apply<pw.binom.plugins.AndroidSupportPlugin>()
-}
 // apply<pw.binom.plugins.ConfigPublishPlugin>()

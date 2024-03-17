@@ -2,14 +2,14 @@ plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
   id("kotlinx-serialization")
-  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    id("com.android.library")
-  }
+//  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    id("com.android.library")
+//  }
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets()
-  applyDefaultHierarchyTemplate()
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
@@ -25,8 +25,5 @@ kotlin {
       }
     }
   }
-}
-if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-  apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

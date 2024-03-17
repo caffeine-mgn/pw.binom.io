@@ -4,9 +4,9 @@ import pw.binom.kotlin.clang.eachNative
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
-  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    id("com.android.library")
-  }
+//  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    id("com.android.library")
+//  }
 }
 
 fun KotlinNativeTarget.useNativeUtils() {
@@ -51,8 +51,5 @@ tasks.withType<Test> {
   this.testLogging {
     this.showStandardStreams = true
   }
-}
-if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-  apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

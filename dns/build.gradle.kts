@@ -7,7 +7,7 @@ kotlin {
   allTargets {
     -"js"
   }
-  applyDefaultHierarchyTemplate()
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
       api(project(":core"))

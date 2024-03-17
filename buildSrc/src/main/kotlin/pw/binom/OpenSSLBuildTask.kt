@@ -5,18 +5,15 @@ import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
-import org.gradle.work.Incremental
-import org.gradle.work.InputChanges
+import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import pw.binom.kotlin.clang.*
+import pw.binom.kotlin.clang.CLang
+import pw.binom.kotlin.clang.CLangLinker
+import pw.binom.kotlin.clang.KonanVersion
+import pw.binom.kotlin.clang.StreamGobblerAppendable
 import pw.binom.publish.propertyOrNull
 import java.io.File
 
@@ -24,7 +21,6 @@ abstract class OpenSSLBuildTask : DefaultTask() {
   @get:Input
   abstract val target: Property<KonanTarget>
 
-  @get:Incremental
   @get:InputDirectory
   abstract val opensslDirection: RegularFileProperty
 
@@ -33,6 +29,9 @@ abstract class OpenSSLBuildTask : DefaultTask() {
 
   @get:OutputDirectory
   abstract val tempDirForObjectFiles: RegularFileProperty
+
+  @get:Internal
+  abstract val buildDirectory: RegularFileProperty
 //    = RegularFile {
 //        project.buildDir.resolve("openssl/${target.get().name}/static")
 //    }
@@ -49,6 +48,13 @@ abstract class OpenSSLBuildTask : DefaultTask() {
   init {
     this.group = "openssl"
 //        outputs.file(opensslDirection.map { it.asFile.resolve("Makefile") })
+    buildDirectory.set(
+      target.map { t ->
+        RegularFile {
+          project.buildDir.resolve("openssl/${t.name}/build")
+        }
+      },
+    )
     staticLib.set(
       target.map { t ->
         RegularFile {
@@ -56,14 +62,13 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         }
       },
     )
+    tempDirForObjectFiles.set(target.map { t -> RegularFile { project.buildDir.resolve("openssl/${t.name}/static") } })
   }
 
   @TaskAction
-  fun execute(inputChanges: InputChanges) {
-    println("inputChanges.isIncremental===>${inputChanges.isIncremental}")
-    inputChanges.getFileChanges(opensslDirection).forEach {
-      println("CHANGED--->$it")
-    }
+  fun execute() {
+    val opensslBuildDir = buildDirectory.get().asFile
+    opensslBuildDir.mkdirs()
     val opensslDirection =
       if (opensslDirection.isPresent) {
         opensslDirection.get().asFile
@@ -110,8 +115,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
     val makeArgs = ArrayList<String>()
     configArgs.addAll(
       listOf(
-        "perl$exe",
-        "Configure",
+        "$opensslDirection/Configure",
         configName,
         "no-shared",
         "no-threads",
@@ -134,185 +138,43 @@ abstract class OpenSSLBuildTask : DefaultTask() {
     ) {
       configArgs += "no-asm"
     }
-    runCatching {
-      execute(
-        args = listOf("make$exe", "clean"),
-        directory = opensslDirection,
-        envs = envs1,
-      )
+    project.exec {
+      it.executable = "perl$exe"
+      it.args = configArgs
+      it.workingDir = opensslBuildDir
+      it.environment.putAll(envs1)
     }
-    execute(
-      args = configArgs,
-      directory = opensslDirection,
-      envs = envs1,
-    )
 
     if (target.get().family == Family.MINGW) {
       makeArgs += "RCFLAGS="
     }
     makeArgs += "PROGRAMS="
-    execute(
-      args = listOf("make$exe", "-j", Runtime.getRuntime().availableProcessors().toString()) + makeArgs,
-      directory = opensslDirection,
-      envs = envs1,
-    )
+    project.exec {
+      it.workingDir = opensslBuildDir
+      it.executable = "make$exe"
+      it.args = listOf("-j", Runtime.getRuntime().availableProcessors().toString()) + makeArgs
+      it.environment.putAll(envs1)
+    }
+//    execute(
+//      args = listOf("make$exe", "-j", Runtime.getRuntime().availableProcessors().toString()) + makeArgs,
+//      directory = opensslBuildDir,
+//      envs = envs1,
+//    )
     val temparalFile = tempDirForObjectFiles.get().asFile
     temparalFile.mkdirs()
-    try {
-      linker.extract(
-        archive = opensslDirection.resolve("libssl.a"),
-        outputDirectory = temparalFile,
-      )
-      linker.extract(
-        archive = opensslDirection.resolve("libcrypto.a"),
-        outputDirectory = temparalFile,
-      )
-      val staticFile = staticLib.get().asFile
-      staticFile.parentFile.mkdirs()
-      linker.static(
-        objectFiles = temparalFile.listFiles().toList(),
-        output = staticFile,
-      )
-    } finally {
-//            try {
-//                temparalFile.deleteRecursively()
-//            } catch (e: Throwable) {
-//                temparalFile.deleteOnExit()
-//                throw e
-//            }
-    }
-
-    return
-    Konan.checkKonanInstalled(Versions.KOTLIN_VERSION)
-    Konan.checkSysrootInstalled(Versions.KOTLIN_VERSION, target.get())
-    val info = targetInfoMap[target.get()] ?: TODO()
-    val llvmPath = "${info.llvmDir}${File.separator}clang".executable.replace("\\", "/")
-    val llvmArPath = "${info.llvmDir}${File.separator}llvm-ar".executable.replace("\\", "/")
-    var path =
-      System.getenv("PATH").removeFromPathExecute("clang").removeFromPathExecute("llvm-ar").addPath(info.llvmDir)
-    if (target.get().family == Family.ANDROID) {
-      val androidSdk = System.getenv("ANDROID_NDK_ROOT")
-      val prebuildName =
-        when (HostManager.host.family) {
-          Family.MINGW -> "windows-x86_64"
-          Family.LINUX -> "linux-x86_64"
-          Family.OSX -> "darwin-x86_64"
-          else -> TODO()
-        }
-      path =
-        path.addPath(
-          File(
-            "$androidSdk${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuildName${File.separator}bin",
-          ),
-        )
-    }
-    val envs =
-      mutableMapOf(
-        "CC" to "clang".executable,
-        "CXX" to "clang".executable,
-        "AR" to "llvm-ar".executable,
-        "ARFLAGS" to "rc",
-        "PATH" to path,
-      )
-    if (target.get().family == Family.ANDROID) {
-      envs["LDFLAGS"] = "-pie"
-      envs["CFLAGS"] = "-fPIE"
-    }
-
-    val target1 =
-      when (target.get()) {
-        KonanTarget.MINGW_X64 -> "mingw64"
-        KonanTarget.MINGW_X86 -> "mingw"
-        KonanTarget.LINUX_X64 -> "linux-x86_64"
-        KonanTarget.LINUX_ARM64 -> "linux-aarch64"
-        KonanTarget.ANDROID_ARM32 -> "linux-generic32"
-        KonanTarget.ANDROID_ARM64 -> "linux-generic64"
-        KonanTarget.ANDROID_X86 -> "linux-generic32"
-        KonanTarget.ANDROID_X64 -> "linux-generic64"
-        else -> TODO()
-      }
-    execute(
-      args =
-        listOf(
-          "perl".executable,
-          "Configure",
-          target1,
-          "no-zlib",
-          "no-zlib-dynamic",
-          "no-shared",
-          "no-threads",
-          "--target=${info.targetName} -O3 ${
-            info.sysRoot.map { "\"--sysroot=${it.toString().replace("\\", "/")}\"" }.joinToString(" ")
-          }",
-        ),
-      envs = envs,
-      directory = opensslDirection,
+    linker.extract(
+      archive = opensslBuildDir.resolve("libssl.a"),
+      outputDirectory = temparalFile,
     )
-    execute(
-      args =
-        listOf(
-          "make".executable,
-          "clean",
-        ),
-      envs = envs,
-      directory = opensslDirection,
+    linker.extract(
+      archive = opensslBuildDir.resolve("libcrypto.a"),
+      outputDirectory = temparalFile,
     )
-    execute(
-      directory = opensslDirection,
-      args =
-        listOf(
-          "make".executable,
-          "build_libs",
-          "-j",
-          Runtime.getRuntime().availableProcessors().toString(),
-          "-d",
-        ),
-      envs = envs,
-    )
-    val targetOutputDir = project.buildDir.resolve("openssl/${target.get().name}")
-    val objectDir = targetOutputDir.resolve("o")
-    objectDir.mkdirs()
-    execute(
-      args =
-        listOf(
-          "ar".executable,
-          "-x",
-          "$opensslDirection${File.separator}libssl.a",
-        ),
-      directory = objectDir,
-      envs = envs,
-    )
-    execute(
-      args =
-        listOf(
-          "ar".executable,
-          "-x",
-          "$opensslDirection${File.separator}libcrypto.a",
-        ),
-      directory = objectDir,
-      envs = envs,
-    )
-
-    val objFileExt =
-      when (target.get().family) {
-        Family.MINGW -> "*.o"
-        else -> "*.o"
-      }
-    if (target.get() == KonanTarget.MINGW_X64) {
-      objectDir.listFiles().forEach {
-        it.renameTo(it.parentFile.resolve("${it.nameWithoutExtension}.o"))
-      }
-    }
-    execute(
-      args =
-        listOf(
-          "ar".executable,
-          "-rv",
-          "$targetOutputDir${File.separator}libopenssl.a",
-          objFileExt,
-        ),
-      directory = objectDir,
-      envs = envs,
+    val staticFile = staticLib.get().asFile
+    staticFile.parentFile.mkdirs()
+    linker.static(
+      objectFiles = temparalFile.listFiles().toList(),
+      output = staticFile,
     )
   }
 }
@@ -338,7 +200,6 @@ fun execute(
   stdout.start()
   stderr.start()
   process.waitFor()
-  println("Process finished!")
   stdout.join()
   stderr.join()
   val exitCode = process.exitValue()

@@ -5,9 +5,9 @@ plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
   id("com.github.ManifestClasspath") version "0.1.0-RELEASE"
-  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    id("com.android.library")
-  }
+//  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    id("com.android.library")
+//  }
 }
 
 fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useNative() {
@@ -67,27 +67,10 @@ kotlin {
   }
 }
 
-fun makeTimeFile() {
-  val dateDir = file("$buildDir/tmp-date")
-  dateDir.mkdirs()
-  val tzFile = file("$dateDir/currentTZ")
-  tzFile.delete()
-  tzFile.writeText((TimeZone.getDefault().rawOffset / 1000 / 60).toString())
-}
-
-tasks {
-  withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest::class).forEach {
-    it.doFirst {
-      makeTimeFile()
-    }
-  }
-}
 tasks.withType<Test> {
   this.testLogging {
     this.showStandardStreams = true
   }
 }
-if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-  apply<pw.binom.plugins.AndroidSupportPlugin>()
-}
+
 apply<pw.binom.plugins.ConfigPublishPlugin>()

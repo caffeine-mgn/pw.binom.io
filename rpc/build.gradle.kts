@@ -1,9 +1,9 @@
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
-  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    id("com.android.library")
-  }
+//  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    id("com.android.library")
+//  }
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
@@ -23,44 +23,17 @@ kotlin {
   macosX64()
    */
   allTargets()
-  applyDefaultHierarchyTemplate()
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(project(":collections"))
-      }
+    commonMain.dependencies {
+      api(project(":collections"))
     }
 
-    /*
-    val jsMain by getting {
-        dependsOn(commonMain)
-    }
-    val linuxX64Main by getting {
-        dependsOn(commonMain)
-    }
-    val linuxArm32HfpMain by getting {
-        dependsOn(commonMain)
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
     }
 
-    val mingwX64Main by getting {
-        dependsOn(commonMain)
-    }
-    if (pw.binom.Target.MINGW_X86_SUPPORT) {
-        val mingwX86Main by getting {
-            dependsOn(commonMain)
-        }
-    }
-
-    val macosX64Main by getting {
-        dependsOn(commonMain)
-    }
-*/
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-      }
-    }
     /*
     val jvmTest by getting {
         dependsOn(commonTest)

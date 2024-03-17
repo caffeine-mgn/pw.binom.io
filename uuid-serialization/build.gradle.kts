@@ -130,7 +130,4 @@ tasks.withType<Test> {
         this.showStandardStreams = true
     }
 }
-if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    apply<pw.binom.plugins.AndroidSupportPlugin>()
-}
 apply<pw.binom.plugins.ConfigPublishPlugin>()

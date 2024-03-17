@@ -4,51 +4,40 @@ import pw.binom.OpenSSLUnpackTask
 import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
-import pw.binom.publish.dependsOn
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
-  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    id("com.android.library")
-  }
+//  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    id("com.android.library")
+//  }
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets {
     -"js"
   }
-  applyDefaultHierarchyTemplate()
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(kotlin("stdlib-common"))
-        api(project(":core"))
-        api(project(":network"))
-        api(project(":file"))
-        api(project(":date"))
-        api(project(":socket"))
-        api(project(":concurrency"))
-        api("com.ionspin.kotlin:bignum:${pw.binom.Versions.IONSPIN_BIGNUM_VERSION}")
-      }
+    commonMain.dependencies {
+      api(kotlin("stdlib-common"))
+      api(project(":core"))
+      api(project(":network"))
+      api(project(":file"))
+      api(project(":date"))
+      api(project(":socket"))
+      api(project(":concurrency"))
+      api("com.ionspin.kotlin:bignum:${pw.binom.Versions.IONSPIN_BIGNUM_VERSION}")
     }
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
     }
-    val jvmMain by getting {
-      dependencies {
-        api("org.bouncycastle:bcprov-jdk15on:1.68")
-        api("org.bouncycastle:bcpkix-jdk15on:1.68")
-      }
+    jvmMain.dependencies {
+      api("org.bouncycastle:bcprov-jdk15on:1.68")
+      api("org.bouncycastle:bcpkix-jdk15on:1.68")
     }
-//    useDefault()
   }
-}
-if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-  apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()
 
@@ -61,7 +50,7 @@ tasks {
     this.input.set(downloadSsl.output)
   }
 
-  var lastBuildTask: OpenSSLBuildTask? = null
+//  var lastBuildTask: OpenSSLBuildTask? = null
 
   kotlin.eachNative {
     val headersPath = file("${buildFile.parent}/src/cinterop/include")
@@ -80,15 +69,8 @@ tasks {
       it.dependsOn(buildOpensslTask)
     }
     buildOpensslTask.configure {
-
-      if (lastBuildTask != null) {
-        mustRunAfter(lastBuildTask)
-      }
-      lastBuildTask = this
-      tempDirForObjectFiles.set(target.map { t -> RegularFile { project.buildDir.resolve("openssl/${t.name}/static") } })
       dependsOn(extractSsl)
       opensslDirection.set(extractSsl.output)
-//      afterConfig()
       target.set(konanTarget)
     }
 

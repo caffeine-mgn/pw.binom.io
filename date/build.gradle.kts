@@ -4,14 +4,14 @@ import java.util.*
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
-  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    id("com.android.library")
-  }
+//  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    id("com.android.library")
+//  }
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets()
-  applyDefaultHierarchyTemplate()
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val implMain by creating {
       dependsOn(commonMain.get())
@@ -19,21 +19,11 @@ kotlin {
     jsMain {
       dependsOn(implMain)
     }
-    val posixMain by creating {
+    val posixMain by getting {
       dependsOn(implMain)
-      dependsOn(nativeMain.get())
     }
     mingwMain {
       dependsOn(implMain)
-    }
-    linuxMain {
-      dependsOn(posixMain)
-    }
-    androidNativeMain {
-      dependsOn(posixMain)
-    }
-    appleMain {
-      dependsOn(posixMain)
     }
 
     commonTest {
@@ -54,7 +44,9 @@ kotlin {
 tasks {
 
   fun generateDate() {
-    val sourceDir = project.buildDir.resolve("gen/pw/binom/date")
+    val sourceDir = project.layout.buildDirectory.map { it.dir("gen/pw/binom/date") }
+      .get()
+      .asFile
     sourceDir.mkdirs()
     val versionSource = sourceDir.resolve("test_data.kt")
     versionSource.writeText(
@@ -80,8 +72,5 @@ val test_data_now get() = ${Date().time}
     testLogging.showStackTraces = true
     testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
   }
-}
-if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-  apply<pw.binom.plugins.AndroidSupportPlugin>()
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

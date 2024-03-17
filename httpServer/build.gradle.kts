@@ -1,5 +1,3 @@
-import pw.binom.useDefault
-
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
@@ -10,6 +8,7 @@ kotlin {
   allTargets {
     -"js"
   }
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
@@ -31,7 +30,6 @@ kotlin {
         api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
       }
     }
-    useDefault()
   }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

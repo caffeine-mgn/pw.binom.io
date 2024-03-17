@@ -3,9 +3,9 @@ plugins {
   id("com.bmuschko.docker-remote-api")
   id("maven-publish")
   id("kotlinx-serialization")
-  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-    id("com.android.library")
-  }
+//  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
+//    id("com.android.library")
+//  }
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
@@ -194,7 +194,4 @@ tasks {
     this["macosX64Test"].finalizedBy(destoryNats2)
 }
 */
-if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-  apply<pw.binom.plugins.AndroidSupportPlugin>()
-}
 apply<pw.binom.plugins.ConfigPublishPlugin>()

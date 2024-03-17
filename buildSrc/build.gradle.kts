@@ -53,7 +53,7 @@ dependencies {
   api("org.jetbrains.dokka:dokka-gradle-plugin:1.8.20")
   api("pw.binom:kn-clang:0.1.13")
   api("com.bmuschko:gradle-docker-plugin:7.3.0")
-  api("pw.binom:binom-publish:0.1.8")
+  api("pw.binom:binom-publish:0.1.19")
   api("com.jakewharton.cite:cite-gradle-plugin:0.2.0")
 //    api("com.android.library:com.android.library.gradle.plugin:7.2.0")
   api("com.android.tools.build:gradle:4.2.1")
