@@ -56,4 +56,15 @@ class ByteBufferBenchmark {
       }
     }
   }
+
+
+  @Benchmark
+  fun writeLongTest() {
+    val num = 1000
+    ByteBuffer(1024 * Long.SIZE_BYTES * num).use { buffer ->
+      repeat(num) {
+        buffer.writeLong(1000)
+      }
+    }
+  }
 }

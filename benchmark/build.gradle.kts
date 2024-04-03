@@ -48,6 +48,7 @@ kotlin {
       dependencies {
 //        implementation(project(":kotlinx-benchmark-runtime"))
         api(project(":io"))
+        api(project(":core"))
         implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.10")
       }
     }

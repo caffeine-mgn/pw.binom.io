@@ -176,9 +176,15 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     return this
   }
 
-  actual fun put(value: Byte) {
-    ensureOpen()
+  actual fun put(value: Byte): Boolean {
+    if (closed) {
+      return false
+    }
+    if (position >= limit) {
+      return false
+    }
     native.put(value)
+    return true
   }
 
   override fun clear() {

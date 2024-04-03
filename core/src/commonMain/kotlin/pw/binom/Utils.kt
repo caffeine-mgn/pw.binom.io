@@ -26,6 +26,7 @@ operator fun Short.get(index: Int): Byte {
 }
 
 fun Long.toByteBuffer(destination: ByteBuffer) {
+//  destination.write(toByteArray())
   destination.put(((this ushr (56 - 8 * 0)) and 0xFF).toByte())
   destination.put(((this ushr (56 - 8 * 1)) and 0xFF).toByte())
   destination.put(((this ushr (56 - 8 * 2)) and 0xFF).toByte())
@@ -38,22 +39,22 @@ fun Long.toByteBuffer(destination: ByteBuffer) {
 
 fun Long.toByteBuffer(): ByteArray {
   val result = ByteArray(Long.SIZE_BYTES)
-  toByteBuffer(destination = result)
+  toByteArray(destination = result)
   return result
 }
 
-fun Long.toByteBuffer(destination: ByteArray, destOffset: Int = 0): ByteArray {
-  require(destination.size - destOffset >= Long.SIZE_BYTES) { "Not available space for storage long" }
-  destination[0 + destOffset] = ((this ushr (56 - 8 * 0)) and 0xFF).toByte()
-  destination[1 + destOffset] = ((this ushr (56 - 8 * 1)) and 0xFF).toByte()
-  destination[2 + destOffset] = ((this ushr (56 - 8 * 2)) and 0xFF).toByte()
-  destination[3 + destOffset] = ((this ushr (56 - 8 * 3)) and 0xFF).toByte()
-  destination[4 + destOffset] = ((this ushr (56 - 8 * 4)) and 0xFF).toByte()
-  destination[5 + destOffset] = ((this ushr (56 - 8 * 5)) and 0xFF).toByte()
-  destination[6 + destOffset] = ((this ushr (56 - 8 * 6)) and 0xFF).toByte()
-  destination[7 + destOffset] = ((this ushr (56 - 8 * 7)) and 0xFF).toByte()
-  return destination
-}
+//fun Long.toByteBuffer(destination: ByteArray, destOffset: Int = 0): ByteArray {
+//  require(destination.size - destOffset >= Long.SIZE_BYTES) { "Not available space for storage long" }
+//  destination[0 + destOffset] = ((this ushr (56 - 8 * 0)) and 0xFF).toByte()
+//  destination[1 + destOffset] = ((this ushr (56 - 8 * 1)) and 0xFF).toByte()
+//  destination[2 + destOffset] = ((this ushr (56 - 8 * 2)) and 0xFF).toByte()
+//  destination[3 + destOffset] = ((this ushr (56 - 8 * 3)) and 0xFF).toByte()
+//  destination[4 + destOffset] = ((this ushr (56 - 8 * 4)) and 0xFF).toByte()
+//  destination[5 + destOffset] = ((this ushr (56 - 8 * 5)) and 0xFF).toByte()
+//  destination[6 + destOffset] = ((this ushr (56 - 8 * 6)) and 0xFF).toByte()
+//  destination[7 + destOffset] = ((this ushr (56 - 8 * 7)) and 0xFF).toByte()
+//  return destination
+//}
 
 fun Float.toByteBuffer(destination: ByteBuffer) {
   toRawBits().toByteBuffer(destination)

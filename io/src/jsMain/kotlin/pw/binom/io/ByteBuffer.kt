@@ -212,9 +212,15 @@ actual open class ByteBuffer(val native: NativeMem) :
     return native[index]
   }
 
-  actual fun put(value: Byte) {
-    ensureOpen()
+  actual fun put(value: Byte): Boolean {
+    if (closed) {
+      return false
+    }
+    if (position >= limit) {
+      return false
+    }
     native[position++] = value
+    return true
   }
 
   actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {

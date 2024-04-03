@@ -28,7 +28,7 @@ expect open class ByteBuffer :
   fun realloc(newSize: Int): ByteBuffer
   fun skip(length: Long): Long
   fun skip(length: Int): Int
-  fun put(value: Byte)
+  fun put(value: Byte):Boolean
   fun getByte(): Byte
   operator fun get(index: Int): Byte
   fun readInto(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int

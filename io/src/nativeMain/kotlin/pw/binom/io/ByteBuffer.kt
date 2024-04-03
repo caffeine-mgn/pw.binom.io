@@ -308,12 +308,22 @@ actual open class ByteBuffer private constructor(
     return this
   }
 
-  actual fun put(value: Byte) {
-    ensureOpen()
-    if (position >= limit) throw IndexOutOfBoundsException("Position: [$position], limit: [$limit]")
-    ref0(0) { array, dataSize ->
-      array[position++] = value
+  actual fun put(value: Byte): Boolean {
+    if (closed) {
+      return false
     }
+    if (position >= limit) {
+      return false
+    }
+    refTo2(0, position) { array ->
+      array[0] = value
+//      array[position++] = value
+    }
+//    ref0(0) { array, dataSize ->
+//      array[position++] = value
+//    }
+    _position++
+    return true
   }
 
   override fun clear() {
