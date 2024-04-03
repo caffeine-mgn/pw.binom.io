@@ -74,4 +74,18 @@ class SimpleAsyncLock : AsyncLock {
       unlock()
     }
   }
+
+  override suspend fun <T> trySynchronize(
+    lockingTimeout: Duration,
+    func: suspend () -> T,
+  ): AsyncLock.SynchronizeResult<T> {
+    if (!tryLock()) {
+      return AsyncLock.SynchronizeResult.notLocked()
+    }
+    return try {
+      AsyncLock.SynchronizeResult.locked(func())
+    } finally {
+      unlock()
+    }
+  }
 }

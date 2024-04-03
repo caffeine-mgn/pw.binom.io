@@ -7,12 +7,17 @@ sealed interface PropertyValue {
     companion object {
       val EMPTY =
         object : Object {
+          override val names: Iterable<String>
+            get() = emptyList()
+
           override fun get(key: String): PropertyValue? = null
 
           override fun contains(key: String): Boolean = false
+          override fun toString() = "{}"
         }
     }
 
+    val names: Iterable<String>
     operator fun get(key: String): PropertyValue?
 
     operator fun contains(key: String): Boolean
@@ -44,11 +49,13 @@ sealed interface PropertyValue {
             get() = 0
 
           override fun get(index: Int): PropertyValue? = null
+          override fun toString(): String = "[]"
         }
     }
 
     val size: Int
-
+    override val names: Iterable<String>
+      get() = (0 until size).map { it.toString() }
     operator fun get(index: Int): PropertyValue?
 
     override fun get(key: String): PropertyValue? = getByIndexPath(key)

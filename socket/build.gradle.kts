@@ -4,6 +4,7 @@ import pw.binom.eachKotlinTest
 import pw.binom.kotlin.clang.clangBuildStatic
 import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
+import pw.binom.publish.*
 import pw.binom.publish.dependsOn
 
 plugins {

@@ -12,7 +12,8 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   ByteBufferProvider {
   actual companion object;
 
-  actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
+//  actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
+  actual constructor(size: Int) : this(JByteBuffer.allocate(size))
   actual constructor(array: ByteArray) : this(JByteBuffer.wrap(array))
 
 //    actual companion object {

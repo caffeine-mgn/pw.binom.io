@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.gradle.plugin.extend
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import pw.binom.publish.allTargets
 
 internal class BuildTarget(val name: String, val preset: String)
 
@@ -32,9 +33,11 @@ class TargetConfig {
   }
 }
 
+/*
 fun KotlinMultiplatformExtension.allTargets() {
   allTargets {}
 }
+*/
 
 fun KotlinMultiplatformExtension.linux(func: KotlinNativeTarget.() -> Unit = {}) {
 //    linuxArm32Hfp(func)
@@ -76,7 +79,7 @@ fun KotlinMultiplatformExtension.androidNative(func: KotlinNativeTarget.() -> Un
   androidNativeArm32(func)
   androidNativeArm64(func)
 }
-
+/*
 fun KotlinMultiplatformExtension.applyDefaultHierarchyBinomTemplate() {
   val template =
     KotlinHierarchyTemplate.default.extend {
@@ -214,3 +217,4 @@ fun KotlinMultiplatformExtension.allTargets(func: (TargetConfig.() -> Unit)) {
     }
   }
 }
+*/

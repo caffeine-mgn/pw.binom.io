@@ -2,9 +2,15 @@ package pw.binom.properties
 
 object IniParser {
   private data class Obj(val map: Map<String, PropertyValue?>) : PropertyValue.Object {
+    override val names: Iterable<String>
+      get() = map.keys
+
     override fun get(key: String): PropertyValue? = map[key]
 
     override fun contains(key: String): Boolean = map.containsKey(key)
+
+    override fun toString() =
+      "{" + map.entries.joinToString(separator = ", ", transform = { "${it.key}: ${it.value}" }) + "}"
   }
 
   private data class EList(val content: List<PropertyValue?>) : PropertyValue.Enumerate {
@@ -12,9 +18,14 @@ object IniParser {
       get() = content.size
 
     override fun get(index: Int): PropertyValue? = content[index]
+
+    override fun toString() =
+      "[" + content.joinToString(", ") + "]"
   }
 
-  private data class Val(override val content: String?) : PropertyValue.Value
+  private data class Val(override val content: String?) : PropertyValue.Value {
+    override fun toString(): String = content?.let { "\"$it\"" } ?: "null"
+  }
 
   fun parseLines(lines: List<String>) = convert(parseLinesInternal(lines.iterator())) as PropertyValue.Object
 

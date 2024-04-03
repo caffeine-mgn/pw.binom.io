@@ -3,6 +3,7 @@
 package pw.binom.io
 
 import kotlinx.cinterop.*
+import platform.posix.memcpy
 import pw.binom.memory.Memory
 import pw.binom.memory.copyInto
 import kotlin.time.ExperimentalTime
@@ -346,6 +347,7 @@ actual open class ByteBuffer private constructor(
     position = 0
   }
 
+  @OptIn(UnsafeNumber::class)
   actual fun realloc(newSize: Int): ByteBuffer {
     ensureOpen()
     if (newSize == 0) {
@@ -358,6 +360,7 @@ actual open class ByteBuffer private constructor(
     val len = minOf(capacity, newSize)
     ref0(0) { oldCPointer, oldDataSize ->
       new.ref0(0) { newCPointer, newDataSize ->
+        // performance equals `memcpy`
         oldCPointer.copyInto(
           dest = newCPointer,
           size = len.convert(),

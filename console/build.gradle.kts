@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import pw.binom.kotlin.clang.eachNative
+import pw.binom.publish.*
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")

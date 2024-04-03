@@ -1,5 +1,6 @@
 import pw.binom.eachKotlinCompile
 import java.util.*
+import pw.binom.publish.*
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")

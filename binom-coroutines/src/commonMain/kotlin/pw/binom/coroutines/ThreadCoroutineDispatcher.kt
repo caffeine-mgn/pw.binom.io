@@ -13,6 +13,7 @@ import kotlin.coroutines.CoroutineContext
 class ThreadCoroutineDispatcher : CoroutineDispatcher(), Closeable {
   private val readyForWriteListener = BatchExchange<Runnable>()
   override fun isDispatchNeeded(context: CoroutineContext): Boolean = Thread.currentThread !== thread
+
   private val lock = ReentrantLock()
   private val lockCondition = lock.newCondition()
   private val closed = AtomicBoolean(false)

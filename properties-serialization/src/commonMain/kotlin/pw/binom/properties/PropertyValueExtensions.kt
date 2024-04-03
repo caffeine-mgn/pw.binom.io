@@ -4,6 +4,14 @@ internal class CompositeObject(
   val first: PropertyValue.Object,
   val second: PropertyValue.Object,
 ) : PropertyValue.Object {
+  override val names: Iterable<String>
+    get() {
+      val result = HashSet<String>()
+      result += first.names
+      result += second.names
+      return result
+    }
+
   override fun get(key: String): PropertyValue? =
     when {
       second.contains(key) && first.contains(key) -> {
@@ -22,6 +30,20 @@ internal class CompositeObject(
     }
 
   override fun contains(key: String): Boolean = first.contains(key) || second.contains(key)
+
+  override fun toString(): String {
+    val result = HashMap<String, PropertyValue?>()
+    names.forEach { name ->
+      result[name] = get(name)
+    }
+    return "{" + result.entries.joinToString(separator = ", ", transform = { "${it.key}: ${it.value}" })
+  }
+}
+
+inline fun PropertyValue.Enumerate.forEach(func: (PropertyValue?) -> Unit) {
+  for (i in 0 until size) {
+    func(get(i))
+  }
 }
 
 internal class CompositeEnumerate(val first: PropertyValue.Enumerate, val second: PropertyValue.Enumerate) :
@@ -35,4 +57,25 @@ internal class CompositeEnumerate(val first: PropertyValue.Enumerate, val second
       index - first.size in 0 until second.size -> first[index - first.size]
       else -> null
     }
+
+  override fun toString(): String {
+    val sb = StringBuilder("[")
+    var isFirst = true
+    first.forEach { value ->
+      if (!isFirst) {
+        sb.append(", ")
+      }
+      isFirst = false
+      sb.append(value)
+    }
+    second.forEach { value ->
+      if (!isFirst) {
+        sb.append(", ")
+      }
+      isFirst = false
+      sb.append(value)
+    }
+    sb.append("]")
+    return sb.toString()
+  }
 }

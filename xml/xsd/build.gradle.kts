@@ -1,5 +1,7 @@
+import pw.binom.publish.*
+
 plugins {
-  id("org.jetbrains.kotlin.multiplatform")
+  kotlin("multiplatform")
 //  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
 //    id("com.android.library")
 //  }

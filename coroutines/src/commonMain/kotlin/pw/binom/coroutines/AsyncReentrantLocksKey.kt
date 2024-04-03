@@ -15,6 +15,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 
 private object AsyncReentrantLocksKey : CoroutineContext.Key<AsyncReentrantLocksElement>
@@ -60,6 +61,7 @@ class AsyncReentrantLock : AsyncLock {
   }
   private val waiterLock = SpinLock()
   private val locked = AtomicBoolean(false)
+
   private fun releaseLock() {
     val waiter = waiterLock.synchronize {
       val waiter = waiters.firstOrNull()
@@ -90,16 +92,40 @@ class AsyncReentrantLock : AsyncLock {
   override val isLocked: Boolean
     get() = locked.getValue()
 
-  override suspend fun <T> synchronize(func: suspend () -> T): T = synchronize(Duration.INFINITE, func)
+  override suspend fun <T> synchronize(func: suspend () -> T): T = synchronize(
+    lockingTimeout = Duration.INFINITE,
+    func = func,
+  )
 
-  override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T {
+  override suspend fun <T> trySynchronize(lockingTimeout: Duration, func: suspend () -> T): AsyncLock.SynchronizeResult<T> =
+    trySynchronize(
+      lockingTimeout = lockingTimeout,
+      waitLock = false,
+      func = func
+    )
+
+  override suspend fun <T> synchronize(lockingTimeout: Duration, func: suspend () -> T): T =
+    trySynchronize(
+      lockingTimeout = lockingTimeout,
+      waitLock = true,
+      func = func
+    ).getOrThrow()
+
+  private suspend fun <T> trySynchronize(
+    lockingTimeout: Duration,
+    waitLock: Boolean,
+    func: suspend () -> T,
+  ): AsyncLock.SynchronizeResult<T> {
     val locks = coroutineContext[AsyncReentrantLocksKey]
     val isCurrentLockActive = locks?.isExist(this) == true // is this lock already locked in this coroutine
     if (isCurrentLockActive) {
-      return func()
+      return AsyncLock.SynchronizeResult.locked(func())
     }
     // Try lock
     if (!locked.compareAndSet(expected = false, new = true)) {
+      if (!waitLock) {
+        return AsyncLock.SynchronizeResult.notLocked()
+      }
       // if lock failed wait until is free
       suspendCancellableCoroutine<Unit> {
         waiterLock.synchronize {
@@ -118,14 +144,14 @@ class AsyncReentrantLock : AsyncLock {
         newLocks.add(this)
         withContext(coroutineContext + newLocks) {
           withTimeout2(lockingTimeout) {
-            func()
+            AsyncLock.SynchronizeResult.locked(func())
           }
         }
       } else {
         locks.add(this)
         try {
           withTimeout2(lockingTimeout) {
-            func()
+            AsyncLock.SynchronizeResult.locked(func())
           }
         } finally {
           locks.remove(this)

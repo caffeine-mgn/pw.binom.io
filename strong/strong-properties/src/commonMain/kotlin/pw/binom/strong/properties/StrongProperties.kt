@@ -60,6 +60,8 @@ class StrongProperties(
       ),
     )
 
+  override fun toString(): String = properties.toString()
+
   @OptIn(InternalSerializationApi::class)
   inline fun <reified T : Any> parse() = parse(T::class.serializer())
 }

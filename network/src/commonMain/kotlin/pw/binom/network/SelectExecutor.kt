@@ -20,11 +20,8 @@ object SelectExecutor {
       val now = TimeSource.Monotonic.markNow()
       selector.select(timeout = Duration.INFINITE) { event ->
         try {
-          val attachment = event.key.attachment
-          if (attachment == null) {
-            return@select
-          }
-          attachment // ?: error("Attachment is null")
+          val attachment = event.key.attachment ?: return@select
+          //          attachment // ?: error("Attachment is null")
           val connection = attachment as AbstractConnection
           if (event.key.readFlags.isError) {
             submitTask {

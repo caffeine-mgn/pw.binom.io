@@ -1,6 +1,7 @@
-package pw.binom.coroutines
+package pw.binom
 
 import kotlinx.benchmark.*
+import org.openjdk.jmh.annotations.Benchmark
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -8,13 +9,13 @@ import kotlin.time.TimeSource
 @Measurement(iterations = 3, time = 1, timeUnit = BenchmarkTimeUnit.SECONDS)
 @OutputTimeUnit(BenchmarkTimeUnit.MILLISECONDS)
 @BenchmarkMode(Mode.AverageTime)
-class AsyncLazyTest3 {
+class AsyncLazyTest4 {
   @Benchmark
   fun exception(): Double {
     val now = TimeSource.Monotonic.markNow()
     while (now.elapsedNow() < 0.5.seconds) {
       // Do nothing
     }
-    return 0
+    return 0.0
   }
 }

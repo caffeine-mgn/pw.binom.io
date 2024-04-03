@@ -1,3 +1,5 @@
+import pw.binom.publish.*
+
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
@@ -8,13 +10,35 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets()
+//  allTargets()
+  jvm()
+  js(IR){
+    browser()
+    nodejs()
+  }
+//  applyDefaultHierarchyTemplate()
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
+    val commonMain by getting
+    val jsMain by getting {
+      dependsOn(commonMain)
+    }
+//    commonMain.dependencies {
+//      api(kotlin("stdlib-common"))
+//      api(kotlin("stdlib"))
+//    }
     commonTest.dependencies {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
     }
+    /*
+    jsMain {
+      dependsOn(commonMain)
+      dependencies {
+//        api(kotlin("stdlib-js"))
+      }
+    }
+    */
   }
 }
 

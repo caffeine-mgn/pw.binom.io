@@ -1,5 +1,6 @@
 import pw.binom.kotlin.clang.eachNative
 import java.util.*
+import pw.binom.publish.allTargets
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -34,7 +35,7 @@ kotlin {
       api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
       api(project(":collections"))
       api(project(":pool"))
-      api(project(":url"))
+      api("pw.binom:url:${pw.binom.Versions.BINOM_URL_VERSION}")
       api("pw.binom:uuid:${pw.binom.Versions.BINOM_UUID_VERSION}")
     }
     val nativeRunnableMain by creating {

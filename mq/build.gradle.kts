@@ -1,3 +1,5 @@
+import pw.binom.publish.*
+
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("com.bmuschko.docker-remote-api")

@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.konan.target.Family
 import pw.binom.kotlin.clang.eachNative
+import pw.binom.publish.*
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")

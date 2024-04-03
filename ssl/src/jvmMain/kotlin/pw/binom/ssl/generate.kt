@@ -1,6 +1,8 @@
 package pw.binom.ssl
 
 import org.bouncycastle.asn1.x509.X509Name
+import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.cert.X509v1CertificateBuilder
 import org.bouncycastle.x509.X509V1CertificateGenerator
 import org.bouncycastle.x509.X509V3CertificateGenerator
 import java.math.BigInteger
@@ -9,6 +11,14 @@ import javax.security.auth.x500.X500Principal
 actual fun X509Builder.generate(): X509Certificate {
     when (version) {
         X509Builder.Version.V1 -> {
+//          X509v1CertificateBuilder(
+//            X500Name(issuer),
+//            BigInteger.valueOf(serialNumber),
+//            java.util.Date(notBefore.time),
+//            java.util.Date(notAfter.time),
+//            X500Name(subject),
+//            TODO(),
+//          )
             val certGen = X509V1CertificateGenerator()
             certGen.setSerialNumber(BigInteger.valueOf(serialNumber))
 

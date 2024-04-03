@@ -1,8 +1,9 @@
 import pw.binom.eachKotlinTest
 import pw.binom.plugins.DockerUtils
+import pw.binom.publish.*
 
 plugins {
-  id("org.jetbrains.kotlin.multiplatform")
+  kotlin("multiplatform")
   id("com.bmuschko.docker-remote-api")
   id("maven-publish")
   id("kotlinx-serialization")

@@ -1,9 +1,10 @@
 import kotlinx.benchmark.gradle.JvmBenchmarkTarget
+import kotlinx.benchmark.gradle.KotlinJvmBenchmarkTarget
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("org.jetbrains.kotlin.plugin.allopen") version "1.9.21"
-  id("org.jetbrains.kotlinx.benchmark") version "0.4.4"
+  id("org.jetbrains.kotlinx.benchmark") version "0.4.10"
 }
 apply<pw.binom.KotlinConfigPlugin>()
 
@@ -15,18 +16,18 @@ kotlin {
   jvm {
     compilations.create("benchmark") { associateWith(compilations["main"]) }
   }
-  js(IR) {
-    nodejs()
-    compilations.create("defaultExecutor") { associateWith(compilations["main"]) }
-    compilations.create("builtInExecutor") { associateWith(compilations["main"]) }
-  }
-  wasm("wasmJs") { nodejs() }
-
-  // Native targets
-  macosX64()
-  macosArm64()
+//  js(IR) {
+//    nodejs()
+//    compilations.create("defaultExecutor") { associateWith(compilations["main"]) }
+//    compilations.create("builtInExecutor") { associateWith(compilations["main"]) }
+//  }
+//  wasm("wasmJs") { nodejs() }
+//
+//  // Native targets
+//  macosX64()
+//  macosArm64()
   linuxX64()
-  mingwX64()
+//  mingwX64()
 
   applyDefaultHierarchyTemplate()
 
@@ -46,26 +47,28 @@ kotlin {
     commonMain {
       dependencies {
 //        implementation(project(":kotlinx-benchmark-runtime"))
-        implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.4")
+        api(project(":io"))
+        implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.10")
       }
     }
 
     val jvmMain by getting
 
-    val wasmJsMain by getting
-
-    val jsMain by getting
-    val jsDefaultExecutor by getting {
-      dependsOn(jsMain)
-    }
-    val jsBuiltInExecutor by getting {
-      dependsOn(jsMain)
-    }
-    val nativeMain by getting
+//    val wasmJsMain by getting
+//
+//    val jsMain by getting
+//    val jsDefaultExecutor by getting {
+//      dependsOn(jsMain)
+//    }
+//    val jsBuiltInExecutor by getting {
+//      dependsOn(jsMain)
+//    }
+//    val nativeMain by getting
   }
 }
 // Configure benchmark
 benchmark {
+
   configurations {
     val main by getting { // --> jvmBenchmark, jsBenchmark, <native target>Benchmark, benchmark
       iterations = 5 // number of iterations
@@ -73,9 +76,25 @@ benchmark {
       iterationTimeUnit = "ms"
       advanced("jvmForks", 3)
       advanced("jsUseBridge", true)
+//      include("Common")
+//      include("Jvm")
+//      include("JvmMain")
+//      include("jvmMain")
+//      include("CommonBenchmark")
+//      include("JvmBenchmark")
+//      include("pw.binom.AsyncLazyTest4")
+//      include("AsyncLazyTest5")
+//      include(".+")
+    }
+    val byteBuffer by creating {
+      include(".+\\.ByteBufferBenchmark")
     }
   }
   targets {
+    register("jvm") {
+      this as KotlinJvmBenchmarkTarget
+      jmhVersion = "1.21"
+    }
     /*
     register("jvm", JvmBenchmarkTarget::class) {
 //      this as JvmBenchmarkTarget

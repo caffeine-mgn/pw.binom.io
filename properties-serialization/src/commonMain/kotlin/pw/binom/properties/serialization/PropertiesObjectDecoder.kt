@@ -92,7 +92,14 @@ class PropertiesObjectDecoder(
     deserializer: DeserializationStrategy<T?>,
     previousValue: T?,
   ): T? {
-    TODO("Not yet implemented")
+    val el = root[descriptor.getElementName(index)]?:return null
+    val d =
+      PropertiesDecoder(
+        root = el,
+        serializersModule = serializersModule,
+        prefix = "",
+      )
+    return deserializer.deserialize(d)
   }
 
   override fun <T> decodeSerializableElement(

@@ -1,19 +1,22 @@
+import pw.binom.publish.*
+
 plugins {
-  id("org.jetbrains.kotlin.multiplatform")
+  kotlin("multiplatform")
   id("maven-publish")
-//  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
-//    id("com.android.library")
-//  }
 }
 apply<pw.binom.KotlinConfigPlugin>()
+apply<pw.binom.plugins.ConfigPublishPlugin>()
 kotlin {
   allTargets()
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
+      api(kotlin("stdlib"))
       api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
     }
-
+    jsMain {
+      dependsOn(commonMain.get())
+    }
     commonTest.dependencies {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
@@ -27,4 +30,3 @@ kotlin {
     }
   }
 }
-apply<pw.binom.plugins.ConfigPublishPlugin>()
