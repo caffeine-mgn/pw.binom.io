@@ -54,6 +54,10 @@ kotlin {
 
     val jvmMain by getting
 
+    val commonRunnable by creating {
+      dependsOn(commonMain.get())
+    }
+
 //    val wasmJsMain by getting
 //
 //    val jsMain by getting
@@ -87,6 +91,7 @@ benchmark {
 //      include(".+")
     }
     val byteBuffer by creating {
+//      include(".+\\.ByteBufferReallocBenchmark")
       include(".+\\.ByteBufferBenchmark")
     }
   }
@@ -103,6 +108,7 @@ benchmark {
     }
     */
     register("linuxX64")
+    register("mingwX64")
   }
 }
 /*

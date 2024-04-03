@@ -76,10 +76,6 @@ actual class File actual constructor(path: String) {
 
   actual override fun hashCode(): Int = 31 + path.hashCode()
 
-  init {
-    freeze()
-  }
-
   actual val size: Long
     get() = memScoped {
       val stat = alloc<_stat64>()

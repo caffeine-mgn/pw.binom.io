@@ -73,6 +73,7 @@ abstract class AbstractIconv(
     }
   }
 
+  @Suppress("UNREACHABLE_CODE")
   protected fun iconv(input: Buffer, output: Buffer): CharsetTransformResult {
     return output.refTo(output.position) { outputPtr ->
       input.refTo(input.position) inputRefTo@{ inputPtr ->

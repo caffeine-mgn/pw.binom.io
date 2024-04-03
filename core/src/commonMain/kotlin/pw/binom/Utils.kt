@@ -254,49 +254,49 @@ fun Long.toByteArray(): ByteArray {
   return result
 }
 
-infix fun Long.or(other: Long) = Long.fromBytes(
-  (this[0].toInt() or other[0].toInt()).toByte(),
-  (this[1].toInt() or other[1].toInt()).toByte(),
-  (this[2].toInt() or other[2].toInt()).toByte(),
-  (this[3].toInt() or other[3].toInt()).toByte(),
-  (this[4].toInt() or other[4].toInt()).toByte(),
-  (this[5].toInt() or other[5].toInt()).toByte(),
-  (this[6].toInt() or other[6].toInt()).toByte(),
-  (this[7].toInt() or other[7].toInt()).toByte(),
-)
+//infix fun Long.or(other: Long) = Long.fromBytes(
+//  (this[0].toInt() or other[0].toInt()).toByte(),
+//  (this[1].toInt() or other[1].toInt()).toByte(),
+//  (this[2].toInt() or other[2].toInt()).toByte(),
+//  (this[3].toInt() or other[3].toInt()).toByte(),
+//  (this[4].toInt() or other[4].toInt()).toByte(),
+//  (this[5].toInt() or other[5].toInt()).toByte(),
+//  (this[6].toInt() or other[6].toInt()).toByte(),
+//  (this[7].toInt() or other[7].toInt()).toByte(),
+//)
 
-infix fun Long.and(other: Long) = Long.fromBytes(
-  (this[0].toInt() and other[0].toInt()).toByte(),
-  (this[1].toInt() and other[1].toInt()).toByte(),
-  (this[2].toInt() and other[2].toInt()).toByte(),
-  (this[3].toInt() and other[3].toInt()).toByte(),
-  (this[4].toInt() and other[4].toInt()).toByte(),
-  (this[5].toInt() and other[5].toInt()).toByte(),
-  (this[6].toInt() and other[6].toInt()).toByte(),
-  (this[7].toInt() and other[7].toInt()).toByte(),
-)
+//infix fun Long.and(other: Long) = Long.fromBytes(
+//  (this[0].toInt() and other[0].toInt()).toByte(),
+//  (this[1].toInt() and other[1].toInt()).toByte(),
+//  (this[2].toInt() and other[2].toInt()).toByte(),
+//  (this[3].toInt() and other[3].toInt()).toByte(),
+//  (this[4].toInt() and other[4].toInt()).toByte(),
+//  (this[5].toInt() and other[5].toInt()).toByte(),
+//  (this[6].toInt() and other[6].toInt()).toByte(),
+//  (this[7].toInt() and other[7].toInt()).toByte(),
+//)
 
-infix fun Long.xor(other: Long) = Long.fromBytes(
-  (this[0].toInt() xor other[0].toInt()).toByte(),
-  (this[1].toInt() xor other[1].toInt()).toByte(),
-  (this[2].toInt() xor other[2].toInt()).toByte(),
-  (this[3].toInt() xor other[3].toInt()).toByte(),
-  (this[4].toInt() xor other[4].toInt()).toByte(),
-  (this[5].toInt() xor other[5].toInt()).toByte(),
-  (this[6].toInt() xor other[6].toInt()).toByte(),
-  (this[7].toInt() xor other[7].toInt()).toByte(),
-)
+//infix fun Long.xor(other: Long) = Long.fromBytes(
+//  (this[0].toInt() xor other[0].toInt()).toByte(),
+//  (this[1].toInt() xor other[1].toInt()).toByte(),
+//  (this[2].toInt() xor other[2].toInt()).toByte(),
+//  (this[3].toInt() xor other[3].toInt()).toByte(),
+//  (this[4].toInt() xor other[4].toInt()).toByte(),
+//  (this[5].toInt() xor other[5].toInt()).toByte(),
+//  (this[6].toInt() xor other[6].toInt()).toByte(),
+//  (this[7].toInt() xor other[7].toInt()).toByte(),
+//)
 
-fun Long.inv() = Long.fromBytes(
-  this[0].inv(),
-  this[1].inv(),
-  this[2].inv(),
-  this[3].inv(),
-  this[4].inv(),
-  this[5].inv(),
-  this[6].inv(),
-  this[7].inv(),
-)
+//fun Long.inv() = Long.fromBytes(
+//  this[0].inv(),
+//  this[1].inv(),
+//  this[2].inv(),
+//  this[3].inv(),
+//  this[4].inv(),
+//  this[5].inv(),
+//  this[6].inv(),
+//  this[7].inv(),
+//)
 
 fun Long.toByteArray(destination: ByteArray, offset: Int = 0): ByteArray {
   if (destination.size - offset < Long.SIZE_BYTES) {

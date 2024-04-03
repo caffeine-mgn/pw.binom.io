@@ -18,6 +18,7 @@ suspend fun <T> AsyncSupplier<T>.takeIf(func: (T) -> Boolean): T? {
   }
 }
 
+@Suppress("UNCHECKED_CAST")
 fun <T> AsyncSupplier<T>.oneShot() = object : AsyncSupplier<T> {
   private var result: T? = null
   private var done = false

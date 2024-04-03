@@ -1,9 +1,8 @@
-@file:OptIn(ExperimentalForeignApi::class)
+@file:OptIn(ExperimentalForeignApi::class, ExperimentalForeignApi::class)
 
 package pw.binom.io
 
 import kotlinx.cinterop.*
-import platform.posix.memcpy
 import pw.binom.memory.Memory
 import pw.binom.memory.copyInto
 import kotlin.time.ExperimentalTime
@@ -101,22 +100,14 @@ actual open class ByteBuffer private constructor(
     },
   )
 
-//    actual companion object {
-//        actual fun alloc(size: Int): AbstractByteBuffer = AbstractByteBuffer(MemAccess.NativeMemory(size), null)
-//        actual fun alloc(size: Int, onClose: (AbstractByteBuffer) -> Unit): AbstractByteBuffer =
-//            AbstractByteBuffer(MemAccess.NativeMemory(size), onClose)
-//
-//        actual fun wrap(array: ByteArray): AbstractByteBuffer = AbstractByteBuffer(MemAccess.ArrayMemory(array), null)
-//    }
-
-  //    private val native = createNativeByteBuffer(capacity)!!
   override val capacity: Int
     get() = data.capacity
 
   override val elementSizeInBytes: Int
     get() = 1
 
-  private var closed = false
+  @PublishedApi
+  internal var closed = false
 
   private var _position = 0 // = AtomicInt(0)
   private var _limit = data.capacity // = AtomicInt(data.capacity)
@@ -127,9 +118,7 @@ actual open class ByteBuffer private constructor(
   override var position: Int
     get() = _position
     set(value) {
-      if (value > limit || value < 0) {
-        throw IllegalArgumentException("Position should be in range between 0 and limit. limit: $limit, new position: $value")
-      }
+      require(value in 0.._limit) { "Position should be in range between 0 and limit. limit: $_limit, new position: $value" }
       _position = value
     }
 
@@ -186,13 +175,20 @@ actual open class ByteBuffer private constructor(
   }
 
   inline fun <T : Any> refTo2(defaultValue: T, position: Int, func: (ptr: CPointer<ByteVar>) -> T): T {
-    ensureOpen()
-    require(position >= 0) { "position ($position) should be more or equals 0" }
+//    ensureOpen()
+    if (closed) {
+      return defaultValue
+    }
+    if (position < 0) {
+      return defaultValue
+    }
+//    require(position >= 0) { "position ($position) should be more or equals 0" }
     if (capacity == 0 || position == capacity) {
       return defaultValue
     }
     if (position > capacity) {
-      throw IllegalArgumentException("position ($position) should be less than capacity ($capacity)")
+      return defaultValue
+//      throw IllegalArgumentException("position ($position) should be less than capacity ($capacity)")
     }
     return func((data.pointer + position)!!)
   }
@@ -216,7 +212,9 @@ actual open class ByteBuffer private constructor(
   actual fun skip(length: Long): Long = skip(length.toInt()).toLong()
 
   actual fun skip(length: Int): Int {
-    ensureOpen()
+    if (closed) {
+      return 0
+    }
     if (length <= 0) {
       return 0
     }
@@ -227,9 +225,10 @@ actual open class ByteBuffer private constructor(
     return len
   }
 
-  @OptIn(ExperimentalTime::class)
   actual fun readInto(dest: ByteBuffer): Int {
-    ensureOpen()
+    if (closed || dest.closed) {
+      return 0
+    }
     val r = run {
       val remaining2 = remaining
       val destRemaining = dest.remaining
@@ -255,33 +254,7 @@ actual open class ByteBuffer private constructor(
           throw e
         }
       }
-//            ref { sourceCPointer, remaining2 ->
-//                dest.ref { destCPointer, destRemaining ->
-//                    val p = position
-//                    val p2 = dest.position
-//                    val len = minOf(destRemaining, remaining2)
-//                    try {
-//                        val copyTime = measureTime {
-//                            sourceCPointer.copyInto(
-//                                dest = destCPointer,
-//                                size = len.convert(),
-//                            )
-//                            position += len
-//                            dest.position += len
-//                        }
-//
-//                        println("ByteBuffer::readInto copyTime: $copyTime")
-//
-//                        len
-//                    } catch (e: Throwable) {
-//                        position = p
-//                        dest.position = p2
-//                        throw e
-//                    }
-//                }
-//            } ?: 0
     }
-//        println("ByteBuffer::readInto total: ${r.duration}")
     return r
   }
 
@@ -291,16 +264,18 @@ actual open class ByteBuffer private constructor(
   override fun write(data: ByteBuffer): Int = data.readInto(this)
 
   override fun flush() {
-    ensureOpen()
+
   }
 
   override fun close() {
-    ensureOpen()
-    preClose()
-    closed = true
-    data.close()
-    ByteBufferMetric.dec(this)
-    ByteBufferAllocationCallback.onFree(this)
+    if (!closed) {
+
+      preClose()
+      closed = true
+      data.close()
+      ByteBufferMetric.dec(this)
+      ByteBufferAllocationCallback.onFree(this)
+    }
   }
 
   actual operator fun get(index: Int): Byte {
@@ -376,6 +351,9 @@ actual open class ByteBuffer private constructor(
   actual fun toByteArray(limit: Int): ByteArray {
     ensureOpen()
     val size = minOf(remaining, limit)
+    if (size == 0) {
+      return byteArrayOf()
+    }
     val r = ByteArray(size)
     if (size > 0) {
       ref(0) { ptr, remaining ->
@@ -391,7 +369,10 @@ actual open class ByteBuffer private constructor(
   }
 
   actual fun write(data: ByteArray, offset: Int, length: Int): Int {
-    ensureOpen()
+    if (closed) {
+      return 0
+    }
+    /*
     require(offset >= 0) { "Offset argument should be more or equals 0. Actual value is $offset" }
     require(length >= 0) { "Length argument should be more or equals 0. Actual value is $length" }
     if (length == 0) {
@@ -400,17 +381,19 @@ actual open class ByteBuffer private constructor(
     if (offset + length > data.size) {
       throw IndexOutOfBoundsException()
     }
-    val len = minOf(remaining, length)
+     */
+    val len = minOf(remaining, length, data.size - offset)
     if (len == 0) {
       return 0
     }
+
     data.usePinned { data ->
       ref0(0) { cPointer, dataSize ->
         data.addressOf(offset).copyInto(
-          dest = (cPointer + position)!!.reinterpret(),
+          dest = (cPointer + _position)!!.reinterpret(),
           size = len.convert(),
         )
-        position += len
+        _position += len
       }
     }
 
@@ -421,13 +404,13 @@ actual open class ByteBuffer private constructor(
     ensureOpen()
     if (remaining > 0) {
       val size = remaining
-      ref0(0) { cPointer, dataSize ->
-        (cPointer + position)!!.copyInto(
+      refTo2(0, _position) { cPointer ->
+        cPointer.copyInto(
           dest = cPointer,
           size = size.convert(),
         )
-        position = size
-        limit = capacity
+        _position = size
+        _limit = capacity
       }
     } else {
       clear()
@@ -436,10 +419,10 @@ actual open class ByteBuffer private constructor(
 
   actual fun peek(): Byte {
     ensureOpen()
-    if (position == limit) {
+    if (_position == _limit) {
       throw NoSuchElementException()
     }
-    return this[position]
+    return this[_position]
   }
 
   actual fun subBuffer(index: Int, length: Int): ByteBuffer {
@@ -458,18 +441,28 @@ actual open class ByteBuffer private constructor(
   }
 
   actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
-    ensureOpen()
-    require(dest.size - offset >= length) { "length more then available space" }
-    return ref0(0) { cPointer, dataSize ->
-      val l = minOf(remaining, length)
+//    ensureOpen()
+    if (closed) {
+      return 0
+    }
+//    if (dest.size - offset < length) {
+//      return 0
+//    }
+
+    val lengthForCopy = minOf(remaining, length, dest.size - offset)
+    if (lengthForCopy <= 0) {
+      return 0
+    }
+//    require(dest.size - offset >= length) { "length more then available space" }
+    return refTo2(0, _position) { cPointer ->
       dest.usePinned { dest ->
-        (cPointer + position)!!.copyInto(
+        cPointer.copyInto(
           dest = dest.addressOf(offset),
-          size = l.convert(),
+          size = lengthForCopy.convert(),
         )
       }
-      position += l
-      l
+      _position += lengthForCopy
+      lengthForCopy
     }
   }
 
@@ -477,8 +470,8 @@ actual open class ByteBuffer private constructor(
     ensureOpen()
     val size = remaining
     if (size > 0) {
-      ref0(0) { native, _ ->
-        (native + position)!!.copyInto(
+      refTo2(0, position) { native ->
+        native.copyInto(
           dest = native,
           size = size.convert(),
         )
@@ -497,7 +490,6 @@ actual open class ByteBuffer private constructor(
   }
 
   override fun reestablish(buffer: ByteBuffer) {
-    ensureOpen()
     require(buffer === this) { "Buffer should equals this buffer" }
     check(!closed) { "Buffer closed" }
   }
@@ -507,11 +499,11 @@ actual open class ByteBuffer private constructor(
   }
 
   override fun skipAll(bufferSize: Int) {
-    position = limit
+    _position = limit
   }
 
   override fun skipAll(buffer: ByteBuffer) {
-    position = limit
+    _position = limit
   }
 
   override fun skip(bytes: Long, buffer: ByteBuffer) {

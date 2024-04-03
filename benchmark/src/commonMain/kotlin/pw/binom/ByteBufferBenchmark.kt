@@ -11,16 +11,49 @@ import kotlin.math.roundToInt
 @BenchmarkMode(Mode.AverageTime)
 class ByteBufferBenchmark {
 
-  @Param("1024", "8192", "1048576")
-  var initSize: Int = 0
-
-  @Param("10", "30", "50", "70", "90", "120", "130")
-  var copyPercent: Int = 0
+  @Benchmark
+  fun newBufferPositionTest() {
+    ByteBuffer(1024 * 1024).use { original ->
+      val capacity = original.capacity
+      original.clear()
+      repeat(capacity) { index ->
+        original.position = index
+      }
+    }
+  }
 
   @Benchmark
-  fun realloc() {
-    ByteBuffer(initSize).use { original ->
-      original.realloc((initSize * copyPercent.toFloat()).roundToInt()).close()
+  fun wrappedBufferPositionTest() {
+    ByteBuffer(ByteArray(1024 * 1024)).use { original ->
+      val capacity = original.capacity
+      original.clear()
+      repeat(capacity) { index ->
+        original.position = index
+      }
+    }
+  }
+
+  @Benchmark
+  fun newBufferWriteByteTest() {
+    val long = ByteArray(8)
+    ByteBuffer(ByteArray(1024 * long.size * 100)).use { original ->
+      val capacity = original.capacity
+      original.clear()
+      repeat(capacity) { _ ->
+        original.write(long)
+      }
+    }
+  }
+
+  @Benchmark
+  fun newBufferReadIntoByteTest() {
+    val long = ByteArray(8)
+    ByteBuffer(ByteArray(1024 * long.size * 100)).use { original ->
+      val capacity = original.capacity
+      original.clear()
+      repeat(capacity) { _ ->
+        original.readInto(long)
+      }
     }
   }
 }

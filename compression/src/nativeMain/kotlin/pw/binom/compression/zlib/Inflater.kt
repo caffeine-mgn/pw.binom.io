@@ -8,7 +8,8 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.io.IOException
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalStdlibApi::class, ExperimentalForeignApi::class, UnsafeNumber::class)
 actual class Inflater actual constructor(wrap: Boolean) : Closeable {
@@ -32,6 +33,7 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
     DeflaterMetrics.incInflaterCount()
   }
 
+  @OptIn(ExperimentalNativeApi::class)
   private val cleaner = createCleaner(native) { self ->
     inflateEnd(self.ptr)
     nativeHeap.free(self)

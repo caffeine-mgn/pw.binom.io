@@ -12,7 +12,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   ByteBufferProvider {
   actual companion object;
 
-//  actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
+  //  actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
   actual constructor(size: Int) : this(JByteBuffer.allocate(size))
   actual constructor(array: ByteArray) : this(JByteBuffer.wrap(array))
 
@@ -152,9 +152,10 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   override fun read(dest: ByteBuffer): Int = readInto(dest)
 
   actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
-    require(dest.size - offset >= length)
-    ensureOpen()
-    val l = minOf(remaining, length)
+    if (closed) {
+      return 0
+    }
+    val l = minOf(remaining, length, dest.size - offset)
     native.get(dest, offset, l)
     return l
   }
@@ -231,8 +232,13 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   }
 
   actual fun write(data: ByteArray, offset: Int, length: Int): Int {
-    ensureOpen()
-    val l = minOf(remaining, length)
+    if (closed) {
+      return 0
+    }
+    val l = minOf(remaining, length, data.size - offset)
+    if (l == 0) {
+      return 0
+    }
     native.put(data, offset, l)
     return l
   }

@@ -47,7 +47,7 @@ class MessageInfoDto(
           stream = msgHeaders.getFirst(NatsHeaders.NATS_STREAM) ?: streamName,
           lastSeq = msgHeaders.getFirst(NatsHeaders.NATS_LAST_SEQUENCE)?.toLongOrNull() ?: -1,
           headers =
-            msgHeaders.filter { key, value ->
+            msgHeaders.filter { key, _ ->
               key !in noCopyDirectHeaders
             },
           direct = true,

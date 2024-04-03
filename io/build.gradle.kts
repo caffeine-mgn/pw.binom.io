@@ -12,6 +12,21 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets()
+  js {
+    browser {
+      testTask {
+        useKarma {
+          useChromeHeadless()
+          useFirefoxHeadless()
+        }
+      }
+    }
+    nodejs {
+      testTask {
+        useKarma()
+      }
+    }
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
@@ -28,7 +43,15 @@ kotlin {
      */
     val commonTest by getting {
       dependencies {
+        api(kotlin("test-common"))
+        api(project(":testing"))
+        api(kotlin("test-annotations-common"))
         api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      }
+    }
+    val jvmTest by getting {
+      dependencies {
+        api(kotlin("test"))
       }
     }
   }

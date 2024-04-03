@@ -1,6 +1,6 @@
 # Binom IO
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.9.20](https://img.shields.io/badge/Kotlin-1.9.20-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)
+[![Kotlin 1.9.23](https://img.shields.io/badge/Kotlin-1.9.23-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)
 [![Gradle build](https://github.com/caffeine-mgn/pw.binom.io/actions/workflows/publish.yml/badge.svg) ](https://github.com/caffeine-mgn/pw.binom.io/actions/workflows/publish.yml) <br><br>
 
 ## What is Binom.IO?
@@ -27,12 +27,13 @@ Library contains next parts:<br>
 * [SSL](ssl)
 * [SMTP Client](smtp)
 * [Concurrency](concurrency)
+* [Testing Utils](testing)
 * MQ Client
     * [Nats](mq/nats)
 * Database Access<br>
     * [PostgreSQL](db/postgresql-async) Async Mode
-    * [SQLIte](db/sqlite) Sync Mode
-    * [Tarantool](tarantool) Async Mode
+    * [SQLIte](db/sqlite) Async/Sync Mode
+    * [Tarantool](db/tarantool-client) Async Mode
 
 ## Using
 
@@ -92,7 +93,6 @@ buildscript {
 - [x] Json Tools <br>
   See [JsonWriter](json/src/commonMain/kotlin/pw/binom/json/JsonWriter.kt)
   and [JsonReader](json/src/commonMain/kotlin/pw/binom/json/JsonReader.kt)
-- [ ] JsonB Tools
 - [x] [ObjectPool](core/src/commonMain/kotlin/pw/binom/pool/DefaultPool.kt)
 - [x] [Date](date)
 - [x] XML Tools<br>
@@ -130,8 +130,9 @@ buildscript {
 
 #### Async DataBase Access
 
-- [x] [Tarantool Connector](tarantool)
+- [x] [Tarantool Connector](db/tarantool-client)
 - [x] [PostgreSQL Connector](db/postgresql-async)
+- - [x] [SQLite Support](sqlite/README.md)
 
 ## Community
 [Telegram](https://t.me/io_binom) <br>

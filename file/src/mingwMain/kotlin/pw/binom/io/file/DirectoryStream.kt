@@ -8,8 +8,9 @@ import platform.posix.dirent
 import platform.posix.opendir
 import platform.posix.readdir
 import pw.binom.io.IOException
+import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.concurrent.ensureNeverFrozen
-import kotlin.native.internal.createCleaner
+import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalForeignApi::class)
 actual class DirectoryStream internal actual constructor(private val path: File) : Iterator<File> {
@@ -56,12 +57,8 @@ actual class DirectoryStream internal actual constructor(private val path: File)
     return result
   }
 
-  @OptIn(ExperimentalStdlibApi::class)
+  @OptIn(ExperimentalNativeApi::class)
   private val cleaner = createCleaner(handler) {
     closedir(it)
-  }
-
-  init {
-    ensureNeverFrozen()
   }
 }

@@ -95,7 +95,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
 
     actual fun writeApp(src: ByteArray, offset: Int, length: Int): Status {
         val s = sslEngine.wrap(ByteBuffer.wrap(src, offset, length), wbio)
-        val state = when (s.status) {
+        val state = when (s.status!!) {
             SSLEngineResult.Status.OK ->
                 when (s.handshakeStatus) {
                     SSLEngineResult.HandshakeStatus.NEED_UNWRAP -> State.WANT_READ
@@ -212,7 +212,6 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                 }
             }
 
-            val length = dst.remaining
             while (true) {
                 if (sslEngine.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_WRAP) {
 //                val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize)
@@ -276,8 +275,8 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
                 }
             }
             val l = minOf(clientData.readRemaining, dst.remaining)
-            dst.length(l) { dst ->
-                clientData.read(dst)
+            dst.length(l) { dstWithLen ->
+                clientData.read(dstWithLen)
             }
             return Status(
                 State.OK,
