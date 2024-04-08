@@ -2,7 +2,7 @@ package pw.binom.mq
 
 import pw.binom.io.AsyncCloseable
 
-interface Topic : AsyncCloseable {
+interface Topic<T:Message> : AsyncCloseable {
   companion object;
 
   suspend fun createProducer(): Producer
@@ -13,6 +13,6 @@ interface Topic : AsyncCloseable {
 
   suspend fun createConsumer(
     group: String? = null,
-    func: suspend (Message) -> Unit,
+    func: suspend (T) -> Unit,
   ): Consumer
 }

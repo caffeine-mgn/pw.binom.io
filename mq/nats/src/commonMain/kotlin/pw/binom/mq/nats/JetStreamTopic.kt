@@ -12,7 +12,7 @@ import kotlin.random.Random
 class JetStreamTopic(
   val config: StreamConfig,
   val connection: JetStreamMqConnection,
-) : Topic {
+) : Topic<Message> {
   override suspend fun createProducer() =
     JetStreamProducer(
       subject = config.subjects.first(),

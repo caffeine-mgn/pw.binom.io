@@ -1,5 +1,6 @@
 package pw.binom.mq.nats
 
+import pw.binom.mq.Message
 import pw.binom.mq.MqConnection
 import pw.binom.mq.Topic
 import pw.binom.mq.nats.client.JetStreamImpl
@@ -7,7 +8,7 @@ import pw.binom.mq.nats.client.NatsReader
 import pw.binom.mq.nats.client.dto.StorageType
 import pw.binom.mq.nats.client.dto.StreamConfig
 
-class JetStreamMqConnection(val reader: NatsReader) : MqConnection {
+class JetStreamMqConnection(reader: NatsReader) : MqConnection {
   internal val js = JetStreamImpl(reader)
 
   override suspend fun asyncClose() {
@@ -33,7 +34,7 @@ class JetStreamMqConnection(val reader: NatsReader) : MqConnection {
     )
   }
 
-  override suspend fun getTopic(name: String): Topic? {
+  override suspend fun getTopic(name: String): JetStreamTopic? {
     TODO("Not yet implemented")
   }
 }

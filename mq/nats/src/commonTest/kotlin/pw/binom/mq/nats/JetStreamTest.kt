@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 
 class JetStreamTest : BaseTest() {
-  fun mqConnection(func: suspend (NatsMqConnection) -> Unit) =
+  fun mqConnection(func: suspend (NatsMqConnectionImpl) -> Unit) =
     testing {
       tcpConnect().use { tcp ->
         MqConnection.nats(

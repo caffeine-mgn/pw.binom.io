@@ -1,9 +1,9 @@
 package pw.binom.mq.nats
 
-import pw.binom.mq.Message
 import pw.binom.mq.Topic
+import pw.binom.mq.nats.client.NatsMessage
 
-class NatsTopic(val connection: NatsMqConnection, val subject: String) : Topic {
+class NatsTopic(val connection: NatsMqConnection, val subject: String) : Topic<NatsMessage> {
   private val producer = NatsProducer(this)
 
   override suspend fun createProducer() = producer
@@ -18,7 +18,7 @@ class NatsTopic(val connection: NatsMqConnection, val subject: String) : Topic {
 
   override suspend fun createConsumer(
     group: String?,
-    func: suspend (Message) -> Unit,
+    func: suspend (NatsMessage) -> Unit,
   ) = NatsConsumer(
     group = group,
     topic = this,
