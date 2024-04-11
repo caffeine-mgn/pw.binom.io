@@ -35,7 +35,7 @@ class TestURL {
         fragment = "ff nn",
       )
 
-    assertEquals("https://example.com:3301/123%20456?gender=m%20w#ff%20nn", uri.toString())
+    assertEquals("https://example.com:3301/123%20456?gender=m+w#ff+nn", uri.toString())
   }
 
   @Test

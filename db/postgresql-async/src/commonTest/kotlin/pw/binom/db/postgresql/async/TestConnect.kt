@@ -2,6 +2,7 @@ package pw.binom.db.postgresql.async
 
 import kotlinx.coroutines.test.runTest
 import pw.binom.charset.Charsets
+import pw.binom.date.Date
 import pw.binom.date.parseIso8601Date
 import pw.binom.db.ColumnType
 import pw.binom.db.async.firstOrNull
@@ -214,10 +215,10 @@ create table member_tag
       val date =
         it.prepareStatement("select date_column from date_argument_test").useAsync {
           it.executeQuery().firstOrNull {
-            it.getDate(0)
+            it.getDateTime(0)
           }
         }
-      assertEquals("2018-02-01 11:42:39.425".parseIso8601Date(0)!!.time, date!!.time)
+      assertEquals("2018-02-01 11:42:39.425".parseIso8601Date(0)!!.milliseconds, date!!.milliseconds)
     }
   }
 
@@ -294,7 +295,7 @@ create table member_tag
             """,
       ).executeQuery().map {
         assertEquals(10.0, it.getDouble(0))
-        assertEquals(1617012000000L, it.getDate(1)!!.time)
+        assertEquals(1617012000000L, it.getDateTime(1)!!.milliseconds)
       }
     }
   }
@@ -417,29 +418,13 @@ create table member_tag
   @Test
   fun timestampTest() {
     println()
-//        pg { con ->
-//            con.prepareStatement("SELECT TIMESTAMP '2020-01-05 15:43:36.000000'").use {
-//                try {
-//                    it.executeQuery().use {
-//                        assertEquals(1, it.columns.size)
-//                        assertTrue(it.next())
-//                        assertEquals(1578239016000L, it.getDate(0)!!.time)
-//                        assertFalse(it.next())
-//                    }
-//                } catch (e: Throwable) {
-//                    e.printStackTrace()
-//                    throw e
-//                }
-//            }
-//        }
-
     pg { con ->
       con.prepareStatement("SELECT TIMESTAMPTZ '2020-01-05 15:43:36.000'").useAsync {
         try {
           it.executeQuery().useAsync {
             assertEquals(1, it.columns.size)
             assertTrue(it.next())
-            assertEquals("2020-01-05 15:43:36.000".parseIso8601Date(0)!!.time, it.getDate(0)!!.time)
+            assertEquals("2020-01-05 15:43:36.000".parseIso8601Date(0)!!.milliseconds, it.getDateTime(0)!!.milliseconds)
             assertFalse(it.next())
           }
         } catch (e: Throwable) {
@@ -447,6 +432,35 @@ create table member_tag
           throw e
         }
       }
+    }
+  }
+
+  @Test
+  fun dateTest() {
+    pg { con ->
+      val date = Date.now
+      val tableName = "datetest"
+      con.createStatement().useAsync {
+        it.executeUpdate(
+          """create table $tableName(
+        id  bigserial not null primary key,
+        tmp date not null
+        )
+        """,
+        )
+      }
+      con.prepareStatement("insert into $tableName(tmp) values(?)").useAsync {
+        it.set(0, date)
+        it.executeUpdate()
+      }
+      val readDate =
+        con.createStatement().useAsync {
+          it.executeQuery("select tmp from $tableName").useAsync {
+            assertTrue(it.next())
+            it.getDate(0)
+          }
+        }
+      assertEquals(date, readDate)
     }
   }
 

@@ -147,7 +147,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
           }
         WebdavEntity(
           length = prop.props.length ?: 0L,
-          lastModified = prop.props.getLastModified?.time ?: 0L,
+          lastModified = prop.props.getLastModified?.milliseconds ?: 0L,
           path = realPath,
           user = user,
           isFile = !prop.props.isDirection,

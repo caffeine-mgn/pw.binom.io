@@ -323,7 +323,8 @@ class TcpConnection(
       return 0
     }
     if (currentKey.isClosed) {
-      throw SocketClosedException()
+      return -1
+//      throw SocketClosedException()
     }
     if (readData.continuation != null) {
 //      readData.continuation!!.cancel(IllegalStateException("Some other thread wants to read"))
@@ -342,7 +343,8 @@ class TcpConnection(
     }
     if (read == -1) {
       channel.close()
-      throw SocketClosedException()
+      return -1
+//      throw SocketClosedException()
     }
     readData.full = false
     return suspendCancellableCoroutine {

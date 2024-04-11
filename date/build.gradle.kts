@@ -1,6 +1,7 @@
 import pw.binom.eachKotlinCompile
+import pw.binom.publish.allTargets
+import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 import java.util.*
-import pw.binom.publish.*
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -32,12 +33,15 @@ kotlin {
       dependencies {
         api(kotlin("test-common"))
         api(kotlin("test-annotations-common"))
-//        api(project(":env"))
       }
     }
 
     jsTest.dependencies {
       api(kotlin("test-js"))
+    }
+
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
     }
   }
 }
@@ -45,9 +49,10 @@ kotlin {
 tasks {
 
   fun generateDate() {
-    val sourceDir = project.layout.buildDirectory.map { it.dir("gen/pw/binom/date") }
-      .get()
-      .asFile
+    val sourceDir =
+      project.layout.buildDirectory.map { it.dir("gen/pw/binom/date") }
+        .get()
+        .asFile
     sourceDir.mkdirs()
     val versionSource = sourceDir.resolve("test_data.kt")
     versionSource.writeText(
@@ -65,13 +70,13 @@ val test_data_now get() = ${Date().time}
     }
   }
 
-  withType(Test::class) {
-    useJUnitPlatform()
-    testLogging.showStandardStreams = true
-    testLogging.showCauses = true
-    testLogging.showExceptions = true
-    testLogging.showStackTraces = true
-    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-  }
+//  withType(Test::class) {
+//    useJUnitPlatform()
+//    testLogging.showStandardStreams = true
+//    testLogging.showCauses = true
+//    testLogging.showExceptions = true
+//    testLogging.showStackTraces = true
+//    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+//  }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

@@ -7,23 +7,25 @@ import kotlinx.cinterop.ptr
 import platform.posix.*
 import kotlin.time.Duration
 
-actual value class DateTime(val time: Long) {
+actual value class DateTime(val milliseconds: Long) {
   @OptIn(ExperimentalForeignApi::class)
   actual companion object {
     actual val systemZoneOffset: Int
-      get() = memScoped {
-        val t = alloc<timezone>()
-        val timeVal = alloc<timeval>()
-        mingw_gettimeofday(timeVal.ptr, t.ptr)
-        val r = -t.tz_minuteswest
-        r
-      }
+      get() =
+        memScoped {
+          val t = alloc<timezone>()
+          val timeVal = alloc<timeval>()
+          mingw_gettimeofday(timeVal.ptr, t.ptr)
+          val r = -t.tz_minuteswest
+          r
+        }
     actual val nowTime: Long
-      get() = memScoped {
-        val ff = alloc<timespec>()
-        clock_gettime(CLOCK_REALTIME, ff.ptr)
-        ff.tv_sec * 1000L + ff.tv_nsec / 1000000L
-      }
+      get() =
+        memScoped {
+          val ff = alloc<timespec>()
+          clock_gettime(CLOCK_REALTIME, ff.ptr)
+          ff.tv_sec * 1000L + ff.tv_nsec / 1000000L
+        }
 
     actual fun internalOf(
       year: Int,
@@ -50,16 +52,21 @@ actual value class DateTime(val time: Long) {
       get() = DateTime(nowTime)
   }
 
-  actual fun calendar(timeZoneOffset: Int): Calendar =
-    Calendar(utcTime = time, offset = timeZoneOffset)
+  actual fun calendar(timeZoneOffset: Int): Calendar = Calendar(utcTime = milliseconds, offset = timeZoneOffset)
 
   actual operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
+
   actual operator fun plus(duration: Duration) = dateTimePlus(date = this, duration = duration)
+
   actual operator fun minus(duration: Duration) = dateTimeMinus(date = this, duration = duration)
-  actual operator fun minus(other: DateTime) = dateTimeMinus(
-    date = this,
-    other = other,
-  )
+
+  actual operator fun minus(other: DateTime) =
+    dateTimeMinus(
+      date = this,
+      other = other,
+    )
+
+  override fun toString(): String = dateTimeToString(this)
 }
 
 private val daysInMonth = arrayOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)

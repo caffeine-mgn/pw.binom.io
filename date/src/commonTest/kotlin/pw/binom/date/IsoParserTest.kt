@@ -5,9 +5,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class IsoParserTest {
-
-    @Test
-    fun test() {
+  @Test
+  fun test() {
         /*
         "2021-03-29".parseIso8601Date(0)!!.calendar(0).apply {
             assertEquals(2021, year)
@@ -68,25 +67,25 @@ class IsoParserTest {
             assertEquals(370, millisecond)
             assertEquals(0, timeZoneOffset)
         }
-        */
-        "2021-03-29T10:17:33.039440139Z".parseIso8601Date(0)!!.calendar(0).apply {
-            assertEquals(2021, year)
-            assertEquals(3, month)
-            assertEquals(29, dayOfMonth)
-            assertEquals(10, hours)
-            assertEquals(17, minutes)
-            assertEquals(33, seconds)
-            assertEquals(39, millisecond)
-            assertEquals(0, offset)
-        }
+         */
+    "2021-03-29T10:17:33.039440139Z".parseIso8601Date(0)!!.calendar(0).apply {
+      assertEquals(2021, year)
+      assertEquals(3, month)
+      assertEquals(29, dayOfMonth)
+      assertEquals(10, hours)
+      assertEquals(17, minutes)
+      assertEquals(33, seconds)
+      assertEquals(39, millisecond)
+      assertEquals(0, offset)
     }
+  }
 
-    @Test
-    fun aaa() {
-        "0071-08-23T12:00:00.000000000Z".parseIso8601Date().apply {
-            println("->time=${this?.time}")
-            val calc = this?.calendar()
-            assertNotNull(this)
-        }
+  @Test
+  fun aaa() {
+    "0071-08-23T12:00:00.000000000Z".parseIso8601Date().apply {
+      println("->time=${this?.milliseconds}")
+      val calc = this?.calendar()
+      assertNotNull(calc)
     }
+  }
 }

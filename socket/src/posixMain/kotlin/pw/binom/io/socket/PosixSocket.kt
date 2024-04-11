@@ -227,7 +227,7 @@ class PosixSocket(
       }
       nativeClose()
 //            TODO("Отслеживать отключение сокета. send: [$r], error: [${errno}], EDEADLK=$EDEADLK")
-      throw IOException("Error on read data to network. send: [$r], error: [$errno]")
+      throw IOException("Error on read data to network. receive: [$r], error: [$errno]")
     }
     if (r > 0) {
       data.position += r

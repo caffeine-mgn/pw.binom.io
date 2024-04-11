@@ -83,6 +83,9 @@ kotlin {
         api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
       }
     }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
+    }
     /*
     val jvmMain by getting {
         dependsOn(commonMain)

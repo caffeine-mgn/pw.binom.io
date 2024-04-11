@@ -25,7 +25,7 @@ class Base64DecodeInputStreamTest {
     Random.nextBytes(data)
     data.clear()
     val sb = StringBuilder()
-    Base64EncodeOutput(sb).use { out ->
+    Base64EncodeOutput(sb, padding = true).use { out ->
       if (data.capacity != out.write(data)) {
         fail()
       }

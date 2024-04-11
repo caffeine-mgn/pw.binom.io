@@ -18,12 +18,18 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
 
   private suspend fun makeRequest(): HttpRequestBody {
     check(httpRequestBody == null) { "Request already sent" }
+    val requestLength =
+      if (headers.contentLength != null || headers.transferEncoding != Encoding.CHUNKED) {
+        OutputLength.None
+      } else {
+        OutputLength.Chunked
+      }
     val req =
       client.startConnect(
         method = method,
         uri = url,
         headers = headers,
-        requestLength = if (headers.contentLength != null || headers.transferEncoding != Encoding.CHUNKED) OutputLength.None else OutputLength.Chunked,
+        requestLength = requestLength,
       )
     httpRequestBody = req
     return req
@@ -37,8 +43,7 @@ class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, 
       var reqInternal = req
       return if (reqInternal == null) {
         val bodyDefined =
-          headers.contentLength != null &&
-            headers.transferEncoding?.let { Encoding.CHUNKED in it } ?: false
+          headers.contentLength != null
 
         if (!bodyDefined) {
           headers.transferEncoding = Encoding.CHUNKED

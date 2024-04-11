@@ -1,6 +1,7 @@
 import pw.binom.kotlin.clang.eachNative
 import java.util.*
 import pw.binom.publish.allTargets
+import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -27,6 +28,7 @@ kotlin {
     useNative()
   }
   applyDefaultHierarchyTemplate()
+  applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
       api(kotlin("stdlib-common"))
@@ -38,18 +40,18 @@ kotlin {
       api("pw.binom:url:${pw.binom.Versions.BINOM_URL_VERSION}")
       api("pw.binom:uuid:${pw.binom.Versions.BINOM_UUID_VERSION}")
     }
-    val nativeRunnableMain by creating {
-      dependsOn(commonMain.get())
-    }
-    nativeMain {
-      dependsOn(nativeRunnableMain)
-    }
-    val jvmLikeMain by creating {
-      dependsOn(commonMain.get())
-    }
-    jvmMain {
-      dependsOn(jvmLikeMain)
-    }
+//    val nativeRunnableMain by creating {
+//      dependsOn(commonMain.get())
+//    }
+//    nativeMain {
+//      dependsOn(nativeRunnableMain)
+//    }
+//    val jvmLikeMain by creating {
+//      dependsOn(commonMain.get())
+//    }
+//    jvmMain {
+//      dependsOn(jvmLikeMain)
+//    }
 
     commonTest.dependencies {
       api(kotlin("test-common"))
@@ -59,7 +61,7 @@ kotlin {
       api(project(":charset"))
     }
     jvmTest.dependencies {
-      api(kotlin("test"))
+      api(kotlin("test-junit"))
     }
 
     jsTest.dependencies {

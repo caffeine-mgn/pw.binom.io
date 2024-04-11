@@ -50,6 +50,9 @@ kotlin {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
     }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
+    }
   }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

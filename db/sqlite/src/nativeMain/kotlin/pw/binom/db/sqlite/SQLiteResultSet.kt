@@ -7,6 +7,7 @@ import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableMap
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.ColumnType
 import pw.binom.db.SQLException
@@ -21,6 +22,7 @@ class SQLiteResultSet(
   private val columnsMap = defaultMutableMap<String, Int>()
 
   override lateinit var columns: List<String>
+
   override fun columnType(index: Int): ColumnType =
     when (val type = sqlite3_column_type(stmt, index)) {
       SQLITE_INTEGER -> ColumnType.INTEGER
@@ -37,10 +39,11 @@ class SQLiteResultSet(
     columnCount = sqlite3_column_count(stmt).toUInt()
     val out = defaultMutableList<String>(columnCount.toInt())
     (0 until columnCount.toInt()).forEach {
-      val name = sqlite3_column_origin_name(stmt, it)
-        ?.reinterpret<ByteVar>()
-        ?.toKStringFromUtf8()
-        ?: ""
+      val name =
+        sqlite3_column_origin_name(stmt, it)
+          ?.reinterpret<ByteVar>()
+          ?.toKStringFromUtf8()
+          ?: ""
       out += name
       columnsMap[name] = it
     }
@@ -59,26 +62,27 @@ class SQLiteResultSet(
       return true
     }
 
-    val bb = when (sqlite3_step(stmt)) {
-      SQLITE_BUSY -> throw SQLException("Database is Busy")
-      SQLITE_DONE -> {
-        empty = true
-        false
+    val bb =
+      when (sqlite3_step(stmt)) {
+        SQLITE_BUSY -> throw SQLException("Database is Busy")
+        SQLITE_DONE -> {
+          empty = true
+          false
+        }
+
+        SQLITE_ROW -> {
+          columnCount = sqlite3_column_count(stmt).toUInt()
+          true
+        }
+
+        SQLITE_ERROR -> throw SQLException(
+          sqlite3_errmsg(prepareStatement.connection.ctx.pointed.value)?.toKStringFromUtf8()
+            ?: "Unknown Error",
+        )
+
+        SQLITE_MISUSE -> throw SQLException("Database is Misuse")
+        else -> throw SQLException()
       }
-
-      SQLITE_ROW -> {
-        columnCount = sqlite3_column_count(stmt).toUInt()
-        true
-      }
-
-      SQLITE_ERROR -> throw SQLException(
-        sqlite3_errmsg(prepareStatement.connection.ctx.pointed.value)?.toKStringFromUtf8()
-          ?: "Unknown Error",
-      )
-
-      SQLITE_MISUSE -> throw SQLException("Database is Misuse")
-      else -> throw SQLException()
-    }
     return bb
   }
 
@@ -105,14 +109,11 @@ class SQLiteResultSet(
 
   override fun getBlob(column: String): ByteArray? = getBlob(columnIndex(column))
 
-  override fun getString(column: String): String? =
-    getString(columnIndex(column))
+  override fun getString(column: String): String? = getString(columnIndex(column))
 
-  override fun getBoolean(index: Int): Boolean? =
-    getInt(index)?.let { it > 0 }
+  override fun getBoolean(index: Int): Boolean? = getInt(index)?.let { it > 0 }
 
-  override fun getBoolean(column: String): Boolean? =
-    getInt(column)?.let { it > 0 }
+  override fun getBoolean(column: String): Boolean? = getInt(column)?.let { it > 0 }
 
   override fun getInt(index: Int): Int? {
     checkRange(index)
@@ -122,8 +123,7 @@ class SQLiteResultSet(
     return sqlite3_column_int(stmt, index)
   }
 
-  override fun getInt(column: String): Int? =
-    getInt(columnIndex(column))
+  override fun getInt(column: String): Int? = getInt(columnIndex(column))
 
   override fun getLong(index: Int): Long? {
     checkRange(index)
@@ -134,15 +134,13 @@ class SQLiteResultSet(
     return sqlite3_column_int64(stmt, index)
   }
 
-  override fun getLong(column: String): Long? =
-    getLong(columnIndex(column))
+  override fun getLong(column: String): Long? = getLong(columnIndex(column))
 
   override fun getFloat(index: Int): Float? {
     return getDouble(index)?.toFloat()
   }
 
-  override fun getFloat(column: String): Float? =
-    getFloat(columnIndex(column))
+  override fun getFloat(column: String): Float? = getFloat(columnIndex(column))
 
 //    override fun getBigDecimal(index: Int): BigDecimal? {
 //        TODO("Not yet implemented")
@@ -160,11 +158,9 @@ class SQLiteResultSet(
     return sqlite3_column_double(stmt, index)
   }
 
-  override fun getDouble(column: String): Double? =
-    getDouble(columnIndex(column))
+  override fun getDouble(column: String): Double? = getDouble(columnIndex(column))
 
-  override fun columnIndex(column: String) =
-    columnsMap[column] ?: throw SQLException("Column \"$column\" not found")
+  override fun columnIndex(column: String) = columnsMap[column] ?: throw SQLException("Column \"$column\" not found")
 
   private inline val stmt
     get() = prepareStatement.native[0]
@@ -174,17 +170,20 @@ class SQLiteResultSet(
     return isNullColumn(index)
   }
 
-  private inline fun isNullColumn(index: Int) =
-    sqlite3_column_type(stmt, index) == SQLITE_NULL
+  private inline fun isNullColumn(index: Int) = sqlite3_column_type(stmt, index) == SQLITE_NULL
 
-  override fun isNull(column: String) =
-    isNullColumn(columnIndex(column))
+  override fun isNull(column: String) = isNullColumn(columnIndex(column))
 
-  override fun getDate(index: Int): DateTime? =
-    getLong(index)?.let { DateTime(it) }
+  override fun getDateTime(index: Int): DateTime? = getLong(index)?.let { DateTime(it) }
 
-  override fun getDate(column: String): DateTime? =
-    getDate(columnIndex(column))
+  override fun getDate(index: Int): Date? {
+    val str = getString(index) ?: return null
+    return Date.fromIso8601(str)
+  }
+
+  override fun getDate(column: String): Date? = getDate(columnIndex(column))
+
+  override fun getDateTime(column: String): DateTime? = getDateTime(columnIndex(column))
 
   private var closed = false
 

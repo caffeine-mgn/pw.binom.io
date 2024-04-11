@@ -1,4 +1,5 @@
-import pw.binom.publish.*
+import pw.binom.publish.allTargets
+import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -13,11 +14,12 @@ kotlin {
   allTargets()
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(project(":io"))
-        api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
-      }
+    commonMain.dependencies {
+      api(project(":io"))
+      api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
+    }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
     }
   }
 }

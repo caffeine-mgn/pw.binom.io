@@ -29,7 +29,7 @@ class NumericTest {
       connection.prepareStatement("select birthday from buyers where id=279734").useAsync { r ->
         r.executeQuery().useAsync { b ->
           assertTrue(b.next())
-          println("->${b.getDate("birthday")!!.iso8601()}")
+          println("->${b.getDateTime("birthday")!!.iso8601()}")
         }
       }
       println("Connected!")

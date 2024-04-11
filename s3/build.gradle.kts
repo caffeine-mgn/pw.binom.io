@@ -34,6 +34,9 @@ kotlin {
       api(project(":httpClient"))
       api(project(":core"))
     }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
+    }
   }
 }
 
@@ -53,6 +56,7 @@ tasks {
       image = "zenko/cloudserver:latest-7.70.7",
       tcpPorts = listOf(8000 to 7122),
       suffix = "S3",
+      autoRemove = true,
       envs =
         mapOf(
 //            "MINIO_ROOT_USER" to "minio",

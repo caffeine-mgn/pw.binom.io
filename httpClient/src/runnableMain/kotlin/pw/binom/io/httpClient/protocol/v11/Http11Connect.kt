@@ -41,12 +41,13 @@ class Http11Connect(
     val newKey = "${url.schema}://${url.host}${url.port?.let { ":$it" } ?: ""}"
     var tcp = tcp
     if (tcp == null) {
-      tcp = connectFactory.connect(
-        networkManager = networkManager,
-        schema = url.schema,
-        host = url.host,
-        port = url.port ?: url.getPort(),
-      )
+      tcp =
+        connectFactory.connect(
+          networkManager = networkManager,
+          schema = url.schema,
+          host = url.host,
+          port = url.port ?: url.getPort(),
+        )
 //      tcp = networkManager.tcpConnect(
 //        InetNetworkAddress.create(
 //          host = url.host,

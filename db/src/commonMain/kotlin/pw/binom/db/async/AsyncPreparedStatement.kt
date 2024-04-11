@@ -3,6 +3,7 @@ package pw.binom.db.async
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.date.Calendar
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.io.AsyncCloseable
@@ -13,17 +14,62 @@ interface AsyncPreparedStatement : AsyncCloseable {
 
   //    suspend fun set(index: Int, value: BigInteger)
 //    suspend fun set(index: Int, value: BigDecimal)
-  suspend fun set(index: Int, value: Double)
-  suspend fun set(index: Int, value: Float)
-  suspend fun set(index: Int, value: Int)
-  suspend fun set(index: Int, value: Short)
-  suspend fun set(index: Int, value: Long)
-  suspend fun set(index: Int, value: String)
-  suspend fun set(index: Int, value: Boolean)
-  suspend fun set(index: Int, value: ByteArray)
-  suspend fun set(index: Int, value: DateTime)
+  suspend fun set(
+    index: Int,
+    value: Double,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: Float,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: Int,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: Short,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: Long,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: String,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: Boolean,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: ByteArray,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: DateTime,
+  )
+
+  suspend fun set(
+    index: Int,
+    value: Date,
+  )
+
   suspend fun setNull(index: Int)
-  suspend fun setValue(index: Int, value: Any?) {
+
+  suspend fun setValue(
+    index: Int,
+    value: Any?,
+  ) {
     when (value) {
       null -> setNull(index)
 //            is BigInteger -> set(index, value)
@@ -71,8 +117,13 @@ interface AsyncPreparedStatement : AsyncCloseable {
   }
 
   suspend fun executeQuery(): AsyncResultSet
+
   suspend fun executeUpdate(): Long
-  suspend fun set(index: Int, value: UUID) {
+
+  suspend fun set(
+    index: Int,
+    value: UUID,
+  ) {
     val buf = ByteArray(16)
     set(index, value.toByteArray(buf))
   }

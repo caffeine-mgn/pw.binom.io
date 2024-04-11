@@ -2,6 +2,7 @@ package pw.binom.db.sqlite
 
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.ColumnType
 import pw.binom.db.async.AsyncResultSet
@@ -61,9 +62,13 @@ class AsyncResultSetAdapter(val ref: SyncResultSet, val context: CoroutineContex
 
   override fun isNull(column: String): Boolean = ref.isNull(column)
 
-  override fun getDate(index: Int): DateTime? = ref.getDate(index)
+  override fun getDateTime(index: Int): DateTime? = ref.getDateTime(index)
 
-  override fun getDate(column: String): DateTime? = ref.getDate(column)
+  override fun getDateTime(column: String): DateTime? = ref.getDateTime(column)
+
+  override fun getDate(index: Int): Date? = ref.getDate(index)
+
+  override fun getDate(column: String): Date? = ref.getDate(column)
 
   override fun columnIndex(column: String): Int = ref.columnIndex(column)
 

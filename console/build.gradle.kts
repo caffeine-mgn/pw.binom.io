@@ -45,6 +45,9 @@ kotlin {
     jvmMain.dependencies {
       api("org.jline:jline:3.21.0")
     }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
+    }
   }
 }
 

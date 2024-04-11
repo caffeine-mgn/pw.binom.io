@@ -17,49 +17,50 @@ class SQLValueDecoder(
   val resultSet: ResultSet,
   override val serializersModule: SerializersModule,
 ) : SQLDecoder {
-
   val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
-  override fun decodeDateTime(): DateTime = resultSet.getDate(columnName)!!
+
+  override fun decodeDateTime(): DateTime = resultSet.getDateTime(columnName)!!
+
   override fun decodeUUID(): UUID = resultSet.getUUID(columnName)!!
+
   override fun decodeByteArray(): ByteArray = resultSet.getBlob(columnName)!!
 
   override fun beginStructure(descriptor: SerialDescriptor): SQLCompositeDecoder {
-    val prefix = columnName +
-      (classDescriptor.getElementAnnotation<EmbeddedSplitter>(fieldIndex)?.splitter ?: "_")
+    val prefix =
+      columnName +
+        (classDescriptor.getElementAnnotation<EmbeddedSplitter>(fieldIndex)?.splitter ?: "_")
 
     return when {
-      descriptor == ByteArraySerializer().descriptor -> ByteArraySQLCompositeDecoder(
-        data = resultSet.getBlob(columnName)!!,
-        serializersModule = serializersModule
-      )
+      descriptor == ByteArraySerializer().descriptor ->
+        ByteArraySQLCompositeDecoder(
+          data = resultSet.getBlob(columnName)!!,
+          serializersModule = serializersModule,
+        )
 
-      else -> SQLCompositeDecoder2(
-        columnPrefix = prefix,
-        resultSet = resultSet,
-        serializersModule = serializersModule
-      )
+      else ->
+        SQLCompositeDecoder2(
+          columnPrefix = prefix,
+          resultSet = resultSet,
+          serializersModule = serializersModule,
+        )
 //            else -> throw SQLException("")
     }
   }
 
-  override fun decodeBoolean(): Boolean =
-    resultSet.getBoolean(columnName)!!
+  override fun decodeBoolean(): Boolean = resultSet.getBoolean(columnName)!!
 
-  override fun decodeByte(): Byte =
-    resultSet.getInt(columnName)!!.toByte()
+  override fun decodeByte(): Byte = resultSet.getInt(columnName)!!.toByte()
 
-  override fun decodeChar(): Char =
-    resultSet.getString(columnName)!![0]
+  override fun decodeChar(): Char = resultSet.getString(columnName)!![0]
 
-  override fun decodeDouble(): Double =
-    resultSet.getDouble(columnName)!!
+  override fun decodeDouble(): Double = resultSet.getDouble(columnName)!!
 
   @OptIn(ExperimentalSerializationApi::class)
   override fun decodeEnum(enumDescriptor: SerialDescriptor): Int {
     return pw.binom.db.serialization.codes.SQLDecoderImpl.decodeEnum(
       name = columnName,
       input = ResultSetDataProvider(resultSet),
-      enumDescriptor = enumDescriptor
+      enumDescriptor = enumDescriptor,
     )
     /*
       val byOrder = enumDescriptor.annotations.any { it is Enumerate }
@@ -86,22 +87,19 @@ class SQLValueDecoder(
           }
       }
       throw SerializationException("Can't find enum ${enumDescriptor.serialName} by value \"$columnValue\"")
-    */
+     */
   }
 
-  override fun decodeFloat(): Float =
-    resultSet.getFloat(columnName)!!
+  override fun decodeFloat(): Float = resultSet.getFloat(columnName)!!
 
   @ExperimentalSerializationApi
   override fun decodeInline(inlineDescriptor: SerialDescriptor): Decoder {
     TODO("Not yet implemented")
   }
 
-  override fun decodeInt(): Int =
-    resultSet.getInt(columnName)!!
+  override fun decodeInt(): Int = resultSet.getInt(columnName)!!
 
-  override fun decodeLong(): Long =
-    resultSet.getLong(columnName)!!
+  override fun decodeLong(): Long = resultSet.getLong(columnName)!!
 
   @ExperimentalSerializationApi
   override fun decodeNotNullMark(): Boolean {
@@ -111,9 +109,7 @@ class SQLValueDecoder(
   @ExperimentalSerializationApi
   override fun decodeNull(): Nothing? = null
 
-  override fun decodeShort(): Short =
-    resultSet.getInt(columnName)!!.toShort()
+  override fun decodeShort(): Short = resultSet.getInt(columnName)!!.toShort()
 
-  override fun decodeString(): String =
-    resultSet.getString(columnName)!!
+  override fun decodeString(): String = resultSet.getString(columnName)!!
 }

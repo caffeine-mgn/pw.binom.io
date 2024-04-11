@@ -3,6 +3,7 @@ package pw.binom.db.sync
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.date.Calendar
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.io.Closeable
@@ -13,24 +14,74 @@ interface SyncPreparedStatement : Closeable {
 
   //    fun set(index: Int, value: BigInteger)
 //    fun set(index: Int, value: BigDecimal)
-  fun set(index: Int, value: Double)
-  fun set(index: Int, value: Float)
-  fun set(index: Int, value: Int)
-  fun set(index: Int, value: Short)
-  fun set(index: Int, value: Long)
-  fun set(index: Int, value: String)
-  fun set(index: Int, value: Boolean)
-  fun set(index: Int, value: ByteArray)
-  fun set(index: Int, value: DateTime)
+  fun set(
+    index: Int,
+    value: Double,
+  )
+
+  fun set(
+    index: Int,
+    value: Float,
+  )
+
+  fun set(
+    index: Int,
+    value: Int,
+  )
+
+  fun set(
+    index: Int,
+    value: Short,
+  )
+
+  fun set(
+    index: Int,
+    value: Long,
+  )
+
+  fun set(
+    index: Int,
+    value: String,
+  )
+
+  fun set(
+    index: Int,
+    value: Boolean,
+  )
+
+  fun set(
+    index: Int,
+    value: ByteArray,
+  )
+
+  fun set(
+    index: Int,
+    value: DateTime,
+  )
+
+  fun set(
+    index: Int,
+    value: Date,
+  )
+
   fun setNull(index: Int)
+
   fun executeQuery(): SyncResultSet
+
   fun executeUpdate(): Long
-  fun set(index: Int, value: UUID) {
+
+  fun set(
+    index: Int,
+    value: UUID,
+  ) {
     val buf = ByteArray(UUID.SIZE_BYTES)
     set(index, value.toByteArray(buf))
   }
 
-  fun setValue(index: Int, value: Any?) {
+  fun setValue(
+    index: Int,
+    value: Any?,
+  ) {
     when (value) {
       null -> setNull(index)
 //            is BigInteger -> set(index, value)

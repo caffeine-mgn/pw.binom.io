@@ -1,13 +1,18 @@
 package pw.binom.date
 
 import kotlin.jvm.JvmInline
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 
 @JvmInline
 value class Time(val nano: Long) {
-    val duration
-        get() = nano.nanoseconds
+  companion object {
+    fun fromMilliseconds(milliseconds: Long) = Time(milliseconds.milliseconds.inWholeNanoseconds)
+  }
 
-    val milliseconds
-        get() = duration.inWholeMilliseconds
+  val duration
+    get() = nano.nanoseconds
+
+  val milliseconds
+    get() = duration.inWholeMilliseconds
 }

@@ -2,6 +2,7 @@ package pw.binom.db.postgresql.async
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.ColumnType
 import pw.binom.db.SQLException
@@ -78,42 +79,76 @@ class PostgresPreparedStatement(
 //        params[index] = value
 //    }
 
-  override suspend fun set(index: Int, value: Double) {
+  override suspend fun set(
+    index: Int,
+    value: Double,
+  ) {
     params[index] = value
   }
 
-  override suspend fun set(index: Int, value: Float) {
+  override suspend fun set(
+    index: Int,
+    value: Float,
+  ) {
     params[index] = value
   }
 
-  override suspend fun set(index: Int, value: Int) {
+  override suspend fun set(
+    index: Int,
+    value: Int,
+  ) {
     params[index] = value
   }
 
-  override suspend fun set(index: Int, value: Short) {
+  override suspend fun set(
+    index: Int,
+    value: Short,
+  ) {
     params[index] = value
   }
 
-  override suspend fun set(index: Int, value: Long) {
+  override suspend fun set(
+    index: Int,
+    value: Long,
+  ) {
     params[index] = value
   }
 
-  override suspend fun set(index: Int, value: String) {
+  override suspend fun set(
+    index: Int,
+    value: String,
+  ) {
     if (index < 0 || index >= params.size) {
       throw IndexOutOfBoundsException("Can't set $index to \"$value\". Params count: ${params.size}. SQL: $query$")
     }
     params[index] = value
   }
 
-  override suspend fun set(index: Int, value: Boolean) {
+  override suspend fun set(
+    index: Int,
+    value: Boolean,
+  ) {
     params[index] = value
   }
 
-  override suspend fun set(index: Int, value: ByteArray) {
+  override suspend fun set(
+    index: Int,
+    value: ByteArray,
+  ) {
     params[index] = value
   }
 
-  override suspend fun set(index: Int, value: DateTime) {
+  override suspend fun set(
+    index: Int,
+    value: DateTime,
+  ) {
+    params[index] = value
+  }
+
+  override suspend fun set(
+    index: Int,
+    value: Date,
+  ) {
     params[index] = value
   }
 
@@ -144,7 +179,10 @@ class PostgresPreparedStatement(
     throw SQLException("Query returns data")
   }
 
-  override suspend fun set(index: Int, value: UUID) {
+  override suspend fun set(
+    index: Int,
+    value: UUID,
+  ) {
     params[index] = value
   }
 
@@ -173,11 +211,12 @@ class PostgresPreparedStatement(
   }
 
   suspend fun execute(): QueryResponse {
-    val types = if (paramColumnTypes.isEmpty()) {
-      emptyList()
-    } else {
-      paramColumnTypes.map { it.typeInt }
-    }
+    val types =
+      if (paramColumnTypes.isEmpty()) {
+        emptyList()
+      } else {
+        paramColumnTypes.map { it.typeInt }
+      }
     var justParsed = false
     if (!parsed) {
       connection.sendOnly(

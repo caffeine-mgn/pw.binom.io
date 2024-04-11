@@ -1,6 +1,7 @@
 package pw.binom.db.postgresql.async
 
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.date.of
 import pw.binom.db.ColumnType
@@ -10,20 +11,20 @@ import pw.binom.uuid.UUID
 import pw.binom.uuid.toUUID
 
 class PostgresAsyncResultSet(
-    binary: Boolean,
-    val data: QueryResponse.Data,
+  binary: Boolean,
+  val data: QueryResponse.Data,
 ) : AsyncResultSet {
-    override val columns: List<String> by lazy { data.meta.map { it.name } }
-    override fun columnType(index: Int): ColumnType =
-        data.meta.getOrNull(index)?.columnType ?: throw SQLException("Column $index not exist")
+  override val columns: List<String> by lazy { data.meta.map { it.name } }
 
-    override fun columnType(column: String) = columnType(getIndex(column))
+  override fun columnType(index: Int): ColumnType = data.meta.getOrNull(index)?.columnType ?: throw SQLException("Column $index not exist")
 
-    override suspend fun next(): Boolean = data.next()
+  override fun columnType(column: String) = columnType(getIndex(column))
 
-    override fun getString(index: Int): String? {
-        val value = data[index] ?: return null
-        return data.connection.charsetUtils.decode(value)
+  override suspend fun next(): Boolean = data.next()
+
+  override fun getString(index: Int): String? {
+    val value = data[index] ?: return null
+    return data.connection.charsetUtils.decode(value)
 //        return when (val dataType = data.meta[index].dataType) {
 //            ColumnTypes.Bigserial -> Long.fromBytes(value).toString()
 //            ColumnTypes.Text, ColumnTypes.Varchar -> data.connection.charsetUtils.decode(value)
@@ -31,67 +32,69 @@ class PostgresAsyncResultSet(
 //            ColumnTypes.UUID -> UUID.Companion.create(value).toString()
 //            else -> throwNotSupported(dataType, value)
 //        }
+  }
+
+  private fun throwNotSupported(
+    dataType: Int,
+    value: ByteArray,
+  ): Nothing {
+    val data =
+      value
+        .map { it.toUByte().toString(16).let { if (it.length == 1) "0$it" else it } }
+        .joinToString(" ")
+    throw SQLException("Unknown Column Type. id: [$dataType], size: [${value.size}], data: [$data]")
+  }
+
+  private fun getIndex(column: String): Int {
+    val p = columns.indexOfFirst { it.lowercase() == column.lowercase() }
+    if (p == -1) {
+      throw IllegalStateException("Column \"$column\" not found")
+    }
+    return p
+  }
+
+  override fun getUUID(index: Int): UUID? {
+    val uuid = getString(index) ?: return null
+    return UUID.fromString(uuid)
+  }
+
+  override fun getUUID(column: String): UUID? = getUUID(getIndex(column))
+
+  override fun getDateTime(index: Int): DateTime? {
+    val value = getString(index) ?: return null
+    return DateUtils.parseDate(value)
+  }
+
+  private fun Long.toDatetime() =
+    DateTime(this / 1000).calendar(0).let {
+      DateTime.of(
+        year = it.year + 30,
+        month = it.month + 0,
+        dayOfMonth = it.dayOfMonth,
+        hours = it.hours,
+        minutes = it.minutes,
+        seconds = it.seconds,
+        millis = it.millisecond,
+        timeZoneOffset = 0,
+      )
     }
 
-    private fun throwNotSupported(dataType: Int, value: ByteArray): Nothing {
-        val data = value
-            .map { it.toUByte().toString(16).let { if (it.length == 1) "0$it" else it } }
-            .joinToString(" ")
-        throw SQLException("Unknown Column Type. id: [$dataType], size: [${value.size}], data: [$data]")
-    }
+  override fun getDateTime(column: String): DateTime? = getDateTime(getIndex(column))
 
-    private fun getIndex(column: String): Int {
-        val p = columns.indexOfFirst { it.lowercase() == column.lowercase() }
-        if (p == -1) {
-            throw IllegalStateException("Column \"$column\" not found")
-        }
-        return p
-    }
+  override fun getDate(index: Int): Date? {
+    val dateStr = getString(index) ?: return null
+    return Date.fromIso8601(dateStr)
+  }
 
-    override fun getUUID(index: Int): UUID? {
-        val uuid = getString(index) ?: return null
-        return UUID.fromString(uuid)
-    }
+  override fun getDate(column: String): Date? = getDate(getIndex(column))
 
-    override fun getUUID(column: String): UUID? =
-        getUUID(getIndex(column))
+  override fun columnIndex(column: String): Int = getIndex(column)
 
-    override fun getDate(index: Int): DateTime? {
-        val value = getString(index) ?: return null
-        return DateUtils.parseDate(value)
-    }
+  override fun getString(column: String): String? = getString(getIndex(column))
 
-    private fun Long.toDatetime() =
-        DateTime(this / 1000).calendar(0).let {
-            DateTime.of(
-                year = it.year + 30,
-                month = it.month + 0,
-                dayOfMonth = it.dayOfMonth,
-                hours = it.hours,
-                minutes = it.minutes,
-                seconds = it.seconds,
-                millis = it.millisecond,
-                timeZoneOffset = 0
-            )
-        }
-
-    override fun getDate(column: String): DateTime? =
-        try {
-            getDate(getIndex(column))
-        } catch (e: Throwable) {
-            println("->>>>$column<<<<-")
-            throw e
-//            throw PostgresqlException("Can't get Date from column \"$column\"", e)
-        }
-
-    override fun columnIndex(column: String): Int = getIndex(column)
-
-    override fun getString(column: String): String? =
-        getString(getIndex(column))
-
-    override fun getBoolean(index: Int): Boolean? {
-        val value = getString(index) ?: return null
-        return value == "t" || value == "true"
+  override fun getBoolean(index: Int): Boolean? {
+    val value = getString(index) ?: return null
+    return value == "t" || value == "true"
 //        val value = data[index] ?: return null
 //        return when (val dataType = data.meta[index].dataType) {
 //            ColumnTypes.Bigserial -> Long.fromBytes(value) > 0
@@ -99,16 +102,15 @@ class PostgresAsyncResultSet(
 //            ColumnTypes.Boolean -> (value[0] > 0.toByte())
 //            else -> throwNotSupported(dataType, value)
 //        }
+  }
+
+  override fun getBoolean(column: String): Boolean? = getBoolean(getIndex(column))
+
+  override fun getInt(index: Int): Int? {
+    if (data.meta[index].columnType == ColumnType.BIT) {
+      return getBoolean(index)?.let { if (it) 1 else 0 }
     }
-
-    override fun getBoolean(column: String): Boolean? =
-        getBoolean(getIndex(column))
-
-    override fun getInt(index: Int): Int? {
-        if (data.meta[index].columnType == ColumnType.BIT) {
-            return getBoolean(index)?.let { if (it) 1 else 0 }
-        }
-        return getString(index)?.toInt()
+    return getString(index)?.toInt()
 //        return when (val dataType = data.meta[index].dataType) {
 //            ColumnTypes.Bigserial -> Long.fromBytes(value).toInt()
 //            ColumnTypes.Boolean -> if ((value[0] > 0.toByte())) 1 else 0
@@ -117,19 +119,18 @@ class PostgresAsyncResultSet(
 //            ColumnTypes.Numeric -> NumericUtils.decode(value).intValue()
 //            else -> throwNotSupported(dataType, value)
 //        }
+  }
+
+  override fun getInt(column: String): Int? = getInt(getIndex(column))
+
+  override fun getLong(index: Int): Long? {
+    if (data.meta[index].columnType == ColumnType.TIMESTAMP) {
+      return getDateTime(index)?.milliseconds
     }
-
-    override fun getInt(column: String): Int? =
-        getInt(getIndex(column))
-
-    override fun getLong(index: Int): Long? {
-        if (data.meta[index].columnType == ColumnType.TIMESTAMP) {
-            return getDate(index)?.time
-        }
-        if (data.meta[index].columnType == ColumnType.BIT) {
-            return getBoolean(index)?.let { if (it) 1L else 0L }
-        }
-        return getString(index)?.toLong()
+    if (data.meta[index].columnType == ColumnType.BIT) {
+      return getBoolean(index)?.let { if (it) 1L else 0L }
+    }
+    return getString(index)?.toLong()
 //        val value = data[index] ?: return null
 //        return when (val dataType = data.meta[index].dataType) {
 //            ColumnTypes.Bigserial -> Long.fromBytes(value)
@@ -140,10 +141,9 @@ class PostgresAsyncResultSet(
 //            ColumnTypes.Numeric -> NumericUtils.decode(value).longValue()
 //            else -> throwNotSupported(dataType, value)
 //        }
-    }
+  }
 
-    override fun getLong(column: String): Long? =
-        getLong(getIndex(column))
+  override fun getLong(column: String): Long? = getLong(getIndex(column))
 
 //    override fun getBigDecimal(index: Int): BigDecimal? {
 //        return getString(index)?.let { BigDecimal.parseString(it) }
@@ -152,8 +152,8 @@ class PostgresAsyncResultSet(
 //    override fun getBigDecimal(column: String): BigDecimal? =
 //        getBigDecimal(getIndex(column))
 
-    override fun getDouble(index: Int): Double? {
-        return getString(index)?.toDouble()
+  override fun getDouble(index: Int): Double? {
+    return getString(index)?.toDouble()
 //        val value = data[index] ?: return null
 //        return when (val dataType = data.meta[index].dataType) {
 //            ColumnTypes.Bigserial -> Long.fromBytes(value).toDouble()
@@ -163,44 +163,40 @@ class PostgresAsyncResultSet(
 //            ColumnTypes.Numeric -> NumericUtils.decode(value).toString().toDouble()
 //            else -> throwNotSupported(dataType, value)
 //        }
+  }
+
+  override fun getDouble(column: String): Double? = getDouble(getIndex(column))
+
+  override fun getBlob(index: Int): ByteArray? {
+    val value = getString(index) ?: return null
+    if (data.meta[index].columnType == ColumnType.UUID) {
+      return value.toUUID().toByteArray()
     }
-
-    override fun getDouble(column: String): Double? =
-        getDouble(getIndex(column))
-
-    override fun getBlob(index: Int): ByteArray? {
-        val value = getString(index) ?: return null
-        if (data.meta[index].columnType == ColumnType.UUID) {
-            return value.toUUID().toByteArray()
-        }
-        if (value.length <= 2 || value[0] != '\\' || value[1] != 'x' || value.length % 2 != 0) {
-            throw IllegalArgumentException("Can't parse \"$value\" to ByteArray")
-        }
-        return ByteArray((value.length - 2) / 2) {
-            val first = value[2 + it * 2 + 0].digitToInt(16)
-            val second = value[2 + it * 2 + 1].digitToInt(16)
-            ((first shl 4) or (second and 0xF)).toByte()
-        }
+    if (value.length <= 2 || value[0] != '\\' || value[1] != 'x' || value.length % 2 != 0) {
+      throw IllegalArgumentException("Can't parse \"$value\" to ByteArray")
     }
-
-    override fun getBlob(column: String): ByteArray? =
-        getBlob(getIndex(column))
-
-    override fun isNull(index: Int): Boolean =
-        data[index] == null
-
-    override fun isNull(column: String): Boolean =
-        isNull(getIndex(column))
-
-    var isClosed = false
-        private set
-
-    override suspend fun asyncClose() {
-        if (!isClosed) {
-            isClosed = true
-            if (!data.isClosed) {
-                data.asyncClose()
-            }
-        }
+    return ByteArray((value.length - 2) / 2) {
+      val first = value[2 + it * 2 + 0].digitToInt(16)
+      val second = value[2 + it * 2 + 1].digitToInt(16)
+      ((first shl 4) or (second and 0xF)).toByte()
     }
+  }
+
+  override fun getBlob(column: String): ByteArray? = getBlob(getIndex(column))
+
+  override fun isNull(index: Int): Boolean = data[index] == null
+
+  override fun isNull(column: String): Boolean = isNull(getIndex(column))
+
+  var isClosed = false
+    private set
+
+  override suspend fun asyncClose() {
+    if (!isClosed) {
+      isClosed = true
+      if (!data.isClosed) {
+        data.asyncClose()
+      }
+    }
+  }
 }

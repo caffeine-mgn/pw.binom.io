@@ -19,6 +19,9 @@ kotlin {
       api(project(":core"))
       api(project(":collections"))
     }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
+    }
 //    val jvmLikeMain by creating {
 //      dependsOn(commonMain.get())
 //    }

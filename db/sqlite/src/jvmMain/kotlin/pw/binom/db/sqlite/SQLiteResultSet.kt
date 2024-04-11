@@ -1,6 +1,7 @@
 package pw.binom.db.sqlite
 
 import pw.binom.collections.defaultMutableList
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.ColumnType
 import pw.binom.db.sync.SyncResultSet
@@ -8,7 +9,6 @@ import java.sql.ResultSet
 import java.sql.Types
 
 class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
-
   override val columns: List<String> by lazy {
     val count = native.metaData.columnCount
     val out = defaultMutableList<String>(count)
@@ -19,6 +19,7 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
   }
 
   override fun next() = native.next()
+
   override fun getString(index: Int): String? {
     native.getObject(index + 1) ?: return null
     return native.getString(index + 1)
@@ -30,6 +31,7 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
   }
 
   override fun getBoolean(index: Int): Boolean? = getInt(index + 1)?.let { it > 0 }
+
   override fun getBoolean(column: String): Boolean? = getInt(column)?.let { it > 0 }
 
   override fun getInt(index: Int): Int? {
@@ -94,24 +96,28 @@ class SQLiteResultSet(private val native: ResultSet) : SyncResultSet {
 //        return buf
   }
 
-  override fun isNull(index: Int) =
-    native.getObject(index + 1) == null
+  override fun isNull(index: Int) = native.getObject(index + 1) == null
 
-  override fun isNull(column: String): Boolean =
-    native.getObject(column) == null
+  override fun isNull(column: String): Boolean = native.getObject(column) == null
 
-  override fun getDate(index: Int): DateTime? {
+  override fun getDateTime(index: Int): DateTime? {
     native.getObject(index + 1) ?: return null
     return DateTime(native.getLong(index + 1))
   }
 
-  override fun getDate(column: String): DateTime? {
+  override fun getDate(index: Int): Date? {
+    val dateStr = native.getString(index + 1) ?: return null
+    return Date.fromIso8601(dateStr)
+  }
+
+  override fun getDate(column: String): Date? = getDate(columnIndex(column))
+
+  override fun getDateTime(column: String): DateTime? {
     native.getObject(column) ?: return null
     return DateTime(native.getLong(column))
   }
 
-  override fun columnIndex(column: String): Int =
-    native.findColumn(column)
+  override fun columnIndex(column: String): Int = native.findColumn(column)
 
   override fun columnType(index: Int): ColumnType =
     when (val type = native.metaData.getColumnType(index + 1)) {

@@ -57,10 +57,11 @@ object S3ClientApi {
         value = CreateBucketConfiguration(locationConstraint = locationConstraint),
         withHeader = true,
       )
+    val fullPath = url.copy(path = url.path.append(name))
     s3Call(
       client = client,
       method = "PUT",
-      url = url.copy(path = url.path.append(name)),
+      url = fullPath,
       regin = regin,
       accessKey = accessKey,
       secretAccessKey = secretAccessKey,

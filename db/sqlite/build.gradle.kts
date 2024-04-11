@@ -67,6 +67,9 @@ kotlin {
     jvmMain.dependencies {
       api("org.xerial:sqlite-jdbc:3.36.0.3")
     }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
+    }
     commonTest.dependencies {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))

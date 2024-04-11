@@ -1,4 +1,5 @@
-import pw.binom.publish.*
+import pw.binom.publish.allTargets
+import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -13,18 +14,17 @@ kotlin {
   allTargets()
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(project(":core"))
-        api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
-      }
+    commonMain.dependencies {
+      api(project(":core"))
+      api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
     }
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+    }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
     }
   }
 }

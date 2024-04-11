@@ -5,6 +5,7 @@ import kotlinx.cinterop.*
 import platform.internal_sqlite.*
 import platform.posix.strlen
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.db.sync.SyncPreparedStatement
@@ -17,7 +18,6 @@ class SQLitePrepareStatement(
   internal val native: CPointer<CPointerVar<sqlite3_stmt>>,
   query: String,
 ) : SyncPreparedStatement {
-
   internal var openedResultSetCount = 0
   private val closed = AtomicBoolean(false)
 
@@ -51,37 +51,55 @@ class SQLitePrepareStatement(
 //        connection.checkSqlCode(sqlite3_bind_text(stmt, index + 1, value.toString(), -1, null))
 //    }
 
-  override fun set(index: Int, value: Double) {
+  override fun set(
+    index: Int,
+    value: Double,
+  ) {
     checkClosed()
     checkRange(index)
     connection.checkSqlCode(sqlite3_bind_double(stmt, index + 1, value))
   }
 
-  override fun set(index: Int, value: Float) {
+  override fun set(
+    index: Int,
+    value: Float,
+  ) {
     checkClosed()
     checkRange(index)
     connection.checkSqlCode(sqlite3_bind_double(stmt, index + 1, value.toDouble()))
   }
 
-  override fun set(index: Int, value: Int) {
+  override fun set(
+    index: Int,
+    value: Int,
+  ) {
     checkClosed()
     checkRange(index)
     connection.checkSqlCode(sqlite3_bind_int(stmt, index + 1, value))
   }
 
-  override fun set(index: Int, value: Short) {
+  override fun set(
+    index: Int,
+    value: Short,
+  ) {
     checkClosed()
     checkRange(index)
     set(index = index, value = value.toInt())
   }
 
-  override fun set(index: Int, value: Long) {
+  override fun set(
+    index: Int,
+    value: Long,
+  ) {
     checkClosed()
     checkRange(index)
     connection.checkSqlCode(sqlite3_bind_int64(stmt, index + 1, value))
   }
 
-  override fun set(index: Int, value: String) {
+  override fun set(
+    index: Int,
+    value: String,
+  ) {
     checkClosed()
     checkRange(index)
     val len = strlen(value)
@@ -96,20 +114,37 @@ class SQLitePrepareStatement(
     )
   }
 
-  override fun set(index: Int, value: Boolean) {
+  override fun set(
+    index: Int,
+    value: Boolean,
+  ) {
     checkClosed()
     set(index, if (value) 1 else 0)
   }
 
-  override fun set(index: Int, value: ByteArray) {
+  override fun set(
+    index: Int,
+    value: ByteArray,
+  ) {
     checkClosed()
     checkRange(index)
     connection.checkSqlCode(sqlite3_bind_blob(stmt, index + 1, value.refTo(0), value.size, SQLITE_TRANSIENT))
   }
 
-  override fun set(index: Int, value: DateTime) {
+  override fun set(
+    index: Int,
+    value: DateTime,
+  ) {
     checkClosed()
-    set(index, value.time)
+    set(index, value.milliseconds)
+  }
+
+  override fun set(
+    index: Int,
+    value: Date,
+  ) {
+    checkClosed()
+    set(index, value.iso8601())
   }
 
   override fun executeQuery(): SyncResultSet {
@@ -117,11 +152,12 @@ class SQLitePrepareStatement(
     val code = sqlite3_step(stmt)
 
     connection.checkSqlCode(code)
-    val result = when (code) {
-      SQLITE_DONE -> SQLiteResultSet(this, true)
-      SQLITE_ROW -> SQLiteResultSet(this, false)
-      else -> throw IllegalStateException()
-    }
+    val result =
+      when (code) {
+        SQLITE_DONE -> SQLiteResultSet(this, true)
+        SQLITE_ROW -> SQLiteResultSet(this, false)
+        else -> throw IllegalStateException()
+      }
     openedResultSetCount++
     return result
   }

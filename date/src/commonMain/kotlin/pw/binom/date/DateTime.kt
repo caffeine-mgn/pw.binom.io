@@ -4,7 +4,7 @@ import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 
 @JvmInline
-expect value class DateTime(val time: Long = nowTime) {
+expect value class DateTime(val milliseconds: Long = nowTime) {
   companion object {
     val systemZoneOffset: Int
     val nowTime: Long
@@ -30,10 +30,19 @@ expect value class DateTime(val time: Long = nowTime) {
   fun calendar(timeZoneOffset: Int = getSystemZoneOffset()): Calendar
 
   operator fun compareTo(expDate: DateTime): Int
+
   operator fun plus(duration: Duration): DateTime
+
   operator fun minus(duration: Duration): DateTime
+
   operator fun minus(other: DateTime): Duration
 }
+
+val DateTime.date
+  get() = Date(this.milliseconds / MILLISECONDS_IN_DAY)
+
+val DateTime.time
+  get() = Time.fromMilliseconds(this.milliseconds % MILLISECONDS_IN_DAY)
 
 internal fun getSystemZoneOffset() = DateTime.systemZoneOffset
 
@@ -48,6 +57,35 @@ internal fun DateTime.Companion.new(calendar: Calendar) =
     millis = calendar.millisecond,
     timeZoneOffset = calendar.offset,
   )
+
+internal fun dateTimeToString(dateTime: DateTime): String {
+  val year: Int
+  val month: Int
+  val dayOfMonth: Int
+  val hours: Int
+  val minutes: Int
+  val seconds: Int
+  val millisecond: Int
+  extractDateItems(
+    utc = dateTime.milliseconds,
+    offset = Duration.ZERO,
+    year = { year = it },
+    month = { month = it },
+    dayOfMonth = { dayOfMonth = it },
+    hours = { hours = it },
+    minutes = { minutes = it },
+    seconds = { seconds = it },
+    millisecond = { millisecond = it },
+  )
+  return "DateTime(" +
+    year.toString().padStart(4, '0') + "-" +
+    month.toString().padStart(2, '0') + "-" +
+    dayOfMonth.toString().padStart(2, '0') + "T" +
+    hours.toString().padStart(2, '0') + ":" +
+    minutes.toString().padStart(2, '0') + ":" +
+    seconds.toString().padStart(2, '0') + ":" +
+    millisecond.toString().padStart(3, '0') + "Z)"
+}
 
 fun DateTime.Companion.of(
   year: Int = 1970,

@@ -2,6 +2,7 @@ package pw.binom.db.sqlite
 
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.async.AsyncConnection
 import pw.binom.db.async.AsyncPreparedStatement
@@ -51,6 +52,13 @@ class AsyncPreparedStatementAdapter(
         ref.set(index, value)
       }
     }
+  }
+
+  override suspend fun set(
+    index: Int,
+    value: Date,
+  ) {
+    set(index, value.iso8601())
   }
 
   override suspend fun set(

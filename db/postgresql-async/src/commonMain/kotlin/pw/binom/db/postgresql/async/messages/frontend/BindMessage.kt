@@ -3,6 +3,7 @@ package pw.binom.db.postgresql.async.messages.frontend
 // import com.ionspin.kotlin.bignum.decimal.BigDecimal
 // import com.ionspin.kotlin.bignum.integer.BigInteger
 import pw.binom.date.Calendar
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.SQLException
 import pw.binom.db.postgresql.async.ColumnTypes
@@ -84,14 +85,17 @@ class BindMessage : KindedMessage {
 }
 
 object TypeWriter {
-  fun writeBinary(type: Int, value: Any?, writer: PackageWriter) {
+  fun writeBinary(
+    type: Int,
+    value: Any?,
+    writer: PackageWriter,
+  ) {
     if (value == null) {
       writer.writeInt(-1)
       return
     }
 
-    fun throwNotSupported(type: String): Nothing =
-      throw IllegalArgumentException("Not supported type. Can't cast ${value::class} to $type")
+    fun throwNotSupported(type: String): Nothing = throw IllegalArgumentException("Not supported type. Can't cast ${value::class} to $type")
 
     when (type) {
       ColumnTypes.UUID -> {
@@ -105,29 +109,31 @@ object TypeWriter {
         }
       }
 
-      ColumnTypes.Integer -> when (value) {
-        is Int -> {
-          writer.writeInt(4)
-          writer.writeInt(value)
-        }
-
-        is Long -> {
-          if (value > Int.MAX_VALUE || value < Int.MIN_VALUE) {
-            throw IllegalArgumentException("Can't cast Long to Int. Out of Range. value: [$value]")
+      ColumnTypes.Integer ->
+        when (value) {
+          is Int -> {
+            writer.writeInt(4)
+            writer.writeInt(value)
           }
-          writer.writeInt(4)
-          writer.writeInt(value.toInt())
-        }
 
-        is String -> {
-          val intValue = value.toIntOrNull()
-            ?: throw IllegalArgumentException("Can't convert $value to Integer. Invalid format")
-          writer.writeInt(4)
-          writer.writeInt(intValue)
-        }
+          is Long -> {
+            if (value > Int.MAX_VALUE || value < Int.MIN_VALUE) {
+              throw IllegalArgumentException("Can't cast Long to Int. Out of Range. value: [$value]")
+            }
+            writer.writeInt(4)
+            writer.writeInt(value.toInt())
+          }
 
-        else -> throwNotSupported("Integer")
-      }
+          is String -> {
+            val intValue =
+              value.toIntOrNull()
+                ?: throw IllegalArgumentException("Can't convert $value to Integer. Invalid format")
+            writer.writeInt(4)
+            writer.writeInt(intValue)
+          }
+
+          else -> throwNotSupported("Integer")
+        }
 
       ColumnTypes.Text -> {
         when (value) {
@@ -155,17 +161,22 @@ object TypeWriter {
       is Float, is Double, is Long, is Int, is Short,
       is Boolean,
       is DateTime,
+      is Date,
       is UUID,
       -> true
 
       else -> false
     }
 
-  fun writeText(value: Any?, writer: PackageWriter) {
+  fun writeText(
+    value: Any?,
+    writer: PackageWriter,
+  ) {
     if (value == null) {
       writer.writeInt(-1)
       return
     }
+
     fun toText(value: Any): String =
       when (value) {
         is String -> value
@@ -176,7 +187,9 @@ object TypeWriter {
           }
           sb.toString()
         }
-        /*is BigInteger, is BigDecimal, */is Float, is Double, is Long, is Int, is Short, is UUID -> value.toString()
+        // is BigInteger, is BigDecimal,
+        is Float, is Double, is Long, is Int, is Short, is UUID,
+        -> value.toString()
         is Boolean -> if (value) "t" else "f"
         is Calendar -> {
           "${value.year}-${(value.month).asTwo()}-${value.dayOfMonth.asTwo()} " +
@@ -188,6 +201,8 @@ object TypeWriter {
           val calendar = value.calendar(0)
           toText(calendar)
         }
+
+        is Date -> value.iso8601()
 
         else -> throw SQLException("Unsupported type ${value::class}")
       }

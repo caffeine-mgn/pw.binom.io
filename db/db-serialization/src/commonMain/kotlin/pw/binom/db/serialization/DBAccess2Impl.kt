@@ -64,7 +64,7 @@ class ResultSetDataProvider(val rs: ResultSet) : DataProvider {
 
   override fun getUUID(key: String): UUID = rs.getUUID(key) ?: columnNotDefined(key)
 
-  override fun getDateTime(key: String): DateTime = rs.getDate(key) ?: columnNotDefined(key)
+  override fun getDateTime(key: String): DateTime = rs.getDateTime(key) ?: columnNotDefined(key)
 
   override fun contains(key: String): Boolean {
     val kk = key.lowercase()
