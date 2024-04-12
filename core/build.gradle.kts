@@ -1,5 +1,4 @@
 import pw.binom.kotlin.clang.eachNative
-import java.util.*
 import pw.binom.publish.allTargets
 import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
@@ -27,7 +26,6 @@ kotlin {
   eachNative {
     useNative()
   }
-  applyDefaultHierarchyTemplate()
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
@@ -59,6 +57,18 @@ kotlin {
       api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
       api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
       api(project(":charset"))
+    }
+    val nativeRunnableMain by creating {
+      dependsOn(commonMain.get())
+    }
+    val posixMain by getting {
+      dependsOn(nativeRunnableMain)
+    }
+    mingwMain {
+      dependsOn(nativeRunnableMain)
+    }
+    val androidNativeMain by getting {
+      dependsOn(nativeRunnableMain)
     }
     jvmTest.dependencies {
       api(kotlin("test-junit"))
