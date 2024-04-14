@@ -5,24 +5,24 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import pw.binom.date.Date
+import pw.binom.date.DateTime
 import pw.binom.db.serialization.codes.SQLDecoder
 import pw.binom.db.serialization.codes.SQLEncoder
 
-object DateSerializer : KSerializer<Date> {
-  override fun deserialize(decoder: Decoder): Date {
+object DateTimeSerializer : KSerializer<DateTime> {
+  override fun deserialize(decoder: Decoder): DateTime {
     if (decoder !is SQLDecoder) {
-      throw IllegalArgumentException("DateSerializer support only pw.binom.db.serialization.SqlDecoder")
+      throw IllegalArgumentException("DateTimeSerializer support only pw.binom.db.serialization.SqlDecoder")
     }
-    return decoder.decodeDate()
+    return decoder.decodeDateTime()
   }
 
   override fun serialize(
     encoder: Encoder,
-    value: Date,
+    value: DateTime,
   ) {
     if (encoder !is SQLEncoder) {
-      throw IllegalArgumentException("DateSerializer support only pw.binom.db.serialization.SQLEncoder")
+      throw IllegalArgumentException("DateTimeSerializer support only pw.binom.db.serialization.SQLEncoder")
     }
     encoder.encodeDate(value)
   }

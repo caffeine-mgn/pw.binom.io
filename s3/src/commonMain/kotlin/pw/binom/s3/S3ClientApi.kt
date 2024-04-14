@@ -322,7 +322,7 @@ object S3ClientApi {
     }
   }
 
-  suspend fun <T> getObject(
+  suspend fun getObject(
     client: HttpClient,
     url: URL,
     regin: String,
@@ -333,8 +333,7 @@ object S3ClientApi {
     accessKey: String,
     range: List<Range> = emptyList(),
     secretAccessKey: String,
-    consumer: suspend (InputFile?) -> T,
-  ): T {
+  ): S3ObjectStream? {
     val query =
       Query.build {
         if (partNumber != null) {
@@ -344,7 +343,7 @@ object S3ClientApi {
           add("versionId", versionId.toString())
         }
       }
-    return s3Call(
+    val resp = s3Call(
       client = client,
       method = "GET",
       url = url.copy(query = query, path = url.path.append(bucket).append(key)),
@@ -352,35 +351,30 @@ object S3ClientApi {
       accessKey = accessKey,
       range = range,
       secretAccessKey = secretAccessKey,
-    ).useAsync {
-      when (val code = it.responseCode) {
-        200, 206 -> {
-          val region = it.inputHeaders["X-Amz-Bucket-Region"]?.firstOrNull()
-          val length = it.inputHeaders.contentLength?.toLong()
-          val type = it.inputHeaders.contentType
-          val eTag = it.inputHeaders["ETag"]?.firstOrNull()
-          val lastModify = it.inputHeaders["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
-          val data =
-            ContentHead(
-              region = region,
-              length = length,
-              contentType = type,
-              eTag = eTag,
-              lastModify = lastModify,
-            )
-          it.readBinary().useAsync { input ->
-            consumer(
-              InputFile(
-                data = data,
-                input = input,
-              ),
-            )
-          }
-        }
-
-        404 -> consumer(null)
-        else -> it.throwErrorText(code)
+    )
+    return when (val code = resp.responseCode) {
+      200, 206 -> {
+        val region = resp.inputHeaders["X-Amz-Bucket-Region"]?.firstOrNull()
+        val length = resp.inputHeaders.contentLength?.toLong()
+        val type = resp.inputHeaders.contentType
+        val eTag = resp.inputHeaders["ETag"]?.firstOrNull()
+        val lastModify = resp.inputHeaders["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
+        val data =
+          ContentHead(
+            region = region,
+            length = length,
+            contentType = type,
+            eTag = eTag,
+            lastModify = lastModify,
+          )
+        S3ObjectStream(
+          data = data,
+          source = resp.readBinary()
+        )
       }
+
+      404 -> null
+      else -> resp.useAsync { resp.throwErrorText(code) }
     }
   }
 

@@ -8,19 +8,21 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.serialization.*
 import pw.binom.uuid.UUID
 
 class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> Unit) : SQLDecoder {
-
   var name = ""
   var input: DataProvider = DataProvider.EMPTY
   override var serializersModule: SerializersModule = EmptySerializersModule
 
   companion object {
-
-    private fun findByAlias(value: String, enumDescriptor: SerialDescriptor): Int {
+    private fun findByAlias(
+      value: String,
+      enumDescriptor: SerialDescriptor,
+    ): Int {
       for (i in 0 until enumDescriptor.elementsCount) {
         val alias = enumDescriptor.getElementAnnotation<Enumerate.Alias>(i) ?: continue
         alias.name.forEach {
@@ -32,9 +34,14 @@ class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> U
       return CompositeDecoder.UNKNOWN_NAME
     }
 
-    fun decodeEnum(name: String, input: DataProvider, enumDescriptor: SerialDescriptor): Int {
-      val enumerateType = enumDescriptor.getElementAnnotation<Enumerate>()?.type
-        ?: Enumerate.Type.BY_NAME
+    fun decodeEnum(
+      name: String,
+      input: DataProvider,
+      enumDescriptor: SerialDescriptor,
+    ): Int {
+      val enumerateType =
+        enumDescriptor.getElementAnnotation<Enumerate>()?.type
+          ?: Enumerate.Type.BY_NAME
       when (enumerateType) {
         Enumerate.Type.BY_NAME -> {
           val enumName = input.getString(name)
@@ -75,6 +82,12 @@ class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> U
     return r
   }
 
+  override fun decodeDate(): Date {
+    val r = input.getDate(name)
+    onClose(this)
+    return r
+  }
+
   override fun decodeUUID(): UUID {
     val r = input.getUUID(name)
     onClose(this)
@@ -90,20 +103,22 @@ class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> U
   override fun beginStructure(descriptor: SerialDescriptor): SQLCompositeDecoder {
     if (descriptor === ByteArraySerializer().descriptor) {
       val value = input.getByteArray(name)
-      val result = ctx.decodeByteArray(
-        prefix = name,
-        input = input,
-        serializersModule = serializersModule,
-        data = value
-      )
+      val result =
+        ctx.decodeByteArray(
+          prefix = name,
+          input = input,
+          serializersModule = serializersModule,
+          data = value,
+        )
       onClose(this)
       return result
     }
-    val decoder = ctx.decoderStruct(
-      prefix = name,
-      input = input,
-      serializersModule = serializersModule
-    )
+    val decoder =
+      ctx.decoderStruct(
+        prefix = name,
+        input = input,
+        serializersModule = serializersModule,
+      )
     onClose(this)
     return decoder
   }

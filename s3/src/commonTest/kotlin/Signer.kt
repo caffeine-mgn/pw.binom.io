@@ -15,11 +15,14 @@ import pw.binom.date.DateTime
 import pw.binom.date.format.toDatePattern
 import pw.binom.date.iso8601
 import pw.binom.date.parseIso8601Date
-import pw.binom.io.*
+import pw.binom.io.ByteBuffer
+import pw.binom.io.bufferedReader
 import pw.binom.io.http.Headers
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.create
+import pw.binom.io.use
+import pw.binom.io.useAsync
 import pw.binom.s3.S3ClientApi
 import pw.binom.url.URI
 import pw.binom.url.UrlEncoder
@@ -100,9 +103,9 @@ class Signer private constructor(
   private fun setStringToSign() {
     this.stringToSign =
       "AWS4-HMAC-SHA256" + "\n" +
-      AMZ_DATE_FORMAT.toString(
-        this.date.calendar(0),
-      ) + "\n" + this.scope + "\n" + this.canonicalRequestHash
+        AMZ_DATE_FORMAT.toString(
+          this.date.calendar(0),
+        ) + "\n" + this.scope + "\n" + this.canonicalRequestHash
   }
 
   lateinit var stringToSign: String
@@ -173,7 +176,7 @@ class Signer private constructor(
         this.signedHeaders +
         "\n" +
         contentSha256
-    )
+      )
     canonicalRequestHash = Digest.sha256Hash(canonicalRequest)
   }
 
@@ -375,10 +378,7 @@ class OOOO {
             bucket = bucket,
             key = "test",
             range = listOf(Range.Last("bytes", 7)),
-          ) { it ->
-            it ?: return@getObject null
-            it.input.bufferedReader().readText()
-          }
+          )!!.useAsync { it.bufferedReader().readText() }
         println("Test: \"$dd\"")
       }
     }

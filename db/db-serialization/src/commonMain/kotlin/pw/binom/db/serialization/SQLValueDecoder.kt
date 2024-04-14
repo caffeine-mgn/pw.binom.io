@@ -5,6 +5,7 @@ import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 import pw.binom.db.serialization.codes.SQLDecoder
@@ -20,6 +21,8 @@ class SQLValueDecoder(
   val columnName = (columnPrefix ?: "") + classDescriptor.getElementName(fieldIndex)
 
   override fun decodeDateTime(): DateTime = resultSet.getDateTime(columnName)!!
+
+  override fun decodeDate(): Date = resultSet.getDate(columnName)!!
 
   override fun decodeUUID(): UUID = resultSet.getUUID(columnName)!!
 

@@ -189,28 +189,26 @@ class S3Client(
       regin = regin,
     )
 
-  suspend fun <T> getObject(
+  suspend fun getObject(
     regin: String,
     bucket: String,
     key: String,
     partNumber: Int? = null,
     versionId: String? = null,
     range: List<Range> = emptyList(),
-    consumer: suspend (InputFile?) -> T,
-  ): T =
-    S3ClientApi.getObject(
-      client = client,
-      url = url,
-      regin = regin,
-      bucket = bucket,
-      key = key,
-      partNumber = partNumber,
-      versionId = versionId,
-      accessKey = accessKey,
-      range = range,
-      secretAccessKey = secretAccessKey,
-      consumer = consumer,
-    )
+  ) = S3ClientApi.getObject(
+    client = client,
+    url = url,
+    regin = regin,
+    bucket = bucket,
+    key = key,
+    partNumber = partNumber,
+    versionId = versionId,
+    accessKey = accessKey,
+    range = range,
+    secretAccessKey = secretAccessKey,
+  )
+
 
   suspend fun listBuckets(regin: String) =
     S3ClientApi.listBuckets(
