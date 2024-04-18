@@ -61,6 +61,35 @@ class EmbeddedTest {
   }
 
   @Test
+  fun encodeEmbedded2() {
+    val result = HashMap<String, Any?>()
+    DefaultSQLSerializePool.encode(
+      serializer = Root.serializer(),
+      value = Root(
+        a = "a",
+        s = Subclass(b = "b"),
+        d = null,
+        n = SubclassNullable(b = null),
+        m = null,
+        k = null,
+      ),
+      name = "",
+      output = result.toMutableDataBinder(),
+      useQuotes = false,
+      excludeGenerated = false,
+    )
+    assertNull(result["n_b"])
+    assertEquals("a", result["a"])
+    assertNull(result["d"])
+    assertEquals("b", result["s_b"])
+    assertNull(result["m"])
+    assertNull(result["k_m"])
+    assertNull(result["k_h"])
+    println("result=$result")
+    assertEquals(7, result.size)
+  }
+
+  @Test
   fun decodeEmbedded() {
     val data = hashMapOf<String, Any?>("n_b" to null, "a" to "a", "d" to null, "s_b" to "b", "m" to null)
     val d = DefaultSQLSerializePool.decode(

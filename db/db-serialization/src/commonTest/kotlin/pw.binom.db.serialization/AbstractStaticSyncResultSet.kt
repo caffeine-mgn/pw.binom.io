@@ -1,5 +1,6 @@
 package pw.binom.db.serialization
 
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.date.parseIso8601Date
 import pw.binom.db.SQLException
@@ -52,6 +53,10 @@ abstract class AbstractStaticSyncResultSet<T> : AsyncResultSet {
     index: Int,
     value: T,
   ): Double? = getString(index, value)?.toDouble()
+
+  override fun getDate(index: Int): Date? = getString(index)?.let { Date.fromIso8601(it) }
+
+  override fun getDate(column: String): Date? = getDate(columnIndex(column))
 
   protected open fun getDate(
     index: Int,

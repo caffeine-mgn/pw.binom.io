@@ -1,4 +1,5 @@
-import pw.binom.publish.*
+import pw.binom.publish.allTargets
+import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -15,24 +16,23 @@ kotlin {
   allTargets()
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(kotlin("stdlib-common"))
-        api(project(":db"))
-        api(project(":collections"))
-        api(project(":db:db-serialization-annotations"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-      }
+    commonMain.dependencies {
+      api(kotlin("stdlib-common"))
+      api(project(":db"))
+      api(project(":collections"))
+      api(project(":db:db-serialization-annotations"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-        api(project(":db:sqlite"))
-        api(project(":network"))
-        api(project(":db:postgresql-async"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api(project(":db:sqlite"))
+      api(project(":network"))
+      api(project(":db:postgresql-async"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+    }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
     }
   }
 }
@@ -46,11 +46,11 @@ tasks {
       args = listOf(),
       suffix = "Postgres",
       envs =
-        mapOf(
-          "POSTGRES_USER" to "postgres",
-          "POSTGRES_PASSWORD" to "postgres",
-          "POSTGRES_DB" to "test",
-        ),
+      mapOf(
+        "POSTGRES_USER" to "postgres",
+        "POSTGRES_PASSWORD" to "postgres",
+        "POSTGRES_DB" to "test",
+      ),
       healthCheck = "/usr/bin/pg_isready -U postgres",
     )
   postgresServer.create.configure {

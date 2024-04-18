@@ -2,10 +2,7 @@ package pw.binom.testing
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import kotlin.test.*
 
 @OptIn(ExperimentalContracts::class)
 fun <T : Any> T?.shouldNotNull(): T {
@@ -21,66 +18,84 @@ fun <T : Any> T?.shouldNull(): T? {
   return null
 }
 
-fun <T, R : T> T.shouldEquals(expected: R) {
+infix fun <T, R : T> T.shouldEquals(expected: R) {
   assertEquals(expected, this)
 }
 
-fun <T> Array<T>?.shouldContentEquals(expected: Array<T>?) {
+@OptIn(ExperimentalContracts::class)
+fun Boolean.shouldBeTrue(): Boolean {
+  contract {
+    returns() implies this@shouldBeTrue
+  }
+  assertTrue(this)
+  return this
+}
+
+@OptIn(ExperimentalContracts::class)
+fun Boolean.shouldBeFalse(): Boolean {
+  contract {
+    returns() implies !this@shouldBeFalse
+  }
+  assertFalse(this)
+  return this
+}
+
+infix fun <T> Array<T>?.shouldContentEquals(expected: Array<T>?) {
   assertContentEquals(expected, this)
 }
 
-fun <T> Sequence<T>?.shouldContentEquals(expected: Sequence<T>?) {
+infix fun <T> Sequence<T>?.shouldContentEquals(expected: Sequence<T>?) {
   assertContentEquals(expected, this)
 }
 
-fun ByteArray?.shouldContentEquals(expected: ByteArray?) {
+infix fun ByteArray?.shouldContentEquals(expected: ByteArray?) {
   assertContentEquals(expected, this)
 }
 
-fun ShortArray?.shouldContentEquals(expected: ShortArray?) {
+infix fun ShortArray?.shouldContentEquals(expected: ShortArray?) {
   assertContentEquals(expected, this)
 }
 
-fun IntArray?.shouldContentEquals(expected: IntArray?) {
+infix fun IntArray?.shouldContentEquals(expected: IntArray?) {
   assertContentEquals(expected, this)
 }
 
-fun LongArray?.shouldContentEquals(expected: LongArray?) {
+infix fun LongArray?.shouldContentEquals(expected: LongArray?) {
   assertContentEquals(expected, this)
 }
 
-fun FloatArray?.shouldContentEquals(expected: FloatArray?) {
+infix fun FloatArray?.shouldContentEquals(expected: FloatArray?) {
   assertContentEquals(expected, this)
 }
 
-fun DoubleArray?.shouldContentEquals(expected: DoubleArray?) {
+infix fun DoubleArray?.shouldContentEquals(expected: DoubleArray?) {
   assertContentEquals(expected, this)
 }
 
-fun BooleanArray?.shouldContentEquals(expected: BooleanArray?) {
+infix fun BooleanArray?.shouldContentEquals(expected: BooleanArray?) {
   assertContentEquals(expected, this)
 }
 
-fun CharArray?.shouldContentEquals(expected: CharArray?) {
+infix fun CharArray?.shouldContentEquals(expected: CharArray?) {
   assertContentEquals(expected, this)
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun UByteArray?.shouldContentEquals(expected: UByteArray?) {
+infix fun UByteArray?.shouldContentEquals(expected: UByteArray?) {
   assertContentEquals(expected, this)
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun UShortArray?.shouldContentEquals(expected: UShortArray?) {
+infix fun UShortArray?.shouldContentEquals(expected: UShortArray?) {
   assertContentEquals(expected, this)
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun UIntArray?.shouldContentEquals(expected: UIntArray?) {
+infix fun UIntArray?.shouldContentEquals(expected: UIntArray?) {
   assertContentEquals(expected, this)
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun ULongArray?.shouldContentEquals(expected: ULongArray?) {
+infix fun ULongArray?.shouldContentEquals(expected: ULongArray?) {
   assertContentEquals(expected, this)
 }

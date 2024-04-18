@@ -1,5 +1,6 @@
 package pw.binom.db.serialization
 
+import pw.binom.date.Date
 import pw.binom.db.ColumnType
 
 class ListStaticSyncResultSet(
@@ -27,7 +28,7 @@ class ListStaticSyncResultSet(
     override fun isNull(index: Int, value: List<Any?>): Boolean =
         value[index] == null
 
-    override fun columnType(index: Int): ColumnType {
+  override fun columnType(index: Int): ColumnType {
         TODO("Not yet implemented")
     }
 

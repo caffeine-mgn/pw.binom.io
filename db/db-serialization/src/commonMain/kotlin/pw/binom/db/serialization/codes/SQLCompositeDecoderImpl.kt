@@ -10,7 +10,7 @@ import kotlinx.serialization.modules.SerializersModule
 import pw.binom.db.serialization.*
 
 class SQLCompositeDecoderImpl(val ctx: SQLDecoderPool, val onClose: () -> Unit) : SQLCompositeDecoder {
-    override var serializersModule: SerializersModule = EmptySerializersModule
+    override var serializersModule: SerializersModule = EmptySerializersModule()
     var input: DataProvider = DataProvider.EMPTY
     var prefix = ""
     var cursor = 0

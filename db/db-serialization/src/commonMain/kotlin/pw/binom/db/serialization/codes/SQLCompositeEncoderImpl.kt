@@ -2,7 +2,9 @@ package pw.binom.db.serialization.codes
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.db.serialization.*
@@ -139,6 +141,47 @@ class SQLCompositeEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) 
     )
   }
 
+  @OptIn(ExperimentalSerializationApi::class)
+  private fun encodeNull(prefix: String, descriptor: SerialDescriptor, index: Int) {
+    if (descriptor.kind != StructureKind.CLASS) {
+      TODO()
+    }
+    val field = descriptor.getElementDescriptor(index)
+    val splitter = descriptor.getElementAnnotation<EmbeddedSplitter>(index)?.splitter ?: ""
+    if (field.kind == StructureKind.CLASS) {
+      (0 until field.elementsCount).forEach { fieldIndex ->
+        val elementDescriptor = field.getElementDescriptor(fieldIndex)
+        val elementName = field.getElementName(fieldIndex)
+        if (elementDescriptor.kind is PrimitiveKind) {
+          val key = prefix + descriptor.getElementName(index) + splitter + elementName
+          output.set(
+            key = key,
+            value = null,
+            useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+          )
+        } else {
+          encodeNull(
+            prefix = prefix + descriptor.getElementName(index) + splitter,
+            descriptor = elementDescriptor,
+            index = fieldIndex,
+          )
+        }
+      }
+    } else {
+      val elementName = descriptor.getElementName(index)
+      output.set(
+        key = prefix + splitter + elementName,
+        value = null,
+        useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+      )
+    }
+//    output.set(
+//      key = prefix + descriptor.getElementName(index),
+//      value = null,
+//      useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+//    )
+  }
+
   @ExperimentalSerializationApi
   override fun <T : Any> encodeNullableSerializableElement(
     descriptor: SerialDescriptor,
@@ -150,11 +193,16 @@ class SQLCompositeEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) 
       return
     }
     if (value == null) {
-      output.set(
-        key = prefix + descriptor.getElementName(index),
-        value = null,
-        useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+      encodeNull(
+        descriptor = descriptor,
+        index = index,
+        prefix = prefix,
       )
+//      output.set(
+//        key = prefix + descriptor.getElementName(index),
+//        value = null,
+//        useQuotes = descriptor.isUseQuotes(index) || useQuotes,
+//      )
     } else {
       encodeSerializableElement(
         descriptor = descriptor,
