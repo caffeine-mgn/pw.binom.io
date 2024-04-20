@@ -4,6 +4,20 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.test.*
 
+fun <T : Iterable<*>> T.shouldBeNotEmpty(): T {
+  if (!iterator().hasNext()) {
+    fail("Collection is empty")
+  }
+  return this
+}
+
+fun <T : Iterable<*>> T.shouldBeEmpty(): T {
+  if (iterator().hasNext()) {
+    fail("Collection is not empty")
+  }
+  return this
+}
+
 @OptIn(ExperimentalContracts::class)
 fun <T : Any> T?.shouldNotNull(): T {
   contract { returns() implies (this@shouldNotNull != null) }

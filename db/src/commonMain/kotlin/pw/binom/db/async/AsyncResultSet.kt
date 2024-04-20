@@ -10,6 +10,14 @@ interface AsyncResultSet : ResultSet, AsyncCloseable {
   suspend fun next(): Boolean
 }
 
+suspend fun AsyncResultSet.collect(func: suspend (AsyncResultSet) -> Unit) {
+  useAsync {
+    while (next()) {
+      func(this)
+    }
+  }
+}
+
 /**
  * Calls [mapper] for each rows of this [AsyncResultSet]. Makes list of result [mapper] and returns it.
  * Closes this [AsyncResultSet] after call [mapper] for each values of this [AsyncResultSet]

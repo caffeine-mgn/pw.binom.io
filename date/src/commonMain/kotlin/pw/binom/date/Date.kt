@@ -9,13 +9,13 @@ value class Date(val epochDay: Long) {
     val now: Date
       get() = Date(DateTime.nowTime / MILLISECONDS_IN_DAY)
 
-    fun from(
+    fun of(
       year: Int,
       monthNumber: Int,
       dayOfMonth: Int,
     ) = Date(toEpochDay(year = year, monthNumber = monthNumber, dayOfMonth = dayOfMonth))
 
-    fun fromMilliseconds(milliseconds: Long) = Date(milliseconds / MILLISECONDS_IN_DAY)
+    fun ofMilliseconds(milliseconds: Long) = Date(milliseconds / MILLISECONDS_IN_DAY)
 
     fun fromIso8601(date: String): Date {
       val items = date.split('-', limit = 3)
@@ -24,10 +24,10 @@ value class Date(val epochDay: Long) {
       if (items.size != 3) {
         throwInvalidDate()
       }
-      return from(
-        year = items[0].toIntOrNull() ?: throwInvalidDate(),
-        monthNumber = items[1].toIntOrNull() ?: throwInvalidDate(),
-        dayOfMonth = items[2].toIntOrNull() ?: throwInvalidDate(),
+      return of(
+          year = items[0].toIntOrNull() ?: throwInvalidDate(),
+          monthNumber = items[1].toIntOrNull() ?: throwInvalidDate(),
+          dayOfMonth = items[2].toIntOrNull() ?: throwInvalidDate(),
       )
     }
   }
