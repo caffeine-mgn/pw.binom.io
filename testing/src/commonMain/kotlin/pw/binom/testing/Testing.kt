@@ -11,6 +11,7 @@ object Testing {
 
   class SyncTestContextImpl(val index: Int) : SyncTestContext {
     private val forDispose = ArrayList<() -> Unit>()
+    private val forInit = ArrayList<() -> Unit>()
     val disposables: List<() -> Unit>
       get() = forDispose
 
@@ -20,6 +21,9 @@ object Testing {
     val exceptions: List<Throwable>
       get() = internalExceptions
 
+    override fun init(func: () -> Unit) {
+      forInit += func
+    }
 
     override fun dispose(func: () -> Unit) {
       forDispose += func
@@ -31,6 +35,10 @@ object Testing {
         val now = TimeSource.Monotonic.markNow()
         println("---===TEST $name STARTED===---")
         try {
+          forInit.forEach {
+            it()
+          }
+          forInit.clear()
           func()
         } catch (e: Throwable) {
           internalExceptions += RuntimeException("Test \"$name\" fail", e)
@@ -51,6 +59,7 @@ object Testing {
 
   class AsyncTestContextImpl(val index: Int) : AsyncTestContext {
     private val forDispose = ArrayList<suspend () -> Unit>()
+    private val forInit = ArrayList<suspend () -> Unit>()
     val disposables: List<suspend () -> Unit>
       get() = forDispose
 
@@ -60,6 +69,9 @@ object Testing {
     val exceptions: List<Throwable>
       get() = internalExceptions
 
+    override fun init(func: suspend () -> Unit) {
+      forInit += func
+    }
 
     override fun dispose(func: suspend () -> Unit) {
       forDispose += func
@@ -71,6 +83,10 @@ object Testing {
         val now = TimeSource.Monotonic.markNow()
         println("---===TEST $name STARTED===---")
         try {
+          forInit.forEach {
+            it()
+          }
+          forInit.clear()
           func()
         } catch (e: Throwable) {
           internalExceptions += RuntimeException("Test \"$name\" fail", e)
