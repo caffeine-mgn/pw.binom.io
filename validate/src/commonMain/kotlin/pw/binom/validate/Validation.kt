@@ -1,10 +1,25 @@
 package pw.binom.validate
 
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.serializer
 
 object Validation {
+
+  @OptIn(InternalSerializationApi::class)
+  inline fun <reified T : Any> validateAndCheck(
+    value: T,
+    validatorModule: ValidatorModule = ValidatorModule.default,
+    serializersModule: SerializersModule = EmptySerializersModule(),
+  ) = validateAndCheck(
+    strategy = T::class.serializer(),
+    value = value,
+    validatorModule = validatorModule,
+    serializersModule = serializersModule,
+  )
+
   fun <T : Any> validateAndCheck(
     strategy: SerializationStrategy<T>,
     value: T,
@@ -31,7 +46,7 @@ object Validation {
   ) {
 
     val encoder = ObjectValidatorEncoder(
-      prefix = "",
+      prefix = Prefix.EMPTY,
       collector = errorCollector,
       validators = emptyMap(),
       serializersModule = serializersModule,

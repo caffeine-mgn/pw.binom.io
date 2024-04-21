@@ -4,11 +4,22 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 
 sealed interface Validator<T : Annotation> {
   interface FieldValidator<T : Annotation> : Validator<T> {
-    fun valid(annotation: T, descriptor: SerialDescriptor, value: String?): ValueValidateResult
+    fun valid(
+      annotation: T,
+      descriptor: SerialDescriptor,
+      validatorModule: ValidatorModule,
+      value: String?,
+    ): ValueValidateResult
   }
 
   interface ObjectValidator<T : Annotation> : Validator<T> {
-    fun startObject(annotation: T, field:String, descriptor: SerialDescriptor, errorCollector: ErrorCollector): CommonValidator
+    fun startObject(
+      annotation: T,
+      field: String,
+      descriptor: SerialDescriptor,
+      validatorModule: ValidatorModule,
+      errorCollector: ErrorCollector,
+    ): CommonValidator
 
     interface CommonValidator {
       companion object {

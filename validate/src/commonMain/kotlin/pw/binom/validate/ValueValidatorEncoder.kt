@@ -8,8 +8,8 @@ import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 
-class ValueValidatorEncoder(
-  val prefix: String,
+internal class ValueValidatorEncoder(
+  val prefix: Prefix,
   val collector: ErrorCollector,
   val validatorModule: ValidatorModule,
   override val serializersModule: SerializersModule,
@@ -20,12 +20,19 @@ class ValueValidatorEncoder(
     val d = descriptor.getElementDescriptor(index)
     descriptor.getElementAnnotations(index).forEach {
       val validator = validatorModule.findValueValidator(it) ?: return@forEach
-      val message = validator.valid(it, d, value).messageOrNull
+      val message = validator.valid(
+        annotation = it,
+        descriptor = d,
+        validatorModule = validatorModule,
+        value = value,
+      ).messageOrNull
       if (message != null) {
-        collector.invalidField(fieldName = prefix + descriptor.getElementName(index), message = message)
+        collector.invalidField(
+          fieldName = (prefix + descriptor.getElementName(index)).toString(),
+          message = message,
+        )
       }
     }
-    println("Check field ${descriptor.getElementName(index)}")
     objectValidators.forEach {
       it.valid(
         fieldName = descriptor.getElementName(index), value = value
@@ -64,7 +71,7 @@ class ValueValidatorEncoder(
   }
 
   override fun encodeInlineElement(descriptor: SerialDescriptor, index: Int): Encoder = ObjectValidatorEncoder(
-    prefix = "$prefix.${descriptor.getElementName(index)}",
+    prefix = prefix + descriptor.getElementName(index),
     collector = collector,
     validatorModule = validatorModule,
     serializersModule = serializersModule,
@@ -103,8 +110,11 @@ class ValueValidatorEncoder(
       } else {
         emptyList()
       }
+      checkValid(
+        descriptor = descriptor, index = index, value = descriptor.getElementDescriptor(index).serialName
+      )
       val encoder = ObjectValidatorEncoder(
-        prefix = "$prefix${descriptor.getElementName(index)}",
+        prefix = prefix + descriptor.getElementName(index),
         collector = collector,
         validators = descriptor.getElementAnnotations(index).asSequence().mapNotNull {
           it to (validatorModule.findValueValidator(it) ?: return@mapNotNull null)

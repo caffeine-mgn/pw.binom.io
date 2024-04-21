@@ -3,6 +3,7 @@ package pw.binom.validate.validators
 import kotlinx.serialization.descriptors.SerialDescriptor
 import pw.binom.validate.ErrorCollector
 import pw.binom.validate.Validator
+import pw.binom.validate.ValidatorModule
 import pw.binom.validate.annotations.OneOf
 
 object OneOfValidator : Validator.ObjectValidator<OneOf> {
@@ -10,6 +11,7 @@ object OneOfValidator : Validator.ObjectValidator<OneOf> {
     annotation: OneOf,
     field: String,
     descriptor: SerialDescriptor,
+    validatorModule: ValidatorModule,
     errorCollector: ErrorCollector,
   ): Validator.ObjectValidator.CommonValidator {
     if (annotation.fields.isEmpty()) {
@@ -49,7 +51,7 @@ object OneOfValidator : Validator.ObjectValidator<OneOf> {
       if (notNull.isEmpty()) {
         errorCollector.invalidField(
           fieldName = field,
-          message = "Only one field of ${fields.joinToString()} should be not null"
+          message = "One field of ${fields.joinToString()} should be not null"
         )
       }
     }

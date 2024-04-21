@@ -7,4 +7,5 @@ import kotlinx.serialization.SerialInfo
 @SerialInfo
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.BINARY)
+@Repeatable
 annotation class OneOf(vararg val fields: String)

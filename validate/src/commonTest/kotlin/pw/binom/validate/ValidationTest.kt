@@ -1,6 +1,7 @@
 package pw.binom.validate
 
 import kotlinx.serialization.Serializable
+import pw.binom.testing.Testing
 import pw.binom.validate.annotations.OneOf
 import kotlin.test.Test
 
@@ -18,6 +19,26 @@ class ValidationTest {
   class Data2(
     val data: Data,
   )
+
+  @Serializable
+  class Sub()
+
+  @OneOf("data1", "data2")
+  @Serializable
+  class Data3(
+    val data1: Data? = null,
+    val data2: Data? = null,
+  )
+
+  @Test
+  fun testWithSubObjects() = Testing.sync {
+    test("success") {
+      Validation.validateAndCheck(
+        strategy = Data3.serializer(),
+        value = Data3(data1 = Data(a = "")),
+      )
+    }
+  }
 
   @Test
   fun successTest() {

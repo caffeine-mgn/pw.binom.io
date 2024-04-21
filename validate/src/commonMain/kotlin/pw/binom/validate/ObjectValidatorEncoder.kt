@@ -9,8 +9,8 @@ import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 
-class ObjectValidatorEncoder(
-  val prefix: String,
+internal class ObjectValidatorEncoder(
+  val prefix: Prefix,
   val collector: ErrorCollector,
   val validatorModule: ValidatorModule,
   override val serializersModule: SerializersModule,
@@ -21,10 +21,6 @@ class ObjectValidatorEncoder(
     private val NULL_DESCRIPTOR = PrimitiveSerialDescriptor("null", PrimitiveKind.INT)
   }
 
-  init {
-      println()
-  }
-
   override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder =
     ValueValidatorEncoder(
       prefix = prefix,
@@ -33,28 +29,35 @@ class ObjectValidatorEncoder(
       serializersModule = serializersModule,
       objectValidators = descriptor.annotations.mapNotNull {
         validatorModule.findObjectValidator(it)?.startObject(
-          field = prefix,
+          field = prefix.toString(),
           annotation = it,
           descriptor = descriptor,
-          errorCollector = collector
+          errorCollector = collector,
+          validatorModule = validatorModule,
         )
       }
     )
 
   private fun check(descriptor: SerialDescriptor, value: String?) {
-    println("ObjectValidatorEncoder::Check $prefix with value $value")
     validators.forEach { (annotation, validator) ->
       val message = validator.valid(
         annotation,
         descriptor = descriptor,
         value = value,
+        validatorModule = validatorModule,
       ).messageOrNull
       if (message != null) {
-        collector.invalidField(fieldName = prefix, message = message)
+        collector.invalidField(
+          fieldName = prefix.toString(),
+          message = message
+        )
       }
     }
     validators2.forEach {
-      it.valid(prefix, value)
+      it.valid(
+        fieldName = prefix.toString(),
+        value = value,
+      )
     }
   }
 

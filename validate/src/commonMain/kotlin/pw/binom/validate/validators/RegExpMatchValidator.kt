@@ -2,11 +2,12 @@ package pw.binom.validate.validators
 
 import kotlinx.serialization.descriptors.SerialDescriptor
 import pw.binom.validate.Validator
+import pw.binom.validate.ValidatorModule
 import pw.binom.validate.ValueValidateResult
 import pw.binom.validate.annotations.RegExpMatch
 
 object RegExpMatchValidator : Validator.FieldValidator<RegExpMatch> {
-  override fun valid(annotation: RegExpMatch, descriptor: SerialDescriptor, value: String?): ValueValidateResult {
+  override fun valid(annotation: RegExpMatch, descriptor: SerialDescriptor, validatorModule: ValidatorModule, value: String?): ValueValidateResult {
     value ?: return ValueValidateResult.success()
     annotation.regexp.forEach {
       if (it.toRegex().matches(value)) {
