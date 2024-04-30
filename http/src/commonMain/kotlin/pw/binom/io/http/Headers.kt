@@ -58,10 +58,10 @@ interface Headers : Map<String, List<String>> {
   fun getContentEncodingList() = contentEncoding?.split(',')?.map { it.trim().lowercase() } ?: emptyList()
 
   val range: List<Range>
-    get() = this[Headers.RANGE]?.firstOrNull()?.let { Range.parseRange(it) } ?: emptyList()
+    get() = this[RANGE]?.flatMap { Range.parseRange(it) } ?: emptyList()
 
   val bodyExist: Boolean
-    get() = transferEncoding.equals(Encoding.CHUNKED, ignoreCase = true) || contentLength ?: 0uL > 0uL
+    get() = transferEncoding.equals(Encoding.CHUNKED, ignoreCase = true) || (contentLength ?: 0uL) > 0uL
 
   val contentType
     get() = getLast(CONTENT_TYPE)

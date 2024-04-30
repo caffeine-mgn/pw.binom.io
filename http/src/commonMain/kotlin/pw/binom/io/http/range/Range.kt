@@ -1,6 +1,6 @@
 package pw.binom.io.http.range
 
-interface Range {
+sealed interface Range {
     val unit: String
     fun accept(visitor: RangeVisitor)
 
