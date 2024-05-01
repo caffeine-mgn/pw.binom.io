@@ -131,7 +131,7 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
 
   override fun close() {
     if (!closed.compareAndSet(false, true)) {
-      throw ClosedException()
+      return
     }
     val l = defaultMutableList(prepareStatements)
     prepareStatements.clear()

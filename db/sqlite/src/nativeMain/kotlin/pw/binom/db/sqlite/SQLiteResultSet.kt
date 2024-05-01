@@ -40,7 +40,8 @@ class SQLiteResultSet(
     val out = defaultMutableList<String>(columnCount.toInt())
     (0 until columnCount.toInt()).forEach {
       val name =
-        sqlite3_column_origin_name(stmt, it)
+//        sqlite3_column_origin_name(stmt, it)
+        sqlite3_column_name(stmt, it)
           ?.reinterpret<ByteVar>()
           ?.toKStringFromUtf8()
           ?: ""

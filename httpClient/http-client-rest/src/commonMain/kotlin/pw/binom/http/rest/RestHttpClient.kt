@@ -70,6 +70,40 @@ abstract class RestHttpClient {
     // Do nothing
   }
 
+  protected open suspend fun <RESPONSE> decodeResponse(
+    resp: HttpResponse,
+    responseDescription: EndpointDescription<RESPONSE>,
+    prefix: PathMask,
+  ): RESPONSE {
+    val httpDecoder = HttpInputDecoder()
+    httpDecoder.serializersModule = serializersModule
+    if (responseDescription.bodyIndex != -1) {
+      val decoder =
+        getBodyDecoder<RESPONSE, Any?>(
+          descriptor = responseDescription.bodyDescription,
+          response = resp,
+        )
+      httpDecoder.reset(
+        input = resp,
+        description = responseDescription,
+        data = decoder.read(resp),
+        body = decoder,
+        path = prefix,
+        responseCode = resp.responseCode,
+      )
+    } else {
+      httpDecoder.reset<RESPONSE, Any?>(
+        input = resp,
+        description = responseDescription,
+        data = null,
+        body = DecodeFunc.notSupported(),
+        path = prefix,
+        responseCode = resp.responseCode,
+      )
+    }
+    return responseDescription.serializer.deserialize(httpDecoder)
+  }
+
   @Suppress("UNCHECKED_CAST")
   protected open suspend fun <REQUEST, RESPONSE> call(
     method: String,
@@ -98,33 +132,11 @@ abstract class RestHttpClient {
       }
       request.getResponse().useAsync { resp ->
         preBodyRead(resp)
-        val httpDecoder = HttpInputDecoder()
-        httpDecoder.serializersModule = serializersModule
-        if (responseDescription.bodyIndex != -1) {
-          val decoder =
-            getBodyDecoder<RESPONSE, Any?>(
-              descriptor = responseDescription.bodyDescription,
-              response = resp,
-            )
-          httpDecoder.reset(
-            input = resp,
-            description = responseDescription,
-            data = decoder.read(resp),
-            body = decoder,
-            path = prefix,
-            responseCode = resp.responseCode,
-          )
-        } else {
-          httpDecoder.reset<RESPONSE, Any?>(
-            input = resp,
-            description = responseDescription,
-            data = null,
-            body = DecodeFunc.notSupported(),
-            path = prefix,
-            responseCode = resp.responseCode,
-          )
-        }
-        responseDescription.serializer.deserialize(httpDecoder)
+        decodeResponse(
+          resp = resp,
+          responseDescription = responseDescription,
+          prefix = prefix,
+        )
       }
     }
   }
