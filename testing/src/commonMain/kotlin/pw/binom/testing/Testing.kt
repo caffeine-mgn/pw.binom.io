@@ -167,6 +167,9 @@ object Testing {
           }
         }
         if (exceptions.isNotEmpty()) {
+          exceptions.forEach {
+            it.printStackTrace()
+          }
           val e = RuntimeException("Testing fail")
           exceptions.forEach {
             e.addSuppressed(it)

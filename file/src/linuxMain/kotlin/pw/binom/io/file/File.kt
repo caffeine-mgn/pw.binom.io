@@ -7,6 +7,7 @@ import platform.common.internal_get_total_space
 import platform.posix.*
 import pw.binom.collections.defaultMutableList
 import pw.binom.io.IOException
+import pw.binom.url.Path
 import kotlin.native.concurrent.freeze
 
 private fun timespec.toMillis(): Long {
@@ -29,6 +30,17 @@ actual class File actual constructor(path: String) {
   )
 
   actual val path: String = replacePath(path)
+
+  actual val parent: File
+    get() = fileGetParent(this)
+  actual val parentOrNull: File?
+    get() = fileGetParentOrNull(this)
+  actual val nameWithoutExtension: String
+    get() = fileGetNameWithoutExtension(this)
+  actual val extension: String?
+    get() = fileGetExtension(this)
+  actual val name: String
+    get() = fileGetName(this)
 
   actual val isFile: Boolean
     get() =
@@ -142,4 +154,9 @@ actual class File actual constructor(path: String) {
       throw IOException("Can't create symbolic from $path to ${to.path}. Error: $errno")
     }
   }
+
+  actual fun relative(path: String): File = fileGetRelative(this, path)
+  actual fun relative(path: Path): File = relative(path.raw)
+  actual fun mkdirs(): File? = fileMkdirs(this)
+  actual fun deleteRecursive(): Boolean = fileDeleteRecursive(this)
 }

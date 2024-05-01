@@ -8,13 +8,18 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 import pw.binom.io.ClosedException
+import pw.binom.io.IOException
 
 @OptIn(ExperimentalForeignApi::class)
-actual class FileChannel actual constructor(file: File, vararg mode: AccessType) :
-  Channel,
-  RandomAccess {
+actual class FileChannel actual constructor(
+  file: File,
+  vararg mode: AccessType,
+) : Channel, RandomAccess {
 
   init {
+    if (file.isDirectory) {
+      throw IOException("Can't open folder ${file.path}")
+    }
     if (AccessType.CREATE !in mode && !file.isFile) {
       throw FileNotFoundException(file.path)
     }
@@ -35,14 +40,18 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         }
 
         write && append -> {
-          if (read) "cb+" else "cb"
+//          if (read) "cb+" else "cb"
+          "ab"
         }
 
         read -> "rb"
         else -> throw IllegalArgumentException("Invalid mode")
       }
     },
-  ) ?: throw FileNotFoundException(file.path)
+  ) ?: run {
+    println("errno=$errno")
+    throw FileNotFoundException(file.path)
+  }
 
   actual fun skip(length: Long): Long {
     checkClosed()

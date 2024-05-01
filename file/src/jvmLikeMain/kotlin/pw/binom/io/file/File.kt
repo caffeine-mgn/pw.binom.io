@@ -4,6 +4,7 @@ package pw.binom.io.file
 
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableSet
+import pw.binom.url.Path
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFileAttributeView
@@ -66,6 +67,17 @@ actual class File actual constructor(path: String) {
 
     return out
   }
+
+  actual val parent: File
+    get() = fileGetParent(this)
+  actual val parentOrNull: File?
+    get() = fileGetParentOrNull(this)
+  actual val nameWithoutExtension: String
+    get() = fileGetNameWithoutExtension(this)
+  actual val extension: String?
+    get() = fileGetExtension(this)
+  actual val name: String
+    get() = fileGetName(this)
 
   actual val freeSpace: Long
     get() = JFile(path).freeSpace
@@ -150,6 +162,11 @@ actual class File actual constructor(path: String) {
 
   val toPath
     get() = Paths.get(path)
+
+  actual fun relative(path: String): File = fileGetRelative(this, path)
+  actual fun relative(path: Path): File = relative(path.raw)
+  actual fun mkdirs(): File? = fileMkdirs(this)
+  actual fun deleteRecursive(): Boolean = fileDeleteRecursive(this)
 }
 
 val JFile.binom: File
