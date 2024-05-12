@@ -6,7 +6,6 @@ import pw.binom.crypto.RSAPrivateKey
 import pw.binom.crypto.RSAPublicKey
 import pw.binom.io.*
 import pw.binom.io.file.openWrite
-import pw.binom.io.file.relative
 import pw.binom.io.file.workDirectoryFile
 import pw.binom.ssl.*
 import kotlin.random.Random

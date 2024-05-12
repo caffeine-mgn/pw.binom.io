@@ -20,7 +20,7 @@ class X509CertificateTest {
         val private1 = pair1.createPrivateKey()
         val public2 = X509Builder(
             pair = pair1,
-            notBefore = DateTime(),
+            notBefore = DateTime.now,
             notAfter = DateTime(DateTime.nowTime + 1000 * 60 * 60),
             serialNumber = 10,
             issuer = "DC=localhost",

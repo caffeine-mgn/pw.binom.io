@@ -1,7 +1,7 @@
 package pw.binom.io.socket
 
-internal expect fun createNetworkAddress(host: String, port: Int): InetNetworkAddress
-internal expect fun createMutableNetworkAddress(): MutableInetNetworkAddress
+//internal expect fun createNetworkAddress(host: String, port: Int): InetNetworkSocketAddress
+//internal expect fun createMutableNetworkAddress(): MutableInetNetworkSocketAddress
 
 internal fun throwUnixSocketNotSupported(): Nothing =
   throw RuntimeException("Mingw Target not supports Unix Domain Socket")
@@ -9,21 +9,21 @@ internal fun throwUnixSocketNotSupported(): Nothing =
 internal fun SelectorKey.buildToString() =
   "SelectorKey(flags: ${commonFlagsToString(listenFlags)}, readFlags: $readFlags, isClosed: $isClosed)"
 
-internal fun commonFlagsToString(flags: Int): String {
-  if (flags == 0) {
+internal fun commonFlagsToString(flags: ListenFlags): String {
+  if (flags.isZero) {
     return "none"
   }
   val sb = StringBuilder()
-  if (flags and KeyListenFlags.READ != 0) {
+  if (flags.isRead) {
     sb.append("READ ")
   }
-  if (flags and KeyListenFlags.WRITE != 0) {
+  if (flags.isWrite) {
     sb.append("WRITE ")
   }
-  if (flags and KeyListenFlags.ERROR != 0) {
+  if (flags.isError) {
     sb.append("ERROR ")
   }
-  if (flags and KeyListenFlags.ONCE != 0) {
+  if (flags.isOnce) {
     sb.append("ONCE ")
   }
   return sb.toString().trim()

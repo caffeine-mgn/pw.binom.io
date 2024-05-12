@@ -2,18 +2,23 @@ package pw.binom.io.socket
 
 import kotlin.jvm.JvmInline
 
+@Suppress("NOTHING_TO_INLINE")
 @JvmInline
 value class ListenFlags(val raw: Int) {
   companion object {
-    val ZERO = ListenFlags()
-    val WRITE = ListenFlags().withWrite
-    val READ = ListenFlags().withRead
-    val ONCE = ListenFlags().withOnce
-    val ERROR = ListenFlags().withError
+    val ZERO = ListenFlags(0)
+    val WRITE = ListenFlags(0b0010)
+    val READ = ListenFlags(0b0001)
+    val ONCE = ListenFlags(0b1000)
+    val ERROR = ListenFlags(0b0100)
   }
 
   constructor() : this(0)
 
+  inline val isZero
+    get() = raw == 0
+  inline val isNotZero
+    get() = raw != 0
   inline val isRead
     get() = raw and KeyListenFlags.READ != 0
   inline val isError

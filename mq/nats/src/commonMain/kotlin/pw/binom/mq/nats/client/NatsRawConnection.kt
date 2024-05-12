@@ -5,7 +5,8 @@ package pw.binom.mq.nats.client
 import kotlinx.serialization.json.*
 // import pw.binom.BINOM_VERSION
 import pw.binom.io.*
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.DomainSocketAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.network.SocketClosedException
 
 class NatsRawConnection(
@@ -42,7 +43,7 @@ class NatsRawConnection(
     val proto: Int,
     val jetStreamEnabled: Boolean,
     val authRequired: Boolean,
-    val clusterAddresses: List<InetNetworkAddress>,
+    val clusterAddresses: List<DomainSocketAddress>,
   )
 
   /**
@@ -222,7 +223,7 @@ private fun parseInfoMsg(msg: String): NatsRawConnection.ConnectInfo {
         data.jsonObject["connect_urls"]?.jsonArray?.map {
           val items = it.jsonPrimitive.content.split(':')
 
-          InetNetworkAddress.create(
+          DomainSocketAddress(
             host = items[0],
             port = items[1].toInt(),
           )

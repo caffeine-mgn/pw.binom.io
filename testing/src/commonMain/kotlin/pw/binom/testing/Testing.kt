@@ -31,7 +31,6 @@ object Testing {
 
     override fun test(name: String, ignore: Boolean, func: () -> Unit) {
       if (index == testCount && !ignore) {
-        testCount++
         val now = TimeSource.Monotonic.markNow()
         println("---===TEST $name STARTED===---")
         try {
@@ -54,6 +53,7 @@ object Testing {
         }
         println("---===TEST $name FINISHED in ${now.elapsedNow()}===---")
       }
+      testCount++
     }
   }
 
@@ -79,7 +79,6 @@ object Testing {
 
     override suspend fun test(name: String, ignore: Boolean, func: suspend () -> Unit) {
       if (index == testCount && !ignore) {
-        testCount++
         val now = TimeSource.Monotonic.markNow()
         println("---===TEST $name STARTED===---")
         try {
@@ -102,6 +101,7 @@ object Testing {
         }
         println("---===TEST $name FINISHED in ${now.elapsedNow()}===---")
       }
+      testCount++
     }
   }
 

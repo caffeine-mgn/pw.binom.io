@@ -1,7 +1,8 @@
 package pw.binom.io.httpClient
 
 import pw.binom.io.AsyncChannel
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.DomainSocketAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
 
@@ -33,10 +34,10 @@ interface ConnectionFactory {
 
     suspend fun connect(networkManager: NetworkManager, schema: String, host: String, port: Int): AsyncChannel {
         val channel = networkManager.tcpConnect(
-            InetNetworkAddress.create(
+            DomainSocketAddress(
                 host = host,
                 port = port,
-            ),
+            ).resolve(),
         )
 
         return connect(

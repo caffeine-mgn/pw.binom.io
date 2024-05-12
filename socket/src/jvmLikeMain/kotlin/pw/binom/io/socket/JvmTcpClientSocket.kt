@@ -11,7 +11,7 @@ import java.nio.channels.SocketChannel
 
 class JvmTcpClientSocket(
   override val native: SocketChannel,
-) : Socket, TcpClientSocket, TcpClientUnixSocket, TcpClientNetSocket {
+) : Socket, TcpClientSocket/*, TcpClientUnixSocket, TcpClientNetSocket*/ {
   override val id: String
     get() = System.identityHashCode(native).toString()
 
@@ -26,8 +26,8 @@ class JvmTcpClientSocket(
 
   private var internalPort = 0
 
-  override val port: Int?
-    get() = internalPort.takeIf { it != 0 }
+//  override val port: Int?
+//    get() = internalPort.takeIf { it != 0 }
 
   // clientNative?.socket()?.localPort ?: serverNative?.socket()?.localPort
 
@@ -52,16 +52,11 @@ class JvmTcpClientSocket(
 //        return BindStatus.OK
 //    }
 
-  override fun connect(address: InetNetworkAddress): ConnectStatus {
-    val netAddress =
-      if (address is JvmMutableInetNetworkAddress) {
-        address
-      } else {
-        JvmMutableInetNetworkAddress(address)
-      }
+/*
+  override fun connect(address: InetSocketAddress): ConnectStatus {
     return try {
       logger.info(line = __LINE__) { "Start connecting to $address" }
-      if (native.connect(netAddress.native)) {
+      if (native.connect(address.native)) {
         logger.info(line = __LINE__) { "Connected success" }
         ConnectStatus.OK
       } else {
@@ -76,6 +71,7 @@ class JvmTcpClientSocket(
       ConnectStatus.CONNECTION_REFUSED
     }
   }
+*/
 
   override fun send(data: ByteBuffer): Int =
     try {
@@ -101,10 +97,12 @@ class JvmTcpClientSocket(
     }
   }
 
+/*
   override fun connect(path: String): ConnectStatus {
     native.connectUnix(path)
     return ConnectStatus.OK
   }
+*/
 
   override var blocking: Boolean = false
     set(value) {

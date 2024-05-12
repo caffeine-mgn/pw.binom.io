@@ -143,7 +143,7 @@ actual class Selector : Closeable {
             SELECTOR_LOGGER.info(line = __LINE__) {
               "Income event on ${System.identityHashCode(binomKey.native.channel())}: ${
                 commonFlagsToString(
-                  eventImpl.internalFlag.raw,
+                  eventImpl.internalFlag,
                 )
               }"
             }
@@ -166,7 +166,7 @@ actual class Selector : Closeable {
   }
 
   private fun SelectorKey.clearFlagsIfNeed() {
-    if (listenFlags and KeyListenFlags.ONCE != 0) {
+    if (ListenFlags.ONCE in listenFlags) {
       clearNativeListenFlags()
     }
   }

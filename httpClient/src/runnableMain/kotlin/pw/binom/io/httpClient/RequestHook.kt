@@ -1,6 +1,6 @@
 package pw.binom.io.httpClient
 
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.SocketAddress
 import pw.binom.url.URL
 import pw.binom.url.toURL
 
@@ -50,7 +50,7 @@ interface RequestHook {
         override suspend fun connectAddress(url: URL) = url
     }
 
-    class HttpProxy(val url: NetworkAddress/*, val fallback: RequestHook*/) : RequestHook {
+    class HttpProxy(val url: SocketAddress/*, val fallback: RequestHook*/) : RequestHook {
 
 //        private suspend fun buildRaw(
 //            method: String,

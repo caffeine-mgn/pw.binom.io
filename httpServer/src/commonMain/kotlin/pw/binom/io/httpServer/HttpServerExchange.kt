@@ -7,7 +7,8 @@ import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
 import pw.binom.io.http.*
 import pw.binom.io.httpServer.exceptions.MissingQueryArgumentException
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.url.Path
 import pw.binom.url.PathMask
 import pw.binom.url.Query
@@ -21,7 +22,7 @@ interface HttpServerExchange : HttpInput {
   val requestMethod: String
   val responseStarted: Boolean
   val requestContext: Path
-  val address: InetNetworkAddress
+  val address: InetAddress
   val mainChannel: AsyncCloseable
 
   override val inputHeaders: Headers

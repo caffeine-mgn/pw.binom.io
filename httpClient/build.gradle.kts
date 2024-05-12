@@ -1,5 +1,6 @@
 import pw.binom.eachKotlinTest
-import pw.binom.publish.*
+import pw.binom.publish.allTargets
+import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -11,10 +12,8 @@ kotlin {
   allTargets()
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(project(":http"))
-      }
+    commonMain.dependencies {
+      api(project(":http"))
     }
     val runnableMain by getting {
       dependencies {
@@ -23,13 +22,14 @@ kotlin {
       }
     }
 
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-        api(project(":httpServer"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api(project(":httpServer"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+    }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
     }
   }
 }
@@ -49,15 +49,15 @@ tasks {
     pw.binom.plugins.DockerUtils.dockerContanier(
       project = project,
       image = "ugeek/webdav:amd64",
-      tcpPorts = listOf(80 to 7143),
+      tcpPorts = listOf(80 to 7153),
       args = listOf(),
       suffix = "WebDav",
       envs =
-        mapOf(
-          "USERNAME" to "root",
-          "PASSWORD" to "root",
-          "TZ" to "GMT",
-        ),
+      mapOf(
+        "USERNAME" to "root",
+        "PASSWORD" to "root",
+        "TZ" to "GMT",
+      ),
     )
 
   eachKotlinTest {

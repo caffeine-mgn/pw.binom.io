@@ -38,6 +38,9 @@ kotlin {
       api("org.bouncycastle:bcprov-jdk15on:1.68")
       api("org.bouncycastle:bcpkix-jdk15on:1.68")
     }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
+    }
   }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

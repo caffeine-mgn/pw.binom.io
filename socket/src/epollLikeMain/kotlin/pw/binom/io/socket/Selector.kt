@@ -1,8 +1,10 @@
 package pw.binom.io.socket
 
-import kotlinx.cinterop.*
-import platform.common.*
-import platform.common.Event
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.UnsafeNumber
+import kotlinx.cinterop.pin
+import platform.socket.*
 import pw.binom.collections.ArrayList2
 import pw.binom.collections.defaultMutableMap
 import pw.binom.collections.defaultMutableSet
@@ -10,7 +12,9 @@ import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
-import kotlin.time.*
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 @OptIn(ExperimentalForeignApi::class)
 internal val STUB_BYTE = byteArrayOf(1).pin()
@@ -28,15 +32,15 @@ actual class Selector : Closeable {
 
   //    private val keyForRemoveLock = SpinLock("Selector::keyForRemoveLock")
   internal val epoll = Epoll.create(1024)
-  private val native = createSelectedList(MAX_ELEMENTS)!!
-  internal val eventMem = mallocEvent()!!
+  private val native = NSelectedList_createSelectedList(MAX_ELEMENTS)!!
+  internal val eventMem = NEvent_malloc()!!
   internal val eventMemLock = SpinLock()
 
   //    internal var pipeRead: Int = 0
 //    internal var pipeWrite: Int = 0
   private val fdToKey = defaultMutableMap<RawSocket, SelectorKey>()
 
-  internal inline fun <T> usingEventPtr(func: (CPointer<Event>) -> T): T =
+  internal inline fun <T> usingEventPtr(func: (CPointer<NEvent>) -> T): T =
     eventMemLock.synchronize { func(eventMem) }
 
   private val eventImpl = object : pw.binom.io.socket.Event {
@@ -127,7 +131,7 @@ actual class Selector : Closeable {
   }
 
   // lock errorsRemoveLock
-  internal fun updateKey(key: SelectorKey, event: CPointer<Event>): Boolean {
+  internal fun updateKey(key: SelectorKey, event: CPointer<NEvent>): Boolean {
     if (epoll.update(key.socket, event)) {
       return true
     }
@@ -215,7 +219,7 @@ actual class Selector : Closeable {
 //                key.internalClose()
       }
       errorsRemove.forEach { key ->
-//                println("Selector::cleanupPostProcessing. Add to keyForRemove. #3. fd: ${key.socket}")
+//        println("Selector::cleanupPostProcessing. Add to keyForRemove. #3. fd: ${key.socket}")
         removeKey(key)
       }
 
@@ -223,14 +227,14 @@ actual class Selector : Closeable {
       errorsRemove.clear()
     }
     while (currentNum < count) {
-      val event = getEventFromSelectedList(native, currentNum++)
-      val ptr = getEventDataPtr(event)
+      val event = NSelectedList_getEventFromSelectedList(native, currentNum++)
+      val ptr = NEvent_getEventDataPtr(event)
       if (ptr == null) {
         interruptWakeup()
 //                println("Selector::cleanupPostProcessing Event for interrupted!")
         continue
       }
-      val socketFd = getEventDataFd(event)
+      val socketFd = NEvent_getEventDataFd(event)
       val key = fdToKey[socketFd]
       if (key == null) {
         val r = epoll.delete(socketFd)
@@ -239,7 +243,7 @@ actual class Selector : Closeable {
         continue
       }
       key ?: continue
-      val flags = getEventFlags(event)
+      val flags = NEvent_getEventFlags(event)
       if (key.isClosed) {
         val r = epoll.delete(key.socket, failOnError = false)
 //                println("Alarm! Event for closed key! $key ${key.identityHashCode()} fd=${getEventDataFd(event)}!")
@@ -283,8 +287,8 @@ actual class Selector : Closeable {
       }
       key.internalReadFlags = e
 //            println("Selector::cleanupPostProcessing Event. socket: ${key.socket}, flags: $flagsStr")
-      if (key.internalListenFlags and KeyListenFlags.ONCE != 0) {
-        key.internalListenFlags = 0
+      if (ListenFlags.ONCE in key.internalListenFlags) {
+        key.internalListenFlags = ListenFlags.ZERO
       }
       func(key)
     }
@@ -327,9 +331,9 @@ actual class Selector : Closeable {
     selectLock.synchronize {
       epollInterceptor.close()
       usingEventPtr { eventMem ->
-        freeEvent(eventMem)
+        NEvent_free(eventMem)
       }
-      closeSelectedList(native)
+      NSelectedList_closeSelectedList(native)
       epoll.close()
     }
   }

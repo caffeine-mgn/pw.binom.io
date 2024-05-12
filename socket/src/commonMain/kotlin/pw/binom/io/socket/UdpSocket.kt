@@ -1,3 +1,7 @@
 package pw.binom.io.socket
 
-interface UdpSocket : Socket
+import kotlin.time.Duration
+
+interface UdpSocket : Socket {
+  fun setSoTimeout(duration: Duration)
+}

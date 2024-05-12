@@ -5,7 +5,9 @@ package pw.binom.mq.nats.client
 import kotlinx.serialization.json.*
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.*
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.DomainSocketAddress
+import pw.binom.io.socket.InetSocketAddress
+import pw.binom.io.socket.SocketAddress
 import pw.binom.mq.nats.client.dto.ConnectRequestDto
 import pw.binom.network.SocketClosedException
 
@@ -36,8 +38,7 @@ class InternalNatsConnection private constructor(
           clusterAddresses =
             data.jsonObject["connect_urls"]?.jsonArray?.map {
               val items = it.jsonPrimitive.content.split(':')
-
-              NetworkAddress.create(
+              DomainSocketAddress(
                 host = items[0],
                 port = items[1].toInt(),
               )

@@ -1,24 +1,25 @@
 package pw.binom.io.socket
 
-import kotlin.test.assertEquals
+import pw.binom.testing.shouldEquals
 
 const val HTTP_SERVER_PORT = 7143
-val httpServerAddress = InetNetworkAddress.create("127.0.0.1", HTTP_SERVER_PORT)
+const val UDP_ECHO_PORT = 8143
+val httpServerAddress = DomainNetworkAddress("127.0.0.1").resolve()!!.withPort(HTTP_SERVER_PORT)
 
 fun TcpNetServerSocket.bind(): Int {
-    bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
-    return port!!
+  bind(DomainNetworkAddress("127.0.0.1").resolve()!!.withPort(0)) shouldEquals BindStatus.OK
+  return port!!
 }
 
 fun TcpClientNetSocket.connect(server: TcpNetServerSocket) =
-    connect(InetNetworkAddress.create(host = "127.0.0.1", port = server.port!!))
+  connect(DomainNetworkAddress("127.0.0.1").resolve()!!.withPort(server.port!!))
 
 fun ConnectStatus.assertOk(): ConnectStatus {
-    assertEquals(ConnectStatus.OK, this)
-    return this
+  this shouldEquals ConnectStatus.OK
+  return this
 }
 
 fun ConnectStatus.assertInProgress(): ConnectStatus {
-    assertEquals(ConnectStatus.IN_PROGRESS, this)
-    return this
+  this shouldEquals ConnectStatus.IN_PROGRESS
+  return this
 }

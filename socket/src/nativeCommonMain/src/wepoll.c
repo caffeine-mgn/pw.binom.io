@@ -167,7 +167,7 @@ typedef struct _OBJECT_ATTRIBUTES {
     NTAPI,                                \
     NtDeviceIoControlFile,                \
     (HANDLE FileHandle,                   \
-     HANDLE Event,                        \
+     HANDLE NEvent,                        \
      PIO_APC_ROUTINE ApcRoutine,          \
      PVOID ApcContext,                    \
      PIO_STATUS_BLOCK IoStatusBlock,      \
@@ -1740,7 +1740,7 @@ int sock_update(port_state_t* port_state, sock_state_t* sock_state) {
           /* Overlapped poll operation in progress; this is expected. */
           break;
         case ERROR_INVALID_HANDLE:
-          /* Socket closed; it'll be dropped from the epoll set. */
+          /* NSocket closed; it'll be dropped from the epoll set. */
           return sock__delete(port_state, sock_state, false);
         default:
           /* Other errors are propagated to the caller. */
@@ -1773,7 +1773,7 @@ int sock_feed_event(port_state_t* port_state,
   sock_state->pending_events = 0;
 
   if (sock_state->delete_pending) {
-    /* Socket has been deleted earlier and can now be freed. */
+    /* NSocket has been deleted earlier and can now be freed. */
     return sock__delete(port_state, sock_state, false);
 
   } else if (io_status_block->Status == STATUS_CANCELLED) {

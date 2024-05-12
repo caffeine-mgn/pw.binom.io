@@ -2,20 +2,21 @@ package pw.binom.io.socket
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.common.*
+import platform.socket.*
 import platform.posix.errno
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 
-@OptIn(ExperimentalForeignApi::class)
-fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus =
-  when (Socket_bindUnix(native, fileName)) {
-    BIND_RESULT_OK -> BindStatus.OK
-    BIND_RESULT_ALREADY_BINDED -> BindStatus.ALREADY_BINDED
-    BIND_RESULT_ADDRESS_ALREADY_IN_USE -> BindStatus.ADDRESS_ALREADY_IN_USE
-    BIND_RESULT_UNKNOWN_ERROR -> BindStatus.UNKNOWN
-    BIND_RESULT_NOT_SUPPORTED -> throwUnixSocketNotSupported()
-    else -> BindStatus.UNKNOWN
-  }
+//@OptIn(ExperimentalForeignApi::class)
+//fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus =
+//  when (NSocket_bindUnix(native, fileName)) {
+//    BIND_RESULT_OK -> BindStatus.OK
+//    BIND_RESULT_ALREADY_BINDED -> BindStatus.ALREADY_BINDED
+//    BIND_RESULT_ADDRESS_ALREADY_IN_USE -> BindStatus.ADDRESS_ALREADY_IN_USE
+//    BIND_RESULT_UNKNOWN_ERROR -> BindStatus.UNKNOWN
+//    BIND_RESULT_NOT_SUPPORTED -> throwUnixSocketNotSupported()
+//    else -> BindStatus.UNKNOWN
+//  }
 
 @OptIn(ExperimentalForeignApi::class)
 fun unbind(native: RawSocket) {
@@ -36,19 +37,30 @@ fun allowIpv4(native: RawSocket) {
   }
 }
 
-expect fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?): RawSocket?
-
-expect fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetNetworkAddress?): Int
-
-internal expect fun createSocket(socket: RawSocket, server: Boolean): Socket
-
-internal actual fun createNetworkAddress(host: String, port: Int): InetNetworkAddress {
-  val ret = createMutableNetworkAddress()
-  ret.update(
-    host = host,
-    port = port,
-  )
-  return ret
+@OptIn(ExperimentalForeignApi::class)
+internal fun networkErrorProcessing(msg:String?) {
+  when (val er = err_getLastNetworkError()) {
+    INVALID_ADDRESS_BY_PROTOCOL -> throw IOException("${msg?.let { "$it: " }?:""}Address family not supported by protocol")
+    ADDRESS_NOT_AVAILABLE -> throw IOException("${msg?.let { "$it: " }?:""}Cannot assign requested address")
+    0 -> return
+    else -> throw IOException("${msg?.let { "$it: " }?:""}Unknown error: $er")
+  }
 }
 
-internal actual fun createMutableNetworkAddress(): MutableInetNetworkAddress = CommonMutableInetNetworkAddress()
+//expect fun internalAccept(native: RawSocket, address: MutableInetSocketAddress?): RawSocket?
+//
+//expect fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetSocketAddress?): Int
+//
+//internal expect fun createSocket(socket: RawSocket, server: Boolean): Socket
+//
+//internal actual fun createNetworkAddress(host: String, port: Int): InetSocketAddress {
+//  val ret = createMutableNetworkAddress()
+//  ret.update(
+//    host = host,
+//    port = port,
+//  )
+//  return ret
+//}
+//
+//internal actual fun createMutableNetworkAddress(): MutableInetSocketAddress =
+//  CommonMutableInetNetworkSocketAddress()

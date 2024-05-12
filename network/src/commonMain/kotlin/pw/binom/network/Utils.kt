@@ -3,6 +3,7 @@
 package pw.binom.network
 
 import pw.binom.collections.defaultMutableSet
+import pw.binom.io.socket.ListenFlags
 import pw.binom.io.socket.SelectorKey
 import pw.binom.io.socket.addListen
 import pw.binom.io.socket.removeListen
@@ -16,7 +17,7 @@ value class KeyCollection(private val set: MutableSet<SelectorKey>) {
     fun addKey(key: SelectorKey) = set.add(key)
     fun removeKey(key: SelectorKey) = set.remove(key)
 
-    fun setListensFlag(flags: Int) {
+    fun setListensFlag(flags: ListenFlags) {
         set.removeIf {
             if (it.isClosed) {
                 true
@@ -38,12 +39,12 @@ value class KeyCollection(private val set: MutableSet<SelectorKey>) {
         }
     }
 
-    fun addListen(code: Int) {
+    fun addListen(flags: ListenFlags) {
         set.removeIf {
             if (it.isClosed) {
                 true
             } else {
-                it.addListen(code)
+                it.addListen(flags)
                 false
             }
         }
@@ -61,12 +62,12 @@ value class KeyCollection(private val set: MutableSet<SelectorKey>) {
     val isNotEmpty
         get() = set.isNotEmpty()
 
-    fun removeListen(code: Int) {
+    fun removeListen(flags: ListenFlags) {
         set.removeIf {
             if (it.isClosed) {
                 true
             } else {
-                it.removeListen(code)
+                it.removeListen(flags)
                 false
             }
         }
@@ -75,7 +76,7 @@ value class KeyCollection(private val set: MutableSet<SelectorKey>) {
     fun close() {
         set.forEach { key ->
             if (!key.isClosed) {
-                key.updateListenFlags(0)
+                key.updateListenFlags(ListenFlags.ZERO)
                 key.close()
             }
         }

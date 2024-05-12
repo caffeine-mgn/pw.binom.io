@@ -1,10 +1,13 @@
 package pw.binom.io.socket
+/*
 
 import kotlinx.cinterop.*
-import platform.common.internal_unbind
+import platform.common.*
+import platform.socket.*
 import platform.posix.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
+import kotlin.time.Duration
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 class PosixSocket(
@@ -14,13 +17,13 @@ class PosixSocket(
   override val id: String
     get() = native.toString()
 
-  override fun bind(address: InetNetworkAddress): BindStatus {
+  override fun bind(address: InetSocketAddress): BindStatus {
     memScoped {
       val netAddress =
-        if (address is CommonMutableInetNetworkAddress) {
+        if (address is CommonMutableInetNetworkSocketAddress) {
           address
         } else {
-          CommonMutableInetNetworkAddress(address)
+          CommonMutableInetNetworkSocketAddress(address)
         }
       internal_unbind(native)
       val bindResult =
@@ -54,15 +57,9 @@ class PosixSocket(
     return BindStatus.OK
   }
 
-  override fun connect(address: InetNetworkAddress): ConnectStatus {
-    val netAddress =
-      if (address is CommonMutableInetNetworkAddress) {
-        address
-      } else {
-        CommonMutableInetNetworkAddress(address)
-      }
+  override fun connect(address: InetSocketAddress): ConnectStatus {
     val connectResponse =
-      netAddress.getAsIpV6 { addr ->
+      address.getAsIpV6 { addr ->
         connect(
           native,
           addr.reinterpret(),
@@ -83,26 +80,19 @@ class PosixSocket(
 
   override fun send(
     data: ByteBuffer,
-    address: InetNetworkAddress,
+    address: InetSocketAddress,
   ): Int {
     if (data.remaining == 0) {
       return 0
     }
-    val netAddress =
-      if (address is CommonMutableInetNetworkAddress) {
-        address
-      } else {
-        CommonMutableInetNetworkAddress(address)
-      }
-    val sendResult =
-      netAddress.getAsIpV6 { ipv6Addr ->
+    val sendResult = address.getAsIpV6 { ipv6Addr ->
         data.ref(0) { ptr, remaining ->
           sendto(
             native,
             ptr,
             remaining.convert(),
             0,
-            ipv6Addr.reinterpret(),
+            ipv6Addr.reinterpret() ,
             sizeOf<sockaddr_in6>().convert(),
           )
         }
@@ -235,7 +225,11 @@ class PosixSocket(
     return r
   }
 
-  override fun accept(address: MutableInetNetworkAddress?): TcpClientNetSocket? {
+  override fun accept(address: MutableInetAddress?): TcpClientNetSocket? {
+    TODO("Not yet implemented")
+  }
+
+  override fun accept(address: MutableInetSocketAddress?): TcpClientNetSocket? {
     val clientRaw = internalAccept(native, address) ?: return null
     return PosixSocket(native = clientRaw, server = false)
   }
@@ -245,4 +239,77 @@ class PosixSocket(
   }
 
   override var keyHash: Int = 0
+  override fun setSoTimeout(duration: Duration) {
+    val success = memScoped {
+      val waitUntil = alloc<timespec>()
+      waitUntil.set(duration)
+      setsockopt(native, SOL_SOCKET, SO_RCVTIMEO, waitUntil.ptr, sizeOf<timespec>().convert()) >= 0
+    }
+    if (!success) {
+      throw IOException("Can't set SoTimeout")
+    }
+  }
+
+  override fun setTtl(value: Byte) {
+    memScoped {
+      val vv = alloc<ByteVar>()
+      vv.value = value
+      if (internal_setsockopt(native, IPPROTO_IP, IP_MULTICAST_TTL, vv.ptr, sizeOf<ByteVar>().convert()) == -1) {
+        throw IOException("Can't set ttl to $value")
+      }
+    }
+  }
+
+  override fun joinGroup(address: InetAddress) {
+    TODO()
+//    val e = address.toNative().native.use { ptr ->
+//      Socket_joinGroup(
+//        socket = native,
+//        address = ptr,
+//        netIfIndex = 0,
+//      )
+//    }
+//    println("Join result $e")
+  }
+
+  override fun joinGroup(address: InetSocketAddress, netIf: NetworkInterface) {
+    address.native.use { ptr ->
+      val e = Socket_joinGroup(
+        socket = native,
+        address = ptr,
+        netIfIndex = netIf.index + 1,
+      )
+      if (e != 1) {
+        networkErrorProcessing("Can't join to group ${address.host} on interface ${netIf.ip}")
+      }
+      println("Join result: $e")
+    }
+  }
+
+  override fun leaveGroup(address: InetAddress) {
+    address.native.use { ptr ->
+      Socket_leaveGroup(
+        socket = native,
+        address = ptr,
+        netIfIndex = 0
+      )
+    }
+  }
+
+  override fun leaveGroup(address: InetSocketAddress, netIf: NetworkInterface) {
+    InetAddress.create(address).native.use { ptr ->
+      Socket_leaveGroup(
+        socket = native,
+        address = ptr,
+        netIfIndex = 0
+      )
+    }
+  }
 }
+
+@OptIn(UnsafeNumber::class, ExperimentalForeignApi::class)
+private fun timespec.set(diff: Duration) {
+  tv_sec = diff.inWholeSeconds.convert()
+  tv_nsec = (diff.inWholeNanoseconds - diff.inWholeSeconds * 1_000_000_000).convert()
+}
+*/

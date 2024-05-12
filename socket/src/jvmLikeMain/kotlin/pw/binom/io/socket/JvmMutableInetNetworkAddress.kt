@@ -1,63 +1,37 @@
 package pw.binom.io.socket
-
+/*
+import java.net.Inet4Address
+import java.net.Inet6Address
 import java.net.InetAddress
-import java.net.InetSocketAddress
 
-class JvmMutableInetNetworkAddress() : MutableInetNetworkAddress {
+class JvmMutableInetNetworkAddress : MutableInetNetworkAddress {
+  var native: InetAddress? = null
 
-  constructor(address: InetNetworkAddress) : this() {
-    update(
-      host = address.host,
-      port = address.port,
-    )
-  }
-
-  var native: InetSocketAddress? = null
-
-  override fun update(host: String, port: Int) {
-    try {
-      native = InetSocketAddress(InetAddress.getByName(host), port)
-    } catch (e: java.net.UnknownHostException) {
-      throw UnknownHostException(host)
+  override val protocolFamily: ProtocolFamily
+    get() = when (native) {
+      is Inet4Address -> ProtocolFamily.AF_INET
+      is Inet6Address -> ProtocolFamily.AF_INET6
+      else -> ProtocolFamily.AF_INET
     }
-  }
-
-  override fun toString(): String = "$host:$port"
-
-  override fun clone(): MutableInetNetworkAddress {
-    val ret = JvmMutableInetNetworkAddress()
-    ret.update(
-      host = host,
-      port = port,
-    )
-    return ret
-  }
-
-  override val host: String
+  override val isMulticastAddress: Boolean
+    get() = native?.isMulticastAddress ?: false
+  override var host: String
     get() {
-      val native = native
-      require(native != null)
-      return native.address.hostAddress
+      return native?.hostAddress ?: ""
     }
-  override val port: Int
-    get() {
-      val native = native
-      require(native != null)
-      return native.port
+    set(value) {
+      native!!.isMulticastAddress
+      native = InetAddress.getByName(value)
     }
-
-  override fun toMutable(dest: MutableInetNetworkAddress): MutableInetNetworkAddress {
-    if (dest is JvmMutableInetNetworkAddress) {
-      dest.native = native
-    } else {
-      dest.update(
-        host = host,
-        port = port,
-      )
-    }
-    return dest
-  }
-
-  override fun toMutable(): MutableInetNetworkAddress = this
-  override fun toImmutable(): InetNetworkAddress = JvmMutableInetNetworkAddress(this)
 }
+
+internal actual fun createMutableInetNetworkAddress(): MutableInetNetworkAddress =
+  JvmMutableInetNetworkAddress()
+
+internal actual fun createInetNetworkAddress(host: String): InetNetworkAddress {
+  InetAddress.getAllByName(host).toList()
+  val addr = JvmMutableInetNetworkAddress()
+  addr.host = host
+  return addr
+}
+*/

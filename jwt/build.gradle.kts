@@ -15,11 +15,18 @@ kotlin {
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
+    commonMain.dependencies {
         api("org.jetbrains.kotlinx:kotlinx-serialization-json:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
         api(project(":ssl"))
-      }
+    }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(project(":testing"))
+    }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
     }
   }
 }

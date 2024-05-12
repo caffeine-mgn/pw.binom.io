@@ -1,9 +1,11 @@
 package pw.binom
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import pw.binom.io.ByteBuffer
 import pw.binom.io.empty
 import kotlin.test.Test
 
+@OptIn(ExperimentalForeignApi::class)
 class NativeByteBufferTest {
 
     @Test

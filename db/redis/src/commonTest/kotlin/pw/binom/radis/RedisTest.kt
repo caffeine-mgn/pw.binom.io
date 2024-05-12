@@ -2,7 +2,7 @@ package pw.binom.radis
 
 import kotlinx.coroutines.test.runTest
 import pw.binom.db.radis.RadisConnection
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.useAsync
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
@@ -12,7 +12,7 @@ class RedisTest : BaseRedisTest() {
   @Test
   fun ff() =
     runTest {
-      val address = InetNetworkAddress.create(host = "127.0.0.1", port = 7133)
+      val address = InetSocketAddress.resolve(host = "127.0.0.1", port = 7133)
       RadisConnection.connect(address).useAsync { con ->
         con.ping()
 //            println("->${con.info()}")

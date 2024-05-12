@@ -36,6 +36,9 @@ kotlin {
       api(project(":coroutines"))
       api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
+    }
     /*
     val jvmLikeMain by creating {
       dependsOn(commonMain)
@@ -56,14 +59,14 @@ kotlin {
   }
 }
 tasks {
-  withType(Test::class) {
-    useJUnitPlatform()
-    testLogging.showStandardStreams = true
-    testLogging.showCauses = true
-    testLogging.showExceptions = true
-    testLogging.showStackTraces = true
-    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-  }
+//  withType(Test::class) {
+//    useJUnitPlatform()
+//    testLogging.showStandardStreams = true
+//    testLogging.showCauses = true
+//    testLogging.showExceptions = true
+//    testLogging.showStackTraces = true
+//    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+//  }
 
   val httpStorage =
     pw.binom.plugins.DockerUtils.dockerContanier(

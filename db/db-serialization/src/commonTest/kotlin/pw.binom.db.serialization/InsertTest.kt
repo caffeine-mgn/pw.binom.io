@@ -11,7 +11,7 @@ import pw.binom.concurrency.sleep
 import pw.binom.db.async.pool.AsyncConnectionPool
 import pw.binom.db.postgresql.async.PGConnection
 import pw.binom.db.sqlite.AsyncSQLiteConnector
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.useAsync
 import pw.binom.network.Network
 import pw.binom.uuid.nextUuid
@@ -24,7 +24,7 @@ import kotlin.time.TimeSource
 
 class InsertTest {
   @OptIn(ExperimentalTime::class)
-  private suspend fun connectToPostgres(address: InetNetworkAddress): PGConnection {
+  private suspend fun connectToPostgres(address: InetSocketAddress): PGConnection {
     return withContext(Dispatchers.Default) {
       val start = TimeSource.Monotonic.markNow()
       withTimeout(10.seconds) {
@@ -64,7 +64,7 @@ class InsertTest {
       try {
         val pool =
           AsyncConnectionPool.create(maxConnections = 1) {
-            connectToPostgres(InetNetworkAddress.create(host = "127.0.0.1", port = 6102))
+            connectToPostgres(InetSocketAddress.resolve(host = "127.0.0.1", port = 6102))
           }
         DBContext.create(pool, sql).useAsync { context ->
           func(context)

@@ -6,7 +6,8 @@ import pw.binom.io.httpServer.HttpHandler
 import pw.binom.io.httpServer.HttpHandlerChain
 import pw.binom.io.httpServer.HttpServer2
 import pw.binom.io.httpServer.HttpServerExchange
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.DomainSocketAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
 import pw.binom.logger.info
@@ -66,14 +67,14 @@ class ManagementWebServerService {
         )
 
       try {
-        val bindAddresses = ArrayList<InetNetworkAddress>()
+        val bindAddresses = ArrayList<InetSocketAddress>()
         webServerProperties.bindAddresses.forEach {
           val items = it.split(':', limit = 2)
           bindAddresses +=
-            InetNetworkAddress.create(
+            DomainSocketAddress(
               host = items[0],
               port = items[1].toInt(),
-            )
+            ).resolve()
         }
         val singlePort =
           when {
@@ -83,7 +84,7 @@ class ManagementWebServerService {
           }
         if (singlePort != null) {
           bindAddresses +=
-            InetNetworkAddress.create(
+            InetSocketAddress.resolve(
               host = "0.0.0.0",
               port = singlePort,
             )

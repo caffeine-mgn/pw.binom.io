@@ -63,6 +63,7 @@ class NetworkCoroutineDispatcherImpl : NetworkCoroutineDispatcher(), Closeable {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !executor.isThreadFromPool(Thread.currentThread)
 
     override fun close() {
+      println("NetworkCoroutineDispatcherImpl::close")
         if (closed.compareAndSet(false, true)) {
             executor.shutdownNow()
             selector.wakeup()

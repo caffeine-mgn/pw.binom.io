@@ -2,6 +2,7 @@ package pw.binom.io.socket
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.common.*
+import platform.socket.*
 import platform.posix.errno
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
@@ -14,43 +15,43 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
   actual var attachment: Any? = null
   private var closed = AtomicBoolean(false)
   private var free = AtomicBoolean(false)
-  internal val eventMem = mallocEvent()!!
+  internal val eventMem = NEvent_malloc()!!
 //    internal val event = mallocEvent() ?: TODO("Can't allocate event")
 
   //    @OptIn(ExperimentalTime::class)
 //    var lastActiveTime: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
   actual val readFlags
     get() = internalReadFlags
-  internal var internalReadFlags = ListenFlags()
+  internal var internalReadFlags = ListenFlags.ZERO
     set(value) {
       field = value
     }
   internal var serverFlag = false
 
-  internal var internalListenFlags = 0
+  internal var internalListenFlags = ListenFlags.ZERO
 
   init {
-    setEventDataFd(eventMem, socket.native)
-    setEventFlags(eventMem, 0, 0)
+    NEvent_setEventDataFd(eventMem, socket.native)
+    NEvent_setEventFlags(eventMem, 0, 0)
     NetworkMetrics.incSelectorKey()
     NetworkMetrics.incSelectorKeyAlloc()
   }
 
-  private fun resetListenFlags(commonFlags: Int): Boolean {
+  private fun resetListenFlags(commonFlags: ListenFlags): Boolean {
     if (closed.getValue()) {
       return false
     }
-    setEventDataFd(eventMem, rawSocket)
-    setEventFlags(eventMem, commonFlags, if (serverFlag) 1 else 0)
+    NEvent_setEventDataFd(eventMem, rawSocket)
+    NEvent_setEventFlags(eventMem, commonFlags.raw, if (serverFlag) 1 else 0)
     val success = selector.updateKey(this, eventMem)
     if (!success) {
       val socketError = internal_get_socket_error(rawSocket)
-      println("Can't update epoll flags. error #${internal_get_last_error()}, errno #$errno, socketError #$socketError")
+      println("Can't update epoll flags. rawSocket=$rawSocket error #${internal_get_last_error()}, errno #$errno, socketError #$socketError")
     }
     return success
   }
 
-  actual fun updateListenFlags(listenFlags: Int): Boolean {
+  actual fun updateListenFlags(listenFlags: ListenFlags): Boolean {
     val updateResult = resetListenFlags(listenFlags)
     return if (updateResult) {
       internalListenFlags = listenFlags
@@ -60,7 +61,7 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
     }
   }
 
-  actual val listenFlags: Int
+  actual val listenFlags: ListenFlags
     get() = internalListenFlags
 
 //    internal val event = nativeHeap.alloc<epoll_event>()
@@ -75,7 +76,7 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
     if (!free.compareAndSet(false, true)) {
       return
     }
-    freeEvent(eventMem)
+    NEvent_free(eventMem)
     NetworkMetrics.decSelectorKeyAlloc()
 //        nativeHeap.free(event)
 //        freeEvent(event)

@@ -5,7 +5,7 @@ import kotlinx.coroutines.runBlocking
 import pw.binom.date.DateTime
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import pw.binom.network.tcpConnect
 import pw.binom.readLong
@@ -47,7 +47,7 @@ class SSLTest {
         val private1 = pair1.createPrivateKey()
         val public2 = X509Builder(
             pair = pair1,
-            notBefore = DateTime(),
+            notBefore = DateTime.now,
             notAfter = DateTime(DateTime.nowTime + 1000 * 60 * 60),
             serialNumber = 10,
             issuer = "DC=localhost",
@@ -67,7 +67,7 @@ class SSLTest {
         )
         val buf = ByteBuffer(16)
         val nd = NetworkCoroutineDispatcherImpl()
-        val addr = InetNetworkAddress.create("127.0.0.1", 4445)
+        val addr = InetSocketAddress.resolve("127.0.0.1", 4445)
         val server = nd.bindTcp(addr)
         val r1 = launch {
             val client = server.accept()

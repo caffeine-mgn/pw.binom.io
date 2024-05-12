@@ -4,7 +4,6 @@ import pw.binom.base64.Base64
 import pw.binom.crypto.ECPrivateKey
 import pw.binom.crypto.ECPublicKey
 import pw.binom.io.file.openWrite
-import pw.binom.io.file.relative
 import pw.binom.io.file.workDirectoryFile
 import pw.binom.io.socket.ssl.writeAllBytes
 import pw.binom.io.use

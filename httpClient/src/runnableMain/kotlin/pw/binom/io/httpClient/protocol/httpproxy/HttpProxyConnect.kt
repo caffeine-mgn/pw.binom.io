@@ -12,8 +12,9 @@ import pw.binom.io.httpClient.protocol.HttpConnect
 import pw.binom.io.httpClient.protocol.ProtocolSelector
 import pw.binom.io.httpClient.protocol.v11.Http11ConnectFactory2
 import pw.binom.io.httpClient.protocol.v11.Http11RequestBody
-import pw.binom.io.socket.InetNetworkAddress
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.DomainSocketAddress
+import pw.binom.io.socket.InetSocketAddress
+import pw.binom.io.socket.SocketAddress
 import pw.binom.io.socket.UnknownHostException
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
@@ -24,11 +25,11 @@ import kotlin.time.TimeSource
 
 @OptIn(ExperimentalTime::class)
 class HttpProxyConnect(
-  val proxyUrl: NetworkAddress,
-  private val networkManager: NetworkManager,
-  private var tcp: AsyncChannel?,
-  private val protocolSelector: ProtocolSelector,
-  protected val auth: HttpAuth?,
+    val proxyUrl: SocketAddress,
+    private val networkManager: NetworkManager,
+    private var tcp: AsyncChannel?,
+    private val protocolSelector: ProtocolSelector,
+    protected val auth: HttpAuth?,
 ) : HttpConnect {
   private var created = TimeSource.Monotonic.markNow()
   private var transparentChannel: HttpConnect? = null
@@ -45,10 +46,10 @@ class HttpProxyConnect(
     if (tcp == null) {
       tcp =
         networkManager.tcpConnect(
-          InetNetworkAddress.create(
+          DomainSocketAddress(
             host = proxyUrl.host,
             port = proxyUrl.port,
-          ),
+          ).resolve(),
         )
       this.tcp = tcp
     }

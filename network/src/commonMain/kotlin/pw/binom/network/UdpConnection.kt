@@ -1,9 +1,6 @@
 package pw.binom.network
 
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
-import pw.binom.concurrency.SpinLock
-import pw.binom.concurrency.synchronize
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 import pw.binom.io.socket.*
@@ -13,8 +10,8 @@ import kotlin.coroutines.resumeWithException
 class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
   companion object {
     fun randomPort() =
-      Socket.createUdpNetSocket().use {
-        it.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
+      UdpNetSocket().use {
+        it.bind(InetSocketAddress.resolve(host = "127.0.0.1", port = 0))
         it.port!!
       }
   }
@@ -30,50 +27,13 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
 
   val keys = KeyCollection()
 
-  private class ReadData {
-    var continuation: CancellableContinuation<Int>? = null
-    var data: ByteBuffer? = null
-    var address: MutableInetNetworkAddress? = null
-    var full = false
-    private val lock = SpinLock()
+  private val readData = InternalUdlReadData()
+  private val sendData = InternalUdpSendData()
 
-    fun lock() = lock.lock()
-
-    fun unlock() = lock.unlock()
-
-    inline fun <T> synchronize(func: () -> T): T = lock.synchronize(func)
-
-    fun reset() {
-      continuation = null
-      data = null
-      address = null
+  fun bind(address: InetSocketAddress) {
+    if (channel.bind(address) != BindStatus.OK) {
+      throw IOException("Can't bind to $address")
     }
-  }
-
-  private class SendData {
-    var continuation: CancellableContinuation<Int>? = null
-    var data: ByteBuffer? = null
-    var address: InetNetworkAddress? = null
-    private val lock = SpinLock()
-
-    fun lock() = lock.lock()
-
-    fun unlock() = lock.unlock()
-
-    inline fun <T> synchronize(func: () -> T): T = lock.synchronize(func)
-
-    fun reset() {
-      continuation = null
-      data = null
-      address = null
-    }
-  }
-
-  private val readData = ReadData()
-  private val sendData = SendData()
-
-  fun bind(address: InetNetworkAddress) {
-    channel.bind(address)
   }
 
   val port
@@ -159,7 +119,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
 
   suspend fun read(
     dest: ByteBuffer,
-    address: MutableInetNetworkAddress?,
+    address: MutableInetSocketAddress?,
   ): Int {
     keys.checkEmpty()
     readData.lock()
@@ -185,13 +145,13 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
           readData.data = dest
           readData.address = address
         }
-        keys.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR)
+        keys.addListen(ListenFlags.READ + ListenFlags.ERROR)
         keys.wakeup()
         it.invokeOnCancellation {
           readData.continuation = null
           readData.data = null
           readData.address = null
-          keys.removeListen(KeyListenFlags.READ)
+          keys.removeListen(ListenFlags.READ)
         }
       }
     if (readed < 0) {
@@ -202,7 +162,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
 
   suspend fun write(
     data: ByteBuffer,
-    address: InetNetworkAddress,
+    address: InetSocketAddress,
   ): Int {
     keys.checkEmpty()
     val l = data.remaining
@@ -214,7 +174,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
       throw IllegalStateException("Connection already has write listener")
     }
     val wrote = channel.send(data, address)
-    if (wrote == l) {
+    if (wrote > 0) {
       return wrote
     }
 
@@ -222,7 +182,7 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     sendData.address = address
     suspendCancellableCoroutine<Int> {
       sendData.continuation = it
-      keys.addListen(KeyListenFlags.WRITE or KeyListenFlags.ERROR)
+      keys.addListen(ListenFlags.WRITE + ListenFlags.ERROR)
       keys.wakeup()
     }
     return l

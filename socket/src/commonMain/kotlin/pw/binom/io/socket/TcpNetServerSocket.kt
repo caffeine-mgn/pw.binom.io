@@ -1,6 +1,6 @@
 package pw.binom.io.socket
 
-interface TcpNetServerSocket : TcpServerSocket, NetSocket {
-  fun accept(address: MutableInetNetworkAddress?): TcpClientNetSocket?
-  fun bind(address: InetNetworkAddress): BindStatus
+expect class TcpNetServerSocket() : TcpServerSocket, NetSocket {
+  fun accept(address: MutableInetAddress? = null): TcpClientNetSocket?
+  fun bind(address: InetSocketAddress): BindStatus
 }

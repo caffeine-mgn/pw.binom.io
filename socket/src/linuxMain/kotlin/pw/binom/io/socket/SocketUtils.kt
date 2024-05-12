@@ -5,6 +5,7 @@ package pw.binom.io.socket
 
 import kotlinx.cinterop.*
 import platform.common.*
+import platform.socket.*
 
 import pw.binom.io.ByteBuffer
 
@@ -61,50 +62,32 @@ actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
 }
 */
 
+/*@OptIn(ExperimentalForeignApi::class)
+actual fun internalAccept(native: RawSocket, address: MutableInetSocketAddress?): RawSocket? {
+  TODO()
+//  return if (address != null) {
+//    address.native.use { ptr ->
+//      Socket_accept(native, ptr).takeIf { it > 0 }
+//    }
+//  } else {
+//    Socket_accept(native, null).takeIf { it > 0 }
+//  }
+}*/
+/*
 @OptIn(ExperimentalForeignApi::class)
-actual fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?): RawSocket? {
-  return address.useNativeAddress { addr ->
-    Socket_accept(native, addr).takeIf { it > 0 }
-  }
-  /*+
-  if (address == null) {
-      return accept(native, null, null).takeIf { it != -1 }
-  }
-  val out = if (address is CommonMutableNetworkAddress) {
-      address
-  } else {
-      CommonMutableNetworkAddress()
-  }
-  val newClientRaw = memScoped {
-      val len = allocArray<socklen_tVar>(1)
-      len[0] = 28.convert()
-      val rr = accept(
-          native,
-          out.data.refTo(0).getPointer(this).reinterpret(),
-          len,
-      )
-      out.size = len[0].convert()
-      rr
-  }
-
-  if (out !== address) {
-      address.update(host = out.host, port = out.port)
-  }
-  return newClientRaw
-  */
-}
-
-@OptIn(ExperimentalForeignApi::class)
-actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
+actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetSocketAddress?): Int {
   if (data.remaining <= 0) {
     return 0
   }
-  return address.useNativeAddress { addr ->
-    data.ref(0) { ptr, rem ->
-      Socket_receive(native, ptr, rem, addr)
-    }
+  return data.ref(0) { ptr, rem ->
+    address?.native
+      ?.use { addrPtr ->
+        Socket_receive(native, ptr, rem, addrPtr)
+      }
+      ?: Socket_receive(native, ptr, rem, null)
   }
-  /*
+  */
+/*
   if (data.remaining == 0) {
       return 0
   }
@@ -142,7 +125,9 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
           address.update(netAddress.host, netAddress.port)
       }
       readSize
-      */
-}
+      *//*
 
-actual fun createSocket(socket: RawSocket, server: Boolean): Socket = PosixSocket(native = socket, server = server)
+}
+*/
+
+//actual fun createSocket(socket: RawSocket, server: Boolean): Socket = PosixSocket(native = socket, server = server)

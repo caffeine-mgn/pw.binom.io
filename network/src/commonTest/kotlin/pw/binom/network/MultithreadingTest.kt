@@ -3,7 +3,7 @@ package pw.binom.network
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.use
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -32,7 +32,7 @@ class MultithreadingTest {
     runTest(dispatchTimeoutMs = 10_000) {
       val flag1 = AtomicBoolean(false)
       val nd = NetworkCoroutineDispatcherImpl()
-      val addr = InetNetworkAddress.create("127.0.0.1", 8765)
+      val addr = InetSocketAddress.resolve(host = "127.0.0.1", port = 8765)
       val server =
         launch {
           nd.bindTcp(addr).use { server ->

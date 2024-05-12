@@ -7,9 +7,11 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import pw.binom.io.bufferedReader
 import pw.binom.io.bufferedWriter
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.socket.Socket
+import pw.binom.io.socket.TcpNetServerSocket
 import pw.binom.io.use
+import pw.binom.io.useAsync
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -27,17 +29,17 @@ class Ololo {
   fun test() =
     runTest {
       val network = NetworkCoroutineDispatcherImpl()
-      val ccc = Socket.createTcpServerNetSocket()
+      val ccc = TcpNetServerSocket()
       println("Bind on 8335")
-      ccc.bind(InetNetworkAddress.create(port = 8335, host = "0.0.0.0"))
+      ccc.bind(InetSocketAddress.resolve(port = 8335, host = "0.0.0.0"))
       println("Wait clients...")
       ccc.use {
         val server = network.attach(ccc)
         while (true) {
           val newClient = server.accept()
           launch {
-            val line = newClient.bufferedReader(closeParent = false).use { it.readln() }
-            newClient.bufferedWriter(closeParent = false).use { it.append("Echo $line") }
+            val line = newClient.bufferedReader(closeParent = false).useAsync { it.readln() }
+            newClient.bufferedWriter(closeParent = false).useAsync { it.append("Echo $line") }
             newClient.asyncClose()
           }
         }

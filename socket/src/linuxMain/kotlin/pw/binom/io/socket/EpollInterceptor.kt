@@ -4,9 +4,9 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.UnsafeNumber
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.convert
-import platform.common.FLAG_READ
-import platform.common.setEventDataPtr
-import platform.common.setEventFlags
+import platform.socket.FLAG_READ
+import platform.socket.NEvent_setEventDataPtr
+import platform.socket.NEvent_setEventFlags
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
@@ -24,8 +24,8 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
     pipeWrite = fds.second
 
     val r = selector.usingEventPtr { eventMem ->
-      setEventDataPtr(eventMem, null)
-      setEventFlags(eventMem, FLAG_READ, 0)
+      NEvent_setEventDataPtr(eventMem, null)
+      NEvent_setEventFlags(eventMem, FLAG_READ, 0)
       epoll.add(pipeRead, eventMem)
     }
     if (r != Epoll.EpollResult.OK) {

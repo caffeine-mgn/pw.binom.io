@@ -8,13 +8,13 @@ buildscript {
   }
 
   dependencies {
-    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23")
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")
     classpath("com.android.tools.build:gradle:7.0.0")
   }
 }
 
 plugins {
-  kotlin("jvm") version "1.9.23"
+  kotlin("jvm") version "1.9.24"
   id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 val kotlinVersion = kotlin.coreLibrariesVersion
@@ -54,7 +54,7 @@ dependencies {
   api("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
   api("org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion")
   api("org.jetbrains.dokka:dokka-gradle-plugin:1.8.20")
-  api("pw.binom:kn-clang:0.1.14")
+  api("pw.binom:kn-clang:0.1.15")
   api("com.bmuschko:gradle-docker-plugin:7.3.0")
 //  api("pw.binom:binom-publish:0.1.19")
   api("pw.binom:binom-publish:0.1.19")

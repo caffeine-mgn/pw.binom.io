@@ -6,20 +6,20 @@ import kotlin.test.assertEquals
 class SyncTcpNetSocketTest {
     @Test
     fun connectSuccessTest() {
-        val socket = Socket.createTcpClientNetSocket()
+        val socket = TcpClientNetSocket()
         assertEquals(ConnectStatus.OK, socket.connect(httpServerAddress))
     }
 
     @Test
     fun alreadyConnectedTest() {
-        val socket = Socket.createTcpClientNetSocket()
+        val socket = TcpClientNetSocket()
         socket.connect(httpServerAddress)
         assertEquals(ConnectStatus.ALREADY_CONNECTED, socket.connect(httpServerAddress))
     }
 
     @Test
     fun connectRefusedTest() {
-        val socket = Socket.createTcpClientNetSocket()
-        assertEquals(ConnectStatus.CONNECTION_REFUSED, socket.connect(InetNetworkAddress.create("127.0.0.1", 1)))
+        val socket = TcpClientNetSocket()
+        assertEquals(ConnectStatus.CONNECTION_REFUSED, socket.connect(InetAddress.resolve("127.0.0.1").withPort(1)))
     }
 }

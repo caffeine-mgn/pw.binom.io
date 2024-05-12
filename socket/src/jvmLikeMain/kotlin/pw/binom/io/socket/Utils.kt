@@ -4,11 +4,11 @@ package pw.binom.io.socket
 
 import java.nio.channels.SelectionKey
 
-fun InetNetworkAddress.toJvmAddress() = if (this is JvmMutableInetNetworkAddress) {
-    this
-} else {
-    JvmMutableInetNetworkAddress(this)
-}
+//fun InetNetworkSocketAddress.toJvmAddress() = if (this is JvmMutableInetNetworkSocketAddress) {
+//    this
+//} else {
+//    JvmMutableInetNetworkSocketAddress(this)
+//}
 
 internal fun SelectionKey.toCommonReadFlag(): ListenFlags {
     var r = ListenFlags()

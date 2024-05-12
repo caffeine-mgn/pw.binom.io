@@ -10,16 +10,17 @@ expect interface Socket : Closeable {
   fun setTcpNoDelay(value: Boolean): Boolean
 
   companion object {
-    fun createTcpClientNetSocket(): TcpClientNetSocket
+//    fun createTcpClientNetSocket(): TcpClientNetSocket
 
-    fun createTcpClientUnixSocket(): TcpClientUnixSocket
+//    fun createTcpClientUnixSocket(): TcpClientUnixSocket
 
-    fun createTcpServerNetSocket(): TcpNetServerSocket
+//    fun createTcpServerNetSocket(): TcpNetServerSocket
 
-    fun createTcpServerUnixSocket(): TcpUnixServerSocket
+//    fun createTcpServerUnixSocket(): TcpUnixServerSocket
 
-    fun createUdpNetSocket(): UdpNetSocket
+//    fun createMulticastSocket(port: Int, networkInterface: NetworkInterface): MulticastSocket
+//    fun createUdpNetSocket(): UdpNetSocket
 
-    fun createUdpUnixSocket(): UdpUnixSocket
+//    fun createUdpUnixSocket(): UdpUnixSocket
   }
 }

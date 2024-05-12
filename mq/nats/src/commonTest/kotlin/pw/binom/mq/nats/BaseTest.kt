@@ -3,7 +3,7 @@ package pw.binom.mq.nats
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.mq.nats.client.*
 import pw.binom.network.Network
 import pw.binom.network.tcpConnect
@@ -21,7 +21,7 @@ abstract class BaseTest {
       }
     }
 
-  suspend fun tcpConnect() = Dispatchers.Network.tcpConnect(InetNetworkAddress.create("127.0.0.1", NATS_PORT))
+  suspend fun tcpConnect() = Dispatchers.Network.tcpConnect(InetSocketAddress.resolve("127.0.0.1", NATS_PORT))
 
   suspend fun natsConnect() =
     InternalNatsConnection.connect(

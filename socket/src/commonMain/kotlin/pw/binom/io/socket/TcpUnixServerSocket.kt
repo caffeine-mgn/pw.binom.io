@@ -1,7 +1,6 @@
 package pw.binom.io.socket
 
-interface TcpUnixServerSocket : TcpServerSocket {
-  fun accept(address: ((String) -> Unit)?): TcpClientNetSocket?
-  fun accept(): TcpClientNetSocket? = accept(null)
+expect class TcpUnixServerSocket() : TcpServerSocket {
+  fun accept(): TcpClientUnixSocket?
   fun bind(path: String): BindStatus
 }

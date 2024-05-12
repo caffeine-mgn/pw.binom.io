@@ -4,16 +4,17 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.common.*
+import platform.socket.*
 import platform.posix.*
 import pw.binom.io.IOException
-import platform.common.Event as NativeEvent
-import platform.common.Selector as NativeSelector
+import platform.socket.NEvent as NativeEvent
+import platform.socket.NSelector as NativeSelector
 
 @OptIn(ExperimentalForeignApi::class)
 value class Epoll(val raw: CPointer<NativeSelector>) {
   companion object {
     fun create(size: Int): Epoll {
-      val descriptor = createSelector(size)
+      val descriptor = NSelector_createSelector(size)
       if (descriptor == null) {
         throw IOException("Can't create epoll. Errno: $errno")
       }
@@ -25,8 +26,8 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
     OK, INVALID, ALREADY_EXIST,
   }
 
-  fun select(events: CPointer<SelectedList>, timeout: Int): Int {
-    val count = selectKeys(raw, events, timeout)
+  fun select(events: CPointer<NSelectedList>, timeout: Int): Int {
+    val count = NSelector_selectKeys(raw, events, timeout)
     if (count < 0) {
       throw IOException("Error on epoll_wait. errno: $errno")
     }
@@ -35,7 +36,7 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
 
   fun add(socket: RawSocket, data: CValuesRef<NativeEvent>?): EpollResult {
 //        val ret = epoll_ctl(raw, sEPOLL_CTL_ADD, socket.convert(), data)
-    val ret = registryKey(raw, socket, data)
+    val ret = NSelector_registryKey(raw, socket, data)
 //        if (ret == 0) {
 //            if (data != null) {
 //                data as CPointer<epoll_event>
@@ -45,8 +46,7 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
 //        } else {
 //            println("======>Epoll $raw: error add socket $socket")
 //        }
-    if (ret != 0) {
-      println("errno--->$errno")
+    if (ret != 1) {
       when (errno) {
         EPERM, EBADF, ENOENT -> return EpollResult.INVALID
         EEXIST -> return EpollResult.ALREADY_EXIST
@@ -57,8 +57,8 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
   }
 
   fun delete(fd: RawSocket): EpollResult {
-    val ret = removeKey(raw, fd)
-    if (ret != 0) {
+    val ret = NSelector_removeKey(raw, fd)
+    if (ret != 1) {
 //            println("Can't remove event. fd: $fd, errno: $errno, operation: $operation")
       when (errno) {
         EPERM, EBADF, ENOENT -> return EpollResult.INVALID
@@ -71,8 +71,8 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
   }
 
   fun delete(socket: Socket, failOnError: Boolean): EpollResult {
-    val ret = removeKey(raw, socket.native)
-    if (ret != 0) {
+    val ret = NSelector_removeKey(raw, socket.native)
+    if (ret != 1) {
       when (errno) {
         EPERM, EBADF, ENOENT -> return EpollResult.INVALID
         EEXIST -> return EpollResult.ALREADY_EXIST
@@ -89,17 +89,17 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
   fun update(socket: Socket, data: CValuesRef<NativeEvent>?): Boolean {
     // ENOENT - socket closed
 //        val ret = epoll_ctl(raw, sEPOLL_CTL_MOD, socket.convert(), data)
-    val ret = updateKey(raw, socket.native, data)
-    if (ret != 0) {
-//            println("Epoll update error: $errno, socket: $socket, flags: ${commonFlagsToString(getEventFlags(data))}")
+    val ret = NSelector_updateKey(raw, socket.native, data)
+    if (ret != 1) {
+//            println("Epoll update error: $errno, socket: $socket, flags: ${commonFlagsToString(ListenFlags(NEvent_getEventFlags(data)))}")
     } else {
-//            println("Epoll update success, socket: $socket, flags: ${commonFlagsToString(getEventFlags(data))}")
+//            println("Epoll update success, socket: $socket, flags: ${commonFlagsToString(ListenFlags(NEvent_getEventFlags(data)))}")
     }
-    return ret == 0
+    return ret == 1
   }
 
   fun close() {
-    closeSelector(raw)
+    NSelector_closeSelector(raw)
 //        platform.posix.close(raw)
   }
 }

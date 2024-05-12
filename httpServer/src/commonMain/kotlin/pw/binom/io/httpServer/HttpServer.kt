@@ -16,9 +16,7 @@ import pw.binom.io.ByteBufferFactory
 import pw.binom.io.ClosedException
 import pw.binom.io.http.ReusableAsyncBufferedOutputAppendable
 import pw.binom.io.http.ReusableAsyncChunkedOutput
-import pw.binom.io.socket.InetNetworkAddress
-import pw.binom.io.socket.MutableInetNetworkAddress
-import pw.binom.io.socket.Socket
+import pw.binom.io.socket.*
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketClosedException
@@ -229,14 +227,14 @@ class HttpServer(
     }
   }
 
-  fun listenHttp(address: InetNetworkAddress, networkManager: NetworkManager = Dispatchers.Network): Job {
-    val serverChannel = Socket.createTcpServerNetSocket()
+  fun listenHttp(address: InetSocketAddress, networkManager: NetworkManager = Dispatchers.Network): Job {
+    val serverChannel = TcpNetServerSocket()
     serverChannel.bind(address)
     serverChannel.blocking = false
     val server = networkManager.attach(serverChannel)
     server.description = address.toString()
     binds += server
-    val address = MutableInetNetworkAddress.create()
+    val address = MutableInetAddress()
 
     val closed = AtomicBoolean(false)
     val listenJob = GlobalScope.launch(networkManager)/*(start = CoroutineStart.UNDISPATCHED)*/ {
@@ -260,7 +258,7 @@ class HttpServer(
             channel = ServerAsyncAsciiChannel(
               channel = client,
               pool = textBufferPool,
-              address = address.clone(),
+              address = address.toImmutable(),
             )
             clientProcessing(
               channel = channel,

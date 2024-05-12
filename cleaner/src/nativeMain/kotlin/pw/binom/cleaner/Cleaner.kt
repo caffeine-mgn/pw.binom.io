@@ -9,7 +9,7 @@ actual class Cleaner private constructor(val native: kotlin.native.ref.Cleaner) 
 
   actual companion object {
     actual fun <T> create(value: T, func: (T) -> Unit): Cleaner {
-      val native = createCleaner<Pair<T, (T) -> Unit>>(value to func) { it.second(it.first) }
+      val native = createCleaner(value to func) { it.second(it.first) }
       return Cleaner(native)
     }
   }

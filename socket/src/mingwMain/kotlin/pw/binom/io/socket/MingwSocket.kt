@@ -1,11 +1,15 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
+import platform.common.internal_inet_addr
+import platform.common.internal_setsockopt
 import platform.posix.SOCKET_ERROR
 import platform.posix.errno
+import platform.posix.timespec
 import platform.windows.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
+import kotlin.time.Duration
 
 @OptIn(ExperimentalForeignApi::class)
 class MingwSocket(
@@ -17,12 +21,12 @@ class MingwSocket(
 
   override var keyHash: Int = 0
 
-  override fun connect(address: InetNetworkAddress): ConnectStatus {
+  override fun connect(address: InetSocketAddress): ConnectStatus {
     val netaddress =
-      if (address is CommonMutableInetNetworkAddress) {
+      if (address is CommonMutableInetNetworkSocketAddress) {
         address
       } else {
-        CommonMutableInetNetworkAddress(address)
+        CommonMutableInetNetworkSocketAddress(address)
       }
     return memScoped {
       netaddress.getAsIpV6 { netdata ->
@@ -116,12 +120,12 @@ class MingwSocket(
     return r
   }
 
-  override fun bind(address: InetNetworkAddress): BindStatus {
+  override fun bind(address: InetSocketAddress): BindStatus {
     val networkAddress =
-      if (address is CommonMutableInetNetworkAddress) {
+      if (address is CommonMutableInetNetworkSocketAddress) {
         address
       } else {
-        CommonMutableInetNetworkAddress(address)
+        CommonMutableInetNetworkSocketAddress(address)
       }
     memScoped {
       val bindResult =
@@ -165,7 +169,7 @@ class MingwSocket(
 
   override fun receive(
     data: ByteBuffer,
-    address: MutableInetNetworkAddress?,
+    address: MutableInetSocketAddress?,
   ): Int {
     var rem: Int = -10
     val lim = data.limit
@@ -198,10 +202,10 @@ class MingwSocket(
       } else {
         memScoped {
           val netaddress =
-            if (address is CommonMutableInetNetworkAddress) {
+            if (address is CommonMutableInetNetworkSocketAddress) {
               address
             } else {
-              CommonMutableInetNetworkAddress(address)
+              CommonMutableInetNetworkSocketAddress(address)
             }
           SetLastError(0.convert())
           val len = allocArray<IntVar>(1)
@@ -297,4 +301,97 @@ class MingwSocket(
   ): Int {
     throw RuntimeException("Not supported")
   }
+
+  override fun setSoTimeout(duration: Duration) {
+    val success = memScoped {
+      val waitUntil = alloc<timespec>()
+      waitUntil.set(duration)
+      internal_setsockopt(
+        native,
+        platform.posix.SOL_SOCKET,
+        platform.posix.SO_RCVTIMEO,
+        waitUntil.ptr,
+        sizeOf<timespec>().convert()
+      ) >= 0
+    }
+    if (!success) {
+      throw IOException("Can't set SoTimeout")
+    }
+  }
+
+  override fun setTtl(value: Byte) {
+    TODO("Not yet implemented")
+  }
+
+  override fun joinGroup(address: InetAddress) {
+    joinGroup(
+      address = address.host,
+      netIf = htonl(platform.posix.INADDR_ANY)
+    )
+  }
+
+  override fun joinGroup(address: InetSocketAddress, netIf: NetworkInterface) {
+    joinGroup(
+      address = address.host,
+      netIf = internal_inet_addr(netIf.ip)
+    )
+  }
+
+  override fun leaveGroup(address: InetAddress) {
+    leaveGroup(
+      address = address.host,
+      netIf = htonl(platform.posix.INADDR_ANY)
+    )
+  }
+
+  override fun leaveGroup(address: InetSocketAddress, netIf: NetworkInterface) {
+    leaveGroup(
+      address = address.host,
+      netIf = internal_inet_addr(netIf.ip)
+    )
+  }
+
+  private fun joinGroup(address: String, netIf: UInt) {
+    memScoped {
+      val mreq = alloc<ip_mreq>()
+      mreq.imr_multiaddr.S_un.S_addr = internal_inet_addr(address)
+      mreq.imr_interface.S_un.S_addr = netIf
+
+      if (internal_setsockopt(
+          native,
+          platform.posix.IPPROTO_IP,
+          IP_ADD_MEMBERSHIP,
+          mreq.ptr,
+          sizeOf<ip_mreq>().convert()
+        ) == -1
+      ) {
+        throw IOException("Can't leave to group ${address}")
+      }
+    }
+  }
+
+  private fun leaveGroup(address: String, netIf: UInt) {
+    memScoped {
+      val mreq = alloc<ip_mreq>()
+      mreq.imr_multiaddr.S_un.S_addr = internal_inet_addr(address)
+      mreq.imr_interface.S_un.S_addr = netIf
+
+      if (internal_setsockopt(
+          native,
+          platform.posix.IPPROTO_IP,
+          IP_DROP_MEMBERSHIP,
+          mreq.ptr,
+          sizeOf<ip_mreq>().convert()
+        ) == -1
+      ) {
+        throw IOException("Can't leave to group ${address}")
+      }
+    }
+  }
+}
+
+@OptIn(UnsafeNumber::class, ExperimentalForeignApi::class)
+private fun timespec.set(diff: Duration) {
+  tv_sec = diff.inWholeSeconds
+  tv_nsec = (diff.inWholeNanoseconds - diff.inWholeSeconds * 1_000_000_000).convert()
 }

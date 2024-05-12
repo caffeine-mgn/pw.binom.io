@@ -10,14 +10,14 @@ import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 
 class JetStreamTest : BaseTest() {
-  fun mqConnection(func: suspend (NatsMqConnectionImpl) -> Unit) =
+  private fun mqConnection(func: suspend (NatsMqConnectionImpl) -> Unit) =
     testing {
       tcpConnect().use { tcp ->
         MqConnection.nats(
           channel = LoggingAsyncChannel(tcp),
           context = coroutineContext,
         ).useAsync {
-          func(it)
+          func(it as NatsMqConnectionImpl)
         }
       }
     }

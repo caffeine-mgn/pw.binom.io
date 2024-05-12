@@ -5,11 +5,11 @@ import pw.binom.io.http.HttpAuth
 import pw.binom.io.httpClient.protocol.ConnectFactory2
 import pw.binom.io.httpClient.protocol.HttpConnect
 import pw.binom.io.httpClient.protocol.ProtocolSelector
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.SocketAddress
 import pw.binom.network.NetworkManager
 
 class HttpProxyConnectFactory2(
-    val proxyUrl: NetworkAddress,
+    val proxyUrl: SocketAddress,
     val networkManager: NetworkManager,
     val protocolSelector: ProtocolSelector,
     val auth: HttpAuth?,

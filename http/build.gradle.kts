@@ -19,12 +19,14 @@ kotlin {
       api(project(":coroutines"))
       api(project(":network-common"))
     }
-
     commonTest.dependencies {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
       api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
       api(project(":httpServer"))
+    }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
     }
   }
 }

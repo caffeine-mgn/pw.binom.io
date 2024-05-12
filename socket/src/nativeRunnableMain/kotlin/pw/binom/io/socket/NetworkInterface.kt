@@ -1,16 +1,16 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
-import platform.common.NativeNetworkAddress
-import platform.common.internal_address_host_to_string
-import platform.common.internal_freeNetworkInterfaces
-import platform.common.internal_getNetworkInterfaces
+import platform.socket.*
+import platform.socket.internal_freeNetworkInterfaces
+import platform.socket.internal_getNetworkInterfaces
 
 @OptIn(ExperimentalForeignApi::class)
-private val CPointer<NativeNetworkAddress>.host: String
+private val CPointer<NInetSocketNetworkAddress>.host: String
   get() = memScoped {
     val str = allocArray<ByteVar>(50)
-    internal_address_host_to_string(this@host.pointed.data, str, 50)
+    NInetSocketNetworkAddress_getHostString(this@host, str, 50)
+//    internal_address_host_to_string(this@host.pointed.data, str, 50)
     str.toKString()
   }
 
@@ -21,9 +21,10 @@ internal actual fun getAvailableNetworkInterfaces(): List<NetworkInterface> {
   try {
     while (inf != null) {
       ret += NativeNetworkInterface(
-        ip = inf.pointed.address?.host ?: TODO("Host is null"),
+        ip = inf.pointed.address.copy(),
         name = inf.pointed.name?.toKString() ?: TODO("Name is null"),
         prefixLength = inf.pointed.prefixLength,
+        index = inf.pointed.index,
       )
       inf = inf.pointed.next
     }
@@ -33,8 +34,9 @@ internal actual fun getAvailableNetworkInterfaces(): List<NetworkInterface> {
   return ret
 }
 
-private data class NativeNetworkInterface(
-  override val ip: String,
+data class NativeNetworkInterface(
+  override val ip: InetAddress,
   override val name: String,
   override val prefixLength: Int,
+  override val index: Int,
 ) : NetworkInterface

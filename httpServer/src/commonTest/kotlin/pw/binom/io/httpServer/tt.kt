@@ -1,6 +1,6 @@
 package pw.binom.io.httpServer
 
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.network.NetworkCoroutineDispatcherImpl
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -27,7 +27,7 @@ class tt {
                 }
             }
         )
-        server.listenHttp(InetNetworkAddress.create("0.0.0.0", 50051))
+        server.listenHttp(InetSocketAddress.resolve("0.0.0.0", 50051))
         manager.close()
     }
 }

@@ -22,8 +22,7 @@ inline fun <T> AtomicBoolean.synchronize(func: () -> T): T {
       break
     }
     if (now.elapsedNow() > 5.seconds) {
-      Throwable().printStackTrace()
-      throw RuntimeException("TIMEOUT!!!!")
+      throw RuntimeException("Timeout")
     }
   }
   try {

@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import pw.binom.charset.Charsets
 import pw.binom.concurrency.sleep
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.use
 import pw.binom.io.useAsync
 import pw.binom.network.NetworkCoroutineDispatcherImpl
@@ -33,8 +33,8 @@ abstract class BaseTest {
 
   @OptIn(ExperimentalTime::class)
   private suspend fun connect(
-    address: InetNetworkAddress,
-    nd: NetworkManager,
+      address: InetSocketAddress,
+      nd: NetworkManager,
   ): PGConnection {
     return withContext(nd) {
       PGConnection.connect(
@@ -82,7 +82,7 @@ abstract class BaseTest {
   fun pg(func: suspend (PGConnection) -> Unit) =
     runTest(dispatchTimeoutMs = 10_000) {
       withContext(Dispatchers.Default) {
-        val address = InetNetworkAddress.create(host = "127.0.0.1", port = 6122)
+        val address = InetSocketAddress.resolve(host = "127.0.0.1", port = 6122)
 
 //            val nd = MultiFixedSizeThreadNetworkDispatcher(10)
         val nd = NetworkCoroutineDispatcherImpl()

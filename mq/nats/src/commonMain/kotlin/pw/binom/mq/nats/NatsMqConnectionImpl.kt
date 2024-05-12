@@ -11,7 +11,7 @@ import pw.binom.mq.nats.client.NatsReader
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-private class NatsMqConnectionImpl(override val reader: NatsReader) : NatsMqConnection {
+internal class NatsMqConnectionImpl(override val reader: NatsReader) : NatsMqConnection {
   override val jetStream: JetStreamMqConnection? =
     if (reader.config.jetStreamEnabled) {
       JetStreamMqConnection(reader)

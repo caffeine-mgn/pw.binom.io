@@ -32,8 +32,9 @@ fun <T : Any> T?.shouldNull(): T? {
   return null
 }
 
-infix fun <T, R : T> T.shouldEquals(expected: R) {
+infix fun <T, R : T> T.shouldEquals(expected: R): T {
   assertEquals(expected, this)
+  return this
 }
 
 @OptIn(ExperimentalContracts::class)

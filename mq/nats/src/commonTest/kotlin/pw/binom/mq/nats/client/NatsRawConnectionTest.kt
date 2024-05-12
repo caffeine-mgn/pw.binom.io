@@ -5,7 +5,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.useAsync
 import pw.binom.mq.nats.client.dto.PullRequestOptionsDto
 import pw.binom.mq.nats.client.dto.StorageType
@@ -30,7 +30,7 @@ class NatsRawConnectionTest {
       }
     }
 
-  suspend fun tcpConnect() = Dispatchers.Network.tcpConnect(InetNetworkAddress.create("127.0.0.1", TestUtils.NATS_PORT))
+  suspend fun tcpConnect() = Dispatchers.Network.tcpConnect(InetSocketAddress.resolve("127.0.0.1", TestUtils.NATS_PORT))
 
   suspend fun natsConnect() =
     InternalNatsConnection.connect(
@@ -49,7 +49,7 @@ class NatsRawConnectionTest {
 
   fun connection(func: suspend (NatsConnection) -> Unit) =
     testing {
-      Dispatchers.Network.tcpConnect(InetNetworkAddress.create("127.0.0.1", TestUtils.NATS_PORT))
+      Dispatchers.Network.tcpConnect(InetSocketAddress.resolve("127.0.0.1", TestUtils.NATS_PORT))
         .useAsync { client ->
           InternalNatsConnection.connect(
             channel = client,
@@ -202,7 +202,7 @@ class NatsRawConnectionTest {
   @Test
   fun connectTest() {
     runBlocking {
-      val client = Dispatchers.Network.tcpConnect(InetNetworkAddress.create("127.0.0.1", TestUtils.NATS_PORT))
+      val client = Dispatchers.Network.tcpConnect(InetSocketAddress.resolve("127.0.0.1", TestUtils.NATS_PORT))
       val con =
         NatsRawConnection(
           channel = client,

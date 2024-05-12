@@ -8,7 +8,8 @@ import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
 import pw.binom.io.IOException
 import pw.binom.io.http.*
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.url.URI
 import pw.binom.url.toPath
 
@@ -26,7 +27,7 @@ class HttpServerExchangeImpl(
       channel.asyncCloseAnyway()
     }
   internal var keepAlive = false
-  override val address: InetNetworkAddress
+  override val address: InetAddress
     get() = channel.address
 
   override suspend fun startResponse(

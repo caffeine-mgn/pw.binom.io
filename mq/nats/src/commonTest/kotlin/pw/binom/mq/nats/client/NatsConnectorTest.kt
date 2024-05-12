@@ -1,7 +1,7 @@
 package pw.binom.mq.nats.client
 
 import kotlinx.coroutines.runBlocking
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
@@ -20,7 +20,7 @@ class NatsConnectorTest {
         echo = true,
         serverList =
           listOf(
-            InetNetworkAddress.create("127.0.0.1", TestUtils.NATS_PORT),
+            InetSocketAddress.resolve("127.0.0.1", TestUtils.NATS_PORT),
           ),
       )
 

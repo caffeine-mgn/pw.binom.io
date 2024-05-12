@@ -60,10 +60,10 @@ class TcpConnection(
 
   private fun calcListenFlags() =
     when {
-      readData.continuation != null && (sendData.continuation != null) -> KeyListenFlags.READ or KeyListenFlags.ERROR or KeyListenFlags.WRITE
-      readData.continuation != null -> KeyListenFlags.READ or KeyListenFlags.ERROR
-      sendData.continuation != null -> KeyListenFlags.WRITE or KeyListenFlags.ERROR
-      else -> 0
+      readData.continuation != null && (sendData.continuation != null) -> ListenFlags.READ + ListenFlags.ERROR + ListenFlags.WRITE
+      readData.continuation != null -> ListenFlags.READ + ListenFlags.ERROR
+      sendData.continuation != null -> ListenFlags.WRITE + ListenFlags.ERROR
+      else -> ListenFlags.ZERO
     }
 
   override fun readyForWrite(key: SelectorKey) {
@@ -83,7 +83,7 @@ class TcpConnection(
 //                key.removeListen(KeyListenFlags.WRITE)
         con.resumeWith(result)
       } else {
-        key.addListen(KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE)
+        key.addListen(ListenFlags.WRITE + ListenFlags.ERROR + ListenFlags.ONCE)
       }
       if (sendData.continuation == null) {
         if (!currentKey.updateListenFlags(calcListenFlags())) {
@@ -122,7 +122,7 @@ class TcpConnection(
     if (readed == 0) {
       logger.info(line = __LINE__) { "readyForRead:: no data for read. Try to wait a data" }
 //            println("TcpConnection::readyForRead readed 0. Try ready again later")
-      currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
+      currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
 //            println("TcpConnection::readyForRead suspend. read 0. channel: $channel")
       return
     }
@@ -138,7 +138,7 @@ class TcpConnection(
         readData.reset()
         continuation.resume(value = readed, onCancellation = null)
       } else {
-        currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
+        currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
       }
     } else {
       logger.info(line = __LINE__) { "readyForRead:: data was read success. $readed bytes" }
@@ -180,7 +180,7 @@ class TcpConnection(
     suspendCancellableCoroutine<Unit> {
       it.invokeOnCancellation {
         this.connect = null
-        if (this.currentKey.updateListenFlags(0)) {
+        if (this.currentKey.updateListenFlags(ListenFlags.ZERO)) {
           this.currentKey.selector.wakeup()
         } else {
           closeAnyway()
@@ -189,7 +189,7 @@ class TcpConnection(
 
 //            try {
       this.connect = it
-      if (this.currentKey.updateListenFlags(KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE)) {
+      if (this.currentKey.updateListenFlags(ListenFlags.WRITE + ListenFlags.ERROR + ListenFlags.ONCE)) {
         it.resumeOnException {
           this.currentKey.selector.wakeup()
         }
@@ -261,7 +261,7 @@ class TcpConnection(
     sendData.data = data
     return suspendCancellableCoroutine<Int> {
       sendData.continuation = it
-      this.currentKey.addListen(KeyListenFlags.WRITE or KeyListenFlags.ERROR or KeyListenFlags.ONCE)
+      this.currentKey.addListen(ListenFlags.WRITE + ListenFlags.ERROR + ListenFlags.ONCE)
       this.currentKey.selector.wakeup()
       it.invokeOnCancellation {
 //        this.currentKey.removeListen(KeyListenFlags.WRITE)
@@ -308,7 +308,7 @@ class TcpConnection(
           continuation = continuation,
           data = dest,
         )
-        currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ERROR or KeyListenFlags.ONCE)
+        currentKey.addListen(ListenFlags.READ + ListenFlags.ERROR + ListenFlags.ONCE)
         currentKey.selector.wakeup()
       }
     if (readed == 0) {
@@ -358,7 +358,7 @@ class TcpConnection(
           continuation = it,
           data = dest,
         )
-        currentKey.addListen(KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
+        currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
         currentKey.selector.wakeup()
       } catch (e: Throwable) {
         it.resumeWithException(e)

@@ -41,9 +41,11 @@ internal actual fun getAvailableNetworkInterfaces(): List<NetworkInterface> {
     .forEach { net ->
       net.interfaceAddresses.forEach { addr ->
         out += JvmNetworkInterface(
-          ip = ipToString(addr.address.address),
+          ip = InetAddress(addr.address),
           name = net.name,
           prefixLength = addr.networkPrefixLength.toInt(),
+          native = net,
+          index = net.index,
         )
       }
     }
@@ -51,7 +53,8 @@ internal actual fun getAvailableNetworkInterfaces(): List<NetworkInterface> {
 }
 
 private data class JvmNetworkInterface(
-  override val ip: String,
+  override val ip: InetAddress,
   override val name: String,
   override val prefixLength: Int,
+  val native: java.net.NetworkInterface, override val index: Int,
 ) : NetworkInterface

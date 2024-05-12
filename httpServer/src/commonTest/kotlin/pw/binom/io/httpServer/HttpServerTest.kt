@@ -6,7 +6,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import pw.binom.io.bufferedAsciiWriter
 import pw.binom.io.http.Headers
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.use
 import pw.binom.io.useAsync
 import pw.binom.network.*
@@ -31,7 +31,7 @@ class HttpServerTest {
     port: Int,
   ): TcpConnection {
     Headers.CONNECTION
-    val connection = networkManager.tcpConnect(InetNetworkAddress.create(host = "127.0.0.1", port = port))
+    val connection = networkManager.tcpConnect(InetSocketAddress.resolve(host = "127.0.0.1", port = port))
     connection.bufferedAsciiWriter(closeParent = false).useAsync {
       it.append("GET $url HTTP/1.0\r\n")
         .append("Host: 127.0.0.1\r\n")
@@ -59,7 +59,7 @@ class HttpServerTest {
             maxIdleTime = 2.seconds,
             manager = nd,
           ).useAsync { httpServer ->
-            httpServer.listenHttp(InetNetworkAddress.create(host = "127.0.0.1", port = port), networkManager = nd)
+            httpServer.listenHttp(InetSocketAddress.resolve(host = "127.0.0.1", port = port), networkManager = nd)
 
             makeHttpQuery(
               networkManager = nd,
@@ -93,7 +93,7 @@ class HttpServerTest {
       httpServer.useAsync {
         val port = TcpServerConnection.randomPort()
         it.listenHttp(
-          address = InetNetworkAddress.create(host = "127.0.0.1", port = port),
+          address = InetSocketAddress.resolve(host = "127.0.0.1", port = port),
         )
         assertEquals(0, httpServer.httpRequest2Impl.size)
         assertEquals(0, httpServer.httpResponse2Impl.size)
@@ -131,7 +131,7 @@ class HttpServerTest {
         httpServer.useAsync {
           val port = TcpServerConnection.randomPort()
           it.listenHttp(
-            address = InetNetworkAddress.create(host = "127.0.0.1", port = port),
+            address = InetSocketAddress.resolve(host = "127.0.0.1", port = port),
           )
           delay(1_000)
 //            get("http://127.0.0.1:4444/".toURL())

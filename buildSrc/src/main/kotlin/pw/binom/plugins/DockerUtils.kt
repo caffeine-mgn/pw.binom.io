@@ -75,7 +75,8 @@ object DockerUtils {
   fun dockerContanier(
     project: Project,
     image: String,
-    tcpPorts: List<Pair<Int, Int>>,
+    tcpPorts: List<Pair<Int, Int>> = emptyList(),
+    udpPorts: List<Pair<Int, Int>> = emptyList(),
     args: List<String> = emptyList(),
     suffix: String,
     envs: Map<String, String> = emptyMap(),
@@ -111,7 +112,9 @@ object DockerUtils {
 
       it.hostConfig.portBindings.set(
         tcpPorts.map {
-          "127.0.0.1:${it.second}:${it.first}"
+          "127.0.0.1:${it.second}:${it.first}/tcp"
+        } + udpPorts.map {
+          "127.0.0.1:${it.second}:${it.first}/udp"
         },
       )
       it.containerId.set(containerId)

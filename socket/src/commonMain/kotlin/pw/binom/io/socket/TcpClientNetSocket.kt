@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
-interface TcpClientNetSocket : TcpClientSocket, NetSocket {
-  fun connect(address: InetNetworkAddress): ConnectStatus
+expect open class TcpClientNetSocket : TcpClientSocket, NetSocket {
+  constructor()
+  fun connect(address: InetSocketAddress): ConnectStatus
 }

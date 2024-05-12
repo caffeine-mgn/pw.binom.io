@@ -3,7 +3,7 @@ package pw.binom.db.tarantool
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.IOException
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.useAsync
 import pw.binom.network.MultiFixedSizeThreadNetworkDispatcher
 import kotlin.time.Duration.Companion.seconds
@@ -33,7 +33,7 @@ abstract class BaseTest {
       do {
         println("Connection...")
         val address =
-          InetNetworkAddress.create(
+          InetSocketAddress.resolve(
             host = "127.0.0.1",
             port = 7040,
           )

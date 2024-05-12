@@ -37,7 +37,7 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
   private var closed = false
 
   internal fun clearNativeListenFlags() {
-    internalListenFlags = 0
+    internalListenFlags = ListenFlags.ZERO
     try {
       native.interestOps(0)
       logger.info(line = __LINE__) { "Cleared listener flags" }
@@ -47,7 +47,7 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     }
   }
 
-  actual fun updateListenFlags(listenFlags: Int): Boolean {
+  actual fun updateListenFlags(listenFlags: ListenFlags): Boolean {
     if (closed) {
       logger.info(line = __LINE__) { "Can't update flags to ${commonFlagsToString(listenFlags)}: socket closed" }
       return false
@@ -56,11 +56,11 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     internalListenFlags = listenFlags
 
     var r = 0
-    if (listenFlags and KeyListenFlags.ERROR != 0 || listenFlags and KeyListenFlags.READ != 0) {
+    if (ListenFlags.ERROR in listenFlags || ListenFlags.READ in listenFlags) {
       r = r or SelectionKey.OP_READ or SelectionKey.OP_ACCEPT
     }
 
-    if (listenFlags and KeyListenFlags.WRITE != 0) {
+    if (ListenFlags.WRITE in listenFlags) {
       r = r or SelectionKey.OP_WRITE or SelectionKey.OP_CONNECT
     }
     return try {
@@ -78,9 +78,9 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     }
   }
 
-  private var internalListenFlags = 0
+  private var internalListenFlags = ListenFlags.ZERO
 
-  actual val listenFlags: Int
+  actual val listenFlags: ListenFlags
     get() = internalListenFlags
   actual val isClosed: Boolean
     get() =

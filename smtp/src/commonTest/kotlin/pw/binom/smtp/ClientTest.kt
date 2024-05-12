@@ -1,7 +1,7 @@
 package pw.binom.smtp
 
 import kotlinx.coroutines.runBlocking
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.useAsync
 import pw.binom.io.wrap
 import pw.binom.network.NetworkCoroutineDispatcherImpl
@@ -18,7 +18,7 @@ class ClientTest {
       val client =
         SMTPClient.tcp(
           dispatcher = NetworkCoroutineDispatcherImpl(),
-          address = InetNetworkAddress.create("127.0.0.1", 1025),
+          address = InetSocketAddress.resolve("127.0.0.1", 1025),
           fromEmail = "test@test.org",
           login = "test@test.org",
           password = "test_password",
@@ -60,7 +60,7 @@ class ClientTest {
       val client =
         SMTPClient.tls(
           dispatcher = NetworkCoroutineDispatcherImpl(),
-          address = InetNetworkAddress.create("smtp.yandex.ru", 465),
+          address = InetSocketAddress.resolve("smtp.yandex.ru", 465),
           keyManager = EmptyKeyManager,
           trustManager = TrustManager.TRUST_ALL,
           fromEmail = "test@test.org",

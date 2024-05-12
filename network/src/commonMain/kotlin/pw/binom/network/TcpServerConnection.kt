@@ -18,8 +18,8 @@ class TcpServerConnection constructor(
 
   companion object {
     fun randomPort() =
-      Socket.createTcpServerNetSocket().use {
-        it.bind(InetNetworkAddress.create(host = "127.0.0.1", port = 0))
+      TcpNetServerSocket().use {
+        it.bind(InetSocketAddress.resolve(host = "127.0.0.1", port = 0))
         it.port!!
       }
   }
@@ -61,7 +61,7 @@ class TcpServerConnection constructor(
     val acceptListener = acceptListener ?: return
     val newChannel = channel.accept(null)
     if (newChannel == null) {
-      safeUpdate(acceptListener, KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
+      safeUpdate(acceptListener, ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
 //            println("TcpServerConnection::readyForRead newChannel == null")
       return
     }
@@ -87,7 +87,7 @@ class TcpServerConnection constructor(
 
   private fun safeUpdate(
     con: CancellableContinuation<TcpClientSocket>,
-    flags: Int,
+    flags: ListenFlags,
   ) = if (currentKey.updateListenFlags(flags)) {
     currentKey.selector.wakeup()
     true
@@ -98,7 +98,7 @@ class TcpServerConnection constructor(
     false
   }
 
-  suspend fun accept(address: MutableInetNetworkAddress? = null): TcpConnection {
+  suspend fun accept(address: MutableInetAddress? = null): TcpConnection {
     if (closed) {
 //            println("TcpServerConnection::accept closed==true")
       throw SocketClosedException()
@@ -116,14 +116,14 @@ class TcpServerConnection constructor(
       suspendCancellableCoroutine<TcpClientSocket> { con ->
         try {
           acceptListener = con
-          safeUpdate(con, KeyListenFlags.READ or KeyListenFlags.ONCE or KeyListenFlags.ERROR)
+          safeUpdate(con, ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
         } catch (e: Throwable) {
           con.resumeWithException(e)
         }
         con.invokeOnCancellation {
 //                println("TcpServerConnection::accept canceled waiting")
           acceptListener = null
-          if (currentKey.updateListenFlags(0)) {
+          if (currentKey.updateListenFlags(ListenFlags.ZERO)) {
             currentKey.selector.wakeup()
           } else {
             close()

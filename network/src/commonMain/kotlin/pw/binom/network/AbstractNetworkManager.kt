@@ -1,17 +1,13 @@
 package pw.binom.network
 
 import kotlinx.coroutines.CoroutineDispatcher
-import pw.binom.io.socket.Selector
-import pw.binom.io.socket.TcpClientSocket
-import pw.binom.io.socket.TcpNetServerSocket
-import pw.binom.io.socket.UdpNetSocket
-import kotlin.coroutines.getPolymorphicElement
+import pw.binom.io.socket.*
 
 abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
   protected abstract val selector: Selector
   protected abstract fun ensureOpen()
 
-  override fun attach(channel: TcpClientSocket, mode: Int): TcpConnection {
+  override fun attach(channel: TcpClientSocket, mode: ListenFlags): TcpConnection {
     ensureOpen()
     channel.blocking = false
     val key = selector.attach(socket = channel)
@@ -23,7 +19,7 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
     }
     val con = TcpConnection(channel = channel, currentKey = key)
     key.attachment = con
-    if (mode != 0) {
+    if (mode.isNotZero) {
       selector.wakeup()
     }
     return con
@@ -35,7 +31,7 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
     while (true) {
       val key = selector.attach(socket = channel)
       val con = TcpServerConnection(channel = channel, dispatcher = this, currentKey = key)
-      if (!key.updateListenFlags(0)) {
+      if (!key.updateListenFlags(ListenFlags.ZERO)) {
         key.closeAnyway()
         continue
       }
@@ -49,8 +45,21 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
     val con = UdpConnection(channel)
     channel.blocking = false
     val key = selector.attach(socket = channel)
-    if (!key.updateListenFlags(0)) {
-      throw IllegalStateException()
+    if (!key.updateListenFlags(ListenFlags.ZERO)) {
+      throw IllegalStateException("Can't listening flags")
+    }
+    key.attachment = con
+    con.keys.addKey(key)
+    return con
+  }
+
+  override fun attach(channel: MulticastUdpSocket): MulticastUdpConnection {
+    ensureOpen()
+    val con = MulticastUdpConnection(channel)
+    channel.blocking = false
+    val key = selector.attach(socket = channel)
+    if (!key.updateListenFlags(ListenFlags.ZERO)) {
+      throw IllegalStateException("Can't listening flags")
     }
     key.attachment = con
     con.keys.addKey(key)

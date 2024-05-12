@@ -3,7 +3,7 @@ package pw.binom.mq.nats.client
 import kotlinx.coroutines.Dispatchers
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.SocketAddress
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
 import pw.binom.uuid.nextUuid
@@ -15,16 +15,16 @@ interface NatsConnection : AsyncCloseable {
      * Creates new nats connection
      */
     fun create(
-      clientName: String? = null,
-      lang: String = "kotlin",
-      echo: Boolean = true,
-      tlsRequired: Boolean = false,
-      user: String? = null,
-      pass: String? = null,
-      defaultGroup: String? = null,
-      attemptCount: Int = 3,
-      networkDispatcher: NetworkManager = Dispatchers.Network,
-      serverList: List<NetworkAddress>,
+        clientName: String? = null,
+        lang: String = "kotlin",
+        echo: Boolean = true,
+        tlsRequired: Boolean = false,
+        user: String? = null,
+        pass: String? = null,
+        defaultGroup: String? = null,
+        attemptCount: Int = 3,
+        networkDispatcher: NetworkManager = Dispatchers.Network,
+        serverList: List<SocketAddress>,
     ): NatsConnection =
       NatsConnectorImpl(
         clientName = clientName,

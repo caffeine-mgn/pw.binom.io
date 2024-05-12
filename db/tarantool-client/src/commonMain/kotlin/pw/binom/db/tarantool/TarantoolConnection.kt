@@ -9,7 +9,7 @@ import pw.binom.db.tarantool.protocol.InternalProtocolUtils
 import pw.binom.db.tarantool.protocol.QueryIterator
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.SocketAddress
 import pw.binom.io.use
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
@@ -18,10 +18,10 @@ import pw.binom.network.tcpConnect
 interface TarantoolConnection : AsyncCloseable {
   companion object {
     suspend fun connect(
-      manager: NetworkManager = Dispatchers.Network,
-      address: NetworkAddress,
-      userName: String?,
-      password: String?,
+        manager: NetworkManager = Dispatchers.Network,
+        address: SocketAddress,
+        userName: String?,
+        password: String?,
     ): TarantoolConnectionImpl {
       val con = manager.tcpConnect(address.resolve())
       ByteBuffer(64).use { buf ->

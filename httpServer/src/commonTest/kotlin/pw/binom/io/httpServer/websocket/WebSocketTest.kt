@@ -15,7 +15,7 @@ import pw.binom.io.httpServer.Handler
 import pw.binom.io.httpServer.HttpHandler
 import pw.binom.io.httpServer.HttpServer2
 import pw.binom.io.httpServer.acceptWebsocket
-import pw.binom.io.socket.InetNetworkAddress
+import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.use
 import pw.binom.io.useAsync
 import pw.binom.io.wrap
@@ -65,7 +65,7 @@ class WebSocketTest {
         dispatcher = Dispatchers.Network,
         byteBufferPool = GenericObjectPool(ByteBufferFactory(DEFAULT_BUFFER_SIZE)),
       ).useAsync { httpServer ->
-        httpServer.listen(address = InetNetworkAddress.create(host = "127.0.0.1", port = port))
+        httpServer.listen(address = InetSocketAddress.resolve(host = "127.0.0.1", port = port))
         HttpClient.create().use { client ->
           connectAndSendText(
             url = "ws://127.0.0.1:$port/".toURL(),

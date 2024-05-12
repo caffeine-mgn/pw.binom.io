@@ -9,15 +9,15 @@ import platform.windows.accept
 import platform.windows.sockaddr_in6
 import pw.binom.io.ByteBuffer
 
-@OptIn(ExperimentalForeignApi::class)
-actual fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?): RawSocket? {
+/*@OptIn(ExperimentalForeignApi::class)
+actual fun internalAccept(native: RawSocket, address: MutableInetSocketAddress?): RawSocket? {
   val native = if (address == null) {
     platform.windows.accept(native.convert(), null, null)
   } else {
-    val out = if (address is CommonMutableInetNetworkAddress) {
+    val out = if (address is CommonMutableInetNetworkSocketAddress) {
       address
     } else {
-      CommonMutableInetNetworkAddress()
+      CommonMutableInetNetworkSocketAddress()
     }
     val rr2 = memScoped {
       SetLastError(0.convert())
@@ -42,7 +42,7 @@ actual fun internalAccept(native: RawSocket, address: MutableInetNetworkAddress?
     return null // throw IOException("Can't accept new client")
   }
   return native.convert()
-}
+}*/
 
 // actual fun allowIpv4(native: RawSocket) {
 //    memScoped {
@@ -85,7 +85,7 @@ internal actual fun createSocket(socket: RawSocket, server: Boolean): Socket =
 // }
 
 @OptIn(ExperimentalForeignApi::class)
-actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetNetworkAddress?): Int {
+actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetSocketAddress?): Int {
 //    if (data.remaining == 0) {
 //        return 0
 //    }
@@ -94,10 +94,10 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
       recvfrom(native.convert(), dataPtr, remaining.convert(), 0, null, null)
     }.toInt()
   } else {
-    val netAddress = if (address is CommonMutableInetNetworkAddress) {
+    val netAddress = if (address is CommonMutableInetNetworkSocketAddress) {
       address
     } else {
-      CommonMutableInetNetworkAddress(address)
+      CommonMutableInetNetworkSocketAddress(address)
     }
     val readSize = netAddress.addr { addrPtr ->
       data.ref(0) { dataPtr, remaining ->

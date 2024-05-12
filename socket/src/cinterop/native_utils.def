@@ -386,6 +386,15 @@ int internal_get_last_error(){
     return errno;
 #endif
 }
+#ifdef _WIN32
+unsigned long internal_inet_addr(const char *cp){
+    return inet_addr(cp);
+}
+#else
+in_addr_t internal_inet_addr(const char *cp){
+    return inet_addr(cp);
+}
+#endif
 
 int internal_get_socket_error(SOCKET sock) {
     int error = -1;

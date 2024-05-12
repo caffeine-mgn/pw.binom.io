@@ -11,6 +11,8 @@ import pw.binom.http.rest.annotations.GetParam
 import pw.binom.http.rest.annotations.HeaderParam
 import pw.binom.http.rest.annotations.PathParam
 import pw.binom.http.rest.endpoints.EndpointWithNothing
+import pw.binom.http.rest.serialization.HttpInputDecoder
+import pw.binom.url.toPathMask
 import pw.binom.url.toURI
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -69,7 +71,7 @@ class HttpInputDecoderTest {
     val decoder = HttpInputDecoder()
     val type1 = Type.ON
     val type2 = Type.OFF
-    decoder.reset(
+    decoder.reset<GetUser, String>(
       description = EndpointDescription.create(GetUser.serializer()),
       input = StubHttpServerExchange(
         requestMethod = "GET",
@@ -79,7 +81,11 @@ class HttpInputDecoderTest {
           .appendQuery("type2", type2.toString())
       )
         .header("X-Trace-Id", traceId)
-        .header("x-uuid", "{$uuid}")
+        .header("x-uuid", "{$uuid}"),
+      path = TODO(),
+      body = TODO(),
+      data = TODO(),
+      responseCode = TODO()
     )
     val a = GetUser.serializer().deserialize(decoder)
     assertEquals(id, a.id)

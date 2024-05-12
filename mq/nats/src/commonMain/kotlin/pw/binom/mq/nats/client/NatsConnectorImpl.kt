@@ -5,7 +5,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.collections.defaultMutableMap
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.io.socket.NetworkAddress
+import pw.binom.io.socket.DomainSocketAddress
+import pw.binom.io.socket.SocketAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketConnectException
 import pw.binom.network.tcpConnect
@@ -13,16 +14,16 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 internal class NatsConnectorImpl(
-  val clientName: String? = null,
-  val lang: String = "kotlin",
-  val echo: Boolean = true,
-  val tlsRequired: Boolean = false,
-  val user: String? = null,
-  val pass: String? = null,
-  val defaultGroup: String? = null,
-  val attemptCount: Int = 3,
-  var networkDispatcher: NetworkManager,
-  serverList: List<NetworkAddress>,
+    val clientName: String? = null,
+    val lang: String = "kotlin",
+    val echo: Boolean = true,
+    val tlsRequired: Boolean = false,
+    val user: String? = null,
+    val pass: String? = null,
+    val defaultGroup: String? = null,
+    val attemptCount: Int = 3,
+    var networkDispatcher: NetworkManager,
+    serverList: List<SocketAddress>,
 ) : NatsConnection {
   init {
     require(serverList.isNotEmpty()) { "Server list is empty" }
@@ -39,7 +40,7 @@ internal class NatsConnectorImpl(
   private val subscribes = defaultMutableMap<String, Subscribe>()
   private var connection: NatsRawConnection? = null
   private var _serverList = ArrayList(serverList)
-  val serverList: List<NetworkAddress>
+  val serverList: List<SocketAddress>
     get() = _serverList
   var serverIndex = 0
   override val config: ConnectInfo

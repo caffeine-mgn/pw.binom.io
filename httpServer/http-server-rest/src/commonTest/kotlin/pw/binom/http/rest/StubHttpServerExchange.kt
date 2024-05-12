@@ -2,13 +2,11 @@ package pw.binom.http.rest
 
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
-import pw.binom.io.AsyncInput
-import pw.binom.io.AsyncOutput
-import pw.binom.io.ByteArrayInput
-import pw.binom.io.ByteArrayOutput
+import pw.binom.io.*
 import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.Headers
 import pw.binom.io.httpServer.HttpServerExchange
+import pw.binom.io.socket.InetAddress
 import pw.binom.url.Path
 import pw.binom.url.URI
 
@@ -21,6 +19,10 @@ class StubHttpServerExchange(
   override val input: AsyncInput = ByteArrayInput(input).asyncInput(callClose = false)
   override var responseStarted: Boolean = false
     private set
+  override val address: InetAddress
+    get() = TODO("Not yet implemented")
+  override val mainChannel: AsyncCloseable
+    get() = TODO("Not yet implemented")
 
   fun header(name: String, value: String): StubHttpServerExchange {
     requestHeaders.add(key = name, value = value)
