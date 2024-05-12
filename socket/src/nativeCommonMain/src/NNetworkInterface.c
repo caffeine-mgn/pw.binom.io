@@ -1,6 +1,6 @@
+#include "../include/definition.h"
 #include "../include/NNetworkInterface.h"
 #include "../include/Network.h"
-#include "../include/definition.h"
 
 #ifdef LINUX_LIKE_TARGET
 
@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 
 #else
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
@@ -156,14 +157,15 @@ struct NNetworkInterface *internal_getNetworkInterfaces() {
         freeaddrinfo(addresses);
     */
     // ----------------------
-#ifdef WINDOWS_TARGET
+#if defined(WINDOWS_TARGET)
     // Получение информации о сетевых интерфейсах
     ULONG bufferSize = sizeof(IP_ADAPTER_ADDRESSES);
-    PIP_ADAPTER_ADDRESSES adapterAddresses = (PIP_ADAPTER_ADDRESSES)malloc(bufferSize);
+    PIP_ADAPTER_ADDRESSES adapterAddresses = (PIP_ADAPTER_ADDRESSES) malloc(bufferSize);
 
-    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, adapterAddresses, &bufferSize) == ERROR_BUFFER_OVERFLOW) {
+    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, adapterAddresses, &bufferSize) ==
+        ERROR_BUFFER_OVERFLOW) {
         free(adapterAddresses);
-        adapterAddresses = (PIP_ADAPTER_ADDRESSES)malloc(bufferSize);
+        adapterAddresses = (PIP_ADAPTER_ADDRESSES) malloc(bufferSize);
         if (adapterAddresses == NULL) {
             // printf("Ошибка выделения памяти\n");
             return NULL;
@@ -177,8 +179,8 @@ struct NNetworkInterface *internal_getNetworkInterfaces() {
     }
 
 
-    struct NNetworkInterface* first = NULL;
-    struct NNetworkInterface* interfaceInstance = NULL;
+    struct NNetworkInterface *first = NULL;
+    struct NNetworkInterface *interfaceInstance = NULL;
 
     // Вывод информации о сетевых интерфейсах
     PIP_ADAPTER_ADDRESSES adapter = adapterAddresses;
@@ -188,10 +190,11 @@ struct NNetworkInterface *internal_getNetworkInterfaces() {
 
         PIP_ADAPTER_UNICAST_ADDRESS unicastAddress = adapter->FirstUnicastAddress;
         while (unicastAddress != NULL) {
-            if (unicastAddress->Address.lpSockaddr->sa_family != AF_INET && unicastAddress->Address.lpSockaddr->sa_family != AF_INET6) {
+            if (unicastAddress->Address.lpSockaddr->sa_family != AF_INET &&
+                unicastAddress->Address.lpSockaddr->sa_family != AF_INET6) {
                 continue;
             }
-            struct NNetworkInterface* newInterface = malloc(sizeof(struct NNetworkInterface));
+            struct NNetworkInterface *newInterface = malloc(sizeof(struct NNetworkInterface));
             if (first == NULL) {
                 first = newInterface;
             }
@@ -200,7 +203,7 @@ struct NNetworkInterface *internal_getNetworkInterfaces() {
             }
 
             interfaceInstance->name = copyString(adapter->AdapterName);
-            interfaceInstance->address = internal_sockaddrToNativeNetworkAddress(unicastAddress->Address.lpSockaddr);
+            internal_sockaddrToNativeNetworkAddress(unicastAddress->Address.lpSockaddr, &interfaceInstance->address);
             // interfaceInstance->mask = NULL;
             interfaceInstance->prefixLength = unicastAddress->OnLinkPrefixLength;
             interfaceInstance->prefixLength = interfaceInstance->prefixLength > 0 ? interfaceInstance->prefixLength : 0;
@@ -232,8 +235,7 @@ struct NNetworkInterface *internal_getNetworkInterfaces() {
 
     // Освобождение ресурсов
     free(adapterAddresses);
-#endif
-#ifdef LINUX_LIKE_TARGET
+#elif defined(LINUX_LIKE_TARGET)
     struct ifaddrs *addrs = NULL;
     if (getifaddrs(&addrs) != 0) {
         return NULL;
@@ -272,5 +274,7 @@ struct NNetworkInterface *internal_getNetworkInterfaces() {
     freeifaddrs(addrs);
 
     return first;
+#else
+#error Not supported
 #endif
 }

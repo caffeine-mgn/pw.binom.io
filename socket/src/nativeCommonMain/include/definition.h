@@ -1,5 +1,6 @@
 #ifndef NATIVE_DEFINITION_H
 #define NATIVE_DEFINITION_H
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #define WINDOWS_TARGET
 // define something for Windows (32-bit and 64-bit, this part is common)

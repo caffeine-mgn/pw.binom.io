@@ -23,10 +23,10 @@ static int network_inited = 0;
 
 int Network_init() {
 #ifdef WINDOWS_TARGET
-    if (network_inited==0){
+    if (network_inited == 0) {
         WSADATA wsa_data;
-        auto r = WSAStartup(MAKEWORD(2, 2), &wsa_data);
-        if (r!=0){
+        int r = WSAStartup(MAKEWORD(2, 2), &wsa_data);
+        if (r != 0) {
             return 0;
         }
     }

@@ -4,25 +4,65 @@
 #include "../include/NSocket.h"
 #include "../include/Network.h"
 
-#ifdef LINUX_LIKE_TARGET
+#ifdef WINDOWS_TARGET
 
+#include <winsock2.h>
+#include <netioapi.h>
+
+#elif defined(LINUX_LIKE_TARGET)
 #include <sys/socket.h>
 #include <sys/un.h>
-
-#endif
-
-#ifdef WINDOWS_TARGET
-#include <winsock2.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+#include <net/if.h>
+#else
+#error Not supported
 #endif
 
 #include <unistd.h>
 #include <errno.h>
-#include <netinet/in.h>
 #include <stdio.h>
-#include <netinet/tcp.h>
 #include <fcntl.h>
-#include <netdb.h>
-#include <net/if.h>
+
+
+#if defined(LINUX_LIKE_TARGET)
+#define IS_SOCKET_ERROR(value) value<0
+#elif defined(WINDOWS_TARGET)
+#define IS_SOCKET_ERROR(value) value==SOCKET_ERROR
+#else
+#error Not supported
+#endif
+
+int internal_NSocket_errorProcessing(struct NSocket *native, size_t wasRead) {
+#if defined(LINUX_LIKE_TARGET)
+    switch (errno) {
+            case EAGAIN:
+                return 0;
+            case EBADF:
+            case ECONNRESET:
+            case EPIPE:
+            case EINVAL:
+            default: {
+                NSocket_close(native);
+                return -1;
+            }
+        }
+#elif defined(WINDOWS_TARGET)
+    switch (GetLastError()) {
+        case WSAEWOULDBLOCK:
+            return 0;
+        case WSAECONNRESET:
+            return -1;
+        default: {
+            NSocket_close(native);
+            return -1;
+        }
+    }
+#else
+#error not supported
+#endif
+}
 
 int Socket_typeHostToInternal(int value) {
     switch (value) {
@@ -61,8 +101,8 @@ int NSocket_create(struct NSocket *dest, int protocolFamily, int socketType) {
     if (dest == NULL) {
         return 0;
     }
-#ifdef WINDOWS_TARGET
-    Network_init()
+#if defined(WINDOWS_TARGET)
+    Network_init();
 #endif
     int domain = Network_ProtocolFamilyInternalToHost(protocolFamily);
     if (domain <= 0) {
@@ -104,8 +144,8 @@ int NSocket_close(struct NSocket *dest) {
     }
     NSocket_unbind(dest->native);
 #ifdef WINDOWS_TARGET
-    shutdown(socket, SD_BOTH);
-    closesocket(socket);
+    shutdown(dest->native, SD_BOTH);
+    closesocket(dest->native);
 #else
     shutdown(dest->native, SHUT_RDWR);
     close(dest->native);
@@ -140,7 +180,16 @@ int internal_NSocket_connect(int socket, struct sockaddr *address, int addressLe
                 return ConnectStatus_FAIL;
         }
 #elif defined(WINDOWS_TARGET)
-#error Not supported
+        switch (GetLastError()) {
+            case WSAEWOULDBLOCK:
+                return ConnectStatus_IN_PROGRESS;
+            case WSAEAFNOSUPPORT:
+                return ConnectStatus_FAIL;
+            case WSAETIMEDOUT:
+                return ConnectStatus_CONNECTION_REFUSED;
+            default:
+                return ConnectStatus_FAIL;
+        }
 #else
 #error Not supported
 #endif
@@ -216,7 +265,6 @@ int NSocket_connectUnix(struct NSocket *dest, const char *path) {
             sizeof(struct sockaddr_un)
     );
 #else
-#error not supported
     return ConnectStatus_FAIL;
 #endif
 }
@@ -390,7 +438,7 @@ int NSocket_getTTL(struct NSocket *native, unsigned char *ttl) {
             return 0;
     }
     int size = sizeof(int);
-    return getsockopt(native->native, level, optname, ttl, &size)==0;
+    return getsockopt(native->native, level, optname, ttl, &size) == 0;
 }
 
 int NSocket_setTTL(struct NSocket *native, unsigned char ttl) {
@@ -463,24 +511,16 @@ int NSocket_send(struct NSocket *native, signed char *buffer, int bufferLen) {
     if (native->type != SOCKET_TYPE_TCP) {
         return -1;
     }
-    ssize_t sent = send(native->native, buffer, bufferLen, MSG_NOSIGNAL);
-    if (sent < 0) {
-#ifdef WINDOWS_TARGET
-#error Not supported
-#elif defined(LINUX_LIKE_TARGET)
-        switch (errno) {
-            case EAGAIN:
-                return 0;
-            case EBADF:
-            case ECONNRESET:
-            case EPIPE:
-            default:
-                NSocket_close(native);
-                return -1;
-        }
+#if defined(LINUX_LIKE_TARGET)
+    int flags=MSG_NOSIGNAL;
+#elif defined(WINDOWS_TARGET)
+    int flags = 0;
 #else
 #error Not supported
 #endif
+    ssize_t sent = send(native->native, buffer, bufferLen, flags);
+    if (IS_SOCKET_ERROR(sent)) {
+        return internal_NSocket_errorProcessing(native, sent);
     }
     return (int) sent;
 }
@@ -518,7 +558,7 @@ int NSocket_sendTo(
     if (native->protocolFamily == NET_TYPE_INET6 && addressProtocolFamily == NET_TYPE_INET4) {
         NInetSocketNetworkAddress_convertToIpv6(address);
     }
-#ifdef LINUX_LIKE_TARGET
+
     size_t sent = sendto(
             native->native,
             buffer,
@@ -527,59 +567,26 @@ int NSocket_sendTo(
             (struct sockaddr *) address->data,
             address->size
     );
-    if (sent == -1) {
-        switch (errno) {
-            case EAGAIN:
-                return 0;
-            case EPIPE: {
-                NSocket_close(native);
-                return -1;
-            }
-            case EINVAL: {
-                NSocket_close(native);
-                return -1;
-            }
-            default:
-                NSocket_close(native);
-                return -1;
-        }
+    if (IS_SOCKET_ERROR(sent)) {
+        internal_NSocket_errorProcessing(native, sent);
     }
     return sent;
-#else
-#error Not supported
-#endif
+
 }
 
 int NSocket_receiveOnly(struct NSocket *native, signed char *buffer, int bufferLen) {
+    if (native == NULL) {
+        return -1;
+    }
     if (native->closed) {
         return -1;
     }
-    ssize_t wasRead = recv(native->native, buffer, bufferLen, 0);
-    if (wasRead == 0) {
-#ifdef WINDOWS_TARGET
-        native->closed=1;
-        return -1;
-#elif defined(LINUX_LIKE_TARGET)
+    if (buffer == NULL) {
         return 0;
-#endif
     }
-    if (wasRead < 0) {
-#ifdef LINUX_LIKE_TARGET
-        switch (errno) {
-            case EAGAIN:
-                return 0;
-            case EBADF:
-            case ECONNRESET:
-            default: {
-                NSocket_close(native);
-                return -1;
-            }
-        }
-#elif WINDOWS_TARGET
-#error Not supported
-#else
-#error Not supported
-#endif
+    ssize_t wasRead = recv(native->native, buffer, bufferLen, 0);
+    if (IS_SOCKET_ERROR(wasRead)) {
+        return internal_NSocket_errorProcessing(native, wasRead);
     }
     return (int) wasRead;
 }
@@ -590,41 +597,22 @@ int NSocket_receiveFrom(struct NSocket *native, void *dest, int max, struct NIne
     }
 
 #ifdef WINDOWS_TARGET
-    char* dest2 = (char*)dest;
+    char *dest2 = (char *) dest;
 #else
     void *dest2 = dest;
 #endif
-    int wasRead;
+    ssize_t wasRead;
     if (addr == NULL) {
         wasRead = (int) recvfrom(native->native, dest2, max, 0, NULL, NULL);
     } else {
-#ifdef WINDOWS_TARGET
-        auto size1 = addr->size;
-#else
         socklen_t size1 = (socklen_t) addr->size;
-#endif
         size1 = 28;
         size_t ret = recvfrom(native->native, dest2, max, 0, (struct sockaddr *) &addr->data, &size1);
         addr->size = (int) size1;
         wasRead = (int) ret;
     }
-    if (wasRead < 0) {
-#ifdef LINUX_LIKE_TARGET
-        switch (errno) {
-            case EAGAIN:
-                return 0;
-            case EBADF:
-            case ECONNRESET:
-            default: {
-                NSocket_close(native);
-                return -1;
-            }
-        }
-#elif WINDOWS_TARGET
-#error Not supported
-#else
-#error Not supported
-#endif
+    if (IS_SOCKET_ERROR(wasRead)) {
+        return internal_NSocket_errorProcessing(native, wasRead);
     }
     return wasRead;
 }
@@ -652,13 +640,12 @@ int NSocket_getBlockedMode(struct NSocket *native) {
 int NSocket_setBlockedMode(struct NSocket *native, int value) {
 #ifdef WINDOWS_TARGET
     int nonBlocking = value ? 0 : 1;
-        if (ioctlsocket(native->native, FIONBIO, &nonBlocking) != 0) {
+    if (ioctlsocket(native->native, FIONBIO, &nonBlocking) != 0) {
 //            if (GetLastError() == WSAENOTSOCK) {
 //                return 0;
 //            }
-            return 0;
-        }
-        return 1;
+        return 0;
+    }
 #else
     int flags = fcntl(native->native, F_GETFL, 0);
     int newFlags = value ? flags ^ O_NONBLOCK : flags | O_NONBLOCK;
@@ -666,36 +653,56 @@ int NSocket_setBlockedMode(struct NSocket *native, int value) {
     if (fcntl(native->native, F_SETFL, newFlags) != 0) {
         return 0;
     }
+#endif
     native->blockedMode = value;
     return 1;
-#endif
 }
 
 int internal_NSocket_bind(int socket, struct sockaddr *addr, int addrSize, int needListen) {
-#ifdef LINUX_LIKE_TARGET
+
     if (bind(socket, addr, addrSize) < 0) {
+#ifdef LINUX_LIKE_TARGET
         if (errno == EINVAL) {
             return BIND_RESULT_ALREADY_BINDED;
         }
         if (errno == EADDRINUSE) {
             return BIND_RESULT_ADDRESS_ALREADY_IN_USE;
         }
+#else
+        switch (GetLastError()) {
+            case WSAEADDRINUSE:
+                return BIND_RESULT_ADDRESS_ALREADY_IN_USE;
+            case WSAEACCES:
+                return BIND_RESULT_UNKNOWN_ERROR; // An attempt was made to access a socket in a way forbidden by its access permissions.
+            case WSAEAFNOSUPPORT:
+                return BIND_RESULT_PROTOCOL_NOT_SUPPORTED;
+            case WSAEFAULT:
+                return BIND_RESULT_UNKNOWN_ERROR;
+            case WSAEINVAL:
+                return BIND_RESULT_ALREADY_BINDED;
+        }
+#endif
         return BIND_RESULT_UNKNOWN_ERROR;
     }
     if (needListen) {
         if (listen(socket, 5) < 0) {
+#ifdef LINUX_LIKE_TARGET
             if (errno == EOPNOTSUPP) {
                 NSocket_unbind(socket);
                 return BIND_RESULT_NOT_SUPPORTED;
             }
+#else
+            switch (GetLastError()) {
+                case WSAEOPNOTSUPP:
+                    return 1; // UDP not supported listen. Ignore
+            }
+#endif
+
             NSocket_unbind(socket);
             return BIND_RESULT_UNKNOWN_ERROR;
         }
     }
     return BIND_RESULT_OK;
-#else
-#error Not supported
-#endif
 }
 
 //int NSocket_bindInetAny(struct NSocket *dest){
