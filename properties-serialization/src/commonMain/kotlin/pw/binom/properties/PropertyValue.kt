@@ -28,7 +28,7 @@ sealed interface PropertyValue {
       }
       val p = path.indexOf('.')
       val itemName = if (p == -1) path else path.substring(0, p)
-      val other = if (p == -1) "" else path.substring(p) + 1
+      val other = if (p == -1) "" else path.substring(p + 1)
       return get(itemName)?.getByPath(other)
     }
 
