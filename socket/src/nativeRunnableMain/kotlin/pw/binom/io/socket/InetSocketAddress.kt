@@ -80,7 +80,18 @@ actual open class InetSocketAddress : SocketAddress {
 
   actual fun toMutable(): MutableInetSocketAddress {
     val result = MutableInetSocketAddress()
-    native.copyInto(result.native)
+    toMutable(result)
     return result
   }
+
+  actual fun toMutable(dest: MutableInetSocketAddress): MutableInetSocketAddress {
+    native.copyInto(dest.native)
+    return dest
+  }
+
+  override fun resolve(): InetSocketAddress = this
+  override fun resolveAll(): List<InetSocketAddress> = listOf(this)
+  override fun resolveOrNull(): InetSocketAddress? = this
+
+  override fun toString(): String = "$host:$port"
 }

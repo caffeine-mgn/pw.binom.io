@@ -1,6 +1,6 @@
 package pw.binom.io.socket
 
-sealed interface SocketAddress {
+interface SocketAddress {
   val host: String
   val port: Int
 

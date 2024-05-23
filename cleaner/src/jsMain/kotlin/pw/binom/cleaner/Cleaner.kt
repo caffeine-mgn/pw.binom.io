@@ -2,9 +2,9 @@ package pw.binom.cleaner
 
 actual class Cleaner {
     actual companion object {
-        private class Item<T : Any>(val value: T, val func: (T) -> Unit)
+        private class CleanRecord<T : Any>(val value: T, val func: (T) -> Unit)
 
-        private val list = ArrayList<Pair<JSWeakRef, Item<Any>>>()
+        private val list = ArrayList<Pair<JSWeakRef, CleanRecord<Any>>>()
         private fun check() {
             val it = list.iterator()
             while (it.hasNext()) {
@@ -20,7 +20,7 @@ actual class Cleaner {
             check()
             val c = Cleaner()
             value ?: return c
-            val item = Item(value = value, func = func) as Item<Any>
+            val item = CleanRecord(value = value, func = func) as CleanRecord<Any>
             list.add(JSWeakRef(c) to item)
             return c
         }

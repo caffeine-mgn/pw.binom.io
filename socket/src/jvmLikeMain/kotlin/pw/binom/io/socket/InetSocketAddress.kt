@@ -35,7 +35,17 @@ actual open class InetSocketAddress(var native: JvmInetSocketAddress) : SocketAd
 
   actual fun toMutable(): MutableInetSocketAddress {
     val l = MutableInetSocketAddress()
-    l.native = native
+    toMutable(l)
     return l
   }
+
+  actual fun toMutable(dest: MutableInetSocketAddress): MutableInetSocketAddress {
+    dest.native = native
+    return dest
+  }
+
+  override fun resolve(): InetSocketAddress = this
+  override fun resolveAll(): List<InetSocketAddress> = listOf(this)
+  override fun resolveOrNull(): InetSocketAddress? = this
+  override fun toString(): String = "$host:$port"
 }

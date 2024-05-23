@@ -4,7 +4,7 @@
 #include "../include/NSocket.h"
 #include "../include/Network.h"
 
-#ifdef WINDOWS_TARGET
+#if defined(WINDOWS_TARGET)
 
 #include <winsock2.h>
 #include <netioapi.h>
@@ -766,7 +766,15 @@ int NSocket_acceptInetSocketAddress(struct NSocket *native, struct NInetSocketNe
         return accept(native->native, NULL, NULL);
     } else {
         socklen_t size1 = 28;//(socklen_t *) &addr->size;
-        int newSocket = accept(native->native, (struct sockaddr *) addr->data, &size1);
+        int newSocket = accept(native->native, (struct sockaddr *) &addr->data[0], &size1);
+        if (IS_SOCKET_ERROR(newSocket)) {
+#if defined(LINUX_LIKE_TARGET)
+#elif defined(WINDOWS_TARGET)
+//#error Not supported
+#else
+#error Not supported
+#endif
+        }
         addr->size = size1;
         return newSocket;
     }

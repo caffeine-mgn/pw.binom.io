@@ -3,6 +3,7 @@ package pw.binom.io.socket
 import pw.binom.io.ByteBuffer
 import pw.binom.io.use
 import pw.binom.testing.Testing
+import pw.binom.testing.shouldEquals
 import pw.binom.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,6 +23,7 @@ class TcpClientNetSocketTest {
     assertEquals(ConnectStatus.OK, connectResult)
     ByteBuffer.wrap(requestBytes).use { data ->
       assertEquals(requestBytes.size, socket.send(data))
+      data.position shouldEquals requestBytes.size
     }
     val txt = ByteBuffer(1024 * 8).use { buffer ->
       assertEquals(376, socket.receive(buffer))

@@ -117,7 +117,11 @@ object IniParser {
           localNode[field] = k
         } else {
           if (k !is HashMap<*, *>) {
-            TODO()
+//            TODO("Not supported type ${k::class}. path: $path, field: $field, k: $k")
+            val old = k
+            k = HashMap<String, Any?>()
+            k[""] = old
+            localNode[field] = k
           }
         }
         localNode = k as HashMap<String, Any?>

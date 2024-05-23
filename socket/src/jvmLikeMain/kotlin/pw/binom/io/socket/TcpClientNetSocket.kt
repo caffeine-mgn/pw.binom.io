@@ -9,8 +9,9 @@ import java.net.SocketException
 import java.nio.channels.AlreadyConnectedException
 import java.nio.channels.SocketChannel
 
-actual open class TcpClientNetSocket (override val native: SocketChannel) : TcpClientSocket, NetSocket {
-  actual constructor():this(SocketChannel.open())
+actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpClientSocket, NetSocket {
+  actual constructor() : this(SocketChannel.open())
+
   private val logger = InternalLog.file("ClientSocket_$id")
   actual fun connect(address: InetSocketAddress): ConnectStatus {
     return try {
@@ -61,7 +62,7 @@ actual open class TcpClientNetSocket (override val native: SocketChannel) : TcpC
       -1
     }
 
-  override var blocking: Boolean=false
+  override var blocking: Boolean = false
     set(value) {
       field = value
       logger.info(line = __LINE__) { "set blocking to $value" }
@@ -86,6 +87,7 @@ actual open class TcpClientNetSocket (override val native: SocketChannel) : TcpC
       logger.info(line = __LINE__) { "set TcpNoDelay to $value" }
       false
     }
+
   private var internalPort = 0
   override val port: Int?
     get() = internalPort.takeIf { it != 0 }

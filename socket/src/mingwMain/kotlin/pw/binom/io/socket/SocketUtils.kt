@@ -77,13 +77,14 @@ actual fun internalAccept(native: RawSocket, address: MutableInetSocketAddress?)
 //    }
 // }
 
-internal actual fun createSocket(socket: RawSocket, server: Boolean): Socket =
-  MingwSocket(native = socket, server = server)
+//internal actual fun createSocket(socket: RawSocket, server: Boolean): Socket =
+//  MingwSocket(native = socket, server = server)
 
 // actual fun bindUnixSocket(native: RawSocket, fileName: String): BindStatus {
 //    throwUnixSocketNotSupported()
 // }
 
+/*
 @OptIn(ExperimentalForeignApi::class)
 actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: MutableInetSocketAddress?): Int {
 //    if (data.remaining == 0) {
@@ -125,3 +126,4 @@ actual fun internalReceive(native: RawSocket, data: ByteBuffer, address: Mutable
     readSize
   }
 }
+*/

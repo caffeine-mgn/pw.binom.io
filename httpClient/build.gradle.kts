@@ -23,6 +23,7 @@ kotlin {
     }
 
     commonTest.dependencies {
+      api(project(":testing"))
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
       api(project(":httpServer"))

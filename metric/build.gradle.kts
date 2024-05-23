@@ -11,7 +11,6 @@ kotlin {
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
-      api(kotlin("stdlib"))
       api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
     }
     jsMain {

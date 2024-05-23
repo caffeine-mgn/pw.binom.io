@@ -1,6 +1,7 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
+import platform.posix.errno
 import platform.socket.*
 import pw.binom.io.IOException
 import pw.binom.io.InHeap
@@ -23,9 +24,11 @@ actual class TcpNetServerSocket actual constructor() : TcpServerSocket, NetSocke
       val tmpSocketAdderPtr = nativeHeap.alloc<NInetSocketNetworkAddress>()
       try {
         val acceptSocket = data.use { socketPtr -> NSocket_acceptInetSocketAddress(socketPtr, tmpSocketAdderPtr.ptr) }
-        address.native.use { aaa ->
-          if (NInetSocketNetworkAddress_getHost(tmpSocketAdderPtr.ptr, aaa) != 1) {
-            throw IOException("Can't get host from address")
+        if (acceptSocket > 0) {
+          address.native.use { aaa ->
+            if (NInetSocketNetworkAddress_getHost(tmpSocketAdderPtr.ptr, aaa) != 1) {
+              throw IOException("Can't get host from address $errno")
+            }
           }
         }
         acceptSocket

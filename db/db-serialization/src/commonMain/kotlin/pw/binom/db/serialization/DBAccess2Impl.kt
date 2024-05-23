@@ -124,9 +124,11 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
 @OptIn(ExperimentalTime::class)
 class DBAccess2Impl internal constructor(
   val con: PooledAsyncConnection,
-  internal val ctx: DBContextImpl,
+  internal val ctxImpl: DBContextImpl,
   override val serializersModule: SerializersModule,
 ) : DBAccess2 {
+  override val ctx: DBContext
+    get() = ctxImpl
   override suspend fun <T : Any> insert(
     serializer: KSerializer<T>,
     value: T,
@@ -170,7 +172,7 @@ class DBAccess2Impl internal constructor(
     onConflict: DBAccess2.ActionOnConflict,
     changedRow: ((Long) -> Unit),
   ): T? {
-    val dsc = ctx.getDescription2(serializer)
+    val dsc = ctxImpl.getDescription2(serializer)
     val params = HashMap<String, Pair<Boolean, Any?>>()
 //    val output = object : DataBinder {
 //      override fun get(key: String): Any? = params[key]

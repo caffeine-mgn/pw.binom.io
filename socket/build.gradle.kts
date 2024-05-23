@@ -17,7 +17,7 @@ plugins {
 //  }
   id("com.jakewharton.cite")
 }
-
+gradle.startParameter.taskRequests.joinToString { it.args.toString() }
 fun KotlinNativeTarget.useNativeNet() {
   val headersPath = project.buildFile.parentFile.resolve("src/nativeCommonMain/include")
   val staticBuildTask =

@@ -1,6 +1,6 @@
 # Binom IO
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.9.24](https://img.shields.io/badge/Kotlin-1.9.24-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)
+[![Kotlin 1.9.23](https://img.shields.io/badge/Kotlin-1.9.23-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)
 [![Gradle build](https://github.com/caffeine-mgn/pw.binom.io/actions/workflows/publish.yml/badge.svg) ](https://github.com/caffeine-mgn/pw.binom.io/actions/workflows/publish.yml) <br><br>
 
 ## What is Binom.IO?

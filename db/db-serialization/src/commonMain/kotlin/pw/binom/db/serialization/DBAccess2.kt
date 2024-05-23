@@ -8,6 +8,8 @@ import pw.binom.db.async.AsyncResultSet
 import kotlin.jvm.JvmInline
 
 interface DBAccess2 {
+  val ctx: DBContext
+
   sealed interface ActionOnConflict {
     @Deprecated(message = "For internal use", level = DeprecationLevel.HIDDEN)
     interface OnColumns {
@@ -339,7 +341,7 @@ internal fun internalGenerateSelectColumns(
 inline fun <reified T : Any> QueryContext.param(value: T?) =
   param(
     serializer =
-      this.serializersModule.getContextual(T::class) ?: T::class.serializerOrNull()
-        ?: throw SerializationException("Can't find serializer for ${T::class}"),
+    this.serializersModule.getContextual(T::class) ?: T::class.serializerOrNull()
+    ?: throw SerializationException("Can't find serializer for ${T::class}"),
     value = value,
   )

@@ -16,10 +16,10 @@ internal class DBContextImpl(val pool: AsyncConnectionPool, val sql: SQLSerializ
   val statements = defaultMutableMap<String, SQLQueryNamedArguments>()
   val mappers = defaultMutableMap<KSerializer<out Any>, suspend (AsyncResultSet) -> Any>()
 
-  private val entityDescriptions2 = HashMap<KSerializer<*>, EntityDescription2>()
+  private val entityDescriptions2 = HashMap<KSerializer<*>, EntityDescription2Impl>()
 
-  internal fun getDescription2(serializer: KSerializer<*>) =
-    entityDescriptions2.getOrPut(serializer) { EntityDescription2(serializer) }
+  override fun getDescription2(serializer: KSerializer<*>) =
+    entityDescriptions2.getOrPut(serializer) { EntityDescription2Impl(serializer) }
 
   private val entityDescriptions = defaultMutableMap<SerialDescriptor, EntityDescription>()
   override fun getDescription(serialDescriptor: SerialDescriptor): EntityDescription =
@@ -31,7 +31,7 @@ internal class DBContextImpl(val pool: AsyncConnectionPool, val sql: SQLSerializ
   }
 
   override suspend fun <T> re2(function: suspend (DBAccess2) -> T): T = tx.re {
-    val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule, ctx = this)
+    val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule, ctxImpl = this)
     function(access)
   }
 
@@ -41,7 +41,7 @@ internal class DBContextImpl(val pool: AsyncConnectionPool, val sql: SQLSerializ
   }
 
   override suspend fun <T> su2(function: suspend (DBAccess2) -> T): T = tx.su {
-    val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule, ctx = this)
+    val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule, ctxImpl = this)
     function(access)
   }
 
@@ -51,12 +51,12 @@ internal class DBContextImpl(val pool: AsyncConnectionPool, val sql: SQLSerializ
   }
 
   override suspend fun <T> new2(function: suspend (DBAccess2) -> T) = tx.new {
-    val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule, ctx = this)
+    val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule, ctxImpl = this)
     function(access)
   }
 
   override suspend fun <T> no(function: suspend (DBAccess2) -> T) = tx.no {
-    val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule, ctx = this)
+    val access = DBAccess2Impl(con = it, serializersModule = sql.serializersModule, ctxImpl = this)
     function(access)
   }
 

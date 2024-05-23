@@ -77,7 +77,7 @@ internal class Starter(
   val strongImpl: StrongImpl,
   startDefiner: InternalDefiner,
 ) {
-  private val dd = startDefiner
+  private val definerImpl = startDefiner
   private val strongWithDeps = StrongWithDependenciesSpy(strongImpl)
 
   internal class BeanConfig(
@@ -141,7 +141,7 @@ internal class Starter(
 
   private fun init() {
     val beanFromConfig =
-      dd.getLastDefinitions().map {
+      definerImpl.getLastDefinitions().map {
         val bean = it.init(strongWithDeps)
         val deps = strongWithDeps.getLastDependencies()
         val postConstruct = strongWithDeps.flushPostConstruct()

@@ -1,5 +1,5 @@
 package pw.binom.io.socket
-
+/*
 import kotlinx.cinterop.*
 import platform.common.internal_inet_addr
 import platform.common.internal_setsockopt
@@ -395,3 +395,4 @@ private fun timespec.set(diff: Duration) {
   tv_sec = diff.inWholeSeconds
   tv_nsec = (diff.inWholeNanoseconds - diff.inWholeSeconds * 1_000_000_000).convert()
 }
+*/

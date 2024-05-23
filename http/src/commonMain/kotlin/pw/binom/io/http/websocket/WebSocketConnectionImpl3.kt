@@ -157,7 +157,9 @@ class WebSocketConnectionImpl3(
     code: Short,
     body: ByteBuffer? = null,
   ) {
-    checkClosed()
+    if (!closed.compareAndSet(false, true)) {
+      return
+    }
     if (this.receivedCloseMessage.getValue()) {
       throw IllegalStateException("Can't send close message because already got close message")
     }
@@ -169,7 +171,9 @@ class WebSocketConnectionImpl3(
   }
 
   override suspend fun asyncClose() {
-    checkClosed()
+    if (!closed.compareAndSet(false, true)) {
+      return
+    }
     try {
       if (!this.receivedCloseMessage.getValue()) {
         sendFinish(code = WebSocketClosedException.CLOSE_NORMAL)

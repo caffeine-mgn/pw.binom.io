@@ -14,6 +14,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":strong"))
+      api(project(":validate"))
       api(project(":properties-serialization"))
     }
     commonTest.dependencies {

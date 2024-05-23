@@ -17,11 +17,12 @@ import pw.binom.strong.BeanLifeCycle
 import pw.binom.strong.inject
 import pw.binom.strong.injectServiceList
 import pw.binom.strong.map
+import pw.binom.strong.properties.injectProperty
 
 class ManagementWebServerService {
   private val listenJob = ArrayList<Job>()
   private val networkManager by inject<NetworkManager>()
-  private val webServerProperties by inject<WebServerProperties>().map { it.management!! }
+  private val webServerProperties by injectProperty<WebServerProperties>().map { it.management!! }
   private val bufferPool by lazy { GenericObjectPool(ByteBufferFactory(webServerProperties.poolSize)) }
   private var server: HttpServer2? = null
   private val handlers by injectServiceList<ManagementHttpHandler>()

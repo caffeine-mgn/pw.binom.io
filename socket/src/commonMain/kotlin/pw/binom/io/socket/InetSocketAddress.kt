@@ -8,6 +8,7 @@ expect open class InetSocketAddress : SocketAddress {
   }
 
   fun toMutable(): MutableInetSocketAddress
+  fun toMutable(dest: MutableInetSocketAddress): MutableInetSocketAddress
   val address: ByteArray
   val protocolFamily: ProtocolFamily
   val isMulticastAddress: Boolean

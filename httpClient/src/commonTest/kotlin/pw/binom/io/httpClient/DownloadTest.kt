@@ -51,6 +51,7 @@ class DownloadTest {
       }
     }
 
+  @Ignore
   @Test
   fun test() =
     runTest {

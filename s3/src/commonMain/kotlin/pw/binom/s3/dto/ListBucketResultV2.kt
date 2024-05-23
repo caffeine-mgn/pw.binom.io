@@ -44,5 +44,5 @@ data class ListBucketResultV2(
     val isTruncated: Boolean,
     @XmlNamespace([AWS_NAMESPACE1, AWS_NAMESPACE2, AWS_NAMESPACE3])
     @SerialName("Contents")
-    val contents: List<Content>
+    val contents: List<Content> = emptyList()
 )

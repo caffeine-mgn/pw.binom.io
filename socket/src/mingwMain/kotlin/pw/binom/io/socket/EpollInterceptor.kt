@@ -3,23 +3,23 @@ package pw.binom.io.socket
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.convert
-import platform.common.FLAG_READ
-import platform.common.setEventDataPtr
-import platform.common.setEventFlags
+import platform.socket.FLAG_READ
+import platform.socket.NEvent_setEventDataPtr
+import platform.socket.NEvent_setEventFlags
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 
 @OptIn(ExperimentalForeignApi::class)
 actual class EpollInterceptor actual constructor(selector: Selector) : Closeable {
 
-  private val udpReadSocket = Socket.createUdpNetSocket()
-  private val udpWriteSocket = Socket.createUdpNetSocket()
+  private val udpReadSocket = UdpNetSocket()
+  private val udpWriteSocket = UdpNetSocket()
   private val wakeupFlag = AtomicBoolean(false)
   private val addr: InetSocketAddress
   private val epoll = selector.epoll
 
   init {
-    val b = udpReadSocket.bind(InetSocketAddress.create(host = "127.0.0.1", port = 0))
+    val b = udpReadSocket.bind(InetSocketAddress.resolve(host = "127.0.0.1", port = 0))
     udpReadSocket.blocking = false
     udpWriteSocket.blocking = false
     check(b == BindStatus.OK) { "Can't bind port" }
@@ -32,7 +32,7 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
       udpReadSocket.close()
       udpWriteSocket.close()
     }
-    addr = InetSocketAddress.create(host = "127.0.0.1", port = udpReadSocket.port!!)
+    addr = InetSocketAddress.resolve(host = "127.0.0.1", port = udpReadSocket.port!!)
   }
 
   actual fun wakeup() {

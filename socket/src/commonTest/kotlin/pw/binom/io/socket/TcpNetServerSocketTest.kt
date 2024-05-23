@@ -6,6 +6,7 @@ import pw.binom.io.wrap
 import pw.binom.testing.shouldContentEquals
 import pw.binom.testing.shouldEquals
 import pw.binom.testing.shouldNotNull
+import pw.binom.testing.shouldNull
 import kotlin.random.Random
 import kotlin.test.Test
 
@@ -28,5 +29,14 @@ class TcpNetServerSocketTest {
       buf.flip()
       buf.toByteArray() shouldContentEquals data
     }
+  }
+
+  @Test
+  fun nonBlockingAccept() {
+    val server = TcpNetServerSocket()
+    server.blocking = false
+    server.bind()
+    server.accept().shouldNull()
+    server.accept(MutableInetAddress()).shouldNull()
   }
 }

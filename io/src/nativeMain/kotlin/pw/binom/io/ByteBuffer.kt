@@ -293,9 +293,9 @@ actual open class ByteBuffer private constructor(
 
   actual fun getByte(): Byte {
     ensureOpen()
-    val p = position
+    val p = _position
     if (p >= limit) throw EOFException()
-    position = p + 1
+    _position = p + 1
     return data.pointer[p]
 //        return data.access { it[p] }
 //        return data[p]
@@ -312,10 +312,10 @@ actual open class ByteBuffer private constructor(
     if (closed) {
       return false
     }
-    if (position >= limit) {
+    if (_position >= limit) {
       return false
     }
-    refTo2(0, position) { array ->
+    refTo2(0, _position) { array ->
       array[0] = value
 //      array[position++] = value
     }

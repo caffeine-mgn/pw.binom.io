@@ -2,15 +2,19 @@ package pw.binom.strong.properties
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import pw.binom.properties.IniParser
 import pw.binom.properties.PropertyValue
 import pw.binom.properties.serialization.PropertiesDecoder
+import pw.binom.validate.Validation
+import pw.binom.validate.ValidatorModule
 
 class StrongProperties(
   val serializersModule: SerializersModule = EmptySerializersModule(),
+  val validatorModule: ValidatorModule = ValidatorModule.default,
   val prefix: String = "",
 ) {
   private var properties: PropertyValue.Object = PropertyValue.Object.EMPTY
@@ -51,14 +55,27 @@ class StrongProperties(
     return this
   }
 
-  fun <T : Any> parse(serializer: DeserializationStrategy<T>) =
-    serializer.deserialize(
-      PropertiesDecoder(
-        root = properties,
+  private val cache = mutableMapOf<DeserializationStrategy<Any>, Any>()
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any> parse(serializer: KSerializer<T>): T {
+    return cache.getOrPut(serializer) {
+      val value = serializer.deserialize(
+        PropertiesDecoder(
+          root = properties,
+          serializersModule = serializersModule,
+          prefix = prefix,
+        ),
+      )
+      Validation.validateAndCheck(
+        strategy = serializer,
+        value = value,
+        validatorModule = validatorModule,
         serializersModule = serializersModule,
-        prefix = prefix,
-      ),
-    )
+      )
+      value
+    } as T
+  }
 
   override fun toString(): String = properties.toString()
 

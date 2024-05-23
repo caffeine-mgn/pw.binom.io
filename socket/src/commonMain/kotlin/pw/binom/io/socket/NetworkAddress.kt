@@ -1,6 +1,6 @@
 package pw.binom.io.socket
 
-sealed interface NetworkAddress {
+interface NetworkAddress {
   val host: String
 
   fun resolve(): InetAddress? = InetAddress.resolveOrNull(host)
