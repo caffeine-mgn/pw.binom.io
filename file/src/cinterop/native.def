@@ -117,21 +117,3 @@ int internal_is_file(const char* path){
 //    return S_IFDIR != pathInfo.st_mode & S_IFMT
 #endif
 }
-
-
-/*
-#include <pthread.h>
-
-int internal_setThreadName(pthread_t thread, const char *name){
-    return pthread_setname_np(thread, name);
-}
-
-void internal_thread_yield(){
-#ifdef WINDOWS_TARGET
-    SwitchToThread();
-#else
-    pthread_yield();
-#endif
-}
-
-*/

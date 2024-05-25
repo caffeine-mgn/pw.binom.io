@@ -1,11 +1,20 @@
+linkerOpts.iosArm64= -lpthread
 ---
 #ifdef _WIN32
 #include <processthreadsapi.h>
+#else
+#include <pthread.h>
+#endif
+
+#ifdef __APPLE__
+#include <TargetConditionals.h>
 #endif
 
 void internal_core_thread_yield(){
 #ifdef _WIN32
     SwitchToThread();
+#elif defined(TARGET_OS_IPHONE) || defined(TARGET_OS_IPHONE_SIMULATOR)
+    pthread_yield_np();
 #else
     pthread_yield();
 #endif

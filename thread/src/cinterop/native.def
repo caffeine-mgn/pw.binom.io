@@ -51,7 +51,7 @@
 
 #include <pthread.h>
 #ifdef WINDOWS_TARGET
-    #include <windows.h>
+#include <windows.h>
 #endif
 
 int internal_setThreadName(pthread_t thread, const char *name){
@@ -61,6 +61,8 @@ int internal_setThreadName(pthread_t thread, const char *name){
 void internal_thread_yield(){
 #ifdef WINDOWS_TARGET
     SwitchToThread();
+#elif defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+    pthread_yield_np();
 #else
     pthread_yield();
 #endif
