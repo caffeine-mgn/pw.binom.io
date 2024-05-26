@@ -1,7 +1,6 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
-import platform.common.internal_sockaddr_in6
 import platform.socket.*
 import pw.binom.io.InHeap
 
@@ -60,7 +59,7 @@ actual open class InetSocketAddress : SocketAddress {
       NInetSocketNetworkAddress_getPort(ptr)
     }
 
-  fun <T> getAsIpV6(func: (CPointer<internal_sockaddr_in6>) -> T): T = native.use { ptr ->
+/*  fun <T> getAsIpV6(func: (CPointer<internal_sockaddr_in6>) -> T): T = native.use { ptr ->
     when (NInetSocketNetworkAddress_getFamily(ptr)) {
       NET_TYPE_INET6 -> func(ptr.reinterpret())
       NET_TYPE_INET4 -> {
@@ -76,7 +75,7 @@ actual open class InetSocketAddress : SocketAddress {
 
       else -> throw IllegalStateException("Unknown protocol")
     }
-  }
+  }*/
 
   actual fun toMutable(): MutableInetSocketAddress {
     val result = MutableInetSocketAddress()

@@ -45,8 +45,8 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
     NEvent_setEventFlags(eventMem, commonFlags.raw, if (serverFlag) 1 else 0)
     val success = selector.updateKey(this, eventMem)
     if (!success) {
-      val socketError = internal_get_socket_error(rawSocket)
-      println("Can't update epoll flags. rawSocket=$rawSocket error #${internal_get_last_error()}, errno #$errno, socketError #$socketError")
+//      val socketError = internal_get_socket_error(rawSocket)
+//      println("Can't update epoll flags. rawSocket=$rawSocket error #${internal_get_last_error()}, errno #$errno, socketError #$socketError")
     }
     return success
   }

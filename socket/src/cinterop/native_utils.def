@@ -1,6 +1,6 @@
 
 ---
-/*
+
 #include <stdint.h>
 #ifdef _WIN32
     #include <winsock.h>
@@ -21,7 +21,7 @@
 #ifndef SOCKET
 #define SOCKET int
 #endif
-
+/*
 // Detect platform endianness at compile time
 
 // If boost were available on all platforms, could use this instead to detect endianness
@@ -291,27 +291,6 @@ void internal_free_network_addresses(void* first_address){
     freeaddrinfo(first_address);
 }
 
-int internal_set_socket_blocked_mode(SOCKET socket, int value){
-    #ifdef _WIN32
-        int nonBlocking = value ? 0 : 1;
-        if (ioctlsocket(socket, FIONBIO, &nonBlocking) != 0) {
-//            if (GetLastError() == WSAENOTSOCK) {
-//                return 0;
-//            }
-            return 0;
-        }
-        return 1;
-    #else
-        auto flags = fcntl(socket, F_GETFL, 0);
-        auto newFlags = value ? flags ^ O_NONBLOCK : flags | O_NONBLOCK;
-
-        if (fcntl(socket, F_SETFL, newFlags) != 0) {
-            return 0;
-        }
-        return 1;
-    #endif
-}
-
 int internal_unbind(SOCKET socket){
     int flag = 1;
     return setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int));
@@ -408,3 +387,24 @@ int internal_get_socket_error(SOCKET sock) {
     return error;
 }
 */
+
+int internal_set_socket_blocked_mode(SOCKET socket, int value){
+    #ifdef _WIN32
+        int nonBlocking = value ? 0 : 1;
+        if (ioctlsocket(socket, FIONBIO, &nonBlocking) != 0) {
+//            if (GetLastError() == WSAENOTSOCK) {
+//                return 0;
+//            }
+            return 0;
+        }
+        return 1;
+    #else
+        auto flags = fcntl(socket, F_GETFL, 0);
+        auto newFlags = value ? flags ^ O_NONBLOCK : flags | O_NONBLOCK;
+
+        if (fcntl(socket, F_SETFL, newFlags) != 0) {
+            return 0;
+        }
+        return 1;
+    #endif
+}

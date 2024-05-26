@@ -3,8 +3,6 @@ package pw.binom.io.socket
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.common.*
 import platform.socket.*
-import platform.posix.errno
-import pw.binom.io.ByteBuffer
 import pw.binom.io.IOException
 
 //@OptIn(ExperimentalForeignApi::class)
@@ -18,10 +16,12 @@ import pw.binom.io.IOException
 //    else -> BindStatus.UNKNOWN
 //  }
 
+/*
 @OptIn(ExperimentalForeignApi::class)
 fun unbind(native: RawSocket) {
   internal_unbind(native)
 }
+*/
 
 @OptIn(ExperimentalForeignApi::class)
 fun setBlocking(native: Int, value: Boolean) {
@@ -30,12 +30,14 @@ fun setBlocking(native: Int, value: Boolean) {
   }
 }
 
+/*
 @OptIn(ExperimentalForeignApi::class)
 fun allowIpv4(native: RawSocket) {
   if (internal_set_allow_ipv6(native) <= 0) {
     throw IOException("Can't allow ipv6 connection socket. error: #$errno")
   }
 }
+*/
 
 @OptIn(ExperimentalForeignApi::class)
 internal fun networkErrorProcessing(msg:String?) {

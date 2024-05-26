@@ -1,13 +1,8 @@
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
-import platform.common.internal_create_socket
-import platform.common.internal_get_last_error
-import platform.common.internal_setsockopt
-import platform.posix.*
 import platform.socket.NSocket
 import pw.binom.io.Closeable
-import pw.binom.io.IOException
 import pw.binom.io.InHeap
 
 actual interface Socket : Closeable {

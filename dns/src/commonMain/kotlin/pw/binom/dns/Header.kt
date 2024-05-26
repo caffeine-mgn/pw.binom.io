@@ -1,9 +1,9 @@
 package pw.binom.dns
 
-import pw.binom.BitArray32
+import pw.binom.bitarray.BitArray32
+import pw.binom.bitarray.toBitset
 import pw.binom.io.*
 import pw.binom.readShort
-import pw.binom.toBitset
 import pw.binom.writeShort
 
 data class Header(
