@@ -53,9 +53,15 @@
 #ifdef WINDOWS_TARGET
 #include <windows.h>
 #endif
+#include <stdlib.h>
 
 int internal_setThreadName(pthread_t thread, const char *name){
+    #ifdef __APPLE__
+    // TODO FIX for macos
+    return 1;
+    #else
     return pthread_setname_np(thread, name);
+    #endif
 }
 
 void internal_thread_yield(){
@@ -95,7 +101,12 @@ void internal_freeThreadData(struct ThreadData* threadData) {
 }
 
 int internal_setThreadName2(struct ThreadData* threadData, const char *name){
+#ifdef __APPLE__
+    // TODO FIX for macos
+    return 1;
+#else
     return pthread_setname_np(threadData->id, name);
+#endif
 }
 
 long long internal_get_thread_id(struct ThreadData* threadData){

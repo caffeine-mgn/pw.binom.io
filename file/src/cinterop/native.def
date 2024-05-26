@@ -65,7 +65,7 @@ int64_t internal_get_free_space(const char* path){
     }
     return stat.f_bfree * stat.f_bsize;
 #endif
-#ifndef WINDOWS_TARGET
+#ifdef WINDOWS_TARGET
     long int freeSpace = 0;
     if (GetDiskFreeSpaceEx(path, NULL, NULL, &freeSpace) == 0){
         return 0;
@@ -82,7 +82,7 @@ int64_t internal_get_available_space(const char* path){
     }
     return stat.f_bavail * stat.f_bsize;
 #endif
-#ifndef WINDOWS_TARGET
+#ifdef WINDOWS_TARGET
     long int availableSpace = 0;
     if (GetDiskFreeSpaceEx(path, &availableSpace, NULL, NULL) == 0){
         return 0;
@@ -99,7 +99,7 @@ int64_t internal_get_total_space(const char* path){
     }
     return stat.f_blocks * stat.f_frsize;
 #endif
-#ifndef WINDOWS_TARGET
+#ifdef WINDOWS_TARGET
     long int availableSpace = 0;
     if (GetDiskFreeSpaceEx(path, NULL, &availableSpace, NULL) == 0){
         return 0;

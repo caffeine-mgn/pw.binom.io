@@ -8,13 +8,13 @@ buildscript {
   }
 
   dependencies {
-    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23")
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")
     classpath("com.android.tools.build:gradle:7.0.0")
   }
 }
 
 plugins {
-  kotlin("jvm") version "1.9.23"
+  kotlin("jvm") version "1.9.24"
   id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 val kotlinVersion = kotlin.coreLibrariesVersion
