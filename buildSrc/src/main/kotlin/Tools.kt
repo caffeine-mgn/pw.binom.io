@@ -5,7 +5,7 @@ import pw.binom.publish.TargetConfig
 internal class BuildTarget(val name: String, val preset: String)
 
 fun TargetConfig.config() {
-  -""
+  -"watchosArm64"
 }
 
 /*
