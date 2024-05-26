@@ -30,6 +30,9 @@ object Testing {
     }
 
     override fun test(name: String, ignore: Boolean, func: () -> Unit) {
+      if (ignore) {
+        return
+      }
       if (index == testCount && !ignore) {
         val now = TimeSource.Monotonic.markNow()
         println("---===TEST $name STARTED===---")
@@ -78,6 +81,9 @@ object Testing {
     }
 
     override suspend fun test(name: String, ignore: Boolean, func: suspend () -> Unit) {
+      if (ignore) {
+        return
+      }
       if (index == testCount && !ignore) {
         val now = TimeSource.Monotonic.markNow()
         println("---===TEST $name STARTED===---")

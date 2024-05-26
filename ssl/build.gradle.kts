@@ -28,7 +28,7 @@ kotlin {
       api(project(":date"))
       api(project(":socket"))
       api(project(":concurrency"))
-//      api("com.ionspin.kotlin:bignum:${pw.binom.Versions.IONSPIN_BIGNUM_VERSION}")
+      api("com.ionspin.kotlin:bignum:${pw.binom.Versions.IONSPIN_BIGNUM_VERSION}")
     }
     commonTest.dependencies {
       api(kotlin("test-common"))

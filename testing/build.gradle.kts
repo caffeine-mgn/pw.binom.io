@@ -1,5 +1,5 @@
-import pw.binom.eachKotlinTest
-import pw.binom.publish.*
+import pw.binom.publish.allTargets
+import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -19,15 +19,19 @@ kotlin {
       api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
 
-    val jsMain by getting {
-      dependencies {
-        api(kotlin("test-js"))
-      }
+    jsMain.dependencies {
+      api(kotlin("test-js"))
     }
-    val jvmMain by getting {
-      dependencies {
-        api(kotlin("test"))
-      }
+    jvmMain.dependencies {
+      api(kotlin("test"))
+    }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+    }
+    jvmTest.dependencies {
+      api(kotlin("test-junit"))
     }
   }
 }

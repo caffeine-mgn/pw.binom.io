@@ -1,17 +1,14 @@
-import org.gradle.api.GradleException
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
-import org.jetbrains.kotlin.gradle.kpm.external.project
-import org.jetbrains.kotlin.gradle.plugin.KotlinHierarchyTemplate
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
-import org.jetbrains.kotlin.gradle.plugin.extend
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.konan.target.KonanTarget
-import pw.binom.publish.allTargets
+import pw.binom.publish.TargetConfig
 
 internal class BuildTarget(val name: String, val preset: String)
 
+fun TargetConfig.config() {
+  -""
+}
+
+/*
 class TargetConfig {
   internal val nativeTargets = ArrayList<BuildTarget>()
 
@@ -32,7 +29,7 @@ class TargetConfig {
     }
   }
 }
-
+*/
 /*
 fun KotlinMultiplatformExtension.allTargets() {
   allTargets {}
