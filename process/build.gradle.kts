@@ -18,6 +18,7 @@ fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useLinux() {
 }
 kotlin {
   allTargets {
+    config()
     -"js"
   }
   eachNative {

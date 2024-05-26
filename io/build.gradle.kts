@@ -11,7 +11,9 @@ plugins {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets()
+  allTargets{
+    config()
+  }
   js {
     browser {
       testTask {

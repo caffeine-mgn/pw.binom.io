@@ -7,7 +7,9 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 apply<pw.binom.plugins.ConfigPublishPlugin>()
 kotlin {
-  allTargets()
+  allTargets{
+    config()
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {

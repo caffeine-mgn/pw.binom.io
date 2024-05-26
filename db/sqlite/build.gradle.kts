@@ -14,6 +14,7 @@ apply<pw.binom.KotlinConfigPlugin>()
 val sqlitePackageName = "platform.internal_sqlite"
 kotlin {
   allTargets {
+    config()
     -"js"
   }
   eachNative {

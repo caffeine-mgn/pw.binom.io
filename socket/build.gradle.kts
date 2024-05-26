@@ -93,6 +93,7 @@ fun KotlinNativeTarget.useNativeMingw() {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets {
+    config()
     -"js"
   }
 

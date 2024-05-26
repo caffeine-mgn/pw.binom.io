@@ -22,7 +22,9 @@ fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useNative() {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets()
+  allTargets{
+    config()
+  }
   eachNative {
     useNative()
   }

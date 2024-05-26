@@ -15,7 +15,9 @@ kotlin {
       this.compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
     }
   }
-  allTargets()
+  allTargets{
+    config()
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val commonMain by getting {

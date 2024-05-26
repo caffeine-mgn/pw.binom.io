@@ -13,6 +13,7 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets {
+    config()
     -"js"
   }
   applyDefaultHierarchyBinomTemplate()

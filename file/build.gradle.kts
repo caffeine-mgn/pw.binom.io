@@ -21,6 +21,7 @@ fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useNative() {
 
 kotlin {
   allTargets {
+    config()
     -"js"
   }
   eachNative {

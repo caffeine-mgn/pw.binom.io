@@ -21,7 +21,9 @@ fun KotlinNativeTarget.useNativeUtils() {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets()
+  allTargets{
+    config()
+  }
   eachNative {
     useNativeUtils()
   }

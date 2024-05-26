@@ -1,4 +1,5 @@
-import pw.binom.publish.*
+import pw.binom.publish.allTargets
+import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -6,7 +7,9 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets()
+  allTargets {
+    config()
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val commonMain by getting {

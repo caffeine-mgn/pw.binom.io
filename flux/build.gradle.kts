@@ -29,6 +29,7 @@ kotlin {
     }
   }
   allTargets {
+    config()
     -"js"
   }
   applyDefaultHierarchyBinomTemplate()

@@ -12,7 +12,9 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets()
+  allTargets{
+    config()
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val implMain by creating {

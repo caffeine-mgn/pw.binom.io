@@ -13,6 +13,7 @@ apply {
 
 kotlin {
   allTargets {
+    config()
     -"js"
   }
   applyDefaultHierarchyBinomTemplate()

@@ -39,7 +39,9 @@ kotlin {
       nodejs()
   }
    */
-  allTargets()
+  allTargets{
+    config()
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {

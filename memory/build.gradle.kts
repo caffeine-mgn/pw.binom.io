@@ -8,6 +8,7 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets {
+    config()
 //    -"jvm"
 //    -"js"
   }

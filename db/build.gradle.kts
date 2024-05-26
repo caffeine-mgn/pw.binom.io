@@ -29,7 +29,9 @@ kotlin {
   }
   macosX64()
    */
-  allTargets()
+  allTargets{
+    config()
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
