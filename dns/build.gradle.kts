@@ -14,7 +14,7 @@ kotlin {
     commonMain.dependencies {
       api(project(":core"))
       api(project(":network"))
-      api("pw.binom:bitarray:0.2.2")
+      api("pw.binom:bitarray:${pw.binom.Versions.BITARRAY_VERSION}")
     }
     commonTest.dependencies {
       api(kotlin("test-common"))
