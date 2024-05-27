@@ -40,7 +40,6 @@ kotlin {
       api(project(":concurrency"))
     }
     jvmTest {
-      dependsOn(commonTest.get())
       dependencies {
         api(kotlin("test-junit"))
       }

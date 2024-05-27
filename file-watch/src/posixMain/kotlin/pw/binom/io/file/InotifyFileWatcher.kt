@@ -1,8 +1,8 @@
 package pw.binom.io.file
 
 import kotlinx.cinterop.*
+import platform.common.internal_inotify_rm_watch
 import platform.linux.*
-import platform.common.*
 import platform.posix.read
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
@@ -127,6 +127,7 @@ class InotifyFileWatcher : FileWatcher {
     var cursor = 0L
     while (cursor < length) {
       val event = (buffer + cursor)!!.reinterpret<inotify_event>()
+      cursor += EVENT_SIZE
       val e = event.pointed
       if (e.len.toInt() > 0) {
         val root = watchers[e.wd] ?: continue
@@ -159,7 +160,6 @@ class InotifyFileWatcher : FileWatcher {
         eventImpl.type = convertEventType(e.mask)
         func(eventImpl)
       }
-      cursor += EVENT_SIZE
     }
   }
 

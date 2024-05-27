@@ -1,16 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
-project(native C)
-set(CMAKE_C_STANDARD 11)
-#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_C_COMPILER clang-cl)
-set(CMAKE_CXX_COMPILER clang-cl)
-set(CMAKE_AR llvm-lib)
-set(CMAKE_LINKER lld-link)
-set(CMAKE_MT llvm-mt)
-#include_directories("/home/subochev/.konan/dependencies/msys2-mingw-w64-x86_64-2/x86_64-w64-mingw32/include")
-#include_directories("/home/subochev/.konan/dependencies/x86_64-unknown-linux-gnu-gcc-8.3.0-glibc-2.19-kernel-4.9-2/x86_64-unknown-linux-gnu/sysroot/usr/include/")
-include_directories("/usr/include")
+project(native VERSION 1.0 LANGUAGES C)
 add_library(
         native
         include/NSelector.h

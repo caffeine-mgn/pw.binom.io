@@ -1,8 +1,8 @@
 package pw.binom.io.file
 
+import pw.binom.thread.Thread
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 class FileWatcherTest {
@@ -17,6 +17,10 @@ class FileWatcherTest {
         recursive = true,
         modes = WatchEventKind.ALL,
       )
+      Thread {
+        Thread.sleep(1000)
+        dir.relative("123").rewrite("test")
+      }.start()
       watcher.pollEvents {
         println("Event->${it.file} -> ${it.type}")
       }

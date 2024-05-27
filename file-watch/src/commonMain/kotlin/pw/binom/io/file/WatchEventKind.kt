@@ -8,8 +8,8 @@ value class WatchEventKind(@PublishedApi internal val raw: Int) {
   inline operator fun plus(other: WatchEventKind) = this or other
 
   companion object {
-    private const val RAW_IN_MODIFY = 0b001
-    private const val RAW_IN_CREATE = 0b010
+    private const val RAW_IN_CREATE = 0b001
+    private const val RAW_IN_MODIFY = 0b010
     private const val RAW_IN_DELETE = 0b100
 
     val EMPTY = WatchEventKind(0)
