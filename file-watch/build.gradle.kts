@@ -32,6 +32,7 @@ kotlin {
       api(project(":io"))
       api(project(":file"))
       api(project(":env"))
+      api(project(":thread"))
     }
     commonTest.dependencies {
       api(kotlin("test-common"))
@@ -44,6 +45,16 @@ kotlin {
         api(kotlin("test-junit"))
       }
     }
+  }
+}
+tasks {
+  withType(Test::class) {
+    useJUnitPlatform()
+    testLogging.showStandardStreams = true
+    testLogging.showCauses = true
+    testLogging.showExceptions = true
+    testLogging.showStackTraces = true
+    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
   }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

@@ -1,20 +1,28 @@
 package pw.binom.io.file
 
+import pw.binom.uuid.nextUuid
+import kotlin.random.Random
 import kotlin.test.Ignore
 import kotlin.test.Test
 
 class FileWatcherTest {
-  @Ignore
   @Test
   fun aa() {
-    val watcher = FileWatcher.createDefault()
-    val e = watcher.register(
-      filePath = File("/tmp/gg/vv/fff"),
-      recursive = true,
-      modes = WatchEventKind.ALL,
-    )
-    watcher.pollEvents {
-      println("Event->${it.file} -> ${it.type}")
+    try {
+      val watcher = FileWatcher.createDefault()
+      val dir = File.temporalDirectory!!.relative(Random.nextUuid().toShortString())
+      dir.mkdirs()
+      val e = watcher.register(
+        filePath = dir,
+        recursive = true,
+        modes = WatchEventKind.ALL,
+      )
+      watcher.pollEvents {
+        println("Event->${it.file} -> ${it.type}")
+      }
+    } catch (e: Throwable) {
+      e.printStackTrace()
+      throw e
     }
   }
 }

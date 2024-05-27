@@ -1,7 +1,6 @@
 package pw.binom.memory
 
-import kotlinx.cinterop.COpaquePointer
-import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.*
 import kotlinx.cinterop.convert
 import platform.posix.malloc
 
