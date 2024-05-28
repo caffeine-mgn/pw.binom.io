@@ -3,8 +3,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 project(native VERSION 1.0 LANGUAGES C)
 add_library(
         native
-        include/NWatcher.h
-        src/NWatcher.c
+        include/NWatchService.h
+        src/NWatchService.c
+        include/NWatchKey.h
+        src/NWatchKey.c
 )
 #include_directories("/usr/include")
 #set_target_properties(native PROPERTIES LINKER_LANGUAGE CXX)
