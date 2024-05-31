@@ -3,21 +3,77 @@ package pw.binom.io.file
 import kotlin.jvm.JvmInline
 
 @JvmInline
-value class PosixPermissions(val mode: UInt) {
+value class PosixPermissions(internal val mode: UInt) {
+  val isExecute
+    get() = isOthersExecute || isGroupExecute || isOwnerExecute || isGroupExecutePermission || isUserExecutePermission
+  val isOthersExecute
+    get() = mode and OTHERS_EXECUTE > 0u
+
+  val isOthersWrite
+    get() = mode and OTHERS_WRITE > 0u
+
+  val isOthersRead
+    get() = mode and OTHERS_READ > 0u
+
+  val isGroupExecute
+    get() = mode and GROUP_EXECUTE > 0u
+
+  val isGroupWrite
+    get() = mode and GROUP_WRITE > 0u
+
+  val isGroupRead
+    get() = mode and GROUP_READ > 0u
+
+  val isOwnerExecute
+    get() = mode and OWNER_EXECUTE > 0u
+
+  val isOwnerWrite
+    get() = mode and OWNER_WRITE > 0u
+
+  val isOwnerRead
+    get() = mode and OWNER_READ > 0u
+
+  val isStickyBit
+    get() = mode and STICKY_BIT > 0u
+
+  val isGroupExecutePermission
+    get() = mode and GROUP_EXECUTE_PERMISSION > 0u
+
+  val isUserExecutePermission
+    get() = mode and USER_EXECUTE_PERMISSION > 0u
+
+  val isDirectory
+    get() = mode and DIRECTORY > 0u
+
+  fun withOthersExecute() = PosixPermissions(mode or OTHERS_EXECUTE)
+  fun withOthersWrite() = PosixPermissions(mode or OTHERS_WRITE)
+  fun withOthersRead() = PosixPermissions(mode or OTHERS_READ)
+  fun withGroupExecute() = PosixPermissions(mode or GROUP_EXECUTE)
+  fun withGroupWrite() = PosixPermissions(mode or GROUP_WRITE)
+  fun withGroupRead() = PosixPermissions(mode or GROUP_READ)
+  fun withOwnerExecute() = PosixPermissions(mode or OWNER_EXECUTE)
+  fun withOwnerWrite() = PosixPermissions(mode or OWNER_WRITE)
+  fun withOwnerRead() = PosixPermissions(mode or OWNER_READ)
+  fun withStickyBit() = PosixPermissions(mode or STICKY_BIT)
+  fun withGroupExecutePermission() = PosixPermissions(mode or GROUP_EXECUTE_PERMISSION)
+  fun withUserExecutePermission() = PosixPermissions(mode or USER_EXECUTE_PERMISSION)
+  fun withDirectory() = PosixPermissions(mode or DIRECTORY)
+
   companion object {
-    const val OTHERS_EXECUTE = 1u // 1
-    const val OTHERS_WRITE = 2u // 10
-    const val OTHERS_READ = 4u // 100
-    const val GROUP_EXECUTE = 8u // 1000
-    const val GROUP_WRITE = 16u // 10000
-    const val GROUP_READ = 32u // 100000
-    const val OWNER_EXECUTE = 64u // 1000000
-    const val OWNER_WRITE = 128u // 10000000
-    const val OWNER_READ = 256u // 100000000
-    const val STICKY_BIT = 512u // 1000000000
-    const val GROUP_EXECUTE_PERMISSION = 1024u // 10000000000
-    const val USER_EXECUTE_PERMISSION = 2048u // 100000000000
-    const val DIRECTORY = 4096u // 1000000000000
+    val EmptyIterator = PosixPermissions(0u)
+    internal const val OTHERS_EXECUTE = 1u // 1
+    internal const val OTHERS_WRITE = 2u // 10
+    internal const val OTHERS_READ = 4u // 100
+    internal const val GROUP_EXECUTE = 8u // 1000
+    internal const val GROUP_WRITE = 16u // 10000
+    internal const val GROUP_READ = 32u // 100000
+    internal const val OWNER_EXECUTE = 64u // 1000000
+    internal const val OWNER_WRITE = 128u // 10000000
+    internal const val OWNER_READ = 256u // 100000000
+    internal const val STICKY_BIT = 512u // 1000000000
+    internal const val GROUP_EXECUTE_PERMISSION = 1024u // 10000000000
+    internal const val USER_EXECUTE_PERMISSION = 2048u // 100000000000
+    internal const val DIRECTORY = 4096u // 1000000000000
 
     /**
      * -rwsrwsrwt

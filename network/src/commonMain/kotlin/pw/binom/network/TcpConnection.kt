@@ -8,7 +8,10 @@ import pw.binom.executeAndResumeWithException
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
-import pw.binom.io.socket.*
+import pw.binom.io.socket.ListenFlags
+import pw.binom.io.socket.SelectorKey
+import pw.binom.io.socket.TcpClientSocket
+import pw.binom.io.socket.addListen
 import pw.binom.resumeOnException
 import kotlin.coroutines.resumeWithException
 
@@ -358,7 +361,11 @@ class TcpConnection(
           continuation = it,
           data = dest,
         )
-        currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
+        if (!currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)) {
+          readData.reset()
+          it.resumeWithException(SocketClosedException())
+          return@suspendCancellableCoroutine
+        }
         currentKey.selector.wakeup()
       } catch (e: Throwable) {
         it.resumeWithException(e)

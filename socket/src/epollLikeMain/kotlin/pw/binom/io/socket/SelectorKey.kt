@@ -38,9 +38,10 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
   }
 
   private fun resetListenFlags(commonFlags: ListenFlags): Boolean {
-    if (closed.getValue()) {
+    if (closed.getValue() || free.getValue()) {
       return false
     }
+
     NEvent_setEventDataFd(eventMem, rawSocket)
     NEvent_setEventFlags(eventMem, commonFlags.raw, if (serverFlag) 1 else 0)
     val success = selector.updateKey(this, eventMem)
