@@ -13,10 +13,16 @@
     #include <sys/epoll.h>
 #endif
 
+#if defined(__APPLE__)
+#define SELECTOR_EVENT_LIST_COUNT 200
+#endif
+
 struct NSelectedList {
     int size;
 #ifdef USE_EPOLL
     struct epoll_event *events;
+#elif defined(__APPLE__)
+    struct kevent*list;
 #endif
 };
 

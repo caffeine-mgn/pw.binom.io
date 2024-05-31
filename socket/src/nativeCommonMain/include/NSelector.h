@@ -9,6 +9,10 @@
 struct NSelector {
 #ifdef USE_EPOLL
     int epoll;
+#elif defined(__APPLE__)
+    int kqueueValue;
+#else
+#error NOT SUPPORTED
 #endif
 };
 

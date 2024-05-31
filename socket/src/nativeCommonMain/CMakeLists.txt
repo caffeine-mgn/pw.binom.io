@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 project(native VERSION 1.0 LANGUAGES C)
+
 add_library(
         native
         include/NSelector.h
@@ -22,6 +23,11 @@ add_library(
         src/NNetworkInterface.c
         src/NNetworkAddress.c
         src/Network.c
+)
+target_include_directories(
+        native PUBLIC
+        /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include
+        /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/malloc
 )
 #set(CMAKE_SYSTEM_NAME Windows)
 #add_definitions(-DWIN32)

@@ -5,11 +5,9 @@
 #include "../include/Network.h"
 
 #if defined(WINDOWS_TARGET)
-
 #include <winsock2.h>
 #include <netioapi.h>
-
-#elif defined(LINUX_LIKE_TARGET)
+#elif defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
@@ -17,7 +15,7 @@
 #include <netdb.h>
 #include <net/if.h>
 #else
-#error Not supported
+#error NOT SUPPORTED
 #endif
 
 #include <unistd.h>
@@ -25,8 +23,11 @@
 #include <stdio.h>
 #include <fcntl.h>
 
+#ifdef __APPLE__
+#define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
+#endif
 
-#if defined(LINUX_LIKE_TARGET)
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
 #define IS_SOCKET_ERROR(value) value<0
 #elif defined(WINDOWS_TARGET)
 #define IS_SOCKET_ERROR(value) value==SOCKET_ERROR
@@ -35,7 +36,7 @@
 #endif
 
 int internal_NSocket_errorProcessing(struct NSocket *native, size_t wasRead) {
-#if defined(LINUX_LIKE_TARGET)
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
     switch (errno) {
             case EAGAIN:
                 return 0;
@@ -167,7 +168,7 @@ int internal_NSocket_connect(int socket, struct sockaddr *address, int addressLe
             address,
             addressLen
     ) != 0) {
-#ifdef LINUX_LIKE_TARGET
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
         switch (errno) {
             case ECONNREFUSED:
                 return ConnectStatus_CONNECTION_REFUSED;
@@ -511,7 +512,7 @@ int NSocket_send(struct NSocket *native, signed char *buffer, int bufferLen) {
     if (native->type != SOCKET_TYPE_TCP) {
         return -1;
     }
-#if defined(LINUX_LIKE_TARGET)
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
     int flags=MSG_NOSIGNAL;
 #elif defined(WINDOWS_TARGET)
     int flags = 0;
@@ -661,14 +662,14 @@ int NSocket_setBlockedMode(struct NSocket *native, int value) {
 int internal_NSocket_bind(int socket, struct sockaddr *addr, int addrSize, int needListen) {
 
     if (bind(socket, addr, addrSize) < 0) {
-#ifdef LINUX_LIKE_TARGET
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
         if (errno == EINVAL) {
             return BIND_RESULT_ALREADY_BINDED;
         }
         if (errno == EADDRINUSE) {
             return BIND_RESULT_ADDRESS_ALREADY_IN_USE;
         }
-#else
+#elif defined(WINDOWS_TARGET)
         switch (GetLastError()) {
             case WSAEADDRINUSE:
                 return BIND_RESULT_ADDRESS_ALREADY_IN_USE;
@@ -681,21 +682,25 @@ int internal_NSocket_bind(int socket, struct sockaddr *addr, int addrSize, int n
             case WSAEINVAL:
                 return BIND_RESULT_ALREADY_BINDED;
         }
+#else
+#error NOT SUPPORTED
 #endif
         return BIND_RESULT_UNKNOWN_ERROR;
     }
     if (needListen) {
         if (listen(socket, 5) < 0) {
-#ifdef LINUX_LIKE_TARGET
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
             if (errno == EOPNOTSUPP) {
                 NSocket_unbind(socket);
                 return BIND_RESULT_NOT_SUPPORTED;
             }
-#else
+#elif defined(WINDOWS_TARGET)
             switch (GetLastError()) {
                 case WSAEOPNOTSUPP:
                     return 1; // UDP not supported listen. Ignore
             }
+#else
+#error NOT SUPPORTED
 #endif
 
             NSocket_unbind(socket);
@@ -743,7 +748,7 @@ int NSocket_bindUnix(struct NSocket *native, const char *path, int needListen) {
 //    unbind(native)//    unbind(native)
 #ifdef WINDOWS_TARGET
     return BIND_RESULT_NOT_SUPPORTED;
-#elif defined(LINUX_LIKE_TARGET)
+#elif defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
     struct sockaddr_un addr;
     memset(&addr, 0, sizeof(struct sockaddr_un));
     addr.sun_family = AF_UNIX;
@@ -768,7 +773,7 @@ int NSocket_acceptInetSocketAddress(struct NSocket *native, struct NInetSocketNe
         socklen_t size1 = 28;//(socklen_t *) &addr->size;
         int newSocket = accept(native->native, (struct sockaddr *) &addr->data[0], &size1);
         if (IS_SOCKET_ERROR(newSocket)) {
-#if defined(LINUX_LIKE_TARGET)
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
 #elif defined(WINDOWS_TARGET)
 //#error Not supported
 #else

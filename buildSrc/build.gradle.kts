@@ -54,7 +54,7 @@ dependencies {
   api("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
   api("org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion")
   api("org.jetbrains.dokka:dokka-gradle-plugin:1.9.20")
-  api("pw.binom:kn-clang:0.1.15")
+  api("pw.binom:kn-clang:1.0.0-SNAPSHOT")
   api("com.bmuschko:gradle-docker-plugin:7.3.0")
 //  api("pw.binom:binom-publish:0.1.19")
   api("pw.binom:binom-publish:0.1.19")

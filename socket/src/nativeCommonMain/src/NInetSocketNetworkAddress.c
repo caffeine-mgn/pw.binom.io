@@ -4,21 +4,22 @@
 
 #include <malloc.h>
 
-#ifdef LINUX_LIKE_TARGET
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
 
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
 
-#else
-
+#elif defined(WINDOWS_TARGET)
 #include <winsock.h>
 #include <ws2def.h>
 #include <ws2tcpip.h>
 #include <wspiapi.h>
 
 typedef int socklen_t;
+#else
+#error NOT SUPPORTED
 #endif
 
 #include <string.h>

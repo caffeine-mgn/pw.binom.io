@@ -13,13 +13,13 @@
 #elif __APPLE__
 #define APPLE_TARGET
 #include <TargetConditionals.h>
-#if TARGET_OS_IPHONE_SIMULATOR
+#if defined(TARGET_OS_IPHONE_SIMULATOR)
 // iOS, tvOS, or watchOS Simulator
-#elif TARGET_OS_MACCATALYST
+#elif defined(TARGET_OS_MACCATALYST)
 // Mac's Catalyst (ports iOS API into Mac, like UIKit).
-#elif TARGET_OS_IPHONE
+#elif defined(TARGET_OS_IPHONE)
 // iOS, tvOS, or watchOS device
-#elif TARGET_OS_MAC
+#elif defined(TARGET_OS_MAC)
 // Other kinds of Apple platforms
 #else
 #error "Unknown Apple platform"

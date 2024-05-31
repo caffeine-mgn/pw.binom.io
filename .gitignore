@@ -2,6 +2,7 @@
 build
 .idea
 .fleet
+.cache
 .gradle/**
 *.o
 buildSrc/.gradle/**

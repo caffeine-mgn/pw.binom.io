@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
 package pw.binom
 
 import kotlinx.cinterop.*
@@ -46,14 +48,14 @@ actual val Environment.workDirectory: String
 actual val Environment.currentTimeMillis: Long
     get() = memScoped {
         val ff = alloc<timespec>()
-        clock_gettime(CLOCK_REALTIME, ff.ptr)
+        clock_gettime(CLOCK_REALTIME.convert(), ff.ptr)
         ff.tv_sec * 1000L + ff.tv_nsec / 1000000L
     }
 
 actual val Environment.currentTimeNanoseconds: Long
     get() = memScoped {
         val ff = alloc<timespec>()
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, ff.ptr)
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID.convert(), ff.ptr)
         ff.tv_sec * 1000000000L + ff.tv_nsec
     }
 

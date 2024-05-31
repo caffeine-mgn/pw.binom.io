@@ -21,6 +21,7 @@ kotlin {
     val headersPath = file("${buildFile.parentFile}/src/native")
     val sqliteStaticTask =
       clangBuildStatic(name = "sqlite3", target = this.konanTarget) {
+        group = "clang"
         this.konanVersion.set(pw.binom.Versions.KOTLIN_VERSION)
         include(headersPath)
         compileArgs(
