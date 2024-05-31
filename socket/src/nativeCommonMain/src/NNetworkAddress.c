@@ -5,11 +5,12 @@
 #include <malloc.h>
 #include <string.h>
 
-#ifdef LINUX_LIKE_TARGET
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
 
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/un.h>
+#include <netinet/in.h>
 
 #endif
 #ifdef WINDOWS_TARGET
@@ -54,8 +55,10 @@ int NNetworkAddress_isMulticast(struct NNetworkAddress *ptr) {
     switch (ptr->protocolFamily) {
         case NET_TYPE_INET4:
             return Network_isMulticastAddressV4((struct in_addr *) ptr->data);
-        case NET_TYPE_INET6:
-            return IN6_IS_ADDR_MULTICAST((struct in_addr *) ptr->data);
+        case NET_TYPE_INET6:{
+            struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)ptr->data;
+            return IN6_IS_ADDR_MULTICAST(&addr6->sin6_addr);
+        }
         default:
             return 0;
     }

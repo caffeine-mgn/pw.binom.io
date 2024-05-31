@@ -9,9 +9,9 @@
 #ifdef __APPLE__
 #include <sys/event.h>
 
-#ifndef EVFILT_EMPTY
-#define EVFILT_EMPTY 0
-#endif
+    #ifndef EVFILT_EMPTY
+    #define EVFILT_EMPTY 0
+    #endif
 #endif
 
 struct NEvent *NEvent_malloc()

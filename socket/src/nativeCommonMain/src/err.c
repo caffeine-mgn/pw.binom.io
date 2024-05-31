@@ -6,7 +6,7 @@
 int err_getLastNetworkError() {
 #ifdef WINDOWS_TARGET
     return GetLastError();
-#elif defined(LINUX_LIKE_TARGET)
+#elif defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
     switch (errno) {
         case EAFNOSUPPORT:
             return INVALID_ADDRESS_BY_PROTOCOL;

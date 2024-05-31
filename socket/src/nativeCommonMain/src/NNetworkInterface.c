@@ -2,7 +2,7 @@
 #include "../include/NNetworkInterface.h"
 #include "../include/Network.h"
 
-#ifdef LINUX_LIKE_TARGET
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
 
 #include <ifaddrs.h>
 #include <netdb.h>
@@ -235,7 +235,7 @@ struct NNetworkInterface *internal_getNetworkInterfaces() {
 
     // Освобождение ресурсов
     free(adapterAddresses);
-#elif defined(LINUX_LIKE_TARGET)
+#elif defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
     struct ifaddrs *addrs = NULL;
     if (getifaddrs(&addrs) != 0) {
         return NULL;

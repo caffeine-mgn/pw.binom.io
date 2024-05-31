@@ -4,7 +4,7 @@
 
 #include "definition.h"
 
-#ifdef LINUX_LIKE_TARGET
+#if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
 
 #include <netinet/in.h>
 
