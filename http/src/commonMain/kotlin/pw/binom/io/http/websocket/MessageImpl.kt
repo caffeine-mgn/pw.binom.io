@@ -1,5 +1,6 @@
 package pw.binom.io.http.websocket
 
+/*
 import pw.binom.copyTo
 import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
@@ -82,3 +83,4 @@ class MessageImpl(
     return read
   }
 }
+*/

@@ -1,5 +1,6 @@
 package pw.binom.io.http.websocket
 
+/*
 import pw.binom.copyTo
 import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
@@ -110,3 +111,4 @@ internal class MessageImpl2(val onClose: (MessageImpl2) -> Unit) : Message {
     cursor = 0L
   }
 }
+*/

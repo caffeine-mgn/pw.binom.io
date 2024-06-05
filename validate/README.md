@@ -22,6 +22,7 @@ val myValidatorModule = ValidatorModule.default + ValidatorModule {
 
 @Serializable
 class Data(
+    @IntFormat
     val age:String,
 )
 

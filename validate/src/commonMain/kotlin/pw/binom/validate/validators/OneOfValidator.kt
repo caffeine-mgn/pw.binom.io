@@ -30,7 +30,7 @@ object OneOfValidator : Validator.ObjectValidator<OneOf> {
     val errorCollector: ErrorCollector,
   ) :
     Validator.ObjectValidator.CommonValidator {
-    val notNull = HashSet<String>()
+    private val notNull = HashSet<String>()
     override fun valid(fieldName: String, value: String?) {
       if (fieldName !in fields) {
         return

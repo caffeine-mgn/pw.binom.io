@@ -14,6 +14,9 @@ internal class MessageImpl3(
     get() = header.maskFlag
   private val mask: Int
     get() = header.mask
+  override var type: MessageType = MessageType.CLOSE
+  private var cursor = 0L
+  private val header = WebSocketHeader()
 
   override val available: Int
     get() =
@@ -63,7 +66,11 @@ internal class MessageImpl3(
           position = startPosition,
           length = n,
         )
-        cursor = Message.encode(cursor, mask, dest)
+        cursor = Message.encode(
+          cursor = cursor,
+          mask = mask,
+          data = dest,
+        )
       }
 
       dest.limit = startLimit
@@ -128,10 +135,6 @@ internal class MessageImpl3(
       }
     }
   }
-
-  override var type: MessageType = MessageType.CLOSE
-  private var cursor = 0L
-  private val header = WebSocketHeader()
 
   suspend fun startMessage() {
     WebSocketHeader.read(input = input, dest = header)
