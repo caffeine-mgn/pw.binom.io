@@ -94,10 +94,7 @@ sealed interface NativeMem {
   }
 }
 
-actual open class ByteBuffer(val native: NativeMem) :
-  Channel,
-  Buffer,
-  ByteBufferProvider {
+actual open class ByteBuffer(val native: NativeMem) : Channel, Buffer, ByteBufferProvider {
 
   actual companion object {
     suspend fun fromBlob(blob: Blob) = ByteBuffer(blob.toArrayBuffer())
@@ -332,10 +329,12 @@ actual open class ByteBuffer(val native: NativeMem) :
   }
 
   override fun close() {
-    ensureOpen()
+    if (closed) {
+      return
+    }
+    closed = true
     preClose()
     ByteBufferMetric.dec(this)
-    closed = true
   }
 
   private fun createLimitException(newLimit: Int): IllegalArgumentException {

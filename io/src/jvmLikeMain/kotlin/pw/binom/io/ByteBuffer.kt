@@ -92,11 +92,13 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   }
 
   override fun close() {
-    ensureOpen()
+    if (closed){
+      return
+    }
+    closed = true
     preClose()
     ByteBufferMetric.dec(this)
     native = JByteBuffer.allocate(0)
-    closed = true
   }
 
   override var position: Int
