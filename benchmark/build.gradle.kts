@@ -49,6 +49,7 @@ kotlin {
 //        implementation(project(":kotlinx-benchmark-runtime"))
         api(project(":io"))
         api(project(":core"))
+        api(project(":http"))
         implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.10")
       }
     }

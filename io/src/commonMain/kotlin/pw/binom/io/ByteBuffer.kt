@@ -28,7 +28,7 @@ expect open class ByteBuffer :
   fun realloc(newSize: Int): ByteBuffer
   fun skip(length: Long): Long
   fun skip(length: Int): Int
-  fun put(value: Byte):Boolean
+  fun put(value: Byte): Boolean
   fun getByte(): Byte
   operator fun get(index: Int): Byte
   fun readInto(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
@@ -48,6 +48,11 @@ expect open class ByteBuffer :
       offset = offset,
     ),
   ): Int
+
+  fun forEach(func: (Byte) -> Unit)
+  fun forEachIndexed(func: (index: Int, value: Byte) -> Unit)
+  fun indexOfFirst(predicate: (Byte) -> Boolean): Int
+  fun replaceEach(func: (Int, Byte) -> Byte)
 
   operator fun set(index: Int, value: Byte)
 
@@ -147,25 +152,25 @@ inline fun <T> ByteArray.wrap(func: (ByteBuffer) -> T): T {
   }
 }
 
-inline fun ByteBuffer.forEach(range: IntRange, func: (Byte) -> Unit) {
-  for (it in range)
-    func(this[it])
-}
+//inline fun ByteBuffer.forEach(range: IntRange, func: (Byte) -> Unit) {
+//  for (it in range)
+//    func(this[it])
+//}
 
-inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
-  val pos = position
-  val lim = limit
-  for (it in pos until lim) {
-    func(this[it])
-  }
-}
-
-inline fun ByteBuffer.forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
-  val pos = position
-  val lim = limit
-  for (it in pos until lim)
-    func(it, this[it])
-}
+//inline fun ByteBuffer.forEach(func: (Byte) -> Unit) {
+//  val pos = position
+//  val lim = limit
+//  for (it in pos until lim) {
+//    func(this[it])
+//  }
+//}
+//
+//inline fun ByteBuffer.forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
+//  val pos = position
+//  val lim = limit
+//  for (it in pos until lim)
+//    func(it, this[it])
+//}
 
 @Suppress("OPT_IN_IS_NOT_ENABLED")
 @OptIn(ExperimentalContracts::class)
@@ -183,14 +188,14 @@ inline fun <T> ByteBuffer.holdState(func: (ByteBuffer) -> T): T {
   }
 }
 
-fun ByteBuffer.indexOfFirst(predicate: (Byte) -> Boolean): Int {
-  forEachIndexed { index, value ->
-    if (predicate(value)) {
-      return index
-    }
-  }
-  return -1
-}
+//fun ByteBuffer.indexOfFirst(predicate: (Byte) -> Boolean): Int {
+//  forEachIndexed { index, value ->
+//    if (predicate(value)) {
+//      return index
+//    }
+//  }
+//  return -1
+//}
 
 fun ByteBuffer.getOrNull(index: Int) =
   if (index < position || index >= limit) {

@@ -8,6 +8,9 @@ import kotlinx.cinterop.toKString
 import platform.openssl.ERR_get_error
 import platform.openssl.ERR_reason_error_string
 import pw.binom.security.SecurityException
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 fun getSslError(): String {
   val errorCode = ERR_get_error()
@@ -16,7 +19,12 @@ fun getSslError(): String {
 }
 
 fun throwError(msg: String): Nothing = throw SecurityException("$msg: ${getSslError()}")
-fun throwError(msg: String, onFail: () -> Unit): Nothing {
+
+@OptIn(ExperimentalContracts::class)
+inline fun throwError(msg: String, onFail: () -> Unit): Nothing {
+  contract {
+    callsInPlace(onFail,InvocationKind.AT_MOST_ONCE)
+  }
   try {
     onFail()
     throw SecurityException("$msg: ${getSslError()}")
@@ -34,7 +42,11 @@ fun Int.checkTrue(msg: String): Int {
   return this
 }
 
+@OptIn(ExperimentalContracts::class)
 inline fun Int.checkTrue(msg: String, onFail: () -> Unit): Int {
+  contract {
+    callsInPlace(onFail,InvocationKind.AT_MOST_ONCE)
+  }
   if (this <= 0) {
     try {
       onFail()

@@ -91,10 +91,7 @@ actual fun Key.Companion.generateRsa(size: Int): Key.Pair<RSAPublicKey, RSAPriva
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun Key.Companion.generateEcdsa(nid: Nid): Key.Pair<ECPublicKey, ECPrivateKey> {
-  val eckey = EC_KEY_new()
-  if (eckey == null) {
-    throw SecurityException("Failed to create new EC")
-  }
+  val eckey = EC_KEY_new() ?: throw SecurityException("Failed to create new EC")
   val ecgroup = EC_GROUP_new_by_curve_name(nid.toOpensslCurveName())
   if (ecgroup == null) {
     EC_KEY_free(eckey)

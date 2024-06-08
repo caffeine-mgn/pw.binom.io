@@ -92,7 +92,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   }
 
   override fun close() {
-    if (closed){
+    if (closed) {
       return
     }
     closed = true
@@ -128,6 +128,48 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   actual operator fun get(index: Int): Byte {
     ensureOpen()
     return native.get(index)
+  }
+
+  private inline fun internalForEachIndexed(func: (Int, Byte) -> Unit) {
+    val start = native.position()
+    val end = native.limit()
+    var cursor = start
+    while (cursor < end) {
+      func(cursor, native.get(cursor))
+      cursor++
+    }
+  }
+
+  actual fun forEach(func: (Byte) -> Unit) {
+    ensureOpen()
+    internalForEachIndexed { _, value ->
+      func(value)
+    }
+  }
+
+  actual fun forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      func(index, value)
+    }
+  }
+
+  actual fun indexOfFirst(predicate: (Byte) -> Boolean): Int {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      if (predicate(value)) {
+        return index
+      }
+    }
+    return -1
+  }
+
+  actual fun replaceEach(func: (Int, Byte) -> Byte) {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      val newValue = func(index, value)
+      native.put(index, newValue)
+    }
   }
 
   actual operator fun set(index: Int, value: Byte) {

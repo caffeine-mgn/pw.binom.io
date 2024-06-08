@@ -265,6 +265,48 @@ actual open class ByteBuffer(val native: NativeMem) : Channel, Buffer, ByteBuffe
     return native[position++]
   }
 
+  private inline fun internalForEachIndexed(func: (Int, Byte) -> Unit) {
+    val start = position
+    val end = limit
+    var cursor = start
+    while (cursor < end) {
+      func(cursor, native[cursor])
+      cursor++
+    }
+  }
+
+  actual fun forEach(func: (Byte) -> Unit) {
+    ensureOpen()
+    internalForEachIndexed { _, value ->
+      func(value)
+    }
+  }
+
+  actual fun forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      func(index, value)
+    }
+  }
+
+  actual fun indexOfFirst(predicate: (Byte) -> Boolean): Int {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      if (predicate(value)) {
+        return index
+      }
+    }
+    return -1
+  }
+
+  actual fun replaceEach(func: (Int, Byte) -> Byte) {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      val newValue = func(index, value)
+      native[index] = newValue
+    }
+  }
+
   actual operator fun set(index: Int, value: Byte) {
     ensureOpen()
     native[index] = value

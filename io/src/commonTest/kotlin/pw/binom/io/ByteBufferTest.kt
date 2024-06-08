@@ -78,4 +78,26 @@ class ByteBufferTest {
       assertEquals(0, b.write(ByteArray(10)))
     }
   }
+
+  @Test
+  fun forEachTest() {
+    ByteBuffer(100).use { buf ->
+      var count = 0
+      buf.forEach {
+        count++
+      }
+      assertEquals(buf.capacity, count)
+    }
+  }
+
+  @Test
+  fun forEachIndexedTest() {
+    ByteBuffer(100).use { buf ->
+      var count = 0
+      buf.forEachIndexed { index, value ->
+        count++
+      }
+      assertEquals(buf.capacity, count)
+    }
+  }
 }

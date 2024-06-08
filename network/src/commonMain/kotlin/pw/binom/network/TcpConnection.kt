@@ -4,6 +4,8 @@ import com.jakewharton.cite.__LINE__
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.InternalLog
+import pw.binom.concurrency.SpinLock
+import pw.binom.concurrency.synchronize
 import pw.binom.executeAndResumeWithException
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
@@ -60,6 +62,7 @@ class TcpConnection(
 
   private val readData = IOState()
   private val sendData = IOState()
+  private val readLock = SpinLock()
 
   private fun calcListenFlags() =
     when {
@@ -109,8 +112,6 @@ class TcpConnection(
     val data = readData.data
     if (continuation == null) {
       logger.info(line = __LINE__) { "readyForRead:: no any continuation set. Cleaning keys" }
-//      currentKey.removeListen(KeyListenFlags.READ)
-//            println("TcpConnection::readyForRead suspend!. continuation=null. channel: $channel")
       return
     }
     data ?: error("readData.data is not set")
@@ -164,8 +165,11 @@ class TcpConnection(
 
     if (readData.continuation != null) {
       logger.info(line = __LINE__) { "error:: stopped reading" }
-      val c = readData.continuation
-      readData.reset()
+      val c = readLock.synchronize {
+        val c = readData.continuation
+        readData.reset()
+        c
+      }
       c?.resumeWith(Result.failure(SocketClosedException()))
     }
     if (sendData.continuation != null) {
@@ -231,8 +235,14 @@ class TcpConnection(
     val connect = connect
     this.connect = null
     connect?.resumeWithException(SocketClosedException())
-    readData.exception(SocketClosedException())
-    sendData.exception(SocketClosedException())
+    val continuation = readLock.synchronize {
+      val continuation = readData.continuation
+      readData.reset()
+      continuation
+    }
+    val e = SocketClosedException()
+    continuation?.resumeWithException(e)
+    sendData.exception(e)
     currentKey.close()
     channel.close()
   }

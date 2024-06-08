@@ -284,6 +284,38 @@ actual open class ByteBuffer private constructor(
 //        return data.access { it[index] }
   }
 
+  actual fun forEach(func: (Byte) -> Unit) {
+    ensureOpen()
+    internalForEachIndexed { _, value ->
+      func(value)
+    }
+  }
+
+  actual fun forEachIndexed(func: (index: Int, value: Byte) -> Unit) {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      func(index, value)
+    }
+  }
+
+  actual fun indexOfFirst(predicate: (Byte) -> Boolean): Int {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      if (predicate(value)) {
+        return index
+      }
+    }
+    return -1
+  }
+
+  actual fun replaceEach(func: (Int, Byte) -> Byte) {
+    ensureOpen()
+    internalForEachIndexed { index, value ->
+      val newValue = func(index, value)
+      data.pointer[index] = newValue
+    }
+  }
+
   actual operator fun set(index: Int, value: Byte) {
     ensureOpen()
     ref0(0) { array, dataSize ->
@@ -299,6 +331,16 @@ actual open class ByteBuffer private constructor(
     return data.pointer[p]
 //        return data.access { it[p] }
 //        return data[p]
+  }
+
+  private inline fun internalForEachIndexed(func: (Int, Byte) -> Unit) {
+    val start = _position
+    val end = _limit
+    var cursor = start
+    while (cursor < end) {
+      func(cursor, data.pointer[cursor])
+      cursor++
+    }
   }
 
   actual fun reset(position: Int, length: Int): ByteBuffer {
