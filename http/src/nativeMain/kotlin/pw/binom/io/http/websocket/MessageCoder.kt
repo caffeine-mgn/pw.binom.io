@@ -2,7 +2,6 @@ package pw.binom.io.http.websocket
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.UnsafeNumber
-import platform.websocket.hello
 import platform.websocket.internalMessageCoderEncode
 import pw.binom.io.ByteBuffer
 
