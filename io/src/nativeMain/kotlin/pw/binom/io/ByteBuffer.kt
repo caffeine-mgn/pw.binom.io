@@ -85,6 +85,9 @@ sealed interface MemAccess : Closeable {
 
 @OptIn(ExperimentalForeignApi::class)
 actual open class ByteBuffer private constructor(
+  /**
+   * Access to native memory
+   */
   val data: MemAccess,
 ) : Channel, Buffer, ByteBufferProvider {
   actual companion object;

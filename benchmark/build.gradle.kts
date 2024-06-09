@@ -91,10 +91,15 @@ benchmark {
 //      include("pw.binom.AsyncLazyTest4")
 //      include("AsyncLazyTest5")
 //      include(".+")
+      reportFormat="csv"
     }
     val byteBuffer by creating {
 //      include(".+\\.ByteBufferReallocBenchmark")
       include(".+\\.ByteBufferBenchmark")
+    }
+    val webSocketEncode by creating {
+//      include(".+\\.ByteBufferReallocBenchmark")
+      include(".+\\.WebSocketEncodeBenchmark")
     }
   }
   targets {
@@ -109,7 +114,8 @@ benchmark {
       println("this::class.java=${this::class.java}")
     }
     */
-    register("linuxX64")
+    register("linuxX64"){
+    }
     register("mingwX64")
   }
 }

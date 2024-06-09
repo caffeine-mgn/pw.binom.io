@@ -1,0 +1,12 @@
+---
+long long internalMessageCoderEncode(signed char* data, int start, int limit, long long cursor, int mask){
+    int dataC = start;
+    signed char* maskP = &mask;
+    int maskC = cursor % 4;
+    while(dataC < limit) {
+        data[dataC++] ^= maskP[maskC++];
+        maskC %= 4;
+    }
+    return cursor + dataC - start;
+}
+

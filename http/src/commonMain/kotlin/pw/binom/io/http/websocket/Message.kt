@@ -1,9 +1,7 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.get
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
-import kotlin.experimental.xor
 
 interface Message : AsyncInput {
   val type: MessageType
@@ -18,20 +16,11 @@ interface Message : AsyncInput {
       data.limit = data.capacity
     }
 
-    fun encode(cursor: Long, mask: Int, data: ByteBuffer): Long {
-      return MessageCoder.encode(
-        cursor = cursor,
-        mask = mask,
-        data=data
-      )
-//      var cursorLocal = cursor
-//      data.replaceEach { _, byte ->
-//        val c = byte xor mask[(cursorLocal and 0x03L).toInt()]
-//        cursorLocal++
-//        c
-//      }
-//      return cursorLocal
-    }
+    fun encode(cursor: Long, mask: Int, data: ByteBuffer): Long = MessageCoder.encode(
+      cursor = cursor,
+      mask = mask,
+      data = data
+    )
   }
 
   val isCloseMessage

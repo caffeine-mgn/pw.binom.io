@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.*
 
 plugins {
@@ -9,11 +11,24 @@ plugins {
   id("com.jakewharton.cite")
 }
 apply<pw.binom.KotlinConfigPlugin>()
+
+fun KotlinNativeTarget.useNativeUtils() {
+  compilations["main"].cinterops {
+    create("native") {
+      defFile = project.file("src/nativeMain/interop/encode.def")
+      packageName = "platform.websocket"
+    }
+  }
+}
+
 kotlin {
   allTargets{
     config()
   }
   applyDefaultHierarchyBinomTemplate()
+  eachNative {
+    useNativeUtils()
+  }
   sourceSets {
     commonMain.dependencies {
       api(project(":core"))
