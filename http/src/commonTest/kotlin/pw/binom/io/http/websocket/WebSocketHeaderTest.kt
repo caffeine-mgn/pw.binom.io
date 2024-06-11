@@ -5,7 +5,6 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.asyncInput
 import pw.binom.asyncOutput
 import pw.binom.io.ByteBuffer
-import pw.binom.io.forEachIndexed
 import pw.binom.io.wrap
 import kotlin.test.Test
 import kotlin.test.assertEquals

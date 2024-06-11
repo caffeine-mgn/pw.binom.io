@@ -14,6 +14,7 @@ actual object MessageCoder {
       cursorLocal++
       c
     }
+    data.position = data.limit
     return cursorLocal
   }
 }

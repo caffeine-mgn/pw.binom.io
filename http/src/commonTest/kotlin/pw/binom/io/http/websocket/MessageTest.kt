@@ -1,7 +1,7 @@
 package pw.binom.io.http.websocket
 
 import pw.binom.io.ByteBuffer
-import pw.binom.io.forEachIndexed
+import pw.binom.io.wrap
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,6 +37,24 @@ class MessageTest {
 //            println("--------READ--------")
 //        }
 //    }
+
+  @OptIn(ExperimentalStdlibApi::class)
+  @Test
+  fun encodeTest2() {
+    val data = ByteArray(50) { it.toByte() }
+    val mask = 1234
+    val bytes = data.wrap {
+      Message.encode(0L, mask, it)
+      assertEquals(it.capacity, it.limit)
+      assertEquals(it.capacity, it.position)
+      it.clear()
+      it.toByteArray()
+    }
+    assertEquals(
+      "000106d1040502d508090ed90c0d0add101116c1141512c518191ec91c1d1acd202126f1242522f528292ef92c2d2afd3031",
+      bytes.toHexString()
+    )
+  }
 
   @Test
   fun encodeTest() {

@@ -1,10 +1,8 @@
 package pw.binom.io.httpClient
 
-import pw.binom.io.bufferedWriter
+import pw.binom.io.*
+import pw.binom.io.http.websocket.MessageCoder
 import pw.binom.io.http.websocket.MessageType
-import pw.binom.io.readBytes
-import pw.binom.io.use
-import pw.binom.io.useAsync
 import pw.binom.network.MultiFixedSizeThreadNetworkDispatcher
 import pw.binom.testing.Testing
 import pw.binom.testing.shouldEquals
@@ -20,7 +18,7 @@ class WebSocketTest {
       val testText = Random.nextUuid().toString()
       HttpClient.create(nd).use { client ->
         client.connectWebSocket(
-          uri = "http://127.0.0.1:7142/".toURL()
+          uri = "http://127.0.0.1:7142/".toURL(),
         ).start().useAsync { ws ->
           ws.write(MessageType.TEXT).bufferedWriter().useAsync { msg ->
             msg.append(testText)
