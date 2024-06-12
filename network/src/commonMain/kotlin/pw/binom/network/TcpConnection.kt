@@ -107,11 +107,12 @@ class TcpConnection(
       logger.info(line = __LINE__) { "readyForRead:: not connected" }
       return
     }
-
+    readLock.lock()
     val continuation = readData.continuation
     val data = readData.data
     if (continuation == null) {
       logger.info(line = __LINE__) { "readyForRead:: no any continuation set. Cleaning keys" }
+      readLock.unlock()
       return
     }
     data ?: error("readData.data is not set")
@@ -119,27 +120,21 @@ class TcpConnection(
     if (readed == -1) {
       logger.info(line = __LINE__) { "readyForRead:: during reading find that connection lost" }
       readData.reset()
+      readLock.unlock()
       close()
       continuation.resumeWithException(SocketClosedException("Read -1"))
       return
     }
     if (readed == 0) {
+      readLock.unlock()
       logger.info(line = __LINE__) { "readyForRead:: no data for read. Try to wait a data" }
-//            println("TcpConnection::readyForRead readed 0. Try ready again later")
       currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
-//            println("TcpConnection::readyForRead suspend. read 0. channel: $channel")
       return
     }
-//        if (readed > 0) {
-//            data.holdState {
-//                data.position = p
-//                data.limit = p + readed
-//                println("TcpClient: Read lazy: ${data.toByteArray().decodeToString()}")
-//            }
-//        }
     if (readData.full) {
       if (data.remaining == 0) {
         readData.reset()
+        readLock.unlock()
         continuation.resume(value = readed, onCancellation = null)
       } else {
         currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
@@ -147,6 +142,7 @@ class TcpConnection(
     } else {
       logger.info(line = __LINE__) { "readyForRead:: data was read success. $readed bytes" }
       readData.reset()
+      readLock.unlock()
       continuation.resume(value = readed, onCancellation = null)
     }
   }

@@ -66,7 +66,6 @@ abstract class AbstractWebDavHandler<U> : HttpHandler {
 
   private suspend fun buildRropFind(req: HttpServerExchange) {
     val fs = getFS(req)
-    val user = getUser(req)
     val currentEntry = fs.get(UrlEncoder.pathDecode(req.requestURI.path.raw).toPath)
 
     if (currentEntry == null) {

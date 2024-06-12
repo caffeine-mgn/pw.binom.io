@@ -147,7 +147,7 @@ actual class Selector : Closeable {
   internal fun removeKey(key: SelectorKey) {
     epoll.delete(key.socket, failOnError = false)
 
-    val removeTime = keysLock.synchronize() {
+    keysLock.synchronize {
       measureTime {
         fdToKey.remove(key.rawSocket)
       }
@@ -237,7 +237,7 @@ actual class Selector : Closeable {
       val socketFd = NEvent_getEventDataFd(event)
       val key = fdToKey[socketFd]
       if (key == null) {
-        val r = epoll.delete(socketFd)
+        epoll.delete(socketFd)
 //                val flagsStr = commonFlagsToString(getEventFlags(event))
 //                println("Selector::cleanupPostProcessing Got event with key null. fd: $socketFd. result: $r, flagsStr: $flagsStr, pipeRead: $pipeRead, pipeWrite: $pipeWrite")
         continue
