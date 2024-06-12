@@ -1,36 +1,17 @@
 package pw.binom.mq.nats
 
 import kotlinx.coroutines.delay
-import pw.binom.io.use
 import pw.binom.io.useAsync
-import pw.binom.mq.MqConnection
-import pw.binom.mq.nats.client.LoggingAsyncChannel
-import kotlin.coroutines.coroutineContext
+import pw.binom.uuid.nextUuid
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 
 class JetStreamTest : BaseTest() {
-  private fun mqConnection(func: suspend (NatsMqConnectionImpl) -> Unit) =
-    testing {
-      tcpConnect().use { tcp ->
-        MqConnection.nats(
-          channel = LoggingAsyncChannel(tcp),
-          context = coroutineContext,
-        ).useAsync {
-          func(it as NatsMqConnectionImpl)
-        }
-      }
-    }
-
-  fun jetStream(func: suspend (JetStreamMqConnection) -> Unit) =
-    mqConnection {
-      func(it.jetStream!!)
-    }
-
   @Test
   fun consumerTest() =
     jetStream {
-      it.createTopic("test").useAsync { topic ->
+      it.createTopic(Random.nextUuid().toShortString()).useAsync { topic ->
         val producer = topic.createProducer()
 
         (0..9).forEach {

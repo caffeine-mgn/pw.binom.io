@@ -1,45 +1,32 @@
 package pw.binom.mq.nats.client
 
-import kotlinx.coroutines.runBlocking
-import pw.binom.io.socket.InetSocketAddress
+import kotlinx.coroutines.delay
+import pw.binom.coroutines.AsyncExchange
+import pw.binom.io.useAsync
+import pw.binom.mq.nats.BaseTest
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Duration.Companion.seconds
 
-class NatsConnectorTest {
+class NatsConnectorTest : BaseTest() {
   @Test
-  fun test3() {
-    val connector1 =
-      NatsConnection.create(
-        clientName = "Binom Client",
-        user = null,
-        pass = null,
-        tlsRequired = false,
-        echo = true,
-        serverList =
-          listOf(
-            InetSocketAddress.resolve("127.0.0.1", TestUtils.NATS_PORT),
-          ),
-      )
-
-    runBlocking {
-      val msgText = Random.nextUuid().toString()
-//      connector1.jetStreamManagement()!!.create(
-//        config =
-//          StreamConfig(
-//            name = "test",
-//            storageType = StorageType.Memory,
-//            subjects = listOf("context-subject"),
-//          ),
-//      )
-//      connector1.subscribe("S1", null)
-      connector1.publish(subject = "S1", replyTo = null, data = msgText.encodeToByteArray())
-      val msg = connector1.readMessage()
+  fun test3() = mqConnection { mq ->
+    val msgText = Random.nextUuid().toString()
+    val topic = mq.getOrCreateTopic("S3")
+    val e = AsyncExchange<Unit>()
+    topic.createConsumer { msg ->
       assertNull(msg.replyTo)
       assertEquals(msgText, msg.data.decodeToString())
+      e.push(Unit)
     }
+    delay(1.seconds)
+    topic.createProducer().useAsync { producer ->
+      producer.send(data = msgText.encodeToByteArray())
+    }
+    e.extract()
   }
 //
 //    @Test

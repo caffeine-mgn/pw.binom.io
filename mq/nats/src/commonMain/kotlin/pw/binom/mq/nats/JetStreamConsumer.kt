@@ -64,19 +64,6 @@ class JetStreamConsumer(
             incomeListener = incomeListener,
             withAckSupport = config.ackPolicy != AckPolicy.NONE,
           )
-//        subject = "consumer-inbox-" + Random.nextUuid().toShortString()
-//        listener =
-//          topic.connection.reader.subscribe(
-//            subject = subject,
-//            listener = { msg ->
-//              incomeListener(MessageWithAck(msg))
-//              remaining--
-//              if (remaining == 0 && isReceiving) {
-//                pullNext()
-//              }
-//            },
-//          )
-//        pullNext()
       }
     }
   }

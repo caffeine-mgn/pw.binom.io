@@ -37,7 +37,9 @@ internal object JetStreamApiJsonUtils {
   ): T {
     val j = json.parseToJsonElement(data.decodeToString())
     val asObject = j as? JsonObject
-    if (asObject?.get("error") != null) {
+    val error = asObject?.get("error")
+    if (error != null) {
+      println(error)
       throw RuntimeException("Has error")
     }
     return json.decodeFromJsonElement(serializer, j)

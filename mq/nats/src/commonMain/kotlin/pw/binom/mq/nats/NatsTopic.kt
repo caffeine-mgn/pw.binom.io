@@ -18,12 +18,19 @@ class NatsTopic(val connection: NatsMqConnection, val subject: String) : Topic<N
 
   override suspend fun createConsumer(
     group: String?,
+    start: Boolean,
     func: suspend (NatsMessage) -> Unit,
-  ) = NatsConsumer(
-    group = group,
-    topic = this,
-    incomeListener = func,
-  )
+  ): NatsConsumer {
+    val consumer = NatsConsumer(
+      group = group,
+      topic = this,
+      incomeListener = func,
+    )
+    if (start) {
+      consumer.start()
+    }
+    return consumer
+  }
 
   override suspend fun asyncClose() {
     // Do nothing

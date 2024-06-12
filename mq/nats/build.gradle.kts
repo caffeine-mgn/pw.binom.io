@@ -30,6 +30,7 @@ kotlin {
     }
     commonTest.dependencies {
       api(kotlin("test-common"))
+      api(project(":coroutines"))
       api(kotlin("test-annotations-common"))
       api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
@@ -54,15 +55,15 @@ tasks {
   }
 }
 
-tasks {
-  withType(Test::class) {
-    useJUnitPlatform()
-    testLogging.showStandardStreams = true
-    testLogging.showCauses = true
-    testLogging.showExceptions = true
-    testLogging.showStackTraces
-  }
-}
+//tasks {
+//  withType(Test::class) {
+//    useJUnitPlatform()
+//    testLogging.showStandardStreams = true
+//    testLogging.showCauses = true
+//    testLogging.showExceptions = true
+//    testLogging.showStackTraces
+//  }
+//}
 /*
 val natsContainerId1 = UUID.randomUUID().toString()
 val natsContainerId2 = UUID.randomUUID().toString()

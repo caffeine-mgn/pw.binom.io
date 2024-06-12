@@ -40,6 +40,7 @@ class JetStreamTopic(
 
   override suspend fun createConsumer(
     group: String?,
+    start: Boolean,
     func: suspend (Message) -> Unit,
   ): JetStreamConsumer {
     val name = "consumer-" + Random.nextUuid().toShortString()
@@ -47,19 +48,23 @@ class JetStreamTopic(
       connection.js.createConsumer(
         streamName = config.name,
         config =
-          ConsumerConfiguration(
-            durableName = name,
-            name = name,
-            deliverGroup = group,
-            ackPolicy = AckPolicy.ALL,
-          ),
+        ConsumerConfiguration(
+          durableName = name,
+          name = name,
+          deliverGroup = group,
+          ackPolicy = AckPolicy.ALL,
+        ),
       )
-    return JetStreamConsumer(
+    val jsConsumer = JetStreamConsumer(
       config = consumer.config,
       topic = this,
       incomeListener = func,
       batchSize = 100,
     )
+    if (start) {
+      jsConsumer.start()
+    }
+    return jsConsumer
   }
 
   override suspend fun asyncClose() {
