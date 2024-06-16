@@ -97,7 +97,10 @@ class AsyncReentrantLock : AsyncLock {
     func = func,
   )
 
-  override suspend fun <T> trySynchronize(lockingTimeout: Duration, func: suspend () -> T): AsyncLock.SynchronizeResult<T> =
+  override suspend fun <T> trySynchronize(
+    lockingTimeout: Duration,
+    func: suspend () -> T,
+  ): AsyncLock.SynchronizeResult<T> =
     trySynchronize(
       lockingTimeout = lockingTimeout,
       waitLock = false,
@@ -160,5 +163,14 @@ class AsyncReentrantLock : AsyncLock {
     } finally {
       releaseLock()
     }
+  }
+
+  override fun throwAll(e: Throwable) = waiterLock.synchronize {
+    val size = waiters.size
+    waiters.forEach {
+      it.resumeWithException(e)
+    }
+    waiters.clear()
+    size
   }
 }

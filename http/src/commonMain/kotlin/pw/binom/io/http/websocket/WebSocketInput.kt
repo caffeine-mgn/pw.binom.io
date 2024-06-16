@@ -3,7 +3,7 @@ package pw.binom.io.http.websocket
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
 
-interface Message : AsyncInput {
+interface WebSocketInput : AsyncInput {
   val type: MessageType
 
   companion object {

@@ -10,7 +10,7 @@ import pw.binom.io.*
 import pw.binom.io.http.*
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.http.websocket.WebSocketConnectionImpl3
+import pw.binom.io.http.websocket.WebSocketConnectionImpl
 import pw.binom.network.SocketClosedException
 import pw.binom.pool.ObjectFactory
 import pw.binom.pool.ObjectPool
@@ -278,7 +278,7 @@ internal class HttpRequest2Impl(/*val onClose: (HttpRequest2Impl) -> Unit*/) : H
     resp.headers[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
     resp.sendHeaders()
     isReadyForResponse = false
-    return WebSocketConnectionImpl3(
+    return WebSocketConnectionImpl(
       _output = channel.writer,
       _input = channel.reader,
       masking = masking,

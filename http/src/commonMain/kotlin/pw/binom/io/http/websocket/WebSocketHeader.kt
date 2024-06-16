@@ -1,10 +1,7 @@
 package pw.binom.io.http.websocket
 
 import pw.binom.*
-import pw.binom.io.AsyncInput
-import pw.binom.io.AsyncOutput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.use
+import pw.binom.io.*
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.random.Random
@@ -60,6 +57,7 @@ class WebSocketHeader {
       mask: Int = Random.nextInt(),
       finishFlag: Boolean = false,
     ) {
+//      try {
       ByteBuffer(8).use { buf ->
         var value = opcode.raw and 0b1111
         if (finishFlag) {
@@ -90,6 +88,9 @@ class WebSocketHeader {
           output.writeInt(value = mask, buffer = buf)
         }
       }
+//      } catch (e: Throwable) {
+//        throw IOException("Can't write WebSocket Header opcode=$opcode, length: $length", e)
+//      }
     }
 
     suspend fun write(
@@ -107,8 +108,8 @@ class WebSocketHeader {
     }
   }
 
-  override fun toString(): String =
-    "WebSocketHeader(opcode=$opcode, length=$length, maskFlag=$maskFlag, mask=${
-      mask.toUInt().toString(2)
-    }, finishFlag=$finishFlag)"
+  override fun toString(): String {
+    val maskHex = mask.toUInt().toString(2)
+    return "WebSocketHeader(opcode=$opcode, length=$length, maskFlag=$maskFlag, mask=$maskHex, finishFlag=$finishFlag)"
+  }
 }

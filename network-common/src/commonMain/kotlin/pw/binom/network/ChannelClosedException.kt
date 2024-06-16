@@ -1,6 +1,8 @@
 package pw.binom.network
 
-open class SocketClosedException : ChannelClosedException {
+import pw.binom.io.IOException
+
+open class ChannelClosedException : IOException {
   constructor() : super()
   constructor(message: String?) : super(message)
   constructor(message: String?, cause: Throwable?) : super(message, cause)

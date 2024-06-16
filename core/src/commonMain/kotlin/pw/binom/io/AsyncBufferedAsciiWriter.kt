@@ -27,9 +27,11 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     buffer.clear()
   }
 
+  protected open fun throwClosed(): Nothing = throw StreamClosedException()
+
   private fun ensureOpen() {
     if (closed.getValue()) {
-      throw StreamClosedException()
+      throwClosed()
     }
   }
 
@@ -149,26 +151,25 @@ class AsyncBufferedAsciiWriter private constructor(
   override val output: AsyncOutput,
   override val buffer: ByteBuffer,
   closeParent: Boolean = true,
-) :
-  AbstractAsyncBufferedAsciiWriter(closeParent = closeParent) {
-    override fun toString(): String = "AsyncBufferedAsciiWriter(output=$output)"
+) : AbstractAsyncBufferedAsciiWriter(closeParent = closeParent) {
+  override fun toString(): String = "AsyncBufferedAsciiWriter(output=$output)"
 
-    constructor(output: AsyncOutput, pool: ByteBufferPool, closeParent: Boolean = true) : this(
-      output = output,
-      buffer = pool.borrow().clean(),
-      closeParent = closeParent,
-    )
+  constructor(output: AsyncOutput, pool: ByteBufferPool, closeParent: Boolean = true) : this(
+    output = output,
+    buffer = pool.borrow().clean(),
+    closeParent = closeParent,
+  )
 
-    constructor(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) : this(
-      output = output,
-      buffer = ByteBuffer(bufferSize).clean(),
-      closeParent = closeParent,
-    )
+  constructor(output: AsyncOutput, bufferSize: Int = DEFAULT_BUFFER_SIZE, closeParent: Boolean = true) : this(
+    output = output,
+    buffer = ByteBuffer(bufferSize).clean(),
+    closeParent = closeParent,
+  )
 
-    init {
-      afterConstruct()
-    }
+  init {
+    afterConstruct()
   }
+}
 
 fun AsyncOutput.bufferedAsciiWriter(
   pool: ByteBufferPool,

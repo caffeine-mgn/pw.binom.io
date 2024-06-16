@@ -8,7 +8,7 @@ import pw.binom.io.http.Headers
 import pw.binom.io.http.emptyHeaders
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.InvalidSecurityKeyException
-import pw.binom.io.http.websocket.WebSocketConnectionImpl3
+import pw.binom.io.http.websocket.WebSocketConnectionImpl
 import pw.binom.url.URL
 
 class WebSocketRequest(
@@ -38,7 +38,7 @@ class WebSocketRequest(
       throw InvalidSecurityKeyException()
     }
     return SuccessWebSocketConnection(
-      connection = WebSocketConnectionImpl3(
+      connection = WebSocketConnectionImpl(
         _input = request.input,
         _output = request.output,
         masking = masking,

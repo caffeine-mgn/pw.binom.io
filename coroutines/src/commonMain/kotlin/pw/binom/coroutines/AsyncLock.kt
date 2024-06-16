@@ -41,4 +41,9 @@ interface AsyncLock {
       lockingTimeout = Duration.INFINITE,
       func = func,
     )
+
+  /**
+   * Resumes all waiting coroutines with [exception]
+   */
+  fun throwAll(e: Throwable): Int
 }

@@ -42,7 +42,7 @@ class MessageImpl3Test {
       )
       buf.write(data3)
       val wasRead = ByteArrayOutput()
-      val msg = MessageImpl3(ByteArrayInput(buf.toByteArray()).asyncInput())
+      val msg = WebSocketInputImpl(ByteArrayInput(buf.toByteArray()).asyncInput())
       msg.startMessage()
       ByteBuffer(20).use {
         // reading first part `data1`

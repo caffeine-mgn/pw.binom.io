@@ -3,9 +3,10 @@ package pw.binom.io.http.websocket
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
 
-internal class MessageImpl3(
+internal class WebSocketInputImpl(
   val input: AsyncInput,
-) : Message {
+  val connection: WebSocketConnectionImpl,
+) : WebSocketInput {
   private var inputReady = 0L
   private val closed = AtomicBoolean(false)
   private val lastFrame: Boolean
@@ -66,7 +67,7 @@ internal class MessageImpl3(
           position = startPosition,
           length = n,
         )
-        cursor = Message.encode(
+        cursor = WebSocketInput.encode(
           cursor = cursor,
           mask = mask,
           data = dest,
@@ -123,16 +124,20 @@ internal class MessageImpl3(
       return
     }
 
-    if (inputReady > 0L || !lastFrame) {
-      // reading also data in message if exist
-      ByteBuffer(1024).use { buffer ->
-        while (true) {
-          buffer.clear()
-          if (readInternal(buffer) <= 0) {
-            break
+    try {
+      if (inputReady > 0L || !lastFrame) {
+        // reading also data in message if exist
+        ByteBuffer(1024).use { buffer ->
+          while (true) {
+            buffer.clear()
+            if (readInternal(buffer) <= 0) {
+              break
+            }
           }
         }
       }
+    } finally {
+      connection.readingMessageFinished()
     }
   }
 

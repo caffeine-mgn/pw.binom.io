@@ -7,6 +7,7 @@ import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration
 
 class SimpleAsyncLock : AsyncLock {
@@ -15,6 +16,7 @@ class SimpleAsyncLock : AsyncLock {
   }
   private val locked = AtomicBoolean(false)
   private val stateLock = SpinLock()
+  private val waiterLock = SpinLock()
 
   override val isLocked: Boolean
     get() = locked.getValue()
@@ -25,9 +27,13 @@ class SimpleAsyncLock : AsyncLock {
       withTimeout2(lockingTimeout) {
         suspendCancellableCoroutine {
           it.invokeOnCancellation { _ ->
-            waiters -= it
+            waiterLock.synchronize {
+              waiters -= it
+            }
           }
-          waiters += it
+          waiterLock.synchronize {
+            waiters += it
+          }
         }
       }
     }
@@ -42,9 +48,12 @@ class SimpleAsyncLock : AsyncLock {
   fun unlock() {
     val waiter =
       stateLock.synchronize {
-        val waiter = waiters.firstOrNull()
-        if (waiter != null) {
-          waiters.remove(waiter)
+        val waiter = waiterLock.synchronize {
+          val waiter = waiters.firstOrNull()
+          if (waiter != null) {
+            waiters -= waiter
+          }
+          waiter
         }
         if (waiter == null) {
           locked.setValue(false)
@@ -87,5 +96,14 @@ class SimpleAsyncLock : AsyncLock {
     } finally {
       unlock()
     }
+  }
+
+  override fun throwAll(e: Throwable) = waiterLock.synchronize {
+    val size = waiters.size
+    waiters.forEach {
+      it.resumeWithException(e)
+    }
+    waiters.clear()
+    size
   }
 }

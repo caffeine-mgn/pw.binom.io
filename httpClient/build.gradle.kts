@@ -9,7 +9,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  allTargets{
+  allTargets {
     config()
   }
   applyDefaultHierarchyBinomTemplate()
@@ -25,6 +25,7 @@ kotlin {
     }
 
     commonTest.dependencies {
+      api(project(":coroutines"))
       api(project(":testing"))
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
@@ -46,6 +47,10 @@ tasks {
       tcpPorts = listOf(8080 to 7142),
       args = listOf(),
       suffix = "WS-EchoServer",
+      envs = mapOf(
+        "LOG_HTTP_HEADERS" to "STDOUT",
+        "LOG_HTTP_BODY" to "STDOUT",
+      )
     )
 
   val httpStorage =

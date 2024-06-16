@@ -23,4 +23,6 @@ value class Opcode(val raw: Byte) {
       PONG.raw -> MessageType.PONG
       else -> throw IllegalArgumentException("Unknown opcode $raw")
     }
+
+  override fun toString(): String = "Opcode(0x${raw.toUByte().toString(16)})"
 }

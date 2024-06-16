@@ -1,153 +1,199 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package pw.binom.io.http.websocket
-/*
+
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.coroutines.SimpleAsyncLock
 import pw.binom.io.*
-import pw.binom.network.SocketClosedException
+import pw.binom.network.ChannelClosedException
 import pw.binom.writeShort
 
-open class WebSocketConnectionImpl(
-    input: AsyncInput,
-    output: AsyncOutput,
-    val masking: Boolean,
-    val messagePool: MessagePool,
+class WebSocketConnectionImpl(
+  private var _output: AsyncOutput,
+  private var _input: AsyncInput,
+  private var masking: Boolean,
+  private val mainChannel: AsyncCloseable,
+  private val bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : WebSocketConnection {
+  private val closing = AtomicBoolean(false)
 
-    private val _output = output
-    private val _input = input
+  private val receivedCloseMessage = AtomicBoolean(false)
+  private val sentCloseMessage = AtomicBoolean(false)
 
-    private var closed = AtomicBoolean(false)
-    var receivedCloseMessage = AtomicBoolean(false)
-        private set
-    var sentCloseMessage = AtomicBoolean(false)
-        private set
+  override val isReadReady: Boolean
+    get() = readChannelLock.isLocked
+  override val isWriteReady: Boolean
+    get() = writeChannelLock.isLocked
 
-    private val header = WebSocketHeader()
+  private val readChannelLock = SimpleAsyncLock()
+  private val writeChannelLock = SimpleAsyncLock()
 
-    private fun checkClosed() {
-        if (closed.getValue()) {
-            throw StreamClosedException()
-        }
+  //  private val header = WebSocketHeader()
+  private val message = WebSocketInputImpl(input = _input, connection = this)
+  private var writing: WebSocketOutput? = null
+
+  private fun checkClosed() {
+    if (closing.getValue()) {
+      throw StreamClosedException()
     }
+  }
 
-    override suspend fun read(): Message {
-        checkClosed()
-        if (receivedCloseMessage.getValue()) {
-            throw IllegalStateException("Can't read message. Already received close message")
-        }
-        if (sentCloseMessage.getValue()) {
-            throw IllegalStateException("Can't read message. Already sent close message")
-        }
-        LOOP@ while (true) {
-            try {
-                WebSocketHeader.read(_input, header)
-                val type = when (header.opcode) {
-                    1.toByte() -> MessageType.TEXT
-                    2.toByte() -> MessageType.BINARY
-                    8.toByte() -> MessageType.CLOSE
-                    else -> {
-                        runCatching {
-                            closeTcp()
-                        }
-                        throw WebSocketClosedException(
-                            connection = this,
-                            code = WebSocketClosedException.ABNORMALLY_CLOSE,
-                        )
-                    }
-                }
-                if (type == MessageType.CLOSE) {
-                    this.receivedCloseMessage.setValue(true)
-                }
-                return messagePool.new(
-                    initLength = header.length,
-                    type = type,
-                    mask = header.mask,
-                    maskFlag = header.maskFlag,
-                    lastFrame = header.finishFlag,
-                    input = _input
-                )
-            } catch (e: SocketClosedException) {
-                runCatching {
-                    closeTcp()
-                }
-                throw WebSocketClosedException(
-                    connection = this,
-                    WebSocketClosedException.ABNORMALLY_CLOSE,
-                )
-            }
-        }
+  private suspend fun sendFinish(
+    code: Short = 1006,
+    body: ByteBuffer? = null,
+  ) {
+    val v = WebSocketHeader()
+    v.opcode = Opcode.CLOSE
+    v.length = Short.SIZE_BYTES.toLong() + (body?.remaining ?: 0).toLong()
+    v.maskFlag = masking
+    v.finishFlag = true
+    WebSocketHeader.write(_output, v)
+    ByteBuffer(Short.SIZE_BYTES + (body?.remaining ?: 0)).use {
+      it.writeShort(code)
+      if (body != null) {
+        it.write(body)
+      }
+      it.clear()
+      if (masking) {
+        WebSocketInput.encode(v.mask, it)
+      }
+      _output.write(it)
     }
+    _output.flush()
+  }
 
-    override suspend fun write(type: MessageType): AsyncOutput {
-        checkClosed()
-        if (receivedCloseMessage.getValue()) {
-            throw IllegalStateException("Can't write message. Already received close message")
-        }
-        if (sentCloseMessage.getValue()) {
-            throw IllegalStateException("Can't write message. Already sent close message")
-        }
-        if (type == MessageType.CLOSE) {
-            sentCloseMessage.setValue(true)
-        }
-        return WebSocketOutput(
-            messageType = type,
-            bufferSize = DEFAULT_BUFFER_SIZE,
-            stream = _output,
-            masked = masking
-        )
+  override suspend fun read(): WebSocketInput {
+    checkClosed()
+    if (receivedCloseMessage.getValue()) {
+      throw IllegalStateException("Can't read message. Already received close message")
     }
+    if (sentCloseMessage.getValue()) {
+      throw IllegalStateException("Can't read message. Already sent close message")
+    }
+    try {
+      readChannelLock.lock()
+      message.startMessage()
+      val type = message.type
+      if (type == MessageType.CLOSE) {
+        this.receivedCloseMessage.setValue(true)
+      }
+      return message
+    } catch (e: ChannelClosedException) {
+      readChannelLock.unlock()
+      runCatching {
+        closeTcp()
+      }
+      throw WebSocketClosedException(
+        connection = this,
+      )
+    } catch (e: Throwable) {
+      readChannelLock.unlock()
+      throw e
+    }
+  }
 
-    private suspend fun closeTcp() {
-        if (closed.getValue()) {
-            return
-        }
-        closed.setValue(true)
-        _input.asyncCloseAnyway()
-        _output.asyncCloseAnyway()
+  private fun checkState() {
+    if (receivedCloseMessage.getValue()) {
+      throw IllegalStateException("Can't write message. Already received close message")
     }
+    if (sentCloseMessage.getValue()) {
+      throw IllegalStateException("Can't write message. Already sent close message")
+    }
+  }
 
-    private suspend fun sendFinish(code: Short = 1006, body: ByteBuffer? = null) {
-        val v = WebSocketHeader()
-        v.opcode = 8
-        v.length = Short.SIZE_BYTES.toLong() + (body?.remaining ?: 0).toLong()
-        v.maskFlag = masking
-        v.finishFlag = true
-        WebSocketHeader.write(_output, v)
-        ByteBuffer(Short.SIZE_BYTES + (body?.remaining ?: 0)).use {
-            it.writeShort(code)
-            if (body != null) {
-                it.write(body)
-            }
-            it.clear()
-            if (masking) {
-                Message.encode(v.mask, it)
-            }
-            _output.write(it)
-        }
-        _output.flush()
-    }
+  internal fun writingMessageFinished() {
+    writing = null
+    writeChannelLock.unlock()
+  }
 
-    suspend fun asyncClose(code: Short, body: ByteBuffer? = null) {
-        checkClosed()
-        if (this.receivedCloseMessage.getValue()) {
-            throw IllegalStateException("Can't send close message because already got close message")
-        }
-        try {
-            sendFinish(code = code, body = body)
-        } finally {
-            closeTcp()
-        }
-    }
+  internal fun readingMessageFinished() {
+    readChannelLock.unlock()
+  }
 
-    override suspend fun asyncClose() {
-        checkClosed()
-        try {
-            if (!this.receivedCloseMessage.getValue()) {
-                sendFinish(code = WebSocketClosedException.CLOSE_NORMAL)
-            }
-        } finally {
-            closeTcp()
-        }
+  override suspend fun write(type: MessageType): AsyncOutput {
+    checkClosed()
+    checkState()
+    writeChannelLock.lock()
+    if (type == MessageType.CLOSE) {
+      sentCloseMessage.setValue(true)
     }
+    val out = WebSocketOutput(
+      messageType = type,
+      bufferSize = bufferSize,
+      stream = _output,
+      masked = masking,
+      connection = this,
+    )
+    writing = out
+    return out
+  }
+
+  override suspend fun writeIfReady(type: MessageType): AsyncOutput? {
+    checkClosed()
+    checkState()
+
+//    if (!writeChannelLock.tryLock()) {
+//      return null
+//    }
+    if (type == MessageType.CLOSE) {
+      sentCloseMessage.setValue(true)
+    }
+    return WebSocketOutput(
+      messageType = type,
+      bufferSize = bufferSize,
+      stream = _output,
+      masked = masking,
+      connection = this,
+    )
+  }
+
+  private suspend fun closeTcp() {
+    _input.asyncCloseAnyway()
+    _output.asyncCloseAnyway()
+    mainChannel.asyncCloseAnyway()
+  }
+
+  internal fun tcpClosed(){
+
+  }
+
+  suspend fun sendClose(
+    code: Short,
+    body: ByteBuffer? = null,
+  ) {
+    if (!closing.compareAndSet(false, true)) {
+      return
+    }
+    if (this.receivedCloseMessage.getValue()) {
+      throw IllegalStateException("Can't send close message because already got close message")
+    }
+    try {
+      write(MessageType.CLOSE).useAsync { msg ->
+        ByteBuffer(Short.SIZE_BYTES).use { buffer ->
+          buffer.writeShort(code)
+          msg.writeFully(buffer)
+        }
+        if (body != null) {
+          msg.writeFully(body)
+        }
+      }
+    } finally {
+      internalClose()
+    }
+  }
+
+  private suspend fun internalClose() {
+    val ex = WebSocketClosedException(this)
+    readChannelLock.throwAll(ex)
+    writeChannelLock.throwAll(ex)
+    closeTcp()
+  }
+
+  override suspend fun asyncClose() {
+    if (!closing.compareAndSet(false, true)) {
+      return
+    }
+    internalClose()
+  }
 }
-*/

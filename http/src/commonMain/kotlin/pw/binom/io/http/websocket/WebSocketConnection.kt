@@ -10,7 +10,7 @@ interface WebSocketConnection : AsyncCloseable {
   /**
    * Read message. Must be call only from network thread
    */
-  suspend fun read(): Message
+  suspend fun read(): WebSocketInput
 
   /**
    * Send message. Must be call only from network thread. After message finished AsyncOutput should be closed

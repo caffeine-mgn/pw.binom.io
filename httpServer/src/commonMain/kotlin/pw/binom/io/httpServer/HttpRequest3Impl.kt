@@ -9,7 +9,7 @@ import pw.binom.io.http.AsyncEmptyHttpInput
 import pw.binom.io.http.Headers
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.http.websocket.WebSocketConnectionImpl3
+import pw.binom.io.http.websocket.WebSocketConnectionImpl
 import pw.binom.pool.using
 import pw.binom.url.Path
 import pw.binom.url.Query
@@ -170,7 +170,7 @@ internal class HttpRequest3Impl(
     resp.headers[Headers.UPGRADE] = Headers.WEBSOCKET
     resp.headers[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
     resp.sendHeaders()
-    return WebSocketConnectionImpl3(
+    return WebSocketConnectionImpl(
       _output = channel.writer,
       _input = channel.reader,
       masking = masking,

@@ -80,15 +80,27 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     }
   }
 
-  override suspend fun flush() {
-    checkClosed()
-    if (buffer.remaining == buffer.capacity) {
-      return
-    }
+  protected val hasDataForFlush
+    get() = buffer.remaining != buffer.capacity
+
+  protected open suspend fun sendDataToStream() {
     buffer.flip()
     stream.writeFully(buffer)
     stream.flush()
     buffer.clear()
+  }
+
+  protected suspend fun flushWithoutCloseCheck(): Boolean {
+    if (!hasDataForFlush) {
+      return false
+    }
+    sendDataToStream()
+    return true
+  }
+
+  override suspend fun flush() {
+    checkClosed()
+    flushWithoutCloseCheck()
   }
 
   override suspend fun asyncClose() {

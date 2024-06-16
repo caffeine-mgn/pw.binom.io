@@ -44,8 +44,8 @@ object LiveCollections {
 // fun <T> defaultMutableList(capacity: Int): MutableList<T> = LiveCollections.reg(ArrayList2(capacity))
 // fun <T> defaultMutableList(): MutableList<T> = LiveCollections.reg(ArrayList2())
 
-private const val USE_NEW_LIST = true
-private const val USE_NEW_MAP = true
+private const val USE_NEW_LIST = false
+private const val USE_NEW_MAP = false
 private const val REG_NEW = false
 internal const val USE_TRIM_LIST = true
 

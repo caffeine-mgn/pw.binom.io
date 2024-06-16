@@ -2,7 +2,7 @@ package pw.binom
 
 import kotlinx.benchmark.*
 import pw.binom.io.ByteBuffer
-import pw.binom.io.http.websocket.Message
+import pw.binom.io.http.websocket.WebSocketInput
 import pw.binom.io.use
 
 @State(Scope.Benchmark)
@@ -17,7 +17,7 @@ class WebSocketEncodeBenchmark {
   @Benchmark
   fun encode() {
     ByteBuffer(initSize).use { buf ->
-      Message.encode(mask = 123, data = buf)
+      WebSocketInput.encode(mask = 123, data = buf)
     }
   }
 }

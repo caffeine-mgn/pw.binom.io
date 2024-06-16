@@ -8,7 +8,7 @@ import pw.binom.io.http.HttpException
 import pw.binom.io.http.emptyHeaders
 import pw.binom.io.http.websocket.HandshakeSecret
 import pw.binom.io.http.websocket.WebSocketConnection
-import pw.binom.io.http.websocket.WebSocketConnectionImpl3
+import pw.binom.io.http.websocket.WebSocketConnectionImpl
 
 suspend fun HttpServerExchange.acceptWebsocket(
   masking: Boolean = false,
@@ -31,7 +31,7 @@ suspend fun HttpServerExchange.acceptWebsocket(
   responseHeader[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
   responseHeader.add(headers)
   startResponse(statusCode = 101, headers = responseHeader)
-  return WebSocketConnectionImpl3(
+  return WebSocketConnectionImpl(
     _output = output,
     _input = input,
     masking = masking,
