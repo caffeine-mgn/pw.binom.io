@@ -120,6 +120,7 @@ class HttpServer(
     }
   }
 
+  private val bindLock = SpinLock()
   private val binds = ArrayList<TcpServerConnection>()
 //    private val idleConnections = defaultMutableSet<ServerAsyncAsciiChannel>()
 //    private var idleExchange = BatchExchange<ServerAsyncAsciiChannel?>()
@@ -233,7 +234,9 @@ class HttpServer(
     serverChannel.blocking = false
     val server = networkManager.attach(serverChannel)
     server.description = address.toString()
-    binds += server
+    bindLock.synchronize {
+      binds += server
+    }
     val address = MutableInetAddress()
 
     val closed = AtomicBoolean(false)
@@ -272,7 +275,9 @@ class HttpServer(
           }
         }
       } finally {
-        binds -= server
+        bindLock.synchronize {
+          binds -= server
+        }
         server.closeAnyway()
       }
 //            }
@@ -305,9 +310,15 @@ class HttpServer(
 //            it.asyncCloseAnyway()
 //        }
 //        idleConnections.clear()
-    defaultMutableList(binds).forEach {
+
+    val oldBinds = bindLock.synchronize {
+      val list = defaultMutableList(binds)
+      binds.clear()
+      list
+    }
+
+    oldBinds.forEach {
       it.closeAnyway()
     }
-    binds.clear()
   }
 }
