@@ -6,7 +6,7 @@ import pw.binom.io.StreamClosedException
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
 
-actual class FileChannel actual constructor(file: File, vararg mode: AccessType) :
+actual class FileChannel actual constructor(file: File, mode: AccessMode) :
     Channel,
     RandomAccess {
 
@@ -16,10 +16,11 @@ actual class FileChannel actual constructor(file: File, vararg mode: AccessType)
         val nativeMode = HashSet<StandardOpenOption>()
         mode.forEach {
             nativeMode += when (it) {
-                AccessType.APPEND -> StandardOpenOption.APPEND
-                AccessType.CREATE -> StandardOpenOption.CREATE
-                AccessType.READ -> StandardOpenOption.READ
-                AccessType.WRITE -> StandardOpenOption.WRITE
+              AccessMode.APPEND -> StandardOpenOption.APPEND
+              AccessMode.CREATE -> StandardOpenOption.CREATE
+              AccessMode.READ -> StandardOpenOption.READ
+              AccessMode.WRITE -> StandardOpenOption.WRITE
+              else->throw IllegalArgumentException()
             }
         }
 

@@ -13,14 +13,14 @@ import pw.binom.io.IOException
 @OptIn(ExperimentalForeignApi::class)
 actual class FileChannel actual constructor(
   file: File,
-  vararg mode: AccessType,
+  mode: AccessMode,
 ) : Channel, RandomAccess {
 
   init {
     if (file.isDirectory) {
       throw IOException("Can't open folder ${file.path}")
     }
-    if (AccessType.CREATE !in mode && !file.isFile) {
+    if (!mode.isCreate && !file.isFile) {
       throw FileNotFoundException(file.path)
     }
   }
@@ -28,9 +28,9 @@ actual class FileChannel actual constructor(
   internal val handler = fopen(
     file.path,
     run {
-      val read = AccessType.READ in mode
-      val write = AccessType.WRITE in mode
-      val append = AccessType.APPEND in mode
+      val read =  mode.isRead
+      val write = mode.isWrite
+      val append = mode.isAppend
       if (!read && !write) {
         throw IllegalArgumentException("Invalid mode")
       }

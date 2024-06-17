@@ -15,7 +15,7 @@ class LocalFileSystem(
 ) : FileSystem {
     override suspend fun new(path: Path): AsyncOutput {
         val file = File(root, path.toString().removePrefix("/"))
-        file.parent?.mkdirs() ?: throw FileSystem.FileNotFoundException((file.parent?.path ?: "").toPath)
+        file.parent.mkdirs() ?: throw FileSystem.FileNotFoundException((file.parent?.path ?: "").toPath)
         return file.openWrite().asyncOutput()
     }
 
@@ -27,7 +27,7 @@ class LocalFileSystem(
         return EntityImpl(f)
     }
 
-    override suspend fun getQuota(path: Path): Quota? {
+    override suspend fun getQuota(path: Path): Quota {
         val f = File(root, path.toString())
         return Quota(
             availableBytes = f.freeSpace,
@@ -59,7 +59,7 @@ class LocalFileSystem(
         return null
     }
 
-    private suspend fun File.listEntities(): List<EntityImpl> {
+    private fun File.listEntities(): List<EntityImpl> {
         val out = defaultMutableList<EntityImpl>()
         this.iterator().forEach {
             out += EntityImpl(it)

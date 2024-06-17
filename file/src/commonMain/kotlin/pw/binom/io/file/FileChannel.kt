@@ -2,28 +2,24 @@ package pw.binom.io.file
 
 import pw.binom.io.Channel
 
-enum class AccessType {
-  READ, WRITE, CREATE, APPEND
-}
-
 expect class FileChannel(
   file: File,
-  vararg mode: AccessType,
+  mode: AccessMode,
 ) : Channel, RandomAccess {
   fun skip(length: Long): Long
 }
 
-fun File.channel(vararg mode: AccessType): FileChannel {
-  if (AccessType.CREATE !in mode && !isFile) {
+fun File.channel(mode: AccessMode): FileChannel {
+  if (!mode.isCreate && !isFile) {
     throw FileNotFoundException(path)
   }
-  return FileChannel(this, *mode)
+  return FileChannel(this, mode)
 }
 
 /**
  * Open file for read
  */
-inline fun File.openRead() = channel(AccessType.READ)
+inline fun File.openRead() = channel(AccessMode.READ)
 
 /**
  * Open file for write
@@ -32,7 +28,7 @@ inline fun File.openRead() = channel(AccessType.READ)
  */
 inline fun File.openWrite(append: Boolean = false) =
   if (append) {
-    channel(AccessType.WRITE, AccessType.CREATE, AccessType.APPEND)
+    channel(AccessMode.WRITE + AccessMode.CREATE + AccessMode.APPEND)
   } else {
-    channel(AccessType.WRITE, AccessType.CREATE)
+    channel(AccessMode.WRITE + AccessMode.CREATE)
   }
