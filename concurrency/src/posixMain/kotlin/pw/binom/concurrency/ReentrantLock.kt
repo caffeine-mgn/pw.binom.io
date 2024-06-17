@@ -2,6 +2,7 @@ package pw.binom.concurrency
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.internal.createCleaner
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
@@ -28,7 +29,8 @@ actual class ReentrantLock : Lock {
     internalPthread_mutex_init(native, null)
   }
 
-  private val cleaner = createCleaner(native) { native ->
+  @OptIn(ExperimentalNativeApi::class)
+  private val cleaner = kotlin.native.ref.createCleaner(native) { native ->
     pthread_mutex_destroy(native)
     free(native)
   }

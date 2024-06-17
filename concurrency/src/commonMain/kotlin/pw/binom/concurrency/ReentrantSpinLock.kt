@@ -9,7 +9,6 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-@OptIn(ExperimentalTime::class)
 class ReentrantSpinLock : LockWithTimeout {
     private val threadId = AtomicLong(0)
     private val count = AtomicInt(0)
