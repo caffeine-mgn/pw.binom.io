@@ -70,4 +70,6 @@ interface AsyncInput : AsyncCloseable {
     }
     return length
   }
+
+  fun withLimit(limit: Long): AsyncInput = AsyncInputWithLimit(limit = limit, source = this)
 }

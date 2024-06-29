@@ -30,7 +30,7 @@ class StrongProperties(
   }
 
   fun addEnvironment(
-    prefix: String = "",
+    prefix: String = "strong_",
     caseSensitive: Boolean = false,
   ): StrongProperties {
     properties +=
@@ -58,7 +58,7 @@ class StrongProperties(
   private val cache = mutableMapOf<DeserializationStrategy<Any>, Any>()
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : Any> parse(serializer: KSerializer<T>): T {
+  fun <T : Any> parse(serializer: KSerializer<T>, serializersModule: SerializersModule = EmptySerializersModule()): T {
     return cache.getOrPut(serializer) {
       val value = serializer.deserialize(
         PropertiesDecoder(
@@ -80,5 +80,10 @@ class StrongProperties(
   override fun toString(): String = properties.toString()
 
   @OptIn(InternalSerializationApi::class)
-  inline fun <reified T : Any> parse() = parse(T::class.serializer())
+  inline fun <reified T : Any> parse(
+    serializersModule: SerializersModule = EmptySerializersModule(),
+  ) = parse(
+    serializer = T::class.serializer(),
+    serializersModule = serializersModule,
+  )
 }

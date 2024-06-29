@@ -119,6 +119,8 @@ actual open class ByteBuffer(val native: NativeMem) : Channel, Buffer, ByteBuffe
 
   override val capacity: Int
     get() = native.size
+  override val hasRemaining: Boolean
+    get() = remaining > 0
 
   init {
     ByteBufferMetric.inc(this)

@@ -9,7 +9,8 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import pw.binom.io.IOException
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalStdlibApi::class, ExperimentalForeignApi::class, UnsafeNumber::class)
 actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlush: Boolean) : Closeable {
@@ -46,6 +47,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
   }
 
+  @OptIn(ExperimentalNativeApi::class)
   private val cleaner = createCleaner(native) { self ->
     deflateEnd(self.ptr)
     nativeHeap.free(self)

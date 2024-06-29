@@ -13,7 +13,7 @@ enum class TarEntityType(internal val num: Byte) {
     ;
 
     companion object {
-        private val byCode = values().associateBy { it.num }
+        private val byCode = entries.associateBy { it.num }
         fun findByCode(code: Byte) = byCode[code]
     }
 }

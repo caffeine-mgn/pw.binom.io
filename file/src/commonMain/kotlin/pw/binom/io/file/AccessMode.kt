@@ -3,13 +3,17 @@ package pw.binom.io.file
 import kotlin.jvm.JvmInline
 
 @JvmInline
-value class AccessMode(private val raw: Int) {
+value class AccessMode(val raw: Int) {
   companion object {
+    private const val READ_VALUE = 0b0001
+    private const val WRITE_VALUE = 0b0010
+    private const val CREATE_VALUE = 0b00100
+    private const val APPEND_VALUE = 0b01000
     val EMPTY = AccessMode(0b0)
-    val READ = AccessMode(0b1)
-    val WRITE = AccessMode(0b01)
-    val CREATE = AccessMode(0b001)
-    val APPEND = AccessMode(0b0001)
+    val READ = AccessMode(READ_VALUE)
+    val WRITE = AccessMode(WRITE_VALUE)
+    val CREATE = AccessMode(CREATE_VALUE)
+    val APPEND = AccessMode(APPEND_VALUE)
   }
 
   val isEmpty
@@ -19,16 +23,16 @@ value class AccessMode(private val raw: Int) {
     get() = raw != 0
 
   val isRead
-    get() = raw and 0b1 != 0
+    get() = (raw and READ_VALUE) != 0
 
   val isWrite
-    get() = raw and 0b01 != 0
+    get() = (raw and WRITE_VALUE) != 0
 
   val isCreate
-    get() = raw and 0b001 != 0
+    get() = (raw and CREATE_VALUE) != 0
 
   val isAppend
-    get() = raw and 0b0001 != 0
+    get() = (raw and APPEND_VALUE) != 0
 
   operator fun plus(value: AccessMode) = AccessMode(raw or value.raw)
   operator fun minus(value: AccessMode) = AccessMode((raw.inv() or value.raw).inv())
@@ -50,5 +54,31 @@ value class AccessMode(private val raw: Int) {
     if (isAppend) {
       func(APPEND)
     }
+  }
+
+  override fun toString(): String {
+    val sb = StringBuilder("AccessMode(")
+    var first = true
+    fun append(text: String) {
+      if (!first) {
+        sb.append(", ")
+      }
+      sb.append(text)
+      first = false
+    }
+    if (isRead) {
+      append("READ")
+    }
+    if (isWrite) {
+      append("WRITE")
+    }
+    if (isCreate) {
+      append("CREATE")
+    }
+    if (isAppend) {
+      append("APPEND")
+    }
+    sb.append(")")
+    return sb.toString()
   }
 }

@@ -257,6 +257,11 @@ inline fun <reified T : Any> Strong.injectOrNull(name: String? = null) = service
  */
 inline fun <reified T : Any> Strong.exist() = contains(T::class)
 
+operator fun Strong.Config.plus(config: Strong.Config) = Strong.config { definer ->
+  this@plus.apply(definer)
+  config.apply(definer)
+}
+
 suspend fun Strong.Companion.launch(
   vararg config: Strong.Config,
   afterInit: ((Strong) -> Unit)? = null,

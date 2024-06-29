@@ -105,6 +105,8 @@ actual open class ByteBuffer private constructor(
 
   override val capacity: Int
     get() = data.capacity
+  override val hasRemaining: Boolean
+    get() = remaining > 0
 
   override val elementSizeInBytes: Int
     get() = 1

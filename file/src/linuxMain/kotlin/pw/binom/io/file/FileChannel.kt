@@ -25,32 +25,38 @@ actual class FileChannel actual constructor(
     }
   }
 
-  internal val handler = fopen(
-    file.path,
-    run {
-      val read =  mode.isRead
-      val write = mode.isWrite
-      val append = mode.isAppend
-      if (!read && !write) {
-        throw IllegalArgumentException("Invalid mode")
+  internal val handler = run {
+    val read = mode.isRead
+    val write = mode.isWrite
+    val append = mode.isAppend
+    if (!read && !write) {
+      throw IllegalArgumentException("Invalid mode")
+    }
+    val nativeMode = when {
+      write && !append -> {
+        if (read) "wb+" else "wb"
       }
-      when {
-        write && !append -> {
-          if (read) "wb+" else "wb"
-        }
 
-        write && append -> {
+      write && append -> {
 //          if (read) "cb+" else "cb"
-          "ab"
-        }
-
-        read -> "rb"
-        else -> throw IllegalArgumentException("Invalid mode")
+        "ab"
       }
-    },
-  ) ?: run {
-    println("errno=$errno")
-    throw FileNotFoundException(file.path)
+
+      read -> "rb"
+      else -> throw IllegalArgumentException("Invalid mode")
+    }
+    fopen(
+      file.path,
+      nativeMode,
+    ) ?: run {
+      when (errno) {
+        ETXTBSY -> throw IOException("File \"${file.path}\" is busy")
+        ENOENT -> throw FileNotFoundException(file.path)
+        else -> {
+          throw IOException("Error open file ${file.path}, errno=$errno")
+        }
+      }
+    }
   }
 
   actual fun skip(length: Long): Long {

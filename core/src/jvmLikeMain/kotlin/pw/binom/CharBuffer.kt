@@ -19,8 +19,10 @@ actual class CharBuffer constructor(val native: java.nio.CharBuffer) : CharSeque
 
     override val capacity: Int
         get() = native.capacity()
+  override val hasRemaining: Boolean
+    get() = native.hasRemaining()
 
-    override val remaining: Int
+  override val remaining: Int
         get() = native.remaining()
 
     override var position: Int

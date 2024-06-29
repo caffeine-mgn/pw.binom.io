@@ -37,6 +37,8 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
 
   override val capacity: Int
     get() = div2(bytes.capacity)
+  override val hasRemaining: Boolean
+    get() = remaining > 0
 
   override val remaining: Int
     get() = div2(bytes.remaining)

@@ -6,6 +6,7 @@ actual interface Buffer {
     actual var limit: Int
     actual val remaining: Int
     actual val capacity: Int
+    actual val hasRemaining: Boolean
     actual val elementSizeInBytes: Int
     actual fun flip()
     actual fun compact()

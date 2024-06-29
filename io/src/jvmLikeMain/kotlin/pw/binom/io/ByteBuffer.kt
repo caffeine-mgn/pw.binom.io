@@ -120,6 +120,8 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     get() {
       return native.capacity()
     }
+  override val hasRemaining: Boolean
+    get() = native.hasRemaining()
 
   init {
     ByteBufferMetric.inc(this)
