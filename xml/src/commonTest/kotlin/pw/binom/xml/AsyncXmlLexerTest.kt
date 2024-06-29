@@ -9,12 +9,21 @@ class AsyncXmlLexerTest {
 
   @Test
   fun test() = runTest {
-    val lexer = AsyncXmlLexer(
+    val lexer = AbstractXmlLexer()
+    val reader =
       """<name="KDE"/><title>
 &quot;KDE-DE&quot;
 </title>
-      """.trimMargin().asReader().asAsync(),
-    )
+      """.trimMargin().asReader().asAsync()
+
+    suspend fun AbstractXmlLexer.nextText(): String? {
+      return if (commonNext { reader.readChar() }) {
+        text
+      } else {
+        null
+      }
+    }
+
     assertEquals("<", lexer.nextText())
     assertEquals("name", lexer.nextText())
     assertEquals("=", lexer.nextText())
@@ -44,13 +53,5 @@ class AsyncXmlLexerTest {
     assertEquals(2, lexer.line)
     assertEquals(8, lexer.column)
     assertEquals(48, lexer.position)
-  }
-}
-
-suspend fun AsyncXmlLexer.nextText(): String? {
-  return if (next()) {
-    text
-  } else {
-    null
   }
 }

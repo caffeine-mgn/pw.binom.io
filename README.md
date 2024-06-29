@@ -114,7 +114,7 @@ buildscript {
 #### HTTP
 
 - [x] Basic Support Http Server<br>
-  See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer.kt)
+  See [HttpServer](httpServer/src/commonMain/kotlin/pw/binom/io/httpServer/HttpServer2.kt)
 - [x] Basic Support Http Client<br>
   See [HttpClient](httpClient/src/commonMain/kotlin/pw/binom/io/httpClient/HttpClient.kt)
 - [x] HTTP Server: WebSocket Support
@@ -126,13 +126,13 @@ buildscript {
 #### Sync DataBase Access
 
 - [x] [Common SQL Interfaces](db/README.md)
-- [x] [SQLite Support](sqlite/README.md)
+- [x] [SQLite Support](db/sqlite/README.md)
 
 #### Async DataBase Access
 
 - [x] [Tarantool Connector](db/tarantool-client)
 - [x] [PostgreSQL Connector](db/postgresql-async)
-- - [x] [SQLite Support](sqlite/README.md)
+- - [x] [SQLite Support](db/sqlite/README.md)
 
 ## Community
 [Telegram](https://t.me/io_binom) <br>
@@ -154,6 +154,3 @@ I use branching like described in `git-flow`.
 ## Using Library in Projects:
 
 [Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)
-
-## Support
-[Patreon](https://www.patreon.com/binom)

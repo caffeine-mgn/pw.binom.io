@@ -4,9 +4,11 @@ import pw.binom.collections.defaultMutableMap
 import pw.binom.io.Reader
 import pw.binom.io.StringReader
 import pw.binom.io.asAsync
+import pw.binom.xml.AbstractXmlLexer
 import pw.binom.xml.XML_NAMESPACE_PREFIX
 import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.sax.AsyncXmlReaderVisitor
+import pw.binom.xml.sax.SyncXmlReaderVisitor
 import pw.binom.xml.sax.SyncXmlVisitor
 
 class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, tag: String) : SyncXmlVisitor {
@@ -104,8 +106,8 @@ class SyncXmlDomReader private constructor(private val ctx: NameSpaceContext, ta
 
 fun Reader.xmlTree(withHeader: Boolean = false): XmlElement {
   return a {
-    val r = AsyncXmlDomReader("")
-    AsyncXmlReaderVisitor(this.asAsync()).accept(r)
+    val r = SyncXmlDomReader("")
+    SyncXmlReaderVisitor(lexer = AbstractXmlLexer(), reader = this).accept(r)
     val element = r.rootNode.childs.get(0)
     element.parent = null
     element

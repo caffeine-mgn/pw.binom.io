@@ -2,22 +2,20 @@ package pw.binom.xml.sax
 
 import pw.binom.collections.Stack
 import pw.binom.io.Reader
-import pw.binom.xml.SyncXmlLexer
+import pw.binom.xml.AbstractXmlLexer
 import pw.binom.xml.TokenType
-import pw.binom.xml.nextSkipEmpty
 
-class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
-  constructor(reader: Reader) : this(SyncXmlLexer(reader))
-
+class SyncXmlReaderVisitor(val lexer:AbstractXmlLexer,val reader: Reader) {
   private class Record(val name: String, val visitor: SyncXmlVisitor)
-
   private val visitors = Stack<Record>().asLiFoQueue()
+  private fun next()=lexer.commonNext { reader.read() }
+  private fun nextSkipEmpty()=lexer.nextSkipEmpty { reader.read() }
 
   /**
    * Чтение начала с <
    */
   private fun t1() {
-    if (!lexer.next()) {
+    if (!next()) {
       TODO()
     }
     when (lexer.tokenType) {
@@ -33,13 +31,13 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
    * Чтение CDATA. Прочитанно "<!"
    */
   private fun readCDATA() {
-    if (!lexer.next()) {
+    if (!next()) {
       TODO()
     }
     if (lexer.tokenType != TokenType.LEFT_BRACKET) {
       TODO()
     }
-    if (!lexer.next()) {
+    if (!next()) {
       TODO()
     }
     if (lexer.tokenType != TokenType.SYMBOL) {
@@ -48,7 +46,7 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
     if (lexer.text != "CDATA") {
       TODO()
     }
-    if (!lexer.next()) {
+    if (!next()) {
       TODO()
     }
     if (lexer.tokenType != TokenType.LEFT_BRACKET) {
@@ -57,17 +55,17 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
     val v = visitors.peek()
     val data = StringBuilder()
     while (true) {
-      if (!lexer.next()) {
+      if (!next()) {
         TODO()
       }
       if (lexer.tokenType == TokenType.RIGHT_BRACKET) {
-        if (!lexer.next()) {
+        if (!next()) {
           TODO()
         }
         if (lexer.tokenType != TokenType.RIGHT_BRACKET) {
           TODO()
         }
-        if (!lexer.next()) {
+        if (!next()) {
           TODO()
         }
         if (lexer.tokenType != TokenType.TAG_END) {
@@ -85,7 +83,7 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
    * Закрытие. "</" уже прочитано
    */
   private fun closeTag() {
-    if (!lexer.next()) {
+    if (!next()) {
       TODO()
     }
     if (lexer.tokenType != TokenType.SYMBOL) {
@@ -96,7 +94,7 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
     if (visitor.name != tagName) {
       throw ExpectedException("Expected closing of tag [${visitor.name}] but got [$tagName]")
     }
-    if (!lexer.next()) {
+    if (!next()) {
       TODO()
     }
     if (lexer.tokenType != TokenType.TAG_END) {
@@ -114,19 +112,19 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
     val subNode = visitors.peek().visitor.subNode(nodeName)
     visitors.push(Record(nodeName, subNode))
     subNode.start(nodeName)
-    if (!lexer.nextSkipEmpty()) {
+    if (!nextSkipEmpty()) {
       TODO()
     }
 
     fun readAttribute() {
       val attribute = lexer.text
-      if (!lexer.nextSkipEmpty()) {
+      if (!nextSkipEmpty()) {
         TODO()
       }
       if (lexer.tokenType != TokenType.EQUALS) {
         TODO("Обработка аттрибута без значения")
       }
-      if (!lexer.nextSkipEmpty()) {
+      if (!nextSkipEmpty()) {
         TODO()
       }
       if (lexer.tokenType != TokenType.STRING) {
@@ -143,14 +141,14 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
       TokenType.SYMBOL -> {
         while (true) {
           readAttribute()
-          if (!lexer.nextSkipEmpty()) {
+          if (!nextSkipEmpty()) {
             TODO()
           }
           when (lexer.tokenType) {
             TokenType.SYMBOL -> continue
             TokenType.TAG_END -> break
             TokenType.SLASH -> {
-              if (!lexer.nextSkipEmpty()) {
+              if (!nextSkipEmpty()) {
                 TODO()
               }
               if (lexer.tokenType != TokenType.TAG_END) {
@@ -167,7 +165,7 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
       }
 
       TokenType.SLASH -> {
-        if (!lexer.nextSkipEmpty()) {
+        if (!nextSkipEmpty()) {
           TODO()
         }
         if (lexer.tokenType != TokenType.TAG_END) {
@@ -187,7 +185,7 @@ class SyncXmlReaderVisitor(val lexer: SyncXmlLexer) {
 
   private fun accept() {
     var t = false
-    while (lexer.next()) {
+    while (next()) {
       when (lexer.tokenType) {
         TokenType.TAG_START -> {
           t1()

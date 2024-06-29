@@ -3,12 +3,12 @@ package pw.binom.xml.sax
 import pw.binom.collections.Stack
 import pw.binom.io.AsyncReader
 import pw.binom.io.EOFException
-import pw.binom.xml.AsyncXmlLexer
+import pw.binom.xml.AbstractXmlLexer
 import pw.binom.xml.TokenType
-import pw.binom.xml.nextSkipEmpty
 
-class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
-  constructor(reader: AsyncReader) : this(AsyncXmlLexer(reader))
+class AsyncXmlReaderVisitor(val reader: AsyncReader, val lexer: AbstractXmlLexer) {
+  private suspend fun next() = lexer.commonNext { reader.readChar() }
+  private suspend fun nextSkipEmpty() = lexer.nextSkipEmpty { reader.readChar() }
 
   private class Record(val name: String, val visitor: AsyncXmlVisitor)
 
@@ -20,7 +20,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
    * Чтение начала с <
    */
   private suspend fun readTagStart() {
-    if (!lexer.next()) {
+    if (!next()) {
       throw EOFException()
     }
     when (lexer.tokenType) {
@@ -33,7 +33,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
   }
 
   private suspend fun readCDATAOrComment() {
-    if (!lexer.next()) TODO()
+    if (!next()) TODO()
     return when (lexer.tokenType) {
       TokenType.LEFT_BRACKET -> readCDATA()
       TokenType.MINUS -> readComment()
@@ -45,7 +45,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
    * Чтение комментариев. Прочитано "<-"
    */
   private suspend fun readComment() {
-    if (!lexer.next()) {
+    if (!next()) {
       TODO("Неожиданный конец комментария")
     }
     if (lexer.tokenType != TokenType.MINUS) {
@@ -53,15 +53,15 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
     }
     val sb = StringBuilder()
     while (true) {
-      if (!lexer.next()) {
+      if (!next()) {
         TODO("Неожиданный конец коментария")
       }
       if (lexer.tokenType == TokenType.MINUS) { // возможно это конец
-        if (!lexer.next()) {
+        if (!next()) {
           TODO("Неожиданный конец коментария")
         }
         if (lexer.tokenType == TokenType.MINUS) { // да, это конец
-          if (!lexer.next()) {
+          if (!next()) {
             TODO("Неожиданный конец коментария")
           }
           if (lexer.tokenType != TokenType.TAG_END) {
@@ -84,14 +84,14 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
    */
   private suspend fun readCDATA() {
     if (lexer.tokenType != TokenType.LEFT_BRACKET) TODO("lexer.tokenType=${lexer.tokenType} ${lexer.line}:${lexer.column} ${lexer.text}")
-    if (!lexer.next()) TODO()
+    if (!next()) TODO()
     if (lexer.tokenType != TokenType.SYMBOL) {
       TODO()
     }
     if (lexer.text != "CDATA") {
       TODO()
     }
-    if (!lexer.next()) {
+    if (!next()) {
       TODO()
     }
     if (lexer.tokenType != TokenType.LEFT_BRACKET) {
@@ -100,17 +100,17 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
     val v = visitors.peek()
     val data = StringBuilder()
     while (true) {
-      if (!lexer.next()) {
+      if (!next()) {
         throw EOFException("on line ${lexer.line}:${lexer.column}")
       }
       if (lexer.tokenType == TokenType.RIGHT_BRACKET) {
-        if (!lexer.next()) {
+        if (!next()) {
           throw XMLSAXException("Unexpected end of xml document on ${lexer.line + 1}:${lexer.column}")
         }
         if (lexer.tokenType != TokenType.RIGHT_BRACKET) {
           throw XMLSAXException("Unknown text \"${lexer.text}\" with type ${lexer.tokenType} on ${lexer.line + 1}:${lexer.column}")
         }
-        if (!lexer.next()) {
+        if (!next()) {
           TODO()
         }
         if (lexer.tokenType != TokenType.TAG_END) {
@@ -128,7 +128,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
    * Закрытие. "</" уже прочитано
    */
   private suspend fun closeTag() {
-    if (!lexer.next()) {
+    if (!next()) {
       TODO()
     }
 
@@ -158,7 +158,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
     val sb = StringBuilder()
     sb.append(lexer.text)
     while (true) {
-      if (!lexer.next()) {
+      if (!next()) {
         TODO()
       }
       when (lexer.tokenType) {
@@ -185,15 +185,15 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
       if (lexer.tokenType != TokenType.EMPTY) {
         break
       }
-    } while (lexer.next())
+    } while (next())
 
     suspend fun readAttribute() {
       val attribute = lexer.text
-      if (!lexer.nextSkipEmpty()) TODO()
+      if (!nextSkipEmpty()) TODO()
       if (lexer.tokenType != TokenType.EQUALS) {
         TODO("Обработка аттрибута без значения. Ожидалось \"=\", а по факту ${lexer.text} ${lexer.tokenType}")
       }
-      if (!lexer.nextSkipEmpty()) TODO()
+      if (!nextSkipEmpty()) TODO()
       if (lexer.tokenType != TokenType.STRING) {
         TODO("${lexer.line + 1}:${lexer.column}")
       }
@@ -208,14 +208,14 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
       TokenType.SYMBOL -> {
         while (true) {
           readAttribute()
-          if (!lexer.nextSkipEmpty()) {
+          if (!nextSkipEmpty()) {
             TODO()
           }
           when (lexer.tokenType) {
             TokenType.SYMBOL -> continue
             TokenType.TAG_END -> break
             TokenType.SLASH -> {
-              if (!lexer.nextSkipEmpty()) {
+              if (!nextSkipEmpty()) {
                 TODO()
               }
               if (lexer.tokenType != TokenType.TAG_END) {
@@ -232,7 +232,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
       }
 
       TokenType.SLASH -> {
-        if (!lexer.nextSkipEmpty()) {
+        if (!nextSkipEmpty()) {
           TODO()
         }
         if (lexer.tokenType != TokenType.TAG_END) {
@@ -255,7 +255,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
 
   private suspend fun accept(): Boolean {
     var t = false
-    if (!lexer.next()) {
+    if (!next()) {
       return false
     }
     do {
@@ -273,7 +273,7 @@ class AsyncXmlReaderVisitor(val lexer: AsyncXmlLexer) {
           tagBodyBuilder!!.append(lexer.text)
         }
       }
-    } while (lexer.next())
+    } while (next())
     return true
   }
 

@@ -2,6 +2,7 @@ package pw.binom.xml.dom
 
 import pw.binom.collections.defaultMutableMap
 import pw.binom.io.AsyncReader
+import pw.binom.xml.AbstractXmlLexer
 import pw.binom.xml.XML_NAMESPACE_PREFIX
 import pw.binom.xml.XML_NAMESPACE_PREFIX_WITH_DOTS
 import pw.binom.xml.sax.AsyncXmlVisitor
@@ -102,6 +103,6 @@ class AsyncXmlDomReader private constructor(private val ctx: NameSpaceContext, t
 
 suspend fun AsyncReader.xmlTree(): XmlElement {
   val r = AsyncXmlDomReader("")
-  XmlRootReaderVisitor(this).accept(r)
+  XmlRootReaderVisitor(lexer = AbstractXmlLexer(), reader = this).accept(r)
   return r.rootNode.childs[0]
 }

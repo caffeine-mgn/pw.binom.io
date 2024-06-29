@@ -62,9 +62,10 @@ class BinomX509KeyManager(val keyManager: KeyManager/*, val private: (serverName
     }
 
     override fun getPrivateKey(p0: String): PrivateKey? {
+//      println("getPrivateKey($p0)")
         val items = p0.split(':', limit = 2)
-        val server = items[0] == "server"
-        return keyManager.getPrivate(items[1].takeIf { it.isNotBlank() })?.native
+//        val server = items[0] == "server"
+        return keyManager.getPrivate(items.getOrNull(1)?.takeIf { it.isNotBlank() })?.native
 //        return private(items[1].takeIf { it.isNotBlank() })
     }
 

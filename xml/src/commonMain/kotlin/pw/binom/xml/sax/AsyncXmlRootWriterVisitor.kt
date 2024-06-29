@@ -2,8 +2,10 @@ package pw.binom.xml.sax
 
 import pw.binom.io.AsyncAppendable
 
-class AsyncXmlRootWriterVisitor private constructor(val appendable: AsyncAppendable, val charset: String?) :
-  AsyncXmlVisitor {
+class AsyncXmlRootWriterVisitor private constructor(
+  val appendable: AsyncAppendable,
+  val charset: String?,
+) : AsyncXmlVisitor {
   companion object {
     fun withHeader(appendable: AsyncAppendable, charset: String = "UTF-8") = AsyncXmlRootWriterVisitor(
       appendable = appendable,

@@ -2,12 +2,13 @@ package pw.binom.xml.sax
 
 import pw.binom.io.AsyncReader
 import pw.binom.io.EOFException
-import pw.binom.xml.AsyncXmlLexer
+import pw.binom.xml.AbstractXmlLexer
 import pw.binom.xml.TokenType
-import pw.binom.xml.nextSkipEmpty
 
-class XmlRootReaderVisitor(val lexer: AsyncXmlLexer) {
-  constructor(reader: AsyncReader) : this(AsyncXmlLexer(reader))
+class XmlRootReaderVisitor(val lexer: AbstractXmlLexer, val reader: AsyncReader) {
+
+  private suspend fun AbstractXmlLexer.nextSkipEmpty() = nextSkipEmpty { reader.readChar() }
+  private suspend fun AbstractXmlLexer.next() = commonNext { reader.readChar() }
 
   suspend fun accept(visiter: AsyncXmlVisitor) {
     if (!lexer.nextSkipEmpty()) {
@@ -49,7 +50,7 @@ class XmlRootReaderVisitor(val lexer: AsyncXmlLexer) {
       throw ExpectedException("TAG_END")
     }
 
-    val root = AsyncXmlReaderVisitor(lexer)
+    val root = AsyncXmlReaderVisitor(reader = reader, lexer = lexer)
     root.accept(visiter)
   }
 }

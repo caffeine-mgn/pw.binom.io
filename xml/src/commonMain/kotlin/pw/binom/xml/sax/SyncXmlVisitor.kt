@@ -12,5 +12,6 @@ interface SyncXmlVisitor {
   fun attributeValue(value: String?) {}
   fun value(body: String) {}
   fun cdata(body: String) {}
+  fun comment(body: String) {}
   fun subNode(name: String): SyncXmlVisitor
 }
