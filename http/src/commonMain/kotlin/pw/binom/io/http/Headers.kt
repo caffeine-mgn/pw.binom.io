@@ -97,13 +97,22 @@ interface Headers : Map<String, List<String>> {
 
   val charset: String?
     get() {
-      val charset = contentType
+      val charset = contentType?.uppercase()
       return if (charset != null) {
-        val s = charset.indexOf(";")
+        val s = charset.indexOf("CHARSET=")
         if (s == -1) {
           null
         } else {
-          charset.substring(s + 1).trim().lowercase().removePrefix("charset=")
+          if (s > 0) {
+            if (charset[s - 1] != ';') {
+              return null
+            }
+          }
+          var endIndex = charset.indexOf(';', startIndex = s + 1)
+          if (endIndex == -1) {
+            endIndex = charset.length
+          }
+          charset.substring(s + 8, endIndex)
         }
       } else {
         null
