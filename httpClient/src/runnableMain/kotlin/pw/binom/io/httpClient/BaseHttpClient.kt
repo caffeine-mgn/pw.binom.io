@@ -82,7 +82,7 @@ class BaseHttpClient(
       url = uri,
     )
     req.headers[Headers.USER_AGENT] = "binom-kotlin-${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"
-    req.headers[Headers.HOST] = uri.host + (uri.port?.let { ":$it" } ?: "")
+    req.headers[Headers.HOST] = uri.host.toString()
     return req
   }
 

@@ -40,7 +40,7 @@ interface HttpRequest : AsyncCloseable, RequestConfig, HttpOutput {
 }
 
 internal fun generateWebSocketHeaders(self: HttpRequest): Headers {
-  val host = self.url.host + (self.url.port?.let { ":$it" } ?: "")
+  val host = self.url.domain + (self.url.port?.let { ":$it" } ?: "")
   return headersOf(
     Headers.ORIGIN to host,
     Headers.HOST to host,

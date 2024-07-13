@@ -1,6 +1,8 @@
 package pw.binom.http.rest
 
 import pw.binom.date.DateTime
+import pw.binom.io.http.Headers
+import pw.binom.io.http.headersOf
 import kotlin.time.Duration
 
 interface HttpRequestScope {
@@ -10,7 +12,7 @@ interface HttpRequestScope {
     NONE,
   }
 
-  fun setCookie(
+  fun setResponseCookie(
     key: String,
     value: String,
     expires: DateTime? = null,
@@ -22,5 +24,8 @@ interface HttpRequestScope {
     sameSite: SameSite? = null,
   )
 
-  fun getCookie(name: String): String?
+  fun getRequestCookie(name: String): String?
+  fun getRequestHeader(name: String): List<String>
+  fun addResponseHeader(name: String, value: String) = addResponseHeader(headersOf(name to value))
+  fun addResponseHeader(headers: Headers)
 }

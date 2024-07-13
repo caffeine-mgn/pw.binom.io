@@ -131,7 +131,7 @@ interface RequestHook {
 //        }
 
         override suspend fun connectAddress(url: URL) =
-            "http://${url.host}:${url.port ?: 80}".toURL()
+            "http://${url.domain}:${url.port ?: 80}".toURL()
 //            NetworkAddress.create(
 //                host = this.url.host,
 //                port = this.url.port ?: url.getDefaultPort()

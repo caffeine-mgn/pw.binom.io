@@ -32,7 +32,7 @@ class TestURL {
         port = 3301,
         path = "/123 456".toPath,
         query = Query.new(mapOf("gender" to "m w")),
-        fragment = "ff nn",
+        fragment = Fragment("ff nn"),
       )
 
     assertEquals("https://example.com:3301/123%20456?gender=m+w#ff+nn", uri.toString())
@@ -68,24 +68,24 @@ class TestURL {
   @Test
   fun hostTest() {
     "https://binom/".toURLOrNull!!.apply {
-      assertEquals("binom", host)
+      assertEquals("binom", domain)
     }
     "https://binom".toURLOrNull!!.apply {
-      assertEquals("binom", host)
+      assertEquals("binom", domain)
     }
 
     "//binom/".toURLOrNull!!.apply {
-      assertEquals("binom", host)
+      assertEquals("binom", domain)
     }
 
     "//a:b@binom/olo".toURLOrNull!!.apply {
-      assertEquals("binom", host)
+      assertEquals("binom", domain)
     }
   }
 
   @Test
   fun emptyHostTest() {
-    assertEquals("", "ws://:80".toURL().host)
+    assertEquals("", "ws://:80".toURL().domain)
   }
 
   @Test
@@ -188,7 +188,7 @@ class TestURL {
   @Test
   fun `withUri`() {
     var url = "http://127.0.0.1:4646".toURL()
-    assertEquals("127.0.0.1", url.host)
+    assertEquals("127.0.0.1", url.domain)
     assertEquals(4646, url.port)
     url = url.copy(path = "${url.path}/var".toPath)
 

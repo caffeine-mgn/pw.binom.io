@@ -107,11 +107,11 @@ class HttpProxyConnect(
     url: URL,
     headers: Headers,
   ): HttpRequestBody {
-    val newKey = "${url.schema}://${url.host}${url.port?.let { ":$it" } ?: ""}"
+    val newKey = "${url.schema}://${url.host}"
     val tcp = getTcpConnect()
     val output = tcp // .bufferedAsciiWriter(closeParent = false)
     val input = tcp.bufferedAsciiReader(closeParent = false)
-    val host = "${url.host}:${url.port ?: url.getPort()}"
+    val host = "${url.domain}:${url.port ?: url.getPort()}"
     var transparentChannel = transparentChannel
     if (transparentChannel == null) {
       val newHeaders = HashHeaders2()
@@ -131,7 +131,7 @@ class HttpProxyConnect(
       output.flush()
       val resp = Http11ConnectFactory2.readResponse(input)
       if (resp.responseCode == 404) {
-        throw UnknownHostException(url.host)
+        throw UnknownHostException(url.domain)
       }
       if (resp.responseCode != 200) {
         throw IOException("Invalid response code: ${resp.responseCode}")

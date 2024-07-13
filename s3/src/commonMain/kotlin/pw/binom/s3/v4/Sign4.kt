@@ -27,7 +27,7 @@ internal suspend fun s3Call(
   payload: (suspend (AsyncOutput) -> Unit)? = null,
 ): HttpResponse {
   client.connect(method = method, uri = url).useAsync { connection ->
-    val host = overrideHost ?: url.host
+    val host = overrideHost ?: url.domain
     val date = DateTime.now
     val specialHeaders: List<Pair<String, String>> =
       buildList {

@@ -62,7 +62,7 @@ fun HttpClient.connectWebSocket(
     method = method,
     masking = masking,
   )
-  wsRequest.headers[Headers.HOST] = uri.host + (uri.port?.let { ":$it" } ?: "")
+  wsRequest.headers[Headers.HOST] = uri.host.toString()
   wsRequest.headers[Headers.CONNECTION] = Headers.UPGRADE
   wsRequest.headers[Headers.UPGRADE] = Headers.WEBSOCKET
   wsRequest.headers[Headers.SEC_WEBSOCKET_VERSION] = "13"

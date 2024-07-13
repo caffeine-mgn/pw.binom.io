@@ -64,9 +64,10 @@ class JsHttpRequestBody internal constructor(
     isFlushed = true
     val resp = suspendCoroutine { con ->
       val xhr = XMLHttpRequest()
+      var resumed = false
       xhr.responseType = XMLHttpRequestResponseType.TEXT
-      xhr.onreadystatechange = {
-        if (xhr.readyState == 4.toShort()) {
+      xhr.onreadystatechange = { event ->
+        if (xhr.readyState == 4.toShort() && xhr.status != 0.toShort()) {
           val resp = JsHttpResponse(url = url, xhr = xhr)
           flashWaters.forEach {
             it.resume(resp)
@@ -75,7 +76,7 @@ class JsHttpRequestBody internal constructor(
           con.resume(resp)
         }
       }
-      xhr.onerror = {
+      xhr.onerror = { event ->
         flashWaters.forEach {
           it.resumeWithException(IOException("Can't get $url"))
         }

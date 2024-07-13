@@ -9,6 +9,7 @@ import pw.binom.http.rest.endpoints.Endpoint2
 import pw.binom.http.rest.serialization.HttpInputDecoder
 import pw.binom.http.rest.serialization.HttpOutputEncoder
 import pw.binom.io.http.Headers
+import pw.binom.io.http.forEachHeader
 import pw.binom.io.httpServer.HttpHandler
 import pw.binom.io.httpServer.HttpServerExchange
 import pw.binom.url.PathMask
@@ -54,8 +55,10 @@ abstract class RestHttpHandler : HttpHandler {
     private inner class HttpRequestScopeImpl : HttpRequestScope {
       var setCookie: ((String) -> Unit)? = null
       var getCookie: ((String) -> String?)? = null
+      var getHeader: ((String) -> List<String>)? = null
+      var addHeader: ((String, String) -> Unit)? = null
 
-      override fun setCookie(
+      override fun setResponseCookie(
         key: String,
         value: String,
         expires: DateTime?,
@@ -101,7 +104,13 @@ abstract class RestHttpHandler : HttpHandler {
         setCookie(sb.toString())
       }
 
-      override fun getCookie(name: String): String? = getCookie?.invoke(name)
+      override fun getRequestCookie(name: String): String? = getCookie?.invoke(name)
+      override fun getRequestHeader(name: String): List<String> = getHeader?.invoke(name) ?: emptyList()
+      override fun addResponseHeader(headers: Headers) {
+        headers.forEachHeader { key, value ->
+          addHeader?.invoke(key, value)
+        }
+      }
     }
 
     override suspend fun handle(exchange: HttpServerExchange) {
@@ -133,6 +142,8 @@ abstract class RestHttpHandler : HttpHandler {
       ctx.setCookie = { resp.headers.add(Headers.SET_COOKIE, it) }
       val cookies by lazy { exchange.requestHeaders.getCookies() }
       ctx.getCookie = { cookies[it] }
+      ctx.getHeader = { exchange.requestHeaders.get(it) ?: emptyList() }
+      ctx.addHeader = { key, value -> resp.headers.add(key, value) }
       val response = func(ctx, requestDescription.serializer.deserialize(d))
       val e = HttpOutputEncoder(serializersModule, responseDescription as EndpointDescription<Any?>)
       responseDescription.serializer.serialize(e, response)

@@ -43,18 +43,18 @@ class HttpSSLConnect(
         headers: Headers,
     ): HttpRequestBody {
         created = TimeSource.Monotonic.markNow()
-        val newKey = "${url.schema}://${url.host}${url.port?.let { ":$it" } ?: ""}"
+        val newKey = "${url.schema}://${url.host}"
         var channel = channel
         if (channel == null) {
             channel = networkManager.tcpConnect(
               DomainSocketAddress(
-                    host = url.host,
+                    host = url.domain,
                     port = url.port ?: url.getPort(),
                 ).resolve(),
             )
             this.channel = channel
         }
-        val sslSession = sslContext.clientSession(host = url.host, port = url.port ?: url.getPort())
+        val sslSession = sslContext.clientSession(host = url.domain, port = url.port ?: url.getPort())
         val sslChannel = sslSession.asyncChannel(channel = channel, closeParent = true, bufferSize = sslBufferSize)
         val newUrl = when (url.schema) {
             "https" -> url.copy(schema = "http")

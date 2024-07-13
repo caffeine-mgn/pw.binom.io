@@ -38,14 +38,14 @@ class Http11Connect(
     headers: Headers,
   ): HttpRequestBody {
     created = TimeSource.Monotonic.markNow()
-    val newKey = "${url.schema}://${url.host}${url.port?.let { ":$it" } ?: ""}"
+    val newKey = "${url.schema}://${url.domain}"
     var tcp = tcp
     if (tcp == null) {
       tcp =
         connectFactory.connect(
           networkManager = networkManager,
           schema = url.schema,
-          host = url.host,
+          host = url.domain,
           port = url.port ?: url.getPort(),
         )
 //      tcp = networkManager.tcpConnect(
