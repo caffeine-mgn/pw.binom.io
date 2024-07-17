@@ -1,8 +1,8 @@
 package pw.binom.io
 
-open class IOException : Exception {
-    constructor() : super()
-    constructor(message: String?) : super(message)
-    constructor(message: String?, cause: Throwable?) : super(message, cause)
-    constructor(cause: Throwable?) : super(cause)
+expect open class IOException : Exception {
+  constructor()
+  constructor(message: String?)
+  constructor(cause: Throwable?)
+  constructor(message: String?, cause: Throwable?)
 }

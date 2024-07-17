@@ -1,5 +1,5 @@
 package pw.binom.io
 
-interface Flushable {
+expect interface Flushable {
     fun flush()
 }
