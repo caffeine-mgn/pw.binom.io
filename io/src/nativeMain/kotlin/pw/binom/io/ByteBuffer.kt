@@ -165,7 +165,7 @@ actual open class ByteBuffer private constructor(
     return IllegalArgumentException(msg)
   }
 
-  fun isReferenceAccessAvailable(position: Int = this.position) = capacity != 0 && position < capacity
+  fun isReferenceAccessAvailable(position: Int = this._position) = capacity != 0 && position < capacity
 
   override fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T? {
     ensureOpen()
