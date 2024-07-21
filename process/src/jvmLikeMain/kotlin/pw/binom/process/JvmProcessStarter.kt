@@ -67,12 +67,20 @@ class JvmProcessStarter(
   }
 
   override fun start(): Process {
-    val pb = ProcessBuilder(listOf(path) + args)
-    pb.environment().clear()
-    pb.environment().putAll(envs)
-    workDir?.let { pb.directory(File(it)) }
-    pb.redirectOutput(ProcessBuilder.Redirect.PIPE)
-    pb.redirectError(ProcessBuilder.Redirect.PIPE)
-    return JvmProcess(process = pb.start(), processStarter = this)
+    lock.withLock {
+      if (this.process != null) {
+        throw IllegalStateException("Process already started")
+      }
+      val pb = ProcessBuilder(listOf(path) + args)
+      pb.environment().clear()
+      pb.environment().putAll(envs)
+      workDir?.let { pb.directory(File(it)) }
+      pb.redirectOutput(ProcessBuilder.Redirect.PIPE)
+      pb.redirectError(ProcessBuilder.Redirect.PIPE)
+      val process = JvmProcess(process = pb.start(), processStarter = this)
+      this.process = process
+      con.signalAll()
+      return process
+    }
   }
 }
