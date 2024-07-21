@@ -51,10 +51,10 @@ interface DBAccess2 {
 
   suspend fun <T : Any> select(
     serializer: KSerializer<T>,
-    func: suspend QueryContext.() -> String,
+    func: suspend SelectContext.() -> String,
   ): Flow<T>
 
-  suspend fun selectRaw(func: suspend QueryContext.() -> String): AsyncResultSet
+  suspend fun selectRaw(func: suspend SelectContext.() -> String): AsyncResultSet
 
   suspend fun update(func: suspend QueryContext.() -> String): Long
 
@@ -76,6 +76,11 @@ suspend inline fun <reified T : Any> DBAccess2.insertAndReturn(
   excludeGenerated: Boolean = true,
 ) = insertAndReturn(serializer = T::class.serializer(), value = value, excludeGenerated = excludeGenerated)
 
+interface WhereContext {
+  fun and(func: QueryContext.() -> String): String
+  fun or(func: QueryContext.() -> String): String
+}
+
 interface QueryContext {
   val serializersModule: SerializersModule
 
@@ -87,7 +92,13 @@ interface QueryContext {
   operator fun String.unaryPlus(): String
 }
 
-interface UpdateContext : QueryContext {
+interface RootQueryContext : QueryContext {
+  fun where(func: WhereContext.() -> String): String
+}
+
+interface SelectContext : RootQueryContext
+
+interface UpdateContext : RootQueryContext {
   fun <T : Any> returning(
     serializer: KSerializer<T>,
     func: suspend (T) -> Unit,

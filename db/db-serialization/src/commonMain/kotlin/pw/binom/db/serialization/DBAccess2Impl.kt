@@ -72,7 +72,9 @@ class ResultSetDataProvider(val rs: ResultSet) : DataProvider {
   }
 }
 
-private class QueryContextImpl(override val serializersModule: SerializersModule) : UpdateContext {
+private class QueryContextImpl(
+  override val serializersModule: SerializersModule,
+) : UpdateContext, WhereContext, SelectContext {
   var args = defaultMutableList<Any?>()
   var returning: Returning<out Any>? = null
   val startQuery = StringBuilder()
@@ -119,9 +121,46 @@ private class QueryContextImpl(override val serializersModule: SerializersModule
     startQuery.append(this)
     return ""
   }
+
+  private var whereStarted = false
+  private var whereConditionExist = false
+
+  override fun where(func: WhereContext.() -> String): String {
+    check(!whereStarted) { "where section already called" }
+    whereStarted = true
+    startQuery.append(func(this))
+    if (whereConditionExist) {
+      startQuery.append(")")
+    }
+    return ""
+  }
+
+  private inline fun condition(operator: String, func: () -> String) {
+    if (!whereConditionExist) {
+      whereConditionExist = true
+      startQuery.append(" where ((")
+    } else {
+      startQuery.append(operator).append("(")
+    }
+    startQuery.append(func())
+    startQuery.append(")")
+  }
+
+  override fun and(func: QueryContext.() -> String): String {
+    condition("and"){
+      func(this)
+    }
+    return ""
+  }
+
+  override fun or(func: QueryContext.() -> String): String {
+    condition("or"){
+      func(this)
+    }
+    return ""
+  }
 }
 
-@OptIn(ExperimentalTime::class)
 class DBAccess2Impl internal constructor(
   val con: PooledAsyncConnection,
   internal val ctxImpl: DBContextImpl,
@@ -129,6 +168,7 @@ class DBAccess2Impl internal constructor(
 ) : DBAccess2 {
   override val ctx: DBContext
     get() = ctxImpl
+
   override suspend fun <T : Any> insert(
     serializer: KSerializer<T>,
     value: T,
@@ -229,7 +269,7 @@ class DBAccess2Impl internal constructor(
     }
   }
 
-  override suspend fun selectRaw(func: suspend QueryContext.() -> String): AsyncResultSet {
+  override suspend fun selectRaw(func: suspend SelectContext.() -> String): AsyncResultSet {
     val params = QueryContextImpl(serializersModule)
     val endPart = func(params)
     val startPart = params.startQuery.toString()
@@ -240,7 +280,7 @@ class DBAccess2Impl internal constructor(
 
   override suspend fun <T : Any> select(
     serializer: KSerializer<T>,
-    func: suspend QueryContext.() -> String,
+    func: suspend SelectContext.() -> String,
   ): Flow<T> {
     val result = selectRaw(func)
     val r = ResultSetDataProvider(result)
