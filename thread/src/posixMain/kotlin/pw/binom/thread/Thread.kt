@@ -4,7 +4,8 @@ package pw.binom.thread
 
 import kotlinx.cinterop.*
 import platform.common.*
-import platform.posix.*
+import platform.posix.errno
+import platform.posix.usleep
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 import kotlin.time.Duration
@@ -19,7 +20,8 @@ private fun genName() = "Thread-${createCount++}"
 @Suppress("OPT_IN_IS_NOT_ENABLED")
 @OptIn(UnsafeNumber::class, ExperimentalForeignApi::class)
 actual abstract class Thread(_id: Long, name: String) {
-  private var threadDataPtr = nativeHeap.alloc<ThreadData>().ptr // malloc(sizeOf<ThreadData>().convert())!!.reinterpret<ThreadData>()
+  private var threadDataPtr =
+    nativeHeap.alloc<ThreadData>().ptr // malloc(sizeOf<ThreadData>().convert())!!.reinterpret<ThreadData>()
 
   //  private val e = internal_createThreadData()!!
   var _id: Long
